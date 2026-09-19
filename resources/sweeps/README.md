@@ -204,33 +204,40 @@ those three indices.
 ## Adding to them
 
 ```bash
-just fingerprint --resume              # every block, one reading each
-just campaign HD2_AmpUSDripmanNorm amp # one block, every control
-just fold /tmp/campaign/HD2_AmpUSDripmanNorm \
-    resources/sweeps/hx-stomp/us-dripman-norm.json
+# every block, one reading each. --resume skips what is already in the file,
+# and --retry gives the ones that refused another go.
+tonestack measure blocks --resume --out resources/sweeps/hx-stomp/fingerprints.json
+
+# one block, every control, each measured alone
+tonestack measure controls --model HD2_AmpUSDripmanNorm \
+    --out resources/sweeps/hx-stomp/us-dripman-norm.json
+
+# check the catalog's parameter order against the hardware
+tonestack measure names --model HD2_AmpUSDripmanNorm
 ```
 
-One control at a time, when a campaign is the wrong granularity:
+Each of these puts the block in a chain of its own and plays it through
+`presets play` rather than writing a slot, because a slot is flash and a
+campaign loads a chain once per control. The chain is played again before every
+control, which matters more than it looks: a live edit writes nothing back, so
+without it each sweep would run on a chain the previous one left skewed.
 
-```bash
-just isolate "US Dripman" amp          # one block, alone, playing
-just identify 1 12                     # check the catalog's order against it
-just sweep 1 3 --isolated --preset /tmp/isolated.hlx --out /tmp/sweeps/p3.json
-```
+A control's range comes from the catalog. That is not a nicety: 1,452 of the
+device's 4,835 float controls do not run zero to one, and a Simple EQ's Mid
+Freq swept 0..1 never leaves its bottom stop and reports as a control that does
+nothing.
 
-`--preset` plays the chain again before measuring, which matters more than it
-looks: a live edit writes nothing back, so without it each sweep runs on a chain
-the previous one left skewed. It goes through `presets play` rather than a slot,
-because a slot is flash and a campaign loads a chain once per control.
+`--points` is how many positions a dial is measured at; a list is measured at
+all of its settings, because a list has no positions in between. `--takes` sets
+how many takes the noise floor is read from, and the floor is what decides
+whether a move happened at all.
 
-A control's range comes from the catalog unless `--low` and `--high` say
-otherwise. That is not a nicety either: 1,452 of the device's 4,835 float
-controls do not run zero to one, and a Simple EQ's Mid Freq swept 0..1 never
-leaves its bottom stop and reports as a control that does nothing.
+A parameter's index is its position in the device's own order, which is not the
+order `catalog show` prints;
+[docs/measuring.md](../../docs/measuring.md#which-control-it-actually-was) says
+why that matters and `measure names` settles it against the hardware.
 
-A block's slot is its position in the chain plus one;
-[docs/measuring.md](../../docs/measuring.md#addressing-a-control) has the layout
-and the trap in it. A parameter's index is its position in the device's own
-order, which is not the order `catalog show` prints;
-[the same page](../../docs/measuring.md#which-control-it-actually-was) says why
-that matters and `just identify` settles it against the hardware.
+Getting the readings into the binary is a separate step: `just pack-measured`
+writes `pkg/sdk/measured/data/hx-stomp.json.gz` through the same reader the
+binary uses, so a library that will not load is refused there rather than at
+the next build. Only the fingerprints are packed; the curves stay here.

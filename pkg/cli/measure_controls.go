@@ -355,13 +355,13 @@ func report(
 			moved, _ = measured.Apart(curve.Points, f)
 		}
 
-		real := "no"
+		aimable := "no"
 		if moved > floor*3 {
-			real = "yes"
+			aimable = "yes"
 		}
 
 		_, _ = fmt.Fprintf(w, "    %-10s moved %9.3f  floor %7.3f  real? %s\n",
-			f, moved, floor, real)
+			f, moved, floor, aimable)
 	}
 
 	_, _ = fmt.Fprintln(w)

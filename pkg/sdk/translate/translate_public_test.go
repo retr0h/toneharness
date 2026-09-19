@@ -170,7 +170,7 @@ like:
 
 	s.Require().NoError(err)
 
-	var roles []rig.Role
+	roles := make([]rig.Role, 0, len(got.Chain))
 	for _, entry := range got.Chain {
 		roles = append(roles, entry.Role)
 	}

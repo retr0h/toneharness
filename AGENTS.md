@@ -74,11 +74,14 @@ code. Read the one that matches the task rather than all of them:
 | Turning a request into knob positions                                                                      | [docs/algorithm.md](docs/algorithm.md), why nothing searches the space, and what a target is                            |
 | Changing the shape of the system                                                                           | [docs/superpowers/specs/](docs/superpowers/specs/), dated design records, superseded rather than rewritten              |
 
-The RigSpec contract is
-[`pkg/sdk/rig/data/rigspec.openapi.yaml`](pkg/sdk/rig/data/rigspec.openapi.yaml),
-embedded in the package that reads it. It is the only hand-authored format;
-everything else is compiled from it. The generated catalog, the gear map and the
-corpus are in [resources/schemas/](resources/schemas/), and
+There are two contracts, each embedded in the package that reads it.
+[`pkg/sdk/tone/data/tonespec.openapi.yaml`](pkg/sdk/tone/data/tonespec.openapi.yaml)
+is what somebody may ask for, and
+[`pkg/sdk/rig/data/rigspec.openapi.yaml`](pkg/sdk/rig/data/rigspec.openapi.yaml)
+is what that resolves to. They are the only hand-authored formats; the Go
+types, both grammar pages and everything downstream are compiled from them.
+The generated catalog, the gear map and the corpus are in
+[resources/schemas/](resources/schemas/), and
 [resources/README.md](resources/README.md) says what else is in that tree and
 which of it may be redistributed.
 

@@ -228,7 +228,7 @@ func (s *MeasureTestSuite) TestSweepableTakesDialsAndListsAndNotSwitches() {
 	block := s.cat.Blocks["HD2_CabMicIr_2x15Brute"]
 	got := Sweepable(block, WireOrder(s.cat, "HD2_CabMicIr_2x15Brute"))
 
-	var kinds []string
+	kinds := make([]string, 0, len(got))
 	for _, c := range got {
 		kinds = append(kinds, c.kind)
 	}

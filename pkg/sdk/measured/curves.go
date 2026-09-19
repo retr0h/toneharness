@@ -196,8 +196,10 @@ func Fitted(
 	mean := average(ys)
 
 	for i, y := range ys {
-		miss += math.Pow(y-(slope*xs[i]+intercept), 2)
-		about += math.Pow(y-mean, 2)
+		off := y - (slope*xs[i] + intercept)
+		spread := y - mean
+		miss += off * off
+		about += spread * spread
 	}
 
 	// A figure that did not move has no shape to miss, so the line accounts

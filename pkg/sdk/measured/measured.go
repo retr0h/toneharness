@@ -264,7 +264,8 @@ func (w Weights) between(
 		{w.Mid, got.Mid, want.Mid},
 		{w.High, got.High, want.High},
 	} {
-		sum += math.Pow(d.by*(d.from-d.to), 2)
+		apart := d.by * (d.from - d.to)
+		sum += apart * apart
 	}
 
 	return math.Sqrt(sum)
