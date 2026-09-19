@@ -1,16 +1,60 @@
 # sweeps
 
-What each control actually does, measured rather than asserted.
+What the device actually does, measured rather than asserted.
 
-One file per block. Each names the control, every position it was measured at,
-the five figures at each, the rig's own repeatability at the time, and the whole
-signal chain it ran through.
-
-This is the data the guessing was standing in for. A character word used to move
-a control by an amount somebody typed, and
+This is the data the guessing was standing in for. A character word used to
+move a control by an amount somebody typed, and
 [docs/algorithm.md](../../docs/algorithm.md) says what replaces that: stack
-these curves into a matrix of slopes, and a request becomes a small linear
+measured curves into a matrix of slopes, and a request becomes a small linear
 system rather than a search.
+
+Everything here is generated. Nothing in it is hand-written and nothing in it
+belongs in Go source: a slope typed into a constant is the thing this whole
+exercise removed. The files are the artifact, the same way the catalog is.
+
+## Two files, answering two questions
+
+`fingerprints.json` says **what each block sounds like**. One reading per
+block, sitting at its own defaults, for all 665 of them. It is what picking a
+block out of 665 needs: ranking 224 amplifiers by how close each sits to a
+target turns "sound like this record" into a shortlist.
+
+`<model>.json` says **what one block's controls do**. Every float control,
+swept across the range the catalog gives it, folded into a matrix of slopes.
+It is what setting a chain needs once the chain has been picked.
+
+The split is a cost one. A control is about two minutes and a twelve-control
+amplifier most of an hour, so the device's 4,835 float controls are a hundred
+and sixty hours. A fingerprint is one reading. So every block gets a
+fingerprint and the blocks a chain reaches for get a matrix.
+
+It is also the right split. [algorithm.md](../../docs/algorithm.md) measures
+its matrix fresh for whatever chain is being tuned, because a slope belongs to
+its chain, so a stored matrix for every block would be rebuilt before anything
+used it. What cannot be worked out at solve time is which blocks belong in the
+chain at all.
+
+### Reading a fingerprint
+
+Every figure is a difference from the empty loop, which is measured first and
+stored as `baseline`. Without it a number says nothing: 95 Hz is not what an
+equaliser does to a bass, it is what the bass already was, and an equaliser
+flat at its defaults passes it straight through.
+
+Two flags travel with each block:
+
+- `clipped` is a reading that hit the converters' ceiling. Its spectrum is the
+  clipping's rather than the block's, because flat tops make harmonics that
+  were never in the signal, so it reads as a bright block and is not one.
+- `refused` is a block that would not load alone, with what the device or the
+  compiler said. Some of what the catalog lists means nothing on its own.
+
+**A fingerprint is not a verdict.** It says where a block sits with nobody
+touching it, and a block that does nothing at its defaults may still do a
+great deal once its controls are moved. The equalisers are the clear case:
+every one of them measures as the baseline, because flat is what they ship at.
+Their curves are the only thing that describes them, and those cost a
+campaign.
 
 ## A curve belongs to a chain, not to a control
 
@@ -161,15 +205,29 @@ those three indices.
 ## Adding to them
 
 ```bash
-just isolate "US Dripman" amp          # one block, alone, in slot 40
-just identify 1 12                     # check the catalog's order against it
-just sweep 1 3 --isolated --slot 40 --out /tmp/sweeps/p3.json
-just fold /tmp/sweeps resources/sweeps/hx-stomp/us-dripman-norm.json
+just fingerprint --resume              # every block, one reading each
+just campaign HD2_AmpUSDripmanNorm amp # one block, every control
+just fold /tmp/campaign/HD2_AmpUSDripmanNorm \
+    resources/sweeps/hx-stomp/us-dripman-norm.json
 ```
 
-`--slot` reloads the preset before measuring, which matters more than it looks:
-a live edit writes nothing back, so without it each sweep runs on a chain the
-previous one left skewed.
+One control at a time, when a campaign is the wrong granularity:
+
+```bash
+just isolate "US Dripman" amp          # one block, alone, playing
+just identify 1 12                     # check the catalog's order against it
+just sweep 1 3 --isolated --preset /tmp/isolated.hlx --out /tmp/sweeps/p3.json
+```
+
+`--preset` plays the chain again before measuring, which matters more than it
+looks: a live edit writes nothing back, so without it each sweep runs on a
+chain the previous one left skewed. It goes through `presets play` rather than
+a slot, because a slot is flash and a campaign loads a chain once per control.
+
+A control's range comes from the catalog unless `--low` and `--high` say
+otherwise. That is not a nicety either: 1,452 of the device's 4,835 float
+controls do not run zero to one, and a Simple EQ's Mid Freq swept 0..1 never
+leaves its bottom stop and reports as a control that does nothing.
 
 A block's slot is its position in the chain plus one;
 [docs/measuring.md](../../docs/measuring.md#addressing-a-control) has the layout
