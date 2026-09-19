@@ -438,6 +438,30 @@ func (s *PresetsPublicTestSuite) TestTurn() {
 	}
 }
 
+// TestPlay covers auditioning a preset, in a Session of its own.
+//
+// Nothing is stored, which is what separates it from Import: a slot is flash,
+// and putting hundreds of chains in front of a device to measure them is the
+// shape of write burst that has corrupted a setlist.
+func (s *PresetsPublicTestSuite) TestPlay() {
+	tests := []struct {
+		name   string
+		client func() *sdk.Client
+		says   string
+	}{
+		{name: "a device that is not there", client: s.absent, says: "no device found"},
+		{name: "a preset that is not there", client: s.attachedTo, says: "nope.hlx"},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := tt.client().Play(context.Background(), "nope.hlx")
+
+			s.Require().ErrorContains(err, tt.says)
+		})
+	}
+}
+
 // rigFile writes a rig somebody typed, about subject, and returns its path.
 func (s *PresetsPublicTestSuite) rigFile(
 	dir string,

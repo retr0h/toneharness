@@ -261,6 +261,7 @@ tonestack presets <command> [flags]
 | [import](#tonestack-presets-import) | Put a preset file into a slot |
 | [list](#tonestack-presets-list) | List the presets a device holds |
 | [make](#tonestack-presets-make) | Build a preset from a recipe |
+| [play](#tonestack-presets-play) | Put a preset in front of the device without storing it |
 | [select](#tonestack-presets-select) | Load a preset on the device |
 | [show](#tonestack-presets-show) | Show the signal chain in one preset |
 | [swap](#tonestack-presets-swap) | Exchange two slots |
@@ -439,6 +440,32 @@ tonestack presets make [flags]
 | `--out` | string |  | where to write the preset |
 | `--recipes` | string |  | a directory of recipes to use instead of yours, beside the built-in ones |
 | `--stats` | string |  | measured corpus statistics to use instead of the built-in ones |
+
+## tonestack presets play
+
+Put a preset file in front of the device without storing it anywhere.
+
+The device starts making that sound at once. No slot is written and no slot is
+read, so nothing it holds changes and there is nothing to put back.
+
+Use this rather than `presets import` for anything being tried rather
+than kept. A slot is flash, flash wears out, and a burst of writes has taken a
+setlist past what a power cycle could clear. Auditioning six hundred chains
+through slots is six hundred flash writes for readings nobody wanted to keep;
+through here it is none.
+
+What it replaces lasts until the next preset is selected or the device is power
+cycled, at which point the slot's own version comes back.
+
+```text
+tonestack presets play [flags]
+```
+
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--catalog` | string |  | a generated catalog to use instead of the built-in one |
+| `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
+| `--preset` | string |  | the .hlx to put in front of the device |
 
 ## tonestack presets select
 

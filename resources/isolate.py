@@ -12,34 +12,41 @@ nothing else may be in the path while it is measured.
 So: build a rig holding one block, compile it, put it in a scratch slot and
 load it. What comes out is attributable, because this wrote it.
 
-Usage:
-    just isolate "Ampeg SVT" amp        # loads it, prints the slot
-    just isolate "Ampeg SVT" amp --slot 41
+Nothing is written. The chain goes in front of the device through `presets
+play`, which replaces the edit buffer and leaves every slot holding what it
+held. That matters because a slot is flash, and
+[the rules that keep a device alive](../docs/protocol.md#rules-that-keep-a-device-alive)
+say a burst of flash writes has corrupted a setlist past what a power cycle
+could clear. Measuring means loading a different chain hundreds of times, and
+none of those are worth keeping.
 
-Slots start at 40 because the first ten banks are John's own presets and a
-measurement is not worth overwriting somebody's work.
+The compiled preset is kept on disk so a sweep can put the same chain back
+between controls. A live edit writes nothing back, so without that each sweep
+would run on a chain the previous one left skewed.
+
+Usage:
+    just isolate "Ampeg SVT" amp        # plays it, prints the file
+    just isolate "Ampeg SVT" amp --out /tmp/svt.hlx
 """
 
 import argparse
 import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 
-# The first slot a scratch preset may be written to.
-#
-# Banks 01-10 are in use. A sweep writes and re-writes whatever slot it is
-# given hundreds of times, so the floor is a guard rather than a preference.
-SCRATCH = 40
+# A prebuilt binary, so a run does not relink the CLI once per call.
+BINARY = Path("/tmp/tonestack")
 
 
 def run(*args: str) -> str:
     """One CLI call, with the failure reported rather than swallowed."""
+    exe = [str(BINARY)] if BINARY.exists() else ["go", "run", "main.go"]
+
     r = subprocess.run(
-        ["go", "run", "main.go", *args],
+        [*exe, *args],
         cwd=REPO, capture_output=True, text=True, timeout=600, check=False,
     )
 
@@ -79,27 +86,24 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Load one block, alone, for measuring.")
     p.add_argument("gear", help='what to load, as a person says it: "Ampeg SVT"')
     p.add_argument("role", help="what it does: amp, cab, drive, comp, eq, ...")
-    p.add_argument("--slot", type=int, default=SCRATCH, help="where to put it")
+    p.add_argument("--out", default="/tmp/isolated.hlx",
+                   help="where to keep the compiled preset, so a sweep can "
+                        "put the same chain back between controls")
     args = p.parse_args()
 
-    if args.slot < SCRATCH:
-        sys.exit(f"isolate: slot {args.slot} is below {SCRATCH}, which is "
-                 f"somebody's own preset. Pick {SCRATCH} or higher.")
+    built = Path(args.out)
+    spec = built.with_suffix(".yaml")
+    spec.write_text(rig(args.gear, args.role))
 
-    with tempfile.TemporaryDirectory() as tmp:
-        spec = Path(tmp) / "isolate.yaml"
-        built = Path(tmp) / "isolate.hlx"
-        spec.write_text(rig(args.gear, args.role))
-
-        print(run("presets", "compile", "--rig", str(spec), "--out", str(built)))
-        run("presets", "import", "--preset", str(built), "--slot", str(args.slot))
-        run("presets", "select", "--slot", str(args.slot))
+    print(run("presets", "compile", "--rig", str(spec), "--out", str(built)))
+    run("presets", "play", "--preset", str(built))
 
     # What actually landed, which is the thing to sweep. A substitution the
     # compiler made shows up here rather than being assumed away.
-    print(run("presets", "show", "--slot", str(args.slot)))
-    print(f"slot {args.slot} holds {args.gear} and nothing else. Sweep it with:")
-    print(f"  just sweep 1 0 --slot {args.slot} --isolated")
+    print(run("presets", "current"))
+    print(f"the device is playing {args.gear} and nothing else, and holds what")
+    print("it held. Sweep it with:")
+    print(f"  just sweep 1 0 --isolated --preset {built}")
 
 
 if __name__ == "__main__":

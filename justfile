@@ -218,6 +218,18 @@ sweep BLOCK PARAM *ARGS:
     uvx --with sounddevice --with numpy --with soundfile \
         python3 resources/sweep.py {{ BLOCK }} {{ PARAM }} {{ ARGS }}
 
+# Measure every block the device has, once, at its own defaults
+#
+# A fingerprint rather than a sweep: one reading per block, which is what
+# ranking 224 amplifiers against a target needs. Sweeping all of them would be
+# a hundred and sixty hours and would be rebuilt at solve time anyway.
+#
+#     just fingerprint --category amp
+#     just fingerprint --resume
+fingerprint *ARGS:
+    uvx --with sounddevice --with numpy --with soundfile \
+        python3 resources/fingerprint.py {{ ARGS }}
+
 # Fold a block's sweeps into the one matrix the algorithm reads
 #
 # A sweep measures one control; what solves for a setting is the whole block,

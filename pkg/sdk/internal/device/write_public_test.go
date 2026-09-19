@@ -509,6 +509,43 @@ func (s *WritePublicTestSuite) TestEmptySlot() {
 		"the setlist and the slot, and nothing else")
 }
 
+// TestWriteCurrent replaces what a device is playing, storing nothing.
+//
+// The document and no slot, which is the difference that matters: every
+// argument a slot write carries names where to put it, and this one has
+// nowhere to put it. That is not a saving, it is the point. A slot is flash,
+// a burst of flash writes has taken a setlist past what a power cycle could
+// clear, and measuring a device's blocks means loading hundreds of chains
+// nobody wants to keep.
+func (s *WritePublicTestSuite) TestWriteCurrent() {
+	d := s.completes()
+
+	s.Require().NoError(
+		s.session(d).WriteCurrent(context.Background(), []byte("a preset")))
+
+	s.Require().Equal(
+		wire.EncodeRequest(wire.Request{
+			Txn:    device.FirstTxn,
+			Opcode: 21,
+			Args:   []wire.Arg{wire.Blob(110, []byte("a preset"))},
+		}),
+		s.stream(d),
+		"the document, and nothing saying where to put it")
+}
+
+// TestAWriteCurrentADeviceRefuses covers the device declining the swap.
+//
+// Read the same way a slot write's refusal is, so a caller hears no rather
+// than going on to measure whatever the device was already playing and
+// filing it under the chain it thought it had loaded.
+func (s *WritePublicTestSuite) TestAWriteCurrentADeviceRefuses() {
+	d := answers(s.ctrl, s.answer(device.FirstTxn, 255))
+
+	err := s.session(d).WriteCurrent(context.Background(), []byte("a preset"))
+
+	s.Require().ErrorIs(err, wire.ErrRefused)
+}
+
 // TestAnEmptyADeviceRefuses covers the answer a device gives to an opcode or
 // a slot it will not have.
 //

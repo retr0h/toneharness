@@ -281,6 +281,23 @@ func (s *Session) Current(
 	})
 }
 
+// Play puts a preset in front of the device without storing it anywhere.
+//
+// Nothing is written. The document goes into the edit buffer and every slot
+// keeps what it holds, which is what makes it the operation for auditioning:
+// hundreds of chains can go in front of a device without a single write to
+// flash, and flash is the part that wears out and corrupts.
+func (s *Session) Play(
+	ctx context.Context,
+	file string,
+) error {
+	_, err := operation(ctx, s, func(f *deviceslots.Flows) (struct{}, error) {
+		return struct{}{}, f.Play(ctx, s.editor, file)
+	})
+
+	return err
+}
+
 // Close ends the Session and lets the device go.
 //
 // An operation in flight finishes first: Close waits for the operation lock

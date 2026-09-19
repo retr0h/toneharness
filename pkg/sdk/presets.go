@@ -93,6 +93,21 @@ func (c *Client) Current(
 	})
 }
 
+// Play puts a preset file in front of the attached device without storing it.
+//
+// Nothing is written to a slot, so this is what auditioning is: the cost of
+// trying a chain is the time it takes to hear it rather than a flash write.
+func (c *Client) Play(
+	ctx context.Context,
+	file string,
+) error {
+	_, err := once(ctx, c, func(s *Session) (struct{}, error) {
+		return struct{}{}, s.Play(ctx, file)
+	})
+
+	return err
+}
+
 // Export writes one slot on the attached device out to a file, as a rig or as
 // the device's own file.
 //

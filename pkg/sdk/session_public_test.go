@@ -593,6 +593,25 @@ func (s *SessionPublicTestSuite) TestTurn() {
 	})
 }
 
+// TestPlay covers putting a preset in front of the device without storing it.
+//
+// The distinction from Import is a hardware one. A slot is flash, a burst of
+// flash writes has taken a setlist past what a power cycle could clear, and
+// auditioning means loading a different chain hundreds of times.
+func (s *SessionPublicTestSuite) TestPlay() {
+	s.Run("a preset it cannot read", func() {
+		dev := s.device()
+
+		s.Require().Error(
+			s.open(dev).Play(context.Background(), "nope.hlx"))
+	})
+
+	s.Run("after Close", func() {
+		s.Require().ErrorIs(
+			s.closed().Play(context.Background(), "nope.hlx"), sdk.ErrClosed)
+	})
+}
+
 // TestCurrent covers reading the preset the device is playing.
 func (s *SessionPublicTestSuite) TestCurrent() {
 	s.Run("nothing loaded", func() {

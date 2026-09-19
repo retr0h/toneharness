@@ -57,6 +57,9 @@ SECONDS = 6.0
 # signal would clip the tail off the thing being measured.
 LEAD, TAIL = 0.3, 1.0
 
+# A prebuilt binary, so a sweep does not relink the CLI once per position.
+BINARY = Path("/tmp/tonestack")
+
 
 def dry() -> np.ndarray:
     """The reference signal, at the device's rate."""
@@ -145,8 +148,10 @@ def chain() -> str:
     reading can be rebuilt into the chain it was taken on rather than
     described in prose beside it.
     """
+    exe = [str(BINARY)] if BINARY.exists() else ["go", "run", "main.go"]
+
     r = subprocess.run(
-        ["go", "run", "main.go", "presets", "current"],
+        [*exe, "presets", "current"],
         cwd=REPO, capture_output=True, text=True, timeout=300, check=False,
     )
 
@@ -157,15 +162,22 @@ def chain() -> str:
     return r.stdout
 
 
-def turn(block: int, param: int, value: float) -> bool:
-    """Move the control, and say whether the device took it."""
+def run(*args: str) -> str | None:
+    """One CLI call. None when it worked, the complaint when it did not."""
+    exe = [str(BINARY)] if BINARY.exists() else ["go", "run", "main.go"]
+
     r = subprocess.run(
-        ["go", "run", "main.go", "presets", "turn",
-         "--block", str(block), "--param", str(param), "--value", str(value)],
-        cwd=REPO, capture_output=True, text=True, timeout=180, check=False,
+        [*exe, *args],
+        cwd=REPO, capture_output=True, text=True, timeout=300, check=False,
     )
 
-    return r.returncode == 0
+    return None if r.returncode == 0 else (r.stderr or r.stdout).strip()
+
+
+def turn(block: int, param: int, value: float) -> bool:
+    """Move the control, and say whether the device took it."""
+    return run("presets", "turn", "--block", str(block),
+               "--param", str(param), "--value", str(value)) is None
 
 
 # The smallest spread a noise floor is allowed to claim.
@@ -222,26 +234,25 @@ def steady(
     return floor, float(np.median([r["level"] for r in rows]))
 
 
-def reload(at: int) -> None:
-    """Put the stored preset back, so a sweep starts from a known chain.
+def reload(preset: str) -> None:
+    """Put the chain back, so a sweep starts from a known state.
 
     `turn` does not write anything back, so the control a sweep finishes with
     is left wherever the sweep left it: at the top of its range. Sweeping a
     second control after that measures it on a chain the first one skewed, and
-    a campaign of eleven sweeps measures the eleventh on a chain nothing
-    describes.
+    a campaign of eleven sweeps measures the eleventh on an amplifier with
+    four controls pinned at maximum.
 
-    Selecting the slot again reloads the stored document into the edit buffer
-    and undoes every move.
+    Playing the preset again replaces the edit buffer and undoes every move.
+    Nothing is written: a slot is flash and this happens once per control, so
+    doing it through a slot would spend a flash write per sweep on a chain
+    nobody wanted to keep.
     """
-    r = subprocess.run(
-        ["go", "run", "main.go", "presets", "select", "--slot", str(at)],
-        cwd=REPO, capture_output=True, text=True, timeout=300, check=False,
-    )
+    r = run("presets", "play", "--preset", preset)
 
-    if r.returncode != 0:
-        sys.exit(f"sweep: cannot reload slot {at}, so the chain this would "
-                 f"measure is whatever the last run left:\n{r.stderr.strip()}")
+    if r is not None:
+        sys.exit(f"sweep: cannot put {preset} back, so the chain this would "
+                 f"measure is whatever the last run left:\n{r}")
 
 
 def main() -> None:
@@ -255,9 +266,9 @@ def main() -> None:
     p.add_argument("--out", default="", help="where to write the result")
     p.add_argument("--isolated", action="store_true",
                    help="the chain holds this block and nothing else")
-    p.add_argument("--slot", type=int, default=-1,
-                   help="reload this slot first, so the sweep starts from the "
-                        "stored preset rather than from what the last one left")
+    p.add_argument("--preset", default="",
+                   help="play this preset first, so the sweep starts from a "
+                        "known chain rather than from what the last one left")
     args = p.parse_args()
 
     signal = dry()
@@ -265,8 +276,8 @@ def main() -> None:
 
     # Before anything is read, so the chain recorded below is the chain
     # measured rather than the one the previous sweep finished on.
-    if args.slot >= 0:
-        reload(args.slot)
+    if args.preset:
+        reload(args.preset)
 
     rig = chain()
 

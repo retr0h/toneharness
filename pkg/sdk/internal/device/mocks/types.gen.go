@@ -345,6 +345,20 @@ func (mr *MockLoadedMockRecorder) ReadCurrent(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadCurrent", reflect.TypeOf((*MockLoaded)(nil).ReadCurrent), ctx)
 }
 
+// WriteCurrent mocks base method.
+func (m *MockLoaded) WriteCurrent(ctx context.Context, document []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteCurrent", ctx, document)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WriteCurrent indicates an expected call of WriteCurrent.
+func (mr *MockLoadedMockRecorder) WriteCurrent(ctx, document any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteCurrent", reflect.TypeOf((*MockLoaded)(nil).WriteCurrent), ctx, document)
+}
+
 // MockEditor is a mock of Editor interface.
 type MockEditor struct {
 	ctrl     *gomock.Controller

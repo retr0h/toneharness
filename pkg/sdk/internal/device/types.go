@@ -161,6 +161,8 @@ type Turner interface {
 type Loaded interface {
 	// ReadCurrent fetches the preset the device has loaded.
 	ReadCurrent(ctx context.Context) ([]byte, error)
+	// WriteCurrent replaces it, storing nothing.
+	WriteCurrent(ctx context.Context, document []byte) error
 }
 
 // Editor is a session with an attached device.
