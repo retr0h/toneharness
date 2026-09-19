@@ -95,8 +95,12 @@ func init() {
 		"what to set it to, in the parameter's own units")
 	f.IntVar(&presetsTurnModel, "model", 0,
 		"the block's own model, or 1 for a cabinet fused into an amplifier")
-	f.BoolVar(&presetsTurnDirect, "direct", true,
-		"address the parameter the ordinary way; false reaches the value some blocks carry past their list")
+	f.BoolVar(
+		&presetsTurnDirect,
+		"direct",
+		true,
+		"address the parameter the ordinary way; false reaches the value some blocks carry past their list",
+	)
 
 	// Fails only for a flag that does not exist, and these are defined above.
 	_ = presetsTurnCmd.MarkFlagRequired("param")
