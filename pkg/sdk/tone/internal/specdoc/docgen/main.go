@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// Command docgen writes the RigSpec grammar page.
+// Command docgen writes the page describing what a request may say.
 //
 // Run by `just generate` through the directive in generate.go, and checked by
 // a test that fails when the page and the contract disagree.
@@ -32,31 +32,30 @@ import (
 	"runtime"
 
 	"github.com/retr0h/tonestack/pkg/sdk/internal/specdoc"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	rigdoc "github.com/retr0h/tonestack/pkg/sdk/rig/internal/specdoc"
+	"github.com/retr0h/tonestack/pkg/sdk/tone"
+	tonedoc "github.com/retr0h/tonestack/pkg/sdk/tone/internal/specdoc"
 )
 
 // out is where the page goes, worked out from this file rather than from
-// wherever somebody ran the command. CONTRIBUTING asks a generator to write by
-// a path relative to itself, so which directory you are in does not matter.
+// wherever somebody ran the command.
 func out() (string, error) {
 	_, self, _, ok := runtime.Caller(0)
 	if !ok {
 		return "", errors.New("cannot tell where this generator lives")
 	}
 
-	// pkg/sdk/rig/internal/specdoc/docgen/main.go, so the repository is six
-	// directories above the one this file is in.
+	// pkg/sdk/tone/internal/specdoc/docgen/main.go, so the repository is
+	// seven directories above the one this file is in.
 	root := self
 	for range 7 {
 		root = filepath.Dir(root)
 	}
 
-	return filepath.Join(root, "docs", "rigspec.md"), nil
+	return filepath.Join(root, "docs", "tonespec.md"), nil
 }
 
 func main() {
-	body, err := specdoc.Render(rig.Schema, rigdoc.Page)
+	body, err := specdoc.Render(tone.Schema, tonedoc.Page)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -72,4 +71,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+
+	fmt.Printf("  wrote %s\n", path)
 }

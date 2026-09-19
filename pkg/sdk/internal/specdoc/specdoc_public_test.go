@@ -21,8 +21,6 @@
 package specdoc_test
 
 import (
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -30,7 +28,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	"github.com/retr0h/tonestack/pkg/sdk/rig/internal/specdoc"
+	"github.com/retr0h/tonestack/pkg/sdk/internal/specdoc"
 )
 
 // SpecdocPublicTestSuite covers the page the contract generates.
@@ -170,7 +168,7 @@ paths: {}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got, err := specdoc.Render([]byte(tt.schema))
+			got, err := specdoc.Render([]byte(tt.schema), testPage)
 
 			if tt.err {
 				s.Require().Error(err)
@@ -197,7 +195,7 @@ paths: {}
 // something with no fields to tabulate — Settings is a map of numbers — has no
 // table to point at, and linked to a heading nobody emits.
 func (s *SpecdocPublicTestSuite) TestEveryLinkPointsAtASection() {
-	body, err := specdoc.Render(rig.Schema)
+	body, err := specdoc.Render(rig.Schema, testPage)
 	s.Require().NoError(err)
 
 	page := string(body)
@@ -215,24 +213,12 @@ func (s *SpecdocPublicTestSuite) TestEveryLinkPointsAtASection() {
 	}
 }
 
-// TestTheShippedPageIsCurrent is what keeps the page honest.
+// testPage is a page of this test's own.
 //
-// A generated reference that nobody regenerates is a hand-written one with
-// extra steps, which is how docs/recipes.md came to describe a format that had
-// moved. This fails the moment the contract and the page disagree, in the
-// ordinary test run rather than in a step somebody has to remember.
-func (s *SpecdocPublicTestSuite) TestTheShippedPageIsCurrent() {
-	want, err := specdoc.Render(rig.Schema)
-	s.Require().NoError(err)
-
-	path := filepath.Join("..", "..", "..", "..", "..", "docs", "rigspec.md")
-
-	got, err := os.ReadFile(path) //nolint:gosec // a path this repository owns
-	s.Require().NoError(err)
-
-	s.Require().Equal(string(want), string(got),
-		"docs/rigspec.md is out of date — run `just generate`")
-}
+// The renderer is checked here without either contract's prose travelling
+// with it; whether a shipped page is current is checked beside the contract
+// it describes.
+var testPage = specdoc.Page{Root: "RigSpec", Preamble: "# A grammar\n"}
 
 // object wraps field definitions in the smallest contract that carries them.
 func object(

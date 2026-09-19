@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// Package specdoc renders the RigSpec contract as a page somebody can read.
+// Package specdoc renders a contract as a page somebody can read.
 //
 // The contract is the only description of what a rig may say, and OpenAPI is
 // not a thing people read. A hand-written reference drifts: docs/recipes.md
@@ -70,13 +70,26 @@ type field struct {
 	required bool
 }
 
-// Render writes the contract out as markdown.
+// Page is what a generated grammar page says about itself.
+//
+// The only prose anybody has to keep true by hand. Everything below it on the
+// page is the contract's own words.
+type Page struct {
+	// Root is the schema the document is, which sorts first because it is
+	// the one somebody opens the page to read.
+	Root string
+	// Preamble is the part of the page that is about the page.
+	Preamble string
+}
+
+// Render writes a contract out as markdown.
 func Render(
 	schema []byte,
+	page Page,
 ) ([]byte, error) {
 	doc, err := openapi3.NewLoader().LoadFromData(schema)
 	if err != nil {
-		return nil, fmt.Errorf("reading the RigSpec schema: %w", err)
+		return nil, fmt.Errorf("reading the %s schema: %w", page.Root, err)
 	}
 
 	if doc.Components == nil || doc.Components.Schemas == nil {
@@ -85,9 +98,9 @@ func Render(
 
 	var out bytes.Buffer
 
-	out.WriteString(preamble)
+	out.WriteString(page.Preamble)
 
-	for _, name := range objects(doc.Components.Schemas) {
+	for _, name := range objects(doc.Components.Schemas, page.Root) {
 		s := doc.Components.Schemas[name].Value
 
 		fields := fieldsOf(s)
@@ -117,10 +130,11 @@ func Render(
 
 // objects lists the schemas that describe an object, in the order they read.
 //
-// RigSpec first, because that is the document; the rest alphabetically, since
+// The root first, because that is the document; the rest alphabetically, since
 // no other order means anything to somebody looking a field up.
 func objects(
 	all openapi3.Schemas,
+	root string,
 ) []string {
 	var names []string
 
@@ -135,7 +149,7 @@ func objects(
 	sort.Strings(names)
 
 	for i, name := range names {
-		if name == "RigSpec" {
+		if name == root {
 			names = append([]string{name}, append(names[:i], names[i+1:]...)...)
 
 			break
