@@ -156,6 +156,30 @@ func (c *Client) Select(
 	})
 }
 
+// Turn moves one control on the preset the attached device is playing.
+//
+// Neither written nor selected: the change lands in the preset in front of
+// somebody and is heard at once. The block is its position in the chain and
+// the parameter its position in that model's list, which is the only thing
+// that identifies either on the wire, and the value is in the parameter's own
+// units.
+//
+// This is the operation a sweep is made of, and writing a preset per step is
+// not a substitute: a slot given a new document goes on sounding like what it
+// held before.
+func (c *Client) Turn(
+	ctx context.Context,
+	block int,
+	param int,
+	value float32,
+) error {
+	_, err := once(ctx, c, func(s *Session) (struct{}, error) {
+		return struct{}{}, s.Turn(ctx, block, param, value)
+	})
+
+	return err
+}
+
 // PresetFile reads a standalone .hlx as the rig it describes.
 //
 // The same rig a slot on a device or in a setlist reads as, which is the

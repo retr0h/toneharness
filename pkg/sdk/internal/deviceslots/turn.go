@@ -1,0 +1,57 @@
+// Copyright (c) 2026 John Dewey
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+package deviceslots
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
+)
+
+// Turn moves one control on the preset a device is playing.
+//
+// The only operation here that changes neither what the device holds nor
+// which preset it is on. Selecting swaps one stored preset for another and
+// writing replaces what a slot holds; this reaches into the preset in front
+// of somebody and moves a knob, exactly as a hand would.
+//
+// It is what a sweep is made of. Writing a preset per step does not work at
+// all, because a slot given a new document goes on sounding like what it held
+// before, and it would wear the device's storage out to no purpose.
+func (*Flows) Turn(
+	ctx context.Context,
+	s device.Editor,
+	block int,
+	param int,
+	value float32,
+) error {
+	t, ok := s.(device.Turner)
+	if !ok {
+		return fmt.Errorf("this session cannot move a control")
+	}
+
+	if err := t.SetParam(ctx, block, param, value); err != nil {
+		return fmt.Errorf(
+			"setting parameter %d on block %d to %g: %w", param, block, value, err)
+	}
+
+	return nil
+}

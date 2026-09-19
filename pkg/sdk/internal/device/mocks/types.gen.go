@@ -268,6 +268,44 @@ func (mr *MockSelectorMockRecorder) SelectPreset(ctx, setlist, slot any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectPreset", reflect.TypeOf((*MockSelector)(nil).SelectPreset), ctx, setlist, slot)
 }
 
+// MockTurner is a mock of Turner interface.
+type MockTurner struct {
+	ctrl     *gomock.Controller
+	recorder *MockTurnerMockRecorder
+	isgomock struct{}
+}
+
+// MockTurnerMockRecorder is the mock recorder for MockTurner.
+type MockTurnerMockRecorder struct {
+	mock *MockTurner
+}
+
+// NewMockTurner creates a new mock instance.
+func NewMockTurner(ctrl *gomock.Controller) *MockTurner {
+	mock := &MockTurner{ctrl: ctrl}
+	mock.recorder = &MockTurnerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTurner) EXPECT() *MockTurnerMockRecorder {
+	return m.recorder
+}
+
+// SetParam mocks base method.
+func (m *MockTurner) SetParam(ctx context.Context, block, param int, value float32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetParam", ctx, block, param, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetParam indicates an expected call of SetParam.
+func (mr *MockTurnerMockRecorder) SetParam(ctx, block, param, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetParam", reflect.TypeOf((*MockTurner)(nil).SetParam), ctx, block, param, value)
+}
+
 // MockEditor is a mock of Editor interface.
 type MockEditor struct {
 	ctrl     *gomock.Controller

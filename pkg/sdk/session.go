@@ -240,6 +240,31 @@ func (s *Session) Select(
 	})
 }
 
+// Turn moves one control on the preset the device is playing.
+//
+// Nothing is written and nothing is selected: the change lands in the preset
+// in front of somebody and is heard at once, which is what a knob does.
+//
+// The block is its position in the chain and the parameter its position in
+// that model's list, because position is the only thing that identifies
+// either on the wire. The value is in the parameter's own units.
+//
+// This is the operation a sweep is made of. Writing a preset for each step
+// does not work: a slot given a new document goes on sounding like what it
+// held before.
+func (s *Session) Turn(
+	ctx context.Context,
+	block int,
+	param int,
+	value float32,
+) error {
+	_, err := operation(ctx, s, func(f *deviceslots.Flows) (struct{}, error) {
+		return struct{}{}, f.Turn(ctx, s.editor, block, param, value)
+	})
+
+	return err
+}
+
 // Close ends the Session and lets the device go.
 //
 // An operation in flight finishes first: Close waits for the operation lock

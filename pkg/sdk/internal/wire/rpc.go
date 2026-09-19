@@ -77,6 +77,10 @@ type Arg struct {
 	// Flag is a boolean argument. A device sends three of them alongside
 	// every write and echoes them back unchanged.
 	Flag bool
+	// Real is a parameter's value, in the units that parameter is stated in
+	// rather than anything normalised. Most run zero to one because that is
+	// their own range; a cabinet's mic distance runs one to twelve inches.
+	Real float32
 	// Kind says which of the above this argument is. The zero value is a
 	// number, which is what almost every argument is.
 	Kind ArgKind
@@ -95,6 +99,8 @@ const (
 	ArgBlob
 	// ArgFlag is a boolean.
 	ArgFlag
+	// ArgReal is a 32-bit float, which is how a parameter's value travels.
+	ArgReal
 )
 
 // Number returns an argument carrying a count or an index.
@@ -119,6 +125,26 @@ func Blob(
 	v []byte,
 ) Arg {
 	return Arg{Key: key, Blob: v, Kind: ArgBlob}
+}
+
+// Flag returns an argument carrying a boolean.
+//
+// Live parameter edits send one to say the parameter is addressed the
+// ordinary way, and a device echoes three back unchanged alongside every
+// preset write.
+func Flag(
+	key int,
+	v bool,
+) Arg {
+	return Arg{Key: key, Flag: v, Kind: ArgFlag}
+}
+
+// Real returns an argument carrying a parameter's value.
+func Real(
+	key int,
+	v float32,
+) Arg {
+	return Arg{Key: key, Real: v, Kind: ArgReal}
 }
 
 // Request is a call to make.
@@ -206,6 +232,13 @@ func encodeArg(
 		_ = enc.EncodeString(string(a.Blob))
 	case ArgFlag:
 		_ = enc.EncodeBool(a.Flag)
+	case ArgReal:
+		// Always the four-byte form. A device takes a parameter's value under
+		// MessagePack's float32 tag and refuses anything else for the same
+		// number: a switch given 1.0 where it wants true is declined, and so
+		// is a float parameter given an integer 1. The tag is the type, and
+		// the type is not coerced.
+		_ = enc.EncodeFloat32(a.Real)
 	case ArgNumber:
 		fallthrough
 	default:

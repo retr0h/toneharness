@@ -263,6 +263,7 @@ tonestack presets <command> [flags]
 | [select](#tonestack-presets-select) | Load a preset on the device |
 | [show](#tonestack-presets-show) | Show the signal chain in one preset |
 | [swap](#tonestack-presets-swap) | Exchange two slots |
+| [turn](#tonestack-presets-turn) | Move one control on what the device is playing |
 
 ## tonestack presets compile
 
@@ -482,6 +483,37 @@ tonestack presets swap [flags]
 | `--out` | string |  | where to write the edited setlist |
 | `--to` | slot | `01A` | slot to write — a label such as 31A, or a number from zero |
 | `--to-setlist` | int |  | which setlist the destination is in |
+
+## tonestack presets turn
+
+Move one control on the preset the device is playing.
+
+What a hand does to a knob. The change lands in the preset in front of you and
+is heard at once: nothing is written to a slot and no preset is selected.
+
+This is the only way to change one control. Writing a preset into a slot does
+not do it — a slot given a new document reads back as the new one and goes on
+sounding like what it held before — and it would wear the device's storage out
+to sweep a control that way.
+
+A block is named by its position in the chain, counting from zero, and a
+parameter by its position in that model's own list. Position is the only thing
+that identifies either on the wire, so neither takes a name. `presets show` lists a chain in order, and `catalog show` lists a model's parameters in
+theirs.
+
+The value is in the parameter's own units, not anything normalised. Most run
+zero to one because that is genuinely their range; a cabinet's microphone
+distance runs one to twelve inches.
+
+```text
+tonestack presets turn [flags]
+```
+
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--block` | int |  | which block, by its position in the chain, counting from zero |
+| `--param` | int |  | which parameter, by its position in the model's own list |
+| `--value` | float64 |  | what to set it to, in the parameter's own units |
 
 ## tonestack recipes
 

@@ -137,6 +137,23 @@ type Selector interface {
 	SelectPreset(ctx context.Context, setlist, slot int) error
 }
 
+// Turner is a session that can move one control on what a device is playing.
+//
+// Separate from Selector and from Writer, because it is neither. Selecting
+// swaps one stored preset for another and writing replaces what a slot holds;
+// this changes the preset in front of somebody without touching either. It is
+// what a knob does, and what HX Edit sends when one is dragged.
+//
+// The reason it exists at all: a preset written to a slot does not become
+// what the device plays, so a caller sweeping a control through its range has
+// no other way to be heard.
+type Turner interface {
+	// SetParam moves one parameter on the running preset, addressing the
+	// block by its position in the chain and the parameter by its position
+	// in that model's list.
+	SetParam(ctx context.Context, block, param int, value float32) error
+}
+
 // Editor is a session with an attached device.
 //
 // What everything above this package needs from one: what it is, what it
