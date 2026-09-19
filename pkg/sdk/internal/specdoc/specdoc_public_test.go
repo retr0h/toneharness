@@ -218,7 +218,15 @@ func (s *SpecdocPublicTestSuite) TestEveryLinkPointsAtASection() {
 // The renderer is checked here without either contract's prose travelling
 // with it; whether a shipped page is current is checked beside the contract
 // it describes.
-var testPage = specdoc.Page{Root: "RigSpec", Preamble: "# A grammar\n"}
+var testPage = specdoc.Page{
+	Root:     "RigSpec",
+	Title:    "A grammar",
+	Holds:    "a thing may carry.",
+	Contract: "../contract.yaml",
+	Sits:     "What this is.",
+	Other:    specdoc.Link{Name: "the other", At: "other.md"},
+	Checked:  "What is checked, and when.",
+}
 
 // object wraps field definitions in the smallest contract that carries them.
 func object(

@@ -3,26 +3,24 @@
 # What a request may say
 
 Every field a ToneSpec and a Setup may carry. Generated from
-[the contract](../pkg/sdk/tone/data/tonespec.openapi.yaml), so it cannot drift
-from what the code actually enforces.
+[the contract](../pkg/sdk/tone/data/tonespec.openapi.yaml),
+so it cannot drift from what the code actually enforces.
 
-These are the two documents a person writes, and neither carries a knob
-position. A ToneSpec is the ask and changes every request; a Setup is what
-somebody owns and changes when they buy something. What they resolve to is
-[a RigSpec](rigspec.md), which nobody writes by hand.
+These are the two documents a person writes, and neither carries a
+knob position. A ToneSpec is the ask and changes every request; a
+Setup is what somebody owns and changes when they buy something.
+Every field is optional and any combination is legal: "punk, but on
+my Jazz" is a genre and a Setup, "like Dirnt but chunkier" is a
+player and a nudge, and a request nobody filled in completely is the
+ordinary case.
 
 ```text
-ToneSpec + Setup   what we mean, and what we have
+ToneSpec + Setup   what somebody means, and what they have
       ↓            tonestack tone build
-RigSpec            exact, resolved, deterministic, shareable
+RigSpec            resolved, deterministic, nobody writes it
       ↓            tonestack presets compile
 .hlx               what the pedal eats
 ```
-
-Every field is optional and any combination is legal. "Punk, but on my Jazz"
-is a genre and a Setup; "like Dirnt but chunkier" is a player and a nudge. A
-request nobody filled in completely is the ordinary case, and what cannot be
-answered is reported rather than guessed at.
 
 A field marked `*` is required. A field that holds another object has
 no grammar of its own and shows `—`; the question moves to that
@@ -35,9 +33,11 @@ object's table. Every other field is in one of four buckets:
 | shaped | checked against a pattern |
 | open | prose. Nothing parses it, and nothing will refuse it for what it says |
 
-Nothing here is checked against a catalog, because a request names gear the
-way a person does and the device it will be built for is a separate question.
-That check happens when the rig is compiled.
+Nothing here is checked against a catalog. A request names gear the
+way a person does, and which device it will be built for is a
+separate question; that check happens when the rig is compiled.
+
+The other half is [what a rig resolves to](rigspec.md).
 
 ## ToneSpec
 

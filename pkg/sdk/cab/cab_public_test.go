@@ -250,6 +250,61 @@ func (s *CabPublicTestSuite) TestSilenceIsNotSomethingToDivideBy() {
 	s.Require().ErrorIs(err, cab.ErrTooShort)
 }
 
+// TestCaptureOnlyWhatADeviceLoads covers a length no device takes.
+func (s *CabPublicTestSuite) TestCaptureOnlyWhatADeviceLoads() {
+	fine := speaker(cab.Long*4, 1500)
+
+	for _, taps := range []int{0, 512, 4096} {
+		_, err := cab.Capture(fine, fine, taps)
+
+		s.Require().ErrorIs(err, cab.ErrNotPowerOfTwo, "%d taps", taps)
+	}
+}
+
+// TestBinsHoldingNothingAreNotDividedBy covers the guard on each bin.
+//
+// A sweep has energy everywhere by design; a recording of music does not, and
+// its quiet bins would come back as enormous numbers that are entirely noise.
+//
+// A constant signal is the clean case: every sample the same puts all of its
+// energy in the first bin and leaves every other one genuinely empty, where a
+// zero-padded tone only leaks quietly into them.
+func (s *CabPublicTestSuite) TestBinsHoldingNothingAreNotDividedBy() {
+	flat := make([]float64, cab.Long*2)
+	for i := range flat {
+		flat[i] = 1
+	}
+
+	got, err := cab.Capture(flat, through(flat, speaker(cab.Long, 1500)), cab.Long)
+
+	s.Require().NoError(err)
+
+	for i, v := range got {
+		s.Require().Falsef(math.IsNaN(v) || math.IsInf(v, 0),
+			"tap %d came back as %v", i, v)
+	}
+}
+
+// TestAQuietTargetBinLeavesTheResponseAlone covers the same guard in Match.
+//
+// A bin where what is in hand holds nothing has no ratio to take, and the
+// correction leaves it as it was rather than inventing gain for it.
+func (s *CabPublicTestSuite) TestAQuietTargetBinLeavesTheResponseAlone() {
+	flat := make([]float64, cab.Long)
+	for i := range flat {
+		flat[i] = 1
+	}
+
+	got, err := cab.Match(speaker(cab.Long, 1500), flat, cab.Long)
+
+	s.Require().NoError(err)
+
+	for i, v := range got {
+		s.Require().Falsef(math.IsNaN(v) || math.IsInf(v, 0),
+			"tap %d came back as %v", i, v)
+	}
+}
+
 func TestCabPublicTestSuite(
 	t *testing.T,
 ) {

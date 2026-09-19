@@ -58,7 +58,11 @@ func (s *PagePublicTestSuite) TestTheShippedPageIsCurrent() {
 // TestThePageNamesItsOwnRoot holds the page to the contract it describes.
 func (s *PagePublicTestSuite) TestThePageNamesItsOwnRoot() {
 	s.Require().Equal("RigSpec", page.Page.Root)
-	s.Require().Contains(page.Page.Preamble, "Do not edit")
+	s.Require().NotEmpty(page.Page.Title)
+	s.Require().NotEmpty(page.Page.Sits)
+	s.Require().NotEmpty(page.Page.Checked)
+	s.Require().NotEmpty(page.Page.Other.At,
+		"each page points at the other half of the pipeline")
 }
 
 func TestPagePublicTestSuite(
