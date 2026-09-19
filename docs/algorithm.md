@@ -39,6 +39,23 @@ A sweep also carries the rig's own repeatability, so a reading that moved less
 than the loop's wander is reported as having moved nothing. Without that, the
 last digit of a float looks like a finding.
 
+**"Everything else held" is the whole difficulty.** Three things break it and
+none announce themselves, because each produces numbers that look ordinary.
+[measuring.md](measuring.md#what-a-sweep-has-to-control-for) has them in full;
+the short version is:
+
+- **The rest of the chain.** A slope is not a property of a control. The same
+  Treble into a 4x12 and into a 1x15 are two different numbers, so a matrix
+  belongs to the chain it was measured in. Measured alone, this amplifier's
+  Treble moves the centroid by 10,872 Hz; measured through its cabinet in a
+  chain the previous sweeps had left maxed, 717 Hz.
+- **The previous sweep.** A live edit writes nothing back, so a control stays
+  where the last sweep left it. The chain has to be reloaded between them.
+- **Silence.** The repeatability check cannot catch a figure computed on
+  nothing, because two takes of silence agree exactly. A control that mutes
+  the chain at one end reads as an enormous move, and the move is the
+  difference between hiss and sound.
+
 ## The model
 
 Stack those curves and you have a matrix: how much each figure moves when each
@@ -201,6 +218,12 @@ a preset write. That was open for an evening and was
 against presets a broken encoder had emptied, and an empty preset still answers
 on the four structural slots, which reads exactly like chain blocks being
 unreachable.
+
+**Curves for anything but one amplifier.** The method is settled and the
+measuring is the slow part: about eight seconds a reading, so a control at
+nine positions with a repeatability check is a couple of minutes and a
+twelve-control amplifier is most of an hour. Every block wanted in the library
+costs that once.
 
 **The corpus side.** Genres are not tagged on records yet, so "punk" has nothing
 to be computed from. That needs no hardware.
