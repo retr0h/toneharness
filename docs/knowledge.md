@@ -91,6 +91,24 @@ Knowing a player uses an SVT is worthless on its own. The mapping is what makes
 artist knowledge usable, and it comes from joining two files that both ship
 inside HX Edit. See [catalog.md](catalog.md).
 
+### When nothing names the gear
+
+The mapping answers "which model is an SVT". It cannot answer "which model
+sounds like this record", and most requests are the second kind: a genre, a
+handful of words, a recording somebody handed over. Naming no gear is the
+ordinary case rather than the awkward one.
+
+That question is now measured rather than reasoned about. Every block on the
+device has been played the same bass recording and measured, so a target in
+the same five figures ranks all 224 amplifiers by how far each sits from it.
+[resources/sweeps/](../resources/sweeps/) holds the readings and
+`pkg/sdk/measured` does the ranking.
+
+It produces a shortlist and not a choice. The nearest block is not always the
+right one: a chain has a shape, a person has preferences, and the tuning that
+follows closes gaps a ranking cannot see. What it removes is picking an
+amplifier because somebody wrote its name down once.
+
 ## 3. What order blocks go in
 
 A chain's order is its signal path. Drive ahead of an amp overdrives its input,
