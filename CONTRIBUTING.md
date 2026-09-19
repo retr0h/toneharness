@@ -120,6 +120,11 @@ pkg/sdk/             the library. One directory, and the one that leaves.
 pkg/sdk/client.go    the Client every wrapper rallies around
 pkg/sdk/alias.go     the answer types, named here and declared in result
 pkg/sdk/result/      what every operation answers with
+pkg/sdk/tone/        ToneSpec and Setup: the request, and what somebody owns
+pkg/sdk/tone/internal/
+  gen/               Go types generated from the contract
+  specdoc/           writes docs/tonespec.md from the contract
+pkg/sdk/translate/   a request and a setup become a rig
 pkg/sdk/rig/         RigSpec, its contract in data/, and its validation
 pkg/sdk/rig/internal/
   gen/               Go types generated from the contract
@@ -128,9 +133,16 @@ pkg/sdk/rigs/        curated rigs: which gear a player uses
 pkg/sdk/chain/       a resolved chain: what compile produces and editor reads
 pkg/sdk/catalog/     what a device can do: blocks, parameters, DSP costs
 pkg/sdk/corpus/      what real presets say about a device, measured
+pkg/sdk/audio/       what a recording sounds like, as numbers. One
+                     implementation, and everything measured goes through it.
+pkg/sdk/measured/    what the device actually did, block by block
+pkg/sdk/reamp/       push a signal through hardware and keep what comes back
+pkg/sdk/cab/         build a cabinet the device does not have: capture one, or
+                     match a target
 pkg/sdk/preset/      read and write a .hlx preset file
 pkg/sdk/slot/        addressing, 01A to 42C
 pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
+  specdoc/           the shape both grammar pages share, so they read as a pair
   fileslots/         reading and editing the slots in a .hls, .hlb or .hlx
   deviceslots/       reading and editing the slots on an attached device
   backup/            what a device slot held, kept before a write replaces it
@@ -190,10 +202,16 @@ packages are the nouns it takes and hands back.
 | to do this                                | import                                    |
 | ----------------------------------------- | ----------------------------------------- |
 | anything that does work                   | `sdk`                                     |
+| write, read or validate a request         | `tone`                                    |
+| turn a request and a setup into a rig     | `translate`                               |
 | write, read or validate a rig             | `rig`                                     |
 | use the rigs that ship                    | `rigs`                                    |
 | ask what a device can do                  | `catalog`                                 |
 | read what the corpus measured             | `corpus`                                  |
+| measure what a recording sounds like      | `audio`                                   |
+| read what a device measured               | `measured`                                |
+| push a signal through hardware            | `reamp`                                   |
+| build an impulse response                 | `cab`                                     |
 | read a resolved chain                     | `chain`                                   |
 | read or write a `.hlx`                    | `preset`                                  |
 | name a slot                               | `slot`                                    |
@@ -468,18 +486,18 @@ satisfying both.
 
 ### The language is Go
 
-Go, unless Go cannot do it. Not a preference: a second language is a second
-home for decisions, and a decision with two homes drifts.
+Go, unless Go cannot do it. Not a preference: a second language is a second home
+for decisions, and a decision with two homes drifts.
 
-That is not hypothetical here. The measuring loop was written in Python
-because it needed an audio interface, and it computed its own band shares and
-centre of gravity in a few lines of numpy. Held against `pkg/sdk/audio` on the
-same file, it read the reference bass as 98.6% low at 95Hz where the real
-measurement says 93% and 138Hz. Three things differed, none of them visible in
-a number, and the result was that every block measured was incomparable with
-every record measured while both looked entirely reasonable. It also wrote its
-recordings through a library that defaults to 16-bit, so every reading was
-quantised before it was measured.
+That is not hypothetical here. The measuring loop was written in Python because
+it needed an audio interface, and it computed its own band shares and centre of
+gravity in a few lines of numpy. Held against `pkg/sdk/audio` on the same file,
+it read the reference bass as 98.6% low at 95Hz where the real measurement says
+93% and 138Hz. Three things differed, none of them visible in a number, and the
+result was that every block measured was incomparable with every record measured
+while both looked entirely reasonable. It also wrote its recordings through a
+library that defaults to 16-bit, so every reading was quantised before it was
+measured.
 
 Both were found by holding the two implementations against each other. Neither
 would have been found by reading either one.
@@ -497,8 +515,8 @@ that question rather than how much quicker the script would be:
   checking the TLS handshake and the other the user agent.
 
 Audio playback and capture is not on that list, and used to be. `pkg/sdk/reamp`
-opens a duplex stream through miniaudio, so pushing a signal through a pedal
-and measuring what comes back is one language from end to end.
+opens a duplex stream through miniaudio, so pushing a signal through a pedal and
+measuring what comes back is one language from end to end.
 
 ### Generated code
 
