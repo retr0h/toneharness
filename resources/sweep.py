@@ -177,7 +177,7 @@ def run(*args: str) -> str | None:
     return None if r.returncode == 0 else (r.stderr or r.stdout).strip()
 
 
-def span(rig: str, at: int, index: int) -> tuple[str, float, float] | None:
+def span(rig: str, at: int, index: int) -> tuple[str, str, float, float] | None:
     """The control's name and the range it actually runs over.
 
     Sweeping every control from zero to one is right for an amplifier, whose
@@ -186,6 +186,13 @@ def span(rig: str, at: int, index: int) -> tuple[str, float, float] | None:
     +12 dB. Swept 0..1 the first never leaves its bottom stop and the second
     covers a twenty-fourth of its travel, and both report as controls that
     barely do anything.
+
+    The kind comes back with it, because a device does not coerce. A
+    cabinet's Mic is one of twelve microphones rather than a position on a
+    dial, and it refuses a float with the same error a block that is not
+    there gives. It is also that cabinet's first control and changes its
+    sound more than any of its knobs, so a sweep that could only send floats
+    measured the dials and reported the one that matters as unreachable.
 
     None when the catalog cannot name the control. That is not rare: the
     equalisers have parameters and no entry in the symbol list at all, so
@@ -220,16 +227,23 @@ def span(rig: str, at: int, index: int) -> tuple[str, float, float] | None:
     name = order[index]
     spec = catalog["blocks"].get(model, {}).get("params", {}).get(name)
 
-    if not spec or spec.get("type") != "float":
+    if not spec or spec.get("type") not in ("float", "int"):
         return None
 
-    return name, float(spec["min"]), float(spec["max"])
+    return name, spec["type"], float(spec["min"]), float(spec["max"])
 
 
-def turn(block: int, param: int, value: float) -> bool:
-    """Move the control, and say whether the device took it."""
+def turn(block: int, param: int, value: float, kind: str) -> bool:
+    """Move the control, and say whether the device took it.
+
+    The flag is the value's type, because the device's refusal for the wrong
+    one is indistinguishable from its refusal for a block that is not there.
+    """
+    flag = "--choice" if kind == "int" else "--value"
+    said = str(int(round(value))) if kind == "int" else str(value)
+
     return run("presets", "turn", "--block", str(block),
-               "--param", str(param), "--value", str(value)) is None
+               "--param", str(param), flag, said) is None
 
 
 # The smallest spread a noise floor is allowed to claim.
@@ -338,16 +352,25 @@ def main() -> None:
     # The catalog's range unless somebody gave one, because most controls do
     # not run zero to one and a sweep over the wrong span measures a stop.
     known = span(rig, args.block, args.param)
-    low = args.low if args.low is not None else (known[1] if known else 0.0)
-    high = args.high if args.high is not None else (known[2] if known else 1.0)
+    kind = known[1] if known else "float"
+    low = args.low if args.low is not None else (known[2] if known else 0.0)
+    high = args.high if args.high is not None else (known[3] if known else 1.0)
     called = known[0] if known else f"index {args.param}"
+
+    # Every setting, for a control that is a list. Twelve microphones are
+    # twelve sounds and nothing sits between two of them, so asking for nine
+    # evenly spaced positions would measure some of them twice and miss
+    # others entirely.
+    points = args.points
+    if kind == "int":
+        points = int(high - low) + 1
 
     if known is None and (args.low is None or args.high is None):
         print("  the catalog cannot name this control, so the range is a "
               "guess of 0..1; `just identify` settles which index it is")
 
-    print(f"block {args.block} parameter {args.param} ({called}), "
-          f"{args.points} positions from {low} to {high}")
+    print(f"block {args.block} parameter {args.param} ({called}, {kind}), "
+          f"{points} positions from {low} to {high}")
 
     noise, settled = steady(signal, dev, args.takes)
     print("  noise floor: " + "  ".join(f"{k} {v:.3f}" for k, v in noise.items()))
@@ -355,8 +378,8 @@ def main() -> None:
           f"so silence is anything under {settled - SILENT:.2f}")
 
     points = []
-    for v in np.linspace(low, high, args.points):
-        if not turn(args.block, args.param, float(v)):
+    for v in np.linspace(low, high, points):
+        if not turn(args.block, args.param, float(v), kind):
             print(f"  {v:.4f}  refused")
             continue
 
@@ -390,6 +413,7 @@ def main() -> None:
         # index is a different control on a different model, and the same
         # control means nothing swept over the wrong range.
         "control": called,
+        "kind": kind,
         "range": {"low": low, "high": high,
                   "from_catalog": known is not None},
         # What it was measured through. `isolated` is the difference between a

@@ -130,24 +130,25 @@ def main() -> None:
     if not ok:
         sys.exit(f"campaign: {args.model} will not load:\n{said}")
 
-    # Only the float controls, and only the ones the catalog can place. A
-    # switch refuses a float outright and an unplaced index would be swept
-    # over a guessed range and filed under a guessed name.
+    # Dials and lists, and only the ones the catalog can place. A switch is
+    # left out because two positions is not a curve, and an unplaced index
+    # would be swept over a guessed range and filed under a guessed name.
     want = [
-        (i, name) for i, name in enumerate(order)
-        if block["params"].get(name, {}).get("type") == "float"
+        (i, name, block["params"][name]["type"])
+        for i, name in enumerate(order)
+        if block["params"].get(name, {}).get("type") in ("float", "int")
     ]
 
     if not want:
-        sys.exit(f"campaign: the catalog gives {args.model} no float controls "
-                 "in wire order, so nothing here knows which index is which. "
-                 f"Run `just identify {ALONE} {len(block['params'])}` against "
-                 "the device and sweep by hand.")
+        sys.exit(f"campaign: the catalog gives {args.model} no controls it "
+                 "can place in wire order, so nothing here knows which index "
+                 f"is which. Run `just identify {ALONE} "
+                 f"{len(block['params'])}` against the device first.")
 
-    print(f"  {block['name']} ({args.model}), {len(want)} float controls\n")
+    print(f"  {block['name']} ({args.model}), {len(want)} controls\n")
 
-    for i, name in want:
-        print(f"  == {name} (index {i})")
+    for i, name, kind in want:
+        print(f"  == {name} (index {i}, {kind})")
 
         done, _ = sweep(i, args, preset, work)
         if not done:
