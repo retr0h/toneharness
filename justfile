@@ -197,7 +197,10 @@ isolate GEAR ROLE *ARGS:
 # catalog listing does not, because a listing is in whatever order suits a
 # reader.
 #
-#     just identify 1 12
+# It matters most where the catalog says nothing: the equalisers carry
+# parameters and have no symbol entry at all, so every index is unplaced.
+#
+#     just identify 1 12 --preset /tmp/isolated.hlx
 identify BLOCK COUNT *ARGS:
     uvx --with sounddevice --with numpy --with soundfile \
         python3 resources/identify.py {{ BLOCK }} {{ COUNT }} {{ ARGS }}

@@ -18,8 +18,12 @@ playing, and see which named parameter changed.
 Two values are tried per index, because a control already sitting at the
 first one would show no change and be reported as missing.
 
+It matters most where the catalog says nothing at all. The equalisers carry
+parameters and have no entry in the symbol list, so no order exists to read
+and every index is unplaced until this settles it.
+
 Usage:
-    just identify 1 12                  # block at slot 1, indices 0..11
+    just identify 1 12 --preset /tmp/isolated.hlx
 """
 
 import argparse
@@ -30,6 +34,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 
+# A prebuilt binary, so a run does not relink the CLI once per probe.
+BINARY = Path("/tmp/tonestack")
+
 # What to move each index to.
 #
 # Two, so an index already resting on the first is still caught. Both are
@@ -39,8 +46,10 @@ PROBES = (0.123, 0.877)
 
 def cli(*args: str) -> str:
     """One CLI call, failing loudly."""
+    exe = [str(BINARY)] if BINARY.exists() else ["go", "run", "main.go"]
+
     r = subprocess.run(
-        ["go", "run", "main.go", *args],
+        [*exe, *args],
         cwd=REPO, capture_output=True, text=True, timeout=600, check=False,
     )
 
@@ -74,18 +83,25 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Name each parameter index.")
     p.add_argument("block", type=int, help="the block, by its device address")
     p.add_argument("count", type=int, help="how many indices to try")
-    p.add_argument("--slot", type=int, default=40, help="reload this first")
+    p.add_argument("--preset", default="/tmp/isolated.hlx",
+                   help="the chain to put back between probes, as isolate left it")
     args = p.parse_args()
 
     found: dict[int, str] = {}
 
     for index in range(args.count):
-        cli("presets", "select", "--slot", str(args.slot))
+        # Between every probe, so an index is measured against the chain as
+        # it was authored rather than against whatever the last one moved.
+        # Through play, because a slot is flash and this runs once per index.
+        cli("presets", "play", "--preset", args.preset)
         before = params(args.block)
 
         for probe in PROBES:
+            exe = ([str(BINARY)] if BINARY.exists()
+                   else ["go", "run", "main.go"])
+
             r = subprocess.run(
-                ["go", "run", "main.go", "presets", "turn",
+                [*exe, "presets", "turn",
                  "--block", str(args.block), "--param", str(index),
                  "--value", str(probe)],
                 cwd=REPO, capture_output=True, text=True, timeout=180,
@@ -110,7 +126,7 @@ def main() -> None:
         else:
             print(f"  {index:>3}  nothing changed")
 
-    cli("presets", "select", "--slot", str(args.slot))
+    cli("presets", "play", "--preset", args.preset)
 
     print("\n  index  control")
     for index in sorted(found):
