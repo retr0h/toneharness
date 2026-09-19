@@ -619,6 +619,23 @@ line 1, blank line, then the header.
 
 ## Testing
 
+### While you are working
+
+Run the tests for what you are editing, and nothing else:
+
+```bash
+go test ./pkg/sdk/internal/editor/     # the package you touched
+```
+
+`just ready` and the full suite are for when a branch is going somewhere, not
+for between edits. The gate installs tools, regenerates, formats, vets and runs
+everything with the race detector, which is minutes rather than seconds, and on
+a branch nobody is about to merge it buys nothing per change. Lint failures keep
+until then.
+
+Run the gate once, before opening a merge request, which is where it earns its
+time.
+
 ```bash
 just test           # Run all tests (lint + unit + coverage)
 just go-unit       # Run unit tests only
@@ -656,6 +673,18 @@ into a slot you choose, reads that back and checks it carries the same chain,
 then puts the slot back from the copy the write kept. It checks the chain rather
 than the whole rig because import places blocks into a blank slot, so
 footswitches, snapshot state and routing come from the blank.
+
+**It cannot tell you the device can render what was written, and that gap has
+already cost a night.** Reading a preset back ignores the offset table and the
+device's own renderer uses it, so a malformed document round-trips perfectly and
+draws an empty chain on the pedal. This test passed throughout. What caught it
+was measuring the audio.
+
+So a preset that has to work on hardware is held to a preset hardware wrote:
+`pkg/sdk/internal/deviceslots/testdata/hx-stomp.written.bin` is a device's own
+answer for a slot and `hx-stomp.written.hlx` is what exporting it produces, and
+building the second has to reproduce the first's chain, block for block and
+value for value. That runs without a device.
 
 ```bash
 TONESTACK_SCRATCH_SLOT=42C just test-device                    # 01A into 42C
