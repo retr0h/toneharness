@@ -518,18 +518,18 @@ rather than a stored one and demonstrably works.
 
 ### Opcode 21, which replaces what is playing without storing it
 
-The other half of opcode 30. A live edit moves one control on the chain in
-front of somebody; this replaces the chain.
+The other half of opcode 30. A live edit moves one control on the chain in front
+of somebody; this replaces the chain.
 
 ```text
 {102: txn, 100: 21, 101: {110: document}}
 ```
 
-One argument, and the absence of the others is the point: every argument a
-slot write carries says where to put the preset, and this one has nowhere to
-put it. Sent down the same chunked path, because it carries a whole preset
-and a frame will not hold one. Implemented as `device.WriteCurrent` and
-reached from the CLI as `presets play`.
+One argument, and the absence of the others is the point: every argument a slot
+write carries says where to put the preset, and this one has nowhere to put it.
+Sent down the same chunked path, because it carries a whole preset and a frame
+will not hold one. Implemented as `device.WriteCurrent` and reached from the CLI
+as `presets play`.
 
 It was in the table above for a fortnight with nothing calling it, because
 nothing needed it. A preset somebody wants is a preset they want kept, and
@@ -537,15 +537,15 @@ nothing needed it. A preset somebody wants is a preset they want kept, and
 
 **Measuring needs the opposite, and the difference is hardware rather than
 taste.** Saying which of 665 blocks belongs in a chain means loading each one,
-hearing it, and throwing it away. Through a slot that is 665 writes to flash
-for readings nobody wanted, and
-[the rules below](#rules-that-keep-a-device-alive) say what a burst of flash
-writes does: it took a setlist past what a power cycle could clear, and a
-device stops accepting writes after about a dozen racing commits.
+hearing it, and throwing it away. Through a slot that is 665 writes to flash for
+readings nobody wanted, and [the rules below](#rules-that-keep-a-device-alive)
+say what a burst of flash writes does: it took a setlist past what a power cycle
+could clear, and a device stops accepting writes after about a dozen racing
+commits.
 
 Verified on an HX Stomp on 19 September 2026. The device played an Ampeg SVT
-that was never written anywhere, `presets current` read it back, and every
-slot still held what it held. What it replaces lasts until the next preset is
+that was never written anywhere, `presets current` read it back, and every slot
+still held what it held. What it replaces lasts until the next preset is
 selected.
 
 ## Writing a preset

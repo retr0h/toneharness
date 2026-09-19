@@ -52,9 +52,9 @@ the short version is:
 - **The previous sweep.** A live edit writes nothing back, so a control stays
   where the last sweep left it. The chain has to be reloaded between them.
 - **Silence.** The repeatability check cannot catch a figure computed on
-  nothing, because two takes of silence agree exactly. A control that mutes
-  the chain at one end reads as an enormous move, and the move is the
-  difference between hiss and sound.
+  nothing, because two takes of silence agree exactly. A control that mutes the
+  chain at one end reads as an enormous move, and the move is the difference
+  between hiss and sound.
 
 ## The model
 
@@ -220,10 +220,9 @@ on the four structural slots, which reads exactly like chain blocks being
 unreachable.
 
 **Curves for anything but one amplifier.** The method is settled and the
-measuring is the slow part: about eight seconds a reading, so a control at
-nine positions with a repeatability check is a couple of minutes and a
-twelve-control amplifier is most of an hour. Every block wanted in the library
-costs that once.
+measuring is the slow part: about eight seconds a reading, so a control at nine
+positions with a repeatability check is a couple of minutes and a twelve-control
+amplifier is most of an hour. Every block wanted in the library costs that once.
 
 **The corpus side.** Genres are not tagged on records yet, so "punk" has nothing
 to be computed from. That needs no hardware.

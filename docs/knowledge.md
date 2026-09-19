@@ -99,8 +99,8 @@ handful of words, a recording somebody handed over. Naming no gear is the
 ordinary case rather than the awkward one.
 
 That question is now measured rather than reasoned about. Every block on the
-device has been played the same bass recording and measured, so a target in
-the same five figures ranks all 224 amplifiers by how far each sits from it.
+device has been played the same bass recording and measured, so a target in the
+same five figures ranks all 224 amplifiers by how far each sits from it.
 [resources/sweeps/](../resources/sweeps/) holds the readings and
 `pkg/sdk/measured` does the ranking.
 
@@ -201,9 +201,9 @@ be swept and measured rather than read about, so the question has an answer
 wherever somebody spends the hour it takes. Measured alone on the US Dripman
 Norm, per full turn:
 
-| control | centroid | level    | what that is                                  |
-| ------- | -------- | -------- | --------------------------------------------- |
-| `Sag`   | -4,316Hz | -4.2dB   | darkens and quietens, straight, and not small |
+| control | centroid | level    | what that is                                      |
+| ------- | -------- | -------- | ------------------------------------------------- |
+| `Sag`   | -4,316Hz | -4.2dB   | darkens and quietens, straight, and not small     |
 | `Hum`   | -69Hz    | -0.048dB | under the rig's own wander, so it reaches nothing |
 
 Line 6's prose for `Sag` is *"tighter responsiveness for metal and djent"*

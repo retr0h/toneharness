@@ -47,11 +47,11 @@ Four of its rules are easy to skip and worth naming. Write Go, and reach for
 Python only where there is nothing in Go to call: see
 [The language is Go](CONTRIBUTING.md#the-language-is-go), which lists the four
 jobs that qualify and what it cost the last time something was written twice.
-Run `just ready` before committing. Put every markdown change through the unslop skill first, see
-[Prose](CONTRIBUTING.md#prose). And when the change touches a rig, read
-[Sourcing a rig](CONTRIBUTING.md#sourcing-a-rig) before starting: it is the
-difference between research and typing, and it says what a pull request has to
-have finished before it is opened.
+Run `just ready` before committing. Put every markdown change through the unslop
+skill first, see [Prose](CONTRIBUTING.md#prose). And when the change touches a
+rig, read [Sourcing a rig](CONTRIBUTING.md#sourcing-a-rig) before starting: it
+is the difference between research and typing, and it says what a pull request
+has to have finished before it is opened.
 
 ## Finding your way around the domain
 

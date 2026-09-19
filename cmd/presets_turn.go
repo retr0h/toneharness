@@ -120,8 +120,12 @@ func init() {
 		"which parameter, by its position in the model's own list")
 	f.Float64Var(&presetsTurnValue, "value", 0,
 		"what to set it to, in the parameter's own units")
-	f.IntVar(&presetsTurnChoice, "choice", 0,
-		"what to set it to, for a parameter that is a list rather than a range, such as a cabinet's microphone")
+	f.IntVar(
+		&presetsTurnChoice,
+		"choice",
+		0,
+		"what to set it to, for a parameter that is a list rather than a range, such as a cabinet's microphone",
+	)
 	f.BoolVar(&presetsTurnSwitch, "switch", false,
 		"what to set it to, for a parameter that is a switch, such as an amplifier's Bright")
 	f.IntVar(&presetsTurnModel, "model", 0,
