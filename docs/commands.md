@@ -235,6 +235,7 @@ tonestack measure <command> [flags]
 | command | what it does |
 | --- | --- |
 | [blocks](#tonestack-measure-blocks) | Measure every block the device has, once, at its own defaults |
+| [controls](#tonestack-measure-controls) | Measure what every control of one block does |
 
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
@@ -287,6 +288,51 @@ tonestack measure blocks [flags]
 | `--resume` |  |  | skip blocks already in the output |
 | `--retry` |  |  | with --resume, try the ones that refused again |
 | `--seconds` | float64 | `4` | how much of the reference to push through per block |
+
+## tonestack measure controls
+
+Put one block in front of the device on its own and move each of its
+controls through its range, measuring at every position.
+
+The expensive half of measuring a device. A control is about two minutes and a
+twelve-control amplifier most of an hour, so this is aimed at the blocks a
+chain reaches for rather than run across all 665.
+`tonestack measure blocks` is the cheap half and covers everything.
+
+Three things a reading has to control for, and each was got wrong first.
+
+The chain, because a slope is not a property of a control: the same Treble
+into a 4x12 and into a 1x15 are two different numbers. This builds a chain
+holding one block and nothing else, and the whole rig travels in the answer.
+
+The starting point, because a live edit writes nothing back. A control stays
+where the last sweep left it, at the top of its range, so the chain goes back
+in front of the device before every control.
+
+And silence, because the noise floor cannot catch a figure computed on
+nothing: two takes of silence agree to the last digit. A position more than
+30dB under the settled level is recorded as muted and left out of the
+arithmetic.
+
+A control's range comes from the catalog. That is not a nicety: 1,452 of the
+device's 4,835 float controls do not run zero to one, and a Simple EQ's Mid
+Freq swept 0..1 never leaves its bottom stop and reports as inert.
+
+```text
+tonestack measure controls [flags]
+```
+
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--catalog` | string |  | a generated catalog to use instead of the built-in one |
+| `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
+| `--dry` | string | `resources/dry/bass-di.wav` | the reference recording to push through it |
+| `--hardware` | string | `hx stomp` | which attached audio device to push the signal through |
+| `--model` | string |  | the block to measure, by its model identifier |
+| `--out` | string |  | where the curves go; named for the model by default |
+| `--points` | int | `9` | how many positions to measure a dial at; a list gets all of its settings |
+| `--seconds` | float64 | `4` | how much of the reference to push through per position |
+| `--takes` | int | `3` | how many takes the noise floor is measured from |
 
 ## tonestack presets
 
