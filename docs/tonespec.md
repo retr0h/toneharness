@@ -45,12 +45,20 @@ A request for a sound, in whatever terms the person has.
 
 | field | holds | grammar | allowed |
 | --- | --- | --- | --- |
+| `aliases` | list of string | open | — |
+| `confidence` | string | closed | `low`, `medium`, `high` |
+| `default` | boolean | — | `true` or `false` |
+| `evidence` | list of Evidence | — | [Evidence](#evidence) |
 | `gear` | list of Wanted | — | [Wanted](#wanted) |
 | `genre` | string | open | — |
+| `instrument` | string | closed | `bass`, `guitar` |
 | `like` | Like | — | [Like](#like) |
 | `note` | string | open | — |
 | `nudges` | list of Nudge | — | [Nudge](#nudge) |
+| `played` | list of Played | — | [Played](#played) |
 | `schema *` | string | closed | `ToneSpec` |
+| `subject` | Subject | — | [Subject](#subject) |
+| `technique` | Technique | — | [Technique](#technique) |
 | `words` | list of string | open | — |
 
 ## Device
@@ -62,6 +70,20 @@ The hardware, which decides what a chain may cost and what it may hold.
 | `firmware` | string | open | — |
 | `model *` | string | open | — |
 
+## Evidence
+
+Why one claim is believed. Attached per claim rather than per document, because the amp may come from an interview and the drive figure from measuring a corpus.
+
+| field | holds | grammar | allowed |
+| --- | --- | --- | --- |
+| `against` | map of number | — | — |
+| `at` | string | shaped | `^\d{1,2}:\d{2}(:\d{2})?(-\d{1,2}:\d{2}(:\d{2})?)?$` |
+| `caveat` | string | open | — |
+| `kind *` | string | closed | `heard`, `cited`, `audio`, `user`, `video`, `corpus`, `llm`, `store` |
+| `measured` | map of number | — | — |
+| `note` | string | open | — |
+| `url` | string | shaped | `^https?://\S+$` |
+
 ## Instrument
 
 One instrument somebody owns, described in what changes the sound.
@@ -69,6 +91,7 @@ One instrument somebody owns, described in what changes the sound.
 | field | holds | grammar | allowed |
 | --- | --- | --- | --- |
 | `default` | boolean | — | `true` or `false` |
+| `evidence` | list of Evidence | — | [Evidence](#evidence) |
 | `gear *` | string | open | — |
 | `pickups` | string | open | — |
 | `strings` | string | closed | `round`, `flat`, `tape`, `unknown` |
@@ -104,6 +127,17 @@ One thing on the device that did not ship with it.
 | `name *` | string | open | — |
 | `slot` | integer | shaped | `0` or more |
 
+## Played
+
+The instrument itself, which no device models and every figure carries.
+
+| field | holds | grammar | allowed |
+| --- | --- | --- | --- |
+| `evidence` | list of Evidence | — | [Evidence](#evidence) |
+| `gear *` | string | shaped | `\S` |
+| `records` | list of string | open | — |
+| `strings` | string | closed | `round`, `flat`, `tape`, `unknown` |
+
 ## Setup
 
 What somebody has.
@@ -115,12 +149,37 @@ What somebody has.
 | `owns` | list of Owned | — | [Owned](#owned) |
 | `schema *` | string | closed | `Setup` |
 
+## Subject
+
+Who or what this rig belongs to.
+
+| field | holds | grammar | allowed |
+| --- | --- | --- | --- |
+| `band` | string | open | — |
+| `era` | string | open | — |
+| `kind *` | string | closed | `artist`, `band`, `song`, `genre`, `sound` |
+| `name *` | string | shaped | `\S` |
+| `years` | Years | — | [Years](#years) |
+
+## Technique
+
+How the instrument is played, where it changes the sound. Not modelled by any device, and it still decides what the rig has to do.
+
+| field | holds | grammar | allowed |
+| --- | --- | --- | --- |
+| `attack *` | string | closed | `pick`, `fingers`, `slap`, `thumb`, `hybrid` |
+| `evidence` | list of Evidence | — | [Evidence](#evidence) |
+| `muting` | string | closed | `none`, `palm` |
+| `position` | string | closed | `bridge`, `middle`, `neck` |
+
 ## Wanted
 
 A piece of gear the request asks for by name.
 
 | field | holds | grammar | allowed |
 | --- | --- | --- | --- |
+| `capture` | string | closed | `direct`, `miked`, `both` |
+| `evidence` | list of Evidence | — | [Evidence](#evidence) |
 | `gear *` | string | open | — |
 | `insist` | boolean | — | `true` or `false` |
 | `role` | string | closed | `amp`, `cab`, `drive`, `comp`, `eq`, `mod`, `delay`, `reverb`, `filter`, `pitch`, `wah`, `other` |
