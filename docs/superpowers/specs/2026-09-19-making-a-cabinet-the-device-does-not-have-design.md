@@ -30,6 +30,22 @@ equaliser in front of or behind it, which is exactly what
 That distinction should not be blurred, because one half is a file somebody can
 sell and the other is a preset.
 
+### So, can this SDK build one
+
+**A cabinet, yes.** Everything it needs is either here or small: the rig
+measures, the arithmetic that turns a magnitude response into a loadable impulse
+response is a few dozen lines, and the file is a WAV. The result loads on the
+device and is a component rather than a preset.
+
+**An amplifier, no, and not with more effort either.** The obstacle is not
+difficulty, it is that there is no file to produce. What the SDK can do is make
+an amplifier the device has, with the controls around it, measurably approach
+one it does not have — and say by how much it missed, which is the part that
+separates it from a claim.
+
+Worth being exact about the difference, because the first is something to sell
+and the second is something to load.
+
 ## Two different jobs
 
 **Capture** is when the thing exists and you have it. A real cabinet, a real

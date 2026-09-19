@@ -68,6 +68,66 @@ The same shape answers questions nobody has asked yet. Records carry a year, so
 "a nineties sound" is the same query with a different predicate. `played`
 carries the instrument, so "a Precision sound" is too.
 
+## Which genres, and when one counts
+
+**Not a list in the contract.** Enumerating genres in an OpenAPI schema means a
+release to add one, and the thing that decides whether a genre works is not the
+schema. The field takes a free string.
+
+What decides it is whether enough records carry the tag to have a distribution.
+The threshold:
+
+|                                        |                                                      |
+| -------------------------------------- | ---------------------------------------------------- |
+| **8 records, from at least 3 artists** | usable                                               |
+| **15 or more**                         | trustworthy                                          |
+| fewer                                  | reported as not yet a genre, and refused as a target |
+
+Three artists is the part that matters. One artist gives you that band's sound
+wearing a genre's name; two gives you a scene. The whole point of a genre is
+that it is what several people have in common.
+
+Where the corpus stands against that:
+
+```
+31 records, 9 artists, one artist per sound
+punk: 3 records, 1 artist   -> not a genre, it is Mike Dirnt
+```
+
+So today the honest count of supported genres is **zero**, and the tool should
+say so rather than compute a target from three records.
+
+### The three to start with
+
+**punk**, **pop-punk** and **grunge**. Chosen because they are what somebody
+asked for, they are adjacent enough to be worth telling apart, and 1990s
+material is easy to source and easy to date.
+
+Adjacent is the useful part: a genre is defined against everything it is not,
+and three neighbours make a harder and more meaningful test than three genres
+that sound nothing like each other. If punk and pop-punk cannot be separated in
+the nine figures, that is worth knowing early.
+
+## Who says a record is punk
+
+A required field when a record is added, and the answer carries how it was
+decided.
+
+**A model labels it by default.** That is the fast path, and it is exactly what
+the `llm` evidence kind already means here: asserted by a model and checked by
+nobody. A tag carrying that kind is a tag somebody may overrule, and the tool
+lists them for review rather than hiding them among the sourced ones.
+
+**A person labels it when they say so**, or when they disagree with what the
+model said. That is the end of the argument; nothing recomputes it.
+
+The reason to write this down is that it is a workflow rule rather than a schema
+rule. Adding a record means: the track, the year, the url, the source, and now
+the genres. A record arriving without them is incomplete in the same way one
+arriving without a year is, and
+[the era check](../../../CONTRIBUTING.md#changing-a-source-is-never-one-file)
+exists because that kind of gap is invisible until something depends on it.
+
 ## What a person actually asks for
 
 The genre request is one of a family, and building only for it would be a
