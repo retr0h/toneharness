@@ -146,9 +146,10 @@ discover while its owner is out.
 
 ## What works and what does not
 
-**Working.** The device is found, read, written and selected. Writing the Input
-block to USB 5/6 lands and survives a read-back. macOS records from the pedal,
-and `tonestack measure` reads a wav and returns its nine figures.
+**Working.** The loop runs. A dry file goes into the pedal, comes back
+processed, and `tonestack measure` reads the result. Presets can be switched
+unattended over MIDI. What is not working is changing one parameter, and the
+reason is in [The pedal ignores what it is written](#the-pedal-ignores-what-it-is-written).
 
 **Not working.** Nothing sent to the pedal comes back. Playing a tone down each
 of the eight output channels in turn and recording all eight inputs gives the
