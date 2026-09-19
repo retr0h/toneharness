@@ -19,13 +19,45 @@ Usage:
 """
 
 import argparse
+import gzip
 import json
 import sys
 from pathlib import Path
 
 import numpy as np
 
+REPO = Path(__file__).resolve().parent.parent
+
 FIGURES = ("centroid", "level", "low", "mid", "high")
+
+# The catalog, which is the only thing that knows a parameter's name.
+#
+# `symbols` lists each model's parameters in the order the device sends their
+# values, which is the order `turn` addresses them by. The per-model `params`
+# map beside it is keyed by name and has no order at all, and `catalog show`
+# prints it sorted for a reader. Reading the sorted one and counting down it
+# mislabels nearly every curve: this amplifier prints Bass, Bias, BiasX and
+# sends Norm Drive, Bass, Mid.
+CATALOG = REPO / "resources" / "schemas" / "hx-stomp.catalog.json"
+
+
+def wire(model: str) -> list[str]:
+    """The model's parameters, in the order the device addresses them.
+
+    Empty when the catalog has no entry, which leaves the indices as their own
+    labels rather than inventing names for them.
+    """
+    if not CATALOG.exists():
+        return []
+
+    with gzip.open(CATALOG) as f:
+        catalog = json.load(f)
+
+    for entry in catalog.get("symbols", []):
+        if entry["id"] == model:
+            return entry["params"]
+
+    return []
 
 
 def slope(points: list[dict], figure: str) -> float:
@@ -97,11 +129,23 @@ def main() -> None:
     p.add_argument("directory", help="where the sweeps are")
     p.add_argument("out", help="where to write the folded document")
     p.add_argument("--names", default="",
-                   help="index=name pairs, comma separated, from `just identify`")
+                   help="index=name pairs overriding the catalog, comma "
+                        "separated, as `just identify` prints them")
     args = p.parse_args()
 
-    found = sorted(Path(args.directory).glob("*.json"))
-    sweeps = [(f, json.loads(f.read_text())) for f in found]
+    sweeps = []
+    for f in sorted(Path(args.directory).glob("*.json")):
+        doc = json.loads(f.read_text())
+
+        # A folded document is JSON in the same directory and globs the same,
+        # so folding twice into one place picks up the last answer as if it
+        # were a reading. Said rather than crashed on.
+        if not isinstance(doc.get("chain"), dict) or "param" not in doc:
+            print(f"  skipping {f.name}, which is not a sweep")
+
+            continue
+
+        sweeps.append((f, doc))
 
     if not sweeps:
         sys.exit(f"fold: no sweeps in {args.directory}")
@@ -110,7 +154,10 @@ def main() -> None:
     at = sweeps[0][1]["block"]
     gear, model = named(rig, at)
 
-    names = dict(
+    # The catalog's own order, overridden by anything given by hand, so a
+    # model the catalog does not carry can still be labelled.
+    names = dict(enumerate(wire(model)))
+    names.update(
         (int(k), v) for k, v in
         (pair.split("=", 1) for pair in args.names.split(",") if pair)
     )
