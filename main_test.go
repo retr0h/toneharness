@@ -576,6 +576,40 @@ func (s *MainTestSuite) rigSpecFields() []string {
 	return out
 }
 
+// TestEveryDomainPageIsIndexed holds the two tables that point at docs/.
+//
+// docs/README.md is what a person opens, and AGENTS.md's table is what an
+// agent reads to pick the one page matching the task. Both list the pages by
+// hand, so both fall behind silently: a page nobody indexed is a page nobody
+// is sent to, and it goes stale because nobody is reading it either.
+//
+// Four had fallen off docs/README.md — the two generated grammar pages, the
+// algorithm and the measuring loop — while AGENTS.md had them all.
+func (s *MainTestSuite) TestEveryDomainPageIsIndexed() {
+	pages, err := filepath.Glob(filepath.Join("docs", "*.md"))
+	s.Require().NoError(err)
+	s.Require().NotEmpty(pages)
+
+	for _, at := range []struct{ file, names string }{
+		{filepath.Join("docs", "README.md"), ""},
+		{"AGENTS.md", "docs/"},
+	} {
+		body, err := os.ReadFile(at.file)
+		s.Require().NoError(err)
+
+		for _, page := range pages {
+			name := filepath.Base(page)
+			if name == "README.md" {
+				continue
+			}
+
+			s.Require().Contains(string(body), at.names+name,
+				"%s does not point at docs/%s, so nobody is sent to it",
+				at.file, name)
+		}
+	}
+}
+
 // TestTheCLIStandsAlone asserts the CLI half could be its own repository.
 //
 // The mirror of TestTheSDKStandsAlone, for the other end. main.go, cmd/ and

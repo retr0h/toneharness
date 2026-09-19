@@ -36,13 +36,15 @@ var measureFile string
 
 // measureJSON asks for the reading as data rather than as a table.
 //
-// For the measuring loop rather than for a person. resources/fingerprint.py
-// and resources/sweep.py both push a signal through the pedal and have to say
+// For the measuring loop rather than for a person. `measure blocks` and
+// `measure controls` both push a signal through the pedal and have to say
 // what came back in the same figures a record is described in, and the only
-// way to be sure of that is to use the same code. A second implementation in
-// Python agreed to about five points on a band share and thirty percent on a
-// centroid, which is not agreement at all: it made every block's reading
-// incomparable with every record's, in a way nothing downstream could see.
+// way to be sure of that is to use the same code. Both once had a second
+// implementation in Python, which agreed to about five points on a band
+// share and thirty percent on a centroid. That is not agreement at all: it
+// made every block's reading incomparable with every record's, in a way
+// nothing downstream could see. See
+// [The language is Go](../CONTRIBUTING.md#the-language-is-go).
 var measureJSON bool
 
 // measureDir is a tree of recordings to measure together.
