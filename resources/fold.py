@@ -184,16 +184,41 @@ def main() -> None:
     for path, doc in sweeps:
         heard = [pt for pt in doc["points"] if not pt.get("silent")]
         index = doc["param"]
+        kind = doc.get("kind", "float")
 
-        params[names.get(index, f"index {index}")] = {
+        # The catalog's name wins over the sweep's own, so a curve taken
+        # before sweeps recorded one is still filed under a control rather
+        # than under its index. They cannot disagree about which control it
+        # is: both come from the same symbol list.
+        called = names.get(index, doc.get("control", f"index {index}"))
+
+        entry = {
             "index": index,
-            "fits": {f: fit(heard, f) for f in FIGURES},
+            "kind": kind,
+            "control": called,
+            "range": doc.get("range"),
             "noise": doc["noise"],
             "silent_below": doc.get("silent_below"),
             "muted_at": [pt["value"] for pt in doc["points"]
                          if pt.get("silent")],
             "points": heard,
         }
+
+        # A slope only means something along a dial. A cabinet's Mic is
+        # twelve microphones and they are not in an order: the fourth is not
+        # between the third and the fifth in any sense a line could describe,
+        # so "so much centroid per microphone" is a number with no referent.
+        # What a list has instead is each setting, which the points already
+        # are, and how far apart the settings sit.
+        if kind == "int":
+            entry["spread"] = {
+                f: float(max(pt[f] for pt in heard) - min(pt[f] for pt in heard))
+                for f in FIGURES
+            } if heard else {}
+        else:
+            entry["fits"] = {f: fit(heard, f) for f in FIGURES}
+
+        params[called] = entry
 
     out = {
         "device": "HX Stomp",
@@ -212,15 +237,28 @@ def main() -> None:
 
     print(f"  {gear} ({model}), slot {at}, "
           f"{'isolated' if isolated else 'IN A CHAIN'}")
-    print(f"\n  per full turn, and how straight the curve is")
-    print(f"\n  {'control':<14}" + "".join(f"{f:>21}" for f in FIGURES))
-    for name, entry in params.items():
-        row = "".join(
-            f"{entry['fits'][f]['per_turn']:>13.1f}"
-            f"{entry['fits'][f]['straight']:>8.2f}"
-            for f in FIGURES
-        )
-        print(f"  {name:<14}{row}")
+    dials = {n: e for n, e in params.items() if e["kind"] != "int"}
+    lists = {n: e for n, e in params.items() if e["kind"] == "int"}
+
+    if dials:
+        print("\n  dials: per full turn, and how straight the curve is")
+        print(f"\n  {'control':<14}" + "".join(f"{f:>21}" for f in FIGURES))
+        for name, entry in dials.items():
+            row = "".join(
+                f"{entry['fits'][f]['per_turn']:>13.1f}"
+                f"{entry['fits'][f]['straight']:>8.2f}"
+                for f in FIGURES
+            )
+            print(f"  {name:<14}{row}")
+
+    if lists:
+        print("\n  lists: how far apart the settings sit, with no order "
+              "between them")
+        print(f"\n  {'control':<14}{'settings':>9}"
+              + "".join(f"{f:>12}" for f in FIGURES))
+        for name, entry in lists.items():
+            row = "".join(f"{entry['spread'][f]:>12.1f}" for f in FIGURES)
+            print(f"  {name:<14}{len(entry['points']):>9}{row}")
 
     muted = {n: e["muted_at"] for n, e in params.items() if e["muted_at"]}
     if muted:
