@@ -149,44 +149,104 @@ discover while its owner is out.
 **Working.** The loop runs. A dry file goes into the pedal, comes back
 processed, and `tonestack measure` reads the result. Presets can be switched
 unattended over MIDI. What is not working is changing one parameter, and the
-reason is in [The pedal ignores what it is written](#the-pedal-ignores-what-it-is-written).
+reason is in
+[The pedal ignores what it is written](#the-pedal-ignores-what-it-is-written).
 
-**Not working.** Nothing sent to the pedal comes back. Playing a tone down each
-of the eight output channels in turn and recording all eight inputs gives the
-same reading whether a tone is playing or not:
+**Not working.** One parameter cannot be changed. That is the only thing left,
+and the reason is below.
+
+### The output block does not mean what its label says
+
+An HX Stomp's output enum is the Helix family's, and its entry 1 reads "Multi
+(1/4", XLR, Digital, USB 1/2)". An HX Stomp has no XLR, and its Multi does
+**not** include USB. A preset left on Multi sends nothing up the cable, and its
+USB return sits at the converter's noise floor whatever the chain does.
+
+Set `data.tone.dsp0.outputA.@output` to **10**, USB 1/2, explicitly. The
+difference is visible immediately: the return's floor moved from -123.4dBFS to
+-118.6dBFS, which is the amplifier idling rather than nothing at all.
+
+This cost most of an evening. Every test before it looked like an input problem,
+because the output was silent for a reason that had nothing to do with the
+input.
+
+### USB 5/6 still does not arrive
+
+With the output fixed, USB 5/6 was swept across every input value the enum
+holds, 0 to 16, and none of them carried audio.
+
+What is established either side of it: the computer can send the pedal audio,
+because a tone played on USB 1/2 comes out of its Main outs and was heard. The
+pedal can send the computer audio, because the chain reaches USB 1/2. Only the
+link between the computer's USB 5/6 and the Input block is missing.
+
+### The cable that closes it
+
+One 1/4" lead from the pedal's Main out back into its own input jack.
 
 ```
-out\in        1       2       3       4       5       6       7       8
-  1     -125.4  -125.4  -999.0  -999.0  -123.3  -123.3  -999.0  -999.0
-  ...
-  -     -125.4  -125.4  -999.0  -999.0  -123.3  -123.3  -999.0  -999.0   (nothing played)
+Mac  --USB 1/2-->  Main out  --cable-->  Input jack
+                                             |
+                                           chain
+                                             |
+Mac  <--USB 1/2--  USB record  <-------------+
 ```
 
-Two things in that table are worth keeping. Inputs 1/2 and 5/6 sit at about
--123dBFS, which is a live stream carrying dither, while 3/4 and 7/8 read as
-digital zero and are not connected at all. So the pedal is sending, and what it
-sends is silence. And the row with nothing playing is identical to every other
-row, so nothing the computer sends is arriving.
+Set the Input block to the Guitar jack, `@input: 2`, and the output to USB 1/2
+only, `@output: 10`. The chain must not reach the Main outs, or its own output
+races back round the cable.
 
-Ruled out along the way:
+It costs a digital-to-analogue and an analogue-to-digital conversion, which adds
+noise. That noise is identical on every take, so it cancels the moment two
+settings are compared, which is all this is for.
 
-- **macOS privacy blocking the input.** The built-in microphone records the room
-  at -62dBFS from the same process, so input is permitted.
-- **The preset.** Read back from the device after writing: `@input` is 15 and
-  `@output` is 1.
-- **Sample rate.** Both ends at 48kHz, the only rate class-compliant mode
-  offers.
-- **A wrong channel.** Every output channel was tried, not just 5/6.
+Measured through it, an amplifier and cabinet on a dry bass:
 
-**The open suspect** is that no Line 6 driver is installed, so the pedal is in
-class-compliant mode. `/Library/Extensions`, the system extension list and
-`kextstat` have nothing from Line 6. Line 6 support's own words in that forum
-thread, that the pedal "is taking over the sound card like an audio interface",
-describe monitoring rather than re-amping, and nobody in the thread was trying
-to re-amp. Whether class-compliant mode carries all eight output channels or
-only the first pair is not established here and is the next thing to find out.
+|           | dry             | through the pedal |
+| --------- | --------------- | ----------------- |
+| energy    | 91% low, 9% mid | 95% low, 5% mid   |
+| centroid  | 145 Hz          | 117 Hz            |
+| transient | 0.63            | 0.58              |
+| decay     | 1.49 s          | 1.54 s            |
+| dynamics  | 6.7 dB          | 7.1 dB            |
 
-Installing a driver needs a person and probably a restart, so it stopped here.
+The cabinet pulled the centre of gravity down 28Hz and took four points of
+energy out of the mids, which is what a speaker does to a signal. The numbers
+behave like physics rather than like noise.
+
+### The pedal ignores what it is written
+
+**A preset written over USB does not become what the pedal plays.**
+
+Slot 42C was given a copy of 01A, a preset measuring 97% of its energy between 1
+and 6kHz. Reading 42C back over USB returns the copy. Playing 42C returns the
+old preset, 0.3% over the same band. Selecting it by the vendor protocol and by
+MIDI program change both do it.
+
+So the device holds presets in memory and a USB write reaches its storage
+without disturbing that. Everything written tonight is in the slots and none of
+it is in the sound.
+
+This is why sweeping a control by writing presets cannot work, and it is worth
+knowing on its own: `presets import` does not do what somebody would reasonably
+assume it does.
+
+### What does work unattended
+
+MIDI, over the same cable, with no writes at all:
+
+```
+PC   0  ->  01A   rms -17.5 dBFS   1-6kHz 97.054%
+PC 125  ->  42C   rms -24.5 dBFS   1-6kHz  0.306%
+PC   2  ->  01C   rms  -3.3 dBFS   1-6kHz  0.003%
+```
+
+Three presets, three measurements, nobody in the room. Program 0 is 01A and each
+bank holds three, so a slot is `(bank - 1) * 3 + letter`.
+
+What is missing is the message HX Edit sends when somebody drags a knob, which
+changes a parameter in the running preset rather than in storage. That message
+exists, because HX Edit does it. It is not implemented here.
 
 ## Why a synthesised signal will not do
 
