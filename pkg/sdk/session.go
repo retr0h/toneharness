@@ -265,6 +265,23 @@ func (s *Session) Turn(
 	return err
 }
 
+// Current reads the preset the device is playing, as the rig it describes.
+//
+// The edit buffer rather than a slot. A control moved with Turn shows here
+// and not in the slot it came from: reading the slot back answers with the
+// stored document, unchanged, which reads as though nothing happened.
+//
+// So this is how a build checks its own work. Move a control, read what the
+// device now holds, and compare that to what was asked for.
+func (s *Session) Current(
+	ctx context.Context,
+	as Format,
+) (Reading, error) {
+	return operation(ctx, s, func(f *deviceslots.Flows) (Reading, error) {
+		return f.Loaded(ctx, s.editor, as)
+	})
+}
+
 // Close ends the Session and lets the device go.
 //
 // An operation in flight finishes first: Close waits for the operation lock

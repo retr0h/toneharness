@@ -318,6 +318,43 @@ What is missing is the message HX Edit sends when somebody drags a knob, which
 changes a parameter in the running preset rather than in storage. That message
 exists, because HX Edit does it. It is not implemented here.
 
+## Addressing a control
+
+A live edit names a block by a number and a parameter by a number, and neither
+is the one a reader would guess.
+
+**The parameter is its position in the device's own list**, which the catalog
+already records as `Symbol.Params`, "in the order a device sends their values".
+It is not the order a `.hlx` writes its keys and not anything alphabetical. For
+the US Dripman the device's order begins Norm Drive, Bass, Mid, Treble, where
+the preset's own JSON is sorted and begins Bass, Bias, BiasX, Bright.
+
+**The block is not its position in the chain**, and what it is instead is not
+established. Probing every address against a preset holding an amplifier, a
+cabinet, a split and a join:
+
+| address | accepted      | refused         |
+| ------- | ------------- | --------------- |
+| 0       | 1, 2          | everything else |
+| 9, 10   | 0, 1          | 2               |
+| 19      | 0, 1, 2, 3, 5 | 4               |
+
+Two of those read cleanly against the models involved. A join's parameters are A
+Level, A Pan, B Level, B Pan, B Polarity, Level, and 4 is the only boolean among
+them, which is the only one address 19 refuses: **19 is the join**. A split's
+are BalanceA, BalanceB, bypass, and bypass takes its own opcode rather than this
+one, so **9 and 10 are splits**.
+
+Address 0 does not read cleanly against anything. It takes two parameters and
+refuses the rest, including parameters of the same kind and range as the two it
+takes, and the refusal does not depend on the value: Treble is declined at 0,
+0.25, 0.75 and 1 alike. Both accepted parameters move the sound, so the address
+is real.
+
+**This is unfinished.** Until it is, a sweep can reach the controls that answer
+and not the rest, which is enough to prove the method and not enough to
+characterise a device.
+
 ## Why a synthesised signal will not do
 
 A generated tone is repeatable, perfectly even across the range, and wrong for

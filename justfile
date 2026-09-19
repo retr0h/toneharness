@@ -161,6 +161,27 @@ forum-search QUERY SUB="":
 web QUERY:
     uvx --with curl_cffi python3 resources/read_forum.py --web "{{ QUERY }}"
 
+# Sweep one control and measure what it does
+#
+# BLOCK is the device's address for a block and PARAM the parameter's position
+# in that model's own list, neither of which is the one a reader would guess.
+# See Addressing a control in docs/measuring.md.
+#
+#     just sweep 0 2
+# just sweep 0 2 --points 17 --out swept.json
+sweep BLOCK PARAM *ARGS:
+    uvx --with sounddevice --with numpy --with soundfile \
+        python3 resources/sweep.py {{ BLOCK }} {{ PARAM }} {{ ARGS }}
+
+# Push a dry signal through the pedal and keep what comes back
+#
+# The analog route needs a cable from the pedal's output to its own input; the
+# usb route needs nothing plugged in and does not currently work. Both are
+# explained in docs/measuring.md.
+reamp DRY OUT *ARGS:
+    uvx --with sounddevice --with numpy --with soundfile \
+        python3 resources/reamp.py {{ DRY }} {{ OUT }} {{ ARGS }}
+
 # Generate code
 generate:
     just go-generate

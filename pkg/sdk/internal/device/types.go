@@ -154,6 +154,17 @@ type Turner interface {
 	SetParam(ctx context.Context, block, param int, value float32) error
 }
 
+// Loaded is a session that can read the preset a device is playing.
+//
+// Separate from Editor's ReadPreset, which fetches a slot. This answers with
+// the edit buffer: what somebody is hearing, including whatever has been
+// changed since it was loaded. The two differ, and the difference is the
+// whole point — a control moved live shows here and not in the slot.
+type Loaded interface {
+	// ReadCurrent fetches the preset the device has loaded.
+	ReadCurrent(ctx context.Context) ([]byte, error)
+}
+
 // Editor is a session with an attached device.
 //
 // What everything above this package needs from one: what it is, what it

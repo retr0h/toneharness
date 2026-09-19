@@ -306,6 +306,45 @@ func (mr *MockTurnerMockRecorder) SetParam(ctx, block, param, value any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetParam", reflect.TypeOf((*MockTurner)(nil).SetParam), ctx, block, param, value)
 }
 
+// MockLoaded is a mock of Loaded interface.
+type MockLoaded struct {
+	ctrl     *gomock.Controller
+	recorder *MockLoadedMockRecorder
+	isgomock struct{}
+}
+
+// MockLoadedMockRecorder is the mock recorder for MockLoaded.
+type MockLoadedMockRecorder struct {
+	mock *MockLoaded
+}
+
+// NewMockLoaded creates a new mock instance.
+func NewMockLoaded(ctrl *gomock.Controller) *MockLoaded {
+	mock := &MockLoaded{ctrl: ctrl}
+	mock.recorder = &MockLoadedMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockLoaded) EXPECT() *MockLoadedMockRecorder {
+	return m.recorder
+}
+
+// ReadCurrent mocks base method.
+func (m *MockLoaded) ReadCurrent(ctx context.Context) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadCurrent", ctx)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadCurrent indicates an expected call of ReadCurrent.
+func (mr *MockLoadedMockRecorder) ReadCurrent(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadCurrent", reflect.TypeOf((*MockLoaded)(nil).ReadCurrent), ctx)
+}
+
 // MockEditor is a mock of Editor interface.
 type MockEditor struct {
 	ctrl     *gomock.Controller
