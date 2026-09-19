@@ -262,6 +262,32 @@ func (s *MeasureRunTestSuite) read() measured.Library {
 	return lib
 }
 
+// turning is a bench that answers normally for a while and then differently.
+//
+// The noise floor is measured first, from the chain as it sits. A bench that
+// was quiet or clipped from the very first reading would make that the
+// settled level too, and nothing afterwards would stand out from it.
+type turning struct {
+	after int
+	to    bench
+	calls *int
+}
+
+func (b turning) Through(
+	ctx context.Context,
+	signal []float32,
+) ([]float32, error) {
+	*b.calls++
+
+	if *b.calls > b.after {
+		return b.to.Through(ctx, signal)
+	}
+
+	return bench{}.Through(ctx, signal)
+}
+
+func (turning) Name() string { return "a bench that changes" }
+
 // stopping is a bench that answers a few times and then does not.
 type stopping struct {
 	after int
