@@ -149,7 +149,7 @@ func (s *CurvesPublicTestSuite) TestEveryNamedFigureCanBeRead() {
 	known := 1.0
 	full := measured.Point{Value: 1, Figures: measured.Figures{
 		Centroid: 1, Level: 1, Low: 1, Mid: 1, High: 1,
-		Dynamics: 1, Harmonics: 1, Lean: 1,
+		Dynamics: &known, Harmonics: &known, Lean: &known,
 		Transient: &known, Decay: &known,
 	}}
 
@@ -163,6 +163,45 @@ func (s *CurvesPublicTestSuite) TestEveryNamedFigureCanBeRead() {
 	}
 
 	s.Require().Len(measured.Named(), 10)
+}
+
+// TestAFigureNoReadingCarriedIsAbsentRatherThanZero covers the older sweeps.
+//
+// Dynamics, harmonics and lean were added after the first curves were
+// measured, so a file taken before that carries five figures where the type
+// names ten. Decoded into plain numbers they came back as zero and could not
+// be told from a control that genuinely does not move one: a whole column of
+// zeroes fits a perfectly straight line, and Fitted would report the slope
+// with a straightness of one.
+func (s *CurvesPublicTestSuite) TestAFigureNoReadingCarriedIsAbsentRatherThanZero() {
+	older, err := measured.LoadCurves(strings.NewReader(`{
+      "controls": {"Bass": {"index": 1, "control": "Bass", "points": [
+        {"value": 0, "centroid": 100, "level": -20, "low": 90, "mid": 8, "high": 2},
+        {"value": 1, "centroid": 200, "level": -18, "low": 80, "mid": 15, "high": 5}
+      ]}}
+    }`))
+	s.Require().NoError(err)
+
+	points := older.Controls["Bass"].Points
+
+	for _, name := range []string{"dynamics", "harmonics", "lean"} {
+		s.Run(name, func() {
+			_, ok := measured.Apart(points, name)
+
+			s.Require().False(ok,
+				"%s was never measured here, which is not a move of zero", name)
+		})
+	}
+
+	// The five that were measured still read, so the guard is about what is
+	// missing rather than about the file being old.
+	for _, name := range []string{"centroid", "level", "low", "mid", "high"} {
+		s.Run(name, func() {
+			_, ok := measured.Apart(points, name)
+
+			s.Require().True(ok)
+		})
+	}
 }
 
 // TestAFigureNobodyNamedIsNotInvented covers an unknown name.

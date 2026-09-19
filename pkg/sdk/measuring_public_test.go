@@ -188,9 +188,14 @@ func (s *MeasuringPublicTestSuite) TestFiguresReportsSharesAsPercentages() {
 	s.Require().InDelta(7, got.Mid, 0.001)
 	s.Require().InDelta(138, got.Centroid, 0.001)
 	s.Require().InDelta(-22.5, got.Level, 0.001)
-	s.Require().InDelta(20, got.Harmonics, 0.001,
+	// Measuring answers all three, so each is set rather than left absent.
+	s.Require().NotNil(got.Harmonics)
+	s.Require().NotNil(got.Lean)
+	s.Require().NotNil(got.Dynamics)
+
+	s.Require().InDelta(20, *got.Harmonics, 0.001,
 		"averaged across the three bands, because a block is one sound")
-	s.Require().InDelta(0.2, got.Lean, 0.001)
+	s.Require().InDelta(0.2, *got.Lean, 0.001)
 }
 
 func TestMeasuringPublicTestSuite(

@@ -261,26 +261,32 @@ func (p Point) figure(
 	case "high":
 		return p.High, true
 	case "dynamics":
-		return p.Dynamics, true
+		return held(p.Dynamics)
 	case "harmonics":
-		return p.Harmonics, true
+		return held(p.Harmonics)
 	case "lean":
-		return p.Lean, true
+		return held(p.Lean)
 	case "transient":
-		if p.Transient == nil {
-			return 0, false
-		}
-
-		return *p.Transient, true
+		return held(p.Transient)
 	case "decay":
-		if p.Decay == nil {
-			return 0, false
-		}
-
-		return *p.Decay, true
+		return held(p.Decay)
 	}
 
 	return 0, false
+}
+
+// held reads a figure that a reading may not carry.
+//
+// The five figures that can be absent are absent in the same way, so they are
+// answered in the same way: no value rather than a value of zero.
+func held(
+	of *float64,
+) (float64, bool) {
+	if of == nil {
+		return 0, false
+	}
+
+	return *of, true
 }
 
 // Named is every figure a curve is reported in.

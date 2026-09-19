@@ -112,14 +112,21 @@ func Figures(
 	read audio.Profile,
 	loud float64,
 ) measured.Figures {
+	// Measuring a profile answers all three, so each is set. They are
+	// pointers because a reading taken before they existed carries none, and
+	// that has to stay tellable from a reading of zero.
+	dynamics := read.DynamicRange
+	harmonics := 100 * (read.Harmonics.Low + read.Harmonics.Mid + read.Harmonics.High) / 3
+	lean := (read.EvenOdd.Low + read.EvenOdd.Mid + read.EvenOdd.High) / 3
+
 	out := measured.Figures{
 		Low:       100 * read.Low,
 		Mid:       100 * read.Mid,
 		High:      100 * read.High,
 		Centroid:  read.Centroid,
-		Dynamics:  read.DynamicRange,
-		Harmonics: 100 * (read.Harmonics.Low + read.Harmonics.Mid + read.Harmonics.High) / 3,
-		Lean:      (read.EvenOdd.Low + read.EvenOdd.Mid + read.EvenOdd.High) / 3,
+		Dynamics:  &dynamics,
+		Harmonics: &harmonics,
+		Lean:      &lean,
 		Level:     loud,
 	}
 

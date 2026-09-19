@@ -71,12 +71,20 @@ type Figures struct {
 	// rather than an answer of zero.
 	Transient *float64 `json:"transient"`
 	Decay     *float64 `json:"decay"`
-	// Dynamics is the loudest against the typical, in dB.
-	Dynamics float64 `json:"dynamics"`
-	// Harmonics is how much energy sits above the fundamental, and Lean
-	// whether the even multiples of it or the odd ones carry more.
-	Harmonics float64 `json:"harmonics"`
-	Lean      float64 `json:"lean"`
+	// Dynamics is the loudest against the typical, in dB. Harmonics is how
+	// much energy sits above the fundamental, and Lean whether the even
+	// multiples of it or the odd ones carry more.
+	//
+	// Absent for the same reason Transient and Decay can be, and pointers for
+	// the same reason. These three were added after the first sweeps ran, so
+	// a file taken before that holds readings without them. As plain numbers
+	// they decoded to zero and read back as measured, which is worse than a
+	// gap: a control whose harmonics are zero at every position fits a
+	// perfectly straight line through nothing, and reports it with total
+	// confidence.
+	Dynamics  *float64 `json:"dynamics"`
+	Harmonics *float64 `json:"harmonics"`
+	Lean      *float64 `json:"lean"`
 }
 
 // Block is one model, measured alone at its own defaults.
