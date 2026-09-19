@@ -32,49 +32,32 @@ import hashlib
 import json
 import os
 import re
-import subprocess
 import sys
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-import numpy as np
-import sounddevice as sd
-import soundfile as sf
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-RATE = 48000
-REPO = Path(__file__).resolve().parent.parent
-DRY = REPO / "resources" / "dry" / "bass-di.wav"
-CATALOG = REPO / "resources" / "schemas" / "hx-stomp.catalog.json"
+from rig import (  # noqa: E402
+    CATALOG_PATH, DRY, REPO, cli, device, dry, figures, through,
+)
+
 OUT = REPO / "resources" / "sweeps" / "hx-stomp" / "fingerprints.json"
 
-LEAD, TAIL = 0.3, 1.0
-
-# A prebuilt binary, so a run does not relink the CLI once per block.
-BINARY = Path("/tmp/tonestack")
-
-
-def cli(*args: str, timeout: int = 300) -> tuple[bool, str]:
-    """One CLI call, saying whether it worked rather than exiting.
-
-    A block that will not load is a result rather than a failure: some of what
-    the catalog lists is a split or a utility that means nothing on its own,
-    and the run has to get past them to reach the rest.
-    """
-    exe = [str(BINARY)] if BINARY.exists() else ["go", "run", "main.go"]
-
-    r = subprocess.run(
-        [*exe, *args], cwd=REPO,
-        capture_output=True, text=True, timeout=timeout, check=False,
-    )
-
-    return r.returncode == 0, (r.stderr or r.stdout).strip()
+# Where a reading stops describing the block and starts describing the
+# converters running out of headroom.
+#
+# A clipped recording's spectrum is the clipping's, not the chain's: flat tops
+# generate harmonics that were never in the signal, so the centroid and the
+# band shares are wrong in a way that looks like a bright block.
+CLIPPED = -0.5
 
 
 def blocks(category: str) -> list[dict]:
     """Every block worth trying, from the catalog."""
-    with gzip.open(CATALOG) as f:
+    with gzip.open(CATALOG_PATH) as f:
         catalog = json.load(f)
 
     out = []
@@ -125,76 +108,6 @@ def rig(block: dict) -> str:
         "    models:\n"
         f"      HX Stomp: {block['id']}\n"
     )
-
-
-def dry(seconds: float) -> np.ndarray:
-    """The reference signal, at the device's rate."""
-    x, rate = sf.read(DRY, dtype="float32", always_2d=True)
-    x = x[:, 0]
-
-    if rate != RATE:
-        n = int(round(len(x) * RATE / rate))
-        x = np.interp(
-            np.linspace(0.0, len(x) - 1, n), np.arange(len(x)), x
-        ).astype(np.float32)
-
-    return x[: int(seconds * RATE)]
-
-
-def device() -> int:
-    """The pedal, or a list of what is attached instead."""
-    for i, d in enumerate(sd.query_devices()):
-        if "hx stomp" in d["name"].lower() and d["max_output_channels"] >= 2:
-            return i
-
-    have = ", ".join(d["name"] for d in sd.query_devices() if d["max_output_channels"])
-    sys.exit(f"fingerprint: no HX Stomp. Attached: {have}")
-
-
-def through(signal: np.ndarray, dev: int) -> np.ndarray:
-    """Play the signal and record the answer, sharing one clock."""
-    x = np.concatenate(
-        [np.zeros(int(LEAD * RATE), np.float32), signal,
-         np.zeros(int(TAIL * RATE), np.float32)]
-    )
-
-    rec = sd.playrec(
-        np.column_stack([x, x]), samplerate=RATE, device=dev,
-        output_mapping=[1, 2], input_mapping=[1, 2], blocking=True,
-    )
-
-    return rec[:, 0]
-
-
-def figures(x: np.ndarray) -> dict[str, float]:
-    """What a recording reads as."""
-    w = x * np.hanning(len(x))
-    mag = np.abs(np.fft.rfft(w))
-    freq = np.fft.rfftfreq(len(w), 1.0 / RATE)
-    power = mag ** 2
-    total = float(np.sum(power)) or 1.0
-
-    def band(lo: float, hi: float) -> float:
-        return 100.0 * float(np.sum(power[(freq > lo) & (freq < hi)])) / total
-
-    rms = float(np.sqrt(np.mean(np.square(x))))
-
-    return {
-        "centroid": float(np.sum(freq * power) / total),
-        "level": float(20.0 * np.log10(rms)) if rms > 1e-12 else -999.0,
-        "low": band(0, 200),
-        "mid": band(200, 2000),
-        "high": band(2000, 20000),
-    }
-
-
-# Where a reading stops describing the block and starts describing the
-# converters running out of headroom.
-#
-# A clipped recording's spectrum is the clipping's, not the chain's: flat tops
-# generate harmonics that were never in the signal, so the centroid and the
-# band shares are wrong in a way that looks like a bright block.
-CLIPPED = -0.5
 
 
 def empty(tmp: Path) -> str:

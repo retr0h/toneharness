@@ -20,6 +20,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -32,6 +33,17 @@ import (
 
 // measureFile is the recording to measure.
 var measureFile string
+
+// measureJSON asks for the reading as data rather than as a table.
+//
+// For the measuring loop rather than for a person. resources/fingerprint.py
+// and resources/sweep.py both push a signal through the pedal and have to say
+// what came back in the same figures a record is described in, and the only
+// way to be sure of that is to use the same code. A second implementation in
+// Python agreed to about five points on a band share and thirty percent on a
+// centroid, which is not agreement at all: it made every block's reading
+// incomparable with every record's, in a way nothing downstream could see.
+var measureJSON bool
 
 // measureDir is a tree of recordings to measure together.
 var measureDir string
@@ -115,7 +127,20 @@ a corpus holding both would earn every bassist "dark" and every guitarist
 			return fmt.Errorf("reading %s: %w", measureFile, err)
 		}
 
-		return cli.Profile(cmd.OutOrStdout(), audio.Measure(samples, rate))
+		reading := audio.Measure(samples, rate)
+
+		if measureJSON {
+			body, err := json.Marshal(reading)
+			if err != nil {
+				return fmt.Errorf("writing the reading: %w", err)
+			}
+
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), string(body))
+
+			return err
+		}
+
+		return cli.Profile(cmd.OutOrStdout(), reading)
 	},
 }
 
@@ -239,6 +264,8 @@ func init() {
 		"a tree of .wav recordings to measure together")
 	measureCmd.Flags().StringVar(&measureManifest, "manifest", "",
 		"a corpus manifest naming the recordings and linking them")
+	measureCmd.Flags().BoolVar(&measureJSON, "json", false,
+		"report the reading as data rather than as a table, for a tool rather than a person")
 	measureCmd.Flags().BoolVar(&measureEvidence, "evidence", false,
 		"write the measurements as rig evidence, to paste into a chain")
 

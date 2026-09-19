@@ -44,8 +44,17 @@ import (
 
 // Figures are what a recording reads as.
 //
-// The same five a sweep takes and a record is described in, so a block, a
-// chain and a record are all comparable without anything being converted.
+// The same ones a record is described in, taken by the same code: the
+// measuring scripts hand what came back to `tonestack measure --json` rather
+// than computing it themselves. That is not tidiness. A second implementation
+// in Python read the reference bass as 98.6% low at 95 Hz where this one says
+// 93% at 138 Hz, which made every block incomparable with every record while
+// both looked reasonable.
+//
+// Level is the exception and is measured beside them. A record's loudness is
+// the mastering engineer's decision and says nothing about the playing; a
+// block's is a property of the block, and a volume control has nothing else
+// to move.
 type Figures struct {
 	// Centroid is the centre of gravity of the spectrum, in Hz.
 	Centroid float64 `json:"centroid"`
@@ -56,6 +65,18 @@ type Figures struct {
 	Low  float64 `json:"low"`
 	Mid  float64 `json:"mid"`
 	High float64 `json:"high"`
+	// Transient is how sharply notes start, and Decay how long they take to
+	// die away. Either can be absent: a transient needs a note starting and
+	// a decay needs one ending, and a reading holding neither has no answer
+	// rather than an answer of zero.
+	Transient *float64 `json:"transient"`
+	Decay     *float64 `json:"decay"`
+	// Dynamics is the loudest against the typical, in dB.
+	Dynamics float64 `json:"dynamics"`
+	// Harmonics is how much energy sits above the fundamental, and Lean
+	// whether the even multiples of it or the odd ones carry more.
+	Harmonics float64 `json:"harmonics"`
+	Lean      float64 `json:"lean"`
 }
 
 // Block is one model, measured alone at its own defaults.
@@ -146,10 +167,9 @@ type Match struct {
 
 // Nearest ranks the blocks of one category by how close they sit to a target.
 //
-// This is what turns "sound like this record" into a shortlist. A record
-// measures as five figures, every block has been measured as five figures
-// through the same loop, and the ones that land nearest are the ones worth
-// putting in a chain and tuning.
+// This is what turns "sound like this record" into a shortlist. A record and
+// a block are measured by the same code into the same figures, so the ones
+// that land nearest are the ones worth putting in a chain and tuning.
 //
 // Ranked rather than chosen, and the whole ranking comes back rather than a
 // winner, because the nearest block is not always the right one: a chain has
@@ -203,15 +223,22 @@ type Weights struct {
 	Centroid, Level, Low, Mid, High float64
 }
 
-// Spectral weighs where the energy sits and ignores loudness.
+// Spectral weighs where the energy sits and ignores everything else.
 //
-// The default for choosing a block. Level is left at zero deliberately: a
-// block that is right and quiet is right, because the next block's level
-// control fixes it, and weighing loudness would rank a loud wrong answer over
-// a quiet correct one.
+// The default for choosing a block. Three things are left at zero and each
+// for its own reason.
+//
+// Level, because a block that is right and quiet is right: the next block's
+// level control fixes it for nothing, and weighing loudness ranks a loud
+// wrong answer over a quiet correct one.
+//
+// Transient and decay, because the measuring loop pads its recording with a
+// second of silence to catch a reverb's tail, and that moves both. It moves
+// them the same way for every block, so comparing two blocks is fair, and it
+// does not move a record at all, so comparing a block with a record is not.
 //
 // The centroid is scaled to per-thousand-Hz so it counts about as much as a
-// band share, rather than swamping all four of them.
+// band share rather than swamping all three of them.
 func Spectral() Weights {
 	return Weights{Centroid: 1.0 / 1000.0, Low: 1, Mid: 1, High: 1}
 }

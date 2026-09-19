@@ -238,6 +238,7 @@ tonestack measure [flags]
 | `--dir` | string |  | a tree of .wav recordings to measure together |
 | `--evidence` |  |  | write the measurements as rig evidence, to paste into a chain |
 | `--file` | string |  | the recording to measure, as a .wav |
+| `--json` |  |  | report the reading as data rather than as a table, for a tool rather than a person |
 | `--manifest` | string |  | a corpus manifest naming the recordings and linking them |
 
 ## tonestack presets

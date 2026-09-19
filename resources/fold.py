@@ -28,7 +28,18 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parent.parent
 
-FIGURES = ("centroid", "level", "low", "mid", "high")
+# The figures a curve is reported in.
+#
+# The same ones `tonestack measure` answers with, so a block's curve and a
+# record's reading are in one vocabulary. Level is not among them for records
+# and is here, because a record's loudness is the mastering engineer's and a
+# block's is the block's.
+FIGURES = ("centroid", "level", "low", "mid", "high",
+           "transient", "decay", "dynamics", "harmonics", "lean")
+
+# The ones worth printing. All ten travel in the file; a terminal holding ten
+# columns of numbers is a table nobody reads.
+SHOWN = ("centroid", "level", "low", "mid", "high")
 
 # The catalog, which is the only thing that knows a parameter's name.
 #
@@ -77,8 +88,10 @@ def fit(points: list[dict], figure: str) -> dict[str, float]:
     [algorithm.md](../docs/algorithm.md) takes the slope at the setting the
     chain is currently on, which is why every point travels with the fit.
     """
-    x = np.array([p["value"] for p in points], dtype=float)
-    y = np.array([p[figure] for p in points], dtype=float)
+    usable = [p for p in points if p.get(figure) is not None]
+
+    x = np.array([p["value"] for p in usable], dtype=float)
+    y = np.array([p[figure] for p in usable], dtype=float)
 
     if len(x) < 2 or float(np.ptp(x)) == 0.0:
         return {"per_turn": 0.0, "straight": 1.0}
@@ -214,7 +227,8 @@ def main() -> None:
             entry["spread"] = {
                 f: float(max(pt[f] for pt in heard) - min(pt[f] for pt in heard))
                 for f in FIGURES
-            } if heard else {}
+                if heard and all(pt.get(f) is not None for pt in heard)
+            }
         else:
             entry["fits"] = {f: fit(heard, f) for f in FIGURES}
 
@@ -242,12 +256,12 @@ def main() -> None:
 
     if dials:
         print("\n  dials: per full turn, and how straight the curve is")
-        print(f"\n  {'control':<14}" + "".join(f"{f:>21}" for f in FIGURES))
+        print(f"\n  {'control':<14}" + "".join(f"{f:>21}" for f in SHOWN))
         for name, entry in dials.items():
             row = "".join(
                 f"{entry['fits'][f]['per_turn']:>13.1f}"
                 f"{entry['fits'][f]['straight']:>8.2f}"
-                for f in FIGURES
+                for f in SHOWN
             )
             print(f"  {name:<14}{row}")
 
@@ -255,9 +269,10 @@ def main() -> None:
         print("\n  lists: how far apart the settings sit, with no order "
               "between them")
         print(f"\n  {'control':<14}{'settings':>9}"
-              + "".join(f"{f:>12}" for f in FIGURES))
+              + "".join(f"{f:>12}" for f in SHOWN))
         for name, entry in lists.items():
-            row = "".join(f"{entry['spread'][f]:>12.1f}" for f in FIGURES)
+            row = "".join(
+                f"{entry['spread'].get(f, float('nan')):>12.1f}" for f in SHOWN)
             print(f"  {name:<14}{len(entry['points']):>9}{row}")
 
     muted = {n: e["muted_at"] for n, e in params.items() if e["muted_at"]}

@@ -31,108 +31,17 @@ import argparse
 import gzip
 import hashlib
 import json
-import subprocess
 import sys
 import time
 from pathlib import Path
 
 import numpy as np
-import sounddevice as sd
-import soundfile as sf
 
-RATE = 48000
-REPO = Path(__file__).resolve().parent.parent
-DRY = REPO / "resources" / "dry" / "bass-di.wav"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-# How much of the reference to push through per reading.
-#
-# A sweep is one pass per position, so length is time: seventeen positions of
-# the whole three and a half minutes is an hour. Six seconds holds enough
-# playing to measure and keeps a sweep to a minute.
-SECONDS = 6.0
-
-# Silence before and after.
-#
-# The front is because latency is not known in advance. The back is because a
-# reverb goes on ringing after the input stops, and cutting at the end of the
-# signal would clip the tail off the thing being measured.
-LEAD, TAIL = 0.3, 1.0
-
-# A prebuilt binary, so a sweep does not relink the CLI once per position.
-BINARY = Path("/tmp/tonestack")
-
-CATALOG = REPO / "resources" / "schemas" / "hx-stomp.catalog.json"
-
-
-def dry() -> np.ndarray:
-    """The reference signal, at the device's rate."""
-    x, rate = sf.read(DRY, dtype="float32", always_2d=True)
-    x = x[:, 0]
-
-    if rate != RATE:
-        n = int(round(len(x) * RATE / rate))
-        x = np.interp(
-            np.linspace(0.0, len(x) - 1, n), np.arange(len(x)), x
-        ).astype(np.float32)
-
-    return x[: int(SECONDS * RATE)]
-
-
-def device() -> int:
-    """The pedal, or a list of what is attached instead."""
-    for i, d in enumerate(sd.query_devices()):
-        if "hx stomp" in d["name"].lower() and d["max_output_channels"] >= 2:
-            return i
-
-    have = ", ".join(d["name"] for d in sd.query_devices() if d["max_output_channels"])
-    sys.exit(f"sweep: no HX Stomp. Attached: {have}")
-
-
-def through(signal: np.ndarray, dev: int) -> np.ndarray:
-    """Play the signal and record the answer, sharing one clock."""
-    x = np.concatenate(
-        [np.zeros(int(LEAD * RATE), np.float32), signal,
-         np.zeros(int(TAIL * RATE), np.float32)]
-    )
-
-    rec = sd.playrec(
-        np.column_stack([x, x]),
-        samplerate=RATE,
-        device=dev,
-        output_mapping=[1, 2],
-        input_mapping=[1, 2],
-        blocking=True,
-    )
-
-    return rec[:, 0]
-
-
-def figures(x: np.ndarray) -> dict[str, float]:
-    """What a recording reads as.
-
-    The same shape of measurement the records are described in, computed here
-    rather than shelled out to, because a sweep takes hundreds of these and
-    each process start costs more than the arithmetic.
-    """
-    w = x * np.hanning(len(x))
-    mag = np.abs(np.fft.rfft(w))
-    freq = np.fft.rfftfreq(len(w), 1.0 / RATE)
-    power = mag ** 2
-    total = float(np.sum(power)) or 1.0
-
-    def band(lo: float, hi: float) -> float:
-        return 100.0 * float(np.sum(power[(freq > lo) & (freq < hi)])) / total
-
-    rms = float(np.sqrt(np.mean(np.square(x))))
-
-    return {
-        "centroid": float(np.sum(freq * power) / total),
-        "level": float(20.0 * np.log10(rms)) if rms > 1e-12 else -999.0,
-        "low": band(0, 200),
-        "mid": band(200, 2000),
-        "high": band(2000, 20000),
-    }
-
+from rig import (  # noqa: E402
+    CATALOG_PATH, DRY, REPO, cli, device, dry, figures, through,
+)
 
 def chain() -> str:
     """The whole signal chain the measurement is being taken through.
@@ -151,30 +60,13 @@ def chain() -> str:
     reading can be rebuilt into the chain it was taken on rather than
     described in prose beside it.
     """
-    exe = [str(BINARY)] if BINARY.exists() else ["go", "run", "main.go"]
+    ok, said = cli("presets", "current", timeout=300)
 
-    r = subprocess.run(
-        [*exe, "presets", "current"],
-        cwd=REPO, capture_output=True, text=True, timeout=300, check=False,
-    )
-
-    if r.returncode != 0:
+    if not ok:
         sys.exit("sweep: cannot read what the device is playing, so nothing "
-                 f"measured here would be attributable:\n{r.stderr.strip()}")
+                 f"measured here would be attributable:\n{said}")
 
-    return r.stdout
-
-
-def run(*args: str) -> str | None:
-    """One CLI call. None when it worked, the complaint when it did not."""
-    exe = [str(BINARY)] if BINARY.exists() else ["go", "run", "main.go"]
-
-    r = subprocess.run(
-        [*exe, *args],
-        cwd=REPO, capture_output=True, text=True, timeout=300, check=False,
-    )
-
-    return None if r.returncode == 0 else (r.stderr or r.stdout).strip()
+    return said
 
 
 def span(rig: str, at: int, index: int) -> tuple[str, str, float, float] | None:
@@ -199,7 +91,7 @@ def span(rig: str, at: int, index: int) -> tuple[str, str, float, float] | None:
     nothing here knows which index is which, and `just identify` is how that
     gets settled against the device rather than guessed.
     """
-    if not CATALOG.exists():
+    if not CATALOG_PATH.exists():
         return None
 
     model = ""
@@ -213,7 +105,7 @@ def span(rig: str, at: int, index: int) -> tuple[str, str, float, float] | None:
     if not model:
         return None
 
-    with gzip.open(CATALOG) as f:
+    with gzip.open(CATALOG_PATH) as f:
         catalog = json.load(f)
 
     order = next(
@@ -242,8 +134,10 @@ def turn(block: int, param: int, value: float, kind: str) -> bool:
     flag = "--choice" if kind == "int" else "--value"
     said = str(int(round(value))) if kind == "int" else str(value)
 
-    return run("presets", "turn", "--block", str(block),
-               "--param", str(param), flag, said) is None
+    ok, _ = cli("presets", "turn", "--block", str(block),
+                "--param", str(param), flag, said)
+
+    return ok
 
 
 # The smallest spread a noise floor is allowed to claim.
@@ -258,6 +152,11 @@ FLOOR = {
     "low": 0.02,
     "mid": 0.02,
     "high": 0.005,
+    "transient": 0.005,
+    "decay": 0.01,
+    "dynamics": 0.05,
+    "harmonics": 0.05,
+    "lean": 0.005,
 }
 
 
@@ -289,12 +188,16 @@ def steady(
     """
     rows = [figures(through(signal, dev)) for _ in range(takes)]
 
+    # Only the figures every take answered with. A transient needs a note
+    # starting and a decay needs one ending, so either can come back unknown,
+    # and a floor computed across a None is not a floor.
     floor = {
         k: max(
             float(np.max([r[k] for r in rows]) - np.min([r[k] for r in rows])),
             FLOOR[k],
         )
         for k in rows[0]
+        if all(r.get(k) is not None for r in rows)
     }
 
     return floor, float(np.median([r["level"] for r in rows]))
@@ -314,11 +217,11 @@ def reload(preset: str) -> None:
     doing it through a slot would spend a flash write per sweep on a chain
     nobody wanted to keep.
     """
-    r = run("presets", "play", "--preset", preset)
+    ok, said = cli("presets", "play", "--preset", preset)
 
-    if r is not None:
+    if not ok:
         sys.exit(f"sweep: cannot put {preset} back, so the chain this would "
-                 f"measure is whatever the last run left:\n{r}")
+                 f"measure is whatever the last run left:\n{said}")
 
 
 def main() -> None:
@@ -373,7 +276,8 @@ def main() -> None:
           f"{points} positions from {low} to {high}")
 
     noise, settled = steady(signal, dev, args.takes)
-    print("  noise floor: " + "  ".join(f"{k} {v:.3f}" for k, v in noise.items()))
+    print("  noise floor: " + "  ".join(
+        f"{k} {v:.3f}" for k, v in noise.items()))
     print(f"  settled level: {settled:.2f} dB, "
           f"so silence is anything under {settled - SILENT:.2f}")
 
@@ -392,8 +296,9 @@ def main() -> None:
         points.append({"value": float(v), "silent": quiet, **got})
 
         note = "  SILENT, figures are of the noise" if quiet else ""
-        print(f"  {v:.4f}  "
-              + "  ".join(f"{k} {got[k]:8.3f}" for k in got) + note)
+        print(f"  {v:.4f}  " + "  ".join(
+            f"{k} {got[k]:8.3f}" for k in ("centroid", "level", "low", "high")
+        ) + note)
 
     if not points:
         sys.exit("sweep: the device refused every position; nothing to report")
@@ -436,9 +341,14 @@ def main() -> None:
         "settled": settled,
         "silent_below": settled - SILENT,
         "points": points,
+        # Only where every position answered. A figure that is unknown at
+        # one setting and known at another has no move: the difference is
+        # between a reading and the absence of one.
         "moves": {
             k: float(max(pt[k] for pt in heard) - min(pt[k] for pt in heard))
-            for k in heard[0] if k not in ("value", "silent")
+            for k in heard[0]
+            if k not in ("value", "silent")
+            and all(pt.get(k) is not None for pt in heard)
         },
     }
 
@@ -446,6 +356,9 @@ def main() -> None:
     # figure that moved less than the noise floor did not move.
     print("\n  figure      moved   noise   real?")
     for k, moved in out["moves"].items():
+        if k not in noise:
+            continue
+
         print(f"  {k:<10} {moved:7.3f} {noise[k]:7.3f}   "
               f"{'yes' if moved > noise[k] * 3 else 'no'}")
 
