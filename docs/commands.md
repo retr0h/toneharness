@@ -229,8 +229,12 @@ a corpus holding both would earn every bassist "dark" and every guitarist
     tonestack measure --corpus resources/music/bass --evidence
 
 ```text
-tonestack measure [flags]
+tonestack measure <command> [flags]
 ```
+
+| command | what it does |
+| --- | --- |
+| [blocks](#tonestack-measure-blocks) | Measure every block the device has, once, at its own defaults |
 
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
@@ -240,6 +244,49 @@ tonestack measure [flags]
 | `--file` | string |  | the recording to measure, as a .wav |
 | `--json` |  |  | report the reading as data rather than as a table, for a tool rather than a person |
 | `--manifest` | string |  | a corpus manifest naming the recordings and linking them |
+
+## tonestack measure blocks
+
+Play a reference recording through every block the device has, one at a
+time, and keep what comes back.
+
+One reading per block rather than a sweep of each. There are 665 blocks on an
+HX Stomp carrying about five thousand controls between them, so sweeping all of
+them is a hundred and sixty hours. It is also the wrong thing to want: the
+matrix a request is solved with is measured fresh for the chain being tuned,
+because a slope belongs to its chain, so a stored one per block would be
+rebuilt before anything used it.
+
+What cannot be worked out at solve time is which blocks belong in the chain to
+begin with, and that needs one number per block.
+
+Nothing is written to a slot. Each chain goes in front of the device with the
+same live replace `presets play` uses, because a slot is flash and
+this loads a different chain six hundred times. See the rules that keep a
+device alive in docs/protocol.md.
+
+The empty loop is measured first and kept as the baseline. Without it a figure
+says nothing: 95 Hz is not what an equaliser does to a bass, it is what the
+bass already was.
+
+Everything is written as it goes, so a run interrupted partway keeps what it
+had. `--resume` picks it up again.
+
+```text
+tonestack measure blocks [flags]
+```
+
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--catalog` | string |  | a generated catalog to use instead of the built-in one |
+| `--category` | string |  | only blocks of this kind: amp, cab, drive, comp, eq and so on |
+| `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
+| `--dry` | string | `resources/dry/bass-di.wav` | the reference recording to push through every block |
+| `--hardware` | string | `hx stomp` | which attached audio device to push the signal through |
+| `--out` | string | `resources/sweeps/hx-stomp/fingerprints.json` | where the readings go |
+| `--resume` |  |  | skip blocks already in the output |
+| `--retry` |  |  | with --resume, try the ones that refused again |
+| `--seconds` | float64 | `4` | how much of the reference to push through per block |
 
 ## tonestack presets
 

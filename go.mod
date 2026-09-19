@@ -13,6 +13,7 @@ tool (
 
 require (
 	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/gen2brain/malgo v0.11.26
 	github.com/getkin/kin-openapi v0.149.0
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.1.0
