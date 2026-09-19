@@ -8,10 +8,13 @@ import? '.just/remote/just.just'
 # No documentation site, so md formats every markdown file in the repository.
 md_site_dir := ""
 
-# Except the one nobody writes. docs/rigspec.md is generated from the RigSpec
-# contract, and a test compares it against what the generator produces — so
-# reflowing it here would leave the page disagreeing with its own source.
-md_extra_excludes := "--exclude 'docs/rigspec.md' --exclude 'docs/commands.md'"
+# Except the ones nobody writes. The two grammar pages are generated from
+# their contracts, and a test compares each against what the generator
+# produces — so reflowing them here would leave a page disagreeing with its
+# own source. `just ready` runs generate before md-fmt, so a page left out of
+# this list is reflowed on every run and fails the next `just test`, which is
+# how docs/tonespec.md broke the moment it was added.
+md_extra_excludes := "--exclude 'docs/rigspec.md' --exclude 'docs/tonespec.md' --exclude 'docs/commands.md'"
 
 # Coverage target for this repository.
 #

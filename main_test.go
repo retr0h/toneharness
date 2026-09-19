@@ -417,6 +417,42 @@ func (s *MainTestSuite) TestEveryPathThisRepositoryNamesExists() {
 	s.Require().NoError(err)
 }
 
+// TestEveryGeneratedPageIsLeftOutOfTheFormatter holds the two steps of the
+// gate to the same answer.
+//
+// `just ready` runs `just generate` and then `just md-fmt`. A generated page
+// that the formatter is allowed to touch is therefore rewritten every run:
+// the generator hard-wraps its prose and leaves its tables unpadded, mdformat
+// reflows both, and the test comparing the page against its generator fails
+// on the next `just test`. Running `just generate` again does not clear it,
+// because the next `just ready` reflows the page straight back.
+//
+// docs/tonespec.md broke exactly that way the day it was added — the page was
+// written, and the exclusion list beside it was not. This fails when a page
+// is generated and not excluded, rather than a run later and somewhere else.
+func (s *MainTestSuite) TestEveryGeneratedPageIsLeftOutOfTheFormatter() {
+	recipe, err := os.ReadFile("justfile")
+	s.Require().NoError(err)
+
+	pages, err := filepath.Glob(filepath.Join("docs", "*.md"))
+	s.Require().NoError(err)
+	s.Require().NotEmpty(pages)
+
+	for _, page := range pages {
+		body, err := os.ReadFile(page) //nolint:gosec // a path this glob found
+		s.Require().NoError(err)
+
+		if !strings.Contains(string(body), "Do not edit.") {
+			continue
+		}
+
+		s.Require().Contains(string(recipe), "--exclude '"+page+"'",
+			"%s is generated, so mdformat reflowing it would leave the page "+
+				"disagreeing with its generator. Add it to md_extra_excludes.",
+			page)
+	}
+}
+
 // TestTheCLIStandsAlone asserts the CLI half could be its own repository.
 //
 // The mirror of TestTheSDKStandsAlone, for the other end. main.go, cmd/ and
