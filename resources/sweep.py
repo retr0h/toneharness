@@ -28,6 +28,7 @@ Usage:
 """
 
 import argparse
+import gzip
 import hashlib
 import json
 import subprocess
@@ -59,6 +60,8 @@ LEAD, TAIL = 0.3, 1.0
 
 # A prebuilt binary, so a sweep does not relink the CLI once per position.
 BINARY = Path("/tmp/tonestack")
+
+CATALOG = REPO / "resources" / "schemas" / "hx-stomp.catalog.json"
 
 
 def dry() -> np.ndarray:
@@ -174,6 +177,55 @@ def run(*args: str) -> str | None:
     return None if r.returncode == 0 else (r.stderr or r.stdout).strip()
 
 
+def span(rig: str, at: int, index: int) -> tuple[str, float, float] | None:
+    """The control's name and the range it actually runs over.
+
+    Sweeping every control from zero to one is right for an amplifier, whose
+    knobs all run 0..1, and wrong for most of what else is on the device. A
+    Simple EQ's Mid Freq runs 125 to 4000 Hz and its High Gain runs -12 to
+    +12 dB. Swept 0..1 the first never leaves its bottom stop and the second
+    covers a twenty-fourth of its travel, and both report as controls that
+    barely do anything.
+
+    None when the catalog cannot name the control. That is not rare: the
+    equalisers have parameters and no entry in the symbol list at all, so
+    nothing here knows which index is which, and `just identify` is how that
+    gets settled against the device rather than guessed.
+    """
+    if not CATALOG.exists():
+        return None
+
+    model = ""
+    blocks = rig.split("\n- enabled:")[1:]
+
+    if at - 1 < len(blocks):
+        for line in blocks[at - 1].splitlines():
+            if line.strip().startswith("HX Stomp:"):
+                model = line.split(":", 1)[1].strip()
+
+    if not model:
+        return None
+
+    with gzip.open(CATALOG) as f:
+        catalog = json.load(f)
+
+    order = next(
+        (e["params"] for e in catalog.get("symbols", []) if e["id"] == model),
+        [],
+    )
+
+    if index >= len(order):
+        return None
+
+    name = order[index]
+    spec = catalog["blocks"].get(model, {}).get("params", {}).get(name)
+
+    if not spec or spec.get("type") != "float":
+        return None
+
+    return name, float(spec["min"]), float(spec["max"])
+
+
 def turn(block: int, param: int, value: float) -> bool:
     """Move the control, and say whether the device took it."""
     return run("presets", "turn", "--block", str(block),
@@ -260,8 +312,10 @@ def main() -> None:
     p.add_argument("block", type=int, help="the block, by its device address")
     p.add_argument("param", type=int, help="the parameter, by its position")
     p.add_argument("--points", type=int, default=9, help="how many positions")
-    p.add_argument("--low", type=float, default=0.0)
-    p.add_argument("--high", type=float, default=1.0)
+    p.add_argument("--low", type=float, default=None,
+                   help="the bottom of the range; the catalog's, by default")
+    p.add_argument("--high", type=float, default=None,
+                   help="the top of the range; the catalog's, by default")
     p.add_argument("--takes", type=int, default=5, help="takes for the noise floor")
     p.add_argument("--out", default="", help="where to write the result")
     p.add_argument("--isolated", action="store_true",
@@ -281,8 +335,19 @@ def main() -> None:
 
     rig = chain()
 
-    print(f"block {args.block} parameter {args.param}, "
-          f"{args.points} positions from {args.low} to {args.high}")
+    # The catalog's range unless somebody gave one, because most controls do
+    # not run zero to one and a sweep over the wrong span measures a stop.
+    known = span(rig, args.block, args.param)
+    low = args.low if args.low is not None else (known[1] if known else 0.0)
+    high = args.high if args.high is not None else (known[2] if known else 1.0)
+    called = known[0] if known else f"index {args.param}"
+
+    if known is None and (args.low is None or args.high is None):
+        print("  the catalog cannot name this control, so the range is a "
+              "guess of 0..1; `just identify` settles which index it is")
+
+    print(f"block {args.block} parameter {args.param} ({called}), "
+          f"{args.points} positions from {low} to {high}")
 
     noise, settled = steady(signal, dev, args.takes)
     print("  noise floor: " + "  ".join(f"{k} {v:.3f}" for k, v in noise.items()))
@@ -290,7 +355,7 @@ def main() -> None:
           f"so silence is anything under {settled - SILENT:.2f}")
 
     points = []
-    for v in np.linspace(args.low, args.high, args.points):
+    for v in np.linspace(low, high, args.points):
         if not turn(args.block, args.param, float(v)):
             print(f"  {v:.4f}  refused")
             continue
@@ -320,6 +385,13 @@ def main() -> None:
     out = {
         "block": args.block,
         "param": args.param,
+        # What the catalog calls this index and the span it was swept over.
+        # A curve filed without them is a curve nobody can place: the same
+        # index is a different control on a different model, and the same
+        # control means nothing swept over the wrong range.
+        "control": called,
+        "range": {"low": low, "high": high,
+                  "from_catalog": known is not None},
         # What it was measured through. `isolated` is the difference between a
         # curve that describes this block and one that describes this chain:
         # only the first belongs in a library, and only a chain holding one
