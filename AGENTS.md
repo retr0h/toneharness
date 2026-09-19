@@ -78,9 +78,9 @@ There are two contracts, each embedded in the package that reads it.
 [`pkg/sdk/tone/data/tonespec.openapi.yaml`](pkg/sdk/tone/data/tonespec.openapi.yaml)
 is what somebody may ask for, and
 [`pkg/sdk/rig/data/rigspec.openapi.yaml`](pkg/sdk/rig/data/rigspec.openapi.yaml)
-is what that resolves to. They are the only hand-authored formats; the Go
-types, both grammar pages and everything downstream are compiled from them.
-The generated catalog, the gear map and the corpus are in
+is what that resolves to. They are the only hand-authored formats; the Go types,
+both grammar pages and everything downstream are compiled from them. The
+generated catalog, the gear map and the corpus are in
 [resources/schemas/](resources/schemas/), and
 [resources/README.md](resources/README.md) says what else is in that tree and
 which of it may be redistributed.

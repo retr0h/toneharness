@@ -18,26 +18,12 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package specdoc
+package measured
 
-import "errors"
-
-// errNoSchema reports a document that describes no schemas.
-var errNoSchema = errors.New("not a schema this can render")
-
-// Buckets is the part of a preamble every contract shares.
+// The readings the binary ships, packed from what came off the pedal.
 //
-// How a field's values are constrained is this package's own scheme rather
-// than anything a contract says about itself, so it is written once here and
-// the rest of a preamble is written beside the contract it describes.
-const Buckets = "A field marked `*` is required. A field that holds another " +
-	"object has\nno grammar of its own and shows `\u2014`; the question moves " +
-	"to that\nobject's table. Every other field is in one of four buckets:\n" +
-	`
-| grammar | means |
-| --- | --- |
-| closed | one of a fixed set, listed here and refused if it is not one of them |
-| looked up | checked against the catalog for the device in hand, so the valid values depend on which device |
-| shaped | checked against a pattern |
-| open | prose. Nothing parses it, and nothing will refuse it for what it says |
-`
+// Here rather than only in a just recipe for the reason every other generator
+// is: `just generate` runs it, so the embedded copy cannot quietly fall behind
+// resources/sweeps/. It skips when the readings are not there, and writes only
+// when what it built differs from what is committed.
+//go:generate go run ./internal/pack ../../../resources/sweeps/hx-stomp/fingerprints.json data/hx-stomp.json.gz

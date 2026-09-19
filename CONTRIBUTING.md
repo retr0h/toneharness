@@ -143,6 +143,7 @@ pkg/sdk/preset/      read and write a .hlx preset file
 pkg/sdk/slot/        addressing, 01A to 42C
 pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
   specdoc/           the shape both grammar pages share, so they read as a pair
+  atomicfile/        writing a file so a crash leaves the old one, not half
   fileslots/         reading and editing the slots in a .hls, .hlb or .hlx
   deviceslots/       reading and editing the slots on an attached device
   backup/            what a device slot held, kept before a write replaces it

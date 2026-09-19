@@ -13,13 +13,13 @@ The goal is a system that knows *how a chain is built*. That decomposes into
 four problems with four different sources, and conflating them is why generated
 tones come out generic.
 
-| Problem                 | Source                                                 | State                                       |
-| ----------------------- | ------------------------------------------------------ | ------------------------------------------- |
-| Who plays what          | `pkg/sdk/rigs/`, hand-written                          | thin, grows by correction                   |
-| Gear to model ID        | `resources/schemas/gear-map.json`                      | 547 models                                  |
-| What order blocks go in | statistics over `resources/schemas/corpus/`            | added blocks placed; a rig's own order kept |
-| Which way a knob moves  | swept on the device, in `resources/sweeps/`            | two blocks measured; not shipped yet        |
-| What values to set      | catalog defaults, corpus medians, intent               | six axes of ten                             |
+| Problem                 | Source                                      | State                                       |
+| ----------------------- | ------------------------------------------- | ------------------------------------------- |
+| Who plays what          | `pkg/sdk/rigs/`, hand-written               | thin, grows by correction                   |
+| Gear to model ID        | `resources/schemas/gear-map.json`           | 547 models                                  |
+| What order blocks go in | statistics over `resources/schemas/corpus/` | added blocks placed; a rig's own order kept |
+| Which way a knob moves  | swept on the device, in `resources/sweeps/` | two blocks measured; not shipped yet        |
+| What values to set      | catalog defaults, corpus medians, intent    | six axes of ten                             |
 
 Two documents a person writes, and one a machine resolves.
 [ToneSpec is the ask](superpowers/specs/2026-09-19-tonespec-is-the-ask-design.md)
@@ -162,13 +162,12 @@ centroid, and `drive` from how much energy sits above the fundamental. Those
 need no general answer to which way a control moves, because each is the same
 quantity the control acts on.
 
-The other three do not, and no threshold is invented for them. `low-end` is
-Sag, which is touch response and sustain. `space` is how much room is on the
-part. `attack` is the click of a pick, which is spectral, and a bass stem
-carries almost nothing above 1 kHz, so the figure that axis needs is not in
-the recording; [The pipeline](#the-pipeline) says so at more length.
-Nothing measured describes any of the three, so all three stay words somebody
-chose.
+The other three do not, and no threshold is invented for them. `low-end` is Sag,
+which is touch response and sustain. `space` is how much room is on the part.
+`attack` is the click of a pick, which is spectral, and a bass stem carries
+almost nothing above 1 kHz, so the figure that axis needs is not in the
+recording; [The pipeline](#the-pipeline) says so at more length. Nothing
+measured describes any of the three, so all three stay words somebody chose.
 
 A figure names nothing on its own: 91% of the energy below 250Hz is not
 "scooped", because every isolated bass stem is mostly low. A measurement becomes

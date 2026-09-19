@@ -223,8 +223,8 @@ control, which matters more than it looks: a live edit writes nothing back, so
 without it each sweep would run on a chain the previous one left skewed.
 
 A control's range comes from the catalog. That is not a nicety: 1,452 of the
-device's 4,835 float controls do not run zero to one, and a Simple EQ's Mid
-Freq swept 0..1 never leaves its bottom stop and reports as a control that does
+device's 4,835 float controls do not run zero to one, and a Simple EQ's Mid Freq
+swept 0..1 never leaves its bottom stop and reports as a control that does
 nothing.
 
 `--points` is how many positions a dial is measured at; a list is measured at
@@ -239,5 +239,5 @@ why that matters and `measure names` settles it against the hardware.
 
 Getting the readings into the binary is a separate step: `just pack-measured`
 writes `pkg/sdk/measured/data/hx-stomp.json.gz` through the same reader the
-binary uses, so a library that will not load is refused there rather than at
-the next build. Only the fingerprints are packed; the curves stay here.
+binary uses, so a library that will not load is refused there rather than at the
+next build. Only the fingerprints are packed; the curves stay here.

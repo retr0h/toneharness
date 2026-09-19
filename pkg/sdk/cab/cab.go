@@ -44,7 +44,6 @@
 package cab
 
 import (
-	"fmt"
 	"math"
 	"math/cmplx"
 
@@ -67,12 +66,6 @@ const (
 // by something nobody here wrote and cannot measure.
 const Rate = 48000
 
-// ErrTooShort reports signals with too little in them to divide.
-var ErrTooShort = fmt.Errorf("not enough signal to work from")
-
-// ErrNotPowerOfTwo reports a length the transform cannot take.
-var ErrNotPowerOfTwo = fmt.Errorf("the length must be a power of two")
-
 // Capture recovers what a cabinet did to a signal.
 //
 // Deconvolution: what came back, divided by what went in, bin by bin. The
@@ -92,9 +85,10 @@ func Capture(
 	}
 
 	if len(sent) < taps || len(back) < taps {
-		return nil, fmt.Errorf(
-			"%w: %d samples out and %d back, against %d taps",
-			ErrTooShort, len(sent), len(back), taps)
+		return nil, &TooShortError{
+			Sent: len(sent), Back: len(back), Taps: taps,
+			What: [2]string{"what went out", "what came back"},
+		}
 	}
 
 	n := next(max(len(sent), len(back)))
@@ -110,7 +104,7 @@ func Capture(
 	}
 
 	if loudest == 0 {
-		return nil, fmt.Errorf("%w: what went in was silence", ErrTooShort)
+		return nil, &SilenceError{Side: "what went in"}
 	}
 
 	floor := loudest * 1e-6
@@ -148,9 +142,10 @@ func Match(
 	}
 
 	if len(target) < taps || len(have) < taps {
-		return nil, fmt.Errorf(
-			"%w: %d samples of target and %d of what is in hand, against %d taps",
-			ErrTooShort, len(target), len(have), taps)
+		return nil, &TooShortError{
+			Sent: len(target), Back: len(have), Taps: taps,
+			What: [2]string{"target", "what is in hand"},
+		}
 	}
 
 	n := next(max(len(target), len(have)))
@@ -164,7 +159,7 @@ func Match(
 	}
 
 	if loudest == 0 {
-		return nil, fmt.Errorf("%w: what is in hand is silence", ErrTooShort)
+		return nil, &SilenceError{Side: "what is in hand"}
 	}
 
 	floor := loudest * 1e-6
@@ -329,9 +324,7 @@ func usable(
 	taps int,
 ) error {
 	if taps != Short && taps != Long {
-		return fmt.Errorf(
-			"%w: a device loads %d or %d samples, not %d",
-			ErrNotPowerOfTwo, Short, Long, taps)
+		return &BadLengthError{Taps: taps}
 	}
 
 	return nil

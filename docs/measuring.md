@@ -427,10 +427,10 @@ So there are two artifacts and they are not interchangeable:
 | A block curve    | one block, nothing else in the chain            | yes, this is the library | one sweep per control, once            |
 | A chain Jacobian | the preset being tuned, at its current settings | no                       | one measurement per control, per solve |
 
-`just isolate "US Dripman" amp` builds the first: a rig holding one block,
-compiled, written to a scratch slot and loaded. Every sweep records the chain it
-ran through, read back off the device with `presets current`, and marks whether
-that chain held anything else.
+`tonestack measure controls --model HD2_AmpUSDripmanNorm` builds the first: a
+rig holding one block, compiled and played. Every sweep records the chain it ran
+through, read back off the device with `presets current`, and marks whether that
+chain held anything else.
 
 ### The flash, because auditioning through slots wears one out
 
@@ -462,7 +462,7 @@ on a chain the first one skewed. Sweep eleven and the eleventh runs on an
 amplifier with four controls pinned at maximum.
 
 Playing the same file again replaces the edit buffer and undoes every move, so
-`just sweep` takes `--preset` and does that first. Through `play` rather than by
+`measure controls` does that before each control. Through `play` rather than by
 reselecting a slot, for the reason above: a campaign of twelve sweeps would
 otherwise spend twelve flash writes putting a chain back.
 
@@ -497,8 +497,8 @@ This amplifier's listing begins Bass, Bias, BiasX; its wire order begins Norm
 Drive, Bass, Mid, Treble. Counting down the printed one mislabels every curve
 and the numbers stay plausible while it does.
 
-`just identify 1 12` holds the catalog to the device: move an index, read back
-which named parameter changed, and say so.
+`tonestack measure names --model HD2_AmpUSDripmanNorm` holds the catalog to the
+device: move each index, read back which named parameter changed, and say so.
 
 ## Why a synthesised signal will not do
 

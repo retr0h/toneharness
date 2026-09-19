@@ -68,9 +68,6 @@ const (
 // difference was entirely this.
 const Margin = 500 * time.Millisecond
 
-// ErrNoDevice is returned when the named hardware is not attached.
-var ErrNoDevice = fmt.Errorf("no such audio device")
-
 // Bench is an open connection to a piece of audio hardware.
 //
 // Held open across many readings rather than opened per reading. Opening a
@@ -160,9 +157,9 @@ func find(
 		}
 	}
 
-	return malgo.DeviceID{}, "", fmt.Errorf(
-		"%w: no %s device matching %q. Attached: %s",
-		ErrNoDevice, direction(kind), want, strings.Join(had, ", "))
+	return malgo.DeviceID{}, "", &NoDeviceError{
+		Want: want, Direction: direction(kind), Had: had,
+	}
 }
 
 // direction names a device kind the way somebody would say it.

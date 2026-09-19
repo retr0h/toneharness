@@ -28,7 +28,12 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
+	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"os"
 
 	"github.com/retr0h/tonestack/pkg/sdk/measured"
@@ -40,30 +45,91 @@ func main() {
 		os.Exit(2)
 	}
 
-	in, err := os.Open(os.Args[1]) //nolint:gosec // a path the operator gave
+	if err := pack(os.Args[1], os.Args[2]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+// pack writes the readings into the form the sdk embeds.
+//
+// Skips and says so when the readings are not there, and writes only when what
+// it built differs from what is committed. Both for the same reason as the
+// catalog and the corpus beside it: `just generate` runs on machines that have
+// never measured anything, and a generator that rewrites an identical file
+// puts a diff in front of somebody on every run.
+func pack(
+	from, to string,
+) error {
+	body, err := os.ReadFile(from) //nolint:gosec // a path the operator gave
+	if errors.Is(err, fs.ErrNotExist) {
+		fmt.Printf("  measurements: skipped, no %s\n", from)
+
+		return nil
+	}
+
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return fmt.Errorf("reading the measurements: %w", err)
 	}
 
-	defer func() { _ = in.Close() }()
-
-	out, err := os.Create(os.Args[2]) //nolint:gosec // a path the operator gave
+	same, err := matches(to, body)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return err
 	}
 
-	if err := measured.Packed(out, in); err != nil {
-		_ = out.Close()
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	if same {
+		fmt.Printf("  measurements: unchanged\n")
+
+		return nil
 	}
 
-	if err := out.Close(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	var packed bytes.Buffer
+	if err := measured.Packed(&packed, bytes.NewReader(body)); err != nil {
+		return err
 	}
 
-	fmt.Printf("  packed %s into %s\n", os.Args[1], os.Args[2])
+	if err := os.WriteFile(to, packed.Bytes(), 0o600); err != nil {
+		return fmt.Errorf("writing the measurements: %w", err)
+	}
+
+	fmt.Printf("  measurements: packed %s into %s\n", from, to)
+
+	return nil
+}
+
+// matches reports whether the committed file already holds these readings.
+//
+// Compared unpacked rather than byte for byte, because two gzip streams of the
+// same bytes are not required to be identical and a compressor that changed
+// its mind would read as a change nobody made.
+func matches(
+	to string,
+	body []byte,
+) (bool, error) {
+	f, err := os.Open(to) //nolint:gosec // a path the operator gave
+	if errors.Is(err, fs.ErrNotExist) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, fmt.Errorf("reading the packed measurements: %w", err)
+	}
+
+	defer func() { _ = f.Close() }()
+
+	r, err := gzip.NewReader(f)
+	if err != nil {
+		// Unreadable is not the same as different, but it is handled the
+		// same way: write a good one over it.
+		return false, nil //nolint:nilerr // a corrupt file is rewritten
+	}
+
+	defer func() { _ = r.Close() }()
+
+	held, err := io.ReadAll(r)
+	if err != nil {
+		return false, nil //nolint:nilerr // a corrupt file is rewritten
+	}
+
+	return bytes.Equal(held, body), nil
 }

@@ -78,9 +78,7 @@ func Write(
 	made Made,
 ) error {
 	if len(of) != Short && len(of) != Long {
-		return fmt.Errorf(
-			"%w: a device loads %d or %d samples, not %d",
-			ErrNotPowerOfTwo, Short, Long, len(of))
+		return &BadLengthError{Taps: len(of)}
 	}
 
 	const (

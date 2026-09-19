@@ -94,20 +94,6 @@ func (n Notes) Unmet() Notes {
 	return out
 }
 
-// ErrInsisted is returned when a request named gear the device does not have
-// and said not to substitute.
-var ErrInsisted = fmt.Errorf("the device has no such gear")
-
-// ErrWrongDevice is returned when the measurements describe one device and
-// the setup names another.
-//
-// Not a warning. Every block was measured on one piece of hardware, and a
-// ranking built from those readings is a ranking of that device's blocks. Run
-// against another it answers confidently with models the device in hand may
-// not even have.
-var ErrWrongDevice = fmt.Errorf(
-	"the measurements were taken on a different device")
-
 // Translate turns a request and a setup into a rig.
 //
 // Deterministic given the same catalog, the same measurements and the same
@@ -197,8 +183,10 @@ func agrees(
 			deps.Measured.Device, setup.Device.Model),
 	})
 
-	return fmt.Errorf("%w: %s, not %s",
-		ErrWrongDevice, deps.Measured.Device, setup.Device.Model)
+	return &WrongDeviceError{
+		Measured: deps.Measured.Device,
+		Setup:    setup.Device.Model,
+	}
 }
 
 // chainFor is the signal path a request asks for.
@@ -275,7 +263,7 @@ func namedGear(
 					Said:  why + ", and the request insisted on it",
 				})
 
-				return nil, fmt.Errorf("%w: %s", ErrInsisted, want.Gear)
+				return nil, &InsistedError{Gear: want.Gear, Why: why}
 			}
 
 			*notes = append(*notes, Note{

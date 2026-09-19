@@ -39,7 +39,8 @@ import (
 //
 // Taken rather than generated. Every number came off a pedal, through the
 // loop in docs/measuring.md, against the one reference signal named inside
-// the file. Regenerate with `just fingerprint` and `just pack-measured`.
+// the file. Re-measure with `tonestack measure blocks`; `just generate` packs
+// what that wrote into here.
 //
 //go:embed data/hx-stomp.json.gz
 var builtIn []byte

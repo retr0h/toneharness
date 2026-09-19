@@ -18,26 +18,35 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package specdoc
+package reamp
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
-// errNoSchema reports a document that describes no schemas.
-var errNoSchema = errors.New("not a schema this can render")
+// ErrNoDevice is returned when the named hardware is not attached.
+var ErrNoDevice = errors.New("no such audio device")
 
-// Buckets is the part of a preamble every contract shares.
+// NoDeviceError says what was asked for and what was actually attached.
 //
-// How a field's values are constrained is this package's own scheme rather
-// than anything a contract says about itself, so it is written once here and
-// the rest of a preamble is written beside the contract it describes.
-const Buckets = "A field marked `*` is required. A field that holds another " +
-	"object has\nno grammar of its own and shows `\u2014`; the question moves " +
-	"to that\nobject's table. Every other field is in one of four buckets:\n" +
-	`
-| grammar | means |
-| --- | --- |
-| closed | one of a fixed set, listed here and refused if it is not one of them |
-| looked up | checked against the catalog for the device in hand, so the valid values depend on which device |
-| shaped | checked against a pattern |
-| open | prose. Nothing parses it, and nothing will refuse it for what it says |
-`
+// The list travels with it because the answer to "that device is not here" is
+// almost always in the names that are, spelled slightly differently.
+type NoDeviceError struct {
+	// Want is the name that was asked for.
+	Want string
+	// Direction is whether this was an input or an output.
+	Direction string
+	// Had is every device of that direction that was attached.
+	Had []string
+}
+
+// Error implements the error interface.
+func (e *NoDeviceError) Error() string {
+	return fmt.Sprintf("no such audio device: no %s device matching %q. "+
+		"Attached: %s", e.Direction, e.Want, strings.Join(e.Had, ", "))
+}
+
+// Unwrap returns ErrNoDevice so callers can match with errors.Is.
+func (*NoDeviceError) Unwrap() error { return ErrNoDevice }
