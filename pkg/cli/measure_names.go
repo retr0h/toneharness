@@ -34,7 +34,7 @@ import (
 
 // NamesOptions is what checking a block's parameter order needs to know.
 type NamesOptions struct {
-	Client *sdk.Client
+	Client Pedal
 	Model  string
 }
 
@@ -128,7 +128,7 @@ func MeasureNames(
 // probe moves one index and reports which named parameter changed.
 func probe(
 	ctx context.Context,
-	client *sdk.Client,
+	client Pedal,
 	preset string,
 	index int,
 ) (string, error) {
@@ -173,7 +173,7 @@ func probe(
 // held is the parameters of the block being probed, as the device holds them.
 func held(
 	ctx context.Context,
-	client *sdk.Client,
+	client Pedal,
 ) (map[string]any, error) {
 	read, err := client.Current(ctx, sdk.FormatRig)
 	if err != nil {

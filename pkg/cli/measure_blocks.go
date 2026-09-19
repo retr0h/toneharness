@@ -45,7 +45,7 @@ import (
 
 // MeasureOptions is what measuring every block needs to know.
 type MeasureOptions struct {
-	Client   *sdk.Client
+	Client   Pedal
 	Dry      string
 	Out      string
 	Category string
@@ -53,6 +53,11 @@ type MeasureOptions struct {
 	Resume   bool
 	Retry    bool
 	Hardware string
+	// Bench is somewhere to push the signal through. Left unset, the named
+	// hardware is opened. A test sets it, because everything this does
+	// besides listening is bookkeeping and ought not to need an audio
+	// interface, a cable and somebody in the room to plug them in.
+	Bench sdk.Bench
 }
 
 // clipped is where a reading stops describing the block and starts describing
@@ -101,12 +106,18 @@ func MeasureBlocks(
 
 	want := wanted(cat, opts.Category, lib.Blocks)
 
-	bench, err := reamp.Open(opts.Hardware)
-	if err != nil {
-		return err
-	}
+	bench := opts.Bench
 
-	defer func() { _ = bench.Close() }()
+	if bench == nil {
+		open, err := reamp.Open(opts.Hardware)
+		if err != nil {
+			return err
+		}
+
+		defer func() { _ = open.Close() }()
+
+		bench = open
+	}
 
 	_, _ = fmt.Fprintf(w, "\n  %d blocks through %s, %.0fs each\n",
 		len(want), bench.Name(), opts.Seconds)
@@ -153,7 +164,7 @@ func MeasureBlocks(
 // one measures a single block, with its preset already built.
 func one(
 	ctx context.Context,
-	client *sdk.Client,
+	client Pedal,
 	bench sdk.Bench,
 	signal []float32,
 	lib *measured.Library,
@@ -238,7 +249,7 @@ func baseline(
 // block cost three times what the measurement did.
 func build(
 	w io.Writer,
-	client *sdk.Client,
+	client Pedal,
 	ctx context.Context,
 	want []measured.Block,
 	work string,
@@ -291,7 +302,7 @@ func build(
 
 // compile writes one block's rig and turns it into a preset.
 func compile(
-	client *sdk.Client,
+	client Pedal,
 	ctx context.Context,
 	block measured.Block,
 	work string,

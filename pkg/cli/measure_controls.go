@@ -41,7 +41,7 @@ import (
 
 // ControlsOptions is what sweeping one block's controls needs to know.
 type ControlsOptions struct {
-	Client   *sdk.Client
+	Client   Pedal
 	Model    string
 	Dry      string
 	Out      string
@@ -49,6 +49,9 @@ type ControlsOptions struct {
 	Points   int
 	Takes    int
 	Hardware string
+	// Bench is somewhere to push the signal through, as it is for measuring
+	// blocks. Left unset, the named hardware is opened.
+	Bench sdk.Bench
 }
 
 // alone is where a block sits when it is the only thing in the chain.
@@ -134,12 +137,18 @@ func MeasureControls(
 		return fmt.Errorf("building a chain holding only %s: %w", opts.Model, err)
 	}
 
-	bench, err := reamp.Open(opts.Hardware)
-	if err != nil {
-		return err
-	}
+	bench := opts.Bench
 
-	defer func() { _ = bench.Close() }()
+	if bench == nil {
+		open, err := reamp.Open(opts.Hardware)
+		if err != nil {
+			return err
+		}
+
+		defer func() { _ = open.Close() }()
+
+		bench = open
+	}
 
 	out := measured.Curves{
 		Device: "HX Stomp", Gear: block.Name, Block: string(block.ID),
@@ -365,7 +374,7 @@ func report(
 // a block that is not there.
 func turn(
 	ctx context.Context,
-	client *sdk.Client,
+	client Pedal,
 	c control,
 	at float64,
 ) error {
@@ -447,7 +456,7 @@ func wireOrder(
 // current is the chain the device is playing, as the rig it describes.
 func current(
 	ctx context.Context,
-	client *sdk.Client,
+	client Pedal,
 ) (string, error) {
 	read, err := client.Current(ctx, sdk.FormatRig)
 	if err != nil {

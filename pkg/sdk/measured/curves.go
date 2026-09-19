@@ -297,10 +297,14 @@ func Named() []string {
 }
 
 // line is the least-squares fit through a set of points.
+//
+// Only ever called with at least two positions that are not all the same,
+// because Fitted refuses anything else first. So the denominator cannot be
+// zero and there is no guard here for it: a guard nothing can reach is a
+// branch nothing can test and a claim nobody can check.
 func line(
 	xs, ys []float64,
 ) (float64, float64) {
-	n := float64(len(xs))
 	mx, my := average(xs), average(ys)
 
 	var top, bottom float64
@@ -310,25 +314,15 @@ func line(
 		bottom += (xs[i] - mx) * (xs[i] - mx)
 	}
 
-	if bottom == 0 {
-		return 0, my
-	}
-
 	slope := top / bottom
-
-	_ = n
 
 	return slope, my - slope*mx
 }
 
-// average is the mean of a set of values.
+// average is the mean of a set of values, which is never empty here.
 func average(
 	of []float64,
 ) float64 {
-	if len(of) == 0 {
-		return 0
-	}
-
 	var sum float64
 	for _, v := range of {
 		sum += v
@@ -341,11 +335,7 @@ func average(
 func spread(
 	of []float64,
 ) float64 {
-	if len(of) == 0 {
-		return 0
-	}
-
-	low, high := of[0], of[0]
+	low, high := math.Inf(1), math.Inf(-1)
 
 	for _, v := range of {
 		low = math.Min(low, v)
