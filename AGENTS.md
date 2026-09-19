@@ -66,6 +66,7 @@ code. Read the one that matches the task rather than all of them:
 | Reading or writing a `.hlx`                                                                                | [docs/preset-format.md](docs/preset-format.md)                                                                          |
 | Reading or editing what a device holds                                                                     | [docs/device.md](docs/device.md)                                                                                        |
 | Touching USB                                                                                               | [docs/protocol.md](docs/protocol.md), **including the rules that keep a device alive**                                  |
+| Pushing audio through a pedal and measuring what comes back                                                | [docs/measuring.md](docs/measuring.md), the USB channel map, the Input block enum, and what is not working yet          |
 | Changing the shape of the system                                                                           | [docs/superpowers/specs/](docs/superpowers/specs/), dated design records, superseded rather than rewritten              |
 
 The RigSpec contract is
