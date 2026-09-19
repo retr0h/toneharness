@@ -230,6 +230,17 @@ fingerprint *ARGS:
     uvx --with sounddevice --with numpy --with soundfile \
         python3 resources/fingerprint.py {{ ARGS }}
 
+# Measure one block completely: every control, alone, ready to fold
+#
+# The expensive half. A control is about two minutes and a twelve-control
+# amplifier most of an hour, so this is aimed at the blocks a chain reaches
+# for rather than run across all 665. `just fingerprint` is the cheap half.
+#
+#     just campaign HD2_AmpUSDripmanNorm amp
+campaign MODEL ROLE *ARGS:
+    uvx --with sounddevice --with numpy --with soundfile \
+        python3 resources/campaign.py {{ MODEL }} {{ ROLE }} {{ ARGS }}
+
 # Fold a block's sweeps into the one matrix the algorithm reads
 #
 # A sweep measures one control; what solves for a setting is the whole block,

@@ -30,11 +30,13 @@ import argparse
 import gzip
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -227,7 +229,43 @@ def empty(tmp: Path) -> str:
     return ""
 
 
-def load(block: dict, tmp: Path) -> str:
+def compile_all(want: list[dict], tmp: Path) -> dict[str, str]:
+    """Build every preset up front, in parallel, before the device is touched.
+
+    Compiling reads the catalog and writes a file. It needs no device, it is
+    the slow half of a block's turn, and done inside the measuring loop it
+    makes each block cost three times what the measurement does.
+
+    So it happens here instead, across every core at once. What comes back
+    maps a block to its preset, or to why it has none.
+    """
+    built: dict[str, str] = {}
+
+    def one(block: dict) -> tuple[str, str]:
+        spec = tmp / f"{block['id']}.yaml"
+        out = tmp / f"{block['id']}.hlx"
+        spec.write_text(rig(block))
+
+        ok, said = cli("presets", "compile", "--rig", str(spec),
+                       "--out", str(out))
+
+        if not ok:
+            return block["id"], f"compile: {said.splitlines()[0] if said else 'failed'}"
+
+        return block["id"], str(out)
+
+    with ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as pool:
+        for ident, where in pool.map(one, want):
+            built[ident] = where
+
+    made = sum(1 for v in built.values() if v.endswith(".hlx"))
+    print(f"  compiled {made} of {len(want)}, "
+          f"{len(want) - made} the compiler would not build")
+
+    return built
+
+
+def load(built: str) -> str:
     """Put one block in front of the device alone, storing nothing.
 
     Through `presets play`, which replaces the edit buffer, rather than
@@ -239,17 +277,10 @@ def load(block: dict, tmp: Path) -> str:
 
     Empty string when it worked.
     """
-    spec = tmp / "fp.yaml"
-    built = tmp / "fp.hlx"
-    spec.write_text(rig(block))
+    ok, said = cli("presets", "play", "--preset", str(built))
 
-    for step in (
-        ("presets", "compile", "--rig", str(spec), "--out", str(built)),
-        ("presets", "play", "--preset", str(built)),
-    ):
-        ok, said = cli(*step)
-        if not ok:
-            return f"{step[1]}: {said.splitlines()[0] if said else 'failed'}"
+    if not ok:
+        return f"play: {said.splitlines()[0] if said else 'failed'}"
 
     return ""
 
@@ -307,8 +338,11 @@ def main() -> None:
         print("  baseline: " + "  ".join(
             f"{k} {v:.2f}" for k, v in header["baseline"].items()))
 
+        built = compile_all(want, tmp)
+
         for i, block in enumerate(want, 1):
-            why = load(block, tmp)
+            where = built.get(block["id"], "compile: never attempted")
+            why = where if not where.endswith(".hlx") else load(where)
 
             if why:
                 done[block["id"]] = {**block, "refused": why}
