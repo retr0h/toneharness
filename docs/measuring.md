@@ -329,31 +329,53 @@ It is not the order a `.hlx` writes its keys and not anything alphabetical. For
 the US Dripman the device's order begins Norm Drive, Bass, Mid, Treble, where
 the preset's own JSON is sorted and begins Bass, Bias, BiasX, Bright.
 
-**The block is not its position in the chain**, and what it is instead is not
-established. Probing every address against a preset holding an amplifier, a
-cabinet, a split and a join:
+**The block is not its position in the chain.** It is the device's own number
+for a slot, and probing every address from 0 to 79 against a preset holding an
+amplifier, a cabinet, a split and a join finds four that answer:
 
-| address | accepted      | refused         |
-| ------- | ------------- | --------------- |
-| 0       | 1, 2          | everything else |
-| 9, 10   | 0, 1          | 2               |
-| 19      | 0, 1, 2, 3, 5 | 4               |
+| address | accepts       | is                                                |
+| ------- | ------------- | ------------------------------------------------- |
+| 0       | 1, 2          | the **input block**, `HelixStomp_AppDSPFlowInput` |
+| 9, 10   | 0, 1          | **splits**                                        |
+| 19      | 0, 1, 2, 3, 5 | the **join**                                      |
 
-Two of those read cleanly against the models involved. A join's parameters are A
-Level, A Pan, B Level, B Pan, B Polarity, Level, and 4 is the only boolean among
-them, which is the only one address 19 refuses: **19 is the join**. A split's
-are BalanceA, BalanceB, bypass, and bypass takes its own opcode rather than this
-one, so **9 and 10 are splits**.
+Each reads exactly against its model's parameter list, which is what identifies
+them. The input block's parameters are noiseGate, threshold, decay, select: the
+two floats are taken and the boolean and the enum are refused. A join's are A
+Level, A Pan, B Level, B Pan, B Polarity, Level, and B Polarity is the only
+boolean and the only refusal. A split's are BalanceA, BalanceB, bypass, and
+bypass takes its own opcode.
 
-Address 0 does not read cleanly against anything. It takes two parameters and
-refuses the rest, including parameters of the same kind and range as the two it
-takes, and the refusal does not depend on the value: Treble is declined at 0,
-0.25, 0.75 and 1 alike. Both accepted parameters move the sound, so the address
-is real.
+### What does not work, and is the next thing to solve
 
-**This is unfinished.** Until it is, a sweep can reach the controls that answer
-and not the rest, which is enough to prove the method and not enough to
-characterise a device.
+**No chain block answers.** Not the amplifier, not the cabinet, at any address
+from 0 to 79.
+
+Ruled out, each by trying it:
+
+- **Every address.** 0 to 79, parameter 1, which is a float on nearly every
+  model. Four answered and all four are flow blocks.
+- **Both other addressing fields.** The model selector at 0 and 1, and the
+  addressing mode true and false, in all four combinations, across the addresses
+  a chain block could plausibly occupy. None answered.
+- **The value.** Treble is refused at 0, 0.25, 0.75 and 1 alike, so it is not a
+  range check.
+- **An unopened edit buffer.** Reading the buffer first, which a preset write is
+  documented to need, changes nothing.
+
+Every refusal is `-3`, the same code the device gives for a parameter it will
+not address the way it was asked.
+
+So a live edit currently reaches the blocks the signal passes through on its way
+in and out, and not the blocks that make the sound. Something further is needed:
+another key in the message, a different opcode for chain blocks, or a call that
+selects a block before its parameters can be set. Nothing in the
+reverse-engineering this was built from distinguishes the two kinds of block,
+which suggests the distinction is real and undocumented rather than a mistake in
+the addressing here.
+
+**This is what blocks characterising a device.** The method works, the loop
+works, and the controls it can reach are the wrong ones.
 
 ## Why a synthesised signal will not do
 

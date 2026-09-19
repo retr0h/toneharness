@@ -20,7 +20,10 @@
 
 package sdk
 
-import "github.com/retr0h/tonestack/pkg/sdk/result"
+import (
+	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
+	"github.com/retr0h/tonestack/pkg/sdk/result"
+)
 
 // What every operation answers with.
 //
@@ -90,6 +93,8 @@ type (
 
 	// Format is what an export is written as: FormatRig or FormatPreset.
 	Format = result.Format
+	// Address says which control a live edit moves.
+	Address = device.Address
 
 	// Existing is what a write does about a file already at its path:
 	// ReplaceExisting or KeepExisting.

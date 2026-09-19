@@ -59,6 +59,27 @@ const (
 	editValue = 119
 )
 
+// Address says which control a live edit moves.
+//
+// Four numbers rather than two, because a device addresses a parameter in
+// more than one way and the other two are not always what a caller would
+// assume. Both extra fields have a sensible zero: the block's own model,
+// addressed the ordinary way.
+type Address struct {
+	// Block is the device's own number for the block, which is not its
+	// position in the chain.
+	Block int
+	// Param is the parameter's position in that model's list.
+	Param int
+	// Model picks between the block's own model and a cabinet fused into an
+	// amplifier's slot, which carries its own parameters under 1.
+	Model int
+	// Direct says the parameter is addressed the ordinary way. False reaches
+	// the value some blocks carry past their parameter list, where the index
+	// is then zero.
+	Direct bool
+}
+
 // SetParam moves one control on the preset the device is playing.
 //
 // The value is in the parameter's own units rather than anything normalised.
@@ -70,15 +91,14 @@ const (
 // recording the same sound at every step and calling it a measurement.
 func (s *session) SetParam(
 	ctx context.Context,
-	block int,
-	param int,
+	at Address,
 	value float32,
 ) error {
 	_, err := s.Call(ctx, channelData, opSetParam, []wire.Arg{
-		wire.Number(editBlock, uint64(block)), //nolint:gosec // a chain index
-		wire.Flag(editDirect, true),
-		wire.Number(editModel, 0),
-		wire.Number(editParam, uint64(param)), //nolint:gosec // a list index
+		wire.Number(editBlock, uint64(at.Block)), //nolint:gosec // an address
+		wire.Flag(editDirect, at.Direct),
+		wire.Number(editModel, uint64(at.Model)), //nolint:gosec // 0 or 1
+		wire.Number(editParam, uint64(at.Param)), //nolint:gosec // a list index
 		wire.Real(editValue, value),
 	})
 

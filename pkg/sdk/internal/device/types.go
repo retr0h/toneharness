@@ -148,10 +148,8 @@ type Selector interface {
 // what the device plays, so a caller sweeping a control through its range has
 // no other way to be heard.
 type Turner interface {
-	// SetParam moves one parameter on the running preset, addressing the
-	// block by its position in the chain and the parameter by its position
-	// in that model's list.
-	SetParam(ctx context.Context, block, param int, value float32) error
+	// SetParam moves one parameter on the running preset.
+	SetParam(ctx context.Context, at Address, value float32) error
 }
 
 // Loaded is a session that can read the preset a device is playing.

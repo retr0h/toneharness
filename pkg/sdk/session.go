@@ -254,12 +254,11 @@ func (s *Session) Select(
 // held before.
 func (s *Session) Turn(
 	ctx context.Context,
-	block int,
-	param int,
+	at Address,
 	value float32,
 ) error {
 	_, err := operation(ctx, s, func(f *deviceslots.Flows) (struct{}, error) {
-		return struct{}{}, f.Turn(ctx, s.editor, block, param, value)
+		return struct{}{}, f.Turn(ctx, s.editor, at, value)
 	})
 
 	return err

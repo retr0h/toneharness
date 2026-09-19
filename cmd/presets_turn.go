@@ -24,12 +24,16 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"github.com/retr0h/tonestack/pkg/sdk"
 )
 
 var (
-	presetsTurnBlock int
-	presetsTurnParam int
-	presetsTurnValue float64
+	presetsTurnBlock  int
+	presetsTurnParam  int
+	presetsTurnValue  float64
+	presetsTurnModel  int
+	presetsTurnDirect bool
 )
 
 // presetsTurnCmd represents the presets turn command.
@@ -59,8 +63,15 @@ distance runs one to twelve inches.`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		pedal.claim()
 
-		if err := newClient().Turn(cmd.Context(),
-			presetsTurnBlock, presetsTurnParam, float32(presetsTurnValue)); err != nil {
+		at := sdk.Address{
+			Block:  presetsTurnBlock,
+			Param:  presetsTurnParam,
+			Model:  presetsTurnModel,
+			Direct: presetsTurnDirect,
+		}
+
+		if err := newClient().Turn(
+			cmd.Context(), at, float32(presetsTurnValue)); err != nil {
 			return err
 		}
 
@@ -82,6 +93,10 @@ func init() {
 		"which parameter, by its position in the model's own list")
 	f.Float64Var(&presetsTurnValue, "value", 0,
 		"what to set it to, in the parameter's own units")
+	f.IntVar(&presetsTurnModel, "model", 0,
+		"the block's own model, or 1 for a cabinet fused into an amplifier")
+	f.BoolVar(&presetsTurnDirect, "direct", true,
+		"address the parameter the ordinary way; false reaches the value some blocks carry past their list")
 
 	// Fails only for a flag that does not exist, and these are defined above.
 	_ = presetsTurnCmd.MarkFlagRequired("param")

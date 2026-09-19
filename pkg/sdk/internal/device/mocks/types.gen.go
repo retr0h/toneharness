@@ -293,17 +293,17 @@ func (m *MockTurner) EXPECT() *MockTurnerMockRecorder {
 }
 
 // SetParam mocks base method.
-func (m *MockTurner) SetParam(ctx context.Context, block, param int, value float32) error {
+func (m *MockTurner) SetParam(ctx context.Context, at device.Address, value float32) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetParam", ctx, block, param, value)
+	ret := m.ctrl.Call(m, "SetParam", ctx, at, value)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetParam indicates an expected call of SetParam.
-func (mr *MockTurnerMockRecorder) SetParam(ctx, block, param, value any) *gomock.Call {
+func (mr *MockTurnerMockRecorder) SetParam(ctx, at, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetParam", reflect.TypeOf((*MockTurner)(nil).SetParam), ctx, block, param, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetParam", reflect.TypeOf((*MockTurner)(nil).SetParam), ctx, at, value)
 }
 
 // MockLoaded is a mock of Loaded interface.

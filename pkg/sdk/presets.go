@@ -169,12 +169,11 @@ func (c *Client) Select(
 // held before.
 func (c *Client) Turn(
 	ctx context.Context,
-	block int,
-	param int,
+	at Address,
 	value float32,
 ) error {
 	_, err := once(ctx, c, func(s *Session) (struct{}, error) {
-		return struct{}{}, s.Turn(ctx, block, param, value)
+		return struct{}{}, s.Turn(ctx, at, value)
 	})
 
 	return err

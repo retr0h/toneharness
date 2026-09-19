@@ -39,8 +39,7 @@ import (
 func (*Flows) Turn(
 	ctx context.Context,
 	s device.Editor,
-	block int,
-	param int,
+	at device.Address,
 	value float32,
 ) error {
 	t, ok := s.(device.Turner)
@@ -48,9 +47,9 @@ func (*Flows) Turn(
 		return fmt.Errorf("this session cannot move a control")
 	}
 
-	if err := t.SetParam(ctx, block, param, value); err != nil {
-		return fmt.Errorf(
-			"setting parameter %d on block %d to %g: %w", param, block, value, err)
+	if err := t.SetParam(ctx, at, value); err != nil {
+		return fmt.Errorf("setting parameter %d on block %d to %g: %w",
+			at.Param, at.Block, value, err)
 	}
 
 	return nil

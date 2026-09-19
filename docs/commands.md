@@ -512,6 +512,8 @@ tonestack presets turn [flags]
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
 | `--block` | int |  | which block, by its position in the chain, counting from zero |
+| `--direct` |  | `true` | address the parameter the ordinary way; false reaches the value some blocks carry past their list |
+| `--model` | int |  | the block's own model, or 1 for a cabinet fused into an amplifier |
 | `--param` | int |  | which parameter, by its position in the model's own list |
 | `--value` | float64 |  | what to set it to, in the parameter's own units |
 
