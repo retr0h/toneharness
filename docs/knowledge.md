@@ -178,6 +178,29 @@ the catalog, about 650 of them together. Most of what is left is not a tone knob
 but a switch or a placement, such as `TempoSync`, `Mic`, `Position`, `Angle` and
 `Pan`, and has no direction to find.
 
+**Two of the five are no longer unclear, on one amplifier.** A control can now
+be swept and measured rather than read about, so the question has an answer
+wherever somebody spends the hour it takes. Measured alone on the US Dripman
+Norm, per full turn:
+
+| control | centroid | level    | what that is                                  |
+| ------- | -------- | -------- | --------------------------------------------- |
+| `Sag`   | -4,316Hz | -4.2dB   | darkens and quietens, straight, and not small |
+| `Hum`   | -69Hz    | -0.048dB | under the rig's own wander, so it reaches nothing |
+
+Line 6's prose for `Sag` is *"tighter responsiveness for metal and djent"*
+against *"more touch dynamics & sustain"*, which says nothing about brightness
+or level. The measurement says tighter means brighter and louder, and it moves
+the centre of gravity about a third as far as the Treble knob does.
+
+`Hum` is the other useful kind of answer. Nothing can aim at it, so nothing
+should try.
+
+This is per model rather than general. `Sag` on a different amplifier is a
+different number and needs its own sweep.
+[resources/sweeps/](../resources/sweeps/) holds what has been measured and
+[algorithm.md](algorithm.md) says what it is for.
+
 ## Artist or song?
 
 Both, at different layers. A rig is not one thing, and treating it as one is

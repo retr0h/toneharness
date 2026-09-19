@@ -199,12 +199,20 @@ func (s *LoadPublicTestSuite) TestAWriteFailureIsReported() {
 // iotest is a reader that always fails.
 type iotest struct{}
 
-func (iotest) Read([]byte) (int, error) { return 0, errors.New("no") }
+func (iotest) Read(
+	[]byte,
+) (int, error) {
+	return 0, errors.New("no")
+}
 
 // broken is a writer that always fails.
 type broken struct{}
 
-func (broken) Write([]byte) (int, error) { return 0, errors.New("no") }
+func (broken) Write(
+	[]byte,
+) (int, error) {
+	return 0, errors.New("no")
+}
 
 func TestLoadPublicTestSuite(
 	t *testing.T,
