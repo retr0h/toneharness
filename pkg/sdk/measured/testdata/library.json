@@ -1,0 +1,90 @@
+{
+ "baseline": {
+  "centroid": 95.3,
+  "high": 0.0,
+  "level": -22.67,
+  "low": 98.57,
+  "mid": 1.42
+ },
+ "blocks": {
+  "AmpBright": {
+   "category": "amp",
+   "centroid": 9000.0,
+   "clipped": false,
+   "high": 80.0,
+   "id": "AmpBright",
+   "level": -20.0,
+   "low": 5.0,
+   "mid": 15.0,
+   "name": "Bright Amp"
+  },
+  "AmpClipped": {
+   "category": "amp",
+   "centroid": 300.0,
+   "clipped": true,
+   "high": 5.0,
+   "id": "AmpClipped",
+   "level": -0.1,
+   "low": 80.0,
+   "mid": 15.0,
+   "name": "Clipped Amp"
+  },
+  "AmpDark": {
+   "category": "amp",
+   "centroid": 300.0,
+   "clipped": false,
+   "high": 5.0,
+   "id": "AmpDark",
+   "level": -20.0,
+   "low": 80.0,
+   "mid": 15.0,
+   "name": "Dark Amp"
+  },
+  "AmpLoud": {
+   "category": "amp",
+   "centroid": 300.0,
+   "clipped": false,
+   "high": 5.0,
+   "id": "AmpLoud",
+   "level": -3.0,
+   "low": 80.0,
+   "mid": 15.0,
+   "name": "Loud Amp"
+  },
+  "AmpRefused": {
+   "category": "amp",
+   "id": "AmpRefused",
+   "name": "Refused Amp",
+   "refused": "play: the device said no"
+  },
+  "AmpTwin": {
+   "category": "amp",
+   "centroid": 300.0,
+   "clipped": false,
+   "high": 5.0,
+   "id": "AmpTwin",
+   "level": -20.0,
+   "low": 80.0,
+   "mid": 15.0,
+   "name": "Twin Amp"
+  },
+  "CabDark": {
+   "category": "cab",
+   "centroid": 300.0,
+   "clipped": false,
+   "high": 5.0,
+   "id": "CabDark",
+   "level": -20.0,
+   "low": 80.0,
+   "mid": 15.0,
+   "name": "Dark Cab"
+  }
+ },
+ "device": "HX Stomp",
+ "isolated": true,
+ "reference": {
+  "file": "resources/dry/bass-di.wav",
+  "seconds": 4.0,
+  "sha256": "abc"
+ }
+}
