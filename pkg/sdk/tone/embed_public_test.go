@@ -28,20 +28,20 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/tone"
 )
 
-// SchemaPublicTestSuite covers the contract a request is checked against.
+// EmbedPublicTestSuite covers the contract a request is checked against.
 //
 // The Go types are generated from the same document, so one this binary could
 // not read would have failed generation first. What is worth holding is that
 // the document and the types have not drifted apart in the ways generation
 // does not catch: a value added to an enum in the contract and nowhere else
 // compiles, ships, and is refused at runtime by a check nobody wrote.
-type SchemaPublicTestSuite struct {
+type EmbedPublicTestSuite struct {
 	suite.Suite
 
 	doc *openapi3.T
 }
 
-func (s *SchemaPublicTestSuite) SetupSuite() {
+func (s *EmbedPublicTestSuite) SetupSuite() {
 	doc, err := openapi3.NewLoader().LoadFromData(tone.Schema)
 	s.Require().NoError(err)
 
@@ -49,7 +49,7 @@ func (s *SchemaPublicTestSuite) SetupSuite() {
 }
 
 // TestTheContractDescribesBothDocuments covers the two roots existing.
-func (s *SchemaPublicTestSuite) TestTheContractDescribesBothDocuments() {
+func (s *EmbedPublicTestSuite) TestTheContractDescribesBothDocuments() {
 	for _, name := range []string{"ToneSpec", "Setup"} {
 		s.Run(name, func() {
 			ref, ok := s.doc.Components.Schemas[name]
@@ -71,7 +71,7 @@ func (s *SchemaPublicTestSuite) TestTheContractDescribesBothDocuments() {
 // every request and what they own changes when they buy something. Folding an
 // instrument into the ask would mean restating it every time, and the twelfth
 // request contradicting the first.
-func (s *SchemaPublicTestSuite) TestAskAndSetupStayApart() {
+func (s *EmbedPublicTestSuite) TestAskAndSetupStayApart() {
 	ask := s.doc.Components.Schemas["ToneSpec"].Value.Properties
 	setup := s.doc.Components.Schemas["Setup"].Value.Properties
 
@@ -92,7 +92,7 @@ func (s *SchemaPublicTestSuite) TestAskAndSetupStayApart() {
 // may not say where a knob goes: that is what the tool works out, and a number
 // typed into an authored file is how `dark` came to move Treble by a quarter
 // of its range because somebody decided a quarter.
-func (s *SchemaPublicTestSuite) TestNoKnobPositions() {
+func (s *EmbedPublicTestSuite) TestNoKnobPositions() {
 	for name, ref := range s.doc.Components.Schemas {
 		for field := range ref.Value.Properties {
 			s.Require().NotContains(
@@ -103,7 +103,7 @@ func (s *SchemaPublicTestSuite) TestNoKnobPositions() {
 }
 
 // TestEnumsMatchTheGoConstants covers the drift generation does not catch.
-func (s *SchemaPublicTestSuite) TestEnumsMatchTheGoConstants() {
+func (s *EmbedPublicTestSuite) TestEnumsMatchTheGoConstants() {
 	tests := []struct {
 		schema string
 		have   []string
@@ -145,7 +145,7 @@ func (s *SchemaPublicTestSuite) TestEnumsMatchTheGoConstants() {
 // schema is not what decides whether a genre works: eight records from three
 // artists is, because three records by one band is that band's sound wearing a
 // genre's name.
-func (s *SchemaPublicTestSuite) TestGenreIsNotAnEnum() {
+func (s *EmbedPublicTestSuite) TestGenreIsNotAnEnum() {
 	genre := s.doc.Components.Schemas["ToneSpec"].Value.Properties["genre"]
 
 	s.Require().NotNil(genre)
@@ -153,8 +153,8 @@ func (s *SchemaPublicTestSuite) TestGenreIsNotAnEnum() {
 		"a genre is a word, and which ones work is a question about records")
 }
 
-func TestSchemaPublicTestSuite(
+func TestEmbedPublicTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(SchemaPublicTestSuite))
+	suite.Run(t, new(EmbedPublicTestSuite))
 }

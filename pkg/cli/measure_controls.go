@@ -86,8 +86,8 @@ var floors = map[string]float64{
 // MeasureControls sweeps every control of one block, alone, and writes what
 // each of them does.
 func MeasureControls(
-	w io.Writer,
 	ctx context.Context,
+	w io.Writer,
 	opts ControlsOptions,
 ) error {
 	cat, err := catalog.BuiltIn()
@@ -132,7 +132,7 @@ func MeasureControls(
 		Category: string(block.Category),
 	}
 
-	preset, err := compile(opts.Client, ctx, entry, work, true)
+	preset, err := compile(ctx, opts.Client, entry, work, true)
 	if err != nil {
 		return fmt.Errorf("building a chain holding only %s: %w", opts.Model, err)
 	}
@@ -165,7 +165,7 @@ func MeasureControls(
 		block.Name, block.ID, len(want), bench.Name())
 
 	for _, c := range want {
-		curve, err := sweep(w, ctx, opts, bench, signal, preset, c)
+		curve, err := sweep(ctx, w, opts, bench, signal, preset, c)
 		if err != nil {
 			return err
 		}
@@ -224,8 +224,8 @@ func sweepable(
 
 // sweep moves one control through its range and measures at every position.
 func sweep(
-	w io.Writer,
 	ctx context.Context,
+	w io.Writer,
 	opts ControlsOptions,
 	bench sdk.Bench,
 	signal []float32,

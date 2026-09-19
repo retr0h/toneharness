@@ -112,7 +112,7 @@ func (s *NamesTestSuite) run(
 ) (string, error) {
 	var buf bytes.Buffer
 
-	err := MeasureNames(&buf, context.Background(), NamesOptions{
+	err := MeasureNames(context.Background(), &buf, NamesOptions{
 		Client: s.pedal, Model: model,
 	})
 

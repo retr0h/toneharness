@@ -57,8 +57,8 @@ var probes = []float64{0.123, 0.877}
 // Drive, Bass, Mid, Treble. Counting down the printed one mislabels every
 // curve, and the numbers stay entirely plausible while it does.
 func MeasureNames(
-	w io.Writer,
 	ctx context.Context,
+	w io.Writer,
 	opts NamesOptions,
 ) error {
 	cat, err := catalog.BuiltIn()
@@ -80,7 +80,7 @@ func MeasureNames(
 
 	defer func() { _ = os.RemoveAll(work) }()
 
-	preset, err := compile(opts.Client, ctx, measured.Block{
+	preset, err := compile(ctx, opts.Client, measured.Block{
 		ID: string(block.ID), Name: block.Name,
 		Category: string(block.Category),
 	}, work, true)

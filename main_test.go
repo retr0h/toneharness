@@ -610,6 +610,83 @@ func (s *MainTestSuite) TestEveryDomainPageIsIndexed() {
 	}
 }
 
+// TestContextComesFirst holds the rule CONTRIBUTING gives a context.
+//
+// "Every method takes a context.Context first." Go's own convention, and the
+// reason is that a reader should not have to check: a signature where it
+// sometimes leads and sometimes sits third makes cancellation something to
+// look up rather than something to know.
+//
+// Seven functions had it second or third, all of them in the three measuring
+// commands ported from Python, where the shape came across with the code. No
+// linter checks it, so it drifted silently, the way the signature rule did.
+func (s *MainTestSuite) TestContextComesFirst() {
+	fset := token.NewFileSet()
+
+	var late []string
+
+	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		switch {
+		case err != nil:
+			return err
+		case d.IsDir():
+			switch d.Name() {
+			case ".git", ".worktrees", ".claude", "node_modules":
+				return fs.SkipDir
+			}
+
+			return nil
+		case !strings.HasSuffix(path, ".go"),
+			strings.HasSuffix(path, ".gen.go"),
+			strings.HasSuffix(path, ".gen_test.go"):
+			return nil
+		}
+
+		file, err := parser.ParseFile(fset, path, nil, 0)
+		if err != nil {
+			return err
+		}
+
+		ast.Inspect(file, func(n ast.Node) bool {
+			decl, ok := n.(*ast.FuncDecl)
+			if !ok || decl.Type.Params == nil {
+				return true
+			}
+
+			for i, p := range decl.Type.Params.List {
+				if i == 0 || !isContext(p.Type) {
+					continue
+				}
+
+				late = append(late, fmt.Sprintf("%s:%d %s takes a context as "+
+					"parameter %d", path, fset.Position(decl.Pos()).Line,
+					decl.Name.Name, i+1))
+			}
+
+			return true
+		})
+
+		return nil
+	})
+
+	s.Require().NoError(err)
+	s.Require().Empty(late, "a context goes first:\n%s", strings.Join(late, "\n"))
+}
+
+// isContext reports whether a parameter's type is context.Context.
+func isContext(
+	of ast.Expr,
+) bool {
+	at, ok := of.(*ast.SelectorExpr)
+	if !ok || at.Sel.Name != "Context" {
+		return false
+	}
+
+	from, ok := at.X.(*ast.Ident)
+
+	return ok && from.Name == "context"
+}
+
 // TestTheCLIStandsAlone asserts the CLI half could be its own repository.
 //
 // The mirror of TestTheSDKStandsAlone, for the other end. main.go, cmd/ and

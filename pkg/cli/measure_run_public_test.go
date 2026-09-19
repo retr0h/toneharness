@@ -110,7 +110,7 @@ func (s *MeasureRunTestSuite) TestBlocksMeasuresACategory() {
 
 	var buf bytes.Buffer
 
-	s.Require().NoError(MeasureBlocks(&buf, context.Background(), MeasureOptions{
+	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
 		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
 		Seconds: 1, Bench: bench{},
 	}))
@@ -140,7 +140,7 @@ func (s *MeasureRunTestSuite) TestBlocksMarksWhatClipped() {
 
 	var buf bytes.Buffer
 
-	s.Require().NoError(MeasureBlocks(&buf, context.Background(), MeasureOptions{
+	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
 		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
 		Seconds: 1, Bench: bench{clipped: true},
 	}))
@@ -167,7 +167,7 @@ func (s *MeasureRunTestSuite) TestBlocksRecordsWhatWouldNotLoad() {
 
 	var buf bytes.Buffer
 
-	s.Require().NoError(MeasureBlocks(&buf, context.Background(), MeasureOptions{
+	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
 		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
 		Seconds: 1, Bench: bench{},
 	}))
@@ -191,7 +191,7 @@ func (s *MeasureRunTestSuite) TestBlocksWritesAsItGoes() {
 		calls int
 	)
 
-	err := MeasureBlocks(&buf, context.Background(), MeasureOptions{
+	err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
 		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq", Seconds: 1,
 		Bench: stopping{after: 3, calls: &calls},
 	})
@@ -207,7 +207,7 @@ func (s *MeasureRunTestSuite) TestBlocksWritesAsItGoes() {
 func (s *MeasureRunTestSuite) TestBlocksReportsAReferenceItCannotRead() {
 	var buf bytes.Buffer
 
-	err := MeasureBlocks(&buf, context.Background(), MeasureOptions{
+	err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
 		Client: s.pedal, Dry: "nowhere.wav", Out: s.out, Seconds: 1,
 		Bench: bench{},
 	})
@@ -226,7 +226,7 @@ func (s *MeasureRunTestSuite) TestBlocksReportsABaselineItCannotTake() {
 
 	var buf bytes.Buffer
 
-	err := MeasureBlocks(&buf, context.Background(), MeasureOptions{
+	err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
 		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
 		Seconds: 1, Bench: bench{},
 	})
@@ -241,7 +241,7 @@ func (s *MeasureRunTestSuite) TestBlocksReportsAPresetItCannotBuild() {
 
 	var buf bytes.Buffer
 
-	err := MeasureBlocks(&buf, context.Background(), MeasureOptions{
+	err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
 		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
 		Seconds: 1, Bench: bench{},
 	})

@@ -53,7 +53,7 @@ would show no change and be reported as an index that reaches nothing.`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		pedal.claim()
 
-		return cli.MeasureNames(cmd.OutOrStdout(), cmd.Context(), cli.NamesOptions{
+		return cli.MeasureNames(cmd.Context(), cmd.OutOrStdout(), cli.NamesOptions{
 			Client: measureNamesClient.client(),
 			Model:  measureNamesModel,
 		})

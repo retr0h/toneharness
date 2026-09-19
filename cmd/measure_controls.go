@@ -79,7 +79,7 @@ Freq swept 0..1 never leaves its bottom stop and reports as inert.`,
 				strings.ToLower(measureControlsModel)+".json")
 		}
 
-		return cli.MeasureControls(cmd.OutOrStdout(), cmd.Context(),
+		return cli.MeasureControls(cmd.Context(), cmd.OutOrStdout(),
 			cli.ControlsOptions{
 				Client:   measureControlsClient.client(),
 				Model:    measureControlsModel,

@@ -29,19 +29,19 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/tone"
 )
 
-// ContractPublicTestSuite covers reading the contract and the failures that
+// ValidatePublicTestSuite covers reading the contract and the failures that
 // only happen if it cannot be read.
 //
 // Nothing here is reachable in a shipped binary: the document is embedded and
 // generation would have failed on one this could not parse. It is here so
 // that if the contract ever could not be read, a document would be reported
 // as unchecked rather than passed as valid.
-type ContractPublicTestSuite struct {
+type ValidatePublicTestSuite struct {
 	suite.Suite
 }
 
 // TestLoadSchema reads both contracts out of an OpenAPI document.
-func (s *ContractPublicTestSuite) TestLoadSchema() {
+func (s *ValidatePublicTestSuite) TestLoadSchema() {
 	tests := []struct {
 		name    string
 		doc     []byte
@@ -85,7 +85,7 @@ components:
 }
 
 // TestAnUnreadableContractRefusesBothDocuments covers the cached failure.
-func (s *ContractPublicTestSuite) TestAnUnreadableContractRefusesBothDocuments() {
+func (s *ValidatePublicTestSuite) TestAnUnreadableContractRefusesBothDocuments() {
 	restore := *tone.Contracts
 	defer func() { *tone.Contracts = restore }()
 
@@ -100,7 +100,7 @@ func (s *ContractPublicTestSuite) TestAnUnreadableContractRefusesBothDocuments()
 
 // TestAgainstRefusesWhatTheTypesCouldNotBuild covers a document reaching the
 // check as something other than a set of fields.
-func (s *ContractPublicTestSuite) TestAgainstRefusesWhatTheTypesCouldNotBuild() {
+func (s *ValidatePublicTestSuite) TestAgainstRefusesWhatTheTypesCouldNotBuild() {
 	err := tone.Against([]any{"a list, not a document"}, "ToneSpec")
 
 	s.Require().ErrorIs(err, tone.ErrInvalid)
@@ -108,7 +108,7 @@ func (s *ContractPublicTestSuite) TestAgainstRefusesWhatTheTypesCouldNotBuild() 
 }
 
 // TestInvalid says what went wrong, whatever the library hands it.
-func (s *ContractPublicTestSuite) TestInvalid() {
+func (s *ValidatePublicTestSuite) TestInvalid() {
 	tests := []struct {
 		name     string
 		in       error
@@ -142,14 +142,14 @@ func (s *ContractPublicTestSuite) TestInvalid() {
 	}
 }
 
-func TestContractPublicTestSuite(
+func TestValidatePublicTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(ContractPublicTestSuite))
+	suite.Run(t, new(ValidatePublicTestSuite))
 }
 
 // TestCheckReportsWhatCannotBeMarshalled covers the guard before the schema.
-func (s *ContractPublicTestSuite) TestCheckReportsWhatCannotBeMarshalled() {
+func (s *ValidatePublicTestSuite) TestCheckReportsWhatCannotBeMarshalled() {
 	err := tone.Check(make(chan int), "ToneSpec")
 
 	s.Require().ErrorContains(err, "reading the ToneSpec")

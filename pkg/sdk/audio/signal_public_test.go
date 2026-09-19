@@ -28,18 +28,18 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/audio"
 )
 
-// GatePublicTestSuite covers telling the playing from the gaps between it.
+// SignalPublicTestSuite covers telling the playing from the gaps between it.
 //
 // A rest is not quiet playing. Measuring one as though it were reports the
 // silence between the notes, which is what a real bass part with rests in it
 // did before this existed: 55dB of dynamic range on a player who sits between
 // 5 and 8 everywhere else.
-type GatePublicTestSuite struct {
+type SignalPublicTestSuite struct {
 	suite.Suite
 }
 
 // part is notes with rests between them, which is what playing looks like.
-func (s *GatePublicTestSuite) part(
+func (s *SignalPublicTestSuite) part(
 	notes int,
 	note float64,
 	rest float64,
@@ -55,7 +55,7 @@ func (s *GatePublicTestSuite) part(
 }
 
 // TestSilenceIsNotPlaying is the whole point.
-func (s *GatePublicTestSuite) TestSilenceIsNotPlaying() {
+func (s *SignalPublicTestSuite) TestSilenceIsNotPlaying() {
 	levels := audio.Frames(s.part(3, 0.5, 0.5), rate/50)
 	held := audio.Playing(levels)
 
@@ -74,7 +74,7 @@ func (s *GatePublicTestSuite) TestSilenceIsNotPlaying() {
 }
 
 // TestAHeldToneIsAllPlaying has no gaps to find.
-func (s *GatePublicTestSuite) TestAHeldToneIsAllPlaying() {
+func (s *SignalPublicTestSuite) TestAHeldToneIsAllPlaying() {
 	levels := audio.Frames(audio.Sine(110, 1.0, rate, 0.8), rate/50)
 
 	for i, on := range audio.Playing(levels) {
@@ -83,7 +83,7 @@ func (s *GatePublicTestSuite) TestAHeldToneIsAllPlaying() {
 }
 
 // TestSilenceIsNeverPlaying covers a signal with nothing in it.
-func (s *GatePublicTestSuite) TestSilenceIsNeverPlaying() {
+func (s *SignalPublicTestSuite) TestSilenceIsNeverPlaying() {
 	levels := audio.Frames(audio.Silence(1.0, rate), rate/50)
 
 	for i, on := range audio.Playing(levels) {
@@ -92,7 +92,7 @@ func (s *GatePublicTestSuite) TestSilenceIsNeverPlaying() {
 }
 
 // TestNoFramesAtAll answers with nothing rather than dividing by it.
-func (s *GatePublicTestSuite) TestNoFramesAtAll() {
+func (s *SignalPublicTestSuite) TestNoFramesAtAll() {
 	s.Require().Empty(audio.Playing(nil))
 	s.Require().Empty(audio.Frames(nil, 100))
 }
@@ -101,7 +101,7 @@ func (s *GatePublicTestSuite) TestNoFramesAtAll() {
 //
 // The same performance mastered twice at different levels is the same
 // playing, so the gate cannot be an absolute threshold.
-func (s *GatePublicTestSuite) TestTheFloorIsRelativeToTheRecording() {
+func (s *SignalPublicTestSuite) TestTheFloorIsRelativeToTheRecording() {
 	loud := audio.Frames(s.part(3, 0.4, 0.4), rate/50)
 
 	quiet := make([]float64, len(loud))
@@ -116,7 +116,7 @@ func (s *GatePublicTestSuite) TestTheFloorIsRelativeToTheRecording() {
 //
 // A part that rests half the time used to report the gap between its loudest
 // note and the noise floor, which is not how dynamic the playing is.
-func (s *GatePublicTestSuite) TestRestsNoLongerInflateTheDynamicRange() {
+func (s *SignalPublicTestSuite) TestRestsNoLongerInflateTheDynamicRange() {
 	steady := audio.Measure(s.part(6, 0.5, 0.05), rate)
 	resting := audio.Measure(s.part(6, 0.5, 2.0), rate)
 
@@ -129,7 +129,7 @@ func (s *GatePublicTestSuite) TestRestsNoLongerInflateTheDynamicRange() {
 //
 // A note that is cut off by the player stopping did not decay over the rest
 // that follows it, and timing one reports the gap rather than the ring.
-func (s *GatePublicTestSuite) TestDecayStopsAtARest() {
+func (s *SignalPublicTestSuite) TestDecayStopsAtARest() {
 	// One note that rings, then a long silence.
 	got := audio.Measure(
 		append(audio.Plucked(110, 1.0, rate, 0.8, 2), audio.Silence(5.0, rate)...),
@@ -147,7 +147,7 @@ func (s *GatePublicTestSuite) TestDecayStopsAtARest() {
 // decayed in any particular time. All that is known is that it rang until the
 // playing stopped, and that is what comes back: the time to the rest, not the
 // length of the recording and not the silence after it.
-func (s *GatePublicTestSuite) TestANoteStillRingingWhenThePlayingStops() {
+func (s *SignalPublicTestSuite) TestANoteStillRingingWhenThePlayingStops() {
 	// A slow decay, cut short: at this rate the note is nowhere near a
 	// quarter of its peak when the silence arrives.
 	const sounding = 0.5
@@ -167,13 +167,13 @@ func (s *GatePublicTestSuite) TestANoteStillRingingWhenThePlayingStops() {
 }
 
 // TestQuietestIsWhereItSays guards the one number this all turns on.
-func (s *GatePublicTestSuite) TestQuietestIsWhereItSays() {
+func (s *SignalPublicTestSuite) TestQuietestIsWhereItSays() {
 	s.Require().InDelta(-40.0, audio.Quietest, 0.001,
 		"measured against four real bass stems; changing it needs the same")
 }
 
-func TestGatePublicTestSuite(
+func TestSignalPublicTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(GatePublicTestSuite))
+	suite.Run(t, new(SignalPublicTestSuite))
 }

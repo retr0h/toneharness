@@ -85,7 +85,7 @@ func (s *ControlsRunTestSuite) run(
 ) (measured.Curves, string, error) {
 	var buf bytes.Buffer
 
-	err := MeasureControls(&buf, context.Background(), ControlsOptions{
+	err := MeasureControls(context.Background(), &buf, ControlsOptions{
 		Client: s.pedal, Model: model, Dry: s.dry, Out: s.out,
 		Seconds: 1, Points: 3, Takes: 2, Bench: b,
 	})
@@ -206,7 +206,7 @@ func (s *ControlsRunTestSuite) TestControlsRefusesAModelNobodyHas() {
 func (s *ControlsRunTestSuite) TestControlsReportsAReferenceItCannotRead() {
 	var buf bytes.Buffer
 
-	err := MeasureControls(&buf, context.Background(), ControlsOptions{
+	err := MeasureControls(context.Background(), &buf, ControlsOptions{
 		Client: s.pedal, Model: "HD2_CabMicIr_2x15Brute",
 		Dry: "nowhere.wav", Out: s.out, Seconds: 1, Points: 3, Takes: 2,
 		Bench: bench{},

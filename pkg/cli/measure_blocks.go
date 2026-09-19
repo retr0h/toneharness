@@ -70,8 +70,8 @@ const clipped = -0.5
 // MeasureBlocks measures every block the device has, once, at its own
 // defaults.
 func MeasureBlocks(
-	w io.Writer,
 	ctx context.Context,
+	w io.Writer,
 	opts MeasureOptions,
 ) error {
 	cat, err := catalog.BuiltIn()
@@ -129,9 +129,9 @@ func MeasureBlocks(
 
 	defer func() { _ = os.RemoveAll(work) }()
 
-	built := build(w, opts.Client, ctx, want, work)
+	built := build(ctx, w, opts.Client, want, work)
 
-	if err := baseline(w, ctx, bench, signal, &lib, work, opts); err != nil {
+	if err := baseline(ctx, w, bench, signal, &lib, work, opts); err != nil {
 		return err
 	}
 
@@ -205,8 +205,8 @@ func one(
 // item and a rig with nothing in it is not a rig. Bypassed is the same signal
 // path either way.
 func baseline(
-	w io.Writer,
 	ctx context.Context,
+	w io.Writer,
 	bench sdk.Bench,
 	signal []float32,
 	lib *measured.Library,
@@ -219,7 +219,7 @@ func baseline(
 		Category: "eq",
 	}
 
-	at, err := compile(opts.Client, ctx, empty, work, false)
+	at, err := compile(ctx, opts.Client, empty, work, false)
 	if err != nil {
 		return fmt.Errorf("building the empty loop: %w", err)
 	}
@@ -248,9 +248,9 @@ func baseline(
 // slow half of a block's turn, and done inside the measuring loop it made each
 // block cost three times what the measurement did.
 func build(
+	ctx context.Context,
 	w io.Writer,
 	client Pedal,
-	ctx context.Context,
 	want []measured.Block,
 	work string,
 ) map[string]string {
@@ -270,7 +270,7 @@ func build(
 			gate <- struct{}{}
 			defer func() { <-gate }()
 
-			at, err := compile(client, ctx, block, work, true)
+			at, err := compile(ctx, client, block, work, true)
 
 			mu.Lock()
 			defer mu.Unlock()
@@ -302,8 +302,8 @@ func build(
 
 // compile writes one block's rig and turns it into a preset.
 func compile(
-	client Pedal,
 	ctx context.Context,
+	client Pedal,
 	block measured.Block,
 	work string,
 	enabled bool,

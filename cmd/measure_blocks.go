@@ -68,7 +68,7 @@ had. ` + "`--resume`" + ` picks it up again.`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		pedal.claim()
 
-		return cli.MeasureBlocks(cmd.OutOrStdout(), cmd.Context(), cli.MeasureOptions{
+		return cli.MeasureBlocks(cmd.Context(), cmd.OutOrStdout(), cli.MeasureOptions{
 			Client:   measureBlocksClient.client(),
 			Dry:      measureBlocksDry,
 			Out:      measureBlocksOut,
