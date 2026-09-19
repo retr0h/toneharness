@@ -42,6 +42,9 @@ type (
 	SpecVersion = gen.RigSpecVersion
 	// Subject is who or what the rig is attributed to.
 	Subject = gen.Subject
+	// Kind is what a rig is attributed to: an artist, a band, a song, a
+	// genre, or nothing in particular.
+	Kind = gen.Kind
 	// ChainEntry is one piece of gear in the signal path.
 	ChainEntry = gen.ChainEntry
 	// Role is what a piece of gear does: amp, cab, drive.
@@ -146,6 +149,9 @@ const (
 
 	// What a rig is attributed to.
 	KindArtist = gen.KindArtist
+	KindBand   = gen.KindBand
+	KindGenre  = gen.KindGenre
+	KindSong   = gen.KindSong
 	KindSound  = gen.KindSound
 
 	// SchemaName is the one value the contract accepts for its own schema
