@@ -27,8 +27,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/specdoc"
+	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
 // SpecdocPublicTestSuite covers the page the contract generates.
@@ -223,6 +223,7 @@ var testPage = specdoc.Page{
 	Title:    "A grammar",
 	Holds:    "a thing may carry.",
 	Contract: "../contract.yaml",
+	By:       "some/package",
 	Sits:     "What this is.",
 	Other:    specdoc.Link{Name: "the other", At: "other.md"},
 	Checked:  "What is checked, and when.",

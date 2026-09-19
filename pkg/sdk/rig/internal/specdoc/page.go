@@ -32,6 +32,7 @@ var Page = specdoc.Page{
 	Title:    "What a rig resolves to",
 	Holds:    "a rig may carry, and what it may say.",
 	Contract: "../pkg/sdk/rig/data/rigspec.openapi.yaml",
+	By:       "pkg/sdk/rig/internal/specdoc",
 	Sits: "A rig is not the document somebody writes. It is what a ToneSpec\n" +
 		"resolves to and what a preset is compiled from: exact model\n" +
 		"identifiers, in order, deterministic. It is the layer worth sharing,\n" +

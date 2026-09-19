@@ -32,6 +32,7 @@ var Page = specdoc.Page{
 	Title:    "What a request may say",
 	Holds:    "a ToneSpec and a Setup may carry.",
 	Contract: "../pkg/sdk/tone/data/tonespec.openapi.yaml",
+	By:       "pkg/sdk/tone/internal/specdoc",
 	Sits: "These are the two documents a person writes, and neither carries a\n" +
 		"knob position. A ToneSpec is the ask and changes every request; a\n" +
 		"Setup is what somebody owns and changes when they buy something.\n" +
