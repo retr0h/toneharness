@@ -7,6 +7,7 @@ The data this project reads and ships, as opposed to the Go that reads it.
 | `schemas/` | the generated catalog and gear map, and the corpus they come from         |
 | `music/`   | records measured to describe how somebody plays, one directory per artist |
 | `dry/`     | bass straight to the converter, the signal a device is measured with      |
+| `sweeps/`  | what each control does, measured through that signal                      |
 
 Nothing here is embedded in the binary. What ships lives beside the package that
 reads it: `pkg/sdk/catalog/data/`, `pkg/sdk/corpus/data/`,
