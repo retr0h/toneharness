@@ -284,22 +284,29 @@ The cabinet pulled the centre of gravity down 28Hz and took four points of
 energy out of the mids, which is what a speaker does to a signal. The numbers
 behave like physics rather than like noise.
 
-### The pedal ignores what it is written
+### Every preset this tool wrote was empty
 
-**A preset written over USB does not become what the pedal plays.**
+The reason nothing measured tonight responded to anything.
 
-Slot 42C was given a copy of 01A, a preset measuring 97% of its energy between 1
-and 6kHz. Reading 42C back over USB returns the copy. Playing 42C returns the
-old preset, 0.3% over the same band. Selecting it by the vendor protocol and by
-MIDI program change both do it.
+A preset written by `presets import` is stored, read back verbatim, and rendered
+by the device as an empty chain. Same preset, two writers, through this loop:
 
-So the device holds presets in memory and a USB write reaches its storage
-without disturbing that. Everything written tonight is in the slots and none of
-it is in the sound.
+```
+01A  written by HX Edit          centroid 4034.33Hz   1-6kHz 98.76%
+39C  a byte-for-byte import      centroid  147.67Hz   1-6kHz  0.52%
+```
 
-This is why sweeping a control by writing presets cannot work, and it is worth
-knowing on its own: `presets import` does not do what somebody would reasonably
-assume it does.
+147Hz is a bass going down a cable through nothing, and it is what every preset
+written here measured.
+
+So the figures below, taken by writing presets, describe an empty chain and a
+pair of converters. They are kept because the method is right and the conclusion
+drawn from them was wrong, which is worth being able to see.
+
+[docs/protocol.md](protocol.md#a-written-preset-renders-empty-and-reads-back-fine)
+has the diagnosis: reading ignores the offset table and the device's renderer
+uses it, so a document whose table does not match its bytes passes every check
+this repository can make.
 
 ### What does work unattended
 

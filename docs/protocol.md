@@ -425,6 +425,57 @@ follows an empty, and the 750ms afterwards is not for the empty itself but for
 whatever lands next, since what an empty does to flash is no more visible on the
 wire than what a write does.
 
+## A written preset renders empty, and reads back fine
+
+**Open, and the most important thing on this page.**
+
+A preset written by `presets import` is stored, returned verbatim when read, and
+rendered by the device as an empty chain. The pedal shows no blocks.
+
+Proven by writing a preset against itself. Slot 01A holds a preset HX Edit
+wrote. Exporting it and importing that file, untouched, into a spare slot gives
+two slots that should be identical. Played through the same loop and measured:
+
+```
+01A  written by HX Edit          centroid 4034.33Hz   1-6kHz 98.76%
+39C  a byte-for-byte import      centroid  147.67Hz   1-6kHz  0.52%
+```
+
+The second is a bass going down a cable through nothing.
+
+### Why reading it back does not catch it
+
+Reading ignores the offset table. This page says so, under
+[what the device gives back is not a `.hlx`](#what-the-device-gives-back-is-not-a-hlx):
+only the third value is read, "the offsets exist for writing". The device's own
+renderer does use them.
+
+So a document whose table does not describe its bytes reads back perfectly and
+renders as nothing, which is exactly what [writing a preset](#writing-a-preset)
+warns about: "The device accepts the write and then reads the preset as empty."
+
+### Why the device test does not catch it
+
+`just test-device` passes. It writes a preset, reads it back, and compares the
+chains, and both halves go through the reader that ignores the table. It
+verifies the bytes survived a round trip, which they do.
+
+That is the distinction AGENTS.md insists on, found in the wild: "the rig
+validates against the catalog", "HX Edit imported the file" and "the hardware
+loaded it" are three different claims, and this repository has only ever been
+able to make the first. The test asserting the third would have to ask the
+device what it rendered, not what it stored.
+
+### What this invalidates
+
+Any measurement taken through a preset this tool wrote. Every one of them was an
+empty chain, which is why bypassing an amplifier changed nothing and why no
+parameter written into a preset ever moved a figure.
+
+It does not touch the live edit on
+[opcode 30](measuring.md#addressing-a-control), which changes the running preset
+rather than a stored one and demonstrably works.
+
 ## Writing a preset
 
 Opcode 5 writes a document into a slot and leaves its name alone. Opcode 8
