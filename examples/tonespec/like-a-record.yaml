@@ -1,0 +1,25 @@
+# A request pointing at a recording, which is the kind this answers fully.
+#
+# A recording is measured rather than looked up, so it needs no catalog entry
+# and no citation: it is evidence of itself. What comes back is the nearest of
+# the device's 224 amplifiers to what that file actually measures.
+#
+#     tonestack tone build --ask examples/tonespec/like-a-record.yaml \
+#       --setup examples/tonespec/my-setup.yaml --out rig.yaml
+#     tonestack presets compile --rig rig.yaml --out a.hlx
+
+schema: ToneSpec
+
+# How it should sound, in the words a person would use. These travel into the
+# rig as character terms, unchanged: turning a word into a knob position is
+# the tool's job and not this document's.
+words: [punchy, dark]
+
+like:
+  recording: resources/dry/bass-di.wav
+
+# Gear the request names, where somebody wants a particular thing rather than
+# a particular sound. Everything not named here is chosen by measuring.
+gear:
+  - gear: LA Studio Comp
+    role: comp

@@ -1,0 +1,18 @@
+# What somebody has, which changes on a different clock from what they want.
+#
+# Folding an instrument into a request would mean restating the bass, the
+# strings and the pedal every time, and the twelfth request contradicting the
+# first.
+
+schema: Setup
+
+device:
+  model: HX Stomp
+
+instruments:
+  - gear: Fender Jazz Bass
+    # Flatwounds and roundwounds are a larger difference than most pedals, and
+    # the difference between what a record was made on and what is being held
+    # is a correction the answer can make.
+    strings: flat
+    default: true

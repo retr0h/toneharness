@@ -1,0 +1,193 @@
+// Copyright (c) 2026 John Dewey
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+package cli_test
+
+import (
+	"bytes"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/suite"
+
+	"github.com/retr0h/tonestack/pkg/cli"
+	"github.com/retr0h/tonestack/pkg/sdk/rig"
+)
+
+// ToneBuildPublicTestSuite covers reading a request and writing the rig it
+// resolves to.
+type ToneBuildPublicTestSuite struct {
+	suite.Suite
+}
+
+// SetupTest runs each case from the checkout root.
+//
+// That is where somebody runs a worked example, and an example carrying a
+// path only this test can resolve is an example that does not work.
+func (s *ToneBuildPublicTestSuite) SetupTest() {
+	s.T().Chdir(filepath.Join("..", ".."))
+}
+
+// file writes a document and returns where it went.
+func (s *ToneBuildPublicTestSuite) file(
+	name, body string,
+) string {
+	at := filepath.Join(s.T().TempDir(), name)
+	s.Require().NoError(os.WriteFile(at, []byte(body), 0o600))
+
+	return at
+}
+
+// examples is where the worked requests live.
+func (s *ToneBuildPublicTestSuite) examples(
+	name string,
+) string {
+	return filepath.Join("examples", "tonespec", name)
+}
+
+// TestTheWorkedExampleBuildsARig holds the examples to the code.
+//
+// A worked example that stopped working is worse than none: it is the first
+// thing somebody runs, and it says the tool is broken when the example is.
+func (s *ToneBuildPublicTestSuite) TestTheWorkedExampleBuildsARig() {
+	out := filepath.Join(s.T().TempDir(), "rig.yaml")
+
+	var buf bytes.Buffer
+
+	s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
+		Ask:   s.examples("like-a-record.yaml"),
+		Setup: s.examples("my-setup.yaml"),
+		Out:   out,
+	}))
+
+	body, err := os.ReadFile(out)
+	s.Require().NoError(err)
+
+	spec, err := rig.Load(bytes.NewReader(body))
+	s.Require().NoError(err)
+	s.Require().NoError(rig.Validate(spec))
+	s.Require().Equal(rig.InstrumentBass, spec.Instrument)
+
+	// The comp it named, and an amplifier nobody named.
+	s.Require().Len(spec.Chain, 2)
+	s.Require().Equal(rig.RoleAmp, spec.Chain[1].Role)
+
+	s.Require().Contains(buf.String(), "closest of 224 measured")
+}
+
+// TestWithoutASetupItSaysWhatItAssumed covers the optional half.
+//
+// Somebody asking what a record sounds like has not necessarily said what
+// they own, so the rig says what it assumed rather than refusing.
+func (s *ToneBuildPublicTestSuite) TestWithoutASetupItSaysWhatItAssumed() {
+	var buf bytes.Buffer
+
+	s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
+		Ask: s.examples("like-a-record.yaml"),
+	}))
+
+	s.Require().Contains(buf.String(), "the setup names none")
+	s.Require().Contains(buf.String(), "schema: RigSpec",
+		"the rig goes to whatever is reading when no file was named")
+}
+
+// TestItReportsWhatItCouldNotHonour covers the half of an ask it drops.
+func (s *ToneBuildPublicTestSuite) TestItReportsWhatItCouldNotHonour() {
+	var buf bytes.Buffer
+
+	s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
+		Ask: s.file("ask.yaml", `schema: ToneSpec
+genre: punk
+gear:
+  - gear: LA Studio Comp
+    role: comp
+`),
+	}))
+
+	s.Require().Contains(buf.String(), "could not")
+	s.Require().Contains(buf.String(), "no records carry that genre yet")
+}
+
+// TestARequestItCannotAnswerFails covers an ask with nothing to build from.
+func (s *ToneBuildPublicTestSuite) TestARequestItCannotAnswerFails() {
+	var buf bytes.Buffer
+
+	err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
+		Ask: s.file("ask.yaml", "schema: ToneSpec\nwords: [dark]\n"),
+	})
+
+	s.Require().ErrorContains(err, "no chain to build")
+}
+
+// TestADocumentItCannotReadIsReported covers both files.
+func (s *ToneBuildPublicTestSuite) TestADocumentItCannotReadIsReported() {
+	tests := []struct {
+		name string
+		opts cli.ToneBuildOptions
+		want string
+	}{
+		{
+			name: "an ask that is not there",
+			opts: cli.ToneBuildOptions{Ask: "nowhere.yaml"},
+			want: "nowhere.yaml",
+		},
+		{
+			name: "an ask that is not a ToneSpec",
+			opts: cli.ToneBuildOptions{
+				Ask: s.file("ask.yaml", "schema: Setup\n"),
+			},
+			want: "this is not a ToneSpec",
+		},
+		{
+			name: "a setup that is not there",
+			opts: cli.ToneBuildOptions{
+				Ask:   s.examples("like-a-record.yaml"),
+				Setup: "nowhere.yaml",
+			},
+			want: "nowhere.yaml",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			var buf bytes.Buffer
+
+			s.Require().ErrorContains(cli.ToneBuild(&buf, tt.opts), tt.want)
+		})
+	}
+}
+
+// TestSomewhereItCannotWriteIsReported covers a bad output path.
+func (s *ToneBuildPublicTestSuite) TestSomewhereItCannotWriteIsReported() {
+	var buf bytes.Buffer
+
+	err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
+		Ask: s.examples("like-a-record.yaml"),
+		Out: filepath.Join(s.T().TempDir(), "no", "such", "rig.yaml"),
+	})
+
+	s.Require().Error(err)
+}
+
+func TestToneBuildPublicTestSuite(
+	t *testing.T,
+) {
+	suite.Run(t, new(ToneBuildPublicTestSuite))
+}

@@ -30,6 +30,7 @@ tonestack <command> [flags]
 | [measure](#tonestack-measure) | Measure what a recording sounds like |
 | [presets](#tonestack-presets) | Build and inspect preset files |
 | [recipes](#tonestack-recipes) | Work with curated gear knowledge |
+| [tone](#tonestack-tone) | Say what you want to sound like, and what you have |
 
 ## tonestack catalog
 
@@ -807,3 +808,67 @@ tonestack recipes show [flags]
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
 | `--id` | string |  | recipe to show, by identifier or alias |
+
+## tonestack tone
+
+A ToneSpec says what somebody wants to sound like. A Setup says what
+they have to work with. Both are written by hand, in the words a person would
+use, and neither carries a knob position.
+
+They are the top of three layers, and the split is what makes the middle one
+worth sharing:
+
+    ToneSpec + Setup   what we mean, and what we have
+          ↓            tonestack tone build
+    RigSpec            exact, resolved, deterministic, shareable
+          ↓            tonestack presets compile
+    .hlx               what the pedal eats
+
+A RigSpec names the exact models, so two people compiling one get the same
+preset. A ToneSpec does not: "punk, a bit darker" resolves against a corpus
+and a library of measurements that both move, so the same ask next month is a
+different rig, and that is the point of keeping them apart.
+
+What a request cannot say is where a knob goes. That is what the tool works
+out, and a number typed into an authored file is how a word came to move
+Treble by a quarter of its range because somebody decided a quarter.
+
+```text
+tonestack tone <command> [flags]
+```
+
+| command | what it does |
+| --- | --- |
+| [build](#tonestack-tone-build) | Turn a request and a setup into a rig |
+
+## tonestack tone build
+
+Read a ToneSpec and a Setup and write the RigSpec they resolve to.
+
+Two halves, and they answer different kinds of ask.
+
+Gear a request names by hand resolves against the catalog. That is exact and
+always was: "LA Studio Comp" is one model and the rig says which.
+
+Gear it does not name is chosen by measuring. A request pointing at a
+recording has that recording measured through the same figures every block on
+the device was, so what comes back is the nearest of 224 amplifiers rather
+than whichever name somebody wrote down. Nothing in that path needs anybody
+to have described an amplifier.
+
+Every choice it makes, and every part of the ask it could not honour, is
+reported. A genre no records carry, a player whose records this does not read
+yet, a gear name that fits four models and so fits none, a nudge with no
+previous answer to move from: each is said rather than quietly dropped.
+
+Compile what comes out with `tonestack presets compile --rig`.
+
+```text
+tonestack tone build [flags]
+```
+
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--ask` | string |  | the ToneSpec to read |
+| `--out` | string |  | where the rig goes; standard output without it |
+| `--setup` | string |  | the Setup to read; without one the rig is for a bass |
