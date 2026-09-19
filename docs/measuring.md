@@ -10,6 +10,76 @@ it and none can be moved.
 To learn what a control does, a known signal goes in, and what comes out gets
 measured. The difference is the device and nothing else.
 
+## The loop is closed
+
+Until tonight this project was open loop. A word chose a knob position, the
+preset was written, and nothing ever came back. Whether the knob did what the
+word meant was unanswerable, so every mapping was an assertion and stayed one
+however long it sat there.
+
+It is now closed. The tool can act, observe the consequence, and compare it to
+what it wanted:
+
+```
+                 act                observe
+    settings ──────────> pedal ──────────> nine figures
+        ▲                                       │
+        └────────── compare to the target ──────┘
+```
+
+Three presets, driven over MIDI with nobody in the room, measured as three
+different sounds. That is the whole thing working, at a coarse setting.
+
+**What is still coarse is the actuator.** The loop can currently change a whole
+preset and not one control, because a preset written over USB does not reach
+what the pedal plays. Narrowing that from "a preset" to "one knob" is the
+remaining work and nothing else stands in the way.
+
+### It is closed on numbers, not on hearing
+
+The loop settles whether a setting moved a figure toward a target. It cannot
+settle whether that sounds right, because nothing here can hear.
+
+So there are two loops, and only the inner one is automatic:
+
+- **Inner, automatic, fast.** Move a control, measure, compare, repeat. Runs
+  overnight without anybody.
+- **Outer, human, rare.** Listen to where the inner loop landed and say whether
+  the target was worth aiming at. If a preset measures as `dark` and sounds
+  wrong, the definition of `dark` is wrong and gets moved.
+
+The inner loop is what makes a word testable. The outer loop is what makes it
+mean anything. Confusing the two is how a project ends up confident and wrong,
+which is roughly where this one was this morning.
+
+## The reference signal is the experiment's control
+
+Every measurement here is a comparison, and a comparison needs one thing held
+still. That thing is `resources/dry/bass-di.wav`.
+
+The same bass, the same notes, the same playing, every single time. Whatever
+differs in the answer is the device, because nothing else was allowed to move.
+That is the entire reason a recording of somebody's actual playing is used
+rather than a tone generated fresh each run: a generated signal is repeatable
+too, but it is not a bass, and what an amplifier does to three sine waves is not
+what it does to an instrument.
+
+It comes from the Cambridge-MT "Mixing Secrets" library, a teaching archive of
+real studio multitracks, and
+[resources/dry/README.md](../resources/dry/README.md) carries the url, the zip
+entry and the hash for both files.
+
+**The hash is not bookkeeping.** It is what makes a figure measured next month
+comparable to one measured tonight. A different reference file silently
+invalidates every number ever taken against the old one, in exactly the way that
+changing a record invalidates the words derived from it. Same discipline, same
+reason: see
+[Changing a source is never one file](../CONTRIBUTING.md#changing-a-source-is-never-one-file).
+
+So the rule is short. Pin the reference, hash it, and if it ever has to change,
+re-measure everything that was measured against it rather than leaving two
+generations of figures side by side pretending to be comparable.
+
 ## The loop
 
 ```
