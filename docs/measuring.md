@@ -12,7 +12,7 @@ measured. The difference is the device and nothing else.
 
 ## The loop is closed
 
-Until tonight this project was open loop. A word chose a knob position, the
+This project was open loop until September 2026. A word chose a knob position, the
 preset was written, and nothing ever came back. Whether the knob did what the
 word meant was unanswerable, so every mapping was an assertion and stayed one
 however long it sat there.
@@ -30,10 +30,12 @@ what it wanted:
 Three presets, driven over MIDI with nobody in the room, measured as three
 different sounds. That is the whole thing working, at a coarse setting.
 
-**What is still coarse is the actuator.** The loop can currently change a whole
-preset and not one control, because a preset written over USB does not reach
-what the pedal plays. Narrowing that from "a preset" to "one knob" is the
-remaining work and nothing else stands in the way.
+**The actuator is no longer coarse.** It started able to change a whole preset
+and not one control, because a preset written over USB did not reach what the
+pedal plays. That was an encoder bug rather than a limit of the device, and
+with it fixed and the live edit implemented, one knob moves on its own. What
+the loop can do now is a sweep: one control through its range, measured at
+every position, nobody in the room.
 
 ### It is closed on numbers, not on hearing
 
@@ -70,7 +72,7 @@ real studio multitracks, and
 entry and the hash for both files.
 
 **The hash is not bookkeeping.** It is what makes a figure measured next month
-comparable to one measured tonight. A different reference file silently
+comparable to one measured today. A different reference file silently
 invalidates every number ever taken against the old one, in exactly the way that
 changing a record invalidates the words derived from it. Same discipline, same
 reason: see
@@ -97,8 +99,10 @@ resources/dry/bass-di.wav
   compare against the record, adjust, repeat
 ```
 
-Three of the four boxes work today. The pedal is the one that does not, and
-[the state of it](#what-works-and-what-does-not) says how far it got.
+All four boxes work, with one substitution: the signal reaches the Input block
+through a cable from the Main out rather than over USB 5/6, which still does
+not carry audio. [What works and what does not](#what-works-and-what-does-not)
+has the detail.
 
 ## The pedal as an audio interface
 
@@ -181,9 +185,12 @@ The file carries `input_type_lt` and `output_type_lt` for a Helix LT and
 four Returns it has no sockets for; the indices are the Helix family's, not the
 device's.
 
-**`@output: 1` is enough.** Multi includes USB 1/2, so an ordinary preset
-already sends its processed output back up the cable. Only the input needs
-changing.
+**`@output: 1` is not enough, whatever the label says.** Entry 1 reads "Multi
+(1/4", XLR, Digital, USB 1/2)" and on an HX Stomp its Multi does not include
+USB, so a preset left on it sends nothing up the cable. Use `@output: 10`,
+USB 1/2 by itself.
+[The output block does not mean what its label says](#the-output-block-does-not-mean-what-its-label-says)
+is how that was found.
 
 ## Building a measuring preset
 
@@ -216,14 +223,25 @@ discover while its owner is out.
 
 ## What works and what does not
 
-**Working.** The loop runs. A dry file goes into the pedal, comes back
-processed, and `tonestack measure` reads the result. Presets can be switched
-unattended over MIDI. What is not working is changing one parameter, and the
-reason is in
-[The pedal ignores what it is written](#the-pedal-ignores-what-it-is-written).
+**Working.** The loop runs, and it closes. A dry file goes into the pedal,
+comes back processed, and `tonestack measure` reads the result. Presets switch
+unattended over MIDI. One control moves on its own with `presets turn`, which
+is the live edit HX Edit sends when somebody drags a knob, and `presets
+current` reads back what the device is playing so a move can be checked rather
+than assumed.
 
-**Not working.** One parameter cannot be changed. That is the only thing left,
-and the reason is below.
+So a sweep runs end to end with nobody in the room: build a chain, load it,
+move one control through its range, measure at every position, write the
+curve.
+
+**Not working.** USB 5/6 does not carry audio into the Input block, so the
+loop runs through a cable from the Main out to the input jack instead. That is
+a convenience rather than a blocker, and the section on it says what was
+tried.
+
+Everything below this line is how those two were established, including the
+evenings spent on conclusions that turned out to be wrong. They are kept
+because the wrong conclusion is the part worth recognising again.
 
 ### The output block does not mean what its label says
 
@@ -284,9 +302,11 @@ The cabinet pulled the centre of gravity down 28Hz and took four points of
 energy out of the mids, which is what a speaker does to a signal. The numbers
 behave like physics rather than like noise.
 
-### Every preset this tool wrote was empty
+### Every preset this tool wrote was empty, and that is fixed
 
-The reason nothing measured tonight responded to anything.
+The reason nothing measured on the first night responded to anything. The
+encoder bug behind it is fixed; an imported preset now measures 4034.36Hz
+where the original measures 4034.33Hz.
 
 A preset written by `presets import` is stored, read back verbatim, and rendered
 by the device as an empty chain. Same preset, two writers, through this loop:
@@ -321,9 +341,9 @@ PC   2  ->  01C   rms  -3.3 dBFS   1-6kHz  0.003%
 Three presets, three measurements, nobody in the room. Program 0 is 01A and each
 bank holds three, so a slot is `(bank - 1) * 3 + letter`.
 
-What is missing is the message HX Edit sends when somebody drags a knob, which
-changes a parameter in the running preset rather than in storage. That message
-exists, because HX Edit does it. It is not implemented here.
+At the time, what was missing was the message HX Edit sends when somebody
+drags a knob, which changes a parameter in the running preset rather than in
+storage. It is opcode 30, it is implemented, and `presets turn` sends it.
 
 ## Addressing a control
 
