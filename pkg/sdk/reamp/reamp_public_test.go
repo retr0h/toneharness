@@ -20,6 +20,7 @@
 package reamp_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -121,6 +122,153 @@ func (s *ReampPublicTestSuite) TestCloseIsSafeTwice() {
 
 	s.Require().NoError(b.Close())
 	s.Require().NoError(b.Close())
+}
+
+// TestAPassPlaysTheSignalAndKeepsTheAnswer covers the loop's own arithmetic.
+//
+// The callback this runs inside cannot be reached from a test: miniaudio
+// ships a null backend that would allow it and the bindings here compile it
+// out. Everything the callback decides is here instead.
+func (s *ReampPublicTestSuite) TestAPassPlaysTheSignalAndKeepsTheAnswer() {
+	signal := []float32{0.25, 0.5, 0.75}
+	run := reamp.NewPass(signal)
+
+	frames := 2
+	output := make([]byte, frames*2*4)
+	input := make([]byte, frames*2*4)
+
+	// The lead is silence, so the first frames out carry nothing and the
+	// signal arrives later.
+	s.Require().False(run.Frame(output, input, frames))
+	s.Require().Zero(reamp.Sample(output, 0))
+
+	// What comes back is kept in the order it arrived, on the left channel.
+	reamp.Put(input, 0, 0.9)
+	reamp.Put(input, 2, 0.8)
+	s.Require().False(run.Frame(output, input, frames))
+
+	got := run.Got()
+	s.Require().Len(got, 2*frames)
+	s.Require().InDelta(0.9, got[2], 0.0001)
+	s.Require().InDelta(0.8, got[3], 0.0001)
+}
+
+// TestAPassPlaysTheSignalOnBothChannels covers what the loop is.
+//
+// A cable from the device's output back to its own input, so the signal goes
+// out of both and the left one comes back.
+func (s *ReampPublicTestSuite) TestAPassPlaysTheSignalOnBothChannels() {
+	run := reamp.NewPass([]float32{1})
+
+	lead := int(reamp.Lead.Seconds() * reamp.Rate)
+	output := make([]byte, 2*4)
+	input := make([]byte, 2*4)
+
+	// Far enough in that the signal itself is what is being played.
+	for range lead {
+		run.Frame(output, input, 1)
+	}
+
+	run.Frame(output, input, 1)
+
+	s.Require().InDelta(1, reamp.Sample(output, 0), 0.0001)
+	s.Require().InDelta(1, reamp.Sample(output, 1), 0.0001,
+		"both channels carry it")
+}
+
+// TestAPassEndsWhenBothSidesAreDone covers the reading finishing.
+//
+// Not when the last sample is played: a converter answers late, so the
+// capture runs on past the end of the signal and the tail is what a decay is
+// measured from.
+func (s *ReampPublicTestSuite) TestAPassEndsWhenBothSidesAreDone() {
+	run := reamp.NewPass([]float32{1, 1, 1})
+
+	frames := 4096
+	output := make([]byte, frames*2*4)
+	input := make([]byte, frames*2*4)
+
+	var done bool
+	for range 200 {
+		if run.Frame(output, input, frames) {
+			done = true
+
+			break
+		}
+	}
+
+	s.Require().True(done, "the reading ends rather than running forever")
+	s.Require().Len(run.Got(), cap(run.Got()),
+		"and it kept the margin a converter answers late by")
+}
+
+// TestAPassPlaysSilenceOnceTheSignalRunsOut covers the tail.
+func (s *ReampPublicTestSuite) TestAPassPlaysSilenceOnceTheSignalRunsOut() {
+	run := reamp.NewPass(nil)
+
+	frames := 4096
+	output := make([]byte, frames*2*4)
+	input := make([]byte, frames*2*4)
+
+	for range 200 {
+		if run.Frame(output, input, frames) {
+			break
+		}
+	}
+
+	s.Require().Zero(reamp.Sample(output, 0),
+		"nothing is played once there is nothing left to play")
+}
+
+// TestThroughRunsTheWholeLoop covers playing and capturing for real.
+//
+// Against miniaudio's null backend, which presents a device that takes
+// samples and hands back silence. Everything but the converters is exercised:
+// the stream opens, the callback runs, the signal is fed out of it a frame at
+// a time, what arrives is kept, and the reading ends when both are done.
+func (s *ReampPublicTestSuite) TestThroughRunsTheWholeLoop() {
+	b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, "")
+	s.Require().NoError(err)
+
+	defer func() { _ = b.Close() }()
+
+	s.Require().NotEmpty(b.Name())
+
+	signal := make([]float32, reamp.Rate/20)
+	got, err := b.Through(context.Background(), signal)
+
+	s.Require().NoError(err)
+	s.Require().Len(got,
+		len(reamp.Pad(signal))+int(reamp.Margin.Seconds()*reamp.Rate),
+		"as many samples as were played, and the margin a converter answers "+
+			"late by")
+}
+
+// TestThroughGivesUpOnADeviceThatStopped covers the budget.
+//
+// A device that stops delivering callbacks would otherwise leave a reading
+// blocked forever, and a campaign that hangs on block two hundred looks
+// exactly like one still working.
+func (s *ReampPublicTestSuite) TestThroughGivesUpOnADeviceThatStopped() {
+	b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, "")
+	s.Require().NoError(err)
+
+	defer func() { _ = b.Close() }()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err = b.Through(ctx, make([]float32, reamp.Rate))
+
+	s.Require().ErrorContains(err, "stopped answering")
+}
+
+// TestOpenRefusesHardwareThatIsNotThere covers a name nothing answers to.
+func (s *ReampPublicTestSuite) TestOpenRefusesHardwareThatIsNotThere() {
+	_, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend},
+		"no such interface anybody owns")
+
+	s.Require().ErrorIs(err, reamp.ErrNoDevice)
 }
 
 func TestReampPublicTestSuite(

@@ -15,12 +15,21 @@ md_extra_excludes := "--exclude 'docs/rigspec.md' --exclude 'docs/commands.md'"
 
 # Coverage target for this repository.
 #
-# Not 100%, and the missing part is one file. pkg/sdk/internal/device/usb_darwin.go
-# is every call this project makes into IOKit, translation and nothing more, and there is no way to
-# reach it without a device on the bus. Everything it forwards to — finding a
-# device, choosing between two, claiming an interface, waiting on a busy one,
-# framing, sequence numbers, acknowledgements — is behind an interface and
-# covered.
+# Not 100%, and the missing part is two files, both of them hardware.
+#
+# pkg/sdk/internal/device/usb_darwin.go is every call this project makes into
+# IOKit, translation and nothing more, and there is no way to reach it without
+# a device on the bus. Everything it forwards to — finding a device, choosing
+# between two, claiming an interface, waiting on a busy one, framing, sequence
+# numbers, acknowledgements — is behind an interface and covered.
+#
+# pkg/sdk/reamp/reamp.go is the same shape for audio: opening a duplex stream
+# and running its callback. miniaudio ships a null backend that would let a
+# test run the loop without an interface, and it is compiled out of the
+# bindings this uses, so the callback genuinely cannot be reached from a test.
+# What it feeds — padding a signal, reading and writing frame buffers, the
+# budget a reading gets, naming a device kind, saying what was attached when
+# the named one is not — is covered.
 #
 # It is counted rather than excluded on purpose. An exclusion hides a file's
 # size; a target says what is not reachable and gets worse if that file grows.

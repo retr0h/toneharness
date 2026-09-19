@@ -96,7 +96,20 @@ type Bench struct {
 func Open(
 	want string,
 ) (*Bench, error) {
-	ctx, err := malgo.InitContext(nil, malgo.ContextConfig{}, nil)
+	return open(nil, want)
+}
+
+// open is Open with the audio backends named.
+//
+// Nil is every backend the platform has, which is what a person wants. A test
+// passes the null one: it presents a device that takes samples and hands back
+// silence, so the loop's own arithmetic can be checked without an audio
+// interface, a cable and somebody in the room to plug them in.
+func open(
+	backends []malgo.Backend,
+	want string,
+) (*Bench, error) {
+	ctx, err := malgo.InitContext(backends, malgo.ContextConfig{}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("starting audio: %w", err)
 	}
@@ -180,10 +193,12 @@ func (b *Bench) Through(
 	defer b.mu.Unlock()
 
 	out := pad(signal)
-	got := make([]float32, 0, len(out)+int(Margin.Seconds()*Rate))
+	run := &pass{
+		out: out,
+		got: make([]float32, 0, len(out)+int(Margin.Seconds()*Rate)),
+	}
 
 	var (
-		sent int
 		done = make(chan struct{})
 		once sync.Once
 	)
@@ -201,27 +216,7 @@ func (b *Bench) Through(
 
 	device, err := malgo.InitDevice(b.ctx.Context, config, malgo.DeviceCallbacks{
 		Data: func(output, input []byte, frames uint32) {
-			// Capture first. What arrives in this callback is the answer to
-			// what the previous one played, and keeping it before the buffer
-			// is refilled is what keeps the two in step.
-			for i := range int(frames) {
-				if len(got) < cap(got) {
-					got = append(got, sample(input, i*2))
-				}
-			}
-
-			for i := range int(frames) {
-				var s float32
-				if sent < len(out) {
-					s = out[sent]
-					sent++
-				}
-
-				put(output, i*2, s)
-				put(output, i*2+1, s)
-			}
-
-			if sent >= len(out) && len(got) >= cap(got) {
+			if run.frame(output, input, int(frames)) {
 				finish()
 			}
 		},
@@ -246,12 +241,57 @@ func (b *Bench) Through(
 
 	select {
 	case <-done:
-		return got, nil
+		return run.got, nil
 	case <-budget.Done():
 		return nil, fmt.Errorf(
 			"%s stopped answering after %d of %d samples",
-			b.name, len(got), cap(got))
+			b.name, len(run.got), cap(run.got))
 	}
+}
+
+// pass is one reading in progress: what is left to play, and what has come
+// back so far.
+//
+// Separate from the device because everything it does is arithmetic on two
+// buffers, and the callback it runs inside cannot be reached from a test:
+// miniaudio ships a null backend that would allow it and the bindings here
+// compile it out.
+type pass struct {
+	out  []float32
+	got  []float32
+	sent int
+}
+
+// frame is one turn of the loop, and reports whether the reading is finished.
+//
+// Capture happens first. What arrives in a callback is the answer to what the
+// previous one played, and keeping it before the buffer is refilled is what
+// holds the two in step.
+//
+// The signal goes out on both channels, which is what the loop is: a cable
+// from the device's output back to its own input.
+func (p *pass) frame(
+	output, input []byte,
+	frames int,
+) bool {
+	for i := range frames {
+		if len(p.got) < cap(p.got) {
+			p.got = append(p.got, sample(input, i*2))
+		}
+	}
+
+	for i := range frames {
+		var s float32
+		if p.sent < len(p.out) {
+			s = p.out[p.sent]
+			p.sent++
+		}
+
+		put(output, i*2, s)
+		put(output, i*2+1, s)
+	}
+
+	return p.sent >= len(p.out) && len(p.got) >= cap(p.got)
 }
 
 // over is how long a reading may take before something is wrong.
