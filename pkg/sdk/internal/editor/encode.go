@@ -69,12 +69,13 @@ func Placements(
 		}
 
 		sym, _ := cat.Symbol(model)
+		kinds := typesOf(b.Model, cat)
 
 		p := wire.Placement{
 			Position: b.Pos,
 			Model:    model,
-			Values:   valuesOf(sym, b.Params, typesOf(b.Model, cat), micOf(b.Attrs)),
-			Named:    len(sym.Params),
+			Values:   valuesOf(sym, b.Params, kinds, micOf(b.Attrs)),
+			Named:    len(carried(sym, kinds)),
 			Enabled:  b.Enabled,
 			CabModel: -1,
 		}
@@ -238,6 +239,17 @@ func classOf(
 //
 // Position is the only thing naming a value on the wire, so a parameter the
 // preset does not carry still takes its place, holding a zero.
+//
+// Not every entry in a model's symbol list is one of those values. A device
+// writes a 2x15 cabinet with seven, where its symbol list holds eight: the
+// eighth is `IrData`, which is not a parameter the chain carries. Ninety-two
+// cabinets are the same, and a handful of flow blocks list `select`, `gain`
+// and the two `guitarSense` entries the same way.
+//
+// Writing the extra one produces a chain entry a device stores, hands back
+// unchanged, and renders as nothing — a preset that reads back perfectly and
+// shows an empty chain on the pedal. The catalog's own parameter list for the
+// block is what says which entries are real, so that is what this follows.
 func valuesOf(
 	sym catalog.Symbol,
 	params map[string]catalog.ParamValue,
@@ -250,11 +262,36 @@ func valuesOf(
 
 	out := make([]any, 0, len(sym.Params)+len(tail))
 
-	for _, name := range sym.Params {
+	for _, name := range carried(sym, types) {
 		out = append(out, rawValue(params[name], types[name].Type))
 	}
 
 	return append(out, tail...)
+}
+
+// carried is the symbol's parameters that a chain entry actually holds, in
+// the device's own order.
+//
+// Empty types means the catalog has no block for this model, which leaves
+// nothing to filter against. The whole list travels then, because writing a
+// short entry is the worse guess of the two.
+func carried(
+	sym catalog.Symbol,
+	types map[string]catalog.Param,
+) []string {
+	if len(types) == 0 {
+		return sym.Params
+	}
+
+	out := make([]string, 0, len(sym.Params))
+
+	for _, name := range sym.Params {
+		if _, carried := types[name]; carried {
+			out = append(out, name)
+		}
+	}
+
+	return out
 }
 
 // typesOf is what the catalog says each of a model's parameters holds.

@@ -208,6 +208,15 @@ func (s *EncodeTestSuite) TestPlacementsOfReportsWhatItCannotWrite() {
 }
 
 // TestValuesFollowTheCatalogsWord covers the typing JSON cannot carry.
+//
+// "e" is in the model table and not in the catalog's block, which is the
+// shape of a real mismatch rather than an artificial one: a cabinet's symbol
+// list ends in `IrData`, the catalog's block does not carry it, and a device
+// writes the entry without it. Ninety-two cabinets are like that.
+//
+// This used to expect "e" to take its place holding a zero. That was the bug:
+// the extra value produces a chain entry a device stores, hands back
+// unchanged, and renders as an empty chain.
 func (s *EncodeTestSuite) TestValuesFollowTheCatalogsWord() {
 	sym := catalog.Symbol{Params: []string{"a", "b", "c", "d", "e"}}
 	types := map[string]catalog.Param{
@@ -220,9 +229,12 @@ func (s *EncodeTestSuite) TestValuesFollowTheCatalogsWord() {
 	tests := []struct {
 		name string
 		// a model the table names but gives nothing to set.
-		bare   bool
-		params map[string]catalog.ParamValue
-		want   []any
+		bare bool
+		// a model the catalog carries no block for, so nothing says which of
+		// its parameters a chain entry holds.
+		untyped bool
+		params  map[string]catalog.ParamValue
+		want    []any
 	}{
 		{
 			name: "a whole number the catalog calls a fraction",
@@ -232,12 +244,12 @@ func (s *EncodeTestSuite) TestValuesFollowTheCatalogsWord() {
 				"c": catalog.Bool(true),
 				"d": catalog.Float(2),
 			},
-			want: []any{float64(3), int64(4), true, int64(2), float64(0)},
+			want: []any{float64(3), int64(4), true, int64(2)},
 		},
 		{
 			name:   "a preset that carries none of them",
 			params: nil,
-			want:   []any{float64(0), int64(0), false, int64(0), float64(0)},
+			want:   []any{float64(0), int64(0), false, int64(0)},
 		},
 		{
 			name: "values already of the kind the catalog states",
@@ -248,7 +260,17 @@ func (s *EncodeTestSuite) TestValuesFollowTheCatalogsWord() {
 				"d": catalog.Int(1),
 				"e": catalog.Bool(true),
 			},
-			want: []any{0.25, int64(7), false, int64(1), true},
+			want: []any{0.25, int64(7), false, int64(1)},
+		},
+		{
+			// Nothing to filter against, so the whole list travels: writing
+			// a short entry is the worse guess of the two.
+			name:    "a model the catalog has no block for",
+			untyped: true,
+			params: map[string]catalog.ParamValue{
+				"a": catalog.Float(0.5),
+			},
+			want: []any{0.5, float64(0), float64(0), float64(0), float64(0)},
 		},
 		{name: "a model with no parameters at all", bare: true},
 	}
@@ -261,7 +283,12 @@ func (s *EncodeTestSuite) TestValuesFollowTheCatalogsWord() {
 				return
 			}
 
-			s.Require().Equal(tt.want, valuesOf(sym, tt.params, types, nil))
+			have := types
+			if tt.untyped {
+				have = nil
+			}
+
+			s.Require().Equal(tt.want, valuesOf(sym, tt.params, have, nil))
 		})
 	}
 }
