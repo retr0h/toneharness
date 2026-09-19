@@ -194,12 +194,13 @@ on.
 
 ## What is still missing
 
-**Reaching the controls.** A live edit currently answers for the input block,
-the splits and the join, and for no chain block, so an amplifier's controls can
-only be moved by writing a preset and selecting it — around ten seconds a step
-rather than one. The budget above assumes that slower path and survives it.
-Solving the addressing would make a sweep about five times faster and stop the
-flash wear.
+**Nothing, on the device side.** A live edit reaches every block, including
+amplifiers and cabinets, so a sweep is one message and a measurement rather than
+a preset write. That was open for an evening and was
+[a self-inflicted wound](measuring.md#addressing-a-control): the probing ran
+against presets a broken encoder had emptied, and an empty preset still answers
+on the four structural slots, which reads exactly like chain blocks being
+unreachable.
 
 **The corpus side.** Genres are not tagged on records yet, so "punk" has nothing
 to be computed from. That needs no hardware.

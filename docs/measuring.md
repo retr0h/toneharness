@@ -336,53 +336,57 @@ It is not the order a `.hlx` writes its keys and not anything alphabetical. For
 the US Dripman the device's order begins Norm Drive, Bass, Mid, Treble, where
 the preset's own JSON is sorted and begins Bass, Bias, BiasX, Bright.
 
-**The block is not its position in the chain.** It is the device's own number
-for a slot, and probing every address from 0 to 79 against a preset holding an
-amplifier, a cabinet, a split and a join finds four that answer:
+**The block is not its position in the chain.** It is the slot it occupies in
+the device's own fixed layout, and on an HX Stomp that layout is:
 
-| address | accepts       | is                                                |
-| ------- | ------------- | ------------------------------------------------- |
-| 0       | 1, 2          | the **input block**, `HelixStomp_AppDSPFlowInput` |
-| 9, 10   | 0, 1          | **splits**                                        |
-| 19      | 0, 1, 2, 3, 5 | the **join**                                      |
+| slot  | what                              |
+| ----- | --------------------------------- |
+| 0     | the input block                   |
+| 1-8   | path A, where a chain's blocks go |
+| 9     | the output block                  |
+| 10    | the split                         |
+| 11-18 | path B                            |
+| 19    | the join                          |
 
-Each reads exactly against its model's parameter list, which is what identifies
-them. The input block's parameters are noiseGate, threshold, decay, select: the
-two floats are taken and the boolean and the enum are refused. A join's are A
-Level, A Pan, B Level, B Pan, B Polarity, Level, and B Polarity is the only
-boolean and the only refusal. A split's are BalanceA, BalanceB, bypass, and
-bypass takes its own opcode.
+So **a block's slot is its position plus one**, on the first path. A preset
+whose amplifier reads `@position: 0` has that amplifier at slot 1. On the second
+path it is the position plus the split's slot plus one. Slots 20 and above do
+not exist on a Stomp and always refuse.
 
-### What does not work, and is the next thing to solve
+The four structural slots are in every preset, **including an empty one**, and
+that is worth knowing because of how it misleads. A preset that renders as
+nothing still answers on 0, 9, 10 and 19 and refuses everything else, which
+reads exactly like "chain blocks cannot be addressed" and is really "there are
+no chain blocks". A whole evening went into that, against presets
+[a broken encoder had emptied](protocol.md#a-written-preset-renders-empty-and-reads-back-fine).
 
-**No chain block answers.** Not the amplifier, not the cabinet, at any address
-from 0 to 79.
+### What a refusal means
 
-Ruled out, each by trying it:
+`-3` is a bad block or parameter reference, and the causes are known:
 
-- **Every address.** 0 to 79, parameter 1, which is a float on nearly every
-  model. Four answered and all four are flow blocks.
-- **Both other addressing fields.** The model selector at 0 and 1, and the
-  addressing mode true and false, in all four combinations, across the addresses
-  a chain block could plausibly occupy. None answered.
-- **The value.** Treble is refused at 0, 0.25, 0.75 and 1 alike, so it is not a
-  range check.
-- **An unopened edit buffer.** Reading the buffer first, which a preset write is
-  documented to need, changes nothing.
+- a slot the loaded preset has nothing in
+- a slot past 19 on this device
+- the wrong wire type: a switch takes a bool and refuses the same number as a
+  float or an int, and a cabinet's `Mic` is an enum and takes an int
+- a parameter past the model's own list, such as `Trails`, which needs the
+  addressing mode false with the index zero
+- a split's `bypass`, which takes opcode 41 rather than this one
 
-Every refusal is `-3`, the same code the device gives for a parameter it will
-not address the way it was asked.
+Nothing refuses because of what kind of block it is. Amplifiers and cabinets
+take a live edit like anything else:
 
-So a live edit currently reaches the blocks the signal passes through on its way
-in and out, and not the blocks that make the sound. Something further is needed:
-another key in the message, a different opcode for chain blocks, or a call that
-selects a block before its parameters can be set. Nothing in the
-reverse-engineering this was built from distinguishes the two kinds of block,
-which suggests the distinction is real and undocumented rather than a mistake in
-the addressing here.
+```
+block 1 parameter 3, the amplifier's Treble
 
-**This is what blocks characterising a device.** The method works, the loop
-works, and the controls it can reach are the wrong ones.
+  value   centroid    high band
+  0.000   185.8 Hz       0.611%
+  0.500   185.3 Hz       0.648%
+  0.750   217.7 Hz       1.583%
+  1.000   778.3 Hz      20.661%
+```
+
+Against a noise floor of 6.9Hz on the centroid, which is the whole point of
+measuring the noise floor first.
 
 ## Why a synthesised signal will not do
 
