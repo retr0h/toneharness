@@ -98,6 +98,16 @@ func (n Notes) Unmet() Notes {
 // and said not to substitute.
 var ErrInsisted = fmt.Errorf("the device has no such gear")
 
+// ErrWrongDevice is returned when the measurements describe one device and
+// the setup names another.
+//
+// Not a warning. Every block was measured on one piece of hardware, and a
+// ranking built from those readings is a ranking of that device's blocks. Run
+// against another it answers confidently with models the device in hand may
+// not even have.
+var ErrWrongDevice = fmt.Errorf(
+	"the measurements were taken on a different device")
+
 // Translate turns a request and a setup into a rig.
 //
 // Deterministic given the same catalog, the same measurements and the same
@@ -109,6 +119,10 @@ func Translate(
 	deps Deps,
 ) (rig.Spec, Notes, error) {
 	var notes Notes
+
+	if err := agrees(setup, deps, &notes); err != nil {
+		return rig.Spec{}, notes, err
+	}
 
 	out := rig.Spec{
 		Schema:     rig.SchemaName,
@@ -129,7 +143,7 @@ func Translate(
 		out.Character = &terms
 	}
 
-	chain, err := chainFor(spec, deps, &notes)
+	chain, err := chainFor(spec, setup, deps, &notes)
 	if err != nil {
 		return rig.Spec{}, notes, err
 	}
@@ -148,9 +162,49 @@ func Translate(
 	return out, notes, nil
 }
 
+// agrees holds the measurements to the device somebody says they have.
+//
+// A setup naming no device is taken at its word rather than refused: somebody
+// asking what a record sounds like has not necessarily said what they own,
+// and the measurements name the device they came from.
+func agrees(
+	setup tone.Setup,
+	deps Deps,
+	notes *Notes,
+) error {
+	if setup.Device == nil || setup.Device.Model == "" {
+		*notes = append(*notes, Note{
+			About:    "device",
+			Said:     fmt.Sprintf("the setup names none, so this is for %s", deps.Measured.Device),
+			Honoured: true,
+		})
+
+		return nil
+	}
+
+	want := strings.ToLower(setup.Device.Model)
+	had := strings.ToLower(deps.Measured.Device)
+
+	if want == had {
+		return nil
+	}
+
+	*notes = append(*notes, Note{
+		About: setup.Device.Model,
+		Said: fmt.Sprintf(
+			"every block was measured on %s, so nothing here can say which "+
+				"of a %s's blocks is closest to anything",
+			deps.Measured.Device, setup.Device.Model),
+	})
+
+	return fmt.Errorf("%w: %s, not %s",
+		ErrWrongDevice, deps.Measured.Device, setup.Device.Model)
+}
+
 // chainFor is the signal path a request asks for.
 func chainFor(
 	spec tone.Spec,
+	setup tone.Setup,
 	deps Deps,
 	notes *Notes,
 ) ([]rig.ChainEntry, error) {
@@ -163,7 +217,7 @@ func chainFor(
 	// nothing named one and there is something to aim at, the measurements
 	// pick the closest.
 	if !holds(named, rig.RoleAmp) {
-		if amp, ok := nearestTo(spec, deps, "amp", notes); ok {
+		if amp, ok := nearestTo(spec, setup, deps, "amp", notes); ok {
 			named = append([]rig.ChainEntry{amp}, named...)
 		}
 	}
@@ -257,6 +311,7 @@ func namedGear(
 // was, so the comparison is between two of the same kind of thing.
 func nearestTo(
 	spec tone.Spec,
+	setup tone.Setup,
 	deps Deps,
 	category string,
 	notes *Notes,
@@ -266,7 +321,8 @@ func nearestTo(
 		return rig.ChainEntry{}, false
 	}
 
-	ranked := deps.Measured.Nearest(category, want, measured.Spectral())
+	ranked := reachable(
+		deps.Measured.Nearest(category, want, measured.Spectral()), setup)
 	if len(ranked) == 0 {
 		*notes = append(*notes, Note{
 			About: category,
@@ -292,6 +348,43 @@ func nearestTo(
 		Gear:   best.Name,
 		Models: &models,
 	}, true
+}
+
+// reachable is the blocks somebody could actually play.
+//
+// An impulse response block carries an index rather than any audio: what is
+// in that slot is whatever its owner put there, so a chain naming slot 82
+// sounds like one thing on the device it was built on and like something else
+// on anybody else's. Choosing one for somebody who has loaded nothing picks a
+// block that will be silent.
+//
+// A setup saying which impulse responses it holds unlocks them again.
+func reachable(
+	ranked []measured.Match,
+	setup tone.Setup,
+) []measured.Match {
+	loaded := map[string]bool{}
+
+	if setup.Owns != nil {
+		for _, held := range *setup.Owns {
+			if held.Kind == tone.OwnedIR {
+				loaded[strings.ToLower(held.Name)] = true
+			}
+		}
+	}
+
+	out := make([]measured.Match, 0, len(ranked))
+
+	for _, match := range ranked {
+		if catalog.NeedsUserIR(catalog.ModelID(match.ID)) &&
+			!loaded[strings.ToLower(match.Name)] {
+			continue
+		}
+
+		out = append(out, match)
+	}
+
+	return out
 }
 
 // target is what a request is aiming at, in the figures a block is measured

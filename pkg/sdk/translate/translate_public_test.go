@@ -407,6 +407,85 @@ func (s *TranslatePublicTestSuite) TestGearWithNoRoleIsLookedForAnywhere() {
 		"it goes in as other, and the compiler places it")
 }
 
+// TestASetupNamingAnotherDeviceIsRefused is not a warning.
+//
+// Every block was measured on one piece of hardware, and a ranking built from
+// those readings ranks that device's blocks. Run against another it answers
+// confidently with models the device in hand may not even have.
+func (s *TranslatePublicTestSuite) TestASetupNamingAnotherDeviceIsRefused() {
+	_, notes, err := translate.Translate(
+		s.ask("gear:\n  - gear: LA Studio Comp\n    role: comp\n"),
+		s.setup("device:\n  model: Helix Floor\n"), s.deps)
+
+	s.Require().ErrorIs(err, translate.ErrWrongDevice)
+	s.Require().Contains(strings.Join(sayings(notes.Unmet()), " "),
+		"every block was measured on HX Stomp")
+}
+
+// TestASetupNamingTheSameDeviceIsFine covers the ordinary case.
+func (s *TranslatePublicTestSuite) TestASetupNamingTheSameDeviceIsFine() {
+	_, _, err := translate.Translate(
+		s.ask("gear:\n  - gear: LA Studio Comp\n    role: comp\n"),
+		s.setup("device:\n  model: HX Stomp\n"), s.deps)
+
+	s.Require().NoError(err)
+}
+
+// TestAnImpulseResponseNobodyLoadedIsNotChosen covers a block that carries an
+// index rather than any audio.
+//
+// What is in that slot is whatever its owner put there, so a chain naming one
+// sounds like something on the device it was built on and like nothing at all
+// on anybody else's. The reading for one is of an empty slot.
+func (s *TranslatePublicTestSuite) TestAnImpulseResponseNobodyLoadedIsNotChosen() {
+	quiet := measured.Figures{Centroid: 111, Low: 99, Mid: 1}
+
+	only := s.deps
+	only.Measured = measured.Library{
+		Device: "HX Stomp",
+		Blocks: map[string]measured.Block{
+			"HD2_ImpulseResponse1024": {
+				ID: "HD2_ImpulseResponse1024", Name: "IR 1024",
+				Category: "amp", Figures: quiet,
+			},
+		},
+	}
+
+	_, notes, err := translate.Translate(
+		s.ask("like:\n  recording: "+s.recording()+
+			"\ngear:\n  - gear: LA Studio Comp\n    role: comp\n"),
+		s.setup(""), only)
+
+	s.Require().NoError(err)
+	s.Require().Contains(strings.Join(sayings(notes.Unmet()), " "),
+		"nothing of that kind has been measured",
+		"the only candidate was one nobody has loaded")
+}
+
+// TestAnImpulseResponseSomebodyOwnsIsChosen covers the setup unlocking it.
+func (s *TranslatePublicTestSuite) TestAnImpulseResponseSomebodyOwnsIsChosen() {
+	only := s.deps
+	only.Measured = measured.Library{
+		Device: "HX Stomp",
+		Blocks: map[string]measured.Block{
+			"HD2_ImpulseResponse1024": {
+				ID: "HD2_ImpulseResponse1024", Name: "IR 1024",
+				Category: "amp",
+				Figures:  measured.Figures{Centroid: 140, Low: 93, Mid: 7},
+			},
+		},
+	}
+
+	got, _, err := translate.Translate(
+		s.ask("like:\n  recording: "+s.recording()+"\n"),
+		s.setup("owns:\n  - kind: ir\n    name: IR 1024\n    slot: 3\n"),
+		only)
+
+	s.Require().NoError(err)
+	s.Require().Len(got.Chain, 1)
+	s.Require().Equal("IR 1024", got.Chain[0].Gear)
+}
+
 // sayings is what a set of notes said.
 func sayings(
 	notes translate.Notes,
