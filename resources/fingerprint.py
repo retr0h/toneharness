@@ -82,6 +82,16 @@ def blocks(category: str) -> list[dict]:
         if category and block["category"] != category:
             continue
 
+        # Four entries in the catalog are not blocks. `@dt`,
+        # `@global_params`, `@powercab` and `@variax` are where a preset
+        # keeps settings about the device rather than anything in the signal
+        # path, and they carry no name because nobody puts one in a chain.
+        # Skipped rather than attempted, so the refusals in the output are
+        # blocks that would not load rather than things that were never
+        # blocks.
+        if not block["name"]:
+            continue
+
         out.append({
             "id": block["id"],
             "name": block["name"],
