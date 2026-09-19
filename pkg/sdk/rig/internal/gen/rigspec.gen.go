@@ -154,24 +154,6 @@ func (e PlayedStrings) Valid() bool {
 	}
 }
 
-// Defines values for RequirementKind.
-const (
-	Ir    RequirementKind = "ir"
-	Model RequirementKind = "model"
-)
-
-// Valid indicates whether the value is a known member of the RequirementKind enum.
-func (e RequirementKind) Valid() bool {
-	switch e {
-	case Ir:
-		return true
-	case Model:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for RigSpecSchema.
 const (
 	RigSpecSchemaRigSpec RigSpecSchema = "RigSpec"
@@ -671,22 +653,6 @@ type Played struct {
 // PlayedStrings What is on it, where somebody knows. Flatwounds and roundwounds are a larger difference than most pedals.
 type PlayedStrings string
 
-// Requirement Something a rig needs that a device does not ship with.
-//
-// Only what a catalog cannot see belongs here. Whether a model exists on a device tier, or needs newer firmware, is already known — the catalog carries the supported device list and the release it came from. What nothing can know is a third-party impulse response or purchased content, so those are declared.
-type Requirement struct {
-	// Kind `ir` is an impulse response the owner loaded themselves. `model` is content that did not ship with the device.
-	Kind RequirementKind `json:"kind"`
-	Name string          `json:"name"`
-
-	// Slot Where the author had it loaded. A preset references the slot, not the audio, so the same rig sounds different to anybody whose slot holds something else.
-	Slot *int    `json:"slot,omitempty"`
-	URL  *string `json:"url,omitempty"`
-}
-
-// RequirementKind `ir` is an impulse response the owner loaded themselves. `model` is content that did not ship with the device.
-type RequirementKind string
-
 // RigSpec A rig, complete. Sparse when hand-written; the same document carries settings and evidence once anything has been measured or tuned.
 type RigSpec struct {
 	// Aliases Other names this rig answers to.
@@ -743,8 +709,7 @@ type RigSpec struct {
 	// Played The instruments the rig is played on, most used first.
 	//
 	// A list because players use more than one and the figures know it. Flea recorded I'm With You on two 1961 Jazz Basses. Les Claypool took a Carl Thompson four and a de-fretted Tune six to the same session, and two of his four measured records are the six.
-	Played   *[]Played      `json:"played,omitempty"`
-	Requires *[]Requirement `json:"requires,omitempty"`
+	Played *[]Played `json:"played,omitempty"`
 
 	// Schema Names the format, so a file says what it is without relying on where it was found.
 	Schema RigSpecSchema `json:"schema"`

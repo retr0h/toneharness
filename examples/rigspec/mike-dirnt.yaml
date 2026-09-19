@@ -181,19 +181,6 @@ technique:
       note: widely said to be a pick player
       caveat: not sourced to anything anybody opened
 
-# Anything a device does not ship with. Only what a catalog cannot already
-# see belongs here: whether a model exists on your device tier, or needs newer
-# firmware, is known from the catalog itself.
-#
-# An impulse response is the case nothing can know. A preset stores the slot
-# number, never the audio, so this rig sounds like somebody else's unless the
-# same IR is loaded in the same slot.
-requires:
-  - kind: ir
-    name: Ownhammer SVT 8x10
-    slot: 82
-    url: https://ownhammer.com/EXAMPLE
-
 # Device parameters under their own names, as distinct from the musical
 # settings above. A rig written by hand has none of these; one lifted from a
 # preset has all of them, and stating them means exactly those — no catalog

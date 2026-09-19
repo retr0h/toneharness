@@ -52,16 +52,17 @@ const subjectBlock = `subject:
   band: A Band
 `
 
-// requiresAndEvidence is what a rig needs and what it rests on, written as
-// rigs marshalled by machine write them: the keys after the first in each
-// entry sit at the indent a subject's own keys sit at.
-const requiresAndEvidence = `requires:
-- name: My IR Pack
-  kind: ir
-
-evidence:
+// nestedKinds is what a rig rests on, written as rigs marshalled by machine
+// write them: the keys after the first in each entry sit at the indent a
+// subject's own keys sit at.
+//
+// Two entries rather than one, so `kind` appears more than once below the
+// subject and a copy cannot pass by rewriting whichever it finds first.
+const nestedKinds = `evidence:
 - url: https://example.test/b
   kind: cited
+- url: https://example.test/c
+  kind: heard
 
 `
 
@@ -239,14 +240,14 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			absent: []string{"kind: artist", "name: Parent Player"},
 		},
 		{
-			// `kind` is the subject's, and a rig says what it requires and
-			// what it rests on in the same word at the same indent.
-			name:      "a copy of a rig that says what it requires",
+			// `kind` is the subject's, and a rig says what it rests on in
+			// the same word at the same indent.
+			name:      "a copy of a rig that says what it rests on",
 			from:      "parent",
 			kind:      "song",
-			rig:       parentRig{extra: requiresAndEvidence},
+			rig:       parentRig{extra: nestedKinds},
 			loadsKind: "song",
-			want:      []string{"kind: ir", "kind: cited", "  kind: song"},
+			want:      []string{"kind: cited", "kind: heard", "  kind: song"},
 		},
 		{
 			// Nothing matched a flow subject's kind, so asking for one was

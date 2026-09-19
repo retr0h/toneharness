@@ -601,42 +601,6 @@ components:
             Whether the gear is switched on. A bypassed pedal is still part of
             a rig and still costs a device something to carry.
 
-    Requirement:
-      type: object
-      additionalProperties: false
-      description: >
-        Something a rig needs that a device does not ship with.
-
-
-        Only what a catalog cannot see belongs here. Whether a model exists on
-        a device tier, or needs newer firmware, is already known — the catalog
-        carries the supported device list and the release it came from. What
-        nothing can know is a third-party impulse response or purchased
-        content, so those are declared.
-      required: [kind, name]
-      properties:
-        kind:
-          type: string
-          enum: [ir, model]
-          description: >
-            `ir` is an impulse response the owner loaded themselves. `model`
-            is content that did not ship with the device.
-        name:
-          type: string
-          minLength: 1
-          # Something other than spaces: a name of blanks is not a name.
-          pattern: "\\S"
-        slot:
-          type: integer
-          description: >
-            Where the author had it loaded. A preset references the slot, not
-            the audio, so the same rig sounds different to anybody whose slot
-            holds something else.
-        url:
-          type: string
-          pattern: "^https?://\\S+$"
-          x-go-name: URL
-
     Capture:
       type: string
       description: >
@@ -1212,9 +1176,6 @@ components:
           description: >
             Evidence for the rig as a whole. Evidence for one piece of gear
             belongs on that entry.
-        requires:
-          type: array
-          items: { $ref: "#/components/schemas/Requirement" }
         target:
           $ref: "#/components/schemas/Target"
         mutations:

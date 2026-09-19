@@ -453,6 +453,129 @@ func (s *MainTestSuite) TestEveryGeneratedPageIsLeftOutOfTheFormatter() {
 	}
 }
 
+// knownUnread is every RigSpec field no file names, on purpose.
+//
+// One, currently. `mutations` records what a round of correction changed and
+// what somebody made of the result, which is a history nothing replays yet.
+// It is #135's to move into a ToneSpec or to wire up.
+//
+// The list is here rather than absent so it stays a decision. A field that
+// leaves it without gaining a reader fails, and so does a field added to the
+// contract that quietly reaches nothing.
+var knownUnread = map[string]string{
+	"Mutations": "#135: what a correction changed, and what somebody made of it",
+}
+
+// TestEveryRigSpecFieldReachesSomething holds the contract to what it builds.
+//
+// John asked for this as a verification: "everything in rigspec needs to turn
+// into an action". Performed by hand it found `requires`, a field describing
+// impulse responses a device does not ship with that nothing in this
+// repository ever read — superseded by a Setup's `owns` before it was wired
+// up, and carried for months looking like a feature.
+//
+// So the check is a test rather than an afternoon. A field is read when some
+// file outside the generated types and outside the tests names it.
+//
+// That is coarse, and the coarseness is the point rather than a shortcut.
+// It matches on the field's name alone, so `Evidence` counts as read because
+// a CharacterTerm's evidence is read, even though a rig's own is not. Telling
+// those apart needs the type checker, and the failure worth catching does not:
+// `requires` was a field whose name appeared in no file at all, and it sat
+// there for months looking like a feature. This catches that, every time,
+// for the cost of parsing one generated file.
+//
+// Which of the fields it passes are read as themselves is #135's audit, and
+// that one wants a person rather than a test.
+func (s *MainTestSuite) TestEveryRigSpecFieldReachesSomething() {
+	fields := s.rigSpecFields()
+	s.Require().NotEmpty(fields)
+
+	var body strings.Builder
+
+	for _, dir := range []string{"pkg", "cmd"} {
+		err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+			switch {
+			case err != nil || info.IsDir():
+				return err
+			case !strings.HasSuffix(path, ".go"):
+				return nil
+			case strings.HasSuffix(path, "_test.go"):
+				return nil
+			case strings.HasSuffix(path, ".gen.go"):
+				return nil
+			}
+
+			at, err := os.ReadFile(path) //nolint:gosec // a path this walk found
+			if err != nil {
+				return err
+			}
+
+			body.Write(at)
+
+			return nil
+		})
+		s.Require().NoError(err)
+	}
+
+	read := body.String()
+
+	for _, name := range fields {
+		why, expected := knownUnread[name]
+		got := strings.Contains(read, "."+name)
+
+		switch {
+		case got && expected:
+			s.Require().Fail("a field gained a reader and is still listed as dead",
+				"RigSpec.%s is read now, so take it out of knownUnread (%s)",
+				name, why)
+		case !got && !expected:
+			s.Require().Fail("a field in the contract reaches nothing",
+				"RigSpec.%s is named by no file that builds anything. Either "+
+					"make it do something, take it out of the contract, or "+
+					"add it to knownUnread saying which task carries it.", name)
+		}
+	}
+}
+
+// rigSpecFields is every field the generated RigSpec type declares.
+//
+// Read off the generated type rather than the contract, because the contract
+// says `snapshots` and the code says `Snapshots`, and the rule turning one
+// into the other belongs to the generator rather than to this test.
+func (s *MainTestSuite) rigSpecFields() []string {
+	at := filepath.Join("pkg", "sdk", "rig", "internal", "gen", "rigspec.gen.go")
+
+	file, err := parser.ParseFile(token.NewFileSet(), at, nil, 0)
+	s.Require().NoError(err)
+
+	var out []string
+
+	ast.Inspect(file, func(n ast.Node) bool {
+		spec, ok := n.(*ast.TypeSpec)
+		if !ok || spec.Name.Name != "RigSpec" {
+			return true
+		}
+
+		body, ok := spec.Type.(*ast.StructType)
+		if !ok {
+			return false
+		}
+
+		for _, f := range body.Fields.List {
+			for _, name := range f.Names {
+				if name.IsExported() {
+					out = append(out, name.Name)
+				}
+			}
+		}
+
+		return false
+	})
+
+	return out
+}
+
 // TestTheCLIStandsAlone asserts the CLI half could be its own repository.
 //
 // The mirror of TestTheSDKStandsAlone, for the other end. main.go, cmd/ and

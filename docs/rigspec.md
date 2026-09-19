@@ -56,7 +56,6 @@ A rig, complete. Sparse when hand-written; the same document carries settings an
 | `instrument *` | string | closed | `guitar`, `bass` |
 | `mutations` | list of Mutation | — | [Mutation](#mutation) |
 | `played` | list of Played | — | [Played](#played) |
-| `requires` | list of Requirement | — | [Requirement](#requirement) |
 | `schema *` | string | closed | `RigSpec` |
 | `sections` | list of Section | — | [Section](#section) |
 | `snapshots` | list of Snapshot | — | [Snapshot](#snapshot) |
@@ -187,17 +186,6 @@ The instrument itself, which no device models and every figure carries.
 | `gear *` | string | shaped | `\S` |
 | `records` | list of string | open | — |
 | `strings` | string | closed | `round`, `flat`, `tape`, `unknown` |
-
-## Requirement
-
-Something a rig needs that a device does not ship with.
-
-| field | holds | grammar | allowed |
-| --- | --- | --- | --- |
-| `kind *` | string | closed | `ir`, `model` |
-| `name *` | string | shaped | `\S` |
-| `slot` | integer | — | — |
-| `url` | string | shaped | `^https?://\S+$` |
 
 ## Section
 
