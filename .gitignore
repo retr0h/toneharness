@@ -37,3 +37,8 @@ resources/schemas/gear-map.json
 
 # Reddit MCP credentials, exported rather than committed
 .env
+
+# Dry signals: the input side of a measurement, licensed for teaching
+# rather than redistribution. resources/dry/README.md says where to get them.
+resources/dry/**
+!resources/dry/README.md
