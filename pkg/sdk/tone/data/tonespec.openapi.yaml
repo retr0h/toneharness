@@ -1,0 +1,341 @@
+openapi: 3.0.3
+info:
+  title: ToneSpec
+  version: "1.0.0"
+  description: >
+    What somebody wants to sound like, and what they have to work with.
+
+
+    Two documents. A ToneSpec is the ask and changes every request; a Setup is
+    what the person owns and changes when they buy something. A RigSpec is
+    what the tool writes from the two, and is not authored by hand.
+
+
+    The split is a re-split. Version 2 of RigSpec merged a former Recipe and
+    RigSpec because "their names were the wrong way round: Recipe held the
+    abstraction and RigSpec held compiler output". The lesson survived and the
+    names are now the right way round: this is the abstraction, RigSpec is the
+    output, and nothing hand-written carries a knob position unless somebody
+    can say where the number came from.
+
+
+    See docs/superpowers/specs/2026-09-19-tonespec-is-the-ask-design.md.
+
+
+    This document is the source for the Go types in pkg/sdk/tone/internal/gen.
+    Do not hand-edit those; change this and run `just generate`.
+
+paths: {}
+
+components:
+  schemas:
+    ToneSpec:
+      type: object
+      additionalProperties: false
+      description: >
+        A request for a sound, in whatever terms the person has.
+
+
+        Every field is optional and any combination is legal. "Punk, but on my
+        Jazz" is a genre and a Setup; "like Dirnt but chunkier" is a player and
+        a nudge. This is a request rather than a form, and a request nobody
+        filled in completely is the ordinary case.
+      required: [schema]
+      properties:
+        schema:
+          type: string
+          enum: [ToneSpec]
+          description: >
+            What this document is, so a file says so rather than being guessed
+            at by its extension.
+        like:
+          $ref: "#/components/schemas/Like"
+        genre:
+          type: string
+          minLength: 1
+          description: >
+            A genre, as a word rather than one of a fixed list.
+
+
+            Not an enum, because enumerating genres in a contract means a
+            release to add one and the thing that decides whether a genre
+            works is not the schema. It is whether enough records carry the
+            tag to have a distribution: eight from at least three artists to
+            be usable. A genre below that is reported rather than computed
+            from, because three records by one band is that band's sound
+            wearing a genre's name.
+        words:
+          type: array
+          items: { type: string, minLength: 1 }
+          description: >
+            How it should sound, in the words a person would use.
+
+
+            Checked against the vocabulary a rig uses, because a word that
+            reaches no control cannot be aimed at and saying so is better than
+            accepting it and quietly doing nothing.
+        gear:
+          type: array
+          items: { $ref: "#/components/schemas/Wanted" }
+          description: >
+            Gear the request names, when somebody wants a particular thing
+            rather than a particular sound.
+        nudges:
+          type: array
+          items: { $ref: "#/components/schemas/Nudge" }
+          description: >
+            Moves from wherever the last answer landed.
+
+
+            Different in kind from everything above, which names a target.
+            Conversation is made almost entirely of these, and a request that
+            can only state targets cannot take the instruction "darker".
+        note:
+          type: string
+          description: >
+            Anything the fields above cannot hold. Read by a person, not by
+            the compiler.
+
+    Like:
+      type: object
+      additionalProperties: false
+      description: >
+        Something to sound like: a player, a band, a song, or a recording
+        handed over.
+
+
+        A player becomes the middle of their records with the spread across
+        them as a tolerance, so an axis their records disagree about is one the
+        answer need not be precise on. A recording becomes its own figures, and
+        is the only fully specified target of the three.
+      properties:
+        artist:
+          type: string
+          minLength: 1
+        band:
+          type: string
+          minLength: 1
+        song:
+          type: string
+          minLength: 1
+        recording:
+          type: string
+          minLength: 1
+          description: >
+            A path to audio to aim at. Measured rather than searched for, so
+            it needs no catalog entry and no citation: it is evidence of
+            itself.
+        years:
+          $ref: "#/components/schemas/Years"
+
+    Years:
+      type: object
+      additionalProperties: false
+      description: >
+        The window a request is about, where a player's sound changed over
+        their career and the request is about one part of it.
+      required: [from, to]
+      properties:
+        from: { type: integer, minimum: 1900, maximum: 2100 }
+        to: { type: integer, minimum: 1900, maximum: 2100 }
+
+    Wanted:
+      type: object
+      additionalProperties: false
+      description: >
+        A piece of gear the request asks for by name.
+
+
+        Named as a person would: "Ampeg SVT", never a model identifier. What
+        the device has to offer for it is the tool's problem.
+      required: [gear]
+      properties:
+        gear:
+          type: string
+          minLength: 1
+        role:
+          $ref: "#/components/schemas/Role"
+        insist:
+          type: boolean
+          default: false
+          description: >
+            Refuse rather than substitute.
+
+
+            False, the default, takes the nearest thing the device models and
+            says what it did. True fails the request instead, which is what
+            somebody means when the gear is the point rather than the sound.
+
+    Role:
+      type: string
+      description: >
+        What a piece of gear does in the chain.
+      enum: [amp, cab, drive, comp, eq, mod, delay, reverb, filter, pitch, wah, other]
+      x-enum-varnames:
+        [
+          RoleAmp,
+          RoleCab,
+          RoleDrive,
+          RoleComp,
+          RoleEQ,
+          RoleMod,
+          RoleDelay,
+          RoleReverb,
+          RoleFilter,
+          RolePitch,
+          RoleWah,
+          RoleOther,
+        ]
+
+    Nudge:
+      type: object
+      additionalProperties: false
+      description: >
+        A move along one axis from where the chain currently is.
+
+
+        Not a target: "darker" names no point. It is a direction and a size,
+        and the size is in steps rather than in a figure's own units because
+        the person saying it does not know what a centroid is. One step is a
+        change somebody would call noticeable.
+      required: [word]
+      properties:
+        word:
+          type: string
+          minLength: 1
+          description: >
+            The word said, which names the axis and the direction together:
+            `darker` is the highs axis, downward.
+        steps:
+          type: number
+          default: 1
+          minimum: 0.1
+          maximum: 5
+          description: >
+            How far. One is the default and means a noticeable move; "much
+            darker" is larger and "a touch darker" is smaller.
+
+    Setup:
+      type: object
+      additionalProperties: false
+      description: >
+        What somebody has.
+
+
+        Separate from the ask because it changes on a different clock. Folding
+        an instrument into a request would mean restating the bass, the
+        strings and the pedal every time, and the twelfth request
+        contradicting the first.
+
+
+        It is also what makes an answer fit the person rather than the record.
+        Every figure in the corpus was measured off somebody else's
+        instrument, and the difference between that and the one being held is
+        a knob position nothing could hold before this existed.
+      required: [schema]
+      properties:
+        schema:
+          type: string
+          enum: [Setup]
+        device:
+          $ref: "#/components/schemas/Device"
+        instruments:
+          type: array
+          items: { $ref: "#/components/schemas/Instrument" }
+          description: >
+            What they play. More than one, because most people have more than
+            one and they do not sound the same.
+        owns:
+          type: array
+          items: { $ref: "#/components/schemas/Owned" }
+          description: >
+            Content the device does not ship with: impulse responses somebody
+            loaded, models somebody bought.
+
+
+            A preset naming one of these on a device that does not have it is
+            silent in that block, and nothing could tell before this: the
+            catalog knows what ships and only the owner knows what else is
+            there.
+
+    Device:
+      type: object
+      additionalProperties: false
+      description: >
+        The hardware, which decides what a chain may cost and what it may
+        hold.
+      required: [model]
+      properties:
+        model:
+          type: string
+          minLength: 1
+          description: >
+            As Line 6 name it: "HX Stomp", "Helix Floor".
+        firmware:
+          type: string
+          description: >
+            What it is running, where that matters. A block's parameters can
+            change between releases, and a measurement taken on one is not a
+            measurement of the other.
+
+    Instrument:
+      type: object
+      additionalProperties: false
+      description: >
+        One instrument somebody owns, described in what changes the sound.
+      required: [gear]
+      properties:
+        gear:
+          type: string
+          minLength: 1
+          description: >
+            As a person would say it: "Fender Jazz Bass", "Rickenbacker 4003".
+        strings:
+          $ref: "#/components/schemas/Strings"
+        pickups:
+          type: string
+          description: >
+            Where they are and what they are, when it is not what the
+            instrument shipped with.
+        default:
+          type: boolean
+          default: false
+          description: >
+            The one to assume when a request does not say. The first
+            instrument is assumed when none is marked.
+
+    Strings:
+      type: string
+      description: >
+        What is on it.
+
+
+        Flatwounds and roundwounds are a larger difference than most pedals,
+        and the difference between what a record was made on and what is being
+        held is a correction the answer can make. Unknown is honest and
+        useful: it says nobody checked rather than implying either.
+      enum: [round, flat, tape, unknown]
+      x-enum-varnames: [StringsRound, StringsFlat, StringsTape, StringsUnknown]
+
+    Owned:
+      type: object
+      additionalProperties: false
+      description: >
+        One thing on the device that did not ship with it.
+      required: [kind, name]
+      properties:
+        kind:
+          type: string
+          enum: [ir, model]
+          x-enum-varnames: [OwnedIR, OwnedModel]
+        name:
+          type: string
+          minLength: 1
+        slot:
+          type: integer
+          minimum: 0
+          description: >
+            Where it is loaded, for an impulse response, which a preset
+            references by position rather than by name. A preset written
+            against somebody else's numbering points at whatever they happen
+            to have there.
