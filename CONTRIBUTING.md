@@ -30,12 +30,8 @@ mise install
   and failed in CI.
 - **[uv].** Python package runner, and the only way Python enters this project.
   Nothing is installed into the repository: `uvx` fetches a tool, runs it and
-  leaves. Three jobs need it, each one something Go should not be doing.
-  `just md-fmt` formats markdown with [mdformat]. `just gear-map` reads the
-  Pilot's Guide PDF, whose model-name column uses a subset-embedded font no Go
-  library decodes. And separating a bass part out of a finished record runs
-  [Demucs], a trained model with no equivalent in Go. See
-  [Measure a player's sound](docs/workflows.md#measure-a-players-sound).
+  leaves. See [The language is Go](#the-language-is-go) for when that is
+  allowed, which is rarely.
 - **[ffmpeg].** Converts a recording to the WAV that `tonestack measure` reads.
   Only needed if you are measuring audio. `brew install ffmpeg`.
 - **[just].** Task runner used for building, testing, formatting, and other
@@ -469,6 +465,40 @@ with `errors.Is` and reach the detail with `errors.As`.
 `func (*OverBudgetError) Unwrap()`. `revive`'s `unused-receiver` says rename it
 to `_`; `receiver-naming` says never use `_`. Omitting is the only form
 satisfying both.
+
+### The language is Go
+
+Go, unless Go cannot do it. Not a preference: a second language is a second
+home for decisions, and a decision with two homes drifts.
+
+That is not hypothetical here. The measuring loop was written in Python
+because it needed an audio interface, and it computed its own band shares and
+centre of gravity in a few lines of numpy. Held against `pkg/sdk/audio` on the
+same file, it read the reference bass as 98.6% low at 95Hz where the real
+measurement says 93% and 138Hz. Three things differed, none of them visible in
+a number, and the result was that every block measured was incomparable with
+every record measured while both looked entirely reasonable. It also wrote its
+recordings through a library that defaults to 16-bit, so every reading was
+quantised before it was measured.
+
+Both were found by holding the two implementations against each other. Neither
+would have been found by reading either one.
+
+So Python is allowed only where there is nothing in Go to call, and the test is
+that question rather than how much quicker the script would be:
+
+- `just md-fmt` formats markdown with [mdformat].
+- `just gear-map` reads the Pilot's Guide PDF, whose model-name column uses a
+  subset-embedded font no Go library decodes.
+- `just stems` separates a bass part out of a finished record with [Demucs], a
+  trained model with no equivalent in Go. See
+  [Measure a player's sound](docs/workflows.md#measure-a-players-sound).
+- `just forum` and `just web` reach sites that refuse an ordinary fetch, one
+  checking the TLS handshake and the other the user agent.
+
+Audio playback and capture is not on that list, and used to be. `pkg/sdk/reamp`
+opens a duplex stream through miniaudio, so pushing a signal through a pedal
+and measuring what comes back is one language from end to end.
 
 ### Generated code
 
