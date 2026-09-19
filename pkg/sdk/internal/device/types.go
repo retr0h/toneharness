@@ -150,6 +150,13 @@ type Selector interface {
 type Turner interface {
 	// SetParam moves one parameter on the running preset.
 	SetParam(ctx context.Context, at Address, value float32) error
+	// SetChoice picks one of a parameter's settings, for the ones that are
+	// a list rather than a range. A cabinet's microphone is the one that
+	// matters: which of eight sits in front of the speaker changes the
+	// sound more than any of its knobs.
+	SetChoice(ctx context.Context, at Address, value int) error
+	// SetSwitch turns one of a parameter's switches on or off.
+	SetSwitch(ctx context.Context, at Address, on bool) error
 }
 
 // Loaded is a session that can read the preset a device is playing.

@@ -552,6 +552,12 @@ parameter by its position in that model's own list. Position is the only thing
 that identifies either on the wire, so neither takes a name. `presets show` lists a chain in order, and `catalog show` lists a model's parameters in
 theirs.
 
+A device does not coerce, so the kind of value has to match the parameter.
+`--value` is a number on a dial, `--choice` is one of a
+list such as a cabinet's microphone, and `--switch` is on or off
+such as an amplifier's Bright. The wrong one is refused with the same error a
+block that is not there gives.
+
 The value is in the parameter's own units, not anything normalised. Most run
 zero to one because that is genuinely their range; a cabinet's microphone
 distance runs one to twelve inches.
@@ -563,9 +569,11 @@ tonestack presets turn [flags]
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
 | `--block` | int |  | which block, by its position in the chain, counting from zero |
+| `--choice` | int |  | what to set it to, for a parameter that is a list rather than a range, such as a cabinet's microphone |
 | `--direct` |  | `true` | address the parameter the ordinary way; false reaches the value some blocks carry past their list |
 | `--model` | int |  | the block's own model, or 1 for a cabinet fused into an amplifier |
 | `--param` | int |  | which parameter, by its position in the model's own list |
+| `--switch` |  |  | what to set it to, for a parameter that is a switch, such as an amplifier's Bright |
 | `--value` | float64 |  | what to set it to, in the parameter's own units |
 
 ## tonestack recipes

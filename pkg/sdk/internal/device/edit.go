@@ -94,12 +94,53 @@ func (s *session) SetParam(
 	at Address,
 	value float32,
 ) error {
+	return s.edit(ctx, at, wire.Real(editValue, value))
+}
+
+// SetChoice picks one of a parameter's settings, for the ones that are a list
+// rather than a range.
+//
+// A cabinet's microphone is the one that matters most: which of eight is in
+// front of the speaker changes the sound more than any of its knobs, and it
+// is an index rather than a position on a dial.
+//
+// Separate from SetParam because a device does not coerce. The value's tag is
+// its type on the wire, and a parameter wanting an index refuses a float with
+// the same error it gives for a block that is not there. Sending 1.0 where it
+// wants 1 fails, and fails in a way that reads as the block being wrong.
+func (s *session) SetChoice(
+	ctx context.Context,
+	at Address,
+	value int,
+) error {
+	return s.edit(ctx, at,
+		wire.Number(editValue, uint64(value))) //nolint:gosec // a list index
+}
+
+// SetSwitch turns one of a parameter's switches on or off.
+//
+// The same refusal applies in the other direction: an amplifier's Bright is a
+// switch, and it declines 1.0 where it wants true.
+func (s *session) SetSwitch(
+	ctx context.Context,
+	at Address,
+	on bool,
+) error {
+	return s.edit(ctx, at, wire.Flag(editValue, on))
+}
+
+// edit is the message all three are, differing only in the value's tag.
+func (s *session) edit(
+	ctx context.Context,
+	at Address,
+	value wire.Arg,
+) error {
 	_, err := s.Call(ctx, channelData, opSetParam, []wire.Arg{
 		wire.Number(editBlock, uint64(at.Block)), //nolint:gosec // an address
 		wire.Flag(editDirect, at.Direct),
 		wire.Number(editModel, uint64(at.Model)), //nolint:gosec // 0 or 1
 		wire.Number(editParam, uint64(at.Param)), //nolint:gosec // a list index
-		wire.Real(editValue, value),
+		value,
 	})
 
 	return err

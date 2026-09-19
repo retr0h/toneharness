@@ -142,6 +142,68 @@ func (s *EditPublicTestSuite) TestSetParam() {
 	}
 }
 
+// TestSetChoiceAndSetSwitch covers the two other kinds of value.
+//
+// They exist because a device does not coerce. The value's tag is its type on
+// the wire, so a cabinet's microphone refuses a float and an amplifier's
+// Bright refuses one too, both with the same error a block that is not there
+// gives. Sending the wrong kind reads as the block being wrong.
+func (s *EditPublicTestSuite) TestSetChoiceAndSetSwitch() {
+	at := device.Address{Block: 2, Param: 5, Direct: true}
+
+	tests := []struct {
+		name   string
+		choice bool
+		refuse bool
+		says   string
+	}{
+		{name: "a microphone, which is one of a list", choice: true},
+		{name: "a switch, which is on or off"},
+		{
+			name:   "a choice the device will not take",
+			choice: true,
+			refuse: true,
+			says:   "error -3",
+		},
+		{
+			name:   "a switch the device will not take",
+			refuse: true,
+			says:   "error -3",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			d := answers(s.ctrl, s.moved(device.FirstTxn, tt.refuse))
+
+			session := device.NewTestSessionWith(s.T(), d.out, d.in,
+				device.ShortBudgets())
+			session.OpenChannels()
+
+			ctx := context.Background()
+
+			// One message, because the double answers once. Sending both
+			// would spend the answer on the first and time the second out.
+			var err error
+
+			if tt.choice {
+				err = session.SetChoice(ctx, at, 3)
+			} else {
+				err = session.SetSwitch(ctx, at, true)
+			}
+
+			if tt.says == "" {
+				s.Require().NoError(err)
+				s.Require().Zero(d.pending(), "every answer was read")
+
+				return
+			}
+
+			s.Require().ErrorContains(err, tt.says)
+		})
+	}
+}
+
 func TestEditPublicTestSuite(
 	t *testing.T,
 ) {

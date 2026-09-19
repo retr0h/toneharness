@@ -92,6 +92,12 @@ func (s *PresetsPublicTestSuite) attachedTo() *sdk.Client {
 		Return(nil).AnyTimes()
 	dev.MockSelector.EXPECT().SelectPreset(gomock.Any(), 0, gomock.Any()).Return(nil).AnyTimes()
 	dev.MockTurner.EXPECT().
+		SetChoice(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
+	dev.MockTurner.EXPECT().
+		SetSwitch(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
+	dev.MockTurner.EXPECT().
 		SetParam(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil).AnyTimes()
 
@@ -436,6 +442,32 @@ func (s *PresetsPublicTestSuite) TestTurn() {
 			s.Require().NoError(err)
 		})
 	}
+}
+
+// TestChooseAndSwitch covers the other two kinds of value, each in a Session
+// of its own.
+func (s *PresetsPublicTestSuite) TestChooseAndSwitch() {
+	at := sdk.Address{Block: 2, Param: 5, Direct: true}
+
+	s.Run("a microphone, with no device there", func() {
+		s.Require().ErrorContains(
+			s.absent().Choose(context.Background(), at, 3), "no device found")
+	})
+
+	s.Run("a switch, with no device there", func() {
+		s.Require().ErrorContains(
+			s.absent().Switch(context.Background(), at, true), "no device found")
+	})
+
+	s.Run("a microphone, on a device", func() {
+		s.Require().NoError(
+			s.attachedTo().Choose(context.Background(), at, 3))
+	})
+
+	s.Run("a switch, on a device", func() {
+		s.Require().NoError(
+			s.attachedTo().Switch(context.Background(), at, true))
+	})
 }
 
 // TestPlay covers auditioning a preset, in a Session of its own.

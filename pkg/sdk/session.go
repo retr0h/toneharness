@@ -281,6 +281,39 @@ func (s *Session) Current(
 	})
 }
 
+// Choose picks one of a parameter's settings, for the ones that are a list
+// rather than a range.
+//
+// A cabinet's microphone is the one that matters most: which of eight sits in
+// front of the speaker changes the sound more than any of its knobs, and it
+// is an index rather than a position on a dial.
+func (s *Session) Choose(
+	ctx context.Context,
+	at Address,
+	value int,
+) error {
+	_, err := operation(ctx, s, func(f *deviceslots.Flows) (struct{}, error) {
+		return struct{}{}, f.Choose(ctx, s.editor, at, value)
+	})
+
+	return err
+}
+
+// Switch turns one of a parameter's switches on or off.
+//
+// A device does not coerce: an amplifier's Bright wants true and refuses 1.0.
+func (s *Session) Switch(
+	ctx context.Context,
+	at Address,
+	on bool,
+) error {
+	_, err := operation(ctx, s, func(f *deviceslots.Flows) (struct{}, error) {
+		return struct{}{}, f.Switch(ctx, s.editor, at, on)
+	})
+
+	return err
+}
+
 // Play puts a preset in front of the device without storing it anywhere.
 //
 // Nothing is written. The document goes into the edit buffer and every slot

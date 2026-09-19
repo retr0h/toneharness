@@ -32,6 +32,8 @@ var (
 	presetsTurnBlock  int
 	presetsTurnParam  int
 	presetsTurnValue  float64
+	presetsTurnChoice int
+	presetsTurnSwitch bool
 	presetsTurnModel  int
 	presetsTurnDirect bool
 )
@@ -56,6 +58,12 @@ that identifies either on the wire, so neither takes a name. ` + "`presets show`
 		` lists a chain in order, and ` + "`catalog show`" + ` lists a model's parameters in
 theirs.
 
+A device does not coerce, so the kind of value has to match the parameter.
+` + "`--value`" + ` is a number on a dial, ` + "`--choice`" + ` is one of a
+list such as a cabinet's microphone, and ` + "`--switch`" + ` is on or off
+such as an amplifier's Bright. The wrong one is refused with the same error a
+block that is not there gives.
+
 The value is in the parameter's own units, not anything normalised. Most run
 zero to one because that is genuinely their range; a cabinet's microphone
 distance runs one to twelve inches.`,
@@ -70,14 +78,33 @@ distance runs one to twelve inches.`,
 			Direct: presetsTurnDirect,
 		}
 
-		if err := newClient().Turn(
-			cmd.Context(), at, float32(presetsTurnValue)); err != nil {
+		// Which of the three the device is sent is decided here, because a
+		// device does not coerce: the value's tag is its type on the wire,
+		// and a switch given 1.0 is refused with the same error it gives
+		// for a block that is not there.
+		client := newClient()
+		said := any(presetsTurnValue)
+
+		var err error
+
+		switch {
+		case cmd.Flags().Changed("choice"):
+			said = presetsTurnChoice
+			err = client.Choose(cmd.Context(), at, presetsTurnChoice)
+		case cmd.Flags().Changed("switch"):
+			said = presetsTurnSwitch
+			err = client.Switch(cmd.Context(), at, presetsTurnSwitch)
+		default:
+			err = client.Turn(cmd.Context(), at, float32(presetsTurnValue))
+		}
+
+		if err != nil {
 			return err
 		}
 
-		_, err := fmt.Fprintf(cmd.OutOrStdout(),
-			"\n  block %d parameter %d is now %g\n\n",
-			presetsTurnBlock, presetsTurnParam, presetsTurnValue)
+		_, err = fmt.Fprintf(cmd.OutOrStdout(),
+			"\n  block %d parameter %d is now %v\n\n",
+			presetsTurnBlock, presetsTurnParam, said)
 
 		return err
 	},
@@ -93,6 +120,10 @@ func init() {
 		"which parameter, by its position in the model's own list")
 	f.Float64Var(&presetsTurnValue, "value", 0,
 		"what to set it to, in the parameter's own units")
+	f.IntVar(&presetsTurnChoice, "choice", 0,
+		"what to set it to, for a parameter that is a list rather than a range, such as a cabinet's microphone")
+	f.BoolVar(&presetsTurnSwitch, "switch", false,
+		"what to set it to, for a parameter that is a switch, such as an amplifier's Bright")
 	f.IntVar(&presetsTurnModel, "model", 0,
 		"the block's own model, or 1 for a cabinet fused into an amplifier")
 	f.BoolVar(
@@ -102,7 +133,11 @@ func init() {
 		"address the parameter the ordinary way; false reaches the value some blocks carry past their list",
 	)
 
-	// Fails only for a flag that does not exist, and these are defined above.
+	// One kind of value, because a parameter has one type and the device
+	// refuses the other two.
+	presetsTurnCmd.MarkFlagsMutuallyExclusive("value", "choice", "switch")
+	presetsTurnCmd.MarkFlagsOneRequired("value", "choice", "switch")
+
+	// Fails only for a flag that does not exist, and it is defined above.
 	_ = presetsTurnCmd.MarkFlagRequired("param")
-	_ = presetsTurnCmd.MarkFlagRequired("value")
 }

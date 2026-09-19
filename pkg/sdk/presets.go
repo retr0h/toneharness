@@ -208,6 +208,34 @@ func (c *Client) Turn(
 	return err
 }
 
+// Choose picks one of a parameter's settings on the preset the attached
+// device is playing, for the ones that are a list rather than a range.
+func (c *Client) Choose(
+	ctx context.Context,
+	at Address,
+	value int,
+) error {
+	_, err := once(ctx, c, func(s *Session) (struct{}, error) {
+		return struct{}{}, s.Choose(ctx, at, value)
+	})
+
+	return err
+}
+
+// Switch turns one of a parameter's switches on or off on the preset the
+// attached device is playing.
+func (c *Client) Switch(
+	ctx context.Context,
+	at Address,
+	on bool,
+) error {
+	_, err := once(ctx, c, func(s *Session) (struct{}, error) {
+		return struct{}{}, s.Switch(ctx, at, on)
+	})
+
+	return err
+}
+
 // PresetFile reads a standalone .hlx as the rig it describes.
 //
 // The same rig a slot on a device or in a setlist reads as, which is the

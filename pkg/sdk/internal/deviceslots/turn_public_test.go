@@ -114,6 +114,59 @@ func (s *TurnPublicTestSuite) TestTurnNeedsASessionThatCanMoveOne() {
 	s.Require().ErrorContains(err, "cannot move a control")
 }
 
+// TestChooseAndSwitch covers the two kinds of value that are not a dial.
+//
+// They exist because a device does not coerce: a cabinet's microphone is an
+// index and an amplifier's Bright is a switch, and each refuses a float with
+// the same error a block that is not there gives.
+func (s *TurnPublicTestSuite) TestChooseAndSwitch() {
+	ctx := context.Background()
+	at := device.Address{Block: 2, Param: 5, Direct: true}
+
+	s.Run("a microphone", func() {
+		d := s.dev()
+		d.MockTurner.EXPECT().SetChoice(ctx, at, 3).Return(nil)
+
+		s.Require().NoError((&deviceslots.Flows{}).Choose(ctx, d, at, 3))
+	})
+
+	s.Run("a microphone the device refuses", func() {
+		d := s.dev()
+		d.MockTurner.EXPECT().SetChoice(ctx, at, 99).
+			Return(errors.New("error -3"))
+
+		s.Require().ErrorContains(
+			(&deviceslots.Flows{}).Choose(ctx, d, at, 99), "to choice 99")
+	})
+
+	s.Run("a switch", func() {
+		d := s.dev()
+		d.MockTurner.EXPECT().SetSwitch(ctx, at, true).Return(nil)
+
+		s.Require().NoError((&deviceslots.Flows{}).Switch(ctx, d, at, true))
+	})
+
+	s.Run("a switch the device refuses", func() {
+		d := s.dev()
+		d.MockTurner.EXPECT().SetSwitch(ctx, at, false).
+			Return(errors.New("error -3"))
+
+		s.Require().ErrorContains(
+			(&deviceslots.Flows{}).Switch(ctx, d, at, false), "to false")
+	})
+
+	s.Run("a session that cannot move a control", func() {
+		plain := mocks.NewMockEditor(s.ctrl)
+
+		s.Require().ErrorContains(
+			(&deviceslots.Flows{}).Choose(ctx, plain, at, 1),
+			"cannot move a control")
+		s.Require().ErrorContains(
+			(&deviceslots.Flows{}).Switch(ctx, plain, at, true),
+			"cannot move a control")
+	})
+}
+
 // TestLoadedReadsTheEditBuffer covers reading what a device is playing.
 func (s *TurnPublicTestSuite) TestLoadedReadsTheEditBuffer() {
 	ctx := context.Background()

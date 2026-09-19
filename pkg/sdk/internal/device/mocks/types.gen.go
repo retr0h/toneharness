@@ -292,6 +292,20 @@ func (m *MockTurner) EXPECT() *MockTurnerMockRecorder {
 	return m.recorder
 }
 
+// SetChoice mocks base method.
+func (m *MockTurner) SetChoice(ctx context.Context, at device.Address, value int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetChoice", ctx, at, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetChoice indicates an expected call of SetChoice.
+func (mr *MockTurnerMockRecorder) SetChoice(ctx, at, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetChoice", reflect.TypeOf((*MockTurner)(nil).SetChoice), ctx, at, value)
+}
+
 // SetParam mocks base method.
 func (m *MockTurner) SetParam(ctx context.Context, at device.Address, value float32) error {
 	m.ctrl.T.Helper()
@@ -304,6 +318,20 @@ func (m *MockTurner) SetParam(ctx context.Context, at device.Address, value floa
 func (mr *MockTurnerMockRecorder) SetParam(ctx, at, value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetParam", reflect.TypeOf((*MockTurner)(nil).SetParam), ctx, at, value)
+}
+
+// SetSwitch mocks base method.
+func (m *MockTurner) SetSwitch(ctx context.Context, at device.Address, on bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetSwitch", ctx, at, on)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetSwitch indicates an expected call of SetSwitch.
+func (mr *MockTurnerMockRecorder) SetSwitch(ctx, at, on any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSwitch", reflect.TypeOf((*MockTurner)(nil).SetSwitch), ctx, at, on)
 }
 
 // MockLoaded is a mock of Loaded interface.

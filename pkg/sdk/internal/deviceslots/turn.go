@@ -54,3 +54,55 @@ func (*Flows) Turn(
 
 	return nil
 }
+
+// Choose picks one of a parameter's settings, for the ones that are a list
+// rather than a range.
+//
+// A cabinet's microphone is the one that matters most: which of eight sits in
+// front of the speaker changes the sound more than any of its knobs.
+//
+// Separate from Turn because a device does not coerce. The value's tag is its
+// type on the wire, so a parameter wanting an index refuses a float with the
+// same error it gives for a block that is not there, which reads as the block
+// being wrong rather than the value.
+func (*Flows) Choose(
+	ctx context.Context,
+	s device.Editor,
+	at device.Address,
+	value int,
+) error {
+	t, ok := s.(device.Turner)
+	if !ok {
+		return fmt.Errorf("this session cannot move a control")
+	}
+
+	if err := t.SetChoice(ctx, at, value); err != nil {
+		return fmt.Errorf("setting parameter %d on block %d to choice %d: %w",
+			at.Param, at.Block, value, err)
+	}
+
+	return nil
+}
+
+// Switch turns one of a parameter's switches on or off.
+//
+// The same refusal applies in the other direction: an amplifier's Bright is a
+// switch and declines 1.0 where it wants true.
+func (*Flows) Switch(
+	ctx context.Context,
+	s device.Editor,
+	at device.Address,
+	on bool,
+) error {
+	t, ok := s.(device.Turner)
+	if !ok {
+		return fmt.Errorf("this session cannot move a control")
+	}
+
+	if err := t.SetSwitch(ctx, at, on); err != nil {
+		return fmt.Errorf("setting parameter %d on block %d to %t: %w",
+			at.Param, at.Block, on, err)
+	}
+
+	return nil
+}

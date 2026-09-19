@@ -593,6 +593,32 @@ func (s *SessionPublicTestSuite) TestTurn() {
 	})
 }
 
+// TestChooseAndSwitch covers the two kinds of value that are not a dial.
+func (s *SessionPublicTestSuite) TestChooseAndSwitch() {
+	at := sdk.Address{Block: 2, Param: 5, Direct: true}
+
+	s.Run("a microphone", func() {
+		dev := s.device()
+		dev.MockTurner.EXPECT().SetChoice(gomock.Any(), at, 3).Return(nil)
+
+		s.Require().NoError(s.open(dev).Choose(context.Background(), at, 3))
+	})
+
+	s.Run("a switch", func() {
+		dev := s.device()
+		dev.MockTurner.EXPECT().SetSwitch(gomock.Any(), at, true).Return(nil)
+
+		s.Require().NoError(s.open(dev).Switch(context.Background(), at, true))
+	})
+
+	s.Run("after Close", func() {
+		s.Require().ErrorIs(
+			s.closed().Choose(context.Background(), at, 1), sdk.ErrClosed)
+		s.Require().ErrorIs(
+			s.closed().Switch(context.Background(), at, true), sdk.ErrClosed)
+	})
+}
+
 // TestPlay covers putting a preset in front of the device without storing it.
 //
 // The distinction from Import is a hardware one. A slot is flash, a burst of
