@@ -79,6 +79,20 @@ func (c *Client) Preset(
 	})
 }
 
+// Current reads what the attached device is playing, as the rig it describes.
+//
+// The edit buffer rather than a slot, which is the difference that matters
+// after Turn: a control moved with Turn shows here and not in the slot it came
+// from, so reading the slot back reads as though nothing happened.
+func (c *Client) Current(
+	ctx context.Context,
+	as Format,
+) (Reading, error) {
+	return once(ctx, c, func(s *Session) (Reading, error) {
+		return s.Current(ctx, as)
+	})
+}
+
 // Export writes one slot on the attached device out to a file, as a rig or as
 // the device's own file.
 //

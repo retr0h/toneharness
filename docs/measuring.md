@@ -388,6 +388,76 @@ block 1 parameter 3, the amplifier's Treble
 Against a noise floor of 6.9Hz on the centroid, which is the whole point of
 measuring the noise floor first.
 
+## What a sweep has to control for
+
+Moving a control and measuring the result is easy. Getting a number that means
+anything is where the work is, and four things have to be true. Each of them
+was got wrong first, and each produced numbers that looked fine.
+
+### The chain, because a slope is not a property of a control
+
+Treble on an amplifier into a 4x12 and the same Treble into a 1x15 are two
+different numbers. Put a drive pedal in front and they change again. A sweep
+taken in a full preset measures the preset.
+
+That is the right thing to measure when the preset is what is being tuned. It
+is the wrong thing to keep, because a library entry has to say what one block
+does. So there are two artifacts and they are not interchangeable:
+
+| | measured on | reusable | cost |
+| --- | --- | --- | --- |
+| A block curve | one block, nothing else in the chain | yes, this is the library | one sweep per control, once |
+| A chain Jacobian | the preset being tuned, at its current settings | no | one measurement per control, per solve |
+
+`just isolate "US Dripman" amp` builds the first: a rig holding one block,
+compiled, written to a scratch slot and loaded. Every sweep records the chain
+it ran through, read back off the device with `presets current`, and marks
+whether that chain held anything else.
+
+### The starting point, because a sweep leaves its control where it finished
+
+`presets turn` writes nothing back, so a control stays wherever the sweep left
+it: the top of its range. Sweep a second control after that and it is measured
+on a chain the first one skewed. Sweep eleven and the eleventh runs on an
+amplifier with four controls pinned at maximum.
+
+Reloading the slot puts the stored preset back into the edit buffer and undoes
+every move, so `just sweep` takes `--slot` and does that first.
+
+### Silence, because two takes of nothing agree perfectly
+
+The noise floor catches a figure that wandered. It cannot catch a figure
+computed on silence, because silence is repeatable: take it twice and the
+readings match to the last digit, so it clears the floor more convincingly
+than music does.
+
+What comes out is not a null result. It is a confident one. The centroid of
+hiss is broadband and reads high, so a control that mutes the chain at one end
+of its travel reports an enormous move:
+
+```
+  0.00  centroid   187.1  level  -84.44   <- nothing came through
+  0.25  centroid  3147.0  level  -19.72
+  1.00  centroid  1019.8  level  -24.21
+```
+
+That was filed as this amplifier's Drive moving the centroid by 2959Hz. The
+2959Hz is the difference between hiss and sound. A reading more than 30dB
+under the settled level is now marked `silent` and left out of the totals,
+and a sweep with fewer than two positions left refuses to report a curve.
+
+### Which control it actually was
+
+A parameter has no name on the wire, only a position in the model's own list.
+The catalog records that order in `Symbol.Params` and `catalog show` prints
+the same parameters sorted for a reader, so the two disagree on nearly every
+model. This amplifier's listing begins Bass, Bias, BiasX; its wire order
+begins Norm Drive, Bass, Mid, Treble. Counting down the printed one mislabels
+every curve and the numbers stay plausible while it does.
+
+`just identify 1 12` holds the catalog to the device: move an index, read back
+which named parameter changed, and say so.
+
 ## Why a synthesised signal will not do
 
 A generated tone is repeatable, perfectly even across the range, and wrong for

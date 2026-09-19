@@ -256,6 +256,7 @@ tonestack presets <command> [flags]
 | --- | --- |
 | [compile](#tonestack-presets-compile) | Turn a rig into a preset a device will load |
 | [copy](#tonestack-presets-copy) | Copy one slot over another |
+| [current](#tonestack-presets-current) | Show what the device is playing right now |
 | [export](#tonestack-presets-export) | Write one slot out as a rig |
 | [import](#tonestack-presets-import) | Put a preset file into a slot |
 | [list](#tonestack-presets-list) | List the presets a device holds |
@@ -314,6 +315,29 @@ tonestack presets copy [flags]
 | `--out` | string |  | where to write the edited setlist |
 | `--to` | slot | `01A` | slot to write — a label such as 31A, or a number from zero |
 | `--to-setlist` | int |  | which setlist the destination is in |
+
+## tonestack presets current
+
+Show the preset the device is playing, with every control where it now sits.
+
+The edit buffer rather than a slot, and that is the whole difference. `presets turn` moves a control in the buffer without writing anything
+back, so reading the slot it came from answers with the stored document and
+makes it look as though nothing happened.
+
+This is how a measurement says what it measured. A control's slope belongs to
+the chain it was taken in: Treble on an amplifier into a 4x12 and the same
+Treble into a 1x15 are two different numbers. A sweep that records the move
+but not the chain records a number nobody can attribute later, so the sweep
+runs this and keeps the answer beside the figures.
+
+```text
+tonestack presets current [flags]
+```
+
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--catalog` | string |  | a generated catalog to use instead of the built-in one |
+| `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
 
 ## tonestack presets export
 

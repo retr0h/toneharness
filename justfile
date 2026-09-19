@@ -180,14 +180,40 @@ cov PKG *ARGS:
     go tool cover -func={{ go_coverage_dir }}/one.out | grep -v '100.0%$' \
       || echo "  every statement covered"
 
+# Load one block with nothing else around it, ready to measure
+#
+# A sweep taken in a full chain measures the chain. A library entry has to say
+# what one block does, so the block is measured alone.
+#
+#     just isolate "Ampeg SVT" amp
+isolate GEAR ROLE *ARGS:
+    uvx --with sounddevice --with numpy --with soundfile \
+        python3 resources/isolate.py {{ GEAR }} {{ ROLE }} {{ ARGS }}
+
+# Find out which control each parameter index actually is
+#
+# A parameter has no name on the wire, only a position. Moving one and reading
+# back which named parameter changed settles it; counting down a printed
+# catalog listing does not, because a listing is in whatever order suits a
+# reader.
+#
+#     just identify 1 12
+identify BLOCK COUNT *ARGS:
+    uvx --with sounddevice --with numpy --with soundfile \
+        python3 resources/identify.py {{ BLOCK }} {{ COUNT }} {{ ARGS }}
+
 # Sweep one control and measure what it does
 #
 # BLOCK is the device's address for a block and PARAM the parameter's position
 # in that model's own list, neither of which is the one a reader would guess.
 # See Addressing a control in docs/measuring.md.
 #
-#     just sweep 0 2
-# just sweep 0 2 --points 17 --out swept.json
+# Every reading records the chain it came through, read off the device, because
+# a reading that cannot name its chain is not evidence of anything. Pass
+# --isolated only when the chain really does hold nothing but this block.
+#
+#     just sweep 1 2 --isolated
+# just sweep 1 2 --isolated --points 17 --out swept.json
 sweep BLOCK PARAM *ARGS:
     uvx --with sounddevice --with numpy --with soundfile \
         python3 resources/sweep.py {{ BLOCK }} {{ PARAM }} {{ ARGS }}
