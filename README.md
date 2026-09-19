@@ -31,7 +31,9 @@ Helix, or works entirely offline.
 
 | Feature                                                                     | Description                                                                                                                                                                                                                                                                              |
 | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [RigSpec](docs/rigspec.md)                                                  | One file describes a tone. It names the gear in the chain the way a player would, says how it should sound and how the player plays it. Every field follows an [OpenAPI contract](pkg/sdk/rig/data/rigspec.openapi.yaml), and tonestack refuses a rig that breaks it                     |
+| [Say what you want](docs/tonespec.md)                                       | A ToneSpec is the ask, in the words anybody would use: a genre, a few adjectives, a player, a recording to sound like. A Setup is what you own. Neither carries a knob position, and both follow an [OpenAPI contract](pkg/sdk/tone/data/tonespec.openapi.yaml)                          |
+| [RigSpec](docs/rigspec.md)                                                  | What a request resolves to: the exact models, in order, deterministic. `tonestack tone build` writes it and `presets compile` turns it into a preset. Every field follows an [OpenAPI contract](pkg/sdk/rig/data/rigspec.openapi.yaml), and tonestack refuses a rig that breaks it       |
+| [Chosen by measuring](resources/sweeps/README.md)                           | Every one of the device's 661 blocks has been played the same bass recording and measured, so a request naming no amplifier gets the nearest of 224 to what it is aiming at. Nobody described a single amp anywhere in that path                                                         |
 | Shareable rigs                                                              | A rig names "Ampeg SVT", not a Line 6 model ID. Export a slot as a rig, send the file to someone, and `presets compile` builds the preset on their end                                                                                                                                   |
 | [Every claim sourced](docs/recipes.md#say-where-each-claim-came-from)       | Each piece of gear and each description records where it came from: an interview, a video timestamp, a forum thread, measured presets. A claim an AI made says so                                                                                                                        |
 | [Your agent tunes it](docs/workflows.md#correct-a-rig-you-have-heard)       | Your agent builds a rig for the player you name. Play it, say what is wrong, and it rebuilds. The rig keeps each round: what you asked, what changed, why, and your verdict. The next session starts from what worked                                                                    |
@@ -70,6 +72,30 @@ a preset needs no HX Edit and no Helix.
 tonestack recipes list                                  # the rigs that ship
 tonestack presets make --id mike-dirnt --out mike.hlx
 ```
+
+Or describe what you want instead of naming a rig. A ToneSpec is the ask and a
+Setup is what you own; what they resolve to is a RigSpec, and that is the file
+worth sharing, because two people compiling one get the same preset.
+
+```bash
+tonestack tone build --ask examples/tonespec/like-a-record.yaml \
+  --setup examples/tonespec/my-setup.yaml --out rig.yaml
+tonestack presets compile --rig rig.yaml --out mine.hlx
+```
+
+```console
+  What it made of the request
+
+             ABOUT           WHAT HAPPENED
+  did        LA Studio Comp  resolved to HD2_CompressorLAStudioComp
+  did        amp             Essex A30 is the closest of 224 measured to
+                             resources/dry/bass-di.wav, 152 Hz against 138
+```
+
+Nobody described an amplifier there. Every block on the device has been played
+the same recording and measured, so "sound like this file" is answered by
+comparing two of the same kind of thing. What it could not answer it says so
+about, rather than guessing.
 
 ```console
   Mike Dirnt
