@@ -434,6 +434,28 @@ compiled, written to a scratch slot and loaded. Every sweep records the chain
 it ran through, read back off the device with `presets current`, and marks
 whether that chain held anything else.
 
+### The flash, because auditioning through slots wears one out
+
+A slot is flash, and flash is the only thing in this loop that corrupts rather
+than merely wearing. A burst of writes took a setlist past what a power cycle
+could clear, and a device stops accepting them after about a dozen racing
+commits. See
+[the rules that keep a device alive](protocol.md#rules-that-keep-a-device-alive).
+
+Measuring means loading a different chain over and over: once per block to say
+what each of 665 of them sounds like, and once per control to put a chain back
+between sweeps. Through `presets import` that is a flash write every time, for
+readings nobody wanted to keep.
+
+`presets play` is the operation for it. It sends the same document to
+[opcode 21](protocol.md#opcode-21-which-replaces-what-is-playing-without-storing-it),
+which replaces the edit buffer and names no slot, so the cost of trying a
+chain is the time it takes to hear it. Every slot keeps what it held, and what
+is playing lasts until the next preset is selected.
+
+Use `import` for a preset somebody wants kept. Use `play` for everything being
+tried.
+
 ### The starting point, because a sweep leaves its control where it finished
 
 `presets turn` writes nothing back, so a control stays wherever the sweep left
@@ -441,8 +463,10 @@ it: the top of its range. Sweep a second control after that and it is measured
 on a chain the first one skewed. Sweep eleven and the eleventh runs on an
 amplifier with four controls pinned at maximum.
 
-Reloading the slot puts the stored preset back into the edit buffer and undoes
-every move, so `just sweep` takes `--slot` and does that first.
+Playing the same file again replaces the edit buffer and undoes every move, so
+`just sweep` takes `--preset` and does that first. Through `play` rather than
+by reselecting a slot, for the reason above: a campaign of twelve sweeps would
+otherwise spend twelve flash writes putting a chain back.
 
 ### Silence, because two takes of nothing agree perfectly
 
