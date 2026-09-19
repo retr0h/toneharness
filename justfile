@@ -180,88 +180,22 @@ cov PKG *ARGS:
     go tool cover -func={{ go_coverage_dir }}/one.out | grep -v '100.0%$' \
       || echo "  every statement covered"
 
-# Load one block with nothing else around it, ready to measure
-#
-# A sweep taken in a full chain measures the chain. A library entry has to say
-# what one block does, so the block is measured alone.
-#
-#     just isolate "Ampeg SVT" amp
-isolate GEAR ROLE *ARGS:
-    uvx --with sounddevice --with numpy --with soundfile \
-        python3 resources/isolate.py {{ GEAR }} {{ ROLE }} {{ ARGS }}
 
-# Find out which control each parameter index actually is
-#
-# A parameter has no name on the wire, only a position. Moving one and reading
-# back which named parameter changed settles it; counting down a printed
-# catalog listing does not, because a listing is in whatever order suits a
-# reader.
-#
-# It matters most where the catalog says nothing: the equalisers carry
-# parameters and have no symbol entry at all, so every index is unplaced.
-#
-#     just identify 1 12 --preset /tmp/isolated.hlx
-identify BLOCK COUNT *ARGS:
-    uvx --with sounddevice --with numpy --with soundfile \
-        python3 resources/identify.py {{ BLOCK }} {{ COUNT }} {{ ARGS }}
 
-# Sweep one control and measure what it does
-#
-# BLOCK is the device's address for a block and PARAM the parameter's position
-# in that model's own list, neither of which is the one a reader would guess.
-# See Addressing a control in docs/measuring.md.
-#
-# Every reading records the chain it came through, read off the device, because
-# a reading that cannot name its chain is not evidence of anything. Pass
-# --isolated only when the chain really does hold nothing but this block.
-#
-#     just sweep 1 2 --isolated
-# just sweep 1 2 --isolated --points 17 --out swept.json
-sweep BLOCK PARAM *ARGS:
-    uvx --with sounddevice --with numpy --with soundfile \
-        python3 resources/sweep.py {{ BLOCK }} {{ PARAM }} {{ ARGS }}
 
-# Measure every block the device has, once, at its own defaults
-#
-# A fingerprint rather than a sweep: one reading per block, which is what
-# ranking 224 amplifiers against a target needs. Sweeping all of them would be
-# a hundred and sixty hours and would be rebuilt at solve time anyway.
-#
-#     just fingerprint --category amp
-#     just fingerprint --resume
-fingerprint *ARGS:
-    uvx --with sounddevice --with numpy --with soundfile \
-        python3 resources/fingerprint.py {{ ARGS }}
 
-# Measure one block completely: every control, alone, ready to fold
-#
-# The expensive half. A control is about two minutes and a twelve-control
-# amplifier most of an hour, so this is aimed at the blocks a chain reaches
-# for rather than run across all 665. `just fingerprint` is the cheap half.
-#
-#     just campaign HD2_AmpUSDripmanNorm amp
-campaign MODEL ROLE *ARGS:
-    uvx --with sounddevice --with numpy --with soundfile \
-        python3 resources/campaign.py {{ MODEL }} {{ ROLE }} {{ ARGS }}
 
-# Fold a block's sweeps into the one matrix the algorithm reads
-#
-# A sweep measures one control; what solves for a setting is the whole block,
-# a column per control and a row per figure. Sweeps taken on different chains
-# or against different reference signals are refused rather than stacked.
-#
-#     just fold /tmp/sweeps resources/sweeps/hx-stomp/us-dripman-norm.json
-fold DIR OUT *ARGS:
-    uvx --with numpy python3 resources/fold.py {{ DIR }} {{ OUT }} {{ ARGS }}
 
-# Push a dry signal through the pedal and keep what comes back
+
+# Put the measured library into the form the sdk embeds
 #
-# The analog route needs a cable from the pedal's output to its own input; the
-# usb route needs nothing plugged in and does not currently work. Both are
-# explained in docs/measuring.md.
-reamp DRY OUT *ARGS:
-    uvx --with sounddevice --with numpy --with soundfile \
-        python3 resources/reamp.py {{ DRY }} {{ OUT }} {{ ARGS }}
+# The readings land in resources/sweeps/, where somebody looks at them. This is
+# the step that gets them into the binary, through the same reader the binary
+# uses, so a library that will not load is refused here.
+pack-measured:
+    go run ./pkg/sdk/measured/internal/pack \
+        resources/sweeps/hx-stomp/fingerprints.json \
+        pkg/sdk/measured/data/hx-stomp.json.gz
 
 # Generate code
 generate:

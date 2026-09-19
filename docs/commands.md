@@ -236,6 +236,7 @@ tonestack measure <command> [flags]
 | --- | --- |
 | [blocks](#tonestack-measure-blocks) | Measure every block the device has, once, at its own defaults |
 | [controls](#tonestack-measure-controls) | Measure what every control of one block does |
+| [names](#tonestack-measure-names) | Check the catalog's parameter order against the device |
 
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
@@ -333,6 +334,34 @@ tonestack measure controls [flags]
 | `--points` | int | `9` | how many positions to measure a dial at; a list gets all of its settings |
 | `--seconds` | float64 | `4` | how much of the reference to push through per position |
 | `--takes` | int | `3` | how many takes the noise floor is measured from |
+
+## tonestack measure names
+
+Move each of a block's parameters by index and report which named
+parameter changed.
+
+A parameter has no name on the wire, only a position in the model's own list.
+Every curve this tool measures is filed under that position, and the catalog's
+claim about which position is which has never been held to the hardware.
+
+It matters more than it sounds. `catalog show` prints the same
+parameters sorted for a reader, so the two orders disagree on nearly every
+model: one amplifier's listing begins Bass, Bias, BiasX where its wire order
+begins Norm Drive, Bass, Mid, Treble. Counting down the printed one mislabels
+every curve, and the numbers stay entirely plausible while it does.
+
+Two values are tried per index, because a control already resting on the first
+would show no change and be reported as an index that reaches nothing.
+
+```text
+tonestack measure names [flags]
+```
+
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--catalog` | string |  | a generated catalog to use instead of the built-in one |
+| `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
+| `--model` | string |  | the block to check, by its model identifier |
 
 ## tonestack presets
 
