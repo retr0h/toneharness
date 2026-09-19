@@ -60,21 +60,39 @@ def wire(model: str) -> list[str]:
     return []
 
 
-def slope(points: list[dict], figure: str) -> float:
-    """How much one figure moves per full turn of the control.
+def fit(points: list[dict], figure: str) -> dict[str, float]:
+    """How much one figure moves per full turn, and how straight that is.
 
     A least-squares fit rather than the difference between the ends, because
-    the ends are two readings and the fit uses every one. A control that is
-    not a straight line is still summarised by its average slope, and the
-    points travel with it so the curve is not lost.
+    the ends are two readings and the fit uses every one.
+
+    `straight` is what keeps the number honest. It is the fraction of the
+    figure's movement the line accounts for, so 1.0 is a control that really
+    is a line and a low value is a control the average slope misdescribes.
+    This amplifier's Master is the case: its centroid leaps from 130 Hz to
+    10,795 Hz over one step and then falls steadily to 3,769 Hz, and no single
+    slope is true anywhere along it.
+
+    So the average is a summary and not the matrix entry.
+    [algorithm.md](../docs/algorithm.md) takes the slope at the setting the
+    chain is currently on, which is why every point travels with the fit.
     """
     x = np.array([p["value"] for p in points], dtype=float)
     y = np.array([p[figure] for p in points], dtype=float)
 
     if len(x) < 2 or float(np.ptp(x)) == 0.0:
-        return 0.0
+        return {"per_turn": 0.0, "straight": 1.0}
 
-    return float(np.polyfit(x, y, 1)[0])
+    slope, intercept = np.polyfit(x, y, 1)
+    spread = float(np.sum((y - np.mean(y)) ** 2))
+    missed = float(np.sum((y - (slope * x + intercept)) ** 2))
+
+    return {
+        "per_turn": float(slope),
+        # A figure that did not move has no shape to miss, so the line
+        # accounts for all of nothing rather than none of it.
+        "straight": 1.0 if spread == 0.0 else float(1.0 - missed / spread),
+    }
 
 
 def agree(sweeps: list[tuple[Path, dict]]) -> tuple[str, bool]:
@@ -169,7 +187,7 @@ def main() -> None:
 
         params[names.get(index, f"index {index}")] = {
             "index": index,
-            "slopes": {f: slope(heard, f) for f in FIGURES},
+            "fits": {f: fit(heard, f) for f in FIGURES},
             "noise": doc["noise"],
             "silent_below": doc.get("silent_below"),
             "muted_at": [pt["value"] for pt in doc["points"]
@@ -194,9 +212,14 @@ def main() -> None:
 
     print(f"  {gear} ({model}), slot {at}, "
           f"{'isolated' if isolated else 'IN A CHAIN'}")
-    print(f"\n  {'control':<14}" + "".join(f"{f:>12}" for f in FIGURES))
+    print(f"\n  per full turn, and how straight the curve is")
+    print(f"\n  {'control':<14}" + "".join(f"{f:>21}" for f in FIGURES))
     for name, entry in params.items():
-        row = "".join(f"{entry['slopes'][f]:>12.2f}" for f in FIGURES)
+        row = "".join(
+            f"{entry['fits'][f]['per_turn']:>13.1f}"
+            f"{entry['fits'][f]['straight']:>8.2f}"
+            for f in FIGURES
+        )
         print(f"  {name:<14}{row}")
 
     muted = {n: e["muted_at"] for n, e in params.items() if e["muted_at"]}
