@@ -40,6 +40,7 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
 	"github.com/retr0h/tonestack/pkg/sdk/measured"
 	"github.com/retr0h/tonestack/pkg/sdk/reamp"
+	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
 // MeasureOptions is what measuring every block needs to know.
@@ -300,7 +301,18 @@ func compile(
 	spec := filepath.Join(work, name+".yaml")
 	out := filepath.Join(work, name+".hlx")
 
-	if err := os.WriteFile(spec, []byte(rigFor(block, enabled)), 0o600); err != nil {
+	f, err := os.Create(spec) //nolint:gosec // a path this made up itself
+	if err != nil {
+		return "", fmt.Errorf("writing %s: %w", spec, err)
+	}
+
+	if err := rig.Write(f, rigFor(block, enabled)); err != nil {
+		_ = f.Close()
+
+		return "", fmt.Errorf("writing %s: %w", spec, err)
+	}
+
+	if err := f.Close(); err != nil {
 		return "", fmt.Errorf("writing %s: %w", spec, err)
 	}
 
@@ -318,30 +330,38 @@ func compile(
 // By model because 665 models share 469 names: "Ampeg SVT" matches both of its
 // channels, so a name would measure whichever the compiler picked and file it
 // under both.
+//
+// Built as the contract's own type and written by its own writer, rather than
+// assembled as text. A cabinet called "'63 Spring" opens a YAML quote that
+// nothing closes, and the whole document fails to parse at a line nowhere
+// near the name. One block of six hundred and sixty one was lost to that.
 func rigFor(
 	block measured.Block,
 	enabled bool,
-) string {
-	off := ""
-	if !enabled {
-		off = "    enabled: false\n"
+) rig.Spec {
+	models := map[string]string{"HX Stomp": block.ID}
+	entry := rig.ChainEntry{
+		Role:   rig.Role(block.Category),
+		Gear:   block.Name,
+		Models: &models,
 	}
 
-	return "# Written by `tonestack measure blocks`. One block, so what is\n" +
-		"# measured is the block rather than a chain.\n" +
-		"schema: RigSpec\n" +
-		"version: 2\n" +
-		"id: measure-" + strings.ToLower(
-		strings.NewReplacer("_", "-", " ", "-").Replace(block.ID)) + "\n" +
-		"subject:\n" +
-		"  kind: sound\n" +
-		"  name: " + block.Name + " alone\n" +
-		"instrument: bass\n" +
-		"chain:\n" +
-		"  - role: " + block.Category + "\n" +
-		"    gear: " + block.Name + "\n" + off +
-		"    models:\n" +
-		"      HX Stomp: " + block.ID + "\n"
+	if !enabled {
+		off := false
+		entry.Enabled = &off
+	}
+
+	return rig.Spec{
+		Schema: rig.SchemaName,
+		ID: "measure-" + strings.ToLower(
+			strings.NewReplacer("_", "-", " ", "-", "'", "").Replace(block.ID)),
+		Subject: rig.Subject{
+			Kind: rig.KindSound,
+			Name: block.Name + " alone",
+		},
+		Instrument: rig.InstrumentBass,
+		Chain:      []rig.ChainEntry{entry},
+	}
 }
 
 // wanted is every block worth trying, in a stable order.
