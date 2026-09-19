@@ -161,6 +161,25 @@ forum-search QUERY SUB="":
 web QUERY:
     uvx --with curl_cffi python3 resources/read_forum.py --web "{{ QUERY }}"
 
+# Test one package with coverage, which is the loop while working
+#
+# Prints every function short of full coverage, and the package total. The
+# repository is gated at 99%, so a gap found here is one nobody has to go
+# back for later.
+#
+#     just cov ./pkg/sdk/internal/editor/
+#
+# Tests that live outside the package they cover need --coverpkg; see
+# Testing in CONTRIBUTING.md.
+cov PKG *ARGS:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p {{ go_coverage_dir }}
+    go test -coverprofile={{ go_coverage_dir }}/one.out {{ ARGS }} {{ PKG }}
+    echo
+    go tool cover -func={{ go_coverage_dir }}/one.out | grep -v '100.0%$' \
+      || echo "  every statement covered"
+
 # Sweep one control and measure what it does
 #
 # BLOCK is the device's address for a block and PARAM the parameter's position

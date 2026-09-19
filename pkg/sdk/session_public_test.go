@@ -58,6 +58,8 @@ type attached struct {
 	*mocks.MockEditor
 	*mocks.MockWriter
 	*mocks.MockSelector
+	*mocks.MockTurner
+	*mocks.MockLoaded
 }
 
 // device is a session that says it is an HX Stomp, and nothing else yet.
@@ -66,6 +68,8 @@ func (s *SessionPublicTestSuite) device() *attached {
 		MockEditor:   mocks.NewMockEditor(s.ctrl),
 		MockWriter:   mocks.NewMockWriter(s.ctrl),
 		MockSelector: mocks.NewMockSelector(s.ctrl),
+		MockTurner:   mocks.NewMockTurner(s.ctrl),
+		MockLoaded:   mocks.NewMockLoaded(s.ctrl),
 	}
 	dev.MockEditor.EXPECT().Model().Return(device.Model{Name: "HX Stomp"}).AnyTimes()
 
@@ -564,6 +568,43 @@ func (s *SessionPublicTestSuite) TestSelect() {
 
 	s.Run("after Close", func() {
 		_, err := s.closed().Select(context.Background(), slot.Address{})
+		s.Require().ErrorIs(err, sdk.ErrClosed)
+	})
+}
+
+// TestTurn covers moving one control on what the device is playing.
+//
+// Neither written nor selected: the change lands in the preset in front of
+// somebody. Writing one per step does not work at all, because a slot given a
+// new document goes on sounding like what it held before.
+func (s *SessionPublicTestSuite) TestTurn() {
+	at := sdk.Address{Block: 2, Param: 5, Direct: true}
+
+	s.Run("a control", func() {
+		dev := s.device()
+		dev.MockTurner.EXPECT().SetParam(gomock.Any(), at, float32(0.25)).Return(nil)
+
+		s.Require().NoError(s.open(dev).Turn(context.Background(), at, 0.25))
+	})
+
+	s.Run("after Close", func() {
+		s.Require().ErrorIs(
+			s.closed().Turn(context.Background(), at, 0.25), sdk.ErrClosed)
+	})
+}
+
+// TestCurrent covers reading the preset the device is playing.
+func (s *SessionPublicTestSuite) TestCurrent() {
+	s.Run("nothing loaded", func() {
+		dev := s.device()
+		dev.MockLoaded.EXPECT().ReadCurrent(gomock.Any()).Return(nil, nil)
+
+		_, err := s.open(dev).Current(context.Background(), sdk.FormatPreset)
+		s.Require().ErrorContains(err, "playing no preset")
+	})
+
+	s.Run("after Close", func() {
+		_, err := s.closed().Current(context.Background(), sdk.FormatPreset)
 		s.Require().ErrorIs(err, sdk.ErrClosed)
 	})
 }

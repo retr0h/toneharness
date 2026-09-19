@@ -402,7 +402,45 @@ the lists.
 | 21  | write the edit buffer | data    | deferred | `110` document                      |
 | 22  | read the edit buffer  | data    | request  | none                                |
 | 23  | what is loaded        | data    | request  | none                                |
+| 30  | move one control      | data    | request  | `98` block, `29`, `26`, `28`, `119` |
+| 41  | bypass a block        | data    | request  | `98` block, `59` enabled            |
 | 71  | save the edit buffer  | data    | command  | `107`, `108`, `109`                 |
+
+### Opcode 30, which moves a control on the running preset
+
+The message HX Edit sends when somebody drags a knob, and the only way to change
+one control without writing a preset. Implemented here as `device.SetParam`.
+
+```text
+{102: txn, 100: 30, 101: {98: block, 29: true, 26: 0, 28: param, 119: value}}
+```
+
+| Key   | What                                                                                              |
+| ----- | ------------------------------------------------------------------------------------------------- |
+| `98`  | the block, by the device's own number for it                                                      |
+| `29`  | address the parameter the ordinary way; false reaches the value some blocks carry past their list |
+| `26`  | the block's own model, or 1 for a cabinet fused into an amplifier's slot                          |
+| `28`  | the parameter's position in that model's list                                                     |
+| `119` | the value, in the parameter's own units, as a float32                                             |
+
+The value's tag is its type and a device does not coerce it: a switch given
+`1.0` where it wants `true` is refused, and so is a float parameter given an
+integer `1`. A refusal is status 255 with `111: -3`, silently, with nothing
+applied.
+
+**Read out of [fretwire](https://github.com/john-baxter-dev/fretwire),
+[tonepush](https://github.com/crmne/tonepush) and
+[helix_usb](https://github.com/kempline/helix_usb), which recovered it
+independently and agree byte for byte.** helix_usb's is a literal byte list
+written before anybody realised it was MessagePack, which is what makes the
+agreement worth something. None of their code is here; the message shape is
+theirs and the implementation is not.
+
+What this project has not worked out is
+[which blocks answer it](measuring.md#addressing-a-control). The input block,
+the splits and the join do. No chain block does, at any address, with any
+combination of the other three keys, and none of those projects distinguishes
+the two kinds.
 
 Two things this table settles that reading the message shapes alone did not.
 

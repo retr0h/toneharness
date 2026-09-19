@@ -80,6 +80,8 @@ func (s *PresetsPublicTestSuite) attachedTo() *sdk.Client {
 		MockEditor:   mocks.NewMockEditor(s.ctrl),
 		MockWriter:   mocks.NewMockWriter(s.ctrl),
 		MockSelector: mocks.NewMockSelector(s.ctrl),
+		MockTurner:   mocks.NewMockTurner(s.ctrl),
+		MockLoaded:   mocks.NewMockLoaded(s.ctrl),
 	}
 	dev.MockEditor.EXPECT().Model().Return(device.Model{Name: "HX Stomp"}).AnyTimes()
 	dev.MockEditor.EXPECT().Presets(gomock.Any(), 0).Return(listing(), nil).AnyTimes()
@@ -89,6 +91,9 @@ func (s *PresetsPublicTestSuite) attachedTo() *sdk.Client {
 		WriteNamedPreset(gomock.Any(), 0, gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil).AnyTimes()
 	dev.MockSelector.EXPECT().SelectPreset(gomock.Any(), 0, gomock.Any()).Return(nil).AnyTimes()
+	dev.MockTurner.EXPECT().
+		SetParam(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
 
 	bus := mocks.NewMockOpener(s.ctrl)
 	bus.EXPECT().Open(gomock.Any()).Return(dev, nil)
@@ -401,6 +406,34 @@ func (s *PresetsPublicTestSuite) TestSelect() {
 
 			s.Require().NoError(err)
 			s.Require().Equal(sdk.Selected, got.Action)
+		})
+	}
+}
+
+// TestTurn covers moving one control, in a Session of its own.
+func (s *PresetsPublicTestSuite) TestTurn() {
+	at := sdk.Address{Block: 2, Param: 5, Direct: true}
+
+	tests := []struct {
+		name   string
+		client func() *sdk.Client
+		says   string
+	}{
+		{name: "a device that is not there", client: s.absent, says: "no device found"},
+		{name: "a device, in a Session of its own", client: s.attachedTo},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := tt.client().Turn(context.Background(), at, 0.25)
+
+			if tt.says != "" {
+				s.Require().ErrorContains(err, tt.says)
+
+				return
+			}
+
+			s.Require().NoError(err)
 		})
 	}
 }

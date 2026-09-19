@@ -621,10 +621,22 @@ line 1, blank line, then the header.
 
 ### While you are working
 
-Run the tests for what you are editing, and nothing else:
+Run the tests for what you are editing, with coverage, and nothing else:
 
 ```bash
-go test ./pkg/sdk/internal/editor/     # the package you touched
+just cov ./pkg/sdk/internal/editor/    # the package you touched
+```
+
+It prints every function short of full coverage and the package total. The
+repository is gated at 99%, so a gap seen here is one nobody has to come back
+for: filling it while the code is fresh costs a test, and finding it at the gate
+costs re-reading why the code is shaped that way.
+
+Tests that live outside the package they cover need `--coverpkg`, which `cov`
+passes through:
+
+```bash
+just cov ./pkg/cli/ --coverpkg=./pkg/cli/...
 ```
 
 `just ready` and the full suite are for when a branch is going somewhere, not
