@@ -292,6 +292,8 @@ def main() -> None:
                    help="how much reference to push through per block")
     p.add_argument("--resume", action="store_true",
                    help="skip blocks already in the output")
+    p.add_argument("--retry", action="store_true",
+                   help="with --resume, try the ones that refused again")
     p.add_argument("--out", default=str(OUT))
     args = p.parse_args()
 
@@ -300,6 +302,18 @@ def main() -> None:
 
     if args.resume and out.exists():
         done = json.loads(out.read_text()).get("blocks", {})
+
+        # A refusal is worth another go. About one block in eighty comes back
+        # "the device stopped taking the message", which is the chunk pacing
+        # giving up rather than anything about the block, and the same block
+        # loads on the next pass.
+        if args.retry:
+            again = [k for k, v in done.items() if "refused" in v]
+            for k in again:
+                del done[k]
+
+            print(f"  retrying {len(again)} that refused")
+
         print(f"  resuming with {len(done)} already measured")
 
     want = [b for b in blocks(args.category) if b["id"] not in done]
