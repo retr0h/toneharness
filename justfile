@@ -218,6 +218,16 @@ sweep BLOCK PARAM *ARGS:
     uvx --with sounddevice --with numpy --with soundfile \
         python3 resources/sweep.py {{ BLOCK }} {{ PARAM }} {{ ARGS }}
 
+# Fold a block's sweeps into the one matrix the algorithm reads
+#
+# A sweep measures one control; what solves for a setting is the whole block,
+# a column per control and a row per figure. Sweeps taken on different chains
+# or against different reference signals are refused rather than stacked.
+#
+#     just fold /tmp/sweeps resources/sweeps/hx-stomp/us-dripman-norm.json
+fold DIR OUT *ARGS:
+    uvx --with numpy python3 resources/fold.py {{ DIR }} {{ OUT }} {{ ARGS }}
+
 # Push a dry signal through the pedal and keep what comes back
 #
 # The analog route needs a cable from the pedal's output to its own input; the
