@@ -180,6 +180,48 @@ like:
 	}, roles)
 }
 
+// TestEveryRoleHasAPlaceInTheChain covers the rest of the signal path.
+//
+// The ordering test above walks the four roles a request usually names. This
+// walks the ones it rarely does, because a role nothing places falls to the
+// end of the chain, and falling to the end is right for a role nobody has an
+// opinion about and wrong for a wah.
+//
+// A pitch block is the fallthrough on purpose: no fixed place in a signal
+// path is the honest answer for it, so it lands after everything that has
+// one, and this pins that rather than leaving it to whatever a map iterates.
+func (s *TranslatePublicTestSuite) TestEveryRoleHasAPlaceInTheChain() {
+	got, _, err := translate.Translate(
+		s.ask(`gear:
+  - gear: Buzz Wave
+    role: pitch
+  - gear: Analog Echo
+    role: delay
+  - gear: Chorus
+    role: mod
+  - gear: Cali Q
+    role: eq
+  - gear: Comet Trails
+    role: filter
+  - gear: Chrome
+    role: wah
+`),
+		s.setup(""), s.deps)
+
+	s.Require().NoError(err)
+	s.Require().NoError(rig.Validate(got))
+
+	roles := make([]rig.Role, 0, len(got.Chain))
+	for _, entry := range got.Chain {
+		roles = append(roles, entry.Role)
+	}
+
+	s.Require().Equal([]rig.Role{
+		rig.RoleWah, rig.RoleFilter, rig.RoleEQ,
+		rig.RoleMod, rig.RoleDelay, rig.RolePitch,
+	}, roles)
+}
+
 // TestInsistRefusesRatherThanSubstitute covers the gear being the point.
 func (s *TranslatePublicTestSuite) TestInsistRefusesRatherThanSubstitute() {
 	_, notes, err := translate.Translate(

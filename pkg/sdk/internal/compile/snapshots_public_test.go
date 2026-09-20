@@ -142,6 +142,42 @@ func (s *SnapshotsPublicTestSuite) TestLiftSnapshots() {
 	}
 }
 
+// TestASnapshotKeepsWhatThisFormatDoesNotModel is what makes a round trip
+// lossless.
+//
+// A handful of presets record commands in a snapshot, and Line 6 can add a
+// field to the format at any release. Anything unrecognised is carried in
+// Rest rather than dropped, so a preset read and written back is the preset
+// that went in. Without it the first new field Line 6 ships would be silently
+// deleted by every rig that passed through here.
+func (s *SnapshotsPublicTestSuite) TestASnapshotKeepsWhatThisFormatDoesNotModel() {
+	doc := s.presetWith(map[string]string{
+		"snapshot0": `{"@name": "Verse", "@ledcolor": 3, ` +
+			`"commands": [{"cc": 41}], "@somethingNew": "from a later release"}`,
+	})
+
+	spec, err := compile.Lift(doc, s.cat)
+	s.Require().NoError(err)
+	s.Require().Len(*spec.Snapshots, 1)
+
+	rest := (*spec.Snapshots)[0].Rest
+	s.Require().NotNil(rest, "an unmodelled key is carried, not dropped")
+	s.Require().Contains(*rest, "commands")
+	s.Require().Contains(*rest, "@somethingNew")
+
+	// And back again, because carrying it and never writing it out is the
+	// same loss one step later.
+	into, err := preset.Blank()
+	s.Require().NoError(err)
+
+	s.Require().NoError(compile.Lower(into, spec, s.cat))
+
+	back := into.Data.Tone["snapshot0"]
+	s.Require().Contains(back, "commands")
+	s.Require().Contains(back, "@somethingNew")
+	s.Require().JSONEq(`"from a later release"`, string(back["@somethingNew"]))
+}
+
 // TestLowerSnapshots writes a rig's snapshots over the preset's own.
 //
 // An untouched preset carries three of its own, and keeping those beside a

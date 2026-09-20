@@ -183,14 +183,54 @@ func (s *WritePublicTestSuite) TestOnlyWhatADeviceLoads() {
 }
 
 // TestAWriterThatFailsIsReported covers somewhere it cannot write.
+//
+// Stopped at each stage rather than once. A file is a header, then the
+// provenance chunk, then the samples, and the samples are by far the largest
+// part: a disk that fills does it there, and stopping only in the first
+// hundred bytes would never have reached the write that matters.
 func (s *WritePublicTestSuite) TestAWriterThatFailsIsReported() {
-	for _, after := range []int{0, 20, 50, 100, 200} {
+	for _, after := range []int{0, 20, 50, 100, 200, 1000, 2000} {
 		err := cab.Write(&stops{after: after},
 			make([]float64, cab.Short), s.made())
 
 		s.Require().ErrorContains(err, "writing the impulse response",
 			"a writer that stopped after %d bytes", after)
 	}
+}
+
+// TestEveryWriteIsReportedWhenItFails covers the stages a byte count misses.
+//
+// A file is written in fifteen calls: eleven for the header fields, one for
+// the provenance chunk, then the data marker, the length, and the samples.
+// Two of those are four bytes each and sit between two much larger writes, so
+// stopping a writer after a number of bytes lands in them only by luck. This
+// stops on the nth call, which reaches each of them exactly.
+func (s *WritePublicTestSuite) TestEveryWriteIsReportedWhenItFails() {
+	for call := 1; call <= 15; call++ {
+		err := cab.Write(&refuses{on: call},
+			make([]float64, cab.Short), s.made())
+
+		s.Require().ErrorContains(err, "writing the impulse response",
+			"a writer that refused call %d", call)
+	}
+}
+
+// refuses is a writer that takes every call but one.
+type refuses struct {
+	on   int
+	seen int
+}
+
+func (w *refuses) Write(
+	p []byte,
+) (int, error) {
+	w.seen++
+
+	if w.seen == w.on {
+		return 0, errors.New("no room")
+	}
+
+	return len(p), nil
 }
 
 // stops is a writer that takes a few bytes and then does not.
