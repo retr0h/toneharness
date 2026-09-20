@@ -38,6 +38,26 @@ type NamesOptions struct {
 	Model  string
 }
 
+// probed is what moving one index settled.
+//
+// A type rather than a string, because a probe has four outcomes and only one
+// of them is comparable with a name in the catalog. Flattened into one string
+// they were all compared, and a switch — which correctly refuses a number and
+// so tells you nothing about naming — was counted as the catalog being wrong.
+// That reported every curve for this amplifier as misfiled while all twelve
+// indexes it could actually test had matched.
+type probed struct {
+	// Named is the one parameter that moved, and is empty when the probe
+	// settled nothing.
+	Named string
+	// Says is what to print when Named is empty.
+	Says string
+	// Switch is true when the device refused a number at this index. Not a
+	// disagreement: an index nothing can sweep is an index this cannot hold
+	// the catalog to either way.
+	Switch bool
+}
+
 // probes are the values each index is moved to.
 //
 // Two, so an index already resting on the first is still caught: moving a
@@ -92,6 +112,7 @@ func MeasureNames(
 		block.Name, block.ID, "index", "the catalog says", "the device moved")
 
 	agreed := true
+	untested := 0
 
 	for index := range len(block.Params) {
 		moved, err := probe(ctx, opts.Client, preset, index)
@@ -104,23 +125,42 @@ func MeasureNames(
 			said = order[index]
 		}
 
-		if said != moved {
+		// Only an index that named a parameter says anything about the
+		// catalog's order. One that settled nothing is untested, and an
+		// untested index is not evidence either way.
+		switch {
+		case moved.Named == "":
+			untested++
+		case moved.Named != said:
 			agreed = false
 		}
 
-		_, _ = fmt.Fprintf(w, "  %-6d %-22s %s\n", index, said, moved)
+		says := moved.Named
+		if says == "" {
+			says = moved.Says
+		}
+
+		_, _ = fmt.Fprintf(w, "  %-6d %-22s %s\n", index, said, says)
 	}
 
-	if agreed {
-		_, _ = fmt.Fprintf(w,
-			"\n  the catalog and the device agree on every index\n\n")
+	if !agreed {
+		_, err = fmt.Fprintf(w,
+			"\n  they disagree, so every curve filed by index for this block is\n"+
+				"  filed under the wrong control\n\n")
 
-		return nil
+		return err
+	}
+
+	if untested > 0 {
+		_, err = fmt.Fprintf(w,
+			"\n  the catalog and the device agree on every index this could\n"+
+				"  test, and %d could not be tested\n\n", untested)
+
+		return err
 	}
 
 	_, err = fmt.Fprintf(w,
-		"\n  they disagree, so every curve filed by index for this block is\n"+
-			"  filed under the wrong control\n\n")
+		"\n  the catalog and the device agree on every index\n\n")
 
 	return err
 }
@@ -131,28 +171,28 @@ func probe(
 	client Prober,
 	preset string,
 	index int,
-) (string, error) {
+) (probed, error) {
 	for _, at := range probes {
 		// The chain put back first, so an index is measured against the
 		// preset as it was authored rather than against whatever the last
 		// probe moved.
 		if err := client.Play(ctx, preset); err != nil {
-			return "", err
+			return probed{}, err
 		}
 
 		before, err := held(ctx, client)
 		if err != nil {
-			return "", err
+			return probed{}, err
 		}
 
 		address := sdk.Address{Block: alone, Param: index, Direct: true}
 		if err := client.Turn(ctx, address, float32(at)); err != nil {
-			return "refused a number on a dial", nil
+			return probed{Says: "refused a number on a dial", Switch: true}, nil
 		}
 
 		after, err := held(ctx, client)
 		if err != nil {
-			return "", err
+			return probed{}, err
 		}
 
 		moved := changed(before, after)
@@ -161,13 +201,15 @@ func probe(
 		case 0:
 			continue
 		case 1:
-			return moved[0], nil
+			return probed{Named: moved[0]}, nil
 		default:
-			return fmt.Sprintf("moved %d at once: %v", len(moved), moved), nil
+			return probed{
+				Says: fmt.Sprintf("moved %d at once: %v", len(moved), moved),
+			}, nil
 		}
 	}
 
-	return "nothing changed", nil
+	return probed{Says: "nothing changed"}, nil
 }
 
 // held is the parameters of the block being probed, as the device holds them.
