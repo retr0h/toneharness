@@ -100,13 +100,13 @@ func (s *EvidencePublicTestSuite) TestTheFiguresSurviveTheTrip() {
 
 	m := *got[0].Measured
 
-	s.Require().InDelta(0.91, m[audio.KeyLow], 1e-9)
-	s.Require().InDelta(7.8, m[audio.KeyDynamics], 1e-9)
-	s.Require().InDelta(0.35, m[audio.KeyHarmonics], 1e-9)
+	s.Require().InDelta(0.91, m[string(audio.KeyLow)], 1e-9)
+	s.Require().InDelta(7.8, m[string(audio.KeyDynamics)], 1e-9)
+	s.Require().InDelta(0.35, m[string(audio.KeyHarmonics)], 1e-9)
 
 	// A figure landing on a whole number is written untagged, so this is also
 	// what holds the decoder to reading 175 as the number 175.
-	s.Require().InDelta(175, m[audio.KeyCentroid], 1e-9)
+	s.Require().InDelta(175, m[string(audio.KeyCentroid)], 1e-9)
 }
 
 // TestATimestampStaysAString is the one value a rig cannot afford to guess at.
@@ -195,7 +195,7 @@ func (s *EvidencePublicTestSuite) TestTheKeyOrderIsFixed() {
 
 	at := -1
 	for _, key := range audio.MeasuredKeys() {
-		next := strings.Index(got, "\n    "+key+":")
+		next := strings.Index(got, "\n    "+string(key)+":")
 		s.Require().Greater(next, at, "%s is written out of order", key)
 
 		at = next

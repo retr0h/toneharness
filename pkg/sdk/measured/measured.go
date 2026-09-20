@@ -40,6 +40,8 @@ import (
 	"io"
 	"math"
 	"sort"
+
+	"github.com/retr0h/tonestack/pkg/sdk/catalog"
 )
 
 // Figures are what a recording reads as.
@@ -96,7 +98,12 @@ type Block struct {
 	// Name is what a person calls it.
 	Name string `json:"name"`
 	// Category is what it does: amp, cab, drive and so on.
-	Category string `json:"category"`
+	//
+	// The catalog's own type rather than a plain string, because it is the
+	// catalog's vocabulary: a reading is filed under the category the block
+	// was listed in, and the two drifting apart would put a cabinet in the
+	// amplifier shortlist.
+	Category catalog.Category `json:"category"`
 	// Clipped marks a reading that hit the converters' ceiling. Its
 	// spectrum is the clipping's rather than the block's, because flat tops
 	// make harmonics that were never in the signal, so it reads as a bright
@@ -188,7 +195,7 @@ type Match struct {
 // a failure or the converters, and ranking them would put a bright-looking
 // reading of clipping at the top of a list of bright amplifiers.
 func (l Library) Nearest(
-	category string,
+	category catalog.Category,
 	want Figures,
 	weigh Weights,
 ) []Match {

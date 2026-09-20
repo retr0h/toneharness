@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/retr0h/tonestack/pkg/cli"
+	"github.com/retr0h/tonestack/pkg/sdk/catalog"
 )
 
 var (
@@ -72,7 +73,7 @@ had. ` + "`--resume`" + ` picks it up again.`,
 			Client:   measureBlocksClient.client(),
 			Dry:      measureBlocksDry,
 			Out:      measureBlocksOut,
-			Category: measureBlocksCategory,
+			Category: catalog.Category(measureBlocksCategory),
 			Seconds:  measureBlocksSeconds,
 			Resume:   measureBlocksResume,
 			Retry:    measureBlocksRetry,

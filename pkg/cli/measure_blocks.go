@@ -45,10 +45,10 @@ import (
 
 // MeasureOptions is what measuring every block needs to know.
 type MeasureOptions struct {
-	Client   Pedal
+	Client   Loader
 	Dry      string
 	Out      string
-	Category string
+	Category catalog.Category
 	Seconds  float64
 	Resume   bool
 	Retry    bool
@@ -164,7 +164,7 @@ func MeasureBlocks(
 // one measures a single block, with its preset already built.
 func one(
 	ctx context.Context,
-	client Pedal,
+	client Plays,
 	bench sdk.Bench,
 	signal []float32,
 	lib *measured.Library,
@@ -250,7 +250,7 @@ func baseline(
 func build(
 	ctx context.Context,
 	w io.Writer,
-	client Pedal,
+	client Compiles,
 	want []measured.Block,
 	work string,
 ) map[string]string {
@@ -303,7 +303,7 @@ func build(
 // compile writes one block's rig and turns it into a preset.
 func compile(
 	ctx context.Context,
-	client Pedal,
+	client Compiles,
 	block measured.Block,
 	work string,
 	enabled bool,
@@ -378,13 +378,13 @@ func rigFor(
 // wanted is every block worth trying, in a stable order.
 func wanted(
 	cat *catalog.Catalog,
-	category string,
+	category catalog.Category,
 	done map[string]measured.Block,
 ) []measured.Block {
 	out := make([]measured.Block, 0, len(cat.Blocks))
 
 	for _, block := range cat.Blocks {
-		if category != "" && string(block.Category) != category {
+		if category != "" && block.Category != category {
 			continue
 		}
 
@@ -403,7 +403,7 @@ func wanted(
 		out = append(out, measured.Block{
 			ID:       string(block.ID),
 			Name:     block.Name,
-			Category: string(block.Category),
+			Category: block.Category,
 		})
 	}
 

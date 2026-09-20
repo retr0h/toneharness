@@ -17,6 +17,333 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
+// MockCompiles is a mock of Compiles interface.
+type MockCompiles struct {
+	ctrl     *gomock.Controller
+	recorder *MockCompilesMockRecorder
+	isgomock struct{}
+}
+
+// MockCompilesMockRecorder is the mock recorder for MockCompiles.
+type MockCompilesMockRecorder struct {
+	mock *MockCompiles
+}
+
+// NewMockCompiles creates a new mock instance.
+func NewMockCompiles(ctrl *gomock.Controller) *MockCompiles {
+	mock := &MockCompiles{ctrl: ctrl}
+	mock.recorder = &MockCompilesMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCompiles) EXPECT() *MockCompilesMockRecorder {
+	return m.recorder
+}
+
+// Compile mocks base method.
+func (m *MockCompiles) Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Compile", ctx, in)
+	ret0, _ := ret[0].(sdk.Built)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Compile indicates an expected call of Compile.
+func (mr *MockCompilesMockRecorder) Compile(ctx, in any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compile", reflect.TypeOf((*MockCompiles)(nil).Compile), ctx, in)
+}
+
+// MockPlays is a mock of Plays interface.
+type MockPlays struct {
+	ctrl     *gomock.Controller
+	recorder *MockPlaysMockRecorder
+	isgomock struct{}
+}
+
+// MockPlaysMockRecorder is the mock recorder for MockPlays.
+type MockPlaysMockRecorder struct {
+	mock *MockPlays
+}
+
+// NewMockPlays creates a new mock instance.
+func NewMockPlays(ctrl *gomock.Controller) *MockPlays {
+	mock := &MockPlays{ctrl: ctrl}
+	mock.recorder = &MockPlaysMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPlays) EXPECT() *MockPlaysMockRecorder {
+	return m.recorder
+}
+
+// Play mocks base method.
+func (m *MockPlays) Play(ctx context.Context, file string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Play", ctx, file)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Play indicates an expected call of Play.
+func (mr *MockPlaysMockRecorder) Play(ctx, file any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockPlays)(nil).Play), ctx, file)
+}
+
+// MockTurns is a mock of Turns interface.
+type MockTurns struct {
+	ctrl     *gomock.Controller
+	recorder *MockTurnsMockRecorder
+	isgomock struct{}
+}
+
+// MockTurnsMockRecorder is the mock recorder for MockTurns.
+type MockTurnsMockRecorder struct {
+	mock *MockTurns
+}
+
+// NewMockTurns creates a new mock instance.
+func NewMockTurns(ctrl *gomock.Controller) *MockTurns {
+	mock := &MockTurns{ctrl: ctrl}
+	mock.recorder = &MockTurnsMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTurns) EXPECT() *MockTurnsMockRecorder {
+	return m.recorder
+}
+
+// Turn mocks base method.
+func (m *MockTurns) Turn(ctx context.Context, at sdk.Address, value float32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Turn", ctx, at, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Turn indicates an expected call of Turn.
+func (mr *MockTurnsMockRecorder) Turn(ctx, at, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Turn", reflect.TypeOf((*MockTurns)(nil).Turn), ctx, at, value)
+}
+
+// MockChooses is a mock of Chooses interface.
+type MockChooses struct {
+	ctrl     *gomock.Controller
+	recorder *MockChoosesMockRecorder
+	isgomock struct{}
+}
+
+// MockChoosesMockRecorder is the mock recorder for MockChooses.
+type MockChoosesMockRecorder struct {
+	mock *MockChooses
+}
+
+// NewMockChooses creates a new mock instance.
+func NewMockChooses(ctrl *gomock.Controller) *MockChooses {
+	mock := &MockChooses{ctrl: ctrl}
+	mock.recorder = &MockChoosesMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockChooses) EXPECT() *MockChoosesMockRecorder {
+	return m.recorder
+}
+
+// Choose mocks base method.
+func (m *MockChooses) Choose(ctx context.Context, at sdk.Address, value int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Choose", ctx, at, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Choose indicates an expected call of Choose.
+func (mr *MockChoosesMockRecorder) Choose(ctx, at, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Choose", reflect.TypeOf((*MockChooses)(nil).Choose), ctx, at, value)
+}
+
+// MockReads is a mock of Reads interface.
+type MockReads struct {
+	ctrl     *gomock.Controller
+	recorder *MockReadsMockRecorder
+	isgomock struct{}
+}
+
+// MockReadsMockRecorder is the mock recorder for MockReads.
+type MockReadsMockRecorder struct {
+	mock *MockReads
+}
+
+// NewMockReads creates a new mock instance.
+func NewMockReads(ctrl *gomock.Controller) *MockReads {
+	mock := &MockReads{ctrl: ctrl}
+	mock.recorder = &MockReadsMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockReads) EXPECT() *MockReadsMockRecorder {
+	return m.recorder
+}
+
+// Current mocks base method.
+func (m *MockReads) Current(ctx context.Context, as sdk.Format) (sdk.Reading, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Current", ctx, as)
+	ret0, _ := ret[0].(sdk.Reading)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Current indicates an expected call of Current.
+func (mr *MockReadsMockRecorder) Current(ctx, as any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Current", reflect.TypeOf((*MockReads)(nil).Current), ctx, as)
+}
+
+// MockLoader is a mock of Loader interface.
+type MockLoader struct {
+	ctrl     *gomock.Controller
+	recorder *MockLoaderMockRecorder
+	isgomock struct{}
+}
+
+// MockLoaderMockRecorder is the mock recorder for MockLoader.
+type MockLoaderMockRecorder struct {
+	mock *MockLoader
+}
+
+// NewMockLoader creates a new mock instance.
+func NewMockLoader(ctrl *gomock.Controller) *MockLoader {
+	mock := &MockLoader{ctrl: ctrl}
+	mock.recorder = &MockLoaderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockLoader) EXPECT() *MockLoaderMockRecorder {
+	return m.recorder
+}
+
+// Compile mocks base method.
+func (m *MockLoader) Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Compile", ctx, in)
+	ret0, _ := ret[0].(sdk.Built)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Compile indicates an expected call of Compile.
+func (mr *MockLoaderMockRecorder) Compile(ctx, in any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compile", reflect.TypeOf((*MockLoader)(nil).Compile), ctx, in)
+}
+
+// Play mocks base method.
+func (m *MockLoader) Play(ctx context.Context, file string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Play", ctx, file)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Play indicates an expected call of Play.
+func (mr *MockLoaderMockRecorder) Play(ctx, file any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockLoader)(nil).Play), ctx, file)
+}
+
+// MockProber is a mock of Prober interface.
+type MockProber struct {
+	ctrl     *gomock.Controller
+	recorder *MockProberMockRecorder
+	isgomock struct{}
+}
+
+// MockProberMockRecorder is the mock recorder for MockProber.
+type MockProberMockRecorder struct {
+	mock *MockProber
+}
+
+// NewMockProber creates a new mock instance.
+func NewMockProber(ctrl *gomock.Controller) *MockProber {
+	mock := &MockProber{ctrl: ctrl}
+	mock.recorder = &MockProberMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockProber) EXPECT() *MockProberMockRecorder {
+	return m.recorder
+}
+
+// Compile mocks base method.
+func (m *MockProber) Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Compile", ctx, in)
+	ret0, _ := ret[0].(sdk.Built)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Compile indicates an expected call of Compile.
+func (mr *MockProberMockRecorder) Compile(ctx, in any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compile", reflect.TypeOf((*MockProber)(nil).Compile), ctx, in)
+}
+
+// Current mocks base method.
+func (m *MockProber) Current(ctx context.Context, as sdk.Format) (sdk.Reading, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Current", ctx, as)
+	ret0, _ := ret[0].(sdk.Reading)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Current indicates an expected call of Current.
+func (mr *MockProberMockRecorder) Current(ctx, as any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Current", reflect.TypeOf((*MockProber)(nil).Current), ctx, as)
+}
+
+// Play mocks base method.
+func (m *MockProber) Play(ctx context.Context, file string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Play", ctx, file)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Play indicates an expected call of Play.
+func (mr *MockProberMockRecorder) Play(ctx, file any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockProber)(nil).Play), ctx, file)
+}
+
+// Turn mocks base method.
+func (m *MockProber) Turn(ctx context.Context, at sdk.Address, value float32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Turn", ctx, at, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Turn indicates an expected call of Turn.
+func (mr *MockProberMockRecorder) Turn(ctx, at, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Turn", reflect.TypeOf((*MockProber)(nil).Turn), ctx, at, value)
+}
+
 // MockPedal is a mock of Pedal interface.
 type MockPedal struct {
 	ctrl     *gomock.Controller

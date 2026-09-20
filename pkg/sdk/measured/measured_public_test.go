@@ -28,6 +28,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/retr0h/tonestack/pkg/sdk/catalog"
 	"github.com/retr0h/tonestack/pkg/sdk/measured"
 )
 
@@ -115,7 +116,7 @@ func (s *MeasuredPublicTestSuite) TestNearestRanksByDistance() {
 // TestNearestStaysInItsCategory covers a cab never answering for an amp.
 func (s *MeasuredPublicTestSuite) TestNearestStaysInItsCategory() {
 	for _, m := range s.lib.Nearest("amp", s.dark(), measured.Spectral()) {
-		s.Require().Equal("amp", m.Category)
+		s.Require().Equal(catalog.CategoryAmp, m.Category)
 	}
 
 	s.Require().Len(s.lib.Nearest("cab", s.dark(), measured.Spectral()), 1)

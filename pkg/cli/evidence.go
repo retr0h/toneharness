@@ -90,7 +90,7 @@ func entryFor(
 	figures := n.Profile.Measured()
 
 	for _, key := range audio.MeasuredKeys() {
-		measured.Content = append(measured.Content, text(key), number(figures[key]))
+		measured.Content = append(measured.Content, text(string(key)), number(figures[string(key)]))
 	}
 
 	out := &yaml.Node{

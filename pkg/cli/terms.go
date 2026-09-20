@@ -94,10 +94,10 @@ func termsFor(
 
 	for _, t := range p.Terms {
 		mine := &yaml.Node{Kind: yaml.MappingNode, Style: yaml.FlowStyle}
-		mine.Content = append(mine.Content, text(t.Key), number(t.Mine))
+		mine.Content = append(mine.Content, text(string(t.Key)), number(t.Mine))
 
 		theirs := &yaml.Node{Kind: yaml.MappingNode, Style: yaml.FlowStyle}
-		theirs.Content = append(theirs.Content, text(t.Key), number(t.Others))
+		theirs.Content = append(theirs.Content, text(string(t.Key)), number(t.Others))
 
 		evidence := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{
 			text("kind"), text("audio"),

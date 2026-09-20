@@ -33,7 +33,7 @@ import "slices"
 // Axis is one measure that can become a word, and the two words it becomes.
 type Axis struct {
 	// Key is the measured figure this axis reads, from MeasuredKeys.
-	Key string
+	Key Figure
 	// More is the term for an artist above the rest, Less for one below.
 	More, Less string
 	// Why says what the figure is, for the evidence a derived term carries.
@@ -106,7 +106,8 @@ type Derived struct {
 	// Term is the word, spelled as the compiler's own table spells it.
 	Term string
 	// Key is the measure it came from, and Why describes that measure.
-	Key, Why string
+	Key Figure
+	Why string
 	// Mine is where this artist sat, Others the middle of everyone else.
 	Mine, Others float64
 	// Of is how many artists the comparison was against, this one included.
@@ -206,7 +207,7 @@ func made(
 		Term: term,
 		Key:  ax.Key,
 		Why:  ax.Why,
-		Mine: mine.Measured()[ax.Key],
+		Mine: mine.Measured()[string(ax.Key)],
 		// The middle of the others, so a report can say what this was
 		// clear of rather than only that it was.
 		Others: between(rest, 0.5),
@@ -221,7 +222,7 @@ func made(
 // counting a zero as a position would drag every comparison toward it.
 func middles(
 	others map[string]Across,
-	key string,
+	key Figure,
 ) []float64 {
 	out := make([]float64, 0, len(others))
 
@@ -230,7 +231,7 @@ func middles(
 			continue
 		}
 
-		out = append(out, a.Measured()[key])
+		out = append(out, a.Measured()[string(key)])
 	}
 
 	return out

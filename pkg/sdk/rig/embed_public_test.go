@@ -31,17 +31,17 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
-// SchemaPublicTestSuite covers reading the contract a rig is checked against.
+// EmbedPublicTestSuite covers reading the contract a rig is checked against.
 //
 // The one this binary ships cannot fail — the Go types are generated from the
 // same document, so a broken one would have failed generation first. What is
 // worth covering is that it says so rather than silently accepting anything.
-type SchemaPublicTestSuite struct {
+type EmbedPublicTestSuite struct {
 	suite.Suite
 }
 
 // TestLoadSchema reads the contract out of an OpenAPI document.
-func (s *SchemaPublicTestSuite) TestLoadSchema() {
+func (s *EmbedPublicTestSuite) TestLoadSchema() {
 	tests := []struct {
 		name    string
 		doc     []byte
@@ -89,7 +89,7 @@ components:
 // Nothing reaches this in a shipped binary. It is here so that if the contract
 // ever could not be read, a rig would be reported as unchecked rather than
 // passed as valid.
-func (s *SchemaPublicTestSuite) TestValidate() {
+func (s *EmbedPublicTestSuite) TestValidate() {
 	restore := *rig.Contract
 	defer func() { *rig.Contract = restore }()
 
@@ -100,7 +100,7 @@ func (s *SchemaPublicTestSuite) TestValidate() {
 }
 
 // TestAgainst checks a document against the contract.
-func (s *SchemaPublicTestSuite) TestAgainst() {
+func (s *EmbedPublicTestSuite) TestAgainst() {
 	tests := []struct {
 		name     string
 		doc      any
@@ -136,7 +136,7 @@ func (s *SchemaPublicTestSuite) TestAgainst() {
 }
 
 // TestInvalid says what went wrong, whatever the library handed it.
-func (s *SchemaPublicTestSuite) TestInvalid() {
+func (s *EmbedPublicTestSuite) TestInvalid() {
 	tests := []struct {
 		name     string
 		in       error
@@ -176,5 +176,5 @@ func (s *SchemaPublicTestSuite) TestInvalid() {
 func TestSchemaTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(SchemaPublicTestSuite))
+	suite.Run(t, new(EmbedPublicTestSuite))
 }

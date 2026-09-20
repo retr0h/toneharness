@@ -134,7 +134,7 @@ func againstOf(
 // clears `mid-forward` by four tenths of a percent, and rounding that to "0%"
 // hides the one thing the column is for.
 func figure(
-	key string,
+	key audio.Figure,
 	v float64,
 ) string {
 	if key == audio.KeyCentroid {

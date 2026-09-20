@@ -73,7 +73,7 @@ func (s *MeasureTestSuite) TestWantedNarrowsToOneKind() {
 	s.Require().NotEmpty(got)
 
 	for _, block := range got {
-		s.Require().Equal("amp", block.Category)
+		s.Require().Equal(catalog.CategoryAmp, block.Category)
 	}
 }
 

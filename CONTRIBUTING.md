@@ -470,6 +470,18 @@ A test file is named for the production file it tests. Where tests grow too
 large to read, split the production file first so each test file keeps a
 counterpart, rather than splitting tests away from the file they cover.
 
+Two kinds of test file are named for something else, and both are deliberate.
+`export_test.go` is Go's own idiom for reaching a package's internals from an
+external test, and is named that because the compiler says so. And a few tests
+cover a concern no single file owns: a round trip through a reader and a writer,
+a walk over every rig that ships, a contract loaded and checked against the
+types generated from it. Those are named for the concern.
+
+`TestEveryTestFileIsNamedForWhatItCovers` in `main_test.go` holds the rule and
+carries the list of the second kind, so each one stays a decision somebody made
+rather than a file that drifted. A test file that is neither named for a
+production file nor on that list fails.
+
 ### Errors live with whoever produces them
 
 There is no shared errors package. `catalog` owns `ErrBadParam` because

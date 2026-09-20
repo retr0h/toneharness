@@ -25,6 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/retr0h/tonestack/pkg/sdk/audio"
 	"github.com/retr0h/tonestack/pkg/sdk/measured"
 )
 
@@ -154,7 +155,7 @@ func (s *CurvesPublicTestSuite) TestEveryNamedFigureCanBeRead() {
 	}}
 
 	for _, name := range measured.Named() {
-		s.Run(name, func() {
+		s.Run(string(name), func() {
 			got, ok := measured.Apart([]measured.Point{full, full}, name)
 
 			s.Require().True(ok, "%s cannot be read off a point", name)
@@ -184,8 +185,10 @@ func (s *CurvesPublicTestSuite) TestAFigureNoReadingCarriedIsAbsentRatherThanZer
 
 	points := older.Controls["Bass"].Points
 
-	for _, name := range []string{"dynamics", "harmonics", "lean"} {
-		s.Run(name, func() {
+	for _, name := range []audio.Figure{
+		audio.KeyDynamics, audio.KeyHarmonics, audio.KeyLean,
+	} {
+		s.Run(string(name), func() {
 			_, ok := measured.Apart(points, name)
 
 			s.Require().False(ok,
@@ -195,8 +198,11 @@ func (s *CurvesPublicTestSuite) TestAFigureNoReadingCarriedIsAbsentRatherThanZer
 
 	// The five that were measured still read, so the guard is about what is
 	// missing rather than about the file being old.
-	for _, name := range []string{"centroid", "level", "low", "mid", "high"} {
-		s.Run(name, func() {
+	for _, name := range []audio.Figure{
+		audio.KeyCentroid, audio.KeyLevel, audio.KeyLow,
+		audio.KeyMid, audio.KeyHigh,
+	} {
+		s.Run(string(name), func() {
 			_, ok := measured.Apart(points, name)
 
 			s.Require().True(ok)

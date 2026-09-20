@@ -34,7 +34,7 @@ type EvidencePublicTestSuite struct {
 }
 
 // keys is every name a measurement is written under.
-func (s *EvidencePublicTestSuite) keys() []string {
+func (s *EvidencePublicTestSuite) keys() []audio.Figure {
 	return audio.MeasuredKeys()
 }
 
@@ -54,7 +54,7 @@ func (s *EvidencePublicTestSuite) TestEveryKeyIsMeasured() {
 	s.Require().Len(audio.MeasuredKeys(), len(got))
 
 	for _, key := range audio.MeasuredKeys() {
-		s.Require().Contains(got, key)
+		s.Require().Contains(got, string(key))
 	}
 }
 
@@ -67,9 +67,9 @@ func (s *EvidencePublicTestSuite) TestEveryKeyIsMeasured() {
 func (s *EvidencePublicTestSuite) TestAMeasureNobodyCouldTakeIsLeftOut() {
 	got := audio.Profile{Centroid: 175}.Measured()
 
-	s.Require().NotContains(got, audio.KeyDecay)
-	s.Require().NotContains(got, audio.KeyTransient)
-	s.Require().Contains(got, audio.KeyCentroid, "the rest still arrives")
+	s.Require().NotContains(got, string(audio.KeyDecay))
+	s.Require().NotContains(got, string(audio.KeyTransient))
+	s.Require().Contains(got, string(audio.KeyCentroid), "the rest still arrives")
 }
 
 // TestAGatheredMeasureThatWasTakenIsWritten covers the other side of it.
@@ -96,8 +96,8 @@ func (s *EvidencePublicTestSuite) TestAGatheredMeasureThatWasTakenIsWritten() {
 		},
 	}).Measured()
 
-	s.Require().InDelta(0.74, got[audio.KeyTransient], 1e-9)
-	s.Require().InDelta(0.82, got[audio.KeyDecay], 1e-9)
+	s.Require().InDelta(0.74, got[string(audio.KeyTransient)], 1e-9)
+	s.Require().InDelta(0.82, got[string(audio.KeyDecay)], 1e-9)
 
 	s.Require().Len(got, len(audio.MeasuredKeys()))
 }
@@ -107,9 +107,9 @@ func (s *EvidencePublicTestSuite) TestAGatheredMeasureNobodyCouldTakeIsLeftOut()
 	got := audio.Together([]audio.Profile{{Centroid: 175}, {Centroid: 185}}).
 		Measured()
 
-	s.Require().NotContains(got, audio.KeyDecay)
-	s.Require().NotContains(got, audio.KeyTransient)
-	s.Require().Contains(got, audio.KeyCentroid)
+	s.Require().NotContains(got, string(audio.KeyDecay))
+	s.Require().NotContains(got, string(audio.KeyTransient))
+	s.Require().Contains(got, string(audio.KeyCentroid))
 }
 
 // TestTheOrderIsStable covers evidence written twice reading the same way.
@@ -130,7 +130,7 @@ func (s *EvidencePublicTestSuite) TestOneRecordingIsNamedInFull() {
 	}.Measured()
 
 	for _, key := range s.keys() {
-		s.Require().Contains(got, key)
+		s.Require().Contains(got, string(key))
 	}
 
 	s.Require().Len(got, len(s.keys()), "and nothing nobody measures")
@@ -163,10 +163,10 @@ func (s *EvidencePublicTestSuite) TestFiguresAreRoundedToWhatTheyCanClaim() {
 		DynamicRange: 7.8449,
 	}.Measured()
 
-	s.Require().InDelta(0.91, got[audio.KeyLow], 1e-9)
-	s.Require().InDelta(175, got[audio.KeyCentroid], 1e-9)
-	s.Require().InDelta(0.82, got[audio.KeyDecay], 1e-9)
-	s.Require().InDelta(7.8, got[audio.KeyDynamics], 1e-9)
+	s.Require().InDelta(0.91, got[string(audio.KeyLow)], 1e-9)
+	s.Require().InDelta(175, got[string(audio.KeyCentroid)], 1e-9)
+	s.Require().InDelta(0.82, got[string(audio.KeyDecay)], 1e-9)
+	s.Require().InDelta(7.8, got[string(audio.KeyDynamics)], 1e-9)
 }
 
 // TestTheMiddleIsWhatIsCarried covers a gathered measurement writing the
@@ -176,7 +176,7 @@ func (s *EvidencePublicTestSuite) TestTheMiddleIsWhatIsCarried() {
 		{Centroid: 135}, {Centroid: 175}, {Centroid: 195},
 	}).Measured()
 
-	s.Require().InDelta(175, got[audio.KeyCentroid], 1e-9)
+	s.Require().InDelta(175, got[string(audio.KeyCentroid)], 1e-9)
 }
 
 // TestNothingMeasuredNamesOnlyWhatItCould covers an empty measurement.
@@ -189,15 +189,15 @@ func (s *EvidencePublicTestSuite) TestTheMiddleIsWhatIsCarried() {
 func (s *EvidencePublicTestSuite) TestNothingMeasuredNamesOnlyWhatItCould() {
 	got := audio.Across{}.Measured()
 
-	for _, key := range []string{
+	for _, key := range []audio.Figure{
 		audio.KeyLow, audio.KeyMid, audio.KeyHigh, audio.KeyCentroid,
 		audio.KeyDynamics, audio.KeyHarmonics, audio.KeyLean,
 	} {
-		s.Require().Contains(got, key, "%s is a real zero", key)
+		s.Require().Contains(got, string(key), "%s is a real zero", key)
 	}
 
-	s.Require().NotContains(got, audio.KeyDecay)
-	s.Require().NotContains(got, audio.KeyTransient)
+	s.Require().NotContains(got, string(audio.KeyDecay))
+	s.Require().NotContains(got, string(audio.KeyTransient))
 
 	s.Require().Len(got, len(audio.MeasuredKeys())-2)
 }

@@ -34,12 +34,12 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/corpus"
 )
 
-type CorpusPublicTestSuite struct {
+type EmbedPublicTestSuite struct {
 	suite.Suite
 }
 
 // TestBuiltIn covers the measurement this binary ships.
-func (s *CorpusPublicTestSuite) TestBuiltIn() {
+func (s *EmbedPublicTestSuite) TestBuiltIn() {
 	got, err := corpus.BuiltIn()
 
 	s.Require().NoError(err)
@@ -50,7 +50,7 @@ func (s *CorpusPublicTestSuite) TestBuiltIn() {
 }
 
 // TestParam reads what the corpus measured about one knob.
-func (s *CorpusPublicTestSuite) TestParam() {
+func (s *EmbedPublicTestSuite) TestParam() {
 	tests := []struct {
 		name  string
 		model catalog.ModelID
@@ -91,7 +91,7 @@ func (s *CorpusPublicTestSuite) TestParam() {
 }
 
 // TestSpread is the interquartile range: how far apart people set a knob.
-func (s *CorpusPublicTestSuite) TestSpread() {
+func (s *EmbedPublicTestSuite) TestSpread() {
 	tests := []struct {
 		name string
 		in   corpus.ParamStats
@@ -113,7 +113,7 @@ func (s *CorpusPublicTestSuite) TestSpread() {
 }
 
 // TestFrequency is the share of chains a category appears in.
-func (s *CorpusPublicTestSuite) TestFrequency() {
+func (s *EmbedPublicTestSuite) TestFrequency() {
 	tests := []struct {
 		name   string
 		in     corpus.CategoryStats
@@ -141,7 +141,7 @@ func (s *CorpusPublicTestSuite) TestFrequency() {
 }
 
 // TestBeforeAmp is the share of uses that sit ahead of the amplifier.
-func (s *CorpusPublicTestSuite) TestBeforeAmp() {
+func (s *EmbedPublicTestSuite) TestBeforeAmp() {
 	tests := []struct {
 		name string
 		in   corpus.CategoryStats
@@ -163,7 +163,7 @@ func (s *CorpusPublicTestSuite) TestBeforeAmp() {
 }
 
 // TestLoad reads statistics off a reader.
-func (s *CorpusPublicTestSuite) TestLoad() {
+func (s *EmbedPublicTestSuite) TestLoad() {
 	// The generator writes gzip because the file is embedded, but somebody
 	// inspecting a copy will have plain JSON. Both are statistics.
 	const plain = `{"device":"HX Stomp","presets":3,"models":{},"grammar":{}}`
@@ -225,7 +225,7 @@ func (s *CorpusPublicTestSuite) TestLoad() {
 }
 
 // TestDecode reads statistics out of bytes already in hand.
-func (s *CorpusPublicTestSuite) TestDecode() {
+func (s *EmbedPublicTestSuite) TestDecode() {
 	tests := []struct {
 		name    string
 		packed  []byte
@@ -269,8 +269,8 @@ func (*failingReader) Read(
 	return 0, errors.New("boom")
 }
 
-func TestCorpusPublicTestSuite(
+func TestEmbedPublicTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(CorpusPublicTestSuite))
+	suite.Run(t, new(EmbedPublicTestSuite))
 }

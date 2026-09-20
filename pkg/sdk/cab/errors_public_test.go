@@ -116,7 +116,7 @@ func (s *ErrorsPublicTestSuite) TestSilenceIsNotAShortSignal() {
 func (s *ErrorsPublicTestSuite) TestALengthNoDeviceLoadsCarriesTheLength() {
 	_, err := cab.Capture(make([]float64, 99), make([]float64, 99), 99)
 
-	s.Require().ErrorIs(err, cab.ErrNotPowerOfTwo)
+	s.Require().ErrorIs(err, cab.ErrBadLength)
 
 	var bad *cab.BadLengthError
 	s.Require().ErrorAs(err, &bad)
@@ -128,7 +128,7 @@ func (s *ErrorsPublicTestSuite) TestALengthNoDeviceLoadsCarriesTheLength() {
 func (s *ErrorsPublicTestSuite) TestWritingRefusesTheSameLengths() {
 	err := cab.Write(nil, make([]float64, 3), cab.Made{})
 
-	s.Require().ErrorIs(err, cab.ErrNotPowerOfTwo)
+	s.Require().ErrorIs(err, cab.ErrBadLength)
 
 	var bad *cab.BadLengthError
 	s.Require().ErrorAs(err, &bad)
@@ -145,7 +145,7 @@ func (s *ErrorsPublicTestSuite) TestEachErrorUnwrapsToItsSentinel() {
 	}{
 		{"too short", &cab.TooShortError{}, cab.ErrTooShort},
 		{"silence", &cab.SilenceError{}, cab.ErrTooShort},
-		{"bad length", &cab.BadLengthError{}, cab.ErrNotPowerOfTwo},
+		{"bad length", &cab.BadLengthError{}, cab.ErrBadLength},
 	} {
 		s.Run(tt.name, func() {
 			s.Require().True(errors.Is(tt.err, tt.is))

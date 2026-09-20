@@ -687,6 +687,100 @@ func isContext(
 	return ok && from.Name == "context"
 }
 
+// coversAConcern is every test file named for something other than a
+// production file, with what it covers instead.
+//
+// Each is a decision rather than a drift. Two shapes qualify: a test that
+// crosses several files on purpose — a round trip through a reader and a
+// writer, a walk over everything that ships — and a file holding fixtures
+// with no tests of its own.
+//
+// What is NOT on this list, and was checked: four files in catalog and rig
+// that test one concern inside a bigger production file. Those want the
+// production file split, which is the rule's own answer and a separate
+// change, not a line here.
+var coversAConcern = map[string]string{
+	"pkg/cli/cli_face_public_test.go":                         "the face a terminal presents, across the package",
+	"pkg/cli/measure_public_test.go":                          "the pieces three measuring commands share",
+	"pkg/cli/measure_run_public_test.go":                      "a campaign end to end",
+	"pkg/cli/internal/paint/paint_public_test.go":             "the visual language, across theme, chain and yaml",
+	"pkg/cli/measure_paths_test.go":                           "what the three measuring commands do when refused",
+	"pkg/cli/technique_test.go":                               "how a technique reads, one helper among many in recipe.go",
+	"pkg/sdk/catalog/byname_public_test.go":                   "finding a model by name, one of embed.go's two jobs",
+	"pkg/sdk/catalog/devices_public_test.go":                  "which devices ship, the other of embed.go's two jobs",
+	"pkg/sdk/catalog/led_public_test.go":                      "Catalog.LEDColour, which CONTRIBUTING lets types.go keep",
+	"pkg/sdk/catalog/symbol_public_test.go":                   "Catalog.Symbol, which CONTRIBUTING names as allowed there",
+	"pkg/sdk/internal/corpusgen/corpusgen_public_test.go":     "measuring and refreshing, which are one job in two files",
+	"pkg/sdk/chain/testdata_public_test.go":                   "fixtures the package's tests build from",
+	"pkg/sdk/device_public_test.go":                           "a round trip against real hardware, behind a build tag",
+	"pkg/sdk/internal/catalogen/stale_public_test.go":         "the shipped catalog against an installed HX Edit",
+	"pkg/sdk/internal/compile/character_moves_public_test.go": "a word becoming knob positions, across the compiler",
+	"pkg/sdk/internal/compile/roundtrip_public_test.go":       "a preset lifted and lowered back",
+	"pkg/sdk/internal/compile/shipped_public_test.go":         "every rig that ships, compiled",
+	"pkg/sdk/internal/device/device_public_test.go":           "the double the package's tests share",
+	"pkg/sdk/internal/device/empty_slot_public_test.go":       "what an empty slot holds, behind a build tag",
+	"pkg/sdk/internal/device/generate_test.go":                "the mockgen directives, and no tests",
+	"pkg/sdk/internal/deviceslots/written_test.go":            "what a write puts on the wire, byte for byte",
+	"pkg/sdk/internal/fileslots/fileslots_public_test.go":     "listing and showing, which are one job in two files",
+	"pkg/sdk/internal/wire/preset_shape_test.go":              "malformed wire data, across the decoder",
+	"pkg/sdk/preset/fidelity_public_test.go":                  "a preset read and written back unchanged",
+	"pkg/sdk/rig/coverage_public_test.go":                     "how much of the contract the shipped rigs use",
+	"pkg/sdk/rig/shipped_public_test.go":                      "every rig that ships, validated",
+}
+
+// TestEveryTestFileIsNamedForWhatItCovers holds the rule CONTRIBUTING gives a
+// test file's name.
+//
+// A test named for a file that does not exist sends the next reader looking
+// for it, and hides that the thing it covers has no test of its own: three
+// were named gate, contract and schema, for production files nobody ever
+// wrote, while signal.go, validate.go and embed.go had no counterpart at all.
+//
+// Anything starting export_ is exempt: export_test.go is Go's own idiom for
+// handing an unexported thing to an external test, and a package with several
+// of them names each for the half it opens up.
+func (s *MainTestSuite) TestEveryTestFileIsNamedForWhatItCovers() {
+	var adrift []string
+
+	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		switch {
+		case err != nil:
+			return err
+		case d.IsDir():
+			switch d.Name() {
+			case ".git", ".worktrees", ".claude", "node_modules":
+				return fs.SkipDir
+			}
+
+			return nil
+		case !strings.HasSuffix(path, "_test.go"),
+			strings.HasSuffix(path, ".gen_test.go"),
+			strings.HasPrefix(d.Name(), "export_"),
+			d.Name() == "main_test.go",
+			d.Name() == "knowledge_test.go":
+			return nil
+		}
+
+		covers := strings.TrimSuffix(path, "_test.go")
+		covers = strings.TrimSuffix(covers, "_public") + ".go"
+
+		if _, err := os.Stat(covers); err == nil {
+			return nil
+		}
+
+		if _, ok := coversAConcern[path]; !ok {
+			adrift = append(adrift, path)
+		}
+
+		return nil
+	})
+
+	s.Require().NoError(err)
+	s.Require().Empty(adrift,
+		"named for no production file and not listed as covering a concern:\n%s",
+		strings.Join(adrift, "\n"))
+}
+
 // TestTheCLIStandsAlone asserts the CLI half could be its own repository.
 //
 // The mirror of TestTheSDKStandsAlone, for the other end. main.go, cmd/ and

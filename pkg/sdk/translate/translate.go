@@ -301,7 +301,7 @@ func nearestTo(
 	spec tone.Spec,
 	setup tone.Setup,
 	deps Deps,
-	category string,
+	category catalog.Category,
 	notes *Notes,
 ) (rig.ChainEntry, bool) {
 	want, from, ok := target(spec, notes)
@@ -313,7 +313,7 @@ func nearestTo(
 		deps.Measured.Nearest(category, want, measured.Spectral()), setup)
 	if len(ranked) == 0 {
 		*notes = append(*notes, Note{
-			About: category,
+			About: string(category),
 			Said:  "nothing of that kind has been measured, so none could be chosen",
 		})
 
@@ -324,7 +324,7 @@ func nearestTo(
 	models := map[string]string{deps.Measured.Device: best.ID}
 
 	*notes = append(*notes, Note{
-		About: category,
+		About: string(category),
 		Said: fmt.Sprintf(
 			"%s is the closest of %d measured to %s, %.0f Hz against %.0f",
 			best.Name, len(ranked), from, best.Centroid, want.Centroid),

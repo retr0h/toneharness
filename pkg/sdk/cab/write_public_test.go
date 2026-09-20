@@ -178,7 +178,7 @@ func (s *WritePublicTestSuite) TestOnlyWhatADeviceLoads() {
 	for _, taps := range []int{0, 512, 4096} {
 		s.Require().ErrorIs(
 			cab.Write(&buf, make([]float64, taps), s.made()),
-			cab.ErrNotPowerOfTwo, "%d taps", taps)
+			cab.ErrBadLength, "%d taps", taps)
 	}
 }
 

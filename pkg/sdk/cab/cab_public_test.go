@@ -209,7 +209,7 @@ func (s *CabPublicTestSuite) TestOnlyWhatADeviceLoads() {
 		_, err := cab.Match(
 			speaker(4096, 600), speaker(4096, 3000), taps)
 
-		s.Require().ErrorIs(err, cab.ErrNotPowerOfTwo, "%d taps", taps)
+		s.Require().ErrorIs(err, cab.ErrBadLength, "%d taps", taps)
 	}
 
 	for _, taps := range []int{cab.Short, cab.Long} {
@@ -257,7 +257,7 @@ func (s *CabPublicTestSuite) TestCaptureOnlyWhatADeviceLoads() {
 	for _, taps := range []int{0, 512, 4096} {
 		_, err := cab.Capture(fine, fine, taps)
 
-		s.Require().ErrorIs(err, cab.ErrNotPowerOfTwo, "%d taps", taps)
+		s.Require().ErrorIs(err, cab.ErrBadLength, "%d taps", taps)
 	}
 }
 

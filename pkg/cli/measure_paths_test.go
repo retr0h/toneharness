@@ -21,6 +21,7 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"os"
@@ -32,6 +33,7 @@ import (
 
 	"github.com/retr0h/tonestack/pkg/cli/internal/mocks"
 	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/tonestack/pkg/sdk/audio"
 	"github.com/retr0h/tonestack/pkg/sdk/measured"
 )
 
@@ -168,6 +170,93 @@ func (s *MeasurePathsTestSuite) TestReadingTheChainPassesTheDevicesRefusalBack()
 	_, err := current(context.Background(), s.pedal)
 
 	s.Require().ErrorIs(err, refused)
+}
+
+// TestWritingCurvesSaysWhereItCouldNotWrite covers the curves having nowhere
+// to land.
+//
+// A sweep is two minutes a control, so losing a finished campaign to a path
+// typo is the expensive failure here. The parent being a file rather than a
+// directory is the shape that actually happens: an --out pointing at a
+// directory somebody meant to create.
+func (s *MeasurePathsTestSuite) TestWritingCurvesSaysWhereItCouldNotWrite() {
+	blocked := filepath.Join(s.T().TempDir(), "not-a-directory")
+	s.Require().NoError(os.WriteFile(blocked, []byte("a file"), 0o600))
+
+	var buf bytes.Buffer
+
+	err := write(&buf, measured.Curves{Device: "HX Stomp"},
+		filepath.Join(blocked, "curves.json"))
+
+	s.Require().Error(err)
+	s.Require().Contains(err.Error(), blocked)
+}
+
+// TestWritingCurvesNamesWhatItMeasured covers the happy path's report.
+//
+// Sorted, because a map's order is not one, and a campaign whose summary
+// reshuffles between runs is one nobody can diff.
+func (s *MeasurePathsTestSuite) TestWritingCurvesNamesWhatItMeasured() {
+	at := filepath.Join(s.T().TempDir(), "deep", "curves.json")
+
+	var buf bytes.Buffer
+
+	s.Require().NoError(write(&buf, measured.Curves{
+		Device: "HX Stomp",
+		Controls: map[string]measured.Curve{
+			"Treble": {Control: "Treble"},
+			"Bass":   {Control: "Bass"},
+		},
+	}, at))
+
+	s.Require().FileExists(at)
+	s.Require().Contains(buf.String(), "2 controls measured")
+	s.Require().Contains(buf.String(), "Bass, Treble")
+}
+
+// TestProbingPassesTheDevicesRefusalBack covers the pedal refusing to play
+// the chain back between probes.
+//
+// It has to be put back before each index, so a failure here means every
+// reading after it would have been taken against whatever the last probe
+// left behind.
+func (s *MeasurePathsTestSuite) TestProbingPassesTheDevicesRefusalBack() {
+	refused := errors.New("no device on the bus")
+
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(refused)
+
+	_, err := probe(context.Background(), s.pedal, "/tmp/absent.hlx", 1)
+
+	s.Require().ErrorIs(err, refused)
+}
+
+// TestTheReportNamesEveryFigureItMeasured is the regression this refactor
+// exists for.
+//
+// The report iterated a list of four figures typed into it, while the noise
+// floors beside it and measured.Named() both carried ten. So the mid band was
+// swept, compared against its floor, written to the file, and never printed:
+// somebody reading a campaign's output would have concluded a control did not
+// touch the mids because the line saying so was not there.
+//
+// It iterates the alphabet now, so the next figure added is printed without
+// anybody remembering to.
+func (s *MeasurePathsTestSuite) TestTheReportNamesEveryFigureItMeasured() {
+	var buf bytes.Buffer
+
+	report(&buf, measured.Curve{
+		Control: "Bass",
+		Noise:   map[audio.Figure]float64{audio.KeyMid: 0.02},
+		Points: []measured.Point{
+			{Value: 0, Figures: measured.Figures{Mid: 8}},
+			{Value: 1, Figures: measured.Figures{Mid: 15}},
+		},
+	})
+
+	for _, f := range measured.Named() {
+		s.Require().Contains(buf.String(), string(f),
+			"%s is measured and the report does not name it", f)
+	}
 }
 
 func TestMeasurePathsTestSuite(

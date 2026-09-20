@@ -28,8 +28,12 @@ import (
 // ErrTooShort reports signals with too little in them to divide.
 var ErrTooShort = errors.New("not enough signal to work from")
 
-// ErrNotPowerOfTwo reports a length the transform cannot take.
-var ErrNotPowerOfTwo = errors.New("the length must be a power of two")
+// ErrBadLength reports a length no device will load.
+//
+// Named for what is actually checked. It was ErrNotPowerOfTwo, which
+// overclaimed: a device takes 1024 or 2048 and nothing else, so 512 and 4096
+// are refused too and both are powers of two.
+var ErrBadLength = errors.New("no device loads an impulse response that long")
 
 // TooShortError says how much signal there was against how much was needed.
 //
@@ -81,9 +85,9 @@ type BadLengthError struct {
 
 // Error implements the error interface.
 func (e *BadLengthError) Error() string {
-	return fmt.Sprintf("the length must be a power of two: a device loads %d "+
-		"or %d samples, not %d", Short, Long, e.Taps)
+	return fmt.Sprintf("no device loads an impulse response that long: a "+
+		"device takes %d or %d samples, not %d", Short, Long, e.Taps)
 }
 
-// Unwrap returns ErrNotPowerOfTwo so callers can match with errors.Is.
-func (*BadLengthError) Unwrap() error { return ErrNotPowerOfTwo }
+// Unwrap returns ErrBadLength so callers can match with errors.Is.
+func (*BadLengthError) Unwrap() error { return ErrBadLength }

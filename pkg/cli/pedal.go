@@ -28,20 +28,69 @@ import (
 
 //go:generate go tool go.uber.org/mock/mockgen -source=pedal.go -destination=internal/mocks/pedal.gen.go -package=mocks
 
-// Pedal is what measuring a device needs from one.
+// What measuring a device needs from one, split by who needs it.
 //
-// An interface rather than *sdk.Client, because a campaign that walks six
-// hundred blocks is mostly bookkeeping — which refused, which clipped, what
-// order to put them in, what to write when the run stops halfway — and none
-// of that should need hardware to check. *sdk.Client satisfies it.
+// Interfaces rather than *sdk.Client, because a campaign that walks six
+// hundred blocks is mostly bookkeeping: which refused, which clipped, what
+// order to put them in, what to write when the run stops halfway. None of
+// that should need hardware to check, and *sdk.Client satisfies all of them.
+//
+// Four of them rather than one, because the three commands here need
+// different amounts. CONTRIBUTING: "a consumer declares only the methods it
+// needs, so the interface it declares is as small as its use, and two
+// consumers of the same thing get two different interfaces rather than one
+// that serves neither." Measuring every block never moves a knob; checking
+// parameter names never touches a list.
+type (
+	// Compiles turns a rig into a preset a device will load.
+	Compiles interface {
+		Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error)
+	}
+
+	// Plays puts a preset in front of the device without storing it.
+	//
+	// Without storing it because a slot is flash, and a campaign that loaded
+	// a chain through one would spend a flash write per control.
+	Plays interface {
+		Play(ctx context.Context, file string) error
+	}
+
+	// Turns moves one control that is a dial.
+	Turns interface {
+		Turn(ctx context.Context, at sdk.Address, value float32) error
+	}
+
+	// Chooses moves one that is a list.
+	//
+	// Apart from Turns because a list is not a dial: a cabinet's twelve
+	// microphones have no position between the third and the fourth, so a
+	// sweep of one is a different measurement from a sweep of the other.
+	Chooses interface {
+		Choose(ctx context.Context, at sdk.Address, value int) error
+	}
+
+	// Reads says what the device is playing.
+	Reads interface {
+		Current(ctx context.Context, as sdk.Format) (sdk.Reading, error)
+	}
+)
+
+// Loader is what measuring every block needs: build a chain and play it.
+type Loader interface {
+	Compiles
+	Plays
+}
+
+// Prober is what checking parameter names needs, which is a Loader that can
+// also move a dial and read back what moved.
+type Prober interface {
+	Loader
+	Turns
+	Reads
+}
+
+// Pedal is the whole of it, which only sweeping a block's controls needs.
 type Pedal interface {
-	// Compile turns a rig into a preset a device will load.
-	Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error)
-	// Play puts a preset in front of the device without storing it.
-	Play(ctx context.Context, file string) error
-	// Turn moves one control that is a dial, and Choose one that is a list.
-	Turn(ctx context.Context, at sdk.Address, value float32) error
-	Choose(ctx context.Context, at sdk.Address, value int) error
-	// Current reads what the device is playing.
-	Current(ctx context.Context, as sdk.Format) (sdk.Reading, error)
+	Prober
+	Chooses
 }

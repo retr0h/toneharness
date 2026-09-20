@@ -25,6 +25,8 @@ import (
 	"fmt"
 	"io"
 	"math"
+
+	"github.com/retr0h/tonestack/pkg/sdk/audio"
 )
 
 // Curves is what every control of one block does, measured.
@@ -73,7 +75,7 @@ type Curve struct {
 	// Noise is how far each figure wandered across repeat takes with nothing
 	// touched. A move smaller than this moved nothing anybody can
 	// demonstrate.
-	Noise map[string]float64 `json:"noise"`
+	Noise map[audio.Figure]float64 `json:"noise"`
 	// Settled is the level a reading sits at when the chain is working, and
 	// SilentBelow the level under which it is not.
 	Settled     float64 `json:"settled"`
@@ -98,7 +100,7 @@ type Curve struct {
 	Points []Point `json:"points"`
 	// Fits is the slope of each figure against this control, for a control
 	// that is a dial.
-	Fits map[string]Fit `json:"fits,omitempty"`
+	Fits map[audio.Figure]Fit `json:"fits,omitempty"`
 	// Spread is how far apart the settings sit, for a control that is a
 	// list.
 	//
@@ -106,7 +108,7 @@ type Curve struct {
 	// fourth does not sit between the third and the fifth in any sense a line
 	// describes, so "so much centroid per microphone" is a number with no
 	// referent.
-	Spread map[string]float64 `json:"spread,omitempty"`
+	Spread map[audio.Figure]float64 `json:"spread,omitempty"`
 }
 
 // Span is the range a control was swept over.
@@ -170,7 +172,7 @@ func LoadCurves(
 // are two readings and this uses every one.
 func Fitted(
 	points []Point,
-	figure string,
+	figure audio.Figure,
 ) Fit {
 	xs := make([]float64, 0, len(points))
 	ys := make([]float64, 0, len(points))
@@ -217,7 +219,7 @@ func Fitted(
 // What a list of settings has instead of a slope.
 func Apart(
 	points []Point,
-	figure string,
+	figure audio.Figure,
 ) (float64, bool) {
 	var (
 		low, high float64
@@ -249,28 +251,28 @@ func Apart(
 // needs one ending, and a reading holding neither has no answer rather than
 // an answer of zero.
 func (p Point) figure(
-	name string,
+	name audio.Figure,
 ) (float64, bool) {
 	switch name {
-	case "centroid":
+	case audio.KeyCentroid:
 		return p.Centroid, true
-	case "level":
+	case audio.KeyLevel:
 		return p.Level, true
-	case "low":
+	case audio.KeyLow:
 		return p.Low, true
-	case "mid":
+	case audio.KeyMid:
 		return p.Mid, true
-	case "high":
+	case audio.KeyHigh:
 		return p.High, true
-	case "dynamics":
+	case audio.KeyDynamics:
 		return held(p.Dynamics)
-	case "harmonics":
+	case audio.KeyHarmonics:
 		return held(p.Harmonics)
-	case "lean":
+	case audio.KeyLean:
 		return held(p.Lean)
-	case "transient":
+	case audio.KeyTransient:
 		return held(p.Transient)
-	case "decay":
+	case audio.KeyDecay:
 		return held(p.Decay)
 	}
 
@@ -297,11 +299,8 @@ func held(
 // reading are in one vocabulary. Level is not among a record's and is among
 // these, because a record's loudness is the mastering engineer's and a
 // block's is the block's.
-func Named() []string {
-	return []string{
-		"centroid", "level", "low", "mid", "high",
-		"transient", "decay", "dynamics", "harmonics", "lean",
-	}
+func Named() []audio.Figure {
+	return append(audio.MeasuredKeys(), audio.KeyLevel)
 }
 
 // line is the least-squares fit through a set of points.

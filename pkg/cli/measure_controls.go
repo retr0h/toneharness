@@ -33,6 +33,7 @@ import (
 	"strings"
 
 	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/tonestack/pkg/sdk/audio"
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
 	"github.com/retr0h/tonestack/pkg/sdk/measured"
 	"github.com/retr0h/tonestack/pkg/sdk/reamp"
@@ -77,10 +78,11 @@ const silent = 30.0
 // Back-to-back takes through a settled loop can agree exactly, and a floor of
 // zero would make every difference significant, including the last digit of a
 // float.
-var floors = map[string]float64{
-	"centroid": 0.2, "level": 0.05, "low": 0.02, "mid": 0.02, "high": 0.005,
-	"transient": 0.005, "decay": 0.01, "dynamics": 0.05,
-	"harmonics": 0.05, "lean": 0.005,
+var floors = map[audio.Figure]float64{
+	audio.KeyCentroid: 0.2, audio.KeyLevel: 0.05,
+	audio.KeyLow: 0.02, audio.KeyMid: 0.02, audio.KeyHigh: 0.005,
+	audio.KeyTransient: 0.005, audio.KeyDecay: 0.01,
+	audio.KeyDynamics: 0.05, audio.KeyHarmonics: 0.05, audio.KeyLean: 0.005,
 }
 
 // MeasureControls sweeps every control of one block, alone, and writes what
@@ -129,7 +131,7 @@ func MeasureControls(
 	entry := measured.Block{
 		ID:       string(block.ID),
 		Name:     block.Name,
-		Category: string(block.Category),
+		Category: block.Category,
 	}
 
 	preset, err := compile(ctx, opts.Client, entry, work, true)
@@ -322,7 +324,7 @@ func fill(
 	curve *measured.Curve,
 ) {
 	if curve.Kind == "int" {
-		curve.Spread = map[string]float64{}
+		curve.Spread = map[audio.Figure]float64{}
 
 		for _, f := range measured.Named() {
 			if apart, ok := measured.Apart(curve.Points, f); ok {
@@ -333,7 +335,7 @@ func fill(
 		return
 	}
 
-	curve.Fits = map[string]measured.Fit{}
+	curve.Fits = map[audio.Figure]measured.Fit{}
 
 	for _, f := range measured.Named() {
 		curve.Fits[f] = measured.Fitted(curve.Points, f)
@@ -345,7 +347,7 @@ func report(
 	w io.Writer,
 	curve measured.Curve,
 ) {
-	for _, f := range []string{"centroid", "level", "low", "high"} {
+	for _, f := range measured.Named() {
 		floor := curve.Noise[f]
 
 		var moved float64
@@ -398,7 +400,7 @@ func steady(
 	bench sdk.Bench,
 	signal []float32,
 	takes int,
-) (map[string]float64, float64, error) {
+) (map[audio.Figure]float64, float64, error) {
 	rows := make([]measured.Figures, 0, takes)
 
 	for range takes {
@@ -418,7 +420,7 @@ func steady(
 		levels = append(levels, r.Level)
 	}
 
-	out := map[string]float64{}
+	out := map[audio.Figure]float64{}
 
 	for _, f := range measured.Named() {
 		apart, ok := measured.Apart(points, f)
@@ -456,7 +458,7 @@ func wireOrder(
 // current is the chain the device is playing, as the rig it describes.
 func current(
 	ctx context.Context,
-	client Pedal,
+	client Reads,
 ) (string, error) {
 	read, err := client.Current(ctx, sdk.FormatRig)
 	if err != nil {
