@@ -26,7 +26,6 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"strings"
 )
 
 // The generated catalogs, one per device this tool can write a preset for.
@@ -69,96 +68,12 @@ var packed = map[int][]byte{
 	HelixLT:    helixLT,
 }
 
-// devices are the catalogs this binary carries, in the order they were
-// generated, which puts first the device everything here was written against.
-//
-// One list rather than a name map and an id map, so a device cannot be added
-// to half of them.
-var devices = []struct {
-	// Name is how Line 6 markets the device.
-	Name string
-	// ID is what a preset carries in data.device.
-	ID int
-}{
-	{"HX Stomp", HXStomp},
-	{"HX Stomp XL", HXStompXL},
-	{"Helix Floor", HelixFloor},
-	{"Helix LT", HelixLT},
-}
-
-// Devices names every device this binary carries a catalog for.
-func Devices() []string {
-	out := make([]string, 0, len(devices))
-
-	for _, d := range devices {
-		out = append(out, d.Name)
-	}
-
-	return out
-}
-
-// ForName returns the built-in catalog for a device, by what it is called.
-//
-// Loosely matched, so "Helix LT", "helix lt" and "helix-lt" all reach the same
-// catalog. Somebody naming their own pedal should not have to guess which
-// spelling this tool wants.
-func ForName(
-	name string,
-) (*Catalog, error) {
-	want := fold(name)
-
-	for _, d := range devices {
-		if fold(d.Name) == want {
-			return For(d.ID)
-		}
-	}
-
-	return nil, &UnknownDeviceError{Name: name, Known: Devices()}
-}
-
-// fold reduces a device name to what matching cares about.
-//
-// Letters and digits. Everything else is somebody's spacing or punctuation,
-// and none of it distinguishes one Line 6 device from another.
-func fold(
-	name string,
-) string {
-	var out strings.Builder
-
-	for _, r := range strings.ToLower(name) {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
-			out.WriteRune(r)
-		}
-	}
-
-	return out.String()
-}
-
 // BuiltIn returns the catalog compiled into this binary.
 //
 // The HX Stomp's. It is the device everything here was written against, the
 // only one that has been written to over USB, and the only one the corpus
 // statistics describe. For another, see For.
 func BuiltIn() (*Catalog, error) { return decode(builtIn) }
-
-// For returns the built-in catalog for one device.
-//
-// By the id a preset carries in data.device, which is also what filtered the
-// model table when the catalog was generated.
-//
-// Only an HX Stomp has been checked against real hardware. The other three are
-// read from Line 6's own files and describe devices nobody here has written
-// to.
-func For(
-	device int,
-) (*Catalog, error) {
-	body, ok := packed[device]
-	if !ok {
-		return nil, &NoDeviceError{Device: device}
-	}
-
-	return decode(body)
-}
 
 // decode reads a gzipped catalog.
 //
