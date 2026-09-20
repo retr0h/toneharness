@@ -17,36 +17,40 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-package cmd
+
+package cli
 
 import (
-	"github.com/spf13/cobra"
-
-	"github.com/retr0h/tonestack/pkg/cli"
+	"encoding/json"
+	"fmt"
+	"io"
 )
 
-var recipesShowID string
+// Data writes what an operation answered, as data rather than as a table.
+//
+// Here rather than in cmd for the same reason the painted half is here: how
+// output looks is this package's job, and a caller should not have to know
+// which of the two it is getting.
+//
+// The whole answer, not a summary of it. A table leaves things out on purpose
+// — a chain drawn in box characters cannot carry every parameter of every
+// block — and that is right for somebody reading it and wrong for anything
+// that has to act on it.
+//
+// Indented, and with a trailing newline, because the usual reader is a person
+// checking what an agent will see, and the usual next thing is a pipe.
+func Data(
+	w io.Writer,
+	of any,
+) error {
+	body, err := json.MarshalIndent(of, "", "  ")
+	if err != nil {
+		return fmt.Errorf("writing the answer: %w", err)
+	}
 
-// recipesShowCmd represents the recipes show command.
-var recipesShowCmd = &cobra.Command{
-	Use:   "show",
-	Short: "Show one recipe in full",
-	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		one, err := newClient(ownRecipes(recipesDir)).Recipe(cmd.Context(), recipesShowID)
-		if err != nil {
-			return cli.Hint(err)
-		}
+	if _, err := w.Write(append(body, '\n')); err != nil {
+		return fmt.Errorf("writing the answer: %w", err)
+	}
 
-		return answer(cmd, one, cli.Recipe)
-	},
-}
-
-func init() {
-	recipesCmd.AddCommand(recipesShowCmd)
-
-	recipesShowCmd.Flags().StringVar(&recipesShowID, "id", "",
-		"recipe to show, by identifier or alias")
-	// Fails only for a flag that does not exist, and these are defined above.
-	_ = recipesShowCmd.MarkFlagRequired("id")
+	return nil
 }

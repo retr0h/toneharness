@@ -57,9 +57,10 @@ Compile what comes out with ` + "`tonestack presets compile --rig`" + `.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cli.ToneBuild(cmd.OutOrStdout(), cli.ToneBuildOptions{
-			Ask:   toneBuildAsk,
-			Setup: toneBuildSetup,
-			Out:   toneBuildOut,
+			Ask:    toneBuildAsk,
+			Setup:  toneBuildSetup,
+			Out:    toneBuildOut,
+			AsData: asData,
 		})
 	},
 }

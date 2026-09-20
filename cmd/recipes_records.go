@@ -51,7 +51,7 @@ who knows the player can say which.
 			return err
 		}
 
-		return cli.Backing(cmd.OutOrStdout(), all)
+		return answer(cmd, all, cli.Backing)
 	},
 }
 

@@ -36,7 +36,7 @@ var recipesListCmd = &cobra.Command{
 			return err
 		}
 
-		return cli.Recipes(cmd.OutOrStdout(), all)
+		return answer(cmd, all, cli.Recipes)
 	},
 }
 

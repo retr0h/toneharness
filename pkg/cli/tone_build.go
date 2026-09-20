@@ -39,6 +39,24 @@ type ToneBuildOptions struct {
 	Ask   string
 	Setup string
 	Out   string
+	// AsData asks for the rig and the notes as one document rather than as
+	// a painted section and a YAML block.
+	//
+	// Its own field rather than going through the shared answer helper,
+	// because this is the one command that does work as well as rendering:
+	// it resolves a request and may write a file, so there is no single value
+	// a renderer could be handed.
+	AsData bool
+}
+
+// Resolved is what building a rig from a request produced.
+//
+// Both halves, because a run that only answered with the rig would hide what
+// it could not honour, and the notes are how somebody finds out that the amp
+// they asked for is not one the device has.
+type Resolved struct {
+	Rig   rig.Spec        `json:"rig"`
+	Notes translate.Notes `json:"notes"`
 }
 
 // ToneBuild reads a request and a setup and writes the rig they resolve to.
@@ -75,6 +93,16 @@ func ToneBuild(
 	spec, notes, err := translate.Translate(ask, setup, translate.Deps{
 		Catalog: cat, Measured: lib,
 	})
+
+	if opts.AsData {
+		// Still an error when it failed, and the notes still travel, because
+		// what could not be honoured is the useful half either way.
+		if writing := Data(w, Resolved{Rig: spec, Notes: notes}); writing != nil {
+			return writing
+		}
+
+		return err
+	}
 
 	// Reported before the error is returned. A request that could not be
 	// honoured has usually said why in the notes, and the error alone is the

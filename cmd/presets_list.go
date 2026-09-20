@@ -21,6 +21,7 @@ package cmd
 
 import (
 	"context"
+	"io"
 
 	"github.com/spf13/cobra"
 
@@ -71,7 +72,9 @@ there.`,
 			return err
 		}
 
-		return cli.Listing(cmd.OutOrStdout(), listing, cat, presetsListAll)
+		return answer(cmd, listing, func(w io.Writer, l sdk.Listing) error {
+			return cli.Listing(w, l, cat, presetsListAll)
+		})
 	},
 }
 

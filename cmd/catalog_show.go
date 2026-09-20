@@ -41,7 +41,7 @@ var catalogShowCmd = &cobra.Command{
 			return cli.Hint(err)
 		}
 
-		return cli.Block(cmd.OutOrStdout(), block)
+		return answer(cmd, block, cli.Block)
 	},
 }
 

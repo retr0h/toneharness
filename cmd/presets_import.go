@@ -62,7 +62,7 @@ attached. Either way whatever the slot held is gone, and a device has no undo.`,
 			return err
 		}
 
-		return cli.Change(cmd.OutOrStdout(), change)
+		return answer(cmd, change, cli.Change)
 	},
 }
 

@@ -61,7 +61,7 @@ chooses.`,
 			return err
 		}
 
-		return cli.Written(cmd.OutOrStdout(), written)
+		return answer(cmd, written, cli.Written)
 	},
 }
 

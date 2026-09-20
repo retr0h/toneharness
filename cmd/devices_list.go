@@ -40,7 +40,7 @@ special privileges and cannot disturb a device in use by other software.`,
 			return err
 		}
 
-		return cli.Attached(cmd.OutOrStdout(), found)
+		return answer(cmd, found, cli.Attached)
 	},
 }
 

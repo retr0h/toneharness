@@ -54,7 +54,7 @@ this tool can be confident about; one nobody agrees on belongs to the player.`,
 			return err
 		}
 
-		return cli.Measured(cmd.OutOrStdout(), measured)
+		return answer(cmd, measured, cli.Measured)
 	},
 }
 

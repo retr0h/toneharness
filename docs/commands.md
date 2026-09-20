@@ -32,6 +32,10 @@ tonestack <command> [flags]
 | [recipes](#tonestack-recipes) | Work with curated gear knowledge |
 | [tone](#tonestack-tone) | Say what you want to sound like, and what you have |
 
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--json` |  |  | answer as data rather than as a table |
+
 ## tonestack catalog
 
 The catalog says what a device can do: which blocks exist, what
@@ -245,7 +249,6 @@ tonestack measure <command> [flags]
 | `--dir` | string |  | a tree of .wav recordings to measure together |
 | `--evidence` |  |  | write the measurements as rig evidence, to paste into a chain |
 | `--file` | string |  | the recording to measure, as a .wav |
-| `--json` |  |  | report the reading as data rather than as a table, for a tool rather than a person |
 | `--manifest` | string |  | a corpus manifest naming the recordings and linking them |
 
 ## tonestack measure blocks

@@ -50,7 +50,7 @@ of what the hardware holds.`,
 			return err
 		}
 
-		return cli.Change(cmd.OutOrStdout(), change)
+		return answer(cmd, change, cli.Change)
 	},
 }
 

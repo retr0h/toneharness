@@ -86,7 +86,7 @@ it wrote.`,
 			return cli.Hint(err)
 		}
 
-		return cli.Scaffolded(cmd.OutOrStdout(), made)
+		return answer(cmd, made, cli.Scaffolded)
 	},
 }
 

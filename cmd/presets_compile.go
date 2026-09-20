@@ -55,7 +55,7 @@ which is what makes a rig read off a device rebuild exactly.`,
 			return err
 		}
 
-		return cli.Built(cmd.OutOrStdout(), built)
+		return answer(cmd, built, cli.Built)
 	},
 }
 

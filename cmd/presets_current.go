@@ -54,7 +54,7 @@ runs this and keeps the answer beside the figures.`,
 			return err
 		}
 
-		return cli.Reading(cmd.OutOrStdout(), read)
+		return answer(cmd, read, cli.Reading)
 	},
 }
 

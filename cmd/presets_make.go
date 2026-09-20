@@ -20,6 +20,8 @@
 package cmd
 
 import (
+	"io"
+
 	"github.com/spf13/cobra"
 
 	"github.com/retr0h/tonestack/pkg/cli"
@@ -56,7 +58,11 @@ words then move the controls they name.`,
 			return err
 		}
 
-		return cli.Made(cmd.OutOrStdout(), made, cat)
+		// cat is how the painted form spells a model, not part of the answer,
+		// so it is closed over rather than passed through.
+		return answer(cmd, made, func(w io.Writer, m sdk.Made) error {
+			return cli.Made(w, m, cat)
+		})
 	},
 }
 

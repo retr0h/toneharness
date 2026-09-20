@@ -56,7 +56,7 @@ and what this tool generates are the same kind of thing.`,
 			return err
 		}
 
-		return cli.Reading(cmd.OutOrStdout(), read)
+		return answer(cmd, read, cli.Reading)
 	},
 }
 

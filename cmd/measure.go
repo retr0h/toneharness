@@ -20,7 +20,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -33,19 +32,6 @@ import (
 
 // measureFile is the recording to measure.
 var measureFile string
-
-// measureJSON asks for the reading as data rather than as a table.
-//
-// For the measuring loop rather than for a person. `measure blocks` and
-// `measure controls` both push a signal through the pedal and have to say
-// what came back in the same figures a record is described in, and the only
-// way to be sure of that is to use the same code. Both once had a second
-// implementation in Python, which agreed to about five points on a band
-// share and thirty percent on a centroid. That is not agreement at all: it
-// made every block's reading incomparable with every record's, in a way
-// nothing downstream could see. See
-// [The language is Go](../CONTRIBUTING.md#the-language-is-go).
-var measureJSON bool
 
 // measureDir is a tree of recordings to measure together.
 var measureDir string
@@ -131,18 +117,7 @@ a corpus holding both would earn every bassist "dark" and every guitarist
 
 		reading := audio.Measure(samples, rate)
 
-		if measureJSON {
-			body, err := json.Marshal(reading)
-			if err != nil {
-				return fmt.Errorf("writing the reading: %w", err)
-			}
-
-			_, err = fmt.Fprintln(cmd.OutOrStdout(), string(body))
-
-			return err
-		}
-
-		return cli.Profile(cmd.OutOrStdout(), reading)
+		return answer(cmd, reading, cli.Profile)
 	},
 }
 
@@ -169,10 +144,10 @@ func measurePlayers(
 	// it earned as evidence to paste into a rig. Both carry the figures,
 	// because a word without them is an assertion.
 	if measureEvidence {
-		return cli.PlayerTerms(cmd.OutOrStdout(), players)
+		return answer(cmd, players, cli.PlayerTerms)
 	}
 
-	return cli.Players(cmd.OutOrStdout(), players)
+	return answer(cmd, players, cli.Players)
 }
 
 // measureTree measures every recording under a directory and reports them
@@ -199,16 +174,26 @@ func measureTree(
 	}
 
 	if measureEvidence {
-		return cli.Evidence(cmd.OutOrStdout(), got)
-	}
-
-	if err := cli.Tracks(cmd.OutOrStdout(), got); err != nil {
-		return err
+		return answer(cmd, got, cli.Evidence)
 	}
 
 	all := make([]audio.Profile, 0, len(got))
 	for _, n := range got {
 		all = append(all, n.Profile)
+	}
+
+	// Painted, this is two sections: each record, then what they have in
+	// common. As data it is one document holding both, because two JSON
+	// values written one after another are not a document anything reads.
+	if asData {
+		return cli.Data(cmd.OutOrStdout(), struct {
+			Tracks   []audio.Named `json:"tracks"`
+			Together audio.Across  `json:"together"`
+		}{Tracks: got, Together: audio.Together(all)})
+	}
+
+	if err := cli.Tracks(cmd.OutOrStdout(), got); err != nil {
+		return err
 	}
 
 	return cli.Across(cmd.OutOrStdout(), audio.Together(all))
@@ -266,8 +251,6 @@ func init() {
 		"a tree of .wav recordings to measure together")
 	measureCmd.Flags().StringVar(&measureManifest, "manifest", "",
 		"a corpus manifest naming the recordings and linking them")
-	measureCmd.Flags().BoolVar(&measureJSON, "json", false,
-		"report the reading as data rather than as a table, for a tool rather than a person")
 	measureCmd.Flags().BoolVar(&measureEvidence, "evidence", false,
 		"write the measurements as rig evidence, to paste into a chain")
 
