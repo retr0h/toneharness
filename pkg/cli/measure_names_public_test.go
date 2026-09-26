@@ -172,8 +172,8 @@ func (s *NamesTestSuite) TestASwitchIsNotADisagreement() {
 
 	s.Require().NoError(err)
 	s.Require().Contains(said, "refused a number on a dial")
-	s.Require().Contains(said, "agree on every index this could")
-	s.Require().Contains(said, "1 could not be tested")
+	s.Require().Contains(said, "claims and this could test")
+	s.Require().Contains(said, "0 unclaimed and 1 untestable")
 	s.Require().NotContains(said, "they disagree")
 }
 
@@ -229,6 +229,29 @@ func (s *NamesTestSuite) refuse(
 				}},
 			}}, nil
 		}).AnyTimes()
+}
+
+// TestAnUnclaimedOrderIsNotADisagreement is the second regression of this
+// shape, and the one that mattered for the equalisers.
+//
+// Line 6 ship no symbol list for an equaliser, so the catalog claims no order
+// for one at all. Comparing an absent claim against the parameter that moved
+// reported that they disagree and that every curve was misfiled, for a block
+// the catalog had never made a claim about. The device is the only thing that
+// knows the order, and discovering it is the whole point of running this.
+func (s *NamesTestSuite) TestAnUnclaimedOrderIsNotADisagreement() {
+	model := "HD2_EQSimple3Band"
+
+	// A device that answers, against a catalog carrying no symbols: what the
+	// device moved is the only record there is.
+	s.device([]string{"LowGain", "MidFreq", "MidGain", "HighGain", "Level"})
+
+	said, err := s.run(model)
+
+	s.Require().NoError(err)
+	s.Require().Contains(said, "claims no order for this block")
+	s.Require().Contains(said, "LowGain")
+	s.Require().NotContains(said, "they disagree")
 }
 
 // TestNamesReportAnIndexThatReachesNothing covers a parameter past the list.

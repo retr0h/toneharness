@@ -29,6 +29,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -102,13 +103,25 @@ func MeasureControls(
 		return fmt.Errorf("the catalog has no %s", opts.Model)
 	}
 
+	// The catalog's order where there is one, and the device's own where there
+	// is not. Line 6 ship no symbol list for an equaliser, so for those the
+	// hardware is the only thing that knows which index is which, and a sweep
+	// that refused would have left the blocks whose fingerprints say nothing
+	// as the blocks nothing describes at all.
+	//
+	// Discovered rather than typed in. An order handed over on a flag is an
+	// order somebody can get wrong, and a curve filed under the wrong control
+	// is a plausible number about a different knob.
 	order := wireOrder(cat, opts.Model)
-	if len(order) == 0 {
-		return fmt.Errorf(
-			"the catalog gives %s no controls in wire order, so nothing here "+
-				"knows which index is which. The equalisers are like this: "+
-				"they carry parameters and have no symbol entry at all",
-			opts.Model)
+	probed := len(order) == 0
+
+	if probed {
+		_, _ = fmt.Fprintf(w,
+			"  %s claims no wire order, so asking the device for it\n", opts.Model)
+
+		if order, err = discover(ctx, opts.Client, block, opts.Model); err != nil {
+			return err
+		}
 	}
 
 	signal, err := reference(opts.Dry, opts.Seconds)
@@ -154,7 +167,7 @@ func MeasureControls(
 
 	out := measured.Curves{
 		Device: "HX Stomp", Gear: block.Name, Block: string(block.ID),
-		Slot: alone, Isolated: true,
+		Slot: alone, Isolated: true, Probed: probed,
 		Reference: measured.Reference{
 			File: opts.Dry, SHA256: sum, Seconds: opts.Seconds,
 		},
@@ -442,6 +455,58 @@ func steady(
 // values". The per-model map beside it is keyed by name and has no order at
 // all, and `catalog show` prints that one sorted, so counting down the
 // printout files every curve under the wrong control.
+// discover asks the device which index is which.
+//
+// The same probe `measure names` uses, and for the same reason: a parameter has
+// no name on the wire, only a position in the model's own list. Moving each
+// index and reading back which named parameter changed is the only way to
+// learn that for a block the catalog says nothing about.
+//
+// An index the device refuses a number for takes the parameter's own name from
+// the catalog, so the slot is held and the sweep skips it rather than shifting
+// every control after it by one.
+func discover(
+	ctx context.Context,
+	client Pedal,
+	block catalog.Block,
+	model string,
+) ([]string, error) {
+	work, err := os.MkdirTemp("", "tonestack-order")
+	if err != nil {
+		return nil, fmt.Errorf("making somewhere to build a preset: %w", err)
+	}
+
+	defer func() { _ = os.RemoveAll(work) }()
+
+	preset, err := compile(ctx, client, measured.Block{
+		ID: model, Name: block.Name, Category: block.Category,
+	}, work, true)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]string, 0, len(block.Params))
+
+	for index := range len(block.Params) {
+		moved, err := probe(ctx, client, preset, index)
+		if err != nil {
+			return nil, err
+		}
+
+		// Empty holds the position without naming it, so a control this could
+		// not settle is skipped rather than mistaken for its neighbour.
+		out = append(out, moved.Named)
+	}
+
+	if !slices.ContainsFunc(out, func(s string) bool { return s != "" }) {
+		return nil, fmt.Errorf(
+			"the device named no parameter of %s at any index, so nothing "+
+				"here can tell which control a reading would belong to", model)
+	}
+
+	return out, nil
+}
+
 func wireOrder(
 	cat *catalog.Catalog,
 	model string,

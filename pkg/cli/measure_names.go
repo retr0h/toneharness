@@ -112,7 +112,7 @@ func MeasureNames(
 		block.Name, block.ID, "index", "the catalog says", "the device moved")
 
 	agreed := true
-	untested := 0
+	untested, unclaimed := 0, 0
 
 	for index := range len(block.Params) {
 		moved, err := probe(ctx, opts.Client, preset, index)
@@ -120,19 +120,31 @@ func MeasureNames(
 			return err
 		}
 
-		said := "—"
+		said := ""
 		if index < len(order) {
 			said = order[index]
 		}
 
-		// Only an index that named a parameter says anything about the
-		// catalog's order. One that settled nothing is untested, and an
-		// untested index is not evidence either way.
+		// Three outcomes rather than two. An index the catalog says nothing
+		// about cannot disagree with anything, and counting it as a
+		// disagreement reported every equaliser's order as wrong when the
+		// catalog had never claimed one: Line 6 ship no symbol list for them,
+		// so the device is the only thing that knows.
+		//
+		// An index that settled nothing is untested, which is not evidence
+		// either way.
 		switch {
+		case said == "":
+			unclaimed++
 		case moved.Named == "":
 			untested++
 		case moved.Named != said:
 			agreed = false
+		}
+
+		claim := said
+		if claim == "" {
+			claim = "—"
 		}
 
 		says := moved.Named
@@ -140,7 +152,7 @@ func MeasureNames(
 			says = moved.Says
 		}
 
-		_, _ = fmt.Fprintf(w, "  %-6d %-22s %s\n", index, said, says)
+		_, _ = fmt.Fprintf(w, "  %-6d %-22s %s\n", index, claim, says)
 	}
 
 	if !agreed {
@@ -151,10 +163,23 @@ func MeasureNames(
 		return err
 	}
 
-	if untested > 0 {
+	// The catalog claims no order at all, so there is nothing to hold it to
+	// and the table above is the only record of which index is which. That is
+	// the ordinary case for an equaliser, and establishing it is what has to
+	// happen before one can be swept.
+	if unclaimed == len(block.Params) {
 		_, err = fmt.Fprintf(w,
-			"\n  the catalog and the device agree on every index this could\n"+
-				"  test, and %d could not be tested\n\n", untested)
+			"\n  the catalog claims no order for this block, so the device's own\n"+
+				"  is above and is the only record of it\n\n")
+
+		return err
+	}
+
+	if unclaimed > 0 || untested > 0 {
+		_, err = fmt.Fprintf(w,
+			"\n  the catalog and the device agree on every index the catalog\n"+
+				"  claims and this could test, with %d unclaimed and %d untestable\n\n",
+			unclaimed, untested)
 
 		return err
 	}

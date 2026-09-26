@@ -44,7 +44,7 @@ const root = "../../../../.."
 // One block rather than every file in the tree, because the page explains what
 // a curve is by walking one, and a page walking eleven would explain nothing
 // eleven times.
-const swept = "us-dripman-norm.json"
+const swept = "HD2_AmpUSDripmanNorm.json"
 
 func main() {
 	if err := write(); err != nil {

@@ -58,6 +58,15 @@ type Curves struct {
 	Chain string `json:"chain"`
 	// Reference identifies the signal every reading was taken against.
 	Reference Reference `json:"reference"`
+	// Probed says the wire order was discovered on the device rather than read
+	// out of the catalog.
+	//
+	// Worth recording, because the two are not equally trustworthy. A catalog
+	// order is Line 6's own; a probed one was worked out by moving each index
+	// and seeing which named parameter changed. That is the only thing that
+	// knows for a block Line 6 ship no symbol list for, and every equaliser is
+	// one of those.
+	Probed bool `json:"probed,omitempty"`
 	// Controls is every control that was swept, by name.
 	Controls map[string]Curve `json:"controls"`
 }

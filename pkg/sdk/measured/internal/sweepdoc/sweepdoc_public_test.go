@@ -47,7 +47,7 @@ func (s *SweepdocPublicTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	at := filepath.Join("..", "..", "..", "..", "..",
-		"resources", "sweeps", "hx-stomp", "us-dripman-norm.json")
+		"resources", "sweeps", "hx-stomp", "HD2_AmpUSDripmanNorm.json")
 
 	f, err := os.Open(at) //nolint:gosec // a path this repository owns
 	s.Require().NoError(err)

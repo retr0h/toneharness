@@ -78,6 +78,60 @@ func (s *ControlsRunTestSuite) ready() {
 		}}, nil).AnyTimes()
 }
 
+// moves is a device that reveals a wire order by answering the probe.
+//
+// Each index moves the parameter at that position, which is what discovering an
+// order reads back. Self-contained rather than layered on ready(), because
+// gomock takes the first matching expectation and ready()'s Turn does nothing,
+// so a probe behind it would read every index as reaching no parameter.
+func (s *ControlsRunTestSuite) moves(
+	order []string,
+) {
+	s.pedal.EXPECT().
+		Compile(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
+			s.Require().NoError(os.WriteFile(in.Out, []byte("a preset"), 0o600))
+
+			return sdk.Built{}, nil
+		}).AnyTimes()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	s.pedal.EXPECT().
+		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	held := map[string]any{}
+	for _, name := range order {
+		held[name] = 0.5
+	}
+
+	s.pedal.EXPECT().
+		Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, at sdk.Address, v float32) error {
+			if at.Param < len(order) {
+				held[order[at.Param]] = float64(v)
+			}
+
+			return nil
+		}).AnyTimes()
+
+	s.pedal.EXPECT().
+		Current(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(context.Context, sdk.Format) (sdk.Reading, error) {
+			now := map[string]any{}
+			for k, v := range held {
+				now[k] = v
+			}
+
+			return sdk.Reading{Rig: rig.Spec{
+				Schema: rig.SchemaName, ID: "probed",
+				Subject:    rig.Subject{Kind: rig.KindSound, Name: "one block"},
+				Instrument: rig.InstrumentBass,
+				Chain: []rig.ChainEntry{{
+					Role: rig.RoleEQ, Gear: "Simple EQ", Params: &now,
+				}},
+			}}, nil
+		}).AnyTimes()
+}
+
 // run sweeps a model and returns what landed on disk.
 func (s *ControlsRunTestSuite) run(
 	model string,
@@ -107,6 +161,30 @@ func (s *ControlsRunTestSuite) run(
 	}
 
 	return got, buf.String(), nil
+}
+
+// TestControlsAsksTheDeviceWhenTheCatalogClaimsNoOrder covers the equalisers.
+//
+// Line 6 ship no symbol list for one, so the catalog names no wire order and a
+// sweep used to refuse outright. That left the blocks whose fingerprints say
+// nothing as the blocks nothing described at all: an equaliser measures as the
+// baseline at its defaults, because flat is what it ships at, so its curves are
+// the only thing that says what it does.
+//
+// Discovered rather than handed over on a flag. An order somebody types is an
+// order somebody can get wrong, and a curve filed under the wrong control is a
+// plausible number about a different knob.
+func (s *ControlsRunTestSuite) TestControlsAsksTheDeviceWhenTheCatalogClaimsNoOrder() {
+	s.moves([]string{"LowGain", "MidFreq", "MidGain", "HighGain", "Level"})
+
+	got, said, err := s.run("HD2_EQSimple3Band", bench{})
+
+	s.Require().NoError(err)
+	s.Require().Contains(said, "claims no wire order")
+	s.Require().True(got.Probed,
+		"the file says the order came from the device, not the catalog")
+	s.Require().Contains(got.Controls, "MidGain",
+		"a control the catalog never named was found and swept")
 }
 
 // TestControlsSweepsDialsAndLists covers a cabinet, which has both.
@@ -185,14 +263,22 @@ func (s *ControlsRunTestSuite) TestControlsRecordsWhatClipped() {
 		"every microphone hit the ceiling, so none of them is a reading")
 }
 
-// TestControlsRefusesABlockTheCatalogCannotPlace covers the equalisers.
+// TestControlsRefusesWhenTheDeviceNamesNothingEither covers the last resort.
 //
-// They carry parameters and have no symbol entry at all, so nothing knows
-// which index is which and a sweep would file every curve under a guess.
-func (s *ControlsRunTestSuite) TestControlsRefusesABlockTheCatalogCannotPlace() {
+// An equaliser has no symbol entry, so the catalog cannot say which index is
+// which and the device is asked instead. When the device answers nothing at any
+// index there is no third place to look, and a sweep that went ahead would file
+// every curve under a guess. That is the one case still refused.
+//
+// The refusal used to cover every unclaimed block, which left the equalisers
+// undescribed: one measures as the baseline at its defaults, because flat is
+// what it ships at, so its curves are the only thing that says what it does.
+func (s *ControlsRunTestSuite) TestControlsRefusesWhenTheDeviceNamesNothingEither() {
+	s.ready()
+
 	_, _, err := s.run("HD2_EQSimple3Band", bench{})
 
-	s.Require().ErrorContains(err, "no controls in wire order")
+	s.Require().ErrorContains(err, "named no parameter")
 }
 
 // TestControlsRefusesAModelNobodyHas covers a name that is not a block.
