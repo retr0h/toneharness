@@ -226,6 +226,29 @@ components:
             False, the default, takes the nearest thing the device models and
             says what it did. True fails the request instead, which is what
             somebody means when the gear is the point rather than the sound.
+        after:
+          $ref: "#/components/schemas/Role"
+          description: >
+            Put this behind that role instead of where it usually goes.
+
+
+            Gear a request lists is sorted into the ordinary signal path,
+            because listing gear is not stating a signal path: a compressor
+            goes in front of the amplifier whichever order somebody typed
+            them. That is right for the common case and wrong for somebody
+            who means it.
+
+
+            A drive behind the amplifier is the case worth naming. It is a
+            known way to use one rather than a mistake, and there was no way
+            to ask for it: the only route was to build the rig and edit a
+            line of it afterwards, which is an edit nobody records the reason
+            for.
+
+
+            Naming a role rather than a number, because a request does not
+            know how many blocks the chain will end up with. "After the amp"
+            survives the compiler adding a cabinet; "position 4" does not.
 
     Role:
       type: string

@@ -644,6 +644,9 @@ type ToneSpecSchema string
 //
 // Named as a person would: "Ampeg SVT", never a model identifier. What the device has to offer for it is the tool's problem.
 type Wanted struct {
+	// After What a piece of gear does in the chain.
+	After *Role `json:"after,omitempty"`
+
 	// Capture How this reached the tape: down a cable, through a microphone, or both blended.
 	//
 	// A cabinet models the air in front of a speaker, and on most bass records there was none. Five of the nine rigs here measure a signal that went to the desk: Geddy Lee set the rule on Caress of Steel in 1975 and kept it, "Use the direct bass from the low-end pickup, and mike the amp for the high-end pickup"; Les Claypool put a microphone up and never used it; Mike Dirnt ran an Evil Twin direct box from Dookie on. Pino Palladino is the one who was only ever miked, and the engineer says so: "no di's whatsoever on the album". Jaco Pastorius took both at once, "a little bit of both, the highs and lows".

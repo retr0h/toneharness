@@ -180,6 +180,88 @@ like:
 	}, roles)
 }
 
+// TestARequestMaySayWhereABlockGoes covers a drive behind the amplifier.
+//
+// A chain is sorted into the ordinary signal path, because listing gear is not
+// stating one: a drive goes in front of the amplifier whichever order somebody
+// typed. That is right for the common case and wrong for somebody who means it,
+// and a drive behind the amplifier is a known way to use one rather than a
+// mistake. Before this the only route was to build the rig and edit a line,
+// which is an edit nobody records the reason for.
+func (s *TranslatePublicTestSuite) TestARequestMaySayWhereABlockGoes() {
+	tests := []struct {
+		name string
+		ask  string
+		want []rig.Role
+	}{
+		{
+			// The ordinary case, unchanged: order asked for is ignored.
+			name: "a drive nobody placed goes in front",
+			ask: `gear:
+  - gear: Minotaur
+    role: drive
+  - gear: Ampeg SVT
+    role: amp
+`,
+			want: []rig.Role{rig.RoleDrive, rig.RoleAmp},
+		},
+		{
+			name: "a drive asked to sit behind the amplifier does",
+			ask: `gear:
+  - gear: Minotaur
+    role: drive
+    after: amp
+  - gear: Ampeg SVT
+    role: amp
+`,
+			want: []rig.Role{rig.RoleAmp, rig.RoleDrive},
+		},
+		{
+			// Named by role rather than by position, so it lands after the
+			// amplifier and before what usually follows one.
+			name: "and still before the reverb",
+			ask: `gear:
+  - gear: Glitz Reverb
+    role: reverb
+  - gear: Minotaur
+    role: drive
+    after: amp
+  - gear: Ampeg SVT
+    role: amp
+`,
+			want: []rig.Role{rig.RoleAmp, rig.RoleDrive, rig.RoleReverb},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, notes, err := translate.Translate(
+				s.ask(tt.ask), s.setup(""), s.deps)
+
+			s.Require().NoError(err)
+			s.Require().NoError(rig.Validate(got))
+
+			roles := make([]rig.Role, 0, len(got.Chain))
+			for _, entry := range got.Chain {
+				roles = append(roles, entry.Role)
+			}
+
+			s.Require().Equal(tt.want, roles)
+
+			// A placement somebody asked for is reported, because a chain in
+			// an order nobody expected should say who chose it.
+			if strings.Contains(tt.ask, "after:") {
+				var said bool
+				for _, n := range notes {
+					said = said || strings.Contains(n.Said, "behind the amp")
+				}
+
+				s.Require().True(said, "the notes say it was asked for")
+			}
+		})
+	}
+}
+
 // TestEveryRoleHasAPlaceInTheChain covers the rest of the signal path.
 //
 // The ordering test above walks the four roles a request usually names. This

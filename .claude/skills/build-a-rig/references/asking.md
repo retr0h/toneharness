@@ -26,6 +26,17 @@ to remove.
 `gear` entries name real-world gear the way a person says it. `insist: true`
 means refuse rather than substitute.
 
+**Order is not what you typed.** Gear is sorted into the ordinary signal path,
+because listing gear is not stating one: a compressor belongs in front of the
+amplifier whichever way round it was written. Where somebody means otherwise,
+`after: amp` on an entry puts it behind that role. A drive behind the amplifier
+is the case worth knowing, and it is a known way to use one rather than a
+mistake.
+
+Named by role rather than by position, because a request does not know how many
+blocks the chain ends up with: "after the amp" survives the compiler adding a
+cabinet and "position 4" does not.
+
 ## Resolve it
 
 ```bash

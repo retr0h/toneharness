@@ -206,7 +206,7 @@ func chainFor(
 	// pick the closest.
 	if !holds(named, rig.RoleAmp) {
 		if amp, ok := nearestTo(spec, setup, deps, "amp", notes); ok {
-			named = append([]rig.ChainEntry{amp}, named...)
+			named = append([]placed{{entry: amp}}, named...)
 		}
 	}
 
@@ -214,14 +214,52 @@ func chainFor(
 		return nil, ErrNothingToBuildFrom
 	}
 
-	// In role order rather than in the order they were typed. A drive ahead
-	// of an amplifier is a different sound from one behind it, and a request
-	// listing gear is not stating a signal path.
+	// In signal order rather than the order they were typed, because listing
+	// gear is not stating a signal path: a compressor belongs in front of the
+	// amplifier whichever way round somebody wrote them.
+	//
+	// Except where the request said otherwise. `after: amp` puts a drive
+	// behind the amplifier, which is a known way to use one rather than a
+	// mistake, and stable sorting keeps two blocks asked behind the same role
+	// in the order they were asked for.
 	sort.SliceStable(named, func(i, j int) bool {
-		return order(named[i].Role) < order(named[j].Role)
+		return placeOf(named[i]) < placeOf(named[j])
 	})
 
-	return named, nil
+	out := make([]rig.ChainEntry, 0, len(named))
+	for _, at := range named {
+		out = append(out, at.entry)
+	}
+
+	return out, nil
+}
+
+// placeOf is where in the signal path one block sits.
+//
+// A half past the role it was asked to sit behind, which lands it after that
+// role and before the next without needing to know what else is in the chain.
+// A request cannot count positions: it does not know the compiler will add a
+// cabinet, so "after the amp" survives that and "position 4" does not.
+func placeOf(
+	at placed,
+) float64 {
+	if at.after != nil {
+		return float64(order(*at.after)) + 0.5
+	}
+
+	return float64(order(at.entry.Role))
+}
+
+// placed is one block and where in the chain it goes.
+//
+// The request's own wish rather than the role's ordinary place, for the entries
+// that asked. Kept beside the entry rather than on it, because a RigSpec's
+// chain is already in order by the time it is written and carrying the reason
+// would be carrying the question into the answer.
+type placed struct {
+	entry rig.ChainEntry
+	// after is the role this was asked to sit behind, where one was named.
+	after *rig.Role
 }
 
 // namedGear is the blocks a request asked for by name.
@@ -229,12 +267,12 @@ func namedGear(
 	spec tone.Spec,
 	deps Deps,
 	notes *Notes,
-) ([]rig.ChainEntry, error) {
+) ([]placed, error) {
 	if spec.Gear == nil {
 		return nil, nil
 	}
 
-	out := make([]rig.ChainEntry, 0, len(*spec.Gear))
+	out := make([]placed, 0, len(*spec.Gear))
 
 	for _, want := range *spec.Gear {
 		role := rig.RoleOther
@@ -283,7 +321,20 @@ func namedGear(
 			})
 		}
 
-		out = append(out, entry)
+		at := placed{entry: entry}
+
+		if want.After != nil {
+			behind := rig.Role(*want.After)
+			at.after = &behind
+
+			*notes = append(*notes, Note{
+				About:    want.Gear,
+				Said:     fmt.Sprintf("asked to sit behind the %s", behind),
+				Honoured: true,
+			})
+		}
+
+		out = append(out, at)
 	}
 
 	return out, nil
@@ -543,11 +594,11 @@ func names(
 
 // holds reports whether a chain already has a block in a role.
 func holds(
-	chain []rig.ChainEntry,
+	chain []placed,
 	role rig.Role,
 ) bool {
-	for _, entry := range chain {
-		if entry.Role == role {
+	for _, at := range chain {
+		if at.entry.Role == role {
 			return true
 		}
 	}

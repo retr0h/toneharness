@@ -178,6 +178,7 @@ A piece of gear the request asks for by name.
 
 | field | holds | grammar | allowed |
 | --- | --- | --- | --- |
+| `after` | string | closed | `amp`, `cab`, `drive`, `comp`, `eq`, `mod`, `delay`, `reverb`, `filter`, `pitch`, `wah`, `other` |
 | `capture` | string | closed | `direct`, `miked`, `both` |
 | `evidence` | list of Evidence | — | [Evidence](#evidence) |
 | `gear *` | string | open | — |
