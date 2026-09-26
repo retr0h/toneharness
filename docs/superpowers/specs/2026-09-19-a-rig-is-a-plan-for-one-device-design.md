@@ -62,6 +62,29 @@ is the same argument the measurement code already lost once, in two languages.
 `mutations` is read nowhere at all. It moves rather than going, because a record
 of what a correction changed is a record about the ask.
 
+### Where the words are resolved, corrected again
+
+An earlier draft said the resolution moves into translate. It cannot, and the
+reason is worth writing down because it looks like it should.
+
+Resolving "mid-forward" into a knob position needs the resolved chain: which
+blocks are actually in it, what parameters those models have, and the corpus
+statistics for them. That chain does not exist until the compiler has built it
+from the plan, so a translate step that tried to resolve words would have to
+build the chain first, which is the compiler's job and would mean two of them.
+
+So the words are not embedded in the plan and not resolved before it. They are
+passed alongside it:
+
+```
+Resolve(plan, words, catalog, stats)
+```
+
+which keeps resolution where the data is, takes prose out of the plan, and
+leaves exactly one implementation. A RigSpec read off disk by
+`presets compile --rig` carries settings that were already applied, which is
+what makes it a plan rather than a request, and needs no words at all.
+
 ### Staying in the Plan
 
 `chain` with its resolved `models`, `settings`, `substitute` **and its per-entry
