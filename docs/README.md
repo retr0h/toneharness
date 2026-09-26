@@ -13,6 +13,7 @@ see [CONTRIBUTING.md](../CONTRIBUTING.md). These pages cover the domain.
 | [recipes.md](recipes.md)             | Writing a rig by hand, and the worked example beside it                               |
 | [algorithm.md](algorithm.md)         | Turning a request into knob positions, and what a target is                           |
 | [measuring.md](measuring.md)         | Pushing audio through a pedal and measuring what comes back                           |
+| [measurements.md](measurements.md)   | What the device actually does, generated from the readings                            |
 | [catalog.md](catalog.md)             | What a device can do, and where that knowledge comes from                             |
 | [preset-format.md](preset-format.md) | How a `.hlx` file is laid out                                                         |
 | [device.md](device.md)               | Reading and editing what a device holds, and what USB is for                          |

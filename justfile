@@ -14,7 +14,7 @@ md_site_dir := ""
 # own source. `just ready` runs generate before md-fmt, so a page left out of
 # this list is reflowed on every run and fails the next `just test`, which is
 # how docs/tonespec.md broke the moment it was added.
-md_extra_excludes := "--exclude 'docs/rigspec.md' --exclude 'docs/tonespec.md' --exclude 'docs/commands.md'"
+md_extra_excludes := "--exclude 'docs/rigspec.md' --exclude 'docs/tonespec.md' --exclude 'docs/measurements.md' --exclude 'docs/commands.md'"
 
 # Coverage target for this repository.
 #
