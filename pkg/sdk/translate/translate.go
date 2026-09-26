@@ -129,6 +129,8 @@ func Translate(
 		out.Character = &terms
 	}
 
+	strung(spec, setup, &notes)
+
 	chain, err := chainFor(spec, setup, deps, &notes)
 	if err != nil {
 		return rig.Spec{}, notes, err
@@ -187,6 +189,83 @@ func agrees(
 		Measured: deps.Measured.Device,
 		Setup:    setup.Device.Model,
 	}
+}
+
+// strung reports a request made on one set of strings and held on another.
+//
+// Reported rather than corrected for, which is #128's answer and the honest
+// one. Flatwounds against roundwounds is a larger difference than most pedals
+// make, and nothing here has measured what it does to the figures: an amplifier
+// chosen by measuring a record played on flats is chosen against a spectrum
+// nobody is going to reproduce on rounds. Applying a correction for it now
+// would be inventing a number, which is the guessing this project removed.
+//
+// So the mismatch travels in the notes. Somebody reading that knows why the rig
+// may sit wrong, and knows it was noticed rather than missed.
+func strung(
+	spec tone.Spec,
+	setup tone.Setup,
+	notes *Notes,
+) {
+	made := stringsOf(spec)
+	held := heldStrings(setup)
+
+	if made == "" || held == "" || made == held || made == "unknown" || held == "unknown" {
+		return
+	}
+
+	*notes = append(*notes, Note{
+		About: "strings",
+		Said: fmt.Sprintf(
+			"the record was played on %s and the setup holds %s, which is a "+
+				"larger difference than most pedals make. Nothing here has "+
+				"measured what it does, so no correction was applied",
+			made, held),
+	})
+}
+
+// stringsOf is what the request says the record was played on.
+func stringsOf(
+	spec tone.Spec,
+) string {
+	if spec.Played == nil {
+		return ""
+	}
+
+	for _, played := range *spec.Played {
+		if played.Strings != nil && *played.Strings != "" {
+			return string(*played.Strings)
+		}
+	}
+
+	return ""
+}
+
+// heldStrings is what the setup says is on the instrument being played.
+//
+// The default instrument where one is marked, the first otherwise, which is the
+// same instrument instrumentFor picks. Two answers about one instrument would be
+// worse than none.
+func heldStrings(
+	setup tone.Setup,
+) string {
+	if setup.Instruments == nil {
+		return ""
+	}
+
+	for _, held := range *setup.Instruments {
+		if held.Default != nil && *held.Default && held.Strings != nil {
+			return string(*held.Strings)
+		}
+	}
+
+	if len(*setup.Instruments) > 0 {
+		if first := (*setup.Instruments)[0]; first.Strings != nil {
+			return string(*first.Strings)
+		}
+	}
+
+	return ""
 }
 
 // chainFor is the signal path a request asks for.

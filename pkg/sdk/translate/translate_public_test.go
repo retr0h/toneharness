@@ -180,6 +180,68 @@ like:
 	}, roles)
 }
 
+// TestStringsThatDoNotMatchAreReported covers #128's honest half.
+//
+// Flatwounds against roundwounds is a larger difference than most pedals make,
+// and an amplifier chosen by measuring a record played on flats is chosen
+// against a spectrum nobody will reproduce on rounds. Nothing here has measured
+// what that does, so the mismatch is reported rather than corrected for:
+// applying a number nobody measured is the guessing this project removed.
+func (s *TranslatePublicTestSuite) TestStringsThatDoNotMatchAreReported() {
+	tests := []struct {
+		name  string
+		ask   string
+		setup string
+		says  bool
+	}{
+		{
+			name:  "flats on the record and rounds in the room",
+			ask:   "played:\n  - gear: Fender Precision\n    strings: flat\n",
+			setup: "instruments:\n  - gear: Fender Jazz\n    strings: round\n    default: true\n",
+			says:  true,
+		},
+		{
+			name:  "the same strings either side",
+			ask:   "played:\n  - gear: Fender Precision\n    strings: round\n",
+			setup: "instruments:\n  - gear: Fender Jazz\n    strings: round\n    default: true\n",
+		},
+		{
+			// Unknown is not a mismatch. Saying nobody knows and then
+			// reporting a difference against it would be inventing one.
+			name:  "nobody knows what the record was played on",
+			ask:   "played:\n  - gear: Fender Precision\n    strings: unknown\n",
+			setup: "instruments:\n  - gear: Fender Jazz\n    strings: round\n    default: true\n",
+		},
+		{
+			name:  "the request says nothing about strings",
+			ask:   "played:\n  - gear: Fender Precision\n",
+			setup: "instruments:\n  - gear: Fender Jazz\n    strings: round\n    default: true\n",
+		},
+		{
+			name:  "the setup says nothing about strings",
+			ask:   "played:\n  - gear: Fender Precision\n    strings: flat\n",
+			setup: "instruments:\n  - gear: Fender Jazz\n    default: true\n",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			_, notes, err := translate.Translate(
+				s.ask(tt.ask+"gear:\n  - gear: Ampeg SVT\n    role: amp\n"),
+				s.setup(tt.setup), s.deps)
+
+			s.Require().NoError(err)
+
+			var said bool
+			for _, n := range notes {
+				said = said || n.About == "strings"
+			}
+
+			s.Require().Equal(tt.says, said)
+		})
+	}
+}
+
 // TestARequestMaySayWhereABlockGoes covers a drive behind the amplifier.
 //
 // A chain is sorted into the ordinary signal path, because listing gear is not

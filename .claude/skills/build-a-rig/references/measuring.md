@@ -40,5 +40,21 @@ does. **A clipped reading is the converters', not the block's**: flat tops make
 harmonics that were never in the signal, so it reads as a bright block and is
 not one.
 
+## What is not corrected for
+
+**The strings.** If the request says the record was played on flatwounds and the
+setup holds roundwounds, the answer says so and changes nothing. That difference
+is larger than most pedals make, and nothing here has measured what it does to
+the figures, so applying a correction would be inventing a number. Read the note
+and decide.
+
+**The instrument itself.** A Setup names what is in the room and that decides
+which instrument the rig is for, which feeds block ordering. It does not correct
+for a Precision against a Jazz.
+
+Both wait on evidence rather than on code. Either measure a bass with each set
+of strings through the loop, or tag the corpus records with what they were
+played on and derive the difference across players.
+
 Detail: [docs/measuring.md](../../../../docs/measuring.md) and
 [docs/algorithm.md](../../../../docs/algorithm.md).
