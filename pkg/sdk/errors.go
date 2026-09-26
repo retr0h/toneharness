@@ -27,6 +27,7 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
 	"github.com/retr0h/tonestack/pkg/sdk/result"
+	"github.com/retr0h/tonestack/pkg/sdk/translate"
 )
 
 // EmptySwapError is a swap refused because neither slot holds a preset. It
@@ -64,6 +65,14 @@ var (
 	// is finished and nothing reconnects it; a caller who wants the pedal
 	// again closes it and opens another.
 	ErrBus = device.ErrBus
+
+	// ErrNothingToBuildFrom reports a request with nothing in it to resolve:
+	// no gear named, and nothing that can be measured against.
+	//
+	// Not a malformed document. "Make me a punk bass tone" is a real request
+	// that lands here, and the answer is to ask which records rather than to
+	// guess at an amplifier.
+	ErrNothingToBuildFrom = translate.ErrNothingToBuildFrom
 
 	// ErrNoDevice reports no Helix on the USB bus.
 	//

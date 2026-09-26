@@ -75,6 +75,14 @@ func (s *HintPublicTestSuite) TestHint() {
 			is:   sdk.ErrBus,
 		},
 		{
+			// The next move is a question, not a guess: a recording resolves
+			// fully where an adjective has to be earned against a population.
+			name: "a request with nothing in it to resolve",
+			err:  fmt.Errorf("%w", sdk.ErrNothingToBuildFrom),
+			want: "Name a record to sound like",
+			is:   sdk.ErrNothingToBuildFrom,
+		},
+		{
 			name: "a slot holding nothing",
 			err:  fmt.Errorf("%w", sdk.ErrEmptySlot),
 			want: "tonestack presets list",

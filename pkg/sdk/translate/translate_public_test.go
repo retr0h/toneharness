@@ -222,6 +222,45 @@ func (s *TranslatePublicTestSuite) TestEveryRoleHasAPlaceInTheChain() {
 	}, roles)
 }
 
+// TestARequestWithNothingInItIsRefused covers the vague ask.
+//
+// "Punk bass" is a real request and there is nothing in it to resolve, so it
+// is refused with a sentinel rather than guessed at. Which question to ask
+// next depends on whether a person or an agent is asking, so the SDK names the
+// problem and the caller names the next step.
+func (s *TranslatePublicTestSuite) TestARequestWithNothingInItIsRefused() {
+	_, notes, err := translate.Translate(
+		s.ask("genre: punk\ninstrument: bass\n"), s.setup(""), s.deps)
+
+	s.Require().ErrorIs(err, translate.ErrNothingToBuildFrom)
+	s.Require().NotEmpty(notes, "and it still says what it assumed on the way")
+}
+
+// TestAnAssumptionIsSomethingThatHappened covers how a note reads.
+//
+// Both of these are the same assumption about the same absent setup, and one
+// of them reported "could not", which told somebody the tool had failed at
+// something it had in fact decided.
+func (s *TranslatePublicTestSuite) TestAnAssumptionIsSomethingThatHappened() {
+	_, notes, _ := translate.Translate(
+		s.ask("like:\n  recording: "+s.recording()+"\n"), s.setup(""), s.deps)
+
+	for _, about := range []string{"device", "instrument"} {
+		s.Run(about, func() {
+			for _, n := range notes {
+				if n.About == about {
+					s.Require().True(n.Honoured,
+						"%q assumed a default, which is a thing it did", about)
+
+					return
+				}
+			}
+
+			s.Require().Fail("no note about " + about)
+		})
+	}
+}
+
 // TestInsistRefusesRatherThanSubstitute covers the gear being the point.
 func (s *TranslatePublicTestSuite) TestInsistRefusesRatherThanSubstitute() {
 	_, notes, err := translate.Translate(

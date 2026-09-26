@@ -38,6 +38,18 @@ var ErrInsisted = errors.New("the device has no such gear")
 // not even have.
 var ErrWrongDevice = errors.New("the measurements were taken on a different device")
 
+// ErrNothingToBuildFrom is returned when a request names no gear and gives
+// nothing that can be measured.
+//
+// A sentinel rather than a sentence, because the useful answer is what to ask
+// for next and only the caller knows whether it is talking to a person or to
+// an agent. "Make me a punk bass tone" lands here: it is a real request and
+// there is nothing in it to resolve, so the next move is to ask which records
+// rather than to guess at an amplifier.
+var ErrNothingToBuildFrom = errors.New(
+	"nothing in the request names gear, and nothing in it can be measured " +
+		"against, so there is no chain to build")
+
 // InsistedError names the gear a request would not give up.
 type InsistedError struct {
 	// Gear is what was asked for, as the request wrote it.

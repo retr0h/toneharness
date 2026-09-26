@@ -35,6 +35,7 @@ reading a terminal and they leave things out on purpose.
 | ---------------------------------------------------------------- | ----------------------------------------------------------- |
 | "make it sound like X", "build me a rig", what gear somebody used | [references/research.md](references/research.md)            |
 | to write or change a request, a ToneSpec, a Setup                 | [references/asking.md](references/asking.md)                |
+| something too vague to build, or "what should I ask them?"        | [references/vague.md](references/vague.md)                  |
 | to measure a recording, or to choose gear by measuring            | [references/measuring.md](references/measuring.md)          |
 | to get it onto the pedal, or to read what the pedal holds         | [references/device.md](references/device.md)                |
 | to change a rig after hearing it                                  | [references/correcting.md](references/correcting.md)        |

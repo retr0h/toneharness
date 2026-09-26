@@ -211,9 +211,7 @@ func chainFor(
 	}
 
 	if len(named) == 0 {
-		return nil, fmt.Errorf(
-			"nothing in the request names gear, and nothing in it can be " +
-				"measured against, so there is no chain to build")
+		return nil, ErrNothingToBuildFrom
 	}
 
 	// In role order rather than in the order they were typed. A drive ahead
@@ -670,9 +668,14 @@ func instrumentFor(
 		}
 	}
 
+	// Honoured, because an assumption that was made is a thing that happened.
+	// It read "could not" beside the device note saying the same thing about
+	// the same absent setup, which told somebody the tool had failed at
+	// something it had in fact decided.
 	*notes = append(*notes, Note{
-		About: "instrument",
-		Said:  "the setup names none, so this is for bass",
+		About:    "instrument",
+		Said:     "the setup names none, so this is for bass",
+		Honoured: true,
 	})
 
 	return rig.InstrumentBass
