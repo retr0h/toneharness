@@ -38,6 +38,7 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
 	"github.com/retr0h/tonestack/pkg/sdk/corpus"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/tonestack/pkg/sdk/translate"
 )
 
 type OfflinePublicTestSuite struct {
@@ -263,6 +264,64 @@ func (s *OfflinePublicTestSuite) TestRigsList() {
 }
 
 // TestRigShow covers reading one rig.
+// TestToneBuild covers the path an agent reaches the whole project through.
+//
+// It was unreachable over MCP until this tool existed, because the resolving
+// lived in pkg/cli and an agent calls a tool rather than a command.
+func (s *OfflinePublicTestSuite) TestToneBuild() {
+	s.run("tone_build", []row{
+		{
+			name: "a request it can answer",
+			args: tools.Asked{Spec: "ask.yaml", Setup: "mine.yaml"},
+			setup: func(c *mocks.MockClient) {
+				c.EXPECT().
+					Tone(gomock.Any(), sdk.Ask{Spec: "ask.yaml", Setup: "mine.yaml"}).
+					Return(sdk.Resolved{
+						Rig: rig.Spec{Chain: []rig.ChainEntry{
+							{Role: rig.RoleAmp, Gear: "Ampeg SVT"},
+						}},
+						Notes: translate.Notes{{About: "amp", Said: "chosen by measuring"}},
+					}, nil)
+			},
+			want: "1 blocks, 1 notes",
+			check: func(s *OfflinePublicTestSuite, res *gomcp.CallToolResult) {
+				var got sdk.Resolved
+				structured(s.T(), res, &got)
+				s.Len(got.Rig.Chain, 1)
+				s.Len(got.Notes, 1)
+			},
+		},
+		{
+			// A setup is optional, and the answer says what it assumed
+			// instead of refusing.
+			name: "a request with nothing about what they own",
+			args: tools.Asked{Spec: "ask.yaml"},
+			setup: func(c *mocks.MockClient) {
+				c.EXPECT().
+					Tone(gomock.Any(), sdk.Ask{Spec: "ask.yaml"}).
+					Return(sdk.Resolved{
+						Notes: translate.Notes{{About: "setup", Said: "assumed a bass"}},
+					}, nil)
+			},
+			want: "0 blocks, 1 notes",
+		},
+		{
+			// The notes travel even when it failed, because what could not be
+			// honoured is the useful half either way.
+			name: "a request it could not answer",
+			args: tools.Asked{Spec: "ask.yaml"},
+			setup: func(c *mocks.MockClient) {
+				c.EXPECT().
+					Tone(gomock.Any(), gomock.Any()).
+					Return(sdk.Resolved{
+						Notes: translate.Notes{{About: "Ampeg B-15", Said: "no such model"}},
+					}, translate.ErrInsisted)
+			},
+			err: true,
+		},
+	})
+}
+
 func (s *OfflinePublicTestSuite) TestRigShow() {
 	s.run("rig_show", []row{
 		{

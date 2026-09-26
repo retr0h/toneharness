@@ -980,6 +980,74 @@ func (s *ClientPublicTestSuite) TestRecipe() {
 	}
 }
 
+// TestTone covers resolving a request into the rig it describes.
+//
+// The operation the whole project is for, and it lived in pkg/cli until this
+// session, which made it unreachable over MCP: an agent calls a tool rather
+// than a command.
+func (s *ClientPublicTestSuite) TestTone() {
+	examples := func(name string) string {
+		return filepath.Join("..", "..", "examples", "tonespec", name)
+	}
+
+	tests := []struct {
+		name  string
+		ctx   context.Context
+		in    sdk.Ask
+		is    error
+		notes bool
+	}{
+		{
+			name:  "a request and what somebody owns",
+			in:    sdk.Ask{Spec: examples("like-a-record.yaml"), Setup: examples("my-setup.yaml")},
+			notes: true,
+		},
+		{
+			// A setup is optional: somebody asking what a record sounds like
+			// has not necessarily said what is in the room.
+			name:  "a request on its own",
+			in:    sdk.Ask{Spec: examples("like-a-record.yaml")},
+			notes: true,
+		},
+		{
+			name: "an ask that is not there",
+			in:   sdk.Ask{Spec: filepath.Join(s.T().TempDir(), "nowhere.yaml")},
+			is:   fs.ErrNotExist,
+		},
+		{
+			name: "a caller who stopped waiting",
+			ctx:  cancelled(),
+			in:   sdk.Ask{Spec: examples("like-a-record.yaml")},
+			is:   context.Canceled,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			ctx := tt.ctx
+			if ctx == nil {
+				ctx = context.Background()
+			}
+
+			got, err := sdk.New().Tone(ctx, tt.in)
+
+			if tt.is != nil {
+				s.Require().ErrorIs(err, tt.is)
+
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotEmpty(got.Rig.Chain)
+
+			if tt.notes {
+				s.Require().NotEmpty(got.Notes,
+					"a resolution says what it made of the request")
+			}
+		})
+	}
+}
+
 // TestScaffold covers writing a rig, gear checked first.
 func (s *ClientPublicTestSuite) TestScaffold() {
 	scaffold := func(ctx context.Context, in sdk.NewRecipe, opts ...sdk.Option) (scaffolded, error) {

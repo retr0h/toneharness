@@ -106,6 +106,22 @@ func (h *handlers) rigShow(
 	return said("rig %s, extended by %d others", in.ID, len(found.Variants)), found, nil
 }
 
+func (h *handlers) toneBuild(
+	ctx context.Context,
+	_ *gomcp.CallToolRequest,
+	in Asked,
+) (*gomcp.CallToolResult, sdk.Resolved, error) {
+	got, err := h.client.Tone(ctx, sdk.Ask{Spec: in.Spec, Setup: in.Setup})
+	if err != nil {
+		// The notes still travel. A request that could not be honoured has
+		// usually said why in them, and the error alone is the half that does
+		// not help.
+		return nil, got, remedy(err)
+	}
+
+	return said("%d blocks, %d notes", len(got.Rig.Chain), len(got.Notes)), got, nil
+}
+
 func (h *handlers) presetBuild(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,

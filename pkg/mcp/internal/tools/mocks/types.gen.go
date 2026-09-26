@@ -179,6 +179,21 @@ func (mr *MockClientMockRecorder) Recipes(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Recipes", reflect.TypeOf((*MockClient)(nil).Recipes), ctx)
 }
 
+// Tone mocks base method.
+func (m *MockClient) Tone(ctx context.Context, in sdk.Ask) (sdk.Resolved, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Tone", ctx, in)
+	ret0, _ := ret[0].(sdk.Resolved)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Tone indicates an expected call of Tone.
+func (mr *MockClientMockRecorder) Tone(ctx, in any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Tone", reflect.TypeOf((*MockClient)(nil).Tone), ctx, in)
+}
+
 // MockSession is a mock of Session interface.
 type MockSession struct {
 	ctrl     *gomock.Controller

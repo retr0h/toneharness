@@ -192,13 +192,6 @@ cov PKG *ARGS:
     go tool cover -func={{ go_coverage_dir }}/one.out | grep -v '100.0%$' \
       || echo "  every statement covered"
 
-
-
-
-
-
-
-
 # Put the measured library into the form the sdk embeds
 #
 # The readings land in resources/sweeps/, where somebody looks at them. This is

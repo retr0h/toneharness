@@ -40,6 +40,7 @@ type Client interface {
 	ModelMeasurements(ctx context.Context, model string) (sdk.Measured, error)
 	Recipes(ctx context.Context) (sdk.Recipes, error)
 	Recipe(ctx context.Context, id string) (sdk.Recipe, error)
+	Tone(ctx context.Context, in sdk.Ask) (sdk.Resolved, error)
 	Build(ctx context.Context, recipeID, out string, existing sdk.Existing) (sdk.Made, error)
 	Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error)
 	Devices(ctx context.Context) (sdk.Attached, error)
@@ -87,6 +88,17 @@ type Build struct {
 	RecipeID string `json:"recipe_id,omitempty" jsonschema:"a rig that ships, by identifier; see rigs_list"`
 	RigPath  string `json:"rig_path,omitempty"  jsonschema:"a rig file on disk"`
 	Out      string `json:"out"                 jsonschema:"where to write the .hlx"`
+}
+
+// Asked says which two documents tone_build resolves.
+//
+// No `out`, unlike preset_build. This answers with the rig rather than writing
+// it, because an agent that has the rig can decide what to do with it, and a
+// tool that wrote a file would need the write permission for something that
+// produces no file of its own.
+type Asked struct {
+	Spec  string `json:"spec"            jsonschema:"a ToneSpec file: what somebody wants to sound like"`
+	Setup string `json:"setup,omitempty" jsonschema:"a Setup file: what they own. Optional; the answer says what it assumed without one"`
 }
 
 // Built is what preset_build answers: exactly one side is set.

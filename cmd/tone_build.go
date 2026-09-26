@@ -26,9 +26,10 @@ import (
 )
 
 var (
-	toneBuildAsk   string
-	toneBuildSetup string
-	toneBuildOut   string
+	toneBuildAsk    string
+	toneBuildSetup  string
+	toneBuildOut    string
+	toneBuildClient clientFlags
 )
 
 // toneBuildCmd represents the tone build command.
@@ -57,6 +58,7 @@ Compile what comes out with ` + "`tonestack presets compile --rig`" + `.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cli.ToneBuild(cmd.OutOrStdout(), cli.ToneBuildOptions{
+			Client: toneBuildClient.client(),
 			Ask:    toneBuildAsk,
 			Setup:  toneBuildSetup,
 			Out:    toneBuildOut,

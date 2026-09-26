@@ -26,9 +26,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 
 	"github.com/retr0h/tonestack/pkg/cli"
+	"github.com/retr0h/tonestack/pkg/cli/internal/mocks"
+	"github.com/retr0h/tonestack/pkg/sdk"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/tonestack/pkg/sdk/translate"
 )
 
 // ToneBuildPublicTestSuite covers reading a request and writing the rig it
@@ -184,6 +188,61 @@ func (s *ToneBuildPublicTestSuite) TestSomewhereItCannotWriteIsReported() {
 	})
 
 	s.Require().Error(err)
+}
+
+// TestAStandInResolvesInsteadOfTheRealThing covers the seam.
+//
+// Declared here rather than taking *sdk.Client, so a test for how an answer
+// looks does not need a catalog and six hundred measurements to produce one.
+// And optional, the way every collaborator in this repository is: the cases
+// above hand in nothing and reach the real one.
+func (s *ToneBuildPublicTestSuite) TestAStandInResolvesInsteadOfTheRealThing() {
+	ctrl := gomock.NewController(s.T())
+	stub := mocks.NewMockResolver(ctrl)
+
+	stub.EXPECT().
+		Tone(gomock.Any(), sdk.Ask{Spec: "ask.yaml", Setup: "mine.yaml"}).
+		Return(sdk.Resolved{
+			Rig: rig.Spec{
+				Schema: rig.SchemaName, ID: "stubbed",
+				Subject:    rig.Subject{Kind: rig.KindSound, Name: "Stubbed"},
+				Instrument: rig.InstrumentBass,
+				Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
+			},
+			Notes: translate.Notes{{About: "amp", Said: "handed over by a test"}},
+		}, nil)
+
+	var buf bytes.Buffer
+
+	s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
+		Client: stub, Ask: "ask.yaml", Setup: "mine.yaml",
+	}))
+
+	s.Require().Contains(buf.String(), "handed over by a test",
+		"the notes are reported, not only the rig")
+	s.Require().Contains(buf.String(), "Ampeg SVT")
+}
+
+// TestAStandInsFailureIsReportedWithItsNotes covers the other half.
+//
+// A request that could not be honoured has usually said why in the notes, so
+// they are printed before the error is returned.
+func (s *ToneBuildPublicTestSuite) TestAStandInsFailureIsReportedWithItsNotes() {
+	ctrl := gomock.NewController(s.T())
+	stub := mocks.NewMockResolver(ctrl)
+
+	stub.EXPECT().
+		Tone(gomock.Any(), gomock.Any()).
+		Return(sdk.Resolved{
+			Notes: translate.Notes{{About: "Ampeg B-15", Said: "no such model"}},
+		}, translate.ErrInsisted)
+
+	var buf bytes.Buffer
+
+	err := cli.ToneBuild(&buf, cli.ToneBuildOptions{Client: stub, Ask: "ask.yaml"})
+
+	s.Require().ErrorIs(err, translate.ErrInsisted)
+	s.Require().Contains(buf.String(), "no such model")
 }
 
 func TestToneBuildPublicTestSuite(

@@ -27,6 +27,7 @@ import (
 	"sync"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/tonestack/pkg/sdk/internal/asking"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/attached"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/backup"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/catalogview"
@@ -36,6 +37,7 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/presets"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
+	"github.com/retr0h/tonestack/pkg/sdk/measured"
 )
 
 // Client is what a wrapper holds.
@@ -412,6 +414,29 @@ func (c *Client) Recipe(
 	}
 
 	return recipes.Show(c.rigs(), id)
+}
+
+// Tone resolves a request and a setup into the rig they describe.
+//
+// The step between what somebody wants and what a preset is compiled from.
+// Notes come back whether it succeeded or not: a request that could not be
+// honoured has usually said why in them, and the error on its own is the half
+// that does not help.
+func (c *Client) Tone(
+	ctx context.Context,
+	in Ask,
+) (Resolved, error) {
+	cat, err := c.openCatalog()
+	if err != nil {
+		return Resolved{}, err
+	}
+
+	lib, err := measured.BuiltIn()
+	if err != nil {
+		return Resolved{}, err
+	}
+
+	return asking.Resolve(ctx, asking.Ask(in), cat, lib)
 }
 
 // Backing reads which records back each rig, and holds them to its era.

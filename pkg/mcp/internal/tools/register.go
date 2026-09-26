@@ -103,6 +103,12 @@ func register(
 		OutputSchema: mustOutputSchema[sdk.Recipe](),
 	}, h.rigShow)
 	gomcp.AddTool(s, &gomcp.Tool{
+		Name:         "tone_build",
+		Description:  "Turn a ToneSpec and a Setup into the rig they describe. Gear named by hand resolves against the catalog; gear left unnamed is chosen by measuring a recording against every block. Read the notes: they say what it could not honour and what it assumed. Answers with the rig rather than writing a file.",
+		Annotations:  readOnly(),
+		OutputSchema: mustOutputSchema[sdk.Resolved](),
+	}, h.toneBuild)
+	gomcp.AddTool(s, &gomcp.Tool{
 		Name:         "preset_build",
 		Description:  "Build a .hlx from a shipped rig or a rig file. Read what it added and what each character word moved before putting it on a pedal. Refuses a file already at out unless the server was started with --allow-writes.",
 		Annotations:  &gomcp.ToolAnnotations{OpenWorldHint: new(false), DestructiveHint: new(true)},

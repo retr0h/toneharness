@@ -70,6 +70,8 @@ type (
 	// Recipe is one rig, and what reading it needs that the rig does not
 	// carry.
 	Recipe = result.Recipe
+	// Resolved is what a request and a setup turned into.
+	Resolved = result.Resolved
 	// Variant is a rig that extends another.
 	Variant = result.Variant
 	// Backing is which records back a rig, and whether they were made when

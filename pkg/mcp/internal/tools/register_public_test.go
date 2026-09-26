@@ -154,7 +154,7 @@ type RegisterPublicTestSuite struct {
 func (s *RegisterPublicTestSuite) TestRegister() {
 	reads := []string{
 		"catalog_block", "catalog_search", "corpus_model",
-		"preset_build", "rig_show", "rigs_list",
+		"tone_build", "preset_build", "rig_show", "rigs_list",
 		"devices_list", "presets_list", "preset_show", "preset_export", "preset_select",
 	}
 
@@ -169,7 +169,8 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 			want: reads,
 			readOnly: map[string]bool{
 				"catalog_block": true, "catalog_search": true, "corpus_model": true,
-				"preset_build": false, "rig_show": true, "rigs_list": true,
+				"tone_build": true, "preset_build": false,
+				"rig_show": true, "rigs_list": true,
 				"devices_list": true, "presets_list": true, "preset_show": true,
 				"preset_export": false, "preset_select": false,
 			},
