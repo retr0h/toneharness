@@ -58,6 +58,29 @@ func (s *HintPublicTestSuite) TestHint() {
 			is:   sdk.ErrNoSuchRecipe,
 		},
 		{
+			// A pedal on a charger rather than a data port looks exactly like
+			// one that is switched off, and the power light is already on.
+			name: "no pedal on the bus",
+			err:  fmt.Errorf("%w", sdk.ErrNoDevice),
+			want: "USB data port",
+			is:   sdk.ErrNoDevice,
+		},
+		{
+			// Retrying is usually enough. When it is not, the endpoint has
+			// stalled and only a power cycle clears it, so the error says so
+			// rather than letting somebody retry into a wall.
+			name: "the session the bus ended",
+			err:  fmt.Errorf("%w: writing to control", sdk.ErrBus),
+			want: "power the pedal off and on",
+			is:   sdk.ErrBus,
+		},
+		{
+			name: "a slot holding nothing",
+			err:  fmt.Errorf("%w", sdk.ErrEmptySlot),
+			want: "tonestack presets list",
+			is:   sdk.ErrEmptySlot,
+		},
+		{
 			// An error with no command to suggest comes back as it was.
 			name: "anything else",
 			err:  other,

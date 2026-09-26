@@ -65,6 +65,7 @@ func Execute() {
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
 
 	styleHelp(rootCmd)
+	hinting(rootCmd)
 
 	// Cobra prints what went wrong and the flags for the command that would
 	// not run. The mark this tool puts in front of a failure goes with it, so

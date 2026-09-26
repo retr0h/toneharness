@@ -64,4 +64,12 @@ var (
 	// is finished and nothing reconnects it; a caller who wants the pedal
 	// again closes it and opens another.
 	ErrBus = device.ErrBus
+
+	// ErrNoDevice reports no Helix on the USB bus.
+	//
+	// Exported because a caller cannot act on what it cannot match, and the
+	// thing to do about this is specific enough to be worth saying: a pedal
+	// that is powered but plugged into a charger rather than a data port
+	// looks exactly like this.
+	ErrNoDevice = device.ErrNoDevice
 )

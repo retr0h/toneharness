@@ -50,7 +50,7 @@ words then move the controls they name.`,
 
 		made, err := client.Build(cmd.Context(), presetsMakeID, presetsMakeOut, sdk.ReplaceExisting)
 		if err != nil {
-			return cli.Hint(err)
+			return err
 		}
 
 		cat, err := client.Catalog(cmd.Context())

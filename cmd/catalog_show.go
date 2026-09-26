@@ -38,7 +38,7 @@ var catalogShowCmd = &cobra.Command{
 			sdk.WithCatalog(catalogPath), sdk.WithDevice(catalogDevice)).
 			Block(cmd.Context(), catalogShowModel)
 		if err != nil {
-			return cli.Hint(err)
+			return err
 		}
 
 		return answer(cmd, block, cli.Block)

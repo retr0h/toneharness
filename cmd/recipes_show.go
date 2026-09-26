@@ -35,7 +35,7 @@ var recipesShowCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		one, err := newClient(ownRecipes(recipesDir)).Recipe(cmd.Context(), recipesShowID)
 		if err != nil {
-			return cli.Hint(err)
+			return err
 		}
 
 		return answer(cmd, one, cli.Recipe)

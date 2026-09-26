@@ -83,7 +83,7 @@ it wrote.`,
 
 		made, err := scaffolded(cmd.Context(), client)
 		if err != nil {
-			return cli.Hint(err)
+			return err
 		}
 
 		return answer(cmd, made, cli.Scaffolded)

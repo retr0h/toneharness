@@ -40,6 +40,24 @@ func Hint(
 		return fmt.Errorf("%w, try 'tonestack catalog list'", err)
 	case errors.Is(err, sdk.ErrNoSuchRecipe):
 		return fmt.Errorf("%w, try 'tonestack recipes list'", err)
+	case errors.Is(err, sdk.ErrNoDevice):
+		// A pedal powered from a charger rather than a data port looks
+		// exactly like one that is switched off, and the first thing anybody
+		// does is check the power light, which is already on.
+		return fmt.Errorf("%w: check it is in a USB data port, then "+
+			"'tonestack devices list'", err)
+	case errors.Is(err, sdk.ErrBus):
+		// The session is gone either way, and reopening is usually enough.
+		// When it is not, the endpoint has stalled, and docs/protocol.md is
+		// unambiguous about the only way out: "the interface will not be
+		// claimed again until the device is power cycled." Worth saying in
+		// the error, because somebody who does not know that retries into a
+		// wall.
+		return fmt.Errorf("%w: run it again, and if it keeps failing power "+
+			"the pedal off and on", err)
+	case errors.Is(err, sdk.ErrEmptySlot):
+		return fmt.Errorf("%w, try 'tonestack presets list' to see which "+
+			"slots hold anything", err)
 	default:
 		return err
 	}

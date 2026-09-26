@@ -41,6 +41,30 @@ func init() {
 		"answer as data rather than as a table")
 }
 
+// hinting puts every command's failure through cli.Hint.
+//
+// Walked rather than added per command. Four commands called Hint by hand and
+// none of them were the device ones, so the step to take after a pedal that
+// is not on the bus, or a session the bus ended, was written and unreachable.
+// A hint somebody has to remember to add is a hint that is missing wherever
+// nobody remembered.
+//
+// The SDK still says only what went wrong. Which next step to name depends on
+// whether a terminal or an agent is asking, and this is the terminal.
+func hinting(
+	c *cobra.Command,
+) {
+	if run := c.RunE; run != nil {
+		c.RunE = func(cmd *cobra.Command, args []string) error {
+			return cli.Hint(run(cmd, args))
+		}
+	}
+
+	for _, child := range c.Commands() {
+		hinting(child)
+	}
+}
+
 // answer writes what an operation produced, as a table or as data.
 //
 // The one place that choice is made. Every command ends in a renderer, and
