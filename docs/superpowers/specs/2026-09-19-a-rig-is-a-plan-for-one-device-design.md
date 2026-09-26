@@ -38,13 +38,20 @@ since it was written.
 ### To the ToneSpec
 
 `subject`, `aliases`, `default`, `extends`, `character`, `technique`, `played`,
-`confidence`, `evidence`, `mutations`.
+`confidence`, `mutations`, and the document's own top-level `evidence`.
 
 These are what a person wrote and why. Counting what reads them was instructive
 and is not the argument: `aliases` is how a rig is found by another name,
 `confidence` is rendered, `extends` resolves a parent, `played` reaches the
 backing listing. All of that is bookkeeping about an ask, and it is bookkeeping
 the ask should be doing.
+
+Most of them are already there. ToneSpec was written with `subject`, `aliases`,
+`default`, `confidence`, `played`, `technique` and `evidence` on it, so the
+contract work is done and what remains is taking them off RigSpec and moving the
+readers. `extends` and `mutations` are the two ToneSpec does not carry yet, and
+they are added when something reads them rather than before, which is the rule
+`requires` broke.
 
 `character` and `technique` are the two that also reach the compiler, in
 `compile/move.go` and `compile/demand.go`. They move with the rest and the
@@ -57,12 +64,24 @@ of what a correction changed is a record about the ask.
 
 ### Staying in the Plan
 
-`chain` with its resolved `models` and `settings`, `device`, `snapshots`,
-`footswitches`, `controllers`, `sections`, `target`, `id`, `schema`, `version`.
+`chain` with its resolved `models`, `settings`, `substitute` **and its per-entry
+`evidence`**, plus `device`, `snapshots`, `footswitches`, `controllers`,
+`sections`, `target`, `id`, `schema`, `version`.
 
 Settings stay because a knob position is the plan. That is what #139 decided:
 "more drive" is a request and `drive: 0.7` is a plan, and the number is only
 meaningful against a chain.
+
+The evidence on a chain entry stays, and John settled that on 2026-09-19 after
+an earlier draft of this record had it moving. It follows from #144: a RigSpec
+is what gets published, and a published plan that cannot say why this amp is a
+plan nobody can check. So the split is by scope rather than by kind. Why the
+request was made is the ask's; why this model answered it is the plan's.
+
+Mike Dirnt's amplifier is the case that settles it. Its citation is a scanned
+1994 magazine page in which the producer says which amp they chose and why, and
+that sentence is the reason an Ampeg SVT is in the chain. Publishing the chain
+without it publishes an assertion.
 
 ### Splitting
 
