@@ -35,8 +35,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/retr0h/tonestack/cmd"
 	sdk "github.com/retr0h/tonestack/pkg/sdk"
 	"github.com/retr0h/tonestack/pkg/sdk/audio"
 )
@@ -777,6 +779,86 @@ func (s *MainTestSuite) TestEveryTestFileIsNamedForWhatItCovers() {
 	s.Require().Empty(adrift,
 		"named for no production file and not listed as covering a concern:\n%s",
 		strings.Join(adrift, "\n"))
+}
+
+// TestEverySkillLinkResolves holds a skill to the repository it describes.
+//
+// A skill is instructions an agent follows without checking, so a dead link in
+// one is worse than a dead link in a document somebody reads: nobody notices
+// until an agent has already acted on the half it could reach.
+//
+// Written after finding two wrong commands in the first skill on the day it was
+// written — `catalog search`, which does not exist, and `presets play --file`,
+// which is `--preset`. Both looked right.
+func (s *MainTestSuite) TestEverySkillLinkResolves() {
+	pages, err := filepath.Glob(filepath.Join(".claude", "skills", "*", "**", "*.md"))
+	s.Require().NoError(err)
+
+	top, err := filepath.Glob(filepath.Join(".claude", "skills", "*", "*.md"))
+	s.Require().NoError(err)
+
+	pages = append(pages, top...)
+	s.Require().NotEmpty(pages, "the skills moved, and this test did not")
+
+	link := regexp.MustCompile(`\]\((\.\.?/[^)]+|references/[^)]+)\)`)
+
+	for _, page := range pages {
+		body, err := os.ReadFile(page) //nolint:gosec // a path this glob found
+		s.Require().NoError(err)
+
+		for _, m := range link.FindAllStringSubmatch(string(body), -1) {
+			// An anchor is a heading rather than a file, and whether one
+			// exists is not what this checks.
+			at, _, _ := strings.Cut(m[1], "#")
+			if at == "" {
+				continue
+			}
+
+			_, err := os.Stat(filepath.Join(filepath.Dir(page), at))
+			s.Require().NoError(err, "%s links to %s, which is not there", page, at)
+		}
+	}
+}
+
+// TestEveryCommandASkillNamesExists is the other half of the same rot.
+//
+// A skill that tells an agent to run a command the tool does not have sends it
+// down a path that fails, and the failure looks like the tool is broken rather
+// than like the instructions are.
+func (s *MainTestSuite) TestEveryCommandASkillNamesExists() {
+	pages, err := filepath.Glob(filepath.Join(".claude", "skills", "*", "**", "*.md"))
+	s.Require().NoError(err)
+
+	top, err := filepath.Glob(filepath.Join(".claude", "skills", "*", "*.md"))
+	s.Require().NoError(err)
+
+	named := regexp.MustCompile(`go run main\.go ([a-z]+(?: [a-z]+)?)`)
+	known := map[string]bool{}
+
+	var walk func(c *cobra.Command, path string)
+	walk = func(c *cobra.Command, path string) {
+		at := strings.TrimSpace(path + " " + c.Name())
+		known[at] = true
+
+		for _, sub := range c.Commands() {
+			walk(sub, at)
+		}
+	}
+
+	for _, sub := range cmd.Root().Commands() {
+		walk(sub, "")
+	}
+
+	for _, page := range append(pages, top...) {
+		body, err := os.ReadFile(page) //nolint:gosec // a path this glob found
+		s.Require().NoError(err)
+
+		for _, m := range named.FindAllStringSubmatch(string(body), -1) {
+			s.Require().True(known[m[1]],
+				"%s tells an agent to run %q, which this tool does not have",
+				page, m[1])
+		}
+	}
 }
 
 // TestTheCLIStandsAlone asserts the CLI half could be its own repository.

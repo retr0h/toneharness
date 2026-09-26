@@ -22,6 +22,7 @@ package commanddoc
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -165,16 +166,34 @@ func available(
 func flags(
 	c *cobra.Command,
 ) []string {
-	var rows []string
+	seen := map[string]*pflag.Flag{}
 
-	c.LocalFlags().VisitAll(func(f *pflag.Flag) {
-		if f.Hidden || f.Name == "help" {
-			return
-		}
+	// Local and inherited both, so this page names every flag a command
+	// accepts. `--json` is persistent on the root, and listing only local
+	// flags documented it once while it worked on all thirty commands. This
+	// reference is what somebody checks instead of running --help, so the two
+	// have to agree.
+	for _, set := range []*pflag.FlagSet{c.LocalFlags(), c.InheritedFlags()} {
+		set.VisitAll(func(f *pflag.Flag) {
+			if !f.Hidden && f.Name != "help" {
+				seen[f.Name] = f
+			}
+		})
+	}
 
+	names := make([]string, 0, len(seen))
+	for name := range seen {
+		names = append(names, name)
+	}
+
+	sort.Strings(names)
+
+	rows := make([]string, 0, len(names))
+	for _, name := range names {
+		f := seen[name]
 		rows = append(rows, fmt.Sprintf("| `%s` | %s | %s | %s |\n",
 			flagName(f), takes(f), defaultOf(f), cell(f.Usage)))
-	})
+	}
 
 	return rows
 }

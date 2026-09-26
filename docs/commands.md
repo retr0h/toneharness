@@ -57,6 +57,7 @@ tonestack catalog <command> [flags]
 | --- | --- | --- | --- |
 | `--catalog` | string |  | a generated catalog to read instead of the built-in one |
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
+| `--json` |  |  | answer as data rather than as a table |
 
 ## tonestack catalog list
 
@@ -71,7 +72,10 @@ tonestack catalog list [flags]
 
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
+| `--catalog` | string |  | a generated catalog to read instead of the built-in one |
 | `--category` | string |  | keep one kind of block: amp, cab, drive, delay, reverb, eq, mod, comp |
+| `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
+| `--json` |  |  | answer as data rather than as a table |
 | `--search` | string |  | keep blocks whose name or real-world gear mentions this |
 | `--subcategory` | string |  | keep what Line 6 tags this way: Guitar, Bass |
 
@@ -85,6 +89,9 @@ tonestack catalog show [flags]
 
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
+| `--catalog` | string |  | a generated catalog to read instead of the built-in one |
+| `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
+| `--json` |  |  | answer as data rather than as a table |
 | `--model` | string |  | model identifier, e.g. HD2_AmpSVBeastNrm |
 
 ## tonestack corpus
@@ -107,6 +114,10 @@ tonestack corpus <command> [flags]
 | --- | --- |
 | [show](#tonestack-corpus-show) | Show what the corpus says |
 
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--json` |  |  | answer as data rather than as a table |
+
 ## tonestack corpus show
 
 Show how people actually set a model, or what their chains contain.
@@ -127,6 +138,7 @@ tonestack corpus show [flags]
 | `--catalog` | string |  | a generated catalog to use instead of the built-in one |
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
 | `--instrument` | string |  | limit the chain grammar to guitar or bass |
+| `--json` |  |  | answer as data rather than as a table |
 | `--model` | string |  | show one model's parameter distributions, by identifier |
 | `--stats` | string |  | measured statistics to use instead of the built-in ones |
 
@@ -146,6 +158,10 @@ tonestack devices <command> [flags]
 | --- | --- |
 | [list](#tonestack-devices-list) | List attached Helix hardware |
 
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--json` |  |  | answer as data rather than as a table |
+
 ## tonestack devices list
 
 List every Line 6 Helix-family device attached over USB.
@@ -156,6 +172,10 @@ special privileges and cannot disturb a device in use by other software.
 ```text
 tonestack devices list [flags]
 ```
+
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--json` |  |  | answer as data rather than as a table |
 
 ## tonestack mcp
 
@@ -172,6 +192,10 @@ tonestack mcp <command> [flags]
 | command | what it does |
 | --- | --- |
 | [start](#tonestack-mcp-start) | Run the MCP server on stdin and stdout |
+
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--json` |  |  | answer as data rather than as a table |
 
 ## tonestack mcp start
 
@@ -195,6 +219,7 @@ tonestack mcp start [flags]
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
 | `--allow-writes` |  |  | offer the tools that overwrite slots on the pedal |
+| `--json` |  |  | answer as data rather than as a table |
 
 ## tonestack measure
 
@@ -249,6 +274,7 @@ tonestack measure <command> [flags]
 | `--dir` | string |  | a tree of .wav recordings to measure together |
 | `--evidence` |  |  | write the measurements as rig evidence, to paste into a chain |
 | `--file` | string |  | the recording to measure, as a .wav |
+| `--json` |  |  | answer as data rather than as a table |
 | `--manifest` | string |  | a corpus manifest naming the recordings and linking them |
 
 ## tonestack measure blocks
@@ -289,6 +315,7 @@ tonestack measure blocks [flags]
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
 | `--dry` | string | `resources/dry/bass-di.wav` | the reference recording to push through every block |
 | `--hardware` | string | `hx stomp` | which attached audio device to push the signal through |
+| `--json` |  |  | answer as data rather than as a table |
 | `--out` | string | `resources/sweeps/hx-stomp/fingerprints.json` | where the readings go |
 | `--resume` |  |  | skip blocks already in the output |
 | `--retry` |  |  | with --resume, try the ones that refused again |
@@ -333,6 +360,7 @@ tonestack measure controls [flags]
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
 | `--dry` | string | `resources/dry/bass-di.wav` | the reference recording to push through it |
 | `--hardware` | string | `hx stomp` | which attached audio device to push the signal through |
+| `--json` |  |  | answer as data rather than as a table |
 | `--model` | string |  | the block to measure, by its model identifier |
 | `--out` | string |  | where the curves go; named for the model by default |
 | `--points` | int | `9` | how many positions to measure a dial at; a list gets all of its settings |
@@ -365,6 +393,7 @@ tonestack measure names [flags]
 | --- | --- | --- | --- |
 | `--catalog` | string |  | a generated catalog to use instead of the built-in one |
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
+| `--json` |  |  | answer as data rather than as a table |
 | `--model` | string |  | the block to check, by its model identifier |
 
 ## tonestack presets
@@ -394,6 +423,10 @@ tonestack presets <command> [flags]
 | [swap](#tonestack-presets-swap) | Exchange two slots |
 | [turn](#tonestack-presets-turn) | Move one control on what the device is playing |
 
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--json` |  |  | answer as data rather than as a table |
+
 ## tonestack presets compile
 
 Compile a rig into the device's own format.
@@ -416,6 +449,7 @@ tonestack presets compile [flags]
 | --- | --- | --- | --- |
 | `--catalog` | string |  | a generated catalog to use instead of the built-in one |
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
+| `--json` |  |  | answer as data rather than as a table |
 | `--out` | string |  | where to write the preset |
 | `--rig` | string |  | the rig to compile |
 | `--template` | string |  | a preset to write the chain into, instead of an untouched one |
@@ -440,6 +474,7 @@ tonestack presets copy [flags]
 | `--file` | string |  | a .hls setlist or .hlb backup written by HX Edit |
 | `--from` | slot | `01A` | slot to read — a label such as 31A, or a number from zero |
 | `--from-setlist` | int |  | which setlist the source is in |
+| `--json` |  |  | answer as data rather than as a table |
 | `--out` | string |  | where to write the edited setlist |
 | `--to` | slot | `01A` | slot to write — a label such as 31A, or a number from zero |
 | `--to-setlist` | int |  | which setlist the destination is in |
@@ -466,6 +501,7 @@ tonestack presets current [flags]
 | --- | --- | --- | --- |
 | `--catalog` | string |  | a generated catalog to use instead of the built-in one |
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
+| `--json` |  |  | answer as data rather than as a table |
 
 ## tonestack presets export
 
@@ -488,6 +524,7 @@ tonestack presets export [flags]
 | `--catalog` | string |  | a generated catalog to use instead of the built-in one |
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
 | `--file` | string |  | a .hls setlist or .hlb backup written by HX Edit |
+| `--json` |  |  | answer as data rather than as a table |
 | `--out` | string |  | where to write it |
 | `--setlist` | int |  | which setlist, when the file is a backup holding several |
 | `--slot` | slot | `01A` | which slot — a label the pedal shows such as 31A, or a number from zero |
@@ -518,6 +555,7 @@ tonestack presets import [flags]
 | `--catalog` | string |  | a catalog to resolve models against, when writing to a device |
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
 | `--file` | string |  | a .hls setlist or .hlb backup written by HX Edit |
+| `--json` |  |  | answer as data rather than as a table |
 | `--out` | string |  | where to write the edited setlist |
 | `--preset` | string |  | the .hlx preset to place, or a .bin backup to put back |
 | `--setlist` | int |  | which setlist, when the file is a backup holding several |
@@ -545,6 +583,7 @@ tonestack presets list [flags]
 | `--catalog` | string |  | a generated catalog to use instead of the built-in one |
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
 | `--file` | string |  | a .hls setlist or .hlb backup written by HX Edit |
+| `--json` |  |  | answer as data rather than as a table |
 | `--setlist` | int |  | which setlist, when the file is a backup holding several |
 
 ## tonestack presets make
@@ -564,6 +603,7 @@ tonestack presets make [flags]
 | `--catalog` | string |  | a generated catalog to use instead of the built-in one |
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
 | `--id` | string |  | recipe to build from |
+| `--json` |  |  | answer as data rather than as a table |
 | `--out` | string |  | where to write the preset |
 | `--recipes` | string |  | a directory of recipes to use instead of yours, beside the built-in ones |
 | `--stats` | string |  | measured corpus statistics to use instead of the built-in ones |
@@ -592,6 +632,7 @@ tonestack presets play [flags]
 | --- | --- | --- | --- |
 | `--catalog` | string |  | a generated catalog to use instead of the built-in one |
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
+| `--json` |  |  | answer as data rather than as a table |
 | `--preset` | string |  | the .hlx to put in front of the device |
 
 ## tonestack presets select
@@ -609,6 +650,7 @@ tonestack presets select [flags]
 
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
+| `--json` |  |  | answer as data rather than as a table |
 | `--setlist` | int |  | which setlist to load from |
 | `--slot` | slot | `01A` | which slot — a label the pedal shows such as 31A, or a number from zero |
 
@@ -632,6 +674,7 @@ tonestack presets show [flags]
 | `--catalog` | string |  | a generated catalog to use instead of the built-in one |
 | `--device` | string |  | which pedal's built-in catalog to use: HX Stomp, HX Stomp XL, Helix Floor or Helix LT |
 | `--file` | string |  | a .hls setlist or .hlb backup written by HX Edit |
+| `--json` |  |  | answer as data rather than as a table |
 | `--preset` | string |  | a standalone .hlx preset file to read |
 | `--setlist` | int |  | which setlist, when the file is a backup holding several |
 | `--slot` | slot | `01A` | which slot — a label the pedal shows such as 31A, or a number from zero |
@@ -658,6 +701,7 @@ tonestack presets swap [flags]
 | `--file` | string |  | a .hls setlist or .hlb backup written by HX Edit |
 | `--from` | slot | `01A` | slot to read — a label such as 31A, or a number from zero |
 | `--from-setlist` | int |  | which setlist the source is in |
+| `--json` |  |  | answer as data rather than as a table |
 | `--out` | string |  | where to write the edited setlist |
 | `--to` | slot | `01A` | slot to write — a label such as 31A, or a number from zero |
 | `--to-setlist` | int |  | which setlist the destination is in |
@@ -698,6 +742,7 @@ tonestack presets turn [flags]
 | `--block` | int |  | which block, by its position in the chain, counting from zero |
 | `--choice` | int |  | what to set it to, for a parameter that is a list rather than a range, such as a cabinet's microphone |
 | `--direct` |  | `true` | address the parameter the ordinary way; false reaches the value some blocks carry past their list |
+| `--json` |  |  | answer as data rather than as a table |
 | `--model` | int |  | the block's own model, or 1 for a cabinet fused into an amplifier |
 | `--param` | int |  | which parameter, by its position in the model's own list |
 | `--switch` |  |  | what to set it to, for a parameter that is a switch, such as an amplifier's Bright |
@@ -733,6 +778,7 @@ tonestack recipes <command> [flags]
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
 | `--dir` | string |  | a directory of recipes to use instead of yours, beside the built-in ones |
+| `--json` |  |  | answer as data rather than as a table |
 
 ## tonestack recipes list
 
@@ -741,6 +787,11 @@ List available recipes
 ```text
 tonestack recipes list [flags]
 ```
+
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--dir` | string |  | a directory of recipes to use instead of yours, beside the built-in ones |
+| `--json` |  |  | answer as data rather than as a table |
 
 ## tonestack recipes new
 
@@ -770,9 +821,11 @@ tonestack recipes new [flags]
 | `--band` | string |  | the group, where there is one |
 | `--cab` | string |  | real-world cabinet; omit to take the amp's own pairing |
 | `--catalog` | string |  | a generated catalog to check against instead of the built-in one |
+| `--dir` | string |  | a directory of recipes to use instead of yours, beside the built-in ones |
 | `--from` | string |  | copy an existing recipe by identifier, rather than naming gear |
 | `--id` | string |  | identifier, and the filename stem — lower case, hyphenated |
 | `--instrument` | string | `guitar` | guitar or bass — it decides which half of the catalog is eligible |
+| `--json` |  |  | answer as data rather than as a table |
 | `--kind` | string |  | what the copy is attributed to: artist, band, song, genre or sound |
 | `--name` | string |  | the player or style |
 | `--pedal` | stringSlice |  | real-world pedal, in signal order; repeat for more |
@@ -799,6 +852,8 @@ tonestack recipes records [flags]
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
 | `--corpus` | string |  | the music corpus holding one directory of records per player |
+| `--dir` | string |  | a directory of recipes to use instead of yours, beside the built-in ones |
+| `--json` |  |  | answer as data rather than as a table |
 
 ## tonestack recipes show
 
@@ -810,7 +865,9 @@ tonestack recipes show [flags]
 
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
+| `--dir` | string |  | a directory of recipes to use instead of yours, beside the built-in ones |
 | `--id` | string |  | recipe to show, by identifier or alias |
+| `--json` |  |  | answer as data rather than as a table |
 
 ## tonestack tone
 
@@ -844,6 +901,10 @@ tonestack tone <command> [flags]
 | --- | --- |
 | [build](#tonestack-tone-build) | Turn a request and a setup into a rig |
 
+| flag | takes | default | what it does |
+| --- | --- | --- | --- |
+| `--json` |  |  | answer as data rather than as a table |
+
 ## tonestack tone build
 
 Read a ToneSpec and a Setup and write the RigSpec they resolve to.
@@ -873,5 +934,6 @@ tonestack tone build [flags]
 | flag | takes | default | what it does |
 | --- | --- | --- | --- |
 | `--ask` | string |  | the ToneSpec to read |
+| `--json` |  |  | answer as data rather than as a table |
 | `--out` | string |  | where the rig goes; standard output without it |
 | `--setup` | string |  | the Setup to read; without one the rig is for a bass |

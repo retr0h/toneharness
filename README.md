@@ -41,6 +41,18 @@ Helix, or works entirely offline.
 | [MCP server](docs/workflows.md#use-it-from-an-agent)                        | `tonestack mcp start` gives an agent the catalog, the corpus, building and the pedal as tools with typed results. It cannot write to a pedal unless you start it with `--allow-writes`                                                                                                   |
 | [Go SDK](CONTRIBUTING.md#what-to-import-if-you-are-using-this-as-a-library) | The CLI is flags over `pkg/sdk`. Import it to build presets, read and write a device, or look up what a device can do from your own Go program                                                                                                                                           |
 
+## Skills
+
+The CLI is for an agent more than for a person, so the way to use tonestack is
+to point an agent at it and say what you want to sound like.
+
+| Skill                                               | Answers                                                          |
+| --------------------------------------------------- | ---------------------------------------------------------------- |
+| [build-a-rig](.claude/skills/build-a-rig/README.md) | _"Make my bass sound like Dookie"_, without guessing at the gear |
+
+Each follows the [Agent Skills] format: a slim `SKILL.md` that routes, with the
+detail in reference files an agent reads only when the question calls for them.
+
 ## Install
 
 ```bash
@@ -191,3 +203,5 @@ the pull request workflow.
 ## License
 
 The MIT License, see [LICENSE](LICENSE).
+
+[agent skills]: https://agentskills.io

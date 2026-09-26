@@ -22,6 +22,7 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -119,19 +120,41 @@ func commands(
 	return items
 }
 
-// flags lists a command's own flags, with the shorthand where it has one.
+// flags lists the flags a command takes, with the shorthand where it has one.
+//
+// Local and inherited, because a flag a command accepts is a flag its help
+// should name. `--json` is persistent on the root so that it reads the same
+// everywhere, and listing only local flags made it work on all thirty commands
+// while appearing in none of their help. A flag nobody can discover is a flag
+// nobody uses, which is the same failure as one that silently does nothing.
+//
+// Sorted, because two flag sets visited in turn are two alphabets, and a help
+// page whose options are alphabetical except for the last two reads as a bug.
 func flags(
 	c *cobra.Command,
 ) []cli.Item {
-	var items []cli.Item
+	seen := map[string]*pflag.Flag{}
 
-	c.LocalFlags().VisitAll(func(f *pflag.Flag) {
-		if f.Hidden {
-			return
-		}
+	for _, set := range []*pflag.FlagSet{c.LocalFlags(), c.InheritedFlags()} {
+		set.VisitAll(func(f *pflag.Flag) {
+			if !f.Hidden {
+				seen[f.Name] = f
+			}
+		})
+	}
 
+	names := make([]string, 0, len(seen))
+	for name := range seen {
+		names = append(names, name)
+	}
+
+	sort.Strings(names)
+
+	items := make([]cli.Item, 0, len(names))
+	for _, name := range names {
+		f := seen[name]
 		items = append(items, cli.Item{Name: flagName(f), Description: f.Usage})
-	})
+	}
 
 	return items
 }
