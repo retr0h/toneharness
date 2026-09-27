@@ -587,6 +587,35 @@ func (s *TranslatePublicTestSuite) TestANudgeHasNothingToMoveFrom() {
 		"nothing to move from")
 }
 
+// TestACorrectionHistoryIsReadOutAndNotReplayed covers what a rebuild does
+// with rounds of correction somebody already made.
+//
+// Nothing, and says so. A correction's paths point into the plan it was made
+// against and this builds a new one, so the settings those rounds arrived at
+// are not in the answer. Left unsaid it reads as a rebuild that carried them.
+//
+// The entry with no verdict is the one that matters: it has been built and not
+// yet listened to, which is the state a person needs shown rather than left to
+// be rediscovered.
+func (s *TranslatePublicTestSuite) TestACorrectionHistoryIsReadOutAndNotReplayed() {
+	_, notes, err := translate.Translate(
+		s.ask("corrections:\n"+
+			"  - ask: make it clunkier\n"+
+			"    verdict: muddy now\n"+
+			"  - ask: put the drive back\n"+
+			"    changed:\n"+
+			"      - {path: \"chain[1].settings.drive\", from: 0.58, to: 0.47}\n"+
+			"gear:\n  - gear: LA Studio Comp\n    role: comp\n"),
+		s.setup(""), s.deps)
+
+	s.Require().NoError(err)
+
+	said := strings.Join(sayings(notes.Unmet()), " ")
+	s.Require().Contains(said, "muddy now")
+	s.Require().Contains(said, "does not replay it")
+	s.Require().Contains(said, "nobody has said what it sounded like")
+}
+
 // TestAGearNameFittingManySaysSoWithoutListingThemAll covers the cap.
 //
 // Some names fit a dozen, and a note listing all of them is one nobody reads.

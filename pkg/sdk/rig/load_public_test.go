@@ -173,21 +173,13 @@ func (s *LoadPublicTestSuite) TestLoad() {
 			errText: "evidence[0].at",
 		},
 		{
-			name: "a correction dated in words",
+			// A correction is a thing a person writes, so it lives in ToneSpec
+			// and a plan refuses it outright rather than checking its shape.
+			name: "a correction, which a plan does not carry",
 			in: "schema: RigSpec\nid: x\nsubject: {kind: artist, name: X}\n" +
 				"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
 				"mutations:\n  - {at: yesterday, ask: make it clunkier}\n",
-			errText: "mutations[0].at",
-		},
-		{
-			// A path into this document, which is how a correction says what it
-			// moved.
-			name: "a path nothing could follow",
-			in: "schema: RigSpec\nid: x\nsubject: {kind: artist, name: X}\n" +
-				"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
-				"mutations:\n  - {at: \"2026-09-06\", ask: x,\n" +
-				"     changed: [{path: the drive knob, from: 1, to: 2}]}\n",
-			errText: "changed[0].path",
+			errText: "\"mutations\" is unsupported",
 		},
 		{
 			name: "a rig holding no chain",

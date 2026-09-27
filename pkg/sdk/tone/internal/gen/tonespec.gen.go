@@ -319,8 +319,37 @@ func (e ToneSpecSchema) Valid() bool {
 // This changes no preset. Every chain still ends in a cabinet, because a preset with none into a PA is not the sound either. It is here so that a figure measured off a record is legible against what the record was made of, and so nobody reads a cabinet as a claim that one was in the signal.
 type Capture string
 
+// Change One field a correction moved.
+type Change struct {
+	From interface{} `json:"from,omitempty"`
+
+	// Path What moved, as a path into the plan this correction changed — "chain[1].settings.drive".
+	Path string      `json:"path"`
+	To   interface{} `json:"to,omitempty"`
+}
+
 // Confidence How far a claim should be trusted. Set by a person, not derived. A claim asserting high confidence with no evidence behind it is worth showing as unverified whatever it says about itself.
 type Confidence string
+
+// Correction One round of correction, and what a person made of the result.
+//
+// This is the only place a human ear's judgement is written down. Nothing in this system can hear; every other input is a measurement or an assertion. A verdict is the one piece of information that cannot be recovered later if it is not captured when it happens.
+//
+// Append-only, and never replayed: the plan always holds the current state. Reconstructing a rig from its history would be more elegant and much worse to read, and a person reads this file.
+type Correction struct {
+	// Ask What was asked for, in the words used. "Clunky" is not a parameter, and normalising it away loses the question.
+	Ask string `json:"ask"`
+
+	// At When, so a run of corrections can be read in order.
+	At      *string   `json:"at,omitempty"`
+	Changed *[]Change `json:"changed,omitempty"`
+
+	// Reason Why the ask was read that way, cited where possible. This is what lets a later reader see that the interpretation was wrong, rather than only that the value was.
+	Reason *string `json:"reason,omitempty"`
+
+	// Verdict What it sounded like. Absent means not yet evaluated, which is useful state rather than a gap.
+	Verdict *string `json:"verdict,omitempty"`
+}
 
 // Device The hardware, which decides what a chain may cost and what it may hold.
 type Device struct {
@@ -574,11 +603,21 @@ type ToneSpec struct {
 	// Confidence How far a claim should be trusted. Set by a person, not derived. A claim asserting high confidence with no evidence behind it is worth showing as unverified whatever it says about itself.
 	Confidence *Confidence `json:"confidence,omitempty"`
 
+	// Corrections What was asked for after hearing the last answer, and what the person made of the result.
+	//
+	// On the ask rather than on the plan, because a correction is a round of asking. The plan it changed holds the current settings and says nothing about why they are what they are.
+	Corrections *[]Correction `json:"corrections,omitempty"`
+
 	// Default The one to assume when somebody names the subject and not the request. A player whose sound changed has several, and one of them is what "sounds like them" means.
 	Default *bool `json:"default,omitempty"`
 
 	// Evidence Why the request as a whole is believed, for claims that belong to no single field.
 	Evidence *[]Evidence `json:"evidence,omitempty"`
+
+	// Extends Another ask this one departs from, by identifier. Only for one that genuinely is a small change: asks that differ at the amplifier are siblings rather than deltas.
+	//
+	// An ask carries no identifier of its own. A stored one is named by its file, because a filename already is an identifier and carrying both is carrying something that can disagree with itself.
+	Extends *string `json:"extends,omitempty"`
 
 	// Gear Gear the request names, when somebody wants a particular thing rather than a particular sound.
 	Gear *[]Wanted `json:"gear,omitempty"`

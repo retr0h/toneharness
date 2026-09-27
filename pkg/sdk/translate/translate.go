@@ -594,6 +594,41 @@ func unresolved(
 				"this builds a first answer, so there is nothing to move from",
 		})
 	}
+
+	corrected(spec, notes)
+}
+
+// corrected reports a correction history this rebuild does not carry.
+//
+// A correction's changed paths point into the plan it was made against, and
+// this builds a new one from the ask. So the settings a correction arrived at
+// are not in the answer, and the entries are worth reading out rather than
+// sitting in the file unmentioned: they are the only record of what somebody
+// heard, and the reason a knob was where it was.
+//
+// An entry with no verdict is the one that matters most. It has been built and
+// not yet listened to, which is the state a person needs shown rather than
+// left to be rediscovered.
+func corrected(
+	spec tone.Spec,
+	notes *Notes,
+) {
+	if spec.Corrections == nil {
+		return
+	}
+
+	for _, was := range *spec.Corrections {
+		said := "corrected before, and this rebuild does not replay it"
+		if was.Verdict != nil && *was.Verdict != "" {
+			said = fmt.Sprintf("heard as %q, and this rebuild does not "+
+				"replay it", *was.Verdict)
+		} else if was.Changed != nil && len(*was.Changed) > 0 {
+			said = fmt.Sprintf("%d setting(s) moved for it and nobody has "+
+				"said what it sounded like", len(*was.Changed))
+		}
+
+		*notes = append(*notes, Note{About: was.Ask, Said: said})
+	}
 }
 
 // lookup finds a block by the name a person uses.

@@ -70,7 +70,6 @@ func (s *ValidatePublicTestSuite) TestValidate() {
 				r.Chain[0].Settings = settings(0)
 				r.Chain[0].Settings.Treble = knob(1)
 				r.Chain[0].Evidence = &[]rig.Evidence{{Kind: rig.EvidenceCited}}
-				r.Mutations = &[]rig.Mutation{{Ask: "make it clunkier"}}
 			},
 		},
 		{
@@ -150,13 +149,6 @@ func (s *ValidatePublicTestSuite) TestValidate() {
 				r.Chain[0].Evidence = &[]rig.Evidence{{Kind: "vibes"}}
 			},
 			field: "chain[0].evidence[0].kind",
-		},
-		{
-			name: "a correction that records no request",
-			mutate: func(r *rig.Spec) {
-				r.Mutations = &[]rig.Mutation{{Ask: "  "}}
-			},
-			field: "mutations[0].ask",
 		},
 	}
 

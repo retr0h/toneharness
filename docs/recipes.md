@@ -471,8 +471,14 @@ lights an amp red and a delay green without anybody setting anything.
 
 ## Record what you thought of it
 
+This one goes on the ask, not on the rig. A correction is a round of asking, and
+the rig holds the settings it arrived at without saying why they are what they
+are. So it lives in the ToneSpec, beside the words that started it, and
+`tonestack tone build` reads the history out:
+
 ```yaml
-mutations:
+schema: ToneSpec
+corrections:
   - ask: make it clunkier
     changed:
       - { path: chain[1].settings.drive, from: 0.47, to: 0.58 }
@@ -594,9 +600,9 @@ order in the chain. A preset can hold `block5` whose position is 6.
 ## What none of this can tell you
 
 Whether it sounds right. That is a person with the preset loaded, and the answer
-belongs in `mutations` so the next round starts from it rather than from
-nothing. [knowledge.md](knowledge.md) explains why the architecture is shaped
-around that.
+belongs in the ask's `corrections` so the next round starts from it rather than
+from nothing. [knowledge.md](knowledge.md) explains why the architecture is
+shaped around that.
 
 ## What a rig keeps
 

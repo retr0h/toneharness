@@ -455,20 +455,20 @@ func (s *MainTestSuite) TestEveryGeneratedPageIsLeftOutOfTheFormatter() {
 	}
 }
 
-// knownUnread is every RigSpec field no file names, on purpose.
+// knownUnread is every contract field no file names, on purpose.
 //
-// One, currently. `mutations` records what a round of correction changed and
-// what somebody made of the result, which is a history nothing replays yet.
-// It is #135's to move into a ToneSpec or to wire up.
+// None, currently. `mutations` was the last one: #135 moved it onto the
+// ToneSpec as `corrections` and `tone build` reads it out, because a rebuild
+// does not replay a correction and that is worth saying rather than leaving to
+// be rediscovered.
 //
-// The list is here rather than absent so it stays a decision. A field that
-// leaves it without gaining a reader fails, and so does a field added to the
-// contract that quietly reaches nothing.
-var knownUnread = map[string]string{
-	"Mutations": "#135: what a correction changed, and what somebody made of it",
-}
+// The map is here rather than absent so an exemption stays a decision. A field
+// that leaves it without gaining a reader fails, a field added to the contract
+// that quietly reaches nothing fails, and so does an entry naming a field
+// neither contract declares any more.
+var knownUnread = map[string]string{}
 
-// TestEveryRigSpecFieldReachesSomething holds the contract to what it builds.
+// TestEveryContractFieldReachesSomething holds each contract to what it builds.
 //
 // John asked for this as a verification: "everything in rigspec needs to turn
 // into an action". Performed by hand it found `requires`, a field describing
@@ -489,9 +489,25 @@ var knownUnread = map[string]string{
 //
 // Which of the fields it passes are read as themselves is #135's audit, and
 // that one wants a person rather than a test.
-func (s *MainTestSuite) TestEveryRigSpecFieldReachesSomething() {
-	fields := s.rigSpecFields()
+//
+// Both hand-authored contracts, not just the rig. #135 moves what a person
+// writes onto the ToneSpec, so a field that reaches nothing is a thing that
+// can now happen on either of them, and a guard on one of the two is a guard
+// on whichever half the next field did not land in.
+func (s *MainTestSuite) TestEveryContractFieldReachesSomething() {
+	fields := append(
+		s.contractFields("rig", "rigspec.gen.go", "RigSpec"),
+		s.contractFields("tone", "tonespec.gen.go", "ToneSpec")...)
 	s.Require().NotEmpty(fields)
+
+	// An exemption for a field neither contract declares is a note about
+	// something that no longer exists, and it silently stops guarding
+	// anything: the loop below only visits fields that are still there.
+	for name := range knownUnread {
+		s.Require().Contains(fields, name,
+			"knownUnread names %s, which neither contract declares any more. "+
+				"Take the entry out.", name)
+	}
 
 	var body strings.Builder
 
@@ -529,33 +545,35 @@ func (s *MainTestSuite) TestEveryRigSpecFieldReachesSomething() {
 		switch {
 		case got && expected:
 			s.Require().Fail("a field gained a reader and is still listed as dead",
-				"RigSpec.%s is read now, so take it out of knownUnread (%s)",
+				"%s is read now, so take it out of knownUnread (%s)",
 				name, why)
 		case !got && !expected:
 			s.Require().Fail("a field in the contract reaches nothing",
-				"RigSpec.%s is named by no file that builds anything. Either "+
+				"%s is named by no file that builds anything. Either "+
 					"make it do something, take it out of the contract, or "+
 					"add it to knownUnread saying which task carries it.", name)
 		}
 	}
 }
 
-// rigSpecFields is every field the generated RigSpec type declares.
+// contractFields is every field one generated contract type declares.
 //
 // Read off the generated type rather than the contract, because the contract
 // says `snapshots` and the code says `Snapshots`, and the rule turning one
 // into the other belongs to the generator rather than to this test.
-func (s *MainTestSuite) rigSpecFields() []string {
-	at := filepath.Join("pkg", "sdk", "rig", "internal", "gen", "rigspec.gen.go")
+func (s *MainTestSuite) contractFields(
+	pkg, file, kind string,
+) []string {
+	at := filepath.Join("pkg", "sdk", pkg, "internal", "gen", file)
 
-	file, err := parser.ParseFile(token.NewFileSet(), at, nil, 0)
+	parsed, err := parser.ParseFile(token.NewFileSet(), at, nil, 0)
 	s.Require().NoError(err)
 
 	var out []string
 
-	ast.Inspect(file, func(n ast.Node) bool {
+	ast.Inspect(parsed, func(n ast.Node) bool {
 		spec, ok := n.(*ast.TypeSpec)
-		if !ok || spec.Name.Name != "RigSpec" {
+		if !ok || spec.Name.Name != kind {
 			return true
 		}
 
@@ -726,6 +744,7 @@ var coversAConcern = map[string]string{
 	"pkg/sdk/preset/fidelity_public_test.go":                  "a preset read and written back unchanged",
 	"pkg/sdk/rig/coverage_public_test.go":                     "how much of the contract the shipped rigs use",
 	"pkg/sdk/rig/shipped_public_test.go":                      "every rig that ships, validated",
+	"pkg/sdk/tone/shipped_public_test.go":                     "every worked example, read with the loader it names",
 }
 
 // TestEveryTestFileIsNamedForWhatItCovers holds the rule CONTRIBUTING gives a

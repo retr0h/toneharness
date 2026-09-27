@@ -13,8 +13,14 @@ That last step is the one people skip and the only one that cannot be recovered
 later. A catalog can be regenerated next year; nobody can go back and ask
 themselves what they thought of round three.
 
+It goes on the ask rather than on the rig. A correction is a round of asking:
+the rig holds the settings it arrived at, and only the ask can say what was
+wanted and what came of it. `tonestack tone build` reads the history back out,
+and says that a rebuild does not replay it.
+
 ```yaml
-mutations:
+schema: ToneSpec
+corrections:
   - ask: make it clunkier
     changed:
       - { path: chain[1].settings.drive, from: 0.47, to: 0.58 }

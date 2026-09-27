@@ -54,7 +54,6 @@ A rig, complete. Sparse when hand-written; the same document carries settings an
 | `footswitches` | list of Footswitch | — | [Footswitch](#footswitch) |
 | `id *` | string | shaped | `^[a-z0-9]+(-[a-z0-9]+)*$` |
 | `instrument *` | string | closed | `guitar`, `bass` |
-| `mutations` | list of Mutation | — | [Mutation](#mutation) |
 | `played` | list of Played | — | [Played](#played) |
 | `schema *` | string | closed | `RigSpec` |
 | `sections` | list of Section | — | [Section](#section) |
@@ -83,16 +82,6 @@ One piece of gear, in signal order.
 | `settings` | Settings | — | [Settings](#settings) |
 | `stage` | boolean | — | `true` or `false` |
 | `substitute` | Substitute | — | [Substitute](#substitute) |
-
-## Change
-
-One field a mutation moved.
-
-| field | holds | grammar | allowed |
-| --- | --- | --- | --- |
-| `from` | any | open | — |
-| `path *` | string | shaped | `^[a-z]+(\[\d+\])?(\.[a-zA-Z_][a-zA-Z0-9_]*(\[\d+\])?)*$` |
-| `to` | any | open | — |
 
 ## CharacterTerm
 
@@ -163,18 +152,6 @@ One thing a switch on the pedal does.
 | `primary` | boolean | — | `true` or `false` |
 | `rest` | map of any | open | — |
 | `switch` | integer | shaped | `1` or more |
-
-## Mutation
-
-One round of correction, and what a person made of the result.
-
-| field | holds | grammar | allowed |
-| --- | --- | --- | --- |
-| `ask *` | string | shaped | `\S` |
-| `at` | string | shaped | `^\d{4}-\d{2}-\d{2}$` |
-| `changed` | list of Change | — | [Change](#change) |
-| `reason` | string | open | — |
-| `verdict` | string | open | — |
 
 ## Played
 

@@ -246,37 +246,3 @@ controllers:
     # Snapshots leave this alone, so the pedal stays where your foot put it
     # when the snapshot changes underneath it.
     no_snapshot: true
-
-# What was asked for, what changed, and what it sounded like.
-#
-# This is the only place in the whole system a human ear is written down.
-# Everything else is a measurement or an assertion. A verdict cannot be
-# recovered later if it is not captured when it happens, which is why the
-# field exists before there is much to put in it.
-#
-# Append-only, and never replayed: `chain` above always holds the current
-# state. An entry with no verdict has not been listened to yet.
-mutations:
-  - at: "2026-09-06"
-    ask: make it clunkier
-    changed:
-      - path: chain[1].settings.drive
-        from: 0.47
-        to: 0.58
-    # Why the ask was read this way, cited. If the reading was wrong, this is
-    # the line that shows it — rather than only that the value was wrong.
-    reason: >-
-      Line 6 document Sag as "lower values offer tighter responsiveness…
-      higher values provide more touch dynamics & sustain", and Bias X as "set
-      low for a tighter feel". Read "clunky" as a looser power-amp feel rather
-      than more gain, so the drive moved and the feel followed it.
-    verdict: closer, but muddy now — keep the feel, put the drive back
-
-  - at: "2026-09-06"
-    ask: put the drive back
-    changed:
-      - path: chain[1].settings.drive
-        from: 0.58
-        to: 0.47
-    reason: reverting the previous round on the player's judgement
-    # No verdict yet. That is state, not a gap: nobody has heard it.

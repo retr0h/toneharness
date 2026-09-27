@@ -381,15 +381,6 @@ type ChainEntry struct {
 	Substitute *Substitute `json:"substitute,omitempty"`
 }
 
-// Change One field a mutation moved.
-type Change struct {
-	From interface{} `json:"from,omitempty"`
-
-	// Path What moved, as a path into this document — "chain[1].settings.drive".
-	Path string      `json:"path"`
-	To   interface{} `json:"to,omitempty"`
-}
-
 // CharacterTerm One thing a rig should sound like, and why that is believed.
 //
 // Describe the result rather than the control: "mid-forward, not scooped", never "raise the mids". Where the treble knob sits is a fact about somebody's amplifier; how the record came out is a fact about the sound, and only the second survives being read on other gear.
@@ -603,26 +594,6 @@ type Kind string
 // Scaled onto the control when the preset is written, so 0.5 is halfway up whether the device counts 0 to 1, -12 to 12 or 20 to 20000.
 type Knob = float64
 
-// Mutation One round of correction, and what a person made of the result.
-//
-// This is the only place a human ear's judgement is written down. Nothing in this system can hear; every other input is a measurement or an assertion. A verdict is the one piece of information that cannot be recovered later if it is not captured when it happens.
-//
-// Append-only, and never replayed: `chain` always holds the current state. Reconstructing a rig from its history would be more elegant and much worse to read, and a person reads this file.
-type Mutation struct {
-	// Ask What was asked for, in the words used. "Clunky" is not a parameter, and normalising it away loses the question.
-	Ask string `json:"ask"`
-
-	// At When, so a run of corrections can be read in order.
-	At      *string   `json:"at,omitempty"`
-	Changed *[]Change `json:"changed,omitempty"`
-
-	// Reason Why the ask was read that way, cited where possible. This is what lets a later reader see that the interpretation was wrong, rather than only that the value was.
-	Reason *string `json:"reason,omitempty"`
-
-	// Verdict What it sounded like. Absent means not yet evaluated, which is useful state rather than a gap.
-	Verdict *string `json:"verdict,omitempty"`
-}
-
 // Played The instrument itself, which no device models and every figure carries.
 //
 // A rig names an amplifier, a cabinet and pedals, and the thing making the sound is upstream of all of them. Jaco Pastorius reads a 259Hz centroid against 170Hz for the other players, and the reason is a fretless played near the bridge; Geddy Lee earns mid-forward on a Rickenbacker. Without this those belong to nothing, and a measured word moves an amplifier control that was never responsible for the figure.
@@ -703,8 +674,7 @@ type RigSpec struct {
 	ID string `json:"id"`
 
 	// Instrument Selects which half of a device's catalog is eligible. Line 6 tags every amp and cabinet Guitar or Bass; everything else serves either.
-	Instrument Instrument  `json:"instrument"`
-	Mutations  *[]Mutation `json:"mutations,omitempty"`
+	Instrument Instrument `json:"instrument"`
 
 	// Played The instruments the rig is played on, most used first.
 	//

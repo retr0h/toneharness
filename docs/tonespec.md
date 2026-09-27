@@ -47,8 +47,10 @@ A request for a sound, in whatever terms the person has.
 | --- | --- | --- | --- |
 | `aliases` | list of string | open | — |
 | `confidence` | string | closed | `low`, `medium`, `high` |
+| `corrections` | list of Correction | — | [Correction](#correction) |
 | `default` | boolean | — | `true` or `false` |
 | `evidence` | list of Evidence | — | [Evidence](#evidence) |
+| `extends` | string | open | — |
 | `gear` | list of Wanted | — | [Wanted](#wanted) |
 | `genre` | string | open | — |
 | `instrument` | string | closed | `bass`, `guitar` |
@@ -60,6 +62,28 @@ A request for a sound, in whatever terms the person has.
 | `subject` | Subject | — | [Subject](#subject) |
 | `technique` | Technique | — | [Technique](#technique) |
 | `words` | list of string | open | — |
+
+## Change
+
+One field a correction moved.
+
+| field | holds | grammar | allowed |
+| --- | --- | --- | --- |
+| `from` | any | open | — |
+| `path *` | string | shaped | `^[a-z]+(\[\d+\])?(\.[a-zA-Z_][a-zA-Z0-9_]*(\[\d+\])?)*$` |
+| `to` | any | open | — |
+
+## Correction
+
+One round of correction, and what a person made of the result.
+
+| field | holds | grammar | allowed |
+| --- | --- | --- | --- |
+| `ask *` | string | shaped | `\S` |
+| `at` | string | shaped | `^\d{4}-\d{2}-\d{2}$` |
+| `changed` | list of Change | — | [Change](#change) |
+| `reason` | string | open | — |
+| `verdict` | string | open | — |
 
 ## Device
 

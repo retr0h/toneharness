@@ -77,8 +77,6 @@ type (
 	Substitute = gen.Substitute
 	// Target is the hardware a rig was written for.
 	Target = gen.Target
-	// Mutation is a change somebody made and why.
-	Mutation = gen.Mutation
 	// Controller is a parameter an expression pedal or footswitch moves.
 	Controller = gen.Controller
 	// Footswitch is what a switch does and how it is lit.

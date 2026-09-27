@@ -38,7 +38,8 @@ since it was written.
 ### To the ToneSpec
 
 `subject`, `aliases`, `default`, `extends`, `character`, `technique`, `played`,
-`confidence`, `mutations`, and the document's own top-level `evidence`.
+`confidence`, `corrections` (was `mutations`), and the document's own top-level
+`evidence`.
 
 These are what a person wrote and why. Counting what reads them was instructive
 and is not the argument: `aliases` is how a rig is found by another name,
@@ -49,9 +50,9 @@ the ask should be doing.
 Most of them are already there. ToneSpec was written with `subject`, `aliases`,
 `default`, `confidence`, `played`, `technique` and `evidence` on it, so the
 contract work is done and what remains is taking them off RigSpec and moving the
-readers. `extends` and `mutations` are the two ToneSpec does not carry yet, and
-they are added when something reads them rather than before, which is the rule
-`requires` broke.
+readers. `extends` and `corrections` are the two ToneSpec did not carry, and
+each is added when something reads it rather than before, which is the rule
+`requires` broke. `corrections` is there now, with its reader.
 
 `character` and `technique` are the two that also reach the compiler, in
 `compile/move.go` and `compile/demand.go`. They move with the rest and the
@@ -59,8 +60,16 @@ compiler stops reading them, because resolving a word into a knob position is
 the translation step's job and doing it twice is how the two answers drift. This
 is the same argument the measurement code already lost once, in two languages.
 
-`mutations` is read nowhere at all. It moves rather than going, because a record
-of what a correction changed is a record about the ask.
+`mutations` was read nowhere at all. It moves rather than going, because a
+record of what a correction changed is a record about the ask, and it is called
+`corrections` on the other side: the field is being moved anyway, and
+"correction" is the word the workflow page and everybody using it already use.
+
+Moving it gave it the reader the rule above asks for. `tone build` reads the
+history out, and says of each entry that this rebuild does not replay it. That
+is true and not obvious. A correction's paths point into the plan it was made
+against, and a rebuild makes a new one. An entry with no verdict is the one
+worth surfacing, because it has been built and not yet listened to.
 
 ### Where the words are resolved, corrected again
 
