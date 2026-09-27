@@ -5,8 +5,8 @@ Answers "make my bass sound like Dookie" without guessing at the gear.
 ## Install
 
 ```
-/plugin marketplace add retr0h/tonestack
-/plugin install build-a-rig@tonestack
+/plugin marketplace add retr0h/toneharness
+/plugin install build-a-rig@toneharness
 ```
 
 Or copy `.claude/skills/build-a-rig/` into any checkout.

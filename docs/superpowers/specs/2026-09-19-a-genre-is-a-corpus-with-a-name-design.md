@@ -222,6 +222,60 @@ apart and has never been able to close.
 The first two need no hardware. The last needs what
 [measuring.md](../../measuring.md) describes, which now works.
 
+### Items 1 and 2 are built, corrected 2026-09-27
+
+Genres are on records, with `genres_by` beside them saying whether a model or a
+person decided each set. That field is not in the plan above and should have
+been: a tag nobody checked and a tag somebody overruled are worth different
+amounts and look identical once both are a word in a list.
+
+The displacement is built, and what it ships in is worth recording. The audio
+cannot travel, so `pkg/sdk/audio/data/genres.json` carries what each genre
+measured as, written by a generator `just generate` runs and read by `go:embed`.
+Asking for a genre therefore costs no audio, which is the same split the preset
+corpus already used.
+
+### A genre cannot use the rule a player uses, corrected 2026-09-27
+
+Item 2 above says "measured the way a player's is". That does not work, and the
+reason is structural rather than a threshold anybody can tune.
+
+A player earns a word where their whole spread sits outside the middle half of
+the others. That suits three or four records by one person. A genre pools
+several players, so its spread runs two to three times wider: measured on this
+corpus, 64 to 92Hz of centroid against 17 to 41Hz for a player. A spread that
+wide cannot sit clear of anything, so the player's rule earned every genre
+nothing whatever the figures said.
+
+John settled the replacement on 2026-09-27: a genre's **middle** against the
+others' middle half, carrying the margin. Still displacement, and it no longer
+demands that every punk record be extreme.
+
+### What the three genres actually earn
+
+The section above hoped adjacency would make a harder test. It did, and the
+answer is more interesting than expected:
+
+| genre    | records | players | earns                                          |
+| -------- | ------- | ------- | ---------------------------------------------- |
+| grunge   | 9       | 3       | `scooped` (0.01 v 0.06), `clean` (0.13 v 0.24) |
+| pop-punk | 9       | 3       | `clean` (0.17 v 0.23)                          |
+| punk     | 12      | 4       | nothing                                        |
+
+Punk has the most records and the most players of the three and earns nothing:
+it sits inside the middle half of non-punk bass on every axis. This record asked
+for that finding early, in "if punk and pop-punk cannot be separated in the nine
+figures, that is worth knowing early", and the answer is that punk cannot be
+separated from bass in general at all.
+
+So the threshold says a genre has enough behind it, never that it sounds like
+anything in particular. Those are two claims and the tool now reports both
+separately: `measure genres` prints "a genre" against grunge and "sets nothing
+apart" against punk.
+
+pop-punk's `clean` sits 0.01 past the line, which is the weak case the margin
+exists to expose rather than a result to lean on.
+
 ## Related
 
 - [measuring.md](../../measuring.md), the loop this leans on

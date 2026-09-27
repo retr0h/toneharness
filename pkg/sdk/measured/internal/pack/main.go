@@ -20,7 +20,7 @@
 
 // Command pack puts a measured library into the form the sdk embeds.
 //
-// The readings are taken by `tonestack measure blocks` and land in
+// The readings are taken by `toneharness measure blocks` and land in
 // resources/sweeps/, which is where somebody looks at them. This is the step
 // that gets them into the binary, and it goes through the same reader the
 // binary uses, so a library that will not load is refused here rather than at
@@ -36,7 +36,7 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 )
 
 func main() {

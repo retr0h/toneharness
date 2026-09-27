@@ -25,14 +25,14 @@ treating the failure as real.
 
 ### Running the CLI itself
 
-Every page here writes commands as `tonestack ...`, which is how somebody with
+Every page here writes commands as `toneharness ...`, which is how somebody with
 it installed runs them. From a checkout, run the source:
 
 ```bash
-go run main.go recipes records --corpus resources/music/bass
+go run main.go rigs records --corpus resources/music/bass
 ```
 
-Use an installed `tonestack` only if you have one. It is a release, so it does
+Use an installed `toneharness` only if you have one. It is a release, so it does
 not have a command added on the branch you are working on, and reporting that a
 command "does not exist yet" when it was added an hour ago is what happens
 otherwise.
@@ -55,27 +55,39 @@ has to have finished before it is opened.
 
 ## Finding your way around the domain
 
-[docs/](docs/) covers what the code is *for*, which is not derivable from the
-code. Read the one that matches the task rather than all of them:
+**How to do anything here is in [.claude/skills/](.claude/skills/)**, and each
+skill is authoritative for its own domain. Five of them, self-contained and
+separately installable, so nothing is stated in two of them:
 
-| Task                                                                                                       | Read                                                                                                                                                                                               |
-| ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Somebody asks how to use it, or for help doing something**: build a rig, read a device, correct a preset | [docs/workflows.md](docs/workflows.md), the usage guide: step-by-step, linking onward to whichever reference it needs                                                                              |
-| Which commands and flags exist                                                                             | [docs/commands.md](docs/commands.md), generated from the CLI and never hand-edited                                                                                                                 |
-| Which tools an agent gets over MCP, and which of them write                                                | [docs/mcp.md](docs/mcp.md), generated from the registered tools and never hand-edited                                                                                                              |
-| Understanding why any of this is shaped as it is                                                           | [docs/knowledge.md](docs/knowledge.md), how a request becomes a signal chain and which of the four problems is unsolved                                                                            |
-| Writing or changing a rig, and the ask beside it                                                           | [docs/recipes.md](docs/recipes.md), with [examples/rigspec/mike-dirnt.yaml](examples/rigspec/mike-dirnt.yaml) and [examples/tonespec/mike-dirnt.yaml](examples/tonespec/mike-dirnt.yaml) beside it |
-| **What somebody may ask for**: the two documents a person writes                                           | [docs/tonespec.md](docs/tonespec.md), generated from the contract and never hand-edited                                                                                                            |
-| **Which words an ask may use**: what each one moves, and what moves nothing                                | [docs/vocabulary.md](docs/vocabulary.md), generated from the vocabulary and never hand-edited                                                                                                      |
-| **Whether a field may say a thing**: what is allowed, and what is refused                                  | [docs/rigspec.md](docs/rigspec.md), generated from the contract and never hand-edited                                                                                                              |
-| Anything touching models, parameters or DSP cost                                                           | [docs/catalog.md](docs/catalog.md)                                                                                                                                                                 |
-| Reading or writing a `.hlx`                                                                                | [docs/preset-format.md](docs/preset-format.md)                                                                                                                                                     |
-| Reading or editing what a device holds                                                                     | [docs/device.md](docs/device.md)                                                                                                                                                                   |
-| Touching USB                                                                                               | [docs/protocol.md](docs/protocol.md), **including the rules that keep a device alive**                                                                                                             |
-| Pushing audio through a pedal and measuring what comes back                                                | [docs/measuring.md](docs/measuring.md), the USB channel map, the Input block enum, and what is not working yet                                                                                     |
-| **What a control actually does**: the measured figures, per control                                        | [docs/measurements.md](docs/measurements.md), generated from the readings and never hand-edited                                                                                                    |
-| Turning a request into knob positions                                                                      | [docs/algorithm.md](docs/algorithm.md), why nothing searches the space, and what a target is                                                                                                       |
-| Changing the shape of the system                                                                           | [docs/superpowers/specs/](docs/superpowers/specs/), dated design records, superseded rather than rewritten                                                                                         |
+| Skill              | Owns                                                                      |
+| ------------------ | ------------------------------------------------------------------------- |
+| `build-a-rig`      | research, citing gear, resolving an ask, tuning after hearing it          |
+| `write-a-spec`     | every field on the two contracts, and which document a fact belongs in    |
+| `measure-a-device` | the reference signal, sweeps, what a control does, trusting a catalog     |
+| `measure-music`    | growing a corpus, measuring records, players and genres, deriving words   |
+| `work-a-device`    | reading and writing what a pedal holds, and the rules that keep one alive |
+
+Read the skill that matches the task. Do not read all five, and do not restate
+one skill's knowledge in another: that is the duplication the split exists to
+prevent.
+
+Three things are not in a skill, on purpose:
+
+| Task                             | Read                                                                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| What is built and what is not    | [docs/knowledge.md](docs/knowledge.md), the status board and why the evaluator is a person                                           |
+| Changing the shape of the system | [docs/superpowers/specs/](docs/superpowers/specs/), dated design records, superseded rather than rewritten                           |
+| Talking to a device over USB     | [`pkg/sdk/internal/wire/README.md`](pkg/sdk/internal/wire/README.md), the reverse-engineered framing, beside the code that speaks it |
+
+And four questions answer themselves from the tool rather than from any page:
+
+| Question                                  | Ask                                                                                      |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Which commands and flags exist            | `go run main.go --help`, which compiles the tree. Never a list written down              |
+| Which tools an agent gets over MCP        | the running server advertises them. Start it and read what it offers                     |
+| What a field may say, and what is refused | the two contracts' `description:` fields                                                 |
+| Which words an ask may use                | [`words.json`](pkg/sdk/internal/compile/data/words.json), which is the vocabulary itself |
+| What a control actually does              | [resources/sweeps/](resources/sweeps/), the readings themselves                          |
 
 There are two contracts, each embedded in the package that reads it.
 [`pkg/sdk/tone/data/tonespec.openapi.yaml`](pkg/sdk/tone/data/tonespec.openapi.yaml)
@@ -114,8 +126,12 @@ so it is one list across sessions rather than one per session. See
   in a reply. A sentence in a reply is gone after the next session.
 - When a pull request finishes something [docs/knowledge.md](docs/knowledge.md)
   marks not built or partly built, update that line in the same pull request,
-  and say so in its description. That page is how the next session learns what
+  and say so in its description. That table is how the next session learns what
   exists, and it fell three features behind when nobody did.
+- When a pull request changes behaviour a skill describes, update that skill in
+  the same pull request. One skill owns each fact, so there is exactly one file
+  to change, and a skill that has drifted is worse than no skill: it is
+  confident and wrong.
 
 If `TaskCreate` is not available, the tools are off. Say so instead of carrying
 on without them.

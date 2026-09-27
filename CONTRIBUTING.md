@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to tonestack.
+Thanks for contributing to toneharness.
 
 ## Before you start
 
@@ -10,7 +10,7 @@ Thanks for contributing to tonestack.
   the feature/change you want to make? Please make sure you consider/address
   these discussions in your work.
 - **Backwards compatibility.** Will your change break existing consumers of
-  tonestack? It is much more likely that your change will be merged if it is
+  toneharness? It is much more likely that your change will be merged if it is
   backwards compatible. Is there an approach you can take that maintains this
   compatibility? If not, consider opening an issue first so that API changes can
   be discussed before you invest your time into a PR.
@@ -32,8 +32,8 @@ mise install
   Nothing is installed into the repository: `uvx` fetches a tool, runs it and
   leaves. See [The language is Go](#the-language-is-go) for when that is
   allowed, which is rarely.
-- **[ffmpeg].** Converts a recording to the WAV that `tonestack measure` reads.
-  Only needed if you are measuring audio. `brew install ffmpeg`.
+- **[ffmpeg].** Converts a recording to the WAV that `toneharness measure`
+  reads. Only needed if you are measuring audio. `brew install ffmpeg`.
 - **[just].** Task runner used for building, testing, formatting, and other
   development workflows. Install with `brew install just`.
 - **[Node] 18 or newer.** Only for the optional Reddit MCP server described
@@ -123,13 +123,11 @@ pkg/sdk/result/      what every operation answers with
 pkg/sdk/tone/        ToneSpec and Setup: the request, and what somebody owns
 pkg/sdk/tone/internal/
   gen/               Go types generated from the contract
-  specdoc/           writes docs/tonespec.md from the contract
 pkg/sdk/translate/   a request and a setup become a rig
 pkg/sdk/rig/         RigSpec, its contract in data/, and its validation
 pkg/sdk/rig/internal/
   gen/               Go types generated from the contract
-  specdoc/           writes docs/rigspec.md from the contract
-pkg/sdk/rigs/        curated rigs: which gear a player uses
+pkg/sdk/shipped/     curated rigs: which gear a player uses
 pkg/sdk/plan/        a resolved chain: what compile produces and editor reads
 pkg/sdk/catalog/     what a device can do: blocks, parameters, DSP costs
 pkg/sdk/corpus/      what real presets say about a device, measured
@@ -147,7 +145,7 @@ pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
   fileslots/         reading and editing the slots in a .hls, .hlb or .hlx
   deviceslots/       reading and editing the slots on an attached device
   backup/            what a device slot held, kept before a write replaces it
-  presets/  recipes/ building and compiling a preset, and the rigs to build from
+  presets/  rigs/    building and compiling a preset, and the rigs to build from
   attached/          listing what is on the bus
   catalogview/  corpusview/    reading the catalog and the measurements
   catalogen/  corpusgen/       generating the catalog and the measurements
@@ -158,7 +156,8 @@ pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
   wire/              the framing a device speaks. Pure Go, no hardware needed.
 resources/
   schemas/           the generated catalog, the gear map, the preset corpus
-docs/                how the format, catalog and generation work
+.claude/skills/      how to do each job. Five skills, each self-contained
+docs/                what is built and what is not, and the design records
 .github/workflows/   CI
 ```
 
@@ -223,13 +222,13 @@ packages are the nouns it takes and hands back.
 `sdk.New()` with no options uses the built-in catalog and statistics, the rigs
 that ship, and whatever device is on the USB bus. Anything that describes the
 Client rather than one call is an option: `WithCatalog`, `WithStats`,
-`WithRecipes`, `WithUserRecipes`, `WithBackupDir`, `WithCapture` and
-`WithTrace`. `WithUserRecipes` layers a directory over the rigs that ship, and
-the program resolves where that directory is, as `cmd` does from
-`XDG_DATA_HOME`. Every method takes a `context.Context` first. The library reads
-no environment variable except `XDG_STATE_HOME`, so a program that wants
-`TONESTACK_USB_DUMP` or `TONESTACK_USB_DEBUG` reads them itself and passes a
-writer in, as `cmd` does.
+`WithRigs`, `WithUserRigs`, `WithBackupDir`, `WithCapture` and `WithTrace`.
+`WithUserRigs` layers a directory over the rigs that ship, and the program
+resolves where that directory is, as `cmd` does from `XDG_DATA_HOME`. Every
+method takes a `context.Context` first. The library reads no environment
+variable except `XDG_STATE_HOME`, so a program that wants `TONEHARNESS_USB_DUMP`
+or `TONEHARNESS_USB_DEBUG` reads them itself and passes a writer in, as `cmd`
+does.
 
 The Client's device methods each claim the pedal, handshake and let it go. For
 several operations in a row, `Client.Open` returns a `Session` that holds one
@@ -241,8 +240,8 @@ with no hardware. Its edits take an `out` path, because they always write a new
 file; a Session's edits take none, because they write the device and keep a
 backup. A standalone `.hlx` is read with `Client.PresetFile`. A slot is a
 `slot.Address` everywhere, and an export's format is a `Format`. The only input
-structs are `Filter`, `Compile`, `NewRecipe` and `ExtendRecipe`, and every field
-of each is read.
+structs are `Filter`, `Compile`, `NewRig` and `ExtendRig`, and every field of
+each is read.
 
 How each operation is done lives in `pkg/sdk/internal/`, where nothing outside
 the library can reach it. That is what keeps this list short, and what lets the
@@ -272,28 +271,47 @@ what a write keeps cannot come to depend on the transport.
 
 ## How the system works
 
-The domain lives in [docs/](docs/), not here. That covers turning a request into
-a signal chain, the preset format, and the device:
+**The domain lives in [.claude/skills/](.claude/skills/), not here.** Five
+skills, each authoritative for its own part and each installable on its own, so
+no fact is stated in two of them:
 
-- [docs/workflows.md](docs/workflows.md) is the usage guide: what to do, in
-  order, for the common tasks
-- [docs/commands.md](docs/commands.md) lists every command and flag, generated
-  from the CLI
-- [docs/knowledge.md](docs/knowledge.md) covers how a request becomes a signal
-  chain
-- [docs/recipes.md](docs/recipes.md) covers writing a rig, and the worked
-  example beside it
-- [docs/catalog.md](docs/catalog.md) covers what a device can do and where that
-  comes from
-- [docs/preset-format.md](docs/preset-format.md) covers how a `.hlx` file is
-  laid out
-- [docs/device.md](docs/device.md) covers reading and editing what a device
-  holds
-- [docs/protocol.md](docs/protocol.md) documents the USB protocol a device
-  speaks
+| Skill              | Owns                                                                      |
+| ------------------ | ------------------------------------------------------------------------- |
+| `build-a-rig`      | research, citing gear, resolving an ask, tuning after hearing it          |
+| `write-a-spec`     | every field on the two contracts, and which document a fact belongs in    |
+| `measure-a-device` | the reference signal, sweeps, what a control does, trusting a catalog     |
+| `measure-music`    | growing a corpus, measuring records, players and genres, deriving words   |
+| `work-a-device`    | reading and writing what a pedal holds, and the rules that keep one alive |
 
-Keep that split. A fact about the domain belongs in `docs/`; a fact about
-working on the project belongs here.
+Each is a slim `SKILL.md` that routes, with the detail in `references/` read
+only when the question calls for it. Read the skill that matches the task rather
+than all five.
+
+Four things sit outside them on purpose:
+
+- `toneharness <command> --help`, or `go run main.go --help` from a checkout,
+  lists every command and flag. **Nothing writes that down**, because the binary
+  is the only thing that cannot be out of date
+- [docs/knowledge.md](docs/knowledge.md) is the status board: what is built,
+  what is not, and why the evaluator is a person
+- Go doc on [`pkg/sdk/preset`](pkg/sdk/preset/) covers how a `.hlx` file is laid
+  out
+- [`pkg/sdk/internal/wire/README.md`](pkg/sdk/internal/wire/README.md) documents
+  the USB protocol a device speaks, beside the code that speaks it
+
+Keep that split. A fact about the domain belongs in the skill that owns it; a
+fact about working on the project belongs here.
+
+### A change to behaviour is a change to a skill
+
+When a pull request changes something a skill describes, it updates that skill
+in the same pull request. One skill owns each fact, so there is exactly one file
+to change, and a skill that has drifted is worse than no skill: it is confident
+and wrong.
+
+The same rule that keeps a list out of a skill decides where a fact goes. If the
+tool can print it, the skill says which command to run. If a person had to work
+it out, the skill says it, once, in the skill that owns it.
 
 ## Code style
 
@@ -378,9 +396,10 @@ nobody established it, so it needs no paragraph explaining the absence.
 
 Which sources are worth searching, what each is good for, and which look like
 sources and are not, is
-[Where to look](docs/workflows/create-a-rig-for-a-player.md#where-to-look-and-what-not-to-accept).
-Search that list rather than the open web. What the fields themselves mean is
-[docs/recipes.md](docs/recipes.md#say-where-each-claim-came-from).
+[sources.md](.claude/skills/build-a-rig/references/sources.md). Search that list
+rather than the open web. What the fields themselves mean is the contracts'
+`description:` fields, and where each one goes is
+[pair.md](.claude/skills/write-a-spec/references/pair.md).
 
 ### Changing a source is never one file
 
@@ -393,16 +412,18 @@ Changing which **records** back a player:
 1. Fetch the new audio under the manifest's own track name.
 2. Re-separate it with `just stems IN OUT bass`. An entry with no stem measures
    as nothing.
-3. Re-measure the player: `go run main.go measure --dir <stems>`.
+3. Re-measure the player: `go run main.go measure recordings --dir <stems>`.
 4. **Re-measure the whole corpus**:
-   `go run main.go measure --corpus resources/music/bass`. This is the step that
-   gets forgotten. A word is earned by sitting outside the middle half of the
-   *other* players, so one player's records moving moves the line everybody else
-   is judged against. Nine rigs can change because one record did.
-5. Update every `character` term whose `measured` and `against` figures moved,
-   in every rig rather than only the one whose records changed.
+   `go run main.go measure players --corpus resources/music/bass`. This is the
+   step that gets forgotten. A word is earned by sitting outside the middle half
+   of the *other* players, so one player's records moving moves the line
+   everybody else is judged against. Nine rigs can change because one record
+   did.
+5. Update every word on an ask whose `measured` and `against` figures moved, in
+   every pair rather than only the one whose records changed. A word the figures
+   no longer earn goes, unless something other than a measurement holds it up.
 6. Re-run the era check:
-   `go run main.go recipes records --corpus resources/music/bass`.
+   `go run main.go rigs records --corpus resources/music/bass`.
 
 Changing a **gear or instrument** claim:
 
@@ -412,9 +433,9 @@ Changing a **gear or instrument** claim:
 3. Anything else in the file that leaned on the old source. A citation is often
    quoted twice, for the amplifier and for the instrument, and correcting one
    while leaving the other is how a file ends up arguing with itself.
-4. `just generate` if the contract changed. [docs/rigspec.md](docs/rigspec.md)
-   and the Go types are compiled from `pkg/sdk/rig/data/rigspec.openapi.yaml`
-   and are never hand-edited.
+4. `just generate` if the contract changed. The generated Go types and the Go
+   types are compiled from `pkg/sdk/rig/data/rigspec.openapi.yaml` and are never
+   hand-edited.
 5. `go run main.go presets make --id <rig>` to confirm it still builds and the
    gear still resolves.
 
@@ -522,8 +543,8 @@ that question rather than how much quicker the script would be:
 - `just gear-map` reads the Pilot's Guide PDF, whose model-name column uses a
   subset-embedded font no Go library decodes.
 - `just stems` separates a bass part out of a finished record with [Demucs], a
-  trained model with no equivalent in Go. See
-  [Measure a player's sound](docs/workflows.md#measure-a-players-sound).
+  trained model with no equivalent in Go. See the
+  [measure-music](.claude/skills/measure-music/README.md) skill.
 - `just forum` and `just web` reach sites that refuse an ordinary fetch, one
   checking the TLS handshake and the other the user agent.
 
@@ -550,7 +571,7 @@ so which directory you run it from does not matter.
 
 ### Regenerating the catalog and corpus
 
-Nobody using tonestack does this. The catalog and the corpus statistics are
+Nobody using toneharness does this. The catalog and the corpus statistics are
 committed and embedded in the binary.
 
 `just generate`, which `just ready` runs, refreshes both through `go generate`.
@@ -760,8 +781,8 @@ building the second has to reproduce the first's chain, block for block and
 value for value. That runs without a device.
 
 ```bash
-TONESTACK_SCRATCH_SLOT=42C just test-device                    # 01A into 42C
-TONESTACK_SOURCE_SLOT=12B TONESTACK_SCRATCH_SLOT=42C just test-device
+TONEHARNESS_SCRATCH_SLOT=42C just test-device                    # 01A into 42C
+TONEHARNESS_SOURCE_SLOT=12B TONEHARNESS_SCRATCH_SLOT=42C just test-device
 ```
 
 Quit HX Edit first. It sits behind the `device` build tag, so `just test` and
@@ -890,7 +911,7 @@ If you have questions, open a [Discussion] on GitHub.
 [claude code]: https://claude.ai/code
 [conventional commits]: https://www.conventionalcommits.org
 [demucs]: https://github.com/adefossez/demucs
-[discussion]: https://github.com/retr0h/tonestack/discussions
+[discussion]: https://github.com/retr0h/toneharness/discussions
 [ffmpeg]: https://ffmpeg.org
 [go]: https://go.dev
 [gofumpt]: https://github.com/mvdan/gofumpt

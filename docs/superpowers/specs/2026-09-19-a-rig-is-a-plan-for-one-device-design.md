@@ -199,26 +199,45 @@ decided from the other side: "more drive" is a request and `drive: 0.7` is a
 plan. `models` was already keyed by device, so the contract has been
 half-expecting this since it was written.
 
+### Two of those stayed, corrected 2026-09-26
+
+`settings` and `sections` are still on the RigSpec, and the paragraph above is
+wrong about both.
+
+`settings` is not a knob position. It is seven words that mean roughly the same
+on any amplifier, and the compiler puts each on whichever control the model has
+for it. `drive: 0.7` under `settings` reaches a Drive or a Gain or neither, and
+a model with no control for it refuses the word. What #139 decided is that a rig
+may not name a device parameter, and `settings` names none. The device
+parameters, `Sag` and `Bias X` and the rest, are the ones that went, as
+`plan.Block.Params`.
+
+`sections` is what somebody plays: Verse, Chorus, a solo. `snapshots` are what a
+device stored. The two answer different questions and the contract already said
+so, so a rig keeps its sections and the compiler turns them into the plan's
+snapshots.
+
 ### A Plan is not a contract, corrected 2026-09-26
 
-An earlier draft called this layer a PlanSpec and had it arriving with an OpenAPI
-contract like the two above. It does not, and the pattern in the tree says why.
+An earlier draft called this layer a PlanSpec and had it arriving with an
+OpenAPI contract like the two above. It does not, and the pattern in the tree
+says why.
 
 Two packages here are contract-backed, `rig` and `tone`, and both are formats a
-person authors. Everything else that gets serialised is hand-written Go with json
-tags: `measured.Curves` is written into `resources/sweeps`, and so are `corpus`,
-`catalog` and `preset`, which is the `.hlx` document itself. Becoming a file is
-not what earns a contract. Being typed by somebody is.
+person authors. Everything else that gets serialised is hand-written Go with
+json tags: `measured.Curves` is written into `resources/sweeps`, and so are
+`corpus`, `catalog` and `preset`, which is the `.hlx` document itself. Becoming
+a file is not what earns a contract. Being typed by somebody is.
 
-A Plan is written by a driver and read back by the compiler. The nearest thing to
-it is `pkg/sdk/preset`, and that is the shape it takes: hand-written types with
-tags, and strict decoding so a misspelt field is refused rather than dropped,
-which is the one thing the contract would have bought.
+A Plan is written by a driver and read back by the compiler. The nearest thing
+to it is `pkg/sdk/preset`, and that is the shape it takes: hand-written types
+with tags, and strict decoding so a misspelt field is refused rather than
+dropped, which is the one thing the contract would have bought.
 
 Generating it would also have cost three things. `Params` is keyed to
-`catalog.ParamValue`, which has unexported fields and marshalling of its own, and
-`Attrs` holds `json.RawMessage`; `pkg/mcp/internal/tools/register.go` already
-hand-patches the schema for both because reflection cannot express them.
+`catalog.ParamValue`, which has unexported fields and marshalling of its own,
+and `Attrs` holds `json.RawMessage`; `pkg/mcp/internal/tools/register.go`
+already hand-patches the schema for both because reflection cannot express them.
 Generated optionals are pointers, which suits a document being unmarshalled and
 not an intermediate the compiler builds a block at a time. And the package holds
 `BlockLookup` and `Limits`, which are not document types at all.
@@ -304,3 +323,26 @@ stays a RigSpec-layer edit until somebody wants it.
 
 It does not build a second driver. It makes building one a day's work instead of
 a rewrite.
+
+### `target` says which device, not how somebody plays, corrected 2026-09-27
+
+`Target` carried `technique` as well as `device` and `catalog`. It no longer
+does.
+
+Two unlike things were in one field. Which hardware and which catalog release is
+the plan's business. How the person plays is authorial, and ToneSpec already had
+a top-level `technique` with the same three fields and its own evidence, so the
+claim had two homes.
+
+It had already drifted before anybody noticed the duplication. mike-dirnt's rig
+said `target.technique.attack: fingers`; its ask said `attack: pick`, backed by
+a 1994 Bass Player interview in which he answers "Do you always play with a
+pick?" with "Yeah". The rig's copy was deleted as stale on 2026-09-26, a day
+before anybody saw it was structural rather than a typo.
+
+John settled it on 2026-09-27: `technique` comes off `Target`, and ToneSpec is
+the only place how-somebody-plays is stated. Nothing read the plan's copy, so
+nothing moved with it; the `Technique` schema in rigspec.openapi.yaml was
+unreferenced after the change and went too, along with four dead type aliases
+and thirteen dead constants in `pkg/sdk/rig/types.go`. Nothing in the corpus
+stated it, so there was no migration.

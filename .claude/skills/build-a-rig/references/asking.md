@@ -6,16 +6,21 @@ Three documents. Two are written by a person.
 | ------------ | ------------------------------------ | -------------------------------- |
 | **Setup**    | what somebody owns                   | when they buy something          |
 | **ToneSpec** | what they want this time             | every request                    |
-| **RigSpec**  | what those two resolve to            | generated, never hand-written    |
+| **RigSpec**  | the gear those two resolve to        | every request, or hand-authored  |
 
 Folding the instrument into the ask would mean restating their bass in every
 request, and the twelfth one would contradict the first.
 
+A researcher writes a RigSpec by hand too, when the gear is the thing being
+established. What every field on either document may say, and which of the two it
+belongs on, is the `write-a-spec` skill's; this page is only how a request gets
+resolved.
+
 ## What a ToneSpec may say
 
-Every field is optional and any combination is legal. The grammar is generated
-from the contract and is the only authority:
-[docs/tonespec.md](../../../../docs/tonespec.md).
+Every field is optional and any combination is legal. The contract is the only
+authority: the `description:` fields in
+`pkg/sdk/tone/data/tonespec.openapi.yaml`.
 
 **It never carries a knob position.** Decided 2026-09-19. "More drive" is a
 request; `drive: 0.7` is a plan, and a number is only meaningful against a

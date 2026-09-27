@@ -1,11 +1,11 @@
 ---
 name: build-a-rig
 description: Turn what somebody says they want to sound like into a Line 6 Helix preset, with evidence at every step. Covers researching a player's real gear and citing it, writing a ToneSpec, resolving it to a rig, measuring a recording to choose an amplifier, putting a preset on the pedal, tuning live and exporting what worked. Use when asked to make something sound like an artist, a band, a record or a genre, to build or correct a rig or preset, to find out what gear somebody used, to measure a recording, or to get a tone onto a Helix.
-compatibility: Requires a tonestack checkout with mise available. Every command runs through `mise exec -- go run main.go`, never a bare `tonestack`.
+compatibility: Requires a toneharness checkout with mise available. Every command runs through `mise exec -- go run main.go`, never a bare `toneharness`.
 license: MIT
 metadata:
   author: retr0h
-  source: https://github.com/retr0h/tonestack
+  source: https://github.com/retr0h/toneharness
 ---
 
 # Build a rig
@@ -15,10 +15,24 @@ metadata:
 Every run, before naming any gear. The catalog is the only answer to what
 exists, and a model it does not carry does not exist:
 
+Start from the tree itself, then the group you need:
+
 ```bash
+mise exec -- go run main.go --help              # which groups exist
+mise exec -- go run main.go catalog --help      # what that group takes
 mise exec -- go run main.go catalog list --category amp --json
-mise exec -- go run main.go recipes list --json
+mise exec -- go run main.go rigs list --json
 ```
+
+`--help` on a checkout compiles the checkout, so it is the source's own answer
+rather than a description of it, and it shows the flags a parent registers that
+reading one file would miss. Read `cmd/` only to change a command, never to find
+out what one does.
+
+What a document may say is the contract, not a page about it:
+`pkg/sdk/tone/data/tonespec.openapi.yaml` and
+`pkg/sdk/rig/data/rigspec.openapi.yaml`. Their `description:` fields are the
+grammar, and the tool refuses a document that breaks it.
 
 Never work from a list written into this skill. The device carries 665 blocks
 across four models and Line 6 rename things between releases, so a list here
@@ -34,13 +48,14 @@ reading a terminal and they leave things out on purpose.
 | The user asks                                                    | Read                                                        |
 | ---------------------------------------------------------------- | ----------------------------------------------------------- |
 | "make it sound like X", "build me a rig", what gear somebody used | [references/research.md](references/research.md)            |
+| where to search for gear evidence, and what not to accept         | [references/sources.md](references/sources.md)              |
 | to write or change a request, a ToneSpec, a Setup                 | [references/asking.md](references/asking.md)                |
 | something too vague to build, or "what should I ask them?"        | [references/vague.md](references/vague.md)                  |
 | to measure a recording, or to choose gear by measuring            | [references/measuring.md](references/measuring.md)          |
 | to get it onto the pedal, or to read what the pedal holds         | [references/device.md](references/device.md)                |
-| to change a rig after hearing it                                  | [references/correcting.md](references/correcting.md)        |
+| to change a rig after hearing it, or what a target is             | [references/correcting.md](references/correcting.md)        |
 | anything touching claims, citations or evidence                   | [references/evidence.md](references/evidence.md)            |
-| all of it, in order                                               | All six, in that order                                      |
+| all of it, in order                                               | All eight, in that order                                    |
 
 ## 3. Say which claim you have
 

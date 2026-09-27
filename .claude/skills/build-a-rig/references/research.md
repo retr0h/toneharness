@@ -6,21 +6,9 @@ had to come out again.
 
 ## Where to look
 
-Search a list, not the open web.
-[Where to look, and what not to accept](../../../../docs/workflows/create-a-rig-for-a-player.md#where-to-look-and-what-not-to-accept)
-is that list, in rough order of how often each settles something. The short
-version: `web.archive.org` for dead magazines, forums for people who were
-there, and rig rundowns before video.
-
-Read the forums with the tooling, which handles what each site refuses:
-
-```bash
-mise exec -- just forum-search "mike dirnt american idiot bass rig"
-mise exec -- just forum "<a thread url>"
-```
-
-**A 429 from Reddit means wait, not that the thread is empty.** Those look
-identical and confusing them is the failure this project keeps having.
+Search a list, not the open web. [sources.md](sources.md) is that list, what
+each place is good for, the two that look like sources and are not, and the
+three ways a citation passes a careless check.
 
 ## What a source has to clear
 

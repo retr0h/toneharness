@@ -18,20 +18,13 @@ did not gather. **If you did not run it, say you did not run it.**
 ## Evidence travels with the claim
 
 Per claim, not per document: the amplifier may come from an interview and the
-drive figure from measuring a corpus. A chain entry keeps its own evidence, and
-that is deliberate — a published plan that cannot say why this amplifier is a
-plan nobody can check.
+drive figure from measuring a corpus. A chain entry keeps its own evidence for a
+reason: a published rig that cannot say why this amplifier is in it is a rig
+nobody can check.
 
-The kinds a claim may carry, and what each admits:
-
-| kind     | means                                                            |
-| -------- | ---------------------------------------------------------------- |
-| `cited`  | a source somebody opened, quoted                                 |
-| `heard`  | somebody listened                                                |
-| `audio`  | measured from a recording                                        |
-| `corpus` | derived from the measured corpus                                 |
-| `user`   | the owner said so                                                |
-| `llm`    | a model asserted it, with nothing behind it                      |
+The kinds a claim may carry, strongest first, are in the contract's
+`description:` fields. Read them there rather than from a list here, because the
+list has changed and a copy gives no sign when it goes stale.
 
 `kind: llm` is honest and weak. Use it rather than dressing an assertion as a
 citation, and say in `caveat` that it is not sourced to anything anybody
@@ -47,4 +40,5 @@ belongs in a task. An absent field already says nobody established it, so it
 needs no paragraph explaining the absence.
 
 Full standard: [Sourcing a rig](../../../../CONTRIBUTING.md#sourcing-a-rig).
-Field meanings: [docs/tonespec.md](../../../../docs/tonespec.md).
+Field meanings: the `description:` fields in
+`pkg/sdk/tone/data/tonespec.openapi.yaml`.

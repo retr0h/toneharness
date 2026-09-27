@@ -45,7 +45,7 @@ recording, a player this repository has, or any gear, run it:
 mise exec -- go run main.go tone build --ask request.yaml --json
 ```
 
-Check `recipes list` first: if they named a player who already ships, there is
+Check `rigs list` first: if they named a player who already ships, there is
 nothing to research.
 
 ## How many records are enough
