@@ -196,6 +196,88 @@ func (s *ReadPublicTestSuite) TestAWavHoldingNoSamples() {
 	s.Require().Equal(rate, gotRate)
 }
 
+// TestTheChunkedReadAgreesWithTheDecoder pins the speedup to the decoder it
+// replaced.
+//
+// Read decodes in chunks through a reused buffer instead of calling the
+// decoder's FullPCMBuffer, which is a 51x difference on the reference recording
+// and therefore worth having. It is only worth having if it reads the same
+// samples, and "the same" is not an assumption anybody should have to take on
+// trust in a project whose whole output is measurements.
+//
+// So this decodes every shipped recording both ways and holds the ten figures
+// against each other. The one difference it allows is the last frame: the
+// decoder's chunked reader stops one short of FullPCMBuffer on a file whose
+// samples do not divide evenly, which moves the reported duration by a
+// forty-four-thousandth of a second and moves no figure at all.
+func (s *ReadPublicTestSuite) TestTheChunkedReadAgreesWithTheDecoder() {
+	paths, err := filepath.Glob(
+		filepath.Join("..", "..", "..", "resources", "dry", "*.wav"))
+	s.Require().NoError(err)
+	s.Require().NotEmpty(paths, "no recordings to check against")
+
+	for _, at := range paths {
+		s.Run(filepath.Base(at), func() {
+			mine, rate := s.read(at)
+			theirs, alsoRate := s.viaFullPCMBuffer(at)
+
+			s.Require().Equal(alsoRate, rate)
+			s.Require().InDelta(len(theirs), len(mine), 1,
+				"a chunked read may stop one frame short and no further")
+
+			was := audio.Measure(theirs, alsoRate)
+			now := audio.Measure(mine, rate)
+
+			// The duration is the one thing a dropped frame moves, so it is
+			// bounded rather than matched. Two frames rather than one, because
+			// the difference is one frame and the bound on one frame fails by a
+			// floating point hair. The exact claim is the sample count above,
+			// which is integers and needs no slack.
+			s.Require().InDelta(was.Seconds, now.Seconds, 2/float64(rate))
+
+			// Everything else matched whole, not figure by figure, because the
+			// one that would drift unnoticed is the one nobody thought to name.
+			was.Seconds, now.Seconds = 0, 0
+			s.Require().Equal(was, now)
+		})
+	}
+}
+
+// viaFullPCMBuffer is what Read did before, kept here and nowhere else.
+//
+// A copy of the old body rather than a flag on the new one. Production has one
+// path, and the thing being compared against is the decoder's own behaviour
+// rather than a branch somebody could take by accident.
+func (s *ReadPublicTestSuite) viaFullPCMBuffer(
+	at string,
+) ([]float64, int) {
+	f, err := os.Open(at) //nolint:gosec // a path this repository ships
+	s.Require().NoError(err)
+
+	defer func() { s.Require().NoError(f.Close()) }()
+
+	dec := wav.NewDecoder(f)
+
+	buf, err := dec.FullPCMBuffer()
+	s.Require().NoError(err)
+
+	channels := buf.Format.NumChannels
+	full := math.Pow(2, float64(dec.BitDepth-1))
+
+	out := make([]float64, 0, len(buf.Data)/channels)
+
+	for i := 0; i+channels <= len(buf.Data); i += channels {
+		var sum float64
+		for c := range channels {
+			sum += float64(buf.Data[i+c]) / full
+		}
+
+		out = append(out, sum/float64(channels))
+	}
+
+	return out, buf.Format.SampleRate
+}
+
 func TestReadPublicTestSuite(
 	t *testing.T,
 ) {

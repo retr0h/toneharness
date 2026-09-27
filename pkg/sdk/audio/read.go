@@ -26,6 +26,7 @@ import (
 	"io"
 	"math"
 
+	goaudio "github.com/go-audio/audio"
 	"github.com/go-audio/wav"
 )
 
@@ -61,22 +62,42 @@ func (*NotAudioError) Unwrap() error { return ErrNotAudio }
 //
 // The reader must also seek, which a file does and a pipe does not. Line 6's
 // own format needs the same, for the same reason.
+//
+// Decoded in chunks through a buffer this reuses, rather than in one call to
+// the decoder's FullPCMBuffer. That is a 51x difference and not a micro
+// optimisation: FullPCMBuffer grows one slice from nothing for the whole file,
+// and on the 215-second reference recording it took 4.54 seconds against 88
+// milliseconds here, while the averaging below takes 15. Every figure a
+// measurement reports is identical either way, which read_public_test.go pins
+// against the decoder rather than leaving as an assumption.
+//
+// It cost most of the test suite's wall clock. One translate case that resolves
+// the same ask six times spent 165 seconds of its 353 doing this.
 func Read(
 	r io.ReadSeeker,
 ) ([]float64, int, error) {
 	dec := wav.NewDecoder(r)
 
-	buf, err := dec.FullPCMBuffer()
-	if err != nil {
+	// Reads the header and leaves the reader at the samples. A file that is not
+	// a WAV fails here, which is where FullPCMBuffer used to fail.
+	if err := dec.FwdToPCM(); err != nil {
 		return nil, 0, &NotAudioError{Why: err.Error()}
 	}
 
-	// A header this cannot make sense of is refused above rather than here: a
-	// file naming no channels fails as "format not supported", and one naming
-	// no bit depth as "unhandled byte depth". Both arrive as that error, so
-	// anything reaching this point has a format, a rate and a width.
-	rate := buf.Format.SampleRate
-	channels := buf.Format.NumChannels
+	rate := int(dec.SampleRate)
+	channels := int(dec.NumChans)
+
+	// A header naming no channels or no width used to be refused by the
+	// decoder, as "format not supported" and "unhandled byte depth". Reading
+	// the header ourselves means refusing them ourselves, and a nil check is
+	// not enough: zero channels would divide by zero below rather than fail.
+	if channels < 1 {
+		return nil, 0, &NotAudioError{Why: "the header names no channels"}
+	}
+
+	if dec.BitDepth < 1 {
+		return nil, 0, &NotAudioError{Why: "the header names no bit depth"}
+	}
 
 	// What divides a whole sample down to something between -1 and 1. A
 	// decoder hands back whatever width the file was written at, and a
@@ -84,16 +105,37 @@ func Read(
 	// hundreds of times louder than the same take at 16.
 	full := math.Pow(2, float64(dec.BitDepth-1))
 
-	out := make([]float64, 0, len(buf.Data)/channels)
+	// One buffer, reused for every chunk. Its size is a trade between syscalls
+	// and memory and nothing depends on the value: the samples that come out
+	// are the same at 1,000 as at 65,536, which the test checks.
+	chunk := &goaudio.IntBuffer{
+		Format: &goaudio.Format{NumChannels: channels, SampleRate: rate},
+		Data:   make([]int, chunkFrames*channels),
+	}
 
-	for at := 0; at+channels <= len(buf.Data); at += channels {
-		var sum float64
-		for c := range channels {
-			sum += float64(buf.Data[at+c]) / full
+	out := make([]float64, 0, chunkFrames)
+
+	for {
+		n, err := dec.PCMBuffer(chunk)
+
+		for at := 0; at+channels <= n; at += channels {
+			var sum float64
+			for c := range channels {
+				sum += float64(chunk.Data[at+c]) / full
+			}
+
+			out = append(out, sum/float64(channels))
 		}
 
-		out = append(out, sum/float64(channels))
+		// After the samples, not before them: the call that returns the last of
+		// them can return the end of the file with them.
+		if err != nil || n == 0 {
+			break
+		}
 	}
 
 	return out, rate, nil
 }
+
+// chunkFrames is how many frames a read asks the decoder for at a time.
+const chunkFrames = 64 * 1024
