@@ -41,6 +41,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/reamp"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // MeasureOptions is what measuring every block needs to know.
@@ -358,7 +359,38 @@ func planFor(
 			Model:   catalog.ModelID(block.ID),
 			Enabled: enabled,
 		}},
+		Device: &rig.DeviceState{Routing: measuringRouting()},
 	}
+}
+
+// measuringRouting sends the chain up the cable and nowhere else.
+//
+// The loop is a lead from the pedal's own output jack back into its input, so
+// where the chain's output goes decides whether there is a loop or an
+// oscillator. The blank template carries `@output: 1`, which the catalog names
+// `Multi (1/4", XLR, Digital, USB 1/2)`: the quarter-inch is in it, so the
+// chain's output leaves by the same socket the lead comes from and arrives at
+// its own input. That is feedback, and it reads as a stable tone near 12kHz
+// whose level follows whatever gain the block adds, which is a reading that
+// looks like a measurement and is the rig listening to itself.
+//
+// `10` is USB 1/2 by itself, so the return goes up the cable to the computer
+// and not back round the loop. `2` is the Guitar jack, where the lead lands.
+//
+// Written here rather than into the blank, because the blank is a preset a
+// device wrote and this is a bench setting.
+func measuringRouting() *map[string]json.RawMessage {
+	const (
+		guitarJack = 2
+		usbOneTwo  = 10
+	)
+
+	out := map[string]json.RawMessage{
+		"dsp0.inputA":  json.RawMessage(fmt.Sprintf(`{"@input": %d}`, guitarJack)),
+		"dsp0.outputA": json.RawMessage(fmt.Sprintf(`{"@output": %d}`, usbOneTwo)),
+	}
+
+	return &out
 }
 
 // wanted is every block worth trying, in a stable order.

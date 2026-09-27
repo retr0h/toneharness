@@ -3,6 +3,24 @@
 **HX Edit must be quit.** It holds the USB interface exclusively and nothing here
 can claim it while that is running.
 
+## What is plugged in
+
+Two connections, both at once, and neither is optional:
+
+1. **USB** from the computer to the pedal. This carries the reference recording
+   down and the measurement back up. It is also the editor channel.
+2. **One 1/4" instrument lead** from the pedal's own output socket into its own
+   input jack. This is the only way audio reaches the chain, because
+   [USB 5/6 does not arrive](#usb-56-does-not-arrive).
+
+So the pedal is wired to itself, and the computer talks to it over one cable.
+Asking whether "the cable" is connected is ambiguous and has wasted somebody's
+afternoon: say which of the two.
+
+The lead is what makes the loop, and it is also what makes the loop able to
+oscillate. That is the subject of
+[the output block](#the-output-block-must-not-put-the-chain-back-on-the-loop).
+
 An HX Stomp is a class-compliant USB audio interface, 8 in and 8 out, fixed at
 48kHz unless Line 6's own driver is installed. macOS sees it with nothing
 installed.
@@ -52,6 +70,29 @@ They were all measuring the loop's own noise. The block being swept cannot tell
 you this: `HD2_EQSimple3Band` read 11,990 Hz that day against the 93 Hz its own
 committed sweep holds, on identical routing.
 
+## Which leg is broken: a test that takes a minute
+
+A wrong baseline says the loop is bad and nothing about which half. Measure a
+block that makes sound without being given any:
+
+```bash
+go run main.go measure controls --model HD2_Synth4OSCGenerator \
+  --points 2 --seconds 2 --takes 1 --out /tmp/synth.json
+```
+
+| What it reads                            | What that means                                  |
+| ---------------------------------------- | ------------------------------------------------ |
+| loud, tens of dB above the empty baseline | **the return works.** The send is what is broken |
+| as quiet as the baseline                  | the return is broken, so the send tells you nothing |
+
+It generates rather than processes, so its output reaches the computer whether or
+not anything reaches the pedal's input. Run on 27 September 2026 it read -29dB
+against a -64dB baseline, which said the chain reached USB and the reference
+recording was not reaching the input jack. That is the send leg: the computer's
+playback, the lead from the output socket, and the input jack. No routing value
+in the preset changes any of it, and an hour went into the preset before this
+test existed.
+
 ## Know what a working reading looks like
 
 **The rig needs no routing changes, and this is the current answer.** A preset
@@ -60,17 +101,29 @@ measures correctly through it. Nothing in the sweep path sets either, and nothin
 should: an agent that "corrected" them to the Guitar jack and bare USB turned a
 working rig into silence and spent an hour theorising about the protocol.
 
-The tiebreaker is the evidence rather than this page. Every sweep in
-`resources/sweeps/` records the chain it was measured through, and
-`HD2_AmpSVBeastBrt.json` carries `@input: 1` and `@output: 1` beside figures that
-are correct. Two sections below contradict this and both are superseded; they are
-kept because the reasoning in them is still worth reading, and each now says so.
+**Read this together with
+[the output block](#the-output-block-must-not-put-the-chain-back-on-the-loop),
+and do not stop here.** The sweeps in `resources/sweeps/` record `@input: 1` and
+`@output: 1` in their `chain`, which is what the blank template carries, and they
+hold correct figures. That does not make those two values right. A destination
+that includes the quarter-inch jack puts the chain's output back on the loop, and
+whether that oscillates depends on the gain around it, so the same preset reads
+correctly one day and squeals the next. If a reading is pinned near 12kHz, that
+is the first thing to rule out.
 
-**So a wrong baseline is never a reason to change the routing.** Read it off the
-device with `device current` and compare it to a committed sweep's `chain`. If it
-matches, the fault is outside the preset: the 1/4" lead, the pedal's own output
-level, or which device the computer is playing through. None of those are
-reachable from here, and all three need somebody at the pedal.
+**Never guess a routing index; they differ per device family.** Ask the catalog,
+which carries the lists:
+
+```go
+cat, _ := catalog.BuiltIn()
+cat.SourceAt("Guitar")        // the chain's input
+cat.DestinationAt("USB 1/2")  // the chain's output
+```
+
+An index written into a page is right for one pedal and silently wrong for the
+next. On an HX Stomp today source 1 is `Multi (Guitar, Aux, Variax)` and
+destination 1 is `Multi (1/4", XLR, Digital, USB 1/2)` — the second is the one
+that closes the loop on itself.
 
 Compare against the readings in `resources/sweeps/`, which are the only figures
 here anybody has confirmed. One block alone, at the first point of its first
@@ -136,12 +189,7 @@ preset rather than global.** A preset built for measuring carries it and an
 ordinary preset does not. In a `.hlx` it is `data.tone.dsp0.inputA.@input`, an
 index into [an enum the preset does not name](enums.md).
 
-## The output block does not mean what its label says
-
-**Superseded.** The committed sweeps were all taken on `@output: 1` and read
-correctly, so the conclusion below is wrong about this hardware even though the
-measurements in it were real. Kept for the reasoning, which is sound and is what
-the label deserves.
+## The output block must not put the chain back on the loop
 
 `@output: 1` is not enough, whatever the label says. Entry 1 reads
 `Multi (1/4", XLR, Digital, USB 1/2)` and an HX Stomp's Multi does not include
@@ -181,10 +229,11 @@ Mac  --USB 1/2-->  Main out  --cable-->  Input jack
 Mac  <--USB 1/2--  USB record  <-------------+
 ```
 
-The cable is right and the two numbers are not. **Superseded:** setting
-`@input: 2` and `@output: 10` is what "turned a working rig into silence" above,
-and the committed sweeps ran on `@input: 1` and `@output: 1`. The worry behind it
-was that a chain reaching the Main outs races its own output back round the
-cable, which the readings say does not happen. It costs a D/A and
+Set `@input: 2`, the Guitar jack, and `@output: 10`, USB 1/2 by itself. **The
+chain must not reach the Main outs, or its own output races back round the
+cable.** That is not theoretical: on 27 September 2026 a run on the blank
+template's `@output: 1` oscillated, and the reading was a stable tone near
+12kHz whose level followed whatever gain the block added. It looks like a
+measurement and it is the rig listening to itself. It costs a D/A and
 an A/D, and that noise is identical on every take, so it cancels the moment two
 settings are compared, which is all this is for.
