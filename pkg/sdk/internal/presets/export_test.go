@@ -23,4 +23,11 @@ package presets
 // IntentOf is what an ask contributes to a build, exposed because the mapping is
 // where a nil field on the ask turns into an empty one on the intent, and every
 // field on a ToneSpec is a pointer.
-var IntentOf = intentOf
+var (
+	IntentOf = intentOf
+
+	// What a genre contributes, given what was measured for it. Exposed
+	// because a genre under the threshold contributes nothing and every genre
+	// measured into this binary clears it.
+	GenreWords = genreWords
+)

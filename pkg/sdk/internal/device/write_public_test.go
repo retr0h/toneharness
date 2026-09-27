@@ -32,8 +32,8 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // WritePublicTestSuite covers putting a preset on a device.
@@ -353,7 +353,7 @@ func (s *WritePublicTestSuite) TestAMessageGoesOutInPiecesADeviceCanPace() {
 // TestAChunkTheDeviceNeverAcksStopsTheMessage reproduces what stalled a
 // pedal's USB endpoint on hardware: a chunk released by a frame on another
 // channel rather than its own acknowledgement, and nothing acking after it.
-// docs/protocol.md cites the trace.
+// pkg/sdk/internal/wire/README.md cites the trace.
 //
 // A timeout here does not merely fail the write. The data channel would be
 // left holding half a message, and a later call feeding it a fresh request

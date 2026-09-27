@@ -35,12 +35,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
-	"github.com/retr0h/tonestack/pkg/sdk/reamp"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/reamp"
 )
 
 // MeasureOptions is what measuring every block needs to know.
@@ -122,7 +122,7 @@ func MeasureBlocks(
 	_, _ = fmt.Fprintf(w, "\n  %d blocks through %s, %.0fs each\n",
 		len(want), bench.Name(), opts.Seconds)
 
-	work, err := os.MkdirTemp("", "tonestack-blocks")
+	work, err := os.MkdirTemp("", "toneharness-blocks")
 	if err != nil {
 		return fmt.Errorf("making somewhere to build presets: %w", err)
 	}
@@ -317,7 +317,7 @@ func compile(
 		return "", fmt.Errorf("writing %s: %w", spec, err)
 	}
 
-	if err := rig.Write(f, rigFor(block, enabled)); err != nil {
+	if err := plan.Write(f, planFor(block, enabled)); err != nil {
 		_ = f.Close()
 
 		return "", fmt.Errorf("writing %s: %w", spec, err)
@@ -328,7 +328,7 @@ func compile(
 	}
 
 	if _, err := client.Compile(ctx, sdk.Compile{
-		Rig: spec, Out: out, Existing: sdk.ReplaceExisting,
+		Plan: spec, Out: out, Existing: sdk.ReplaceExisting,
 	}); err != nil {
 		return "", err
 	}
@@ -336,38 +336,28 @@ func compile(
 	return out, nil
 }
 
-// rigFor is a rig holding one block, addressed by model rather than by name.
+// planFor is a plan holding one block, named by model rather than by gear.
 //
-// By model because 665 models share 469 names: "Ampeg SVT" matches both of its
-// channels, so a name would measure whichever the compiler picked and file it
-// under both.
+// A plan rather than a rig because a sweep is device work: it wants this one
+// model and no other. 665 models share 469 names, so "Ampeg SVT" matches both
+// of its channels, and a rig naming the gear would measure whichever the
+// compiler picked and file it under both. Only a plan can pin the model.
 //
-// Built as the contract's own type and written by its own writer, rather than
-// assembled as text. A cabinet called "'63 Spring" opens a YAML quote that
-// nothing closes, and the whole document fails to parse at a line nowhere
-// near the name. One block of six hundred and sixty one was lost to that.
-func rigFor(
+// Built as the type and written by its own writer, rather than assembled as
+// text. A cabinet called "'63 Spring" opens a YAML quote that nothing closes,
+// and the whole document fails to parse at a line nowhere near the name. One
+// block of six hundred and sixty one was lost to that.
+func planFor(
 	block measured.Block,
 	enabled bool,
-) rig.Spec {
-	models := map[string]string{"HX Stomp": block.ID}
-	entry := rig.ChainEntry{
-		Role:   rig.Role(block.Category),
-		Gear:   block.Name,
-		Models: &models,
-	}
-
-	if !enabled {
-		off := false
-		entry.Enabled = &off
-	}
-
-	return rig.Spec{
-		Schema: rig.SchemaName,
-		ID: "measure-" + strings.ToLower(
+) plan.Plan {
+	return plan.Plan{
+		Name: "measure-" + strings.ToLower(
 			strings.NewReplacer("_", "-", " ", "-", "'", "").Replace(block.ID)),
-		Instrument: rig.InstrumentBass,
-		Chain:      []rig.ChainEntry{entry},
+		Blocks: []plan.Block{{
+			Model:   catalog.ModelID(block.ID),
+			Enabled: enabled,
+		}},
 	}
 }
 

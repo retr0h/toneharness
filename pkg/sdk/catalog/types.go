@@ -122,7 +122,7 @@ type Block struct {
 	// in their own documentation — "Ampeg SVT (normal channel)". Empty when
 	// the model emulates nothing in particular, such as a utility block.
 	//
-	// This is what makes a recipe usable. A recipe names gear a person
+	// This is what makes a rig usable. A rig names gear a person
 	// recognises; only this field connects that to a model identifier.
 	BasedOn string `json:"based_on,omitempty"`
 	// Subcategory is Line 6's own grouping — "Guitar", "Bass". It decides
@@ -131,7 +131,7 @@ type Block struct {
 	// CabLink is the cabinet Line 6 pairs with this amp by default. Empty for
 	// anything that is not an amp.
 	//
-	// A recipe that names no cabinet gets this one, which is a better answer
+	// A rig that names no cabinet gets this one, which is a better answer
 	// than picking arbitrarily: it is the pairing the model was voiced with.
 	CabLink ModelID          `json:"cablink,omitempty"`
 	Params  map[string]Param `json:"params"`

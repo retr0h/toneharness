@@ -33,7 +33,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/corpusgen"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/corpusgen"
 )
 
 // root is the repository, worked out from this file rather than from wherever

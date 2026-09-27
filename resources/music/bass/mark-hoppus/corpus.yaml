@@ -1,0 +1,23 @@
+artist: Mark Hoppus
+tracks:
+  - track: dammit
+    url: https://open.spotify.com/track/6WkSUgo1VdpzgtiXKlFPcY
+    year: 1997
+    band: blink-182
+    genres: [punk, pop-punk]
+    genres_by: llm
+    note: Dude Ranch, 1997
+  - track: whats-my-age-again
+    url: https://open.spotify.com/track/4LJhJ6DQS7NwE7UKtvcM52
+    year: 1999
+    band: blink-182
+    genres: [punk, pop-punk]
+    genres_by: llm
+    note: Enema of the State, 1999
+  - track: feeling-this
+    url: https://open.spotify.com/track/26AYR77170U49cMcXB7aRV
+    year: 2003
+    band: blink-182
+    genres: [punk, pop-punk]
+    genres_by: llm
+    note: blink-182, 2003

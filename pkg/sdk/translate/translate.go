@@ -47,11 +47,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	"github.com/retr0h/tonestack/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // Deps is what translating needs to know about the world.
@@ -384,9 +385,9 @@ func namedGear(
 		entry := rig.ChainEntry{Role: role, Gear: want.Gear}
 
 		if found {
-			models := map[string]string{deps.Measured.Device: string(block.ID)}
-			entry.Models = &models
-
+			// Said rather than written into the entry. Which model a name
+			// resolves to is the plan's answer, and a rig that carried one
+			// would be answering it twice.
 			*notes = append(*notes, Note{
 				About:    want.Gear,
 				Said:     fmt.Sprintf("resolved to %s", block.ID),
@@ -443,7 +444,6 @@ func nearestTo(
 	}
 
 	best := ranked[0]
-	models := map[string]string{deps.Measured.Device: best.ID}
 
 	*notes = append(*notes, Note{
 		About: string(category),
@@ -454,9 +454,8 @@ func nearestTo(
 	})
 
 	return rig.ChainEntry{
-		Role:   rig.Role(category),
-		Gear:   best.Name,
-		Models: &models,
+		Role: rig.Role(category),
+		Gear: best.Name,
 	}, true
 }
 
@@ -543,17 +542,78 @@ func target(
 	}, at, true
 }
 
+// genreNote says what is known about a genre somebody asked for.
+//
+// Four answers rather than one, because "cannot answer that" was true of every
+// genre and is now true of some. What is measured ships in the binary, so this
+// needs no audio: see audio.Shipped.
+//
+// Given what was found rather than finding it, so every one of the four has a
+// test. Only three are reachable through the shipped data, and which three
+// depends on whichever records somebody has tagged.
+func genreNote(
+	want string,
+	got audio.Genre,
+	ok bool,
+) Note {
+	switch {
+	case !ok:
+		return Note{
+			About: want,
+			Said: "no records carry that genre, so there is no distribution " +
+				"to aim at. Tag some and measure them",
+		}
+	case !got.Usable:
+		return Note{
+			About: want,
+			Said: fmt.Sprintf(
+				"%d records from %d players carry that genre, under the eight "+
+					"from three it takes to aim at one: fewer is a band's sound "+
+					"wearing a genre's name",
+				got.Records, got.Players),
+		}
+	case len(got.Terms) == 0:
+		// The honest and least expected answer. Punk clears the threshold on
+		// this corpus and sits inside the middle half of everything else on
+		// every axis, so there is nothing to aim at even though there is plenty
+		// behind it.
+		return Note{
+			About: want,
+			Said: fmt.Sprintf(
+				"%d records from %d players carry that genre and none of the "+
+					"figures set it apart from the players who play none of it, "+
+					"so there is nothing to aim at",
+				got.Records, got.Players),
+		}
+	default:
+		return Note{
+			About: want,
+			Said: fmt.Sprintf("measured across %d records from %d players as %s",
+				got.Records, got.Players, strings.Join(termsOf(got.Terms), ", ")),
+		}
+	}
+}
+
+// termsOf names what a genre earned, in the order it earned them.
+func termsOf(
+	of []audio.Derived,
+) []string {
+	out := make([]string, 0, len(of))
+	for _, t := range of {
+		out = append(out, t.Term)
+	}
+
+	return out
+}
+
 // unresolved says which parts of a request this cannot yet answer.
 func unresolved(
 	spec tone.Spec,
 	notes *Notes,
 ) {
 	if spec.Genre != nil && *spec.Genre != "" {
-		*notes = append(*notes, Note{
-			About: *spec.Genre,
-			Said: "no records carry that genre yet, so there is no " +
-				"distribution to aim at. See a genre is a corpus with a name",
-		})
+		got, ok := audio.ShippedGenre(slug.Of(*spec.Genre))
+		*notes = append(*notes, genreNote(*spec.Genre, got, ok))
 	}
 
 	// Named in a fixed order, because ranging a map is not one and a request

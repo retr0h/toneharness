@@ -26,8 +26,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 )
 
 // Moving snapshots between a device and a file, in both directions.

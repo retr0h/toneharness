@@ -13,10 +13,10 @@ import (
 	context "context"
 	reflect "reflect"
 
-	tools "github.com/retr0h/tonestack/pkg/mcp/internal/tools"
-	sdk "github.com/retr0h/tonestack/pkg/sdk"
-	catalog "github.com/retr0h/tonestack/pkg/sdk/catalog"
-	slot "github.com/retr0h/tonestack/pkg/sdk/slot"
+	tools "github.com/retr0h/toneharness/pkg/mcp/internal/tools"
+	sdk "github.com/retr0h/toneharness/pkg/sdk"
+	catalog "github.com/retr0h/toneharness/pkg/sdk/catalog"
+	slot "github.com/retr0h/toneharness/pkg/sdk/slot"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -74,21 +74,6 @@ func (mr *MockClientMockRecorder) Blocks(ctx, f any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Blocks", reflect.TypeOf((*MockClient)(nil).Blocks), ctx, f)
 }
 
-// Build mocks base method.
-func (m *MockClient) Build(ctx context.Context, recipeID, out string, existing sdk.Existing) (sdk.Made, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Build", ctx, recipeID, out, existing)
-	ret0, _ := ret[0].(sdk.Made)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Build indicates an expected call of Build.
-func (mr *MockClientMockRecorder) Build(ctx, recipeID, out, existing any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockClient)(nil).Build), ctx, recipeID, out, existing)
-}
-
 // Compile mocks base method.
 func (m *MockClient) Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error) {
 	m.ctrl.T.Helper()
@@ -117,6 +102,21 @@ func (m *MockClient) Devices(ctx context.Context) (sdk.Attached, error) {
 func (mr *MockClientMockRecorder) Devices(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Devices", reflect.TypeOf((*MockClient)(nil).Devices), ctx)
+}
+
+// Make mocks base method.
+func (m *MockClient) Make(ctx context.Context, rigID, out string, existing sdk.Existing) (sdk.Made, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Make", ctx, rigID, out, existing)
+	ret0, _ := ret[0].(sdk.Made)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Make indicates an expected call of Make.
+func (mr *MockClientMockRecorder) Make(ctx, rigID, out, existing any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Make", reflect.TypeOf((*MockClient)(nil).Make), ctx, rigID, out, existing)
 }
 
 // ModelMeasurements mocks base method.
@@ -149,34 +149,34 @@ func (mr *MockClientMockRecorder) Open(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Open", reflect.TypeOf((*MockClient)(nil).Open), ctx)
 }
 
-// Recipe mocks base method.
-func (m *MockClient) Recipe(ctx context.Context, id string) (sdk.Recipe, error) {
+// Rig mocks base method.
+func (m *MockClient) Rig(ctx context.Context, id string) (sdk.Rig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Recipe", ctx, id)
-	ret0, _ := ret[0].(sdk.Recipe)
+	ret := m.ctrl.Call(m, "Rig", ctx, id)
+	ret0, _ := ret[0].(sdk.Rig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Recipe indicates an expected call of Recipe.
-func (mr *MockClientMockRecorder) Recipe(ctx, id any) *gomock.Call {
+// Rig indicates an expected call of Rig.
+func (mr *MockClientMockRecorder) Rig(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Recipe", reflect.TypeOf((*MockClient)(nil).Recipe), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rig", reflect.TypeOf((*MockClient)(nil).Rig), ctx, id)
 }
 
-// Recipes mocks base method.
-func (m *MockClient) Recipes(ctx context.Context) (sdk.Recipes, error) {
+// Rigs mocks base method.
+func (m *MockClient) Rigs(ctx context.Context) (sdk.Rigs, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Recipes", ctx)
-	ret0, _ := ret[0].(sdk.Recipes)
+	ret := m.ctrl.Call(m, "Rigs", ctx)
+	ret0, _ := ret[0].(sdk.Rigs)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Recipes indicates an expected call of Recipes.
-func (mr *MockClientMockRecorder) Recipes(ctx any) *gomock.Call {
+// Rigs indicates an expected call of Rigs.
+func (mr *MockClientMockRecorder) Rigs(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Recipes", reflect.TypeOf((*MockClient)(nil).Recipes), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rigs", reflect.TypeOf((*MockClient)(nil).Rigs), ctx)
 }
 
 // Tone mocks base method.

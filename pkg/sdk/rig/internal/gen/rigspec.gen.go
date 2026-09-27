@@ -238,72 +238,6 @@ func (e Role) Valid() bool {
 	}
 }
 
-// Defines values for TechniqueAttack.
-const (
-	AttackFingers TechniqueAttack = "fingers"
-	AttackHybrid  TechniqueAttack = "hybrid"
-	AttackPick    TechniqueAttack = "pick"
-	AttackSlap    TechniqueAttack = "slap"
-	AttackThumb   TechniqueAttack = "thumb"
-)
-
-// Valid indicates whether the value is a known member of the TechniqueAttack enum.
-func (e TechniqueAttack) Valid() bool {
-	switch e {
-	case AttackFingers:
-		return true
-	case AttackHybrid:
-		return true
-	case AttackPick:
-		return true
-	case AttackSlap:
-		return true
-	case AttackThumb:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for TechniqueMuting.
-const (
-	MutingNone TechniqueMuting = "none"
-	MutingPalm TechniqueMuting = "palm"
-)
-
-// Valid indicates whether the value is a known member of the TechniqueMuting enum.
-func (e TechniqueMuting) Valid() bool {
-	switch e {
-	case MutingNone:
-		return true
-	case MutingPalm:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for TechniquePosition.
-const (
-	PositionBridge TechniquePosition = "bridge"
-	PositionMiddle TechniquePosition = "middle"
-	PositionNeck   TechniquePosition = "neck"
-)
-
-// Valid indicates whether the value is a known member of the TechniquePosition enum.
-func (e TechniquePosition) Valid() bool {
-	switch e {
-	case PositionBridge:
-		return true
-	case PositionMiddle:
-		return true
-	case PositionNeck:
-		return true
-	default:
-		return false
-	}
-}
-
 // Capture How this reached the tape: down a cable, through a microphone, or both blended.
 //
 // A cabinet models the air in front of a speaker, and on most bass records there was none. Five of the nine rigs here measure a signal that went to the desk: Geddy Lee set the rule on Caress of Steel in 1975 and kept it, "Use the direct bass from the low-end pickup, and mike the amp for the high-end pickup"; Les Claypool put a microphone up and never used it; Mike Dirnt ran an Evil Twin direct box from Dookie on. Pino Palladino is the one who was only ever miked, and the engineer says so: "no di's whatsoever on the album". Jaco Pastorius took both at once, "a little bit of both, the highs and lows".
@@ -324,35 +258,10 @@ type ChainEntry struct {
 
 	// Confidence How far a claim should be trusted. Set by a person, not derived. A claim asserting high confidence with no evidence behind it is worth showing as unverified whatever it says about itself.
 	Confidence *Confidence `json:"confidence,omitempty"`
-
-	// Enabled Whether the gear is switched on. A bypassed pedal is still part of a rig and still costs a device something to carry.
-	Enabled  *bool       `json:"enabled,omitempty"`
-	Evidence *[]Evidence `json:"evidence,omitempty"`
+	Evidence   *[]Evidence `json:"evidence,omitempty"`
 
 	// Gear Real-world gear, as a person would say it — "Ampeg SVT", "Klon Centaur". Never a device model identifier: those are one manufacturer's internal names, they change, and they do not survive being read on other hardware.
 	Gear string `json:"gear"`
-
-	// Models The exact model this resolved to, keyed by device.
-	//
-	// Gear names do not identify a model on their own: 665 models share 469 names, and "Ampeg SVT" matches both channels. A rig lifted from a preset records what was actually there so it rebuilds exactly; one written by hand carries none, and the gear name is resolved against the catalog instead.
-	//
-	// Reading a rig on a device it has no entry for falls back to the name, which is the portable behaviour and the reason the name is still required.
-	Models *map[string]string `json:"models,omitempty"`
-
-	// Params Device parameters by their own name — Sag, Bias X, Ripple.
-	//
-	// Values are numbers, booleans or enumerated strings, because a device mixes all three within one block and a switch is not a number. Narrowing them to numbers turns every switch off.
-	//
-	// Distinct from settings, which is the small musical vocabulary that means something on any amplifier. These mean something on one, and they are here because somebody dialling Sag by ear is producing the one kind of knowledge nothing else can produce. Dropping it to stay portable would throw away exactly what is worth keeping.
-	Params *map[string]interface{} `json:"params,omitempty"`
-
-	// Path Which signal path the block is on, for devices that have more than one. Omitted means the first, which is the only one an HX Stomp has.
-	Path *int `json:"path,omitempty"`
-
-	// Position Where the block sits on its path, when that is not simply its order in the chain.
-	//
-	// A device lays blocks out on a fixed grid and a preset may leave gaps in it, so position carries information the array order does not. A rig written by hand omits this and is laid out in order.
-	Position *int `json:"position,omitempty"`
 
 	// Role What a piece of gear does in a chain. The same vocabulary the catalog groups blocks by, so a role resolves without translation.
 	//
@@ -386,7 +295,7 @@ type Confidence string
 
 // Controller One parameter something moves: an expression pedal, or a footswitch set to sweep a knob rather than switch a block.
 //
-// A rig records these because they are decisions somebody made about how they play, not device state. Nothing else in a rig says that the pedal under your foot is on the amp's drive rather than its volume.
+// A plan records these because they are decisions somebody made about how they play, not device state. Nothing else says that the pedal under your foot is on the amp's drive rather than its volume.
 type Controller struct {
 	// Block Which block it works on, counted along the signal path the way the chain counts its entries.
 	Block int `json:"block"`
@@ -416,9 +325,9 @@ type Controller struct {
 
 // DeviceState Everything a preset carries that this format does not model as musical intent, kept exactly as the device wrote it.
 //
-// A rig describes a sound, so it models gear, settings and why they were chosen. A preset also carries footswitch assignments, snapshot names, the blocks a device puts either side of a chain, and metadata nobody documented. None of that is intent, and all of it is somebody's work.
+// A plan says which model each piece of gear resolved to and what every knob is set to. A preset also carries the blocks a device puts either side of a chain and metadata nobody documented. None of that is intent, and all of it is somebody's work.
 //
-// Without this a rig read out of a preset could not rebuild it: the footswitches would be gone and the snapshots would be whatever the template happened to hold. With it, a rig is the whole preset — which is what makes it safe to be the only thing this project exchanges.
+// Without this a plan read out of a preset could not rebuild it: the routing would be gone and the metadata would be whatever the template happened to hold.
 //
 // Written by lifting a preset, and only then. A rig somebody typed has none of it, and compiling one falls back to an untouched preset the device itself wrote.
 type DeviceState struct {
@@ -457,7 +366,7 @@ type DeviceState struct {
 //
 // A URL does not make a claim true. It makes it checkable, which is what lets somebody correct one line instead of re-deriving a rig.
 type Evidence struct {
-	// Against The same figures for the players this one was compared against, keyed the same way. Written by `tonestack measure --corpus`, which is where a word is earned.
+	// Against The same figures for the players this one was compared against, keyed the same way. Written by `toneharness measure --corpus`, which is where a word is earned.
 	//
 	// This is what turns a word into a distance. A term whose evidence carries both sides moves its control by the gap between them rather than by a fixed step, so a player who reads a little cleaner than everybody else gets a little less drive, and one who reads twice as clean gets the whole step.
 	//
@@ -613,24 +522,10 @@ type PlayedStrings string
 //
 // The portable layer. Nothing here is one manufacturer's vocabulary, so a rig reads the same on a device nobody has written a driver for. What somebody wanted is the ToneSpec beside it, and which model each piece of gear resolved to is the plan below it.
 //
-// Sparse when hand-written; the same document carries settings and evidence once anything has been measured or tuned.
+// No knob positions, and nothing keyed by device. A position is only meaningful against the model whose knob it is, and that model is in the plan.
 type RigSpec struct {
 	// Chain The signal path, in order.
 	Chain []ChainEntry `json:"chain"`
-
-	// Controllers The parameters an expression pedal or a footswitch moves.
-	//
-	// Which knob your foot is on is a decision about how you play, made once and used every time. A preset stores it against a parameter number nobody can read; a rig names the parameter.
-	Controllers *[]Controller `json:"controllers,omitempty"`
-
-	// Device Everything a preset carries that this format does not model as musical intent, kept exactly as the device wrote it.
-	//
-	// A rig describes a sound, so it models gear, settings and why they were chosen. A preset also carries footswitch assignments, snapshot names, the blocks a device puts either side of a chain, and metadata nobody documented. None of that is intent, and all of it is somebody's work.
-	//
-	// Without this a rig read out of a preset could not rebuild it: the footswitches would be gone and the snapshots would be whatever the template happened to hold. With it, a rig is the whole preset — which is what makes it safe to be the only thing this project exchanges.
-	//
-	// Written by lifting a preset, and only then. A rig somebody typed has none of it, and compiling one falls back to an untouched preset the device itself wrote.
-	Device *DeviceState `json:"device,omitempty"`
 
 	// Evidence Why the gear as a whole is believed, for a citation that covers the chain rather than one entry of it.
 	//
@@ -638,13 +533,6 @@ type RigSpec struct {
 	//
 	// A ToneSpec has an `evidence` of its own and it is a different claim. Why the request was made is the ask's; why this gear answered it is this one's.
 	Evidence *[]Evidence `json:"evidence,omitempty"`
-
-	// Footswitches What the pedal prints under each switch, and the colour it lights.
-	//
-	// A label and a colour are decisions about somebody's own pedal, made once and looked at every time they play, and nothing else in a rig records them.
-	//
-	// Read and written both ways: a preset stores them per block, and a rig carrying them rebuilds that exactly.
-	Footswitches *[]Footswitch `json:"footswitches,omitempty"`
 
 	// ID Stable identifier, matching the filename stem.
 	ID string `json:"id"`
@@ -657,18 +545,10 @@ type RigSpec struct {
 
 	// Sections The parts of a song this rig plays, each one a snapshot.
 	//
-	// The way to write snapshots by hand. A rig carries sections or snapshots, not both: snapshots are what a device stored, sections are what somebody wants, and a build given both would have to pick one without saying so. A device has a fixed number of snapshots, three on an HX Stomp, and a rig with more sections than that will not build.
+	// The way to write snapshots by hand, and the one part of the arrangement that stays here: a section is what somebody plays rather than anything the device holds.
+	//
+	// Sections or snapshots, never both: a plan's snapshots are what a device stored, sections are what somebody wants, and a build given both would have to pick one without saying so. A device has a fixed number of snapshots, three on an HX Stomp, and more sections than that will not build.
 	Sections *[]Section `json:"sections,omitempty"`
-
-	// Snapshots The rig's snapshots, in the order the device numbers them.
-	//
-	// A snapshot is a musical decision — which blocks are on, at what tempo, under what name — so it is modelled rather than carried as device state. What a person put on a footswitch is part of the rig.
-	Snapshots *[]Snapshot `json:"snapshots,omitempty"`
-
-	// Target Where the settings in this rig were arrived at.
-	//
-	// Advisory, never a restriction. A rig pinned to one device could not be used on another, which would cost the portability the format exists for. This says "these numbers were tuned here", so somebody on other hardware knows to re-tune rather than trust.
-	Target *Target `json:"target,omitempty"`
 
 	// Version Which version of this contract the document was written against.
 	//
@@ -799,7 +679,7 @@ type Subject struct {
 
 	// Years The same era as years, so a machine can hold records to it.
 	//
-	// `era` is prose and prose cannot be checked. A rig's audio evidence is measured from records, and a record made on other gear measures other gear: Paul McCartney's rig describes an Acoustic 360, which did not exist when one of his measured records was cut. `tonestack recipes records` reads these and says which records fall outside the rig they are attached to.
+	// `era` is prose and prose cannot be checked. A rig's audio evidence is measured from records, and a record made on other gear measures other gear: Paul McCartney's rig describes an Acoustic 360, which did not exist when one of his measured records was cut. `toneharness rigs records` reads these and says which records fall outside the rig they are attached to.
 	//
 	// One year is a rig that applied for one year: from and to the same.
 	Years *Years `json:"years,omitempty"`
@@ -821,55 +701,22 @@ type Substitute struct {
 	Gear string `json:"gear"`
 }
 
-// Target Where the settings in this rig were arrived at.
+// Target Where the numbers in a plan were arrived at.
 //
-// Advisory, never a restriction. A rig pinned to one device could not be used on another, which would cost the portability the format exists for. This says "these numbers were tuned here", so somebody on other hardware knows to re-tune rather than trust.
+// A plan's, not a rig's, and it stays in this contract because the plan package reads the type from here.
+//
+// Advisory, never a restriction. A plan pinned to one device could not be read on another, which would cost the portability the rig above it exists for. This says "these numbers were tuned here", so somebody on other hardware knows to re-tune rather than trust.
 type Target struct {
 	// Catalog The release the catalog came from, such as "HX Edit 3.82".
 	Catalog *string `json:"catalog,omitempty"`
 
 	// Device Human-readable device name, such as "HX Stomp".
 	Device *string `json:"device,omitempty"`
-
-	// Technique How the instrument is played, where it changes the sound. Not modelled by any device, and it still decides what the rig has to do.
-	//
-	// Three things rather than a sentence, because three things are being said and a sentence has to be parsed to get at them.
-	//
-	// Under `target` this says how the person using the rig plays, where that differs from the rig's own. The distinction is not pedantry. A pick puts high-frequency attack into every note that fingers do not, so a rig tuned from a picked recording sounds duller played fingered, and the fix is in the amp and the compressor rather than in the player. Recording both lets the difference be compensated rather than discovered, and that comparison needs both sides to be the same kind of value: two `attack` values can be held against each other, and two sentences cannot.
-	Technique *Technique `json:"technique,omitempty"`
 }
-
-// Technique How the instrument is played, where it changes the sound. Not modelled by any device, and it still decides what the rig has to do.
-//
-// Three things rather than a sentence, because three things are being said and a sentence has to be parsed to get at them.
-//
-// Under `target` this says how the person using the rig plays, where that differs from the rig's own. The distinction is not pedantry. A pick puts high-frequency attack into every note that fingers do not, so a rig tuned from a picked recording sounds duller played fingered, and the fix is in the amp and the compressor rather than in the player. Recording both lets the difference be compensated rather than discovered, and that comparison needs both sides to be the same kind of value: two `attack` values can be held against each other, and two sentences cannot.
-type Technique struct {
-	// Attack What sets the string moving. Required, because there is no playing without one.
-	Attack TechniqueAttack `json:"attack"`
-
-	// Evidence Why this is believed. Nothing measures how somebody plays out of a preset, so a claim here is asserted or it is watched, and which of those it was belongs beside it.
-	Evidence *[]Evidence `json:"evidence,omitempty"`
-
-	// Muting What damps the string. Omit it where it does not matter, and say `none` where the notes ringing on is part of the sound rather than the absence of a decision.
-	Muting *TechniqueMuting `json:"muting,omitempty"`
-
-	// Position Where along the string, which decides how much fundamental there is against harmonics. Omit it where it does not matter.
-	Position *TechniquePosition `json:"position,omitempty"`
-}
-
-// TechniqueAttack What sets the string moving. Required, because there is no playing without one.
-type TechniqueAttack string
-
-// TechniqueMuting What damps the string. Omit it where it does not matter, and say `none` where the notes ringing on is part of the sound rather than the absence of a decision.
-type TechniqueMuting string
-
-// TechniquePosition Where along the string, which decides how much fundamental there is against harmonics. Omit it where it does not matter.
-type TechniquePosition string
 
 // Years The same era as years, so a machine can hold records to it.
 //
-// `era` is prose and prose cannot be checked. A rig's audio evidence is measured from records, and a record made on other gear measures other gear: Paul McCartney's rig describes an Acoustic 360, which did not exist when one of his measured records was cut. `tonestack recipes records` reads these and says which records fall outside the rig they are attached to.
+// `era` is prose and prose cannot be checked. A rig's audio evidence is measured from records, and a record made on other gear measures other gear: Paul McCartney's rig describes an Acoustic 360, which did not exist when one of his measured records was cut. `toneharness rigs records` reads these and says which records fall outside the rig they are attached to.
 //
 // One year is a rig that applied for one year: from and to the same.
 type Years struct {

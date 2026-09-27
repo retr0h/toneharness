@@ -22,12 +22,12 @@ package sdk
 import (
 	"errors"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/catalogview"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/translate"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/catalogview"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
 // EmptySwapError is a swap refused because neither slot holds a preset. It
@@ -47,8 +47,8 @@ type EmptySwapError = deviceslots.EmptySwapError
 var (
 	// ErrNoSuchBlock reports a model the catalog does not carry.
 	ErrNoSuchBlock = catalogview.ErrNotFound
-	// ErrNoSuchRecipe reports a rig nobody has written.
-	ErrNoSuchRecipe = recipes.ErrNotFound
+	// ErrNoSuchRig reports a rig nobody has written.
+	ErrNoSuchRig = rigs.ErrNotFound
 	// ErrUnknownFormat reports an export asked for a Format that is neither
 	// FormatRig nor FormatPreset.
 	ErrUnknownFormat = result.ErrUnknownFormat

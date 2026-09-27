@@ -25,7 +25,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/retr0h/tonestack/pkg/mcp"
+	"github.com/retr0h/toneharness/pkg/mcp"
 )
 
 var mcpStartAllowWrites bool
@@ -39,16 +39,16 @@ Ctrl-C or SIGTERM.
 
 An agent starts this itself. For Claude Code:
 
-  claude mcp add tonestack -- tonestack mcp start
+  claude mcp add toneharness -- toneharness mcp start
 
-Your own recipes are offered beside the built-in ones, as recipes list shows
+Your own rigs are offered beside the built-in ones, as rigs list shows
 them.
 
 Tools that overwrite what a pedal holds (import, copy, swap) are offered only
 with --allow-writes. Each still saves what it replaces to a file first.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		server := mcp.New(newClient(ownRecipes("")), mcp.Options{
+		server := mcp.New(newClient(ownRigs("")), mcp.Options{
 			Version:     version,
 			AllowWrites: mcpStartAllowWrites,
 		})

@@ -27,9 +27,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/editor"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/editor"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // TranslatorPublicTestSuite covers the package's work reached as a value.

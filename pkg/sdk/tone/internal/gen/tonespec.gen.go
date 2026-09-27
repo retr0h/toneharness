@@ -364,7 +364,7 @@ type Device struct {
 //
 // A URL does not make a claim true. It makes it checkable, which is what lets somebody correct one line instead of re-deriving a rig.
 type Evidence struct {
-	// Against The same figures for the players this one was compared against, keyed the same way. Written by `tonestack measure --corpus`, which is where a word is earned.
+	// Against The same figures for the players this one was compared against, keyed the same way. Written by `toneharness measure --corpus`, which is where a word is earned.
 	//
 	// This is what turns a word into a distance. A term whose evidence carries both sides moves its control by the gap between them rather than by a fixed step, so a player who reads a little cleaner than everybody else gets a little less drive, and one who reads twice as clean gets the whole step.
 	//
@@ -667,7 +667,7 @@ type ToneSpec struct {
 
 	// Words How it should sound, in the words a person would use.
 	//
-	// Checked against the shipped vocabulary, because a word that reaches no control cannot be aimed at and saying so is better than accepting it and quietly doing nothing. docs/vocabulary.md lists every word and what each one moves.
+	// Checked against the shipped vocabulary, because a word that reaches no control cannot be aimed at and saying so is better than accepting it and quietly doing nothing. words.json lists every word and what each one moves.
 	Words *[]Word `json:"words,omitempty"`
 }
 

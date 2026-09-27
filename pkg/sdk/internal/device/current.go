@@ -23,7 +23,7 @@ package device
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // Opcodes that read and replace what a device is playing.
@@ -61,7 +61,7 @@ func (s *session) ReadCurrent(
 // That distinction is not a nicety. A burst of slot writes corrupted a
 // setlist past what a power cycle could clear, and a device tolerates about a
 // dozen racing commits before it stops accepting writes at all — see
-// [Rules that keep a device alive](../../../../docs/protocol.md#rules-that-keep-a-device-alive).
+// [Rules that keep a device alive](../wire/README.md#rules-that-keep-a-device-alive).
 // Measuring every block the device has, one at a time, is exactly the shape
 // that rule forbids doing through slots.
 //

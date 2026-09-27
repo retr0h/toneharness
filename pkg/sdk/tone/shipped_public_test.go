@@ -28,7 +28,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // ShippedPublicTestSuite checks the worked examples the docs point at.

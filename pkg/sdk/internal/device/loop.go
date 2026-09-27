@@ -27,7 +27,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // This file is the read loop: the one goroutine that reads from a device, and

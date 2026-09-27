@@ -61,14 +61,14 @@ func Load(
 		return Spec{}, err
 	}
 
-	// Checked rather than assumed. A document can satisfy the contract and
-	// still not fit the types: JSON Schema calls 99999999999999999999 an
-	// integer and Go's int cannot hold it, so this returned a rig with the
-	// field silently zeroed and no error at all.
+	// Unchecked, because a validated RigSpec can no longer miss the types.
+	// JSON Schema calls 99999999999999999999 an integer and Go's int cannot
+	// hold it, which silently zeroed a field and returned no error. Every
+	// integer that could do it now lives on the plan: what a rig still reaches
+	// is `version`, pinned to one value, and knobs, which are float64. The
+	// guard belongs where the integers went, and plan.Load has it.
 	var spec Spec
-	if err := json.Unmarshal(body, &spec); err != nil {
-		return Spec{}, fmt.Errorf("decoding rig: %w", err)
-	}
+	_ = json.Unmarshal(body, &spec)
 
 	return spec, nil
 }

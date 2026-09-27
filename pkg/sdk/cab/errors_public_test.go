@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/cab"
+	"github.com/retr0h/toneharness/pkg/sdk/cab"
 )
 
 // ErrorsPublicTestSuite covers what this package refuses, and how.

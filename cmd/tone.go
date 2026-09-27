@@ -36,9 +36,9 @@ They are the top of three layers, and the split is what makes the middle one
 worth sharing:
 
     ToneSpec + Setup   what we mean, and what we have
-          ↓            tonestack tone build
+          ↓            toneharness tone build
     RigSpec            exact, resolved, deterministic, shareable
-          ↓            tonestack presets compile
+          ↓            toneharness presets compile
     .hlx               what the pedal eats
 
 A RigSpec names the exact models, so two people compiling one get the same

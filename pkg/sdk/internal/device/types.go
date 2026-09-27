@@ -28,7 +28,7 @@ package device
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // vendorID is Line 6's USB vendor identifier. Every device this package

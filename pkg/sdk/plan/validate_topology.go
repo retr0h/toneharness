@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"strconv"
 )
 
 // ValidateTopology reports a rig whose shape the device cannot represent:
@@ -86,40 +85,6 @@ func ValidateTopology(
 						"processor %d positions are not contiguous from zero: %v",
 						chip,
 						positions,
-					),
-				}
-			}
-		}
-	}
-
-	return validateSnapshots(s)
-}
-
-func validateSnapshots(
-	s Plan,
-) error {
-	if len(s.Snapshots) == 0 {
-		return nil
-	}
-
-	for _, snap := range s.Snapshots {
-		for _, key := range slices.Sorted(maps.Keys(snap.Overrides)) {
-			// JSON object keys are strings, so a block index arrives as "0".
-			idx, err := strconv.Atoi(key)
-			if err != nil {
-				return &TopologyError{
-					Reason: fmt.Sprintf(
-						"snapshot %q overrides block %q, which is not an index",
-						snap.Name, key,
-					),
-				}
-			}
-
-			if idx < 0 || idx >= len(s.Blocks) {
-				return &TopologyError{
-					Reason: fmt.Sprintf(
-						"snapshot %q overrides block %d, rig has %d",
-						snap.Name, idx, len(s.Blocks),
 					),
 				}
 			}

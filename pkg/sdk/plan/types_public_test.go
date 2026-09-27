@@ -26,8 +26,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 type RigPublicTestSuite struct {
@@ -46,14 +46,6 @@ func (s *RigPublicTestSuite) TestSpecRoundTripsThroughJSON() {
 				DSP:     0,
 				Pos:     0,
 				Enabled: true,
-			},
-		},
-		Snapshots: []plan.Snapshot{
-			{
-				Name: "Lead",
-				Overrides: map[string]plan.Params{
-					"0": {"Gain": catalog.Float(0.9)},
-				},
 			},
 		},
 	}

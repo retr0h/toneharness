@@ -21,12 +21,12 @@
 package rig_test
 
 import (
-	"encoding/json"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 type ValidatePublicTestSuite struct {
@@ -72,15 +72,11 @@ func (s *ValidatePublicTestSuite) TestValidate() {
 			},
 		},
 		{
-			// A rig carries raw JSON it was handed — the state a device wrote
-			// — and something that is not JSON cannot be checked against
-			// anything.
-			name: "state that is not JSON at all",
-			mutate: func(r *rig.Spec) {
-				broken := json.RawMessage("not json")
-				r.Device = &rig.DeviceState{Version: &broken}
-			},
-			says: "reading the rig",
+			// A rig is checked through JSON, and a value that has no JSON
+			// cannot be checked against anything.
+			name:   "a knob holding a value that is not a number",
+			mutate: func(r *rig.Spec) { r.Chain[0].Settings = settings(math.NaN()) },
+			says:   "reading the rig",
 		},
 		{
 			name:   "a document that is not a rig",

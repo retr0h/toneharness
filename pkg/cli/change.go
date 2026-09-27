@@ -24,10 +24,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Change reports what a write did.

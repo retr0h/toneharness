@@ -25,10 +25,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // WordsMovePublicTestSuite covers the words an ask uses reaching the
@@ -45,7 +45,7 @@ func (s *WordsMovePublicTestSuite) SetupTest() {
 
 // described is the ask beside a rig, saying how it should sound.
 //
-// Beside rather than on it: the rig from recipe is unchanged whatever words go
+// Beside rather than on it: the rig from rig is unchanged whatever words go
 // with it, which is the split these tests are checking.
 func described(
 	terms ...string,
@@ -77,7 +77,7 @@ func (s *WordsMovePublicTestSuite) TestWordsReachTheAmplifier() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			plain, _, _, err := compile.Resolve(
-				recipe("Ampeg SVT", ""),
+				bassRig("Ampeg SVT", ""),
 				compile.Intent{},
 				s.cat,
 				nil,
@@ -85,7 +85,7 @@ func (s *WordsMovePublicTestSuite) TestWordsReachTheAmplifier() {
 			s.Require().NoError(err)
 
 			got, _, moved, err := compile.Resolve(
-				recipe("Ampeg SVT", ""), described(tt.term), s.cat, nil)
+				bassRig("Ampeg SVT", ""), described(tt.term), s.cat, nil)
 			s.Require().NoError(err)
 
 			s.Require().Len(moved, 1)
@@ -134,7 +134,7 @@ func (s *WordsMovePublicTestSuite) paramOf(
 // carries settings somebody already applied, so there is nothing for a word to
 // decide.
 func (s *WordsMovePublicTestSuite) TestAnAskThatSaysNothingMovesNothing() {
-	_, _, moved, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+	_, _, moved, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 
 	s.Require().NoError(err)
 	s.Require().Empty(moved)
@@ -165,11 +165,11 @@ func (s *WordsMovePublicTestSuite) TestWordsSurviveAChainWithNoAmplifier() {
 // TestTwoWordsForOneAxisMoveNothing covers an ask answering one question
 // twice.
 func (s *WordsMovePublicTestSuite) TestTwoWordsForOneAxisMoveNothing() {
-	plain, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+	plain, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	got, _, moved, err := compile.Resolve(
-		recipe("Ampeg SVT", ""),
+		bassRig("Ampeg SVT", ""),
 		described("minimal-drive", "grit-on-attack"), s.cat, nil)
 	s.Require().NoError(err)
 

@@ -27,7 +27,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // ManifestPublicTestSuite covers the record of what a corpus was.
@@ -391,10 +391,101 @@ tracks:
     url: https://open.spotify.com/track/x
     year: 1994
     genres: [punk, pop-punk]
+    genres_by: person
 `))
 
 	s.Require().NoError(err)
 	s.Require().Equal([]string{"punk", "pop-punk"}, m.Tracks[0].Genres)
+	s.Require().Equal(audio.ByPerson, m.Tracks[0].GenresBy)
+}
+
+// TestAGenreSaysWhoDecidedIt covers the provenance rule.
+//
+// A model's guess and somebody's answer read identically once they are both a
+// word in a list, and the review list exists to tell them apart.
+func (s *ManifestPublicTestSuite) TestAGenreSaysWhoDecidedIt() {
+	tests := []struct {
+		name string
+		body string
+		want string
+	}{
+		{
+			name: "genres with nobody behind them",
+			body: "    genres: [punk]\n",
+			want: "names genres and no genres_by",
+		},
+		{
+			name: "a decider with nothing decided",
+			body: "    genres_by: llm\n",
+			want: "names no genres for it to have decided",
+		},
+		{
+			name: "a decider that is neither",
+			body: "    genres: [punk]\n    genres_by: vibes\n",
+			want: `has a genres_by of "vibes"`,
+		},
+		{
+			name: "neither, which is every record written before the field",
+			body: "",
+			want: "",
+		},
+		{
+			name: "a model's guess",
+			body: "    genres: [punk]\n    genres_by: llm\n",
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			_, err := audio.ReadManifest(strings.NewReader(`
+artist: Mike Dirnt
+tracks:
+  - track: longview
+    url: https://open.spotify.com/track/x
+    year: 1994
+` + tt.body))
+
+			if tt.want == "" {
+				s.Require().NoError(err)
+
+				return
+			}
+
+			s.Require().ErrorContains(err, tt.want)
+		})
+	}
+}
+
+// TestAModelsGenresAreCounted covers what the review list reads.
+//
+// A genre can reach the threshold entirely on guesses, which is reported rather
+// than deducted: the count is still eight, and somebody should know none of it
+// was checked.
+func (s *ManifestPublicTestSuite) TestAModelsGenresAreCounted() {
+	all := []audio.Manifest{
+		{Artist: "Mike Dirnt", Tracks: []audio.Record{
+			{Track: "a", Genres: []string{"punk"}, GenresBy: audio.ByModel},
+			{Track: "b", Genres: []string{"punk"}, GenresBy: audio.ByPerson},
+		}},
+		{Artist: "Matt Freeman", Tracks: []audio.Record{
+			{Track: "c", Genres: []string{"punk"}, GenresBy: audio.ByModel},
+			// A band carries no provenance, so it never counts as unsighted.
+			{
+				Track: "d", Band: "Rancid", GenresBy: audio.ByModel,
+				Genres: []string{"punk"},
+			},
+		}},
+	}
+
+	got := audio.Genres(all)
+	s.Require().Len(got, 1)
+	s.Require().Equal(4, got[0].Records)
+	s.Require().Equal(3, got[0].Unsighted, "one of the four was checked")
+
+	bands := audio.Bands(all)
+	s.Require().Len(bands, 1)
+	s.Require().Zero(bands[0].Unsighted, "a band is nobody's label")
 }
 
 // TestBandsGroupsOnTheSlug covers two spellings of one band counting once.

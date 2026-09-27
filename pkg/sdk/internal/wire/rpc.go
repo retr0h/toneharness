@@ -27,7 +27,7 @@ import (
 
 	"github.com/vmihailenco/msgpack/v5"
 
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Map keys in a remote call. Line 6 numbers them rather than naming them.

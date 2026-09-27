@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"maps"
 	"os"
 	"path/filepath"
 	"testing"
@@ -30,10 +31,12 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/cli/internal/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // ControlsRunTestSuite covers sweeping one block's controls, without the
@@ -70,11 +73,48 @@ func (s *ControlsRunTestSuite) ready() {
 		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	s.pedal.EXPECT().
 		Current(gomock.Any(), gomock.Any()).
-		Return(sdk.Reading{Rig: rig.Spec{
+		Return(cabReading(nil), nil).AnyTimes()
+}
+
+// cabReading is a device read of a chain holding the cabinet alone.
+//
+// Both layers, because a read populates both: the rig is what travels with the
+// curves, and the probe reads its parameters out of the plan.
+func cabReading(
+	held plan.Params,
+) sdk.Reading {
+	return sdk.Reading{
+		Rig: rig.Spec{
 			Schema: rig.SchemaName, ID: "measured",
 			Instrument: rig.InstrumentBass,
 			Chain:      []rig.ChainEntry{{Role: rig.RoleCab, Gear: "2x15 Brute"}},
-		}}, nil).AnyTimes()
+		},
+		Plan: plan.Plan{
+			Name: "measured",
+			Blocks: []plan.Block{{
+				Model: "HD2_CabMicIr_2x15Brute", Params: held, Enabled: true,
+			}},
+		},
+	}
+}
+
+// eqReading is a device read of a chain holding the equaliser alone.
+func eqReading(
+	held plan.Params,
+) sdk.Reading {
+	return sdk.Reading{
+		Rig: rig.Spec{
+			Schema: rig.SchemaName, ID: "probed",
+			Instrument: rig.InstrumentBass,
+			Chain:      []rig.ChainEntry{{Role: rig.RoleEQ, Gear: "Simple EQ"}},
+		},
+		Plan: plan.Plan{
+			Name: "probed",
+			Blocks: []plan.Block{{
+				Model: "HD2_EQSimple3Band", Params: held, Enabled: true,
+			}},
+		},
+	}
 }
 
 // moves is a device that reveals a wire order by answering the probe.
@@ -97,16 +137,16 @@ func (s *ControlsRunTestSuite) moves(
 	s.pedal.EXPECT().
 		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-	held := map[string]any{}
+	held := plan.Params{}
 	for _, name := range order {
-		held[name] = 0.5
+		held[name] = catalog.Float(0.5)
 	}
 
 	s.pedal.EXPECT().
 		Turn(gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, at sdk.Address, v float32) error {
 			if at.Param < len(order) {
-				held[order[at.Param]] = float64(v)
+				held[order[at.Param]] = catalog.Float(float64(v))
 			}
 
 			return nil
@@ -115,18 +155,10 @@ func (s *ControlsRunTestSuite) moves(
 	s.pedal.EXPECT().
 		Current(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(context.Context, sdk.Format) (sdk.Reading, error) {
-			now := map[string]any{}
-			for k, v := range held {
-				now[k] = v
-			}
+			now := plan.Params{}
+			maps.Copy(now, held)
 
-			return sdk.Reading{Rig: rig.Spec{
-				Schema: rig.SchemaName, ID: "probed",
-				Instrument: rig.InstrumentBass,
-				Chain: []rig.ChainEntry{{
-					Role: rig.RoleEQ, Gear: "Simple EQ", Params: &now,
-				}},
-			}}, nil
+			return eqReading(now), nil
 		}).AnyTimes()
 }
 
@@ -320,11 +352,7 @@ func (s *ControlsRunTestSuite) TestControlsCarriesOnPastAControlTheDeviceRefuses
 		}).AnyTimes()
 	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	s.pedal.EXPECT().Current(gomock.Any(), gomock.Any()).
-		Return(sdk.Reading{Rig: rig.Spec{
-			Schema: rig.SchemaName, ID: "measured",
-			Instrument: rig.InstrumentBass,
-			Chain:      []rig.ChainEntry{{Role: rig.RoleCab, Gear: "2x15 Brute"}},
-		}}, nil).AnyTimes()
+		Return(cabReading(nil), nil).AnyTimes()
 	s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errors.New("error -3")).AnyTimes()
 	s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).

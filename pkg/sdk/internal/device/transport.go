@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // send writes one frame on a channel and advances its counter.

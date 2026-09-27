@@ -24,11 +24,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 // debugEnv turns on the wire trace: every USB frame in and out, on stderr.
-const debugEnv = "TONESTACK_USB_DEBUG"
+const debugEnv = "TONEHARNESS_USB_DEBUG"
 
 // deviceUsage is what --device says, wherever it is offered.
 //
@@ -64,7 +64,7 @@ type clientFlags struct {
 	catalog   string
 	device    string
 	stats     string
-	recipes   string
+	rigs      string
 	backupDir string
 }
 
@@ -76,7 +76,7 @@ func (f *clientFlags) client(
 		sdk.WithCatalog(f.catalog),
 		sdk.WithDevice(f.device),
 		sdk.WithStats(f.stats),
-		sdk.WithRecipes(f.recipes),
+		sdk.WithRigs(f.rigs),
 		sdk.WithBackupDir(f.backupDir),
 	}, opts...)...)
 }

@@ -33,8 +33,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/mcp/internal/tools"
-	"github.com/retr0h/tonestack/pkg/mcp/internal/tools/mocks"
+	"github.com/retr0h/toneharness/pkg/mcp/internal/tools"
+	"github.com/retr0h/toneharness/pkg/mcp/internal/tools/mocks"
 )
 
 // connect puts the tools on a server and a client session in front of it,
@@ -47,7 +47,7 @@ func connect(
 ) *gomcp.ClientSession {
 	t.Helper()
 
-	server := gomcp.NewServer(&gomcp.Implementation{Name: "tonestack", Version: "test"}, nil)
+	server := gomcp.NewServer(&gomcp.Implementation{Name: "toneharness", Version: "test"}, nil)
 	pedal := tools.Register(server, c, allowWrites)
 
 	// The pedal is let go when the test ends, as the server lets it go when it
@@ -67,7 +67,7 @@ func connectIdle(
 ) (*gomcp.ClientSession, io.Closer) {
 	t.Helper()
 
-	server := gomcp.NewServer(&gomcp.Implementation{Name: "tonestack", Version: "test"}, nil)
+	server := gomcp.NewServer(&gomcp.Implementation{Name: "toneharness", Version: "test"}, nil)
 	pedal := tools.RegisterIdle(server, c, allowWrites, idle)
 
 	// A test that asserts on closing it has already closed it, and a second
@@ -154,7 +154,7 @@ type RegisterPublicTestSuite struct {
 func (s *RegisterPublicTestSuite) TestRegister() {
 	reads := []string{
 		"catalog_block", "catalog_search", "corpus_model",
-		"tone_build", "preset_build", "rig_show", "rigs_list",
+		"tone_build", "preset_make", "rig_show", "rigs_list",
 		"devices_list", "presets_list", "preset_show", "preset_export", "preset_select",
 	}
 
@@ -169,7 +169,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 			want: reads,
 			readOnly: map[string]bool{
 				"catalog_block": true, "catalog_search": true, "corpus_model": true,
-				"tone_build": true, "preset_build": false,
+				"tone_build": true, "preset_make": false,
 				"rig_show": true, "rigs_list": true,
 				"devices_list": true, "presets_list": true, "preset_show": true,
 				"preset_export": false, "preset_select": false,
@@ -219,7 +219,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 					"presets_copy",
 					"presets_swap",
 					"preset_export",
-					"preset_build":
+					"preset_make":
 					s.Require().NotNil(tool.Annotations.DestructiveHint, tool.Name)
 					s.True(*tool.Annotations.DestructiveHint, tool.Name)
 				}

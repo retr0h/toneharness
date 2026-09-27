@@ -28,9 +28,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
-	flowmocks "github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	flowmocks "github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots/mocks"
 )
 
 // PlayPublicTestSuite covers putting a preset in front of a device without

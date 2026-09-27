@@ -34,14 +34,14 @@ import (
 	"context"
 	"io"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/backup"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/editor"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/backup"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/editor"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Catalogs hands over the catalog model names are read out of. The sdk Client
@@ -57,7 +57,7 @@ type Catalogs interface {
 // answered is all this package does with it.
 type Compiler interface {
 	// Lift reads a preset into a rig.
-	Lift(doc *preset.Document, cat *catalog.Catalog) (rig.Spec, error)
+	Lift(doc *preset.Document, cat *catalog.Catalog) (rig.Spec, plan.Plan, error)
 }
 
 // Translator moves between what a device says and what a preset holds.

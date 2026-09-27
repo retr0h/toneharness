@@ -23,13 +23,16 @@ package presets
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // CompileOptions says which rig to build, what to build it into, and where the
@@ -38,8 +41,14 @@ type CompileOptions struct {
 	// Deps are the collaborators this command works through.
 	Deps
 
-	// RigPath is the rig to read.
-	RigPath string
+	// RigPath is the rig to read, and PlanPath the plan.
+	//
+	// Exactly one. A rig is the gear in signal order and carries no model, so it
+	// is realised against the catalog on the way through; a plan already names
+	// which model answered and what every knob is set to, which is what somebody
+	// exporting a slot and tuning it by hand has.
+	RigPath  string
+	PlanPath string
 	// TemplatePath is a preset to write the chain into. Empty uses an
 	// untouched preset the device itself wrote.
 	TemplatePath string
@@ -61,14 +70,23 @@ func Compile(
 	ctx context.Context,
 	opts CompileOptions,
 ) (result.Built, error) {
-	spec, err := readRig(ctx, opts.RigPath)
+	cat, err := opts.catalog(ctx)
 	if err != nil {
 		return result.Built{}, err
 	}
 
-	cat, err := opts.catalog(ctx)
+	made, name, blocks, err := readOne(ctx, opts, cat)
 	if err != nil {
 		return result.Built{}, err
+	}
+
+	// Checked before anything is written, and checked here for the same reason
+	// Make checks: a preset that will not load is worse than no preset. This is
+	// the path with the weaker input, because what it reads is a file somebody
+	// may have typed, where Make resolves a rig the project ships.
+	if err := plan.Validate(cat, made, plan.LimitsFor(cat.Device)); err != nil {
+		return result.Built{}, fmt.Errorf(
+			"the chain this document describes will not load: %w", err)
 	}
 
 	doc, err := template(ctx, opts.TemplatePath)
@@ -78,13 +96,13 @@ func Compile(
 
 	doc.Data.Device = cat.DeviceID
 
-	// The rig's identifier names the preset. A rig read off disk arrives on
-	// its own, with no ask beside it to say whose sound it is, and the
-	// identifier is the one name it has. Lower says the same thing again from
-	// the rig it is handed, and a device label on the rig beats both.
-	doc.Data.Meta.Name = spec.ID
+	// The identifier names the preset. A document read off disk arrives on its
+	// own, with no ask beside it to say whose sound it is, and the identifier is
+	// the one name it has. Lower says the same thing again from the plan it is
+	// handed, and a device label on that plan beats both.
+	doc.Data.Meta.Name = name
 
-	if err := opts.compiler().Lower(doc, spec, cat); err != nil {
+	if err := opts.compiler().Lower(doc, made, cat); err != nil {
 		return result.Built{}, err
 	}
 
@@ -101,10 +119,74 @@ func Compile(
 	}
 
 	return result.Built{
-		Name:   spec.ID,
-		Blocks: len(spec.Chain),
+		Name:   name,
+		Blocks: blocks,
 		Path:   opts.OutputPath,
 	}, nil
+}
+
+// ErrOnePath reports neither path given, or both.
+var ErrOnePath = errors.New("name one of --rig or --plan")
+
+// readOne reads whichever document was named, and answers with the plan to
+// write, the name to write it under and how many blocks it holds.
+//
+// A rig is realised on the way through because it names gear rather than models,
+// which is the whole reason it reads the same on hardware nobody has written a
+// driver for. A plan is already realised and goes straight to being written,
+// which is what somebody who exported a slot and turned a knob has in hand.
+func readOne(
+	ctx context.Context,
+	opts CompileOptions,
+	cat *catalog.Catalog,
+) (plan.Plan, string, int, error) {
+	named := opts.RigPath != ""
+	alsoNamed := opts.PlanPath != ""
+
+	if named == alsoNamed {
+		return plan.Plan{}, "", 0, ErrOnePath
+	}
+
+	if alsoNamed {
+		made, err := readPlan(ctx, opts.PlanPath)
+		if err != nil {
+			return plan.Plan{}, "", 0, err
+		}
+
+		return made, made.Name, len(made.Blocks), nil
+	}
+
+	spec, err := readRig(ctx, opts.RigPath)
+	if err != nil {
+		return plan.Plan{}, "", 0, err
+	}
+
+	made, err := opts.compiler().Realise(spec, cat)
+	if err != nil {
+		return plan.Plan{}, "", 0, err
+	}
+
+	return made, spec.ID, len(spec.Chain), nil
+}
+
+// readPlan loads a plan from disk.
+func readPlan(
+	ctx context.Context,
+	path string,
+) (plan.Plan, error) {
+	if err := ctx.Err(); err != nil {
+		return plan.Plan{}, err
+	}
+
+	f, err := os.Open(path) //nolint:gosec // the path is the user's own file
+	if err != nil {
+		return plan.Plan{}, fmt.Errorf("opening %s: %w", path, err)
+	}
+
+	// Opened read-only, so Close has nothing to report the read did not.
+	defer func() { _ = f.Close() }()
+
+	return plan.Load(f)
 }
 
 // readRig loads a rig from disk.

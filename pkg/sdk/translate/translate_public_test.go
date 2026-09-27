@@ -27,11 +27,12 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	"github.com/retr0h/tonestack/pkg/sdk/tone"
-	"github.com/retr0h/tonestack/pkg/sdk/translate"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
 // TranslatePublicTestSuite covers turning what somebody asked for into what a
@@ -87,9 +88,13 @@ func (s *TranslatePublicTestSuite) TestNamedGearResolvesToAModel() {
 	s.Require().NoError(rig.Validate(got))
 	s.Require().Len(got.Chain, 1)
 	s.Require().Equal("LA Studio Comp", got.Chain[0].Gear)
-	s.Require().Equal("HD2_CompressorLAStudioComp",
-		(*got.Chain[0].Models)["HX Stomp"])
 	s.Require().NotEmpty(notes)
+
+	// Said rather than written into the entry. Which model a name resolves to
+	// is the plan's answer, so the rig names the gear and the note names the
+	// model it reached.
+	s.Require().Contains(sayings(notes),
+		"LA Studio Comp: resolved to HD2_CompressorLAStudioComp")
 }
 
 // TestARecordingChoosesTheAmplifier is the half no reasoning about names can
@@ -108,7 +113,7 @@ func (s *TranslatePublicTestSuite) TestARecordingChoosesTheAmplifier() {
 	s.Require().NoError(rig.Validate(got))
 	s.Require().Len(got.Chain, 1)
 	s.Require().Equal(rig.RoleAmp, got.Chain[0].Role)
-	s.Require().NotEmpty((*got.Chain[0].Models)["HX Stomp"])
+	s.Require().NotEmpty(got.Chain[0].Gear)
 
 	var said string
 	for _, note := range notes {
@@ -460,8 +465,57 @@ like:
 	s.Require().NoError(err)
 
 	said := strings.Join(sayings(notes.Unmet()), " ")
-	s.Require().Contains(said, "no records carry that genre yet")
+
+	// Punk is measured and clears the threshold, and none of the figures set it
+	// apart from the players who play none of it. So the note says that rather
+	// than that nobody has tagged anything, which is what it used to say of
+	// every genre.
+	s.Require().Contains(said, "records from")
+	s.Require().Contains(said, "nothing to aim at")
 	s.Require().Contains(said, "Mike Dirnt")
+}
+
+// TestAGenreNobodyHasTagged covers the answer for a word with no records.
+func (s *TranslatePublicTestSuite) TestAGenreNobodyHasTagged() {
+	_, notes, err := translate.Translate(
+		s.ask("genre: sea-shanty\nlike:\n  recording: "+s.recording()+"\n"),
+		s.setup(""), s.deps)
+
+	s.Require().NoError(err)
+	s.Require().Contains(strings.Join(sayings(notes.Unmet()), " "),
+		"no records carry that genre")
+}
+
+// TestAGenreThatEarnsWords covers the answer somebody asked for.
+//
+// Grunge is displaced on two axes against the players who play none of it, so
+// the note says what it measured as rather than what it cannot do.
+func (s *TranslatePublicTestSuite) TestAGenreThatEarnsWords() {
+	_, notes, err := translate.Translate(
+		s.ask("genre: grunge\nlike:\n  recording: "+s.recording()+"\n"),
+		s.setup(""), s.deps)
+
+	s.Require().NoError(err)
+
+	said := strings.Join(sayings(notes.Unmet()), " ")
+	s.Require().Contains(said, "measured across")
+	s.Require().Contains(said, "scooped")
+}
+
+// TestAGenreUnderTheThreshold covers the count being reported.
+//
+// Said as the two numbers rather than as a refusal, because how far short it is
+// decides what to download next. Tested directly, because every genre measured
+// into this binary clears the threshold and which ones do depends on whichever
+// records somebody tagged.
+func (s *TranslatePublicTestSuite) TestAGenreUnderTheThreshold() {
+	got := translate.GenreNote("emo", audio.Genre{
+		Name: "emo", Slug: "emo", Records: 3, Players: 1,
+	}, true)
+
+	s.Require().Contains(got.Said, "3 records from 1 players")
+	s.Require().Contains(got.Said, "under the eight from three")
+	s.Require().Contains(got.Said, "wearing a genre's name")
 }
 
 // TestNothingToBuildFromIsRefused covers an empty ask.

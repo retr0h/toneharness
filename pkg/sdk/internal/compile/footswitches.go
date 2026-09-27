@@ -26,9 +26,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // footswitchKey is the tone entry a preset stores footswitches under.
@@ -163,15 +164,15 @@ func footswitchOf(
 // rig through check.
 func Footswitches(
 	doc *preset.Document,
-	spec rig.Spec,
+	made plan.Plan,
 	cat *catalog.Catalog,
 ) {
-	if spec.Footswitches == nil {
+	if len(made.Footswitches) == 0 {
 		return
 	}
 
 	pruneFootswitches(doc)
-	restoreFootswitches(doc, *spec.Footswitches, cat)
+	restoreFootswitches(doc, made.Footswitches, cat)
 }
 
 // restoreFootswitches writes a rig's footswitches back as a preset stores

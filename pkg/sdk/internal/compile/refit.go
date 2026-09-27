@@ -20,8 +20,8 @@
 package compile
 
 import (
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Refit moves a rig's controller assignments onto where the fit put the
@@ -39,17 +39,17 @@ import (
 // A footswitch carries the same numbers for the same reason, and moves the
 // same way.
 func Refit(
-	spec rig.Spec,
+	made plan.Plan,
 	before, after []plan.Block,
-) rig.Spec {
+) plan.Plan {
 	if len(before) != len(after) {
-		return spec
+		return made
 	}
 
-	if spec.Controllers != nil {
-		out := make([]rig.Controller, 0, len(*spec.Controllers))
+	if len(made.Controllers) > 0 {
+		out := make([]rig.Controller, 0, len(made.Controllers))
 
-		for _, c := range *spec.Controllers {
+		for _, c := range made.Controllers {
 			if path, pos, ok := moved(before, after, at(c.Path, 0), c.Block); ok {
 				c.Path, c.Block = &path, pos
 			}
@@ -57,13 +57,13 @@ func Refit(
 			out = append(out, c)
 		}
 
-		spec.Controllers = &out
+		made.Controllers = out
 	}
 
-	if spec.Footswitches != nil {
-		out := make([]rig.Footswitch, 0, len(*spec.Footswitches))
+	if len(made.Footswitches) > 0 {
+		out := make([]rig.Footswitch, 0, len(made.Footswitches))
 
-		for _, fs := range *spec.Footswitches {
+		for _, fs := range made.Footswitches {
 			// A switch with no block is a switch that acts on nothing, which
 			// the fit cannot have moved.
 			if fs.Block != nil {
@@ -75,10 +75,10 @@ func Refit(
 			out = append(out, fs)
 		}
 
-		spec.Footswitches = &out
+		made.Footswitches = out
 	}
 
-	return spec
+	return made
 }
 
 // moved says where the block at one address ended up.

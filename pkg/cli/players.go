@@ -26,8 +26,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // Players prints what each player's records earn them against the others.

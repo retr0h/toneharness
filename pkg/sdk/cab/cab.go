@@ -47,7 +47,7 @@ import (
 	"math"
 	"math/cmplx"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // Taps is how long an impulse response a device will load.

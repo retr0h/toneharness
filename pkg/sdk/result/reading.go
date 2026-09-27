@@ -21,8 +21,9 @@
 package result
 
 import (
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Reading is one preset, read out of a slot or a file.
@@ -36,15 +37,24 @@ type Reading struct {
 	// Name is what the preset is called. A slot has one even when it holds
 	// nothing, because a device names every slot whether or not anybody has
 	// put anything in it.
-	Name string
+	Name string `json:"name"`
 	// Doc is the preset itself. Nil when the slot holds nothing.
-	Doc *preset.Document
-	// Rig is what the preset describes. Zero when the slot holds nothing, or
-	// when only the device's own document was asked for.
-	Rig rig.Spec
+	Doc *preset.Document `json:"doc"`
+	// Rig is what the preset describes, as gear a person recognises. Zero when
+	// the slot holds nothing, or when only the device's own document was asked
+	// for.
+	Rig rig.Spec `json:"rig"`
+	// Plan is the same preset as the device holds it: which model each piece of
+	// gear resolved to, where it sits, and the snapshots and footswitches that
+	// only mean anything on a pedal.
+	//
+	// Beside the rig rather than instead of it, because the two answer different
+	// questions about one read. What gear is this is the rig's; what is this
+	// pedal actually doing is the plan's.
+	Plan plan.Plan `json:"plan"`
 	// Answer is what a device replied with when the reply was not a preset.
 	// Nil otherwise.
-	Answer *Answer
+	Answer *Answer `json:"answer"`
 }
 
 // Empty says whether the slot holds a preset.
@@ -61,7 +71,7 @@ func (r Reading) Empty() bool { return r.Doc == nil }
 // Reading a preset off the hardware is the one call whose reply nobody has
 // seen. Capturing it is what turns a guess about the wire format into a test,
 // and it costs one plugged-in session rather than one per attempt.
-const DumpEnv = "TONESTACK_USB_DUMP"
+const DumpEnv = "TONEHARNESS_USB_DUMP"
 
 // Answer is a device's reply that did not decode as a preset.
 //
@@ -72,19 +82,19 @@ const DumpEnv = "TONESTACK_USB_DUMP"
 // printing a chain that would be wrong.
 type Answer struct {
 	// Model is what the device calls itself.
-	Model string
+	Model string `json:"model"`
 	// Slot is the position that was read, from zero.
-	Slot int
+	Slot int `json:"slot"`
 	// Shape is what arrived, described in whatever detail can be had.
-	Shape string
+	Shape string `json:"shape"`
 }
 
 // Written is a file this wrote, and what went into it.
 type Written struct {
 	// Slot is the position it came from, from zero.
-	Slot int
+	Slot int `json:"slot"`
 	// Name is what the preset is called.
-	Name string
+	Name string `json:"name"`
 	// Path is the file that was written.
-	Path string
+	Path string `json:"path"`
 }

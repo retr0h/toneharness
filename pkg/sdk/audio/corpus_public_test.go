@@ -29,7 +29,7 @@ import (
 	"github.com/go-audio/wav"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // CorpusPublicTestSuite covers measuring several players and comparing them.

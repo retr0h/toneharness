@@ -27,7 +27,7 @@ import (
 	"github.com/gen2brain/malgo"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/reamp"
+	"github.com/retr0h/toneharness/pkg/sdk/reamp"
 )
 
 // ReampPublicTestSuite covers the arithmetic of pushing a signal through

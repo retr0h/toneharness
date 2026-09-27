@@ -21,8 +21,8 @@
 package result
 
 import (
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	"github.com/retr0h/tonestack/pkg/sdk/translate"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
 // Resolved is what a request and a setup turned into.

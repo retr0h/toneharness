@@ -27,10 +27,10 @@ import (
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // RegisterTestSuite covers building a tool's output schema.
@@ -95,19 +95,30 @@ func (s *RegisterTestSuite) TestMustOutputSchema() {
 			},
 		},
 		{
-			// Device state a rig keeps without modelling it: raw JSON behind
-			// a pointer, and a map of it.
-			name:   "a rig carrying device state",
-			schema: func() *jsonschema.Schema { return mustOutputSchema[sdk.Recipe]() },
-			value: sdk.Recipe{Rig: rig.Spec{
-				ID:         "mike-dirnt",
-				Instrument: rig.InstrumentBass,
-				Schema:     rig.SchemaName,
-				Device: &rig.DeviceState{
-					Version: &version,
-					Meta:    &map[string]json.RawMessage{"name": json.RawMessage(`"Longview"`)},
+			// Device state a plan keeps without modelling it: raw JSON behind
+			// a pointer, and a map of it. Beside the rig, which is the same
+			// read answering what gear this is.
+			name:   "a read carrying device state",
+			schema: func() *jsonschema.Schema { return mustOutputSchema[sdk.Reading]() },
+			value: sdk.Reading{
+				Name: "Longview",
+				Rig: rig.Spec{
+					ID:         "mike-dirnt",
+					Instrument: rig.InstrumentBass,
+					Schema:     rig.SchemaName,
+					Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
 				},
-			}},
+				Plan: plan.Plan{
+					Name:   "Longview",
+					Blocks: []plan.Block{block},
+					Device: &rig.DeviceState{
+						Version: &version,
+						Meta: &map[string]json.RawMessage{
+							"name": json.RawMessage(`"Longview"`),
+						},
+					},
+				},
+			},
 		},
 		{
 			name:   "a type jsonschema cannot describe",

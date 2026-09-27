@@ -27,7 +27,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // LoadPublicTestSuite covers reading a request and a setup off disk.

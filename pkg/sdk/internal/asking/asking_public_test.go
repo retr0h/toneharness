@@ -28,9 +28,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/asking"
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/asking"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 )
 
 // AskingPublicTestSuite covers turning a request into the rig it describes.

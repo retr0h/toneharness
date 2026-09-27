@@ -32,8 +32,8 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // LoopPublicTestSuite covers the read loop: the one goroutine that reads, and
@@ -41,7 +41,7 @@ import (
 //
 // A device sends notifications unasked, and with nothing draining its
 // endpoint its queue fills and it stops taking writes. Rule 2 in
-// docs/protocol.md.
+// pkg/sdk/internal/wire/README.md.
 type LoopPublicTestSuite struct {
 	suite.Suite
 

@@ -25,8 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 type ValidateTopologyPublicTestSuite struct {
@@ -35,19 +34,6 @@ type ValidateTopologyPublicTestSuite struct {
 
 func (*ValidateTopologyPublicTestSuite) limits() plan.Limits {
 	return plan.Limits{MaxBlocks: 6, Paths: 2, ChipCeiling: 95.0}
-}
-
-// snapshot is a chain of one block with one override, keyed by at.
-func (s *ValidateTopologyPublicTestSuite) snapshot(
-	at string,
-) plan.Plan {
-	return plan.Plan{
-		Blocks: []plan.Block{{Model: "A", DSP: 0, Pos: 0}},
-		Snapshots: []plan.Snapshot{{
-			Name:      "Lead",
-			Overrides: map[string]plan.Params{at: {"Gain": catalog.Float(0.9)}},
-		}},
-	}
 }
 
 // TestValidateTopology checks where blocks sit rather than what they cost.
@@ -107,28 +93,6 @@ func (s *ValidateTopologyPublicTestSuite) TestValidateTopology() {
 			name: "a block on a chip the device does not have",
 			spec: plan.Plan{Blocks: []plan.Block{{Model: "A", DSP: 5, Pos: 0}}},
 			says: "",
-		},
-		{
-			name: "a snapshot overriding a block that is there",
-			spec: s.snapshot("0"),
-			ok:   true,
-		},
-		{
-			name: "one overriding a block that is not",
-			spec: s.snapshot("4"),
-			says: "snapshot",
-		},
-		{
-			name: "one naming a position below the first",
-			spec: s.snapshot("-1"),
-			says: "",
-		},
-		{
-			// Overrides are keyed by string because JSON object keys are
-			// strings. A key that is not a number is a rig nobody can act on.
-			name: "one keyed by something that is not an index",
-			spec: s.snapshot("amp"),
-			says: "not an index",
 		},
 	}
 

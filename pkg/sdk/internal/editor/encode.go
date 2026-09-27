@@ -25,10 +25,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 )
 
 // Turning a chain into what a device lays on its grid.
@@ -49,7 +49,7 @@ func Placements(
 	if len(cat.Symbols) == 0 {
 		return nil, fmt.Errorf(
 			"this catalog has no model table, so a chain cannot be written to " +
-				"a device: regenerate it with go generate in the tonestack repository")
+				"a device: regenerate it with go generate in the toneharness repository")
 	}
 
 	c, err := doc.Spec()

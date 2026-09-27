@@ -26,13 +26,13 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
-// CheckPublicTestSuite covers what a rig claims beside its chain.
+// CheckPublicTestSuite covers what a plan claims beside its chain.
 //
 // A colour, a parameter name and a device name are all valid strings, so the
 // contract cannot rule on them. Whether they name anything is a question about
@@ -72,11 +72,11 @@ func (s *CheckPublicTestSuite) catalogWith(
 	}
 }
 
-// TestCheck covers every claim a rig makes that a catalog has to supply.
+// TestCheck covers every claim a plan makes that a catalog has to supply.
 func (s *CheckPublicTestSuite) TestCheck() {
 	tests := []struct {
 		name string
-		// what the rig says beside its chain.
+		// what the plan says beside its chain.
 		device      string
 		led         string
 		parameter   string
@@ -97,9 +97,9 @@ func (s *CheckPublicTestSuite) TestCheck() {
 		field   string
 		suggest string
 	}{
-		{name: "a rig claiming nothing"},
+		{name: "a plan claiming nothing"},
 		{
-			// A rig read off a device numbers its blocks the way the device
+			// A plan read off a device numbers its blocks the way the device
 			// lays them out, so the position a controller names is not where
 			// the block sits in the list.
 			name:       "a controller on a chain that states its positions",
@@ -155,7 +155,7 @@ func (s *CheckPublicTestSuite) TestCheck() {
 		},
 		{
 			// A model from newer firmware than the catalog was generated
-			// from. A rig may name one, and nothing here can say whether its
+			// from. A plan may name one, and nothing here can say whether its
 			// parameter is real.
 			name:         "a controller on a model this catalog lacks",
 			parameter:    "Anything",
@@ -213,10 +213,10 @@ func (s *CheckPublicTestSuite) TestCheck() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			spec := recipe("Ampeg SVT (normal", "")
+			made := plan.Plan{Name: "test"}
 
 			if tt.device != "" {
-				spec.Target = &rig.Target{Device: &tt.device}
+				made.Target = &rig.Target{Device: &tt.device}
 			}
 
 			if tt.hasSwitch {
@@ -225,11 +225,11 @@ func (s *CheckPublicTestSuite) TestCheck() {
 					fs.Led = &tt.led
 				}
 
-				spec.Footswitches = &[]rig.Footswitch{fs}
+				made.Footswitches = []rig.Footswitch{fs}
 			}
 
 			if tt.hasControl {
-				spec.Controllers = &[]rig.Controller{{
+				made.Controllers = []rig.Controller{{
 					Controller: 2, Block: tt.block, Parameter: tt.parameter,
 				}}
 			}
@@ -253,7 +253,7 @@ func (s *CheckPublicTestSuite) TestCheck() {
 				blocks = nil
 			}
 
-			err := compile.Check(spec, blocks, cat)
+			err := compile.Check(made, blocks, cat)
 
 			if tt.err == nil {
 				s.Require().NoError(err)
@@ -275,23 +275,23 @@ func (s *CheckPublicTestSuite) TestCheck() {
 	}
 }
 
-// TestCheckReportsEveryBadValue covers a rig that is wrong four ways.
+// TestCheckReportsEveryBadValue covers a plan that is wrong four ways.
 //
-// It used to report the first mistake and stop, so a rig with four in it took
+// It used to report the first mistake and stop, so a plan with four in it took
 // four runs to fix and each run hid the next. What is held here is that they
 // arrive together, and that matching on the sentinel still reaches through
 // the join.
 func (s *CheckPublicTestSuite) TestCheckReportsEveryBadValue() {
 	first, second := "nonsense", "alsonot"
 
-	spec := recipe("Ampeg SVT (normal", "")
-	spec.Footswitches = &[]rig.Footswitch{{Led: &first}, {Led: &second}}
-	spec.Controllers = &[]rig.Controller{
+	made := plan.Plan{Name: "test"}
+	made.Footswitches = []rig.Footswitch{{Led: &first}, {Led: &second}}
+	made.Controllers = []rig.Controller{
 		{Controller: 2, Block: 0, Parameter: "NotAParameter"},
 		{Controller: 3, Block: 99, Parameter: "Drive"},
 	}
 
-	err := compile.Check(spec, s.blocks(), s.cat)
+	err := compile.Check(made, s.blocks(), s.cat)
 	s.Require().Error(err)
 
 	for _, want := range []string{

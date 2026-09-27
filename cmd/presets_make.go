@@ -24,31 +24,31 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 var (
-	presetsMakeID      string
-	presetsMakeOut     string
-	presetsMakeClient  clientFlags
-	presetsMakeRecipes string
+	presetsMakeID     string
+	presetsMakeOut    string
+	presetsMakeClient clientFlags
+	presetsMakeRigs   string
 )
 
 // presetsMakeCmd represents the presets make command.
 var presetsMakeCmd = &cobra.Command{
 	Use:   "make",
-	Short: "Build a preset from a recipe",
+	Short: "Build a preset from a rig",
 	Long: `Build a preset from curated knowledge.
 
-The recipe names real-world gear; the catalog says what this device has. Every
-parameter is set to what Line 6 states as its default — a recipe's character
-words then move the controls they name.`,
+The rig names real-world gear; the catalog says what this device has. Every
+parameter is set to what Line 6 states as its default — the words in the ask
+beside the rig then move the controls they name.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		client := presetsMakeClient.client(ownRecipes(presetsMakeRecipes))
+		client := presetsMakeClient.client(ownRigs(presetsMakeRigs))
 
-		made, err := client.Build(cmd.Context(), presetsMakeID, presetsMakeOut, sdk.ReplaceExisting)
+		made, err := client.Make(cmd.Context(), presetsMakeID, presetsMakeOut, sdk.ReplaceExisting)
 		if err != nil {
 			return err
 		}
@@ -70,12 +70,12 @@ func init() {
 	presetsCmd.AddCommand(presetsMakeCmd)
 
 	f := presetsMakeCmd.Flags()
-	f.StringVar(&presetsMakeID, "id", "", "recipe to build from")
+	f.StringVar(&presetsMakeID, "id", "", "rig to build from")
 	f.StringVar(
-		&presetsMakeRecipes,
-		"recipes",
+		&presetsMakeRigs,
+		"rigs",
 		"",
-		"a directory of recipes to use instead of yours, beside the built-in ones",
+		"a directory of rigs to use instead of yours, beside the built-in ones",
 	)
 	f.StringVar(&presetsMakeClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")

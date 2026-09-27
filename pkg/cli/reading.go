@@ -25,11 +25,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Reading prints the rig a preset describes.

@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/slug"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 )
 
 type SlugPublicTestSuite struct {
@@ -49,7 +49,11 @@ func (s *SlugPublicTestSuite) TestOf() {
 			want: "guns-n-roses",
 		},
 		{name: "the same band written plainly", in: "Guns n Roses", want: "guns-n-roses"},
-		{name: "a hyphen already there", in: "Parliament-Funkadelic", want: "parliament-funkadelic"},
+		{
+			name: "a hyphen already there",
+			in:   "Parliament-Funkadelic",
+			want: "parliament-funkadelic",
+		},
 		{name: "a digit", in: "blink-182", want: "blink-182"},
 		{name: "a colon and spaces", in: "DIR:ANGL Meteor", want: "dir-angl-meteor"},
 		{name: "already a slug", in: "pop-punk", want: "pop-punk"},

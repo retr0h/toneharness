@@ -24,8 +24,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 )
 
 // nearUniversal is how common a kind of block must be before one is added to a
@@ -34,7 +34,7 @@ import (
 // Set high on purpose. A compressor in 88% of bass chains is a convention, and
 // leaving it out produces something nobody would recognise. Drive in 62% is a
 // choice, and making it silently would be this tool having opinions it cannot
-// justify. A recipe naming a pedal always gets it, whatever the figure.
+// justify. A rig naming a pedal always gets it, whatever the figure.
 const nearUniversal = 0.75
 
 // Added records a block the chain did not ask for, and why it is there.
@@ -103,7 +103,7 @@ func fill(
 // Position is not decoration: drive ahead of an amp overdrives its input,
 // drive after it does something else entirely.
 //
-// A resolved chain always holds an amp — a recipe cannot omit one — so the
+// A resolved chain always holds an amp — a rig cannot omit one — so the
 // index is found rather than guarded against.
 func insert(
 	blocks []catalog.Block,

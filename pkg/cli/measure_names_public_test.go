@@ -23,16 +23,18 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"maps"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/cli/internal/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // NamesTestSuite covers holding the catalog's parameter order to the device.
@@ -70,9 +72,9 @@ func (s *NamesTestSuite) device(
 		}).AnyTimes()
 	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-	held := map[string]any{}
+	held := plan.Params{}
 	for _, name := range order {
-		held[name] = 0.5
+		held[name] = catalog.Float(0.5)
 	}
 
 	s.pedal.EXPECT().
@@ -82,7 +84,7 @@ func (s *NamesTestSuite) device(
 				return errors.New("error -3")
 			}
 
-			held[order[at.Param]] = float64(v)
+			held[order[at.Param]] = catalog.Float(float64(v))
 
 			return nil
 		}).AnyTimes()
@@ -90,19 +92,34 @@ func (s *NamesTestSuite) device(
 	s.pedal.EXPECT().
 		Current(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(context.Context, sdk.Format) (sdk.Reading, error) {
-			now := map[string]any{}
-			for k, v := range held {
-				now[k] = v
-			}
+			now := plan.Params{}
+			maps.Copy(now, held)
 
-			return sdk.Reading{Rig: rig.Spec{
-				Schema: rig.SchemaName, ID: "probed",
-				Instrument: rig.InstrumentBass,
-				Chain: []rig.ChainEntry{{
-					Role: rig.RoleAmp, Gear: "an amplifier", Params: &now,
-				}},
-			}}, nil
+			return probedReading(now), nil
 		}).AnyTimes()
+}
+
+// probedReading is a device read of a chain holding one block.
+//
+// Both layers, because a read populates both. A probe reads only the plan's
+// parameters, so the model names the block a plan must carry and nothing
+// compares it.
+func probedReading(
+	held plan.Params,
+) sdk.Reading {
+	return sdk.Reading{
+		Rig: rig.Spec{
+			Schema: rig.SchemaName, ID: "probed",
+			Instrument: rig.InstrumentBass,
+			Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "an amplifier"}},
+		},
+		Plan: plan.Plan{
+			Name: "probed",
+			Blocks: []plan.Block{{
+				Model: "HD2_AmpUSDripmanNorm", Params: held, Enabled: true,
+			}},
+		},
+	}
 }
 
 // run checks one model and returns what was said.
@@ -190,9 +207,9 @@ func (s *NamesTestSuite) refuse(
 		}).AnyTimes()
 	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-	held := map[string]any{}
+	held := plan.Params{}
 	for _, name := range order {
-		held[name] = 0.5
+		held[name] = catalog.Float(0.5)
 	}
 
 	s.pedal.EXPECT().
@@ -206,7 +223,7 @@ func (s *NamesTestSuite) refuse(
 				return errors.New("error -3")
 			}
 
-			held[order[at.Param]] = float64(v)
+			held[order[at.Param]] = catalog.Float(float64(v))
 
 			return nil
 		}).AnyTimes()
@@ -214,18 +231,10 @@ func (s *NamesTestSuite) refuse(
 	s.pedal.EXPECT().
 		Current(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(context.Context, sdk.Format) (sdk.Reading, error) {
-			now := map[string]any{}
-			for k, v := range held {
-				now[k] = v
-			}
+			now := plan.Params{}
+			maps.Copy(now, held)
 
-			return sdk.Reading{Rig: rig.Spec{
-				Schema: rig.SchemaName, ID: "probed",
-				Instrument: rig.InstrumentBass,
-				Chain: []rig.ChainEntry{{
-					Role: rig.RoleAmp, Gear: "an amplifier", Params: &now,
-				}},
-			}}, nil
+			return probedReading(now), nil
 		}).AnyTimes()
 }
 
@@ -314,7 +323,7 @@ func (s *NamesTestSuite) TestNamesReportAChainWithNothingInIt() {
 		}).AnyTimes()
 	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	s.pedal.EXPECT().Current(gomock.Any(), gomock.Any()).
-		Return(sdk.Reading{Rig: rig.Spec{}}, nil).AnyTimes()
+		Return(sdk.Reading{Plan: plan.Plan{}}, nil).AnyTimes()
 
 	_, err := s.run("HD2_AmpUSDripmanNorm")
 

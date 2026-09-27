@@ -24,9 +24,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // deviceReading turns a device's answer for one slot into a reading.
@@ -77,7 +77,7 @@ func (f *Flows) deviceReading(
 		return result.Reading{Name: name, Doc: doc}, nil
 	}
 
-	spec, err := f.compiler().Lift(doc, cat)
+	spec, made, err := f.compiler().Lift(doc, cat)
 	if err != nil {
 		return result.Reading{}, fmt.Errorf(
 			"reading slot %s: %w", slotpkg.Label(slot), err)
@@ -89,10 +89,22 @@ func (f *Flows) deviceReading(
 	//
 	// Controller assignments are not decoded yet and so are not carried. A
 	// rig read off the device rebuilds its routing but not those.
-	spec.Device = f.translator().DeviceState(got, cat)
-	spec.Snapshots = f.translator().Snapshots(got)
-	spec.Footswitches = f.translator().Footswitches(got, cat)
-	spec.Controllers = f.translator().Controllers(got, cat)
+	made.Device = f.translator().DeviceState(got, cat)
+	made.Snapshots = deref(f.translator().Snapshots(got))
+	made.Footswitches = deref(f.translator().Footswitches(got, cat))
+	made.Controllers = deref(f.translator().Controllers(got, cat))
 
-	return result.Reading{Name: name, Doc: doc, Rig: spec}, nil
+	return result.Reading{Name: name, Doc: doc, Rig: spec, Plan: made}, nil
+}
+
+// deref reads an optional list as a list, since absent and empty are the same
+// thing to a plan: nothing to write.
+func deref[T any](
+	of *[]T,
+) []T {
+	if of == nil {
+		return nil
+	}
+
+	return *of
 }

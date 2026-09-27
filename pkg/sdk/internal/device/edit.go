@@ -22,7 +22,7 @@ package device
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // opSetParam changes one parameter in the preset a device is playing.

@@ -28,7 +28,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/retr0h/tonestack/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/cli"
 )
 
 // styleHelp makes every command print help in the project's own palette.

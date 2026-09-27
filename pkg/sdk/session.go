@@ -25,9 +25,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Session is one claim of the pedal and one handshake, used for as many

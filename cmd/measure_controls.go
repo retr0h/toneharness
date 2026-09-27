@@ -25,7 +25,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/retr0h/tonestack/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/cli"
 )
 
 var (
@@ -49,7 +49,7 @@ controls through its range, measuring at every position.
 The expensive half of measuring a device. A control is about two minutes and a
 twelve-control amplifier most of an hour, so this is aimed at the blocks a
 chain reaches for rather than run across all 665.
-` + "`tonestack measure blocks`" + ` is the cheap half and covers everything.
+` + "`toneharness measure blocks`" + ` is the cheap half and covers everything.
 
 Three things a reading has to control for, and each was got wrong first.
 

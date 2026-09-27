@@ -38,7 +38,11 @@ var (
 	Loudness = loudness
 
 	Playing = playing
-	Frames  = frames
+
+	// The genre rule, which is not Derive and is the reason genre.go exists.
+	Displaced    = displaced
+	UnpackGenres = unpackGenres
+	Frames       = frames
 )
 
 // Quietest is how far under the loudest moment a frame may sit and still

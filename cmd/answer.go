@@ -25,7 +25,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/retr0h/tonestack/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/cli"
 )
 
 // asData is set by --json, and is a persistent flag so it reads the same on
@@ -35,7 +35,7 @@ var asData bool
 // Registered here rather than in Execute, because Root() hands the command
 // tree to anything that reads it rather than runs it — the generated command
 // reference, and the MCP server — and a flag added on the way to running is a
-// flag none of them can see. docs/commands.md lost it exactly that way.
+// flag none of them can see. A generated command page lost it exactly that way, before the page went.
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&asData, "json", false,
 		"answer as data rather than as a table")

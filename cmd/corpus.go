@@ -25,17 +25,17 @@ import "github.com/spf13/cobra"
 // corpusCmd represents the corpus command.
 var corpusCmd = &cobra.Command{
 	Use:   "corpus",
-	Short: "Work with what real presets say about a device",
+	Short: "Work with the bodies of evidence this is built on",
 	Args:  cobra.NoArgs,
-	Long: `Inspect what a body of presets other people made says.
+	Long: `Two bodies of evidence, and they answer different questions.
 
-The catalog says what a device can do. The corpus says what people actually do
-with it, which is a different question: Line 6 states a default Treble of 0.77
-for the Ampeg SVT's bright channel, and across the presets using it the median
-is 0.85.
+A corpus of presets says what people set their knobs to. A corpus of recordings
+says what players actually sound like. Neither is authority and both are
+somebody else's work, which is why every figure here comes with a spread or a
+count rather than a verdict.
 
-Nothing here is authority. It is a measurement over strangers' presets,
-including their mistakes, which is why every median comes with a spread.`,
+They are named rather than sharing the word, because "corpus" meant only the
+presets for long enough that a reader could reasonably assume it still does.`,
 }
 
 func init() {

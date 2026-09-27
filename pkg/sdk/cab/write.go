@@ -152,7 +152,7 @@ func chunk(
 	}
 
 	fields := [][2]string{
-		{"ISFT", "tonestack"},
+		{"ISFT", "toneharness"},
 		{"ICMT", comment},
 	}
 

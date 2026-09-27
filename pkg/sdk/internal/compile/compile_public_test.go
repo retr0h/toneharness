@@ -25,11 +25,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // CompilePublicTestSuite covers the package's work reached as a value.
@@ -66,23 +66,32 @@ func (s *CompilePublicTestSuite) TestLift() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			doc := tt.doc()
-			want, wantErr := compile.Lift(doc, s.cat)
-			got, err := compile.New().Lift(doc, s.cat)
+			want, wantPlan, wantErr := compile.Lift(doc, s.cat)
+			got, made, err := compile.New().Lift(doc, s.cat)
 
 			s.Require().Equal(wantErr == nil, err == nil)
 			s.Require().Equal(want, got)
+			// Both halves through the type, because a lift answers with two
+			// documents and a method that dropped one would pass a test for the
+			// other.
+			s.Require().Equal(wantPlan, made)
 		})
 	}
 }
 
-// TestLower covers writing a rig back into a preset through the type.
+// TestLower covers writing a plan back into a preset through the type.
 func (s *CompilePublicTestSuite) TestLower() {
 	tests := []struct {
 		name string
-		spec rig.Spec
+		made plan.Plan
 	}{
-		{name: "a rig naming an amplifier", spec: recipe("Ampeg SVT", "")},
-		{name: "a rig naming nothing that resolves", spec: rig.Spec{}},
+		{
+			name: "a plan holding an amplifier",
+			made: plan.Plan{Name: "test", Blocks: []plan.Block{
+				{Model: "HD2_AmpSVBeastNrm", Enabled: true},
+			}},
+		},
+		{name: "a plan holding nothing", made: plan.Plan{}},
 	}
 
 	for _, tt := range tests {
@@ -90,11 +99,32 @@ func (s *CompilePublicTestSuite) TestLower() {
 			first, _ := preset.Blank()
 			second, _ := preset.Blank()
 
-			want := compile.Lower(first, tt.spec, s.cat)
-			got := compile.New().Lower(second, tt.spec, s.cat)
+			want := compile.Lower(first, tt.made, s.cat)
+			got := compile.New().Lower(second, tt.made, s.cat)
 
 			s.Require().Equal(want == nil, got == nil)
 			s.Require().Equal(first, second)
+		})
+	}
+}
+
+// TestRealise covers fitting a rig to a device through the type.
+func (s *CompilePublicTestSuite) TestRealise() {
+	tests := []struct {
+		name string
+		spec rig.Spec
+	}{
+		{name: "a rig naming an amplifier", spec: bassRig("Ampeg SVT", "")},
+		{name: "a rig naming gear no model emulates", spec: bassRig("Nothing At All", "")},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			want, wantErr := compile.Realise(tt.spec, s.cat)
+			got, err := compile.New().Realise(tt.spec, s.cat)
+
+			s.Require().Equal(wantErr == nil, err == nil)
+			s.Require().Equal(want, got)
 		})
 	}
 }
@@ -124,8 +154,8 @@ func (s *CompilePublicTestSuite) TestSections() {
 			first, _ := preset.Blank()
 			second, _ := preset.Blank()
 
-			want := compile.Sections(first, tt.spec, blocks, s.cat)
-			got := compile.New().Sections(second, tt.spec, blocks, s.cat)
+			want := compile.Sections(first, tt.spec, plan.Plan{}, blocks, s.cat)
+			got := compile.New().Sections(second, tt.spec, plan.Plan{}, blocks, s.cat)
 
 			s.Require().Equal(want == nil, got == nil)
 			s.Require().Equal(first, second)
@@ -139,17 +169,17 @@ func (s *CompilePublicTestSuite) TestControllers() {
 
 	tests := []struct {
 		name string
-		spec rig.Spec
+		made plan.Plan
 	}{
 		{
 			name: "an assignment the chain can make",
-			spec: rig.Spec{Controllers: &[]rig.Controller{
+			made: plan.Plan{Controllers: []rig.Controller{
 				{Controller: 2, Block: 0, Parameter: "Drive"},
 			}},
 		},
 		{
-			name: "a rig that assigns nothing",
-			spec: rig.Spec{},
+			name: "a plan that assigns nothing",
+			made: plan.Plan{},
 		},
 	}
 
@@ -158,8 +188,8 @@ func (s *CompilePublicTestSuite) TestControllers() {
 			first, _ := preset.Blank()
 			second, _ := preset.Blank()
 
-			compile.Controllers(first, tt.spec, blocks, s.cat)
-			compile.New().Controllers(second, tt.spec, blocks, s.cat)
+			compile.Controllers(first, tt.made, blocks, s.cat)
+			compile.New().Controllers(second, tt.made, blocks, s.cat)
 
 			s.Require().Equal(first, second)
 		})
@@ -172,17 +202,17 @@ func (s *CompilePublicTestSuite) TestFootswitches() {
 
 	tests := []struct {
 		name string
-		spec rig.Spec
+		made plan.Plan
 	}{
 		{
 			name: "a switch on a block",
-			spec: rig.Spec{Footswitches: &[]rig.Footswitch{
+			made: plan.Plan{Footswitches: []rig.Footswitch{
 				{Switch: &switched, Block: &block},
 			}},
 		},
 		{
-			name: "a rig with no switches set",
-			spec: rig.Spec{},
+			name: "a plan with no switches set",
+			made: plan.Plan{},
 		},
 	}
 
@@ -191,8 +221,8 @@ func (s *CompilePublicTestSuite) TestFootswitches() {
 			first, _ := preset.Blank()
 			second, _ := preset.Blank()
 
-			compile.Footswitches(first, tt.spec, s.cat)
-			compile.New().Footswitches(second, tt.spec, s.cat)
+			compile.Footswitches(first, tt.made, s.cat)
+			compile.New().Footswitches(second, tt.made, s.cat)
 
 			s.Require().Equal(first, second)
 		})
@@ -205,8 +235,8 @@ func (s *CompilePublicTestSuite) TestResolve() {
 		name string
 		spec rig.Spec
 	}{
-		{name: "a rig naming an amplifier", spec: recipe("Ampeg SVT", "")},
-		{name: "a rig naming gear no model emulates", spec: recipe("Nothing At All", "")},
+		{name: "a rig naming an amplifier", spec: bassRig("Ampeg SVT", "")},
+		{name: "a rig naming gear no model emulates", spec: bassRig("Nothing At All", "")},
 	}
 
 	for _, tt := range tests {
@@ -223,7 +253,7 @@ func (s *CompilePublicTestSuite) TestResolve() {
 
 // TestFit covers dropping what a device has no room for, through the type.
 func (s *CompilePublicTestSuite) TestFit() {
-	built, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+	built, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	tests := []struct {

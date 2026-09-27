@@ -20,7 +20,7 @@
 
 package sdk
 
-import "github.com/retr0h/tonestack/pkg/sdk/internal/device"
+import "github.com/retr0h/toneharness/pkg/sdk/internal/device"
 
 // Opener is the bus a Client was built over, so a test can see which one New
 // chose and what it handed that bus.

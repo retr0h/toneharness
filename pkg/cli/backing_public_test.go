@@ -25,8 +25,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	sdk "github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/cli"
+	sdk "github.com/retr0h/toneharness/pkg/sdk"
 )
 
 // BackingPublicTestSuite covers the table that holds a rig's records to its

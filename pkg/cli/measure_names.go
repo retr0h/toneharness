@@ -27,9 +27,10 @@ import (
 	"os"
 	"sort"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 // NamesOptions is what checking a block's parameter order needs to know.
@@ -93,7 +94,7 @@ func MeasureNames(
 
 	order := wireOrder(cat, opts.Model)
 
-	work, err := os.MkdirTemp("", "tonestack-names")
+	work, err := os.MkdirTemp("", "toneharness-names")
 	if err != nil {
 		return fmt.Errorf("making somewhere to build a preset: %w", err)
 	}
@@ -241,29 +242,24 @@ func probe(
 func held(
 	ctx context.Context,
 	client Prober,
-) (map[string]any, error) {
+) (plan.Params, error) {
 	read, err := client.Current(ctx, sdk.FormatRig)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(read.Rig.Chain) < alone {
+	if len(read.Plan.Blocks) < alone {
 		return nil, fmt.Errorf(
 			"the chain has %d blocks, so slot %d is not one of them",
-			len(read.Rig.Chain), alone)
+			len(read.Plan.Blocks), alone)
 	}
 
-	entry := read.Rig.Chain[alone-1]
-	if entry.Params == nil {
-		return map[string]any{}, nil
-	}
-
-	return *entry.Params, nil
+	return read.Plan.Blocks[alone-1].Params, nil
 }
 
 // changed is the parameters that differ between two readings.
 func changed(
-	before, after map[string]any,
+	before, after plan.Params,
 ) []string {
 	out := make([]string, 0, 1)
 

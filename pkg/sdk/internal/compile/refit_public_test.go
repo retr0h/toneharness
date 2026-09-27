@@ -24,9 +24,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // RefitPublicTestSuite covers assignments following the blocks they name.
@@ -43,20 +43,20 @@ func (s *RefitPublicTestSuite) TestRefit() {
 
 	tests := []struct {
 		name          string
-		control       *[]rig.Controller
+		control       []rig.Controller
 		before, after []plan.Block
 		wantPath      int
 		wantBlock     int
 	}{
 		{
 			name:    "a block the fit moved",
-			control: &[]rig.Controller{{Controller: 2, Block: 2, Parameter: "Mix"}},
+			control: []rig.Controller{{Controller: 2, Block: 2, Parameter: "Mix"}},
 			before:  before, after: after,
 			wantPath: 1, wantBlock: 0,
 		},
 		{
 			name:    "a block the fit left alone",
-			control: &[]rig.Controller{{Controller: 2, Block: 1, Parameter: "Mix"}},
+			control: []rig.Controller{{Controller: 2, Block: 1, Parameter: "Mix"}},
 			before:  before, after: after,
 			wantPath: 0, wantBlock: 1,
 		},
@@ -64,7 +64,7 @@ func (s *RefitPublicTestSuite) TestRefit() {
 			// Nothing to move it onto, so it says what it said. Whether that
 			// is a block the chain has is check's answer, not this one.
 			name:    "a block the chain never had",
-			control: &[]rig.Controller{{Controller: 2, Block: 9, Parameter: "Mix"}},
+			control: []rig.Controller{{Controller: 2, Block: 9, Parameter: "Mix"}},
 			before:  before, after: after,
 			wantPath: 0, wantBlock: 9,
 		},
@@ -72,7 +72,7 @@ func (s *RefitPublicTestSuite) TestRefit() {
 			// Two lists that are not the same chain say nothing about where
 			// anything went.
 			name:    "a chain that does not line up",
-			control: &[]rig.Controller{{Controller: 2, Block: 2, Parameter: "Mix"}},
+			control: []rig.Controller{{Controller: 2, Block: 2, Parameter: "Mix"}},
 			before:  before, after: after[:2],
 			wantPath: 0, wantBlock: 2,
 		},
@@ -81,12 +81,12 @@ func (s *RefitPublicTestSuite) TestRefit() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			got := compile.Refit(
-				rig.Spec{Controllers: tt.control}, tt.before, tt.after)
+				plan.Plan{Controllers: tt.control}, tt.before, tt.after)
 
-			s.Require().NotNil(got.Controllers)
-			s.Require().Len(*got.Controllers, 1)
+			s.Require().NotEmpty(got.Controllers)
+			s.Require().Len(got.Controllers, 1)
 
-			one := (*got.Controllers)[0]
+			one := got.Controllers[0]
 			s.Require().Equal(tt.wantBlock, one.Block)
 
 			path := 0
@@ -106,33 +106,33 @@ func (s *RefitPublicTestSuite) TestRefitMovesAFootswitch() {
 	after := []plan.Block{{Pos: 0}, {Pos: 1}, {DSP: 1, Pos: 0}}
 
 	on, at, nowhere := 1, 2, 9
-	spec := rig.Spec{Footswitches: &[]rig.Footswitch{
+	made := plan.Plan{Footswitches: []rig.Footswitch{
 		{Switch: &on, Block: &at},
 		{Switch: &on, Block: &nowhere},
 		// A switch that acts on nothing has no block for the fit to move.
 		{Switch: &on},
 	}}
 
-	got := compile.Refit(spec, before, after)
-	s.Require().NotNil(got.Footswitches)
+	got := compile.Refit(made, before, after)
+	s.Require().NotEmpty(got.Footswitches)
 
-	moved := (*got.Footswitches)[0]
+	moved := got.Footswitches[0]
 	s.Require().Equal(0, *moved.Block)
 	s.Require().Equal(1, *moved.Path)
 
-	kept := (*got.Footswitches)[1]
+	kept := got.Footswitches[1]
 	s.Require().Equal(9, *kept.Block)
 	s.Require().Nil(kept.Path)
 
-	s.Require().Nil((*got.Footswitches)[2].Block)
+	s.Require().Nil(got.Footswitches[2].Block)
 }
 
-// TestRefitLeavesARigThatAssignsNothing covers the common case, where there
+// TestRefitLeavesAPlanThatAssignsNothing covers the common case, where there
 // is nothing to move.
-func (s *RefitPublicTestSuite) TestRefitLeavesARigThatAssignsNothing() {
-	spec := rig.Spec{ID: "test"}
+func (s *RefitPublicTestSuite) TestRefitLeavesAPlanThatAssignsNothing() {
+	made := plan.Plan{Name: "test"}
 
-	s.Require().Equal(spec, compile.Refit(spec, nil, nil))
+	s.Require().Equal(made, compile.Refit(made, nil, nil))
 }
 
 func TestRefitPublicTestSuite(

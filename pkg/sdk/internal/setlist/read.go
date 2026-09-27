@@ -28,7 +28,7 @@ import (
 	"hash/crc32"
 	"io"
 
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 )
 
 // Read decodes a setlist or bundle file.

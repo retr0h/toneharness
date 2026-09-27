@@ -31,12 +31,13 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
-	slotmocks "github.com/retr0h/tonestack/pkg/sdk/internal/fileslots/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
+	slotmocks "github.com/retr0h/toneharness/pkg/sdk/internal/fileslots/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 type FileslotsPublicTestSuite struct {
@@ -98,9 +99,10 @@ func did(
 
 // said renders a reading the way something displaying one would.
 //
-// The assertions here are about what was read, and what was read is a rig.
-// Rendering it in the test rather than importing the one renderer keeps these
-// operations free of anything that knows what a terminal is.
+// The assertions here are about what was read, and what was read is a rig and
+// the plan that realises it on this device. Rendering both in the test rather
+// than importing the one renderer keeps these operations free of anything that
+// knows what a terminal is.
 func said(
 	t *testing.T,
 	r result.Reading,
@@ -118,6 +120,7 @@ func said(
 	var buf bytes.Buffer
 
 	require.NoError(t, rig.Write(&buf, r.Rig))
+	require.NoError(t, plan.Write(&buf, r.Plan))
 
 	return r.Name + "\n" + buf.String()
 }
@@ -264,9 +267,10 @@ func (s *FileslotsPublicTestSuite) TestShow() {
 			name: "gear the catalog cannot name",
 			path: fixture("setlist.hls"),
 			at:   slotpkg.Address{Slot: 3},
-			// It is written as the identifier the preset carried, so the rig
-			// still rebuilds it exactly rather than dropping it.
-			contains: []string{"gear: HD2_NotInCatalog", "HX Stomp: HD2_NotInCatalog"},
+			// It is written as the identifier the preset carried, in the rig
+			// and in the block the plan resolves it to, so it still rebuilds
+			// exactly rather than being dropped.
+			contains: []string{"gear: HD2_NotInCatalog", "model: HD2_NotInCatalog"},
 		},
 		{name: "a setlist that is not there", path: fixture("nope.hls"), errText: "opening"},
 		{

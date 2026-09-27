@@ -28,7 +28,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 )
 
 // EmbedPublicTestSuite covers the measurements this binary ships.

@@ -10,15 +10,28 @@ resources/music/bass/flea/
 `flea` is the rig's own identifier, and that is the only thing joining a rig to
 its records. A directory spelled any other way leaves the rig reading as one
 nobody has measured and the records as belonging to nobody, which look identical
-to the ordinary cases. `tonestack recipes records --corpus resources/music/bass`
+to the ordinary cases. `toneharness rigs records --corpus resources/music/bass`
 names both.
+
+A genre says who decided it, in `genres_by`: `llm` where a model labelled the
+track, which is the fast path, or `person` where somebody said so or overruled a
+model. A record naming genres without it does not read. The field exists because
+a guess and a checked answer look identical once both are a word in a list, and
+a genre can clear its threshold entirely on guesses.
+
+A genre and a band do not get a directory. Both are fields on a record inside
+`corpus.yaml`, because a career spans them: Bootsy Collins is on a
+Parliament-Funkadelic record and a James Brown one, and a directory per band
+would split one player's comparison in two. The directory stays the player, and
+a selection by genre or by band is a filter over the records rather than a walk
+of the tree.
 
 The instrument is not tidiness. A word is earned by sitting clear of the other
 players in the tree, and a guitar's centre of gravity sits an octave above a
 bass guitar's. One guitarist in a corpus of bassists would earn every bassist
 `dark` and every guitarist `bright`, and both words would stop meaning anything.
 So the directory that holds a comparison is the instrument, and
-`measure --corpus` is pointed at one of them.
+`measure players --corpus` is pointed at one of them.
 
 Nothing here travels. The audio is somebody else's and the stems are cut from
 it, so both are git-ignored. What is committed is `corpus.yaml`: which songs
@@ -56,7 +69,7 @@ wants to separate it again with different settings, and then it is gone.
 To see what the manifest names but the disk does not hold:
 
 ```bash
-tonestack measure --dir resources/music/bass/flea/stems/htdemucs \
+toneharness measure recordings --dir resources/music/bass/flea/stems/htdemucs \
   --manifest resources/music/bass/flea/corpus.yaml
 ```
 
@@ -66,7 +79,7 @@ It reports `named in the manifest but not measured` for each one.
 
 ```bash
 just stems resources/music/bass/flea resources/music/bass/flea/stems bass
-tonestack measure --dir resources/music/bass/flea/stems/htdemucs \
+toneharness measure recordings --dir resources/music/bass/flea/stems/htdemucs \
   --manifest resources/music/bass/flea/corpus.yaml
 ```
 
@@ -74,8 +87,8 @@ tonestack measure --dir resources/music/bass/flea/stems/htdemucs \
 own name without its extension. A name that matches nothing is reported rather
 than ignored, and so is a recording nothing names.
 
-[workflows/measure-a-players-sound.md](../../docs/workflows/measure-a-players-sound.md)
-is the full procedure.
+the [measure-music](../../.claude/skills/measure-music/README.md) skill is the
+full procedure.
 
 A guitarist takes `guitar` as the third argument, which also switches the model:
 the default one separates four sources and none of them is a guitar. Its stems
@@ -88,8 +101,8 @@ the band with it, so the caveat on that evidence is doing real work.
 just record resources/music/bass/flea aeroplane https://open.spotify.com/track/0VLdJcQUsqHBBwqPp4CIKJ
 ```
 
-[workflows/add-records-to-a-corpus.md](../../docs/workflows/add-records-to-a-corpus.md)
-says how to pick the record and check the file is the right recording.
+the [measure-music](../../.claude/skills/measure-music/README.md) skill says how
+to pick the record and check the file is the right recording.
 
 ## Choosing records
 

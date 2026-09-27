@@ -1,0 +1,25 @@
+artist: Matt Freeman
+tracks:
+  - track: maxwell-murder
+    url: https://open.spotify.com/track/39uIrqxNaqGlJ8MKAHkyVb
+    year: 1995
+    band: Rancid
+    genres: [punk]
+    genres_by: llm
+    note: ...And Out Come the Wolves, 1995. Eighty five seconds, most of it a bass
+      solo
+  - track: roots-radicals
+    url: https://open.spotify.com/track/3KXzazIiJfhSO8LrKmWVAR
+    year: 1995
+    band: Rancid
+    genres: [punk]
+    genres_by: llm
+    note: ...And Out Come the Wolves, 1995. Spotify titles it "Roots Radical",
+      singular
+  - track: journey-to-the-end-of-the-east-bay
+    url: https://open.spotify.com/track/4BvlcR5aZhMq8RNMHmgVSf
+    year: 1995
+    band: Rancid
+    genres: [punk]
+    genres_by: llm
+    note: ...And Out Come the Wolves, 1995

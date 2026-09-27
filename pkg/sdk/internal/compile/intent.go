@@ -21,7 +21,7 @@
 package compile
 
 import (
-	"github.com/retr0h/tonestack/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // Intent is what the ask contributes to a build.

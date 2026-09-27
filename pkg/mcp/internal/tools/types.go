@@ -23,11 +23,11 @@ package tools
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Client is what the tools call. FromSDK makes one of an *sdk.Client.
@@ -38,10 +38,10 @@ type Client interface {
 	Blocks(ctx context.Context, f sdk.Filter) (sdk.Blocks, error)
 	Block(ctx context.Context, id string) (catalog.Block, error)
 	ModelMeasurements(ctx context.Context, model string) (sdk.Measured, error)
-	Recipes(ctx context.Context) (sdk.Recipes, error)
-	Recipe(ctx context.Context, id string) (sdk.Recipe, error)
+	Rigs(ctx context.Context) (sdk.Rigs, error)
+	Rig(ctx context.Context, id string) (sdk.Rig, error)
 	Tone(ctx context.Context, in sdk.Ask) (sdk.Resolved, error)
-	Build(ctx context.Context, recipeID, out string, existing sdk.Existing) (sdk.Made, error)
+	Make(ctx context.Context, rigID, out string, existing sdk.Existing) (sdk.Made, error)
 	Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error)
 	Devices(ctx context.Context) (sdk.Attached, error)
 	// Open claims the pedal. The tools hold what it returns across calls.
@@ -83,16 +83,16 @@ type ID struct {
 // None is the input of a tool that takes nothing.
 type None struct{}
 
-// Build says what preset_build builds from and where the file goes.
-type Build struct {
-	RecipeID string `json:"recipe_id,omitempty" jsonschema:"a rig that ships, by identifier; see rigs_list"`
-	RigPath  string `json:"rig_path,omitempty"  jsonschema:"a rig file on disk"`
-	Out      string `json:"out"                 jsonschema:"where to write the .hlx"`
+// Make says what preset_make builds from and where the file goes.
+type Make struct {
+	RigID   string `json:"rig_id,omitempty"   jsonschema:"a rig that ships, by identifier; see rigs_list"`
+	RigPath string `json:"rig_path,omitempty" jsonschema:"a rig file on disk"`
+	Out     string `json:"out"                jsonschema:"where to write the .hlx"`
 }
 
 // Asked says which two documents tone_build resolves.
 //
-// No `out`, unlike preset_build. This answers with the rig rather than writing
+// No `out`, unlike preset_make. This answers with the rig rather than writing
 // it, because an agent that has the rig can decide what to do with it, and a
 // tool that wrote a file would need the write permission for something that
 // produces no file of its own.
@@ -101,10 +101,10 @@ type Asked struct {
 	Setup string `json:"setup,omitempty" jsonschema:"a Setup file: what they own. Optional; the answer says what it assumed without one"`
 }
 
-// Built is what preset_build answers: exactly one side is set.
+// Built is what preset_make answers: exactly one side is set.
 type Built struct {
-	FromRecipe *sdk.Made  `json:"from_recipe,omitempty"`
-	FromRig    *sdk.Built `json:"from_rig,omitempty"`
+	FromShipped *sdk.Made  `json:"from_shipped,omitempty"`
+	FromRig     *sdk.Built `json:"from_rig,omitempty"`
 }
 
 // Model is one model as corpus_model answers it: the block, and how players

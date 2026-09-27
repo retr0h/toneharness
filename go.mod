@@ -1,4 +1,4 @@
-module github.com/retr0h/tonestack
+module github.com/retr0h/toneharness
 
 go 1.27.0
 

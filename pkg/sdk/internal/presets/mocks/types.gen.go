@@ -13,14 +13,14 @@ import (
 	context "context"
 	reflect "reflect"
 
-	catalog "github.com/retr0h/tonestack/pkg/sdk/catalog"
-	corpus "github.com/retr0h/tonestack/pkg/sdk/corpus"
-	compile "github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	recipes "github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
-	plan "github.com/retr0h/tonestack/pkg/sdk/plan"
-	preset "github.com/retr0h/tonestack/pkg/sdk/preset"
-	result "github.com/retr0h/tonestack/pkg/sdk/result"
-	rig "github.com/retr0h/tonestack/pkg/sdk/rig"
+	catalog "github.com/retr0h/toneharness/pkg/sdk/catalog"
+	corpus "github.com/retr0h/toneharness/pkg/sdk/corpus"
+	compile "github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	rigs "github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	plan "github.com/retr0h/toneharness/pkg/sdk/plan"
+	preset "github.com/retr0h/toneharness/pkg/sdk/preset"
+	result "github.com/retr0h/toneharness/pkg/sdk/result"
+	rig "github.com/retr0h/toneharness/pkg/sdk/rig"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -63,32 +63,32 @@ func (mr *MockCatalogsMockRecorder) Catalog(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Catalog", reflect.TypeOf((*MockCatalogs)(nil).Catalog), ctx)
 }
 
-// MockRecipes is a mock of Recipes interface.
-type MockRecipes struct {
+// MockRigs is a mock of Rigs interface.
+type MockRigs struct {
 	ctrl     *gomock.Controller
-	recorder *MockRecipesMockRecorder
+	recorder *MockRigsMockRecorder
 	isgomock struct{}
 }
 
-// MockRecipesMockRecorder is the mock recorder for MockRecipes.
-type MockRecipesMockRecorder struct {
-	mock *MockRecipes
+// MockRigsMockRecorder is the mock recorder for MockRigs.
+type MockRigsMockRecorder struct {
+	mock *MockRigs
 }
 
-// NewMockRecipes creates a new mock instance.
-func NewMockRecipes(ctrl *gomock.Controller) *MockRecipes {
-	mock := &MockRecipes{ctrl: ctrl}
-	mock.recorder = &MockRecipesMockRecorder{mock}
+// NewMockRigs creates a new mock instance.
+func NewMockRigs(ctrl *gomock.Controller) *MockRigs {
+	mock := &MockRigs{ctrl: ctrl}
+	mock.recorder = &MockRigsMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockRecipes) EXPECT() *MockRecipesMockRecorder {
+func (m *MockRigs) EXPECT() *MockRigsMockRecorder {
 	return m.recorder
 }
 
 // Find mocks base method.
-func (m *MockRecipes) Find(src recipes.Source, id string) (result.Known, error) {
+func (m *MockRigs) Find(src rigs.Source, id string) (result.Known, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Find", src, id)
 	ret0, _ := ret[0].(result.Known)
@@ -97,9 +97,9 @@ func (m *MockRecipes) Find(src recipes.Source, id string) (result.Known, error) 
 }
 
 // Find indicates an expected call of Find.
-func (mr *MockRecipesMockRecorder) Find(src, id any) *gomock.Call {
+func (mr *MockRigsMockRecorder) Find(src, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Find", reflect.TypeOf((*MockRecipes)(nil).Find), src, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Find", reflect.TypeOf((*MockRigs)(nil).Find), src, id)
 }
 
 // MockCompiler is a mock of Compiler interface.
@@ -127,15 +127,15 @@ func (m *MockCompiler) EXPECT() *MockCompilerMockRecorder {
 }
 
 // Controllers mocks base method.
-func (m *MockCompiler) Controllers(doc *preset.Document, spec rig.Spec, blocks []plan.Block, cat *catalog.Catalog) {
+func (m *MockCompiler) Controllers(doc *preset.Document, made plan.Plan, blocks []plan.Block, cat *catalog.Catalog) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Controllers", doc, spec, blocks, cat)
+	m.ctrl.Call(m, "Controllers", doc, made, blocks, cat)
 }
 
 // Controllers indicates an expected call of Controllers.
-func (mr *MockCompilerMockRecorder) Controllers(doc, spec, blocks, cat any) *gomock.Call {
+func (mr *MockCompilerMockRecorder) Controllers(doc, made, blocks, cat any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Controllers", reflect.TypeOf((*MockCompiler)(nil).Controllers), doc, spec, blocks, cat)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Controllers", reflect.TypeOf((*MockCompiler)(nil).Controllers), doc, made, blocks, cat)
 }
 
 // Fit mocks base method.
@@ -153,29 +153,44 @@ func (mr *MockCompilerMockRecorder) Fit(spec, cat, lim any) *gomock.Call {
 }
 
 // Footswitches mocks base method.
-func (m *MockCompiler) Footswitches(doc *preset.Document, spec rig.Spec, cat *catalog.Catalog) {
+func (m *MockCompiler) Footswitches(doc *preset.Document, made plan.Plan, cat *catalog.Catalog) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Footswitches", doc, spec, cat)
+	m.ctrl.Call(m, "Footswitches", doc, made, cat)
 }
 
 // Footswitches indicates an expected call of Footswitches.
-func (mr *MockCompilerMockRecorder) Footswitches(doc, spec, cat any) *gomock.Call {
+func (mr *MockCompilerMockRecorder) Footswitches(doc, made, cat any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Footswitches", reflect.TypeOf((*MockCompiler)(nil).Footswitches), doc, spec, cat)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Footswitches", reflect.TypeOf((*MockCompiler)(nil).Footswitches), doc, made, cat)
 }
 
 // Lower mocks base method.
-func (m *MockCompiler) Lower(doc *preset.Document, spec rig.Spec, cat *catalog.Catalog) error {
+func (m *MockCompiler) Lower(doc *preset.Document, made plan.Plan, cat *catalog.Catalog) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Lower", doc, spec, cat)
+	ret := m.ctrl.Call(m, "Lower", doc, made, cat)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Lower indicates an expected call of Lower.
-func (mr *MockCompilerMockRecorder) Lower(doc, spec, cat any) *gomock.Call {
+func (mr *MockCompilerMockRecorder) Lower(doc, made, cat any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Lower", reflect.TypeOf((*MockCompiler)(nil).Lower), doc, spec, cat)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Lower", reflect.TypeOf((*MockCompiler)(nil).Lower), doc, made, cat)
+}
+
+// Realise mocks base method.
+func (m *MockCompiler) Realise(spec rig.Spec, cat *catalog.Catalog) (plan.Plan, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Realise", spec, cat)
+	ret0, _ := ret[0].(plan.Plan)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Realise indicates an expected call of Realise.
+func (mr *MockCompilerMockRecorder) Realise(spec, cat any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Realise", reflect.TypeOf((*MockCompiler)(nil).Realise), spec, cat)
 }
 
 // Resolve mocks base method.
@@ -196,15 +211,15 @@ func (mr *MockCompilerMockRecorder) Resolve(spec, intent, cat, stats any) *gomoc
 }
 
 // Sections mocks base method.
-func (m *MockCompiler) Sections(doc *preset.Document, spec rig.Spec, blocks []plan.Block, cat *catalog.Catalog) error {
+func (m *MockCompiler) Sections(doc *preset.Document, spec rig.Spec, made plan.Plan, blocks []plan.Block, cat *catalog.Catalog) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Sections", doc, spec, blocks, cat)
+	ret := m.ctrl.Call(m, "Sections", doc, spec, made, blocks, cat)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Sections indicates an expected call of Sections.
-func (mr *MockCompilerMockRecorder) Sections(doc, spec, blocks, cat any) *gomock.Call {
+func (mr *MockCompilerMockRecorder) Sections(doc, spec, made, blocks, cat any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sections", reflect.TypeOf((*MockCompiler)(nil).Sections), doc, spec, blocks, cat)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sections", reflect.TypeOf((*MockCompiler)(nil).Sections), doc, spec, made, blocks, cat)
 }

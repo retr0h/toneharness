@@ -25,7 +25,7 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // ValidateParams reports the first parameter in s that the catalog does not

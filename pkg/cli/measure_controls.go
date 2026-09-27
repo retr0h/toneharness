@@ -33,12 +33,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
-	"github.com/retr0h/tonestack/pkg/sdk/reamp"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/reamp"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // ControlsOptions is what sweeping one block's controls needs to know.
@@ -134,7 +134,7 @@ func MeasureControls(
 		return err
 	}
 
-	work, err := os.MkdirTemp("", "tonestack-controls")
+	work, err := os.MkdirTemp("", "toneharness-controls")
 	if err != nil {
 		return fmt.Errorf("making somewhere to build a preset: %w", err)
 	}
@@ -465,7 +465,7 @@ func discover(
 	block catalog.Block,
 	model string,
 ) ([]string, error) {
-	work, err := os.MkdirTemp("", "tonestack-order")
+	work, err := os.MkdirTemp("", "toneharness-order")
 	if err != nil {
 		return nil, fmt.Errorf("making somewhere to build a preset: %w", err)
 	}

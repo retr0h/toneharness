@@ -27,10 +27,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 type FillPublicTestSuite struct {
@@ -66,12 +66,12 @@ func (s *FillPublicTestSuite) grammar(
 // TestResolveFill covers what the corpus adds to a chain nobody asked for.
 //
 // Every case is resolved three times: two conventions of equal weight must
-// fill in the same order every run, or the same recipe yields a different rig
+// fill in the same order every run, or the same rig yields a different rig
 // for no reason anybody chose.
 func (s *FillPublicTestSuite) TestResolveFill() {
 	tests := []struct {
 		name string
-		// the amp the recipe names, and anything else it names beside it.
+		// the amp the rig names, and anything else it names beside it.
 		gear  string
 		extra []string
 
@@ -125,7 +125,7 @@ func (s *FillPublicTestSuite) TestResolveFill() {
 			models: map[catalog.ModelID]corpus.ModelStats{"HD2_DistMinotaur": {Uses: 40}},
 		},
 		{
-			name:  "a convention the recipe already named a pedal for",
+			name:  "a convention the rig already named a pedal for",
 			extra: []string{"Klon"},
 			cats: map[catalog.Category]corpus.CategoryStats{
 				catalog.CategoryDrive: {Chains: 95, Before: 95},
@@ -300,7 +300,7 @@ func (s *FillPublicTestSuite) TestResolveFill() {
 
 			for range 3 {
 				spec, added, _, err := compile.Resolve(
-					recipe(gear, "", tt.extra...), compile.Intent{}, s.cat, stats)
+					bassRig(gear, "", tt.extra...), compile.Intent{}, s.cat, stats)
 
 				s.Require().NoError(err)
 				s.Require().Len(added, tt.want)
@@ -314,7 +314,7 @@ func (s *FillPublicTestSuite) TestResolveFill() {
 					first = got
 				}
 
-				s.Require().Equal(first, got, "the same recipe must fill the same way")
+				s.Require().Equal(first, got, "the same rig must fill the same way")
 
 				if tt.wantIDs != nil {
 					s.Require().Equal(tt.wantIDs, got)

@@ -1,0 +1,126 @@
+// Copyright (c) 2026 John Dewey
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+package cmd
+
+import (
+	"github.com/spf13/cobra"
+
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
+)
+
+var (
+	presetsImportFile    string
+	presetsImportPreset  string
+	presetsImportSetlist int
+	presetsImportSlot    int
+	presetsImportOut     string
+	presetsImportClient  clientFlags
+)
+
+// slotsImportCmd represents the presets import command.
+var slotsImportCmd = &cobra.Command{
+	Use:   "import",
+	Short: "Put a preset file into a slot",
+	Long: `Place a standalone .hlx into a slot.
+
+With no --file this writes the attached device, which is how a generated preset
+reaches the hardware. The chain goes into an unused slot the device itself
+wrote, so everything a chain does not describe is what the device expects to
+find there.
+
+A .bin backup goes back the other way. It holds what a device sent for a slot
+nothing could read a chain out of, so its bytes are written as they are, and
+the slot keeps the name it has: a .bin carries none.
+
+With --file it edits an HX Edit backup instead, for working without a device
+attached. Either way whatever the slot held is gone, and a device has no undo.`,
+	Args: cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		// The operation answers with what it did; saying so is decided here,
+		// which is all this command does.
+		change, err := imported(cmd)
+		if err != nil {
+			return err
+		}
+
+		return answer(cmd, change, cli.Change)
+	},
+}
+
+func init() {
+	slotsCmd.AddCommand(slotsImportCmd)
+
+	f := slotsImportCmd.Flags()
+	f.StringVar(
+		&presetsImportFile,
+		"file",
+		"",
+		"a .hls setlist or .hlb backup written by HX Edit",
+	)
+	f.StringVar(&presetsImportPreset, "preset", "",
+		"the .hlx preset to place, or a .bin backup to put back")
+	f.IntVar(
+		&presetsImportSetlist,
+		"setlist",
+		0,
+		"which setlist, when the file is a backup holding several",
+	)
+	f.Var(
+		slot.NewValue(&presetsImportSlot),
+		"slot",
+		"which slot — a label the pedal shows such as 31A, or a number from zero",
+	)
+	f.StringVar(&presetsImportOut, "out", "", "where to write the edited setlist")
+	f.StringVar(&presetsImportClient.backupDir, "backup-dir", "",
+		"where to keep what a device slot held; the state directory by default")
+	f.StringVar(&presetsImportClient.catalog, "catalog", "",
+		"a catalog to resolve models against, when writing to a device")
+	f.StringVar(&presetsImportClient.device, "device", "", deviceUsage)
+	// Fails only for a flag that does not exist, and these are defined above.
+	_ = slotsImportCmd.MarkFlagRequired("preset")
+	_ = slotsImportCmd.MarkFlagRequired("slot")
+
+	// Importing into a backup writes a new file, and importing into a device
+	// writes the device. So a file needs somewhere to put the result and a
+	// device does not.
+	slotsImportCmd.MarkFlagsRequiredTogether("file", "out")
+}
+
+// imported puts a preset file into a slot, on the device or in a file.
+//
+// No file means the device itself, which is what somebody with one plugged in
+// almost always wants.
+func imported(
+	cmd *cobra.Command,
+) (sdk.Change, error) {
+	client := presetsImportClient.client()
+	at := slot.Address{Setlist: presetsImportSetlist, Slot: presetsImportSlot}
+
+	if presetsImportFile == "" {
+		pedal.claim()
+
+		return client.Import(cmd.Context(), presetsImportPreset, at)
+	}
+
+	return client.Setlist(presetsImportFile).
+		Import(cmd.Context(), presetsImportPreset, at, presetsImportOut)
+}

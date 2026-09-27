@@ -1,0 +1,116 @@
+# Pino Palladino — D'Angelo, Voodoo
+#
+# The ask: who he is, how he played, and what he played. The gear this
+# resolves to is in pino-palladino.yaml beside it.
+
+schema: ToneSpec
+aliases: [pino, palladino]
+
+subject:
+  kind: artist
+  name: Pino Palladino
+  band: D'Angelo
+  era: Voodoo
+  years: { from: 2000, to: 2000 }
+
+instrument: bass
+
+words:
+  - term: dark
+    evidence:
+      - kind: cited
+        url: https://mixdownmag.com.au/features/rig-rundown-pino-palladino/
+        note: '"keeping the volume turned all the way up and the tone all the way down"'
+      - kind: audio
+        measured: { centroid: 96 }
+        against: { centroid: 172 }
+        note: >-
+          his centroid sits at 96Hz, the darkest of the fifteen players
+          measured, against a middle of 131Hz. It no longer earns the word:
+          against eight others he was clear by 3Hz, and six more players
+          between him and the middle closed that. The word is kept on the
+          citation above.
+        caveat: >-
+          measures the record rather than the player, and all three records
+          are one album cut by one engineer. The margin has been 28Hz, then
+          3Hz, then nothing, without the recordings changing: a word earned by
+          a comparison is a word the next player measured can take away.
+  # `scooped` stood here on the narrowest margin in the corpus, 0.1%, with the
+  # note saying one more player between him and the middle would take it. Six
+  # arrived and it did: 2% mid against a middle of 5% is inside the middle half.
+  # The measurement was its only evidence, so the word goes with it.
+  - term: short-decay
+    evidence:
+      - kind: user
+        url: https://www.talkbass.com/threads/dangelo-voodoo.146620/
+        note: >-
+          Russell Elevado, the album's engineer, on how Pino played it: "He
+          has an amazing touch and he'll use his palm to get a 'deader' sound
+          or just barely pluck it."
+        caveat: >-
+          a description of the playing rather than a measurement, from the
+          person who put it on tape. It stood here as a guess off the
+          flatwounds until he was found saying it.
+  - term: quiet-strings
+    evidence:
+      - kind: cited
+        url: https://mixdownmag.com.au/features/rig-rundown-pino-palladino/
+        note: flatwounds named there as a major component of the sound
+        caveat: >-
+          strings are not modelled by anything. This term is here for a
+          reader, not for the compiler.
+
+played:
+  - gear: Fender Precision Bass, 1963
+    strings: flat
+    evidence:
+      - kind: cited
+        url: https://mixdownmag.com.au/features/rig-rundown-pino-palladino/
+        note: the 1963 Precision with flatwounds is what the rundown describes
+      - kind: cited
+        url: https://www.guitarworld.com/artists/bassists/pino-palladino-dangelo-voodoo
+        note: >-
+          Pino's own answer: "I played either my '63 P-Bass tuned down to D or
+          my Moon Larry Graham signature 4-string tuned down to C#. Both had
+          heavy-gauge La Bella flatwounds, which can be rough on necks; that's
+          originally why I tuned down the Precision."
+        caveat: >-
+          two instruments, and he does not say which track took which. The
+          tuning is the part this rig cannot carry: dropping the bottom on
+          heavy flats is most of why he reads 96Hz, the darkest of the fifteen
+          players, and no field here holds a tuning.
+      - kind: user
+        url: https://www.talkbass.com/threads/dangelo-voodoo.146620/
+        note: >-
+          Russell Elevado, who engineered the album: "Pino mostly used his
+          favourite bass, which is a 1961 Fender Precision ... He tunes his e
+          string down sometimes as well."
+        caveat: >-
+          two first-hand accounts that disagree, and both are kept because
+          neither is obviously wrong. Pino says a 1963 and Elevado a 1961; Pino
+          is the better witness to his own instrument and Elevado to what was
+          in the room. The tuning matters more than the year: Pino describes
+          the whole bass down a tone and the engineer describes the E string
+          down sometimes, which are different sounds, and the second is the
+          looser claim from the person watching.
+
+technique:
+  attack: fingers
+  muting: palm
+  evidence:
+    - kind: cited
+      url: https://web.archive.org/web/20110518211048/http://bassplayer.com/article/pino-palladino-steps/April-2011/130905
+      note: >-
+        Bass Player, April 2011, Chris Jisi, Pino describing the technique he
+        brought from this period: "the fingerstyle technique I developed
+        playing hip-hop on my P-Bass, where I pluck the E string with my
+        thumb, the A with my index finger, the D with my middle finger, and
+        the G with my ring finger, all while muting with my palm."
+      caveat: >-
+        `fingers` is his own word for it and the lowest string is not one:
+        the E is plucked with his thumb, and on this record that is the
+        string tuned down to D, so it is the one doing most of the work. The
+        interview is 2011 and describes carrying an existing technique
+        forward, so it is close to this era rather than inside it.
+
+confidence: medium

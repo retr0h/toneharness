@@ -24,11 +24,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // KnobsPublicTestSuite covers a rig's musical words reaching real controls.
@@ -169,33 +169,29 @@ func (s *KnobsPublicTestSuite) TestSetKnobs() {
 }
 
 // TestLowerSetsWhatTheRigSaid covers the words reaching a compiled preset.
+//
+// A plan carries knob positions rather than words, so the words land while the
+// rig is resolved. What is held here is that they survive the write.
 func (s *KnobsPublicTestSuite) TestLowerSetsWhatTheRigSaid() {
-	spec := recipe("Ampeg SVT", "")
+	spec := bassRig("Ampeg SVT", "")
 	spec.Chain[0].Settings = &rig.Settings{Drive: knob(0.47)}
+
+	made, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
+	s.Require().NoError(err)
 
 	doc, err := preset.Blank()
 	s.Require().NoError(err)
-	s.Require().NoError(compile.Lower(doc, spec, s.cat))
+	s.Require().NoError(compile.Lower(doc, made, s.cat))
 
 	built, err := doc.Spec()
 	s.Require().NoError(err)
 	s.Require().Equal(catalog.Float(0.47), built.Blocks[0].Params["Drive"])
 }
 
-// TestLowerRefusesAWordTheGearHasNoControlFor covers the other outcome.
-func (s *KnobsPublicTestSuite) TestLowerRefusesAWordTheGearHasNoControlFor() {
-	spec := recipe("Ampeg SVT", "")
-	spec.Chain[0].Settings = &rig.Settings{Presence: knob(0.4)}
-
-	doc, err := preset.Blank()
-	s.Require().NoError(err)
-	s.Require().ErrorIs(compile.Lower(doc, spec, s.cat), compile.ErrNoSuchValue)
-}
-
 // TestResolveSetsWhatTheRigSaid covers the build path, where the words are
 // the last thing to move a control.
 func (s *KnobsPublicTestSuite) TestResolveSetsWhatTheRigSaid() {
-	spec := recipe("Ampeg SVT", "")
+	spec := bassRig("Ampeg SVT", "")
 	spec.Chain[0].Settings = &rig.Settings{Drive: knob(0.47)}
 
 	built, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
@@ -206,7 +202,7 @@ func (s *KnobsPublicTestSuite) TestResolveSetsWhatTheRigSaid() {
 // TestResolveRefusesAWordTheGearHasNoControlFor covers the same refusal on
 // the build path, where the block is one the catalog chose.
 func (s *KnobsPublicTestSuite) TestResolveRefusesAWordTheGearHasNoControlFor() {
-	spec := recipe("Ampeg SVT", "")
+	spec := bassRig("Ampeg SVT", "")
 	spec.Chain[0].Settings = &rig.Settings{Presence: knob(0.4)}
 
 	_, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)

@@ -22,8 +22,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 var (
@@ -57,7 +57,7 @@ begin with, and that needs one number per block.
 Nothing is written to a slot. Each chain goes in front of the device with the
 same live replace ` + "`presets play`" + ` uses, because a slot is flash and
 this loads a different chain six hundred times. See the rules that keep a
-device alive in docs/protocol.md.
+device alive in pkg/sdk/internal/wire/README.md.
 
 The empty loop is measured first and kept as the baseline. Without it a figure
 says nothing: 95 Hz is not what an equaliser does to a bass, it is what the

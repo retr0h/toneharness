@@ -22,8 +22,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 var catalogListFilter sdk.Filter
@@ -34,8 +34,8 @@ var catalogListCmd = &cobra.Command{
 	Short: "List the blocks this device has",
 	Long: `List the blocks in the catalog, optionally narrowed.
 
-    tonestack catalog list --subcategory bass --category amp
-    tonestack catalog list --search ampeg`,
+    toneharness catalog list --subcategory bass --category amp
+    toneharness catalog list --search ampeg`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		blocks, err := newClient(

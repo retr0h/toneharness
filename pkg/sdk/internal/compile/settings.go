@@ -23,9 +23,9 @@ package compile
 import (
 	"math"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 // agreementThreshold is how tightly players must agree before the corpus
@@ -35,7 +35,7 @@ import (
 // default — Line 6 states 0.77 for the Ampeg SVT bright channel's Treble and
 // the corpus median is 0.85. Above it there is no consensus to adopt, only an average
 // of disagreement, and the catalog's default is the honest answer until a
-// recipe or a person says otherwise.
+// rig or a person says otherwise.
 const agreementThreshold = 0.15
 
 // settings decides what every knob on a block is set to.

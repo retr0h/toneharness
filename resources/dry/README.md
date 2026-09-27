@@ -23,7 +23,7 @@ models an amplifier into an amplifier, and the answer describes neither.
 
 Both 24-bit, mono, 44.1kHz.
 
-As `tonestack measure` reads the full take:
+As `toneharness measure` reads the full take:
 
 ```
 energy      93% low · 7% mid · 0% high

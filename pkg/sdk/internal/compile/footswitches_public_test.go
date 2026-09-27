@@ -27,15 +27,16 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // FootswitchesPublicTestSuite covers what a preset says about the pedal.
 //
-// A preset keys footswitches by the block each acts on, so a rig has to carry
+// A preset keys footswitches by the block each acts on, so a plan has to carry
 // both the block and the switch or it cannot be written back. Everything here
 // is about that going both ways, and about a file somebody edited by hand not
 // producing a broken preset.
@@ -64,7 +65,7 @@ func (s *FootswitchesPublicTestSuite) presetWith(
 
 	doc.Data.Tone["footswitch"] = entry
 
-	// A rig holds at least one thing, so the preset it is read from has to.
+	// A plan holds at least one thing, so the preset it is read from has to.
 	doc.Data.Tone["dsp0"]["block0"] = json.RawMessage(
 		`{"@model": "HD2_AmpSVBeastNrm", "@position": 0, "@enabled": true}`)
 
@@ -85,7 +86,7 @@ func (s *FootswitchesPublicTestSuite) TestLiftFootswitches() {
 		primary    bool
 		// fields this does not model, which it must not drop either.
 		rest bool
-		// what writing the rig back must put in the preset.
+		// what writing the plan back must put in the preset.
 		writes []string
 		// a switch naming no block at all.
 		none bool
@@ -141,19 +142,19 @@ func (s *FootswitchesPublicTestSuite) TestLiftFootswitches() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			spec, err := compile.Lift(s.presetWith(tt.body), s.cat)
+			_, made, err := compile.Lift(s.presetWith(tt.body), s.cat)
 			s.Require().NoError(err)
 
 			if tt.none {
-				s.Require().Nil(spec.Footswitches)
+				s.Require().Empty(made.Footswitches)
 
 				return
 			}
 
-			s.Require().NotNil(spec.Footswitches)
-			s.Require().Len(*spec.Footswitches, 1)
+			s.Require().NotEmpty(made.Footswitches)
+			s.Require().Len(made.Footswitches, 1)
 
-			fs := (*spec.Footswitches)[0]
+			fs := made.Footswitches[0]
 			s.Require().Equal(tt.wantSwitch, *fs.Switch)
 			s.Require().Equal(tt.wantBlock, *fs.Block,
 				"a switch acts on a block, and says which")
@@ -182,7 +183,7 @@ func (s *FootswitchesPublicTestSuite) TestLiftFootswitches() {
 
 			back, err := preset.Blank()
 			s.Require().NoError(err)
-			s.Require().NoError(compile.Lower(back, spec, s.cat))
+			s.Require().NoError(compile.Lower(back, made, s.cat))
 
 			var out bytes.Buffer
 			s.Require().NoError(preset.Write(&out, back))
@@ -195,23 +196,21 @@ func (s *FootswitchesPublicTestSuite) TestLiftFootswitches() {
 }
 
 func (s *FootswitchesPublicTestSuite) TestASwitchWithNoBlockIsNotWritten() {
-	// A rig somebody edited can say anything. A switch that names no block
+	// A plan somebody edited can say anything. A switch that names no block
 	// has nowhere to go, and dropping it beats writing a preset that will not
 	// load.
 	label := "orphan"
-	spec := rig.Spec{
-		Schema:     rig.SchemaName,
-		ID:         "test",
-		Instrument: rig.InstrumentBass,
-		Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
-		Footswitches: &[]rig.Footswitch{
+	made := plan.Plan{
+		Name:   "test",
+		Blocks: []plan.Block{{Model: "HD2_AmpSVBeastNrm", Enabled: true}},
+		Footswitches: []rig.Footswitch{
 			{Label: &label},
 		},
 	}
 
 	doc, err := preset.Blank()
 	s.Require().NoError(err)
-	s.Require().NoError(compile.Lower(doc, spec, s.cat))
+	s.Require().NoError(compile.Lower(doc, made, s.cat))
 
 	var out bytes.Buffer
 	s.Require().NoError(preset.Write(&out, doc))
@@ -228,11 +227,11 @@ func (s *FootswitchesPublicTestSuite) TestAChosenColourGoesBothWays() {
 	doc := s.presetWith(`{"dsp0": {"block1": {"@fs_index": 3, "@fs_customcolor": 3,
 		"@fs_ledcolor": 525824, "@fs_label": "Dhyana Drive"}}}`)
 
-	lifted, err := compile.Lift(doc, s.cat)
+	_, made, err := compile.Lift(doc, s.cat)
 	s.Require().NoError(err)
-	s.Require().NotNil(lifted.Footswitches)
+	s.Require().NotEmpty(made.Footswitches)
 
-	fs := (*lifted.Footswitches)[0]
+	fs := made.Footswitches[0]
 	s.Require().NotNil(fs.Led)
 	s.Require().Equal("dark orange", *fs.Led,
 		"the third colour the catalog lists, which is what the number means")
@@ -241,14 +240,14 @@ func (s *FootswitchesPublicTestSuite) TestAChosenColourGoesBothWays() {
 	back, err := preset.Blank()
 	s.Require().NoError(err)
 
-	compile.Footswitches(back, lifted, s.cat)
+	compile.Footswitches(back, made, s.cat)
 
 	var out bytes.Buffer
 	s.Require().NoError(preset.Write(&out, back))
 	s.Require().Contains(out.String(), `"@fs_customcolor": 3`)
 }
 
-// TestAColourNobodyChoseIsNotWritten covers a rig that names no colour, and
+// TestAColourNobodyChoseIsNotWritten covers a plan that names no colour, and
 // one that names something this device does not have.
 func (s *FootswitchesPublicTestSuite) TestAColourNobodyChoseIsNotWritten() {
 	block, switched := 1, 3
@@ -258,7 +257,7 @@ func (s *FootswitchesPublicTestSuite) TestAColourNobodyChoseIsNotWritten() {
 		name string
 		led  *string
 	}{
-		{name: "a rig that names no colour"},
+		{name: "a plan that names no colour"},
 		{name: "a colour this device does not have", led: &nonsense},
 	}
 
@@ -267,7 +266,7 @@ func (s *FootswitchesPublicTestSuite) TestAColourNobodyChoseIsNotWritten() {
 			doc, err := preset.Blank()
 			s.Require().NoError(err)
 
-			compile.Footswitches(doc, rig.Spec{Footswitches: &[]rig.Footswitch{
+			compile.Footswitches(doc, plan.Plan{Footswitches: []rig.Footswitch{
 				{Switch: &switched, Block: &block, Led: tt.led},
 			}}, s.cat)
 
@@ -278,25 +277,23 @@ func (s *FootswitchesPublicTestSuite) TestAColourNobodyChoseIsNotWritten() {
 	}
 }
 
-// TestAColourByNameReachesABuiltPreset covers the point of all this: a rig
-// somebody typed asking for a red switch and getting one.
+// TestAColourByNameReachesABuiltPreset covers the point of all this: somebody
+// asking for a red switch and getting one.
 func (s *FootswitchesPublicTestSuite) TestAColourByNameReachesABuiltPreset() {
 	block, switched := 0, 1
 	red := "red"
 
-	spec := rig.Spec{
-		Schema:     rig.SchemaName,
-		ID:         "test",
-		Instrument: rig.InstrumentBass,
-		Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
-		Footswitches: &[]rig.Footswitch{
+	made := plan.Plan{
+		Name:   "test",
+		Blocks: []plan.Block{{Model: "HD2_AmpSVBeastNrm", Enabled: true}},
+		Footswitches: []rig.Footswitch{
 			{Switch: &switched, Block: &block, Led: &red},
 		},
 	}
 
 	doc, err := preset.Blank()
 	s.Require().NoError(err)
-	s.Require().NoError(compile.Lower(doc, spec, s.cat))
+	s.Require().NoError(compile.Lower(doc, made, s.cat))
 
 	var out bytes.Buffer
 	s.Require().NoError(preset.Write(&out, doc))

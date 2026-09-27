@@ -1,0 +1,59 @@
+# A plan naming every field this format models.
+#
+# Not a real preset. examples/plan/dir-angl-meteor.yaml is that, and it is the
+# one to read; this exists so a field whose shape nobody has checked fails a
+# test rather than waiting for a device to disagree with it.
+#
+# Kept as a file rather than built in a test, because the fields that go
+# unexercised are the awkward ones, and a struct literal makes them as easy to
+# write as the rest. A document has to spell them.
+name: Everything
+rig: mike-dirnt
+blocks:
+  - model: HD2_AmpSVBeastNrm
+    dsp: 0
+    pos: 0
+    enabled: true
+    params:
+      Drive: 0.53
+      Sag: 0.5
+      Bias: 2
+      Master: true
+      Mic: "1: 121 Ribbon"
+    attrs:
+      "@type": 7
+      "@position": 0
+snapshots:
+  - name: SNAPSHOT 1
+    tempo: 120
+    led: 2
+    pedal: 1
+footswitches:
+  - switch: 2
+    block: 1
+    path: 0
+    label: Drive
+    gear: Ampeg SVT
+    colour: 3
+    led: red
+    enabled: true
+    momentary: false
+    primary: true
+    rest:
+      "@fs_unknown": 1
+controllers:
+  - controller: 2
+    block: 1
+    path: 0
+    parameter: Drive
+    min: 0.3
+    max: 0.85
+    no_snapshot: true
+device:
+  tone:
+    dsp0:
+      block0:
+        "@model": HD2_AmpSVBeastNrm
+target:
+  device: HX Stomp
+  catalog: HX Edit 3.82

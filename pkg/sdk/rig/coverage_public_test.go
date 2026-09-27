@@ -29,8 +29,8 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	"github.com/retr0h/tonestack/pkg/sdk/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/shipped"
 	"github.com/stretchr/testify/suite"
 	"sigs.k8s.io/yaml"
 )
@@ -54,7 +54,7 @@ var exempt = map[string]string{
 		"catalog has one, so a rig writing it would be a rig that cannot " +
 		"build.",
 	"extends": "records that one rig departs from another. Every rig here " +
-		"is a sibling rather than a departure, and `recipes new --from` " +
+		"is a sibling rather than a departure, and `rigs new --from` " +
 		"writes the field, so exercising it would mean inventing a rig to " +
 		"have something to extend.",
 }
@@ -83,7 +83,7 @@ func (s *CoveragePublicTestSuite) TestEveryFieldAppearsInARig() {
 	}
 
 	s.Require().Empty(missing,
-		"no rig under examples/rigspec or pkg/sdk/rigs writes these. "+
+		"no rig under examples/rigspec or pkg/sdk/shipped writes these. "+
 			"Add one to a rig, or add it to exempt with a reason: %v", missing)
 }
 
@@ -134,12 +134,12 @@ func (s *CoveragePublicTestSuite) written() map[string]bool {
 
 	// The shipped rigs come through the embedded copy and the examples off
 	// disk, because only the first of those travels with this package.
-	shipped, err := fs.Glob(rigs.FS, filepath.Join("*", "*.yaml"))
+	embedded, err := fs.Glob(shipped.FS, filepath.Join("*", "*.yaml"))
 	s.Require().NoError(err)
-	s.Require().NotEmpty(shipped)
+	s.Require().NotEmpty(embedded)
 
-	for _, path := range shipped {
-		raw, err := fs.ReadFile(rigs.FS, path)
+	for _, path := range embedded {
+		raw, err := fs.ReadFile(shipped.FS, path)
 		s.Require().NoError(err)
 
 		var body any

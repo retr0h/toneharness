@@ -27,8 +27,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
-	sdk "github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
+	sdk "github.com/retr0h/toneharness/pkg/sdk"
 )
 
 // Backing prints which records back each rig, and which of them were made

@@ -26,13 +26,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
-// ErrSectionsAndSnapshots reports a rig carrying both.
+// ErrSectionsAndSnapshots reports sections written over snapshots.
 //
 // Snapshots are what a device stored and sections are what somebody wants.
 // Building from both would mean quietly picking one.
@@ -57,6 +57,7 @@ var ErrSectionContradicts = errors.New("a section plays and bypasses the same ro
 func Sections(
 	doc *preset.Document,
 	spec rig.Spec,
+	made plan.Plan,
 	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) error {
@@ -64,7 +65,11 @@ func Sections(
 		return nil
 	}
 
-	if spec.Snapshots != nil {
+	// Sections live on the rig and snapshots on the plan, so a document can no
+	// longer carry both. What it can still do is turn a rig's sections into
+	// snapshots over a plan that already has some, which would leave the pedal
+	// switching between two sets nobody meant to combine.
+	if len(made.Snapshots) > 0 {
 		return ErrSectionsAndSnapshots
 	}
 

@@ -1,0 +1,23 @@
+artist: Krist Novoselic
+tracks:
+  - track: lounge-act
+    url: https://open.spotify.com/track/7glld4kxYHp61zIPtSVHNk
+    year: 1991
+    band: Nirvana
+    genres: [grunge]
+    genres_by: llm
+    note: Nevermind, 1991. The bass carries the verse alone. Remastered edition
+  - track: come-as-you-are
+    url: https://open.spotify.com/track/4P5KoWXOxwuobLmHXLMobV
+    year: 1991
+    band: Nirvana
+    genres: [grunge]
+    genres_by: llm
+    note: Nevermind, 1991. Remastered edition
+  - track: heart-shaped-box
+    url: https://open.spotify.com/track/11LmqTE2naFULdEP94AUBa
+    year: 1993
+    band: Nirvana
+    genres: [grunge]
+    genres_by: llm
+    note: In Utero, 1993. Deluxe edition

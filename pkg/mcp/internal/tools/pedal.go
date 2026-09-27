@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 // idleClose is how long the pedal stays held after the last device call.

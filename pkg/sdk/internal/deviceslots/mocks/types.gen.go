@@ -13,12 +13,12 @@ import (
 	context "context"
 	reflect "reflect"
 
-	catalog "github.com/retr0h/tonestack/pkg/sdk/catalog"
-	backup "github.com/retr0h/tonestack/pkg/sdk/internal/backup"
-	wire "github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	plan "github.com/retr0h/tonestack/pkg/sdk/plan"
-	preset "github.com/retr0h/tonestack/pkg/sdk/preset"
-	rig "github.com/retr0h/tonestack/pkg/sdk/rig"
+	catalog "github.com/retr0h/toneharness/pkg/sdk/catalog"
+	backup "github.com/retr0h/toneharness/pkg/sdk/internal/backup"
+	wire "github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	plan "github.com/retr0h/toneharness/pkg/sdk/plan"
+	preset "github.com/retr0h/toneharness/pkg/sdk/preset"
+	rig "github.com/retr0h/toneharness/pkg/sdk/rig"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -86,12 +86,13 @@ func (m *MockCompiler) EXPECT() *MockCompilerMockRecorder {
 }
 
 // Lift mocks base method.
-func (m *MockCompiler) Lift(doc *preset.Document, cat *catalog.Catalog) (rig.Spec, error) {
+func (m *MockCompiler) Lift(doc *preset.Document, cat *catalog.Catalog) (rig.Spec, plan.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Lift", doc, cat)
 	ret0, _ := ret[0].(rig.Spec)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(plan.Plan)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // Lift indicates an expected call of Lift.

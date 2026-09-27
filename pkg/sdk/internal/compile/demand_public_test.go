@@ -26,11 +26,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 type DemandPublicTestSuite struct {
@@ -56,7 +56,7 @@ func (s *DemandPublicTestSuite) SetupSuite() {
 func svt(
 	pedals ...string,
 ) rig.Spec {
-	return recipe("Ampeg SVT", "", pedals...)
+	return bassRig("Ampeg SVT", "", pedals...)
 }
 
 // asking is the ask beside that rig: what it should sound like, and how it is

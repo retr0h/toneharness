@@ -30,16 +30,16 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/backup"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
-	slotmocks "github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/backup"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	slotmocks "github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // TypesPublicTestSuite covers standing something else in for a collaborator.
@@ -86,7 +86,7 @@ func (s *TypesPublicTestSuite) TestCompiler() {
 	dev.EXPECT().ReadPreset(gomock.Any(), 0, 0).Return(s.answer(), nil)
 
 	comp := slotmocks.NewMockCompiler(s.ctrl)
-	comp.EXPECT().Lift(gomock.Any(), gomock.Any()).Return(rig.Spec{}, want)
+	comp.EXPECT().Lift(gomock.Any(), gomock.Any()).Return(rig.Spec{}, plan.Plan{}, want)
 
 	_, err := (&deviceslots.Flows{Catalogs: s.builtIn(), Compiler: comp}).
 		Show(context.Background(), dev, slotpkg.Address{})

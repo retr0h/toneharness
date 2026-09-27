@@ -23,7 +23,7 @@ package plan
 import (
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // ValidateBudget reports the first DSP processor whose blocks exceed the

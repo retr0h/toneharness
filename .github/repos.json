@@ -34,18 +34,22 @@
   },
   "repos": [
     {
-      "name": "tonestack",
-      "description": "Describe a guitar or bass sound, get a Line 6 Helix preset.",
+      "name": "toneharness",
+      "description": "An agentic harness for guitar and bass tone. Built for agents, there to empower humans.",
       "topics": [
+        "agent-skills",
+        "agentic",
+        "ai-agents",
         "bass",
+        "claude",
         "golang",
         "guitar",
         "helix",
         "hx-stomp",
         "line6",
+        "mcp",
         "preset-generator",
-        "tone",
-        "tui"
+        "tone"
       ]
     }
   ]

@@ -25,11 +25,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // SectionsPublicTestSuite covers song sections becoming snapshots.
@@ -83,7 +83,7 @@ func (s *SectionsPublicTestSuite) TestSections() {
 	tests := []struct {
 		name     string
 		sections *[]rig.Section
-		snaps    *[]rig.Snapshot
+		snaps    []rig.Snapshot
 		blocks   []plan.Block
 		existing string
 		want     map[string]map[string]map[string]bool
@@ -92,7 +92,7 @@ func (s *SectionsPublicTestSuite) TestSections() {
 		errText  string
 	}{
 		{
-			name:   "a rig without sections",
+			name:   "a rig with no sections",
 			blocks: sectionChain,
 			names:  map[string]string{"snapshot0": "SNAPSHOT 1"},
 		},
@@ -139,7 +139,7 @@ func (s *SectionsPublicTestSuite) TestSections() {
 		{
 			name:     "sections beside snapshots",
 			sections: &[]rig.Section{{Name: "Verse"}},
-			snaps:    &[]rig.Snapshot{},
+			snaps:    []rig.Snapshot{{}},
 			blocks:   sectionChain,
 			err:      compile.ErrSectionsAndSnapshots,
 		},
@@ -173,9 +173,10 @@ func (s *SectionsPublicTestSuite) TestSections() {
 				doc.Data.Tone["snapshot0"]["blocks"] = json.RawMessage(tt.existing)
 			}
 
-			spec := rig.Spec{Sections: tt.sections, Snapshots: tt.snaps}
+			spec := rig.Spec{Sections: tt.sections}
+			made := plan.Plan{Snapshots: tt.snaps}
 
-			err = compile.Sections(doc, spec, tt.blocks, s.cat)
+			err = compile.Sections(doc, spec, made, tt.blocks, s.cat)
 
 			if tt.err != nil {
 				s.Require().ErrorIs(err, tt.err)
@@ -202,8 +203,9 @@ func (s *SectionsPublicTestSuite) TestSections() {
 	}
 }
 
-// TestLowerRefusesASectionItCannotBuild reaches sections through Lower.
-func (s *SectionsPublicTestSuite) TestLowerRefusesASectionItCannotBuild() {
+// TestSectionsRefusesARoleTheGearCannotPlay reaches sections over a chain the
+// catalog chose, rather than one a test handed over.
+func (s *SectionsPublicTestSuite) TestSectionsRefusesARoleTheGearCannotPlay() {
 	doc, err := preset.Blank()
 	s.Require().NoError(err)
 
@@ -215,7 +217,11 @@ func (s *SectionsPublicTestSuite) TestLowerRefusesASectionItCannotBuild() {
 		Sections:   &[]rig.Section{{Name: "Chorus", Play: roles("drive")}},
 	}
 
-	s.Require().ErrorIs(compile.Lower(doc, spec, s.cat), compile.ErrNoSuchValue)
+	made := realised(&s.Suite, spec, s.cat)
+
+	s.Require().ErrorIs(
+		compile.Sections(doc, spec, made, made.Blocks, s.cat),
+		compile.ErrNoSuchValue)
 }
 
 func TestSectionsPublicTestSuite(

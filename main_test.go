@@ -38,13 +38,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/cmd"
-	sdk "github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/cmd"
+	sdk "github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // mod is this module, so a test can tell its own packages from anybody's.
-const mod = "github.com/retr0h/tonestack/"
+const mod = "github.com/retr0h/toneharness/"
 
 // MainTestSuite covers the shape of the repository rather than its behaviour.
 type MainTestSuite struct {
@@ -95,7 +95,7 @@ func (s *MainTestSuite) TestEveryManifestSitsUnderAnInstrument() {
 //
 // Nothing read them until this. A note written as a plain multi-line scalar
 // with a colon in it, added by hand, made one manifest unparseable and the
-// whole suite stayed green: `tonestack measure --manifest` failed on it and
+// whole suite stayed green: `toneharness measure --manifest` failed on it and
 // no test did.
 func (s *MainTestSuite) TestEveryManifestReads() {
 	found, err := filepath.Glob(filepath.Join("resources", "music", "*", "*", "corpus.yaml"))
@@ -116,7 +116,7 @@ func (s *MainTestSuite) TestEveryManifestReads() {
 // TestEveryRecordIsInTheEraItsRigDescribes holds the shipped rigs to their
 // own years.
 //
-// `recipes records` reports this and reporting was right while four of the
+// `rigs records` reports this and reporting was right while four of the
 // nine disagreed: which half is wrong is a judgement and a build failing
 // would not have made it. They agree now, so the next one to drift should
 // stop somebody rather than wait to be noticed.
@@ -132,6 +132,12 @@ func (s *MainTestSuite) TestEveryRecordIsInTheEraItsRigDescribes() {
 
 	for _, b := range all {
 		if len(b.Records) == 0 {
+			continue
+		}
+
+		// Records arrive before the rig that will use them, so a directory no
+		// rig answers to has no era to be held to yet.
+		if b.NoRig {
 			continue
 		}
 
@@ -429,11 +435,11 @@ func (s *MainTestSuite) TestEveryPathThisRepositoryNamesExists() {
 // on the next `just test`. Running `just generate` again does not clear it,
 // because the next `just ready` reflows the page straight back.
 //
-// docs/tonespec.md broke exactly that way the day it was added — the page was
+// A generated grammar page broke exactly that way the day it was added: it was
 // written, and the exclusion list beside it was not. This fails when a page
 // is generated and not excluded, rather than a run later and somewhere else.
 func (s *MainTestSuite) TestEveryGeneratedPageIsLeftOutOfTheFormatter() {
-	recipe, err := os.ReadFile("justfile")
+	rig, err := os.ReadFile("justfile")
 	s.Require().NoError(err)
 
 	pages, err := filepath.Glob(filepath.Join("docs", "*.md"))
@@ -448,7 +454,7 @@ func (s *MainTestSuite) TestEveryGeneratedPageIsLeftOutOfTheFormatter() {
 			continue
 		}
 
-		s.Require().Contains(string(recipe), "--exclude '"+page+"'",
+		s.Require().Contains(string(rig), "--exclude '"+page+"'",
 			"%s is generated, so mdformat reflowing it would leave the page "+
 				"disagreeing with its generator. Add it to md_extra_excludes.",
 			page)
@@ -725,7 +731,7 @@ var coversAConcern = map[string]string{
 	"pkg/cli/measure_run_public_test.go":                  "a campaign end to end",
 	"pkg/cli/internal/paint/paint_public_test.go":         "the visual language, across theme, chain and yaml",
 	"pkg/cli/measure_paths_test.go":                       "what the three measuring commands do when refused",
-	"pkg/cli/technique_test.go":                           "a helper in recipe.go, which #136 renames wholesale",
+	"pkg/cli/technique_test.go":                           "a helper in rig.go, which #136 renames wholesale",
 	"pkg/sdk/catalog/led_public_test.go":                  "Catalog.LEDColour, which CONTRIBUTING lets types.go keep",
 	"pkg/sdk/catalog/symbol_public_test.go":               "Catalog.Symbol, which CONTRIBUTING names as allowed there",
 	"pkg/sdk/internal/corpusgen/corpusgen_public_test.go": "Run end to end, which drives measure.go and refresh.go",
@@ -743,6 +749,7 @@ var coversAConcern = map[string]string{
 	"pkg/sdk/internal/wire/preset_shape_test.go":          "malformed wire data, across the decoder",
 	"pkg/sdk/preset/fidelity_public_test.go":              "a preset read and written back unchanged",
 	"pkg/sdk/rig/coverage_public_test.go":                 "how much of the contract the shipped rigs use",
+	"pkg/sdk/plan/coverage_public_test.go":                "whether every field a plan models is written down somewhere",
 	"pkg/sdk/rig/shipped_public_test.go":                  "every rig that ships, validated",
 	"pkg/sdk/tone/shipped_public_test.go":                 "every worked example, read with the loader it names",
 }
@@ -883,7 +890,7 @@ func (s *MainTestSuite) TestEveryCommandASkillNamesExists() {
 // TestTheCLIStandsAlone asserts the CLI half could be its own repository.
 //
 // The mirror of TestTheSDKStandsAlone, for the other end. main.go, cmd/ and
-// the rendering are what a tonestack-cli would be, and the only thing it may
+// the rendering are what a toneharness-cli would be, and the only thing it may
 // reach in this module is the library it would import as a dependency.
 //
 // A generator was the thing that broke it. The two that build the catalog and
@@ -907,7 +914,7 @@ func (s *MainTestSuite) TestTheCLIStandsAlone() {
 			case strings.HasPrefix(dep, mod+"pkg/sdk"):
 			default:
 				s.Require().Fail("reaches too far",
-					"%s reaches %s, which a tonestack-cli would not have",
+					"%s reaches %s, which a toneharness-cli would not have",
 					pkg, dep)
 			}
 		}
@@ -915,7 +922,7 @@ func (s *MainTestSuite) TestTheCLIStandsAlone() {
 }
 
 // TestTheMCPStandsAlone holds the MCP server to the SDK, so it can leave for a
-// tonestack-mcp repository without taking the CLI with it.
+// toneharness-mcp repository without taking the CLI with it.
 func (s *MainTestSuite) TestTheMCPStandsAlone() {
 	out, err := exec.Command("go", "list", "-deps", "./pkg/mcp/...").Output()
 	s.Require().NoError(err)
@@ -930,7 +937,7 @@ func (s *MainTestSuite) TestTheMCPStandsAlone() {
 		case strings.HasPrefix(dep, mod+"pkg/sdk"):
 		default:
 			s.Require().
-				Fail("reaches too far", "pkg/mcp reaches %s, which a tonestack-mcp would not have", dep)
+				Fail("reaches too far", "pkg/mcp reaches %s, which a toneharness-mcp would not have", dep)
 		}
 	}
 }
@@ -940,7 +947,7 @@ func (s *MainTestSuite) TestTheMCPStandsAlone() {
 //
 // A library that reads the environment is configured by whoever started the
 // process rather than by whoever called it, and two Clients in one process
-// cannot differ. So the CLI reads TONESTACK_USB_DUMP and TONESTACK_USB_DEBUG
+// cannot differ. So the CLI reads TONEHARNESS_USB_DUMP and TONEHARNESS_USB_DEBUG
 // and passes options in. XDG_STATE_HOME is the exception: where state lives by
 // default is the platform's convention, the way os.UserConfigDir is.
 //

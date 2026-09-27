@@ -25,7 +25,7 @@ import (
 	"os"
 	"sync/atomic"
 
-	"github.com/retr0h/tonestack/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/cli"
 )
 
 // pedal is whether this run has gone to the device.

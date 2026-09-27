@@ -20,7 +20,7 @@
 
 package tone
 
-import "github.com/retr0h/tonestack/pkg/sdk/tone/internal/gen"
+import "github.com/retr0h/toneharness/pkg/sdk/tone/internal/gen"
 
 // The contract's types, named here so nothing outside reaches into gen.
 //

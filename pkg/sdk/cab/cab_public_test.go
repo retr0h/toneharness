@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/cab"
+	"github.com/retr0h/toneharness/pkg/sdk/cab"
 )
 
 // CabPublicTestSuite covers building a cabinet the device does not have.

@@ -15,8 +15,8 @@ directory.
 | `corpus/`               | collected     | ~4,400 real presets                                |
 
 The RigSpec contract is not here. It is embedded in the package that reads it,
-at `pkg/sdk/rig/data/rigspec.openapi.yaml`, and
-[docs/recipes.md](../../docs/recipes.md#where-the-contract-lives) says why.
+at `pkg/sdk/rig/data/rigspec.openapi.yaml`, and \[the write-a-spec
+skill\](../../the write-a-spec skill) says why.
 
 ## What the catalog and the gear map are for
 
@@ -27,8 +27,8 @@ RigSpec                   gear-map + catalog             .hlx
 what a person means       what the device understands    what the file needs
 ```
 
-The curated rigs in `pkg/sdk/rigs/` are the only gear knowledge that is ours and
-publishable. The catalog and the gear map come from a licensed HX Edit
+The curated rigs in `pkg/sdk/shipped/` are the only gear knowledge that is ours
+and publishable. The catalog and the gear map come from a licensed HX Edit
 installation, so we do not redistribute them.
 
 ## hx-stomp.catalog.json

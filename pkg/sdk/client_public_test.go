@@ -34,11 +34,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 type ClientPublicTestSuite struct {
@@ -122,7 +122,7 @@ func (s *ClientPublicTestSuite) TestNew() {
 			opts: []sdk.Option{
 				sdk.WithCatalog("no.json"),
 				sdk.WithStats("no.json.gz"),
-				sdk.WithRecipes("no-such-directory"),
+				sdk.WithRigs("no-such-directory"),
 				sdk.WithBackupDir("no-such-directory"),
 				sdk.WithCapture(io.Discard),
 				sdk.WithTrace(io.Discard),
@@ -238,10 +238,10 @@ func (s *ClientPublicTestSuite) TestWithStats() {
 	s.Require().Error(err, "the Client read the statistics it was given")
 }
 
-// TestWithRecipes covers naming a directory of rigs.
-func (s *ClientPublicTestSuite) TestWithRecipes() {
-	got, err := sdk.New(sdk.WithRecipes("no-such-directory")).
-		Recipes(context.Background())
+// TestWithRigs covers naming a directory of rigs.
+func (s *ClientPublicTestSuite) TestWithRigs() {
+	got, err := sdk.New(sdk.WithRigs("no-such-directory")).
+		Rigs(context.Background())
 
 	s.Require().NoError(err)
 	s.Require().Equal("no-such-directory", got.Dir)
@@ -286,7 +286,7 @@ confidence: high
 func (s *ClientPublicTestSuite) rigsDir(
 	files map[string]string,
 ) string {
-	dir := filepath.Join(s.T().TempDir(), "recipes")
+	dir := filepath.Join(s.T().TempDir(), "rigs")
 	s.Require().NoError(os.MkdirAll(filepath.Join(dir, "artists"), 0o750))
 
 	for name, body := range files {
@@ -297,9 +297,9 @@ func (s *ClientPublicTestSuite) rigsDir(
 	return dir
 }
 
-// TestWithUserRecipes covers somebody's own rigs layered over the ones that
-// ship: what Recipes lists, and what Recipe and Build find.
-func (s *ClientPublicTestSuite) TestWithUserRecipes() {
+// TestWithUserRigs covers somebody's own rigs layered over the ones that
+// ship: what Rigs lists, and what Rig and Build find.
+func (s *ClientPublicTestSuite) TestWithUserRigs() {
 	tests := []struct {
 		name  string
 		files map[string]string
@@ -308,7 +308,7 @@ func (s *ClientPublicTestSuite) TestWithUserRecipes() {
 		// locked leaves the directory unreadable.
 		locked bool
 		id     string
-		// want is the subject Recipe finds, which its ask carries.
+		// want is the subject Rig finds, which its ask carries.
 		want    string
 		variant string
 		listErr string
@@ -382,12 +382,12 @@ func (s *ClientPublicTestSuite) TestWithUserRecipes() {
 			}
 
 			ctx := context.Background()
-			client := sdk.New(sdk.WithUserRecipes(dir))
+			client := sdk.New(sdk.WithUserRigs(dir))
 
-			listed, listErr := client.Recipes(ctx)
-			shown, showErr := client.Recipe(ctx, tt.id)
+			listed, listErr := client.Rigs(ctx)
+			shown, showErr := client.Rig(ctx, tt.id)
 			out := filepath.Join(s.T().TempDir(), "out.hlx")
-			_, buildErr := client.Build(ctx, tt.id, out, sdk.ReplaceExisting)
+			_, buildErr := client.Make(ctx, tt.id, out, sdk.ReplaceExisting)
 
 			if tt.listErr != "" {
 				s.Require().ErrorContains(listErr, tt.listErr)
@@ -425,9 +425,9 @@ func (s *ClientPublicTestSuite) TestWithUserRecipes() {
 	}
 }
 
-// TestUserRecipesAreWrittenTo covers where Scaffold and Extend write when a
+// TestUserRigsAreWrittenTo covers where Scaffold and Extend write when a
 // Client has a directory of somebody's own, and what Extend copies from.
-func (s *ClientPublicTestSuite) TestUserRecipesAreWrittenTo() {
+func (s *ClientPublicTestSuite) TestUserRigsAreWrittenTo() {
 	ctx := context.Background()
 	user := s.rigsDir(nil)
 	beneath := s.rigsDir(ownRig("guitarist", "guitarist", "", "guitar"))
@@ -444,9 +444,9 @@ func (s *ClientPublicTestSuite) TestUserRecipesAreWrittenTo() {
 	}{
 		{
 			name: "a rig scaffolded from gear",
-			opts: []sdk.Option{sdk.WithUserRecipes(user), sdk.WithRecipes(beneath)},
+			opts: []sdk.Option{sdk.WithUserRigs(user), sdk.WithRigs(beneath)},
 			do: func(c *sdk.Client) (sdk.Scaffolded, error) {
-				return c.Scaffold(ctx, sdk.NewRecipe{
+				return c.Scaffold(ctx, sdk.NewRig{
 					ID: "scaffolded", Name: "Somebody", Instrument: "bass", Amp: "Ampeg SVT",
 				})
 			},
@@ -455,18 +455,18 @@ func (s *ClientPublicTestSuite) TestUserRecipesAreWrittenTo() {
 		{
 			// The copied rig's instrument, since a copy names none.
 			name: "a copy of a shipped rig",
-			opts: []sdk.Option{sdk.WithUserRecipes(user)},
+			opts: []sdk.Option{sdk.WithUserRigs(user)},
 			do: func(c *sdk.Client) (sdk.Scaffolded, error) {
-				return c.Extend(ctx, sdk.ExtendRecipe{From: "mike-dirnt", ID: "copied"})
+				return c.Extend(ctx, sdk.ExtendRig{From: "mike-dirnt", ID: "copied"})
 			},
 			instrument: "bass",
 			from:       "mike-dirnt",
 		},
 		{
 			name: "a copy of a rig in the directory beneath theirs",
-			opts: []sdk.Option{sdk.WithUserRecipes(user), sdk.WithRecipes(beneath)},
+			opts: []sdk.Option{sdk.WithUserRigs(user), sdk.WithRigs(beneath)},
 			do: func(c *sdk.Client) (sdk.Scaffolded, error) {
-				return c.Extend(ctx, sdk.ExtendRecipe{From: "guitarist", ID: "copied-guitar"})
+				return c.Extend(ctx, sdk.ExtendRig{From: "guitarist", ID: "copied-guitar"})
 			},
 			instrument: "guitar",
 			from:       "guitarist",
@@ -866,8 +866,8 @@ func (s *ClientPublicTestSuite) TestChainMeasurements() {
 	}
 }
 
-// TestRecipes covers reading the rigs that ship with this library.
-func (s *ClientPublicTestSuite) TestRecipes() {
+// TestRigs covers reading the rigs that ship with this library.
+func (s *ClientPublicTestSuite) TestRigs() {
 	tests := []struct {
 		name string
 		ctx  context.Context
@@ -888,7 +888,7 @@ func (s *ClientPublicTestSuite) TestRecipes() {
 				ctx = context.Background()
 			}
 
-			got, err := sdk.New().Recipes(ctx)
+			got, err := sdk.New().Rigs(ctx)
 
 			if tt.err {
 				s.Require().Error(err)
@@ -948,8 +948,8 @@ func (s *ClientPublicTestSuite) TestBacking() {
 	}
 }
 
-// TestRecipe covers reading one of them.
-func (s *ClientPublicTestSuite) TestRecipe() {
+// TestRig covers reading one of them.
+func (s *ClientPublicTestSuite) TestRig() {
 	tests := []struct {
 		name string
 		ctx  context.Context
@@ -957,7 +957,7 @@ func (s *ClientPublicTestSuite) TestRecipe() {
 		is   error
 	}{
 		{name: "a rig that ships", id: "mike-dirnt"},
-		{name: "one nobody wrote", id: "nobody-at-all", is: sdk.ErrNoSuchRecipe},
+		{name: "one nobody wrote", id: "nobody-at-all", is: sdk.ErrNoSuchRig},
 		{
 			name: "a caller who stopped waiting",
 			ctx:  cancelled(),
@@ -973,7 +973,7 @@ func (s *ClientPublicTestSuite) TestRecipe() {
 				ctx = context.Background()
 			}
 
-			got, err := sdk.New().Recipe(ctx, tt.id)
+			got, err := sdk.New().Rig(ctx, tt.id)
 
 			if tt.is != nil {
 				s.Require().ErrorIs(err, tt.is)
@@ -1057,7 +1057,7 @@ func (s *ClientPublicTestSuite) TestTone() {
 
 // TestScaffold covers writing a rig, gear checked first.
 func (s *ClientPublicTestSuite) TestScaffold() {
-	scaffold := func(ctx context.Context, in sdk.NewRecipe, opts ...sdk.Option) (scaffolded, error) {
+	scaffold := func(ctx context.Context, in sdk.NewRig, opts ...sdk.Option) (scaffolded, error) {
 		got, err := sdk.New(opts...).Scaffold(ctx, in)
 		if err != nil {
 			return scaffolded{}, err
@@ -1073,9 +1073,9 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 
 	// Each row writes into a directory of its own, because a scaffold is
 	// never written over a rig already there.
-	into := func() sdk.Option { return sdk.WithRecipes(s.T().TempDir()) }
+	into := func() sdk.Option { return sdk.WithRigs(s.T().TempDir()) }
 
-	base := sdk.NewRecipe{
+	base := sdk.NewRig{
 		ID: "test-player", Name: "Test Player",
 		Instrument: "bass", Amp: "Ampeg SVT",
 	}
@@ -1083,8 +1083,8 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 	written, err := scaffold(context.Background(), base, into())
 	s.Require().NoError(err)
 
-	// with is the base recipe with one field changed.
-	with := func(change func(*sdk.NewRecipe)) sdk.NewRecipe {
+	// with is the base rig with one field changed.
+	with := func(change func(*sdk.NewRig)) sdk.NewRig {
 		in := base
 		change(&in)
 
@@ -1094,7 +1094,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 	tests := []struct {
 		name string
 		ctx  context.Context
-		in   sdk.NewRecipe
+		in   sdk.NewRig
 		// nowhere means the Client was given no directory of rigs.
 		nowhere bool
 		// check is what the written rig must say that the base rig does
@@ -1112,7 +1112,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 		},
 		{
 			name: "Name decides who the rig is about",
-			in:   with(func(in *sdk.NewRecipe) { in.Name = "Other Player" }),
+			in:   with(func(in *sdk.NewRig) { in.Name = "Other Player" }),
 			check: func(got scaffolded) {
 				s.Require().Contains(got.ask, "  name: Other Player")
 				s.Require().Contains(written.ask, "  name: Test Player")
@@ -1120,7 +1120,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 		},
 		{
 			name: "Band decides the group the rig names",
-			in:   with(func(in *sdk.NewRecipe) { in.Band = "The Test Band" }),
+			in:   with(func(in *sdk.NewRig) { in.Band = "The Test Band" }),
 			check: func(got scaffolded) {
 				s.Require().Contains(got.ask, "  band: The Test Band")
 				s.Require().NotContains(written.ask, "band:")
@@ -1128,7 +1128,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 		},
 		{
 			name: "Instrument decides which instrument the rig is for",
-			in:   with(func(in *sdk.NewRecipe) { in.Instrument = "guitar" }),
+			in:   with(func(in *sdk.NewRig) { in.Instrument = "guitar" }),
 			check: func(got scaffolded) {
 				s.Require().Contains(got.body, "instrument: guitar")
 				s.Require().Contains(written.body, "instrument: bass")
@@ -1136,7 +1136,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 		},
 		{
 			name: "Amp decides the amplifier in the chain",
-			in:   with(func(in *sdk.NewRecipe) { in.Amp = "Acoustic 360" }),
+			in:   with(func(in *sdk.NewRig) { in.Amp = "Acoustic 360" }),
 			check: func(got scaffolded) {
 				s.Require().Contains(got.body, "role: amp\n    gear: Acoustic 360")
 				s.Require().Contains(written.body, "role: amp\n    gear: Ampeg SVT")
@@ -1144,7 +1144,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 		},
 		{
 			name: "Cab decides the cabinet in the chain",
-			in:   with(func(in *sdk.NewRecipe) { in.Cab = "Ampeg 8x10" }),
+			in:   with(func(in *sdk.NewRig) { in.Cab = "Ampeg 8x10" }),
 			check: func(got scaffolded) {
 				s.Require().Contains(got.body, "role: cab\n    gear: Ampeg 8x10")
 				s.Require().NotContains(written.body, "role: cab")
@@ -1152,7 +1152,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 		},
 		{
 			name: "Pedals decide what goes ahead of the amp",
-			in:   with(func(in *sdk.NewRecipe) { in.Pedals = []string{"Klon"} }),
+			in:   with(func(in *sdk.NewRig) { in.Pedals = []string{"Klon"} }),
 			check: func(got scaffolded) {
 				s.Require().Contains(got.body, "role: drive\n    gear: Klon")
 				s.Require().NotContains(written.body, "role: drive")
@@ -1162,7 +1162,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 			// Checked first, because a rig naming gear no device models is
 			// otherwise only found out when somebody builds from it.
 			name: "one naming gear nothing emulates",
-			in: sdk.NewRecipe{
+			in: sdk.NewRig{
 				ID: "test-player", Name: "Test Player",
 				Instrument: "bass", Amp: "No Such Amplifier",
 			},
@@ -1170,14 +1170,14 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 		},
 		{
 			name: "an identifier that will not do",
-			in:   sdk.NewRecipe{ID: "Not An ID", Amp: "Ampeg SVT"},
+			in:   sdk.NewRig{ID: "Not An ID", Amp: "Ampeg SVT"},
 			err:  true,
 		},
 		{
 			// Refused rather than written wherever the program happened to
 			// run.
 			name: "a Client given nowhere to write",
-			in: sdk.NewRecipe{
+			in: sdk.NewRig{
 				ID: "test-player", Name: "Test Player",
 				Instrument: "bass", Amp: "Ampeg SVT",
 			},
@@ -1187,7 +1187,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 		{
 			name: "a caller who stopped waiting",
 			ctx:  cancelled(),
-			in:   sdk.NewRecipe{ID: "test-player", Amp: "Ampeg SVT"},
+			in:   sdk.NewRig{ID: "test-player", Amp: "Ampeg SVT"},
 			err:  true,
 		},
 	}
@@ -1253,11 +1253,11 @@ type extended struct {
 
 // TestExtend covers starting a rig as a copy of another.
 //
-// ExtendRecipe is an input struct, so each of its fields has a row of its own
+// ExtendRig is an input struct, so each of its fields has a row of its own
 // that changes that field alone and shows the rig written changing with it. A
 // field no path reads would leave its row identical to the baseline.
 func (s *ClientPublicTestSuite) TestExtend() {
-	extend := func(ctx context.Context, in sdk.ExtendRecipe, opts ...sdk.Option) (extended, error) {
+	extend := func(ctx context.Context, in sdk.ExtendRig, opts ...sdk.Option) (extended, error) {
 		got, err := sdk.New(opts...).Extend(ctx, in)
 		if err != nil {
 			return extended{}, err
@@ -1273,11 +1273,11 @@ func (s *ClientPublicTestSuite) TestExtend() {
 
 	// Each row writes into a directory of its own, because a copy is never
 	// written over a rig already there.
-	into := func() sdk.Option { return sdk.WithRecipes(s.T().TempDir()) }
+	into := func() sdk.Option { return sdk.WithRigs(s.T().TempDir()) }
 
 	base, err := extend(
 		context.Background(),
-		sdk.ExtendRecipe{From: "mike-dirnt", ID: "the-copy"},
+		sdk.ExtendRig{From: "mike-dirnt", ID: "the-copy"},
 		into(),
 	)
 	s.Require().NoError(err)
@@ -1285,7 +1285,7 @@ func (s *ClientPublicTestSuite) TestExtend() {
 	tests := []struct {
 		name string
 		ctx  context.Context
-		in   sdk.ExtendRecipe
+		in   sdk.ExtendRig
 		// nowhere means the Client was given no directory of rigs.
 		nowhere bool
 		check   func(got extended)
@@ -1294,7 +1294,7 @@ func (s *ClientPublicTestSuite) TestExtend() {
 	}{
 		{
 			name: "From decides which rig is copied",
-			in:   sdk.ExtendRecipe{From: "flea", ID: "the-copy"},
+			in:   sdk.ExtendRig{From: "flea", ID: "the-copy"},
 			check: func(got extended) {
 				s.Require().Contains(got.ask, "extends: flea")
 				s.Require().Contains(base.ask, "extends: mike-dirnt")
@@ -1313,7 +1313,7 @@ func (s *ClientPublicTestSuite) TestExtend() {
 		},
 		{
 			name: "ID decides what the copy is called and where it is written",
-			in:   sdk.ExtendRecipe{From: "mike-dirnt", ID: "another-copy"},
+			in:   sdk.ExtendRig{From: "mike-dirnt", ID: "another-copy"},
 			check: func(got extended) {
 				s.Require().Equal("another-copy", got.got.ID)
 				s.Require().Equal("another-copy.yaml", filepath.Base(got.got.Path))
@@ -1323,7 +1323,7 @@ func (s *ClientPublicTestSuite) TestExtend() {
 		},
 		{
 			name: "Name decides who the copy is about",
-			in:   sdk.ExtendRecipe{From: "mike-dirnt", ID: "the-copy", Name: "Somebody Else"},
+			in:   sdk.ExtendRig{From: "mike-dirnt", ID: "the-copy", Name: "Somebody Else"},
 			check: func(got extended) {
 				s.Require().Contains(got.ask, "  name: Somebody Else")
 				s.Require().Contains(base.ask, "  name: Mike Dirnt")
@@ -1332,7 +1332,7 @@ func (s *ClientPublicTestSuite) TestExtend() {
 		},
 		{
 			name: "Kind decides what the copy is attributed to",
-			in:   sdk.ExtendRecipe{From: "mike-dirnt", ID: "the-copy", Kind: "song"},
+			in:   sdk.ExtendRig{From: "mike-dirnt", ID: "the-copy", Kind: "song"},
 			check: func(got extended) {
 				s.Require().Contains(got.ask, "  kind: song")
 				s.Require().Contains(base.ask, "  kind: artist")
@@ -1340,27 +1340,27 @@ func (s *ClientPublicTestSuite) TestExtend() {
 		},
 		{
 			name: "a rig to copy that nobody wrote",
-			in:   sdk.ExtendRecipe{From: "nobody-at-all", ID: "the-copy"},
-			is:   sdk.ErrNoSuchRecipe,
+			in:   sdk.ExtendRig{From: "nobody-at-all", ID: "the-copy"},
+			is:   sdk.ErrNoSuchRig,
 		},
 		{
 			// Without one this would scaffold a rig from no gear at all.
 			name: "no rig to copy",
-			in:   sdk.ExtendRecipe{ID: "the-copy"},
-			is:   sdk.ErrNoSuchRecipe,
+			in:   sdk.ExtendRig{ID: "the-copy"},
+			is:   sdk.ErrNoSuchRig,
 		},
 		{
 			// Refused rather than written wherever the program happened to
 			// run.
 			name:    "a Client given nowhere to write",
-			in:      sdk.ExtendRecipe{From: "mike-dirnt", ID: "the-copy"},
+			in:      sdk.ExtendRig{From: "mike-dirnt", ID: "the-copy"},
 			nowhere: true,
 			err:     true,
 		},
 		{
 			name: "a caller who stopped waiting",
 			ctx:  cancelled(),
-			in:   sdk.ExtendRecipe{From: "mike-dirnt", ID: "the-copy"},
+			in:   sdk.ExtendRig{From: "mike-dirnt", ID: "the-copy"},
 			is:   context.Canceled,
 		},
 	}
@@ -1439,7 +1439,7 @@ func (s *ClientPublicTestSuite) TestBuild() {
 				s.Require().NoError(os.WriteFile(out, []byte("somebody's preset"), 0o600))
 			}
 
-			got, err := sdk.New().Build(ctx, tt.id, out, tt.existing)
+			got, err := sdk.New().Make(ctx, tt.id, out, tt.existing)
 
 			if tt.is != nil {
 				s.Require().ErrorIs(err, tt.is)
@@ -1470,4 +1470,144 @@ func TestClientPublicTestSuite(
 	t.Parallel()
 
 	suite.Run(t, new(ClientPublicTestSuite))
+}
+
+// TestMusic covers the four questions the music corpus answers.
+//
+// One test for all four because they share everything but the call: the same
+// tree, the same read of the same manifests, and four views over it. Separate
+// tests would assert the same setup four times.
+func (s *ClientPublicTestSuite) TestMusic() {
+	root := s.T().TempDir()
+
+	dir := filepath.Join(root, "bass", "mike-dirnt")
+	s.Require().NoError(os.MkdirAll(dir, 0o750))
+	s.Require().NoError(os.WriteFile(filepath.Join(dir, "corpus.yaml"),
+		[]byte("artist: Mike Dirnt\ntracks:\n  - track: longview\n"+
+			"    url: https://open.spotify.com/track/x\n    year: 1994\n"+
+			"    band: Green Day\n    genres: [punk]\n    genres_by: llm\n"), 0o600))
+
+	tests := []struct {
+		name  string
+		check func(ctx context.Context, c *sdk.Client) error
+	}{
+		{
+			name: "who it holds records for",
+			check: func(ctx context.Context, c *sdk.Client) error {
+				got, err := c.MusicPlayers(ctx, root)
+				if err != nil {
+					return err
+				}
+
+				s.Require().Len(got, 1)
+				s.Require().Equal("mike-dirnt", got[0].ID)
+				s.Require().Equal("bass", got[0].Instrument)
+				s.Require().Equal([]string{"punk"}, got[0].Genres)
+
+				return nil
+			},
+		},
+		{
+			name: "which bands made them",
+			check: func(ctx context.Context, c *sdk.Client) error {
+				got, err := c.MusicBands(ctx, root)
+				if err != nil {
+					return err
+				}
+
+				s.Require().Len(got, 1)
+				s.Require().Equal("Green Day", got[0].Name)
+				s.Require().Zero(got[0].Unsighted, "nobody labels a band")
+
+				return nil
+			},
+		},
+		{
+			name: "which genres, and how far off usable",
+			check: func(ctx context.Context, c *sdk.Client) error {
+				got, err := c.MusicGenres(ctx, root)
+				if err != nil {
+					return err
+				}
+
+				s.Require().Len(got, 1)
+				s.Require().Equal("punk", got[0].Slug)
+				s.Require().False(got[0].Usable, "one record from one player")
+				s.Require().Equal(7, got[0].ShortRecords)
+				s.Require().Equal(2, got[0].ShortArtists)
+				s.Require().Equal(1, got[0].Unsighted, "a model tagged it")
+
+				return nil
+			},
+		},
+		{
+			name: "every record, and whether it has stems",
+			check: func(ctx context.Context, c *sdk.Client) error {
+				got, err := c.MusicRecords(ctx, root)
+				if err != nil {
+					return err
+				}
+
+				s.Require().Len(got, 1)
+				s.Require().Equal("longview", got[0].Track)
+				s.Require().Equal("llm", got[0].DecidedBy)
+				s.Require().False(got[0].Separated, "nothing separated it")
+
+				return nil
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.Require().NoError(tt.check(context.Background(), sdk.New()))
+		})
+
+		// The same call refuses a caller who stopped waiting, before it reads
+		// anything off disk.
+		s.Run(tt.name+", cancelled", func() {
+			s.Require().Error(tt.check(cancelled(), sdk.New()))
+		})
+	}
+}
+
+// TestMusicRefusesATreeWithNoManifests covers a path pointing at nothing.
+//
+// Refused rather than answered empty, because the ordinary cause is a wrong
+// path and an empty table reads as a corpus that holds nothing.
+func (s *ClientPublicTestSuite) TestMusicRefusesATreeWithNoManifests() {
+	_, err := sdk.New().MusicPlayers(context.Background(), s.T().TempDir())
+	s.Require().Error(err)
+}
+
+// TestMeasuredGenres covers measuring the audio rather than counting manifests.
+//
+// The slow half: it reads the recordings, where MusicGenres reads what somebody
+// wrote down. Against a tree this test builds, so the assertion does not depend
+// on whichever records somebody has on disk.
+func (s *ClientPublicTestSuite) TestMeasuredGenres() {
+	root := s.T().TempDir()
+
+	dir := filepath.Join(root, "bass", "a")
+	s.Require().NoError(os.MkdirAll(dir, 0o750))
+	s.Require().NoError(os.WriteFile(filepath.Join(dir, "corpus.yaml"),
+		[]byte("artist: A\ntracks:\n  - track: t\n"+
+			"    url: https://open.spotify.com/track/x\n    year: 1994\n"+
+			"    genres: [punk]\n    genres_by: llm\n"), 0o600))
+
+	// A manifest naming a record nothing separated, which is a genre measured
+	// from nothing rather than an error.
+	got, err := sdk.New().MeasuredGenres(context.Background(), root)
+	s.Require().NoError(err)
+	s.Require().Empty(got, "no stems, so nothing measured")
+
+	_, err = sdk.New().MeasuredGenres(cancelled(), root)
+	s.Require().Error(err, "a caller who stopped waiting")
+}
+
+// TestMeasuredGenresRefusesATreeThatIsNotThere covers a path nobody can walk.
+func (s *ClientPublicTestSuite) TestMeasuredGenresRefusesATreeThatIsNotThere() {
+	_, err := sdk.New().MeasuredGenres(
+		context.Background(), filepath.Join("testdata", "nowhere"))
+	s.Require().Error(err)
 }

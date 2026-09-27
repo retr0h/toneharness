@@ -29,8 +29,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
-	"github.com/retr0h/tonestack/pkg/sdk/cab"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/cab"
 )
 
 // WritePublicTestSuite covers putting an impulse response where a device can
@@ -111,7 +111,7 @@ func (s *WritePublicTestSuite) TestWhereItCameFromTravelsInside() {
 
 	s.Require().Contains(body, "LIST")
 	s.Require().Contains(body, "INFO")
-	s.Require().Contains(body, "tonestack")
+	s.Require().Contains(body, "toneharness")
 	s.Require().Contains(body, "matched")
 	s.Require().Contains(body, "a synthetic roll-off")
 	s.Require().Contains(body, "2026-09-19")

@@ -31,9 +31,9 @@ import (
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/mcp"
-	"github.com/retr0h/tonestack/pkg/mcp/internal/tools"
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/mcp"
+	"github.com/retr0h/toneharness/pkg/mcp/internal/tools"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 // MCPPublicTestSuite covers pkg/mcp's public surface.
@@ -72,7 +72,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 			s.Len(listed.Tools, tt.tools)
 
 			dir := s.T().TempDir()
-			fromRecipe := filepath.Join(dir, "recipe.hlx")
+			fromShipped := filepath.Join(dir, "shipped.hlx")
 			fromRig := filepath.Join(dir, "rig.hlx")
 
 			// Offline tools only, against the real catalog, corpus and rigs: the
@@ -96,7 +96,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 					tool: "rigs_list",
 					args: map[string]string{},
 					check: func(res *gomcp.CallToolResult) {
-						var got sdk.Recipes
+						var got sdk.Rigs
 						s.decode(res, &got)
 						s.NotEmpty(got.Rigs)
 					},
@@ -105,7 +105,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 					tool: "rig_show",
 					args: map[string]string{"id": "mike-dirnt"},
 					check: func(res *gomcp.CallToolResult) {
-						var got sdk.Recipe
+						var got sdk.Rig
 						s.decode(res, &got)
 						s.Equal("mike-dirnt", got.Rig.ID)
 					},
@@ -120,17 +120,17 @@ func (s *MCPPublicTestSuite) TestServe() {
 					},
 				},
 				{
-					tool: "preset_build",
-					args: map[string]string{"recipe_id": "mike-dirnt", "out": fromRecipe},
+					tool: "preset_make",
+					args: map[string]string{"rig_id": "mike-dirnt", "out": fromShipped},
 					check: func(res *gomcp.CallToolResult) {
 						var got built
 						s.decode(res, &got)
-						s.Require().NotNil(got.FromRecipe)
-						s.Equal(fromRecipe, got.FromRecipe.Path)
+						s.Require().NotNil(got.FromShipped)
+						s.Equal(fromShipped, got.FromShipped.Path)
 					},
 				},
 				{
-					tool: "preset_build",
+					tool: "preset_make",
 					args: map[string]string{
 						"rig_path": filepath.Join(
 							"..",
@@ -166,12 +166,12 @@ func (s *MCPPublicTestSuite) TestServe() {
 	}
 }
 
-// TestUserRecipes covers an agent reaching somebody's own rigs, beside the
+// TestUserRigs covers an agent reaching somebody's own rigs, beside the
 // ones that ship, through the tools that read and build rigs.
-func (s *MCPPublicTestSuite) TestUserRecipes() {
+func (s *MCPPublicTestSuite) TestUserRigs() {
 	dir := s.T().TempDir()
 	s.Require().NoError(os.MkdirAll(filepath.Join(dir, "artists"), 0o750))
-	// Two documents, because a recipe is two: the gear, and the ask it answers.
+	// Two documents, because a rig is two: the gear, and the ask it answers.
 	// What the rig extends is the ask's, since one ask departing from another is
 	// a fact about what was wanted rather than about the gear.
 	s.Require().
@@ -206,7 +206,7 @@ confidence: high
 
 	served := make(chan error, 1)
 	go func() {
-		served <- mcp.New(sdk.New(sdk.WithUserRecipes(dir)), mcp.Options{}).Serve(ctx, serverEnd)
+		served <- mcp.New(sdk.New(sdk.WithUserRigs(dir)), mcp.Options{}).Serve(ctx, serverEnd)
 	}()
 
 	session, err := gomcp.NewClient(
@@ -227,7 +227,7 @@ confidence: high
 			tool: "rigs_list",
 			args: map[string]string{},
 			check: func(res *gomcp.CallToolResult) {
-				var got sdk.Recipes
+				var got sdk.Rigs
 				s.decode(res, &got)
 
 				listed := make([]string, 0, len(got.Rigs))
@@ -244,7 +244,7 @@ confidence: high
 			tool: "rig_show",
 			args: map[string]string{"id": "their-player"},
 			check: func(res *gomcp.CallToolResult) {
-				var got sdk.Recipe
+				var got sdk.Rig
 				s.decode(res, &got)
 				s.Require().NotNil(got.Ask)
 				s.Require().NotNil(got.Ask.Subject)
@@ -256,21 +256,21 @@ confidence: high
 			tool: "rig_show",
 			args: map[string]string{"id": "mike-dirnt"},
 			check: func(res *gomcp.CallToolResult) {
-				var got sdk.Recipe
+				var got sdk.Rig
 				s.decode(res, &got)
 				s.Require().Len(got.Variants, 1)
 				s.Equal("their-player", got.Variants[0].ID)
 			},
 		},
 		{
-			name: "preset_build builds theirs",
-			tool: "preset_build",
-			args: map[string]string{"recipe_id": "their-player", "out": out},
+			name: "preset_make builds theirs",
+			tool: "preset_make",
+			args: map[string]string{"rig_id": "their-player", "out": out},
 			check: func(res *gomcp.CallToolResult) {
 				var got built
 				s.decode(res, &got)
-				s.Require().NotNil(got.FromRecipe)
-				s.Equal(out, got.FromRecipe.Path)
+				s.Require().NotNil(got.FromShipped)
+				s.Equal(out, got.FromShipped.Path)
 			},
 		},
 	}
@@ -289,10 +289,10 @@ confidence: high
 	s.ErrorIs(<-served, context.Canceled)
 }
 
-// built is preset_build's answer as an agent reads it.
+// built is preset_make's answer as an agent reads it.
 type built struct {
-	FromRecipe *sdk.Made  `json:"from_recipe"`
-	FromRig    *sdk.Built `json:"from_rig"`
+	FromShipped *sdk.Made  `json:"from_shipped"`
+	FromRig     *sdk.Built `json:"from_rig"`
 }
 
 // decode reads a tool's structured answer into a Go value.

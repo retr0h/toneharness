@@ -30,7 +30,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 type LoadPublicTestSuite struct {
@@ -80,17 +80,6 @@ func (s *LoadPublicTestSuite) TestLoad() {
 				"instrument: bass\nchain:\n" +
 				"  - {role: amp, gear: Ampeg SVT, gera: nonsense}\n",
 			errText: `property "gera" is unsupported`,
-		},
-		{
-			// The contract calls this an integer and Go's int cannot hold
-			// it, so the decode fails on a document that validated. It came
-			// back as a rig with the field zeroed and no error at all.
-			name: "a number larger than the type that holds it",
-			in: "schema: RigSpec\nid: x\n" +
-				"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
-				"controllers:\n" +
-				"  - {controller: 99999999999999999999, block: 0, parameter: Drive}\n",
-			errText: "of type int",
 		},
 		{
 			// One version, so a rig stating another is refused rather than

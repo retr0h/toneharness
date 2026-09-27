@@ -21,8 +21,9 @@
 package sdk
 
 import (
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
 )
 
 // What every operation answers with.
@@ -56,22 +57,22 @@ type (
 	// Built is a preset compiled from a rig.
 	Built = result.Built
 
-	// Made is a preset built from a recipe.
+	// Made is a preset built from a rig.
 	Made = result.Made
-	// Added is a block put in the chain that the recipe did not name.
+	// Added is a block put in the chain that the rig did not name.
 	Added = result.Added
 	// Unfamiliar is a character term nothing defines.
 	Unfamiliar = result.Unfamiliar
 	// Moved is what a word did to a parameter.
 	Moved = result.Moved
 
-	// Recipes is every rig under one directory.
-	Recipes = result.Recipes
+	// Rigs is every rig under one directory.
+	Rigs = result.Rigs
 	// Known is one rig and the ask it answers.
 	Known = result.Known
-	// Recipe is one rig, and what reading it needs that the rig does not
+	// Rig is one rig, and what reading it needs that the rig does not
 	// carry.
-	Recipe = result.Recipe
+	Rig = result.Rig
 	// Resolved is what a request and a setup turned into.
 	Resolved = result.Resolved
 	// Variant is a rig that extends another.
@@ -81,7 +82,7 @@ type (
 	Backing = result.Backing
 	// Record is one record measured for a rig.
 	Record = result.Record
-	// Scaffolded is a recipe this wrote.
+	// Scaffolded is a rig this wrote.
 	Scaffolded = result.Scaffolded
 
 	// Attached is what is on the bus that this recognises.
@@ -142,3 +143,16 @@ const (
 
 // DumpEnv names a file to write a device's raw answer to.
 const DumpEnv = result.DumpEnv
+
+// What the music corpus holds, read off the manifests.
+type (
+	// MusicPlayer is one player's corpus, as their manifest describes it.
+	MusicPlayer = result.MusicPlayer
+	// MusicGroup is one genre or one band, and what backs it.
+	MusicGroup = result.MusicGroup
+	// MusicRecord is one recording, with the player it was measured for.
+	MusicRecord = result.MusicRecord
+)
+
+// MeasuredGenre is one genre measured against the players who do not play it.
+type MeasuredGenre = audio.Genre

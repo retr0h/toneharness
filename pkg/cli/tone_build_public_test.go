@@ -28,11 +28,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/cli/internal/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	"github.com/retr0h/tonestack/pkg/sdk/translate"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/cli/internal/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
 // ToneBuildPublicTestSuite covers reading a request and writing the rig it
@@ -126,7 +126,11 @@ gear:
 	}))
 
 	s.Require().Contains(buf.String(), "could not")
-	s.Require().Contains(buf.String(), "no records carry that genre yet")
+
+	// What punk measured as, rather than the blanket "nobody has tagged
+	// anything" this said of every genre before any were measured.
+	s.Require().Contains(buf.String(), "records from")
+	s.Require().Contains(buf.String(), "nothing to aim at")
 }
 
 // TestARequestItCannotAnswerFails covers an ask with nothing to build from.

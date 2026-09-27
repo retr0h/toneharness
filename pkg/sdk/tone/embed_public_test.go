@@ -25,7 +25,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // EmbedPublicTestSuite covers the contract a request is checked against.

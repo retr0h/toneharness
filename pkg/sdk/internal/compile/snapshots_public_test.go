@@ -27,10 +27,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // SnapshotsPublicTestSuite covers what a footswitch recalls.
@@ -115,17 +116,17 @@ func (s *SnapshotsPublicTestSuite) TestLiftSnapshots() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			spec, err := compile.Lift(s.presetWith(tt.entries), s.cat)
+			_, made, err := compile.Lift(s.presetWith(tt.entries), s.cat)
 			s.Require().NoError(err)
 
 			if tt.none {
-				s.Require().Nil(spec.Snapshots)
+				s.Require().Empty(made.Snapshots)
 
 				return
 			}
 
 			if tt.unnamed {
-				snap := (*spec.Snapshots)[0]
+				snap := made.Snapshots[0]
 
 				s.Require().Nil(snap.Name)
 				s.Require().InDelta(tt.tempo, *snap.Tempo, 0.001)
@@ -133,10 +134,10 @@ func (s *SnapshotsPublicTestSuite) TestLiftSnapshots() {
 				return
 			}
 
-			s.Require().Len(*spec.Snapshots, len(tt.want))
+			s.Require().Len(made.Snapshots, len(tt.want))
 
 			for i, want := range tt.want {
-				s.Require().Equal(want, *(*spec.Snapshots)[i].Name)
+				s.Require().Equal(want, *made.Snapshots[i].Name)
 			}
 		})
 	}
@@ -149,18 +150,18 @@ func (s *SnapshotsPublicTestSuite) TestLiftSnapshots() {
 // field to the format at any release. Anything unrecognised is carried in
 // Rest rather than dropped, so a preset read and written back is the preset
 // that went in. Without it the first new field Line 6 ships would be silently
-// deleted by every rig that passed through here.
+// deleted by every plan that passed through here.
 func (s *SnapshotsPublicTestSuite) TestASnapshotKeepsWhatThisFormatDoesNotModel() {
 	doc := s.presetWith(map[string]string{
 		"snapshot0": `{"@name": "Verse", "@ledcolor": 3, ` +
 			`"commands": [{"cc": 41}], "@somethingNew": "from a later release"}`,
 	})
 
-	spec, err := compile.Lift(doc, s.cat)
+	_, made, err := compile.Lift(doc, s.cat)
 	s.Require().NoError(err)
-	s.Require().Len(*spec.Snapshots, 1)
+	s.Require().Len(made.Snapshots, 1)
 
-	rest := (*spec.Snapshots)[0].Rest
+	rest := made.Snapshots[0].Rest
 	s.Require().NotNil(rest, "an unmodelled key is carried, not dropped")
 	s.Require().Contains(*rest, "commands")
 	s.Require().Contains(*rest, "@somethingNew")
@@ -170,7 +171,7 @@ func (s *SnapshotsPublicTestSuite) TestASnapshotKeepsWhatThisFormatDoesNotModel(
 	into, err := preset.Blank()
 	s.Require().NoError(err)
 
-	s.Require().NoError(compile.Lower(into, spec, s.cat))
+	s.Require().NoError(compile.Lower(into, made, s.cat))
 
 	back := into.Data.Tone["snapshot0"]
 	s.Require().Contains(back, "commands")
@@ -178,37 +179,37 @@ func (s *SnapshotsPublicTestSuite) TestASnapshotKeepsWhatThisFormatDoesNotModel(
 	s.Require().JSONEq(`"from a later release"`, string(back["@somethingNew"]))
 }
 
-// TestLowerSnapshots writes a rig's snapshots over the preset's own.
+// TestLowerSnapshots writes a plan's snapshots over the preset's own.
 //
 // An untouched preset carries three of its own, and keeping those beside a
-// rig's would rebuild a preset holding snapshots nobody made.
+// plan's would rebuild a preset holding snapshots nobody made.
 func (s *SnapshotsPublicTestSuite) TestLowerSnapshots() {
 	name := "Verse"
 
 	tests := []struct {
 		name string
-		// a rig lifted off a preset holding this one snapshot, or one
+		// a plan lifted off a preset holding this one snapshot, or one
 		// somebody typed.
 		lifted string
-		typed  *rig.Spec
+		typed  *plan.Plan
 		want   string
 	}{
 		{
-			name:   "a rig lifted off a preset",
+			name:   "a plan lifted off a preset",
 			lifted: "Only",
 			want:   `"@name": "Only"`,
 		},
 		{
-			// A rig somebody typed carries no record of a device, so nothing
+			// A plan somebody typed carries no record of a device, so nothing
 			// has already cleared the preset it is built into. Its snapshots
 			// still have to replace the three an untouched preset ships with.
-			name: "a rig somebody typed",
-			typed: &rig.Spec{
-				Schema:     rig.SchemaName,
-				ID:         "typed",
-				Instrument: rig.InstrumentBass,
-				Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
-				Snapshots:  &[]rig.Snapshot{{Name: &name}},
+			name: "a plan somebody typed",
+			typed: &plan.Plan{
+				Name: "typed",
+				Blocks: []plan.Block{
+					{Model: "HD2_AmpSVBeastNrm", Pos: 0, Enabled: true},
+				},
+				Snapshots: []rig.Snapshot{{Name: &name}},
 			},
 			want: `"@name": "Verse"`,
 		},
@@ -216,29 +217,29 @@ func (s *SnapshotsPublicTestSuite) TestLowerSnapshots() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var spec rig.Spec
+			var made plan.Plan
 
 			if tt.typed != nil {
-				spec = *tt.typed
+				made = *tt.typed
 			} else {
-				got, err := compile.Lift(s.presetWith(map[string]string{
+				_, lifted, err := compile.Lift(s.presetWith(map[string]string{
 					"snapshot0": `{"@name": "` + tt.lifted + `"}`,
 				}), s.cat)
 				s.Require().NoError(err)
 
-				spec = got
+				made = lifted
 			}
 
 			doc, err := preset.Blank()
 			s.Require().NoError(err)
-			s.Require().NoError(compile.Lower(doc, spec, s.cat))
+			s.Require().NoError(compile.Lower(doc, made, s.cat))
 
 			var out bytes.Buffer
 			s.Require().NoError(preset.Write(&out, doc))
 
 			s.Require().Contains(out.String(), tt.want)
 			s.Require().NotContains(out.String(), "SNAPSHOT 2",
-				"the preset's own snapshots are not kept beside the rig's")
+				"the preset's own snapshots are not kept beside the plan's")
 		})
 	}
 }

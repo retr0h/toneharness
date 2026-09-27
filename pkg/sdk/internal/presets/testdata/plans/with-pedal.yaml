@@ -1,0 +1,19 @@
+name: with-pedal
+rig: with-pedal
+blocks:
+  - model: HD2_AmpSVBeastNrm
+    dsp: 0
+    pos: 0
+    enabled: true
+    params:
+      Drive: 0.5
+  - model: HD2_Cab8x10SVBeast
+    dsp: 0
+    pos: 1
+    enabled: true
+controllers:
+  - controller: 2
+    block: 0
+    parameter: Drive
+    min: 0.3
+    max: 0.85

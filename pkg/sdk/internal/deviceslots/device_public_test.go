@@ -34,16 +34,17 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
-	slotmocks "github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	slotmocks "github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // flows are the operations, naming gear against the catalog at path. An empty
@@ -67,9 +68,10 @@ func flows(
 
 // said renders a reading the way something displaying one would.
 //
-// The assertions here are about what was read, and what was read is a rig.
-// Rendering it in the test rather than importing the one renderer keeps these
-// operations free of anything that knows what a terminal is.
+// The assertions here are about what was read, and what was read is a rig and
+// the plan that realises it on the device it came off. Rendering both in the
+// test rather than importing the one renderer keeps these operations free of
+// anything that knows what a terminal is.
 func said(
 	t *testing.T,
 	r result.Reading,
@@ -87,6 +89,7 @@ func said(
 	var buf bytes.Buffer
 
 	require.NoError(t, rig.Write(&buf, r.Rig))
+	require.NoError(t, plan.Write(&buf, r.Plan))
 
 	return r.Name + "\n" + buf.String()
 }

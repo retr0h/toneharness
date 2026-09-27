@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // Budgets are how long a session waits on each thing, exported so a test

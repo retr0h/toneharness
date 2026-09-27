@@ -24,7 +24,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/retr0h/tonestack/pkg/mcp/internal/tools"
+	"github.com/retr0h/toneharness/pkg/mcp/internal/tools"
 )
 
 // Held reports whether the server is holding the pedal: a Session is open,

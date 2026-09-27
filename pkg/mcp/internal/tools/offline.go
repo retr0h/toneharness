@@ -25,8 +25,8 @@ import (
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 func (h *handlers) catalogSearch(
@@ -84,10 +84,10 @@ func (h *handlers) rigsList(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
 	_ None,
-) (*gomcp.CallToolResult, sdk.Recipes, error) {
-	found, err := h.client.Recipes(ctx)
+) (*gomcp.CallToolResult, sdk.Rigs, error) {
+	found, err := h.client.Rigs(ctx)
 	if err != nil {
-		return nil, sdk.Recipes{}, err
+		return nil, sdk.Rigs{}, err
 	}
 
 	return said("%d rigs to build from", len(found.Rigs)), found, nil
@@ -97,10 +97,10 @@ func (h *handlers) rigShow(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
 	in ID,
-) (*gomcp.CallToolResult, sdk.Recipe, error) {
-	found, err := h.client.Recipe(ctx, in.ID)
+) (*gomcp.CallToolResult, sdk.Rig, error) {
+	found, err := h.client.Rig(ctx, in.ID)
 	if err != nil {
-		return nil, sdk.Recipe{}, remedy(err)
+		return nil, sdk.Rig{}, remedy(err)
 	}
 
 	return said("rig %s, extended by %d others", in.ID, len(found.Variants)), found, nil
@@ -122,15 +122,15 @@ func (h *handlers) toneBuild(
 	return said("%d blocks, %d notes", len(got.Rig.Chain), len(got.Notes)), got, nil
 }
 
-func (h *handlers) presetBuild(
+func (h *handlers) presetMake(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
-	in Build,
+	in Make,
 ) (*gomcp.CallToolResult, Built, error) {
 	switch {
-	case in.RecipeID != "" && in.RigPath != "":
+	case in.RigID != "" && in.RigPath != "":
 		return nil, Built{}, ErrTwoSources
-	case in.RecipeID == "" && in.RigPath == "":
+	case in.RigID == "" && in.RigPath == "":
 		return nil, Built{}, ErrNoSource
 	}
 
@@ -139,13 +139,13 @@ func (h *handlers) presetBuild(
 	}
 
 	switch {
-	case in.RecipeID != "":
-		made, err := h.client.Build(ctx, in.RecipeID, in.Out, h.existing())
+	case in.RigID != "":
+		made, err := h.client.Make(ctx, in.RigID, in.Out, h.existing())
 		if err != nil {
 			return nil, Built{}, remedy(h.refused(in.Out, err))
 		}
 
-		return said("wrote %s from rig %s", in.Out, in.RecipeID), Built{FromRecipe: &made}, nil
+		return said("wrote %s from rig %s", in.Out, in.RigID), Built{FromShipped: &made}, nil
 	default:
 		built, err := h.client.Compile(ctx, sdk.Compile{
 			Rig:      in.RigPath,

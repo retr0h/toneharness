@@ -25,11 +25,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // ControllersPublicTestSuite covers what moves while somebody plays reaching
@@ -56,14 +56,14 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 	tests := []struct {
 		name     string
 		blocks   []plan.Block
-		control  *[]rig.Controller
+		control  []rig.Controller
 		existing string
 		want     string
 	}{
 		{
-			// Left as it was, rather than emptied: a rig that says nothing
-			// about what moves is not a rig saying nothing moves.
-			name:     "a rig that assigns nothing",
+			// Left as it was, rather than emptied: a plan that says nothing
+			// about what moves is not a plan saying nothing moves.
+			name:     "a plan that assigns nothing",
 			blocks:   []plan.Block{amp},
 			existing: `{"dsp0":{"block0":{"Pedal":{"@controller":1,"@min":0,"@max":1}}}}`,
 			want:     `{"dsp0":{"block0":{"Pedal":{"@controller":1,"@min":0,"@max":1}}}}`,
@@ -73,7 +73,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			// settings neither of which is silence.
 			name:   "a pedal on a knob",
 			blocks: []plan.Block{amp},
-			control: &[]rig.Controller{{
+			control: []rig.Controller{{
 				Controller: 2, Block: 1, Parameter: "Drive",
 				Min: sweep(0.3), Max: sweep(0.85), NoSnapshot: &yes,
 			}},
@@ -81,11 +81,11 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 				`{"@controller":2,"@max":0.85,"@min":0.3,"@snapshot_disable":true}}}}`,
 		},
 		{
-			// A rig that names no ends gets the control's own, which is the
+			// A plan that names no ends gets the control's own, which is the
 			// whole of it and invents nothing.
 			name:    "a pedal with no ends stated",
 			blocks:  []plan.Block{amp},
-			control: &[]rig.Controller{{Controller: 1, Block: 1, Parameter: "Interval"}},
+			control: []rig.Controller{{Controller: 1, Block: 1, Parameter: "Interval"}},
 			want: `{"dsp0":{"block1":{"Interval":` +
 				`{"@controller":1,"@max":24,"@min":-24}}}}`,
 		},
@@ -95,35 +95,35 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			// assignment takes the whole of a normal control.
 			name:    "a model this catalog does not carry",
 			blocks:  []plan.Block{{Model: "HD2_FromNewerFirmware", Pos: 0}},
-			control: &[]rig.Controller{{Controller: 2, Block: 0, Parameter: "Drive"}},
+			control: []rig.Controller{{Controller: 2, Block: 0, Parameter: "Drive"}},
 			want:    `{"dsp0":{"block0":{"Drive":{"@controller":2,"@max":1,"@min":0}}}}`,
 		},
 		{
 			// A chain the device split across two processors lands on the
-			// block the rig named, on the processor it named it on.
+			// block the plan named, on the processor it named it on.
 			name:   "a block on the second processor",
 			blocks: []plan.Block{{Model: "HD2_AmpSVBeastNrm", DSP: 1, Pos: 4}},
-			control: &[]rig.Controller{
+			control: []rig.Controller{
 				{Controller: 2, Block: 4, Path: &second, Parameter: "Drive"},
 			},
 			want: `{"dsp1":{"block4":{"Drive":{"@controller":2,"@max":1,"@min":0}}}}`,
 		},
 		{
-			// Both paths count from zero, so a rig that says nothing about
+			// Both paths count from zero, so a plan that says nothing about
 			// which one means the first. The block on the second is not it.
-			name:     "a position on a processor the rig did not name",
+			name:     "a position on a processor the plan did not name",
 			blocks:   []plan.Block{{Model: "HD2_AmpSVBeastNrm", DSP: 1, Pos: 4}},
 			existing: `{}`,
-			control:  &[]rig.Controller{{Controller: 2, Block: 4, Parameter: "Drive"}},
+			control:  []rig.Controller{{Controller: 2, Block: 4, Parameter: "Drive"}},
 			want:     `{}`,
 		},
 		{
-			// What the preset underneath came with is not what the rig says
+			// What the preset underneath came with is not what the plan says
 			// moves.
 			name:     "written over assignments the preset came with",
 			blocks:   []plan.Block{amp},
 			existing: `{"dsp0":{"block0":{"Pedal":{"@controller":1,"@min":0,"@max":1}}}}`,
-			control:  &[]rig.Controller{{Controller: 2, Block: 1, Parameter: "Drive"}},
+			control:  []rig.Controller{{Controller: 2, Block: 1, Parameter: "Drive"}},
 			want:     `{"dsp0":{"block1":{"Drive":{"@controller":2,"@max":1,"@min":0}}}}`,
 		},
 		{
@@ -134,7 +134,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			name:     "a position the chain no longer has",
 			blocks:   []plan.Block{amp},
 			existing: `{}`,
-			control:  &[]rig.Controller{{Controller: 2, Block: 7, Parameter: "Drive"}},
+			control:  []rig.Controller{{Controller: 2, Block: 7, Parameter: "Drive"}},
 			want:     `{}`,
 		},
 		{
@@ -144,7 +144,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			name:     "a control the block at that position does not have",
 			blocks:   []plan.Block{amp},
 			existing: `{}`,
-			control:  &[]rig.Controller{{Controller: 2, Block: 1, Parameter: "Warp"}},
+			control:  []rig.Controller{{Controller: 2, Block: 1, Parameter: "Warp"}},
 			want:     `{}`,
 		},
 	}
@@ -161,9 +161,9 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 				doc.Data.Tone["controller"] = entry
 			}
 
-			spec := rig.Spec{Controllers: tt.control}
+			made := plan.Plan{Controllers: tt.control}
 
-			compile.Controllers(doc, spec, tt.blocks, s.cat)
+			compile.Controllers(doc, made, tt.blocks, s.cat)
 
 			body, err := json.Marshal(doc.Data.Tone["controller"])
 			s.Require().NoError(err)
@@ -172,7 +172,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 	}
 }
 
-// yes is a rig saying a field is true.
+// yes is a plan saying a field is true.
 var yes = true
 
 // second is the other processor, on a device that has one.
@@ -180,14 +180,14 @@ var second = 1
 
 // TestLowerWritesWhatMoves covers the assignments reaching a compiled preset.
 func (s *ControllersPublicTestSuite) TestLowerWritesWhatMoves() {
-	spec := recipe("Ampeg SVT", "")
-	spec.Controllers = &[]rig.Controller{
+	made := realised(&s.Suite, bassRig("Ampeg SVT", ""), s.cat)
+	made.Controllers = []rig.Controller{
 		{Controller: 2, Block: 0, Parameter: "Drive", Min: sweep(0.3), Max: sweep(0.85)},
 	}
 
 	doc, err := preset.Blank()
 	s.Require().NoError(err)
-	s.Require().NoError(compile.Lower(doc, spec, s.cat))
+	s.Require().NoError(compile.Lower(doc, made, s.cat))
 
 	body, err := json.Marshal(doc.Data.Tone["controller"])
 	s.Require().NoError(err)
@@ -197,31 +197,31 @@ func (s *ControllersPublicTestSuite) TestLowerWritesWhatMoves() {
 }
 
 // TestLowerRefusesAnAssignmentItCannotMake covers the check that runs before
-// anything is written, so a rig naming a block its own chain does not have
+// anything is written, so a plan naming a block its own chain does not have
 // fails rather than building a preset with the pedal on nothing.
 func (s *ControllersPublicTestSuite) TestLowerRefusesAnAssignmentItCannotMake() {
-	spec := recipe("Ampeg SVT", "")
-	spec.Controllers = &[]rig.Controller{
+	made := realised(&s.Suite, bassRig("Ampeg SVT", ""), s.cat)
+	made.Controllers = []rig.Controller{
 		{Controller: 2, Block: 9, Parameter: "Drive"},
 	}
 
 	doc, err := preset.Blank()
 	s.Require().NoError(err)
-	s.Require().ErrorIs(compile.Lower(doc, spec, s.cat), compile.ErrNoSuchBlock)
+	s.Require().ErrorIs(compile.Lower(doc, made, s.cat), compile.ErrNoSuchBlock)
 	s.Require().NotContains(doc.Data.Tone, "controller")
 }
 
-// TestLowerRefusesAProcessorTheDeviceDoesNotHave covers a rig naming the
+// TestLowerRefusesAProcessorTheDeviceDoesNotHave covers a plan naming the
 // second path on a chain that has one.
 func (s *ControllersPublicTestSuite) TestLowerRefusesAProcessorTheDeviceDoesNotHave() {
-	spec := recipe("Ampeg SVT", "")
-	spec.Controllers = &[]rig.Controller{
+	made := realised(&s.Suite, bassRig("Ampeg SVT", ""), s.cat)
+	made.Controllers = []rig.Controller{
 		{Controller: 2, Block: 0, Path: &second, Parameter: "Drive"},
 	}
 
 	doc, err := preset.Blank()
 	s.Require().NoError(err)
-	s.Require().ErrorIs(compile.Lower(doc, spec, s.cat), compile.ErrNoSuchBlock)
+	s.Require().ErrorIs(compile.Lower(doc, made, s.cat), compile.ErrNoSuchBlock)
 }
 
 func TestControllersPublicTestSuite(

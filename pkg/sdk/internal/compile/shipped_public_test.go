@@ -29,9 +29,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/rigs"
-	"github.com/retr0h/tonestack/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/shipped"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // ShippedPublicTestSuite holds the asks this repository ships to the
@@ -81,14 +81,14 @@ func (s *ShippedPublicTestSuite) words(
 // Read through the embedded copy rather than off disk, so this counts no
 // directories and travels wherever the package does.
 func (s *ShippedPublicTestSuite) TestEveryShippedAskUsesTheVocabulary() {
-	paths, err := fs.Glob(rigs.FS, filepath.Join("*", "*.tone.yaml"))
+	paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.tone.yaml"))
 	s.Require().NoError(err)
 	s.Require().NotEmpty(paths, "no asks found to check")
 
 	for _, path := range paths {
 		s.Run(filepath.Base(path), func() {
 			for _, u := range compile.CheckWords(
-				s.words(func() (fs.File, error) { return rigs.FS.Open(path) }),
+				s.words(func() (fs.File, error) { return shipped.FS.Open(path) }),
 			) {
 				s.Require().Fail("no such character term",
 					"%q. Add it to pkg/sdk/compile/data/words.json "+
@@ -105,14 +105,14 @@ func (s *ShippedPublicTestSuite) TestEveryShippedAskUsesTheVocabulary() {
 // run. mike-dirnt shipped claiming both minimal-drive and grit-on-attack, and
 // nothing caught it until the words started moving knobs.
 func (s *ShippedPublicTestSuite) TestEveryShippedAskAnswersEachAxisOnce() {
-	paths, err := fs.Glob(rigs.FS, filepath.Join("*", "*.tone.yaml"))
+	paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.tone.yaml"))
 	s.Require().NoError(err)
 	s.Require().NotEmpty(paths, "no asks found to check")
 
 	for _, path := range paths {
 		s.Run(filepath.Base(path), func() {
 			for _, c := range compile.CheckAxes(
-				s.words(func() (fs.File, error) { return rigs.FS.Open(path) }),
+				s.words(func() (fs.File, error) { return shipped.FS.Open(path) }),
 			) {
 				s.Require().Fail("one axis answered twice",
 					"%q: %v. Keep the term that says the most and drop the "+

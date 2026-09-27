@@ -27,10 +27,10 @@ import (
 	"io"
 	"os"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	"github.com/retr0h/tonestack/pkg/sdk/translate"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
 //go:generate go tool go.uber.org/mock/mockgen -source=tone_build.go -destination=internal/mocks/resolver.gen.go -package=mocks
@@ -164,7 +164,7 @@ func put(
 
 	_, err := fmt.Fprintf(w,
 		"\n  [ok] wrote %s\n\n  compile it with:\n"+
-			"    tonestack presets compile --rig %s --out a.hlx\n\n", at, at)
+			"    toneharness presets compile --rig %s --out a.hlx\n\n", at, at)
 
 	return err
 }

@@ -32,8 +32,8 @@ import (
 //
 // They ship inside the binary so nothing about describing, validating or
 // writing a preset needs HX Edit installed. Generating them does, see
-// docs/catalog.md, but that happens once per Line 6 release, on one machine,
-// not on every machine that runs this.
+// the measure-a-device skill, but that happens once per Line 6 release, on one
+// machine, not on every machine that runs this.
 //
 // Gzipped because it is repetitive JSON: about 1MB becomes about 74KB, so
 // four of them cost roughly 300KB of binary.

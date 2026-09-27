@@ -24,9 +24,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/backup"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/backup"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // holds returns what a slot has in it, or nothing at all.

@@ -28,7 +28,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/cli"
 )
 
 type HelpPublicTestSuite struct {
@@ -46,21 +46,21 @@ func (s *HelpPublicTestSuite) TestRender() {
 		{
 			name: "every section there is",
 			help: cli.Help{
-				Name:        "tonestack presets make",
-				Description: "Build a preset.\n\nFrom a recipe.",
-				Usage:       "tonestack presets make [flags]",
+				Name:        "toneharness presets make",
+				Description: "Build a preset.\n\nFrom a rig.",
+				Usage:       "toneharness presets make [flags]",
 				Commands:    []cli.Item{{Name: "list", Description: "list them"}},
 				Flags:       []cli.Item{{Name: "--id string", Description: "which one"}},
 				Footer:      "Run --help for more.",
 			},
 			contains: []string{
-				"tonestack presets make", "Build a preset.", "USAGE",
+				"toneharness presets make", "Build a preset.", "USAGE",
 				"COMMANDS", "list", "FLAGS", "--id string", "Run --help for more.",
 			},
 		},
 		{
 			name:     "a command with neither subcommands nor flags",
-			help:     cli.Help{Usage: "tonestack"},
+			help:     cli.Help{Usage: "toneharness"},
 			contains: []string{"USAGE"},
 			absent:   []string{"COMMANDS", "FLAGS"},
 		},

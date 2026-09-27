@@ -39,7 +39,7 @@ func where(
 	}
 
 	if state := os.Getenv("XDG_STATE_HOME"); state != "" {
-		return filepath.Join(state, "tonestack", "presets"), nil
+		return filepath.Join(state, "toneharness", "presets"), nil
 	}
 
 	home, err := os.UserHomeDir()
@@ -47,5 +47,5 @@ func where(
 		return "", fmt.Errorf("finding somewhere to keep a backup: %w", err)
 	}
 
-	return filepath.Join(home, ".local", "state", "tonestack", "presets"), nil
+	return filepath.Join(home, ".local", "state", "toneharness", "presets"), nil
 }

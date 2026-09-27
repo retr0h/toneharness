@@ -22,7 +22,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/retr0h/tonestack/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/cli"
 )
 
 var (
@@ -54,7 +54,7 @@ reported. A genre no records carry, a player whose records this does not read
 yet, a gear name that fits four models and so fits none, a nudge with no
 previous answer to move from: each is said rather than quietly dropped.
 
-Compile what comes out with ` + "`tonestack presets compile --rig`" + `.`,
+Compile what comes out with ` + "`toneharness presets compile --rig`" + `.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cli.ToneBuild(cmd.OutOrStdout(), cli.ToneBuildOptions{

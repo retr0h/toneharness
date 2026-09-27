@@ -23,10 +23,10 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Keys a preset stores one controller assignment under. A device owns these
@@ -59,11 +59,11 @@ const (
 // written onto whatever happens to sit there.
 func Controllers(
 	doc *preset.Document,
-	spec rig.Spec,
+	made plan.Plan,
 	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) {
-	if spec.Controllers == nil {
+	if len(made.Controllers) == 0 {
 		return
 	}
 
@@ -72,7 +72,7 @@ func Controllers(
 	// nobody asked for.
 	paths := map[string]map[string]map[string]preset.Tone{}
 
-	for _, c := range *spec.Controllers {
+	for _, c := range made.Controllers {
 		at, ok := blockAt(blocks, at(c.Path, 0), c.Block)
 		if !ok || !carries(at, c.Parameter, cat) {
 			continue

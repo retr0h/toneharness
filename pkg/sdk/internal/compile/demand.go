@@ -22,8 +22,8 @@ package compile
 import (
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 )
 
 // needs is what a claim cannot mean anything without.

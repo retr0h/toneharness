@@ -35,26 +35,26 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/atomicfile"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/backup"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/atomicfile"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/backup"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Run on hardware once, on 15 September 2026: an HX Stomp, with
-// TONESTACK_SCRATCH_SLOT=42B.
+// TONEHARNESS_SCRATCH_SLOT=42B.
 //
 // The pedal answered status 0. The slot then read back as no document at all,
 // which is the answer a slot nobody has ever written gives, and the restore
 // put its 2387 bytes back byte for byte. What that means for the protocol is
-// recorded in docs/protocol.md and not repeated here.
+// recorded in pkg/sdk/internal/wire/README.md and not repeated here.
 //
 // One pedal, one firmware, one run. A second run, on another firmware, is
 // still wanted, and that is what this is kept re-runnable for.
 
-// opEmptySlot is opcode 16, which docs/protocol.md lists as "empty a slot" on
+// opEmptySlot is opcode 16, which pkg/sdk/internal/wire/README.md lists as "empty a slot" on
 // the data channel taking a setlist and a slot.
 //
 // The opcode, its channel and its arguments come from reading other people's
@@ -89,7 +89,7 @@ const flashPause = 750 * time.Millisecond
 //
 // Unset, the copy goes where the SDK already keeps what it is about to
 // overwrite. Set, it goes where a run can watch it appear.
-const keptDirVar = "TONESTACK_EXPERIMENT_DIR"
+const keptDirVar = "TONEHARNESS_EXPERIMENT_DIR"
 
 // EmptySlotPublicTestSuite asks an attached HX Stomp what opcode 16 does.
 //
@@ -128,20 +128,20 @@ func (s *EmptySlotPublicTestSuite) TestEmptyASlot() {
 
 	// Emptying a slot on somebody's pedal is a choice they make, not a
 	// default.
-	label := os.Getenv("TONESTACK_SCRATCH_SLOT")
+	label := os.Getenv("TONEHARNESS_SCRATCH_SLOT")
 	s.Require().NotEmpty(label,
-		"set TONESTACK_SCRATCH_SLOT to a slot this experiment may empty, such as 42C")
+		"set TONEHARNESS_SCRATCH_SLOT to a slot this experiment may empty, such as 42C")
 
 	var scratch int
 
 	s.Require().NoError(slot.NewValue(&scratch).Set(label),
-		"TONESTACK_SCRATCH_SLOT=%q is not a slot", label)
+		"TONEHARNESS_SCRATCH_SLOT=%q is not a slot", label)
 
 	// The same switch the CLI reads, so a hardware run leaves a frame trace.
 	// This is the only record of what actually went over the wire, which is
-	// how the two hardware-only findings in docs/protocol.md were made.
+	// how the two hardware-only findings in pkg/sdk/internal/wire/README.md were made.
 	var trace io.Writer
-	if os.Getenv("TONESTACK_USB_DEBUG") != "" {
+	if os.Getenv("TONEHARNESS_USB_DEBUG") != "" {
 		trace = os.Stderr
 	}
 
@@ -170,7 +170,7 @@ func (s *EmptySlotPublicTestSuite) TestEmptyASlot() {
 
 	if len(before) == 0 {
 		t.Skipf("%s already holds no preset, so emptying it would show nothing; "+
-			"point TONESTACK_SCRATCH_SLOT at a slot holding something",
+			"point TONEHARNESS_SCRATCH_SLOT at a slot holding something",
 			slot.Label(scratch))
 	}
 
@@ -289,9 +289,9 @@ func (s *EmptySlotPublicTestSuite) keepOnDisk(
 
 // keptDir is the directory the copy goes in.
 //
-// TONESTACK_EXPERIMENT_DIR when it is set. Otherwise the state directory the
+// TONEHARNESS_EXPERIMENT_DIR when it is set. Otherwise the state directory the
 // SDK keeps backups in, worked out the way that package works it out:
-// $XDG_STATE_HOME/tonestack/presets, or ~/.local/state/tonestack/presets. It
+// $XDG_STATE_HOME/toneharness/presets, or ~/.local/state/toneharness/presets. It
 // is spelled out rather than borrowed because the directory is needed here
 // too, for the file written when the keeper's policy keeps nothing.
 //
@@ -305,7 +305,7 @@ func keptDir(
 	}
 
 	if state := os.Getenv("XDG_STATE_HOME"); state != "" {
-		return filepath.Join(state, "tonestack", "presets")
+		return filepath.Join(state, "toneharness", "presets")
 	}
 
 	home, err := os.UserHomeDir()
@@ -314,7 +314,7 @@ func keptDir(
 			"set %s to a directory this may write to", err, keptDirVar)
 	}
 
-	return filepath.Join(home, ".local", "state", "tonestack", "presets")
+	return filepath.Join(home, ".local", "state", "toneharness", "presets")
 }
 
 // nameOf reads what the device calls a slot.

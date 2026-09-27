@@ -20,7 +20,7 @@
 
 package cab
 
-import "github.com/retr0h/tonestack/pkg/sdk/audio"
+import "github.com/retr0h/toneharness/pkg/sdk/audio"
 
 // Forward is the transform, so a test can measure what this package built
 // without writing a third one.

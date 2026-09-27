@@ -20,7 +20,7 @@
 
 package rig
 
-import "github.com/retr0h/tonestack/pkg/sdk/rig/internal/gen"
+import "github.com/retr0h/toneharness/pkg/sdk/rig/internal/gen"
 
 // What a rig is made of.
 //
@@ -51,14 +51,6 @@ type (
 	Role = gen.Role
 	// Capture is how the signal reached the tape: direct, miked, or both.
 	Capture = gen.Capture
-	// Technique is how the instrument is played.
-	Technique = gen.Technique
-	// Position is where on the string it is played.
-	Position = gen.TechniquePosition
-	// Muting is what stops the note.
-	Muting = gen.TechniqueMuting
-	// Attack is what starts it.
-	Attack = gen.TechniqueAttack
 	// Evidence is where a claim came from.
 	Evidence = gen.Evidence
 	// EvidenceKind is how far somebody has to go to disagree with one.
@@ -67,13 +59,14 @@ type (
 	Confidence = gen.Confidence
 	// Instrument is what the rig is played on.
 	Instrument = gen.Instrument
-	// Settings are the values a piece of gear is set to.
+	// Settings are the values a piece of gear is set to, in musical words that
+	// mean roughly the same on any amplifier.
 	Settings = gen.Settings
 	// Knob is one control, from 0 to 1, whatever the device's range is.
 	Knob = gen.Knob
 	// Substitute stands in for gear no device models.
 	Substitute = gen.Substitute
-	// Target is the hardware a rig was written for.
+	// Target is the hardware a plan was tuned on.
 	Target = gen.Target
 	// Controller is a parameter an expression pedal or footswitch moves.
 	Controller = gen.Controller
@@ -101,23 +94,6 @@ const (
 	CaptureDirect = gen.CaptureDirect
 	CaptureMiked  = gen.CaptureMiked
 	CaptureBoth   = gen.CaptureBoth
-
-	// Where on the string a note is played.
-	PositionBridge = gen.PositionBridge
-	PositionMiddle = gen.PositionMiddle
-	PositionNeck   = gen.PositionNeck
-
-	// What starts the note.
-	AttackPick    = gen.AttackPick
-	AttackFingers = gen.AttackFingers
-	AttackThumb   = gen.AttackThumb
-	AttackSlap    = gen.AttackSlap
-	AttackHybrid  = gen.AttackHybrid
-
-	// What stops it. Named only when there is some: "not muted" is what
-	// every unmuted note already sounds like.
-	MutingPalm = gen.MutingPalm
-	MutingNone = gen.MutingNone
 
 	// How far a claim should be trusted. Unstated reads as the lowest,
 	// because a rig that says nothing about itself has earned nothing.

@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/reamp"
+	"github.com/retr0h/toneharness/pkg/sdk/reamp"
 )
 
 // ErrorsPublicTestSuite covers what opening hardware refuses, and how.

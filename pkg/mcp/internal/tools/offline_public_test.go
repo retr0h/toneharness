@@ -32,13 +32,13 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/mcp/internal/tools"
-	"github.com/retr0h/tonestack/pkg/mcp/internal/tools/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	"github.com/retr0h/tonestack/pkg/sdk/translate"
+	"github.com/retr0h/toneharness/pkg/mcp/internal/tools"
+	"github.com/retr0h/toneharness/pkg/mcp/internal/tools/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
 type OfflinePublicTestSuite struct {
@@ -240,11 +240,11 @@ func (s *OfflinePublicTestSuite) TestRigsList() {
 			name: "the rigs that ship",
 			args: tools.None{},
 			setup: func(c *mocks.MockClient) {
-				c.EXPECT().Recipes(gomock.Any()).Return(sdk.Recipes{Rigs: []sdk.Known{{}, {}}}, nil)
+				c.EXPECT().Rigs(gomock.Any()).Return(sdk.Rigs{Rigs: []sdk.Known{{}, {}}}, nil)
 			},
 			want: "2 rigs to build from",
 			check: func(s *OfflinePublicTestSuite, res *gomcp.CallToolResult) {
-				var got sdk.Recipes
+				var got sdk.Rigs
 				structured(s.T(), res, &got)
 				s.Len(got.Rigs, 2)
 			},
@@ -254,8 +254,8 @@ func (s *OfflinePublicTestSuite) TestRigsList() {
 			args: tools.None{},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
-					Recipes(gomock.Any()).
-					Return(sdk.Recipes{}, errors.New("rigs unreadable"))
+					Rigs(gomock.Any()).
+					Return(sdk.Rigs{}, errors.New("rigs unreadable"))
 			},
 			want: "rigs unreadable",
 			err:  true,
@@ -328,12 +328,12 @@ func (s *OfflinePublicTestSuite) TestRigShow() {
 			name: "a rig that ships",
 			args: tools.ID{ID: "mike-dirnt"},
 			setup: func(c *mocks.MockClient) {
-				c.EXPECT().Recipe(gomock.Any(), "mike-dirnt").
-					Return(sdk.Recipe{Variants: []sdk.Variant{{}}}, nil)
+				c.EXPECT().Rig(gomock.Any(), "mike-dirnt").
+					Return(sdk.Rig{Variants: []sdk.Variant{{}}}, nil)
 			},
 			want: "rig mike-dirnt, extended by 1 others",
 			check: func(s *OfflinePublicTestSuite, res *gomcp.CallToolResult) {
-				var got sdk.Recipe
+				var got sdk.Rig
 				structured(s.T(), res, &got)
 				s.Len(got.Variants, 1)
 			},
@@ -343,8 +343,8 @@ func (s *OfflinePublicTestSuite) TestRigShow() {
 			args: tools.ID{ID: "nobody"},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
-					Recipe(gomock.Any(), "nobody").
-					Return(sdk.Recipe{}, fmt.Errorf("%w %q", sdk.ErrNoSuchRecipe, "nobody"))
+					Rig(gomock.Any(), "nobody").
+					Return(sdk.Rig{}, fmt.Errorf("%w %q", sdk.ErrNoSuchRig, "nobody"))
 			},
 			want: "call rigs_list",
 			err:  true,
@@ -352,8 +352,8 @@ func (s *OfflinePublicTestSuite) TestRigShow() {
 	})
 }
 
-// TestPresetBuild covers building from either source.
-func (s *OfflinePublicTestSuite) TestPresetBuild() {
+// TestPresetMake covers building from either source.
+func (s *OfflinePublicTestSuite) TestPresetMake() {
 	dir := s.T().TempDir()
 	fresh := filepath.Join(dir, "fresh.hlx")
 	held := filepath.Join(dir, "held.hlx")
@@ -363,12 +363,12 @@ func (s *OfflinePublicTestSuite) TestPresetBuild() {
 	// A rig that builds, so a real compile has something to write.
 	rigFile := filepath.Join("..", "..", "..", "..", "examples", "rigspec", "mike-dirnt.yaml")
 
-	s.run("preset_build", []row{
+	s.run("preset_make", []row{
 		{
 			name: "a path nothing is at",
-			args: tools.Build{RecipeID: "mike-dirnt", Out: fresh},
+			args: tools.Make{RigID: "mike-dirnt", Out: fresh},
 			setup: func(c *mocks.MockClient) {
-				c.EXPECT().Build(gomock.Any(), "mike-dirnt", fresh, sdk.KeepExisting).
+				c.EXPECT().Make(gomock.Any(), "mike-dirnt", fresh, sdk.KeepExisting).
 					Return(sdk.Made{}, nil)
 			},
 			want: "wrote " + fresh,
@@ -376,15 +376,15 @@ func (s *OfflinePublicTestSuite) TestPresetBuild() {
 		{
 			// No client call is expected, so reaching one fails the row.
 			name: "a path a file is at, with writes off",
-			args: tools.Build{RigPath: "mine.yaml", Out: held},
+			args: tools.Make{RigPath: "mine.yaml", Out: held},
 			want: tools.ErrWouldOverwrite.Error() + ": " + held,
 			err:  true,
 		},
 		{
 			name: "a path a file is at, with writes on",
-			args: tools.Build{RecipeID: "mike-dirnt", Out: held},
+			args: tools.Make{RigID: "mike-dirnt", Out: held},
 			setup: func(c *mocks.MockClient) {
-				c.EXPECT().Build(gomock.Any(), "mike-dirnt", held, sdk.ReplaceExisting).
+				c.EXPECT().Make(gomock.Any(), "mike-dirnt", held, sdk.ReplaceExisting).
 					Return(sdk.Made{}, nil)
 			},
 			want:        "wrote " + held,
@@ -396,9 +396,9 @@ func (s *OfflinePublicTestSuite) TestPresetBuild() {
 			// there and then builds for real, so what refuses it can only be
 			// the write itself.
 			name: "a file that appears between the decision and the write, with writes off",
-			args: tools.Build{RecipeID: "mike-dirnt", Out: racy},
+			args: tools.Make{RigID: "mike-dirnt", Out: racy},
 			setup: func(c *mocks.MockClient) {
-				c.EXPECT().Build(gomock.Any(), "mike-dirnt", racy, sdk.KeepExisting).
+				c.EXPECT().Make(gomock.Any(), "mike-dirnt", racy, sdk.KeepExisting).
 					DoAndReturn(func(
 						ctx context.Context, id, out string, existing sdk.Existing,
 					) (sdk.Made, error) {
@@ -406,7 +406,7 @@ func (s *OfflinePublicTestSuite) TestPresetBuild() {
 							return sdk.Made{}, err
 						}
 
-						return sdk.New().Build(ctx, id, out, existing)
+						return sdk.New().Make(ctx, id, out, existing)
 					})
 			},
 			want: tools.ErrWouldOverwrite.Error() + ": " + racy,
@@ -421,7 +421,7 @@ func (s *OfflinePublicTestSuite) TestPresetBuild() {
 			// The same race on the other source: a rig file compiled for
 			// real, through Compile's own write.
 			name: "a file that appears between the decision and the write, from a rig file, with writes off",
-			args: tools.Build{RigPath: rigFile, Out: racyRig},
+			args: tools.Make{RigPath: rigFile, Out: racyRig},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
 					Compile(gomock.Any(), sdk.Compile{
@@ -445,23 +445,23 @@ func (s *OfflinePublicTestSuite) TestPresetBuild() {
 		},
 		{
 			name: "from a shipped rig",
-			args: tools.Build{RecipeID: "mike-dirnt", Out: "mike.hlx"},
+			args: tools.Make{RigID: "mike-dirnt", Out: "mike.hlx"},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
-					Build(gomock.Any(), "mike-dirnt", "mike.hlx", sdk.KeepExisting).
+					Make(gomock.Any(), "mike-dirnt", "mike.hlx", sdk.KeepExisting).
 					Return(sdk.Made{}, nil)
 			},
 			want: "wrote mike.hlx from rig mike-dirnt",
 			check: func(s *OfflinePublicTestSuite, res *gomcp.CallToolResult) {
 				var got tools.Built
 				structured(s.T(), res, &got)
-				s.NotNil(got.FromRecipe)
+				s.NotNil(got.FromShipped)
 				s.Nil(got.FromRig)
 			},
 		},
 		{
 			name: "from a rig file",
-			args: tools.Build{RigPath: "mine.yaml", Out: "mine.hlx"},
+			args: tools.Make{RigPath: "mine.yaml", Out: "mine.hlx"},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
 					Compile(gomock.Any(), sdk.Compile{
@@ -478,10 +478,10 @@ func (s *OfflinePublicTestSuite) TestPresetBuild() {
 		},
 		{
 			name: "a shipped rig that will not build",
-			args: tools.Build{RecipeID: "mike-dirnt", Out: "mike.hlx"},
+			args: tools.Make{RigID: "mike-dirnt", Out: "mike.hlx"},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
-					Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(sdk.Made{}, errors.New("over budget"))
 			},
 			want: "over budget",
@@ -489,18 +489,18 @@ func (s *OfflinePublicTestSuite) TestPresetBuild() {
 		},
 		{
 			name: "a shipped rig nobody wrote",
-			args: tools.Build{RecipeID: "nobody", Out: "nobody.hlx"},
+			args: tools.Make{RigID: "nobody", Out: "nobody.hlx"},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
-					Build(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(sdk.Made{}, fmt.Errorf("%w %q", sdk.ErrNoSuchRecipe, "nobody"))
+					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(sdk.Made{}, fmt.Errorf("%w %q", sdk.ErrNoSuchRig, "nobody"))
 			},
 			want: "call rigs_list",
 			err:  true,
 		},
 		{
 			name: "a rig file that will not build",
-			args: tools.Build{RigPath: "mine.yaml", Out: "mine.hlx"},
+			args: tools.Make{RigPath: "mine.yaml", Out: "mine.hlx"},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
 					Compile(gomock.Any(), gomock.Any()).
@@ -511,13 +511,13 @@ func (s *OfflinePublicTestSuite) TestPresetBuild() {
 		},
 		{
 			name: "nothing to build from",
-			args: tools.Build{Out: "x.hlx"},
+			args: tools.Make{Out: "x.hlx"},
 			want: tools.ErrNoSource.Error(),
 			err:  true,
 		},
 		{
 			name: "two things to build from",
-			args: tools.Build{RecipeID: "a", RigPath: "b", Out: "x.hlx"},
+			args: tools.Make{RigID: "a", RigPath: "b", Out: "x.hlx"},
 			want: tools.ErrTwoSources.Error(),
 			err:  true,
 		},

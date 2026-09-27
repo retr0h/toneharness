@@ -24,20 +24,23 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"sync"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/asking"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/attached"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/backup"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/catalogview"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/corpusview"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/presets"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/asking"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/attached"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/backup"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/catalogview"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/musicview"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/presetsview"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 )
 
 // Client is what a wrapper holds.
@@ -86,11 +89,11 @@ type options struct {
 	device string
 	// stats is measured corpus statistics. Empty means the built-in ones.
 	stats string
-	// recipes is a directory of rigs. Empty means the ones that ship.
-	recipes string
-	// userRecipes is somebody's own directory of rigs, layered over recipes.
+	// rigs is a directory of rigs. Empty means the ones that ship.
+	rigs string
+	// userRigs is somebody's own directory of rigs, layered over rigs.
 	// Empty layers nothing.
-	userRecipes string
+	userRigs string
 	// backupDir is where a slot's old contents go. Empty means the state
 	// directory.
 	backupDir string
@@ -134,27 +137,27 @@ func WithStats(
 	return func(o *options) { o.stats = path }
 }
 
-// WithRecipes reads rigs from a directory instead of the ones that ship.
+// WithRigs reads rigs from a directory instead of the ones that ship.
 //
-// Scaffold and Extend write there too, unless WithUserRecipes names somewhere
+// Scaffold and Extend write there too, unless WithUserRigs names somewhere
 // else, and need one or the other: a new rig is not written into wherever the
 // program happened to run.
-func WithRecipes(
+func WithRigs(
 	dir string,
 ) Option {
-	return func(o *options) { o.recipes = dir }
+	return func(o *options) { o.rigs = dir }
 }
 
-// WithUserRecipes layers somebody's own directory of rigs over the ones that
-// ship, or over the directory WithRecipes named.
+// WithUserRigs layers somebody's own directory of rigs over the ones that
+// ship, or over the directory WithRigs named.
 //
 // A rig of theirs takes the place of one beneath when the two share an
-// identifier or alias, in any case, so Recipes lists the rig Recipe and Build
+// identifier or alias, in any case, so Rigs lists the rig Rig and Build
 // find. Variants are read across both, so a rig of theirs made from a shipped
 // one with Extend shows under it. A directory that is not there holds no rigs;
 // one that cannot be read is an error.
 //
-// A file in it that is not a rig is reported by Recipes. It stops Recipe,
+// A file in it that is not a rig is reported by Rigs. It stops Rig,
 // Build and Extend only when it may be the rig asked for: when its filename,
 // or the id or aliases it states, is the name asked for or a name of the rig
 // found. Otherwise one mistake in a directory of their own would stop every
@@ -164,16 +167,16 @@ func WithRecipes(
 // Scaffold and Extend write here. The library reads no environment for this:
 // a program that keeps rigs under $XDG_DATA_HOME resolves that and passes the
 // directory in.
-func WithUserRecipes(
+func WithUserRigs(
 	dir string,
 ) Option {
-	return func(o *options) { o.userRecipes = dir }
+	return func(o *options) { o.userRigs = dir }
 }
 
 // WithBackupDir is where a slot's old contents go before a device write.
 //
-// Without it they go to $XDG_STATE_HOME/tonestack/presets, or to
-// ~/.local/state/tonestack/presets when that variable is unset.
+// Without it they go to $XDG_STATE_HOME/toneharness/presets, or to
+// ~/.local/state/toneharness/presets when that variable is unset.
 func WithBackupDir(
 	dir string,
 ) Option {
@@ -340,8 +343,8 @@ func (c *Client) Block(
 }
 
 // corpus is what every question of the measurements reads.
-func (c *Client) corpus() corpusview.Options {
-	return corpusview.Options{StatsPath: c.opts.stats, Catalogs: c}
+func (c *Client) corpus() presetsview.Options {
+	return presetsview.Options{StatsPath: c.opts.stats, Catalogs: c}
 }
 
 // ModelMeasurements reports what players did with one model: how they set
@@ -357,7 +360,7 @@ func (c *Client) ModelMeasurements(
 		return Measured{}, err
 	}
 
-	return corpusview.Model(ctx, c.corpus(), model)
+	return presetsview.Model(ctx, c.corpus(), model)
 }
 
 // ChainMeasurements reports what chains tend to hold: which kinds of block,
@@ -372,48 +375,48 @@ func (c *Client) ChainMeasurements(
 		return Measured{}, err
 	}
 
-	return corpusview.Chains(c.corpus(), instrument)
+	return presetsview.Chains(c.corpus(), instrument)
 }
 
-// rigs is where this Client reads rigs from.
-func (c *Client) rigs() recipes.Source {
-	return recipes.Source{Dir: c.opts.recipes, User: c.opts.userRecipes}
+// source is where this Client reads rigs from.
+func (c *Client) source() rigs.Source {
+	return rigs.Source{Dir: c.opts.rigs, User: c.opts.userRigs}
 }
 
-// recipesHome is where Scaffold and Extend write: the directory of somebody's
-// own when there is one, and the one WithRecipes named otherwise.
-func (c *Client) recipesHome() string {
-	if c.opts.userRecipes != "" {
-		return c.opts.userRecipes
+// rigsHome is where Scaffold and Extend write: the directory of somebody's
+// own when there is one, and the one WithRigs named otherwise.
+func (c *Client) rigsHome() string {
+	if c.opts.userRigs != "" {
+		return c.opts.userRigs
 	}
 
-	return c.opts.recipes
+	return c.opts.rigs
 }
 
-// Recipes reads every rig this Client was given.
+// Rigs reads every rig this Client was given.
 //
-// Dir is the directory WithUserRecipes named where there is one, since that
-// is where somebody's own rigs are, and the one WithRecipes named otherwise.
-func (c *Client) Recipes(
+// Dir is the directory WithUserRigs named where there is one, since that
+// is where somebody's own rigs are, and the one WithRigs named otherwise.
+func (c *Client) Rigs(
 	ctx context.Context,
-) (Recipes, error) {
+) (Rigs, error) {
 	if err := ctx.Err(); err != nil {
-		return Recipes{}, err
+		return Rigs{}, err
 	}
 
-	return recipes.List(c.rigs())
+	return rigs.List(c.source())
 }
 
-// Recipe reads one rig, and what the rest of the set says about it.
-func (c *Client) Recipe(
+// Rig reads one rig, and what the rest of the set says about it.
+func (c *Client) Rig(
 	ctx context.Context,
 	id string,
-) (Recipe, error) {
+) (Rig, error) {
 	if err := ctx.Err(); err != nil {
-		return Recipe{}, err
+		return Rig{}, err
 	}
 
-	return recipes.Show(c.rigs(), id)
+	return rigs.Show(c.source(), id)
 }
 
 // Tone resolves a request and a setup into the rig they describe.
@@ -452,11 +455,11 @@ func (c *Client) Backing(
 		return nil, err
 	}
 
-	return recipes.Backing(c.rigs(), corpus)
+	return rigs.Backing(c.source(), corpus)
 }
 
-// NewRecipe describes a rig to scaffold from the gear it names.
-type NewRecipe struct {
+// NewRig describes a rig to scaffold from the gear it names.
+type NewRig struct {
 	// ID is the identifier, and the filename stem.
 	ID string
 	// Name is the player or style, as a person would write it.
@@ -480,19 +483,19 @@ type NewRecipe struct {
 // found out when somebody tries to build from it, and by then the name has
 // usually been copied somewhere else too.
 //
-// The rig is written into the directory WithUserRecipes named, or failing that
-// the one WithRecipes named. A Client given neither is refused rather than
+// The rig is written into the directory WithUserRigs named, or failing that
+// the one WithRigs named. A Client given neither is refused rather than
 // writing wherever the program happened to run.
 func (c *Client) Scaffold(
 	ctx context.Context,
-	in NewRecipe,
+	in NewRig,
 ) (Scaffolded, error) {
 	if err := ctx.Err(); err != nil {
 		return Scaffolded{}, err
 	}
 
-	return recipes.New(ctx, recipes.NewOptions{
-		Dir:        c.recipesHome(),
+	return rigs.New(ctx, rigs.NewOptions{
+		Dir:        c.rigsHome(),
 		ID:         in.ID,
 		Name:       in.Name,
 		Band:       in.Band,
@@ -504,8 +507,8 @@ func (c *Client) Scaffold(
 	})
 }
 
-// ExtendRecipe describes a rig to start as a copy of another.
-type ExtendRecipe struct {
+// ExtendRig describes a rig to start as a copy of another.
+type ExtendRig struct {
 	// From is the rig to copy, by identifier or alias. Required.
 	From string
 	// ID is the new rig's identifier, and its filename stem.
@@ -526,14 +529,14 @@ type ExtendRecipe struct {
 // already resolved when it was written.
 //
 // The rig is written where Scaffold writes. From is looked for there first,
-// then in the rigs beneath: the ones WithRecipes named when WithUserRecipes
+// then in the rigs beneath: the ones WithRigs named when WithUserRigs
 // was given too, and the ones that ship otherwise. The report's Instrument,
 // Amp, Cab and Pedals are the copied rig's, and so is its Name unless in.Name
 // gave another. in.Name replaces the subject's name and nothing else, encoded
 // as YAML so any text is a name.
 func (c *Client) Extend(
 	ctx context.Context,
-	in ExtendRecipe,
+	in ExtendRig,
 ) (Scaffolded, error) {
 	if err := ctx.Err(); err != nil {
 		return Scaffolded{}, err
@@ -542,18 +545,18 @@ func (c *Client) Extend(
 	// Without a rig to copy this would scaffold one from no gear at all,
 	// which is a different operation with a different check.
 	if in.From == "" {
-		return Scaffolded{}, fmt.Errorf("%w: name the rig to copy", ErrNoSuchRecipe)
+		return Scaffolded{}, fmt.Errorf("%w: name the rig to copy", ErrNoSuchRig)
 	}
 
-	// A directory WithRecipes named is where the copy goes when there is no
+	// A directory WithRigs named is where the copy goes when there is no
 	// directory of their own, so it cannot also be what that one sits on.
 	base := ""
-	if c.opts.userRecipes != "" {
-		base = c.opts.recipes
+	if c.opts.userRigs != "" {
+		base = c.opts.rigs
 	}
 
-	return recipes.New(ctx, recipes.NewOptions{
-		Dir:      c.recipesHome(),
+	return rigs.New(ctx, rigs.NewOptions{
+		Dir:      c.rigsHome(),
 		Base:     base,
 		From:     in.From,
 		ID:       in.ID,
@@ -563,8 +566,12 @@ func (c *Client) Extend(
 	})
 }
 
-// Build compiles a shipped or configured rig into a preset, and writes it to
-// out.
+// Make resolves an ask and the rig beside it into a preset, and writes it to out.
+//
+// Resolving is what separates this from Compile. An ask carries words, and a
+// word moves a control against the chain the compiler built, so the blocks the
+// corpus adds and the positions those words reach are decided here. Compile
+// lowers a document that has already made those decisions.
 //
 // Reporting what it chose matters as much as writing the file. A generated
 // preset is a set of decisions, and a wrong amp should be visible before
@@ -573,18 +580,91 @@ func (c *Client) Extend(
 // existing says what happens to a file already at out: ReplaceExisting puts
 // the preset in its place, and KeepExisting refuses it with an error matching
 // fs.ErrExist.
-func (c *Client) Build(
+func (c *Client) Make(
 	ctx context.Context,
-	recipeID string,
+	rigID string,
 	out string,
 	existing Existing,
 ) (Made, error) {
 	return presets.Make(ctx, presets.MakeOptions{
 		Deps:       presets.Deps{Catalogs: c},
-		RecipeID:   recipeID,
-		Rigs:       c.rigs(),
+		RigID:      rigID,
+		Source:     c.source(),
 		StatsPath:  c.opts.stats,
 		OutputPath: out,
 		Existing:   existing,
 	})
+}
+
+// MusicPlayers is every player the music corpus names, from the manifests.
+//
+// The manifests rather than the audio. Measuring a corpus needs the recordings
+// and minutes of work per record; this answers what somebody wrote down, which
+// is what says whether the records to measure are even there.
+func (c *Client) MusicPlayers(
+	ctx context.Context,
+	corpus string,
+) ([]MusicPlayer, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	return musicview.Players(os.DirFS(corpus), ".")
+}
+
+// MusicBands is every band the corpus names, grouped on the slug so two
+// spellings of one band count once.
+func (c *Client) MusicBands(
+	ctx context.Context,
+	corpus string,
+) ([]MusicGroup, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	return musicview.Bands(os.DirFS(corpus), ".")
+}
+
+// MusicGenres is every genre the corpus names, and how far each one still is
+// from being a distribution worth aiming at.
+func (c *Client) MusicGenres(
+	ctx context.Context,
+	corpus string,
+) ([]MusicGroup, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	return musicview.Genres(os.DirFS(corpus), ".")
+}
+
+// MusicRecords is every recording the corpus names, and whether the bass has
+// been separated out of it yet.
+func (c *Client) MusicRecords(
+	ctx context.Context,
+	corpus string,
+) ([]MusicRecord, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	return musicview.Records(os.DirFS(corpus), ".")
+}
+
+// MusicGenres measures every genre in a corpus against the players who play
+// none of it.
+//
+// The audio, not the manifests, which is what separates this from
+// CorpusGenres: that counts what somebody wrote down and this measures what the
+// records sound like. Minutes of work per record, and it needs the recordings on
+// disk.
+func (c *Client) MeasuredGenres(
+	ctx context.Context,
+	corpus string,
+) ([]audio.Genre, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	return audio.GenresMeasured(os.DirFS(corpus), ".")
 }

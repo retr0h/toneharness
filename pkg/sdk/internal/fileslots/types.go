@@ -23,10 +23,11 @@ package fileslots
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Catalogs hands over the catalog model names are read out of. The sdk Client
@@ -42,7 +43,7 @@ type Catalogs interface {
 // holds is all this package does with it.
 type Compiler interface {
 	// Lift reads a preset into a rig.
-	Lift(doc *preset.Document, cat *catalog.Catalog) (rig.Spec, error)
+	Lift(doc *preset.Document, cat *catalog.Catalog) (rig.Spec, plan.Plan, error)
 }
 
 // Flows are the operations on a slot of a file, and what they were configured

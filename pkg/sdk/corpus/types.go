@@ -32,7 +32,7 @@
 // median, and why a wide spread should defer to a person.
 package corpus
 
-import "github.com/retr0h/tonestack/pkg/sdk/catalog"
+import "github.com/retr0h/toneharness/pkg/sdk/catalog"
 
 // Stats is a whole corpus, measured.
 type Stats struct {
@@ -73,7 +73,7 @@ type ParamStats struct {
 //
 // Near zero means consensus and a value worth adopting. Wide means taste, and
 // a generated preset should either leave it at the catalog's default or take
-// direction from the recipe rather than pretend the median means something.
+// direction from the rig rather than pretend the median means something.
 func (p ParamStats) Spread() float64 { return p.P75 - p.P25 }
 
 // Grammar is what a chain for one instrument tends to contain.

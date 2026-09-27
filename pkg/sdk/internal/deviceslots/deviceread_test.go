@@ -31,11 +31,12 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	slotmocks "github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/presets"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	slotmocks "github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // catalogsAt hands over the catalog at path whenever it is asked, the built-in
@@ -129,7 +130,11 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 		// the device's own file was asked for, so no rig is lifted.
 		fileOnly bool
 
+		// contains is checked against the rig, plan against the plan, and
+		// absent against both: a reading answers with the portable rig and
+		// the realisation of it on the device that was read.
 		contains []string
+		plan     []string
 		absent   []string
 		err      bool
 		errText  string
@@ -150,9 +155,12 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 				"gear: Ampeg SVT® (normal channel)",
 				"gear: 8x10 Ampeg SVT-E",
 				"role: amp",
+			},
+			plan: []string{
+				// The plan names the rig it realises.
+				"rig: bas-svt-nrm",
 
-				// Read from the device, and nothing else in a rig records
-				// them.
+				// Read from the device, and nothing else records them.
 				"snapshots:",
 				"SNAPSHOT 1",
 
@@ -184,7 +192,7 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 			name:   "an amp carrying its own cabinet",
 			answer: "switches.bin",
 			slot:   24,
-			contains: []string{
+			plan: []string{
 				"dsp0.cab0",
 				"dsp0.cab1",
 				"'@model': HD2_Cab1x15TucknGo",
@@ -283,6 +291,7 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 				s.Require().Equal(tt.called, read.Name)
 				s.Require().NotNil(read.Doc)
 				s.Require().Empty(read.Rig.Chain, "no rig was lifted")
+				s.Require().Empty(read.Plan.Blocks, "no plan was lifted")
 
 				return
 			}
@@ -296,12 +305,20 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 
 			got := read.Name + "\n" + out.String()
 
+			var realised bytes.Buffer
+
+			s.Require().NoError(plan.Write(&realised, read.Plan))
+
 			for _, want := range tt.contains {
 				s.Require().Contains(got, want)
 			}
 
+			for _, want := range tt.plan {
+				s.Require().Contains(realised.String(), want)
+			}
+
 			for _, unwanted := range tt.absent {
-				s.Require().NotContains(got, unwanted)
+				s.Require().NotContains(got+realised.String(), unwanted)
 			}
 		})
 	}

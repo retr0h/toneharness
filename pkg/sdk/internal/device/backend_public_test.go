@@ -28,7 +28,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
 )
 
 // BackendPublicTestSuite covers what a USB backend decides.

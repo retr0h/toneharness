@@ -29,10 +29,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 // stops writing after ok writes, so a report written in parts can be failed
@@ -106,7 +106,7 @@ func (s *MadePublicTestSuite) TestMade() {
 			absent: []string{"added", "no such word"},
 		},
 		{
-			// A recipe names an amp; a rig is several blocks. Whatever the
+			// A rig names an amp; a rig is several blocks. Whatever the
 			// corpus contributed has to be visible before anybody plugs in.
 			name: "what the corpus added unasked",
 			in: s.made(func(m *sdk.Made) {

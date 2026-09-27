@@ -22,18 +22,18 @@
 //
 // A rig names real-world gear; a device understands model identifiers. This is
 // where the two meet. Resolving looks up what each named piece of gear
-// corresponds to on this device, orders the result into a chain the hardware
-// can represent, and sets every parameter to what Line 6 says it should be.
-// Lowering writes that chain into a preset. Lifting reads a preset back out as
-// a rig.
+// corresponds to on this device, orders the result into a plan the hardware can
+// represent, and sets every parameter to what Line 6 says it should be.
+// Lowering writes that plan into a preset. Lifting reads a preset back out as
+// the two documents it is: the rig, and the plan that realises it.
 //
 // Both directions, because a format that only reads one way is not an
 // abstraction over anything. Nothing is lost either way. What a rig does not
 // model as musical intent, meaning routing, snapshots, footswitch assignments
-// and the metadata a preset carries, is recorded verbatim under `device`, so a
-// rig lifted from a preset rebuilds that preset without the original file. A
-// rig somebody typed carries none of it and is built into an untouched preset
-// the device itself wrote.
+// and the metadata a preset carries, lands on the plan, which records it
+// verbatim under `device`, so a plan lifted from a preset rebuilds that preset
+// without the original file. A rig somebody typed realises into a plan carrying
+// none of it and is built into an untouched preset the device itself wrote.
 //
 // What it does not yet do is act on an ask's words. Those describe how
 // a rig should sound, and turning them into parameter moves is the next piece

@@ -25,10 +25,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Resolve turns a rig into a chain for the device the catalog describes.
@@ -153,12 +153,9 @@ func Resolve(
 		return plan.Plan{}, nil, nil, err
 	}
 
-	// What the rig claims beside its chain: a colour, a parameter, a device.
-	// Checked here because the answer is a fact about this catalog.
-	if err := check(spec, built.Blocks, cat); err != nil {
-		return plan.Plan{}, nil, nil, err
-	}
-
+	// Not checked here. check reads a plan's target, footswitches and
+	// controllers, and this builds none of them: a rig has nowhere to state
+	// one. Lower checks, which is where a plan arrives from a file.
 	return built, append(sub, added...), moved, nil
 }
 
@@ -293,7 +290,7 @@ func findGear(
 //
 // The chosen block is reported when a preset is built, so an ambiguity a
 // person cares about is visible and can be settled by naming the channel in
-// the recipe.
+// the rig.
 func closer(
 	a, b catalog.Block,
 ) bool {

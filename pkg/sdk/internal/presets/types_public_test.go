@@ -29,11 +29,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/presets"
-	presetmocks "github.com/retr0h/tonestack/pkg/sdk/internal/presets/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
+	presetmocks "github.com/retr0h/toneharness/pkg/sdk/internal/presets/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
 )
 
 // TypesPublicTestSuite covers standing something else in for a collaborator.
@@ -57,20 +57,20 @@ func (s *TypesPublicTestSuite) options(
 ) presets.MakeOptions {
 	return presets.MakeOptions{
 		Deps:       deps,
-		RecipeID:   "mike-dirnt",
-		Rigs:       recipes.Source{Dir: filepath.Join("..", "recipes", "testdata-good")},
+		RigID:      "mike-dirnt",
+		Source:     rigs.Source{Dir: filepath.Join("..", "rigs", "testdata-good")},
 		OutputPath: filepath.Join(s.T().TempDir(), "out.hlx"),
 	}
 }
 
-// TestRecipes covers a build finding its rig through a double.
-func (s *TypesPublicTestSuite) TestRecipes() {
-	want := errors.New("no such recipe here")
+// TestRigs covers a build finding its rig through a double.
+func (s *TypesPublicTestSuite) TestRigs() {
+	want := errors.New("no such rig here")
 
-	rec := presetmocks.NewMockRecipes(s.ctrl)
+	rec := presetmocks.NewMockRigs(s.ctrl)
 	rec.EXPECT().Find(gomock.Any(), "mike-dirnt").Return(result.Known{}, want)
 
-	_, err := presets.Make(context.Background(), s.options(presets.Deps{Recipes: rec}))
+	_, err := presets.Make(context.Background(), s.options(presets.Deps{Rigs: rec}))
 
 	s.Require().ErrorIs(err, want)
 }

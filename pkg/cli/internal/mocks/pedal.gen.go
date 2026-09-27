@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	sdk "github.com/retr0h/tonestack/pkg/sdk"
+	sdk "github.com/retr0h/toneharness/pkg/sdk"
 	gomock "go.uber.org/mock/gomock"
 )
 

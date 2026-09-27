@@ -24,7 +24,7 @@ import (
 	"encoding/json"
 	"maps"
 
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 )
 
 // Copy overwrites one slot with another.

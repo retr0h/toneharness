@@ -42,7 +42,7 @@ import (
 const (
 	// writeTimeout bounds one write. A device whose queue has filled stops
 	// accepting writes, and that is reported rather than retried: see the
-	// rules in docs/protocol.md.
+	// rules in pkg/sdk/internal/wire/README.md.
 	writeTimeout = 5 * time.Second
 	// readSlice is how long one read waits before looking at the context
 	// again. IOKit reads take a timeout, not a context, and a read has to stay

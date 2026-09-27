@@ -31,7 +31,7 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/slug"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 )
 
 // A corpus is audio nobody may redistribute and a record of what it was.
@@ -95,7 +95,27 @@ type Record struct {
 	// what decides whether a genre works is not the type: it is whether enough
 	// records carry it to have a distribution. See Genres.
 	Genres []string `yaml:"genres"`
+	// GenresBy is who decided the genres above: ByModel or ByPerson.
+	//
+	// Required wherever genres are, because a tag nobody checked and a tag
+	// somebody overruled are worth different amounts and look identical. One
+	// value for the record rather than one per term: a track is labelled in a
+	// single act, and nobody takes punk from a model and pop-punk from a person
+	// on the same song.
+	GenresBy Decided `yaml:"genres_by"`
 }
+
+// Decided is who put a genre on a record.
+type Decided string
+
+const (
+	// ByModel is a genre a language model asserted, which is the fast path and
+	// the default. Checked by nobody, so these are the ones to review.
+	ByModel Decided = "llm"
+	// ByPerson is a genre somebody stated, or one they overruled a model on.
+	// That ends the argument; nothing recomputes it.
+	ByPerson Decided = "person"
+)
 
 // Manifest is a corpus of recordings, without the recordings.
 type Manifest struct {
@@ -115,10 +135,18 @@ type Grouped struct {
 	Name string
 	// Slug is what a path or a flag says, which is what grouping is done on.
 	Slug string
-	// Records is how many recordings carry it, and Artists how many different
-	// players those come from.
+	// Records is how many recordings carry it, and Who the players those come
+	// from, in order. The count is Artists, which is len(Who) and kept because
+	// the threshold is stated as a number.
 	Records int
 	Artists int
+	Who     []string
+	// Unsighted is how many of those records a model tagged and nobody checked.
+	//
+	// Reported rather than deducted. A genre reaching the threshold entirely on
+	// a model's guesses still reaches it, and somebody should know that before
+	// aiming at it.
+	Unsighted int
 }
 
 // Usable reports whether this genre has a distribution worth aiming at.
@@ -141,7 +169,9 @@ func (n Grouped) Usable() bool { return n.Records >= 8 && n.Artists >= 3 }
 func Genres(
 	all []Manifest,
 ) []Grouped {
-	return grouped(all, func(rec Record) []string { return rec.Genres })
+	return grouped(all,
+		func(rec Record) []string { return rec.Genres },
+		func(rec Record) bool { return rec.GenresBy == ByModel })
 }
 
 // Bands is every band the manifests name, with what backs each one.
@@ -152,13 +182,14 @@ func Genres(
 func Bands(
 	all []Manifest,
 ) []Grouped {
+	// A band is not a claim anybody labels, so nothing here is ever unsighted.
 	return grouped(all, func(rec Record) []string {
 		if rec.Band == "" {
 			return nil
 		}
 
 		return []string{rec.Band}
-	})
+	}, func(Record) bool { return false })
 }
 
 // grouped counts records and players for whatever a record says it is.
@@ -168,11 +199,13 @@ func Bands(
 func grouped(
 	all []Manifest,
 	of func(Record) []string,
+	unchecked func(Record) bool,
 ) []Grouped {
 	type count struct {
-		name    string
-		records int
-		players map[string]bool
+		name      string
+		records   int
+		unsighted int
+		players   map[string]bool
 	}
 
 	seen := map[string]*count{}
@@ -188,14 +221,27 @@ func grouped(
 
 				seen[key].records++
 				seen[key].players[m.Artist] = true
+
+				if unchecked(rec) {
+					seen[key].unsighted++
+				}
 			}
 		}
 	}
 
 	out := make([]Grouped, 0, len(seen))
+
 	for key, c := range seen {
+		who := make([]string, 0, len(c.players))
+		for name := range c.players {
+			who = append(who, name)
+		}
+
+		sort.Strings(who)
+
 		out = append(out, Grouped{
-			Name: c.name, Slug: key, Records: c.records, Artists: len(c.players),
+			Name: c.name, Slug: key, Records: c.records, Artists: len(who),
+			Who: who, Unsighted: c.unsighted,
 		})
 	}
 
@@ -316,12 +362,40 @@ func (r Record) check() error {
 			"it reads those two", r.Track, r.Source)
 	}
 
+	if err := r.checkGenres(); err != nil {
+		return err
+	}
+
 	if r.At != "" && !atPattern.MatchString(r.At) {
 		return fmt.Errorf(
 			`reading manifest: %s has an at that is not a timestamp: %q, wanted "1:20" or "1:20-1:45"`,
 			r.Track,
 			r.At,
 		)
+	}
+
+	return nil
+}
+
+// checkGenres holds a tag to saying who decided it.
+//
+// Refused here rather than reported later, for the reason a missing url is: a
+// genre with no provenance reads exactly like a sourced one, and the review
+// list that exists to catch a model's guess cannot see it.
+func (r Record) checkGenres() error {
+	switch {
+	case len(r.Genres) == 0 && r.GenresBy == "":
+		return nil
+	case len(r.Genres) == 0:
+		return fmt.Errorf("reading manifest: %s says genres_by %q and names no "+
+			"genres for it to have decided", r.Track, r.GenresBy)
+	case r.GenresBy == "":
+		return fmt.Errorf("reading manifest: %s names genres and no genres_by, "+
+			"so nothing says whether a model guessed them or somebody checked. "+
+			"Wanted %q or %q", r.Track, ByModel, ByPerson)
+	case r.GenresBy != ByModel && r.GenresBy != ByPerson:
+		return fmt.Errorf("reading manifest: %s has a genres_by of %q, wanted "+
+			"%q or %q", r.Track, r.GenresBy, ByModel, ByPerson)
 	}
 
 	return nil

@@ -37,8 +37,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/atomicfile"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/setlist"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/atomicfile"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/setlist"
 )
 
 // open reads a setlist or bundle from disk.

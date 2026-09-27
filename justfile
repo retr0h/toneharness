@@ -8,13 +8,7 @@ import? '.just/remote/just.just'
 # No documentation site, so md formats every markdown file in the repository.
 md_site_dir := ""
 
-# Except the ones nobody writes. The two grammar pages are generated from
-# their contracts, and a test compares each against what the generator
-# produces — so reflowing them here would leave a page disagreeing with its
-# own source. `just ready` runs generate before md-fmt, so a page left out of
-# this list is reflowed on every run and fails the next `just test`, which is
-# how docs/tonespec.md broke the moment it was added.
-md_extra_excludes := "--exclude 'docs/rigspec.md' --exclude 'docs/tonespec.md' --exclude 'docs/measurements.md' --exclude 'docs/commands.md' --exclude 'docs/mcp.md' --exclude 'docs/vocabulary.md'"
+md_extra_excludes := ""
 
 # Coverage target for this repository.
 #
@@ -59,7 +53,7 @@ test:
     just license-check
     just go-test
 
-# Round-trip a preset on an attached Helix. Overwrites TONESTACK_SCRATCH_SLOT and puts it back
+# Round-trip a preset on an attached Helix. Overwrites TONEHARNESS_SCRATCH_SLOT and puts it back
 test-device:
     go test -tags device -count=1 -v -run TestDevicePublicTestSuite ./pkg/sdk/
 
@@ -110,7 +104,7 @@ corpus:
 gear-map:
     uvx --with pypdf --with fonttools python3 resources/schemas/extract_gear_map.py
 
-# Separate one instrument out of every recording in a directory, for `tonestack measure --dir`
+# Separate one instrument out of every recording in a directory, for `toneharness measure --dir`
 #
 # A mix measures the band, so the instrument has to come out of it before any
 # number describes the player. Python because Demucs is; the same category as
@@ -125,22 +119,29 @@ gear-map:
 # carries more of the rest of the band with it.
 #
 # `--with numpy` is not optional: Demucs does not declare it and fails without it.
+#
+# The audio is named rather than globbed. A player's directory also holds its
+# corpus.yaml, and Demucs given that refuses the whole run rather than skipping
+# it, so `IN/*` separated whichever tracks sort before "corpus" and stopped.
 stems IN OUT INSTRUMENT="bass":
     #!/usr/bin/env bash
     set -euo pipefail
     model=htdemucs
     if [ "{{ INSTRUMENT }}" = "guitar" ]; then model=htdemucs_6s; fi
+    shopt -s nullglob
+    audio=({{ IN }}/*.mp3 {{ IN }}/*.wav {{ IN }}/*.flac {{ IN }}/*.m4a)
+    if [ ${#audio[@]} -eq 0 ]; then echo "no audio in {{ IN }}" >&2; exit 1; fi
     uvx --from demucs --with numpy demucs -n "$model" \
-      --two-stems={{ INSTRUMENT }} -o {{ OUT }} {{ IN }}/*
+      --two-stems={{ INSTRUMENT }} -o {{ OUT }} "${audio[@]}"
     echo "stems written to {{ OUT }}/$model — measure them with:"
-    echo "    tonestack measure --dir {{ OUT }}/$model"
+    echo "    toneharness measure --dir {{ OUT }}/$model"
 
 # Download one record into an artist's corpus, named for its manifest entry
 #
 # URL is the Spotify track the manifest links to, so the record measured is the
 # one the evidence names. When spotdl cannot find the audio, pass
 # "YOUTUBE|SPOTIFY" and it takes the audio from that video. The file is named
-# TRACK because that is what `tonestack measure --manifest` matches against.
+# TRACK because that is what `toneharness measure --manifest` matches against.
 record DIR TRACK URL:
     uvx spotdl download "{{ URL }}" --output "{{ DIR }}/{{ TRACK }}.{output-ext}"
     @test -f "{{ DIR }}/{{ TRACK }}.mp3" || { echo "no {{ DIR }}/{{ TRACK }}.mp3: see docs/workflows/add-records-to-a-corpus.md" >&2; exit 1; }

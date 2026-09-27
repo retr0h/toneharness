@@ -30,10 +30,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/mcp"
-	"github.com/retr0h/tonestack/pkg/mcp/internal/tools"
-	"github.com/retr0h/tonestack/pkg/mcp/internal/tools/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/mcp"
+	"github.com/retr0h/toneharness/pkg/mcp/internal/tools"
+	"github.com/retr0h/toneharness/pkg/mcp/internal/tools/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 // HeldPublicTestSuite covers telling whether the server holds the pedal.

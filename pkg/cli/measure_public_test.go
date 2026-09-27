@@ -28,9 +28,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 // MeasureTestSuite covers the bookkeeping a measuring campaign is mostly made
@@ -100,66 +100,75 @@ func (s *MeasureTestSuite) TestWantedLeavesOutWhatIsDone() {
 	s.Require().NotEqual(all[0].ID, got[0].ID)
 }
 
-// TestRigForQuotesWhatWouldBreakTheDocument is the bug this cost.
+// TestPlanForWritesADocumentThatParses is the bug this cost.
 //
 // A reverb called "'63 Spring" opens a YAML quote that nothing closes, and
 // the document fails to parse at a line nowhere near the name. One block of
-// six hundred and sixty one was lost to it, so the rig is built as the
-// contract's own type and written by its own writer rather than as text.
-func (s *MeasureTestSuite) TestRigForQuotesWhatWouldBreakTheDocument() {
-	spec := RigFor(measured.Block{
+// six hundred and sixty one was lost to it, so the plan is built as the type
+// and written by its own writer rather than as text.
+func (s *MeasureTestSuite) TestPlanForWritesADocumentThatParses() {
+	spec := PlanFor(measured.Block{
 		ID: "HD2_Reverb63Spring", Name: "'63 Spring", Category: "reverb",
 	}, true)
 
 	var buf bytes.Buffer
-	s.Require().NoError(rig.Write(&buf, spec))
+	s.Require().NoError(plan.Write(&buf, spec))
 
-	back, err := rig.Load(&buf)
+	back, err := plan.Load(&buf)
 	s.Require().NoError(err)
-	s.Require().Equal("'63 Spring", back.Chain[0].Gear)
-	s.Require().Equal("HD2_Reverb63Spring", (*back.Chain[0].Models)["HX Stomp"])
+	s.Require().Equal("measure-hd2-reverb63spring", back.Name)
+	s.Require().Equal(catalog.ModelID("HD2_Reverb63Spring"), back.Blocks[0].Model)
 }
 
-// TestRigForHoldsOneBlockAndNothingElse is what isolation means.
-func (s *MeasureTestSuite) TestRigForHoldsOneBlockAndNothingElse() {
-	spec := RigFor(measured.Block{
+// TestPlanForPinsOneModel is why a sweep writes a plan and not a rig.
+//
+// 665 models share 469 names, so "Ampeg SVT" matches both of its channels and
+// a rig naming the gear would measure whichever the compiler picked.
+func (s *MeasureTestSuite) TestPlanForPinsOneModel() {
+	spec := PlanFor(measured.Block{
 		ID: "HD2_AmpSVBeastNrm", Name: "Ampeg SVT", Category: "amp",
 	}, true)
 
-	s.Require().Len(spec.Chain, 1)
-	s.Require().Nil(spec.Chain[0].Enabled, "switched on unless it is the baseline")
-	s.Require().NoError(rig.Validate(spec))
+	s.Require().Len(spec.Blocks, 1)
+	s.Require().Equal(catalog.ModelID("HD2_AmpSVBeastNrm"), spec.Blocks[0].Model)
+	s.Require().True(spec.Blocks[0].Enabled,
+		"switched on unless it is the baseline")
+	s.Require().NoError(plan.Validate(s.cat, spec, plan.HXStompLimits()))
 }
 
-// TestRigForCanBeBypassed covers the baseline.
+// TestPlanForCanBeBypassed covers the baseline.
 //
 // One bypassed block rather than none, because a chain has a minimum of one
-// item and a rig with nothing in it is not a rig. Bypassed is the same signal
-// path either way.
-func (s *MeasureTestSuite) TestRigForCanBeBypassed() {
-	spec := RigFor(measured.Block{
+// item and a plan with nothing in it is not a plan. Bypassed is the same
+// signal path either way.
+func (s *MeasureTestSuite) TestPlanForCanBeBypassed() {
+	spec := PlanFor(measured.Block{
 		ID: "HD2_EQSimple3Band", Name: "Simple EQ", Category: "eq",
 	}, false)
 
-	s.Require().NotNil(spec.Chain[0].Enabled)
-	s.Require().False(*spec.Chain[0].Enabled)
-	s.Require().NoError(rig.Validate(spec))
+	s.Require().False(spec.Blocks[0].Enabled)
+	s.Require().NoError(plan.Validate(s.cat, spec, plan.HXStompLimits()))
 }
 
-// TestEveryBlockCompilesIntoARigThatValidates is the check that would have
+// TestEveryBlockCompilesIntoAPlanThatValidates is the check that would have
 // caught the lost reverb before a campaign spent ninety five minutes.
-func (s *MeasureTestSuite) TestEveryBlockCompilesIntoARigThatValidates() {
+//
+// Structure rather than the whole of Validate. The question is whether every
+// block makes a document that names a model and survives being written, and
+// 29 blocks carry an assumed DSP cost that the budget layer refuses outright,
+// which is a fact about the catalog rather than about writing a plan.
+func (s *MeasureTestSuite) TestEveryBlockCompilesIntoAPlanThatValidates() {
 	for _, block := range Wanted(s.cat, "", nil) {
-		spec := RigFor(block, true)
+		spec := PlanFor(block, true)
 
-		s.Require().NoErrorf(rig.Validate(spec),
-			"%s (%q) does not make a valid rig", block.ID, block.Name)
+		s.Require().NoErrorf(plan.ValidateStructure(s.cat, spec),
+			"%s (%q) does not make a valid plan", block.ID, block.Name)
 
 		var buf bytes.Buffer
-		s.Require().NoErrorf(rig.Write(&buf, spec), "%s will not write", block.ID)
+		s.Require().NoErrorf(plan.Write(&buf, spec), "%s will not write", block.ID)
 
-		_, err := rig.Load(&buf)
-		s.Require().NoErrorf(err, "%s writes a rig it cannot read back", block.ID)
+		_, err := plan.Load(&buf)
+		s.Require().NoErrorf(err, "%s writes a plan it cannot read back", block.ID)
 	}
 }
 
@@ -329,8 +338,12 @@ func (s *MeasureTestSuite) TestReferenceRefusesWhatIsNotAudio() {
 
 // TestChangedNamesWhatMoved covers reading a probe's answer.
 func (s *MeasureTestSuite) TestChangedNamesWhatMoved() {
-	before := map[string]any{"Bass": 0.5, "Treble": 0.5}
-	after := map[string]any{"Bass": 0.877, "Treble": 0.5}
+	before := plan.Params{
+		"Bass": catalog.Float(0.5), "Treble": catalog.Float(0.5),
+	}
+	after := plan.Params{
+		"Bass": catalog.Float(0.877), "Treble": catalog.Float(0.5),
+	}
 
 	s.Require().Equal([]string{"Bass"}, Changed(before, after))
 	s.Require().Empty(Changed(before, before))

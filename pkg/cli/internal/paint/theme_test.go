@@ -62,7 +62,7 @@ func (s *ThemeTestSuite) TestMarkedFallsBackWithoutColour() {
 }
 
 func (s *ThemeTestSuite) TestThemeEnvIsNamedForTheProject() {
-	s.Require().Equal("TONESTACK_THEME", ThemeEnv)
+	s.Require().Equal("TONEHARNESS_THEME", ThemeEnv)
 }
 
 func TestThemeTestSuite(

@@ -27,8 +27,8 @@ var (
 	Wanted = wanted
 	// Resume reads what a previous run got as far as.
 	Resume = resume
-	// RigFor is a rig holding one block.
-	RigFor = rigFor
+	// PlanFor is a plan holding one block.
+	PlanFor = planFor
 	// Reference reads the signal every block is measured against, and
 	// Resample puts it at the rate the loop runs at.
 	Reference = reference

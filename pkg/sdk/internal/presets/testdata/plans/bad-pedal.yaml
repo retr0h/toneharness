@@ -1,0 +1,11 @@
+name: bad-pedal
+rig: bad-pedal
+blocks:
+  - model: HD2_AmpSVBeastNrm
+    dsp: 0
+    pos: 0
+    enabled: true
+controllers:
+  - controller: 2
+    block: 0
+    parameter: Nonesuch

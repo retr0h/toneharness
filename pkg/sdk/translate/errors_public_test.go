@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/translate"
+	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
 // ErrorsPublicTestSuite covers what translating refuses, and how.

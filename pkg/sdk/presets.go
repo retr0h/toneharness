@@ -23,8 +23,8 @@ package sdk
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/presets"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // once opens a Session, makes one call on it and closes it.
@@ -111,7 +111,7 @@ func (c *Client) Play(
 // Export writes one slot on the attached device out to a file, as a rig or as
 // the device's own file.
 //
-// existing says what happens to a file already at out, as it does for Build.
+// existing says what happens to a file already at out, as it does for Make.
 func (c *Client) Export(
 	ctx context.Context,
 	at slot.Address,
@@ -254,8 +254,11 @@ func (c *Client) PresetFile(
 // A struct rather than three arguments, because three paths of one type are
 // too easy to pass in the wrong order.
 type Compile struct {
-	// Rig is the rig file to build.
+	// Rig is the rig file to build. Name this or Plan, not both.
 	Rig string
+	// Plan is a plan file to build, for work that has already chosen its
+	// models. Name this or Rig, not both.
+	Plan string
 	// Template is a preset to write the chain into. Empty uses an untouched
 	// one the device itself wrote.
 	Template string
@@ -267,7 +270,10 @@ type Compile struct {
 	Existing Existing
 }
 
-// Compile builds a preset from a rig on disk.
+// Compile lowers a rig or a plan on disk into a preset.
+//
+// No ask, and no words resolved: what the document says is what gets written.
+// Make is the one that resolves an ask.
 func (c *Client) Compile(
 	ctx context.Context,
 	in Compile,
@@ -275,6 +281,7 @@ func (c *Client) Compile(
 	return presets.Compile(ctx, presets.CompileOptions{
 		Deps:         presets.Deps{Catalogs: c},
 		RigPath:      in.Rig,
+		PlanPath:     in.Plan,
 		TemplatePath: in.Template,
 		OutputPath:   in.Out,
 		Existing:     in.Existing,

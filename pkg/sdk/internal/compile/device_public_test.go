@@ -27,13 +27,14 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
-// DevicePublicTestSuite covers what a hand-edited rig can put in the section
+// DevicePublicTestSuite covers what a hand-edited plan can put in the section
 // a device wrote.
 //
 // Everything under `device` is carried verbatim, which means a person can
@@ -52,22 +53,26 @@ func (s *DevicePublicTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-// rig returns a buildable rig carrying the given device state.
-func (s *DevicePublicTestSuite) rig(
+// made returns a buildable plan carrying the given device state.
+func (s *DevicePublicTestSuite) made(
 	state *rig.DeviceState,
-) rig.Spec {
-	return rig.Spec{
+) plan.Plan {
+	spec := rig.Spec{
 		Schema:     rig.SchemaName,
 		ID:         "test",
 		Instrument: rig.InstrumentBass,
 		Chain: []rig.ChainEntry{
 			{Role: rig.RoleAmp, Gear: "Ampeg SVT"},
 		},
-		Device: state,
 	}
+
+	out := realised(&s.Suite, spec, s.cat)
+	out.Device = state
+
+	return out
 }
 
-// TestLowerDeviceState builds a preset out of what a rig carries under
+// TestLowerDeviceState builds a preset out of what a plan carries under
 // `device`.
 func (s *DevicePublicTestSuite) TestLowerDeviceState() {
 	tests := []struct {
@@ -83,7 +88,7 @@ func (s *DevicePublicTestSuite) TestLowerDeviceState() {
 		{
 			// A person edited the file and put a string where a device wrote
 			// a map. Dropping that one entry beats refusing to build the rest
-			// of the rig.
+			// of the plan.
 			name: "a tone entry that is not an object",
 			tone: map[string]json.RawMessage{
 				"controller": json.RawMessage(`"nonsense"`),
@@ -115,7 +120,7 @@ func (s *DevicePublicTestSuite) TestLowerDeviceState() {
 		},
 		{
 			// A device writes its version as a number or a string. Anything
-			// else leaves the blank's own rather than refusing the rig.
+			// else leaves the blank's own rather than refusing the plan.
 			name:    "a device version that is neither a number nor a string",
 			version: json.RawMessage(`{"nonsense":1}`),
 			absent:  "nonsense",
@@ -141,7 +146,7 @@ func (s *DevicePublicTestSuite) TestLowerDeviceState() {
 				state.Version = &tt.version
 			}
 
-			s.Require().NoError(compile.Lower(doc, s.rig(state), s.cat))
+			s.Require().NoError(compile.Lower(doc, s.made(state), s.cat))
 
 			var out bytes.Buffer
 			s.Require().NoError(preset.Write(&out, doc))

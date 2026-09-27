@@ -38,8 +38,8 @@ import (
 // Gzipped because it is repetitive JSON, the same as the catalog beside it.
 //
 // Taken rather than generated. Every number came off a pedal, through the
-// loop in docs/measuring.md, against the one reference signal named inside
-// the file. Re-measure with `tonestack measure blocks`; `just generate` packs
+// loop in the measure-a-device skill, against the one reference signal named inside
+// the file. Re-measure with `toneharness measure blocks`; `just generate` packs
 // what that wrote into here.
 //
 //go:embed data/hx-stomp.json.gz

@@ -26,9 +26,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 // Plan turns a device's answer into a plan the rest of this speaks.
@@ -46,7 +46,7 @@ func Plan(
 	if len(cat.Symbols) == 0 {
 		return plan.Plan{}, fmt.Errorf(
 			"this catalog has no model table, so a preset read off the device " +
-				"cannot be named: regenerate it with go generate in the tonestack repository")
+				"cannot be named: regenerate it with go generate in the toneharness repository")
 	}
 
 	out := plan.Plan{Name: name, Blocks: make([]plan.Block, 0, len(got.Blocks))}

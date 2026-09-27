@@ -7,8 +7,8 @@
 # Most asks are a tenth of this. A hand-written one is a subject, an instrument
 # and a few words. This one is filled in to show what each part is for.
 #
-# Validate with:  tonestack recipes show --id mike-dirnt
-# See docs/tonespec.md for what a ToneSpec may hold.
+# Validate with:  toneharness rigs show --id mike-dirnt
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
 
@@ -21,7 +21,7 @@ subject:
   # A player's rig changes. Saying when this one applies is more honest than
   # implying it is timeless.
   era: Dookie through American Idiot
-  # The same era as years, so `recipes records` can hold his records to it.
+  # The same era as years, so `rigs records` can hold his records to it.
   years: { from: 1994, to: 2004 }
 
 # The one to assume when somebody names the subject and not the request. A

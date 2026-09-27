@@ -23,8 +23,8 @@ package backup
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Held is what one slot held before a write, as the device answered it.

@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	device "github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	wire "github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	device "github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	wire "github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 	gomock "go.uber.org/mock/gomock"
 )
 

@@ -19,7 +19,7 @@
 // DEALINGS IN THE SOFTWARE.
 package plan_test
 
-import "github.com/retr0h/tonestack/pkg/sdk/catalog"
+import "github.com/retr0h/toneharness/pkg/sdk/catalog"
 
 // newCatalog returns a real *catalog.Catalog holding blocks.
 //

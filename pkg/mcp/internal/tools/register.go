@@ -30,8 +30,8 @@ import (
 	"github.com/google/jsonschema-go/jsonschema"
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // handlers holds what every tool shares.
@@ -46,7 +46,7 @@ type handlers struct {
 	allowWrites bool
 }
 
-// Register adds tonestack's tools to a server.
+// Register adds toneharness's tools to a server.
 //
 // The tools that write to a pedal are added only when allowWrites is true, and
 // without it no tool writes over a file already on disk. A device has no undo,
@@ -92,15 +92,15 @@ func register(
 	}, h.corpusModel)
 	gomcp.AddTool(s, &gomcp.Tool{
 		Name:         "rigs_list",
-		Description:  "The rigs that ship with tonestack.",
+		Description:  "The rigs that ship with toneharness.",
 		Annotations:  readOnly(),
-		OutputSchema: mustOutputSchema[sdk.Recipes](),
+		OutputSchema: mustOutputSchema[sdk.Rigs](),
 	}, h.rigsList)
 	gomcp.AddTool(s, &gomcp.Tool{
 		Name:         "rig_show",
 		Description:  "One shipped rig, and the rigs that extend it.",
 		Annotations:  readOnly(),
-		OutputSchema: mustOutputSchema[sdk.Recipe](),
+		OutputSchema: mustOutputSchema[sdk.Rig](),
 	}, h.rigShow)
 	gomcp.AddTool(s, &gomcp.Tool{
 		Name:         "tone_build",
@@ -109,11 +109,11 @@ func register(
 		OutputSchema: mustOutputSchema[sdk.Resolved](),
 	}, h.toneBuild)
 	gomcp.AddTool(s, &gomcp.Tool{
-		Name:         "preset_build",
+		Name:         "preset_make",
 		Description:  "Build a .hlx from a shipped rig or a rig file. Read what it added and what each character word moved before putting it on a pedal. Refuses a file already at out unless the server was started with --allow-writes.",
 		Annotations:  &gomcp.ToolAnnotations{OpenWorldHint: new(false), DestructiveHint: new(true)},
 		OutputSchema: mustOutputSchema[Built](),
-	}, h.presetBuild)
+	}, h.presetMake)
 	gomcp.AddTool(s, &gomcp.Tool{
 		Name:         "devices_list",
 		Description:  "The Line 6 Helix hardware attached over USB. HX Edit must be quit for any tool that reaches the pedal.",

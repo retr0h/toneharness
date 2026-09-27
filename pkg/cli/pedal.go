@@ -23,7 +23,7 @@ package cli
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 //go:generate go tool go.uber.org/mock/mockgen -source=pedal.go -destination=internal/mocks/pedal.gen.go -package=mocks

@@ -26,14 +26,16 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // MakeOptions says what to build and where to put it.
@@ -41,10 +43,11 @@ type MakeOptions struct {
 	// Deps are the collaborators this command works through.
 	Deps
 
-	// RecipeID names the curated knowledge to build from.
-	RecipeID string
-	// Rigs is where recipes live. The zero value is the rigs that ship.
-	Rigs recipes.Source
+	// RigID names the curated knowledge to build from.
+	RigID string
+	// Source is where rigs are read from. The zero value is the rigs that
+	// ship.
+	Source rigs.Source
 	// StatsPath is measured corpus statistics. Empty means the ones built
 	// into this binary.
 	StatsPath string
@@ -55,7 +58,7 @@ type MakeOptions struct {
 	Existing result.Existing
 }
 
-// Make builds a preset from a recipe and writes it, reporting what it chose.
+// Make builds a preset from a rig and writes it, reporting what it chose.
 //
 // Reporting the chain matters as much as writing the file. A generated preset
 // is a set of decisions, and a wrong amp should be visible before anyone plugs
@@ -68,7 +71,7 @@ func Make(
 		return result.Made{}, err
 	}
 
-	known, err := opts.recipes().Find(opts.Rigs, opts.RecipeID)
+	known, err := opts.rigs().Find(opts.Source, opts.RigID)
 	if err != nil {
 		return result.Made{}, err
 	}
@@ -105,30 +108,35 @@ func Make(
 	before := append([]plan.Block(nil), spec.Blocks...)
 
 	spec = opts.compiler().Fit(spec, cat, limits)
-	rec = compile.Refit(rec, before, spec.Blocks)
+
+	// The plan, not the rig. A footswitch names the block it acts on by where
+	// that block sits, and the fit is what moves it; the rig names gear by role
+	// and has no number the fit could invalidate.
+	spec = compile.Refit(spec, before, spec.Blocks)
 
 	if err := plan.Validate(cat, spec, limits); err != nil {
 		return result.Made{}, fmt.Errorf(
-			"the chain this recipe describes will not load: %w", err)
+			"the chain this rig describes will not load: %w", err)
 	}
 
 	doc := build(cat.DeviceID, spec)
 
-	// Against the chain as built rather than as the recipe wrote it: filling
+	// Against the chain as built rather than as the rig wrote it: filling
 	// and fitting add and drop blocks, and a section can only turn on what
 	// made it into the preset.
-	if err := opts.compiler().Sections(doc, rec, spec.Blocks, cat); err != nil {
+	if err := opts.compiler().Sections(doc, rec, spec, spec.Blocks, cat); err != nil {
 		return result.Made{}, err
 	}
 
-	// Against the same chain, and after the fit, because the fit is what
-	// decides which position a block ends up at. Resolve has already checked
-	// the assignments against the chain it built.
-	opts.compiler().Controllers(doc, rec, spec.Blocks, cat)
+	// After the fit, because the fit decides which position a block ends up at.
+	//
+	// Both of these do nothing on this path today: Resolve builds no
+	// assignments, because nothing a person writes can state one. They are the
+	// seam that lights up when something can, and Lower runs them for a plan
+	// that arrived from a file.
+	opts.compiler().Controllers(doc, spec, spec.Blocks, cat)
 
-	// The same numbers, moved the same way: what the pedal prints under a
-	// switch names the block the switch acts on.
-	opts.compiler().Footswitches(doc, rec, cat)
+	opts.compiler().Footswitches(doc, spec, cat)
 
 	if err := write(opts.OutputPath, doc, opts.Existing); err != nil {
 		return result.Made{}, err
@@ -238,12 +246,57 @@ func intentOf(
 		}
 	}
 
+	// A genre's words, after the ask's own, so anything somebody wrote by hand
+	// outranks what a measurement produced. Both carry their figures, so
+	// weightOf sizes each by how far it actually sits from the rest.
+	if ask.Genre != nil && *ask.Genre != "" {
+		out.Words = append(out.Words, genreWords(audio.ShippedGenre(slug.Of(*ask.Genre)))...)
+	}
+
 	if ask.Technique != nil {
 		out.Attack = string(ask.Technique.Attack)
 	}
 
 	if ask.Subject != nil {
 		out.Name = ask.Subject.Name
+	}
+
+	return out
+}
+
+// genreWords is what a genre earned, as words a build can act on.
+//
+// The measurement ships in the binary, so asking for a genre costs no audio.
+// Each word carries the figures behind it, which is what tells a word somebody
+// measured from one somebody asserted: a genre sitting just past the others
+// moves a control barely at all, and one far past it moves a full step.
+//
+// Nothing where the genre was never measured or earned nothing. Saying so is
+// translate's job, and doing it here too would say it twice.
+// Given what was found rather than finding it, so each of the three ways a
+// genre contributes nothing has a test. Only two are reachable through the
+// shipped data, and which two depends on whichever records somebody tagged.
+func genreWords(
+	got audio.Genre,
+	ok bool,
+) []compile.Word {
+	// Under the threshold is reported, never computed from: eight records from
+	// three players, or a request for the genre gets one band's sound.
+	if !ok || !got.Usable {
+		return nil
+	}
+
+	out := make([]compile.Word, 0, len(got.Terms))
+
+	for _, t := range got.Terms {
+		out = append(out, compile.Word{
+			Term: t.Term,
+			Evidence: []tone.Evidence{{
+				Kind:     tone.EvidenceAudio,
+				Measured: &map[string]float64{string(t.Key): t.Mine},
+				Against:  &map[string]float64{string(t.Key): t.Others},
+			}},
+		})
 	}
 
 	return out
@@ -273,7 +326,7 @@ func unfamiliar(
 	return out
 }
 
-// addedFrom says what went into the chain that the recipe did not name.
+// addedFrom says what went into the chain that the rig did not name.
 func addedFrom(
 	added []compile.Added,
 ) []result.Added {

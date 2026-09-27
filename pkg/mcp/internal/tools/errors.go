@@ -26,19 +26,19 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 var (
-	// ErrNoSource is preset_build given nothing to build from.
-	ErrNoSource = errors.New("name a recipe_id or a rig_path to build from")
-	// ErrTwoSources is preset_build given both.
-	ErrTwoSources = errors.New("name a recipe_id or a rig_path, not both")
+	// ErrNoSource is preset_make given nothing to build from.
+	ErrNoSource = errors.New("name a rig_id or a rig_path to build from")
+	// ErrTwoSources is preset_make given both.
+	ErrTwoSources = errors.New("name a rig_id or a rig_path, not both")
 	// ErrNotInCatalog is corpus_model's model measured but missing from the
 	// catalog it was resolved against, a sign the corpus and catalog have
 	// drifted apart.
 	ErrNotInCatalog = errors.New("measured but not in the catalog")
-	// ErrWouldOverwrite is preset_build or preset_export pointed at a file
+	// ErrWouldOverwrite is preset_make or preset_export pointed at a file
 	// that already exists, on a server started without --allow-writes.
 	ErrWouldOverwrite = errors.New(
 		"a file is already there, and replacing it needs the server started with --allow-writes")
@@ -111,7 +111,7 @@ func remedy(
 	switch {
 	case errors.Is(err, sdk.ErrNoSuchBlock):
 		return fmt.Errorf("%w, call catalog_search to find one", err)
-	case errors.Is(err, sdk.ErrNoSuchRecipe):
+	case errors.Is(err, sdk.ErrNoSuchRig):
 		return fmt.Errorf("%w, call rigs_list to see the rigs that ship", err)
 	default:
 		return err

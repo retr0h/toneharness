@@ -29,9 +29,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // EvidencePublicTestSuite covers measurements written as rig evidence.

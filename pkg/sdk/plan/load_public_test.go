@@ -22,13 +22,17 @@ package plan_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 type LoadPublicTestSuite struct {
@@ -73,6 +77,16 @@ func (s *LoadPublicTestSuite) TestLoad() {
 			name:    "something that is not YAML",
 			in:      "\tnope: [",
 			errText: "not a readable plan",
+		},
+		{
+			// The guard that used to live on rig.Load, moved here with the
+			// integers it protects. JSON Schema calls this an integer and Go's
+			// int cannot hold it, and left unchecked it zeroed the field and
+			// reported nothing.
+			name: "a number larger than the type that holds it",
+			in: smallest +
+				"footswitches:\n  - {switch: 99999999999999999999, block: 1}\n",
+			errText: "of type int",
 		},
 		{
 			// Everything a lifted preset carries, so the fields that moved off
@@ -121,6 +135,123 @@ func (s *LoadPublicTestSuite) TestWriteReadsBack() {
 	s.Require().NoError(err)
 
 	s.Require().Equal(first, again)
+}
+
+// TestWriteReadsBackEveryParameterKind covers a knob surviving the round trip.
+//
+// The assertion whose absence let a plan be lossy for months. A ParamValue keeps
+// its kind in unexported fields and an attribute is raw JSON, so neither is
+// reachable by a decoder working off the struct: the only caller that wrote a
+// plan wrote blocks with no params and no attrs, and nothing noticed that
+// everything else came back empty.
+func (s *LoadPublicTestSuite) TestWriteReadsBackEveryParameterKind() {
+	first := plan.Plan{
+		Name: "every-kind",
+		Blocks: []plan.Block{{
+			Model:   "HD2_AmpTucknGo",
+			Enabled: true,
+			Params: plan.Params{
+				"Drive":       catalog.Float(0.3500000238418579),
+				"HighCut":     catalog.Int(8000),
+				"MidBoost":    catalog.Bool(false),
+				"SyncSelect1": catalog.Enum("Quarter"),
+			},
+			Attrs: map[string]json.RawMessage{
+				"@no_snapshot_bypass": json.RawMessage(`false`),
+				"@position":           json.RawMessage(`2`),
+				"@type":               json.RawMessage(`1`),
+			},
+		}},
+	}
+
+	var out bytes.Buffer
+	s.Require().NoError(plan.Write(&out, first))
+
+	again, err := plan.Load(bytes.NewReader(out.Bytes()))
+	s.Require().NoError(err)
+
+	s.Require().Equal(first, again)
+}
+
+// TestLoadReadsALiftedPreset covers the plan a device read produces.
+//
+// Off disk rather than built here, because the shape that broke this is one
+// nothing in this package assembles: the routing, footswitches and snapshots a
+// device wraps a chain in, every one of them holding raw JSON.
+func (s *LoadPublicTestSuite) TestLoadReadsALiftedPreset() {
+	at := filepath.Join("..", "..", "..", "examples", "plan", "dir-angl-meteor.yaml")
+
+	f, err := os.Open(at) //nolint:gosec // a path this test chose
+	s.Require().NoError(err)
+
+	defer func() { s.Require().NoError(f.Close()) }()
+
+	first, err := plan.Load(f)
+	s.Require().NoError(err)
+
+	// The knobs and the attributes, which is what a lifted preset is mostly
+	// made of and what a decode reading none of them still called a success.
+	s.Require().Len(first.Blocks, 8)
+
+	for _, block := range first.Blocks {
+		s.Require().NotEmpty(block.Params, block.Model)
+		s.Require().NotEmpty(block.Attrs, block.Model)
+
+		for key, value := range block.Params {
+			s.Require().NotEmpty(value.Type(), key)
+		}
+	}
+
+	s.Require().Len(first.Snapshots, 3)
+	s.Require().Len(first.Footswitches, 3)
+	s.Require().NotNil(first.Device)
+	s.Require().NotNil(first.Target)
+
+	var out bytes.Buffer
+	s.Require().NoError(plan.Write(&out, first))
+
+	again, err := plan.Load(bytes.NewReader(out.Bytes()))
+	s.Require().NoError(err)
+
+	s.Require().Equal(first, again)
+}
+
+// TestLoadReadsEveryFieldThisFormatModels reads the fixture the coverage test
+// counts fields in.
+//
+// Two tests over one file, because they ask different things: that one is about
+// whether a field has been written down, this one about whether writing it down
+// produces a plan. A fixture nothing parses would satisfy the first and mean
+// nothing.
+func (s *LoadPublicTestSuite) TestLoadReadsEveryFieldThisFormatModels() {
+	f, err := os.Open(filepath.Join("testdata", "everything.yaml"))
+	s.Require().NoError(err)
+
+	defer func() { _ = f.Close() }()
+
+	got, err := plan.Load(f)
+	s.Require().NoError(err)
+
+	// Each of the five that moved off a rig, since those are the ones no test
+	// reached while they were declared in a contract nothing referenced.
+	s.Require().NotEmpty(got.Blocks[0].Params)
+	s.Require().NotEmpty(got.Blocks[0].Attrs)
+	s.Require().Len(got.Snapshots, 1)
+	s.Require().Len(got.Footswitches, 1)
+	s.Require().Len(got.Controllers, 1)
+	s.Require().NotNil(got.Device)
+	s.Require().NotNil(got.Target)
+
+	// The awkward one: what a device stored under a footswitch that this
+	// format does not model, kept rather than dropped.
+	s.Require().NotNil(got.Footswitches[0].Rest)
+
+	var back strings.Builder
+	s.Require().NoError(plan.Write(&back, got))
+
+	again, err := plan.Load(strings.NewReader(back.String()))
+	s.Require().NoError(err)
+	s.Require().Equal(got, again)
 }
 
 // TestWriteReportsAWriterThatFails covers the error nothing else would.

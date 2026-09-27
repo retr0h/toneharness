@@ -20,7 +20,7 @@
 // Package preset reads and writes Line 6 .hlx preset files.
 //
 // The format has no published schema; everything here was established by
-// reading real presets. See docs/preset-format.md.
+// reading real presets. See pkg/sdk/preset/README.md.
 package preset
 
 import (
@@ -29,7 +29,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // Schema is the value every preset carries in its schema field.

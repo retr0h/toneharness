@@ -26,9 +26,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 // check reports what a rig claims that this device cannot supply.
@@ -42,7 +41,7 @@ import (
 // it moves by position and the parameter by name, and only the model sitting
 // at that position says whether the name is one of its own.
 func check(
-	spec rig.Spec,
+	made plan.Plan,
 	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) error {
@@ -51,28 +50,28 @@ func check(
 	// next. errors.Is and errors.As reach through a join, so a caller
 	// matching on ErrNoSuchValue still matches.
 	return errors.Join(
-		checkTarget(spec, cat),
-		checkFootswitches(spec, cat),
-		checkControllers(spec, blocks, cat),
+		checkTarget(made, cat),
+		checkFootswitches(made, cat),
+		checkControllers(made, blocks, cat),
 	)
 }
 
 // checkTarget refuses a rig built for another device.
 func checkTarget(
-	spec rig.Spec,
+	made plan.Plan,
 	cat *catalog.Catalog,
 ) error {
-	if spec.Target == nil || spec.Target.Device == nil || *spec.Target.Device == "" {
+	if made.Target == nil || made.Target.Device == nil || *made.Target.Device == "" {
 		return nil
 	}
 
-	if strings.EqualFold(*spec.Target.Device, cat.Device) {
+	if strings.EqualFold(*made.Target.Device, cat.Device) {
 		return nil
 	}
 
 	return &NoSuchValueError{
 		Field: "target.device",
-		Value: *spec.Target.Device,
+		Value: *made.Target.Device,
 		Near:  []string{cat.Device},
 		Whole: true,
 	}
@@ -83,16 +82,16 @@ func checkTarget(
 // The device has twelve, and the catalog carries their names. A rig naming a
 // thirteenth describes a switch nobody will see.
 func checkFootswitches(
-	spec rig.Spec,
+	made plan.Plan,
 	cat *catalog.Catalog,
 ) error {
-	if spec.Footswitches == nil || len(cat.LEDColours) == 0 {
+	if made.Footswitches == nil || len(cat.LEDColours) == 0 {
 		return nil
 	}
 
 	out := []error(nil)
 
-	for i, fs := range *spec.Footswitches {
+	for i, fs := range made.Footswitches {
 		if fs.Led == nil || *fs.Led == "" {
 			continue
 		}
@@ -120,17 +119,17 @@ func checkFootswitches(
 // its name, so a name nothing matches is written as a position — and the
 // controller ends up moving whatever happens to sit there.
 func checkControllers(
-	spec rig.Spec,
+	made plan.Plan,
 	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) error {
-	if spec.Controllers == nil {
+	if len(made.Controllers) == 0 {
 		return nil
 	}
 
 	out := []error(nil)
 
-	for i, c := range *spec.Controllers {
+	for i, c := range made.Controllers {
 		// By position along the path rather than by place in the list. A rig
 		// read off a device numbers its blocks the way the device lays them
 		// out, and a chain that states its positions leaves gaps in them.

@@ -2,7 +2,7 @@
   "schema": "L6PresetBundle",
   "version": 1,
   "meta": {
-    "application": "tonestack",
+    "application": "toneharness",
     "appversion": 1,
     "device": 2162694,
     "device_version": 0,

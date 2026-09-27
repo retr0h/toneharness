@@ -23,7 +23,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
 )
 
 // Turn moves one control on the preset a device is playing.

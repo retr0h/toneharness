@@ -30,7 +30,7 @@ var ErrNoSuchGear = errors.New("no model emulates that gear")
 
 // NoSuchGearError names the gear and where it was looked for.
 type NoSuchGearError struct {
-	// Gear is what the recipe named, e.g. "Ampeg SVT".
+	// Gear is what the rig named, e.g. "Ampeg SVT".
 	Gear string
 	// Kind is the sort of block wanted — amp, cab, drive.
 	Kind string

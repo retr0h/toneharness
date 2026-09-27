@@ -26,7 +26,7 @@ import (
 	"io"
 	"math"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // Curves is what every control of one block does, measured.

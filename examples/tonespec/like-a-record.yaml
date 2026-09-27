@@ -4,9 +4,9 @@
 # and no citation: it is evidence of itself. What comes back is the nearest of
 # the device's 224 amplifiers to what that file actually measures.
 #
-#     tonestack tone build --ask examples/tonespec/like-a-record.yaml \
+#     toneharness tone build --ask examples/tonespec/like-a-record.yaml \
 #       --setup examples/tonespec/my-setup.yaml --out rig.yaml
-#     tonestack presets compile --rig rig.yaml --out a.hlx
+#     toneharness presets compile --rig rig.yaml --out a.hlx
 
 schema: ToneSpec
 
@@ -26,7 +26,7 @@ schema: ToneSpec
 # between two axes, and the honest answer is that nobody has measured it. See
 # #155, which is blocked on the measurements rather than on the design.
 #
-# Meanwhile `tonestack tone build` reports a word it does not carry rather than
+# Meanwhile `toneharness tone build` reports a word it does not carry rather than
 # refusing the file, so writing `punchy` is legal and moves nothing, which is
 # the worse of the two outcomes.
 words:

@@ -23,9 +23,9 @@ package deviceslots
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Decoder reads a device's answer for one slot as the preset a backup keeps.

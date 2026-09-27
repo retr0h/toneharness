@@ -23,7 +23,7 @@
 //
 // Mirrors tlock's theme system — same Theme struct, same role names, same
 // lipgloss renderer plumbing — so the retr0h CLIs share one shape.
-// tonestack ships one theme today; more can be added behind TONESTACK_THEME
+// toneharness ships one theme today; more can be added behind TONEHARNESS_THEME
 // later without touching callers.
 package paint
 
@@ -37,7 +37,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Theme is a six-role palette covering every place tonestack's CLI surface
+// Theme is a six-role palette covering every place toneharness's CLI surface
 // emits styled text. Roles are stable across themes so a theme swap is a
 // pure recolor — no callers change.
 //
@@ -76,7 +76,7 @@ func fg(
 // install.sh's `\033[0;2m` output exactly.
 var faint = lipgloss.NewStyle().Faint(true)
 
-// ThemeTube is tonestack's default.
+// ThemeTube is toneharness's default.
 //
 // A tonestack is the tone circuit in a valve amplifier, and warm amber
 // (#ffa032) is what one looks like with the lights off. Everything else is
@@ -102,7 +102,7 @@ var active = &ThemeTube
 func init() { applyEnv(os.Getenv(themeEnv)) }
 
 // themeEnv names the variable that selects a theme.
-const themeEnv = "TONESTACK_THEME"
+const themeEnv = "TONEHARNESS_THEME"
 
 // applyEnv selects a theme by name, ignoring one nobody registered.
 //
@@ -246,18 +246,17 @@ func Heading(
 	return render(w, active.Accent.Bold(true), strings.ToUpper(s))
 }
 
-// Banner returns the TONESTACK block-letter logo, themed via the active
+// Banner returns the TONEHARNESS block-letter logo, themed via the active
 // theme's BannerTop and BannerBot colors. Line-level coloring matches the
-// install summary so curl|bash and `tonestack --help` look the same.
+// install summary so curl|bash and `toneharness --help` look the same.
 //
 // The E carries a middle bar (██▄) rather than the usual █▄▄, which is
-// identical to C in this alphabet and would leave TONESTACK reading with two
-// of them.
+// identical to C in this alphabet.
 func Banner(
 	w io.Writer,
 ) string {
-	const top = "▀█▀ █▀█ █▄░█ █▀▀ █▀ ▀█▀ ▄▀█ █▀▀ █▄▀"
-	const bot = "░█░ █▄█ █░▀█ ██▄ ▄█ ░█░ █▀█ █▄▄ █░█"
+	const top = "▀█▀ █▀█ █▄░█ █▀▀ █░█ ▄▀█ █▀█ █▄░█ █▀▀ █▀ █▀"
+	const bot = "░█░ █▄█ █░▀█ ██▄ █▀█ █▀█ █▀▄ █░▀█ ██▄ ▄█ ▄█"
 
 	return render(w, active.BannerTop, top) + "\n" +
 		render(w, active.BannerBot, bot) + "\n"

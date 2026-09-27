@@ -31,7 +31,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/retr0h/tonestack/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/cli"
 )
 
 // version is set at release by goreleaser's -X cmd.version, and says "dev"
@@ -40,7 +40,7 @@ var version = "dev"
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
-	Use:   "tonestack",
+	Use:   "toneharness",
 	Short: "Describe a guitar or bass sound, get a Line 6 Helix preset",
 	Long: `Describe a guitar or bass sound and get a preset file that loads on a
 Line 6 Helix device.
@@ -52,7 +52,7 @@ device has to be attached, to describe a chain and write a preset.`,
 }
 
 // Root is the command tree, for anything that needs to read it rather than
-// run it. The command reference in docs/commands.md is generated from it.
+// run it. The CLI is its own command reference; nothing renders it into a page.
 func Root() *cobra.Command {
 	return rootCmd
 }
@@ -76,7 +76,7 @@ func Execute() {
 	// out. Ctrl-C has to reach it: without a context to cancel, the process
 	// dies where it stands, the interface is released by teardown rather
 	// than by the session that claimed it, and the pedal is left needing a
-	// power cycle. See docs/protocol.md.
+	// power cycle. See pkg/sdk/internal/wire/README.md.
 	//
 	// Cancelling does not end a device command at once: a write that has
 	// started finishes and the session closes, which waits on the pedal. So

@@ -26,7 +26,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // ValidatePublicTestSuite covers reading the contract and the failures that

@@ -25,8 +25,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
-	"github.com/retr0h/tonestack/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 )
 
 // Bench is somewhere to push a signal through and hear what comes back.

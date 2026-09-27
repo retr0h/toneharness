@@ -1,11 +1,11 @@
 # A worked RigSpec, showing every part of the format on one subject.
 #
 # Most rigs are a tenth of this. Everything below `chain` is optional, and a
-# hand-written rig usually has a subject, an instrument and three or four
-# pieces of gear. This one is filled in to show what each part is for.
+# hand-written rig usually has an id, an instrument and three or four pieces
+# of gear. This one is filled in to show what each part is for.
 #
-# Validate with:  tonestack recipes show --id mike-dirnt
-# Build from it:  tonestack presets make --id mike-dirnt --out mike.hlx
+# Validate with:  toneharness rigs show --id mike-dirnt
+# Build from it:  toneharness presets make --id mike-dirnt --out mike.hlx
 
 schema: RigSpec
 version: 2
@@ -29,14 +29,12 @@ chain:
     confidence: low
 
   - role: amp
-    # Written by hand this would just be "Ampeg SVT". The fuller name and the
-    # models map below are what a rig lifted off a device carries, and they
-    # are here to show what that looks like: "Ampeg SVT" matches both
-    # channels, and 665 models share only 469 names, so a rig carrying the
-    # name alone rebuilds into a different preset.
+    # Written by hand this would just be "Ampeg SVT". The fuller name is what
+    # a rig lifted off a device carries, and it is here to show what that
+    # looks like. Which of the two channels it resolves to is the plan's
+    # answer, not this document's: 665 models share only 469 names, and a rig
+    # that pinned one would answer the same question twice.
     gear: Ampeg SVT® (bright channel)
-    models:
-      HX Stomp: HD2_AmpSVBeastBrt
     settings:
       drive: 0.47
       bass: 0.52
@@ -62,10 +60,10 @@ chain:
       # compare against the same measurement taken from a generated preset;
       # they are not knob positions, because a record is not an amplifier.
       #
-      # The keys are what `tonestack measure` writes, and that is the point of
+      # The keys are what `toneharness measure` writes, and that is the point of
       # them: a figure can only be compared against the same figure taken
       # somewhere else if both sides call it the same thing. Write this block
-      # with `tonestack measure --dir <stems> --evidence` rather than by hand,
+      # with `toneharness measure --dir <stems> --evidence` rather than by hand,
       # then add the url.
       - kind: audio
         url: https://www.youtube.com/watch?v=EXAMPLE2
@@ -101,16 +99,6 @@ chain:
         note: assumed from the amplifier, which Ampeg sold as a stack
     confidence: low
 
-target:
-  device: HX Stomp
-  catalog: HX Edit 3.82
-  # How the person using this rig plays, where it differs from the rig's own
-  # technique above. A pick puts high-frequency attack into every note that
-  # fingers do not, so a rig tuned from picked playing reads duller under
-  # fingers — and the compensation belongs in the amp and the compressor.
-  technique:
-    attack: fingers
-
 # The parts of a song, as the gear that plays in each. Every section becomes a
 # snapshot, in this order, and an HX Stomp has three.
 #
@@ -126,28 +114,3 @@ sections:
     bypass: [comp]
   - name: Chorus
     play: [comp]
-
-# What moves while you play, as distinct from what the chain holds.
-#
-# A rig records these because they are decisions somebody made about how they
-# play rather than device state. Nothing else in a rig says that the pedal
-# under your foot is on the amplifier's drive rather than its volume, and a
-# preset built without this is a preset with the pedal doing nothing.
-#
-# The parameter is named the way the catalog names it, and it is checked: a
-# controller on a parameter the model at that block does not have is refused
-# with the ones it does have listed.
-controllers:
-  # The expression pedal, which reads 2 on an HX Stomp.
-  - controller: 2
-    # Counted along the signal path the way the chain counts its entries, so
-    # 1 is the amplifier: the compressor above it is 0.
-    block: 1
-    parameter: Drive
-    # What it reads at either end of the sweep. Heel down is not silence
-    # here: it is the amp still driven, just less.
-    min: 0.3
-    max: 0.85
-    # Snapshots leave this alone, so the pedal stays where your foot put it
-    # when the snapshot changes underneath it.
-    no_snapshot: true

@@ -27,7 +27,7 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // measuredCaveat is what a measurement taken off a record does not show.

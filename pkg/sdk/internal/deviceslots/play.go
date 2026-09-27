@@ -24,8 +24,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
 )
 
 // Play puts a preset in front of the device without storing it anywhere.
@@ -35,7 +35,7 @@ import (
 // corrupts: a burst of writes took a setlist past what a power cycle could
 // clear, and a device stops accepting them after about a dozen racing
 // commits. See
-// [Rules that keep a device alive](../../../../docs/protocol.md#rules-that-keep-a-device-alive).
+// [Rules that keep a device alive](../wire/README.md#rules-that-keep-a-device-alive).
 //
 // That rule is what makes auditioning through slots impossible. Measuring
 // each of a device's blocks in turn means putting hundreds of different

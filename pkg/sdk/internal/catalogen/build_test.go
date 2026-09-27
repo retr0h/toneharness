@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 type BuildTestSuite struct {
@@ -265,7 +265,7 @@ func (s *BuildTestSuite) TestBuildReportsWhatItCannotRead() {
 		},
 		{
 			// The file is gitignored, so a fresh clone has none. Swallowing
-			// this generated a catalog where no recipe could resolve any
+			// this generated a catalog where no rig could resolve any
 			// gear, reported only as "0 mapped to real gear".
 			name:    "a gear map somebody named and does not have",
 			gearMap: filepath.Join("testdata", "no-such-map.json"),

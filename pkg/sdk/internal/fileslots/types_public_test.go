@@ -29,12 +29,13 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
-	slotmocks "github.com/retr0h/tonestack/pkg/sdk/internal/fileslots/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
+	slotmocks "github.com/retr0h/toneharness/pkg/sdk/internal/fileslots/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // TypesPublicTestSuite covers standing something else in for a collaborator.
@@ -111,10 +112,11 @@ func (s *TypesPublicTestSuite) TestCompiler() {
 	tests := []struct {
 		name string
 		// what the lift answers.
-		lifted rig.Spec
-		err    error
-		call   func(*fileslots.Flows, string) error
-		says   string
+		lifted  rig.Spec
+		planned plan.Plan
+		err     error
+		call    func(*fileslots.Flows, string) error
+		says    string
 	}{
 		{
 			name: "a lift that fails",
@@ -146,7 +148,8 @@ func (s *TypesPublicTestSuite) TestCompiler() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			comp := slotmocks.NewMockCompiler(s.ctrl)
-			comp.EXPECT().Lift(gomock.Any(), gomock.Any()).Return(tt.lifted, tt.err)
+			comp.EXPECT().Lift(gomock.Any(), gomock.Any()).
+				Return(tt.lifted, tt.planned, tt.err)
 
 			out := filepath.Join(s.T().TempDir(), "rig.yaml")
 

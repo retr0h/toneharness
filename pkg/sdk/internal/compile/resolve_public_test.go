@@ -26,10 +26,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/plan"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 type ResolvePublicTestSuite struct {
@@ -58,7 +58,7 @@ func loadCatalog(
 	return cat
 }
 
-// recipe returns a bass rig naming amp, with optional cab and pedals.
+// bassRig returns a bass rig naming amp, with optional cab and pedals.
 //
 // Pedals are written ahead of the amp because that is where the tests mean
 // them to be: a chain is ordered by what the signal does, and nothing
@@ -67,7 +67,7 @@ func loadCatalog(
 // They carry the `other` role rather than a guess, because these fixtures do
 // not say what the pedals are and stating a role they do not have would test
 // the wrong thing.
-func recipe(
+func bassRig(
 	amp string,
 	cab string,
 	pedals ...string,
@@ -94,12 +94,27 @@ func recipe(
 	return spec
 }
 
+// realised is the plan a rig fits to on the device a catalog describes.
+//
+// One block per chain entry, at factory settings, which is the chain the
+// device-bound half of a test needs under whatever it is really asserting.
+func realised(
+	s *suite.Suite,
+	spec rig.Spec,
+	cat *catalog.Catalog,
+) plan.Plan {
+	made, err := compile.Realise(spec, cat)
+	s.Require().NoError(err)
+
+	return made
+}
+
 // substituting names gear this catalog has no model for, and says what to put
 // there instead.
 func substituting(
 	gear, instead string,
 ) rig.Spec {
-	spec := recipe("Ampeg SVT", "")
+	spec := bassRig("Ampeg SVT", "")
 	spec.Chain[len(spec.Chain)-1] = rig.ChainEntry{
 		Role: rig.RoleAmp,
 		Gear: gear,
@@ -126,12 +141,12 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 	}{
 		{
 			name:   "an amp brings the cabinet it was voiced with",
-			spec:   recipe("Ampeg SVT", ""),
+			spec:   bassRig("Ampeg SVT", ""),
 			models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
 		},
 		{
 			name: "the chain keeps the order it was written in",
-			spec: recipe("Ampeg SVT", "", "Klon Centaur"),
+			spec: bassRig("Ampeg SVT", "", "Klon Centaur"),
 			models: []catalog.ModelID{
 				"HD2_DistMinotaur",
 				"HD2_AmpSVBeastBrt",
@@ -142,19 +157,19 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 			// Two pedals, descriptions of equal length. The identifier
 			// decides, so the answer does not depend on map iteration order.
 			name:   "the identifier breaks a tie",
-			spec:   recipe("Ampeg SVT", "", "Tied Pedal"),
+			spec:   bassRig("Ampeg SVT", "", "Tied Pedal"),
 			models: []catalog.ModelID{"HD2_TieA", "HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
 		},
 		{
 			// "Fuzz Face" matches both the Fuzz Face and the Fuzz Face
 			// Germanium Reissue. The shorter description is the closer answer.
 			name:   "the closer description wins",
-			spec:   recipe("Ampeg SVT", "", "Fuzz Face"),
+			spec:   bassRig("Ampeg SVT", "", "Fuzz Face"),
 			models: []catalog.ModelID{"HD2_Short", "HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
 		},
 		{
-			name:   "a cabinet the recipe names beats the amp's own",
-			spec:   recipe("Ampeg SVT", "Ampeg SVT 410HLF"),
+			name:   "a cabinet the rig names beats the amp's own",
+			spec:   bassRig("Ampeg SVT", "Ampeg SVT 410HLF"),
 			models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_CabNamed"},
 		},
 		{
@@ -180,29 +195,29 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 			// Line 6 does not describe every cabinet in terms of real gear,
 			// so one it cannot name is not a reason to refuse to build.
 			name:   "a cabinet nobody models falls back to the amp's",
-			spec:   recipe("Ampeg SVT", "Some Cabinet Nobody Models"),
+			spec:   bassRig("Ampeg SVT", "Some Cabinet Nobody Models"),
 			models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
 		},
 		{
 			name:   "a partial name reaching the other channel",
-			spec:   recipe("Ampeg SVT (bright", ""),
+			spec:   bassRig("Ampeg SVT (bright", ""),
 			models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
 		},
 		{
 			name:   "an amp that names none at all",
-			spec:   recipe("Cabless Bass Head", ""),
+			spec:   bassRig("Cabless Bass Head", ""),
 			models: []catalog.ModelID{"HD2_AmpNoCab"},
 		},
 		{
 			name:   "an amp naming a cabinet this device lacks",
-			spec:   recipe("Dangling Bass Head", ""),
+			spec:   bassRig("Dangling Bass Head", ""),
 			models: []catalog.ModelID{"HD2_AmpDanglingCab"},
 		},
 		{
 			// A bass request must not reach a guitar amp, however well the
 			// name matches.
 			name: "a request stays inside its instrument",
-			spec: recipe("Marshall JCM-800", ""),
+			spec: bassRig("Marshall JCM-800", ""),
 			err:  "bass amps",
 		},
 		{
@@ -210,24 +225,24 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 			// the one it was voiced with. One that names none leaves nothing
 			// to substitute.
 			name: "a cabinet miss with nothing to fall back to",
-			spec: recipe("Cabless Bass Head", "Some Cabinet Nobody Models"),
+			spec: bassRig("Cabless Bass Head", "Some Cabinet Nobody Models"),
 			err:  "Some Cabinet Nobody Models",
 		},
 		{
 			name: "gear no model emulates",
-			spec: recipe("Orange Rockerverb", ""),
+			spec: bassRig("Orange Rockerverb", ""),
 			err:  "Orange Rockerverb",
 		},
 		{
 			name: "a pedal no model emulates",
-			spec: recipe("Ampeg SVT", "", "Nonexistent Fuzz"),
+			spec: bassRig("Ampeg SVT", "", "Nonexistent Fuzz"),
 			err:  "Nonexistent Fuzz",
 		},
 		{
 			// A user IR block carries a slot index, not audio. Generating one
 			// would point at whatever happened to be loaded in that slot.
 			name: "a block needing the owner's own impulse response",
-			spec: recipe("Slotted Cab", ""),
+			spec: bassRig("Slotted Cab", ""),
 			err:  "Slotted Cab",
 		},
 	}
@@ -277,27 +292,12 @@ func (s *ResolvePublicTestSuite) TestTheAskNamesThePreset() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			got, _, _, err := compile.Resolve(
-				recipe("Ampeg SVT", ""), tt.intent, s.cat, nil)
+				bassRig("Ampeg SVT", ""), tt.intent, s.cat, nil)
 
 			s.Require().NoError(err)
 			s.Require().Equal(tt.want, got.Name)
 		})
 	}
-}
-
-// TestResolveChecksWhatTheRigClaims covers the check reaching the caller.
-//
-// Resolve builds the chain and then asks whether this catalog can supply what
-// the rig says beside it, so a recipe naming another device's hardware fails
-// here rather than at the pedal.
-func (s *ResolvePublicTestSuite) TestResolveChecksWhatTheRigClaims() {
-	spec := recipe("Ampeg SVT (normal", "")
-	device := "Kemper Profiler"
-	spec.Target = &rig.Target{Device: &device}
-
-	_, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
-
-	s.Require().ErrorIs(err, compile.ErrNoSuchValue)
 }
 
 // TestGear resolves one name, the way both halves of this project now do.
@@ -374,11 +374,11 @@ func (s *ResolvePublicTestSuite) TestGear() {
 // chosen, it must not change because the catalog was regenerated or because
 // a map iterated in a different order.
 func (s *ResolvePublicTestSuite) TestResolveIsDeterministic() {
-	first, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+	first, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	for range 20 {
-		again, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+		again, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 
 		s.Require().NoError(err)
 		s.Require().Equal(models(first), models(again))
@@ -389,7 +389,7 @@ func (s *ResolvePublicTestSuite) TestResolveIsDeterministic() {
 // a person is told about decisions made on their behalf.
 func (s *ResolvePublicTestSuite) TestResolveNamesWhatItChoseForYou() {
 	_, added, _, err := compile.Resolve(
-		recipe("Ampeg SVT", "Some Cabinet Nobody Models"),
+		bassRig("Ampeg SVT", "Some Cabinet Nobody Models"),
 		compile.Intent{}, s.cat, nil)
 
 	s.Require().NoError(err)
@@ -407,7 +407,7 @@ func (s *ResolvePublicTestSuite) TestResolveSetsParameters() {
 	}{
 		{
 			name: "every parameter starts at what Line 6 states",
-			spec: recipe("Ampeg SVT", ""),
+			spec: bassRig("Ampeg SVT", ""),
 			check: func(b plan.Block) {
 				blk, ok := s.cat.Block(b.Model)
 				s.Require().True(ok)
@@ -423,7 +423,7 @@ func (s *ResolvePublicTestSuite) TestResolveSetsParameters() {
 		{
 			// A value with no kind produces a preset the device rejects.
 			name: "a parameter with no stated default is skipped",
-			spec: recipe("Ampeg SVT", "", "Nothing Real"),
+			spec: bassRig("Ampeg SVT", "", "Nothing Real"),
 			check: func(b plan.Block) {
 				s.Require().Empty(b.Params)
 			},
@@ -452,13 +452,13 @@ func (s *ResolvePublicTestSuite) TestFit() {
 	}{
 		{
 			name:   "a small chain stays on the first processor",
-			spec:   recipe("Ampeg SVT", ""),
+			spec:   bassRig("Ampeg SVT", ""),
 			limits: twoChips(95.0),
 		},
 		{
 			// 60 + 60 + 26.67 + 7.2 cannot fit under 95 on one chip.
 			name:    "overflow moves to the second",
-			spec:    recipe("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),
+			spec:    bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),
 			limits:  twoChips(95.0),
 			spilled: true,
 		},
@@ -466,7 +466,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 			// 50 stereo + 26.67 + 7.2 overflows 80; 5 mono and the rest
 			// would not, so this is the stereo figure being charged.
 			name:    "a stereo block costs its stereo figure",
-			spec:    recipe("Ampeg SVT", "", "Wide Thing"),
+			spec:    bassRig("Ampeg SVT", "", "Wide Thing"),
 			limits:  twoChips(80.0),
 			spilled: true,
 		},
@@ -477,7 +477,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 			// load. A chain that does not fit stays put and is rejected by
 			// validation instead.
 			name:   "a device with one path has nowhere to put overflow",
-			spec:   recipe("Ampeg SVT", "", "Wide Thing"),
+			spec:   bassRig("Ampeg SVT", "", "Wide Thing"),
 			limits: oneChip(80.0),
 		},
 	}
@@ -516,7 +516,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 // for 95, and the chain was rejected by validation rather than laid out.
 func (s *ResolvePublicTestSuite) TestFitBudgetsEachProcessor() {
 	spec, _, _, err := compile.Resolve(
-		recipe("Ampeg SVT", "", "Heavy Thing", "Heavy Thing", "Heavy Thing"),
+		bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing", "Heavy Thing"),
 		compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
@@ -542,7 +542,7 @@ func (s *ResolvePublicTestSuite) TestFitBudgetsEachProcessor() {
 // rather than of any one chain.
 func (s *ResolvePublicTestSuite) TestFitNumbersEachProcessorFromZero() {
 	spec, _, _, err := compile.Resolve(
-		recipe("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),
+		bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),
 		compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
@@ -568,7 +568,7 @@ func (s *ResolvePublicTestSuite) TestFitNumbersEachProcessorFromZero() {
 // TestFitIgnoresABlockTheCatalogLacks keeps a catalog from another release
 // from dropping blocks on the floor.
 func (s *ResolvePublicTestSuite) TestFitIgnoresABlockTheCatalogLacks() {
-	spec, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+	spec, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	spec.Blocks[0].Model = "HD2_NotInThisCatalog"

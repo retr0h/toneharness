@@ -41,13 +41,13 @@ import (
 	"math"
 	"sort"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // Figures are what a recording reads as.
 //
 // The same ones a record is described in, taken by the same code: the
-// measuring scripts hand what came back to `tonestack measure --json` rather
+// measuring scripts hand what came back to `toneharness measure --json` rather
 // than computing it themselves. That is not tidiness. A second implementation
 // in Python read the reference bass as 98.6% low at 95 Hz where this one says
 // 93% at 138 Hz, which made every block incomparable with every record while

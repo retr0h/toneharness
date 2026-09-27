@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 )
 
 // WordsPublicTestSuite covers the words an ask may use for how it sounds.

@@ -28,7 +28,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
 )
 
 // EditPublicTestSuite covers moving one control on the running preset.

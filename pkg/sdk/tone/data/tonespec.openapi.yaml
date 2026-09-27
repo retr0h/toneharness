@@ -73,7 +73,7 @@ components:
 
             Checked against the shipped vocabulary, because a word that
             reaches no control cannot be aimed at and saying so is better than
-            accepting it and quietly doing nothing. docs/vocabulary.md lists
+            accepting it and quietly doing nothing. words.json lists
             every word and what each one moves.
         gear:
           type: array
@@ -634,7 +634,7 @@ components:
           additionalProperties: { type: number, format: double }
           description: >
             The same figures for the players this one was compared against,
-            keyed the same way. Written by `tonestack measure --corpus`,
+            keyed the same way. Written by `toneharness measure --corpus`,
             which is where a word is earned.
 
 

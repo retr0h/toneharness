@@ -26,8 +26,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 type HintPublicTestSuite struct {
@@ -48,14 +48,14 @@ func (s *HintPublicTestSuite) TestHint() {
 		{
 			name: "a block the catalog does not carry",
 			err:  fmt.Errorf("%w %q", sdk.ErrNoSuchBlock, "HD2_Nope"),
-			want: "try 'tonestack catalog list'",
+			want: "try 'toneharness catalog list'",
 			is:   sdk.ErrNoSuchBlock,
 		},
 		{
 			name: "a rig nobody wrote",
-			err:  fmt.Errorf("%w %q", sdk.ErrNoSuchRecipe, "nobody"),
-			want: "try 'tonestack recipes list'",
-			is:   sdk.ErrNoSuchRecipe,
+			err:  fmt.Errorf("%w %q", sdk.ErrNoSuchRig, "nobody"),
+			want: "try 'toneharness rigs list'",
+			is:   sdk.ErrNoSuchRig,
 		},
 		{
 			// A pedal on a charger rather than a data port looks exactly like
@@ -85,7 +85,7 @@ func (s *HintPublicTestSuite) TestHint() {
 		{
 			name: "a slot holding nothing",
 			err:  fmt.Errorf("%w", sdk.ErrEmptySlot),
-			want: "tonestack presets list",
+			want: "toneharness presets list",
 			is:   sdk.ErrEmptySlot,
 		},
 		{

@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"io"
 
-	"go.yaml.in/yaml/v3"
+	"sigs.k8s.io/yaml"
 )
 
 // ErrNotAPlan reports a document that is not a plan this can read.
@@ -57,15 +57,23 @@ func (*NotAPlanError) Unwrap() error { return ErrNotAPlan }
 // authors and their schemas say what a field may hold; this is written by a
 // driver, and the only thing a reader of one needs protecting from is a field
 // nobody defined.
+//
+// YAML through JSON, the route a rig takes, because a plan holds two kinds of
+// value that only the JSON tags and the JSON marshallers describe: a
+// [catalog.ParamValue] keeps its kind in unexported fields, and an attribute is
+// raw JSON. Decoding the YAML directly reached neither, and read every knob on a
+// lifted preset as an error.
 func Load(
 	r io.Reader,
 ) (Plan, error) {
-	dec := yaml.NewDecoder(r)
-	dec.KnownFields(true)
+	raw, err := io.ReadAll(r)
+	if err != nil {
+		return Plan{}, &NotAPlanError{Why: err.Error()}
+	}
 
 	var out Plan
 
-	if err := dec.Decode(&out); err != nil {
+	if err := yaml.UnmarshalStrict(raw, &out); err != nil {
 		return Plan{}, &NotAPlanError{Why: err.Error()}
 	}
 
@@ -77,16 +85,20 @@ func Load(
 }
 
 // Write writes a plan out as YAML.
+//
+// The same route Load reads, so what comes back is what went out.
 func Write(
 	w io.Writer,
 	of Plan,
 ) error {
-	enc := yaml.NewEncoder(w)
-	enc.SetIndent(2)
-
-	if err := enc.Encode(of); err != nil {
+	raw, err := yaml.Marshal(of)
+	if err != nil {
 		return fmt.Errorf("writing the plan: %w", err)
 	}
 
-	return enc.Close()
+	if _, err := w.Write(raw); err != nil {
+		return fmt.Errorf("writing the plan: %w", err)
+	}
+
+	return nil
 }

@@ -27,9 +27,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 )
 
 type SettingsPublicTestSuite struct {
@@ -47,7 +47,7 @@ func (s *SettingsPublicTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-// stats builds statistics for the bass amp the fixture recipe resolves to.
+// stats builds statistics for the bass amp the fixture rig resolves to.
 func (s *SettingsPublicTestSuite) stats(
 	params map[string]corpus.ParamStats,
 ) *corpus.Stats {
@@ -64,7 +64,7 @@ func (s *SettingsPublicTestSuite) value(
 	key string,
 ) catalog.ParamValue {
 	spec, _, _, err := compile.Resolve(
-		recipe("Ampeg SVT (normal", ""),
+		bassRig("Ampeg SVT (normal", ""),
 		compile.Intent{},
 		s.cat,
 		stats,

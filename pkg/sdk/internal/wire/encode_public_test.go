@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/vmihailenco/msgpack/v5"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // EncodePublicTestSuite covers writing one value the way the byte it replaces
