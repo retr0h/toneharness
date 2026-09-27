@@ -247,8 +247,8 @@ func (s *ReampPublicTestSuite) TestThroughRunsTheWholeLoop() {
 // TestThroughGivesUpOnADeviceThatStopped covers the budget.
 //
 // A device that stops delivering callbacks would otherwise leave a reading
-// blocked forever, and a campaign that hangs on block two hundred looks
-// exactly like one still working.
+// blocked forever, and a campaign that hangs on block two hundred looks exactly
+// like one still working.
 func (s *ReampPublicTestSuite) TestThroughGivesUpOnADeviceThatStopped() {
 	b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, "")
 	s.Require().NoError(err)
@@ -261,6 +261,31 @@ func (s *ReampPublicTestSuite) TestThroughGivesUpOnADeviceThatStopped() {
 	_, err = b.Through(ctx, make([]float32, reamp.Rate))
 
 	s.Require().ErrorContains(err, "stopped answering")
+}
+
+// TestThroughGivesUpOnADeviceThatNeverOpens covers the claim deadline.
+//
+// The failure it exists for is a device that neither opens nor refuses. On
+// macOS that is a program with no Microphone permission: CoreAudio blocks
+// inside the first capture while the system waits for somebody to answer a
+// dialog, and a terminal running unattended has nobody to answer it. A sweep
+// sat there for six minutes having measured nothing before this had a deadline,
+// which is the failure the budget below was already written to prevent one
+// stage later.
+//
+// No backend fakes a device that blocks on open, so the deadline is made short
+// enough that one which does open still misses it.
+func (s *ReampPublicTestSuite) TestThroughGivesUpOnADeviceThatNeverOpens() {
+	b, err := reamp.OpenClaiming([]malgo.Backend{reamp.NullBackend}, "", time.Nanosecond)
+	s.Require().NoError(err)
+
+	defer func() { _ = b.Close() }()
+
+	_, err = b.Through(context.Background(), make([]float32, reamp.Rate))
+
+	s.Require().ErrorIs(err, reamp.ErrUnclaimed)
+	s.Require().ErrorContains(err, "Microphone access",
+		"the error says what to go and do, not only that it failed")
 }
 
 // TestOpenRefusesHardwareThatIsNotThere covers a name nothing answers to.

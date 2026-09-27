@@ -36,6 +36,12 @@ package has to know and nothing can print.
 
 ## Setlist containers
 
+Documented here rather than beside `pkg/sdk/internal/setlist`, which is the
+package that reads them, because the whole file format is one subject: a `.hlb`
+holds setlists, a setlist holds presets, and somebody working out why a file
+will not load needs all three layers on one page. `setlist/types.go` points
+here, and `internal` would make a README there harder to find than this one.
+
 `.hls`, `.hlb` and `.pgs` are wrappers, not presets:
 
 ```json

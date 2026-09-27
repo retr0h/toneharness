@@ -38,6 +38,7 @@ import (
 	"math"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gen2brain/malgo"
@@ -77,7 +78,26 @@ type Bench struct {
 	ctx  *malgo.AllocatedContext
 	play malgo.DeviceID
 	rec  malgo.DeviceID
-	name string
+	// claiming is how long the device is given to hand itself over. Zero is
+	// Claiming, and a test names a shorter one.
+	claiming time.Duration
+	// stuck is whether a claim was abandoned while still inside CoreAudio.
+	//
+	// The goroutine holding it cannot be cancelled: it is blocked in a C call
+	// that returns when the system stops waiting, and it reads this Bench's
+	// audio context when it does. So Close leaves that context alone rather
+	// than freeing memory something is still going to touch, and the process
+	// exit reclaims it. Freeing it was a segfault.
+	stuck atomic.Bool
+	// width is how many channels to open, and 0 means the device's own
+	// count.
+	//
+	// Asking for two on a device that presents eight is refused by CoreAudio
+	// with nothing to say but "invalid argument", and an HX Stomp presents
+	// eight. Naming a number here would only be right for one interface, so
+	// the device decides and the loop reads the width back off the buffer.
+	width uint32
+	name  string
 
 	// One reading at a time. The callback writes into buffers this owns, and
 	// two readings at once would interleave into each other's.
@@ -128,6 +148,10 @@ func open(
 	}
 
 	b.play, b.rec, b.name = play, rec, name
+
+	if b.claiming == 0 {
+		b.claiming = Claiming
+	}
 
 	return b, nil
 }
@@ -206,28 +230,21 @@ func (b *Bench) Through(
 	config.SampleRate = Rate
 	config.Playback.DeviceID = b.play.Pointer()
 	config.Playback.Format = malgo.FormatF32
-	config.Playback.Channels = 2
+	config.Playback.Channels = b.width
 	config.Capture.DeviceID = b.rec.Pointer()
 	config.Capture.Format = malgo.FormatF32
-	config.Capture.Channels = 2
+	config.Capture.Channels = b.width
 
-	device, err := malgo.InitDevice(b.ctx.Context, config, malgo.DeviceCallbacks{
-		Data: func(output, input []byte, frames uint32) {
-			if run.frame(output, input, int(frames)) {
-				finish()
-			}
-		},
+	device, err := b.claim(b.claiming, config, func(output, input []byte, frames uint32) {
+		if run.frame(output, input, int(frames)) {
+			finish()
+		}
 	})
 	if err != nil {
-		return nil, fmt.Errorf("opening %s: %w", b.name, err)
+		return nil, err
 	}
 
 	defer device.Uninit()
-
-	if err := device.Start(); err != nil {
-		return nil, fmt.Errorf("starting %s: %w", b.name, err)
-	}
-
 	defer func() { _ = device.Stop() }()
 
 	// A budget rather than a wait. A device that stops delivering callbacks
@@ -291,6 +308,74 @@ func (p *pass) frame(
 	return p.sent >= len(p.out) && len(p.got) >= cap(p.got)
 }
 
+// Claiming is how long opening a device may take before something is wrong.
+//
+// Generous, because a real interface takes a moment to hand itself over, and
+// bounded, because the thing that goes wrong here does not fail: on macOS the
+// first capture by a program with no Microphone permission blocks in CoreAudio
+// while the system waits for somebody to answer a dialog. Nobody answers a
+// dialog raised behind a terminal running unattended, so without a deadline a
+// campaign sits there all night having measured nothing.
+const Claiming = 20 * time.Second
+
+// claim opens a device and starts it, or says what to go and do about it.
+//
+// Both calls run on their own goroutine because neither takes a context and
+// either can block indefinitely. A goroutine left behind is the price of
+// answering at all: it is holding a CoreAudio call that will return when the
+// system stops waiting, and the process is on its way out by then anyway.
+// The caller's context is deliberately not consulted. A caller who gave up is
+// not a device that went quiet, and the reading's own budget already reports
+// cancellation: looking at it here would turn a Ctrl-C into advice about
+// granting a permission.
+func (b *Bench) claim(
+	within time.Duration,
+	config malgo.DeviceConfig,
+	data func(output, input []byte, frames uint32),
+) (*malgo.Device, error) {
+	type opened struct {
+		device *malgo.Device
+		err    error
+	}
+
+	out := make(chan opened, 1)
+
+	// Read before the goroutine starts, because Close may set b.ctx to nil
+	// while the call below is still inside CoreAudio.
+	audio := b.ctx.Context
+
+	go func() {
+		device, err := malgo.InitDevice(
+			audio, config, malgo.DeviceCallbacks{Data: data})
+		if err != nil {
+			out <- opened{err: fmt.Errorf("opening %s: %w", b.name, err)}
+
+			return
+		}
+
+		if err := device.Start(); err != nil {
+			device.Uninit()
+			out <- opened{err: fmt.Errorf("starting %s: %w", b.name, err)}
+
+			return
+		}
+
+		out <- opened{device: device}
+	}()
+
+	waiting := time.NewTimer(within)
+	defer waiting.Stop()
+
+	select {
+	case got := <-out:
+		return got.device, got.err
+	case <-waiting.C:
+		b.stuck.Store(true)
+
+		return nil, &UnclaimedError{Name: b.name, After: within}
+	}
+}
+
 // over is how long a reading may take before something is wrong.
 //
 // Twice the signal and a few seconds, which is loose on purpose: a device
@@ -345,6 +430,16 @@ func put(
 // Close lets the hardware go.
 func (b *Bench) Close() error {
 	if b.ctx == nil {
+		return nil
+	}
+
+	// A claim still inside CoreAudio reads this context when it returns, and
+	// nothing here can tell it not to. Dropping the reference without freeing
+	// it costs one context for the life of the process; freeing it was a
+	// segfault in the goroutine.
+	if b.stuck.Load() {
+		b.ctx = nil
+
 		return nil
 	}
 

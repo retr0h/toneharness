@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // ErrNoDevice is returned when the named hardware is not attached.
@@ -50,3 +51,34 @@ func (e *NoDeviceError) Error() string {
 
 // Unwrap returns ErrNoDevice so callers can match with errors.Is.
 func (*NoDeviceError) Unwrap() error { return ErrNoDevice }
+
+// ErrUnclaimed is returned when a device neither opened nor refused.
+var ErrUnclaimed = errors.New("the audio device never handed itself over")
+
+// UnclaimedError says which device went quiet while being opened.
+//
+// Distinct from a device that refuses, which answers immediately and says why.
+// This is the one that answers nothing: on macOS the first capture by a program
+// with no Microphone permission blocks inside CoreAudio while the system waits
+// for somebody to answer a dialog, and a terminal running unattended has nobody
+// to answer it. Before this had a deadline a campaign sat there all night,
+// having measured nothing, looking exactly like one still working.
+type UnclaimedError struct {
+	// Name is the device that went quiet.
+	Name string
+	// After is how long it was given.
+	After time.Duration
+}
+
+// Error implements the error interface.
+func (e *UnclaimedError) Error() string {
+	return fmt.Sprintf(
+		"the audio device never handed itself over: %s neither opened nor "+
+			"refused within %s. Grant Microphone access to the terminal running "+
+			"this in System Settings, Privacy & Security, then answer any dialog "+
+			"macOS is holding: the first capture blocks until somebody does",
+		e.Name, e.After)
+}
+
+// Unwrap returns ErrUnclaimed so callers can match with errors.Is.
+func (*UnclaimedError) Unwrap() error { return ErrUnclaimed }

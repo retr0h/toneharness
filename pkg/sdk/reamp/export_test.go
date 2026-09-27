@@ -20,7 +20,11 @@
 
 package reamp
 
-import "github.com/gen2brain/malgo"
+import (
+	"time"
+
+	"github.com/gen2brain/malgo"
+)
 
 // The parts of the loop that are arithmetic rather than hardware, exposed so
 // they can be held to a number without an audio interface, a cable and
@@ -41,6 +45,28 @@ var (
 	// OpenWith is Open with the audio backends named.
 	OpenWith = open
 )
+
+// OpenClaiming is OpenWith, with the device given less time to hand itself
+// over.
+//
+// The deadline exists for a device that neither opens nor refuses, which on
+// macOS is a program with no Microphone permission waiting on a dialog. No
+// backend fakes that, so the only way to reach the branch is to make the wait
+// short enough that a device which does open still misses it.
+func OpenClaiming(
+	backends []malgo.Backend,
+	want string,
+	within time.Duration,
+) (*Bench, error) {
+	b, err := open(backends, want)
+	if err != nil {
+		return nil, err
+	}
+
+	b.claiming = within
+
+	return b, nil
+}
 
 // NullBackend is miniaudio's null backend, which presents a device that takes
 // samples and hands back silence.
