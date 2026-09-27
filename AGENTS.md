@@ -126,8 +126,10 @@ which of it may be redistributed.
 ## Say which claim you have
 
 "The rig validates against the catalog", "HX Edit imported the file" and "the
-hardware loaded it" are three different claims. Only the first is currently
-possible in this repository.
+hardware loaded it" are three different claims. The first needs no device. The
+third needs one attached and `device current` read back afterwards, because a
+chain that is stored is not a chain that rendered: for a fortnight every one
+this tool wrote read back byte for byte and drew nothing on the pedal.
 
 Do not report one as another, and do not describe work as verified on evidence
 you did not gather. If you did not run it, say you did not run it.

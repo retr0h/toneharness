@@ -87,8 +87,10 @@ Then say which claim you have, because three get confused:
 2. HX Edit or the pedal's own display shows the blocks
 3. signal went through it and it sounded right
 
-Reading a slot back does not establish the second. A preset can be stored
-perfectly, read back byte for byte, and rendered by the pedal as an empty chain.
-See [references/formats.md](references/formats.md). Report what you ran and what
+Reading a slot back does not establish the second, and no amount of reading ever
+will: a preset can be stored perfectly, read back byte for byte, and rendered by
+the pedal as an empty chain. Two faults have done that and both are fixed, but
+the asymmetry that hid them is permanent. See
+[references/formats.md](references/formats.md). Report what you ran and what
 it answered, including every note it returned, and if you did not run it, say you
 did not run it.

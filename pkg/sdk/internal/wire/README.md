@@ -468,56 +468,70 @@ follows an empty, and the 750ms afterwards is not for the empty itself but for
 whatever lands next, since what an empty does to flash is no more visible on the
 wire than what a write does.
 
-## A written preset renders empty, and reads back fine
+## A block body's keys go in the device's order
 
-**Open, and the most important thing on this page.**
+**Closed. It rendered every written preset as an empty chain for a fortnight,
+and it was one key in the wrong place.**
 
-A preset written by `slots import` is stored, returned verbatim when read, and
-rendered by the device as an empty chain. The pedal shows no blocks.
+A block body carries five keys. The device writes the model reference first:
 
-Proven by writing a preset against itself. Slot 01A holds a preset HX Edit
-wrote. Exporting it and importing that file, untouched, into a spare slot gives
-two slots that should be identical. Played through the same loop and measured:
+```text
+24 model reference    {23: carries a cab, 25: model number, 26: cab model}
+ 9 class
+10 enabled
+11 parameters
+12 paired cabinet
+```
+
+This package wrote the same five in ascending order, model reference last. A
+device seeks to where it put a model rather than walking the map, so it found a
+class where a model should be and rendered the block as nothing. The preset was
+stored, read back byte for byte, and showed no blocks on the pedal.
+
+What it looked like, before the cause was known:
 
 ```
 01A  written by HX Edit          centroid 4034.33Hz   1-6kHz 98.76%
-39C  a byte-for-byte import      centroid  147.67Hz   1-6kHz  0.52%
+39C  a chain this tool wrote     centroid  147.67Hz   1-6kHz  0.52%
 ```
 
-The second is a bass going down a cable through nothing.
+The second is a bass going down a cable through nothing. Every reading taken
+through a preset this tool built was that, which is why bypassing an amplifier
+changed nothing and why no parameter written into a preset ever moved a figure.
 
-### Why reading it back does not catch it
+Fixed on 27 September 2026, and verified the way the section below says to: an
+HX Stomp played a chain this tool built, `device current` read back the model at
+its position with every parameter this tool set, and a sweep of the Ampeg SVT
+bright channel moved the centroid from 9,036Hz to 11,998Hz across its Drive.
 
-Reading ignores the offset table. This page says so, under
-[what the device gives back is not a `.hlx`](#what-the-device-gives-back-is-not-a-hlx):
-only the third value is read, "the offsets exist for writing". The device's own
-renderer does use them.
+### Why nothing caught it
 
-So a document whose table does not describe its bytes reads back perfectly and
-renders as nothing, which is exactly what [writing a preset](#writing-a-preset)
-warns about: "The device accepts the write and then reads the preset as empty."
-
-### Why the device test does not catch it
-
-`just test-device` passes. It writes a preset, reads it back, and compares the
-chains, and both halves go through the reader that ignores the table. It
-verifies the bytes survived a round trip, which they do.
+Reading cannot. The decoder walks the MessagePack and finds a key wherever it
+sits, so a body with the right keys in the wrong order decodes perfectly. Both
+halves of `just test-device` go through that decoder, so it verified the bytes
+survived a round trip, which they did.
 
 That is the distinction [AGENTS.md](../../../../AGENTS.md) insists on, found in
 the wild: "the rig validates against the catalog", "HX Edit imported the file"
-and "the hardware loaded it" are three different claims, and this repository has
-only ever been able to make the first. The test asserting the third would have
-to ask the device what it rendered, not what it stored.
+and "the hardware loaded it" are three different claims, and only the first was
+ever being made.
 
-### What this invalidates
+`TestAChainIsWrittenTheWayTheDeviceWroteIt` is what catches it now, and it is
+the only test here that can. It reads a capture, writes its chain straight back
+into the document it came from, and requires the chain section to be the bytes
+that arrived. A reordering fails it; nothing that reads the result back will.
 
-Any measurement taken through a preset this tool wrote. Every one of them was an
-empty chain, which is why bypassing an amplifier changed nothing and why no
-parameter written into a preset ever moved a figure.
+### The other half of the same night
 
-It does not touch the live edit on [opcode 30](../../../../measure-a-device),
-which changes the running preset rather than a stored one and demonstrably
-works.
+A chain that names a model and sets nothing sent every parameter as zero, and an
+amp with its Master and channel volume at zero reads 50dB down: a chain that
+loaded and passed no signal, which looks like this bug and is not. An absent
+parameter now takes the catalog's default, which Line 6 states for every one.
+See `settingOf` in `../editor/encode.go`.
+
+Worth keeping apart when a reading looks wrong. Around 120-150Hz at any level is
+a chain that did not render. Kilohertz at 40 to 50dB below the others is a chain
+that rendered with its volume at zero.
 
 ### Opcode 21, which replaces what is playing without storing it
 

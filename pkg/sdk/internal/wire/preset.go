@@ -270,6 +270,19 @@ type DeviceBlock struct {
 	// CabNamed is how many of those values the cabinet model has names for.
 	// Anything past it is the microphone.
 	CabNamed int
+	// Named is how many of Values the model has names for.
+	Named int
+	// Class is what the block declares itself as, in the device's own
+	// numbering: one of the Class constants in place.go.
+	Class int
+	// CabModel is the paired cabinet's place in the model table, or -1 when
+	// the block carries none.
+	//
+	// Read for the same reason Class and Named are. A block is written back
+	// out of these fields, and one the reader drops is one the writer has to
+	// invent, which is how a chain came to be written with the model in the
+	// wrong place and rendered as nothing.
+	CabModel int
 }
 
 // DecodePreset reads what a device hands back for one slot.
@@ -716,7 +729,15 @@ func blockOf(
 		return DeviceBlock{}, false
 	}
 
-	out := DeviceBlock{Model: int(model), Enabled: true}
+	out := DeviceBlock{Model: int(model), Enabled: true, CabModel: noCab}
+
+	if n, ok := asInt(ref[int8(keyCabModel)]); ok {
+		out.CabModel = int(n)
+	}
+
+	if n, ok := asInt(body[int8(keyClass)]); ok {
+		out.Class = int(n)
+	}
 
 	if on, ok := body[int8(keyEnabled)].(bool); ok {
 		out.Enabled = on
@@ -725,6 +746,10 @@ func blockOf(
 	if params, ok := body[int8(keyParams)].(map[any]any); ok {
 		if values, ok := params[int8(keyValues)].([]any); ok {
 			out.Values = narrow(values)
+		}
+
+		if n, ok := asUint(params[int8(keyNamedCount)]); ok {
+			out.Named = int(n)
 		}
 	}
 

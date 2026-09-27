@@ -769,16 +769,25 @@ than the whole rig because import places blocks into a blank slot, so
 footswitches, snapshot state and routing come from the blank.
 
 **It cannot tell you the device can render what was written, and that gap has
-already cost a night.** Reading a preset back ignores the offset table and the
-device's own renderer uses it, so a malformed document round-trips perfectly and
-draws an empty chain on the pedal. This test passed throughout. What caught it
-was measuring the audio.
+already cost a night.** Reading a preset back walks the MessagePack and finds a
+key wherever it sits; the device seeks to where it put one. So a document with
+the right keys in the wrong order round-trips perfectly and draws an empty chain
+on the pedal. This test passed throughout. What caught it was measuring the
+audio.
 
-So a preset that has to work on hardware is held to a preset hardware wrote:
+So a preset that has to work on hardware is held to a preset hardware wrote, and
+in two ways, because one of them was not enough.
 `pkg/sdk/internal/deviceslots/testdata/hx-stomp.written.bin` is a device's own
 answer for a slot and `hx-stomp.written.hlx` is what exporting it produces, and
 building the second has to reproduce the first's chain, block for block and
-value for value. That runs without a device.
+value for value. That is the comparison that read through the decoder and missed
+the key order.
+
+`TestAChainIsWrittenTheWayTheDeviceWroteIt` in `pkg/sdk/internal/wire` is the
+other: it writes a capture's own chain back into the document it came out of and
+requires the chain section to be the same bytes. Any test that reads the result
+back can miss a reordering; only a byte comparison cannot. Both run without a
+device.
 
 ```bash
 TONEHARNESS_SCRATCH_SLOT=42C just test-device                    # 01A into 42C

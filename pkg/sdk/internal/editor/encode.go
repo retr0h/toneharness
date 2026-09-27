@@ -263,10 +263,35 @@ func valuesOf(
 	out := make([]any, 0, len(sym.Params)+len(tail))
 
 	for _, name := range carried(sym, types) {
-		out = append(out, rawValue(params[name], types[name].Type))
+		out = append(out, rawValue(settingOf(params, types, name), types[name].Type))
 	}
 
 	return append(out, tail...)
+}
+
+// settingOf is what one parameter is set to, falling back to the catalog.
+//
+// A chain that says nothing about a parameter means "leave it alone", not
+// "zero". The two are the same value in Go and nothing like each other on a
+// device: an amp whose Master and channel volume are absent rather than
+// stated comes out 50dB down, which reads as a chain that is present and
+// silent, and a campaign measuring every block that way measures its own
+// noise floor 665 times.
+//
+// The catalog states a default for every parameter Line 6 ships, so there is
+// always a better answer than zero. A value the chain does carry wins, zero
+// included, because a knob somebody turned down is not a knob nobody
+// mentioned.
+func settingOf(
+	params map[string]catalog.ParamValue,
+	types map[string]catalog.Param,
+	name string,
+) catalog.ParamValue {
+	if v, ok := params[name]; ok {
+		return v
+	}
+
+	return types[name].Default
 }
 
 // carried is the symbol's parameters that a chain entry actually holds, in

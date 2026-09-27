@@ -32,10 +32,16 @@ import (
 
 // PlacePublicTestSuite covers writing a chain into a preset.
 //
-// Everything here is checked by reading the result back with the decoder the
-// rest of this project uses, rather than against the bytes this package
-// produced. A block that goes in and does not come out is the failure that
-// matters.
+// Most of it is checked by reading the result back with the decoder the rest
+// of this project uses. A block that goes in and does not come out is one
+// failure that matters.
+//
+// It is not the only one, and reading back alone cannot see the other. The
+// decoder walks the MessagePack and finds a key wherever it sits; the device
+// seeks to where it put one. So a chain carrying the right keys in the wrong
+// order reads back perfectly and renders as an empty chain, which is what
+// happened. TestAChainIsWrittenTheWayTheDeviceWroteIt is the half that
+// compares bytes, and it is the only test here a reordering can fail.
 type PlacePublicTestSuite struct {
 	suite.Suite
 }
@@ -644,6 +650,68 @@ func (s *PlacePublicTestSuite) messagePackBool(
 	}
 
 	return []byte{0xc2}
+}
+
+// placementOf turns a block the device wrote back into one to write.
+func (s *PlacePublicTestSuite) placementOf(
+	b wire.DeviceBlock,
+) wire.Placement {
+	return wire.Placement{
+		Position: b.Index - wire.GridOffset,
+		Model:    b.Model,
+		Values:   b.Values,
+		Named:    b.Named,
+		Enabled:  b.Enabled,
+		Class:    b.Class,
+		Cab:      b.Cab,
+		CabNamed: b.CabNamed,
+		CabModel: b.CabModel,
+	}
+}
+
+// TestAChainIsWrittenTheWayTheDeviceWroteIt covers the byte order of a block.
+//
+// A device's own preset is read, its chain is written straight back into the
+// document it came out of, and the chain section has to be the bytes that
+// arrived. Nothing else here can make that assertion: every other test reads
+// the result back, and reading finds a key wherever it sits.
+//
+// This is the test that was missing. A block body carries five keys, the
+// device writes the model reference first, and this package wrote it last.
+// Every chain it produced read back correctly, measured 147Hz on the
+// hardware, and showed no blocks on the pedal.
+func (s *PlacePublicTestSuite) TestAChainIsWrittenTheWayTheDeviceWroteIt() {
+	for _, name := range []string{"preset.bin", "switches.bin"} {
+		raw, err := os.ReadFile(filepath.Join("testdata", name))
+		s.Require().NoError(err, name)
+
+		read, err := wire.DecodePreset(raw)
+		s.Require().NoError(err, name)
+		s.Require().NotEmpty(read.Blocks, name)
+
+		blocks := make([]wire.Placement, 0, len(read.Blocks))
+		for _, b := range read.Blocks {
+			blocks = append(blocks, s.placementOf(b))
+		}
+
+		doc, err := wire.DecodeDocument(raw)
+		s.Require().NoError(err, name)
+
+		want, ok := doc.Section(wire.KeyTone)
+		s.Require().True(ok, name)
+
+		kept := make([]byte, len(want))
+		copy(kept, want)
+
+		s.Require().NoError(wire.PlaceAsWritten(doc, blocks), name)
+
+		got, ok := doc.Section(wire.KeyTone)
+		s.Require().True(ok, name)
+
+		s.Require().Equal(kept, []byte(got),
+			"%s: the chain a device wrote, written back, is not the same bytes",
+			name)
+	}
 }
 
 func TestPlacePublicTestSuite(

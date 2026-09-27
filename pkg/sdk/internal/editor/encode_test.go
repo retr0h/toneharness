@@ -247,7 +247,10 @@ func (s *EncodeTestSuite) TestValuesFollowTheCatalogsWord() {
 			want: []any{float64(3), int64(4), true, int64(2)},
 		},
 		{
-			name:   "a preset that carries none of them",
+			// These four state no default, so there is nothing better to fall
+			// back to. TestASettingFallsBackToTheCatalogsDefault covers the
+			// case where there is.
+			name:   "a preset that carries none of them, and a catalog with no defaults",
 			params: nil,
 			want:   []any{float64(0), int64(0), false, int64(0)},
 		},
@@ -291,6 +294,44 @@ func (s *EncodeTestSuite) TestValuesFollowTheCatalogsWord() {
 			s.Require().Equal(tt.want, valuesOf(sym, tt.params, have, nil))
 		})
 	}
+}
+
+// TestASettingFallsBackToTheCatalogsDefault covers a parameter nobody set.
+//
+// The failure it exists for was silent and cost a night. A plan built to
+// measure one block names the model and nothing else, every absent parameter
+// went to the device as zero, and an amp with its Master and channel volume at
+// zero came back 50dB down. That reads as a chain that loaded and passed no
+// signal, which is a different bug from the one it was.
+func (s *EncodeTestSuite) TestASettingFallsBackToTheCatalogsDefault() {
+	sym := catalog.Symbol{Params: []string{"Master", "ChVol", "MidFreq", "Bright"}}
+	types := map[string]catalog.Param{
+		"Master":  {Type: catalog.ParamFloat, Default: catalog.Float(1)},
+		"ChVol":   {Type: catalog.ParamFloat, Default: catalog.Float(0.8)},
+		"MidFreq": {Type: catalog.ParamInt, Default: catalog.Int(2)},
+		"Bright":  {Type: catalog.ParamBool, Default: catalog.Bool(true)},
+	}
+
+	s.Run("nothing is set, so every default travels", func() {
+		s.Require().Equal([]any{float64(1), 0.8, int64(2), true},
+			valuesOf(sym, nil, types, nil))
+	})
+
+	s.Run("a value the chain carries beats the default", func() {
+		s.Require().Equal([]any{0.25, 0.8, int64(2), true},
+			valuesOf(sym, map[string]catalog.ParamValue{
+				"Master": catalog.Float(0.25),
+			}, types, nil))
+	})
+
+	s.Run("a zero somebody set is not an absent one", func() {
+		s.Require().Equal([]any{float64(0), 0.8, int64(2), false},
+			valuesOf(sym, map[string]catalog.ParamValue{
+				"Master": catalog.Float(0),
+				"Bright": catalog.Bool(false),
+			}, types, nil),
+			"a knob turned down is not a knob nobody mentioned")
+	})
 }
 
 // TestMicOf covers the value a cabinet sends past its named ones.

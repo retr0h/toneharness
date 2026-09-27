@@ -47,12 +47,22 @@ The device accepts such a write and then reads the preset as empty. Two
 reference projects lost hardware sessions to exactly this.
 
 Which produces the one trap worth memorising. **A written preset can render empty
-and read back fine.** Proven by exporting one slot and importing it untouched
-into a spare, then measuring both through the same loop: 4,034.33 Hz against
-147.67 Hz, the second being a bass going down a cable through nothing. Reading
-back does not catch it because reading ignores the offset table and the device's
-own renderer uses it. The device test passes for the same reason: it writes, reads
-back and compares, and both halves go through the reader that ignores the table.
+and read back fine**, and reading it back can never tell you. Reading walks the
+MessagePack and finds a key wherever it sits; the device seeks to where it put
+one. The device test passes for the same reason: it writes, reads back and
+compares, and both halves go through the reader that walks.
+
+Two separate faults have produced that empty chain, and both are fixed. A
+document whose length disagrees with its own offset table is one. The other was
+the order of the five keys inside a block body, where the device puts the model
+reference first and this tool put it last, so it found a class where a model
+should be. Measured through the loop at the time: 4,034 Hz for a preset HX Edit
+wrote against 147.67 Hz for one this tool built, the second being a bass going
+down a cable through nothing.
+
+Neither is a reason to hand-audit a chain now. The bytes a write produces are
+asserted against real captures, and what to do when a reading still looks wrong
+belongs to the `measure-a-device` skill.
 
 So writing a preset synthesised from nothing is the least-solved thing in the
 space and no reference project does it. **The reliable shape is read a preset,

@@ -57,16 +57,21 @@ to, because the intuitive reading is the broken one.
 | kilohertz but 40 dB too quiet   | the chain is there and the signal is not                |
 
 The second row has cost more than the rest together. It looks exactly like what a
-bass ought to measure, so it reads as success.
-[A written preset renders empty](../../../../pkg/sdk/internal/wire/README.md#a-written-preset-renders-empty-and-reads-back-fine)
-is why: the device's renderer uses an offset table that reading ignores, so a
-preset this tool wrote is stored, returns verbatim, and renders as nothing. The
-proof there measures 147.67 Hz against 4,034 Hz for the same preset written by
-HX Edit.
+bass ought to measure, so it reads as success. It was
+[a block body's keys in the wrong order](../../../../pkg/sdk/internal/wire/README.md#a-block-bodys-keys-go-in-the-devices-order):
+the device seeks to where it keeps a model, found something else, and rendered
+nothing, while the preset read back byte for byte. Fixed, and the test that holds
+it compares bytes rather than reading the chain back.
 
 An agent read 123 Hz as a working amplifier, wrote it into this page as the
 known-good figure, and built three rounds of fixes on top of it. Check a new
 figure against the table above before believing it.
+
+The fourth row is the one to check next, because it is the near miss. A chain
+whose volume control arrived at zero reads in the kilohertz and 40 to 50dB down,
+which is a chain that rendered, not one that did not. Read the chain back with
+`device current` and look at what the parameters actually say: the level is a
+setting, and the centroid says the blocks are there.
 
 ## When opening the audio device fails
 

@@ -87,6 +87,23 @@ RigSpec      validated against the catalog
 a person     listens, and corrects the pair                   nothing above can hear
 ```
 
+## A chain this tool builds renders on the hardware
+
+True since 27 September 2026 and not before. A block body carries five keys, the
+device seeks to where it keeps the model rather than walking the map, and this
+tool wrote that key last instead of first. Every chain it built was stored, read
+back byte for byte, and rendered as no blocks at all.
+
+What holds it now is a byte comparison rather than a read-back:
+`TestAChainIsWrittenTheWayTheDeviceWroteIt` writes a capture's own chain back
+into the document it came from and requires the same bytes. The cause and the
+near-miss that follows it are in
+[the wire README](../pkg/sdk/internal/wire/README.md#a-block-bodys-keys-go-in-the-devices-order).
+
+So the correction loop below is now actually cheap, and the measuring that
+[solving for knob positions](superpowers/specs/2026-09-27-solving-for-knob-positions-design.md)
+needs is unblocked.
+
 ## Nothing here can hear
 
 No part of this system can judge whether a preset sounds right, and no quantity
