@@ -52,16 +52,16 @@ not do it — a slot given a new document reads back as the new one and goes on
 sounding like what it held before — and it would wear the device's storage out
 to sweep a control that way.
 
-A block is named by the device's own number for it, and a parameter by its
-position in that model's own list. Position is the only thing that identifies
-either on the wire, so neither takes a name.
+A block is named by the position ` + "`presets show`" + ` reports for it, and a
+parameter by its position in that model's own list. Position is the only thing
+that identifies either on the wire, so neither takes a name.
 
-A block's number is not its place in the chain. The device lays a preset out
-on a fixed grid and a chain of four blocks can sit at 5, 6, 8 and 13, so counting
-down the chain mislabels every control while the numbers stay plausible.
-` + "`presets show`" + ` reports the number each block actually has, and
-` + "`catalog show`" + ` lists a model's parameters in the order this addresses
-them.
+That position is not its place in the chain. The device lays a preset out on a
+fixed grid and a chain of four blocks can sit at 0, 1, 3 and 4, so counting down
+the chain mislabels every control while the numbers stay plausible. Read the
+chain back before trusting an index: ` + "`presets show`" + ` reports what each
+block actually holds, and ` + "`catalog show`" + ` lists a model's parameters in
+the order this addresses them.
 
 A device does not coerce, so the kind of value has to match the parameter.
 ` + "`--value`" + ` is a number on a dial, ` + "`--choice`" + ` is one of a
@@ -77,7 +77,13 @@ distance runs one to twelve inches.`,
 		pedal.claim()
 
 		at := sdk.Address{
-			Block:  presetsTurnBlock,
+			// The wire counts the grid, where slot 0 holds the input and a
+			// chain's first block is 1, so a position `presets show` reports
+			// is one less than the number the device answers to. Measured on
+			// an HX Stomp: `--block 5` moved the block at position 4 and
+			// `--block 0` was refused with error -3. The arithmetic lives here
+			// so that one number means one thing everywhere a person sees it.
+			Block:  presetsTurnBlock + 1,
 			Param:  presetsTurnParam,
 			Model:  presetsTurnModel,
 			Direct: presetsTurnDirect,
@@ -120,7 +126,7 @@ func init() {
 
 	f := deviceTurnCmd.Flags()
 	f.IntVar(&presetsTurnBlock, "block", 0,
-		"which block, by the device's own number for it, which `presets show` reports")
+		"which block, by the position `presets show` reports for it")
 	f.IntVar(&presetsTurnParam, "param", 0,
 		"which parameter, by its position in the model's own list")
 	f.Float64Var(&presetsTurnValue, "value", 0,

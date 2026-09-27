@@ -85,7 +85,7 @@ func (s *HintPublicTestSuite) TestHint() {
 		{
 			name: "a slot holding nothing",
 			err:  fmt.Errorf("%w", sdk.ErrEmptySlot),
-			want: "toneharness presets list",
+			want: "toneharness slots list",
 			is:   sdk.ErrEmptySlot,
 		},
 		{

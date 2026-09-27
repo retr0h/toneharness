@@ -56,7 +56,8 @@ type ControlsOptions struct {
 	Bench sdk.Bench
 }
 
-// alone is where a block sits when it is the only thing in the chain.
+// alone is where a block sits on the grid when it is the only thing in the
+// chain: 1, because the grid keeps the input at 0.
 //
 // A block's slot is its position plus one, and a chain holding one block puts
 // it at position zero.

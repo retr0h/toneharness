@@ -66,8 +66,14 @@ const (
 // assume. Both extra fields have a sensible zero: the block's own model,
 // addressed the ordinary way.
 type Address struct {
-	// Block is the device's own number for the block, which is not its
-	// position in the chain.
+	// Block is the block's slot on the device's grid, which is neither its
+	// place in the chain nor the position a preset records for it.
+	//
+	// The grid holds the input at 0, so a block a preset records at position
+	// P answers to P+1 here. Measured on an HX Stomp: addressing 5 moved the
+	// block recorded at position 4, and addressing 0 was refused with error
+	// -3 because the input is not a block. Callers that speak positions add
+	// the one themselves; this is the wire's number.
 	Block int
 	// Param is the parameter's position in that model's list.
 	Param int

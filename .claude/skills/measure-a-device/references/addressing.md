@@ -41,6 +41,13 @@ So **a block's slot is its position plus one** on the first path: an amplifier a
 `@position: 0` is slot 1. On the second path it is the position plus the split's
 slot plus one. Slots 20 and above do not exist and always refuse.
 
+Measured, on a preset whose blocks sat at positions 0, 1, 3 and 4: addressing 5
+moved the block at position 4, addressing 4 moved the one at position 3, and
+addressing 0 was refused with `-3` because the input is not a block. **`device
+turn --block` takes the position, not the slot**, and adds the one itself, so the
+number `presets show` prints is the number to type. The SDK's `Address.Block` is
+still the slot, which is what the wire wants and what a sweep passes.
+
 **The four structural slots answer even on an empty preset**, and that misleads.
 A preset rendering as nothing still answers on 0, 9, 10 and 19 and refuses
 everything else, which reads exactly like "chain blocks cannot be addressed" and

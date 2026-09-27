@@ -5,7 +5,11 @@ input, two in the middle hold the split and the join, the last holds the output,
 and the device decides where those sit. The other sixteen hold blocks or nothing.
 
 So the position in that array is the block's number and **it is not its place in
-the chain**: a preset holding four blocks can have them at 5, 6, 8 and 13.
+the chain**: a preset holding four blocks can have them at 5, 6, 8 and 13. Nor is
+it the number the wire answers to, which is one higher again, because the grid
+keeps the input at 0. `device turn --block` takes the position and does that
+arithmetic itself.
+
 Footswitch assignments address blocks by that number, so renumbering them to 0
 through 3 would break the only link between a switch and the block it works on.
 
