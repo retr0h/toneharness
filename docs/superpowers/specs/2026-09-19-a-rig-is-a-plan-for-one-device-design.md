@@ -23,7 +23,7 @@ Three layers, which is what has been said all along and has not been true:
 | ------------ | -------------------------------------------- | ---------- |
 | **ToneSpec** | what somebody means, and why it is believed  | a person   |
 | **RigSpec**  | gear in signal order, named as a person does | the tool   |
-| **PlanSpec** | that rig realised on one device              | a driver   |
+| **Plan**     | that rig realised on one device              | a driver   |
 
 The middle one is the portable layer nobody had. It is what survives moving to
 another modeller: roles in order, gear by its real-world name, the instrument it
@@ -45,7 +45,7 @@ place to add one.
 John settled it on 2026-09-26. **RigSpec keeps its name and becomes the portable
 layer**, because a rig is what a player calls the gear they play through and
 naming that document after the pedal would be the opposite of what the word
-means. The Helix half becomes a **PlanSpec**, and `pkg/sdk/chain` is renamed to
+means. The Helix half becomes a **Plan**, and `pkg/sdk/chain` is renamed to
 `pkg/sdk/plan` to match.
 
 It is also the cheapest of the three options. Nothing that currently says "rig"
@@ -188,7 +188,7 @@ Mike Dirnt's amplifier is the case that settles it. Its citation is a scanned
 that sentence is the reason an Ampeg SVT is in the chain. Publishing the chain
 without it publishes an assertion.
 
-### Moving to the PlanSpec
+### Moving to the Plan
 
 The resolved `models`, the `settings`, `position`, `device`, `snapshots`,
 `footswitches`, `controllers`, `sections` and `target`.
@@ -198,6 +198,30 @@ the block it is turning, and that block is a Helix model. That is what #139
 decided from the other side: "more drive" is a request and `drive: 0.7` is a
 plan. `models` was already keyed by device, so the contract has been
 half-expecting this since it was written.
+
+### A Plan is not a contract, corrected 2026-09-26
+
+An earlier draft called this layer a PlanSpec and had it arriving with an OpenAPI
+contract like the two above. It does not, and the pattern in the tree says why.
+
+Two packages here are contract-backed, `rig` and `tone`, and both are formats a
+person authors. Everything else that gets serialised is hand-written Go with json
+tags: `measured.Curves` is written into `resources/sweeps`, and so are `corpus`,
+`catalog` and `preset`, which is the `.hlx` document itself. Becoming a file is
+not what earns a contract. Being typed by somebody is.
+
+A Plan is written by a driver and read back by the compiler. The nearest thing to
+it is `pkg/sdk/preset`, and that is the shape it takes: hand-written types with
+tags, and strict decoding so a misspelt field is refused rather than dropped,
+which is the one thing the contract would have bought.
+
+Generating it would also have cost three things. `Params` is keyed to
+`catalog.ParamValue`, which has unexported fields and marshalling of its own, and
+`Attrs` holds `json.RawMessage`; `pkg/mcp/internal/tools/register.go` already
+hand-patches the schema for both because reflection cannot express them.
+Generated optionals are pointers, which suits a document being unmarshalled and
+not an intermediate the compiler builds a block at a time. And the package holds
+`BlockLookup` and `Limits`, which are not document types at all.
 
 ### Splitting
 
@@ -212,7 +236,7 @@ A driver owns everything a modeller knows about itself: its catalog, its limits,
 its routing, and the file it writes.
 
 ```
-RigSpec + Setup ──▶ driver.Fit ──▶ PlanSpec ──▶ driver.Write ──▶ a file the device loads
+RigSpec + Setup ──▶ driver.Fit ──▶ Plan ──▶ driver.Write ──▶ a file the device loads
 ```
 
 What the Helix driver supplies today, and therefore what the interface asks for:
@@ -261,7 +285,7 @@ here. It folds into the ToneSpec documentation.
    of this uses.
 2. Move the authorial fields to ToneSpec, converting the nine shipped rigs in
    the same change.
-3. Add the PlanSpec contract and take the device-bound fields off RigSpec.
+3. Give `pkg/sdk/plan` the device-bound fields, and take them off RigSpec.
 4. Put the Helix realisation behind a driver, derived from what it calls.
 5. Retire the word recipe (#136).
 

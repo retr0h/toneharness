@@ -29,5 +29,5 @@ with
 beside it, together superseding
 [RigSpec as the one model](superpowers/specs/2026-09-06-rigspec-as-the-one-model-design.md).
 A ToneSpec is what somebody means, a RigSpec is the gear that answers it, and a
-PlanSpec is that rig on one device. The third does not exist yet, so a RigSpec
-still carries the Helix half.
+Plan is that rig on one device. The third does not exist yet, so a RigSpec still
+carries the Helix half.

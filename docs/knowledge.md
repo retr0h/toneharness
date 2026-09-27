@@ -27,13 +27,13 @@ Three layers, and each is written by somebody different:
 | ------------ | -------------------------------------------- | ---------- |
 | **ToneSpec** | what somebody means, and why it is believed  | a person   |
 | **RigSpec**  | gear in signal order, named as a person does | the tool   |
-| **PlanSpec** | that rig realised on one device              | a driver   |
+| **Plan**     | that rig realised on one device              | a driver   |
 
 The first two exist. A person writes a ToneSpec, and a Setup beside it saying
 what they own; `tone build` resolves the pair into a RigSpec. A rig is also
 written by hand, as the ask's answer, which is how the nine that ship were made.
 
-**PlanSpec is not built.** A RigSpec still carries the device-bound half it is
+**The Plan is not built.** A RigSpec still carries the device-bound half it is
 meant to take away: the resolved `models`, the `params` and `settings` a knob
 position lives in, each block's `position`, the snapshots and footswitches that
 only mean anything on a pedal, and the `device` state a lifted preset arrived
