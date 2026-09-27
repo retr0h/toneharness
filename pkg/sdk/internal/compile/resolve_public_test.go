@@ -94,11 +94,6 @@ func recipe(
 	return spec
 }
 
-// TestResolve turns gear a person names into models a device has.
-//
-// "Ampeg SVT" names neither the normal nor the bright channel, so which of
-// the two comes back is arbitrary. It is pinned here because a row wants a
-// value, and TestResolveIsDeterministic is what guards that it stays put.
 // substituting names gear this catalog has no model for, and says what to put
 // there instead.
 func substituting(
@@ -117,6 +112,11 @@ func substituting(
 	return spec
 }
 
+// TestResolve turns gear a person names into models a device has.
+//
+// "Ampeg SVT" names neither the normal nor the bright channel, so which of
+// the two comes back is arbitrary. It is pinned here because a row wants a
+// value, and TestResolveIsDeterministic is what guards that it stays put.
 func (s *ResolvePublicTestSuite) TestResolve() {
 	tests := []struct {
 		name   string
@@ -285,17 +285,6 @@ func (s *ResolvePublicTestSuite) TestTheAskNamesThePreset() {
 	}
 }
 
-// TestResolveIsDeterministic is a property rather than a case.
-//
-// "Ampeg SVT" names neither the normal nor the bright channel. Whichever is
-// chosen, it must not change because the catalog was regenerated or because
-// a map iterated in a different order.
-// TestGear resolves one name, the way both halves of this project now do.
-//
-// Lowering a rig into a preset used to answer this question itself, with a map
-// range that took whatever matched first. Two resolvers cannot both be right
-// about which Ampeg SVT is meant, and the one that ignored the role would
-// answer with a cabinet.
 // TestResolveChecksWhatTheRigClaims covers the check reaching the caller.
 //
 // Resolve builds the chain and then asks whether this catalog can supply what
@@ -311,6 +300,12 @@ func (s *ResolvePublicTestSuite) TestResolveChecksWhatTheRigClaims() {
 	s.Require().ErrorIs(err, compile.ErrNoSuchValue)
 }
 
+// TestGear resolves one name, the way both halves of this project now do.
+//
+// Lowering a rig into a preset used to answer this question itself, with a map
+// range that took whatever matched first. Two resolvers cannot both be right
+// about which Ampeg SVT is meant, and the one that ignored the role would
+// answer with a cabinet.
 func (s *ResolvePublicTestSuite) TestGear() {
 	tests := []struct {
 		name       string
@@ -373,6 +368,11 @@ func (s *ResolvePublicTestSuite) TestGear() {
 	}
 }
 
+// TestResolveIsDeterministic is a property rather than a case.
+//
+// "Ampeg SVT" names neither the normal nor the bright channel. Whichever is
+// chosen, it must not change because the catalog was regenerated or because
+// a map iterated in a different order.
 func (s *ResolvePublicTestSuite) TestResolveIsDeterministic() {
 	first, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
@@ -508,8 +508,6 @@ func (s *ResolvePublicTestSuite) TestFit() {
 	}
 }
 
-// TestFitNumbersEachProcessorFromZero is a property of the whole result
-// rather than of any one chain.
 // TestFitBudgetsEachProcessor covers the second processor having a ceiling
 // of its own.
 //
@@ -540,6 +538,8 @@ func (s *ResolvePublicTestSuite) TestFitBudgetsEachProcessor() {
 		"the second processor is not a place to put whatever did not fit")
 }
 
+// TestFitNumbersEachProcessorFromZero is a property of the whole result
+// rather than of any one chain.
 func (s *ResolvePublicTestSuite) TestFitNumbersEachProcessorFromZero() {
 	spec, _, _, err := compile.Resolve(
 		recipe("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),

@@ -449,12 +449,6 @@ func steady(
 	return out, levels[len(levels)/2], nil
 }
 
-// wireOrder is a model's parameters in the order the device addresses them.
-//
-// From the symbol list, which records them "in the order a device sends their
-// values". The per-model map beside it is keyed by name and has no order at
-// all, and `catalog show` prints that one sorted, so counting down the
-// printout files every curve under the wrong control.
 // discover asks the device which index is which.
 //
 // The same probe `measure names` uses, and for the same reason: a parameter has
@@ -507,6 +501,12 @@ func discover(
 	return out, nil
 }
 
+// wireOrder is a model's parameters in the order the device addresses them.
+//
+// From the symbol list, which records them "in the order a device sends their
+// values". The per-model map beside it is keyed by name and has no order at
+// all, and `catalog show` prints that one sorted, so counting down the
+// printout files every curve under the wrong control.
 func wireOrder(
 	cat *catalog.Catalog,
 	model string,

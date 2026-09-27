@@ -31,7 +31,7 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
-// Category colours.
+// categoryColor is the colour each kind of block is drawn in.
 //
 // A chain is read by shape before it is read by word — where the amp sits,
 // whether anything comes after the cab. Colouring by what a block does makes

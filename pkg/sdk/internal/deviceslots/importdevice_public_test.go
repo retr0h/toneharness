@@ -70,7 +70,7 @@ func (s *ImportDevicePublicTestSuite) SetupTest() {
 
 func (s *ImportDevicePublicTestSuite) TearDownTest() { s.ctrl.Finish() }
 
-// preset is a .hlx the corpus carries, with a real chain in it.
+// answer is a preset off the wire, as a device hands one back.
 func (s *ImportDevicePublicTestSuite) answer() []byte {
 	raw, err := os.ReadFile(
 		filepath.Join("..", "wire", "testdata", "preset.bin"))
@@ -79,6 +79,7 @@ func (s *ImportDevicePublicTestSuite) answer() []byte {
 	return raw
 }
 
+// preset is a .hlx the corpus carries, with a real chain in it.
 func (s *ImportDevicePublicTestSuite) preset() string {
 	return filepath.Join("..", "compile", "testdata", "preset0.hlx")
 }

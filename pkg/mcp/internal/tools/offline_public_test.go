@@ -263,7 +263,6 @@ func (s *OfflinePublicTestSuite) TestRigsList() {
 	})
 }
 
-// TestRigShow covers reading one rig.
 // TestToneBuild covers the path an agent reaches the whole project through.
 //
 // It was unreachable over MCP until this tool existed, because the resolving
@@ -322,6 +321,7 @@ func (s *OfflinePublicTestSuite) TestToneBuild() {
 	})
 }
 
+// TestRigShow covers reading one rig.
 func (s *OfflinePublicTestSuite) TestRigShow() {
 	s.run("rig_show", []row{
 		{

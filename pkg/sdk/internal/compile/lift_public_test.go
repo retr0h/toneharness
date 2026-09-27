@@ -265,7 +265,6 @@ func withSwitch(
 	return spec
 }
 
-// TestLower writes a rig into a preset.
 // substituted says what to put in place of the gear a rig names.
 func substituted(
 	spec rig.Spec,
@@ -276,6 +275,7 @@ func substituted(
 	return spec
 }
 
+// TestLower writes a rig into a preset.
 func (s *LiftPublicTestSuite) TestLower() {
 	tests := []struct {
 		name   string
