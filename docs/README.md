@@ -7,7 +7,9 @@ see [CONTRIBUTING.md](../CONTRIBUTING.md). These pages cover the domain.
 | ------------------------------------ | ------------------------------------------------------------------------------------- |
 | [workflows.md](workflows.md)         | **Start here.** How to use tonestack, in order, for the things people come here to do |
 | [commands.md](commands.md)           | Every command and flag, generated from the CLI                                        |
+| [mcp.md](mcp.md)                     | The tools an agent gets, generated from the MCP server                                |
 | [tonespec.md](tonespec.md)           | What a request may say, generated from the contract                                   |
+| [vocabulary.md](vocabulary.md)       | Every word an ask may use and what each moves, generated from the vocabulary          |
 | [rigspec.md](rigspec.md)             | What a rig resolves to, generated from the contract                                   |
 | [knowledge.md](knowledge.md)         | How a request becomes a signal chain, and the four problems that entails.             |
 | [recipes.md](recipes.md)             | Writing a rig and the ask beside it by hand, with the worked examples                 |

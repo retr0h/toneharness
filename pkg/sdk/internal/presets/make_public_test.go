@@ -37,6 +37,7 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/result"
+	"github.com/retr0h/tonestack/pkg/sdk/tone"
 )
 
 type MakePublicTestSuite struct {
@@ -322,6 +323,77 @@ func built(
 	}
 
 	return strings.Join(parts, " ")
+}
+
+// IntentPublicTestSuite covers what an ask contributes to a build.
+type IntentPublicTestSuite struct {
+	suite.Suite
+}
+
+// TestIntentOf covers every field an ask may leave out.
+//
+// Each one is a pointer, so the mapping is where a missing field becomes an
+// empty one rather than a nil dereference. A rig with no ask beside it is the
+// ordinary case, not an error, so the zero intent has to be a legal answer.
+func (s *IntentPublicTestSuite) TestIntentOf() {
+	words := []tone.Word{
+		{Term: "dark"},
+		{Term: "scooped", Evidence: &[]tone.Evidence{{Kind: tone.EvidenceLLM}}},
+	}
+	attack := tone.Technique{Attack: tone.AttackPick}
+	subject := tone.Subject{Kind: tone.KindArtist, Name: "Somebody"}
+
+	tests := []struct {
+		name string
+		ask  *tone.Spec
+		// what the intent must carry.
+		words  int
+		attack string
+		who    string
+	}{
+		{name: "no ask at all, which is legal and ordinary"},
+		{name: "an ask that says nothing", ask: &tone.Spec{}},
+		{
+			name:  "words, one with evidence and one without",
+			ask:   &tone.Spec{Words: &words},
+			words: 2,
+		},
+		{
+			name:   "how it is played",
+			ask:    &tone.Spec{Technique: &attack},
+			attack: "pick",
+		},
+		{
+			// The preset takes its name from the subject, and the pedal shows
+			// that name on its screen.
+			name: "who it is for",
+			ask:  &tone.Spec{Subject: &subject},
+			who:  "Somebody",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got := presets.IntentOf(tt.ask)
+
+			s.Require().Len(got.Words, tt.words)
+			s.Require().Equal(tt.attack, got.Attack)
+			s.Require().Equal(tt.who, got.Name)
+
+			if tt.words == 2 {
+				// The evidence travels with the word it belongs to, which is
+				// what sizes how far that word moves a control.
+				s.Require().Empty(got.Words[0].Evidence)
+				s.Require().Len(got.Words[1].Evidence, 1)
+			}
+		})
+	}
+}
+
+func TestIntentPublicTestSuite(
+	t *testing.T,
+) {
+	suite.Run(t, new(IntentPublicTestSuite))
 }
 
 func TestMakePublicTestSuite(

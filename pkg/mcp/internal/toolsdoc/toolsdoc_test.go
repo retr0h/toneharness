@@ -22,8 +22,10 @@ package toolsdoc
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/google/jsonschema-go/jsonschema"
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -247,6 +249,84 @@ func (s *ToolsdocTestSuite) page() Page {
 	s.Require().NoError(err)
 
 	return page
+}
+
+// TestATemplateThatFailsIsReported covers the error render can return.
+//
+// The shipped template is embedded and parsed at startup, so nothing a caller
+// does reaches this. A test can, by handing it one that asks for a field the
+// page has not got.
+func (s *ToolsdocTestSuite) TestATemplateThatFailsIsReported() {
+	_, err := Drawn(template.Must(template.New("x").Parse("{{ .Nope.Missing }}")), Page{})
+
+	s.Require().Error(err)
+	s.Require().Contains(err.Error(), "writing the MCP page")
+}
+
+// TestAContextAlreadyDoneIsReported covers listing the tools failing.
+//
+// The page is built by standing a server up in memory and asking it what it
+// offers, so the failure a caller could actually see is the context going away
+// underneath that.
+func (s *ToolsdocTestSuite) TestAContextAlreadyDoneIsReported() {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := Listed(ctx, false)
+	s.Require().Error(err)
+}
+
+// TestRenderReportsEachWayListingCanFail covers the three failures between
+// asking a server what it offers and having a page.
+//
+// The real lister stands a server up in memory and cannot be made to fail on
+// demand past a cancelled context, so each is provoked here instead: the first
+// listing failing, the second failing, and both succeeding with nothing to
+// report, which is a server that registered no tools at all.
+func (s *ToolsdocTestSuite) TestRenderReportsEachWayListingCanFail() {
+	boom := errors.New("no server")
+
+	tests := []struct {
+		name string
+		list func(context.Context, bool) ([]*gomcp.Tool, error)
+		want string
+	}{
+		{
+			name: "the first listing fails",
+			list: func(_ context.Context, _ bool) ([]*gomcp.Tool, error) {
+				return nil, boom
+			},
+			want: "no server",
+		},
+		{
+			name: "the second listing fails",
+			list: func(_ context.Context, writes bool) ([]*gomcp.Tool, error) {
+				if writes {
+					return nil, boom
+				}
+
+				return []*gomcp.Tool{{Name: "catalog_list"}}, nil
+			},
+			want: "no server",
+		},
+		{
+			name: "a server offering nothing",
+			list: func(_ context.Context, _ bool) ([]*gomcp.Tool, error) {
+				return nil, nil
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			_, err := Rendered(context.Background(), tt.list)
+			s.Require().Error(err)
+
+			if tt.want != "" {
+				s.Require().ErrorIs(err, boom)
+			}
+		})
+	}
 }
 
 func TestToolsdocTestSuite(

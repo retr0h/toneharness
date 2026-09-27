@@ -241,3 +241,65 @@ func axisOf(
 
 	return "", false
 }
+
+// Axis is one question the vocabulary asks, with the answers it accepts.
+type Axis struct {
+	// Name is the question, as the vocabulary names it.
+	Name string
+	// About is what the question is about.
+	About string
+	// Words are the answers, in order.
+	Words []Defined
+}
+
+// Defined is one word, what it means, and what it moves.
+type Defined struct {
+	// Term is the word itself, and Means what it describes.
+	Term  string
+	Means string
+	// Param is the control it moves and Block the kind of block that carries
+	// it, both empty for a word that moves nothing.
+	//
+	// Four of the ten axes describe the player and the instrument, and no
+	// amplifier, reverb or compressor has a control for them. A word from one
+	// of those is recorded and moves nothing, which a build says out loud.
+	Param string
+	Block string
+	// Steps is how far it moves that control, as a share of the step the
+	// corpus spread allows. Negative moves it down.
+	Steps float64
+}
+
+// Vocabulary is every axis and every word, with what each one moves.
+//
+// The shape a reference page needs. Words() answers "is this a word", which is
+// what a check wants; this answers "what are the words and what do they do",
+// which is what somebody writing an ask wants.
+func Vocabulary() []Axis {
+	var v vocabulary
+
+	// Embedded and written by this repository, so it parses.
+	_ = json.Unmarshal(terms, &v)
+
+	out := make([]Axis, 0, len(v.Axes))
+
+	for name, axis := range v.Axes {
+		words := make([]Defined, 0, len(axis.Terms))
+
+		for term, means := range axis.Terms {
+			one := Defined{Term: term, Means: means}
+			if t, moves := turns[term]; moves {
+				one.Param, one.Block, one.Steps = t.param, string(t.category), t.steps
+			}
+
+			words = append(words, one)
+		}
+
+		sort.Slice(words, func(i, j int) bool { return words[i].Term < words[j].Term })
+		out = append(out, Axis{Name: name, About: axis.About, Words: words})
+	}
+
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+
+	return out
+}

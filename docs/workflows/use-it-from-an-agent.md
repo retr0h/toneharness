@@ -19,6 +19,9 @@ refusal is part of the write: a file that appears while a build or an export is
 running is kept too. With it they replace the file, as `presets make` and
 `presets export` always do.
 
+[mcp.md](../mcp.md) is every tool the server offers, what each one takes and
+what it answers with, generated from the registration.
+
 The agent sees the rigs `recipes list` shows, your own recipes beside the ones
 that ship. `rigs_list`, `rig_show` and `preset_build` reach a rig you wrote with
 `recipes new` as soon as the file is there.

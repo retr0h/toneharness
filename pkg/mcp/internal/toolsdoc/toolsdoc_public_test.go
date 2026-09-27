@@ -61,7 +61,7 @@ func (s *ToolsdocPublicTestSuite) TestTheShippedPageIsCurrent() {
 	s.Require().NoError(err)
 
 	s.Require().Equal(s.page, string(got),
-		"docs/mcp.md is out of date — run `just generate`")
+		"docs/mcp.md is out of date. Run `just generate`")
 }
 
 // TestEveryToolTheServerOffersIsOnThePage covers the point of generating it.
@@ -195,6 +195,19 @@ func properties(
 	}
 
 	return props
+}
+
+// TestRenderReportsAContextThatIsDone covers the page failing to be built.
+//
+// Render stands a server up in memory twice, once with writes and once without,
+// so the context going away is the failure a caller sees rather than a template
+// problem.
+func (s *ToolsdocPublicTestSuite) TestRenderReportsAContextThatIsDone() {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := toolsdoc.Render(ctx)
+	s.Require().Error(err)
 }
 
 func TestToolsdocPublicTestSuite(

@@ -152,6 +152,62 @@ func (s *WordsPublicTestSuite) TestCheckAxes() {
 	}
 }
 
+// TestVocabularyPairsEveryWordWithWhatItMoves covers the shape a reference page
+// needs, which Words alone cannot answer.
+//
+// Words says whether a word exists. This says what it does, and the two have to
+// agree: a word in one and not the other is a word the page would omit or invent.
+func (s *WordsPublicTestSuite) TestVocabularyPairsEveryWordWithWhatItMoves() {
+	axes := compile.Vocabulary()
+	s.Require().NotEmpty(axes)
+
+	seen := map[string]bool{}
+
+	var acting, idle int
+
+	for _, axis := range axes {
+		s.Require().NotEmpty(axis.Name)
+		s.Require().NotEmpty(axis.About, "%s says nothing about itself", axis.Name)
+		s.Require().NotEmpty(axis.Words, "%s carries no words", axis.Name)
+
+		for _, w := range axis.Words {
+			s.Require().NotEmpty(w.Term)
+			s.Require().NotEmpty(w.Means, "%s means nothing", w.Term)
+			s.Require().False(seen[w.Term], "%s is on two axes", w.Term)
+
+			seen[w.Term] = true
+
+			// A word either names a control and a block or names neither. One
+			// without the other would move something nowhere.
+			if w.Param == "" {
+				s.Require().Empty(w.Block)
+				s.Require().Zero(w.Steps)
+
+				idle++
+
+				continue
+			}
+
+			s.Require().NotEmpty(w.Block, "%s moves %s on nothing", w.Term, w.Param)
+			s.Require().NotZero(w.Steps, "%s moves %s by nothing", w.Term, w.Param)
+
+			acting++
+		}
+	}
+
+	// The two lists are the same list.
+	for _, word := range compile.Words() {
+		s.Require().True(seen[word], "%s is a word and Vocabulary omits it", word)
+	}
+
+	s.Require().Len(seen, len(compile.Words()))
+
+	// Six axes act and four describe, so both kinds must be represented or the
+	// checks above passed over half the vocabulary.
+	s.Require().NotZero(acting)
+	s.Require().NotZero(idle)
+}
+
 func TestWordsPublicTestSuite(
 	t *testing.T,
 ) {

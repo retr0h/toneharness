@@ -667,7 +667,7 @@ type ToneSpec struct {
 
 	// Words How it should sound, in the words a person would use.
 	//
-	// Checked against the vocabulary a rig uses, because a word that reaches no control cannot be aimed at and saying so is better than accepting it and quietly doing nothing.
+	// Checked against the shipped vocabulary, because a word that reaches no control cannot be aimed at and saying so is better than accepting it and quietly doing nothing. docs/vocabulary.md lists every word and what each one moves.
 	Words *[]Word `json:"words,omitempty"`
 }
 

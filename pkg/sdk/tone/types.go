@@ -100,6 +100,27 @@ const (
 	ConfidenceHigh   = gen.ConfidenceHigh
 )
 
+// What kind of thing a piece of evidence is.
+const (
+	EvidenceAudio  = gen.EvidenceAudio
+	EvidenceCited  = gen.EvidenceCited
+	EvidenceCorpus = gen.EvidenceCorpus
+	EvidenceHeard  = gen.EvidenceHeard
+	EvidenceLLM    = gen.EvidenceLLM
+	EvidenceStore  = gen.EvidenceStore
+	EvidenceUser   = gen.EvidenceUser
+	EvidenceVideo  = gen.EvidenceVideo
+)
+
+// What an ask is about.
+const (
+	KindArtist = gen.KindArtist
+	KindBand   = gen.KindBand
+	KindGenre  = gen.KindGenre
+	KindSong   = gen.KindSong
+	KindSound  = gen.KindSound
+)
+
 // What sets the string moving.
 const (
 	AttackPick    = gen.AttackPick

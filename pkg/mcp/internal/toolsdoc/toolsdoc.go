@@ -135,12 +135,24 @@ type Page struct {
 func Render(
 	ctx context.Context,
 ) ([]byte, error) {
-	held, err := listed(ctx, false)
+	return rendered(ctx, listed)
+}
+
+// lister is what answers "which tools does a server offer", so a test can hand
+// back a failure or an empty set. The real one stands a server up in memory.
+type lister func(ctx context.Context, allowWrites bool) ([]*gomcp.Tool, error)
+
+// rendered builds the page from whatever lists the tools.
+func rendered(
+	ctx context.Context,
+	list lister,
+) ([]byte, error) {
+	held, err := list(ctx, false)
 	if err != nil {
 		return nil, err
 	}
 
-	all, err := listed(ctx, true)
+	all, err := list(ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -157,8 +169,20 @@ func Render(
 func render(
 	page Page,
 ) ([]byte, error) {
+	return drawn(tmpl, page)
+}
+
+// drawn puts a page through one template, so a test can hand it one that fails.
+//
+// The template this ships is embedded and parsed at startup, so nothing a caller
+// does provokes the error below. Reaching it any other way would leave a claim
+// nobody can check.
+func drawn(
+	with *template.Template,
+	page Page,
+) ([]byte, error) {
 	var out bytes.Buffer
-	if err := tmpl.Execute(&out, page); err != nil {
+	if err := with.Execute(&out, page); err != nil {
 		return nil, fmt.Errorf("writing the MCP page: %w", err)
 	}
 
@@ -211,9 +235,10 @@ func read(
 
 // listed is every tool an agent connecting to the server is offered.
 //
-// Over the library's in-memory transport, because the server exports no list
-// and a client session is how the answer is arrived at anywhere else. The
-// iterator rather than one call, so a page size the library chooses cannot
+// Over the library's in-memory transport, because the server exports no list of
+// its tools. A session is also what every test here asks through, so the page
+// reports what an agent is handed rather than what the registration meant. The
+// iterator rather than one call, so a page size the library picks cannot
 // silently truncate the reference.
 //
 // The tools are registered against a nil Client. Listing calls no handler, so
@@ -286,8 +311,8 @@ func toolOf(
 
 // writes says what calling a tool can change.
 //
-// The gate first, because it is the strongest claim: the server withholding a
-// tool is a stronger statement than an annotation about what it would do.
+// The gate comes first. A server that withholds a tool has said more about it
+// than any annotation on it could.
 func writes(
 	a *gomcp.ToolAnnotations,
 	gated bool,
