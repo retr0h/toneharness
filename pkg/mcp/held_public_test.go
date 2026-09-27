@@ -142,7 +142,7 @@ func (s *HeldPublicTestSuite) TestHeld() {
 
 			if tt.call {
 				_, err := agent.CallTool(context.Background(), &gomcp.CallToolParams{
-					Name:      "presets_list",
+					Name:      "slots_list",
 					Arguments: map[string]any{},
 				})
 				s.Require().NoError(err)

@@ -47,12 +47,12 @@ import (
 type Spread struct {
 	// Low is the tenth percentile: all but the lowest tenth of windows are
 	// above this.
-	Low float64
+	Low float64 `json:"low"`
 	// Mid is the median, the middle window.
-	Mid float64
+	Mid float64 `json:"mid"`
 	// High is the ninetieth percentile: all but the highest tenth are below
 	// it.
-	High float64
+	High float64 `json:"high"`
 }
 
 // Reading is a measurement a recording may not have allowed.
@@ -67,10 +67,10 @@ type Spread struct {
 // indistinguishable from one somebody did. Known is what separates them.
 type Reading struct {
 	// Value is the measurement, when there was one.
-	Value float64
+	Value float64 `json:"value"`
 	// Known says whether the recording answered at all. Value means nothing
 	// when it is false.
-	Known bool
+	Known bool `json:"known"`
 }
 
 // Profile is what a recording measures as.
@@ -79,45 +79,47 @@ type Reading struct {
 // get the same answer. Nothing here is an opinion.
 type Profile struct {
 	// Seconds is how long the measured audio runs.
-	Seconds float64
+	Seconds float64 `json:"seconds"`
 	// Rate is the sample rate it was measured at.
-	Rate int
+	Rate int `json:"rate"`
 
 	// Low, Mid and High are the share of energy in each band, summing to one.
 	//
 	// For a bass the interesting one is Low: where the fundamental sits. Mid
 	// carries the note's body and the growl of any distortion, and High is
 	// string noise, pick attack and air.
-	Low, Mid, High float64
+	Low  float64 `json:"low"`
+	Mid  float64 `json:"mid"`
+	High float64 `json:"high"`
 
 	// Centroid is the centre of gravity of the spectrum, in hertz.
 	//
 	// Where the sound sits. A dub bass and a Rickenbacker played with a pick
 	// can hold the same note and land hundreds of hertz apart here.
-	Centroid float64
+	Centroid float64 `json:"centroid"`
 
 	// Transient is how sharply notes start, from zero to one.
 	//
 	// The share of the signal's rises that are sudden rather than gradual.
 	// Fingers are lower, a pick is higher, a slap higher still. Unknown when
 	// the recording starts at its loudest, because nothing rose.
-	Transient Reading
+	Transient Reading `json:"transient"`
 
 	// Decay is how long a note takes to fall to a quarter of its peak, in
 	// seconds. Muted playing is short, a ringing open string is long. Unknown
 	// when it never falls that far before the recording ends.
-	Decay Reading
+	Decay Reading `json:"decay"`
 
 	// DynamicRange is the gap between the loudest and the typical moment, in
 	// decibels. A heavily compressed part is a small number.
-	DynamicRange float64
+	DynamicRange float64 `json:"dynamic_range"`
 
 	// Harmonics is the share of energy above the fundamental, from zero to
 	// one. A clean note is low, a distorted one is high.
-	Harmonics Spread
+	Harmonics Spread `json:"harmonics"`
 	// EvenOdd leans positive when even harmonics dominate and negative when
 	// odd ones do. Even is the warmth of a valve; odd is the edge of a fuzz.
-	EvenOdd Spread
+	EvenOdd Spread `json:"even_odd"`
 }
 
 // Band edges, in hertz.

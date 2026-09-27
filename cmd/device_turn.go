@@ -76,18 +76,12 @@ distance runs one to twelve inches.`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		pedal.claim()
 
-		at := sdk.Address{
-			// The wire counts the grid, where slot 0 holds the input and a
-			// chain's first block is 1, so a position `presets show` reports
-			// is one less than the number the device answers to. Measured on
-			// an HX Stomp: `--block 5` moved the block at position 4 and
-			// `--block 0` was refused with error -3. The arithmetic lives here
-			// so that one number means one thing everywhere a person sees it.
-			Block:  presetsTurnBlock + 1,
-			Param:  presetsTurnParam,
-			Model:  presetsTurnModel,
-			Direct: presetsTurnDirect,
-		}
+		// sdk.Control takes the position `presets show` reports and does the
+		// arithmetic to the wire's own number, which is the one place that
+		// conversion lives.
+		at := sdk.Control(presetsTurnBlock, presetsTurnParam)
+		at.Model = presetsTurnModel
+		at.Direct = presetsTurnDirect
 
 		// Which of the three the device is sent is decided here, because a
 		// device does not coerce: the value's tag is its type on the wire,

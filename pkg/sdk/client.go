@@ -668,3 +668,50 @@ func (c *Client) MeasuredGenres(
 
 	return audio.GenresMeasured(os.DirFS(corpus), ".")
 }
+
+// MeasuredPlayers is what each player's records measure as, and the words that
+// earns them against the others.
+//
+// A word is earned by sitting clear of the other players, so one player alone
+// earns nothing: there is nobody to be clear of. Point this at one instrument,
+// because a bass centroid sits an octave below a guitar's and a corpus holding
+// both would earn every bassist "dark" and mean nothing by it.
+//
+// Reads the recordings, which costs minutes per record. MusicPlayers answers
+// what the corpus holds for the price of a file read.
+func (c *Client) MeasuredPlayers(
+	ctx context.Context,
+	corpus string,
+) ([]audio.Player, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	return audio.Corpus(os.DirFS(corpus), ".")
+}
+
+// MeasuredRecordings is what a directory of recordings measures as, one entry
+// per file and the figures they make together.
+//
+// Separate the instrument out first. A mix measures the band, so a figure taken
+// from one describes the arrangement rather than the player.
+func (c *Client) MeasuredRecordings(
+	ctx context.Context,
+	dir string,
+) ([]audio.Named, audio.Across, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, audio.Across{}, err
+	}
+
+	got, err := audio.MeasureAll(os.DirFS(dir), ".")
+	if err != nil {
+		return nil, audio.Across{}, err
+	}
+
+	all := make([]audio.Profile, 0, len(got))
+	for _, one := range got {
+		all = append(all, one.Profile)
+	}
+
+	return got, audio.Together(all), nil
+}

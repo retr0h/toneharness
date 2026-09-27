@@ -79,6 +79,16 @@ func (*Compiler) Sections(
 	return Sections(doc, spec, made, blocks, cat)
 }
 
+// Moves turns what a rig says a foot reaches into a plan's assignments.
+func (*Compiler) Moves(
+	made *plan.Plan,
+	spec rig.Spec,
+	blocks []plan.Block,
+	cat *catalog.Catalog,
+) error {
+	return Moves(made, spec, blocks, cat)
+}
+
 // Controllers writes what an expression pedal or footswitch moves.
 func (*Compiler) Controllers(
 	doc *preset.Document,

@@ -61,8 +61,8 @@ type step struct {
 func (s *PedalPublicTestSuite) TestOnPedal() {
 	listing := sdk.Listing{Slots: []sdk.Held{{}}}
 	gone := fmt.Errorf("%w: reading from the device: gone", sdk.ErrBus)
-	list := step{tool: "presets_list", args: tools.None{}}
-	listFails := step{tool: "presets_list", args: tools.None{}, err: true}
+	list := step{tool: "slots_list", args: tools.None{}}
+	listFails := step{tool: "slots_list", args: tools.None{}, err: true}
 
 	tests := []struct {
 		name string
@@ -86,8 +86,8 @@ func (s *PedalPublicTestSuite) TestOnPedal() {
 			},
 			steps: []step{
 				list,
-				{tool: "preset_show", args: tools.Slot{Slot: "01A"}},
-				{tool: "preset_select", args: tools.Slot{Slot: "01A"}},
+				{tool: "presets_show", args: tools.Slot{Slot: "01A"}},
+				{tool: "device_select", args: tools.Slot{Slot: "01A"}},
 			},
 		},
 		{
@@ -109,7 +109,7 @@ func (s *PedalPublicTestSuite) TestOnPedal() {
 				second.EXPECT().Presets(gomock.Any(), 0).Return(listing, nil)
 				second.EXPECT().Close().Return(nil).MaxTimes(1)
 			},
-			steps: []step{list, {tool: "presets_list", args: tools.None{}, afterIdle: true}},
+			steps: []step{list, {tool: "slots_list", args: tools.None{}, afterIdle: true}},
 		},
 		{
 			// The Session is finished, so it is let go, and the error is
@@ -249,7 +249,7 @@ func (s *PedalPublicTestSuite) TestClose() {
 			session, pedal := connectIdle(s.T(), c, false, time.Hour)
 
 			if tt.open {
-				s.False(call(s.T(), session, "presets_list", tools.None{}).IsError)
+				s.False(call(s.T(), session, "slots_list", tools.None{}).IsError)
 			}
 
 			if tt.err != nil {
@@ -262,7 +262,7 @@ func (s *PedalPublicTestSuite) TestClose() {
 
 			// A call that arrives after the server let go does not claim the
 			// pedal again.
-			res := call(s.T(), session, "presets_list", tools.None{})
+			res := call(s.T(), session, "slots_list", tools.None{})
 			s.True(res.IsError)
 			s.Contains(text(s.T(), res), "the server has stopped")
 		})

@@ -603,6 +603,82 @@ components:
       required: [controller, block, parameter]
       additionalProperties: false
 
+    Move:
+      type: object
+      description: >
+        One control something sweeps, said portably: what moves it, which piece
+        of gear, and which of the rig's own setting words.
+
+
+        The counterpart of `sections`, and portable for the same reason. A
+        plan's `controllers` names a block by its position and a parameter by
+        the name one manufacturer gives it, and neither exists until a device
+        has been chosen. A rig names a role and a setting word, which mean the
+        same thing on any hardware, and the build turns the pair into the
+        numbers the device wants.
+
+
+        So a rig can finally say "the pedal under my foot is on the amp's
+        drive", which is a fact about how somebody plays rather than about a
+        Helix, and two people compiling the same rig get the same assignment.
+      properties:
+        by:
+          type: string
+          enum: [expression, footswitch]
+          description: >
+            What moves it. `expression` is a pedal, `footswitch` is a switch set
+            to sweep a knob rather than turn a block on and off.
+
+
+            Named rather than numbered, because the number is one device's:
+            an expression pedal reads 2 on an HX Stomp and a rig saying 2 would
+            be saying something about that pedal instead of about the music.
+        role:
+          $ref: "#/components/schemas/Role"
+          description: >
+            Which piece of gear it moves, by what that gear does. The first
+            block in the chain with this role, the same way a word on the ask
+            reaches the first amplifier.
+
+
+            A role the chain has no block for is refused, because a rig
+            assigning a pedal to a drive it does not have describes a pedal
+            that does nothing.
+        setting:
+          type: string
+          enum: [drive, bass, mid, treble, presence, level, mix]
+          description: >
+            Which control, in the same vocabulary `settings` uses, so it lands
+            on whichever parameter the model has for the word: `drive` reaches
+            a Drive or a Gain, `level` reaches a Level, a Ch Vol, a Master, a
+            Volume or an Output.
+
+
+            A word the model has no control for is refused with the words it
+            does take, exactly as a setting is.
+        min:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: >
+            What the control reads with the pedal at rest, from 0 to 1 over the
+            control's own range. Omitted means the bottom of it.
+        max:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: >
+            What it reads with the pedal all the way over. Omitted means the top
+            of the control's range, which is the full sweep.
+        no_snapshot:
+          type: boolean
+          description: >
+            Whether snapshots leave the assignment alone, which keeps a section
+            change from moving the pedal out from under your foot. Omitted means
+            they move it.
+      required: [by, role, setting]
+      additionalProperties: false
+
     Footswitch:
       type: object
       additionalProperties: false
@@ -967,3 +1043,19 @@ components:
             both would have to pick one without saying so. A device has a fixed
             number of snapshots, three on an HX Stomp, and more sections than
             that will not build.
+        moves:
+          type: array
+          items: { $ref: "#/components/schemas/Move" }
+          description: >
+            What an expression pedal or a footswitch sweeps, by role and setting
+            word.
+
+
+            Beside `sections` and portable for the same reason: both say what
+            somebody does rather than what a device holds. A plan's
+            `controllers` is what these become once a device has been chosen,
+            and a rig read off a device carries those rather than these.
+
+
+            A rig may say both, because they answer different questions: a
+            section is which blocks play, a move is which knob a foot reaches.

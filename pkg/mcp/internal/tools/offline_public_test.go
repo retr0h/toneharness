@@ -89,7 +89,7 @@ var errUnreadable = errors.New("catalog unreadable")
 
 // TestCatalogSearch covers finding blocks.
 func (s *OfflinePublicTestSuite) TestCatalogSearch() {
-	s.run("catalog_search", []row{
+	s.run("catalog_list", []row{
 		{
 			name: "blocks that match",
 			args: tools.Search{Subcategory: "Bass", Search: "SVT"},
@@ -120,7 +120,7 @@ func (s *OfflinePublicTestSuite) TestCatalogSearch() {
 
 // TestCatalogBlock covers reading one block.
 func (s *OfflinePublicTestSuite) TestCatalogBlock() {
-	s.run("catalog_block", []row{
+	s.run("catalog_show", []row{
 		{
 			name: "a block the catalog has",
 			args: tools.ID{ID: "HD2_AmpSVBeastBrt"},
@@ -148,7 +148,7 @@ func (s *OfflinePublicTestSuite) TestCatalogBlock() {
 					Block(gomock.Any(), "HD2_Nope").
 					Return(catalog.Block{}, fmt.Errorf("%w %q", sdk.ErrNoSuchBlock, "HD2_Nope"))
 			},
-			want: "call catalog_search",
+			want: "call catalog_list",
 			err:  true,
 		},
 		{
@@ -172,7 +172,7 @@ func (s *OfflinePublicTestSuite) TestCorpusModel() {
 		id: {ID: id, Name: "Ampeg SVT Brt", Params: map[string]catalog.Param{}},
 	}}
 
-	s.run("corpus_model", []row{
+	s.run("corpus_presets_show", []row{
 		{
 			name: "a model the corpus measured",
 			args: tools.ID{ID: string(id)},
@@ -323,7 +323,7 @@ func (s *OfflinePublicTestSuite) TestToneBuild() {
 
 // TestRigShow covers reading one rig.
 func (s *OfflinePublicTestSuite) TestRigShow() {
-	s.run("rig_show", []row{
+	s.run("rigs_show", []row{
 		{
 			name: "a rig that ships",
 			args: tools.ID{ID: "mike-dirnt"},
@@ -363,7 +363,7 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 	// A rig that builds, so a real compile has something to write.
 	rigFile := filepath.Join("..", "..", "..", "..", "examples", "rigspec", "mike-dirnt.yaml")
 
-	s.run("preset_make", []row{
+	s.run("presets_make", []row{
 		{
 			name: "a path nothing is at",
 			args: tools.Make{RigID: "mike-dirnt", Out: fresh},
@@ -453,7 +453,7 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 			},
 			want: "wrote mike.hlx from rig mike-dirnt",
 			check: func(s *OfflinePublicTestSuite, res *gomcp.CallToolResult) {
-				var got tools.Built
+				var got tools.Outcome
 				structured(s.T(), res, &got)
 				s.NotNil(got.FromShipped)
 				s.Nil(got.FromRig)
@@ -471,7 +471,7 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 			},
 			want: "wrote mine.hlx from mine.yaml",
 			check: func(s *OfflinePublicTestSuite, res *gomcp.CallToolResult) {
-				var got tools.Built
+				var got tools.Outcome
 				structured(s.T(), res, &got)
 				s.NotNil(got.FromRig)
 			},

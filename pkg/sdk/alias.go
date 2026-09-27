@@ -156,3 +156,21 @@ type (
 
 // MeasuredGenre is one genre measured against the players who do not play it.
 type MeasuredGenre = audio.Genre
+
+// At addresses one control by the position a preset records for its block.
+//
+// The one place the arithmetic between the two numbers lives. A device lays a
+// preset out on a grid that keeps the input at 0, so a block a preset records
+// at position P answers to P+1 on the wire, and Address.Block is the wire's
+// number. Measured on an HX Stomp: addressing 5 moved the block recorded at
+// position 4, and addressing 0 was refused because the input is not a block.
+//
+// Every caller that speaks positions goes through this. Both the CLI and the
+// MCP server did the +1 themselves for a while, which is two copies of a fact
+// and the shape of bug where one of them is corrected and the other is not.
+func Control(
+	block int,
+	param int,
+) Address {
+	return Address{Block: block + 1, Param: param, Direct: true}
+}

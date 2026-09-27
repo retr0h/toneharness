@@ -32,11 +32,49 @@ sections that produced them.
 **The fields are not called `on` and `off`** because the YAML reader takes those
 words as true and false, so the lists would vanish without an error.
 
-## Controllers are the plan's
+## A rig says what a foot reaches, in `moves`
 
-An expression pedal assignment names a block number and a device parameter, and
-neither exists until the compiler has chosen the models. There is nowhere in a
-portable rig to put one.
+```yaml
+moves:
+  - by: expression
+    role: amp
+    setting: drive
+    min: 0.3
+    max: 0.85
+    no_snapshot: true
+```
+
+The counterpart of `sections`, and portable for the same reason: a role and a
+setting word mean the same thing on any hardware, where a block number and one
+manufacturer's parameter name do not.
+
+`by` is `expression` or `footswitch`, **named rather than numbered**, because the
+number is one family's: an expression pedal reads 2 on an HX Stomp and a rig
+saying 2 would be describing that pedal instead of the music. `role` reaches the
+first block in the built chain with it, the way a word on the ask reaches the
+first amplifier. `setting` is the same vocabulary `settings` uses, so it lands on
+whichever control the model has for the word, and a move and a setting on one
+word reach the same knob.
+
+`min` and `max` are over the control's own range, and leaving them out gives the
+full sweep. Three things are refused: a role the chain has no block for, a
+setting the model has no control for, and two moves claiming the same mover,
+because one pedal cannot be on two knobs.
+
+**One caveat that is real today.** A move survives into a preset file and reads
+back out of one, but it does not reach a pedal over USB yet: the wire writer does
+not write that section. So a built file is right and the hardware will not show
+the assignment. Say which of those you have.
+
+## What a plan carries instead
+
+A plan's `controllers` is what a move becomes once a device has been chosen, and
+what a rig read off a device carries. A rig may say one or the other, never both:
+a move is what somebody wants and a controller is what a device stored, and a
+build given both would have to pick one without saying so.
+
+An assignment names a block number and a device parameter, and neither exists
+until the compiler has chosen the models.
 
 ```yaml
 controllers:

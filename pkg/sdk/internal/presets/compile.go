@@ -166,6 +166,13 @@ func readOne(
 		return plan.Plan{}, "", 0, err
 	}
 
+	// After realising, because a move names a role and a role has no position
+	// until the chain is laid out. Nothing fits on this path, so the position
+	// Realise gave each block is the one the preset gets.
+	if err := opts.compiler().Moves(&made, spec, made.Blocks, cat); err != nil {
+		return plan.Plan{}, "", 0, err
+	}
+
 	return made, spec.ID, len(spec.Chain), nil
 }
 

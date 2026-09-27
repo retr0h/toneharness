@@ -45,6 +45,25 @@ mise exec -- go run main.go tone build --ask request.yaml --json
 A Plan has no contract, and that is the rule behind the split: **becoming a file
 is not what earns a contract. Being typed by somebody is.**
 
+## Two surfaces, one SDK
+
+Every command here has a tool beside it over MCP, named after the command:
+`device select` is `device_select`, `corpus music genres` is
+`corpus_music_genres`. Use whichever the session offers. **The tools are the
+same operations, not a reimplementation**: both surfaces call `pkg/sdk` and
+answer with the same types, and a test walks the command tree against the
+registered tools both ways, so neither can quietly gain a capability the other
+lacks.
+
+`.mcp.json` starts the server with `go run`, so it compiles the working tree
+every launch and cannot serve a stale binary.
+
+Three commands have no tool, and the reason is in that test's exempt list:
+`measure blocks`, `measure controls` and `measure names` are sweeps. One reading
+is about eight seconds, so a twelve-control amplifier is most of an hour, and a
+tool that blocks that long is not one anybody can use. Run those from a terminal
+where the progress shows and Ctrl-C reaches the session holding the pedal.
+
 ## 3. Route
 
 | The question                                                     | Read                                                      |

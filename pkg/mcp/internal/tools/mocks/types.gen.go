@@ -15,6 +15,7 @@ import (
 
 	tools "github.com/retr0h/toneharness/pkg/mcp/internal/tools"
 	sdk "github.com/retr0h/toneharness/pkg/sdk"
+	audio "github.com/retr0h/toneharness/pkg/sdk/audio"
 	catalog "github.com/retr0h/toneharness/pkg/sdk/catalog"
 	slot "github.com/retr0h/toneharness/pkg/sdk/slot"
 	gomock "go.uber.org/mock/gomock"
@@ -42,6 +43,21 @@ func NewMockClient(ctrl *gomock.Controller) *MockClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
+}
+
+// Backing mocks base method.
+func (m *MockClient) Backing(ctx context.Context, corpus string) ([]sdk.Backing, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Backing", ctx, corpus)
+	ret0, _ := ret[0].([]sdk.Backing)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Backing indicates an expected call of Backing.
+func (mr *MockClientMockRecorder) Backing(ctx, corpus any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Backing", reflect.TypeOf((*MockClient)(nil).Backing), ctx, corpus)
 }
 
 // Block mocks base method.
@@ -72,6 +88,21 @@ func (m *MockClient) Blocks(ctx context.Context, f sdk.Filter) (sdk.Blocks, erro
 func (mr *MockClientMockRecorder) Blocks(ctx, f any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Blocks", reflect.TypeOf((*MockClient)(nil).Blocks), ctx, f)
+}
+
+// ChainMeasurements mocks base method.
+func (m *MockClient) ChainMeasurements(ctx context.Context, instrument string) (sdk.Measured, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChainMeasurements", ctx, instrument)
+	ret0, _ := ret[0].(sdk.Measured)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ChainMeasurements indicates an expected call of ChainMeasurements.
+func (mr *MockClientMockRecorder) ChainMeasurements(ctx, instrument any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChainMeasurements", reflect.TypeOf((*MockClient)(nil).ChainMeasurements), ctx, instrument)
 }
 
 // Compile mocks base method.
@@ -119,6 +150,52 @@ func (mr *MockClientMockRecorder) Make(ctx, rigID, out, existing any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Make", reflect.TypeOf((*MockClient)(nil).Make), ctx, rigID, out, existing)
 }
 
+// MeasuredGenres mocks base method.
+func (m *MockClient) MeasuredGenres(ctx context.Context, corpus string) ([]audio.Genre, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MeasuredGenres", ctx, corpus)
+	ret0, _ := ret[0].([]audio.Genre)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MeasuredGenres indicates an expected call of MeasuredGenres.
+func (mr *MockClientMockRecorder) MeasuredGenres(ctx, corpus any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MeasuredGenres", reflect.TypeOf((*MockClient)(nil).MeasuredGenres), ctx, corpus)
+}
+
+// MeasuredPlayers mocks base method.
+func (m *MockClient) MeasuredPlayers(ctx context.Context, corpus string) ([]audio.Player, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MeasuredPlayers", ctx, corpus)
+	ret0, _ := ret[0].([]audio.Player)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MeasuredPlayers indicates an expected call of MeasuredPlayers.
+func (mr *MockClientMockRecorder) MeasuredPlayers(ctx, corpus any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MeasuredPlayers", reflect.TypeOf((*MockClient)(nil).MeasuredPlayers), ctx, corpus)
+}
+
+// MeasuredRecordings mocks base method.
+func (m *MockClient) MeasuredRecordings(ctx context.Context, dir string) ([]audio.Named, audio.Across, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MeasuredRecordings", ctx, dir)
+	ret0, _ := ret[0].([]audio.Named)
+	ret1, _ := ret[1].(audio.Across)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// MeasuredRecordings indicates an expected call of MeasuredRecordings.
+func (mr *MockClientMockRecorder) MeasuredRecordings(ctx, dir any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MeasuredRecordings", reflect.TypeOf((*MockClient)(nil).MeasuredRecordings), ctx, dir)
+}
+
 // ModelMeasurements mocks base method.
 func (m *MockClient) ModelMeasurements(ctx context.Context, model string) (sdk.Measured, error) {
 	m.ctrl.T.Helper()
@@ -132,6 +209,66 @@ func (m *MockClient) ModelMeasurements(ctx context.Context, model string) (sdk.M
 func (mr *MockClientMockRecorder) ModelMeasurements(ctx, model any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ModelMeasurements", reflect.TypeOf((*MockClient)(nil).ModelMeasurements), ctx, model)
+}
+
+// MusicBands mocks base method.
+func (m *MockClient) MusicBands(ctx context.Context, corpus string) ([]sdk.MusicGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MusicBands", ctx, corpus)
+	ret0, _ := ret[0].([]sdk.MusicGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MusicBands indicates an expected call of MusicBands.
+func (mr *MockClientMockRecorder) MusicBands(ctx, corpus any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MusicBands", reflect.TypeOf((*MockClient)(nil).MusicBands), ctx, corpus)
+}
+
+// MusicGenres mocks base method.
+func (m *MockClient) MusicGenres(ctx context.Context, corpus string) ([]sdk.MusicGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MusicGenres", ctx, corpus)
+	ret0, _ := ret[0].([]sdk.MusicGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MusicGenres indicates an expected call of MusicGenres.
+func (mr *MockClientMockRecorder) MusicGenres(ctx, corpus any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MusicGenres", reflect.TypeOf((*MockClient)(nil).MusicGenres), ctx, corpus)
+}
+
+// MusicPlayers mocks base method.
+func (m *MockClient) MusicPlayers(ctx context.Context, corpus string) ([]sdk.MusicPlayer, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MusicPlayers", ctx, corpus)
+	ret0, _ := ret[0].([]sdk.MusicPlayer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MusicPlayers indicates an expected call of MusicPlayers.
+func (mr *MockClientMockRecorder) MusicPlayers(ctx, corpus any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MusicPlayers", reflect.TypeOf((*MockClient)(nil).MusicPlayers), ctx, corpus)
+}
+
+// MusicRecords mocks base method.
+func (m *MockClient) MusicRecords(ctx context.Context, corpus string) ([]sdk.MusicRecord, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MusicRecords", ctx, corpus)
+	ret0, _ := ret[0].([]sdk.MusicRecord)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MusicRecords indicates an expected call of MusicRecords.
+func (mr *MockClientMockRecorder) MusicRecords(ctx, corpus any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MusicRecords", reflect.TypeOf((*MockClient)(nil).MusicRecords), ctx, corpus)
 }
 
 // Open mocks base method.
@@ -179,6 +316,21 @@ func (mr *MockClientMockRecorder) Rigs(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rigs", reflect.TypeOf((*MockClient)(nil).Rigs), ctx)
 }
 
+// Scaffold mocks base method.
+func (m *MockClient) Scaffold(ctx context.Context, in sdk.NewRig) (sdk.Scaffolded, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Scaffold", ctx, in)
+	ret0, _ := ret[0].(sdk.Scaffolded)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Scaffold indicates an expected call of Scaffold.
+func (mr *MockClientMockRecorder) Scaffold(ctx, in any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scaffold", reflect.TypeOf((*MockClient)(nil).Scaffold), ctx, in)
+}
+
 // Tone mocks base method.
 func (m *MockClient) Tone(ctx context.Context, in sdk.Ask) (sdk.Resolved, error) {
 	m.ctrl.T.Helper()
@@ -218,6 +370,20 @@ func (m *MockSession) EXPECT() *MockSessionMockRecorder {
 	return m.recorder
 }
 
+// Choose mocks base method.
+func (m *MockSession) Choose(ctx context.Context, at sdk.Address, value int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Choose", ctx, at, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Choose indicates an expected call of Choose.
+func (mr *MockSessionMockRecorder) Choose(ctx, at, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Choose", reflect.TypeOf((*MockSession)(nil).Choose), ctx, at, value)
+}
+
 // Close mocks base method.
 func (m *MockSession) Close() error {
 	m.ctrl.T.Helper()
@@ -245,6 +411,21 @@ func (m *MockSession) Copy(ctx context.Context, from, to slot.Address) (sdk.Chan
 func (mr *MockSessionMockRecorder) Copy(ctx, from, to any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Copy", reflect.TypeOf((*MockSession)(nil).Copy), ctx, from, to)
+}
+
+// Current mocks base method.
+func (m *MockSession) Current(ctx context.Context, as sdk.Format) (sdk.Reading, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Current", ctx, as)
+	ret0, _ := ret[0].(sdk.Reading)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Current indicates an expected call of Current.
+func (mr *MockSessionMockRecorder) Current(ctx, as any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Current", reflect.TypeOf((*MockSession)(nil).Current), ctx, as)
 }
 
 // Export mocks base method.
@@ -275,6 +456,20 @@ func (m *MockSession) Import(ctx context.Context, file string, at slot.Address) 
 func (mr *MockSessionMockRecorder) Import(ctx, file, at any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Import", reflect.TypeOf((*MockSession)(nil).Import), ctx, file, at)
+}
+
+// Play mocks base method.
+func (m *MockSession) Play(ctx context.Context, file string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Play", ctx, file)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Play indicates an expected call of Play.
+func (mr *MockSessionMockRecorder) Play(ctx, file any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockSession)(nil).Play), ctx, file)
 }
 
 // Preset mocks base method.
@@ -335,4 +530,32 @@ func (m *MockSession) Swap(ctx context.Context, a, b slot.Address) (sdk.Change, 
 func (mr *MockSessionMockRecorder) Swap(ctx, a, b any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Swap", reflect.TypeOf((*MockSession)(nil).Swap), ctx, a, b)
+}
+
+// Switch mocks base method.
+func (m *MockSession) Switch(ctx context.Context, at sdk.Address, on bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Switch", ctx, at, on)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Switch indicates an expected call of Switch.
+func (mr *MockSessionMockRecorder) Switch(ctx, at, on any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Switch", reflect.TypeOf((*MockSession)(nil).Switch), ctx, at, on)
+}
+
+// Turn mocks base method.
+func (m *MockSession) Turn(ctx context.Context, at sdk.Address, value float32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Turn", ctx, at, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Turn indicates an expected call of Turn.
+func (mr *MockSessionMockRecorder) Turn(ctx, at, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Turn", reflect.TypeOf((*MockSession)(nil).Turn), ctx, at, value)
 }

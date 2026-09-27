@@ -132,21 +132,21 @@ type Manifest struct {
 // one type rather than two that drift.
 type Grouped struct {
 	// Name is the word or the band, as the manifests spell it.
-	Name string
+	Name string `json:"name"`
 	// Slug is what a path or a flag says, which is what grouping is done on.
-	Slug string
+	Slug string `json:"slug"`
 	// Records is how many recordings carry it, and Who the players those come
 	// from, in order. The count is Artists, which is len(Who) and kept because
 	// the threshold is stated as a number.
-	Records int
-	Artists int
-	Who     []string
+	Records int      `json:"records"`
+	Artists int      `json:"artists"`
+	Who     []string `json:"who"`
 	// Unsighted is how many of those records a model tagged and nobody checked.
 	//
 	// Reported rather than deducted. A genre reaching the threshold entirely on
 	// a model's guesses still reaches it, and somebody should know that before
 	// aiming at it.
-	Unsighted int
+	Unsighted int `json:"unsighted"`
 }
 
 // Usable reports whether this genre has a distribution worth aiming at.

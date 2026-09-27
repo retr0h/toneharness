@@ -128,12 +128,13 @@ func Make(
 		return result.Made{}, err
 	}
 
-	// After the fit, because the fit decides which position a block ends up at.
-	//
-	// Both of these do nothing on this path today: Resolve builds no
-	// assignments, because nothing a person writes can state one. They are the
-	// seam that lights up when something can, and Lower runs them for a plan
-	// that arrived from a file.
+	// After the fit, because the fit decides which position a block ends up
+	// at: a move names a role and the role's block only has a position once
+	// the chain is laid out.
+	if err := opts.compiler().Moves(&spec, rec, spec.Blocks, cat); err != nil {
+		return result.Made{}, err
+	}
+
 	opts.compiler().Controllers(doc, spec, spec.Blocks, cat)
 
 	opts.compiler().Footswitches(doc, spec, cat)

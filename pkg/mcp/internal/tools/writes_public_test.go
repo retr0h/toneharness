@@ -84,7 +84,7 @@ func (s *WritesPublicTestSuite) run(
 
 // TestPresetImport covers putting a file into a slot.
 func (s *WritesPublicTestSuite) TestPresetImport() {
-	s.run("preset_import", []deviceRow{
+	s.run("slots_import", []deviceRow{
 		{
 			name: "a preset into a slot",
 			args: tools.Put{Preset: "mike.hlx", Slot: "01A"},
@@ -111,7 +111,7 @@ func (s *WritesPublicTestSuite) TestPresetImport() {
 
 // TestPresetsCopy covers copying a slot.
 func (s *WritesPublicTestSuite) TestPresetsCopy() {
-	s.run("presets_copy", []deviceRow{
+	s.run("slots_copy", []deviceRow{
 		{
 			name: "one slot onto another",
 			args: tools.Move{From: "01A", To: "01B"},
@@ -143,7 +143,7 @@ func (s *WritesPublicTestSuite) TestPresetsCopy() {
 
 // TestPresetsSwap covers exchanging two slots.
 func (s *WritesPublicTestSuite) TestPresetsSwap() {
-	s.run("presets_swap", []deviceRow{
+	s.run("slots_swap", []deviceRow{
 		{
 			name: "two slots",
 			args: tools.Move{From: "01A", To: "01B"},

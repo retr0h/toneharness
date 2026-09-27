@@ -362,6 +362,9 @@ func (s *CompilePublicTestSuite) TestCompile() {
 				compiler.EXPECT().Realise(gomock.Any(), gomock.Any()).
 					DoAndReturn(compile.New().Realise)
 				compiler.EXPECT().
+					Moves(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(compile.New().Moves)
+				compiler.EXPECT().
 					Lower(gomock.Any(), gomock.Any(), gomock.Any()).
 					DoAndReturn(func(doc *preset.Document, _ plan.Plan, _ *catalog.Catalog) error {
 						doc.Meta = json.RawMessage("{")

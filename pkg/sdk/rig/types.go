@@ -74,6 +74,15 @@ type (
 	Footswitch = gen.Footswitch
 	// Section is one part of a song, as the roles that play in it.
 	Section = gen.Section
+	// Move is one control an expression pedal or a footswitch sweeps, said
+	// portably: a role and one of the settings vocabulary's words.
+	Move = gen.Move
+	// MoveBy is what moves a control: an expression pedal, or a footswitch
+	// set to sweep rather than switch.
+	MoveBy = gen.MoveBy
+	// MoveSetting is which control a move reaches, in the same words a rig
+	// sets gear with.
+	MoveSetting = gen.MoveSetting
 	// Played is the instrument a rig is played on, which no device models.
 	Played = gen.Played
 	// Snapshot is one set of values a preset can recall.
@@ -114,6 +123,11 @@ const (
 	// Not ranked, because it answers where to get something rather than why
 	// a claim is believed.
 	EvidenceStore = gen.EvidenceStore
+
+	// What moves a control. Named rather than numbered, because the number
+	// is one device family's and a rig is meant to outlive it.
+	MoveByExpression = gen.MoveByExpression
+	MoveByFootswitch = gen.MoveByFootswitch
 
 	// What a rig is played on.
 	InstrumentBass   = gen.InstrumentBass

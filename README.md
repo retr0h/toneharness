@@ -56,6 +56,13 @@ compiles the tree and answers from the source rather than from a description of
 it. Ask for something no skill covers and an agent finds it there in two calls,
 which is why nothing here writes the commands down.
 
+Or work over MCP. `.mcp.json` starts the server with `go run`, so it compiles
+the working tree every launch and cannot serve a stale binary, and every command
+has a tool named after it: `device select` is `device_select`. Both surfaces
+call the same SDK, and a test walks the command tree against the registered
+tools in both directions, so neither can quietly gain a capability the other
+lacks.
+
 ## Skills
 
 The CLI is for an agent more than for a person, so the way to use toneharness is

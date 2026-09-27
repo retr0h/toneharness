@@ -178,6 +178,20 @@ func (mr *MockCompilerMockRecorder) Lower(doc, made, cat any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Lower", reflect.TypeOf((*MockCompiler)(nil).Lower), doc, made, cat)
 }
 
+// Moves mocks base method.
+func (m *MockCompiler) Moves(made *plan.Plan, spec rig.Spec, blocks []plan.Block, cat *catalog.Catalog) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Moves", made, spec, blocks, cat)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Moves indicates an expected call of Moves.
+func (mr *MockCompilerMockRecorder) Moves(made, spec, blocks, cat any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Moves", reflect.TypeOf((*MockCompiler)(nil).Moves), made, spec, blocks, cat)
+}
+
 // Realise mocks base method.
 func (m *MockCompiler) Realise(spec rig.Spec, cat *catalog.Catalog) (plan.Plan, error) {
 	m.ctrl.T.Helper()

@@ -79,6 +79,10 @@ type Compiler interface {
 		doc *preset.Document, spec rig.Spec, made plan.Plan, blocks []plan.Block,
 		cat *catalog.Catalog,
 	) error
+	// Moves turns what a rig says a foot reaches into a plan's assignments.
+	Moves(
+		made *plan.Plan, spec rig.Spec, blocks []plan.Block, cat *catalog.Catalog,
+	) error
 }
 
 // Deps are the collaborators building a preset works through.

@@ -40,10 +40,10 @@ import (
 // instructions are what a connecting agent is told before its first call.
 const instructions = `toneharness builds Line 6 Helix presets from rigs, and reads and writes the pedal.
 
-Use catalog_search before naming any model. If it does not find the gear, the
+Use catalog_list before naming any model. If it does not find the gear, the
 device does not model it: say so, and never invent a model identifier.
 
-Build with preset_make, then read what it added and what each character word
+Build with presets_make, then read what it added and what each character word
 moved before putting the preset on a pedal. Quit HX Edit before any tool that
 reaches the pedal.
 

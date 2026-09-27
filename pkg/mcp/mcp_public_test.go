@@ -48,8 +48,8 @@ func (s *MCPPublicTestSuite) TestServe() {
 		opts  mcp.Options
 		tools int
 	}{
-		{name: "without writes", opts: mcp.Options{Version: "1.2.3"}, tools: 12},
-		{name: "with writes", opts: mcp.Options{AllowWrites: true}, tools: 15},
+		{name: "without writes", opts: mcp.Options{Version: "1.2.3"}, tools: 24},
+		{name: "with writes", opts: mcp.Options{AllowWrites: true}, tools: 29},
 	}
 
 	for _, tt := range tests {
@@ -65,7 +65,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 			).Connect(context.Background(), clientEnd, nil)
 			s.Require().NoError(err)
 
-			s.Contains(session.InitializeResult().Instructions, "catalog_search")
+			s.Contains(session.InitializeResult().Instructions, "catalog_list")
 
 			listed, err := session.ListTools(context.Background(), nil)
 			s.Require().NoError(err)
@@ -84,7 +84,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 				check func(res *gomcp.CallToolResult)
 			}{
 				{
-					tool: "catalog_search",
+					tool: "catalog_list",
 					args: map[string]string{"search": "SVT"},
 					check: func(res *gomcp.CallToolResult) {
 						var got sdk.Blocks
@@ -102,7 +102,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 					},
 				},
 				{
-					tool: "rig_show",
+					tool: "rigs_show",
 					args: map[string]string{"id": "mike-dirnt"},
 					check: func(res *gomcp.CallToolResult) {
 						var got sdk.Rig
@@ -111,7 +111,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 					},
 				},
 				{
-					tool: "corpus_model",
+					tool: "corpus_presets_show",
 					args: map[string]string{"id": "HD2_AmpSVBeastBrt"},
 					check: func(res *gomcp.CallToolResult) {
 						var got tools.Model
@@ -120,7 +120,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 					},
 				},
 				{
-					tool: "preset_make",
+					tool: "presets_make",
 					args: map[string]string{"rig_id": "mike-dirnt", "out": fromShipped},
 					check: func(res *gomcp.CallToolResult) {
 						var got built
@@ -130,7 +130,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 					},
 				},
 				{
-					tool: "preset_make",
+					tool: "presets_make",
 					args: map[string]string{
 						"rig_path": filepath.Join(
 							"..",
@@ -240,8 +240,8 @@ confidence: high
 			},
 		},
 		{
-			name: "rig_show reads theirs",
-			tool: "rig_show",
+			name: "rigs_show reads theirs",
+			tool: "rigs_show",
 			args: map[string]string{"id": "their-player"},
 			check: func(res *gomcp.CallToolResult) {
 				var got sdk.Rig
@@ -252,8 +252,8 @@ confidence: high
 			},
 		},
 		{
-			name: "rig_show names theirs under the shipped rig it extends",
-			tool: "rig_show",
+			name: "rigs_show names theirs under the shipped rig it extends",
+			tool: "rigs_show",
 			args: map[string]string{"id": "mike-dirnt"},
 			check: func(res *gomcp.CallToolResult) {
 				var got sdk.Rig
@@ -263,8 +263,8 @@ confidence: high
 			},
 		},
 		{
-			name: "preset_make builds theirs",
-			tool: "preset_make",
+			name: "presets_make builds theirs",
+			tool: "presets_make",
 			args: map[string]string{"rig_id": "their-player", "out": out},
 			check: func(res *gomcp.CallToolResult) {
 				var got built
@@ -289,7 +289,7 @@ confidence: high
 	s.ErrorIs(<-served, context.Canceled)
 }
 
-// built is preset_make's answer as an agent reads it.
+// built is presets_make's answer as an agent reads it.
 type built struct {
 	FromShipped *sdk.Made  `json:"from_shipped"`
 	FromRig     *sdk.Built `json:"from_rig"`

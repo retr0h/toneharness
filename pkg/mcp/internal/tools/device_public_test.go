@@ -120,7 +120,7 @@ func hxEdit(
 
 // TestDevicesList covers what is attached, and one call at a time.
 func (s *DevicePublicTestSuite) TestDevicesList() {
-	s.run("devices_list", []deviceRow{
+	s.run("device_hardware", []deviceRow{
 		{
 			name: "a pedal attached",
 			args: tools.None{},
@@ -178,7 +178,7 @@ func (s *DevicePublicTestSuite) TestDevicesList() {
 		session := connect(s.T(), s.client, false)
 		devices := func() {
 			_, _ = session.CallTool(context.Background(), &gomcp.CallToolParams{
-				Name: "devices_list", Arguments: tools.None{},
+				Name: "device_hardware", Arguments: tools.None{},
 			})
 		}
 
@@ -205,7 +205,7 @@ func (s *DevicePublicTestSuite) TestDevicesList() {
 
 // TestPresetsList covers reading the setlist.
 func (s *DevicePublicTestSuite) TestPresetsList() {
-	s.run("presets_list", []deviceRow{
+	s.run("slots_list", []deviceRow{
 		{
 			name: "a setlist",
 			args: tools.None{},
@@ -232,7 +232,7 @@ func (s *DevicePublicTestSuite) TestPresetsList() {
 
 // TestPresetShow covers reading one slot.
 func (s *DevicePublicTestSuite) TestPresetShow() {
-	s.run("preset_show", []deviceRow{
+	s.run("presets_show", []deviceRow{
 		{
 			name: "a slot by its label",
 			args: tools.Slot{Slot: "01B"},
@@ -275,7 +275,7 @@ func (s *DevicePublicTestSuite) TestPresetExport() {
 	// something to write.
 	setlist := filepath.Join("..", "..", "..", "sdk", "testdata", "setlist.hls")
 
-	s.run("preset_export", []deviceRow{
+	s.run("slots_export", []deviceRow{
 		{
 			name: "a path nothing is at",
 			args: tools.Export{Slot: "01A", Out: fresh},
@@ -389,7 +389,7 @@ func (s *DevicePublicTestSuite) TestPresetExport() {
 
 // TestPresetSelect covers loading a slot.
 func (s *DevicePublicTestSuite) TestPresetSelect() {
-	s.run("preset_select", []deviceRow{
+	s.run("device_select", []deviceRow{
 		{
 			name: "a slot by its label",
 			args: tools.Slot{Slot: "07A"},

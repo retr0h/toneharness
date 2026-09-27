@@ -130,6 +130,57 @@ func (e Kind) Valid() bool {
 	}
 }
 
+// Defines values for MoveBy.
+const (
+	MoveByExpression MoveBy = "expression"
+	MoveByFootswitch MoveBy = "footswitch"
+)
+
+// Valid indicates whether the value is a known member of the MoveBy enum.
+func (e MoveBy) Valid() bool {
+	switch e {
+	case MoveByExpression:
+		return true
+	case MoveByFootswitch:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MoveSetting.
+const (
+	Bass     MoveSetting = "bass"
+	Drive    MoveSetting = "drive"
+	Level    MoveSetting = "level"
+	Mid      MoveSetting = "mid"
+	Mix      MoveSetting = "mix"
+	Presence MoveSetting = "presence"
+	Treble   MoveSetting = "treble"
+)
+
+// Valid indicates whether the value is a known member of the MoveSetting enum.
+func (e MoveSetting) Valid() bool {
+	switch e {
+	case Bass:
+		return true
+	case Drive:
+		return true
+	case Level:
+		return true
+	case Mid:
+		return true
+	case Mix:
+		return true
+	case Presence:
+		return true
+	case Treble:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PlayedStrings.
 const (
 	StringsFlat    PlayedStrings = "flat"
@@ -488,6 +539,47 @@ type Kind string
 // Scaled onto the control when the preset is written, so 0.5 is halfway up whether the device counts 0 to 1, -12 to 12 or 20 to 20000.
 type Knob = float64
 
+// Move One control something sweeps, said portably: what moves it, which piece of gear, and which of the rig's own setting words.
+//
+// The counterpart of `sections`, and portable for the same reason. A plan's `controllers` names a block by its position and a parameter by the name one manufacturer gives it, and neither exists until a device has been chosen. A rig names a role and a setting word, which mean the same thing on any hardware, and the build turns the pair into the numbers the device wants.
+//
+// So a rig can finally say "the pedal under my foot is on the amp's drive", which is a fact about how somebody plays rather than about a Helix, and two people compiling the same rig get the same assignment.
+type Move struct {
+	// By What moves it. `expression` is a pedal, `footswitch` is a switch set to sweep a knob rather than turn a block on and off.
+	//
+	// Named rather than numbered, because the number is one device's: an expression pedal reads 2 on an HX Stomp and a rig saying 2 would be saying something about that pedal instead of about the music.
+	By MoveBy `json:"by"`
+
+	// Max What it reads with the pedal all the way over. Omitted means the top of the control's range, which is the full sweep.
+	Max *float32 `json:"max,omitempty"`
+
+	// Min What the control reads with the pedal at rest, from 0 to 1 over the control's own range. Omitted means the bottom of it.
+	Min *float32 `json:"min,omitempty"`
+
+	// NoSnapshot Whether snapshots leave the assignment alone, which keeps a section change from moving the pedal out from under your foot. Omitted means they move it.
+	NoSnapshot *bool `json:"no_snapshot,omitempty"`
+
+	// Role What a piece of gear does in a chain. The same vocabulary the catalog groups blocks by, so a role resolves without translation.
+	//
+	// `utility` is plumbing — volume, gain, a send, a looper. Nobody chooses one for how it sounds, and a chain still contains them, so a rig that could not name one could not describe a real preset.
+	Role Role `json:"role"`
+
+	// Setting Which control, in the same vocabulary `settings` uses, so it lands on whichever parameter the model has for the word: `drive` reaches a Drive or a Gain, `level` reaches a Level, a Ch Vol, a Master, a Volume or an Output.
+	//
+	// A word the model has no control for is refused with the words it does take, exactly as a setting is.
+	Setting MoveSetting `json:"setting"`
+}
+
+// MoveBy What moves it. `expression` is a pedal, `footswitch` is a switch set to sweep a knob rather than turn a block on and off.
+//
+// Named rather than numbered, because the number is one device's: an expression pedal reads 2 on an HX Stomp and a rig saying 2 would be saying something about that pedal instead of about the music.
+type MoveBy string
+
+// MoveSetting Which control, in the same vocabulary `settings` uses, so it lands on whichever parameter the model has for the word: `drive` reaches a Drive or a Gain, `level` reaches a Level, a Ch Vol, a Master, a Volume or an Output.
+//
+// A word the model has no control for is refused with the words it does take, exactly as a setting is.
+type MoveSetting string
+
 // Played The instrument itself, which no device models and every figure carries.
 //
 // A rig names an amplifier, a cabinet and pedals, and the thing making the sound is upstream of all of them. Jaco Pastorius reads a 259Hz centroid against 170Hz for the other players, and the reason is a fretless played near the bridge; Geddy Lee earns mid-forward on a Rickenbacker. Without this those belong to nothing, and a measured word moves an amplifier control that was never responsible for the figure.
@@ -539,6 +631,13 @@ type RigSpec struct {
 
 	// Instrument Selects which half of a device's catalog is eligible. Line 6 tags every amp and cabinet Guitar or Bass; everything else serves either.
 	Instrument Instrument `json:"instrument"`
+
+	// Moves What an expression pedal or a footswitch sweeps, by role and setting word.
+	//
+	// Beside `sections` and portable for the same reason: both say what somebody does rather than what a device holds. A plan's `controllers` is what these become once a device has been chosen, and a rig read off a device carries those rather than these.
+	//
+	// A rig may say both, because they answer different questions: a section is which blocks play, a move is which knob a foot reaches.
+	Moves *[]Move `json:"moves,omitempty"`
 
 	// Schema Names the format, so a file says what it is without relying on where it was found.
 	Schema RigSpecSchema `json:"schema"`

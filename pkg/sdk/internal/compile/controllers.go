@@ -22,6 +22,7 @@ package compile
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
@@ -164,6 +165,110 @@ func assignment(
 	// corpus that assign anything leave the field out entirely.
 	if c.NoSnapshot != nil {
 		put(out, ctlNoSnapshot, c.NoSnapshot)
+	}
+
+	return out
+}
+
+// controllersOf reads back what a preset says an expression pedal or a
+// footswitch moves.
+//
+// The other half of Controllers, and the reason it exists: a controller is a
+// decision somebody made and might want to change, so it is modelled rather
+// than carried as opaque device state. Without this a preset built from a rig
+// that named a move round-tripped at the byte level and came back with nothing
+// a reader could see, which is the same shape of bug as a field written and
+// never read.
+//
+// Addressed the way the preset stores it, by path and by the position a block
+// is filed under, which is what a plan's Block holds.
+func controllersOf(
+	doc *preset.Document,
+	cat *catalog.Catalog,
+) *[]rig.Controller {
+	entry, ok := doc.Data.Tone[controllerKey]
+	if !ok {
+		return nil
+	}
+
+	out := []rig.Controller(nil)
+
+	for _, processor := range sorted(entry) {
+		path, err := strconv.Atoi(strings.TrimPrefix(processor, processorPrefix))
+		if err != nil {
+			continue
+		}
+
+		var blocks map[string]json.RawMessage
+		if err := json.Unmarshal(entry[processor], &blocks); err != nil {
+			continue
+		}
+
+		for _, key := range sortedKeys(blocks) {
+			out = append(out, controllersAt(blocks[key], key, path, cat)...)
+		}
+	}
+
+	if len(out) == 0 {
+		return nil
+	}
+
+	return &out
+}
+
+// controllersAt reads every assignment one block carries.
+//
+// A block holds one entry per parameter something moves, so a block with a
+// pedal on its drive and a switch on its level answers with two.
+func controllersAt(
+	raw json.RawMessage,
+	key string,
+	path int,
+	_ *catalog.Catalog,
+) []rig.Controller {
+	number, err := strconv.Atoi(strings.TrimPrefix(key, blockPrefix))
+	if err != nil {
+		return nil
+	}
+
+	var params map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &params); err != nil {
+		return nil
+	}
+
+	out := []rig.Controller(nil)
+
+	for _, parameter := range sortedKeys(params) {
+		var fields map[string]json.RawMessage
+		if err := json.Unmarshal(params[parameter], &fields); err != nil {
+			continue
+		}
+
+		// Without a controller number there is nothing to say what moves it,
+		// which is the one field an assignment cannot be read without.
+		var which *int
+
+		decode(fields[ctlNumber], &which)
+
+		if which == nil {
+			continue
+		}
+
+		got := rig.Controller{
+			Controller: *which,
+			Block:      number,
+			Parameter:  parameter,
+		}
+
+		if path != 0 {
+			got.Path = &path
+		}
+
+		decode(fields[ctlMin], &got.Min)
+		decode(fields[ctlMax], &got.Max)
+		decode(fields[ctlNoSnapshot], &got.NoSnapshot)
+
+		out = append(out, got)
 	}
 
 	return out

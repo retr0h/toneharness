@@ -30,15 +30,22 @@ import (
 )
 
 var (
-	// ErrNoSource is preset_make given nothing to build from.
+	// ErrOneDocument is presets_compile given neither a rig nor a plan, or
+	// both. They are the same shape at two levels of resolution, and building
+	// from both would mean quietly picking one.
+	ErrOneDocument = errors.New("name one of rig or plan")
+	// ErrOneValue is device_turn given none of value, choice or switch, or
+	// more than one. A device does not coerce, so the kind has to be chosen.
+	ErrOneValue = errors.New("name exactly one of value, choice or switch")
+	// ErrNoSource is presets_make given nothing to build from.
 	ErrNoSource = errors.New("name a rig_id or a rig_path to build from")
-	// ErrTwoSources is preset_make given both.
+	// ErrTwoSources is presets_make given both.
 	ErrTwoSources = errors.New("name a rig_id or a rig_path, not both")
-	// ErrNotInCatalog is corpus_model's model measured but missing from the
+	// ErrNotInCatalog is corpus_presets_show's model measured but missing from the
 	// catalog it was resolved against, a sign the corpus and catalog have
 	// drifted apart.
 	ErrNotInCatalog = errors.New("measured but not in the catalog")
-	// ErrWouldOverwrite is preset_make or preset_export pointed at a file
+	// ErrWouldOverwrite is presets_make or slots_export pointed at a file
 	// that already exists, on a server started without --allow-writes.
 	ErrWouldOverwrite = errors.New(
 		"a file is already there, and replacing it needs the server started with --allow-writes")
@@ -110,7 +117,7 @@ func remedy(
 ) error {
 	switch {
 	case errors.Is(err, sdk.ErrNoSuchBlock):
-		return fmt.Errorf("%w, call catalog_search to find one", err)
+		return fmt.Errorf("%w, call catalog_list to find one", err)
 	case errors.Is(err, sdk.ErrNoSuchRig):
 		return fmt.Errorf("%w, call rigs_list to see the rigs that ship", err)
 	default:

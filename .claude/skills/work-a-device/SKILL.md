@@ -42,6 +42,25 @@ positions a setlist holds and takes either backing: name `--file` and it edits
 that backup, name none and it reaches the attached device. `device` is what only
 ever means anything on live hardware.
 
+## Two surfaces, one SDK
+
+Every command here has a tool beside it over MCP, named after the command:
+`device select` is `device_select`, `corpus music genres` is
+`corpus_music_genres`. Use whichever the session offers. **The tools are the
+same operations, not a reimplementation**: both surfaces call `pkg/sdk` and
+answer with the same types, and a test walks the command tree against the
+registered tools both ways, so neither can quietly gain a capability the other
+lacks.
+
+`.mcp.json` starts the server with `go run`, so it compiles the working tree
+every launch and cannot serve a stale binary.
+
+Three commands have no tool, and the reason is in that test's exempt list:
+`measure blocks`, `measure controls` and `measure names` are sweeps. One reading
+is about eight seconds, so a twelve-control amplifier is most of an hour, and a
+tool that blocks that long is not one anybody can use. Run those from a terminal
+where the progress shows and Ctrl-C reaches the session holding the pedal.
+
 ## 2. Route
 
 | The user asks                                                        | Read                                                       |

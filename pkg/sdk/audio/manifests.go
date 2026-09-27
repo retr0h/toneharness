@@ -44,13 +44,13 @@ type Held struct {
 	// comparison is only meaningful within one of these: a word is earned by
 	// sitting clear of the other players, and a guitar's centre of gravity sits
 	// an octave above a bass guitar's.
-	Instrument string
+	Instrument string `json:"instrument"`
 	// ID is the directory, which is the rig's identifier.
-	ID string
+	ID string `json:"id"`
 	// Artist is the name the manifest gives, which is for reading.
-	Artist string
+	Artist string `json:"artist"`
 	// Tracks is what the manifest names.
-	Tracks []Record
+	Tracks []Record `json:"tracks"`
 }
 
 // Manifests reads every manifest under a tree, wherever it sits in it.

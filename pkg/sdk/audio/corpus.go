@@ -32,15 +32,15 @@ import (
 // what that says about them against everybody else.
 type Player struct {
 	// ID is the directory the records sit in, which is the rig's identifier.
-	ID string
+	ID string `json:"id"`
 	// Records is how many of their recordings were measured.
-	Records int
+	Records int `json:"records"`
 	// Across is what those records measure as together.
-	Across Across
+	Across Across `json:"across"`
 	// Terms are the words their figures earn against the other players.
 	// Empty is the ordinary answer with few players, and it means the
 	// evidence is mixed rather than that something went wrong.
-	Terms []Derived
+	Terms []Derived `json:"terms"`
 }
 
 // Corpus measures every player under a tree and derives what each one's

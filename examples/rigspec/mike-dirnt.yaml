@@ -114,3 +114,26 @@ sections:
     bypass: [comp]
   - name: Chorus
     play: [comp]
+
+# What a foot reaches, said the way a section is: by role and by one of the
+# words `settings` uses, so it means the same thing on any hardware.
+#
+# The build turns each into the assignment a device wants, resolving the role to
+# whichever block ended up carrying it and the word to whichever parameter that
+# model answers it with. A plan read off a device carries `controllers` instead,
+# which is the same thing after a device has been chosen, and a rig may not say
+# both.
+#
+# `min` and `max` are over the control's own range. Leaving them out gives the
+# full sweep. Two moves claiming the same mover are refused, because one pedal
+# cannot be on two knobs.
+#
+# As with the sections above: nobody has documented Dirnt using a pedal this
+# way. It shows the shape of the field.
+moves:
+  - by: expression
+    role: amp
+    setting: drive
+    min: 0.3
+    max: 0.85
+    no_snapshot: true

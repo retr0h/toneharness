@@ -33,11 +33,12 @@ import "slices"
 // Axis is one measure that can become a word, and the two words it becomes.
 type Axis struct {
 	// Key is the measured figure this axis reads, from MeasuredKeys.
-	Key Figure
+	Key Figure `json:"key"`
 	// More is the term for an artist above the rest, Less for one below.
-	More, Less string
+	More string `json:"more"`
+	Less string `json:"less"`
 	// Why says what the figure is, for the evidence a derived term carries.
-	Why string
+	Why string `json:"why"`
 
 	// places is how many decimals this measure is reported to, which is the
 	// smallest margin it can resolve. See resolves.
@@ -126,14 +127,15 @@ func (a Axis) resolves(
 // Derived is one term an artist earned, and what earned it.
 type Derived struct {
 	// Term is the word, spelled as the compiler's own table spells it.
-	Term string
+	Term string `json:"term"`
 	// Key is the measure it came from, and Why describes that measure.
-	Key Figure
-	Why string
+	Key Figure `json:"key"`
+	Why string `json:"why"`
 	// Mine is where this artist sat, Others the middle of everyone else.
-	Mine, Others float64
+	Mine   float64 `json:"mine"`
+	Others float64 `json:"others"`
 	// Of is how many artists the comparison was against, this one included.
-	Of int
+	Of int `json:"of"`
 	// Margin is how far past the line this player sits, in the measure's own
 	// units: how much the other players' quartile would have to move to take
 	// the word away.
@@ -151,7 +153,7 @@ type Derived struct {
 	// the ninetieth. It was built, run against the nine players here, and
 	// reported nothing for every word, which is what the arithmetic says it
 	// must do.
-	Margin float64
+	Margin float64 `json:"margin"`
 }
 
 // Derive is what an artist's measurements say about them, against others

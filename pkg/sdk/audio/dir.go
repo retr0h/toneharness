@@ -32,13 +32,13 @@ import (
 // Named is one recording's measurement and what to call it.
 type Named struct {
 	// Name is what to call the recording in a report.
-	Name string
+	Name string `json:"name"`
 	// Profile is what it measured as.
-	Profile Profile
+	Profile Profile `json:"profile"`
 	// Source is where the recording came from, when a manifest said. Empty
 	// otherwise: a measurement without a link is still a measurement, and the
 	// audio on disk is not a source anybody else can check.
-	Source Record
+	Source Record `json:"source"`
 }
 
 // MeasureAll measures every .wav in a tree, in name order.

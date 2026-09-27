@@ -153,9 +153,13 @@ type RegisterPublicTestSuite struct {
 // TestRegister covers which tools an agent is offered.
 func (s *RegisterPublicTestSuite) TestRegister() {
 	reads := []string{
-		"catalog_block", "catalog_search", "corpus_model",
-		"tone_build", "preset_make", "rig_show", "rigs_list",
-		"devices_list", "presets_list", "preset_show", "preset_export", "preset_select",
+		"catalog_show", "catalog_list", "corpus_presets_show", "corpus_presets_chains",
+		"corpus_music_players", "corpus_music_bands", "corpus_music_genres",
+		"corpus_music_records",
+		"tone_build", "presets_make", "rigs_show", "rigs_list", "rigs_records",
+		"measure_genres", "measure_players", "measure_recordings",
+		"device_hardware", "slots_list", "presets_show", "slots_export", "device_select",
+		"device_current", "device_play", "device_turn",
 	}
 
 	tests := []struct {
@@ -168,11 +172,16 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 			name: "without writes",
 			want: reads,
 			readOnly: map[string]bool{
-				"catalog_block": true, "catalog_search": true, "corpus_model": true,
-				"tone_build": true, "preset_make": false,
-				"rig_show": true, "rigs_list": true,
-				"devices_list": true, "presets_list": true, "preset_show": true,
-				"preset_export": false, "preset_select": false,
+				"catalog_show": true, "catalog_list": true, "corpus_presets_show": true,
+				"tone_build": true, "presets_make": false,
+				"rigs_show": true, "rigs_list": true,
+				"device_hardware": true, "slots_list": true, "presets_show": true,
+				"slots_export": false, "device_select": false,
+				"corpus_presets_chains": true, "corpus_music_players": true,
+				"corpus_music_bands": true, "corpus_music_genres": true,
+				"corpus_music_records": true, "rigs_records": true,
+				"measure_genres": true, "measure_players": true,
+				"measure_recordings": true, "device_current": true,
 			},
 		},
 		{
@@ -180,14 +189,18 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 			allowWrites: true,
 			want: append(
 				slices.Clone(reads),
-				"preset_import",
-				"presets_copy",
-				"presets_swap",
+				"rigs_new",
+				"presets_compile",
+				"slots_import",
+				"slots_copy",
+				"slots_swap",
 			),
 			readOnly: map[string]bool{
-				"preset_import": false,
-				"presets_copy":  false,
-				"presets_swap":  false,
+				"rigs_new":        false,
+				"presets_compile": false,
+				"slots_import":    false,
+				"slots_copy":      false,
+				"slots_swap":      false,
 			},
 		},
 	}
@@ -208,18 +221,18 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 					s.Equal(want, tool.Annotations.ReadOnlyHint, tool.Name)
 				}
 
-				if tool.Name == "preset_select" {
+				if tool.Name == "device_select" {
 					s.Require().NotNil(tool.Annotations.DestructiveHint)
 					s.False(*tool.Annotations.DestructiveHint)
 					s.True(tool.Annotations.IdempotentHint)
 				}
 
 				switch tool.Name {
-				case "preset_import",
-					"presets_copy",
-					"presets_swap",
-					"preset_export",
-					"preset_make":
+				case "slots_import",
+					"slots_copy",
+					"slots_swap",
+					"slots_export",
+					"presets_make":
 					s.Require().NotNil(tool.Annotations.DestructiveHint, tool.Name)
 					s.True(*tool.Annotations.DestructiveHint, tool.Name)
 				}

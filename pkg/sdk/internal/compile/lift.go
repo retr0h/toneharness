@@ -58,6 +58,7 @@ func Lift(
 
 	snapshots := snapshotsOf(doc)
 	switches := footswitchesOf(doc, cat)
+	movers := controllersOf(doc, cat)
 
 	out := rig.Spec{
 		Schema:     rig.SchemaName,
@@ -80,8 +81,9 @@ func Lift(
 		Blocks:       c.Blocks,
 		Snapshots:    deref(snapshots),
 		Footswitches: deref(switches),
+		Controllers:  deref(movers),
 		Target:       &rig.Target{Device: &device},
-		Device:       deviceState(doc, modelledKeys(doc, snapshots, switches)),
+		Device:       deviceState(doc, modelledKeys(doc, snapshots, switches, movers)),
 	}
 
 	// A rig this package produced must be one anybody else can read. Lifting
@@ -252,6 +254,7 @@ func modelledKeys(
 	doc *preset.Document,
 	snapshots *[]rig.Snapshot,
 	switches *[]rig.Footswitch,
+	movers *[]rig.Controller,
 ) map[string]bool {
 	out := map[string]bool{}
 
@@ -265,6 +268,10 @@ func modelledKeys(
 
 	if switches != nil {
 		out[footswitchKey] = true
+	}
+
+	if movers != nil {
+		out[controllerKey] = true
 	}
 
 	return out

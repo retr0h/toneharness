@@ -41,7 +41,7 @@ func slotOf(
 	return n, nil
 }
 
-// formatOf reads the format preset_export was asked for.
+// formatOf reads the format slots_export was asked for.
 //
 // Empty is a rig, which is what the tool's schema says leaving it out means.
 // Any other name that is not a format is refused, rather than written as a rig
@@ -62,7 +62,7 @@ func formatOf(
 	return as, nil
 }
 
-func (h *handlers) devicesList(
+func (h *handlers) deviceHardware(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
 	_ None,
@@ -77,7 +77,7 @@ func (h *handlers) devicesList(
 	return said("%d attached", len(found.Devices)), found, nil
 }
 
-func (h *handlers) presetsList(
+func (h *handlers) slotsList(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
 	_ None,
@@ -92,7 +92,7 @@ func (h *handlers) presetsList(
 	return said("%d of %d slots hold a preset", listing.Used(), len(listing.Slots)), listing, nil
 }
 
-func (h *handlers) presetShow(
+func (h *handlers) presetsShow(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
 	in Slot,
@@ -114,7 +114,7 @@ func (h *handlers) presetShow(
 	return said("%s holds %s", in.Slot, reading.Name), out, nil
 }
 
-func (h *handlers) presetExport(
+func (h *handlers) slotsExport(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
 	in Export,
@@ -146,7 +146,7 @@ func (h *handlers) presetExport(
 	return said("wrote %s from %s", written.Path, in.Slot), written, nil
 }
 
-func (h *handlers) presetSelect(
+func (h *handlers) deviceSelect(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
 	in Slot,
@@ -164,4 +164,95 @@ func (h *handlers) presetSelect(
 	}
 
 	return said("loaded %s", in.Slot), change, nil
+}
+
+func (h *handlers) deviceCurrent(
+	ctx context.Context,
+	_ *gomcp.CallToolRequest,
+	_ None,
+) (*gomcp.CallToolResult, Shown, error) {
+	reading, err := onPedal(ctx, h.pedal, func(s Session) (sdk.Reading, error) {
+		return s.Current(ctx, sdk.FormatRig)
+	})
+	if err != nil {
+		return nil, Shown{}, err
+	}
+
+	return said("the pedal is playing %s", reading.Name),
+		Shown{Name: reading.Name, Rig: reading.Rig}, nil
+}
+
+func (h *handlers) devicePlay(
+	ctx context.Context,
+	_ *gomcp.CallToolRequest,
+	in Play,
+) (*gomcp.CallToolResult, sdk.Change, error) {
+	if _, err := onPedal(ctx, h.pedal, func(s Session) (struct{}, error) {
+		return struct{}{}, s.Play(ctx, in.Preset)
+	}); err != nil {
+		return nil, sdk.Change{}, err
+	}
+
+	return said("the pedal is playing %s, and holds what it held", in.Preset),
+		sdk.Change{}, nil
+}
+
+func (h *handlers) deviceTurn(
+	ctx context.Context,
+	_ *gomcp.CallToolRequest,
+	in Turn,
+) (*gomcp.CallToolResult, sdk.Change, error) {
+	at := sdk.Control(in.Block, in.Param)
+	at.Model = in.Model
+
+	if in.Direct != nil {
+		at.Direct = *in.Direct
+	}
+
+	said, err := h.turned(ctx, in, at)
+	if err != nil {
+		return nil, sdk.Change{}, err
+	}
+
+	return said, sdk.Change{}, nil
+}
+
+// turned sends whichever of the three kinds of value was given.
+//
+// Exactly one, because a device does not coerce: the value's tag is its type on
+// the wire, and a switch handed 1.0 is refused with the same error it gives for
+// a block that is not there.
+func (h *handlers) turned(
+	ctx context.Context,
+	in Turn,
+	at sdk.Address,
+) (*gomcp.CallToolResult, error) {
+	given := 0
+
+	for _, set := range []bool{in.Value != nil, in.Choice != nil, in.Switch != nil} {
+		if set {
+			given++
+		}
+	}
+
+	if given != 1 {
+		return nil, ErrOneValue
+	}
+
+	_, err := onPedal(ctx, h.pedal, func(s Session) (struct{}, error) {
+		switch {
+		case in.Value != nil:
+			return struct{}{}, s.Turn(ctx, at, *in.Value)
+		case in.Choice != nil:
+			return struct{}{}, s.Choose(ctx, at, *in.Choice)
+		default:
+			return struct{}{}, s.Switch(ctx, at, *in.Switch)
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return said("block %d parameter %d moved, and nothing was written",
+		in.Block, in.Param), nil
 }
