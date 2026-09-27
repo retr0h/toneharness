@@ -25,13 +25,52 @@ The claim still explains the shape of the cable rig: sending to USB 1/2 goes to
 the sockets on the back rather than to an amp model, which is exactly why a lead
 is needed from those sockets back into the input jack.
 
+## Measure the empty loop first, every time
+
+One reading, before any block, and it costs seconds:
+
+```bash
+go run main.go measure blocks --category pitch --out /tmp/baseline.json
+```
+
+It prints the empty loop before the first block. That line decides whether
+anything after it means anything:
+
+| The baseline says                      | What to do                              |
+| -------------------------------------- | --------------------------------------- |
+| centroid ~95 Hz, level ~-21 dB         | the loop is good, carry on              |
+| centroid ~12,000 Hz, level ~-46 dB     | **stop.** The loop is not carrying audio |
+
+The committed baseline is 94.76 Hz at -21.12 dB, in
+`resources/sweeps/hx-stomp/fingerprints.json`. A bass through a cable measures
+low, because a bass is low.
+
+The failure this prevents ran on 27 September 2026. A baseline of 11,990.0 Hz at
+-46.65 dB went unread, eight sweeps were queued behind it, and the first one
+finished before anybody noticed that every block was reading the same number.
+They were all measuring the loop's own noise. The block being swept cannot tell
+you this: `HD2_EQSimple3Band` read 11,990 Hz that day against the 93 Hz its own
+committed sweep holds, on identical routing.
+
 ## Know what a working reading looks like
 
-**The rig needs no routing changes.** A preset built from the blank template
-carries `@input: 1` and `@output: 1`, and the loop measures correctly through it.
-Nothing in the sweep path sets either, and nothing should: an agent that
-"corrected" them to the Guitar jack and bare USB turned a working rig into
-silence and spent an hour theorising about the protocol.
+**The rig needs no routing changes, and this is the current answer.** A preset
+built from the blank template carries `@input: 1` and `@output: 1`, and the loop
+measures correctly through it. Nothing in the sweep path sets either, and nothing
+should: an agent that "corrected" them to the Guitar jack and bare USB turned a
+working rig into silence and spent an hour theorising about the protocol.
+
+The tiebreaker is the evidence rather than this page. Every sweep in
+`resources/sweeps/` records the chain it was measured through, and
+`HD2_AmpSVBeastBrt.json` carries `@input: 1` and `@output: 1` beside figures that
+are correct. Two sections below contradict this and both are superseded; they are
+kept because the reasoning in them is still worth reading, and each now says so.
+
+**So a wrong baseline is never a reason to change the routing.** Read it off the
+device with `device current` and compare it to a committed sweep's `chain`. If it
+matches, the fault is outside the preset: the 1/4" lead, the pedal's own output
+level, or which device the computer is playing through. None of those are
+reachable from here, and all three need somebody at the pedal.
 
 Compare against the readings in `resources/sweeps/`, which are the only figures
 here anybody has confirmed. One block alone, at the first point of its first
@@ -99,6 +138,11 @@ index into [an enum the preset does not name](enums.md).
 
 ## The output block does not mean what its label says
 
+**Superseded.** The committed sweeps were all taken on `@output: 1` and read
+correctly, so the conclusion below is wrong about this hardware even though the
+measurements in it were real. Kept for the reasoning, which is sound and is what
+the label deserves.
+
 `@output: 1` is not enough, whatever the label says. Entry 1 reads
 `Multi (1/4", XLR, Digital, USB 1/2)` and an HX Stomp's Multi does not include
 USB, so a preset left on it sends nothing up the cable and the USB return sits at
@@ -137,7 +181,10 @@ Mac  --USB 1/2-->  Main out  --cable-->  Input jack
 Mac  <--USB 1/2--  USB record  <-------------+
 ```
 
-Set `@input: 2`, the Guitar jack, and `@output: 10`. **The chain must not reach
-the Main outs, or its own output races back round the cable.** It costs a D/A and
+The cable is right and the two numbers are not. **Superseded:** setting
+`@input: 2` and `@output: 10` is what "turned a working rig into silence" above,
+and the committed sweeps ran on `@input: 1` and `@output: 1`. The worry behind it
+was that a chain reaching the Main outs races its own output back round the
+cable, which the readings say does not happen. It costs a D/A and
 an A/D, and that noise is identical on every take, so it cancels the moment two
 settings are compared, which is all this is for.
