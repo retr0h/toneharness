@@ -149,6 +149,12 @@ func Build(
 		return nil, err
 	}
 
+	if out.Sources, out.Destinations, err = readRouting(
+		opts.ResourcesDir, opts.DeviceID,
+	); err != nil {
+		return nil, err
+	}
+
 	if len(out.Blocks) == 0 {
 		return nil, fmt.Errorf("%w: no models support device %d", ErrNoResources, opts.DeviceID)
 	}

@@ -24,6 +24,8 @@
 // the preset format has no published schema.
 package catalog
 
+import "strings"
+
 // ModelID is a Line 6 internal model identifier, such as "HD2_AmpAmpegSVT".
 type ModelID string
 
@@ -180,6 +182,58 @@ type Catalog struct {
 	// else here, and generated rather than written down: a firmware that adds
 	// a colour would otherwise be reported under the wrong name.
 	LEDColours []string `json:"led_colours,omitempty"`
+	// Sources is what a device can take a chain's input from, and Destinations
+	// what it can send the output to, each in the order it numbers them.
+	//
+	// A preset stores the position rather than the name, and the positions are
+	// the device family's: the file these come from carries a separate list
+	// for a Helix LT and another for the plugin, and an HX Stomp's lists four
+	// Returns it has no sockets for. So a number written into code is right
+	// for one family and quietly wrong for the rest, which is what these
+	// exist to prevent.
+	//
+	// The one that has cost an evening is entry 1 of Destinations,
+	// `Multi (1/4", XLR, Digital, USB 1/2)`. An HX Stomp's Multi does not
+	// include USB whatever the label says, so a preset left on it sends
+	// nothing up the cable and a measurement reads the converter's floor
+	// however loud the chain is.
+	Sources      []string `json:"sources,omitempty"`
+	Destinations []string `json:"destinations,omitempty"`
+}
+
+// SourceAt is the number a device files one chain input under, by name.
+//
+// By name because the number is the device family's and the name is not:
+// "USB 5/6" means the same thing on every Helix and is 15 on only some of them.
+func (c *Catalog) SourceAt(
+	name string,
+) (int, bool) {
+	return at(c.Sources, name)
+}
+
+// DestinationAt is the number a device files one chain output under, by name.
+func (c *Catalog) DestinationAt(
+	name string,
+) (int, bool) {
+	return at(c.Destinations, name)
+}
+
+// at finds a name's position in a device's own list.
+//
+// Case-insensitive, because these are written for a menu and read here as
+// values, and the same list spells "USB 1/2" and "S/PDIF" to be looked at
+// rather than matched.
+func at(
+	in []string,
+	name string,
+) (int, bool) {
+	for i, got := range in {
+		if strings.EqualFold(got, name) {
+			return i, true
+		}
+	}
+
+	return 0, false
 }
 
 // LEDColour returns what a device calls one of its footswitch colours.

@@ -750,6 +750,7 @@ var coversAConcern = map[string]string{
 	"pkg/sdk/internal/wire/preset_shape_test.go":          "malformed wire data, across the decoder",
 	"pkg/sdk/preset/fidelity_public_test.go":              "a preset read and written back unchanged",
 	"pkg/mcp/coverage_public_test.go":                     "the command tree against the registered MCP tools",
+	"pkg/cli/measure_preset_test.go":                      "a preset a reader can read, for the doubles that stand in for the compiler",
 	"pkg/sdk/rig/coverage_public_test.go":                 "how much of the contract the shipped rigs use",
 	"pkg/sdk/plan/coverage_public_test.go":                "whether every field a plan models is written down somewhere",
 	"pkg/sdk/rig/shipped_public_test.go":                  "every rig that ships, validated",

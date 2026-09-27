@@ -131,3 +131,115 @@ func readLEDColours(
 
 	return out, nil
 }
+
+// The lists a device names its chain's ends with, per family.
+//
+// A Helix LT and the plugin get their own, which is why nothing here may write
+// an index down: the same name sits at a different number depending on which
+// list a device reads.
+const (
+	sourceControl      = "input_type"
+	destinationControl = "output_type"
+)
+
+// familyOf is the suffix a device's own lists carry.
+//
+// Absent for an HX Stomp, an HX Stomp XL and a Helix Floor, which share the
+// unsuffixed pair. That pair lists four Returns an HX Stomp has no sockets for
+// and an XLR it does not have, which is why an entry existing is not the same
+// as the socket existing.
+func familyOf(
+	device int,
+) string {
+	if device == catalog.HelixLT {
+		return "_lt"
+	}
+
+	return ""
+}
+
+// readRouting reads what a device can take a chain's input from and send its
+// output to.
+//
+// A preset stores the position in these lists rather than the name, so without
+// them nothing can ask for "USB 1/2" and every caller would have to write a
+// number that is only right for one family. The one that has cost an evening is
+// entry 1 of the destinations: its label claims USB and an HX Stomp's Multi does
+// not carry it.
+//
+// Absent on an installation too old to have them, which is not fatal: only
+// measuring needs to name a destination.
+func readRouting(
+	dir string,
+	device int,
+) (sources, destinations []string, err error) {
+	controls, err := readControls(dir)
+	if err != nil || controls == nil {
+		return nil, nil, err
+	}
+
+	family := familyOf(device)
+
+	if sources, err = namesIn(controls, sourceControl+family); err != nil {
+		return nil, nil, err
+	}
+
+	if destinations, err = namesIn(controls, destinationControl+family); err != nil {
+		return nil, nil, err
+	}
+
+	return sources, destinations, nil
+}
+
+// readControls decodes the file every one of these lists lives in.
+//
+// One entry out of hundreds is wanted at a time and `format` means something
+// different in most of them, so each is decoded where it is asked for rather
+// than the whole file being modelled.
+func readControls(
+	dir string,
+) (map[string]json.RawMessage, error) {
+	body, err := os.ReadFile(
+		filepath.Join(dir, controlsFile),
+	) //nolint:gosec // the app's own directory
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("reading %s: %w", controlsFile, err)
+	}
+
+	var controls map[string]json.RawMessage
+
+	if err := json.Unmarshal(body, &controls); err != nil {
+		return nil, fmt.Errorf("decoding %s: %w", controlsFile, err)
+	}
+
+	return controls, nil
+}
+
+// namesIn reads one control's list of names, in the order it numbers them.
+//
+// Kept as written rather than lower-cased: these are read back to somebody as
+// the device spells them, and "USB 1/2" and "S/PDIF" lose something in
+// flattening. Matching is case-insensitive where it happens.
+func namesIn(
+	controls map[string]json.RawMessage,
+	key string,
+) ([]string, error) {
+	raw, ok := controls[key]
+	if !ok {
+		return nil, nil
+	}
+
+	var control struct {
+		Format []string `json:"format"`
+	}
+
+	if err := json.Unmarshal(raw, &control); err != nil {
+		return nil, fmt.Errorf("decoding %s in %s: %w", key, controlsFile, err)
+	}
+
+	return control.Format, nil
+}

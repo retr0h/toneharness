@@ -24,7 +24,6 @@ import (
 	"context"
 	"errors"
 	"maps"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -66,7 +65,7 @@ func (s *NamesTestSuite) device(
 	s.pedal.EXPECT().
 		Compile(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			s.Require().NoError(os.WriteFile(in.Out, []byte("a preset"), 0o600))
+			writeBlank(s.T(), in.Out)
 
 			return sdk.Built{}, nil
 		}).AnyTimes()
@@ -201,7 +200,7 @@ func (s *NamesTestSuite) refuse(
 	s.pedal.EXPECT().
 		Compile(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			s.Require().NoError(os.WriteFile(in.Out, []byte("a preset"), 0o600))
+			writeBlank(s.T(), in.Out)
 
 			return sdk.Built{}, nil
 		}).AnyTimes()
@@ -294,7 +293,7 @@ func (s *NamesTestSuite) TestNamesReportADeviceThatWillNotAnswer() {
 	s.pedal.EXPECT().
 		Compile(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			s.Require().NoError(os.WriteFile(in.Out, []byte("a preset"), 0o600))
+			writeBlank(s.T(), in.Out)
 
 			return sdk.Built{}, nil
 		}).AnyTimes()
@@ -317,7 +316,7 @@ func (s *NamesTestSuite) TestNamesReportAChainWithNothingInIt() {
 	s.pedal.EXPECT().
 		Compile(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			s.Require().NoError(os.WriteFile(in.Out, []byte("a preset"), 0o600))
+			writeBlank(s.T(), in.Out)
 
 			return sdk.Built{}, nil
 		}).AnyTimes()
@@ -335,7 +334,7 @@ func (s *NamesTestSuite) TestNamesReportAPedalThatWillNotLoadThePreset() {
 	s.pedal.EXPECT().
 		Compile(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			s.Require().NoError(os.WriteFile(in.Out, []byte("a preset"), 0o600))
+			writeBlank(s.T(), in.Out)
 
 			return sdk.Built{}, nil
 		}).AnyTimes()

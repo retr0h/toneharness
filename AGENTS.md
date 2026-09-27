@@ -59,17 +59,40 @@ has to have finished before it is opened.
 skill is authoritative for its own domain. Five of them, self-contained and
 separately installable, so nothing is stated in two of them:
 
-| Skill              | Owns                                                                      |
-| ------------------ | ------------------------------------------------------------------------- |
-| `build-a-rig`      | research, citing gear, resolving an ask, tuning after hearing it          |
-| `write-a-spec`     | every field on the two contracts, and which document a fact belongs in    |
-| `measure-a-device` | the reference signal, sweeps, what a control does, trusting a catalog     |
-| `measure-music`    | growing a corpus, measuring records, players and genres, deriving words   |
-| `work-a-device`    | reading and writing what a pedal holds, and the rules that keep one alive |
+| Skill              | Owns                                                                                                     |
+| ------------------ | -------------------------------------------------------------------------------------------------------- |
+| `build-a-rig`      | research, citing gear, resolving an ask, tuning after hearing it                                         |
+| `write-a-spec`     | every field on the two contracts, and which document a fact belongs in                                   |
+| `measure-a-device` | **playing audio through the pedal and hearing it back**, sweeps, what a control does, trusting a catalog |
+| `measure-music`    | growing a corpus, measuring records, players and genres, deriving words                                  |
+| `work-a-device`    | reading and writing what a pedal holds, and the rules that keep one alive                                |
 
 Read the skill that matches the task. Do not read all five, and do not restate
 one skill's knowledge in another: that is the duplication the split exists to
 prevent.
+
+**Nothing you send reaches an amplifier by default.** If audio is going out and
+coming back wrong, silent, or unchanging, that is the signal path and it is
+`measure-a-device`'s `references/signal-path.md`, before the wire framing and
+before anything about the block being measured. The two numbers that decide it
+live on the preset rather than in any setting, and one of them is a destination
+whose label says it carries USB when it does not.
+
+## Nothing here is one pedal on one laptop
+
+Every number that describes hardware is somebody else's different number, and
+each of these has already been a bug:
+
+| Varies with     | Do not hardcode                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------ |
+| the Helix model | how many audio channels it presents. Ask the device; a Stomp is 8 in and 8 out                   |
+| the Helix model | the routing enum indices. The same file carries separate lists for a Stomp, an LT and the plugin |
+| the Helix model | how many blocks, paths and snapshots it holds. `plan.LimitsFor` answers from the catalog         |
+| the computer    | the audio device's name and its backend. `--hardware` names one                                  |
+| the computer    | the sample rate, which is 48kHz only while Line 6's own driver is absent                         |
+| the room        | whether a cable loops the output back to the input, or the return comes over USB                 |
+
+A figure measured on one device is a figure about that device. Say which.
 
 Three things are not in a skill, on purpose:
 

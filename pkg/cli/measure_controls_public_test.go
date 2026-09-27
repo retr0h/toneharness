@@ -62,7 +62,7 @@ func (s *ControlsRunTestSuite) ready() {
 	s.pedal.EXPECT().
 		Compile(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			s.Require().NoError(os.WriteFile(in.Out, []byte("a preset"), 0o600))
+			writeBlank(s.T(), in.Out)
 
 			return sdk.Built{}, nil
 		}).AnyTimes()
@@ -129,7 +129,7 @@ func (s *ControlsRunTestSuite) moves(
 	s.pedal.EXPECT().
 		Compile(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			s.Require().NoError(os.WriteFile(in.Out, []byte("a preset"), 0o600))
+			writeBlank(s.T(), in.Out)
 
 			return sdk.Built{}, nil
 		}).AnyTimes()
@@ -346,7 +346,7 @@ func (s *ControlsRunTestSuite) TestControlsCarriesOnPastAControlTheDeviceRefuses
 	s.pedal.EXPECT().
 		Compile(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			s.Require().NoError(os.WriteFile(in.Out, []byte("a preset"), 0o600))
+			writeBlank(s.T(), in.Out)
 
 			return sdk.Built{}, nil
 		}).AnyTimes()
