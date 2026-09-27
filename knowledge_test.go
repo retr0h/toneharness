@@ -30,30 +30,53 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 )
 
-// KnowledgeTestSuite holds docs/knowledge.md to the data it quotes.
+// KnowledgeTestSuite holds every page that quotes a figure to the data.
 //
-// The page is where this project says what it knows, and it quotes figures
-// from the catalog and the corpus statistics built into the binary. Those are
-// regenerated when Line 6 ships a release or the corpus grows, and the page
-// went stale more than once before anything checked it.
+// A page quoting the catalog or the corpus statistics goes stale when Line 6
+// ships a release or the corpus grows, and several did before anything checked
+// them. So each case below names the file that carries its sentence, and the
+// check follows the sentence when it moves rather than being tied to one page.
+//
+// Most figures are not quoted anywhere any more, on purpose: a skill resolves
+// them from the tool at the moment it needs them, because a number written into
+// a skill is right the day it is written and wrong after the next change with
+// nothing marking the moment. Those have no case here, because there is no
+// sentence to hold honest. What is left is the status board, which is prose a
+// person reads, and the two skill sentences that earn a figure by arguing from
+// it.
 type KnowledgeTestSuite struct {
 	suite.Suite
-	page  string
+	pages map[string]string
 	cat   *catalog.Catalog
 	stats *corpus.Stats
 }
 
-func (s *KnowledgeTestSuite) SetupSuite() {
-	raw, err := os.ReadFile("docs/knowledge.md")
-	s.Require().NoError(err)
+// board is the status board, and controls is the skill page arguing from
+// measured figures. Named here so a case reads as prose.
+const (
+	board    = "docs/knowledge.md"
+	controls = ".claude/skills/measure-a-device/references/unclear-controls.md"
+	trust    = ".claude/skills/measure-a-device/references/catalog-trust.md"
+)
 
-	// Prose wraps wherever the formatter puts the line end, so a figure is
-	// looked for with every run of whitespace collapsed to one space.
-	s.page = strings.Join(strings.Fields(string(raw)), " ")
+func (s *KnowledgeTestSuite) SetupSuite() {
+	s.pages = map[string]string{}
+
+	for _, name := range []string{board, controls, trust} {
+		raw, err := os.ReadFile(name)
+		s.Require().NoError(err)
+
+		// Prose wraps wherever the formatter puts the line end, so a figure is
+		// looked for with every run of whitespace collapsed to one space.
+		s.pages[name] = strings.Join(strings.Fields(string(raw)), " ")
+	}
+
+	var err error
 
 	s.cat, err = catalog.BuiltIn()
 	s.Require().NoError(err)
@@ -68,11 +91,7 @@ func (s *KnowledgeTestSuite) SetupSuite() {
 // and the sentence should follow it, or the page quotes something new and this
 // should learn to compute it.
 func (s *KnowledgeTestSuite) TestTheFiguresMatchTheData() {
-	bass := s.stats.Grammar["bass"]
-	comp := bass.Categories[catalog.CategoryComp]
-	drive := bass.Categories[catalog.CategoryDrive]
-
-	names, controls := s.parameters()
+	names, controlCount := s.parameters()
 
 	unclear := 0
 	for _, key := range []string{"Sag", "Hum", "Ripple", "Bias", "BiasX"} {
@@ -80,83 +99,83 @@ func (s *KnowledgeTestSuite) TestTheFiguresMatchTheData() {
 	}
 
 	brt := s.model("HD2_AmpSVBeastBrt")
-	nrm := s.model("HD2_AmpSVBeastNrm")
 	nrmBlock, _ := s.cat.Block("HD2_AmpSVBeastNrm")
 	brtBlock, _ := s.cat.Block("HD2_AmpSVBeastBrt")
 
 	tests := []struct {
 		name string
+		page string
 		want string
 	}{
 		{
 			name: "models mapped to real gear",
+			page: board,
 			want: fmt.Sprintf("%d models", s.named()),
 		},
 		{
-			name: "presets measured",
-			want: fmt.Sprintf("Across the %s presets measured", thousands(s.stats.Presets)),
-		},
-		{
-			name: "what a bass chain holds",
-			want: fmt.Sprintf("across %d bass chains, %d%% hold a compressor and %d%% hold drive, "+
-				"which sits before the amp %d%% of the time",
-				bass.Chains, percent(comp.Frequency(bass.Chains)),
-				percent(drive.Frequency(bass.Chains)), percent(drive.BeforeAmp())),
-		},
-		{
-			// Not a convention: close to a coin flip, which is why a build does
-			// not reorder a rig's chain by it.
-			name: "a compressor's side of the amp",
-			want: fmt.Sprintf("A compressor on bass sits before the amp %d%% of the time",
-				percent(comp.BeforeAmp())),
-		},
-		{
-			name: "a default players move away from",
-			want: fmt.Sprintf("Across %d presets using the Ampeg SVT's bright channel, the median "+
-				"`Treble` is %.2f where Line 6's stated default is %.2f",
-				brt.Uses, brt.Params["Treble"].Median, s.float(brtBlock, "Treble")),
-		},
-		{
-			name: "where players agree and where they do not",
-			want: fmt.Sprintf(
-				"On its normal channel `Bass` sits in %.2f–%.2f and `Drive` spans %.2f–%.2f",
-				nrm.Params["Bass"].P25,
-				nrm.Params["Bass"].P75,
-				nrm.Params["Drive"].P25,
-				nrm.Params["Drive"].P75,
-			),
-		},
-		{
-			name: "how many controls there are",
-			want: fmt.Sprintf("The catalog has %d parameter names across %s controls",
-				len(names), thousands(controls)),
-		},
-		{
-			name: "the controls a name does not explain",
-			want: fmt.Sprintf("about %d of them together", roundTo(unclear, 50)),
-		},
-		{
-			// The comparison Derive makes needs artists to compare, so the
-			// page says how many there are. A sixth added without the
-			// sentence following it makes the page wrong about its own
-			// method.
+			// The comparison Derive makes needs players to compare, so the
+			// board says how many there are. One added without the sentence
+			// following it makes the board wrong about its own method, and it
+			// is also what decides whether a word stays earned.
 			name: "players in the music corpus",
-			want: fmt.Sprintf("The music corpus names %d players", s.players()),
+			page: board,
+			want: fmt.Sprintf("%d players, %d records", s.players(), s.records()),
 		},
 		{
 			name: "the amp the pipeline follows",
+			page: board,
 			want: fmt.Sprintf("Drive %.1f–%.1f, default %.2f, DSP %.2f",
 				nrmBlock.Params["Drive"].Min, nrmBlock.Params["Drive"].Max,
 				s.float(nrmBlock, "Drive"), nrmBlock.DSP.Mono),
+		},
+		{
+			name: "how many controls there are",
+			page: controls,
+			want: fmt.Sprintf("The catalog holds %d parameter names across %s",
+				len(names), thousands(controlCount)),
+		},
+		{
+			name: "the controls a name does not explain",
+			page: controls,
+			want: fmt.Sprintf("About %d do not", roundTo(unclear, 50)),
+		},
+		{
+			// The argument this sentence makes is that the catalog knows what
+			// the device can do and the corpus knows what people do with it.
+			// It only works while the two figures still differ.
+			name: "a default players move away from",
+			page: trust,
+			want: fmt.Sprintf(
+				"Line 6 state a default Treble of %.2f for one amplifier's bright channel; the median across the presets using it is %.2f",
+				s.float(brtBlock, "Treble"),
+				brt.Params["Treble"].Median,
+			),
 		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			s.Require().Contains(s.page, tt.want,
-				"docs/knowledge.md no longer matches the embedded data")
+			s.Require().Contains(s.pages[tt.page], tt.want,
+				"%s no longer matches the embedded data", tt.page)
 		})
 	}
+}
+
+// records counts the recordings every manifest names.
+//
+// Read with the loader the tool reads them with rather than counted as text: a
+// string count agrees with the truth until somebody reflows a manifest, and then
+// it is quietly wrong in the direction that makes this test pass.
+func (s *KnowledgeTestSuite) records() int {
+	held, err := audio.Manifests(os.DirFS("."), filepath.Join("resources", "music"))
+	s.Require().NoError(err)
+
+	n := 0
+	for _, m := range held {
+		n += len(m.Tracks)
+	}
+
+	return n
 }
 
 // players counts the artists the music corpus holds records for.
@@ -218,13 +237,6 @@ func (s *KnowledgeTestSuite) parameters() (map[string]int, int) {
 	}
 
 	return names, total
-}
-
-// percent rounds a share to a whole percentage, the way the page quotes it.
-func percent(
-	share float64,
-) int {
-	return int(math.Round(share * 100))
 }
 
 // roundTo rounds n to the nearest multiple of step, for figures quoted as

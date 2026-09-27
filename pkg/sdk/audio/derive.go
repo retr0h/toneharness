@@ -39,6 +39,10 @@ type Axis struct {
 	// Why says what the figure is, for the evidence a derived term carries.
 	Why string
 
+	// places is how many decimals this measure is reported to, which is the
+	// smallest margin it can resolve. See resolves.
+	places int
+
 	// of is the range this axis reads from a gathered measurement.
 	//
 	// Carried here rather than looked up by Key, so there is no branch for a
@@ -86,19 +90,37 @@ type Axis struct {
 var Axes = []Axis{
 	{
 		Key: KeyMid, More: "mid-forward", Less: "scooped",
-		Why: "share of energy between 250Hz and 2kHz",
-		of:  func(a Across) Spread { return a.Mid },
+		Why:    "share of energy between 250Hz and 2kHz",
+		places: 2,
+		of:     func(a Across) Spread { return a.Mid },
 	},
 	{
 		Key: KeyCentroid, More: "bright", Less: "dark",
-		Why: "the spectrum's centre of gravity, in hertz",
-		of:  func(a Across) Spread { return a.Centroid },
+		Why:    "the spectrum's centre of gravity, in hertz",
+		places: 0,
+		of:     func(a Across) Spread { return a.Centroid },
 	},
 	{
 		Key: KeyHarmonics, More: "saturated", Less: "clean",
-		Why: "share of energy above the fundamental",
-		of:  func(a Across) Spread { return a.Harmonics },
+		Why:    "share of energy above the fundamental",
+		places: 2,
+		of:     func(a Across) Spread { return a.Harmonics },
 	},
+}
+
+// resolves says whether a margin is a difference this measure can see.
+//
+// A word clear by less than the figure is reported to is a word clear by
+// nothing anybody can check: "bright, clear by 0 Hz" was awarded on a margin
+// that rounded away, and one more player measured would have taken it back.
+//
+// The precision rather than a threshold somebody chose. Measured() reports a
+// centroid to the hertz and a band share to two places, so below that there is
+// no difference to report rather than a small one.
+func (a Axis) resolves(
+	margin float64,
+) bool {
+	return to(margin, a.places) > 0
 }
 
 // Derived is one term an artist earned, and what earned it.
@@ -177,15 +199,14 @@ func Derive(
 		slices.Sort(rest)
 		span := ax.of(mine)
 
-		switch {
-		case span.Low > between(rest, 0.75):
+		// Clear of the rest, and clear by enough for the measure to see it.
+		switch upper, lower := between(rest, 0.75), between(rest, 0.25); {
+		case span.Low > upper && ax.resolves(span.Low-upper):
 			out = append(out, made(
-				ax, ax.More, mine, rest, len(others)+1,
-				span.Low-between(rest, 0.75)))
-		case span.High < between(rest, 0.25):
+				ax, ax.More, mine, rest, len(others)+1, span.Low-upper))
+		case span.High < lower && ax.resolves(lower-span.High):
 			out = append(out, made(
-				ax, ax.Less, mine, rest, len(others)+1,
-				between(rest, 0.25)-span.High))
+				ax, ax.Less, mine, rest, len(others)+1, lower-span.High))
 		}
 	}
 
@@ -207,10 +228,15 @@ func made(
 		Term: term,
 		Key:  ax.Key,
 		Why:  ax.Why,
-		Mine: mine.Measured()[string(ax.Key)],
+		Mine: to(mine.Measured()[string(ax.Key)], ax.places),
 		// The middle of the others, so a report can say what this was
 		// clear of rather than only that it was.
-		Others: between(rest, 0.5),
+		//
+		// Rounded to the axis's places, the same as Mine. A median is an
+		// average of floats and comes out as one: 0.22999999999999998 was
+		// being written into shipped asks beside a `measured` of 0.23, which
+		// reads as a precision nothing here has.
+		Others: to(between(rest, 0.5), ax.places),
 		Of:     of,
 		Margin: margin,
 	}
