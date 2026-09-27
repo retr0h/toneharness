@@ -31,7 +31,7 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
-// Chain turns a device's answer into a chain the rest of this speaks.
+// Plan turns a device's answer into a plan the rest of this speaks.
 //
 // The device names nothing. A block carries a number into the device's own
 // model table and its parameters arrive as a bare array, so the catalog's

@@ -49,8 +49,8 @@ func (s *DecodeTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-// TestChainOf turns a device's answer into a chain.
-func (s *DecodeTestSuite) TestChainOf() {
+// TestPlanOf turns a device's answer into a plan for that device.
+func (s *DecodeTestSuite) TestPlanOf() {
 	tests := []struct {
 		name string
 		// what the slot is called, and the blocks the device sent.

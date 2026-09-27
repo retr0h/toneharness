@@ -63,8 +63,8 @@ func (s *TranslatorPublicTestSuite) TestNew() {
 	s.Require().NotNil(editor.New())
 }
 
-// TestChain covers reading what a device laid out, through the type.
-func (s *TranslatorPublicTestSuite) TestChain() {
+// TestPlan covers reading what a device laid out, through the type.
+func (s *TranslatorPublicTestSuite) TestPlan() {
 	tests := []struct {
 		name string
 		got  wire.DevicePreset
