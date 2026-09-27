@@ -33,18 +33,40 @@ Nothing in the sweep path sets either, and nothing should: an agent that
 "corrected" them to the Guitar jack and bare USB turned a working rig into
 silence and spent an hour theorising about the protocol.
 
-So compare against these before touching anything. A bass DI through an
-amplifier, one block alone:
+Compare against the readings in `resources/sweeps/`, which are the only figures
+here anybody has confirmed. One block alone, at the first point of its first
+control:
 
-| Reading                        | What it means                                |
-| ------------------------------ | -------------------------------------------- |
-| centroid ~120-130 Hz, ~-43 dBFS | working. This is the signal                 |
-| centroid ~2 Hz, ~-105 dBFS      | silence. Nothing is arriving at all         |
-| centroid ~11 kHz, ~-68 dBFS     | the amplifier's own hiss, not the reference |
+| Block           | centroid  | level  |
+| --------------- | --------- | ------ |
+| Tuck n Go       | 2,988 Hz  | -13.75 |
+| Cali 400        | 3,918 Hz  | -13.95 |
+| G Cougar 800    | 5,245 Hz  | -6.66  |
+| SV Beast Brt    | 8,472 Hz  | -15.39 |
+| US Dripman Norm | 12,823 Hz | -25.49 |
 
-A centroid in the kilohertz on a bass signal is never right, and neither is one
-near zero. The middle row is the one that looks like a measurement and is not:
-every axis moves a little, and a control appears to do something.
+**A working amplifier reads high and loud**: kilohertz of centroid at better than
+-26 dBFS. That is not intuitive for a bass signal, and it is the thing to hold on
+to, because the intuitive reading is the broken one.
+
+| What comes back                 | What it is                                              |
+| ------------------------------- | ------------------------------------------------------- |
+| kilohertz, better than -26 dBFS | the chain, working                                      |
+| ~120-150 Hz at any level        | **an empty chain**: a bass down a cable through nothing  |
+| ~2 Hz at ~-105 dBFS             | silence, nothing arriving at all                        |
+| kilohertz but 40 dB too quiet   | the chain is there and the signal is not                |
+
+The second row has cost more than the rest together. It looks exactly like what a
+bass ought to measure, so it reads as success.
+[A written preset renders empty](../../../../pkg/sdk/internal/wire/README.md#a-written-preset-renders-empty-and-reads-back-fine)
+is why: the device's renderer uses an offset table that reading ignores, so a
+preset this tool wrote is stored, returns verbatim, and renders as nothing. The
+proof there measures 147.67 Hz against 4,034 Hz for the same preset written by
+HX Edit.
+
+An agent read 123 Hz as a working amplifier, wrote it into this page as the
+known-good figure, and built three rounds of fixes on top of it. Check a new
+figure against the table above before believing it.
 
 ## When opening the audio device fails
 
