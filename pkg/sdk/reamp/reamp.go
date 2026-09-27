@@ -288,9 +288,19 @@ func (p *pass) frame(
 	output, input []byte,
 	frames int,
 ) bool {
+	// The stride is the device's, not this loop's. A device is opened at its
+	// own channel count and an HX Stomp presents eight, so frame i starts at
+	// slot i*channels and a loop striding by two walks across one frame's
+	// channels instead of down successive frames. That played a quarter of the
+	// signal scattered across the wrong channels, which measures as something
+	// quiet and bright: the empty loop read 11,990Hz at -46dB where it should
+	// read 95Hz at -21dB.
+	out := channelsIn(output, frames)
+	in := channelsIn(input, frames)
+
 	for i := range frames {
 		if len(p.got) < cap(p.got) {
-			p.got = append(p.got, sample(input, i*2))
+			p.got = append(p.got, sample(input, i*in))
 		}
 	}
 
@@ -301,11 +311,36 @@ func (p *pass) frame(
 			p.sent++
 		}
 
-		put(output, i*2, s)
-		put(output, i*2+1, s)
+		// The first pair only. That is where the Main out listens, and a
+		// device presenting eight wants silence on the other six rather than
+		// six copies.
+		put(output, i*out, s)
+		put(output, i*out+1, s)
 	}
 
 	return p.sent >= len(p.out) && len(p.got) >= cap(p.got)
+}
+
+// channelsIn is how many channels a frame buffer holds, read off the buffer.
+//
+// The callback is handed a buffer the device sized, so this is the one place
+// that knows the width, and asking it beats recording a number that is right
+// for one interface. Two is the floor because the loop writes a pair, and a
+// buffer that cannot even be measured gets it rather than a division by zero.
+func channelsIn(
+	buf []byte,
+	frames int,
+) int {
+	if frames <= 0 {
+		return 2
+	}
+
+	got := len(buf) / (4 * frames)
+	if got < 2 {
+		return 2
+	}
+
+	return got
 }
 
 // Claiming is how long opening a device may take before something is wrong.

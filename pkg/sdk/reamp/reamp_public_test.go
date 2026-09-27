@@ -296,6 +296,79 @@ func (s *ReampPublicTestSuite) TestOpenRefusesHardwareThatIsNotThere() {
 	s.Require().ErrorIs(err, reamp.ErrNoDevice)
 }
 
+// TestAPassStridesByTheDevicesOwnChannelCount covers an eight-channel device.
+//
+// The regression this exists for cost a day twice. A device is opened at its own
+// channel count and an HX Stomp presents eight, so one frame is eight slots wide
+// and frame i starts at slot i*8. A loop striding by two walks across the first
+// frame's channels instead of down successive frames: a quarter of the signal
+// goes out, smeared sideways, and reading it back makes the same error.
+//
+// It does not fail, which is the problem. It measures: the empty loop read
+// 11,990Hz at -46dB where it reads 95Hz at -21dB, and every block in a campaign
+// came back with the same wrong figure looking like data.
+func (s *ReampPublicTestSuite) TestAPassStridesByTheDevicesOwnChannelCount() {
+	const channels = 8
+
+	signal := []float32{0.25, 0.5, 0.75, 1}
+	run := reamp.NewPass(signal)
+
+	frames := 4
+	output := make([]byte, frames*channels*4)
+	input := make([]byte, frames*channels*4)
+
+	lead := int(reamp.Lead.Seconds() * reamp.Rate)
+	for range lead / frames {
+		run.Frame(output, input, frames)
+	}
+
+	// What comes back is read one per frame, at the frame's own start.
+	for i := range frames {
+		reamp.Put(input, i*channels, float32(i+1)/10)
+	}
+
+	run.Frame(output, input, frames)
+
+	got := run.Got()
+	s.Require().GreaterOrEqual(len(got), frames)
+
+	tail := got[len(got)-frames:]
+	for i := range frames {
+		s.Require().InDelta(float32(i+1)/10, tail[i], 0.0001,
+			"frame %d is read at slot %d, not %d", i, i*channels, i*2)
+	}
+}
+
+// TestAPassLeavesTheOtherChannelsAlone covers where the signal is put.
+//
+// The first pair, because that is where the Main out listens. A device
+// presenting eight wants silence on the other six rather than six copies: the
+// loop is a lead out of one socket and back into another, and anything on the
+// remaining channels is somebody else's problem to explain.
+func (s *ReampPublicTestSuite) TestAPassLeavesTheOtherChannelsAlone() {
+	const channels = 8
+
+	run := reamp.NewPass([]float32{1})
+
+	lead := int(reamp.Lead.Seconds() * reamp.Rate)
+	output := make([]byte, channels*4)
+	input := make([]byte, channels*4)
+
+	for range lead {
+		run.Frame(output, input, 1)
+	}
+
+	run.Frame(output, input, 1)
+
+	s.Require().InDelta(1, reamp.Sample(output, 0), 0.0001, "left")
+	s.Require().InDelta(1, reamp.Sample(output, 1), 0.0001, "right")
+
+	for ch := 2; ch < channels; ch++ {
+		s.Require().Zero(reamp.Sample(output, ch),
+			"channel %d carries nothing", ch)
+	}
+}
+
 func TestReampPublicTestSuite(
 	t *testing.T,
 ) {
