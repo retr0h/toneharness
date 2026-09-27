@@ -149,42 +149,6 @@ components:
           EvidenceStore,
         ]
 
-    CharacterTerm:
-      type: object
-      additionalProperties: false
-      description: >
-        One thing a rig should sound like, and why that is believed.
-
-
-        Describe the result rather than the control: "mid-forward, not
-        scooped", never "raise the mids". Where the treble knob sits is a
-        fact about somebody's amplifier; how the record came out is a fact
-        about the sound, and only the second survives being read on other
-        gear.
-
-
-        A term moves controls when a preset is built: six axes act, each word
-        worth one step from wherever the corpus left that control and never
-        more than a quarter of its range. So the evidence on a term is not
-        decoration. It is the difference between a knob moved because
-        somebody listened and a knob moved because a model guessed.
-
-
-        A term outside the shipped vocabulary is reported and kept, not
-        refused: it moves nothing, and refusing a preset over a word would
-        make the format hostile to the person it exists for.
-      required: [term]
-      properties:
-        term:
-          type: string
-          minLength: 1
-          pattern: "\\S"
-          description: How it should sound, in the words a person would use.
-        evidence:
-          type: array
-          items: { $ref: "#/components/schemas/Evidence" }
-          description: Why this is believed.
-
     Confidence:
       type: string
       description: >

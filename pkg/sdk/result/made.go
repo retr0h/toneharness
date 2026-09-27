@@ -52,7 +52,7 @@ type Made struct {
 	Path string
 }
 
-// Moved is what a character term did to a parameter.
+// Moved is what a word did to a parameter.
 type Moved struct {
 	// Term is the word that moved it.
 	Term string

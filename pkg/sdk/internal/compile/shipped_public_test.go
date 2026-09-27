@@ -87,11 +87,11 @@ func (s *ShippedPublicTestSuite) TestEveryShippedAskUsesTheVocabulary() {
 
 	for _, path := range paths {
 		s.Run(filepath.Base(path), func() {
-			for _, u := range compile.CheckCharacter(
+			for _, u := range compile.CheckWords(
 				s.words(func() (fs.File, error) { return rigs.FS.Open(path) }),
 			) {
 				s.Require().Fail("no such character term",
-					"%q. Add it to pkg/sdk/compile/data/character-terms.json "+
+					"%q. Add it to pkg/sdk/compile/data/words.json "+
 						"with a definition, or use one of: %v", u.Term, u.Near)
 			}
 		})
@@ -143,7 +143,7 @@ func (s *ShippedPublicTestSuite) TestEveryExampleUsesTheVocabulary() {
 		s.Run(filepath.Base(path), func() {
 			words := s.words(func() (fs.File, error) { return os.Open(path) })
 
-			s.Require().Empty(compile.CheckCharacter(words))
+			s.Require().Empty(compile.CheckWords(words))
 			s.Require().Empty(compile.CheckAxes(words))
 		})
 	}

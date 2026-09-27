@@ -107,7 +107,7 @@ func (s *TermsPublicTestSuite) TestWhatToDoWithItIsSaidOnce() {
 		}}},
 	})
 
-	s.Require().Contains(got, "Paste under the rig of the player it names")
+	s.Require().Contains(got, "Paste under the ask of the player it names")
 	s.Require().Contains(got, "an argument, not a verdict")
 }
 

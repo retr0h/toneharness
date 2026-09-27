@@ -28,7 +28,7 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
-// Moved is what a character term did to a parameter.
+// Moved is what a word did to a parameter.
 type Moved struct {
 	// Term is the word that moved it.
 	Term string
@@ -179,7 +179,7 @@ const fallbackStep = 0.1
 // opinion should not decide the whole of a control.
 const maxStep = 0.25
 
-// move applies a rig's character to whichever blocks answer for it.
+// move applies an ask's words to whichever blocks answer for them.
 //
 // Each axis names the kind of block it speaks to, because a word is about a
 // part of the sound and not about a box: "roomy" is the reverb's question and

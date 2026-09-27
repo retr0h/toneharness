@@ -31,15 +31,15 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
-// CharacterMovesPublicTestSuite covers the words an ask uses reaching the
+// WordsMovePublicTestSuite covers the words an ask uses reaching the
 // amplifier, which is the whole reason the vocabulary exists.
-type CharacterMovesPublicTestSuite struct {
+type WordsMovePublicTestSuite struct {
 	suite.Suite
 
 	cat *catalog.Catalog
 }
 
-func (s *CharacterMovesPublicTestSuite) SetupTest() {
+func (s *WordsMovePublicTestSuite) SetupTest() {
 	s.cat = loadCatalog(&s.Suite)
 }
 
@@ -58,13 +58,13 @@ func described(
 	return compile.Intent{Words: words}
 }
 
-// TestCharacterReachesTheAmplifier covers a word turning a real knob.
+// TestWordsReachTheAmplifier covers a word turning a real knob.
 //
 // Drive, because it is the one control every amplifier in this fixture
 // carries. Which parameter each axis moves is covered against a block built
 // for it in move_test.go; what this proves is that a rig's words reach the
 // amplifier at all.
-func (s *CharacterMovesPublicTestSuite) TestCharacterReachesTheAmplifier() {
+func (s *WordsMovePublicTestSuite) TestWordsReachTheAmplifier() {
 	tests := []struct {
 		name string
 		term string
@@ -107,7 +107,7 @@ func (s *CharacterMovesPublicTestSuite) TestCharacterReachesTheAmplifier() {
 }
 
 // paramOf reads one control off whichever block is the amplifier.
-func (s *CharacterMovesPublicTestSuite) paramOf(
+func (s *WordsMovePublicTestSuite) paramOf(
 	built plan.Plan,
 	key string,
 ) float64 {
@@ -133,7 +133,7 @@ func (s *CharacterMovesPublicTestSuite) paramOf(
 // The zero Intent, which is also what a rig read off disk is built with: it
 // carries settings somebody already applied, so there is nothing for a word to
 // decide.
-func (s *CharacterMovesPublicTestSuite) TestAnAskThatSaysNothingMovesNothing() {
+func (s *WordsMovePublicTestSuite) TestAnAskThatSaysNothingMovesNothing() {
 	_, _, moved, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 
 	s.Require().NoError(err)
@@ -145,7 +145,7 @@ func (s *CharacterMovesPublicTestSuite) TestAnAskThatSaysNothingMovesNothing() {
 //
 // The words are still what somebody asked for, so they are reported as moving
 // nothing rather than dropped.
-func (s *CharacterMovesPublicTestSuite) TestWordsSurviveAChainWithNoAmplifier() {
+func (s *WordsMovePublicTestSuite) TestWordsSurviveAChainWithNoAmplifier() {
 	spec := rig.Spec{
 		Schema:     rig.SchemaName,
 		ID:         "test",
@@ -164,7 +164,7 @@ func (s *CharacterMovesPublicTestSuite) TestWordsSurviveAChainWithNoAmplifier() 
 
 // TestTwoWordsForOneAxisMoveNothing covers an ask answering one question
 // twice.
-func (s *CharacterMovesPublicTestSuite) TestTwoWordsForOneAxisMoveNothing() {
+func (s *WordsMovePublicTestSuite) TestTwoWordsForOneAxisMoveNothing() {
 	plain, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
@@ -184,8 +184,8 @@ func (s *CharacterMovesPublicTestSuite) TestTwoWordsForOneAxisMoveNothing() {
 		s.paramOf(plain, "Drive"), s.paramOf(got, "Drive"), 1e-9)
 }
 
-func TestCharacterMovesPublicTestSuite(
+func TestWordsMovePublicTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(CharacterMovesPublicTestSuite))
+	suite.Run(t, new(WordsMovePublicTestSuite))
 }

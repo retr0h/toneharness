@@ -381,21 +381,6 @@ type ChainEntry struct {
 	Substitute *Substitute `json:"substitute,omitempty"`
 }
 
-// CharacterTerm One thing a rig should sound like, and why that is believed.
-//
-// Describe the result rather than the control: "mid-forward, not scooped", never "raise the mids". Where the treble knob sits is a fact about somebody's amplifier; how the record came out is a fact about the sound, and only the second survives being read on other gear.
-//
-// A term moves controls when a preset is built: six axes act, each word worth one step from wherever the corpus left that control and never more than a quarter of its range. So the evidence on a term is not decoration. It is the difference between a knob moved because somebody listened and a knob moved because a model guessed.
-//
-// A term outside the shipped vocabulary is reported and kept, not refused: it moves nothing, and refusing a preset over a word would make the format hostile to the person it exists for.
-type CharacterTerm struct {
-	// Evidence Why this is believed.
-	Evidence *[]Evidence `json:"evidence,omitempty"`
-
-	// Term How it should sound, in the words a person would use.
-	Term string `json:"term"`
-}
-
 // Confidence How far a claim should be trusted. Set by a person, not derived. A claim asserting high confidence with no evidence behind it is worth showing as unverified whatever it says about itself.
 type Confidence string
 

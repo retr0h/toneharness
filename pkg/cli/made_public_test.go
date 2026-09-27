@@ -103,7 +103,7 @@ func (s *MadePublicTestSuite) TestMade() {
 				"dsp0",
 				"wrote /tmp/out.hlx",
 			},
-			absent: []string{"added", "no such character term"},
+			absent: []string{"added", "no such word"},
 		},
 		{
 			// A recipe names an amp; a rig is several blocks. Whatever the
@@ -233,7 +233,7 @@ func (s *MadePublicTestSuite) TestMade() {
 					{Term: "sounds like a wet paper bag"},
 				}
 			}),
-			want:   []string{`no such character term "sounds like a wet paper bag"`},
+			want:   []string{`no such word "sounds like a wet paper bag"`},
 			absent: []string{"did you mean"},
 		},
 		{

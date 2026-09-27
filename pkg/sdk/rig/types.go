@@ -59,8 +59,6 @@ type (
 	Muting = gen.TechniqueMuting
 	// Attack is what starts it.
 	Attack = gen.TechniqueAttack
-	// CharacterTerm is how it should sound, in the words a person would use.
-	CharacterTerm = gen.CharacterTerm
 	// Evidence is where a claim came from.
 	Evidence = gen.Evidence
 	// EvidenceKind is how far somebody has to go to disagree with one.

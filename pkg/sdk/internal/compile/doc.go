@@ -35,7 +35,7 @@
 // rig somebody typed carries none of it and is built into an untouched preset
 // the device itself wrote.
 //
-// What it does not yet do is act on a rig's character lines. Those describe how
+// What it does not yet do is act on an ask's words. Those describe how
 // a rig should sound, and turning them into parameter moves is the next piece
 // of work. Until then a generated preset is the right gear at factory settings,
 // which is a starting point rather than an answer.

@@ -18,16 +18,6 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package compile
+package toolsdoc
 
-import _ "embed"
-
-// terms is the vocabulary an ask's words are checked against.
-//
-// Beside the check rather than in the contract: the list will churn, every
-// term needs a sentence of definition an OpenAPI enum has nowhere to put, and
-// adding a word should be a data change rather than a schema edit and a
-// regeneration.
-//
-//go:embed data/words.json
-var terms []byte
+//go:generate go run ./docgen

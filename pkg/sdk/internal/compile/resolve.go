@@ -144,9 +144,9 @@ func Resolve(
 
 	// After the corpus has had its say, because a term is an opinion about
 	// where players land rather than a replacement for knowing.
-	moved := character(intent, blocks, built, stats)
+	moved := worded(intent, blocks, built, stats)
 
-	// Last, over the corpus medians and over whatever a character term
+	// Last, over the corpus medians and over whatever a word
 	// moved: a number somebody wrote down is the most explicit thing in the
 	// rig, and the only one that says exactly what they meant.
 	if err := saidKnobs(built.Blocks, blocks, said); err != nil {
@@ -162,11 +162,11 @@ func Resolve(
 	return built, append(sub, added...), moved, nil
 }
 
-// character moves whatever in the chain answers for the words the ask used.
+// worded moves whatever in the chain answers for the words the ask used.
 //
 // After the corpus has had its say, because a term is an opinion about where
 // players land rather than a replacement for knowing.
-func character(
+func worded(
 	intent Intent,
 	blocks []catalog.Block,
 	built plan.Plan,

@@ -137,7 +137,7 @@ func demand(
 
 // claimed is everything an ask says that might name a block.
 //
-// The character words and how the instrument is played, which are different
+// The words and how the instrument is played, which are different
 // fields saying the same kind of thing: not how loud, but what is there.
 func claimed(
 	intent Intent,

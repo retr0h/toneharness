@@ -62,7 +62,7 @@ type (
 	Added = result.Added
 	// Unfamiliar is a character term nothing defines.
 	Unfamiliar = result.Unfamiliar
-	// Moved is what a character term did to a parameter.
+	// Moved is what a word did to a parameter.
 	Moved = result.Moved
 
 	// Recipes is every rig under one directory.

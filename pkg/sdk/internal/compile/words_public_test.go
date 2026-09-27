@@ -28,14 +28,14 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
 )
 
-// CharacterPublicTestSuite covers the words an ask may use for how it sounds.
-type CharacterPublicTestSuite struct {
+// WordsPublicTestSuite covers the words an ask may use for how it sounds.
+type WordsPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestCharacterTerms covers the shipped vocabulary.
-func (s *CharacterPublicTestSuite) TestCharacterTerms() {
-	got := compile.CharacterTerms()
+// TestWords covers the shipped vocabulary.
+func (s *WordsPublicTestSuite) TestWords() {
+	got := compile.Words()
 
 	s.Require().NotEmpty(got)
 	s.Require().Contains(got, "mid-forward")
@@ -47,8 +47,8 @@ func (s *CharacterPublicTestSuite) TestCharacterTerms() {
 	}
 }
 
-// TestCheckCharacter covers reporting the words nothing defines.
-func (s *CharacterPublicTestSuite) TestCheckCharacter() {
+// TestCheckWords covers reporting the words nothing defines.
+func (s *WordsPublicTestSuite) TestCheckWords() {
 	tests := []struct {
 		name string
 		in   []string
@@ -94,7 +94,7 @@ func (s *CharacterPublicTestSuite) TestCheckCharacter() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got := compile.CheckCharacter(tt.in)
+			got := compile.CheckWords(tt.in)
 
 			s.Require().Len(got, len(tt.want))
 
@@ -108,7 +108,7 @@ func (s *CharacterPublicTestSuite) TestCheckCharacter() {
 }
 
 // TestCheckAxes covers an ask answering one question twice.
-func (s *CharacterPublicTestSuite) TestCheckAxes() {
+func (s *WordsPublicTestSuite) TestCheckAxes() {
 	tests := []struct {
 		name  string
 		terms []string
@@ -152,8 +152,8 @@ func (s *CharacterPublicTestSuite) TestCheckAxes() {
 	}
 }
 
-func TestCharacterPublicTestSuite(
+func TestWordsPublicTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(CharacterPublicTestSuite))
+	suite.Run(t, new(WordsPublicTestSuite))
 }

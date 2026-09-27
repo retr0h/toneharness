@@ -263,7 +263,7 @@ func unfamiliar(
 		terms = append(terms, w.Term)
 	}
 
-	unknown := compile.CheckCharacter(terms)
+	unknown := compile.CheckWords(terms)
 
 	out := make([]result.Unfamiliar, 0, len(unknown))
 	for _, u := range unknown {

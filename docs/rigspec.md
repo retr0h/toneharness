@@ -75,15 +75,6 @@ One piece of gear, in signal order.
 | `stage` | boolean | — | `true` or `false` |
 | `substitute` | Substitute | — | [Substitute](#substitute) |
 
-## CharacterTerm
-
-One thing a rig should sound like, and why that is believed.
-
-| field | holds | grammar | allowed |
-| --- | --- | --- | --- |
-| `evidence` | list of Evidence | — | [Evidence](#evidence) |
-| `term *` | string | shaped | `\S` |
-
 ## Controller
 
 One parameter something moves: an expression pedal, or a footswitch set to sweep a knob rather than switch a block.

@@ -160,7 +160,7 @@ func heard(
 	return nil
 }
 
-// unfamiliar names the character terms nothing defines.
+// unfamiliar names the words nothing defines.
 func unfamiliar(
 	w io.Writer,
 	all []sdk.Unfamiliar,
@@ -174,7 +174,7 @@ func unfamiliar(
 	}
 
 	for _, u := range all {
-		line := fmt.Sprintf("no such character term %q", u.Term)
+		line := fmt.Sprintf("no such word %q", u.Term)
 		if len(u.Near) > 0 {
 			line += " — did you mean " + strings.Join(u.Near, ", ") + "?"
 		}

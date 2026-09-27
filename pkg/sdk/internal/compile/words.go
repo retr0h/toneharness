@@ -50,12 +50,12 @@ type vocabulary struct {
 	} `json:"axes"`
 }
 
-// CharacterTerms returns the terms the vocabulary knows, in order.
+// Words returns the terms the vocabulary knows, in order.
 //
 // Exported because the words are the point: a person writing a rig needs to
 // see the list, and a test over the rigs this project ships needs to check
 // against it.
-func CharacterTerms() []string {
+func Words() []string {
 	var v vocabulary
 
 	// Embedded and written by this repository, so it parses.
@@ -74,15 +74,15 @@ func CharacterTerms() []string {
 	return out
 }
 
-// CheckCharacter reports the character terms an ask uses that nothing defines.
+// CheckWords reports the words an ask uses that nothing defines.
 //
 // An empty result means every word asked for is one the vocabulary carries.
 // The words arrive as words rather than as a document, because the ask is what
 // holds them and nothing here needs the rest of it.
-func CheckCharacter(
+func CheckWords(
 	words []string,
 ) []UnknownTerm {
-	known := CharacterTerms()
+	known := Words()
 	out := []UnknownTerm(nil)
 
 	for _, word := range words {

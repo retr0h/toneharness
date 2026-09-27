@@ -414,7 +414,7 @@ $ tonestack presets make --id mine
 
 The preset is written, because refusing a word would be refusing you the right
 to describe a sound. If the word you want is missing, add it to
-[`pkg/sdk/internal/compile/data/character-terms.json`](../pkg/sdk/internal/compile/data/character-terms.json)
+[`pkg/sdk/internal/compile/data/words.json`](../pkg/sdk/internal/compile/data/words.json)
 with a sentence saying what it means. The file and that message still say
 "character term", which is what the field was called before it moved onto the
 ask; it is the same list. The asks this repository ships are held to it by a
