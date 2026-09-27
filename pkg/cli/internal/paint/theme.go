@@ -78,9 +78,9 @@ var faint = lipgloss.NewStyle().Faint(true)
 
 // ThemeTube is toneharness's default.
 //
-// A tonestack is the tone circuit in a valve amplifier, and warm amber
-// (#ffa032) is what one looks like with the lights off. Everything else is
-// deliberately quiet so the accent means something when it appears.
+// Warm amber (#ffa032) is what a valve looks like with the lights off, which is
+// what the theme is named after. Everything else is deliberately quiet so the
+// accent means something when it appears.
 // Truecolor, so the install banner and `--help` paint the same hue.
 var ThemeTube = Theme{
 	Name:      "tube",
