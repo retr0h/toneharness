@@ -21,6 +21,7 @@
 package audio_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -308,6 +309,92 @@ func (s *ManifestPublicTestSuite) TestUnmatchedIsQuietWhenTheyAgree() {
 
 	s.Require().Empty(missing)
 	s.Require().Empty(unnamed)
+}
+
+// TestGenresCountsRecordsAndPlayers covers what decides whether a genre can be
+// aimed at.
+//
+// Eight records from three players. Under either number the genre is one band's
+// sound wearing its name, and the figures cannot tell those apart, so the count
+// is the only thing that can.
+func (s *ManifestPublicTestSuite) TestGenresCountsRecordsAndPlayers() {
+	of := func(artist string, genres ...[]string) audio.Manifest {
+		m := audio.Manifest{Artist: artist}
+		for i, g := range genres {
+			m.Tracks = append(m.Tracks, audio.Record{
+				Track: fmt.Sprintf("t%d", i), Genres: g,
+			})
+		}
+
+		return m
+	}
+
+	punk := []string{"punk", "pop-punk"}
+
+	all := []audio.Manifest{
+		of("A", punk, punk, punk),
+		of("B", punk, punk, punk),
+		of("C", punk, punk, []string{"grunge"}),
+		of("D", []string{"grunge"}),
+	}
+
+	got := audio.Genres(all)
+
+	// Name order, so two runs read the same.
+	names := make([]string, 0, len(got))
+	for _, g := range got {
+		names = append(names, g.Genre)
+	}
+
+	s.Require().Equal([]string{"grunge", "pop-punk", "punk"}, names)
+
+	by := map[string]audio.Tagged{}
+	for _, g := range got {
+		by[g.Genre] = g
+	}
+
+	s.Require().Equal(8, by["punk"].Records)
+	s.Require().Equal(3, by["punk"].Artists)
+	s.Require().True(by["punk"].Usable(), "eight records from three players")
+
+	// Two records from two players. Enough players, not enough records.
+	s.Require().Equal(2, by["grunge"].Records)
+	s.Require().Equal(2, by["grunge"].Artists)
+	s.Require().False(by["grunge"].Usable())
+}
+
+// TestAGenreFromOneBandIsNotUsable is the case the threshold exists for.
+func (s *ManifestPublicTestSuite) TestAGenreFromOneBandIsNotUsable() {
+	alone := audio.Manifest{Artist: "Green Day"}
+	for i := range 9 {
+		alone.Tracks = append(alone.Tracks, audio.Record{
+			Track: fmt.Sprintf("t%d", i), Genres: []string{"punk"},
+		})
+	}
+
+	got := audio.Genres([]audio.Manifest{alone})
+	s.Require().Len(got, 1)
+
+	// Nine records is past the record threshold and still one band.
+	s.Require().Equal(9, got[0].Records)
+	s.Require().Equal(1, got[0].Artists)
+	s.Require().False(got[0].Usable(),
+		"nine records by one band is that band, not a genre")
+}
+
+// TestAManifestMayCarryGenres covers the field reading off disk.
+func (s *ManifestPublicTestSuite) TestAManifestMayCarryGenres() {
+	m, err := audio.ReadManifest(strings.NewReader(`
+artist: Mike Dirnt
+tracks:
+  - track: longview
+    url: https://open.spotify.com/track/x
+    year: 1994
+    genres: [punk, pop-punk]
+`))
+
+	s.Require().NoError(err)
+	s.Require().Equal([]string{"punk", "pop-punk"}, m.Tracks[0].Genres)
 }
 
 func TestManifestPublicTestSuite(

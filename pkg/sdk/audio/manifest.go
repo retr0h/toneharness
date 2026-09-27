@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"regexp"
 	"slices"
+	"sort"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -69,6 +70,19 @@ type Record struct {
 	At string `yaml:"at"`
 	// Note is anything worth saying about this recording in particular.
 	Note string `yaml:"note"`
+	// Genres are what this recording is, as words rather than one of a fixed
+	// list.
+	//
+	// Per track rather than per artist, because a catalogue spans them: the same
+	// player is on a punk record and a funk one, and tagging the artist would
+	// put both sounds in both distributions. A track may carry several, since
+	// pop-punk is punk and saying so twice is cheaper than deciding which one
+	// it "really" is.
+	//
+	// Not an enum. Enumerating genres in code means a release to add one, and
+	// what decides whether a genre works is not the type: it is whether enough
+	// records carry it to have a distribution. See Genres.
+	Genres []string `yaml:"genres"`
 }
 
 // Manifest is a corpus of recordings, without the recordings.
@@ -77,6 +91,65 @@ type Manifest struct {
 	Artist string `yaml:"artist"`
 	// Tracks is what was measured, one entry per recording.
 	Tracks []Record `yaml:"tracks"`
+}
+
+// Tagged is one genre and what the corpus holds for it.
+type Tagged struct {
+	// Genre is the word, as the manifests spell it.
+	Genre string
+	// Records is how many recordings carry it, and Artists how many different
+	// players those come from.
+	Records int
+	Artists int
+}
+
+// Usable reports whether this genre has a distribution worth aiming at.
+//
+// Eight records from at least three players. Three records by one band is that
+// band's sound wearing a genre's name, and a request for the genre would get the
+// band: the figures cannot tell the two apart, so the threshold is the only
+// thing that can.
+//
+// A genre under it is reported rather than computed from, which is why this is a
+// question and not a filter.
+func (n Tagged) Usable() bool { return n.Records >= 8 && n.Artists >= 3 }
+
+// Genres is every genre the manifests name, with what backs each one.
+//
+// In name order, so two runs read the same. The counts are what decides whether
+// a genre can be aimed at, and reporting them is the honest answer while a
+// corpus is being built: somebody adding records needs to see how far off the
+// threshold each one still is.
+func Genres(
+	all []Manifest,
+) []Tagged {
+	records := map[string]int{}
+	players := map[string]map[string]bool{}
+
+	for _, m := range all {
+		for _, rec := range m.Tracks {
+			for _, genre := range rec.Genres {
+				records[genre]++
+
+				if players[genre] == nil {
+					players[genre] = map[string]bool{}
+				}
+
+				players[genre][m.Artist] = true
+			}
+		}
+	}
+
+	out := make([]Tagged, 0, len(records))
+	for genre, n := range records {
+		out = append(out, Tagged{
+			Genre: genre, Records: n, Artists: len(players[genre]),
+		})
+	}
+
+	sort.Slice(out, func(i, j int) bool { return out[i].Genre < out[j].Genre })
+
+	return out
 }
 
 // Where a timestamp is allowed to point, and what a link has to look like.
