@@ -343,14 +343,14 @@ func (s *ManifestPublicTestSuite) TestGenresCountsRecordsAndPlayers() {
 	// Name order, so two runs read the same.
 	names := make([]string, 0, len(got))
 	for _, g := range got {
-		names = append(names, g.Genre)
+		names = append(names, g.Slug)
 	}
 
 	s.Require().Equal([]string{"grunge", "pop-punk", "punk"}, names)
 
-	by := map[string]audio.Tagged{}
+	by := map[string]audio.Grouped{}
 	for _, g := range got {
-		by[g.Genre] = g
+		by[g.Slug] = g
 	}
 
 	s.Require().Equal(8, by["punk"].Records)
@@ -395,6 +395,42 @@ tracks:
 
 	s.Require().NoError(err)
 	s.Require().Equal([]string{"punk", "pop-punk"}, m.Tracks[0].Genres)
+}
+
+// TestBandsGroupsOnTheSlug covers two spellings of one band counting once.
+//
+// The corpus groups on the slug, so a name typed two ways must not read as two
+// bands. Reported under the spelling first seen, because somebody reading the
+// answer wants the band and not the slug.
+func (s *ManifestPublicTestSuite) TestBandsGroupsOnTheSlug() {
+	all := []audio.Manifest{
+		{Artist: "Duff McKagan", Tracks: []audio.Record{
+			{Track: "a", Band: "Guns N' Roses"},
+			{Track: "b", Band: "Guns n Roses"},
+		}},
+		{Artist: "Somebody Else", Tracks: []audio.Record{
+			{Track: "c", Band: "Guns N' Roses"},
+			// No band at all, which is ordinary: a session player's record
+			// belongs to whoever made it and often to no band.
+			{Track: "d"},
+		}},
+	}
+
+	got := audio.Bands(all)
+	s.Require().Len(got, 1, "three records, one band, two spellings")
+
+	s.Require().Equal("guns-n-roses", got[0].Slug)
+	s.Require().Equal("Guns N' Roses", got[0].Name)
+	s.Require().Equal(3, got[0].Records)
+	s.Require().Equal(2, got[0].Artists)
+}
+
+// TestABandIsOptional covers the corpus as it stands.
+//
+// No record carried a band before the field existed, so reading one without it
+// has to answer nothing rather than an empty band.
+func (s *ManifestPublicTestSuite) TestABandIsOptional() {
+	s.Require().Empty(audio.Bands([]audio.Manifest{s.read(full)}))
 }
 
 func TestManifestPublicTestSuite(

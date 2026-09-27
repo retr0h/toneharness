@@ -30,6 +30,8 @@ import (
 	"strings"
 
 	"go.yaml.in/yaml/v3"
+
+	"github.com/retr0h/tonestack/pkg/sdk/internal/slug"
 )
 
 // A corpus is audio nobody may redistribute and a record of what it was.
@@ -70,6 +72,16 @@ type Record struct {
 	At string `yaml:"at"`
 	// Note is anything worth saying about this recording in particular.
 	Note string `yaml:"note"`
+	// Band is who made the record, where a player was in one.
+	//
+	// On the record rather than on the player, for the reason the genres below
+	// are: a bassist plays in several bands over a career and a record belongs
+	// to one. Attaching it to the player would put Parliament-Funkadelic on
+	// every Bootsy Collins record, including the ones it was not.
+	//
+	// Written as somebody writes it, and grouped on its slug, so "Guns N' Roses"
+	// and "Guns n Roses" are one band rather than two.
+	Band string `yaml:"band"`
 	// Genres are what this recording is, as words rather than one of a fixed
 	// list.
 	//
@@ -93,10 +105,16 @@ type Manifest struct {
 	Tracks []Record `yaml:"tracks"`
 }
 
-// Tagged is one genre and what the corpus holds for it.
-type Tagged struct {
-	// Genre is the word, as the manifests spell it.
-	Genre string
+// Grouped is one name the corpus can be selected by, and what backs it.
+//
+// A genre and a band are the same question asked twice: how many records carry
+// this, and how many different players do they come from. So they answer with
+// one type rather than two that drift.
+type Grouped struct {
+	// Name is the word or the band, as the manifests spell it.
+	Name string
+	// Slug is what a path or a flag says, which is what grouping is done on.
+	Slug string
 	// Records is how many recordings carry it, and Artists how many different
 	// players those come from.
 	Records int
@@ -112,7 +130,7 @@ type Tagged struct {
 //
 // A genre under it is reported rather than computed from, which is why this is a
 // question and not a filter.
-func (n Tagged) Usable() bool { return n.Records >= 8 && n.Artists >= 3 }
+func (n Grouped) Usable() bool { return n.Records >= 8 && n.Artists >= 3 }
 
 // Genres is every genre the manifests name, with what backs each one.
 //
@@ -122,32 +140,66 @@ func (n Tagged) Usable() bool { return n.Records >= 8 && n.Artists >= 3 }
 // threshold each one still is.
 func Genres(
 	all []Manifest,
-) []Tagged {
-	records := map[string]int{}
-	players := map[string]map[string]bool{}
+) []Grouped {
+	return grouped(all, func(rec Record) []string { return rec.Genres })
+}
+
+// Bands is every band the manifests name, with what backs each one.
+//
+// The same shape as Genres, because it is the same question: which records are
+// this, and how many players made them. Grouped on the slug so two spellings of
+// one band are one band.
+func Bands(
+	all []Manifest,
+) []Grouped {
+	return grouped(all, func(rec Record) []string {
+		if rec.Band == "" {
+			return nil
+		}
+
+		return []string{rec.Band}
+	})
+}
+
+// grouped counts records and players for whatever a record says it is.
+//
+// Keyed on the slug and reported under the spelling first seen, so a name typed
+// two ways counts once and still reads as somebody wrote it.
+func grouped(
+	all []Manifest,
+	of func(Record) []string,
+) []Grouped {
+	type count struct {
+		name    string
+		records int
+		players map[string]bool
+	}
+
+	seen := map[string]*count{}
 
 	for _, m := range all {
 		for _, rec := range m.Tracks {
-			for _, genre := range rec.Genres {
-				records[genre]++
+			for _, name := range of(rec) {
+				key := slug.Of(name)
 
-				if players[genre] == nil {
-					players[genre] = map[string]bool{}
+				if seen[key] == nil {
+					seen[key] = &count{name: name, players: map[string]bool{}}
 				}
 
-				players[genre][m.Artist] = true
+				seen[key].records++
+				seen[key].players[m.Artist] = true
 			}
 		}
 	}
 
-	out := make([]Tagged, 0, len(records))
-	for genre, n := range records {
-		out = append(out, Tagged{
-			Genre: genre, Records: n, Artists: len(players[genre]),
+	out := make([]Grouped, 0, len(seen))
+	for key, c := range seen {
+		out = append(out, Grouped{
+			Name: c.name, Slug: key, Records: c.records, Artists: len(c.players),
 		})
 	}
 
-	sort.Slice(out, func(i, j int) bool { return out[i].Genre < out[j].Genre })
+	sort.Slice(out, func(i, j int) bool { return out[i].Slug < out[j].Slug })
 
 	return out
 }
