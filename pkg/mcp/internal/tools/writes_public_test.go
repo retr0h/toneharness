@@ -21,6 +21,7 @@
 package tools_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -205,4 +206,113 @@ func TestWritesPublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(WritesPublicTestSuite))
+}
+
+// TestRigsNew covers writing a rig and the ask beside it.
+//
+// Not through run, because run checks every answer for the sdk.Change a slot
+// move makes and this answers an sdk.Scaffolded.
+func (s *WritesPublicTestSuite) TestRigsNew() {
+	s.Run("a rig written from the gear it names", func() {
+		s.client.EXPECT().Scaffold(gomock.Any(), sdk.NewRig{
+			ID:         "matt-freeman",
+			Name:       "Matt Freeman",
+			Band:       "Rancid",
+			Instrument: "bass",
+			Amp:        "Ampeg SVT",
+			Pedals:     []string{"Boss ODB-3"},
+		}).Return(sdk.Scaffolded{ID: "matt-freeman", Name: "Matt Freeman"}, nil)
+
+		res := call(s.T(), connect(s.T(), s.client, true), "rigs_new", tools.Scaffold{
+			ID:         "matt-freeman",
+			Name:       "Matt Freeman",
+			Band:       "Rancid",
+			Instrument: "bass",
+			Amp:        "Ampeg SVT",
+			Pedals:     []string{"Boss ODB-3"},
+		})
+
+		s.False(res.IsError)
+		s.Contains(text(s.T(), res), "wrote the rig matt-freeman and the ask beside it")
+
+		var got sdk.Scaffolded
+		structured(s.T(), res, &got)
+		s.Equal("matt-freeman", got.ID)
+	})
+
+	s.Run("gear the catalog does not carry", func() {
+		s.client.EXPECT().Scaffold(gomock.Any(), gomock.Any()).
+			Return(sdk.Scaffolded{}, errors.New("no model for Marshall Nonesuch"))
+
+		res := call(s.T(), connect(s.T(), s.client, true), "rigs_new", tools.Scaffold{
+			ID: "nobody", Name: "Nobody", Instrument: "bass", Amp: "Marshall Nonesuch",
+		})
+
+		s.True(res.IsError)
+		s.Contains(text(s.T(), res), "no model for Marshall Nonesuch")
+	})
+}
+
+// TestPresetsCompile covers turning a rig or a plan into a preset.
+//
+// The refusal matters more than the two happy paths. A rig names gear and is
+// realised on the way through; a plan already names the models and every knob.
+// Given both, nothing can say which one the caller meant, and quietly picking
+// one writes a preset somebody did not ask for.
+func (s *WritesPublicTestSuite) TestPresetsCompile() {
+	s.Run("a rig, realised against the catalog", func() {
+		s.client.EXPECT().Compile(gomock.Any(), sdk.Compile{
+			Rig: "mine.yaml", Out: "mine.hlx", Existing: sdk.ReplaceExisting,
+		}).Return(sdk.Built{Path: "mine.hlx", Blocks: 4}, nil)
+
+		res := call(s.T(), connect(s.T(), s.client, true), "presets_compile",
+			tools.Build{Rig: "mine.yaml", Out: "mine.hlx"})
+
+		s.False(res.IsError)
+		s.Contains(text(s.T(), res), "mine.hlx holds 4 blocks")
+
+		var got sdk.Built
+		structured(s.T(), res, &got)
+		s.Equal(4, got.Blocks)
+	})
+
+	s.Run("a plan, which already chose its models", func() {
+		s.client.EXPECT().Compile(gomock.Any(), sdk.Compile{
+			Plan: "tuned.yaml", Template: "slot.hlx", Out: "tuned.hlx",
+			Existing: sdk.ReplaceExisting,
+		}).Return(sdk.Built{Path: "tuned.hlx", Blocks: 6}, nil)
+
+		res := call(s.T(), connect(s.T(), s.client, true), "presets_compile",
+			tools.Build{Plan: "tuned.yaml", Template: "slot.hlx", Out: "tuned.hlx"})
+
+		s.False(res.IsError)
+		s.Contains(text(s.T(), res), "tuned.hlx holds 6 blocks")
+	})
+
+	s.Run("both a rig and a plan", func() {
+		res := call(s.T(), connect(s.T(), s.client, true), "presets_compile",
+			tools.Build{Rig: "mine.yaml", Plan: "tuned.yaml", Out: "mine.hlx"})
+
+		s.True(res.IsError)
+		s.Contains(text(s.T(), res), tools.ErrOneDocument.Error())
+	})
+
+	s.Run("neither a rig nor a plan", func() {
+		res := call(s.T(), connect(s.T(), s.client, true), "presets_compile",
+			tools.Build{Out: "mine.hlx"})
+
+		s.True(res.IsError)
+		s.Contains(text(s.T(), res), tools.ErrOneDocument.Error())
+	})
+
+	s.Run("a rig the compiler refuses", func() {
+		s.client.EXPECT().Compile(gomock.Any(), gomock.Any()).
+			Return(sdk.Built{}, errors.New("over the DSP budget"))
+
+		res := call(s.T(), connect(s.T(), s.client, true), "presets_compile",
+			tools.Build{Rig: "mine.yaml", Out: "mine.hlx"})
+
+		s.True(res.IsError)
+		s.Contains(text(s.T(), res), "over the DSP budget")
+	})
 }

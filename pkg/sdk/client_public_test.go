@@ -1611,3 +1611,78 @@ func (s *ClientPublicTestSuite) TestMeasuredGenresRefusesATreeThatIsNotThere() {
 		context.Background(), filepath.Join("testdata", "nowhere"))
 	s.Require().Error(err)
 }
+
+// TestMeasuredPlayers covers measuring each player's records.
+//
+// The slow half of the pair, the way MeasuredGenres is: this reads the audio
+// where MusicPlayers reads what somebody wrote down. A word is earned by sitting
+// clear of the other players, so one player alone earns nothing and an empty
+// answer is the ordinary result rather than a fault.
+func (s *ClientPublicTestSuite) TestMeasuredPlayers() {
+	root := s.T().TempDir()
+
+	dir := filepath.Join(root, "a")
+	s.Require().NoError(os.MkdirAll(dir, 0o750))
+	s.Require().NoError(os.WriteFile(filepath.Join(dir, "corpus.yaml"),
+		[]byte("artist: A\ntracks:\n  - track: t\n"+
+			"    url: https://open.spotify.com/track/x\n    year: 1994\n"), 0o600))
+
+	// A manifest naming a record nothing separated, so there is a player and
+	// no audio behind them.
+	got, err := sdk.New().MeasuredPlayers(context.Background(), root)
+	s.Require().NoError(err)
+	s.Require().Empty(got, "no stems, so nothing measured")
+
+	_, err = sdk.New().MeasuredPlayers(cancelled(), root)
+	s.Require().Error(err, "a caller who stopped waiting")
+}
+
+// TestMeasuredPlayersRefusesATreeThatIsNotThere covers a path nobody can walk.
+func (s *ClientPublicTestSuite) TestMeasuredPlayersRefusesATreeThatIsNotThere() {
+	_, err := sdk.New().MeasuredPlayers(
+		context.Background(), filepath.Join("testdata", "nowhere"))
+	s.Require().Error(err)
+}
+
+// TestMeasuredRecordings covers measuring a directory of separated audio.
+//
+// A directory of files rather than a corpus tree, and no manifest: this is what
+// somebody points at the output of a separation run before any of it has been
+// filed under a player.
+func (s *ClientPublicTestSuite) TestMeasuredRecordings() {
+	empty := s.T().TempDir()
+
+	tracks, together, err := sdk.New().MeasuredRecordings(context.Background(), empty)
+	s.Require().NoError(err)
+	s.Require().Empty(tracks, "a directory holding no audio measures nothing")
+	s.Require().Zero(together.Tracks)
+
+	_, _, err = sdk.New().MeasuredRecordings(cancelled(), empty)
+	s.Require().Error(err, "a caller who stopped waiting")
+}
+
+// TestMeasuredRecordingsRefusesADirectoryThatIsNotThere covers a wrong path.
+func (s *ClientPublicTestSuite) TestMeasuredRecordingsRefusesADirectoryThatIsNotThere() {
+	_, _, err := sdk.New().MeasuredRecordings(
+		context.Background(), filepath.Join("testdata", "nowhere"))
+	s.Require().Error(err)
+}
+
+// TestControlAddressesABlockOnePastItsPosition covers the one place the
+// arithmetic between a preset's numbering and the wire's lives.
+//
+// A device keeps the input at grid 0, so a block a preset records at position P
+// answers to P+1. Both the CLI and the MCP server did this themselves for a
+// while, which is two copies of one fact and the shape of bug where one gets
+// corrected and the other does not.
+func (s *ClientPublicTestSuite) TestControlAddressesABlockOnePastItsPosition() {
+	s.Require().Equal(
+		sdk.Address{Block: 1, Param: 0, Direct: true},
+		sdk.Control(0, 0),
+		"the first block a preset records is 1 on the wire, because 0 is the input")
+
+	s.Require().Equal(
+		sdk.Address{Block: 5, Param: 3, Direct: true},
+		sdk.Control(4, 3),
+		"measured on an HX Stomp: addressing 5 moved the block recorded at 4")
+}

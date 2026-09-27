@@ -26,6 +26,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // SymbolsTestSuite covers the table a device names its models by.
@@ -235,6 +237,25 @@ func (s *SymbolsTestSuite) TestBuildReportsAnInstallationItCannotRead() {
 			s.Require().Error(err)
 			s.Require().Contains(err.Error(), tt.errText)
 		})
+	}
+}
+
+// TestFamilyOf covers the suffix a device's own lists carry.
+//
+// Only a Helix LT has one. The three that share the unsuffixed pair are not
+// interchangeable with each other in general, and the pair they share lists
+// four Returns an HX Stomp has no sockets for, so an entry existing is not the
+// same as the socket existing.
+func (s *SymbolsTestSuite) TestFamilyOf() {
+	s.Require().Equal("_lt", familyOf(catalog.HelixLT))
+
+	for _, device := range []int{
+		catalog.HXStomp,
+		catalog.HXStompXL,
+		catalog.HelixFloor,
+	} {
+		s.Require().Empty(familyOf(device),
+			"device %d shares the unsuffixed pair", device)
 	}
 }
 
