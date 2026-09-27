@@ -50,6 +50,33 @@ Then check the record was made when the rig was, which is [era.md](era.md). A
 record from another period measures another rig, and the figures come out looking
 like the gear that was in the room instead of the gear the rig names.
 
+## A player added is a rig owed
+
+Records and gear are two halves and the corpus only holds one of them. A player
+whose records are measured and who has no rig in
+`pkg/sdk/shipped/artists/` contributes figures that nothing can act on: the words
+their records earn describe a sound with no amplifier behind it.
+
+It shows up worst one level up, at the genre. A genre needs three players before
+it is a distribution rather than one band, and it earns its words by sitting
+clear of the players who avoid it. Both of those work on records alone, so a
+genre can earn words while **none** of its players has any gear. That is what
+happened here: grunge earned `scooped` and `clean` off nine records from three
+players, and `tone build` then refuses the whole request, correctly, with
+"nothing in the request names gear, and nothing in it can be measured against".
+
+So adding records is half a job. Finish it or write down that you did not:
+
+1. `corpus music players` says who the corpus holds.
+2. `rigs list` says who has gear.
+3. Every name in the first and not the second is a hole. Either research the
+   gear, which is the `build-a-rig` skill and is hours per player rather than
+   minutes, or create a task naming that player so the next session can.
+
+**Do not leave it as a sentence in a reply.** Five players sat in the corpus
+earning genre words with no gear behind any of them, and nothing in this
+repository said so until somebody asked why a genre would not build.
+
 ## The layout is not tidiness
 
 [resources/music/README.md](../../../../resources/music/README.md) is the rule

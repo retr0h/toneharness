@@ -22,12 +22,15 @@ package tone_test
 
 import (
 	"bytes"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/retr0h/toneharness/pkg/sdk/shipped"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
@@ -67,6 +70,36 @@ func (s *ShippedPublicTestSuite) TestEveryExampleLoads() {
 
 			_, err = tone.Load(bytes.NewReader(body))
 			s.Require().NoError(err)
+		})
+	}
+}
+
+// TestEveryShippedAskLoads reads the ask beside every rig this binary ships.
+//
+// The gap this closes was invisible from either side. pkg/sdk/rig checks every
+// shipped rig and skips the `.tone.yaml` files beside them, saying "pkg/sdk/tone
+// checks those", and pkg/sdk/tone checked `examples/` and never the shipped
+// asks. Each test was right about itself and the sentence joining them was not,
+// so the documents this project ships as its own knowledge were the only ones
+// nothing validated.
+func (s *ShippedPublicTestSuite) TestEveryShippedAskLoads() {
+	paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.tone.yaml"))
+	s.Require().NoError(err)
+	s.Require().NotEmpty(paths, "no shipped asks found to check")
+
+	for _, path := range paths {
+		s.Run(filepath.Base(path), func() {
+			body, err := fs.ReadFile(shipped.FS, path)
+			s.Require().NoError(err)
+
+			_, err = tone.Load(bytes.NewReader(body))
+			s.Require().NoError(err)
+
+			// An ask is reached through the rig it sits beside, so one with no
+			// rig is unreachable. It loads cleanly and nothing can ever ask it.
+			beside := strings.TrimSuffix(path, ".tone.yaml") + ".yaml"
+			_, err = fs.Stat(shipped.FS, beside)
+			s.Require().NoError(err, "%s has no rig beside it", path)
 		})
 	}
 }

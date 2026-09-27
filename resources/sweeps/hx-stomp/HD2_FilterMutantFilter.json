@@ -1,0 +1,144 @@
+{
+ "device": "HX Stomp",
+ "gear": "Mutant Filter",
+ "block": "HD2_FilterMutantFilter",
+ "slot": 1,
+ "isolated": true,
+ "chain": "chain:\n- gear: Musitronics Mu-Tron III\n  role: filter\nid: slot-01a\ninstrument: guitar\nschema: RigSpec\nversion: 2\n",
+ "reference": {
+  "file": "resources/dry/bass-di.wav",
+  "sha256": "859209f091f1e92db2ffdfccf9b586e348005aafcf7c7ed8eee08f235087af4b",
+  "seconds": 4
+ },
+ "probed": true,
+ "controls": {
+  "Mix": {
+   "index": 5,
+   "kind": "float",
+   "control": "Mix",
+   "span": {
+    "low": 0,
+    "high": 1,
+    "fromCatalog": true
+   },
+   "noise": {
+    "centroid": 94.16634768966833,
+    "decay": 0.01,
+    "dynamics": 0.05,
+    "harmonics": 0.05,
+    "high": 0.36522297608527765,
+    "lean": 0.005,
+    "level": 0.8463884240319753,
+    "low": 0.02,
+    "mid": 0.3634473823766373,
+    "transient": 0.5216518451756134
+   },
+   "settled": -0.27754503302091715,
+   "silentBelow": -30.277545033020917,
+   "mutedAt": null,
+   "clippedAt": [
+    0.5,
+    0.625,
+    0.75,
+    0.875,
+    1
+   ],
+   "points": [
+    {
+     "value": 0,
+     "centroid": 92.3457823560525,
+     "level": -21.75908548913553,
+     "low": 98.71538485958301,
+     "mid": 1.28013309018073,
+     "high": 0.004482050236266745,
+     "transient": 0.6118514318295386,
+     "decay": 1.19,
+     "dynamics": 6.263876492797955,
+     "harmonics": 28.11335466879699,
+     "lean": 0.47616309158757586
+    },
+    {
+     "value": 0.125,
+     "centroid": 92.54203636184315,
+     "level": -21.75024098287331,
+     "low": 98.69614894225846,
+     "mid": 1.2985029101010743,
+     "high": 0.005348147640458836,
+     "transient": 0.6115868585342041,
+     "decay": 1.22,
+     "dynamics": 5.728496977390779,
+     "harmonics": 28.472946802429927,
+     "lean": 0.4764612653210949
+    },
+    {
+     "value": 0.25,
+     "centroid": 263.59387089836656,
+     "level": -21.577687037765465,
+     "low": 95.18651263522425,
+     "mid": 1.6081754409175166,
+     "high": 3.2053119238582397,
+     "transient": 0.6107541016836453,
+     "decay": 1.24,
+     "dynamics": 5.829132821239691,
+     "harmonics": 28.984390848362725,
+     "lean": 0.47507698480494076
+    },
+    {
+     "value": 0.375,
+     "centroid": 7911.323862968739,
+     "level": -1.3296112353722171,
+     "low": 0.0736661211108663,
+     "mid": 1.2312320326753179,
+     "high": 98.69510184621382,
+     "transient": 0.4870467829554415,
+     "decay": 0.02,
+     "dynamics": 0.005243537566437525,
+     "harmonics": 12.139368499730608,
+     "lean": -0.9947589485856381
+    }
+   ],
+   "fits": {
+    "centroid": {
+     "perTurn": 18902.388861099666,
+     "straight": 0.6175132028361484
+    },
+    "decay": {
+     "perTurn": -2.792,
+     "straight": 0.5663713933644882
+    },
+    "dynamics": {
+     "perTurn": -14.940210417476512,
+     "straight": 0.6560084269267306
+    },
+    "harmonics": {
+     "perTurn": -37.92841156901308,
+     "straight": 0.5571626801976413
+    },
+    "high": {
+     "perTurn": 239.4174585313204,
+     "straight": 0.6259187468560794
+    },
+    "lean": {
+     "perTurn": -3.5313203208286366,
+     "straight": 0.6005905658910751
+    },
+    "level": {
+     "perTurn": 49.16878136511822,
+     "straight": 0.6071058487916874
+    },
+    "low": {
+     "perTurn": -239.54783401796053,
+     "straight": 0.628588059896408
+    },
+    "mid": {
+     "perTurn": 0.13037548664016488,
+     "straight": 0.015054024278983835
+    },
+    "transient": {
+     "perTurn": -0.3001973627782801,
+     "straight": 0.607046019285939
+    }
+   }
+  }
+ }
+}

@@ -100,6 +100,21 @@ into the document it came from and requires the same bytes. The cause and the
 near-miss that follows it are in
 [the wire README](../pkg/sdk/internal/wire/README.md#a-block-bodys-keys-go-in-the-devices-order).
 
+The loop that hears it back broke the same day, separately, and the pair is
+worth reading together because neither failed. A device is opened at its own
+channel count, an HX Stomp presents eight, and the loop still strode a frame
+buffer by two: a quarter of the signal went out smeared across channels instead
+of forward in time. That measures 11,990Hz at -46dB where the empty loop
+measures 95Hz at -21dB, so every block in a campaign came back with the same
+wrong figure looking like data.
+
+**Neither bug failed. Both measured.** That is the shape of defect this project
+has to expect, and it is why the checks now live in
+[signal-path.md](../.claude/skills/measure-a-device/references/signal-path.md):
+read the empty loop before believing any sweep, and if it is wrong, use a block
+that generates rather than processes to say whether the send or the return is
+the dead leg.
+
 So the correction loop below is now actually cheap, and the measuring that
 [solving for knob positions](superpowers/specs/2026-09-27-solving-for-knob-positions-design.md)
 needs is unblocked.

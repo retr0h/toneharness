@@ -157,6 +157,38 @@ func (a Across) Measured() map[string]float64 {
 	return out
 }
 
+// Spreads is how far apart the records sit on each figure, beside the middle
+// Measured reports.
+//
+// The pair is what makes a player or a genre a target rather than a point. An
+// axis their records agree closely about is one an answer has to hit; an axis
+// they disagree about is one it need not be precise on, and treating the two the
+// same spends controls defending a figure the evidence never agreed on.
+//
+// Keyed the same way as Measured, and carrying the same two guards: a figure
+// no recording answered is absent rather than zero.
+func (a Across) Spreads() map[string]Spread {
+	out := map[string]Spread{
+		string(KeyLow):       a.Low,
+		string(KeyMid):       a.Mid,
+		string(KeyHigh):      a.High,
+		string(KeyCentroid):  a.Centroid,
+		string(KeyDynamics):  a.DynamicRange,
+		string(KeyHarmonics): a.Harmonics,
+		string(KeyLean):      a.EvenOdd,
+	}
+
+	if a.Transient.From > 0 {
+		out[string(KeyTransient)] = a.Transient.Spread
+	}
+
+	if a.Decay.From > 0 {
+		out[string(KeyDecay)] = a.Decay.Spread
+	}
+
+	return out
+}
+
 // to rounds a measurement to the places it can honestly claim.
 func to(
 	v float64,
