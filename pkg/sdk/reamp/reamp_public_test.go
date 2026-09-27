@@ -369,6 +369,30 @@ func (s *ReampPublicTestSuite) TestAPassLeavesTheOtherChannelsAlone() {
 	}
 }
 
+// TestAPassOnAMonoDevice covers an interface with no pair to write.
+//
+// Not a Helix, which presents eight. `--hardware` names any attached device and
+// a mono one has one slot per frame, so writing a pair would put this frame's
+// second sample where the next frame's first belongs.
+func (s *ReampPublicTestSuite) TestAPassOnAMonoDevice() {
+	run := reamp.NewPass([]float32{1, 1})
+
+	frames := 2
+	output := make([]byte, frames*4)
+	input := make([]byte, frames*4)
+
+	lead := int(reamp.Lead.Seconds() * reamp.Rate)
+	for range lead / frames {
+		run.Frame(output, input, frames)
+	}
+
+	s.Require().NotPanics(func() { run.Frame(output, input, frames) })
+
+	s.Require().InDelta(1, reamp.Sample(output, 0), 0.0001)
+	s.Require().InDelta(1, reamp.Sample(output, 1), 0.0001,
+		"the next frame's own sample, not a second copy of this one")
+}
+
 func TestReampPublicTestSuite(
 	t *testing.T,
 ) {

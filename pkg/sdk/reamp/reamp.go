@@ -311,11 +311,15 @@ func (p *pass) frame(
 			p.sent++
 		}
 
-		// The first pair only. That is where the Main out listens, and a
-		// device presenting eight wants silence on the other six rather than
-		// six copies.
+		// The first pair, where the Main out listens, and silence on whatever
+		// else the device presents rather than a copy per channel. A mono
+		// interface has no pair, and writing one would put this frame's second
+		// sample into the next frame.
 		put(output, i*out, s)
-		put(output, i*out+1, s)
+
+		if out > 1 {
+			put(output, i*out+1, s)
+		}
 	}
 
 	return p.sent >= len(p.out) && len(p.got) >= cap(p.got)
@@ -325,19 +329,23 @@ func (p *pass) frame(
 //
 // The callback is handed a buffer the device sized, so this is the one place
 // that knows the width, and asking it beats recording a number that is right
-// for one interface. Two is the floor because the loop writes a pair, and a
-// buffer that cannot even be measured gets it rather than a division by zero.
+// for one interface and wrong for the next. An HX Stomp presents eight, a
+// Floor presents more, and an ordinary interface presents two.
+//
+// One is a real answer and not an error: a mono device has no pair to write,
+// which the caller handles. Anything that cannot be divided at all gets one,
+// because a stride of zero would write every frame on top of the first.
 func channelsIn(
 	buf []byte,
 	frames int,
 ) int {
 	if frames <= 0 {
-		return 2
+		return 1
 	}
 
 	got := len(buf) / (4 * frames)
-	if got < 2 {
-		return 2
+	if got < 1 {
+		return 1
 	}
 
 	return got
