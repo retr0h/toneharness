@@ -32,7 +32,7 @@ var (
 	presetsCopyClient  clientFlags
 )
 
-// slotsCopyCmd represents the presets copy command.
+// slotsCopyCmd represents the slots copy command.
 var slotsCopyCmd = &cobra.Command{
 	Use:   "copy",
 	Short: "Copy one slot over another",

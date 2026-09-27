@@ -30,7 +30,7 @@ var (
 	presetsPlayClient clientFlags
 )
 
-// devicePlayCmd represents the presets play command.
+// devicePlayCmd represents the device play command.
 var devicePlayCmd = &cobra.Command{
 	Use:   "play",
 	Short: "Put a preset in front of the device without storing it",
@@ -39,7 +39,7 @@ var devicePlayCmd = &cobra.Command{
 The device starts making that sound at once. No slot is written and no slot is
 read, so nothing it holds changes and there is nothing to put back.
 
-Use this rather than ` + "`presets import`" + ` for anything being tried rather
+Use this rather than ` + "`slots import`" + ` for anything being tried rather
 than kept. A slot is flash, flash wears out, and a burst of writes has taken a
 setlist past what a power cycle could clear. Auditioning six hundred chains
 through slots is six hundred flash writes for readings nobody wanted to keep;

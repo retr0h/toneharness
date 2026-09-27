@@ -38,7 +38,7 @@ var (
 	presetsTurnDirect bool
 )
 
-// deviceTurnCmd represents the presets turn command.
+// deviceTurnCmd represents the device turn command.
 var deviceTurnCmd = &cobra.Command{
 	Use:   "turn",
 	Short: "Move one control on what the device is playing",
@@ -52,11 +52,16 @@ not do it — a slot given a new document reads back as the new one and goes on
 sounding like what it held before — and it would wear the device's storage out
 to sweep a control that way.
 
-A block is named by its position in the chain, counting from zero, and a
-parameter by its position in that model's own list. Position is the only thing
-that identifies either on the wire, so neither takes a name. ` + "`presets show`" +
-		` lists a chain in order, and ` + "`catalog show`" + ` lists a model's parameters in
-theirs.
+A block is named by the device's own number for it, and a parameter by its
+position in that model's own list. Position is the only thing that identifies
+either on the wire, so neither takes a name.
+
+A block's number is not its place in the chain. The device lays a preset out
+on a fixed grid and a chain of four blocks can sit at 5, 6, 8 and 13, so counting
+down the chain mislabels every control while the numbers stay plausible.
+` + "`presets show`" + ` reports the number each block actually has, and
+` + "`catalog show`" + ` lists a model's parameters in the order this addresses
+them.
 
 A device does not coerce, so the kind of value has to match the parameter.
 ` + "`--value`" + ` is a number on a dial, ` + "`--choice`" + ` is one of a
@@ -115,7 +120,7 @@ func init() {
 
 	f := deviceTurnCmd.Flags()
 	f.IntVar(&presetsTurnBlock, "block", 0,
-		"which block, by its position in the chain, counting from zero")
+		"which block, by the device's own number for it, which `presets show` reports")
 	f.IntVar(&presetsTurnParam, "param", 0,
 		"which parameter, by its position in the model's own list")
 	f.Float64Var(&presetsTurnValue, "value", 0,

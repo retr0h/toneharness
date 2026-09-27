@@ -32,7 +32,7 @@ var (
 	presetsSelectSlot    int
 )
 
-// deviceSelectCmd represents the presets select command.
+// deviceSelectCmd represents the device select command.
 var deviceSelectCmd = &cobra.Command{
 	Use:   "select",
 	Short: "Load a preset on the device",

@@ -28,14 +28,14 @@ import (
 
 var presetsCurrentClient clientFlags
 
-// deviceCurrentCmd represents the presets current command.
+// deviceCurrentCmd represents the device current command.
 var deviceCurrentCmd = &cobra.Command{
 	Use:   "current",
 	Short: "Show what the device is playing right now",
 	Long: `Show the preset the device is playing, with every control where it now sits.
 
 The edit buffer rather than a slot, and that is the whole difference. ` +
-		"`presets turn`" + ` moves a control in the buffer without writing anything
+		"`device turn`" + ` moves a control in the buffer without writing anything
 back, so reading the slot it came from answers with the stored document and
 makes it look as though nothing happened.
 

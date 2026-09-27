@@ -55,7 +55,7 @@ What cannot be worked out at solve time is which blocks belong in the chain to
 begin with, and that needs one number per block.
 
 Nothing is written to a slot. Each chain goes in front of the device with the
-same live replace ` + "`presets play`" + ` uses, because a slot is flash and
+same live replace ` + "`device play`" + ` uses, because a slot is flash and
 this loads a different chain six hundred times. See the rules that keep a
 device alive in pkg/sdk/internal/wire/README.md.
 

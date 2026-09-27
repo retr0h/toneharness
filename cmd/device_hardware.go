@@ -25,7 +25,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/cli"
 )
 
-// deviceHardwareCmd represents the devices list command.
+// deviceHardwareCmd represents the device hardware command.
 var deviceHardwareCmd = &cobra.Command{
 	Use:   "hardware",
 	Short: "List attached Helix hardware",

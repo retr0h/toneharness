@@ -42,7 +42,7 @@ var (
 // where the gaps are.
 var presetsListAll bool
 
-// slotsListCmd represents the presets list command.
+// slotsListCmd represents the slots list command.
 var slotsListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List what each slot holds",

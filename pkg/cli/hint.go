@@ -45,10 +45,10 @@ func Hint(
 		// exactly like one that is switched off, and the first thing anybody
 		// does is check the power light, which is already on.
 		return fmt.Errorf("%w: check it is in a USB data port, then "+
-			"'toneharness devices list'", err)
+			"'toneharness device hardware'", err)
 	case errors.Is(err, sdk.ErrBus):
 		// The session is gone either way, and reopening is usually enough.
-		// When it is not, the endpoint has stalled, and pkg/sdk/internal/wire/README.md is
+		// When it is not, the endpoint has stalled, and the wire README is
 		// unambiguous about the only way out: "the interface will not be
 		// claimed again until the device is power cycled." Worth saying in
 		// the error, because somebody who does not know that retries into a
@@ -64,7 +64,7 @@ func Hint(
 			"gear itself: `like: { recording: take.wav }` resolves fully, and "+
 			"an adjective on its own does not", err)
 	case errors.Is(err, sdk.ErrEmptySlot):
-		return fmt.Errorf("%w, try 'toneharness presets list' to see which "+
+		return fmt.Errorf("%w, try 'toneharness slots list' to see which "+
 			"slots hold anything", err)
 	default:
 		return err

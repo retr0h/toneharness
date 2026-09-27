@@ -36,7 +36,7 @@ var (
 	presetsImportClient  clientFlags
 )
 
-// slotsImportCmd represents the presets import command.
+// slotsImportCmd represents the slots import command.
 var slotsImportCmd = &cobra.Command{
 	Use:   "import",
 	Short: "Put a preset file into a slot",

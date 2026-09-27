@@ -103,12 +103,18 @@ the citation onto both is how a guess acquires a URL. Sharing a page between two
 terms is fine when each quotes a different sentence from it. Sharing a sentence
 is not.
 
-## What an agent cannot check
+## Readable is not citable
 
-Reddit refuses Anthropic's crawler outright and TalkBass returns 403 to anything
-automated. Both can be found by search and neither can be read by an agent, so a
-rig citing one **records that nobody checked it**, in a `caveat`. Those are the
-citations a person should open first.
+The `forum` command reads both sites, so an agent citing one has no excuse for
+not opening it. A `caveat` saying nobody checked is for a page that genuinely
+would not load, and it names what failed.
+
+What the tooling does not fix is that most of a thread is people talking. One
+Reddit thread on a well-known bassist returns seventeen posts and **not one is
+evidence about gear**: they are enthusiasts discussing his playing, which is
+worth reading and cites nothing. The rule above still decides it. A named person
+with first-hand access describing what they did or saw is a source; everybody
+else in the thread is company.
 
 `video` ranks low on purpose: a stage seen from forty feet says little about
 which head was on it, and the description under a clip is whatever the uploader

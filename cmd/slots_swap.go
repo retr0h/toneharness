@@ -31,7 +31,7 @@ var (
 	presetsSwapClient  clientFlags
 )
 
-// slotsSwapCmd represents the presets swap command.
+// slotsSwapCmd represents the slots swap command.
 var slotsSwapCmd = &cobra.Command{
 	Use:   "swap",
 	Short: "Exchange two slots",

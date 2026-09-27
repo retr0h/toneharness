@@ -726,6 +726,7 @@ func isContext(
 // production file split, which is the rule's own answer and a separate
 // change, not a line here.
 var coversAConcern = map[string]string{
+	"hints_test.go":                                       "every command this repository names, against the cobra tree",
 	"pkg/cli/cli_face_public_test.go":                     "the face a terminal presents, across the package",
 	"pkg/cli/measure_public_test.go":                      "the pieces three measuring commands share",
 	"pkg/cli/measure_run_public_test.go":                  "a campaign end to end",
