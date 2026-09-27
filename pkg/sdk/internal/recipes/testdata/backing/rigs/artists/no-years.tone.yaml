@@ -1,0 +1,6 @@
+schema: ToneSpec
+
+subject: { kind: artist, name: No Years }
+played:
+  - gear: A Bass
+confidence: low

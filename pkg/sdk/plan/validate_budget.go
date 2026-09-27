@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package chain
+package plan
 
 import (
 	"fmt"
@@ -37,7 +37,7 @@ import (
 // rather than counted. A guessed figure cannot support a claim that a rig fits.
 func ValidateBudget(
 	l BlockLookup,
-	s Chain,
+	s Plan,
 	lim Limits,
 ) error {
 	if lim.Paths <= 0 {

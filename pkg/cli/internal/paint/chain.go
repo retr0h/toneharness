@@ -28,7 +28,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 // Category colours.
@@ -104,7 +104,7 @@ func Meter(
 // that order and the processor totals follow.
 func Chain(
 	w io.Writer,
-	spec chain.Chain,
+	spec plan.Plan,
 	cat *catalog.Catalog,
 ) error {
 	rows := make([][]string, 0, len(spec.Blocks))
@@ -149,7 +149,7 @@ func Chain(
 // thing to show.
 func basedOn(
 	blk catalog.Block,
-	b chain.Block,
+	b plan.Block,
 ) string {
 	if !catalog.NeedsUserIR(b.Model) {
 		return blk.BasedOn
@@ -169,7 +169,7 @@ func basedOn(
 // on the machine it came from.
 func userIRs(
 	w io.Writer,
-	spec chain.Chain,
+	spec plan.Plan,
 ) error {
 	var slots []string
 

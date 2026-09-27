@@ -29,17 +29,17 @@ Helix, or works entirely offline.
 
 ## Features
 
-| Feature                                                                     | Description                                                                                                                                                                                                                                                                              |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Say what you want](docs/tonespec.md)                                       | A ToneSpec is the ask, in the words anybody would use: a genre, a few adjectives, a player, a recording to sound like. A Setup is what you own. Neither carries a knob position, and both follow an [OpenAPI contract](pkg/sdk/tone/data/tonespec.openapi.yaml)                          |
-| [RigSpec](docs/rigspec.md)                                                  | What a request resolves to: the exact models, in order, deterministic. `tonestack tone build` writes it and `presets compile` turns it into a preset. Every field follows an [OpenAPI contract](pkg/sdk/rig/data/rigspec.openapi.yaml), and tonestack refuses a rig that breaks it       |
-| [Chosen by measuring](docs/measurements.md)                                 | Every one of the device's 661 blocks has been played the same bass recording and measured, so a request naming no amplifier gets the nearest of 224 to what it is aiming at. Nobody described a single amp anywhere in that path                                                         |
-| Shareable rigs                                                              | A rig names "Ampeg SVT", not a Line 6 model ID. Export a slot as a rig, send the file to someone, and `presets compile` builds the preset on their end                                                                                                                                   |
-| [Every claim sourced](docs/recipes.md#say-where-each-claim-came-from)       | Each piece of gear and each description records where it came from: an interview, a video timestamp, a forum thread, measured presets. A claim an AI made says so                                                                                                                        |
-| [Your agent tunes it](docs/workflows.md#correct-a-rig-you-have-heard)       | Your agent builds a rig for the player you name. Play it, say what is wrong, and it rebuilds. The rig keeps each round: what you asked, what changed, why, and your verdict. The next session starts from what worked                                                                    |
-| Talks to your Helix                                                         | Read, write, copy, swap and select presets over USB. tonestack saves a slot to a file before it overwrites it. Device access is one backend per operating system, and only macOS has one so far. Building presets works everywhere, and the HX Stomp is the device it has been tested on |
-| [MCP server](docs/workflows.md#use-it-from-an-agent)                        | `tonestack mcp start` gives an agent the catalog, the corpus, building and the pedal as tools with typed results. It cannot write to a pedal unless you start it with `--allow-writes`                                                                                                   |
-| [Go SDK](CONTRIBUTING.md#what-to-import-if-you-are-using-this-as-a-library) | The CLI is flags over `pkg/sdk`. Import it to build presets, read and write a device, or look up what a device can do from your own Go program                                                                                                                                           |
+| Feature                                                                     | Description                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Say what you want](docs/tonespec.md)                                       | A ToneSpec is the ask, in the words anybody would use: a genre, a few adjectives, a player, a recording to sound like. A Setup is what you own. Neither carries a knob position, and both follow an [OpenAPI contract](pkg/sdk/tone/data/tonespec.openapi.yaml)                                                                                                          |
+| [RigSpec](docs/rigspec.md)                                                  | What a request resolves to: the gear in signal order, named the way a musician names it. `tonestack tone build` writes one, and so does anybody researching a player by hand, which is how the nine that ship were made. `presets compile` turns it into a preset, and tonestack refuses a rig that breaks its [OpenAPI contract](pkg/sdk/rig/data/rigspec.openapi.yaml) |
+| [Chosen by measuring](docs/measurements.md)                                 | Every one of the device's 661 blocks has been played the same bass recording and measured, so a request naming no amplifier gets the nearest of 224 to what it is aiming at. Nobody described a single amp anywhere in that path                                                                                                                                         |
+| Shareable rigs                                                              | A rig names "Ampeg SVT", not a Line 6 model ID. Export a slot as a rig, send the file to someone, and `presets compile` builds the preset on their end                                                                                                                                                                                                                   |
+| [Every claim sourced](docs/recipes.md#say-where-each-claim-came-from)       | Each piece of gear and each description records where it came from: an interview, a video timestamp, a forum thread, measured presets. A claim an AI made says so                                                                                                                                                                                                        |
+| [Your agent tunes it](docs/workflows.md#correct-a-rig-you-have-heard)       | Your agent builds a rig for the player you name. Play it, say what is wrong, and it rebuilds. The ask beside the rig keeps each round: what you asked, what changed, why, and your verdict. The next session starts from what worked                                                                                                                                     |
+| Talks to your Helix                                                         | Read, write, copy, swap and select presets over USB. tonestack saves a slot to a file before it overwrites it. Device access is one backend per operating system, and only macOS has one so far. Building presets works everywhere, and the HX Stomp is the device it has been tested on                                                                                 |
+| [MCP server](docs/workflows.md#use-it-from-an-agent)                        | `tonestack mcp start` gives an agent the catalog, the corpus, building and the pedal as tools with typed results. It cannot write to a pedal unless you start it with `--allow-writes`                                                                                                                                                                                   |
+| [Go SDK](CONTRIBUTING.md#what-to-import-if-you-are-using-this-as-a-library) | The CLI is flags over `pkg/sdk`. Import it to build presets, read and write a device, or look up what a device can do from your own Go program                                                                                                                                                                                                                           |
 
 ## Skills
 
@@ -120,10 +120,8 @@ about, rather than guessing.
 
   added Deluxe Comp — almost every chain has one (88% of chains)
 
-  heard mid-forward — Mid 0.79 to 0.89
-  heard grit-on-attack — Drive 0.60 to 0.72
-  heard tight-low-end — Sag 0.50 to 0.40
-  heard short-decay — nothing acts on this yet
+  heard scooped — Mid 0.79 to 0.70 (90% of a step: what the records measured)
+  heard clean — Drive 0.60 to 0.53 (29% of a step: what the records measured)
   heard audible-pick-attack — Attack 0.04 to 0.05
 
   [ok] wrote mike.hlx
@@ -131,7 +129,9 @@ about, rather than guessing.
 
 Read that before you plug anything in. Each block names the real gear it models
 and what it costs. `added` is what tonestack put in that the rig did not ask
-for, and `heard` is what each word in the rig's description did to a knob.
+for, and `heard` is what each word in the ask beside it did to a knob. Two files
+carry a player: `mike-dirnt.yaml` is the gear and `mike-dirnt.tone.yaml` is what
+somebody asked for.
 
 Have a rig file of your own, one you wrote or one somebody shared? Build it the
 same way:

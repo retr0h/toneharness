@@ -47,14 +47,7 @@ func render(
 	b.WriteString("schema: RigSpec\nversion: 2\n")
 	fmt.Fprintf(&b, "id: %s\n\n", opts.ID)
 
-	b.WriteString("subject:\n  kind: artist\n")
-	fmt.Fprintf(&b, "  name: %s\n", opts.Name)
-
-	if opts.Band != "" {
-		fmt.Fprintf(&b, "  band: %s\n", opts.Band)
-	}
-
-	fmt.Fprintf(&b, "\ninstrument: %s\n\n", opts.Instrument)
+	fmt.Fprintf(&b, "instrument: %s\n\n", opts.Instrument)
 
 	b.WriteString("# The signal path, in order. Order is what the signal " +
 		"does: drive ahead\n# of an amp overdrives its input, drive after it " +
@@ -76,11 +69,62 @@ func render(
 			"used — which is what\n  # Line 6 voiced it with.\n")
 	}
 
+	return b.String()
+}
+
+// renderAsk writes the ask beside the rig, with the same comments.
+//
+// Who it is for, how it should sound and how far to trust it are all things a
+// person wrote, so they are on the ask and not on the gear. Written as a second
+// file rather than folded in, because the gear answers the question and the
+// question is not a property of the answer.
+//
+// from is the rig this was copied from, or empty for one scaffolded from gear.
+// A fresh ask still records the link, because a copy of a parent that has no ask
+// of its own is written from here rather than copied, and leaving `extends` out
+// in that one case would mean `recipes show` never listed the copy as a variant
+// of the rig it came from. The link is a fact about the copy, not about whether
+// the parent happened to have an ask.
+func renderAsk(
+	opts NewOptions,
+	from string,
+) string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "# What %s was asked for.\n#\n", title(opts))
+	b.WriteString("# The rig beside this file is what answered it. This one " +
+		"says who it is for\n# and how it should sound; that one says what " +
+		"the gear is.\n#\n")
+	b.WriteString("# See docs/tonespec.md.\n\n")
+
+	b.WriteString("schema: ToneSpec\n")
+
+	if from != "" {
+		fmt.Fprintf(&b, "extends: %s\n", from)
+	}
+
+	b.WriteString("\n")
+
+	b.WriteString("subject:\n  kind: artist\n")
+	fmt.Fprintf(&b, "  name: %s\n", opts.Name)
+
+	if opts.Band != "" {
+		fmt.Fprintf(&b, "  band: %s\n", opts.Band)
+	}
+
+	// Left out rather than written blank when nothing says. A copy takes its
+	// instrument from the rig it came from, and a rig read off a device names
+	// one this may not have been told, so the contract refusing an empty string
+	// is right and writing one would be the bug.
+	if opts.Instrument != "" {
+		fmt.Fprintf(&b, "\ninstrument: %s\n", opts.Instrument)
+	}
+
 	b.WriteString("\n# How it should sound, in the words a person would " +
 		"use. Describe the\n# result, not the control: \"mid-forward\", not " +
-		"\"raise the mids\".\ncharacter: []\n\n")
+		"\"raise the mids\".\nwords: []\n\n")
 
-	b.WriteString("# How far to trust the whole rig. Nothing here has been " +
+	b.WriteString("# How far to trust the whole thing. Nothing here has been " +
 		"confirmed against\n# a rig rundown, an interview or a recording. " +
 		"Correct it from what you hear.\nconfidence: low\n")
 

@@ -1,6 +1,6 @@
 # Measure a player's sound
 
-Reading numbers off records somebody actually made, so a rig can carry
+Reading numbers off records somebody actually made, so an ask can carry
 measurements rather than adjectives. Needs uv; see
 [Prerequisites](../../CONTRIBUTING.md#prerequisites).
 
@@ -99,6 +99,10 @@ tenth in from them, so one unusual take is the whole of one end. Treat a figure
 that disagrees with the rest as a question rather than an answer.
 
 ### 5. Write it into the rig
+
+The per-record figures go on the rig, beside the gear they were measured
+through, because a measurement of a record is part of why that amp is there. The
+word they earn goes on the ask, and step 6 is where that happens.
 
 Evidence carries the measurement and a link naming the recording. The audio
 itself is never referenced: somebody who does not own the record can still see
@@ -234,11 +238,11 @@ record can only raise the first or lower the second. That check was built, run
 against all nine players, and reported nothing for every word, which is what the
 arithmetic says it must do.
 
-The records matter more than the population. Mike Dirnt's rig describes his
+The records matter more than the population. Mike Dirnt's ask describes his
 American Idiot rig and his first three records were Dookie and Insomniac, made
 on the amplifiers his own rig names for other years. Measured from American
 Idiot he reads 1% in the mid band where those records read 8%, and the word he
-earns is `scooped`: the opposite of the one the rig carried. Geddy Lee earned
+earns is `scooped`: the opposite of the one he used to carry. Geddy Lee earned
 `mid-forward` while those wrong records were in the corpus and stopped earning
 it when they were replaced, without a record of his own changing.
 
@@ -247,8 +251,8 @@ Three axes are derived — `mid-forward`/`scooped`, `bright`/`dark` and
 the control acts on. `attack` and `decay` are measured but not derived, for
 reasons written down in `pkg/sdk/audio/derive.go`.
 
-A word this earns is a word for the rig's `character`, and `--evidence` writes
-the block to paste:
+A word this earns is a word for the ask's `words`, in the `.tone.yaml` beside
+the rig, and `--evidence` writes the block to paste:
 
 ```bash
 tonestack measure --corpus resources/music/bass --evidence
@@ -267,5 +271,7 @@ Both sides, because the gap between them is what decides how far the word moves
 a control when the preset is built. Half of what everybody else reads is half a
 step, not a knob at zero.
 
-Nothing writes it into the rig for you. The terms are an argument, and putting
-one in a file is still somebody deciding to believe it.
+Nothing writes it into the ask for you. The terms are an argument, and putting
+one in a file is still somebody deciding to believe it. The command's own header
+still says to paste it under the rig, which is where these went before the words
+moved onto the ask; the block itself is unchanged.

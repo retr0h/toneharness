@@ -30,8 +30,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 )
 
@@ -369,21 +369,21 @@ func (s *EncodeTestSuite) TestClassOf() {
 func (s *EncodeTestSuite) TestCabNameOf() {
 	tests := []struct {
 		name  string
-		block chain.Block
+		block plan.Block
 		want  string
 		found bool
 	}{
 		{
 			name: "a chain built here, where it is a parameter",
-			block: chain.Block{
-				Params: chain.Params{attrCab: catalog.Enum("cab0")},
+			block: plan.Block{
+				Params: plan.Params{attrCab: catalog.Enum("cab0")},
 			},
 			want:  "cab0",
 			found: true,
 		},
 		{
 			name: "one read back out of a preset, where it is an attribute",
-			block: chain.Block{
+			block: plan.Block{
 				Attrs: map[string]json.RawMessage{attrCab: json.RawMessage(`"cab1"`)},
 			},
 			want:  "cab1",
@@ -391,11 +391,11 @@ func (s *EncodeTestSuite) TestCabNameOf() {
 		},
 		{
 			name:  "a block carrying no cabinet",
-			block: chain.Block{},
+			block: plan.Block{},
 		},
 		{
 			name: "one whose cabinet is not a name",
-			block: chain.Block{
+			block: plan.Block{
 				Attrs: map[string]json.RawMessage{attrCab: json.RawMessage(`7`)},
 			},
 		},

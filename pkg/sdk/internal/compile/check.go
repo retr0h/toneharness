@@ -27,7 +27,7 @@ import (
 	"strings"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
@@ -43,7 +43,7 @@ import (
 // at that position says whether the name is one of its own.
 func check(
 	spec rig.Spec,
-	blocks []chain.Block,
+	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) error {
 	// Every complaint at once. A rig with four bad colours in it took four
@@ -121,7 +121,7 @@ func checkFootswitches(
 // controller ends up moving whatever happens to sit there.
 func checkControllers(
 	spec rig.Spec,
-	blocks []chain.Block,
+	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) error {
 	if spec.Controllers == nil {
@@ -179,16 +179,16 @@ func checkControllers(
 // zero. A chain laid across them holds two blocks numbered 0, and a position
 // on its own would find whichever came first.
 func blockAt(
-	blocks []chain.Block,
+	blocks []plan.Block,
 	path, position int,
-) (chain.Block, bool) {
+) (plan.Block, bool) {
 	for _, b := range blocks {
 		if b.DSP == path && b.Pos == position {
 			return b, true
 		}
 	}
 
-	return chain.Block{}, false
+	return plan.Block{}, false
 }
 
 // slicesContainFold reports whether a value is in a list, ignoring case.

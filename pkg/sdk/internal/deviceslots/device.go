@@ -26,10 +26,10 @@ import (
 	"fmt"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/result"
 	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
 )
@@ -213,7 +213,7 @@ func (f *Flows) chainAt(
 	s device.Editor,
 	cat *catalog.Catalog,
 	at slotpkg.Address,
-) ([]chain.Block, error) {
+) ([]plan.Block, error) {
 	body, err := s.ReadPreset(ctx, at.Setlist, at.Slot)
 
 	// An answer that is not a preset is skipped the way an undecodable one

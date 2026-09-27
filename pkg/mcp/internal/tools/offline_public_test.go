@@ -240,7 +240,7 @@ func (s *OfflinePublicTestSuite) TestRigsList() {
 			name: "the rigs that ship",
 			args: tools.None{},
 			setup: func(c *mocks.MockClient) {
-				c.EXPECT().Recipes(gomock.Any()).Return(sdk.Recipes{Rigs: []rig.Spec{{}, {}}}, nil)
+				c.EXPECT().Recipes(gomock.Any()).Return(sdk.Recipes{Rigs: []sdk.Known{{}, {}}}, nil)
 			},
 			want: "2 rigs to build from",
 			check: func(s *OfflinePublicTestSuite, res *gomcp.CallToolResult) {

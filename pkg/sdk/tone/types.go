@@ -62,6 +62,60 @@ type (
 	Owned = gen.Owned
 	// OwnedKind is whether that is an impulse response or a model.
 	OwnedKind = gen.OwnedKind
+	// Subject is who or what the request is about.
+	Subject = gen.Subject
+	// Technique is how the instrument is played, which no device models and
+	// which still decides what the rig has to do.
+	Technique = gen.Technique
+	// Played is an instrument the subject played, where it is known.
+	Played = gen.Played
+	// Confidence is how far a claim should be trusted, set by a person rather
+	// than derived.
+	Confidence = gen.Confidence
+	// Evidence is why a claim is believed.
+	Evidence = gen.Evidence
+	// EvidenceKind is what kind of thing that evidence is.
+	EvidenceKind = gen.EvidenceKind
+	// Word is one thing it should sound like, and why that is believed. The
+	// evidence sizes how far it moves a control, so a word that was measured
+	// moves further than one a model asserted.
+	Word = gen.Word
+	// Correction is one round of correction, and what a person made of the
+	// result. The only place a human ear is written down.
+	Correction = gen.Correction
+	// Change is one field a correction moved.
+	Change = gen.Change
+	// Position is where along the string the instrument is played.
+	Position = gen.TechniquePosition
+	// Muting is what damps the string.
+	Muting = gen.TechniqueMuting
+	// Attack is what sets the string moving.
+	Attack = gen.TechniqueAttack
+)
+
+// How far a claim should be trusted.
+const (
+	ConfidenceLow    = gen.ConfidenceLow
+	ConfidenceMedium = gen.ConfidenceMedium
+	ConfidenceHigh   = gen.ConfidenceHigh
+)
+
+// What sets the string moving.
+const (
+	AttackPick    = gen.AttackPick
+	AttackFingers = gen.AttackFingers
+	AttackSlap    = gen.AttackSlap
+	AttackThumb   = gen.AttackThumb
+	AttackHybrid  = gen.AttackHybrid
+)
+
+// Where along the string, and what damps it.
+const (
+	PositionBridge = gen.PositionBridge
+	PositionMiddle = gen.PositionMiddle
+	PositionNeck   = gen.PositionNeck
+	MutingNone     = gen.MutingNone
+	MutingPalm     = gen.MutingPalm
 )
 
 // What a request may say.

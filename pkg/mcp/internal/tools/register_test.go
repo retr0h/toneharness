@@ -29,7 +29,7 @@ import (
 
 	"github.com/retr0h/tonestack/pkg/sdk"
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
@@ -43,9 +43,9 @@ type RegisterTestSuite struct {
 func (s *RegisterTestSuite) TestMustOutputSchema() {
 	// A block as a built chain holds it: every kind of parameter value, and
 	// Attrs left nil, which marshals to null.
-	block := chain.Block{
+	block := plan.Block{
 		Model: "HD2_AmpSVBeastBrt",
-		Params: chain.Params{
+		Params: plan.Params{
 			"Drive":  catalog.Float(0.41),
 			"Ch":     catalog.Int(3),
 			"Bright": catalog.Bool(true),
@@ -65,7 +65,7 @@ func (s *RegisterTestSuite) TestMustOutputSchema() {
 			name:   "a built chain",
 			schema: func() *jsonschema.Schema { return mustOutputSchema[sdk.Made]() },
 			value: sdk.Made{
-				Chain: chain.Chain{Name: "Longview", Blocks: []chain.Block{block}},
+				Chain: plan.Plan{Name: "Longview", Blocks: []plan.Block{block}},
 				Path:  "longview.hlx",
 			},
 		},
@@ -74,7 +74,7 @@ func (s *RegisterTestSuite) TestMustOutputSchema() {
 			schema: func() *jsonschema.Schema { return mustOutputSchema[sdk.Listing]() },
 			value: sdk.Listing{
 				Name:  "HX Stomp",
-				Slots: []sdk.Held{{Slot: 0, Name: "Longview", Blocks: []chain.Block{block}}},
+				Slots: []sdk.Held{{Slot: 0, Name: "Longview", Blocks: []plan.Block{block}}},
 			},
 		},
 		{

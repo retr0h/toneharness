@@ -26,7 +26,7 @@ import (
 	"strings"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -64,7 +64,6 @@ func Lift(
 		Schema:       rig.SchemaName,
 		Version:      &version,
 		ID:           identifier(doc.Data.Meta.Name),
-		Subject:      rig.Subject{Kind: rig.KindSound, Name: subjectName(doc)},
 		Chain:        entries,
 		Instrument:   instrumentOf(c, cat),
 		Target:       &rig.Target{Device: &device},
@@ -81,20 +80,6 @@ func Lift(
 	}
 
 	return out, nil
-}
-
-// subjectName is what the rig is called.
-//
-// A preset carries a name and nothing about who plays it, so a lifted rig is
-// a sound rather than an artist until somebody says otherwise.
-func subjectName(
-	doc *preset.Document,
-) string {
-	if name := strings.TrimSpace(doc.Data.Meta.Name); name != "" {
-		return name
-	}
-
-	return "Untitled"
 }
 
 // identifier turns a preset name into the shape the schema states for one.
@@ -133,7 +118,7 @@ func collapse(
 
 // entryFor describes one block as gear.
 func entryFor(
-	b chain.Block,
+	b plan.Block,
 	cat *catalog.Catalog,
 	device string,
 ) rig.ChainEntry {
@@ -240,7 +225,7 @@ var roles = map[catalog.Category]rig.Role{
 // Line 6 tag amps Guitar or Bass. A chain with no amp names no instrument, so
 // guitar stands as the more common default.
 func instrumentOf(
-	c chain.Chain,
+	c plan.Plan,
 	cat *catalog.Catalog,
 ) rig.Instrument {
 	for _, b := range c.Blocks {

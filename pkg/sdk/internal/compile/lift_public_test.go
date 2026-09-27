@@ -27,8 +27,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -51,12 +51,12 @@ func (s *LiftPublicTestSuite) preset(
 	name string,
 	models ...catalog.ModelID,
 ) *preset.Document {
-	blocks := make([]chain.Block, 0, len(models))
+	blocks := make([]plan.Block, 0, len(models))
 	for i, m := range models {
-		blocks = append(blocks, chain.Block{Model: m, Pos: i, Enabled: true})
+		blocks = append(blocks, plan.Block{Model: m, Pos: i, Enabled: true})
 	}
 
-	doc, err := preset.New(s.cat.DeviceID, chain.Chain{Name: name, Blocks: blocks})
+	doc, err := preset.New(s.cat.DeviceID, plan.Plan{Name: name, Blocks: blocks})
 	s.Require().NoError(err)
 
 	return doc
@@ -84,7 +84,6 @@ func rigOf(
 	return rig.Spec{
 		Schema:     rig.SchemaName,
 		ID:         id,
-		Subject:    rig.Subject{Kind: rig.KindSound, Name: id},
 		Instrument: inst,
 		Chain: []rig.ChainEntry{
 			{Role: rig.RoleAmp, Gear: gear, Params: params},
@@ -212,7 +211,7 @@ func (s *LiftPublicTestSuite) TestLift() {
 			case tt.bare:
 				var err error
 
-				doc, err = preset.New(s.cat.DeviceID, chain.Chain{Name: "Empty"})
+				doc, err = preset.New(s.cat.DeviceID, plan.Plan{Name: "Empty"})
 				s.Require().NoError(err)
 			default:
 				doc = s.preset(tt.title, tt.model)

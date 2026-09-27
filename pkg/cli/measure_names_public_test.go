@@ -97,7 +97,6 @@ func (s *NamesTestSuite) device(
 
 			return sdk.Reading{Rig: rig.Spec{
 				Schema: rig.SchemaName, ID: "probed",
-				Subject:    rig.Subject{Kind: rig.KindSound, Name: "one block"},
 				Instrument: rig.InstrumentBass,
 				Chain: []rig.ChainEntry{{
 					Role: rig.RoleAmp, Gear: "an amplifier", Params: &now,
@@ -222,7 +221,6 @@ func (s *NamesTestSuite) refuse(
 
 			return sdk.Reading{Rig: rig.Spec{
 				Schema: rig.SchemaName, ID: "probed",
-				Subject:    rig.Subject{Kind: rig.KindSound, Name: "one block"},
 				Instrument: rig.InstrumentBass,
 				Chain: []rig.ChainEntry{{
 					Role: rig.RoleAmp, Gear: "an amplifier", Params: &now,

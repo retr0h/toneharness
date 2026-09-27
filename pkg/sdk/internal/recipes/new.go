@@ -147,7 +147,7 @@ func New(
 		return result.Scaffolded{}, ErrNoDir
 	}
 
-	body, made, err := scaffoldFor(ctx, opts)
+	body, ask, made, err := scaffoldFor(ctx, opts)
 	if err != nil {
 		return result.Scaffolded{}, err
 	}
@@ -158,15 +158,24 @@ func New(
 		return result.Scaffolded{}, fmt.Errorf("making room for %s: %w", path, err)
 	}
 
-	// Never over a recipe already there. The write itself refuses, rather
-	// than a look beforehand, so one written in between is not replaced
-	// either.
-	err = atomicfile.WriteNew(path, []byte(body), 0o600)
-	if errors.Is(err, fs.ErrExist) {
-		return result.Scaffolded{}, &ExistsError{Path: path}
+	// The rig first, and the ask second. Which order matters only for what a
+	// refusal names, and the rig is the file somebody asked for: being told
+	// "test-player.yaml already exists" is the useful message, not the name of
+	// a second file they did not know was being written.
+	//
+	// Either write can be the one that stops, and neither leaves a mess. A rig
+	// with no ask beside it is a legal state, so the second failing is not a
+	// half-written pair; and if the second fails, the first goes with it anyway,
+	// because a file this call created is this call's to take back.
+	askPath := filepath.Join(opts.Dir, "artists", opts.ID+askSuffix)
+
+	if err := writeNew(path, body); err != nil {
+		return result.Scaffolded{}, err
 	}
 
-	if err != nil {
+	if err := writeNew(askPath, ask); err != nil {
+		_ = os.Remove(path)
+
 		return result.Scaffolded{}, err
 	}
 
@@ -174,6 +183,21 @@ func New(
 	made.Path = path
 
 	return made, nil
+}
+
+// writeNew writes one file, and never over one already there.
+//
+// The write itself refuses, rather than a look beforehand, so a file written in
+// between is not replaced either.
+func writeNew(
+	path, body string,
+) error {
+	err := atomicfile.WriteNew(path, []byte(body), 0o600)
+	if errors.Is(err, fs.ErrExist) {
+		return &ExistsError{Path: path}
+	}
+
+	return err
 }
 
 // checkGear refuses a recipe naming gear the device has no model for.
@@ -276,11 +300,11 @@ func near(
 func scaffoldFor(
 	ctx context.Context,
 	opts NewOptions,
-) (string, result.Scaffolded, error) {
+) (string, string, result.Scaffolded, error) {
 	if opts.From != "" {
 		parent, err := findFile(Source{Dir: opts.Base, User: opts.Dir}, opts.From)
 		if err != nil {
-			return "", result.Scaffolded{}, err
+			return "", "", result.Scaffolded{}, err
 		}
 
 		// The rig's own identifier, not whatever was typed. An alias belongs
@@ -295,12 +319,25 @@ func scaffoldFor(
 
 		// scaffold rewrites the subject's name only when one was asked for,
 		// and copies the chain as it stands.
-		name := parent.spec.Subject.Name
+		name := subjectOf(parent)
 		if opts.Name != "" {
 			name = opts.Name
 		}
 
-		return body, result.Scaffolded{
+		// The ask is copied the same way, from the parent's own ask where it has
+		// one. A parent with no ask gives a scaffolded one instead of nothing:
+		// the copy is a new subject either way, and a blank ask beside it is the
+		// file somebody fills in rather than a file they have to know to create.
+		// Either way it records what it was copied from.
+		ask := renderAsk(forAsk(opts, parent.spec, name), parent.spec.ID)
+
+		if parent.askRaw != nil {
+			copied, askErr := scaffoldAsk(string(parent.askRaw), parent.spec.ID, opts)
+			ask = copied
+			err = errors.Join(err, askErr)
+		}
+
+		return body, ask, result.Scaffolded{
 			Name:       name,
 			Instrument: string(parent.spec.Instrument),
 			Amp:        rig.GearName(parent.spec, rig.RoleAmp),
@@ -315,20 +352,38 @@ func scaffoldFor(
 
 	cat, err := opts.Catalogs.Catalog(ctx)
 	if err != nil {
-		return "", result.Scaffolded{}, err
+		return "", "", result.Scaffolded{}, err
 	}
 
 	if err := checkGear(cat, opts); err != nil {
-		return "", result.Scaffolded{}, err
+		return "", "", result.Scaffolded{}, err
 	}
 
-	return render(opts), result.Scaffolded{
+	// Nothing to extend: this was scaffolded from gear rather than copied.
+	return render(opts), renderAsk(opts, ""), result.Scaffolded{
 		Name:       opts.Name,
 		Instrument: opts.Instrument,
 		Amp:        opts.Amp,
 		Cab:        opts.Cab,
 		Pedals:     opts.Pedals,
 	}, nil
+}
+
+// forAsk is the options a copy's ask is written from: the name the copy answers
+// to rather than the one it was copied from, and the instrument of the rig it
+// was copied from rather than of a request that named none.
+//
+// A copy names nothing of its own but what renamed it, so everything else here
+// comes from the parent.
+func forAsk(
+	opts NewOptions,
+	parent rig.Spec,
+	name string,
+) NewOptions {
+	opts.Name = name
+	opts.Instrument = string(parent.Instrument)
+
+	return opts
 }
 
 // pedals is everything in a chain other than its amps and cabinets, in the

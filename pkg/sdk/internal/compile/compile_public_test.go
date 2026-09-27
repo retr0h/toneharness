@@ -26,8 +26,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -101,7 +101,7 @@ func (s *CompilePublicTestSuite) TestLower() {
 
 // TestSections covers writing song sections into snapshots through the type.
 func (s *CompilePublicTestSuite) TestSections() {
-	blocks := []chain.Block{{Model: "HD2_AmpSVBeastNrm", Enabled: true}}
+	blocks := []plan.Block{{Model: "HD2_AmpSVBeastNrm", Enabled: true}}
 	amp := []rig.Role{rig.RoleAmp}
 	drive := []rig.Role{rig.RoleDrive}
 
@@ -135,7 +135,7 @@ func (s *CompilePublicTestSuite) TestSections() {
 
 // TestControllers covers writing what moves through the type.
 func (s *CompilePublicTestSuite) TestControllers() {
-	blocks := []chain.Block{{Model: "HD2_AmpSVBeastNrm", Enabled: true}}
+	blocks := []plan.Block{{Model: "HD2_AmpSVBeastNrm", Enabled: true}}
 
 	tests := []struct {
 		name string
@@ -211,8 +211,8 @@ func (s *CompilePublicTestSuite) TestResolve() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			want, wantAdded, _, wantErr := compile.Resolve(tt.spec, s.cat, nil)
-			got, gotAdded, _, err := compile.New().Resolve(tt.spec, s.cat, nil)
+			want, wantAdded, _, wantErr := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
+			got, gotAdded, _, err := compile.New().Resolve(tt.spec, compile.Intent{}, s.cat, nil)
 
 			s.Require().Equal(wantErr == nil, err == nil)
 			s.Require().Equal(want, got)
@@ -223,12 +223,12 @@ func (s *CompilePublicTestSuite) TestResolve() {
 
 // TestFit covers dropping what a device has no room for, through the type.
 func (s *CompilePublicTestSuite) TestFit() {
-	built, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), s.cat, nil)
+	built, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	tests := []struct {
 		name string
-		lim  chain.Limits
+		lim  plan.Limits
 	}{
 		{name: "room for everything", lim: twoChips(1)},
 		{name: "room for nothing", lim: oneChip(0)},

@@ -31,8 +31,8 @@ import (
 	"strings"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/corpus"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 )
 
@@ -204,7 +204,7 @@ func (m *measurer) record(
 
 // grammarOf records what a chain contained and where, for its instrument.
 func (m *measurer) grammarOf(
-	spec chain.Chain,
+	spec plan.Plan,
 ) {
 	instrument, ampAt, ok := m.instrumentOf(spec)
 	if !ok {
@@ -275,7 +275,7 @@ func tonal(
 // A chain with no amp says nothing about ordering, because there is nothing to
 // order around.
 func (m *measurer) instrumentOf(
-	spec chain.Chain,
+	spec plan.Plan,
 ) (string, int, bool) {
 	for i, b := range spec.Blocks {
 		blk, known := m.cat.Block(b.Model)

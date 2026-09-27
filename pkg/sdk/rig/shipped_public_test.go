@@ -24,6 +24,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -48,6 +49,12 @@ func (s *ShippedPublicTestSuite) TestEveryShippedRigLoads() {
 	s.Require().NotEmpty(paths, "no rigs found to check")
 
 	for _, path := range paths {
+		// The ask beside each rig lives in the same directory and is a
+		// different document. pkg/sdk/tone checks those; this one is the rigs.
+		if strings.HasSuffix(path, ".tone.yaml") {
+			continue
+		}
+
 		s.Run(filepath.Base(path), func() {
 			f, err := rigs.FS.Open(path)
 			s.Require().NoError(err)

@@ -25,8 +25,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -68,13 +68,13 @@ func (s *KnobsPublicTestSuite) TestSetKnobs() {
 		name   string
 		params map[string]catalog.Param
 		set    *rig.Settings
-		want   chain.Params
+		want   plan.Params
 		errs   []string
 	}{
 		{
 			name:   "a rig that says nothing",
 			params: map[string]catalog.Param{"Drive": dial(catalog.ParamFloat, 0, 1)},
-			want:   chain.Params{},
+			want:   plan.Params{},
 		},
 		{
 			name: "the words an amplifier answers to",
@@ -84,7 +84,7 @@ func (s *KnobsPublicTestSuite) TestSetKnobs() {
 				"Mid":   dial(catalog.ParamFloat, 0, 1),
 			},
 			set: &rig.Settings{Drive: knob(0.47), Bass: knob(0.52), Mid: knob(0.71)},
-			want: chain.Params{
+			want: plan.Params{
 				"Drive": catalog.Float(0.47),
 				"Bass":  catalog.Float(0.52),
 				"Mid":   catalog.Float(0.71),
@@ -100,7 +100,7 @@ func (s *KnobsPublicTestSuite) TestSetKnobs() {
 				"ChVol": dial(catalog.ParamFloat, 0, 1),
 			},
 			set: &rig.Settings{Bass: knob(0.25), Treble: knob(0.75), Level: knob(1)},
-			want: chain.Params{
+			want: plan.Params{
 				"Low":   catalog.Float(0.25),
 				"High":  catalog.Float(0.75),
 				"ChVol": catalog.Float(1),
@@ -112,7 +112,7 @@ func (s *KnobsPublicTestSuite) TestSetKnobs() {
 			name:   "a control counted in something other than 0 to 1",
 			params: map[string]catalog.Param{"Level": dial(catalog.ParamFloat, -12, 12)},
 			set:    &rig.Settings{Level: knob(0.5)},
-			want:   chain.Params{"Level": catalog.Float(0)},
+			want:   plan.Params{"Level": catalog.Float(0)},
 		},
 		{
 			// A device handed 4.7 for a control counting whole steps refuses
@@ -120,7 +120,7 @@ func (s *KnobsPublicTestSuite) TestSetKnobs() {
 			name:   "a control counted in whole steps",
 			params: map[string]catalog.Param{"Level": dial(catalog.ParamInt, 0, 10)},
 			set:    &rig.Settings{Level: knob(0.47)},
-			want:   chain.Params{"Level": catalog.Int(5)},
+			want:   plan.Params{"Level": catalog.Int(5)},
 		},
 		{
 			// Halfway up a switch is not a position, so the switch is not a
@@ -147,7 +147,7 @@ func (s *KnobsPublicTestSuite) TestSetKnobs() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			blk := catalog.Block{ID: "HD2_Test", Params: tt.params}
-			got := chain.Params{}
+			got := plan.Params{}
 
 			err := compile.SetKnobs(got, blk, tt.set, "chain[0].settings")
 
@@ -198,7 +198,7 @@ func (s *KnobsPublicTestSuite) TestResolveSetsWhatTheRigSaid() {
 	spec := recipe("Ampeg SVT", "")
 	spec.Chain[0].Settings = &rig.Settings{Drive: knob(0.47)}
 
-	built, _, _, err := compile.Resolve(spec, s.cat, nil)
+	built, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 	s.Require().Equal(catalog.Float(0.47), built.Blocks[0].Params["Drive"])
 }
@@ -209,7 +209,7 @@ func (s *KnobsPublicTestSuite) TestResolveRefusesAWordTheGearHasNoControlFor() {
 	spec := recipe("Ampeg SVT", "")
 	spec.Chain[0].Settings = &rig.Settings{Presence: knob(0.4)}
 
-	_, _, _, err := compile.Resolve(spec, s.cat, nil)
+	_, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
 	s.Require().ErrorIs(err, compile.ErrNoSuchValue)
 }
 

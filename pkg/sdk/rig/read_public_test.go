@@ -39,7 +39,6 @@ func spec(
 	return rig.Spec{
 		Schema:     rig.SchemaName,
 		ID:         "test",
-		Subject:    rig.Subject{Kind: rig.KindArtist, Name: "Test"},
 		Instrument: rig.InstrumentBass,
 		Chain:      chain,
 	}

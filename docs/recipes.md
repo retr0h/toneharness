@@ -1,63 +1,106 @@
-# Writing a rig
+# Writing a rig, and the ask beside it
 
 How to describe what somebody plays, so this project can build it.
 
-A rig is written as a **RigSpec**, the project's only hand-authored format,
-defined in
-[`pkg/sdk/rig/data/rigspec.openapi.yaml`](../pkg/sdk/rig/data/rigspec.openapi.yaml).
-One is a YAML file, and it is the only data here that is ours: the device
-catalog and the gear map are derived from Line 6's own files, while these are
-written by hand.
+What somebody plays is written down as two files, not one. A **RigSpec** is the
+gear in signal order, named the way a musician names it, and why each piece of
+it is believed to be there. A **ToneSpec** beside it is the ask: who it is for,
+how it should sound, how it is played, and what a person made of the result once
+they heard it. Both are hand-authored, and each has its own contract,
+[`rigspec.openapi.yaml`](../pkg/sdk/rig/data/rigspec.openapi.yaml) and
+[`tonespec.openapi.yaml`](../pkg/sdk/tone/data/tonespec.openapi.yaml). They are
+the only data here that is ours: the device catalog and the gear map are derived
+from Line 6's own files, while these two are written by hand.
 
-The rigs that ship live under `pkg/sdk/rigs/`. `tonestack recipes new` writes
-yours to `$XDG_DATA_HOME/tonestack/recipes/artists/`, or to
-`~/.local/share/tonestack/recipes/artists/` when that variable is unset.
-`recipes list`, `recipes show`, `presets make` and the MCP server read that
-directory beside the rigs that ship. A rig of yours takes the place of a shipped
-one when the two share a name, whether that is the `id` or one of the `aliases`,
-in any case. A rig of yours that `extends` a shipped one shows under it in
+The two are paired by filename stem in one directory. `mike-dirnt.yaml` is the
+gear and `mike-dirnt.tone.yaml` is the ask it answers. Two files in a directory
+rather than two directories, because they are one subject, and somebody editing
+the words wants the gear in the next tab rather than in a parallel tree they
+keep in step by hand. Neither file points at the other, so neither can end up
+pointing at the wrong one.
+
+The line between them is scope, not kind. Why the request was made belongs to
+the ask; why this particular piece of gear answered it belongs to the rig, since
+a rig is what gets published and a published chain that cannot say why this amp
+is in it is a chain nobody can check.
+[A rig is a plan, for one device](superpowers/specs/2026-09-19-a-rig-is-a-plan-for-one-device-design.md)
+argues the division out field by field.
+
+This page is how to write the pair. For what each field may say, read
+[`docs/rigspec.md`](rigspec.md) and [`docs/tonespec.md`](tonespec.md), both
+generated from their contracts, which list every field, its grammar and its
+allowed values.
+
+The rigs that ship live under `pkg/sdk/rigs/`, each with its ask beside it.
+`tonestack recipes new` writes a pair of yours to
+`$XDG_DATA_HOME/tonestack/recipes/artists/`, or to
+`~/.local/share/tonestack/recipes/artists/` when that variable is unset, and
+prints the path of the rig. `recipes list`, `recipes show`, `presets make` and
+the MCP server read that directory beside the rigs that ship.
+
+A rig of yours takes the place of a shipped one when the two share a name. A
+rig's names are its own `id` and the `aliases` on the ask beside it, in any
+case, because people ask for a band as readily as a player and which names
+answer to a subject is a fact about the subject rather than about the gear. A
+rig with nothing beside it answers to one name, which is right: nobody wrote
+another one down. An ask that `extends` another rig shows under it in
 `recipes show`. `--dir`, or `--recipes` on `presets make`, names a different
 directory to read in place of yours, and the rigs that ship are still read
 beside it.
 
 A directory that is not there holds no rigs. One that cannot be read is an
-error. A file in it that is not a valid rig makes `recipes list` fail and name
-the file, but it does not stop a shipped rig building. The exception is a file
-whose filename, `id` or `aliases` match the rig you asked for. `recipes show`
-and `presets make` report that file rather than build the shipped rig you wrote
-it to replace.
+error. A file in it that is neither a valid rig nor a valid ask makes
+`recipes list` fail and name the file, but it does not stop a shipped rig
+building. The exception is a file whose filename, `id` or `aliases` match the
+rig you asked for. `recipes show` and `presets make` report that file rather
+than build the shipped rig you wrote it to replace.
 
-This page is how to write one. For what each field may say, read
-[`docs/rigspec.md`](rigspec.md), which is generated from the contract and lists
-every field, its grammar and its allowed values.
-
-Two rigs show the format between them, and they are worth reading together.
-[`examples/rigspec/mike-dirnt.yaml`](../examples/rigspec/mike-dirnt.yaml) is
-somebody saying what they want, with evidence, confidence and character.
+Three worked files show the two formats between them, and they are worth reading
+together.
+[`examples/rigspec/mike-dirnt.yaml`](../examples/rigspec/mike-dirnt.yaml) is the
+gear, with evidence on every piece of it, and
+[`examples/tonespec/mike-dirnt.yaml`](../examples/tonespec/mike-dirnt.yaml) is
+the ask it answers: the subject, the words, the technique, the instruments and
+how far to trust the lot.
 [`examples/rigspec/dir-angl-meteor.yaml`](../examples/rigspec/dir-angl-meteor.yaml)
 is a device saying what it has: produced by `presets show` from a preset an HX
 Stomp wrote, committed exactly as it came out, and carrying the footswitches,
 snapshots and routing no hand-written rig needs.
 
-A test holds the two of them to the contract. Every field it declares is written
-down in one of the rigs here, or named in that test with a reason nobody can
-write it, so a field added without an example fails the build.
+Tests hold both contracts to those files. Every field the rig contract declares
+is written down in one of the rigs here, or named in that test with a reason
+nobody can write it, so a field added without an example fails the build. Every
+worked ask is loaded with whichever loader its own `schema` line names, because
+an example that has stopped parsing is worse than no example: it is the first
+thing somebody copies.
 
-## The smallest useful rig
+## The smallest useful pair
+
+The rig is the gear and an identifier:
 
 ```yaml
 schema: RigSpec
 version: 2
 id: mike-dirnt
-subject: { kind: artist, name: Mike Dirnt, band: Green Day }
 instrument: bass
 chain:
   - { role: amp, gear: Ampeg SVT }
   - { role: cab, gear: Ampeg 8x10 }
 ```
 
-That builds. Everything else is optional, and earns its place by making a claim
-checkable later.
+and the ask beside it, in `mike-dirnt.tone.yaml`, says who that is for:
+
+```yaml
+schema: ToneSpec
+subject: { kind: artist, name: Mike Dirnt, band: Green Day }
+instrument: bass
+```
+
+That builds. Everything else on either file is optional, and earns its place by
+making a claim checkable later. `instrument` is on both on purpose: the ask says
+which instrument the request is about and the rig says which one the gear is
+for. They are usually the same value and always two different claims, and
+folding them would leave a rig nobody can read without the ask above it.
 
 ## Name gear the way a person would
 
@@ -75,8 +118,9 @@ Check a name resolves before trusting it:
 tonestack catalog list --search ampeg
 ```
 
-Nothing back means the device does not model that gear. Either name something it
-has, or declare the gap in `requires`.
+Nothing back means the device does not model that gear. Name something it has,
+or give the entry a `substitute` saying what to use instead and why, which is
+the one place a rig admits that the device cannot do what it names.
 
 ## Order is the signal path
 
@@ -117,8 +161,10 @@ does not build. That is the point: `drive: 0.47` sat in the example rig doing
 nothing until this was written, because nothing read it.
 
 What a rig says beats everything under it. The catalog default is the floor, the
-corpus median can raise on it, a character term can move it, and the number
-somebody wrote down wins over all three.
+corpus median can raise on it, a word on the ask can move it, and the number
+somebody wrote down in the rig wins over all three. The order is deliberate: a
+number is somebody's decision about this gear, and a word is a description of a
+result that something else has to turn into a number.
 
 **Device controls do not belong here.** `Sag`, `Bias X`, `Ripple` and `Hum` are
 one manufacturer's knobs; the compiler sets those from catalog defaults, corpus
@@ -141,38 +187,50 @@ having.
 ## Say when the rig applied
 
 ```yaml
+schema: ToneSpec
 subject:
   era: American Idiot
   years: { from: 2004, to: 2004 }
 ```
 
-`era` is how a person says it and `years` is the same thing a machine can check.
-They matter together because a rig's audio evidence comes from records, and a
-record made outside the period the gear describes measures other gear. Paul
-McCartney's rig names an Acoustic 360; one of his measured records was cut in
-1966, two years before Acoustic built one. Both halves are honest and the join
-between them is wrong.
+The period is a fact about the request rather than about the gear, so it sits on
+the ask with the rest of the subject. `era` is how a person says it and `years`
+is the same thing a machine can check. They matter together because the audio
+evidence comes from records, and a record made outside the period the gear
+describes measures other gear. Paul McCartney's rig names an Acoustic 360, his
+ask names 1975 to 1979, and his corpus once held a record cut in 1966, two years
+before Acoustic built one. All three were honest and the joins between them were
+wrong.
 
 ```bash
 tonestack recipes records --corpus resources/music/bass
 ```
 
-reads every rig against its manifest and says which records fall outside:
+reads every pair against its manifest and says which records fall outside the
+years the ask gives:
 
 ```
-  RIG             ERA        RECORDS              READS
-  geddy-lee       1975–1978  1975 1976 1977 1978  records match the era
-  mike-dirnt      2004       1994* 1994* 1995*    every record is from another era
-  tim-commerford  1992       1992 1992 1999*      1 of 3 from another era
+  RIG             ERA        RECORDS              ROOM               READS
+  geddy-lee       1975–1978  1975 1976 1977 1978  direct             records match the era
+  mike-dirnt      2004       2004 2004 2004       direct             records match the era
+  flea            2011–2016  2016 2011 2011       gear from a stage  records match the era
 ```
+
+All nine match today and Mike Dirnt did not until his records were replaced: he
+was being measured from Dookie and Insomniac while his ask describes American
+Idiot, and the amplifiers on those two records are ones his own evidence names
+for other years. A pair whose ask states no years reads `no era to hold them to`
+rather than passing quietly, because an unstated period is not a period every
+record falls inside.
 
 It reports rather than refuses, because which half is wrong is a judgement. The
-rig may describe the wrong period, or the records may be the wrong records, and
-only somebody who knows the player can say which.
+ask may name the wrong period, or the records may be the wrong records, and only
+somebody who knows the player can say which.
 
 ## Say what it is played on
 
 ```yaml
+schema: ToneSpec
 played:
   - gear: Carl Thompson 4-string
     strings: round
@@ -223,21 +281,32 @@ how much of a figure left the instrument that way.
 roundwounds is a larger difference than most pedals, and `unknown` is worth
 saying out loud rather than omitting.
 
-## Character describes the result, not the control
+## Words describe the result, not the control
+
+What a sound should be like is `words` on the ask. It used to be `character` on
+the rig, and it moved with the rest of what a person wrote, because resolving a
+word into a knob position is the build's job and a document that already holds
+the position has nothing left to resolve.
 
 Each term is one thing, from a list that ships beside the catalog. A term is one
-claim, so a rig saying two things says two of them:
+claim, so an ask saying two things says two of them:
 
 ```yaml
-character:
+schema: ToneSpec
+words:
   - term: mid-forward
     evidence:
       - kind: llm
   - term: short-decay
 ```
 
+A word is an object rather than a bare string, and the evidence is the reason:
+how far a word moves a control is sized from what earned it, so a term with
+nothing behind it and a term measured off three records cannot be the same
+shape. `evidence` is optional, and leaving it off says nobody has checked.
+
 The words, grouped by the axis each belongs to. An axis is what makes a term
-mean something: saying `mid-forward` has already said "not scooped", and a rig
+mean something: saying `mid-forward` has already said "not scooped", and an ask
 claiming both has claimed nothing.
 
 | axis           | what it says                                        | words                                                      |
@@ -257,7 +326,8 @@ A term earned by measurement carries the figures that earned it, and then the
 gap decides the distance:
 
 ```yaml
-character:
+schema: ToneSpec
+words:
   - term: clean
     evidence:
       - kind: audio
@@ -268,7 +338,7 @@ character:
 `measured` is this player, `against` is everybody else. Reading half of what the
 others read is worth half a step; reading a gap as wide as their own figure is
 worth the whole one, and nothing is worth more than that. A term with no figures
-beside it is worth the whole step, which is what every rig did before any of
+beside it is worth the whole step, which is what every ask did before any of
 this could be measured. `tonestack measure --corpus <dir> --evidence` writes
 these blocks for you.
 
@@ -288,16 +358,21 @@ on its limit. A build reports what it heard and what it did about it:
 
 ```console
 $ tonestack presets make --id mike-dirnt
-  heard mid-forward — Mid 0.79 to 0.89
-  heard grit-on-attack — Drive 0.60 to 0.72
-  heard tight-low-end — Sag 0.50 to 0.40
-  heard short-decay — nothing acts on this yet
+  heard scooped — Mid 0.79 to 0.70 (90% of a step: what the records measured)
+  heard clean — Drive 0.60 to 0.53 (29% of a step: what the records measured)
   heard audible-pick-attack — Attack 0.04 to 0.05
 ```
 
-The `short-decay` line is this project's gap: nothing anywhere acts on that
-word. A word can also go unanswered because of the rig, and the build says that
-differently. A rig saying `roomy` in a chain that holds no reverb gets:
+The first two carry figures and the third does not, which is why only two of
+them say how much of a step they were worth. A word nothing acts on says so:
+
+```console
+  heard short-decay — nothing acts on this yet
+```
+
+That is this project's gap rather than the ask's. A word can also go unanswered
+because of the rig, and the build says that differently. An ask saying `roomy`
+against a chain that holds no reverb gets:
 
 ```console
   heard roomy — this chain holds no reverb
@@ -323,7 +398,7 @@ is already what it asked for:
 ```
 
 The other four axes, `decay`, `string-noise`, `pickup` and `movement`, describe
-the player and the instrument rather than the rig. They are recorded and move
+the player and the instrument rather than the gear. They are recorded and move
 nothing on purpose, because no amplifier, reverb or compressor has a control for
 how a player mutes a string or where they pick it. Use them anyway. They are
 part of what somebody listening compares the preset against.
@@ -340,9 +415,10 @@ $ tonestack presets make --id mine
 The preset is written, because refusing a word would be refusing you the right
 to describe a sound. If the word you want is missing, add it to
 [`pkg/sdk/internal/compile/data/character-terms.json`](../pkg/sdk/internal/compile/data/character-terms.json)
-with a sentence saying what it means. The rigs this repository ships are held to
-the list by a test, which is what keeps the examples from drifting back into
-sentences.
+with a sentence saying what it means. The file and that message still say
+"character term", which is what the field was called before it moved onto the
+ask; it is the same list. The asks this repository ships are held to it by a
+test, which is what keeps the examples from drifting back into sentences.
 
 ## Say where each claim came from
 
@@ -362,6 +438,15 @@ from an interview and a drive figure from measuring a corpus. `kind` is open:
 `heard`, `cited`, `audio`, `user`, `video`, `corpus`, `llm`, strongest first,
 plus `store` for where to get something.
 
+Both documents carry evidence, and the two are different claims. Why this piece
+of gear answered the request is the rig's, per chain entry, with a top-level
+`evidence` on the rig for a rundown that covers the whole chain rather than one
+entry of it: a rig rundown names everything in it at once, and requiring the
+citation on each entry would only encourage repeating it. Why the request was
+made, and why each word in it is believed, is the ask's. The rig keeps its half
+because the rig is what gets published, and a chain nobody can check is worth
+little to whoever receives it.
+
 Two things to be clear about.
 
 **A URL does not make a claim true.** It makes it *checkable*. That is what lets
@@ -370,9 +455,9 @@ correction is a small reviewable diff.
 
 **`llm` means nobody checked.** A language model is good at well-known players
 and confabulates for obscure ones, and cannot reliably tell which it is doing.
-That is the largest correctness risk in this project. A rig sourced that way
-should carry `confidence: low` and be shown as unverified whatever it claims
-about itself.
+That is the largest correctness risk in this project. A claim sourced that way
+should carry `confidence: low`, on the chain entry it belongs to or on the ask
+for the whole thing, and be shown as unverified whatever it says about itself.
 
 `note` carries the sentence the claim rests on, quoted, not a summary of it. It
 is what lets the next reader see whether the source says what the field claims
@@ -382,22 +467,38 @@ What a source has to be worth before it goes in a `url`, and what a pull request
 touching a rig has to have finished, is
 [Sourcing a rig](../CONTRIBUTING.md#sourcing-a-rig).
 
-## Declare what the device does not ship with
+## What the device does not ship with belongs to the Setup
+
+A rig used to carry a `requires` list naming impulse responses and bought models
+a device may not have. It is gone, and it is worth saying why rather than
+leaving a reader to wonder where it went: nothing in this repository ever read
+it. It sat in the contract for months looking like a feature, and a test now
+walks both contracts and fails on any field no code names, so the next one
+cannot last as long.
+
+What it was reaching for belongs to the person rather than to the rig. A Setup
+says what somebody owns:
 
 ```yaml
-requires:
-  - { kind: ir, name: Ownhammer SVT 8x10, slot: 82, url: "…" }
+schema: Setup
+owns:
+  - { kind: ir, name: Ownhammer SVT 8x10, slot: 82 }
 ```
 
-Only what a catalog cannot see. Whether a model exists on a device tier, or
-needs newer firmware, is already known, because the catalog carries the
-supported device list and the release it came from.
+That is the right document for it, because which impulse responses are loaded is
+a fact about one pedal in one room, and a rig is the thing two people are
+supposed to be able to exchange. It also does something: an IR block is left out
+of the ranking for anybody who has loaded nothing, since choosing one for them
+picks a block that plays silence, and a Setup naming what it holds puts those
+blocks back in.
 
-The case nothing can know is an impulse response. A preset stores the **slot
-number**, never the audio, so a rig depending on slot 82 sounds like whoever
-made it only if the same IR is loaded there. That is why generated chains never
-reach for a user IR block, and why one is flagged when reading somebody else's
-preset.
+A preset stores the **slot number**, never the audio, so a chain depending on
+slot 82 sounds like whoever built it only if the same IR is loaded there. That
+is why generated chains never reach for a user IR block, and why one is flagged
+when reading somebody else's preset. Nothing else needs declaring: whether a
+model exists on a device tier, or needs newer firmware, the catalog already
+knows, because it carries the supported device list and the release it came
+from.
 
 ## Write a song as sections
 
@@ -505,30 +606,38 @@ Four fields, four jobs:
 - `verdict` is what it sounded like. Absent means not yet heard, which is useful
   state.
 
-Append-only, never replayed: `chain` always holds the current state.
-Reconstructing a rig from its history would be more elegant and much worse to
-read, and a person reads this file.
+Append-only, never replayed: the rig's `chain` always holds the current state. A
+correction's paths point into the build it was made against and a rebuild makes
+another one, so replaying the history would apply somebody's round three to
+settings that never went through rounds one and two. `tone build` reads the
+entries out and says that the rebuild does not replay them, which is true and
+not obvious. Reconstructing a rig from its history would be more elegant and
+much worse to read, and a person reads these files.
 
-## One artist, several rigs
+## One artist, several pairs
 
 A player's rig changes by era and by song, and two can differ at the amp, which
-makes them siblings, not variations. Each is a complete RigSpec with its own
-`id`; one carries `default: true`, because asking for "a Mike Dirnt sound" with
-no qualifier has to land somewhere. Use `extends` only where a rig genuinely is
-a small departure from another.
+makes them siblings, not variations. Each is a whole pair with its own `id`; one
+ask carries `default: true`, because asking for "a Mike Dirnt sound" with no
+qualifier has to land somewhere. Use `extends` only where an ask genuinely is a
+small departure from another.
+
+Both fields are on the ask, and that is where they belong: which of a player's
+sounds somebody means when they name no era is a fact about the asking, and the
+gear does not know it.
 
 ### `extends` records lineage, and nothing merges
 
 This is the part people expect to work the other way, so it is worth saying
-plainly: **a rig that extends another still holds everything itself.** Nothing
+plainly: **a pair that extends another still holds everything itself.** Nothing
 is inherited, nothing is looked up at build time, and deleting the parent leaves
-the child working. All `extends` does is record where the rig came from, which
+the child working. All `extends` does is record where the ask came from, which
 is what lets `recipes show` list a rig's variants underneath it.
 
-The reason is that a rig is meant to be read. If a file only held its
+The reason is that these files are meant to be read. If one only held its
 differences, the rig that compiled would not be the rig on the page, and
 answering "why is this amp here" would mean opening two files and knowing the
-merge rules. Duplication across nine rigs is cheaper than that.
+merge rules. Duplication across nine pairs is cheaper than that.
 
 So copy the parent and edit the copy:
 
@@ -537,15 +646,19 @@ tonestack recipes new --from flea \
   --id flea-under-the-bridge --kind song --name "Under the Bridge"
 ```
 
-That writes a whole rig: the chain, the character, the comments and every
-citation, with `extends: flea` recorded and the parent's `aliases` and `default`
-dropped, since those belong to the parent alone.
+That writes both files: the chain, the words, the comments and every citation,
+with `extends: flea` recorded on the ask and the parent's `aliases` and
+`default` dropped, since those name the parent to whoever asks for it.
+
+The corrections do not come across, and that one would do real harm if it did. A
+correction is a round of somebody listening to particular gear, so copying it
+would attribute a verdict to a rig nobody has heard.
 
 The citations coming across is the point and also the trap. A claim sourced for
-one rig is not evidence for another, so anything you change loses its evidence
-with it. The file says so at the top, and the honest move is to drop what you
-cannot stand behind rather than leave a citation pointing at a rig that no
-longer exists.
+one subject is not evidence for another, so anything you change loses its
+evidence with it. The files say so at the top, and the honest move is to drop
+what you cannot stand behind rather than leave a citation pointing at gear that
+is no longer there.
 
 ## Checking your work
 
@@ -655,11 +768,19 @@ twenty-four values.
 
 ## Where the contract lives
 
-The schema is at
-[`pkg/sdk/rig/data/rigspec.openapi.yaml`](../pkg/sdk/rig/data/rigspec.openapi.yaml),
-embedded into the package that reads it. It sits beside that code rather than in
-a directory of its own so the library can be lifted out without somebody
+Two of them now, one per document. The rig's is at
+[`pkg/sdk/rig/data/rigspec.openapi.yaml`](../pkg/sdk/rig/data/rigspec.openapi.yaml)
+and the ask's at
+[`pkg/sdk/tone/data/tonespec.openapi.yaml`](../pkg/sdk/tone/data/tonespec.openapi.yaml),
+each embedded into the package that reads it. Each sits beside that code rather
+than in a directory of its own so the library can be lifted out without somebody
 remembering to bring a file along.
+
+They get the same treatment: hand-authored, Go types generated from them, and a
+reference page generated too, which is why [rigspec.md](rigspec.md) and
+[tonespec.md](tonespec.md) carry a banner saying not to edit them. The rest of
+this section is about the rig's, which is the older of the two and the one whose
+shape needed arguing for.
 
 RigSpec is this project's own invention. The Line 6 format has no equivalent. It
 stores blocks under `dsp0`/`block0` keys with no abstraction over where a chain
@@ -672,10 +793,12 @@ rather than against a second copy of the rules written in Go. Two copies drift:
 a constraint added to one becomes a type nothing enforces, or a check nothing
 asked for.
 
-There used to be two contracts, one for what a person writes and one for what
-the generator produces. They were the same document at two levels of detail, so
-now there is one. A rig is sparse when somebody types it and full once it has
-been compiled or lifted from a preset.
+There used to be two rig contracts, one for what a person writes and one for
+what the generator produces. They were the same document at two levels of
+detail, so now there is one. A rig is sparse when somebody types it and full
+once it has been compiled or lifted from a preset. The split that did earn a
+second contract is a different one: the ask and the rig hold different fields
+rather than the same fields in more or less detail.
 
 ### Why RigSpec does not enumerate models
 

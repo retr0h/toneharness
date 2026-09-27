@@ -134,7 +134,7 @@ func (s *ToneBuildPublicTestSuite) TestARequestItCannotAnswerFails() {
 	var buf bytes.Buffer
 
 	err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
-		Ask: s.file("ask.yaml", "schema: ToneSpec\nwords: [dark]\n"),
+		Ask: s.file("ask.yaml", "schema: ToneSpec\nwords:\n  - term: dark\n"),
 	})
 
 	s.Require().ErrorContains(err, "no chain to build")
@@ -205,7 +205,6 @@ func (s *ToneBuildPublicTestSuite) TestAStandInResolvesInsteadOfTheRealThing() {
 		Return(sdk.Resolved{
 			Rig: rig.Spec{
 				Schema: rig.SchemaName, ID: "stubbed",
-				Subject:    rig.Subject{Kind: rig.KindSound, Name: "Stubbed"},
 				Instrument: rig.InstrumentBass,
 				Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
 			},

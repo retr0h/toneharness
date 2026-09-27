@@ -1,0 +1,6 @@
+schema: ToneSpec
+
+subject:
+  kind: artist
+  name: Unbuildable
+confidence: low

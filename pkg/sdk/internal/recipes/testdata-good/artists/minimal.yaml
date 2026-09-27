@@ -1,11 +1,6 @@
 schema: RigSpec
 version: 2
 id: minimal
-aliases: [spare, bare]
-
-subject:
-  kind: genre
-  name: Minimal
 
 instrument: guitar
 
@@ -15,5 +10,3 @@ chain:
     evidence:
       - { kind: cited, note: "Fender publish the model" }
     confidence: high
-
-confidence: high

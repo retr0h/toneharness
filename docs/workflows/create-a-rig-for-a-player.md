@@ -142,35 +142,45 @@ tonestack recipes new \
 Every gear name is resolved before anything is written, and near misses are
 suggested when one does not resolve.
 
-The file goes to your own recipes directory, `$XDG_DATA_HOME/tonestack/recipes`,
-or `~/.local/share/tonestack/recipes` when that variable is unset, and the
-command prints its path. `recipes list`, `recipes show`, `presets make` and the
-MCP server read that directory beside the rigs that ship, so the new rig builds
-straight away. `--dir` writes somewhere else instead. A rig written there is
-only found when you name the same directory again, with `--dir` or with
+**That writes two files, not one.** `mike-dirnt.yaml` is the gear and
+`mike-dirnt.tone.yaml` beside it is the ask: who it is for and how it should
+sound. They are paired by filename stem, and the command prints the path of the
+rig. Both go to your own recipes directory, `$XDG_DATA_HOME/tonestack/recipes`,
+or `~/.local/share/tonestack/recipes` when that variable is unset.
+`recipes list`, `recipes show`, `presets make` and the MCP server read that
+directory beside the rigs that ship, so the new rig builds straight away.
+`--dir` writes somewhere else instead. A rig written there is only found when
+you name the same directory again, with `--dir` or with
 `presets make --recipes`, and the rigs that ship are read beside it either way.
 
 `--kind` changes what a copy made with `--from` is attributed to, and is refused
 without `--from`. A rig written from gear is always an artist.
 
-Then open the file. The flags write the chain; everything that makes the rig
-worth reading is what you add next.
+Then open both. The flags write the chain and a subject; everything that makes
+the pair worth reading is what you add next.
 
-| field           | what it carries                                  | why it is not optional in practice                                                  |
-| --------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| `evidence`      | where each gear claim came from, per chain entry | a chain with no sources is a model's guess wearing a filename                       |
-| `confidence`    | how much of the above you believe                | `low` is an honest answer and the tool displays it as unverified                    |
-| `subject.era`   | when the rig applied, in words                   | a rig that does not say when it applies claims to be timeless and usually is not    |
-| `subject.years` | the same period as numbers                       | nothing can be measured for this rig without it: records are held to these years    |
-| `played`        | the instrument and its strings                   | a figure measured without it is attributed to the amplifier, which did not cause it |
-| `technique`     | pick or fingers, and where on the string         | a picked record tuned by ear sounds dull played fingered                            |
-| `character`     | how it should sound, each word with its evidence | this is what moves controls when the preset is built                                |
+| field           | goes on | what it carries                                       | why it is not optional in practice                                                  |
+| --------------- | ------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `evidence`      | rig     | where each gear claim came from, per chain entry      | a chain with no sources is a model's guess wearing a filename                       |
+| `confidence`    | both    | how much of a claim, or of the whole ask, you believe | `low` is an honest answer and the tool displays it as unverified                    |
+| `subject.era`   | ask     | when the rig applied, in words                        | an ask that does not say when it applies claims to be timeless and usually is not   |
+| `subject.years` | ask     | the same period as numbers                            | nothing can be measured for this pair without it: records are held to these years   |
+| `played`        | ask     | the instrument and its strings                        | a figure measured without it is attributed to the amplifier, which did not cause it |
+| `technique`     | ask     | pick or fingers, and where on the string              | a picked record tuned by ear sounds dull played fingered                            |
+| `words`         | ask     | how it should sound, each word with its evidence      | this is what moves controls when the preset is built                                |
 
-[recipes.md](../recipes.md) has a section per field and
-[`examples/rigspec/mike-dirnt.yaml`](../../examples/rigspec/mike-dirnt.yaml)
-shows all of them on one subject. Fill what you can source and leave the rest
-out: an empty field is a gap somebody can close, and a filled one nobody checked
-is a claim this project will repeat back as fact.
+Everything a person wrote is on the ask and the gear is on the rig, which is the
+line worth remembering when deciding where a new claim goes: why the request was
+made belongs to the ask, and why this amp answered it belongs to the rig.
+
+[recipes.md](../recipes.md) has a section per field, and the two worked examples
+sit beside each other:
+[`examples/rigspec/mike-dirnt.yaml`](../../examples/rigspec/mike-dirnt.yaml) for
+the gear and
+[`examples/tonespec/mike-dirnt.yaml`](../../examples/tonespec/mike-dirnt.yaml)
+for the ask. Fill what you can source and leave the rest out: an empty field is
+a gap somebody can close, and a filled one nobody checked is a claim this
+project will repeat back as fact.
 
 **Be honest about where the gear came from.** `kind: llm` on a piece of evidence
 means a model asserted it and nobody checked. That is reliable for well-known
@@ -218,7 +228,7 @@ tonestack presets make --id mike-dirnt --out mike.hlx
 
 The output is the point. It reports every block chosen, what real gear each one
 emulates, what it costs, how much of the processor is used, anything added that
-the rig did not ask for, and what each word in the rig's `character` did:
+the rig did not ask for, and what each word on the ask did:
 
 ```text
   ●  0.0  Deluxe Comp       Line 6 Original             1.8
@@ -229,15 +239,13 @@ the rig did not ask for, and what each word in the rig's `character` did:
 
   added Deluxe Comp — almost every chain has one (88% of chains)
 
-  heard mid-forward — Mid 0.79 to 0.89
-  heard grit-on-attack — Drive 0.60 to 0.72
-  heard tight-low-end — Sag 0.50 to 0.40
-  heard short-decay — nothing acts on this yet
+  heard scooped — Mid 0.79 to 0.70 (90% of a step: what the records measured)
+  heard clean — Drive 0.60 to 0.53 (29% of a step: what the records measured)
   heard audible-pick-attack — Attack 0.04 to 0.05
 ```
 
-[recipes.md](../recipes.md#character-describes-the-result-not-the-control)
-explains the `heard` lines.
+[recipes.md](../recipes.md#words-describe-the-result-not-the-control) explains
+the `heard` lines.
 
 Read it before you plug anything in. A wrong amp is a bad miss that nothing
 downstream recovers from, and it is visible right there.

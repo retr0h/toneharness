@@ -206,7 +206,6 @@ func (s *SnapshotsPublicTestSuite) TestLowerSnapshots() {
 			typed: &rig.Spec{
 				Schema:     rig.SchemaName,
 				ID:         "typed",
-				Subject:    rig.Subject{Kind: rig.KindSound, Name: "Typed"},
 				Instrument: rig.InstrumentBass,
 				Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
 				Snapshots:  &[]rig.Snapshot{{Name: &name}},

@@ -29,6 +29,7 @@ import (
 
 	"github.com/retr0h/tonestack/pkg/sdk"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/tonestack/pkg/sdk/tone"
 )
 
 // Recipes prints every rig a directory holds, one to a row.
@@ -38,13 +39,13 @@ func Recipes(
 ) error {
 	rows := make([][]string, 0, len(r.Rigs))
 
-	for _, spec := range r.Rigs {
+	for _, known := range r.Rigs {
 		rows = append(rows, []string{
-			paint.Accent(w, spec.ID),
-			spec.Subject.Name,
-			paint.Mute(w, string(spec.Instrument)),
-			rig.GearName(spec, rig.RoleAmp),
-			source(w, spec),
+			paint.Accent(w, known.Rig.ID),
+			named(known),
+			paint.Mute(w, string(known.Rig.Instrument)),
+			rig.GearName(known.Rig, rig.RoleAmp),
+			source(w, known.Rig),
 		})
 	}
 
@@ -63,38 +64,90 @@ func Recipe(
 	r sdk.Recipe,
 ) error {
 	spec := r.Rig
-	d := paint.Detail{Title: spec.Subject.Name, Subtitle: spec.ID}
+	d := paint.Detail{Title: named(r.Known), Subtitle: spec.ID}
 
-	if spec.Subject.Band != nil && *spec.Subject.Band != "" {
-		d.Fields = append(d.Fields, paint.Field{Label: "band", Value: *spec.Subject.Band})
-	}
-
-	if spec.Subject.Era != nil && *spec.Subject.Era != "" {
-		d.Fields = append(d.Fields, paint.Field{Label: "era", Value: *spec.Subject.Era})
-	}
-
+	d.Fields = append(d.Fields, about(r.Ask)...)
 	d.Fields = append(d.Fields,
 		paint.Field{Label: "instrument", Value: string(spec.Instrument)})
 	d.Fields = append(d.Fields, signalPath(spec)...)
-
-	if spec.Technique != nil {
-		d.Fields = append(d.Fields,
-			paint.Field{Label: "technique", Value: technique(*spec.Technique)})
-	}
-
-	d.Fields = append(d.Fields, character(spec)...)
+	d.Fields = append(d.Fields, asked(r.Ask)...)
 	d.Fields = append(d.Fields, variants(r.Variants)...)
 	d.Fields = append(d.Fields, paint.Field{
 		Label: "source",
 		Value: fmt.Sprintf("%s, %s confidence",
-			rig.Sourced(spec), confidence(spec)),
+			rig.Sourced(spec), confidence(r.Ask)),
 	})
 
-	if !rig.Trusted(spec) {
-		d.Note = "unverified — nobody has confirmed this gear"
+	switch {
+	case !rig.Trusted(spec):
+		d.Note = "unverified, nobody has confirmed this gear"
+	case r.Ask == nil:
+		// Worth saying rather than rendering as a rig with no words. The gear is
+		// here and what it was for is not, so nothing can tell whether the rig
+		// answers the question it was built for.
+		d.Note = "no ask beside it, so nothing records what this was built for"
 	}
 
 	return wrapReport(d.Render(w))
+}
+
+// named is what to call a rig, which only its ask knows.
+//
+// The rig carries an identifier and the ask carries the subject, so a rig with
+// no ask has a name nobody wrote down. Its identifier stands in, which is what
+// a listing needs: a blank cell reads as a bug and the identifier is true.
+func named(
+	known sdk.Known,
+) string {
+	if known.Ask == nil || known.Ask.Subject == nil {
+		return known.Rig.ID
+	}
+
+	return known.Ask.Subject.Name
+}
+
+// about is who the ask is for, where it says.
+func about(
+	ask *tone.Spec,
+) []paint.Field {
+	if ask == nil || ask.Subject == nil {
+		return nil
+	}
+
+	out := []paint.Field(nil)
+
+	if ask.Subject.Band != nil && *ask.Subject.Band != "" {
+		out = append(out, paint.Field{Label: "band", Value: *ask.Subject.Band})
+	}
+
+	if ask.Subject.Era != nil && *ask.Subject.Era != "" {
+		out = append(out, paint.Field{Label: "era", Value: *ask.Subject.Era})
+	}
+
+	return out
+}
+
+// asked is how the ask says it should sound and how it is played.
+//
+// Both come off the ask and neither is on the rig, which is the whole point of
+// the split: a word is what somebody meant, and the gear below is what answered
+// it. Printed after the signal path so the page reads answer first, then what it
+// was answering.
+func asked(
+	ask *tone.Spec,
+) []paint.Field {
+	if ask == nil {
+		return nil
+	}
+
+	out := []paint.Field(nil)
+
+	if ask.Technique != nil {
+		out = append(out,
+			paint.Field{Label: "technique", Value: technique(*ask.Technique)})
+	}
+
+	return append(out, words(ask)...)
 }
 
 // variants lists the rigs that are a small change on this one.
@@ -155,47 +208,52 @@ func signalPath(
 	return out
 }
 
-// confidence reports how far a rig says it should be trusted.
+// confidence reports how far an ask says its answer should be trusted.
+//
+// Low when nothing says otherwise, including when there is no ask at all. A
+// claim asserting high confidence with no evidence behind it is worth showing as
+// unverified whatever it says about itself, and a rig nobody wrote an ask for
+// says nothing about itself at all.
 func confidence(
-	spec rig.Spec,
-) rig.Confidence {
-	if spec.Confidence == nil {
-		return rig.ConfidenceLow
+	ask *tone.Spec,
+) tone.Confidence {
+	if ask == nil || ask.Confidence == nil {
+		return tone.ConfidenceLow
 	}
 
-	return *spec.Confidence
+	return *ask.Confidence
 }
 
-// character renders the intent lines, one per row, labelled only once.
+// words renders how it should sound, one per row, labelled only once.
 //
 // The label repeats as blank so the values line up in the same column as
 // every other field rather than starting a block of their own.
-func character(
-	spec rig.Spec,
+func words(
+	ask *tone.Spec,
 ) []paint.Field {
-	if spec.Character == nil || len(*spec.Character) == 0 {
+	if ask == nil || ask.Words == nil || len(*ask.Words) == 0 {
 		return nil
 	}
 
-	out := make([]paint.Field, 0, len(*spec.Character))
+	out := make([]paint.Field, 0, len(*ask.Words))
 
-	for i, c := range *spec.Character {
+	for i, word := range *ask.Words {
 		label := ""
 		if i == 0 {
-			label = "character"
+			label = "words"
 		}
 
-		out = append(out, paint.Field{Label: label, Value: c.Term})
+		out = append(out, paint.Field{Label: label, Value: word.Term})
 	}
 
 	return out
 }
 
 // where reads a position back as the phrase a player would use.
-var where = map[rig.Position]string{
-	rig.PositionBridge: "near the bridge",
-	rig.PositionMiddle: "over the middle",
-	rig.PositionNeck:   "over the neck",
+var where = map[tone.Position]string{
+	tone.PositionBridge: "near the bridge",
+	tone.PositionMiddle: "over the middle",
+	tone.PositionNeck:   "over the neck",
 }
 
 // technique writes the three things a rig stores as the one sentence a person
@@ -205,7 +263,7 @@ var where = map[rig.Position]string{
 // "attack: pick, position: bridge" out loud. Muting is named only when there
 // is some, because "not muted" is what every unmuted note already sounds like.
 func technique(
-	t rig.Technique,
+	t tone.Technique,
 ) string {
 	parts := []string{string(t.Attack)}
 
@@ -213,7 +271,7 @@ func technique(
 		parts = append(parts, where[*t.Position])
 	}
 
-	if t.Muting != nil && *t.Muting == rig.MutingPalm {
+	if t.Muting != nil && *t.Muting == tone.MutingPalm {
 		parts = append(parts, "palm muted")
 	}
 

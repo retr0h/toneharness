@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 // Write encodes a preset file.
@@ -55,7 +55,7 @@ func Write(
 // template's blocks on a processor the rig does not use would otherwise be
 // compiled in beside the rig's own chain.
 func (d *Document) SetSpec(
-	spec chain.Chain,
+	spec plan.Plan,
 ) error {
 	d.Data.Meta.Name = spec.Name
 
@@ -75,7 +75,7 @@ func (d *Document) SetSpec(
 		}
 	}
 
-	byProcessor := map[int][]chain.Block{}
+	byProcessor := map[int][]plan.Block{}
 	for _, b := range spec.Blocks {
 		byProcessor[b.DSP] = append(byProcessor[b.DSP], b)
 	}
@@ -124,7 +124,7 @@ func isBlockKey(
 // encodeBlock renders one block as the device writes it: @-prefixed
 // attributes alongside parameters, each parameter in its own kind.
 func encodeBlock(
-	b chain.Block,
+	b plan.Block,
 ) (json.RawMessage, error) {
 	fields := map[string]any{
 		attrModel:   string(b.Model),
@@ -167,7 +167,7 @@ func encodeBlock(
 // New returns a document for a device, carrying spec.
 func New(
 	deviceID int,
-	spec chain.Chain,
+	spec plan.Plan,
 ) (*Document, error) {
 	d := &Document{
 		Schema:  Schema,

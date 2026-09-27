@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package chain
+package plan
 
 import (
 	"fmt"
@@ -33,7 +33,7 @@ import (
 //
 // It needs no catalog — every question it answers is about the rig alone.
 func ValidateTopology(
-	s Chain,
+	s Plan,
 	lim Limits,
 ) error {
 	if len(s.Blocks) == 0 {
@@ -96,7 +96,7 @@ func ValidateTopology(
 }
 
 func validateSnapshots(
-	s Chain,
+	s Plan,
 ) error {
 	if len(s.Snapshots) == 0 {
 		return nil

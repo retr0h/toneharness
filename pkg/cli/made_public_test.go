@@ -32,7 +32,7 @@ import (
 	"github.com/retr0h/tonestack/pkg/cli"
 	"github.com/retr0h/tonestack/pkg/sdk"
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 // stops writing after ok writes, so a report written in parts can be failed
@@ -70,9 +70,9 @@ func (s *MadePublicTestSuite) made(
 	mutate func(*sdk.Made),
 ) sdk.Made {
 	m := sdk.Made{
-		Chain: chain.Chain{
+		Chain: plan.Plan{
 			Name:   "Test Player",
-			Blocks: []chain.Block{{Model: "amp", Enabled: true}},
+			Blocks: []plan.Block{{Model: "amp", Enabled: true}},
 		},
 		Path: "/tmp/out.hlx",
 	}

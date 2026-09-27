@@ -24,9 +24,8 @@ import (
 	"math"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 // Moved is what a character term did to a parameter.
@@ -189,7 +188,7 @@ const maxStep = 0.25
 // reporting only the ones that worked would read as if the rest had.
 func move(
 	blocks []catalog.Block,
-	built chain.Chain,
+	built plan.Plan,
 	terms []heard,
 	stats *corpus.Stats,
 ) []Moved {
@@ -334,7 +333,7 @@ func indexOf(
 // apply turns one knob, or reports why it could not.
 func apply(
 	b catalog.Block,
-	params chain.Params,
+	params plan.Params,
 	h heard,
 	t turn,
 	key string,
@@ -396,17 +395,20 @@ func clamp(
 	}
 }
 
-// termsOf reads the words a rig describes itself with, in the order written.
+// termsOf reads the words an ask describes a sound with, in the order written.
+//
+// The order is kept because two words on one axis cancel and the report names
+// them as the ask wrote them, which is no help if this reordered them first.
 func termsOf(
-	spec rig.Spec,
+	words []Word,
 ) []heard {
-	if spec.Character == nil {
+	if len(words) == 0 {
 		return nil
 	}
 
-	out := make([]heard, 0, len(*spec.Character))
-	for _, c := range *spec.Character {
-		out = append(out, heard{term: c.Term, weight: weightOf(c)})
+	out := make([]heard, 0, len(words))
+	for _, word := range words {
+		out = append(out, heard{term: word.Term, weight: weightOf(word)})
 	}
 
 	return out
@@ -435,30 +437,30 @@ var measures = map[string]string{
 	"drive": "harmonics",
 }
 
-// weightOf reads how far a term's own measurement sits from everybody else's.
+// weightOf reads how far a word's own measurement sits from everybody else's.
 //
 // The gap as a share of what the others read: a player reading half the
 // harmonics of the rest is worth half a step, and one reading none of them is
 // worth the whole step. Beyond that it stops counting, because a word is one
 // opinion and the cap on a step is what keeps one opinion off the rail.
 //
-// A term with no measurement, or one measuring something no control answers
+// A word with no measurement, or one measuring something no control answers
 // to, is worth the whole step. That is what every rig did before any of this
 // was measured, and it stays the answer where nobody has measured anything.
 func weightOf(
-	c rig.CharacterTerm,
+	w Word,
 ) float64 {
-	axis, ok := axisOf(c.Term)
+	axis, ok := axisOf(w.Term)
 	if !ok {
 		return 1
 	}
 
 	key, ok := measures[axis]
-	if !ok || c.Evidence == nil {
+	if !ok {
 		return 1
 	}
 
-	for _, e := range *c.Evidence {
+	for _, e := range w.Evidence {
 		if e.Measured == nil || e.Against == nil {
 			continue
 		}
@@ -476,7 +478,7 @@ func weightOf(
 	return 1
 }
 
-// contested finds the axes a rig spoke for more than once.
+// contested finds the axes an ask spoke for more than once.
 func contested(
 	terms []heard,
 ) map[string]bool {

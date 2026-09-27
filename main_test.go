@@ -729,7 +729,7 @@ var coversAConcern = map[string]string{
 	"pkg/sdk/catalog/led_public_test.go":                      "Catalog.LEDColour, which CONTRIBUTING lets types.go keep",
 	"pkg/sdk/catalog/symbol_public_test.go":                   "Catalog.Symbol, which CONTRIBUTING names as allowed there",
 	"pkg/sdk/internal/corpusgen/corpusgen_public_test.go":     "Run end to end, which drives measure.go and refresh.go",
-	"pkg/sdk/chain/testdata_public_test.go":                   "fixtures the package's tests build from",
+	"pkg/sdk/plan/testdata_public_test.go":                    "fixtures the package's tests build from",
 	"pkg/sdk/device_public_test.go":                           "a round trip against real hardware, behind a build tag",
 	"pkg/sdk/internal/catalogen/stale_public_test.go":         "the shipped catalog against an installed HX Edit",
 	"pkg/sdk/internal/compile/character_moves_public_test.go": "a word becoming knob positions, across the compiler",

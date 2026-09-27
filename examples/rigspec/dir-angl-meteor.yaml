@@ -394,9 +394,6 @@ snapshots:
   pedal: 0
   tempo: 120
   valid: true
-subject:
-  kind: sound
-  name: DIR:ANGL Meteor
 target:
   device: HX Stomp
 version: 2

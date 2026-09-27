@@ -28,7 +28,7 @@ import (
 	"strings"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -52,7 +52,7 @@ func Lower(
 		return err
 	}
 
-	blocks := make([]chain.Block, 0, len(spec.Chain))
+	blocks := make([]plan.Block, 0, len(spec.Chain))
 
 	for i, entry := range spec.Chain {
 		model, err := modelFor(entry, cat, string(spec.Instrument))
@@ -71,7 +71,7 @@ func Lower(
 			return err
 		}
 
-		blocks = append(blocks, chain.Block{
+		blocks = append(blocks, plan.Block{
 			Model:   model,
 			Params:  params,
 			Attrs:   attrsFor(entry),
@@ -116,12 +116,16 @@ func Lower(
 	// an untouched preset would otherwise write out the template's own name.
 	// A lifted rig carries the label the device stored, padding and all,
 	// which is what restore has already put back.
-	name := spec.Subject.Name
+	//
+	// The identifier rather than a subject's name, because a subject is what
+	// somebody asked for and lives on the ask. A rig's identifier is the only
+	// name a rig has of its own, and it is the one its file is called after.
+	name := spec.ID
 	if spec.Device != nil && spec.Device.Name != nil {
 		name = *spec.Device.Name
 	}
 
-	return doc.SetSpec(chain.Chain{Name: name, Blocks: blocks})
+	return doc.SetSpec(plan.Plan{Name: name, Blocks: blocks})
 }
 
 // at reads an optional integer, falling back when a rig does not state one.
@@ -196,9 +200,9 @@ func paramsFor(
 	entry rig.ChainEntry,
 	cat *catalog.Catalog,
 	model catalog.ModelID,
-) chain.Params {
+) plan.Params {
 	blk, known := cat.Block(model)
-	out := chain.Params{}
+	out := plan.Params{}
 
 	if entry.Params == nil {
 		if known {

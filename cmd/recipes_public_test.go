@@ -93,19 +93,23 @@ func reset(
 	}
 }
 
+// pair is a recipe of somebody's own: the rig, and the ask beside it.
+type pair struct {
+	rig string
+	ask string
+}
+
 // theirs is a recipe of somebody's own, for the subject "Their Player".
+//
+// Two documents, because the subject and the aliases are things a person wrote
+// and those live on the ask. aliases is a line for the ask, or empty.
 func theirs(
 	id string,
 	aliases string,
-) string {
-	return fmt.Sprintf(`schema: RigSpec
+) pair {
+	rig := fmt.Sprintf(`schema: RigSpec
 version: 2
 id: %s
-%s
-
-subject:
-  kind: artist
-  name: Their Player
 
 instrument: bass
 
@@ -115,9 +119,19 @@ chain:
     evidence:
       - { kind: cited, note: "a test says so" }
     confidence: high
+`, id)
+
+	ask := fmt.Sprintf(`schema: ToneSpec
+%s
+
+subject:
+  kind: artist
+  name: Their Player
 
 confidence: high
-`, id, aliases)
+`, aliases)
+
+	return pair{rig: rig, ask: ask}
 }
 
 // TestTheirsBesideTheShippedOnes covers which rig list, show and make find
@@ -126,7 +140,8 @@ func (s *RecipesPublicTestSuite) TestTheirsBesideTheShippedOnes() {
 	tests := []struct {
 		name string
 		// rig is a recipe of theirs to write, or empty for none.
-		rig string
+		// files is the pair written into their directory, where a row writes one.
+		files pair
 		// missing leaves their directory absent.
 		missing bool
 		// locked leaves their directory unreadable.
@@ -143,38 +158,40 @@ func (s *RecipesPublicTestSuite) TestTheirsBesideTheShippedOnes() {
 			// Variants are read across both, so the copy shows under the
 			// shipped rig it was made from.
 			name:    "a rig of theirs made from a shipped one",
-			rig:     theirs("mike-dirnt-live", "extends: mike-dirnt"),
+			files:   theirs("mike-dirnt-live", "extends: mike-dirnt"),
 			want:    "Mike Dirnt",
 			variant: "mike-dirnt-live",
 		},
 		{
-			// One mistake of theirs does not stop a shipped rig building.
+			// One mistake of theirs does not stop a shipped rig building. No ask
+			// beside it: the rig is the half that is wrong, and a rig with no ask
+			// is legal, so this fails on the rig rather than on the pair.
 			name:    "a file of theirs that is not a rig",
-			rig:     "schema: RigSpec\nid: broken\n",
+			files:   pair{rig: "schema: RigSpec\nid: broken\n"},
 			want:    "Mike Dirnt",
 			listErr: "theirs.yaml",
 		},
 		{
-			name: "the same identifier as a shipped rig",
-			rig:  theirs("mike-dirnt", ""),
-			want: "Their Player",
+			name:  "the same identifier as a shipped rig",
+			files: theirs("mike-dirnt", ""),
+			want:  "Their Player",
 		},
 		{
 			// Otherwise show and make would find theirs through the alias
 			// while list still showed the shipped one.
-			name: "an alias that is a shipped rig's identifier, in any case",
-			rig:  theirs("their-player", "aliases: [MIKE-DIRNT]"),
-			want: "Their Player",
+			name:  "an alias that is a shipped rig's identifier, in any case",
+			files: theirs("their-player", "aliases: [MIKE-DIRNT]"),
+			want:  "Their Player",
 		},
 		{
-			name: "an identifier that is a shipped rig's alias",
-			rig:  theirs("dirnt", ""),
-			want: "Their Player",
+			name:  "an identifier that is a shipped rig's alias",
+			files: theirs("dirnt", ""),
+			want:  "Their Player",
 		},
 		{
-			name: "a rig of theirs sharing no name with a shipped one",
-			rig:  theirs("their-player", ""),
-			want: "Mike Dirnt",
+			name:  "a rig of theirs sharing no name with a shipped one",
+			files: theirs("their-player", ""),
+			want:  "Mike Dirnt",
 		},
 		{
 			// Nobody has written a recipe of their own yet.
@@ -186,7 +203,7 @@ func (s *RecipesPublicTestSuite) TestTheirsBesideTheShippedOnes() {
 			// Not the shipped rigs alone, which would hide theirs without
 			// saying why.
 			name:   "a directory that cannot be read",
-			rig:    theirs("mike-dirnt", ""),
+			files:  theirs("mike-dirnt", ""),
 			locked: true,
 			err:    true,
 		},
@@ -209,9 +226,11 @@ func (s *RecipesPublicTestSuite) TestTheirsBesideTheShippedOnes() {
 				s.Require().NoError(os.MkdirAll(filepath.Join(dir, "artists"), 0o750))
 			}
 
-			if tt.rig != "" {
-				s.Require().NoError(os.WriteFile(
-					filepath.Join(dir, "artists", "theirs.yaml"), []byte(tt.rig), 0o600))
+			if tt.files.rig != "" {
+				s.Require().NoError(os.WriteFile(filepath.Join(dir, "artists", "theirs.yaml"),
+					[]byte(tt.files.rig), 0o600))
+				s.Require().NoError(os.WriteFile(filepath.Join(dir, "artists", "theirs.tone.yaml"),
+					[]byte(tt.files.ask), 0o600))
 			}
 
 			if tt.locked {
@@ -350,8 +369,11 @@ func (s *RecipesPublicTestSuite) TestNewFlags() {
 		// out must be in what it printed, and absent must not.
 		out    string
 		absent string
-		// body must be in the file written.
+		// body must be in the rig written, and ask in the ToneSpec beside it.
+		// Which of the two a row states is which document the claim lives in:
+		// the gear is the rig's and who it is for is the ask's.
 		body string
+		ask  string
 		// example puts the meteor rig in the directory written to.
 		example bool
 	}{
@@ -365,7 +387,7 @@ func (s *RecipesPublicTestSuite) TestNewFlags() {
 		{
 			name: "--kind with --from",
 			args: []string{"--from", "mike-dirnt", "--kind", "song"},
-			body: "  kind: song",
+			ask:  "  kind: song",
 		},
 		{
 			// The copy is played on what the copied rig is, whatever the
@@ -411,14 +433,14 @@ func (s *RecipesPublicTestSuite) TestNewFlags() {
 			// Written bare, this name is a mapping and the file is not a rig.
 			name: "a copy named with YAML syntax",
 			args: []string{"--from", "flea", "--name", `a: "b" #c`},
-			body: `name: 'a: "b" #c'`,
+			ask:  `name: 'a: "b" #c'`,
 		},
 		{
 			// Written bare, a rig loads this name as the boolean true and
 			// refuses the file. Yes is a band.
 			name: "a copy named for a band called Yes",
 			args: []string{"--from", "flea", "--name", "Yes"},
-			body: `name: "Yes"`,
+			ask:  `name: "Yes"`,
 		},
 	}
 
@@ -461,6 +483,13 @@ func (s *RecipesPublicTestSuite) TestNewFlags() {
 				body, err := os.ReadFile(path)
 				s.Require().NoError(err)
 				s.Require().Contains(string(body), tt.body)
+			}
+
+			if tt.ask != "" {
+				beside, err := os.ReadFile(
+					filepath.Join(dir, "artists", "the-copy.tone.yaml"))
+				s.Require().NoError(err)
+				s.Require().Contains(string(beside), tt.ask)
 			}
 		})
 	}

@@ -35,11 +35,11 @@ import (
 	"io"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/backup"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/editor"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -63,7 +63,7 @@ type Compiler interface {
 // Translator moves between what a device says and what a preset holds.
 type Translator interface {
 	// Chain reads what a device laid out as a chain.
-	Chain(name string, got wire.DevicePreset, cat *catalog.Catalog) (chain.Chain, error)
+	Chain(name string, got wire.DevicePreset, cat *catalog.Catalog) (plan.Plan, error)
 	// Controllers carries what an expression pedal or a footswitch moves.
 	Controllers(got wire.DevicePreset, cat *catalog.Catalog) *[]rig.Controller
 	// DeviceState carries the routing a device wraps a chain in.

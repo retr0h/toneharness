@@ -59,8 +59,13 @@ func (s *MCPStartPublicTestSuite) TestUserRecipes() {
 
 	artists := filepath.Join(data, "tonestack", "recipes", "artists")
 	s.Require().NoError(os.MkdirAll(artists, 0o750))
+	// The pair, because a recipe is a rig and the ask beside it, and the server
+	// reads the subject off the ask.
+	own := theirs("their-player", "")
 	s.Require().NoError(os.WriteFile(filepath.Join(artists, "their-player.yaml"),
-		[]byte(theirs("their-player", "")), 0o600))
+		[]byte(own.rig), 0o600))
+	s.Require().NoError(os.WriteFile(filepath.Join(artists, "their-player.tone.yaml"),
+		[]byte(own.ask), 0o600))
 
 	inR, inW := io.Pipe()
 	outR, outW := io.Pipe()
@@ -110,7 +115,7 @@ func (s *MCPStartPublicTestSuite) TestUserRecipes() {
 
 		if got.ID == 2 {
 			for _, r := range got.Result.StructuredContent.Rigs {
-				listed = append(listed, r.ID)
+				listed = append(listed, r.Rig.ID)
 			}
 
 			break

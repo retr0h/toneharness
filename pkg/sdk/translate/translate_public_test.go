@@ -20,6 +20,7 @@
 package translate_test
 
 import (
+	"encoding/json"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -122,7 +123,7 @@ func (s *TranslatePublicTestSuite) TestARecordingChoosesTheAmplifier() {
 
 // TestTheSameAskTwiceIsTheSameRig is what makes a RigSpec worth sharing.
 func (s *TranslatePublicTestSuite) TestTheSameAskTwiceIsTheSameRig() {
-	body := "words: [punchy]\nlike:\n  recording: " + s.recording() + "\n"
+	body := "words:\n  - term: punchy\nlike:\n  recording: " + s.recording() + "\n"
 
 	first, _, err := translate.Translate(s.ask(body), s.setup(""), s.deps)
 	s.Require().NoError(err)
@@ -135,20 +136,29 @@ func (s *TranslatePublicTestSuite) TestTheSameAskTwiceIsTheSameRig() {
 	}
 }
 
-// TestWordsTravelAsWords is the line this does not cross.
+// TestWordsStayOnTheAsk is the line this does not cross.
 //
-// A character term is how it should sound, which is the same thing a
-// ToneSpec's words are. Turning them into knob positions here would be the
-// guessing the whole project removed.
-func (s *TranslatePublicTestSuite) TestWordsTravelAsWords() {
+// How it should sound is what somebody asked for, so it stays on the ask and
+// the rig says only which gear answered. A rig carrying the words too would be
+// a second place for the answer to live, and turning them into knob positions
+// here would be the guessing the whole project removed: that happens once, in
+// the compiler, which is the only place the resolved chain exists.
+func (s *TranslatePublicTestSuite) TestWordsStayOnTheAsk() {
 	got, _, err := translate.Translate(
-		s.ask("words: [punchy, dark]\ngear:\n  - gear: LA Studio Comp\n    role: comp\n"),
-		s.setup(""), s.deps)
+		s.ask(
+			"words:\n  - term: punchy\n  - term: dark\ngear:\n  - gear: LA Studio Comp\n    role: comp\n",
+		),
+		s.setup(""),
+		s.deps,
+	)
 
 	s.Require().NoError(err)
-	s.Require().NotNil(got.Character)
-	s.Require().Len(*got.Character, 2)
-	s.Require().Equal("punchy", (*got.Character)[0].Term)
+	s.Require().NotEmpty(got.Chain, "the gear still answered")
+
+	built, err := json.Marshal(got)
+	s.Require().NoError(err)
+	s.Require().NotContains(string(built), "punchy")
+	s.Require().NotContains(string(built), "dark")
 }
 
 // TestAChainIsOrderedBySignalPath covers gear listed in any order.
@@ -456,7 +466,7 @@ like:
 
 // TestNothingToBuildFromIsRefused covers an empty ask.
 func (s *TranslatePublicTestSuite) TestNothingToBuildFromIsRefused() {
-	_, _, err := translate.Translate(s.ask("words: [dark]\n"), s.setup(""), s.deps)
+	_, _, err := translate.Translate(s.ask("words:\n  - term: dark\n"), s.setup(""), s.deps)
 
 	s.Require().ErrorContains(err, "no chain to build")
 }
@@ -501,38 +511,41 @@ func (s *TranslatePublicTestSuite) TestTheSetupDecidesTheInstrument() {
 	}
 }
 
-// TestTheSubjectFollowsTheAsk covers what a rig is attributed to.
-func (s *TranslatePublicTestSuite) TestTheSubjectFollowsTheAsk() {
+// TestTheIdentifierFollowsTheAsk covers what a rig is named after.
+//
+// Who the rig is for is the ask's to say and no longer sits on the rig, so the
+// identifier is what carries the attribution across: it is how a rig is found
+// again, and a rig named after nobody could not be.
+func (s *TranslatePublicTestSuite) TestTheIdentifierFollowsTheAsk() {
 	tests := []struct {
 		name string
 		give string
-		kind rig.Kind
-		who  string
+		want string
 	}{
 		{
 			name: "a player",
 			give: "like:\n  artist: Mike Dirnt\n  band: Green Day\n",
-			kind: rig.KindArtist, who: "Mike Dirnt",
+			want: "mike-dirnt-green-day",
 		},
 		{
 			name: "a band",
 			give: "like:\n  band: Green Day\n",
-			kind: rig.KindBand, who: "Green Day",
+			want: "green-day",
 		},
 		{
 			name: "a song",
 			give: "like:\n  song: Longview\n",
-			kind: rig.KindSong, who: "Longview",
+			want: "longview",
 		},
 		{
 			name: "a genre",
 			give: "genre: punk\n",
-			kind: rig.KindGenre, who: "punk",
+			want: "punk",
 		},
 		{
 			name: "nobody in particular",
 			give: "",
-			kind: rig.KindSound, who: "a sound somebody asked for",
+			want: "a-sound",
 		},
 	}
 
@@ -543,9 +556,7 @@ func (s *TranslatePublicTestSuite) TestTheSubjectFollowsTheAsk() {
 				s.setup(""), s.deps)
 
 			s.Require().NoError(err)
-			s.Require().Equal(tt.kind, got.Subject.Kind)
-			s.Require().Equal(tt.who, got.Subject.Name)
-			s.Require().NotEmpty(got.ID)
+			s.Require().Equal(tt.want, got.ID)
 		})
 	}
 }

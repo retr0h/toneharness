@@ -366,10 +366,6 @@ func rigFor(
 		Schema: rig.SchemaName,
 		ID: "measure-" + strings.ToLower(
 			strings.NewReplacer("_", "-", " ", "-", "'", "").Replace(block.ID)),
-		Subject: rig.Subject{
-			Kind: rig.KindSound,
-			Name: block.Name + " alone",
-		},
 		Instrument: rig.InstrumentBass,
 		Chain:      []rig.ChainEntry{entry},
 	}

@@ -34,10 +34,12 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/retr0h/tonestack/pkg/sdk/result"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 	"github.com/retr0h/tonestack/pkg/sdk/rigs"
+	"github.com/retr0h/tonestack/pkg/sdk/tone"
 )
 
 // DefaultDir is where recipes live.
@@ -117,7 +119,15 @@ func readFS(
 	out := make([]stored, 0, len(paths))
 	broken := []brokenFile(nil)
 
+	// The asks first, keyed by the stem they belong to, because a rig is what
+	// this returns and an ask has to be in hand by the time its rig is built.
+	asks, broken := readAsks(fsys, paths, broken)
+
 	for _, p := range paths {
+		if isAsk(p) {
+			continue
+		}
+
 		raw, err := fs.ReadFile(fsys, p)
 		if err != nil {
 			broken = append(broken, brokenFile{
@@ -135,12 +145,97 @@ func readFS(
 			continue
 		}
 
-		out = append(out, stored{spec: spec, raw: raw})
+		held := stored{spec: spec, raw: raw}
+		if beside, ok := asks[stem(p)]; ok {
+			held.ask, held.askRaw = beside.spec, beside.raw
+		}
+
+		out = append(out, held)
 	}
 
 	sortEntries(out)
 
 	return out, broken, nil
+}
+
+// asked is one ask as read, and the text it came from.
+type asked struct {
+	spec *tone.Spec
+	raw  []byte
+}
+
+// readAsks reads every ask a directory holds, by the stem it belongs to.
+//
+// An ask that will not parse is reported the same way a rig that will not parse
+// is, rather than leaving the rig to load without it: a file somebody wrote and
+// got wrong is the case where saying so matters, and a rig quietly missing the
+// words it was built from is the same bug this split exists to remove.
+func readAsks(
+	fsys fs.FS,
+	paths []string,
+	broken []brokenFile,
+) (map[string]asked, []brokenFile) {
+	out := map[string]asked{}
+
+	for _, p := range paths {
+		if !isAsk(p) {
+			continue
+		}
+
+		raw, err := fs.ReadFile(fsys, p)
+		if err != nil {
+			broken = append(broken, brokenFile{
+				names: claimed(p, nil),
+				err:   fmt.Errorf("opening %s: %w", path.Base(p), err),
+			})
+
+			continue
+		}
+
+		spec, err := tone.Load(bytes.NewReader(raw))
+		if err != nil {
+			broken = append(broken, brokenFile{
+				names: claimed(p, raw),
+				err:   fmt.Errorf("%s: %w", path.Base(p), err),
+			})
+
+			continue
+		}
+
+		out[stem(p)] = asked{spec: &spec, raw: raw}
+	}
+
+	return out, broken
+}
+
+// askSuffix is what names the ask beside a rig.
+//
+// Two files in one directory rather than two directories, because they are one
+// subject and a person editing the words wants the gear in the next tab, not in
+// a parallel tree they have to keep in step by hand.
+const askSuffix = ".tone.yaml"
+
+// isAsk reports whether a path names the ask rather than the rig.
+func isAsk(
+	p string,
+) bool {
+	return strings.HasSuffix(p, askSuffix)
+}
+
+// stem is the identifier two paired files share.
+//
+// The filename is the identifier, which is what the rigs already do: all nine
+// that ship state an `id` exactly equal to their own stem. So a pair needs no
+// field pointing at its other half, and cannot end up with one that disagrees.
+func stem(
+	p string,
+) string {
+	base := path.Base(p)
+	if isAsk(p) {
+		return strings.TrimSuffix(base, askSuffix)
+	}
+
+	return strings.TrimSuffix(base, ".yaml")
 }
 
 // decode parses one rig, naming the file it came from when it will not parse.
@@ -204,25 +299,31 @@ func List(
 		dir = src.User
 	}
 
-	return result.Recipes{Dir: dir, Rigs: specs(all.merged())}, nil
+	return result.Recipes{Dir: dir, Rigs: known(all.merged())}, nil
 }
 
-// Find returns the rig with the given identifier, or one of its aliases.
+// Find returns the rig with the given identifier, or one of its aliases, and
+// the ask beside it.
+//
+// Both, because a caller that builds from a rig needs both: the gear comes from
+// the rig and how it should sound comes from the ask, and asking for them
+// separately would read the directory twice and could answer from two states of
+// it. The ask is nil where nobody wrote one down, which is ordinary.
 func Find(
 	src Source,
 	id string,
-) (rig.Spec, error) {
+) (result.Known, error) {
 	all, err := read(src)
 	if err != nil {
-		return rig.Spec{}, err
+		return result.Known{}, err
 	}
 
 	found, err := all.find(id)
 	if err != nil {
-		return rig.Spec{}, err
+		return result.Known{}, err
 	}
 
-	return found.spec, nil
+	return result.Known{Rig: found.spec, Ask: found.ask}, nil
 }
 
 // Show reads one rig, and what the rest of the set says about it.
@@ -241,8 +342,8 @@ func Show(
 	}
 
 	return result.Recipe{
-		Rig:      found.spec,
-		Variants: departures(specs(all.merged()), found.spec),
+		Known:    result.Known{Rig: found.spec, Ask: found.ask},
+		Variants: departures(all.merged(), found),
 	}, nil
 }
 
@@ -254,22 +355,45 @@ func Show(
 // with `extends`, and this is the other end of that link: reading the
 // characteristic rig should show what departs from it.
 func departures(
-	all []rig.Spec,
-	spec rig.Spec,
+	all []stored,
+	of stored,
 ) []result.Variant {
 	out := []result.Variant(nil)
 
 	for _, other := range all {
-		// A rig of somebody's own copied from a shipped one under the same
-		// identifier extends a rig it has replaced. It is not its own variant.
-		if other.Extends == nil || *other.Extends != spec.ID || other.ID == spec.ID {
+		// Both ends of the link are the ask's. What one ask departs from is a
+		// fact about what was wanted, not about the gear that answered it, and a
+		// rig with no ask beside it cannot depart from anything because nothing
+		// says what it was for.
+		if other.ask == nil || other.ask.Extends == nil {
 			continue
 		}
 
-		out = append(out, result.Variant{ID: other.ID, Name: other.Subject.Name})
+		// A rig of somebody's own copied from a shipped one under the same
+		// identifier extends a rig it has replaced. It is not its own variant.
+		if *other.ask.Extends != of.spec.ID || other.spec.ID == of.spec.ID {
+			continue
+		}
+
+		out = append(out, result.Variant{
+			ID:   other.spec.ID,
+			Name: subjectOf(other),
+		})
 	}
 
 	return out
+}
+
+// subjectOf is what a rig's ask calls its subject, or its identifier when no ask
+// names one.
+func subjectOf(
+	e stored,
+) string {
+	if e.ask == nil || e.ask.Subject == nil {
+		return e.spec.ID
+	}
+
+	return e.ask.Subject.Name
 }
 
 // specs are the rigs of a set of entries, in the same order.
@@ -279,6 +403,18 @@ func specs(
 	out := make([]rig.Spec, 0, len(all))
 	for _, e := range all {
 		out = append(out, e.spec)
+	}
+
+	return out
+}
+
+// known are the paired rigs and asks of a set of entries, in the same order.
+func known(
+	all []stored,
+) []result.Known {
+	out := make([]result.Known, 0, len(all))
+	for _, e := range all {
+		out = append(out, result.Known{Rig: e.spec, Ask: e.ask})
 	}
 
 	return out

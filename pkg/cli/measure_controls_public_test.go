@@ -72,7 +72,6 @@ func (s *ControlsRunTestSuite) ready() {
 		Current(gomock.Any(), gomock.Any()).
 		Return(sdk.Reading{Rig: rig.Spec{
 			Schema: rig.SchemaName, ID: "measured",
-			Subject:    rig.Subject{Kind: rig.KindSound, Name: "one block"},
 			Instrument: rig.InstrumentBass,
 			Chain:      []rig.ChainEntry{{Role: rig.RoleCab, Gear: "2x15 Brute"}},
 		}}, nil).AnyTimes()
@@ -123,7 +122,6 @@ func (s *ControlsRunTestSuite) moves(
 
 			return sdk.Reading{Rig: rig.Spec{
 				Schema: rig.SchemaName, ID: "probed",
-				Subject:    rig.Subject{Kind: rig.KindSound, Name: "one block"},
 				Instrument: rig.InstrumentBass,
 				Chain: []rig.ChainEntry{{
 					Role: rig.RoleEQ, Gear: "Simple EQ", Params: &now,
@@ -324,7 +322,6 @@ func (s *ControlsRunTestSuite) TestControlsCarriesOnPastAControlTheDeviceRefuses
 	s.pedal.EXPECT().Current(gomock.Any(), gomock.Any()).
 		Return(sdk.Reading{Rig: rig.Spec{
 			Schema: rig.SchemaName, ID: "measured",
-			Subject:    rig.Subject{Kind: rig.KindSound, Name: "one block"},
 			Instrument: rig.InstrumentBass,
 			Chain:      []rig.ChainEntry{{Role: rig.RoleCab, Gear: "2x15 Brute"}},
 		}}, nil).AnyTimes()

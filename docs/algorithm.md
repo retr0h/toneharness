@@ -147,7 +147,9 @@ or when the device's firmware changes what a block does.
 ## What a target is
 
 Three kinds of request, and each becomes a point or a partial point in the nine
-figures.
+figures. Each is also a field on the ask: `like` for a record or a player,
+`genre` for a genre, and `nudges` for the fourth thing below, which is not a
+target at all.
 
 **A record.** "Like *Longview*" is the figures of that recording. Every one is
 specified, and the target is a full point.
@@ -176,6 +178,15 @@ one axis and zero everywhere else.
 
 Conversation is made almost entirely of these, and a system that only
 understands targets cannot take the instruction.
+
+A word on the ask is the same shape of thing, said once rather than in reply:
+`dark` is a step along the high axis from wherever the corpus left the control.
+Both live on the ask because both are somebody describing a result, and both are
+resolved against the chain the compiler built, since which control a word can
+reach depends on which blocks are in the chain. What this loop replaces is the
+size of the step. Today a word nobody measured moves a control by a fixed
+fraction somebody chose, and once the sweeps are in the step is whatever closes
+the gap in the figures.
 
 ## When it cannot get there
 

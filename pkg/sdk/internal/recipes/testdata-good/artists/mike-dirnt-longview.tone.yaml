@@ -1,0 +1,13 @@
+schema: ToneSpec
+
+extends: mike-dirnt
+subject:
+  kind: song
+  name: Longview
+  band: Green Day
+words:
+  - term: soft-attack
+  - term: neck-forward
+  - term: clean
+technique:
+  attack: fingers

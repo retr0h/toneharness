@@ -20,7 +20,7 @@
 package compile
 
 import (
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
@@ -40,7 +40,7 @@ import (
 // same way.
 func Refit(
 	spec rig.Spec,
-	before, after []chain.Block,
+	before, after []plan.Block,
 ) rig.Spec {
 	if len(before) != len(after) {
 		return spec
@@ -83,7 +83,7 @@ func Refit(
 
 // moved says where the block at one address ended up.
 func moved(
-	before, after []chain.Block,
+	before, after []plan.Block,
 	path, position int,
 ) (int, int, bool) {
 	i, ok := blockIndexAt(before, path, position)
@@ -96,7 +96,7 @@ func moved(
 
 // blockIndexAt finds where in a chain the block at a position sits.
 func blockIndexAt(
-	blocks []chain.Block,
+	blocks []plan.Block,
 	path, position int,
 ) (int, bool) {
 	for i, b := range blocks {

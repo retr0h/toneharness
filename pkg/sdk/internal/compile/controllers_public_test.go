@@ -26,8 +26,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -51,11 +51,11 @@ func sweep(
 
 // TestControllers covers what a preset ends up holding.
 func (s *ControllersPublicTestSuite) TestControllers() {
-	amp := chain.Block{Model: "HD2_AmpSVBeastNrm", Pos: 1}
+	amp := plan.Block{Model: "HD2_AmpSVBeastNrm", Pos: 1}
 
 	tests := []struct {
 		name     string
-		blocks   []chain.Block
+		blocks   []plan.Block
 		control  *[]rig.Controller
 		existing string
 		want     string
@@ -64,7 +64,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			// Left as it was, rather than emptied: a rig that says nothing
 			// about what moves is not a rig saying nothing moves.
 			name:     "a rig that assigns nothing",
-			blocks:   []chain.Block{amp},
+			blocks:   []plan.Block{amp},
 			existing: `{"dsp0":{"block0":{"Pedal":{"@controller":1,"@min":0,"@max":1}}}}`,
 			want:     `{"dsp0":{"block0":{"Pedal":{"@controller":1,"@min":0,"@max":1}}}}`,
 		},
@@ -72,7 +72,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			// The expression pedal on the amplifier's drive, between two
 			// settings neither of which is silence.
 			name:   "a pedal on a knob",
-			blocks: []chain.Block{amp},
+			blocks: []plan.Block{amp},
 			control: &[]rig.Controller{{
 				Controller: 2, Block: 1, Parameter: "Drive",
 				Min: sweep(0.3), Max: sweep(0.85), NoSnapshot: &yes,
@@ -84,7 +84,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			// A rig that names no ends gets the control's own, which is the
 			// whole of it and invents nothing.
 			name:    "a pedal with no ends stated",
-			blocks:  []chain.Block{amp},
+			blocks:  []plan.Block{amp},
 			control: &[]rig.Controller{{Controller: 1, Block: 1, Parameter: "Interval"}},
 			want: `{"dsp0":{"block1":{"Interval":` +
 				`{"@controller":1,"@max":24,"@min":-24}}}}`,
@@ -94,7 +94,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			// still a model the device has. Nothing states its range, so the
 			// assignment takes the whole of a normal control.
 			name:    "a model this catalog does not carry",
-			blocks:  []chain.Block{{Model: "HD2_FromNewerFirmware", Pos: 0}},
+			blocks:  []plan.Block{{Model: "HD2_FromNewerFirmware", Pos: 0}},
 			control: &[]rig.Controller{{Controller: 2, Block: 0, Parameter: "Drive"}},
 			want:    `{"dsp0":{"block0":{"Drive":{"@controller":2,"@max":1,"@min":0}}}}`,
 		},
@@ -102,7 +102,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			// A chain the device split across two processors lands on the
 			// block the rig named, on the processor it named it on.
 			name:   "a block on the second processor",
-			blocks: []chain.Block{{Model: "HD2_AmpSVBeastNrm", DSP: 1, Pos: 4}},
+			blocks: []plan.Block{{Model: "HD2_AmpSVBeastNrm", DSP: 1, Pos: 4}},
 			control: &[]rig.Controller{
 				{Controller: 2, Block: 4, Path: &second, Parameter: "Drive"},
 			},
@@ -112,7 +112,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			// Both paths count from zero, so a rig that says nothing about
 			// which one means the first. The block on the second is not it.
 			name:     "a position on a processor the rig did not name",
-			blocks:   []chain.Block{{Model: "HD2_AmpSVBeastNrm", DSP: 1, Pos: 4}},
+			blocks:   []plan.Block{{Model: "HD2_AmpSVBeastNrm", DSP: 1, Pos: 4}},
 			existing: `{}`,
 			control:  &[]rig.Controller{{Controller: 2, Block: 4, Parameter: "Drive"}},
 			want:     `{}`,
@@ -121,7 +121,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			// What the preset underneath came with is not what the rig says
 			// moves.
 			name:     "written over assignments the preset came with",
-			blocks:   []chain.Block{amp},
+			blocks:   []plan.Block{amp},
 			existing: `{"dsp0":{"block0":{"Pedal":{"@controller":1,"@min":0,"@max":1}}}}`,
 			control:  &[]rig.Controller{{Controller: 2, Block: 1, Parameter: "Drive"}},
 			want:     `{"dsp0":{"block1":{"Drive":{"@controller":2,"@max":1,"@min":0}}}}`,
@@ -132,7 +132,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			// whatever sits at that position now would be worse than
 			// dropping it.
 			name:     "a position the chain no longer has",
-			blocks:   []chain.Block{amp},
+			blocks:   []plan.Block{amp},
 			existing: `{}`,
 			control:  &[]rig.Controller{{Controller: 2, Block: 7, Parameter: "Drive"}},
 			want:     `{}`,
@@ -142,7 +142,7 @@ func (s *ControllersPublicTestSuite) TestControllers() {
 			// processors: the position exists and the block at it is a
 			// different one.
 			name:     "a control the block at that position does not have",
-			blocks:   []chain.Block{amp},
+			blocks:   []plan.Block{amp},
 			existing: `{}`,
 			control:  &[]rig.Controller{{Controller: 2, Block: 1, Parameter: "Warp"}},
 			want:     `{}`,

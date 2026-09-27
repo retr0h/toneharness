@@ -18,19 +18,19 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// Package chain is a signal chain compiled for one device, and the checks
-// that say whether the device will load it.
+// Package plan is a signal chain realised for one device, and the checks that
+// say whether the device will load it.
 //
-// A Chain is the compiler's intermediate form, not a format. Nobody authors
+// A Plan is the compiler's intermediate form, not a format. Nobody authors
 // one, nothing exchanges one, and it has no schema: it exists between
 // resolving a [RigSpec] against a catalog and writing a preset file. What is
-// authored and shared is a RigSpec, which names real-world gear; what a
-// device loads is a preset. This sits between them and is deliberately
-// device-bound, holding one manufacturer's model identifiers and one
-// manufacturer's parameter keys.
+// authored and shared is a RigSpec, which names real-world gear by its
+// real-world name; what a device loads is a preset. This sits between them and
+// is deliberately device-bound, holding one manufacturer's model identifiers
+// and one manufacturer's parameter keys.
 //
 // [RigSpec]: https://github.com/retr0h/tonestack/blob/main/pkg/sdk/rig/data/rigspec.openapi.yaml
-package chain
+package plan
 
 import (
 	"encoding/json"
@@ -75,8 +75,8 @@ type Snapshot struct {
 	Overrides map[string]Params
 }
 
-// Chain is an ordered signal path for one device.
-type Chain struct {
+// Plan is an ordered signal path for one device.
+type Plan struct {
 	// Name is what the preset will be called.
 	Name string
 	// Blocks are in the order the device runs them.

@@ -14,11 +14,12 @@ import (
 	reflect "reflect"
 
 	catalog "github.com/retr0h/tonestack/pkg/sdk/catalog"
-	chain "github.com/retr0h/tonestack/pkg/sdk/chain"
 	corpus "github.com/retr0h/tonestack/pkg/sdk/corpus"
 	compile "github.com/retr0h/tonestack/pkg/sdk/internal/compile"
 	recipes "github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
+	plan "github.com/retr0h/tonestack/pkg/sdk/plan"
 	preset "github.com/retr0h/tonestack/pkg/sdk/preset"
+	result "github.com/retr0h/tonestack/pkg/sdk/result"
 	rig "github.com/retr0h/tonestack/pkg/sdk/rig"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -87,10 +88,10 @@ func (m *MockRecipes) EXPECT() *MockRecipesMockRecorder {
 }
 
 // Find mocks base method.
-func (m *MockRecipes) Find(src recipes.Source, id string) (rig.Spec, error) {
+func (m *MockRecipes) Find(src recipes.Source, id string) (result.Known, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Find", src, id)
-	ret0, _ := ret[0].(rig.Spec)
+	ret0, _ := ret[0].(result.Known)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -126,7 +127,7 @@ func (m *MockCompiler) EXPECT() *MockCompilerMockRecorder {
 }
 
 // Controllers mocks base method.
-func (m *MockCompiler) Controllers(doc *preset.Document, spec rig.Spec, blocks []chain.Block, cat *catalog.Catalog) {
+func (m *MockCompiler) Controllers(doc *preset.Document, spec rig.Spec, blocks []plan.Block, cat *catalog.Catalog) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Controllers", doc, spec, blocks, cat)
 }
@@ -138,10 +139,10 @@ func (mr *MockCompilerMockRecorder) Controllers(doc, spec, blocks, cat any) *gom
 }
 
 // Fit mocks base method.
-func (m *MockCompiler) Fit(spec chain.Chain, cat *catalog.Catalog, lim chain.Limits) chain.Chain {
+func (m *MockCompiler) Fit(spec plan.Plan, cat *catalog.Catalog, lim plan.Limits) plan.Plan {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Fit", spec, cat, lim)
-	ret0, _ := ret[0].(chain.Chain)
+	ret0, _ := ret[0].(plan.Plan)
 	return ret0
 }
 
@@ -178,10 +179,10 @@ func (mr *MockCompilerMockRecorder) Lower(doc, spec, cat any) *gomock.Call {
 }
 
 // Resolve mocks base method.
-func (m *MockCompiler) Resolve(spec rig.Spec, cat *catalog.Catalog, stats *corpus.Stats) (chain.Chain, []compile.Added, []compile.Moved, error) {
+func (m *MockCompiler) Resolve(spec rig.Spec, intent compile.Intent, cat *catalog.Catalog, stats *corpus.Stats) (plan.Plan, []compile.Added, []compile.Moved, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Resolve", spec, cat, stats)
-	ret0, _ := ret[0].(chain.Chain)
+	ret := m.ctrl.Call(m, "Resolve", spec, intent, cat, stats)
+	ret0, _ := ret[0].(plan.Plan)
 	ret1, _ := ret[1].([]compile.Added)
 	ret2, _ := ret[2].([]compile.Moved)
 	ret3, _ := ret[3].(error)
@@ -189,13 +190,13 @@ func (m *MockCompiler) Resolve(spec rig.Spec, cat *catalog.Catalog, stats *corpu
 }
 
 // Resolve indicates an expected call of Resolve.
-func (mr *MockCompilerMockRecorder) Resolve(spec, cat, stats any) *gomock.Call {
+func (mr *MockCompilerMockRecorder) Resolve(spec, intent, cat, stats any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockCompiler)(nil).Resolve), spec, cat, stats)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockCompiler)(nil).Resolve), spec, intent, cat, stats)
 }
 
 // Sections mocks base method.
-func (m *MockCompiler) Sections(doc *preset.Document, spec rig.Spec, blocks []chain.Block, cat *catalog.Catalog) error {
+func (m *MockCompiler) Sections(doc *preset.Document, spec rig.Spec, blocks []plan.Block, cat *catalog.Catalog) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Sections", doc, spec, blocks, cat)
 	ret0, _ := ret[0].(error)

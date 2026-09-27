@@ -24,11 +24,12 @@ import (
 	"context"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/corpus"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
+	"github.com/retr0h/tonestack/pkg/sdk/result"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
@@ -39,10 +40,11 @@ type Catalogs interface {
 	Catalog(ctx context.Context) (*catalog.Catalog, error)
 }
 
-// Recipes finds the curated rig a build starts from.
+// Recipes finds the curated rig a build starts from, and the ask beside it.
 type Recipes interface {
-	// Find returns the rig with the given identifier, from where src says.
-	Find(src recipes.Source, id string) (rig.Spec, error)
+	// Find returns the rig with the given identifier, and the ask beside it,
+	// from where src says.
+	Find(src recipes.Source, id string) (result.Known, error)
 }
 
 // Compiler turns a rig into a preset a device has room for.
@@ -53,23 +55,26 @@ type Recipes interface {
 // writes a rig into a preset. Lift reads a slot rather than building one, so
 // it is not named here.
 type Compiler interface {
-	// Resolve turns a rig and a catalog into a chain.
+	// Resolve turns a rig, the ask beside it and a catalog into a chain.
 	Resolve(
-		spec rig.Spec, cat *catalog.Catalog, stats *corpus.Stats,
-	) (chain.Chain, []compile.Added, []compile.Moved, error)
+		spec rig.Spec,
+		intent compile.Intent,
+		cat *catalog.Catalog,
+		stats *corpus.Stats,
+	) (plan.Plan, []compile.Added, []compile.Moved, error)
 	// Fit drops what a device has no room for.
-	Fit(spec chain.Chain, cat *catalog.Catalog, lim chain.Limits) chain.Chain
+	Fit(spec plan.Plan, cat *catalog.Catalog, lim plan.Limits) plan.Plan
 	// Lower writes a rig into a preset.
 	Lower(doc *preset.Document, spec rig.Spec, cat *catalog.Catalog) error
 	// Controllers writes what an expression pedal or footswitch moves.
 	Controllers(
-		doc *preset.Document, spec rig.Spec, blocks []chain.Block, cat *catalog.Catalog,
+		doc *preset.Document, spec rig.Spec, blocks []plan.Block, cat *catalog.Catalog,
 	)
 	// Footswitches writes what the pedal prints under each switch.
 	Footswitches(doc *preset.Document, spec rig.Spec, cat *catalog.Catalog)
 	// Sections writes a rig's song sections into a preset's snapshots.
 	Sections(
-		doc *preset.Document, spec rig.Spec, blocks []chain.Block, cat *catalog.Catalog,
+		doc *preset.Document, spec rig.Spec, blocks []plan.Block, cat *catalog.Catalog,
 	) error
 }
 

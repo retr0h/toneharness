@@ -28,9 +28,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/corpus"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 type FillPublicTestSuite struct {
@@ -300,7 +300,7 @@ func (s *FillPublicTestSuite) TestResolveFill() {
 
 			for range 3 {
 				spec, added, _, err := compile.Resolve(
-					recipe(gear, "", tt.extra...), s.cat, stats)
+					recipe(gear, "", tt.extra...), compile.Intent{}, s.cat, stats)
 
 				s.Require().NoError(err)
 				s.Require().Len(added, tt.want)
@@ -343,7 +343,7 @@ func (s *FillPublicTestSuite) TestResolveFill() {
 
 // categoryAt returns the category of the block at a position.
 func (s *FillPublicTestSuite) categoryAt(
-	spec chain.Chain,
+	spec plan.Plan,
 	i int,
 ) catalog.Category {
 	b, ok := s.cat.Block(spec.Blocks[i].Model)

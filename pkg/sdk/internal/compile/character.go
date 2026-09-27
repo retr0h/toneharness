@@ -25,11 +25,9 @@ import (
 	"sort"
 	"strings"
 	"unicode"
-
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
-// UnknownTerm is a word a rig used to describe its sound that the shipped
+// UnknownTerm is a word somebody used to describe a sound that the shipped
 // vocabulary does not carry.
 //
 // Reported rather than refused. A term the vocabulary carries moves controls;
@@ -38,7 +36,7 @@ import (
 // to the person it exists for. Unknown gear is different: there is no model to
 // write, so that is an error and stays one.
 type UnknownTerm struct {
-	// Term is what the rig said.
+	// Term is what was asked for.
 	Term string
 	// Near are terms the vocabulary does carry that look close.
 	Near []string
@@ -76,60 +74,54 @@ func CharacterTerms() []string {
 	return out
 }
 
-// CheckCharacter reports the character terms a rig uses that nothing defines.
+// CheckCharacter reports the character terms an ask uses that nothing defines.
 //
-// An empty result means every word in the rig is one the vocabulary carries.
+// An empty result means every word asked for is one the vocabulary carries.
+// The words arrive as words rather than as a document, because the ask is what
+// holds them and nothing here needs the rest of it.
 func CheckCharacter(
-	spec rig.Spec,
+	words []string,
 ) []UnknownTerm {
-	if spec.Character == nil {
-		return nil
-	}
-
 	known := CharacterTerms()
 	out := []UnknownTerm(nil)
 
-	for _, c := range *spec.Character {
-		if has(known, c.Term) {
+	for _, word := range words {
+		if has(known, word) {
 			continue
 		}
 
-		out = append(out, UnknownTerm{Term: c.Term, Near: closest(known, c.Term)})
+		out = append(out, UnknownTerm{Term: word, Near: closest(known, word)})
 	}
 
 	return out
 }
 
-// ContestedAxis is one question a rig answered twice.
+// ContestedAxis is one question an ask answered twice.
 //
-// Saying "mid-forward" has already said "not scooped". A rig naming both has
+// Saying "mid-forward" has already said "not scooped". An ask naming both has
 // named a direction and its opposite, and the two cancel: apply them in turn
 // and the control lands where it started.
 type ContestedAxis struct {
 	// Axis is the question, named the way the vocabulary names it.
 	Axis string
-	// Terms are the words the rig used on it, in the order it used them.
+	// Terms are the words used on it, in the order they were written.
 	Terms []string
 }
 
-// CheckAxes reports the axes a rig answered more than once.
+// CheckAxes reports the axes an ask answered more than once.
 //
-// A build already says this out loud for any rig, and that is the right answer
-// for somebody else's: a description is theirs to write. The rigs this project
+// A build already says this out loud for any ask, and that is the right answer
+// for somebody else's: a description is theirs to write. The asks this project
 // ships are the examples everybody copies, so they are held to one term per
 // axis by a test instead.
 func CheckAxes(
-	spec rig.Spec,
+	words []string,
 ) []ContestedAxis {
-	if spec.Character == nil {
-		return nil
-	}
-
 	seen := map[string][]string{}
 	order := []string(nil)
 
-	for _, c := range *spec.Character {
-		axis, ok := axisOf(c.Term)
+	for _, word := range words {
+		axis, ok := axisOf(word)
 		if !ok {
 			continue
 		}
@@ -138,7 +130,7 @@ func CheckAxes(
 			order = append(order, axis)
 		}
 
-		seen[axis] = append(seen[axis], c.Term)
+		seen[axis] = append(seen[axis], word)
 	}
 
 	out := []ContestedAxis(nil)

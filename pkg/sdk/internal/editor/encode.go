@@ -26,8 +26,8 @@ import (
 	"strconv"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 )
 
@@ -96,7 +96,7 @@ func Placements(
 func held(
 	p *wire.Placement,
 	doc *preset.Document,
-	b chain.Block,
+	b plan.Block,
 	cat *catalog.Catalog,
 ) error {
 	name, ok := cabNameOf(b)
@@ -141,7 +141,7 @@ func held(
 // preset carries it as an attribute, because `@cab` is @-prefixed and that
 // is where a preset keeps those. Both are the same claim.
 func cabNameOf(
-	b chain.Block,
+	b plan.Block,
 ) (string, bool) {
 	if name, ok := b.Params[attrCab].Enum(); ok {
 		return name, true

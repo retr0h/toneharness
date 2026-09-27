@@ -29,6 +29,7 @@ import (
 	"github.com/retr0h/tonestack/pkg/sdk/audio"
 	"github.com/retr0h/tonestack/pkg/sdk/result"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/tonestack/pkg/sdk/tone"
 )
 
 // manifestName is what a player's corpus directory calls its manifest.
@@ -58,16 +59,23 @@ func Backing(
 	out := []result.Backing(nil)
 	claimed := map[string]bool{}
 
-	for _, spec := range specs(all.merged()) {
+	for _, e := range all.merged() {
+		spec := e.spec
 		claimed[spec.ID] = true
 		one := result.Backing{ID: spec.ID}
 
-		if spec.Subject.Era != nil {
-			one.Era = *spec.Subject.Era
-		}
+		// The era and the years are the ask's. Which records back a rig is a
+		// question about the subject and the window somebody claimed for them,
+		// and a rig with no ask claims no window: its records are listed and
+		// none of them can be outside a range nobody stated.
+		if e.ask != nil && e.ask.Subject != nil {
+			if e.ask.Subject.Era != nil {
+				one.Era = *e.ask.Subject.Era
+			}
 
-		if spec.Subject.Years != nil {
-			one.From, one.To = spec.Subject.Years.From, spec.Subject.Years.To
+			if e.ask.Subject.Years != nil {
+				one.From, one.To = e.ask.Subject.Years.From, e.ask.Subject.Years.To
+			}
 		}
 
 		one.Direct, one.Both, one.Captured, one.Stage = rooms(spec.Chain)
@@ -77,7 +85,9 @@ func Backing(
 			return nil, err
 		}
 
-		one.Misnamed = misnamed(spec.Played, records)
+		if e.ask != nil {
+			one.Misnamed = misnamed(e.ask.Played, records)
+		}
 
 		for _, r := range records {
 			one.Records = append(one.Records, result.Record{
@@ -216,7 +226,7 @@ func rooms(
 // way: a name matching nothing is silently attributed to nothing, and reads
 // like an instrument nobody has got to yet.
 func misnamed(
-	played *[]rig.Played,
+	played *[]tone.Played,
 	have []audio.Record,
 ) []string {
 	known := map[string]bool{}

@@ -27,7 +27,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 )
 
@@ -157,9 +157,9 @@ func (s *FidelityPublicTestSuite) TestWritingAChainKeepsItsAttributes() {
 		  "device_version":0,"meta":{"name":"X"},"tone":{}}}`)))
 	s.Require().NoError(err)
 
-	s.Require().NoError(doc.SetSpec(chain.Chain{
+	s.Require().NoError(doc.SetSpec(plan.Plan{
 		Name: "X",
-		Blocks: []chain.Block{{
+		Blocks: []plan.Block{{
 			Model: "HD2_AmpTest", Pos: 5, Enabled: true,
 			Attrs: map[string]json.RawMessage{
 				"@position": json.RawMessage("6"),

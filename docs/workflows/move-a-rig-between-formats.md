@@ -14,12 +14,15 @@ measurement rather than a claim.
 
 Two things make that work, and both matter if you hand-edit a rig in between.
 
-`slot3.yaml` is a rig, the same format `recipes new` writes and `presets make`
-reads. A lifted rig records `models: { HX Stomp: HD2_... }`, the exact model
-each piece of gear resolved to. **665 models share only 469 names**, and "Ampeg
-SVT" matches both channels, so a rig carrying the name alone would rebuild into
-a different preset. Delete that line and compiling falls back to resolving the
-name, which is right for a rig you wrote and wrong for one you lifted.
+`slot3.yaml` is a rig, the same format `recipes new` writes as the gear half of
+a pair and `presets make` reads. Nothing lifted off a device has an ask beside
+it, and that is correct: a preset records what somebody built, not what they
+were after. A lifted rig records `models: { HX Stomp: HD2_... }`, the exact
+model each piece of gear resolved to. **665 models share only 469 names**, and
+"Ampeg SVT" matches both channels, so a rig carrying the name alone would
+rebuild into a different preset. Delete that line and compiling falls back to
+resolving the name, which is right for a rig you wrote and wrong for one you
+lifted.
 
 Compiling writes the chain into an untouched preset the device itself wrote, so
 the result carries the inputs, outputs, split and join a device expects. 98.6%

@@ -22,8 +22,8 @@ package compile
 
 import (
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/corpus"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -64,7 +64,7 @@ func (*Compiler) Lower(
 func (*Compiler) Sections(
 	doc *preset.Document,
 	spec rig.Spec,
-	blocks []chain.Block,
+	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) error {
 	return Sections(doc, spec, blocks, cat)
@@ -74,7 +74,7 @@ func (*Compiler) Sections(
 func (*Compiler) Controllers(
 	doc *preset.Document,
 	spec rig.Spec,
-	blocks []chain.Block,
+	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) {
 	Controllers(doc, spec, blocks, cat)
@@ -89,20 +89,21 @@ func (*Compiler) Footswitches(
 	Footswitches(doc, spec, cat)
 }
 
-// Resolve turns a rig and a catalog into a chain.
+// Resolve turns a rig, the ask beside it and a catalog into a chain.
 func (*Compiler) Resolve(
 	spec rig.Spec,
+	intent Intent,
 	cat *catalog.Catalog,
 	stats *corpus.Stats,
-) (chain.Chain, []Added, []Moved, error) {
-	return Resolve(spec, cat, stats)
+) (plan.Plan, []Added, []Moved, error) {
+	return Resolve(spec, intent, cat, stats)
 }
 
 // Fit drops what a device has no room for.
 func (*Compiler) Fit(
-	spec chain.Chain,
+	spec plan.Plan,
 	cat *catalog.Catalog,
-	lim chain.Limits,
-) chain.Chain {
+	lim plan.Limits,
+) plan.Plan {
 	return Fit(spec, cat, lim)
 }

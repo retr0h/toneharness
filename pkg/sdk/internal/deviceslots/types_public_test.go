@@ -31,13 +31,13 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/backup"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/device/mocks"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
 	slotmocks "github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots/mocks"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
 )
@@ -105,7 +105,7 @@ func (s *TypesPublicTestSuite) TestTranslator() {
 	// The slot really holds six blocks. The double says it holds none, so a
 	// listing that shows it empty can only have asked the double.
 	tr := slotmocks.NewMockTranslator(s.ctrl)
-	tr.EXPECT().Chain("", gomock.Any(), gomock.Any()).Return(chain.Chain{}, nil)
+	tr.EXPECT().Chain("", gomock.Any(), gomock.Any()).Return(plan.Plan{}, nil)
 
 	listing, err := (&deviceslots.Flows{Catalogs: s.builtIn(), Translator: tr}).
 		List(context.Background(), dev, 0)

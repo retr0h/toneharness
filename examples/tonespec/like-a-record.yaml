@@ -10,10 +10,28 @@
 
 schema: ToneSpec
 
-# How it should sound, in the words a person would use. These travel into the
-# rig as character terms, unchanged: turning a word into a knob position is
+# How it should sound, in the words a person would use. A word carries its own
+# evidence, where anybody has any; these two have none, which is the ordinary
+# case for a request somebody typed. Turning a word into a knob position is
 # the tool's job and not this document's.
-words: [punchy, dark]
+#
+# This example said `punchy` until 2026-09-26. The vocabulary does not carry it,
+# because "punchy" answers two of the ten axes at once: the bottom stopping when
+# the note does, and the front of the note being audible.
+#
+# That is a gap rather than a rule. Nothing stops a word answering two axes, and
+# the contradiction check would be better for it: today `punchy` beside
+# `loose-low-end` is a plain contradiction that nothing can see, because
+# `punchy` is not a term at all. What is missing is how to split a word's step
+# between two axes, and the honest answer is that nobody has measured it. See
+# #155, which is blocked on the measurements rather than on the design.
+#
+# Meanwhile `tonestack tone build` reports a word it does not carry rather than
+# refusing the file, so writing `punchy` is legal and moves nothing, which is
+# the worse of the two outcomes.
+words:
+  - term: tight-low-end
+  - term: dark
 
 like:
   recording: resources/dry/bass-di.wav

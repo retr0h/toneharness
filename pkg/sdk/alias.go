@@ -67,6 +67,8 @@ type (
 
 	// Recipes is every rig under one directory.
 	Recipes = result.Recipes
+	// Known is one rig and the ask it answers.
+	Known = result.Known
 	// Recipe is one rig, and what reading it needs that the rig does not
 	// carry.
 	Recipe = result.Recipe

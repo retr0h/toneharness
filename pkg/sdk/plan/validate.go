@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package chain
+package plan
 
 // Validate runs every layer in the order that produces the most useful first
 // failure: structure, then parameters, then topology, then budget.
@@ -32,7 +32,7 @@ package chain
 // individually. This returns the first.
 func Validate(
 	l BlockLookup,
-	s Chain,
+	s Plan,
 	lim Limits,
 ) error {
 	if err := ValidateStructure(l, s); err != nil {

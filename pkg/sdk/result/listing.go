@@ -34,7 +34,7 @@
 // three should know about the other two.
 package result
 
-import "github.com/retr0h/tonestack/pkg/sdk/chain"
+import "github.com/retr0h/tonestack/pkg/sdk/plan"
 
 // Listing is what a setlist holds, slot by slot.
 //
@@ -71,7 +71,7 @@ type Held struct {
 	// whether or not anything is in it.
 	Name string
 	// Blocks are the chain it holds, empty when it holds nothing.
-	Blocks []chain.Block
+	Blocks []plan.Block
 }
 
 // Empty says whether the slot holds a chain.

@@ -668,7 +668,7 @@ type ToneSpec struct {
 	// Words How it should sound, in the words a person would use.
 	//
 	// Checked against the vocabulary a rig uses, because a word that reaches no control cannot be aimed at and saying so is better than accepting it and quietly doing nothing.
-	Words *[]string `json:"words,omitempty"`
+	Words *[]Word `json:"words,omitempty"`
 }
 
 // ToneSpecInstrument What this is for, where the request asserts it rather than leaving it to the Setup.
@@ -706,6 +706,23 @@ type Wanted struct {
 
 	// Role What a piece of gear does in the chain.
 	Role *Role `json:"role,omitempty"`
+}
+
+// Word One thing it should sound like, and why that is believed.
+//
+// Describe the result rather than the control: "mid-forward, not scooped", never "raise the mids". Where the treble knob sits is a fact about somebody's amplifier; how the record came out is a fact about the sound, and only the second survives being read on other gear.
+//
+// A word moves controls when a preset is built: six axes act, each word worth one step from wherever the corpus left that control and never more than a quarter of its range. How far it moves is sized from the evidence here, so the evidence is not decoration. It is the difference between a knob moved because somebody listened and a knob moved because a model guessed.
+//
+// An object rather than a bare string, and it was a bare string until 2026-09-26. Flattening it lost the weighting: every word moved a control by the same amount whether somebody had measured it or a model had asserted it, which is the guessing this project exists to remove.
+//
+// A word outside the shipped vocabulary is reported and kept, not refused: it moves nothing, and refusing an ask over a word would make the format hostile to the person it exists for.
+type Word struct {
+	// Evidence Why this is believed.
+	Evidence *[]Evidence `json:"evidence,omitempty"`
+
+	// Term How it should sound, in the words a person would use.
+	Term string `json:"term"`
 }
 
 // Years The window a request is about, where a player's sound changed over their career and the request is about one part of it.

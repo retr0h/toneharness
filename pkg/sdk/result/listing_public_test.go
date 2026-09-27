@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/result"
 )
 
@@ -46,7 +46,7 @@ func (s *ListingPublicTestSuite) TestUsed() {
 			name: "one preset in a hundred and twenty-eight slots",
 			in: result.Listing{Slots: []result.Held{
 				{Slot: 0, Name: "New Preset"},
-				{Slot: 1, Name: "Mike Dirnt", Blocks: []chain.Block{{Model: "x"}}},
+				{Slot: 1, Name: "Mike Dirnt", Blocks: []plan.Block{{Model: "x"}}},
 				{Slot: 2, Name: "New Preset"},
 			}},
 			want: 1,
@@ -54,8 +54,8 @@ func (s *ListingPublicTestSuite) TestUsed() {
 		{
 			name: "every slot in use",
 			in: result.Listing{Slots: []result.Held{
-				{Blocks: []chain.Block{{Model: "x"}}},
-				{Blocks: []chain.Block{{Model: "y"}}},
+				{Blocks: []plan.Block{{Model: "x"}}},
+				{Blocks: []plan.Block{{Model: "y"}}},
 			}},
 			want: 2,
 		},
@@ -89,7 +89,7 @@ func (s *ListingPublicTestSuite) TestEmpty() {
 		},
 		{
 			name: "holding a chain",
-			in:   result.Held{Name: "Lead", Blocks: []chain.Block{{Model: "x"}}},
+			in:   result.Held{Name: "Lead", Blocks: []plan.Block{{Model: "x"}}},
 		},
 	}
 

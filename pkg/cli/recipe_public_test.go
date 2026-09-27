@@ -30,30 +30,32 @@ import (
 	"github.com/retr0h/tonestack/pkg/cli"
 	"github.com/retr0h/tonestack/pkg/sdk"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/tonestack/pkg/sdk/tone"
 )
 
 type RecipePublicTestSuite struct {
 	suite.Suite
 }
 
-// rig builds a rig carrying everything a person can write down, so a test
-// about rendering one is not also a test about what a rig must hold.
-func rigWith(
+// knownWith builds a rig and the ask beside it, each carrying everything a
+// person can write down, so a test about rendering them is not also a test
+// about what either document must hold.
+//
+// Two documents rather than one, because that is what a reader of a recipe now
+// gets: the gear is the rig's and the words, the subject, the technique and the
+// confidence are the ask's. A mutator for each, so a case can take either side
+// apart without disturbing the other.
+func knownWith(
 	mutate func(*rig.Spec),
-) rig.Spec {
+	asked func(*tone.Spec),
+) sdk.Known {
 	v := rig.SpecVersion(2)
-	band := "Green Day"
-	era := "Dookie through American Idiot"
-	conf := rig.ConfidenceHigh
-	pos := rig.PositionBridge
-	mute := rig.MutingPalm
 	cited := []rig.Evidence{{Kind: rig.EvidenceCited}}
 
 	spec := rig.Spec{
 		Schema:     "RigSpec",
 		Version:    &v,
 		ID:         "mike-dirnt",
-		Subject:    rig.Subject{Kind: "artist", Name: "Mike Dirnt", Band: &band, Era: &era},
 		Instrument: "bass",
 		// Confirmed by default, so a rig that says nobody checked it is a
 		// case a test has to ask for rather than get by accident.
@@ -61,20 +63,40 @@ func rigWith(
 			{Gear: "Ampeg SVT", Role: rig.RoleAmp, Evidence: &cited},
 			{Gear: "Ampeg 8x10", Role: rig.RoleCab, Evidence: &cited},
 		},
-		Character:  &[]rig.CharacterTerm{{Term: "mid-forward"}, {Term: "gritty"}},
-		Confidence: &conf,
-		Technique: &rig.Technique{
-			Attack:   rig.AttackPick,
+	}
+
+	band := "Green Day"
+	era := "Dookie through American Idiot"
+	conf := tone.ConfidenceHigh
+	pos := tone.PositionBridge
+	mute := tone.MutingPalm
+
+	ask := tone.Spec{
+		Schema: tone.SchemaName,
+		Subject: &tone.Subject{
+			Kind: "artist",
+			Name: "Mike Dirnt",
+			Band: &band,
+			Era:  &era,
+		},
+		Words: &[]tone.Word{{Term: "mid-forward"}, {Term: "gritty"}},
+		Technique: &tone.Technique{
+			Attack:   tone.AttackPick,
 			Position: &pos,
 			Muting:   &mute,
 		},
+		Confidence: &conf,
 	}
 
 	if mutate != nil {
 		mutate(&spec)
 	}
 
-	return spec
+	if asked != nil {
+		asked(&ask)
+	}
+
+	return sdk.Known{Rig: spec, Ask: &ask}
 }
 
 // TestRecipes covers listing every rig a directory holds.
@@ -90,7 +112,7 @@ func (s *RecipePublicTestSuite) TestRecipes() {
 			name: "one row per recipe",
 			in: sdk.Recipes{
 				Dir:  "pkg/sdk/rigs",
-				Rigs: []rig.Spec{rigWith(nil)},
+				Rigs: []sdk.Known{knownWith(nil, nil)},
 			},
 			want: []string{"mike-dirnt", "Mike Dirnt", "bass", "Ampeg SVT"},
 		},
@@ -101,9 +123,9 @@ func (s *RecipePublicTestSuite) TestRecipes() {
 			name: "a recipe nobody confirmed",
 			in: sdk.Recipes{
 				Dir: "pkg/sdk/rigs",
-				Rigs: []rig.Spec{rigWith(func(r *rig.Spec) {
+				Rigs: []sdk.Known{knownWith(func(r *rig.Spec) {
 					r.Chain[0].Evidence = nil
-				})},
+				}, nil)},
 			},
 			want: []string{"mike-dirnt"},
 		},
@@ -116,7 +138,7 @@ func (s *RecipePublicTestSuite) TestRecipes() {
 			name: "nowhere to write it",
 			in: sdk.Recipes{
 				Dir:  "pkg/sdk/rigs",
-				Rigs: []rig.Spec{rigWith(nil)},
+				Rigs: []sdk.Known{knownWith(nil, nil)},
 			},
 			to:  &brokenWriter{},
 			err: true,
@@ -168,7 +190,7 @@ func (s *RecipePublicTestSuite) TestRecipe() {
 		{
 			name: "everything a person wrote",
 			in: sdk.Recipe{
-				Rig: rigWith(nil),
+				Known: knownWith(nil, nil),
 				Variants: []sdk.Variant{
 					{ID: "mike-dirnt-longview", Name: "Longview"},
 				},
@@ -184,21 +206,21 @@ func (s *RecipePublicTestSuite) TestRecipe() {
 		{
 			// Nothing about what nobody wrote. An empty band line reads as a
 			// band with no name rather than as a player without one.
-			name: "a rig with only the required fields",
-			in: sdk.Recipe{Rig: rigWith(func(r *rig.Spec) {
-				r.Subject.Band = nil
-				r.Subject.Era = nil
-				r.Character = nil
-				r.Technique = nil
+			name: "an ask with only the required fields",
+			in: sdk.Recipe{Known: knownWith(nil, func(a *tone.Spec) {
+				a.Subject.Band = nil
+				a.Subject.Era = nil
+				a.Words = nil
+				a.Technique = nil
 			})},
-			absent: []string{"character", "variants", "band", "era", "technique"},
+			absent: []string{"words", "variants", "band", "era", "technique"},
 		},
 		{
 			// An unstated confidence is the lowest one. A rig that says
 			// nothing about how far to trust it has not earned anything.
 			name: "an unstated confidence reads as low",
-			in: sdk.Recipe{Rig: rigWith(func(r *rig.Spec) {
-				r.Confidence = nil
+			in: sdk.Recipe{Known: knownWith(nil, func(a *tone.Spec) {
+				a.Confidence = nil
 			})},
 			want: []string{"low confidence"},
 		},
@@ -206,14 +228,30 @@ func (s *RecipePublicTestSuite) TestRecipe() {
 			// A rig nobody has confirmed says so, whatever it claims about
 			// itself.
 			name: "gear nobody confirmed",
-			in: sdk.Recipe{Rig: rigWith(func(r *rig.Spec) {
+			in: sdk.Recipe{Known: knownWith(func(r *rig.Spec) {
 				r.Chain[0].Evidence = nil
-			})},
+			}, nil)},
 			want: []string{"unverified"},
 		},
 		{
+			// A rig somebody wrote for themselves and never wrote an ask for.
+			// Legal and ordinary, so the page says what is missing rather than
+			// rendering blanks: the identifier stands in for the name nobody
+			// wrote, and nothing records what the rig was built for.
+			name: "a rig with no ask beside it",
+			in: sdk.Recipe{
+				Known: sdk.Known{Rig: knownWith(nil, nil).Rig},
+			},
+			want: []string{
+				"mike-dirnt",
+				"no ask beside it",
+				"low confidence",
+			},
+			absent: []string{"Mike Dirnt", "words", "technique", "band", "era"},
+		},
+		{
 			name: "nowhere to write it",
-			in:   sdk.Recipe{Rig: rigWith(nil)},
+			in:   sdk.Recipe{Known: knownWith(nil, nil)},
 			to:   &brokenWriter{},
 			err:  true,
 		},

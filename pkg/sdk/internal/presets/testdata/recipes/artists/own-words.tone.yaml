@@ -1,0 +1,11 @@
+schema: ToneSpec
+
+subject:
+  kind: artist
+  name: Test Player
+words:
+  - term: mid-forward
+  # One the vocabulary can suggest something for, and one it cannot.
+  - term: tight low end
+  - term: sounds like a wet paper bag
+confidence: medium

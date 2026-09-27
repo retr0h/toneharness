@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package chain_test
+package plan_test
 
 import (
 	"errors"
@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 type ValidateParamsPublicTestSuite struct {
@@ -155,7 +155,7 @@ func (s *ValidateParamsPublicTestSuite) TestValidateParams() {
 		{
 			name:  "a model the catalog does not have",
 			model: "HD2_Nope",
-			err:   chain.ErrUnknownBlock,
+			err:   plan.ErrUnknownBlock,
 		},
 		{
 			name: "two parameters the block does not have",
@@ -181,8 +181,8 @@ func (s *ValidateParamsPublicTestSuite) TestValidateParams() {
 				model = "HD2_AmpTest"
 			}
 
-			spec := chain.Chain{
-				Blocks: []chain.Block{{Model: model, Params: tt.params}},
+			spec := plan.Plan{
+				Blocks: []plan.Block{{Model: model, Params: tt.params}},
 			}
 
 			runs := 1
@@ -191,7 +191,7 @@ func (s *ValidateParamsPublicTestSuite) TestValidateParams() {
 			}
 
 			for range runs {
-				err := chain.ValidateParams(newCatalog(blk), spec)
+				err := plan.ValidateParams(newCatalog(blk), spec)
 
 				if tt.err == nil {
 					s.Require().NoError(err)

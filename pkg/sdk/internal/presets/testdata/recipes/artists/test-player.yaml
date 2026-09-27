@@ -2,7 +2,6 @@ schema: RigSpec
 version: 2
 id: test-player
 
-subject: { kind: artist, name: Test Player }
 instrument: bass
 
 chain:
@@ -12,5 +11,3 @@ chain:
   - role: cab
     gear: Ampeg SVT 410HLF
     evidence: [{ kind: llm }]
-
-confidence: medium

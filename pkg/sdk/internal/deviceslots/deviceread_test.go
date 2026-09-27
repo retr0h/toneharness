@@ -140,7 +140,10 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 			called: "BAS:SVT Nrm",
 			contains: []string{
 				"schema: RigSpec",
-				"name: BAS:SVT Nrm",
+				// The slot's name reaches the rig as its identifier. A rig
+				// carries no subject, so the name a person reads is the heading
+				// above the document rather than a field in it.
+				"id: bas-svt-nrm",
 
 				// The slot is a factory preset, so what it holds is known
 				// before it is decoded.

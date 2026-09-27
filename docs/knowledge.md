@@ -15,15 +15,34 @@ tones come out generic.
 
 | Problem                 | Source                                      | State                                       |
 | ----------------------- | ------------------------------------------- | ------------------------------------------- |
-| Who plays what          | `pkg/sdk/rigs/`, hand-written               | thin, grows by correction                   |
+| Who plays what          | `pkg/sdk/rigs/`, a hand-written pair each   | thin, grows by correction                   |
 | Gear to model ID        | `resources/schemas/gear-map.json`           | 547 models                                  |
 | What order blocks go in | statistics over `resources/schemas/corpus/` | added blocks placed; a rig's own order kept |
 | Which way a knob moves  | swept on the device, in `resources/sweeps/` | two blocks measured; not shipped yet        |
 | What values to set      | catalog defaults, corpus medians, intent    | six axes of ten                             |
 
-Two documents a person writes, and one a machine resolves.
+Three layers, and each is written by somebody different:
+
+|              | holds                                        | written by |
+| ------------ | -------------------------------------------- | ---------- |
+| **ToneSpec** | what somebody means, and why it is believed  | a person   |
+| **RigSpec**  | gear in signal order, named as a person does | the tool   |
+| **PlanSpec** | that rig realised on one device              | a driver   |
+
+The first two exist. A person writes a ToneSpec, and a Setup beside it saying
+what they own; `tone build` resolves the pair into a RigSpec. A rig is also
+written by hand, as the ask's answer, which is how the nine that ship were made.
+
+**PlanSpec is not built.** A RigSpec still carries the device-bound half it is
+meant to take away: the resolved `models`, the `params` and `settings` a knob
+position lives in, each block's `position`, the snapshots and footswitches that
+only mean anything on a pedal, and the `device` state a lifted preset arrived
+with. So the portable layer is not yet portable, and the honest way to read a
+rig today is as a chain that happens to be full of one manufacturer's answers.
+[A rig is a plan, for one device](superpowers/specs/2026-09-19-a-rig-is-a-plan-for-one-device-design.md)
+is the record for that split and what it will cost, and
 [ToneSpec is the ask](superpowers/specs/2026-09-19-tonespec-is-the-ask-design.md)
-says how they divide, superseding
+says how the first two divide, both superseding
 [the RigSpec design record](superpowers/specs/2026-09-06-rigspec-as-the-one-model-design.md).
 
 ## 1. Who plays what
@@ -32,8 +51,9 @@ Cultural knowledge. It is not in any preset and cannot be derived from one.
 
 A language model is good at this for well-known players and confabulates for
 obscure ones. It cannot tell which it is doing. That is the largest correctness
-risk in the product, and it is why every rig carries evidence per claim. See
-[recipes.md](recipes.md).
+risk in the product, and it is why both hand-written documents carry evidence
+per claim: why this gear answered the request sits on the rig, and why the
+request said what it said sits on the ask. See [recipes.md](recipes.md).
 
 ### Which sources are worth what
 
@@ -52,8 +72,8 @@ rig's source:
 
 Video sits low on purpose. A stage seen from forty feet says little about which
 head was on it, and the description under a clip is whatever the uploader typed.
-Cite it for character and technique, where hearing or seeing it is the point,
-and say in the note that is what it is for.
+Cite it for a word or for the technique, where hearing or seeing it is the
+point, and say in the note that is what it is for.
 
 Two practical things, both found the hard way while sourcing the shipped rigs:
 
@@ -146,13 +166,15 @@ of authority:
    measurably not what players use. On its normal channel `Bass` sits in
    0.50–0.52 and `Drive` spans 0.27–0.60, so the spread also says how much of an
    opinion is worth having.
-3. **Intent.** A rig's `character` words become moves against the catalog's real
-   ranges. Each word is worth one step from where the corpus left that control,
-   never more than a quarter of its range, and six axes act: `mids`, `highs`,
-   `drive` and `low-end` on the amp, `space` on the reverb and `attack` on the
-   compressor.
-   [recipes.md](recipes.md#character-describes-the-result-not-the-control) lists
-   the words.
+3. **Intent.** The ask's `words` become moves against the catalog's real ranges.
+   Each word is worth one step from where the corpus left that control, never
+   more than a quarter of its range, and six axes act: `mids`, `highs`, `drive`
+   and `low-end` on the amp, `space` on the reverb and `attack` on the
+   compressor. They are resolved against the chain the compiler has built rather
+   than embedded in it, because which controls a word can reach depends on which
+   blocks are in the chain and what parameters their models have.
+   [recipes.md](recipes.md#words-describe-the-result-not-the-control) lists the
+   words.
 
 Built, for those six axes.
 
@@ -240,9 +262,11 @@ part of why generated tones sound generic.
 plus median settings. *"The Longview bass tone"* keeps the same instrument and
 amp and moves only the settings.
 
-Recipes record this split as `rig` and `variants`, so a refinement moves only
-what should move. Getting the amp right and the drive wrong is a fixable near
-miss; getting the amp wrong is not.
+Each of those is its own pair rather than a variation inside one file, and an
+ask saying `extends` records which it departed from. Nothing merges, so a
+refinement is a whole readable rig rather than a diff against a parent. Getting
+the amp right and the drive wrong is a fixable near miss; getting the amp wrong
+is not.
 
 ## Nothing here can hear
 
@@ -257,8 +281,10 @@ assumes it:
 - **Decisions must be inspectable.** A generated rig should record why each
   block was chosen and how confident that choice was, so a wrong amp is visible
   before anyone plugs in rather than after.
-- **Corrections must be permanent.** A fix belongs in a recipe, where it
-  outranks generated knowledge for good.
+- **Corrections must be permanent.** A fix belongs in the files, where it
+  outranks generated knowledge for good. The settings land on the rig and the
+  round that produced them lands on the ask, as a `corrections` entry carrying
+  what was asked, what moved, why it was read that way and what it sounded like.
 
 ## The pipeline
 
@@ -266,7 +292,10 @@ assumes it:
 request      "a Mike Dirnt sound"
    │
    ▼
-recipe       pkg/sdk/rigs/artists/mike-dirnt.yaml             who plays what
+the ask      pkg/sdk/rigs/artists/mike-dirnt.tone.yaml        who it is for
+   │         words: scooped, clean
+   ▼
+the rig      pkg/sdk/rigs/artists/mike-dirnt.yaml             who plays what
    │         amp: Ampeg SVT
    ▼
 gear map     resources/schemas/gear-map.json                  gear to model
@@ -278,7 +307,7 @@ catalog      pkg/sdk/catalog/data/hx-stomp.json.gz            what the device ac
 grammar      pkg/sdk/corpus/data/hx-stomp.stats.json.gz       what a chain almost always holds
    │
    ▼
-values       corpus medians + character                       what to set
+values       corpus medians + the ask's words                 what to set
    │
    ▼
 RigSpec      validated against the catalog
@@ -287,13 +316,13 @@ RigSpec      validated against the catalog
 .hlx         written, and put on a device over USB
    │
    ▼
-a person     listens, and corrects the rig                    nothing above can hear
+a person     listens, and corrects the pair                   nothing above can hear
 ```
 
 Every step above the person exists, and so does measuring a recording:
-`tonestack measure` reads an artist's records as numbers, and those numbers
-reach a rig as `kind: audio` evidence carrying the figures they were measured
-as.
+`tonestack measure` reads an artist's records as numbers. Those numbers reach
+the rig as `kind: audio` evidence beside the gear they were measured through,
+and the word they earn reaches the ask carrying both sides of the comparison.
 
 The step from figures to words exists too, for three axes. `tonestack measure`
 compares an artist against the others measured the same way, and earns them a
@@ -302,7 +331,7 @@ scooped from the mid band, bright or dark from the centroid, saturated or clean
 from the harmonics. The music corpus names 9 players, which is what makes the
 comparison possible at all: one artist has nothing to be clear of.
 
-Three axes rather than the six a rig can say. `attack` is not among them,
+Three axes rather than the six an ask can say. `attack` is not among them,
 because what is measured is how fast the level rises and the click of a pick is
 spectral: the bass stems carry almost nothing above 1 kHz, so the figure that
 axis needs is not in the recording. `decay` is not among them either, because it
@@ -311,7 +340,7 @@ measures the choice rather than the player. Both findings sit beside the code
 that would have used them, in `pkg/sdk/audio/derive.go`.
 
 The records are not in this repository and neither are the measurements: the
-stems are somebody's own audio files, so a figure in a rig is a claim about a
+stems are somebody's own audio files, so a figure in an ask is a claim about a
 recording nobody else here can replay.
 
 The step from a word to a value is half built. A term says which way to move a

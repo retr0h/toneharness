@@ -22,8 +22,8 @@ package editor
 
 import (
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -47,7 +47,7 @@ func (*Translator) Chain(
 	name string,
 	got wire.DevicePreset,
 	cat *catalog.Catalog,
-) (chain.Chain, error) {
+) (plan.Plan, error) {
 	return Chain(name, got, cat)
 }
 

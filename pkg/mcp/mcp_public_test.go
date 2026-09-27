@@ -171,15 +171,13 @@ func (s *MCPPublicTestSuite) TestServe() {
 func (s *MCPPublicTestSuite) TestUserRecipes() {
 	dir := s.T().TempDir()
 	s.Require().NoError(os.MkdirAll(filepath.Join(dir, "artists"), 0o750))
+	// Two documents, because a recipe is two: the gear, and the ask it answers.
+	// What the rig extends is the ask's, since one ask departing from another is
+	// a fact about what was wanted rather than about the gear.
 	s.Require().
 		NoError(os.WriteFile(filepath.Join(dir, "artists", "their-player.yaml"), []byte(`schema: RigSpec
 version: 2
 id: their-player
-extends: mike-dirnt
-
-subject:
-  kind: artist
-  name: Their Player
 
 instrument: bass
 
@@ -189,6 +187,16 @@ chain:
     evidence:
       - { kind: cited, note: "a test says so" }
     confidence: high
+`), 0o600))
+	s.Require().
+		NoError(os.WriteFile(
+			filepath.Join(dir, "artists", "their-player.tone.yaml"), []byte(`schema: ToneSpec
+
+extends: mike-dirnt
+
+subject:
+  kind: artist
+  name: Their Player
 
 confidence: high
 `), 0o600))
@@ -224,7 +232,7 @@ confidence: high
 
 				listed := make([]string, 0, len(got.Rigs))
 				for _, r := range got.Rigs {
-					listed = append(listed, r.ID)
+					listed = append(listed, r.Rig.ID)
 				}
 
 				s.Contains(listed, "their-player")
@@ -238,7 +246,9 @@ confidence: high
 			check: func(res *gomcp.CallToolResult) {
 				var got sdk.Recipe
 				s.decode(res, &got)
-				s.Equal("Their Player", got.Rig.Subject.Name)
+				s.Require().NotNil(got.Ask)
+				s.Require().NotNil(got.Ask.Subject)
+				s.Equal("Their Player", got.Ask.Subject.Name)
 			},
 		},
 		{

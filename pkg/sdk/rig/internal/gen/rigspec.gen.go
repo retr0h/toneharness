@@ -624,29 +624,19 @@ type Played struct {
 // PlayedStrings What is on it, where somebody knows. Flatwounds and roundwounds are a larger difference than most pedals.
 type PlayedStrings string
 
-// RigSpec A rig, complete. Sparse when hand-written; the same document carries settings and evidence once anything has been measured or tuned.
+// RigSpec A rig: the gear in signal order, named the way a musician names it, and why each piece of it is believed to be there.
+//
+// The portable layer. Nothing here is one manufacturer's vocabulary, so a rig reads the same on a device nobody has written a driver for. What somebody wanted is the ToneSpec beside it, and which model each piece of gear resolved to is the plan below it.
+//
+// Sparse when hand-written; the same document carries settings and evidence once anything has been measured or tuned.
 type RigSpec struct {
-	// Aliases Other names this rig answers to.
-	//
-	// People ask for a band as readily as a player, and for a nickname as readily as either. An alias costs nothing and saves somebody guessing which of them was written down.
-	Aliases *[]string `json:"aliases,omitempty"`
-
 	// Chain The signal path, in order.
 	Chain []ChainEntry `json:"chain"`
-
-	// Character How it should sound, in the words a person would use.
-	Character *[]CharacterTerm `json:"character,omitempty"`
-
-	// Confidence How far a claim should be trusted. Set by a person, not derived. A claim asserting high confidence with no evidence behind it is worth showing as unverified whatever it says about itself.
-	Confidence *Confidence `json:"confidence,omitempty"`
 
 	// Controllers The parameters an expression pedal or a footswitch moves.
 	//
 	// Which knob your foot is on is a decision about how you play, made once and used every time. A preset stores it against a parameter number nobody can read; a rig names the parameter.
 	Controllers *[]Controller `json:"controllers,omitempty"`
-
-	// Default Whether this is the rig a bare request resolves to. A player owns several — by era, by song — and asking for "a Mike Dirnt sound" with no qualifier has to land somewhere.
-	Default *bool `json:"default,omitempty"`
 
 	// Device Everything a preset carries that this format does not model as musical intent, kept exactly as the device wrote it.
 	//
@@ -657,11 +647,12 @@ type RigSpec struct {
 	// Written by lifting a preset, and only then. A rig somebody typed has none of it, and compiling one falls back to an untouched preset the device itself wrote.
 	Device *DeviceState `json:"device,omitempty"`
 
-	// Evidence Evidence for the rig as a whole. Evidence for one piece of gear belongs on that entry.
+	// Evidence Why the gear as a whole is believed, for a citation that covers the chain rather than one entry of it.
+	//
+	// On the rig rather than on the ask, by the same argument that kept the per-entry evidence here: a published rig that cannot say why this gear is a rig nobody can check. A rig rundown covers every piece of gear in it, and requiring the citation to be repeated on each entry would only encourage repeating it.
+	//
+	// A ToneSpec has an `evidence` of its own and it is a different claim. Why the request was made is the ask's; why this gear answered it is this one's.
 	Evidence *[]Evidence `json:"evidence,omitempty"`
-
-	// Extends Another rig this one departs from, by identifier. Only for a rig that genuinely is a small change; rigs that differ at the amp are siblings, not deltas.
-	Extends *string `json:"extends,omitempty"`
 
 	// Footswitches What the pedal prints under each switch, and the colour it lights.
 	//
@@ -676,11 +667,6 @@ type RigSpec struct {
 	// Instrument Selects which half of a device's catalog is eligible. Line 6 tags every amp and cabinet Guitar or Bass; everything else serves either.
 	Instrument Instrument `json:"instrument"`
 
-	// Played The instruments the rig is played on, most used first.
-	//
-	// A list because players use more than one and the figures know it. Flea recorded I'm With You on two 1961 Jazz Basses. Les Claypool took a Carl Thompson four and a de-fretted Tune six to the same session, and two of his four measured records are the six.
-	Played *[]Played `json:"played,omitempty"`
-
 	// Schema Names the format, so a file says what it is without relying on where it was found.
 	Schema RigSpecSchema `json:"schema"`
 
@@ -694,22 +680,10 @@ type RigSpec struct {
 	// A snapshot is a musical decision — which blocks are on, at what tempo, under what name — so it is modelled rather than carried as device state. What a person put on a footswitch is part of the rig.
 	Snapshots *[]Snapshot `json:"snapshots,omitempty"`
 
-	// Subject Who or what this rig belongs to.
-	//
-	// A field rather than the document's shape, because people ask for a player, a song, a genre and a bare description in the same breath, and making one of them primary makes the rest second-class.
-	Subject Subject `json:"subject"`
-
 	// Target Where the settings in this rig were arrived at.
 	//
 	// Advisory, never a restriction. A rig pinned to one device could not be used on another, which would cost the portability the format exists for. This says "these numbers were tuned here", so somebody on other hardware knows to re-tune rather than trust.
 	Target *Target `json:"target,omitempty"`
-
-	// Technique How the instrument is played, where it changes the sound. Not modelled by any device, and it still decides what the rig has to do.
-	//
-	// Three things rather than a sentence, because three things are being said and a sentence has to be parsed to get at them.
-	//
-	// Under `target` this says how the person using the rig plays, where that differs from the rig's own. The distinction is not pedantry. A pick puts high-frequency attack into every note that fingers do not, so a rig tuned from a picked recording sounds duller played fingered, and the fix is in the amp and the compressor rather than in the player. Recording both lets the difference be compensated rather than discovered, and that comparison needs both sides to be the same kind of value: two `attack` values can be held against each other, and two sentences cannot.
-	Technique *Technique `json:"technique,omitempty"`
 
 	// Version Which version of this contract the document was written against.
 	//

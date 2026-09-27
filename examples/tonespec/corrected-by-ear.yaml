@@ -26,7 +26,19 @@ subject:
 
 instrument: bass
 
-words: [mid-forward, grit-on-attack, tight-low-end]
+# A word carries why it is believed, because how far it moves a control is
+# sized from that. These three were asserted and nobody has listened, which is
+# what `llm` says.
+words:
+  - term: mid-forward
+    evidence:
+      - { kind: llm }
+  - term: grit-on-attack
+    evidence:
+      - { kind: llm }
+  - term: tight-low-end
+    evidence:
+      - { kind: llm }
 
 # Append-only, and never replayed. An entry with no verdict has not been
 # listened to yet, which is state rather than a gap.

@@ -346,6 +346,33 @@ func (s *NewPublicTestSuite) TestNew() {
 	}
 }
 
+// TestAHalfWrittenPairLeavesNothingBehind covers the second write failing.
+//
+// A rig with no ask beside it is a legal state, so the danger is not a broken
+// pair. It is leaving a rig somebody did not ask for, under an identifier they
+// will now be told is taken, when the call as a whole failed.
+func (s *NewPublicTestSuite) TestAHalfWrittenPairLeavesNothingBehind() {
+	dir := s.T().TempDir()
+	artists := filepath.Join(dir, "artists")
+	s.Require().NoError(os.MkdirAll(artists, 0o750))
+
+	// The ask already there and the rig not, which is the one arrangement that
+	// gets past the first write and fails the second.
+	ask := filepath.Join(artists, "taken.tone.yaml")
+	s.Require().NoError(os.WriteFile(ask, []byte("schema: ToneSpec\n"), 0o600))
+
+	_, err := recipes.New(context.Background(), recipes.NewOptions{
+		Dir: dir, ID: "taken", Name: "Somebody", Instrument: "bass",
+		Amp: "Ampeg SVT", Catalogs: s.catalogs(filepath.Join("testdata", "catalog.json")),
+	})
+
+	s.Require().ErrorIs(err, recipes.ErrExists)
+	s.Require().Contains(err.Error(), "taken.tone.yaml")
+	s.Require().NoFileExists(filepath.Join(artists, "taken.yaml"),
+		"the rig this call wrote is taken back when the ask stops it")
+	s.Require().FileExists(ask, "the file that was already there is untouched")
+}
+
 func TestNewPublicTestSuite(
 	t *testing.T,
 ) {

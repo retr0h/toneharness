@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package chain_test
+package plan_test
 
 import (
 	"errors"
@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 type ValidateStructurePublicTestSuite struct {
@@ -34,26 +34,26 @@ type ValidateStructurePublicTestSuite struct {
 }
 
 func (s *ValidateStructurePublicTestSuite) TestAcceptsARigOfKnownBlocks() {
-	spec := chain.Chain{Blocks: []chain.Block{{Model: "HD2_AmpTest"}}}
+	spec := plan.Plan{Blocks: []plan.Block{{Model: "HD2_AmpTest"}}}
 
-	s.Require().NoError(chain.ValidateStructure(newCatalog(testAmp()), spec))
+	s.Require().NoError(plan.ValidateStructure(newCatalog(testAmp()), spec))
 }
 
 func (s *ValidateStructurePublicTestSuite) TestAcceptsAnEmptyRig() {
-	s.Require().NoError(chain.ValidateStructure(newCatalog(), chain.Chain{}))
+	s.Require().NoError(plan.ValidateStructure(newCatalog(), plan.Plan{}))
 }
 
 func (s *ValidateStructurePublicTestSuite) TestRejectsAnUnknownModel() {
-	spec := chain.Chain{Blocks: []chain.Block{
+	spec := plan.Plan{Blocks: []plan.Block{
 		{Model: "HD2_AmpTest"},
 		{Model: "HD2_Nope"},
 	}}
 
-	err := chain.ValidateStructure(newCatalog(testAmp()), spec)
+	err := plan.ValidateStructure(newCatalog(testAmp()), spec)
 
-	s.Require().ErrorIs(err, chain.ErrUnknownBlock)
+	s.Require().ErrorIs(err, plan.ErrUnknownBlock)
 
-	var target *chain.UnknownBlockError
+	var target *plan.UnknownBlockError
 	s.Require().True(errors.As(err, &target))
 	s.Require().Equal("HD2_Nope", target.Model)
 }

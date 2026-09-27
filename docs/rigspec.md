@@ -13,8 +13,8 @@ because two people compiling one get the same preset.
 
 ```text
 ToneSpec + Setup   what somebody means, and what they have
-      ↓            tonestack tone build
-RigSpec            resolved, deterministic, nobody writes it
+      ↓            tonestack tone build, or somebody researching a player
+RigSpec            the gear in signal order, and why each piece is there
       ↓            tonestack presets compile
 .hlx               what the pedal eats
 ```
@@ -38,29 +38,21 @@ The other half is [what a request may say](tonespec.md).
 
 ## RigSpec
 
-A rig, complete. Sparse when hand-written; the same document carries settings and evidence once anything has been measured or tuned.
+A rig: the gear in signal order, named the way a musician names it, and why each piece of it is believed to be there.
 
 | field | holds | grammar | allowed |
 | --- | --- | --- | --- |
-| `aliases` | list of string | shaped | `\S` |
 | `chain *` | list of ChainEntry | — | [ChainEntry](#chainentry) |
-| `character` | list of CharacterTerm | — | [CharacterTerm](#characterterm) |
-| `confidence` | string | closed | `low`, `medium`, `high` |
 | `controllers` | list of Controller | — | [Controller](#controller) |
-| `default` | boolean | — | `true` or `false` |
 | `device` | DeviceState | — | [DeviceState](#devicestate) |
 | `evidence` | list of Evidence | — | [Evidence](#evidence) |
-| `extends` | string | open | — |
 | `footswitches` | list of Footswitch | — | [Footswitch](#footswitch) |
 | `id *` | string | shaped | `^[a-z0-9]+(-[a-z0-9]+)*$` |
 | `instrument *` | string | closed | `guitar`, `bass` |
-| `played` | list of Played | — | [Played](#played) |
 | `schema *` | string | closed | `RigSpec` |
 | `sections` | list of Section | — | [Section](#section) |
 | `snapshots` | list of Snapshot | — | [Snapshot](#snapshot) |
-| `subject *` | Subject | — | [Subject](#subject) |
 | `target` | Target | — | [Target](#target) |
-| `technique` | Technique | — | [Technique](#technique) |
 | `version` | integer | closed | `2` |
 
 ## ChainEntry

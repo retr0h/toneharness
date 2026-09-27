@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package chain_test
+package plan_test
 
 import (
 	"errors"
@@ -27,7 +27,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 type ErrorsPublicTestSuite struct {
@@ -40,22 +40,22 @@ func (s *ErrorsPublicTestSuite) TestUnknownBlockError() {
 		name string
 		err  error
 	}{
-		{name: "on its own", err: &chain.UnknownBlockError{Model: "HD2_Nope"}},
+		{name: "on its own", err: &plan.UnknownBlockError{Model: "HD2_Nope"}},
 		{
 			// The model has to survive the wrapping every layer adds, or a
 			// caller cannot say which block it was.
 			name: "wrapped by a caller",
 			err: fmt.Errorf("resolving: %w",
-				&chain.UnknownBlockError{Model: "HD2_Nope"}),
+				&plan.UnknownBlockError{Model: "HD2_Nope"}),
 		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			s.Require().ErrorIs(tt.err, chain.ErrUnknownBlock)
+			s.Require().ErrorIs(tt.err, plan.ErrUnknownBlock)
 			s.Require().Contains(tt.err.Error(), "HD2_Nope")
 
-			var target *chain.UnknownBlockError
+			var target *plan.UnknownBlockError
 			s.Require().True(errors.As(tt.err, &target))
 			s.Require().Equal("HD2_Nope", string(target.Model))
 		})
@@ -63,21 +63,21 @@ func (s *ErrorsPublicTestSuite) TestUnknownBlockError() {
 }
 
 func (s *ErrorsPublicTestSuite) TestOverBudgetErrorNamesChipAndCost() {
-	err := &chain.OverBudgetError{Chip: 1, Cost: 1.2, Ceiling: 0.95}
+	err := &plan.OverBudgetError{Chip: 1, Cost: 1.2, Ceiling: 0.95}
 
 	s.Require().Contains(err.Error(), "chip 1")
-	s.Require().ErrorIs(err, chain.ErrOverBudget)
+	s.Require().ErrorIs(err, plan.ErrOverBudget)
 }
 
 func (s *ErrorsPublicTestSuite) TestTopologyErrorCarriesReason() {
-	err := &chain.TopologyError{Reason: "too many blocks"}
+	err := &plan.TopologyError{Reason: "too many blocks"}
 
 	s.Require().Contains(err.Error(), "too many blocks")
-	s.Require().ErrorIs(err, chain.ErrBadTopology)
+	s.Require().ErrorIs(err, plan.ErrBadTopology)
 }
 
 func (s *ErrorsPublicTestSuite) TestSentinelsAreDistinct() {
-	all := []error{chain.ErrUnknownBlock, chain.ErrOverBudget, chain.ErrBadTopology}
+	all := []error{plan.ErrUnknownBlock, plan.ErrOverBudget, plan.ErrBadTopology}
 
 	for i, a := range all {
 		for j, b := range all {

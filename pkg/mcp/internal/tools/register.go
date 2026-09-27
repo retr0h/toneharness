@@ -204,7 +204,7 @@ func outputTypeSchemas() map[reflect.Type]*jsonschema.Schema {
 		// but it marshals as the JSON it holds. rig.Spec carries these for
 		// device state it keeps without modelling.
 		reflect.TypeFor[json.RawMessage](): anyJSON,
-		// chain.Block.Attrs and rig.Spec's kept device fields. Nil on a
+		// plan.Block.Attrs and rig.Spec's kept device fields. Nil on a
 		// built chain, so it marshals to null, which a map's inferred
 		// object-only schema refuses.
 		reflect.TypeFor[map[string]json.RawMessage](): {

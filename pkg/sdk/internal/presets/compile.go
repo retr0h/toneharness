@@ -77,7 +77,12 @@ func Compile(
 	}
 
 	doc.Data.Device = cat.DeviceID
-	doc.Data.Meta.Name = spec.Subject.Name
+
+	// The rig's identifier names the preset. A rig read off disk arrives on
+	// its own, with no ask beside it to say whose sound it is, and the
+	// identifier is the one name it has. Lower says the same thing again from
+	// the rig it is handed, and a device label on the rig beats both.
+	doc.Data.Meta.Name = spec.ID
 
 	if err := opts.compiler().Lower(doc, spec, cat); err != nil {
 		return result.Built{}, err
@@ -96,7 +101,7 @@ func Compile(
 	}
 
 	return result.Built{
-		Name:   spec.Subject.Name,
+		Name:   spec.ID,
 		Blocks: len(spec.Chain),
 		Path:   opts.OutputPath,
 	}, nil

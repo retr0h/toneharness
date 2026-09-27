@@ -20,24 +20,44 @@
 
 package result
 
-import "github.com/retr0h/tonestack/pkg/sdk/rig"
+import (
+	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/tonestack/pkg/sdk/tone"
+)
 
-// Recipes is every rig under one directory.
+// Recipes is every rig under one directory, each with the ask beside it.
 type Recipes struct {
 	// Dir is where they were read from.
 	Dir string
 	// Rigs are what was found, in the order they were read.
-	Rigs []rig.Spec
+	Rigs []Known
+}
+
+// Known is one rig and the ask it answers.
+//
+// Two documents, because they say two different things. The rig is the gear in
+// signal order and why each piece of it is believed to be there; the ask is who
+// it is for, how it should sound and how it is played. Held together here
+// because every reader of one wants the other in the same breath: a listing
+// shows the subject's name from the ask beside the amplifier from the rig.
+type Known struct {
+	// Rig is the gear, in order.
+	Rig rig.Spec
+	// Ask is what somebody wanted, where it was written down.
+	//
+	// Absent is ordinary rather than an error. Somebody's own directory holds
+	// rigs they wrote, and nothing obliges them to write down the ask that
+	// produced one.
+	Ask *tone.Spec
 }
 
 // Recipe is one rig, and what reading it needs that the rig does not carry.
 type Recipe struct {
-	// Rig is the rig itself.
-	Rig rig.Spec
+	Known
 	// Variants are the rigs that say they are a small change on this one.
 	//
-	// A rig cannot know this about itself. The link points the other way —
-	// a variant names what it extends — so only the whole set can answer it,
+	// A rig cannot know this about itself. The link points the other way:
+	// a variant names what it extends, so only the whole set can answer it,
 	// and reading the characteristic rig is where somebody wants it.
 	Variants []Variant
 }

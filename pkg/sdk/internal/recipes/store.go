@@ -20,7 +20,7 @@
 
 package recipes
 
-import "github.com/retr0h/tonestack/pkg/sdk/rig"
+import "github.com/retr0h/tonestack/pkg/sdk/result"
 
 // Store finds curated rigs, in a directory or in the binary.
 //
@@ -29,10 +29,11 @@ import "github.com/retr0h/tonestack/pkg/sdk/rig"
 // this package.
 type Store struct{}
 
-// Find returns the rig with the given identifier, from where src says.
+// Find returns the rig with the given identifier, and the ask beside it, from
+// where src says.
 func (Store) Find(
 	src Source,
 	id string,
-) (rig.Spec, error) {
+) (result.Known, error) {
 	return Find(src, id)
 }

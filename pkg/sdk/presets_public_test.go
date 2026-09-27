@@ -494,17 +494,21 @@ func (s *PresetsPublicTestSuite) TestPlay() {
 	}
 }
 
-// rigFile writes a rig somebody typed, about subject, and returns its path.
+// rigFile writes a rig somebody typed under the given identifier, and returns
+// its path.
+//
+// The identifier is all there is to tell two of these apart. A rig read off
+// disk arrives with no ask beside it, so there is no subject to name the preset
+// after and the identifier is what a compile reports and writes.
 func (s *PresetsPublicTestSuite) rigFile(
 	dir string,
-	subject string,
+	id string,
 ) string {
-	path := filepath.Join(dir, subject+".yaml")
+	path := filepath.Join(dir, id+".yaml")
 
 	s.Require().NoError(os.WriteFile(path, []byte(`schema: RigSpec
 version: 2
-id: typed
-subject: { kind: sound, name: `+subject+` }
+id: `+id+`
 instrument: bass
 chain:
   - { role: amp, gear: Ampeg SVT }
@@ -526,8 +530,8 @@ type compiled struct {
 // field no path reads would leave its row identical to the baseline.
 func (s *PresetsPublicTestSuite) TestCompile() {
 	dir := s.T().TempDir()
-	typed := s.rigFile(dir, "Typed")
-	other := s.rigFile(dir, "Other")
+	typed := s.rigFile(dir, "typed")
+	other := s.rigFile(dir, "other")
 
 	compile := func(ctx context.Context, in sdk.Compile) (compiled, error) {
 		built, err := sdk.New().Compile(ctx, in)
@@ -570,7 +574,7 @@ func (s *PresetsPublicTestSuite) TestCompile() {
 			name: "Rig decides what is built",
 			in:   sdk.Compile{Rig: other, Out: filepath.Join(dir, "rig.hlx")},
 			check: func(got compiled) {
-				s.Require().Equal("Other", got.built.Name)
+				s.Require().Equal("other", got.built.Name)
 				s.Require().NotEqual(base.built.Name, got.built.Name)
 			},
 		},

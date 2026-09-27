@@ -27,8 +27,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
@@ -49,8 +49,8 @@ func (s *CheckPublicTestSuite) SetupSuite() {
 
 // blocks is a chain holding the bass amp, which is what a controller in these
 // cases points at.
-func (s *CheckPublicTestSuite) blocks() []chain.Block {
-	return []chain.Block{{Model: "HD2_AmpSVBeastNrm"}}
+func (s *CheckPublicTestSuite) blocks() []plan.Block {
+	return []plan.Block{{Model: "HD2_AmpSVBeastNrm"}}
 }
 
 // catalogWith returns a catalog whose one block carries the given parameters,

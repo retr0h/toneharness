@@ -12,8 +12,8 @@ why each claim is believed, what was corrected and when. It also carries Line
 6's own vocabulary next to gear named the way a musician names it, so a document
 that could describe any modeller is welded to one.
 
-John settled both on 2026-09-19. A ToneSpec never names a knob position, and a
-RigSpec becomes a device plan with a driver behind it.
+John settled both on 2026-09-19. A ToneSpec never names a knob position, and the
+device-bound half comes off the RigSpec into a plan with a driver behind it.
 
 ## What a rig is after this
 
@@ -22,24 +22,42 @@ Three layers, which is what has been said all along and has not been true:
 |              | holds                                        | written by |
 | ------------ | -------------------------------------------- | ---------- |
 | **ToneSpec** | what somebody means, and why it is believed  | a person   |
-| **Chain**    | gear in signal order, named as a person does | the tool   |
-| **Plan**     | that chain realised on one device            | a driver   |
+| **RigSpec**  | gear in signal order, named as a person does | the tool   |
+| **PlanSpec** | that rig realised on one device              | a driver   |
 
-A Chain is the portable middle nobody had. It is what survives moving to another
-modeller: roles in order, gear by its real-world name, the instrument it is for.
-A Plan is that chain fitted to hardware: which model each piece of gear resolved
-to, where it sits in the DSP, what the footswitches do.
+The middle one is the portable layer nobody had. It is what survives moving to
+another modeller: roles in order, gear by its real-world name, the instrument it
+is for. A Plan is that rig fitted to hardware: which model each piece of gear
+resolved to, where it sits in the DSP, what the footswitches do.
 
-`models` was already keyed by device. The contract has been half-expecting this
-since it was written.
+### The names, corrected 2026-09-26
+
+An earlier draft of this table called the middle layer a Chain and gave the
+device-bound one no suffix. Both were wrong, and the reason is worth keeping
+because the draft read fine until somebody went to write the code.
+
+`pkg/sdk/chain` already existed, and it is the device-bound one: it holds Helix
+model identifiers and Helix parameter keys. So the draft's names had the word
+Chain meaning the portable document in the contract and the device-bound one in
+the tree, which is the confusion this record exists to remove rather than a
+place to add one.
+
+John settled it on 2026-09-26. **RigSpec keeps its name and becomes the portable
+layer**, because a rig is what a player calls the gear they play through and
+naming that document after the pedal would be the opposite of what the word
+means. The Helix half becomes a **PlanSpec**, and `pkg/sdk/chain` is renamed to
+`pkg/sdk/plan` to match.
+
+It is also the cheapest of the three options. Nothing that currently says "rig"
+has to stop saying it, so #136 removes the confusion between recipe and RigSpec
+instead of moving it to a new pair of words.
 
 ## Which fields move, and why
 
 ### To the ToneSpec
 
-`subject`, `aliases`, `default`, `extends`, `character`, `technique`, `played`,
-`confidence`, `corrections` (was `mutations`), and the document's own top-level
-`evidence`.
+`subject`, `aliases`, `default`, `extends`, `character` (as `words`),
+`technique`, `played`, `confidence` and `corrections` (was `mutations`).
 
 These are what a person wrote and why. Counting what reads them was instructive
 and is not the argument: `aliases` is how a rig is found by another name,
@@ -54,11 +72,66 @@ readers. `extends` and `corrections` are the two ToneSpec did not carry, and
 each is added when something reads it rather than before, which is the rule
 `requires` broke. `corrections` is there now, with its reader.
 
+### The top-level evidence, corrected 2026-09-26
+
+An earlier draft of the list above ended "and the document's own top-level
+`evidence`". It does not move, and the reason is the same one that kept the
+per-entry evidence here.
+
+A document-level citation is the one that covers the whole chain at once: a rig
+rundown naming a player's entire setup in one article. Moving it to the ask
+would put that citation on one document while the four claims it supports sat on
+another, and would leave a published rig unable to say why its gear is what it
+is. That is the #144 argument John settled on 2026-09-19 for the per-entry
+evidence, and it does not weaken as the claim gets wider.
+
+So the division is by scope rather than by document. Why the request was made is
+the ask's; why this gear answered it is the rig's. A ToneSpec keeps an
+`evidence` of its own for the first kind, which makes this the same pattern as
+`instrument`: one field name, three layers, a different claim on each.
+
+Nothing moved either way in practice. None of the nine shipped rigs carried a
+document-level citation, so this was a decision about the contract rather than a
+migration of anything.
+
 `character` and `technique` are the two that also reach the compiler, in
 `compile/move.go` and `compile/demand.go`. They move with the rest and the
 compiler stops reading them, because resolving a word into a knob position is
 the translation step's job and doing it twice is how the two answers drift. This
 is the same argument the measurement code already lost once, in two languages.
+
+They do not travel inside the rig and they are not resolved before it. They are
+passed beside it, as a `compile.Intent` carrying the words, the attack and the
+name. The section below says why resolution cannot move earlier than the
+compiler.
+
+### A word keeps its evidence, corrected 2026-09-26
+
+`character` becomes `words` on the ask, and the rename was nearly a silent
+regression.
+
+A character term was an object, `{term, evidence}`. ToneSpec's `words` was a
+bare list of strings, so the obvious move was to flatten each term to its name.
+That flattening removes the weighting. `weightOf` sizes how far a word moves a
+control from how far that word's own measurement sits from every other rig's, so
+a word nobody measured moves a control by a full step and a word measured close
+to the pack moves it barely at all. With the evidence gone, every word moves the
+same amount whether somebody listened or a model guessed, which is the guessing
+this project exists to remove.
+
+It nearly shipped that way, as an interim with the weighting deleted and a note
+to re-attach it later. It is not an interim worth having: a build that looks
+right and is weighted wrong is worse than one that does not build.
+
+So `words` carries `{term, evidence}`, which is the old shape moved across
+unchanged, and the nine shipped asks carry their per-word citations. Twenty
+evidence entries came off the rigs and twenty went back onto the words.
+
+The vocabulary is still one axis per word, and that is now a known gap rather
+than a rule. "Punchy" answers two axes at once and cannot be written, while a
+compound word would let the contradiction check see a real contradiction it
+currently cannot. What is missing is how to divide a step between two axes, and
+nobody has measured that, so it waits on the sweeps.
 
 `mutations` was read nowhere at all. It moves rather than going, because a
 record of what a correction changed is a record about the ask, and it is called
@@ -94,32 +167,44 @@ leaves exactly one implementation. A RigSpec read off disk by
 `presets compile --rig` carries settings that were already applied, which is
 what makes it a plan rather than a request, and needs no words at all.
 
-### Staying in the Plan
+### Staying in the RigSpec
 
-`chain` with its resolved `models`, `settings`, `substitute` **and its per-entry
-`evidence`**, plus `device`, `snapshots`, `footswitches`, `controllers`,
-`sections`, `target`, `id`, `schema`, `version`.
+`chain` with each entry's `role`, `gear`, `capture`, `substitute` **and its
+`evidence`**, plus `instrument`, `id`, `schema`, `version`.
 
-Settings stay because a knob position is the plan. That is what #139 decided:
-"more drive" is a request and `drive: 0.7` is a plan, and the number is only
-meaningful against a chain.
+That is the portable set: what the gear is, what order it is in, and why each
+piece of it is believed to be there. All of it reads the same on a device nobody
+has written a driver for.
 
-The evidence on a chain entry stays, and John settled that on 2026-09-19 after
-an earlier draft of this record had it moving. It follows from #144: a RigSpec
-is what gets published, and a published plan that cannot say why this amp is a
-plan nobody can check. So the split is by scope rather than by kind. Why the
-request was made is the ask's; why this model answered it is the plan's.
+The evidence on a chain entry stays here, and John settled that on 2026-09-19
+after an earlier draft of this record had it moving to the ask. It follows from
+#144: a RigSpec is what gets published, and a published rig that cannot say why
+this amp is a rig nobody can check. So the split is by scope rather than by
+kind. Why the request was made is the ask's; why this piece of gear answered it
+is the rig's.
 
 Mike Dirnt's amplifier is the case that settles it. Its citation is a scanned
 1994 magazine page in which the producer says which amp they chose and why, and
 that sentence is the reason an Ampeg SVT is in the chain. Publishing the chain
 without it publishes an assertion.
 
+### Moving to the PlanSpec
+
+The resolved `models`, the `settings`, `position`, `device`, `snapshots`,
+`footswitches`, `controllers`, `sections` and `target`.
+
+Settings go with the models because a knob position is only meaningful against
+the block it is turning, and that block is a Helix model. That is what #139
+decided from the other side: "more drive" is a request and `drive: 0.7` is a
+plan. `models` was already keyed by device, so the contract has been
+half-expecting this since it was written.
+
 ### Splitting
 
-`instrument` is in both. A ToneSpec says which instrument the request is about;
-a Plan says which one it was built for. They are the same value and different
-claims, and folding them would mean a plan that cannot be read without its ask.
+`instrument` is in all three. A ToneSpec says which instrument the request is
+about, a RigSpec which one the gear is for, and a Plan which one it was built
+for. They are the same value and three different claims, and folding them would
+mean a document that cannot be read without the one above it.
 
 ## The driver
 
@@ -127,7 +212,7 @@ A driver owns everything a modeller knows about itself: its catalog, its limits,
 its routing, and the file it writes.
 
 ```
-Chain + Setup ──▶ driver.Fit ──▶ Plan ──▶ driver.Write ──▶ a file the device loads
+RigSpec + Setup ──▶ driver.Fit ──▶ PlanSpec ──▶ driver.Write ──▶ a file the device loads
 ```
 
 What the Helix driver supplies today, and therefore what the interface asks for:
@@ -162,9 +247,9 @@ which is why that task says to follow the semantic change rather than lead it:
 renaming files that are still RigSpecs underneath moves the confusion instead of
 removing it.
 
-The nine shipped rigs are RigSpecs holding authorial fields. They become
-ToneSpecs plus Plans, and the conversion is mechanical but is nine files of real
-research that must not lose a citation on the way.
+The nine shipped rigs are RigSpecs holding authorial fields. Each becomes a
+ToneSpec beside a RigSpec, and the conversion is mechanical but is nine files of
+real research that must not lose a citation on the way.
 
 `docs/recipes.md` is already wrong on its central claim, "a rig is written as a
 RigSpec, the project's only hand-authored format", and stops being salvageable
@@ -172,16 +257,21 @@ here. It folds into the ToneSpec documentation.
 
 ## Order
 
-1. Add the Chain and Plan contracts, leaving RigSpec in place.
-2. Move the authorial fields to ToneSpec, and move word-to-setting resolution
-   out of the compiler and into translate.
-3. Put the Helix realisation behind a driver, derived from what it calls.
-4. Convert the nine shipped rigs.
-5. Retire RigSpec and the word recipe (#136).
+1. Rename `pkg/sdk/chain` to `pkg/sdk/plan`, which frees the vocabulary the rest
+   of this uses.
+2. Move the authorial fields to ToneSpec, converting the nine shipped rigs in
+   the same change.
+3. Add the PlanSpec contract and take the device-bound fields off RigSpec.
+4. Put the Helix realisation behind a driver, derived from what it calls.
+5. Retire the word recipe (#136).
 
-Each step leaves the suite green and the gate passing. Step 2 is the one that
-cannot be half done: a field read from two documents is the drift this is meant
-to remove.
+Each step leaves the suite green and the gate passing.
+
+Step 2 cannot be half done: a field read from two documents is the drift this is
+meant to remove. It also cannot be done before the nine rigs are converted,
+because they are the files carrying the fields it takes away, and an earlier
+draft of this list had those as separate steps. Either order leaves the suite
+red in the middle, so they are one step.
 
 ## What this does not do
 

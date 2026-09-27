@@ -38,7 +38,6 @@ func (s *ValidatePublicTestSuite) good() rig.Spec {
 	return rig.Spec{
 		Schema:     rig.SchemaName,
 		ID:         "mike-dirnt",
-		Subject:    rig.Subject{Kind: rig.KindArtist, Name: "Mike Dirnt"},
 		Instrument: rig.InstrumentBass,
 		Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
 	}
@@ -97,16 +96,6 @@ func (s *ValidatePublicTestSuite) TestValidate() {
 			name:   "an identifier that is empty",
 			mutate: func(r *rig.Spec) { r.ID = "" },
 			field:  "id",
-		},
-		{
-			name:   "a subject of no known kind",
-			mutate: func(r *rig.Spec) { r.Subject.Kind = "robot" },
-			field:  "subject.kind",
-		},
-		{
-			name:   "a subject nobody named",
-			mutate: func(r *rig.Spec) { r.Subject.Name = "  " },
-			field:  "subject.name",
 		},
 		{
 			name:   "an instrument the catalog cannot be filtered by",

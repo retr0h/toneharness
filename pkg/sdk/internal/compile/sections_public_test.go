@@ -26,8 +26,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -47,7 +47,7 @@ func (s *SectionsPublicTestSuite) SetupSuite() {
 }
 
 // sectionChain is a compressor, a drive that starts bypassed, and an amp.
-var sectionChain = []chain.Block{
+var sectionChain = []plan.Block{
 	{Model: "HD2_CompressorDeluxeComp", Pos: 0, Enabled: true},
 	{Model: "HD2_DM4BuzzSaw", Pos: 1, Enabled: false},
 	{Model: "HD2_AmpSVBeastNrm", Pos: 2, Enabled: true},
@@ -84,7 +84,7 @@ func (s *SectionsPublicTestSuite) TestSections() {
 		name     string
 		sections *[]rig.Section
 		snaps    *[]rig.Snapshot
-		blocks   []chain.Block
+		blocks   []plan.Block
 		existing string
 		want     map[string]map[string]map[string]bool
 		names    map[string]string
@@ -148,7 +148,7 @@ func (s *SectionsPublicTestSuite) TestSections() {
 			// carry has none to list.
 			name:     "a role the chain has no block for",
 			sections: &[]rig.Section{{Name: "Chorus", Bypass: roles("delay")}},
-			blocks: append([]chain.Block{{Model: "HD2_FromNewerFirmware", Pos: 3}},
+			blocks: append([]plan.Block{{Model: "HD2_FromNewerFirmware", Pos: 3}},
 				sectionChain...),
 			err:     compile.ErrNoSuchValue,
 			errText: "sections[0].bypass: this device has no \"delay\"\n  it has: amp, comp, drive",
@@ -210,7 +210,6 @@ func (s *SectionsPublicTestSuite) TestLowerRefusesASectionItCannotBuild() {
 	spec := rig.Spec{
 		Schema:     rig.SchemaName,
 		ID:         "sections",
-		Subject:    rig.Subject{Kind: rig.KindSound, Name: "Sections"},
 		Instrument: rig.InstrumentBass,
 		Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
 		Sections:   &[]rig.Section{{Name: "Chorus", Play: roles("drive")}},

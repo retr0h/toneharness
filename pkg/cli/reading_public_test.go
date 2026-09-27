@@ -53,7 +53,6 @@ func valid() rig.Spec {
 		Schema:     "RigSpec",
 		Version:    &v,
 		ID:         "lead",
-		Subject:    rig.Subject{Kind: "artist", Name: "Lead"},
 		Instrument: "bass",
 		Chain:      []rig.ChainEntry{{Gear: "Ampeg SVT", Role: "amp"}},
 	}

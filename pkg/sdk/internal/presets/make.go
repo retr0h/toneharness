@@ -26,14 +26,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/corpus"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/tonestack/pkg/sdk/tone"
 )
 
 // MakeOptions says what to build and where to put it.
@@ -68,10 +68,12 @@ func Make(
 		return result.Made{}, err
 	}
 
-	rec, err := opts.recipes().Find(opts.Rigs, opts.RecipeID)
+	known, err := opts.recipes().Find(opts.Rigs, opts.RecipeID)
 	if err != nil {
 		return result.Made{}, err
 	}
+
+	rec, intent := known.Rig, intentOf(known.Ask)
 
 	cat, err := opts.catalog(ctx)
 	if err != nil {
@@ -87,7 +89,7 @@ func Make(
 		return result.Made{}, err
 	}
 
-	spec, added, moved, err := opts.compiler().Resolve(rec, cat, stats)
+	spec, added, moved, err := opts.compiler().Resolve(rec, intent, cat, stats)
 	if err != nil {
 		return result.Made{}, err
 	}
@@ -95,17 +97,17 @@ func Make(
 	// The device the catalog describes, not whichever one this was written
 	// against: an HX Stomp holds eight blocks on one path and a Helix Floor
 	// holds 29 across two.
-	limits := chain.LimitsFor(cat.Device)
+	limits := plan.LimitsFor(cat.Device)
 
 	// Kept, because the fit renumbers: a rig names the block its pedal moves
 	// by where that block sits in the chain the rig wrote, and after the fit
 	// that number means something else.
-	before := append([]chain.Block(nil), spec.Blocks...)
+	before := append([]plan.Block(nil), spec.Blocks...)
 
 	spec = opts.compiler().Fit(spec, cat, limits)
 	rec = compile.Refit(rec, before, spec.Blocks)
 
-	if err := chain.Validate(cat, spec, limits); err != nil {
+	if err := plan.Validate(cat, spec, limits); err != nil {
 		return result.Made{}, fmt.Errorf(
 			"the chain this recipe describes will not load: %w", err)
 	}
@@ -136,7 +138,7 @@ func Make(
 		Chain:      spec,
 		Added:      addedFrom(added),
 		Moved:      movedFrom(moved),
-		Unfamiliar: unfamiliar(rec),
+		Unfamiliar: unfamiliar(intent),
 		Path:       opts.OutputPath,
 	}, nil
 }
@@ -169,7 +171,7 @@ func openStats(
 // the hardware has ever written.
 func build(
 	deviceID int,
-	spec chain.Chain,
+	spec plan.Plan,
 ) *preset.Document {
 	// The blank is embedded and covered by its own test, so reading it cannot
 	// fail here. SetSpec refuses a parameter named like a block attribute,
@@ -201,16 +203,67 @@ func write(
 	return fileslots.Save(path, buf.Bytes(), existing)
 }
 
+// intentOf is what the ask contributes to the build.
+//
+// A rig with no ask beside it is legal and ordinary: somebody's own directory
+// holds rigs they wrote, and nothing obliges them to write down the ask that
+// produced one. The zero Intent is the right answer for that rather than an
+// error, because a rig already carries the settings somebody applied.
+//
+// Everything on a ToneSpec is optional and arrives as a pointer, so each field
+// is taken only where the ask actually said it.
+func intentOf(
+	ask *tone.Spec,
+) compile.Intent {
+	if ask == nil {
+		return compile.Intent{}
+	}
+
+	out := compile.Intent{}
+
+	if ask.Words != nil {
+		out.Words = make([]compile.Word, 0, len(*ask.Words))
+
+		for _, w := range *ask.Words {
+			// The evidence travels with the word. A figure measured off a
+			// record and held against what other players read is what decides
+			// how far the word moves its control, and a word arriving without
+			// it moves the whole step.
+			word := compile.Word{Term: w.Term}
+			if w.Evidence != nil {
+				word.Evidence = *w.Evidence
+			}
+
+			out.Words = append(out.Words, word)
+		}
+	}
+
+	if ask.Technique != nil {
+		out.Attack = string(ask.Technique.Attack)
+	}
+
+	if ask.Subject != nil {
+		out.Name = ask.Subject.Name
+	}
+
+	return out
+}
+
 // unfamiliar names the character terms nothing defines.
 //
 // Said rather than refused. A term moves no knob, so an unfamiliar one costs
 // the preset nothing, and a build that stopped over a word would be refusing
-// somebody the right to describe a sound in their own words. The rigs this
+// somebody the right to describe a sound in their own words. The asks this
 // project ships are held to the list by a test instead.
 func unfamiliar(
-	rec rig.Spec,
+	intent compile.Intent,
 ) []result.Unfamiliar {
-	unknown := compile.CheckCharacter(rec)
+	terms := make([]string, 0, len(intent.Words))
+	for _, w := range intent.Words {
+		terms = append(terms, w.Term)
+	}
+
+	unknown := compile.CheckCharacter(terms)
 
 	out := make([]result.Unfamiliar, 0, len(unknown))
 	for _, u := range unknown {

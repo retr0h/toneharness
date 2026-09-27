@@ -27,8 +27,8 @@ import (
 	"strings"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 // Chain turns a device's answer into a chain the rest of this speaks.
@@ -42,21 +42,21 @@ func Chain(
 	name string,
 	got wire.DevicePreset,
 	cat *catalog.Catalog,
-) (chain.Chain, error) {
+) (plan.Plan, error) {
 	if len(cat.Symbols) == 0 {
-		return chain.Chain{}, fmt.Errorf(
+		return plan.Plan{}, fmt.Errorf(
 			"this catalog has no model table, so a preset read off the device " +
 				"cannot be named: regenerate it with go generate in the tonestack repository")
 	}
 
-	out := chain.Chain{Name: name, Blocks: make([]chain.Block, 0, len(got.Blocks))}
+	out := plan.Plan{Name: name, Blocks: make([]plan.Block, 0, len(got.Blocks))}
 
 	cabs := 0
 
 	for _, b := range got.Blocks {
 		sym, ok := cat.Symbol(b.Model)
 		if !ok {
-			return chain.Chain{}, fmt.Errorf(
+			return plan.Plan{}, fmt.Errorf(
 				"block %d names model %d, which this catalog's table of %d does "+
 					"not reach: it was generated from a different release",
 				b.Index, b.Model, len(cat.Symbols))
@@ -75,7 +75,7 @@ func Chain(
 
 		params[attrType] = catalog.Int(typeOf(model, cat, len(b.Cab) > 0))
 
-		out.Blocks = append(out.Blocks, chain.Block{
+		out.Blocks = append(out.Blocks, plan.Block{
 			Model: model,
 			// A cabinet standing on its own sends one value past what its
 			// model names, and that is the microphone. Dropping it loses a

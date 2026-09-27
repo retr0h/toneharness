@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package chain_test
+package plan_test
 
 import (
 	"testing"
@@ -26,46 +26,46 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 type ValidateTopologyPublicTestSuite struct {
 	suite.Suite
 }
 
-func (*ValidateTopologyPublicTestSuite) limits() chain.Limits {
-	return chain.Limits{MaxBlocks: 6, Paths: 2, ChipCeiling: 95.0}
+func (*ValidateTopologyPublicTestSuite) limits() plan.Limits {
+	return plan.Limits{MaxBlocks: 6, Paths: 2, ChipCeiling: 95.0}
 }
 
 // snapshot is a chain of one block with one override, keyed by at.
 func (s *ValidateTopologyPublicTestSuite) snapshot(
 	at string,
-) chain.Chain {
-	return chain.Chain{
-		Blocks: []chain.Block{{Model: "A", DSP: 0, Pos: 0}},
-		Snapshots: []chain.Snapshot{{
+) plan.Plan {
+	return plan.Plan{
+		Blocks: []plan.Block{{Model: "A", DSP: 0, Pos: 0}},
+		Snapshots: []plan.Snapshot{{
 			Name:      "Lead",
-			Overrides: map[string]chain.Params{at: {"Gain": catalog.Float(0.9)}},
+			Overrides: map[string]plan.Params{at: {"Gain": catalog.Float(0.9)}},
 		}},
 	}
 }
 
 // TestValidateTopology checks where blocks sit rather than what they cost.
 func (s *ValidateTopologyPublicTestSuite) TestValidateTopology() {
-	crowded := make([]chain.Block, 7)
+	crowded := make([]plan.Block, 7)
 	for i := range crowded {
-		crowded[i] = chain.Block{Model: "A", DSP: 0, Pos: i}
+		crowded[i] = plan.Block{Model: "A", DSP: 0, Pos: i}
 	}
 
 	tests := []struct {
 		name string
-		spec chain.Chain
+		spec plan.Plan
 		ok   bool
 		says string
 	}{
 		{
 			name: "positions running 0..n on each chip",
-			spec: chain.Chain{Blocks: []chain.Block{
+			spec: plan.Plan{Blocks: []plan.Block{
 				{Model: "A", DSP: 0, Pos: 0},
 				{Model: "B", DSP: 0, Pos: 1},
 				{Model: "C", DSP: 1, Pos: 0},
@@ -74,17 +74,17 @@ func (s *ValidateTopologyPublicTestSuite) TestValidateTopology() {
 		},
 		{
 			name: "a rig with nothing in it",
-			spec: chain.Chain{},
+			spec: plan.Plan{},
 			says: "no blocks",
 		},
 		{
 			name: "more blocks than the device takes",
-			spec: chain.Chain{Blocks: crowded},
+			spec: plan.Plan{Blocks: crowded},
 			says: "7 blocks",
 		},
 		{
 			name: "two blocks claiming one position",
-			spec: chain.Chain{Blocks: []chain.Block{
+			spec: plan.Plan{Blocks: []plan.Block{
 				{Model: "A", DSP: 0, Pos: 0},
 				{Model: "B", DSP: 0, Pos: 0},
 			}},
@@ -92,7 +92,7 @@ func (s *ValidateTopologyPublicTestSuite) TestValidateTopology() {
 		},
 		{
 			name: "a gap in the run",
-			spec: chain.Chain{Blocks: []chain.Block{
+			spec: plan.Plan{Blocks: []plan.Block{
 				{Model: "A", DSP: 0, Pos: 0},
 				{Model: "B", DSP: 0, Pos: 2},
 			}},
@@ -100,12 +100,12 @@ func (s *ValidateTopologyPublicTestSuite) TestValidateTopology() {
 		},
 		{
 			name: "a position below the first",
-			spec: chain.Chain{Blocks: []chain.Block{{Model: "A", DSP: 0, Pos: -1}}},
+			spec: plan.Plan{Blocks: []plan.Block{{Model: "A", DSP: 0, Pos: -1}}},
 			says: "",
 		},
 		{
 			name: "a block on a chip the device does not have",
-			spec: chain.Chain{Blocks: []chain.Block{{Model: "A", DSP: 5, Pos: 0}}},
+			spec: plan.Plan{Blocks: []plan.Block{{Model: "A", DSP: 5, Pos: 0}}},
 			says: "",
 		},
 		{
@@ -134,7 +134,7 @@ func (s *ValidateTopologyPublicTestSuite) TestValidateTopology() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			err := chain.ValidateTopology(tt.spec, s.limits())
+			err := plan.ValidateTopology(tt.spec, s.limits())
 
 			if tt.ok {
 				s.Require().NoError(err)
@@ -142,7 +142,7 @@ func (s *ValidateTopologyPublicTestSuite) TestValidateTopology() {
 				return
 			}
 
-			s.Require().ErrorIs(err, chain.ErrBadTopology)
+			s.Require().ErrorIs(err, plan.ErrBadTopology)
 
 			if tt.says != "" {
 				s.Require().Contains(err.Error(), tt.says)

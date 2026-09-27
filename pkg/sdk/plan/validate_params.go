@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package chain
+package plan
 
 import (
 	"fmt"
@@ -34,7 +34,7 @@ import (
 // failure.
 func ValidateParams(
 	l BlockLookup,
-	s Chain,
+	s Plan,
 ) error {
 	for _, sb := range s.Blocks {
 		blk, ok := l.Block(sb.Model)

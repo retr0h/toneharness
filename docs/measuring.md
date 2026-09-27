@@ -527,10 +527,10 @@ is and where to get it.
 
 ## What this is for
 
-A character word today moves a control by an amount somebody chose. `dark` takes
-Treble down by a quarter of its range because a quarter was written in a file.
-Nothing has ever checked that a quarter is what `dark` means, or that moving
-Treble moves the figure `dark` was earned from.
+A word on the ask today moves a control by an amount somebody chose. `dark`
+takes Treble down by a quarter of its range because a quarter was written in a
+file. Nothing has ever checked that a quarter is what `dark` means, or that
+moving Treble moves the figure `dark` was earned from.
 
 Once this loop runs, a word can name a region in the nine figures instead of a
 direction on a knob, and a preset either lands in it or does not.

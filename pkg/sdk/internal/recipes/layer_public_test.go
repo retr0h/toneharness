@@ -36,17 +36,17 @@ type LayerPublicTestSuite struct {
 	suite.Suite
 }
 
-// userRig is a rig of somebody's own, about "Their Player". extra is a line
-// such as aliases or extends, or empty.
+// userRig is a pair of somebody's own, about "Their Player": the rig under
+// <stem>.yaml and the ask beside it under <stem>.tone.yaml.
+//
+// Two files because the subject, the aliases and the link to what a rig departs
+// from are all things a person wrote, and those live on the ask. extra is a line
+// for the ask, such as aliases or extends, or empty.
 func userRig(
-	id string,
-	extra string,
-) string {
-	return "schema: RigSpec\nversion: 2\nid: " + id + "\n" + extra + `
-
-subject:
-  kind: artist
-  name: Their Player
+	stem, id, extra string,
+) map[string]string {
+	return map[string]string{
+		stem + ".yaml": "schema: RigSpec\nversion: 2\nid: " + id + `
 
 instrument: bass
 
@@ -56,9 +56,16 @@ chain:
     evidence:
       - { kind: cited, note: "a test says so" }
     confidence: high
+`,
+		stem + ".tone.yaml": "schema: ToneSpec\n" + extra + `
+
+subject:
+  kind: artist
+  name: Their Player
 
 confidence: high
-`
+`,
+	}
 }
 
 // TestLayered covers which rig a lookup finds and what a listing shows.
@@ -89,13 +96,13 @@ func (s *LayerPublicTestSuite) TestLayered() {
 		},
 		{
 			name:  "a rig of theirs with a shipped rig's identifier",
-			files: map[string]string{"mine.yaml": userRig("mike-dirnt", "")},
+			files: userRig("mine", "mike-dirnt", ""),
 			id:    "mike-dirnt",
 			want:  "Their Player",
 		},
 		{
 			name:  "an alias of theirs that is a shipped rig's identifier, in any case",
-			files: map[string]string{"mine.yaml": userRig("their-player", "aliases: [MIKE-DIRNT]")},
+			files: userRig("mine", "their-player", "aliases: [MIKE-DIRNT]"),
 			id:    "mike-dirnt",
 			want:  "Their Player",
 		},
@@ -103,21 +110,19 @@ func (s *LayerPublicTestSuite) TestLayered() {
 			// Asked for by the shipped rig's own identifier, which no rig of
 			// theirs answers to, and still theirs, as a listing shows.
 			name:  "an identifier of theirs that is a shipped rig's alias",
-			files: map[string]string{"mine.yaml": userRig("dirnt", "")},
+			files: userRig("mine", "dirnt", ""),
 			id:    "mike-dirnt",
 			want:  "Their Player",
 		},
 		{
 			name:  "a rig of theirs sharing no name with a shipped one",
-			files: map[string]string{"mine.yaml": userRig("their-player", "")},
+			files: userRig("mine", "their-player", ""),
 			id:    "their-player",
 			want:  "Their Player",
 		},
 		{
-			name: "a variant of theirs on a shipped rig",
-			files: map[string]string{
-				"mine.yaml": userRig("mike-dirnt-live", "extends: mike-dirnt"),
-			},
+			name:     "a variant of theirs on a shipped rig",
+			files:    userRig("mine", "mike-dirnt-live", "extends: mike-dirnt"),
 			id:       "mike-dirnt",
 			want:     "Mike Dirnt",
 			variants: []string{"mike-dirnt-live"},
@@ -130,7 +135,7 @@ func (s *LayerPublicTestSuite) TestLayered() {
 		},
 		{
 			name:    "a directory that cannot be read",
-			files:   map[string]string{"mine.yaml": userRig("mike-dirnt", "")},
+			files:   userRig("mine", "mike-dirnt", ""),
 			locked:  true,
 			id:      "mike-dirnt",
 			findErr: "reading",
@@ -139,7 +144,7 @@ func (s *LayerPublicTestSuite) TestLayered() {
 		{
 			// The glob would drop it, and every rig in it with no word said.
 			name:          "an artists directory of theirs that cannot be read",
-			files:         map[string]string{"mine.yaml": userRig("mike-dirnt", "")},
+			files:         userRig("mine", "mike-dirnt", ""),
 			lockedArtists: true,
 			id:            "mike-dirnt",
 			findErr:       "artists",
@@ -149,7 +154,7 @@ func (s *LayerPublicTestSuite) TestLayered() {
 			// Copied from the shipped rig under its own identifier, so it
 			// extends the rig it replaces and is not a variant of itself.
 			name:  "a rig of theirs extending the shipped rig it replaces",
-			files: map[string]string{"mine.yaml": userRig("mike-dirnt", "extends: mike-dirnt")},
+			files: userRig("mine", "mike-dirnt", "extends: mike-dirnt"),
 			id:    "mike-dirnt",
 			want:  "Their Player",
 		},
@@ -267,7 +272,10 @@ func (s *LayerPublicTestSuite) TestLayered() {
 				if tt.want != "" {
 					subjects := make([]string, 0, len(listed.Rigs))
 					for _, r := range listed.Rigs {
-						subjects = append(subjects, r.Subject.Name)
+						s.Require().NotNil(r.Ask,
+							"%s ships with no ask beside it", r.Rig.ID)
+						s.Require().NotNil(r.Ask.Subject)
+						subjects = append(subjects, r.Ask.Subject.Name)
 					}
 
 					s.Require().Contains(subjects, tt.want)
@@ -292,8 +300,12 @@ func (s *LayerPublicTestSuite) TestLayered() {
 
 			s.Require().NoError(showErr)
 			s.Require().NoError(findErr)
-			s.Require().Equal(tt.want, found.Subject.Name)
-			s.Require().Equal(tt.want, shown.Rig.Subject.Name)
+			// The subject is the ask's, and a lookup returns the rig, so this
+			// is also the check that the two are paired by filename stem.
+			s.Require().NotNil(shown.Ask)
+			s.Require().NotNil(shown.Ask.Subject)
+			s.Require().Equal(tt.want, shown.Ask.Subject.Name)
+			s.Require().Equal(shown.Rig.ID, found.Rig.ID)
 
 			got := make([]string, 0, len(shown.Variants))
 			for _, v := range shown.Variants {
@@ -304,7 +316,7 @@ func (s *LayerPublicTestSuite) TestLayered() {
 				s.Require().Contains(got, want)
 			}
 
-			s.Require().NotContains(got, found.ID, "a rig is not its own variant")
+			s.Require().NotContains(got, found.Rig.ID, "a rig is not its own variant")
 		})
 	}
 }
@@ -314,8 +326,10 @@ func (s *LayerPublicTestSuite) TestLayered() {
 func (s *LayerPublicTestSuite) TestLayeredOverADirectory() {
 	user := s.T().TempDir()
 	s.Require().NoError(os.MkdirAll(filepath.Join(user, "artists"), 0o750))
-	s.Require().NoError(os.WriteFile(filepath.Join(user, "artists", "mine.yaml"),
-		[]byte(userRig("minimal-live", "extends: minimal")), 0o600))
+	for name, body := range userRig("mine", "minimal-live", "extends: minimal") {
+		s.Require().NoError(os.WriteFile(
+			filepath.Join(user, "artists", name), []byte(body), 0o600))
+	}
 
 	src := recipes.Source{Dir: s.good(), User: user}
 

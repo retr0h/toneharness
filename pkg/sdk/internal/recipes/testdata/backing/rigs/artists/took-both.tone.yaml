@@ -1,0 +1,8 @@
+schema: ToneSpec
+
+subject:
+  kind: artist
+  name: Took Both
+  era: a DI and a microphone at once
+  years: { from: 1990, to: 1995 }
+confidence: low

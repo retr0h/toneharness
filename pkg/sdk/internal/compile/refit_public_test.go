@@ -24,8 +24,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
@@ -38,13 +38,13 @@ type RefitPublicTestSuite struct {
 func (s *RefitPublicTestSuite) TestRefit() {
 	// Three blocks, the last of which the fit put on the second processor
 	// and numbered from zero again.
-	before := []chain.Block{{Pos: 0}, {Pos: 1}, {Pos: 2}}
-	after := []chain.Block{{Pos: 0}, {Pos: 1}, {DSP: 1, Pos: 0}}
+	before := []plan.Block{{Pos: 0}, {Pos: 1}, {Pos: 2}}
+	after := []plan.Block{{Pos: 0}, {Pos: 1}, {DSP: 1, Pos: 0}}
 
 	tests := []struct {
 		name          string
 		control       *[]rig.Controller
-		before, after []chain.Block
+		before, after []plan.Block
 		wantPath      int
 		wantBlock     int
 	}{
@@ -102,8 +102,8 @@ func (s *RefitPublicTestSuite) TestRefit() {
 // TestRefitMovesAFootswitch covers a switch following its block, which is the
 // same numbers and the same fit.
 func (s *RefitPublicTestSuite) TestRefitMovesAFootswitch() {
-	before := []chain.Block{{Pos: 0}, {Pos: 1}, {Pos: 2}}
-	after := []chain.Block{{Pos: 0}, {Pos: 1}, {DSP: 1, Pos: 0}}
+	before := []plan.Block{{Pos: 0}, {Pos: 1}, {Pos: 2}}
+	after := []plan.Block{{Pos: 0}, {Pos: 1}, {DSP: 1, Pos: 0}}
 
 	on, at, nowhere := 1, 2, 9
 	spec := rig.Spec{Footswitches: &[]rig.Footswitch{

@@ -26,8 +26,8 @@ import (
 	"strings"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/corpus"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
@@ -38,13 +38,18 @@ import (
 // whoever wrote the rig, and second-guessing it here would silently move
 // somebody's pedals.
 //
-// What a rig does not say, the corpus fills — but only where a kind of block
-// is near-universal, and never quietly. See fill.
+// What a rig does not say, the corpus fills, but only where a kind of block is
+// near-universal, and never quietly. See fill.
+//
+// The intent is the ask beside the rig, and the zero value is a rig with no ask
+// behind it. That is not a degraded build: a rig off disk carries settings
+// somebody already applied, so there is nothing left for a word to decide.
 func Resolve(
 	spec rig.Spec,
+	intent Intent,
 	cat *catalog.Catalog,
 	stats *corpus.Stats,
-) (chain.Chain, []Added, []Moved, error) {
+) (plan.Plan, []Added, []Moved, error) {
 	instrument := string(spec.Instrument)
 
 	blocks := make([]catalog.Block, 0, len(spec.Chain)+1)
@@ -78,7 +83,7 @@ func Resolve(
 			stand, err = findGear(
 				cat, entry.Substitute.Gear, categoryFor(entry.Role), instrument)
 			if err != nil {
-				return chain.Chain{}, nil, nil, fmt.Errorf(
+				return plan.Plan{}, nil, nil, fmt.Errorf(
 					"%q stands in for %q, and nothing emulates it either: %w",
 					entry.Substitute.Gear, entry.Gear, err)
 			}
@@ -95,7 +100,7 @@ func Resolve(
 
 		if err != nil {
 			if entry.Role != rig.RoleCab || !errors.Is(err, ErrNoSuchGear) {
-				return chain.Chain{}, nil, nil, err
+				return plan.Plan{}, nil, nil, err
 			}
 
 			missed, missedErr = entry.Gear, err
@@ -123,7 +128,7 @@ func Resolve(
 	} else if missed != "" {
 		// Nothing to fall back to, so the rig named a cabinet that cannot be
 		// built and saying so is the only honest answer.
-		return chain.Chain{}, nil, nil, missedErr
+		return plan.Plan{}, nil, nil, missedErr
 	}
 
 	blocks, added := fill(blocks, cat, stats, instrument)
@@ -132,42 +137,42 @@ func Resolve(
 	// claim and should not be displaced by one word. Before specFor, because
 	// a block arriving later would miss the corpus medians and start on
 	// catalog defaults.
-	blocks, asked := demand(blocks, cat, stats, spec, instrument)
+	blocks, asked := demand(blocks, cat, stats, intent, instrument)
 	added = append(added, asked...)
 
-	built := specFor(spec, blocks, stats)
+	built := specFor(spec, intent, blocks, stats)
 
 	// After the corpus has had its say, because a term is an opinion about
 	// where players land rather than a replacement for knowing.
-	moved := character(spec, blocks, built, stats)
+	moved := character(intent, blocks, built, stats)
 
 	// Last, over the corpus medians and over whatever a character term
 	// moved: a number somebody wrote down is the most explicit thing in the
 	// rig, and the only one that says exactly what they meant.
 	if err := saidKnobs(built.Blocks, blocks, said); err != nil {
-		return chain.Chain{}, nil, nil, err
+		return plan.Plan{}, nil, nil, err
 	}
 
 	// What the rig claims beside its chain: a colour, a parameter, a device.
 	// Checked here because the answer is a fact about this catalog.
 	if err := check(spec, built.Blocks, cat); err != nil {
-		return chain.Chain{}, nil, nil, err
+		return plan.Plan{}, nil, nil, err
 	}
 
 	return built, append(sub, added...), moved, nil
 }
 
-// character moves whatever in the chain answers for the words a rig used.
+// character moves whatever in the chain answers for the words the ask used.
 //
 // After the corpus has had its say, because a term is an opinion about where
 // players land rather than a replacement for knowing.
 func character(
-	spec rig.Spec,
+	intent Intent,
 	blocks []catalog.Block,
-	built chain.Chain,
+	built plan.Plan,
 	stats *corpus.Stats,
 ) []Moved {
-	terms := termsOf(spec)
+	terms := termsOf(intent.Words)
 	if len(terms) == 0 {
 		return nil
 	}
@@ -349,16 +354,29 @@ func kindOf(
 // specFor lays blocks out as a chain the device can represent.
 func specFor(
 	spec rig.Spec,
+	intent Intent,
 	blocks []catalog.Block,
 	stats *corpus.Stats,
-) chain.Chain {
-	out := chain.Chain{
-		Name:   spec.Subject.Name,
-		Blocks: make([]chain.Block, 0, len(blocks)),
+) plan.Plan {
+	// The name is what the device prints on its screen, and "Mike Dirnt" is
+	// what somebody wants to read there. That is the subject, which lives on
+	// the ask, so the ask is asked first.
+	//
+	// The rig's identifier where there is no ask. A rig read off disk has no
+	// subject to be named after, and its identifier is the one name it has of
+	// its own, which beats a blank heading.
+	name := intent.Name
+	if name == "" {
+		name = spec.ID
+	}
+
+	out := plan.Plan{
+		Name:   name,
+		Blocks: make([]plan.Block, 0, len(blocks)),
 	}
 
 	for i, b := range blocks {
-		out.Blocks = append(out.Blocks, chain.Block{
+		out.Blocks = append(out.Blocks, plan.Block{
 			Model:   b.ID,
 			Params:  settings(b, stats),
 			DSP:     0,
@@ -376,10 +394,10 @@ func specFor(
 // Line 6 states each block's cost as a percentage of one processor, so a chain
 // that overflows is not a preset anyone can load.
 func Fit(
-	spec chain.Chain,
+	spec plan.Plan,
 	cat *catalog.Catalog,
-	lim chain.Limits,
-) chain.Chain {
+	lim plan.Limits,
+) plan.Plan {
 	used, path := 0.0, 0
 
 	for i := range spec.Blocks {
@@ -419,8 +437,8 @@ func Fit(
 
 // renumber gives each processor a contiguous run of positions.
 func renumber(
-	spec chain.Chain,
-) chain.Chain {
+	spec plan.Plan,
+) plan.Plan {
 	next := map[int]int{}
 
 	for i := range spec.Blocks {
@@ -437,7 +455,7 @@ func renumber(
 // Blocks the rig did not ask for are at the end of the chain and have no
 // settings beside them, so the lists run out together.
 func saidKnobs(
-	built []chain.Block,
+	built []plan.Block,
 	blocks []catalog.Block,
 	said []*rig.Settings,
 ) error {

@@ -26,9 +26,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
+	"github.com/retr0h/tonestack/pkg/sdk/tone"
 )
 
 type MoveTestSuite struct {
@@ -65,17 +65,17 @@ func (s *MoveTestSuite) blocks() []catalog.Block {
 }
 
 // built is where the corpus and the catalog left every block, before a word.
-func (s *MoveTestSuite) built() chain.Chain {
-	return chain.Chain{Blocks: []chain.Block{
-		{Model: "HD2_CompTest", Params: chain.Params{"Attack": catalog.Float(0.5)}},
+func (s *MoveTestSuite) built() plan.Plan {
+	return plan.Plan{Blocks: []plan.Block{
+		{Model: "HD2_CompTest", Params: plan.Params{"Attack": catalog.Float(0.5)}},
 		{Model: "HD2_AmpTestBass", Params: s.params()},
-		{Model: "HD2_ReverbTest", Params: chain.Params{"Mix": catalog.Float(0.5)}},
+		{Model: "HD2_ReverbTest", Params: plan.Params{"Mix": catalog.Float(0.5)}},
 	}}
 }
 
 // paramOf reads one control off whichever block holds it.
 func (s *MoveTestSuite) paramOf(
-	built chain.Chain,
+	built plan.Plan,
 	key string,
 ) float64 {
 	for _, b := range built.Blocks {
@@ -90,8 +90,8 @@ func (s *MoveTestSuite) paramOf(
 }
 
 // params is where the corpus and the catalog left things, before any word.
-func (s *MoveTestSuite) params() chain.Params {
-	return chain.Params{
+func (s *MoveTestSuite) params() plan.Params {
+	return plan.Params{
 		"Mid":    catalog.Float(0.5),
 		"Treble": catalog.Float(0.5),
 		"Drive":  catalog.Float(0.5),
@@ -334,8 +334,8 @@ func (s *MoveTestSuite) TestMoveClampsToWhatTheDeviceAccepts() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			built := chain.Chain{Blocks: []chain.Block{
-				{Model: "HD2_AmpTestBass", Params: chain.Params{
+			built := plan.Plan{Blocks: []plan.Block{
+				{Model: "HD2_AmpTestBass", Params: plan.Params{
 					"Drive": catalog.Float(tt.at),
 				}},
 			}}
@@ -360,8 +360,8 @@ func (s *MoveTestSuite) TestMoveSkipsWhatTheBlockDoesNotHave() {
 		},
 	}
 
-	built := chain.Chain{Blocks: []chain.Block{
-		{Model: "HD2_Plain", Params: chain.Params{"Mid": catalog.Float(0.5)}},
+	built := plan.Plan{Blocks: []plan.Block{
+		{Model: "HD2_Plain", Params: plan.Params{"Mid": catalog.Float(0.5)}},
 	}}
 
 	got := move([]catalog.Block{b}, built, said("tight-low-end"), nil)
@@ -379,7 +379,7 @@ func (s *MoveTestSuite) TestMoveSkipsWhatTheBlockDoesNotHave() {
 // dry, in a chain holding no reverb, got what it asked for, and saying the
 // chain could not answer would be backwards.
 func (s *MoveTestSuite) TestMoveWhenTheChainIsAlreadyWhatTheWordAsked() {
-	built := chain.Chain{Blocks: []chain.Block{
+	built := plan.Plan{Blocks: []plan.Block{
 		{Model: "HD2_AmpTestBass", Params: s.params()},
 	}}
 
@@ -412,7 +412,7 @@ func (s *MoveTestSuite) TestMoveTurnsTheReverbThatIsThere() {
 // A rig asking for room in a chain holding no reverb is not a word nobody has
 // taught the project: it is a chain that cannot answer.
 func (s *MoveTestSuite) TestMoveWithoutTheBlockTheWordNeeds() {
-	built := chain.Chain{Blocks: []chain.Block{
+	built := plan.Plan{Blocks: []plan.Block{
 		{Model: "HD2_AmpTestBass", Params: s.params()},
 	}}
 
@@ -448,8 +448,8 @@ func (s *MoveTestSuite) TestMoveSkipsAValueItCannotDo() {
 		},
 	}
 
-	built := chain.Chain{Blocks: []chain.Block{
-		{Model: "HD2_Switched", Params: chain.Params{"Mid": catalog.Bool(true)}},
+	built := plan.Plan{Blocks: []plan.Block{
+		{Model: "HD2_Switched", Params: plan.Params{"Mid": catalog.Bool(true)}},
 	}}
 
 	got := move([]catalog.Block{b}, built, said("mid-forward"), nil)
@@ -480,7 +480,7 @@ func (s *MoveTestSuite) TestAWordFindsAControlTheAmplifierDoesNotHave() {
 	tests := []struct {
 		name   string
 		blocks []catalog.Block
-		params []chain.Params
+		params []plan.Params
 		want   string
 		acted  bool
 	}{
@@ -489,14 +489,14 @@ func (s *MoveTestSuite) TestAWordFindsAControlTheAmplifierDoesNotHave() {
 			// equaliser standing right there.
 			name:   "an amplifier that has the control",
 			blocks: []catalog.Block{s.amp(), eq},
-			params: []chain.Params{s.params(), {"MidGain": catalog.Float(0)}},
+			params: []plan.Params{s.params(), {"MidGain": catalog.Float(0)}},
 			want:   "Mid",
 			acted:  true,
 		},
 		{
 			name:   "an amplifier that does not, beside an equaliser that does",
 			blocks: []catalog.Block{twoKnob, eq},
-			params: []chain.Params{
+			params: []plan.Params{
 				{"Bass": catalog.Float(0.5), "Treble": catalog.Float(0.5)},
 				{"MidGain": catalog.Float(0)},
 			},
@@ -508,17 +508,17 @@ func (s *MoveTestSuite) TestAWordFindsAControlTheAmplifierDoesNotHave() {
 			// asked is what tells somebody why.
 			name:   "neither",
 			blocks: []catalog.Block{twoKnob},
-			params: []chain.Params{{"Bass": catalog.Float(0.5), "Treble": catalog.Float(0.5)}},
+			params: []plan.Params{{"Bass": catalog.Float(0.5), "Treble": catalog.Float(0.5)}},
 			want:   "has no Mid",
 		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			built := chain.Chain{}
+			built := plan.Plan{}
 			for i, b := range tt.blocks {
 				built.Blocks = append(built.Blocks,
-					chain.Block{Model: b.ID, Params: tt.params[i]})
+					plan.Block{Model: b.ID, Params: tt.params[i]})
 			}
 
 			got := move(tt.blocks, built, said("mid-forward"), nil)
@@ -537,12 +537,17 @@ func (s *MoveTestSuite) TestAWordFindsAControlTheAmplifierDoesNotHave() {
 	}
 }
 
-// TestTermsOf covers reading the words a rig described itself with, and how
+// TestTermsOf covers reading the words the ask described a sound with, and how
 // much of a step each one is worth.
+//
+// The order is checked as much as the contents. Two words on one axis cancel,
+// and the report names them as the ask wrote them, which is no help if this
+// reordered them first.
 func (s *MoveTestSuite) TestTermsOf() {
-	figures := func(mine, theirs float64, key string) *[]rig.Evidence {
-		return &[]rig.Evidence{{
-			Kind:     rig.EvidenceAudio,
+	figures := func(mine, theirs float64, key string) []tone.Evidence {
+		return []tone.Evidence{{
+			// A measurement taken off a record, which is what carries figures.
+			Kind:     tone.EvidenceKind("audio"),
 			Measured: &map[string]float64{key: mine},
 			Against:  &map[string]float64{key: theirs},
 		}}
@@ -550,15 +555,15 @@ func (s *MoveTestSuite) TestTermsOf() {
 
 	tests := []struct {
 		name string
-		in   *[]rig.CharacterTerm
+		in   []Word
 		want []heard
 	}{
-		{name: "a rig that said nothing about how it sounds"},
+		{name: "an ask that said nothing about how it sounds"},
 		{
 			// Nobody measured these, so each is worth the whole step, which
 			// is what every rig did before any of this could be weighed.
 			name: "the words, in the order they were written",
-			in: &[]rig.CharacterTerm{
+			in: []Word{
 				{Term: "mid-forward"}, {Term: "saturated"},
 			},
 			want: []heard{
@@ -569,7 +574,7 @@ func (s *MoveTestSuite) TestTermsOf() {
 			// Half the harmonics of everybody else is half a step. The word
 			// says which way; the gap says how far.
 			name: "a word with the gap that earned it",
-			in: &[]rig.CharacterTerm{
+			in: []Word{
 				{Term: "clean", Evidence: figures(0.12, 0.24, "harmonics")},
 			},
 			want: []heard{{term: "clean", weight: 0.5}},
@@ -578,14 +583,14 @@ func (s *MoveTestSuite) TestTermsOf() {
 			// A gap wider than what the others read is still one word, and
 			// one word does not decide the whole of a control.
 			name: "a gap wider than the others' own figure",
-			in: &[]rig.CharacterTerm{
+			in: []Word{
 				{Term: "mid-forward", Evidence: figures(0.09, 0.02, "mid")},
 			},
 			want: []heard{{term: "mid-forward", weight: 1}},
 		},
 		{
 			name: "a centroid, which the highs are earned from",
-			in: &[]rig.CharacterTerm{
+			in: []Word{
 				{Term: "dark", Evidence: figures(96, 170, "centroid")},
 			},
 			want: []heard{{term: "dark", weight: 0.43529411764705883}},
@@ -594,14 +599,16 @@ func (s *MoveTestSuite) TestTermsOf() {
 			// Every way the figures can fail to say anything, each of which
 			// leaves the word worth its whole step rather than nothing.
 			name: "figures that do not weigh the word",
-			in: &[]rig.CharacterTerm{
+			in: []Word{
 				// An axis no measurement speaks to.
 				{Term: "quiet-strings", Evidence: figures(0.1, 0.2, "harmonics")},
 				// A word the vocabulary does not carry.
 				{Term: "chewy", Evidence: figures(0.1, 0.2, "harmonics")},
 				// One side of the comparison missing.
-				{Term: "clean", Evidence: &[]rig.Evidence{{
-					Kind: rig.EvidenceAudio, Measured: &map[string]float64{"harmonics": 0.12},
+				{Term: "clean", Evidence: []tone.Evidence{{
+					Kind: tone.EvidenceKind(
+						"audio",
+					), Measured: &map[string]float64{"harmonics": 0.12},
 				}}},
 				// The wrong measure for this axis.
 				{Term: "bright", Evidence: figures(0.12, 0.24, "harmonics")},
@@ -623,7 +630,7 @@ func (s *MoveTestSuite) TestTermsOf() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got := termsOf(rig.Spec{Character: tt.in})
+			got := termsOf(tt.in)
 
 			s.Require().Equal(tt.want, got)
 		})

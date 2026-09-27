@@ -1027,9 +1027,19 @@ components:
       type: object
       additionalProperties: false
       description: >
-        A rig, complete. Sparse when hand-written; the same document carries
-        settings and evidence once anything has been measured or tuned.
-      required: [schema, id, subject, instrument, chain]
+        A rig: the gear in signal order, named the way a musician names it, and
+        why each piece of it is believed to be there.
+
+
+        The portable layer. Nothing here is one manufacturer's vocabulary, so a
+        rig reads the same on a device nobody has written a driver for. What
+        somebody wanted is the ToneSpec beside it, and which model each piece of
+        gear resolved to is the plan below it.
+
+
+        Sparse when hand-written; the same document carries settings and evidence
+        once anything has been measured or tuned.
+      required: [schema, id, instrument, chain]
       properties:
         schema:
           type: string
@@ -1058,64 +1068,31 @@ components:
           pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
           description: Stable identifier, matching the filename stem.
           x-go-name: ID
-        subject:
-          $ref: "#/components/schemas/Subject"
         instrument:
           $ref: "#/components/schemas/Instrument"
-        aliases:
-          type: array
-          items: { type: string, minLength: 1, pattern: "\\S" }
-          description: >
-            Other names this rig answers to.
-
-
-            People ask for a band as readily as a player, and for a nickname as
-            readily as either. An alias costs nothing and saves somebody
-            guessing which of them was written down.
-        default:
-          type: boolean
-          description: >
-            Whether this is the rig a bare request resolves to. A player owns
-            several — by era, by song — and asking for "a Mike Dirnt sound"
-            with no qualifier has to land somewhere.
-        extends:
-          type: string
-          description: >
-            Another rig this one departs from, by identifier. Only for a rig
-            that genuinely is a small change; rigs that differ at the amp are
-            siblings, not deltas.
         chain:
           type: array
           minItems: 1
           items: { $ref: "#/components/schemas/ChainEntry" }
           description: The signal path, in order.
-        played:
-          type: array
-          items: { $ref: "#/components/schemas/Played" }
-          minItems: 1
-          description: >
-            The instruments the rig is played on, most used first.
-
-
-            A list because players use more than one and the figures know it.
-            Flea recorded I'm With You on two 1961 Jazz Basses. Les Claypool
-            took a Carl Thompson four and a de-fretted Tune six to the same
-            session, and two of his four measured records are the six.
-        technique:
-          $ref: "#/components/schemas/Technique"
-        character:
-          type: array
-          items: { $ref: "#/components/schemas/CharacterTerm" }
-          description: >
-            How it should sound, in the words a person would use.
-        confidence:
-          $ref: "#/components/schemas/Confidence"
         evidence:
           type: array
           items: { $ref: "#/components/schemas/Evidence" }
           description: >
-            Evidence for the rig as a whole. Evidence for one piece of gear
-            belongs on that entry.
+            Why the gear as a whole is believed, for a citation that covers the
+            chain rather than one entry of it.
+
+
+            On the rig rather than on the ask, by the same argument that kept
+            the per-entry evidence here: a published rig that cannot say why
+            this gear is a rig nobody can check. A rig rundown covers every
+            piece of gear in it, and requiring the citation to be repeated on
+            each entry would only encourage repeating it.
+
+
+            A ToneSpec has an `evidence` of its own and it is a different claim.
+            Why the request was made is the ask's; why this gear answered it is
+            this one's.
         target:
           $ref: "#/components/schemas/Target"
         sections:

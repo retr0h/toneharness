@@ -24,8 +24,8 @@ import (
 	"math"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/corpus"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 // agreementThreshold is how tightly players must agree before the corpus
@@ -46,8 +46,8 @@ const agreementThreshold = 0.15
 func settings(
 	b catalog.Block,
 	stats *corpus.Stats,
-) chain.Params {
-	out := make(chain.Params, len(b.Params))
+) plan.Params {
+	out := make(plan.Params, len(b.Params))
 
 	for key, p := range b.Params {
 		// A parameter with no stated default has no kind, and writing a value

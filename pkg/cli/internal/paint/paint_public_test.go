@@ -33,7 +33,7 @@ import (
 
 	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 type ThemePublicTestSuite struct {
@@ -410,22 +410,22 @@ func (s *ChainPublicTestSuite) cat() *catalog.Catalog {
 }
 
 func (s *ChainPublicTestSuite) spec(
-	blocks ...chain.Block,
-) chain.Chain {
-	return chain.Chain{Name: "Test", Blocks: blocks}
+	blocks ...plan.Block,
+) plan.Plan {
+	return plan.Plan{Name: "Test", Blocks: blocks}
 }
 
 // TestChain draws a chain and what it costs.
 func (s *ChainPublicTestSuite) TestChain() {
 	tests := []struct {
 		name     string
-		blocks   []chain.Block
+		blocks   []plan.Block
 		contains []string
 		absent   []string
 	}{
 		{
 			name: "every block in it",
-			blocks: []chain.Block{
+			blocks: []plan.Block{
 				{Model: "amp", DSP: 0, Pos: 0, Enabled: true},
 				{Model: "cab", DSP: 0, Pos: 1, Enabled: false},
 				{Model: "weird", DSP: 1, Pos: 0, Enabled: true},
@@ -438,11 +438,11 @@ func (s *ChainPublicTestSuite) TestChain() {
 		},
 		{
 			name: "a block needing the owner's own IR",
-			blocks: []chain.Block{
+			blocks: []plan.Block{
 				{Model: "amp", Enabled: true},
 				{
 					Model: "HD2_ImpulseResponse1024", Pos: 1, Enabled: true,
-					Params: chain.Params{"Index": catalog.Int(82)},
+					Params: plan.Params{"Index": catalog.Int(82)},
 				},
 			},
 			contains: []string{
@@ -454,14 +454,14 @@ func (s *ChainPublicTestSuite) TestChain() {
 		},
 		{
 			name: "an IR naming no slot",
-			blocks: []chain.Block{
+			blocks: []plan.Block{
 				{Model: "HD2_ImpulseResponse1024", Enabled: true},
 			},
 			contains: []string{"a user IR"},
 		},
 		{
 			name:     "a processor nothing uses",
-			blocks:   []chain.Block{{Model: "amp", DSP: 1, Enabled: true}},
+			blocks:   []plan.Block{{Model: "amp", DSP: 1, Enabled: true}},
 			contains: []string{"dsp1"},
 			absent:   []string{"dsp0"},
 		},
@@ -490,22 +490,22 @@ func (s *ChainPublicTestSuite) TestChain() {
 func (s *ChainPublicTestSuite) TestChainReportsAWriterThatFails() {
 	tests := []struct {
 		name   string
-		blocks []chain.Block
+		blocks []plan.Block
 		after  int
 	}{
 		{name: "with nothing to show"},
-		{name: "on the rows", blocks: []chain.Block{{Model: "amp"}}},
-		{name: "on the budget", blocks: []chain.Block{{Model: "amp"}}, after: 1},
+		{name: "on the rows", blocks: []plan.Block{{Model: "amp"}}},
+		{name: "on the budget", blocks: []plan.Block{{Model: "amp"}}, after: 1},
 		{
 			name:   "on the budget's own line",
-			blocks: []chain.Block{{Model: "amp"}},
+			blocks: []plan.Block{{Model: "amp"}},
 			after:  2,
 		},
 		{
 			name: "on the warning about somebody's own IR",
-			blocks: []chain.Block{{
+			blocks: []plan.Block{{
 				Model: "HD2_ImpulseResponse1024", Enabled: true,
-				Params: chain.Params{"Index": catalog.Int(82)},
+				Params: plan.Params{"Index": catalog.Int(82)},
 			}},
 			after: 3,
 		},

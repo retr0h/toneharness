@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package chain_test
+package plan_test
 
 import (
 	"testing"
@@ -26,25 +26,25 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 type ValidateBudgetPublicTestSuite struct {
 	suite.Suite
 }
 
-func (*ValidateBudgetPublicTestSuite) limits() chain.Limits {
-	return chain.Limits{MaxBlocks: 6, Paths: 2, ChipCeiling: 95.0}
+func (*ValidateBudgetPublicTestSuite) limits() plan.Limits {
+	return plan.Limits{MaxBlocks: 6, Paths: 2, ChipCeiling: 95.0}
 }
 
 // blocks is a chain of n identical amps on one chip.
 func (s *ValidateBudgetPublicTestSuite) blocks(
 	n, dsp int,
 	enabled bool,
-) chain.Chain {
-	out := chain.Chain{}
+) plan.Plan {
+	out := plan.Plan{}
 	for i := range n {
-		out.Blocks = append(out.Blocks, chain.Block{
+		out.Blocks = append(out.Blocks, plan.Block{
 			Model: "HD2_AmpTest", DSP: dsp, Pos: i, Enabled: enabled,
 		})
 	}
@@ -63,14 +63,14 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
 	tests := []struct {
 		name   string
 		block  catalog.Block
-		spec   chain.Chain
-		limits chain.Limits
+		spec   plan.Plan
+		limits plan.Limits
 		is     error
 		says   string
 	}{
 		{
 			name: "one amp on each of two chips",
-			spec: chain.Chain{
+			spec: plan.Plan{
 				Blocks: append(s.blocks(1, 0, true).Blocks, s.blocks(1, 1, true).Blocks...),
 			},
 			limits: s.limits(),
@@ -79,7 +79,7 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
 			name:   "four on one, at 26.67 each",
 			spec:   s.blocks(4, 0, true),
 			limits: s.limits(),
-			is:     chain.ErrOverBudget,
+			is:     plan.ErrOverBudget,
 		},
 		{
 			// A bypassed block still occupies its position and still costs
@@ -87,7 +87,7 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
 			name:   "four bypassed ones, which cost the same",
 			spec:   s.blocks(4, 0, false),
 			limits: s.limits(),
-			is:     chain.ErrOverBudget,
+			is:     plan.ErrOverBudget,
 		},
 		{
 			// Three stereo instances cost 120.3; three mono are 80.01.
@@ -95,7 +95,7 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
 			block:  stereo,
 			spec:   s.blocks(3, 0, true),
 			limits: s.limits(),
-			is:     chain.ErrOverBudget,
+			is:     plan.ErrOverBudget,
 		},
 		{
 			name:   "the same three, mono",
@@ -116,25 +116,25 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
 			name:   "a block on a chip the device does not have",
 			spec:   s.blocks(1, 5, false),
 			limits: s.limits(),
-			is:     chain.ErrBadTopology,
+			is:     plan.ErrBadTopology,
 		},
 		{
 			name:   "one on a chip below the first",
 			spec:   s.blocks(1, -1, false),
 			limits: s.limits(),
-			is:     chain.ErrBadTopology,
+			is:     plan.ErrBadTopology,
 		},
 		{
 			name:   "limits declaring no chips at all",
 			spec:   s.blocks(1, 0, false),
-			limits: chain.Limits{Paths: 0},
-			is:     chain.ErrBadTopology,
+			limits: plan.Limits{Paths: 0},
+			is:     plan.ErrBadTopology,
 		},
 		{
 			name:   "a model the catalog does not carry",
-			spec:   chain.Chain{Blocks: []chain.Block{{Model: "HD2_Nope"}}},
+			spec:   plan.Plan{Blocks: []plan.Block{{Model: "HD2_Nope"}}},
 			limits: s.limits(),
-			is:     chain.ErrUnknownBlock,
+			is:     plan.ErrUnknownBlock,
 		},
 		{
 			// Regression: ChipCeiling was once a fraction while the catalog
@@ -143,7 +143,7 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
 			// happily load must validate.
 			name:   "three amps on the one path a Stomp has",
 			spec:   s.blocks(3, 0, true),
-			limits: chain.HXStompLimits(),
+			limits: plan.HXStompLimits(),
 		},
 	}
 
@@ -154,7 +154,7 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
 				block = testAmp()
 			}
 
-			err := chain.ValidateBudget(newCatalog(block), tt.spec, tt.limits)
+			err := plan.ValidateBudget(newCatalog(block), tt.spec, tt.limits)
 
 			if tt.is == nil {
 				s.Require().NoError(err)
@@ -174,10 +174,10 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
 // TestValidateBudgetNamesTheChipThatOverflowed covers the detail a caller
 // reads, which is one error rather than a set of cases.
 func (s *ValidateBudgetPublicTestSuite) TestValidateBudgetNamesTheChipThatOverflowed() {
-	err := chain.ValidateBudget(
+	err := plan.ValidateBudget(
 		newCatalog(testAmp()), s.blocks(4, 0, true), s.limits())
 
-	var got *chain.OverBudgetError
+	var got *plan.OverBudgetError
 	s.Require().ErrorAs(err, &got)
 	s.Require().Equal(0, got.Chip)
 	s.Require().InDelta(106.68, got.Cost, 1e-9)
@@ -188,7 +188,7 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudgetNamesTheChipThatOverfl
 // The catalog states an Ampeg SVT at 26.67. A ceiling below that would mean
 // no amp ever fits, which is how the units drifted apart before.
 func (s *ValidateBudgetPublicTestSuite) TestCostAndCeilingShareUnits() {
-	s.Require().Greater(chain.HXStompLimits().ChipCeiling, 26.67,
+	s.Require().Greater(plan.HXStompLimits().ChipCeiling, 26.67,
 		"the ceiling must admit at least one amp")
 }
 

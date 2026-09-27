@@ -55,12 +55,31 @@ func scaffold(
 	parent, from string,
 	opts NewOptions,
 ) (string, error) {
+	// Nothing to replace inside the document any more. The subject, the
+	// aliases, the default and the link back all moved to the ask, so a rig is
+	// gear and an identifier, and copying one is copying the gear under a new
+	// name. scaffoldAsk does the part that needs parsing.
+	return header(from, opts) + asCopy(parent, opts), nil
+}
+
+// scaffoldAsk writes a copy of one ask as the start of another.
+//
+// The half of a copy that needs parsing. Who it is for is replaced, the names
+// the parent answered to are dropped, and the link back to it is recorded here
+// because what one ask departs from is a fact about what was wanted.
+//
+// A failure to replace is reported and the text still returned, the way the rig
+// side does it: a copy somebody has to finish by hand is more use than no file.
+func scaffoldAsk(
+	parent, from string,
+	opts NewOptions,
+) (string, error) {
 	body := parent
 
 	var kindErr, nameErr error
 
 	// Both belong to the subject, and both are replaced first, while the
-	// text is still the rig that loaded: the lines removed below are only
+	// text is still the ask that loaded: the lines removed below are only
 	// removed whole where they are one line long.
 	if opts.Kind != "" {
 		body, kindErr = replaceSubject(body, "kind", opts.Kind)
@@ -70,7 +89,7 @@ func scaffold(
 		body, nameErr = replaceSubject(body, "name", opts.Name)
 	}
 
-	return header(from, opts) + asCopy(body, from, opts), errors.Join(kindErr, nameErr)
+	return askHeader(from, opts) + asCopiedAsk(body, from), errors.Join(kindErr, nameErr)
 }
 
 // asCopy writes the copy's own identity over the parent's.
@@ -89,7 +108,7 @@ func scaffold(
 // Not everything above `schema` is a header: a rig read off a device has its
 // keys in marshalled order, and `schema` comes late.
 func asCopy(
-	body, from string,
+	body string,
 	opts NewOptions,
 ) string {
 	var out []string
@@ -100,11 +119,60 @@ func asCopy(
 		text, ends := lineText(line)
 
 		switch {
-		case strings.HasPrefix(text, "aliases: "), strings.HasPrefix(text, "default: "):
 		case strings.HasPrefix(text, "id: "):
 			header = false
 
-			out = append(out, "id: "+opts.ID+ends, "extends: "+from+ends)
+			out = append(out, "id: "+opts.ID+ends)
+		case header && (text == "" || strings.HasPrefix(text, "#")):
+		default:
+			header = false
+
+			out = append(out, line)
+		}
+	}
+
+	return strings.Join(out, "")
+}
+
+// asCopiedAsk writes the copy's own identity over the parent ask's.
+//
+// What goes is what belongs to the parent alone: the aliases and the default,
+// which name the parent to a reader asking for it, and the header comments,
+// which describe the parent. Each is a whole line at the top level, so each is
+// matched as one. The subject's own fields are not, and scaffoldAsk replaces
+// those by parsing.
+//
+// The corrections go too, and that is the one that would do real harm if it
+// stayed. A correction is a round of somebody listening to a particular rig, so
+// carrying it into a copy would attribute a verdict to gear nobody has heard.
+func asCopiedAsk(
+	body, from string,
+) string {
+	var out []string
+
+	header, inCorrections := true, false
+
+	for _, line := range breakLines(body) {
+		text, ends := lineText(line)
+
+		// A correction is a block, not a line, so it ends at the next thing
+		// starting in the first column.
+		if inCorrections {
+			if text == "" || strings.HasPrefix(line, " ") || strings.HasPrefix(line, "#") {
+				continue
+			}
+
+			inCorrections = false
+		}
+
+		switch {
+		case strings.HasPrefix(text, "aliases:"), strings.HasPrefix(text, "default: "):
+		case strings.HasPrefix(text, "corrections:"):
+			inCorrections = true
+		case strings.HasPrefix(text, "schema: "):
+			header = false
+
+			out = append(out, line, "extends: "+from+ends)
 		case header && (text == "" || strings.HasPrefix(text, "#")):
 		default:
 			header = false
@@ -432,6 +500,32 @@ func header(
 		"change. A claim about a different\n# rig is not evidence for this " +
 		"one. Re-check what you edit, and drop the\n# evidence you cannot " +
 		"stand behind.\n\n")
+
+	return b.String()
+}
+
+// askHeader warns a reader of a copied ask what it inherited.
+//
+// The same warning the rig gets, for the same reason, and one more: what a
+// person wrote about somebody else is the easiest kind of claim to leave in
+// place without noticing, because it reads as description rather than as a
+// citation.
+func askHeader(
+	from string,
+	opts NewOptions,
+) string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "# What %s is asked for.\n#\n", opts.ID)
+	fmt.Fprintf(&b, "# Copied from %s, which is what `extends` below records. "+
+		"Nothing\n", from)
+	b.WriteString("# merges the two: this is a whole ask and reads as one, " +
+		"and editing it\n# does not touch the one it came from.\n#\n")
+	b.WriteString("# The words, the technique and the confidence all came " +
+		"across with the copy,\n# and they describe the subject they were " +
+		"written for. Re-check what you edit\n# and drop what you cannot " +
+		"stand behind. The corrections did not come across:\n# a verdict is " +
+		"somebody listening to one rig, and this is a different one.\n\n")
 
 	return b.String()
 }

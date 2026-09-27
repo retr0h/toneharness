@@ -130,7 +130,7 @@ pkg/sdk/rig/internal/
   gen/               Go types generated from the contract
   specdoc/           writes docs/rigspec.md from the contract
 pkg/sdk/rigs/        curated rigs: which gear a player uses
-pkg/sdk/chain/       a resolved chain: what compile produces and editor reads
+pkg/sdk/plan/        a resolved chain: what compile produces and editor reads
 pkg/sdk/catalog/     what a device can do: blocks, parameters, DSP costs
 pkg/sdk/corpus/      what real presets say about a device, measured
 pkg/sdk/audio/       what a recording sounds like, as numbers. One

@@ -1,13 +1,6 @@
 schema: RigSpec
 version: 2
 id: mike-dirnt
-default: true
-
-subject:
-  kind: artist
-  name: Mike Dirnt
-  band: Green Day
-  era: Dookie through American Idiot
 
 instrument: bass
 
@@ -22,17 +15,3 @@ chain:
     evidence:
       - { kind: llm }
     confidence: medium
-
-character:
-  - term: mid-forward
-  - term: minimal-drive
-  - term: grit-on-attack
-  - term: tight-low-end
-  - term: short-decay
-  - term: audible-pick-attack
-
-technique:
-  attack: pick
-  position: bridge
-
-confidence: medium

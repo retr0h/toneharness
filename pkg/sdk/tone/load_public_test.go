@@ -40,7 +40,10 @@ func (s *LoadPublicTestSuite) TestReadsARequest() {
 	spec, err := tone.Load(strings.NewReader(`
 schema: ToneSpec
 genre: pop-punk
-words: [bright, punchy]
+words:
+  - term: bright
+  - term: tight-low-end
+    evidence: [{ kind: llm }]
 like:
   artist: Mike Dirnt
   years: { from: 1994, to: 2004 }
@@ -51,7 +54,14 @@ nudges:
 
 	s.Require().NoError(err)
 	s.Require().Equal("pop-punk", *spec.Genre)
-	s.Require().Equal([]string{"bright", "punchy"}, *spec.Words)
+	s.Require().Len(*spec.Words, 2)
+	s.Require().Equal("bright", (*spec.Words)[0].Term)
+	// A word carries why it is believed, because that is what sizes how far it
+	// moves a control. The first here carries none, which is legal and is what
+	// a request somebody typed looks like.
+	s.Require().Nil((*spec.Words)[0].Evidence)
+	s.Require().Equal("tight-low-end", (*spec.Words)[1].Term)
+	s.Require().Len(*(*spec.Words)[1].Evidence, 1)
 	s.Require().Equal("Mike Dirnt", *spec.Like.Artist)
 	s.Require().Equal(1994, spec.Like.Years.From)
 	s.Require().Equal("darker", (*spec.Nudges)[0].Word)

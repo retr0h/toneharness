@@ -35,7 +35,9 @@ lists them all.
 ## Create a rig for a player
 
 The whole path, from a name to a file that loads: check the gear exists, see
-what else belongs in the chain, write it, build it.
+what else belongs in the chain, write it, build it. "It" is two files. A rig
+holds the gear in signal order and the ask beside it holds what somebody wanted,
+and `recipes new` writes both.
 
 Read
 [workflows/create-a-rig-for-a-player.md](workflows/create-a-rig-for-a-player.md).
@@ -71,8 +73,9 @@ Read [workflows/switch-and-rearrange.md](workflows/switch-and-rearrange.md).
 
 ## Correct a rig you have heard
 
-Play it, say what is wrong, rebuild. The rig keeps each round so the next
-session starts from what worked.
+Play it, say what is wrong, rebuild. The settings land on the rig and the ask
+beside it keeps each round, so the next session starts from what worked rather
+than from nothing.
 
 Read
 [workflows/correct-a-rig-you-have-heard.md](workflows/correct-a-rig-you-have-heard.md).
@@ -88,7 +91,8 @@ Read
 ## Measure a player's sound
 
 Separate the bass out of records somebody actually made, measure them together,
-and write the figures into a rig as evidence.
+and write the figures in as evidence: the per-record figures on the rig, beside
+the gear they were measured through, and the words they earn on the ask.
 
 Read
 [workflows/measure-a-players-sound.md](workflows/measure-a-players-sound.md).

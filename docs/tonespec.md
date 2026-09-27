@@ -16,8 +16,8 @@ ordinary case.
 
 ```text
 ToneSpec + Setup   what somebody means, and what they have
-      ↓            tonestack tone build
-RigSpec            resolved, deterministic, nobody writes it
+      ↓            tonestack tone build, or somebody researching a player
+RigSpec            the gear in signal order, and why each piece is there
       ↓            tonestack presets compile
 .hlx               what the pedal eats
 ```
@@ -61,7 +61,7 @@ A request for a sound, in whatever terms the person has.
 | `schema *` | string | closed | `ToneSpec` |
 | `subject` | Subject | — | [Subject](#subject) |
 | `technique` | Technique | — | [Technique](#technique) |
-| `words` | list of string | open | — |
+| `words` | list of Word | — | [Word](#word) |
 
 ## Change
 
@@ -208,6 +208,15 @@ A piece of gear the request asks for by name.
 | `gear *` | string | open | — |
 | `insist` | boolean | — | `true` or `false` |
 | `role` | string | closed | `amp`, `cab`, `drive`, `comp`, `eq`, `mod`, `delay`, `reverb`, `filter`, `pitch`, `wah`, `other` |
+
+## Word
+
+One thing it should sound like, and why that is believed.
+
+| field | holds | grammar | allowed |
+| --- | --- | --- | --- |
+| `evidence` | list of Evidence | — | [Evidence](#evidence) |
+| `term *` | string | shaped | `\S` |
 
 ## Years
 

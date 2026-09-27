@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package chain_test
+package plan_test
 
 import (
 	"encoding/json"
@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 )
 
 type RigPublicTestSuite struct {
@@ -35,9 +35,9 @@ type RigPublicTestSuite struct {
 }
 
 func (s *RigPublicTestSuite) TestSpecRoundTripsThroughJSON() {
-	in := chain.Chain{
+	in := plan.Plan{
 		Name: "Test Rig",
-		Blocks: []chain.Block{
+		Blocks: []plan.Block{
 			{
 				Model: "HD2_AmpTest",
 				Params: map[string]catalog.ParamValue{
@@ -48,10 +48,10 @@ func (s *RigPublicTestSuite) TestSpecRoundTripsThroughJSON() {
 				Enabled: true,
 			},
 		},
-		Snapshots: []chain.Snapshot{
+		Snapshots: []plan.Snapshot{
 			{
 				Name: "Lead",
-				Overrides: map[string]chain.Params{
+				Overrides: map[string]plan.Params{
 					"0": {"Gain": catalog.Float(0.9)},
 				},
 			},
@@ -61,7 +61,7 @@ func (s *RigPublicTestSuite) TestSpecRoundTripsThroughJSON() {
 	b, err := json.Marshal(in)
 	s.Require().NoError(err)
 
-	var out chain.Chain
+	var out plan.Plan
 	s.Require().NoError(json.Unmarshal(b, &out))
 	s.Require().Equal(in, out)
 }
@@ -103,7 +103,7 @@ func (s *RigPublicTestSuite) TestLimitsForNamesTheDevice() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			l := chain.LimitsFor(tt.device)
+			l := plan.LimitsFor(tt.device)
 
 			s.Require().Equal(tt.blocks, l.MaxBlocks, tt.why)
 			s.Require().Equal(tt.paths, l.Paths, tt.why)
@@ -113,7 +113,7 @@ func (s *RigPublicTestSuite) TestLimitsForNamesTheDevice() {
 }
 
 func (s *RigPublicTestSuite) TestHXStompLimitsAreTheDocumentedCeilings() {
-	l := chain.HXStompLimits()
+	l := plan.HXStompLimits()
 
 	s.Require().Equal(8, l.MaxBlocks,
 		"the corpus shows HX Stomp presets holding eight blocks")

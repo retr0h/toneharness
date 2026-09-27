@@ -21,12 +21,9 @@
 package recipes
 
 import (
-	"path"
 	"strings"
 
 	"sigs.k8s.io/yaml"
-
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
 // merged is every rig asking by name can find: somebody's own, and each rig
@@ -36,7 +33,7 @@ func (s set) merged() []stored {
 	out = append(out, s.user...)
 
 	for _, e := range s.base {
-		if _, replaced := replacement(s.user, e.spec); !replaced {
+		if _, replaced := replacement(s.user, e); !replaced {
 			out = append(out, e)
 		}
 	}
@@ -74,13 +71,13 @@ func (s set) find(
 			return stored{}, &NotFoundError{ID: id, Known: len(s.merged())}
 		}
 
-		if theirs, replaced := replacement(s.user, found.spec); replaced {
+		if theirs, replaced := replacement(s.user, found); replaced {
 			found = theirs
 		}
 	}
 
 	for _, b := range s.broken {
-		for _, n := range names(found.spec) {
+		for _, n := range names(found) {
 			if answers(b.names, n) {
 				return stored{}, b.err
 			}
@@ -96,7 +93,7 @@ func first(
 	id string,
 ) (stored, bool) {
 	for _, e := range all {
-		if answers(names(e.spec), id) {
+		if answers(names(e), id) {
 			return e, true
 		}
 	}
@@ -110,7 +107,7 @@ func first(
 // otherwise find one rig through a lookup and list the other.
 func replacement(
 	user []stored,
-	beneath rig.Spec,
+	beneath stored,
 ) (stored, bool) {
 	for _, n := range names(beneath) {
 		if theirs, ok := first(user, n); ok {
@@ -122,15 +119,23 @@ func replacement(
 }
 
 // names are every way a rig can be asked for, in lower case.
+//
+// Its identifier, which is the rig's, and its aliases, which are the ask's.
+// People ask for a band as readily as a player and for a nickname as readily as
+// either, and which names answer to a subject is a fact about the subject rather
+// than about the gear. So a rig with no ask beside it answers to one name only,
+// and that is correct: nobody wrote down another.
 func names(
-	spec rig.Spec,
+	e stored,
 ) []string {
-	out := []string{strings.ToLower(spec.ID)}
+	out := []string{strings.ToLower(e.spec.ID)}
 
-	if spec.Aliases != nil {
-		for _, a := range *spec.Aliases {
-			out = append(out, strings.ToLower(a))
-		}
+	if e.ask == nil || e.ask.Aliases == nil {
+		return out
+	}
+
+	for _, a := range *e.ask.Aliases {
+		out = append(out, strings.ToLower(a))
 	}
 
 	return out
@@ -159,7 +164,10 @@ func claimed(
 	p string,
 	raw []byte,
 ) []string {
-	out := []string{strings.ToLower(strings.TrimSuffix(path.Base(p), ".yaml"))}
+	// The stem rather than the basename, so an ask that will not parse is
+	// reported under the subject it belongs to instead of under a name with a
+	// stray ".tone" on the end.
+	out := []string{strings.ToLower(stem(p))}
 
 	var doc map[string]any
 	if yaml.Unmarshal(raw, &doc) != nil {

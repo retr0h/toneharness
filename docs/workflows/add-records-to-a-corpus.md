@@ -49,8 +49,9 @@ recordings.
 
 ### 2. Check the record was made when the rig was
 
-A rig says which years its gear describes. A record from another period measures
-another rig, and the figures come out looking like the one in the file.
+The ask beside a rig says which years its gear describes, in `subject.years`. A
+record from another period measures another rig, and the figures come out
+looking like the one in the file.
 `tonestack recipes records --corpus resources/music/bass` says which rigs
 already disagree with their records, and adding to those without reading it
 makes the disagreement bigger.
@@ -66,9 +67,10 @@ Decide which half is wrong, and only somebody who knows the player can:
   period. Mike Dirnt's rig cites the Ampeg SVT as his American Idiot rig and
   names the Mesa and Yamaha amplifiers he used in other years, so his Dookie
   records are the half to replace.
-- **The rig is wrong** where its evidence sits inside a wider period than the
-  years say. Flea's gear comes from a 2012 rundown and his records run 2011 to
-  2016, so widening `years` to that window is the honest fix and costs nothing.
+- **The years are wrong** where the gear evidence sits inside a wider period
+  than the ask claims. Flea's gear comes from a 2012 rundown and his records run
+  2011 to 2016, so widening `subject.years` on the ask to that window is the
+  honest fix and costs nothing.
 
 Then:
 
@@ -256,9 +258,9 @@ It also names a directory no rig answers to. Records are joined to a rig by the
 directory carrying the rig's identifier, so `mccartney` beside a rig called
 `paul-mccartney` is measured by nobody.
 
-Then carry the measurement back into the rig: the words its records earn, with
+Then carry the measurement back into the ask: the words its records earn, with
 both sides of the comparison, per
 [Measure a player's sound](measure-a-players-sound.md#6-compare-them-against-the-other-players).
-If the rig has no `played`, fill it first — every figure a record produces
+If the ask has no `played`, fill it first. Every figure a record produces
 carries the instrument, and without it the figure is attributed to the
-amplifier.
+amplifier, which did not cause it.

@@ -25,6 +25,7 @@ import (
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/tonestack/pkg/sdk/tone"
 )
 
 // Source says where rigs are read from.
@@ -41,11 +42,23 @@ type Source struct {
 	User string
 }
 
-// stored is one rig as read, and the text it was read from. The text is kept
-// because a copy keeps the comments and decoding drops them.
+// stored is one rig as read, the ask beside it, and the text each was read
+// from. The text is kept because a copy keeps the comments and decoding drops
+// them.
+//
+// Two documents rather than one. A rig says what the gear is and why each piece
+// of it is believed to be there; the ask says who it is for, how it should
+// sound, and how it is played. They are paired by filename stem, so
+// mike-dirnt.yaml and mike-dirnt.tone.yaml are one subject read two ways.
+//
+// The ask is a pointer because a rig without one is legal and ordinary:
+// somebody's own directory holds rigs they wrote, and nothing obliges them to
+// write down the ask that produced one.
 type stored struct {
-	spec rig.Spec
-	raw  []byte
+	spec   rig.Spec
+	raw    []byte
+	ask    *tone.Spec
+	askRaw []byte
 }
 
 // brokenFile is a file in somebody's own directory that is not a rig.

@@ -29,7 +29,7 @@ import (
 
 	"github.com/retr0h/tonestack/pkg/sdk"
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
 )
 
@@ -96,7 +96,7 @@ func Plural(
 // does that where four model names in a row do not.
 func Flow(
 	w io.Writer,
-	blocks []chain.Block,
+	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) string {
 	parts := make([]string, 0, len(blocks))

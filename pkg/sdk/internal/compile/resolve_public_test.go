@@ -27,8 +27,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
@@ -75,7 +75,6 @@ func recipe(
 	spec := rig.Spec{
 		Schema:     rig.SchemaName,
 		ID:         "test",
-		Subject:    rig.Subject{Kind: rig.KindArtist, Name: "Test Player"},
 		Instrument: rig.InstrumentBass,
 	}
 
@@ -235,7 +234,7 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got, _, _, err := compile.Resolve(tt.spec, s.cat, nil)
+			got, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
 
 			if tt.err != "" {
 				s.Require().ErrorIs(err, compile.ErrNoSuchGear)
@@ -245,8 +244,43 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 			}
 
 			s.Require().NoError(err)
-			s.Require().Equal("Test Player", got.Name)
+			s.Require().Equal("test", got.Name,
+				"no ask names it, so the rig's identifier does")
 			s.Require().Equal(tt.models, models(got))
+		})
+	}
+}
+
+// TestTheAskNamesThePreset covers where the name on the screen comes from.
+//
+// The subject is the ask's, and it is what somebody wants to read on the
+// device: "Mike Dirnt" rather than "mike-dirnt". A rig read off disk has no ask
+// beside it and no subject to be named after, so its identifier stands in,
+// which beats a blank heading.
+func (s *ResolvePublicTestSuite) TestTheAskNamesThePreset() {
+	tests := []struct {
+		name   string
+		intent compile.Intent
+		want   string
+	}{
+		{
+			name:   "the ask names the subject",
+			intent: compile.Intent{Name: "Test Player"},
+			want:   "Test Player",
+		},
+		{
+			name: "no ask at all",
+			want: "test",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, _, _, err := compile.Resolve(
+				recipe("Ampeg SVT", ""), tt.intent, s.cat, nil)
+
+			s.Require().NoError(err)
+			s.Require().Equal(tt.want, got.Name)
 		})
 	}
 }
@@ -272,7 +306,7 @@ func (s *ResolvePublicTestSuite) TestResolveChecksWhatTheRigClaims() {
 	device := "Kemper Profiler"
 	spec.Target = &rig.Target{Device: &device}
 
-	_, _, _, err := compile.Resolve(spec, s.cat, nil)
+	_, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
 
 	s.Require().ErrorIs(err, compile.ErrNoSuchValue)
 }
@@ -340,11 +374,11 @@ func (s *ResolvePublicTestSuite) TestGear() {
 }
 
 func (s *ResolvePublicTestSuite) TestResolveIsDeterministic() {
-	first, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), s.cat, nil)
+	first, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	for range 20 {
-		again, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), s.cat, nil)
+		again, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 
 		s.Require().NoError(err)
 		s.Require().Equal(models(first), models(again))
@@ -355,7 +389,8 @@ func (s *ResolvePublicTestSuite) TestResolveIsDeterministic() {
 // a person is told about decisions made on their behalf.
 func (s *ResolvePublicTestSuite) TestResolveNamesWhatItChoseForYou() {
 	_, added, _, err := compile.Resolve(
-		recipe("Ampeg SVT", "Some Cabinet Nobody Models"), s.cat, nil)
+		recipe("Ampeg SVT", "Some Cabinet Nobody Models"),
+		compile.Intent{}, s.cat, nil)
 
 	s.Require().NoError(err)
 	s.Require().NotEmpty(added, "a substitution is a choice made for somebody")
@@ -368,12 +403,12 @@ func (s *ResolvePublicTestSuite) TestResolveSetsParameters() {
 	tests := []struct {
 		name  string
 		spec  rig.Spec
-		check func(chain.Block)
+		check func(plan.Block)
 	}{
 		{
 			name: "every parameter starts at what Line 6 states",
 			spec: recipe("Ampeg SVT", ""),
-			check: func(b chain.Block) {
+			check: func(b plan.Block) {
 				blk, ok := s.cat.Block(b.Model)
 				s.Require().True(ok)
 
@@ -389,7 +424,7 @@ func (s *ResolvePublicTestSuite) TestResolveSetsParameters() {
 			// A value with no kind produces a preset the device rejects.
 			name: "a parameter with no stated default is skipped",
 			spec: recipe("Ampeg SVT", "", "Nothing Real"),
-			check: func(b chain.Block) {
+			check: func(b plan.Block) {
 				s.Require().Empty(b.Params)
 			},
 		},
@@ -397,7 +432,7 @@ func (s *ResolvePublicTestSuite) TestResolveSetsParameters() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got, _, _, err := compile.Resolve(tt.spec, s.cat, nil)
+			got, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
 
 			s.Require().NoError(err)
 			s.Require().NotEmpty(got.Blocks)
@@ -412,7 +447,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 	tests := []struct {
 		name    string
 		spec    rig.Spec
-		limits  chain.Limits
+		limits  plan.Limits
 		spilled bool
 	}{
 		{
@@ -449,7 +484,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			spec, _, _, err := compile.Resolve(tt.spec, s.cat, nil)
+			spec, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
 			s.Require().NoError(err)
 
 			fitted := compile.Fit(spec, s.cat, tt.limits)
@@ -484,7 +519,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 func (s *ResolvePublicTestSuite) TestFitBudgetsEachProcessor() {
 	spec, _, _, err := compile.Resolve(
 		recipe("Ampeg SVT", "", "Heavy Thing", "Heavy Thing", "Heavy Thing"),
-		s.cat, nil)
+		compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	used := map[int]float64{}
@@ -507,7 +542,8 @@ func (s *ResolvePublicTestSuite) TestFitBudgetsEachProcessor() {
 
 func (s *ResolvePublicTestSuite) TestFitNumbersEachProcessorFromZero() {
 	spec, _, _, err := compile.Resolve(
-		recipe("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"), s.cat, nil)
+		recipe("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),
+		compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	seen := map[int]map[int]bool{}
@@ -532,7 +568,7 @@ func (s *ResolvePublicTestSuite) TestFitNumbersEachProcessorFromZero() {
 // TestFitIgnoresABlockTheCatalogLacks keeps a catalog from another release
 // from dropping blocks on the floor.
 func (s *ResolvePublicTestSuite) TestFitIgnoresABlockTheCatalogLacks() {
-	spec, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), s.cat, nil)
+	spec, _, _, err := compile.Resolve(recipe("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	spec.Blocks[0].Model = "HD2_NotInThisCatalog"
@@ -570,7 +606,7 @@ func (s *ResolvePublicTestSuite) TestNoSuchGearError() {
 
 // models names what a chain resolved to, in order.
 func models(
-	c chain.Chain,
+	c plan.Plan,
 ) []catalog.ModelID {
 	out := make([]catalog.ModelID, 0, len(c.Blocks))
 	for _, b := range c.Blocks {
@@ -589,13 +625,13 @@ func TestResolvePublicTestSuite(
 // twoChips is a device with somewhere to put overflow.
 func twoChips(
 	ceiling float64,
-) chain.Limits {
-	return chain.Limits{MaxBlocks: 8, Paths: 2, ChipCeiling: ceiling}
+) plan.Limits {
+	return plan.Limits{MaxBlocks: 8, Paths: 2, ChipCeiling: ceiling}
 }
 
 // oneChip is a device with a single signal path, like the HX Stomp.
 func oneChip(
 	ceiling float64,
-) chain.Limits {
-	return chain.Limits{MaxBlocks: 8, Paths: 1, ChipCeiling: ceiling}
+) plan.Limits {
+	return plan.Limits{MaxBlocks: 8, Paths: 1, ChipCeiling: ceiling}
 }

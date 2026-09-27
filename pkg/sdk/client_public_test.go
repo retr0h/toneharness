@@ -28,6 +28,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -250,15 +251,13 @@ func (s *ClientPublicTestSuite) TestWithRecipes() {
 // ownRig is a rig of somebody's own, about "Their Player". extra is a line
 // such as aliases or extends, or empty.
 func ownRig(
+	stem string,
 	id string,
 	extra string,
 	instrument string,
-) string {
-	return "schema: RigSpec\nversion: 2\nid: " + id + "\n" + extra + `
-
-subject:
-  kind: artist
-  name: Their Player
+) map[string]string {
+	return map[string]string{
+		stem + ".yaml": "schema: RigSpec\nversion: 2\nid: " + id + `
 
 instrument: ` + instrument + `
 
@@ -268,12 +267,22 @@ chain:
     evidence:
       - { kind: cited, note: "a test says so" }
     confidence: high
+`,
+		stem + ".tone.yaml": "schema: ToneSpec\n" + extra + `
+
+subject:
+  kind: artist
+  name: Their Player
 
 confidence: high
-`
+`,
+	}
 }
 
 // rigsDir writes files under artists/ in a new directory, and returns it.
+//
+// A rig and the ask beside it are two files under one stem, so a case hands
+// over whatever ownRig produced rather than naming them one at a time.
 func (s *ClientPublicTestSuite) rigsDir(
 	files map[string]string,
 ) string {
@@ -299,7 +308,7 @@ func (s *ClientPublicTestSuite) TestWithUserRecipes() {
 		// locked leaves the directory unreadable.
 		locked bool
 		id     string
-		// want is the subject Recipe finds.
+		// want is the subject Recipe finds, which its ask carries.
 		want    string
 		variant string
 		listErr string
@@ -307,23 +316,21 @@ func (s *ClientPublicTestSuite) TestWithUserRecipes() {
 	}{
 		{
 			name:  "a rig of theirs over a shipped one",
-			files: map[string]string{"mine.yaml": ownRig("mike-dirnt", "", "bass")},
+			files: ownRig("mine", "mike-dirnt", "", "bass"),
 			id:    "mike-dirnt",
 			want:  "Their Player",
 		},
 		{
 			name: "an alias of theirs that is a shipped rig's alias",
-			files: map[string]string{
-				"mine.yaml": ownRig("their-player", "aliases: [DIRNT]", "bass"),
-			},
-			id:   "mike-dirnt",
-			want: "Their Player",
+			// Aliases are the ask's: another name for what somebody wanted.
+			files: ownRig("mine", "their-player", "aliases: [DIRNT]", "bass"),
+			id:    "mike-dirnt",
+			want:  "Their Player",
 		},
 		{
 			name: "a variant of theirs on a shipped rig",
-			files: map[string]string{
-				"mine.yaml": ownRig("mike-dirnt-live", "extends: mike-dirnt", "bass"),
-			},
+			// What a rig departs from is the ask's too.
+			files:   ownRig("mine", "mike-dirnt-live", "extends: mike-dirnt", "bass"),
 			id:      "mike-dirnt",
 			want:    "Mike Dirnt",
 			variant: "mike-dirnt-live",
@@ -390,7 +397,7 @@ func (s *ClientPublicTestSuite) TestWithUserRecipes() {
 
 				listedIDs := make([]string, 0, len(listed.Rigs))
 				for _, r := range listed.Rigs {
-					listedIDs = append(listedIDs, r.ID)
+					listedIDs = append(listedIDs, r.Rig.ID)
 				}
 
 				s.Require().Contains(listedIDs, "flea", "the shipped rigs are still listed")
@@ -405,7 +412,9 @@ func (s *ClientPublicTestSuite) TestWithUserRecipes() {
 
 			s.Require().NoError(showErr)
 			s.Require().NoError(buildErr)
-			s.Require().Equal(tt.want, shown.Rig.Subject.Name)
+			s.Require().NotNil(shown.Ask, "every rig here has an ask beside it")
+			s.Require().NotNil(shown.Ask.Subject)
+			s.Require().Equal(tt.want, shown.Ask.Subject.Name)
 			s.Require().FileExists(out)
 
 			if tt.variant != "" {
@@ -421,9 +430,7 @@ func (s *ClientPublicTestSuite) TestWithUserRecipes() {
 func (s *ClientPublicTestSuite) TestUserRecipesAreWrittenTo() {
 	ctx := context.Background()
 	user := s.rigsDir(nil)
-	beneath := s.rigsDir(map[string]string{
-		"guitarist.yaml": ownRig("guitarist", "", "guitar"),
-	})
+	beneath := s.rigsDir(ownRig("guitarist", "guitarist", "", "guitar"))
 
 	tests := []struct {
 		name string
@@ -1059,7 +1066,9 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 		body, err := os.ReadFile(got.Path)
 		s.Require().NoError(err)
 
-		return scaffolded{got: got, body: string(body)}, nil
+		return scaffolded{
+			got: got, body: string(body), ask: s.asked(got.Path),
+		}, nil
 	}
 
 	// Each row writes into a directory of its own, because a scaffold is
@@ -1105,16 +1114,16 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 			name: "Name decides who the rig is about",
 			in:   with(func(in *sdk.NewRecipe) { in.Name = "Other Player" }),
 			check: func(got scaffolded) {
-				s.Require().Contains(got.body, "  name: Other Player")
-				s.Require().Contains(written.body, "  name: Test Player")
+				s.Require().Contains(got.ask, "  name: Other Player")
+				s.Require().Contains(written.ask, "  name: Test Player")
 			},
 		},
 		{
 			name: "Band decides the group the rig names",
 			in:   with(func(in *sdk.NewRecipe) { in.Band = "The Test Band" }),
 			check: func(got scaffolded) {
-				s.Require().Contains(got.body, "  band: The Test Band")
-				s.Require().NotContains(written.body, "band:")
+				s.Require().Contains(got.ask, "  band: The Test Band")
+				s.Require().NotContains(written.ask, "band:")
 			},
 		},
 		{
@@ -1213,12 +1222,33 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 type scaffolded struct {
 	got  sdk.Scaffolded
 	body string
+	// ask is the text of the ToneSpec written beside the rig.
+	//
+	// Both, because a scaffold writes both and which of the two a claim lands
+	// in is the decision worth holding: who the rig is for is the ask's, and the
+	// gear is the rig's.
+	ask string
+}
+
+// asked is the ask written beside a rig, read by the rig's own path.
+//
+// The pair is matched by filename stem, so the ask needs no field pointing at
+// its rig and this needs nothing but the path the answer already gave back.
+func (s *ClientPublicTestSuite) asked(
+	at string,
+) string {
+	raw, err := os.ReadFile(strings.TrimSuffix(at, ".yaml") + ".tone.yaml")
+	s.Require().NoError(err)
+
+	return string(raw)
 }
 
 // extended is what an extend answered and the rig it wrote.
 type extended struct {
 	got  sdk.Scaffolded
 	body string
+	// ask is the text of the ToneSpec written beside the copy.
+	ask string
 }
 
 // TestExtend covers starting a rig as a copy of another.
@@ -1236,7 +1266,9 @@ func (s *ClientPublicTestSuite) TestExtend() {
 		body, err := os.ReadFile(got.Path)
 		s.Require().NoError(err)
 
-		return extended{got: got, body: string(body)}, nil
+		return extended{
+			got: got, body: string(body), ask: s.asked(got.Path),
+		}, nil
 	}
 
 	// Each row writes into a directory of its own, because a copy is never
@@ -1264,8 +1296,8 @@ func (s *ClientPublicTestSuite) TestExtend() {
 			name: "From decides which rig is copied",
 			in:   sdk.ExtendRecipe{From: "flea", ID: "the-copy"},
 			check: func(got extended) {
-				s.Require().Contains(got.body, "extends: flea")
-				s.Require().Contains(base.body, "extends: mike-dirnt")
+				s.Require().Contains(got.ask, "extends: flea")
+				s.Require().Contains(base.ask, "extends: mike-dirnt")
 				s.Require().NotEqual(base.body, got.body)
 				// The report names what the copy holds, which is the rig
 				// it copied: its name and its amp.
@@ -1293,8 +1325,8 @@ func (s *ClientPublicTestSuite) TestExtend() {
 			name: "Name decides who the copy is about",
 			in:   sdk.ExtendRecipe{From: "mike-dirnt", ID: "the-copy", Name: "Somebody Else"},
 			check: func(got extended) {
-				s.Require().Contains(got.body, "  name: Somebody Else")
-				s.Require().Contains(base.body, "  name: Mike Dirnt")
+				s.Require().Contains(got.ask, "  name: Somebody Else")
+				s.Require().Contains(base.ask, "  name: Mike Dirnt")
 				s.Require().Equal("Somebody Else", got.got.Name)
 			},
 		},
@@ -1302,8 +1334,8 @@ func (s *ClientPublicTestSuite) TestExtend() {
 			name: "Kind decides what the copy is attributed to",
 			in:   sdk.ExtendRecipe{From: "mike-dirnt", ID: "the-copy", Kind: "song"},
 			check: func(got extended) {
-				s.Require().Contains(got.body, "  kind: song")
-				s.Require().Contains(base.body, "  kind: artist")
+				s.Require().Contains(got.ask, "  kind: song")
+				s.Require().Contains(base.ask, "  kind: artist")
 			},
 		},
 		{

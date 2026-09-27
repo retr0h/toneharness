@@ -33,7 +33,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 )
 
@@ -128,7 +128,7 @@ func (s *WritePublicTestSuite) TestSetSpec() {
 		doc  *preset.Document
 		// a document read from this, for shapes the fixture does not have.
 		raw      string
-		spec     chain.Chain
+		spec     plan.Plan
 		contains []string
 		absent   []string
 		// the keys each tone entry is left holding, sorted.
@@ -137,9 +137,9 @@ func (s *WritePublicTestSuite) TestSetSpec() {
 		{
 			name: "the blocks that were on that processor are gone",
 			doc:  s.doc(),
-			spec: chain.Chain{
+			spec: plan.Plan{
 				Name: "Replaced",
-				Blocks: []chain.Block{{
+				Blocks: []plan.Block{{
 					Model:   "HD2_AmpBrit2204",
 					Params:  map[string]catalog.ParamValue{"Drive": catalog.Float(0.25)},
 					Enabled: true,
@@ -151,9 +151,9 @@ func (s *WritePublicTestSuite) TestSetSpec() {
 		{
 			name: "a document with no tone at all gets one",
 			doc:  &preset.Document{Schema: "L6Preset"},
-			spec: chain.Chain{
+			spec: plan.Plan{
 				Name:   "New",
-				Blocks: []chain.Block{{Model: "HD2_AmpX", Enabled: true}},
+				Blocks: []plan.Block{{Model: "HD2_AmpX", Enabled: true}},
 			},
 			contains: []string{"HD2_AmpX"},
 		},
@@ -164,8 +164,8 @@ func (s *WritePublicTestSuite) TestSetSpec() {
 			raw: `{"schema":"L6Preset","data":{"tone":{"dsp0":{` +
 				`"block0":{"@model":"Old","@position":0},` +
 				`"split":{"@model":"HD2_Split"}}}}}`,
-			spec: chain.Chain{
-				Blocks: []chain.Block{{Model: "New", Enabled: true}},
+			spec: plan.Plan{
+				Blocks: []plan.Block{{Model: "New", Enabled: true}},
 			},
 			contains: []string{"HD2_Split"},
 			absent:   []string{`"Old"`},
@@ -179,8 +179,8 @@ func (s *WritePublicTestSuite) TestSetSpec() {
 				`"dsp1":{"block0":{"@model":"OldB"},"block3":{"@model":"OldC"},` +
 				`"inputA":{"@model":"InB"},"outputA":{"@model":"OutB"}},` +
 				`"snapshot0":{"block0":true}}}}`,
-			spec: chain.Chain{
-				Blocks: []chain.Block{{Model: "New", Enabled: true}},
+			spec: plan.Plan{
+				Blocks: []plan.Block{{Model: "New", Enabled: true}},
 			},
 			absent: []string{`"OldA"`, `"OldB"`, `"OldC"`},
 			keys: map[string][]string{
@@ -228,15 +228,15 @@ func (s *WritePublicTestSuite) TestNew() {
 
 	tests := []struct {
 		name string
-		spec chain.Chain
+		spec plan.Plan
 		err  bool
 		says string
 	}{
 		{
 			name: "a chain of one block",
-			spec: chain.Chain{
+			spec: plan.Plan{
 				Name: "From Scratch",
-				Blocks: []chain.Block{{
+				Blocks: []plan.Block{{
 					Model:   "HD2_AmpSVBeastNrm",
 					Params:  map[string]catalog.ParamValue{"Drive": catalog.Float(0.53)},
 					Enabled: true,
@@ -247,8 +247,8 @@ func (s *WritePublicTestSuite) TestNew() {
 			// An attribute is the device's to set. A parameter named like
 			// one would overwrite it in every preset generated.
 			name: "a parameter named like an attribute",
-			spec: chain.Chain{
-				Blocks: []chain.Block{{
+			spec: plan.Plan{
+				Blocks: []plan.Block{{
 					Model:  "HD2_AmpSVBeastNrm",
 					Params: map[string]catalog.ParamValue{"@model": catalog.Enum("nope")},
 				}},
@@ -258,8 +258,8 @@ func (s *WritePublicTestSuite) TestNew() {
 		},
 		{
 			name: "a value with no kind at all",
-			spec: chain.Chain{
-				Blocks: []chain.Block{{
+			spec: plan.Plan{
+				Blocks: []plan.Block{{
 					Model:  "X",
 					Params: map[string]catalog.ParamValue{"Gain": zero},
 				}},

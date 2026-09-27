@@ -113,22 +113,16 @@ func Translate(
 	out := rig.Spec{
 		Schema:     rig.SchemaName,
 		ID:         identify(spec),
-		Subject:    subjectFor(spec),
 		Instrument: instrumentFor(setup, &notes),
 	}
 
-	// Words travel as words. A character term is how it should sound, which
-	// is the same thing a ToneSpec's words are, and turning them into knob
-	// positions here would be the guessing this project removed.
-	if spec.Words != nil && len(*spec.Words) > 0 {
-		terms := make([]rig.CharacterTerm, 0, len(*spec.Words))
-		for _, word := range *spec.Words {
-			terms = append(terms, rig.CharacterTerm{Term: word})
-		}
-
-		out.Character = &terms
-	}
-
+	// The words are not copied onto the rig, and that is the point of the
+	// split. How it should sound is what somebody asked for, so it stays on
+	// the ask; the rig says which gear answered. Nothing is lost by leaving
+	// them behind, because whoever wants them is holding the ask that has
+	// them: they reach the compiler as a compile.Intent beside the rig, which
+	// is the one place a word can be turned into a knob position, because it
+	// is the only place the resolved chain exists.
 	strung(spec, setup, &notes)
 
 	chain, err := chainFor(spec, setup, deps, &notes)
@@ -779,36 +773,6 @@ func identify(
 	}, name)
 
 	return strings.Trim(name, "-")
-}
-
-// subjectFor is who or what the rig is attributed to.
-func subjectFor(
-	spec tone.Spec,
-) rig.Subject {
-	if spec.Like != nil {
-		if spec.Like.Artist != nil && *spec.Like.Artist != "" {
-			out := rig.Subject{Kind: rig.KindArtist, Name: *spec.Like.Artist}
-			if spec.Like.Band != nil && *spec.Like.Band != "" {
-				out.Band = spec.Like.Band
-			}
-
-			return out
-		}
-
-		if spec.Like.Band != nil && *spec.Like.Band != "" {
-			return rig.Subject{Kind: rig.KindBand, Name: *spec.Like.Band}
-		}
-
-		if spec.Like.Song != nil && *spec.Like.Song != "" {
-			return rig.Subject{Kind: rig.KindSong, Name: *spec.Like.Song}
-		}
-	}
-
-	if spec.Genre != nil && *spec.Genre != "" {
-		return rig.Subject{Kind: rig.KindGenre, Name: *spec.Genre}
-	}
-
-	return rig.Subject{Kind: rig.KindSound, Name: "a sound somebody asked for"}
 }
 
 // instrumentFor is what the rig is played on.

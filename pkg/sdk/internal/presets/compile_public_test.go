@@ -75,7 +75,6 @@ func (s *CompilePublicTestSuite) handWritten(
 	s.Require().NoError(os.WriteFile(out, []byte(`schema: RigSpec
 version: 2
 id: typed
-subject: { kind: sound, name: Typed }
 instrument: bass
 chain:
   - { role: amp, gear: Ampeg SVT }
@@ -105,7 +104,7 @@ func (s *CompilePublicTestSuite) unknownGear(
 ) string {
 	path := filepath.Join(dir, "unknown.yaml")
 	s.Require().NoError(os.WriteFile(path, []byte(
-		"schema: RigSpec\nid: unknown\nsubject: {kind: sound, name: Unknown}\n"+
+		"schema: RigSpec\nid: unknown\n"+
 			"instrument: guitar\nchain:\n  - {role: amp, gear: Nonesuch 900}\n"),
 		0o600))
 
@@ -118,7 +117,7 @@ func (s *CompilePublicTestSuite) emptyChain(
 ) string {
 	path := filepath.Join(dir, "bad.yaml")
 	s.Require().NoError(os.WriteFile(path, []byte(
-		"schema: RigSpec\nid: x\nsubject: {kind: artist, name: X}\n"+
+		"schema: RigSpec\nid: x\n"+
 			"instrument: bass\nchain: []\n"), 0o600))
 
 	return path

@@ -15,6 +15,13 @@ asserting them more confidently.
 Evidence attaches to a claim, not to the document, because the amp may come from
 an interview and a drive figure from measuring a corpus.
 
+Which of the two files it lands in follows the claim. Why this piece of gear is
+in the chain goes on the rig, beside the gear, as above. Why the request asked
+for what it did goes on the ask: a word, the technique, an instrument it was
+played on. Measuring a record therefore writes onto the ask, since what comes
+back is a statement about how it should sound rather than about which box was in
+the room.
+
 **A URL does not make a claim true.** It makes it checkable, which is what lets
 somebody correct one line instead of re-deriving a rig.
 

@@ -29,11 +29,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/presets"
 	presetmocks "github.com/retr0h/tonestack/pkg/sdk/internal/presets/mocks"
 	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
+	"github.com/retr0h/tonestack/pkg/sdk/result"
 )
 
 // TypesPublicTestSuite covers standing something else in for a collaborator.
@@ -68,7 +68,7 @@ func (s *TypesPublicTestSuite) TestRecipes() {
 	want := errors.New("no such recipe here")
 
 	rec := presetmocks.NewMockRecipes(s.ctrl)
-	rec.EXPECT().Find(gomock.Any(), "mike-dirnt").Return(rig.Spec{}, want)
+	rec.EXPECT().Find(gomock.Any(), "mike-dirnt").Return(result.Known{}, want)
 
 	_, err := presets.Make(context.Background(), s.options(presets.Deps{Recipes: rec}))
 
@@ -92,8 +92,9 @@ func (s *TypesPublicTestSuite) TestCompiler() {
 	want := errors.New("cannot resolve that")
 
 	comp := presetmocks.NewMockCompiler(s.ctrl)
-	comp.EXPECT().Resolve(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(chain.Chain{}, nil, nil, want)
+	comp.EXPECT().Resolve(
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(plan.Plan{}, nil, nil, want)
 
 	_, err := presets.Make(context.Background(), s.options(presets.Deps{Compiler: comp}))
 

@@ -18,14 +18,14 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-package chain
+package plan
 
 // ValidateStructure reports the first block in s whose model the catalog does
 // not hold. It is the first of the validation layers and answers only one
 // question, so a failure names one cause.
 func ValidateStructure(
 	l BlockLookup,
-	s Chain,
+	s Plan,
 ) error {
 	for _, b := range s.Blocks {
 		if _, ok := l.Block(b.Model); !ok {

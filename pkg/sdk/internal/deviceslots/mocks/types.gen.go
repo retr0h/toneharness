@@ -14,9 +14,9 @@ import (
 	reflect "reflect"
 
 	catalog "github.com/retr0h/tonestack/pkg/sdk/catalog"
-	chain "github.com/retr0h/tonestack/pkg/sdk/chain"
 	backup "github.com/retr0h/tonestack/pkg/sdk/internal/backup"
 	wire "github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	plan "github.com/retr0h/tonestack/pkg/sdk/plan"
 	preset "github.com/retr0h/tonestack/pkg/sdk/preset"
 	rig "github.com/retr0h/tonestack/pkg/sdk/rig"
 	gomock "go.uber.org/mock/gomock"
@@ -125,10 +125,10 @@ func (m *MockTranslator) EXPECT() *MockTranslatorMockRecorder {
 }
 
 // Chain mocks base method.
-func (m *MockTranslator) Chain(name string, got wire.DevicePreset, cat *catalog.Catalog) (chain.Chain, error) {
+func (m *MockTranslator) Chain(name string, got wire.DevicePreset, cat *catalog.Catalog) (plan.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Chain", name, got, cat)
-	ret0, _ := ret[0].(chain.Chain)
+	ret0, _ := ret[0].(plan.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

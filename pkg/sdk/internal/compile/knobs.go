@@ -24,7 +24,7 @@ import (
 	"math"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
@@ -92,7 +92,7 @@ var knobWords = []knobWord{
 // alternative is a rig that says drive on a cabinet and builds anyway, which
 // is how `drive: 0.47` sat in the example rig doing nothing.
 func setKnobs(
-	params chain.Params,
+	params plan.Params,
 	blk catalog.Block,
 	set *rig.Settings,
 	field string,

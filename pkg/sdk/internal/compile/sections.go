@@ -27,7 +27,7 @@ import (
 	"strings"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -57,7 +57,7 @@ var ErrSectionContradicts = errors.New("a section plays and bypasses the same ro
 func Sections(
 	doc *preset.Document,
 	spec rig.Spec,
-	blocks []chain.Block,
+	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) error {
 	if spec.Sections == nil {
@@ -119,7 +119,7 @@ func Sections(
 //
 // A model the catalog does not carry has no role, so no section can name it.
 func rolesOf(
-	blocks []chain.Block,
+	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) []rig.Role {
 	out := make([]rig.Role, len(blocks))
@@ -218,7 +218,7 @@ func contradiction(
 func sectionEntry(
 	existing preset.Tone,
 	name string,
-	blocks []chain.Block,
+	blocks []plan.Block,
 	state []bool,
 ) preset.Tone {
 	entry := preset.Tone{}

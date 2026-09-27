@@ -294,8 +294,11 @@ func (s *DevicePublicTestSuite) TestShow() {
 			answer: s.answer("switches.bin"),
 			contains: []string{
 				"schema: RigSpec",
-				// The name comes from the listing.
-				"name: B15 Eras",
+				// The name comes from the listing, and reaches the rig as its
+				// identifier. A rig carries no subject: who a sound is for is
+				// something a person writes on an ask, and a preset read off a
+				// device says only what the pedal had in that slot.
+				"id: b15-eras",
 				// Somebody labelled and coloured these switches, and a rig
 				// carries what the pedal shows rather than what the block is
 				// called.
@@ -308,7 +311,7 @@ func (s *DevicePublicTestSuite) TestShow() {
 			name:     "a preset in another setlist",
 			at:       slotpkg.Address{Setlist: 1, Slot: 24},
 			answer:   s.answer("switches.bin"),
-			contains: []string{"name: B15 Eras"},
+			contains: []string{"id: b15-eras"},
 		},
 		{
 			name:     "one holding no blocks",

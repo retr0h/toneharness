@@ -1,0 +1,6 @@
+schema: ToneSpec
+
+subject:
+  kind: artist
+  name: Two Paths Pedal
+confidence: low

@@ -26,10 +26,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
-// CharacterPublicTestSuite covers the words a rig may use for how it sounds.
+// CharacterPublicTestSuite covers the words an ask may use for how it sounds.
 type CharacterPublicTestSuite struct {
 	suite.Suite
 }
@@ -95,18 +94,7 @@ func (s *CharacterPublicTestSuite) TestCheckCharacter() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var spec rig.Spec
-
-			if tt.in != nil {
-				terms := make([]rig.CharacterTerm, 0, len(tt.in))
-				for _, t := range tt.in {
-					terms = append(terms, rig.CharacterTerm{Term: t})
-				}
-
-				spec.Character = &terms
-			}
-
-			got := compile.CheckCharacter(spec)
+			got := compile.CheckCharacter(tt.in)
 
 			s.Require().Len(got, len(tt.want))
 
@@ -119,7 +107,7 @@ func (s *CharacterPublicTestSuite) TestCheckCharacter() {
 	}
 }
 
-// TestCheckAxes covers a rig answering one question twice.
+// TestCheckAxes covers an ask answering one question twice.
 func (s *CharacterPublicTestSuite) TestCheckAxes() {
 	tests := []struct {
 		name  string
@@ -153,24 +141,13 @@ func (s *CharacterPublicTestSuite) TestCheckAxes() {
 			terms: []string{"sounds like a wet paper bag", "mid-forward"},
 		},
 		{
-			name: "a rig that describes nothing",
+			name: "an ask that describes nothing",
 		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			spec := rig.Spec{}
-
-			if tt.terms != nil {
-				c := []rig.CharacterTerm(nil)
-				for _, term := range tt.terms {
-					c = append(c, rig.CharacterTerm{Term: term})
-				}
-
-				spec.Character = &c
-			}
-
-			s.Require().Equal(tt.want, compile.CheckAxes(spec))
+			s.Require().Equal(tt.want, compile.CheckAxes(tt.terms))
 		})
 	}
 }

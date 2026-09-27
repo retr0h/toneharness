@@ -20,11 +20,13 @@
 
 package recipes
 
-// ReplaceSubject sets one of a rig's subject fields in the rig's own text.
+// ReplaceSubject sets one of an ask's subject fields in the ask's own text.
+//
+// The ask rather than the rig, because the subject moved there: a rig is gear
+// and an identifier, and who it is for is a thing a person wrote.
 //
 // A helper with a contract of its own: what it does with a document that has
 // no such field, or one it cannot parse, is part of that contract and no
-// caller can ask it for either. A copy rewrites a rig that loaded, and a rig
-// that loaded has a subject carrying both fields, because the contract
-// requires them.
+// caller can ask it for either. A copy rewrites an ask that loaded, and a
+// subject that loaded carries both fields, because the contract requires them.
 var ReplaceSubject = replaceSubject

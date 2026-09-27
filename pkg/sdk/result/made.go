@@ -20,7 +20,7 @@
 
 package result
 
-import "github.com/retr0h/tonestack/pkg/sdk/chain"
+import "github.com/retr0h/tonestack/pkg/sdk/plan"
 
 // Made is a preset built from a recipe.
 //
@@ -29,7 +29,7 @@ import "github.com/retr0h/tonestack/pkg/sdk/chain"
 // than after.
 type Made struct {
 	// Chain is the signal path that was built.
-	Chain chain.Chain
+	Chain plan.Plan
 	// Added are the blocks nobody asked for. A recipe names an amp; a rig is
 	// four or five blocks, and a choice made on the player's behalf has to be
 	// visible.

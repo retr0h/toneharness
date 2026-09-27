@@ -1,12 +1,6 @@
 schema: RigSpec
 version: 2
 id: mike-dirnt-longview
-extends: mike-dirnt
-
-subject:
-  kind: song
-  name: Longview
-  band: Green Day
 
 instrument: bass
 
@@ -21,11 +15,3 @@ chain:
     evidence:
       - { kind: llm }
     confidence: medium
-
-character:
-  - term: soft-attack
-  - term: neck-forward
-  - term: clean
-
-technique:
-  attack: fingers

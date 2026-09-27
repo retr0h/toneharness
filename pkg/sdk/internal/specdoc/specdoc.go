@@ -109,10 +109,15 @@ type Link struct {
 //
 // A reader landing on either one should be able to see where they are
 // without holding the other in their head.
+//
+// It used to say a RigSpec is one "nobody writes", which was false the day it
+// was written: the nine rigs that ship are hand-authored research, and a person
+// correcting a chain edits one directly. Both documents are hand-authored and
+// the difference between them is what each says, not who types it.
 const pipeline = "```text\n" +
 	"ToneSpec + Setup   what somebody means, and what they have\n" +
-	"      ↓            tonestack tone build\n" +
-	"RigSpec            resolved, deterministic, nobody writes it\n" +
+	"      ↓            tonestack tone build, or somebody researching a player\n" +
+	"RigSpec            the gear in signal order, and why each piece is there\n" +
 	"      ↓            tonestack presets compile\n" +
 	".hlx               what the pedal eats\n" +
 	"```\n"

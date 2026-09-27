@@ -24,7 +24,7 @@ import (
 	"strconv"
 
 	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/tonestack/pkg/sdk/plan"
 	"github.com/retr0h/tonestack/pkg/sdk/preset"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
@@ -60,7 +60,7 @@ const (
 func Controllers(
 	doc *preset.Document,
 	spec rig.Spec,
-	blocks []chain.Block,
+	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) {
 	if spec.Controllers == nil {
@@ -113,7 +113,7 @@ func Controllers(
 // carry is taken at its word, because it is a model the device has and this
 // tool has never seen.
 func carries(
-	at chain.Block,
+	at plan.Block,
 	parameter string,
 	cat *catalog.Catalog,
 ) bool {

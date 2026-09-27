@@ -10,7 +10,7 @@ see [CONTRIBUTING.md](../CONTRIBUTING.md). These pages cover the domain.
 | [tonespec.md](tonespec.md)           | What a request may say, generated from the contract                                   |
 | [rigspec.md](rigspec.md)             | What a rig resolves to, generated from the contract                                   |
 | [knowledge.md](knowledge.md)         | How a request becomes a signal chain, and the four problems that entails.             |
-| [recipes.md](recipes.md)             | Writing a rig by hand, and the worked example beside it                               |
+| [recipes.md](recipes.md)             | Writing a rig and the ask beside it by hand, with the worked examples                 |
 | [algorithm.md](algorithm.md)         | Turning a request into knob positions, and what a target is                           |
 | [measuring.md](measuring.md)         | Pushing audio through a pedal and measuring what comes back                           |
 | [measurements.md](measurements.md)   | What the device actually does, generated from the readings                            |
@@ -21,8 +21,11 @@ see [CONTRIBUTING.md](../CONTRIBUTING.md). These pages cover the domain.
 
 Design records live under [superpowers/](superpowers/). They are dated, and
 superseded rather than rewritten. The current architecture is
-[ToneSpec is the ask](superpowers/specs/2026-09-19-tonespec-is-the-ask-design.md),
-which supersedes
+[ToneSpec is the ask](superpowers/specs/2026-09-19-tonespec-is-the-ask-design.md)
+with
+[A rig is a plan, for one device](superpowers/specs/2026-09-19-a-rig-is-a-plan-for-one-device-design.md)
+beside it, together superseding
 [RigSpec as the one model](superpowers/specs/2026-09-06-rigspec-as-the-one-model-design.md).
-Two documents a person writes, one a machine resolves, and a preset compiled
-from that.
+A ToneSpec is what somebody means, a RigSpec is the gear that answers it, and a
+PlanSpec is that rig on one device. The third does not exist yet, so a RigSpec
+still carries the Helix half.

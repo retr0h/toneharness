@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
+	"github.com/retr0h/tonestack/pkg/sdk/result"
 	"github.com/retr0h/tonestack/pkg/sdk/rig"
 )
 
@@ -134,7 +135,7 @@ func (s *RecipesPublicTestSuite) TestLoad() {
 				return
 			}
 
-			s.Require().Equal(tt.ids, ids(all))
+			s.Require().Equal(tt.ids, specIDs(all))
 		})
 	}
 }
@@ -195,7 +196,7 @@ func (s *RecipesPublicTestSuite) TestFind() {
 			}
 
 			s.Require().NoError(err)
-			s.Require().Equal(tt.want, got.ID)
+			s.Require().Equal(tt.want, got.Rig.ID)
 		})
 	}
 }
@@ -324,6 +325,19 @@ func (s *RecipesPublicTestSuite) TestShow() {
 // ids reads the identifiers out of a set of rigs, so a test can say which
 // were found without also saying what else each one holds.
 func ids(
+	all []result.Known,
+) []string {
+	out := make([]string, 0, len(all))
+	for _, r := range all {
+		out = append(out, r.Rig.ID)
+	}
+
+	return out
+}
+
+// specIDs is the same for the bare rigs Load answers with, which carries no
+// asks because nothing reading a whole directory of rigs has asked for them.
+func specIDs(
 	all []rig.Spec,
 ) []string {
 	out := make([]string, 0, len(all))
@@ -332,6 +346,69 @@ func ids(
 	}
 
 	return out
+}
+
+// TestAnAskThatWillNotLoadIsReported covers the half of a pair that is wrong.
+//
+// Reported the same way a rig that will not parse is, rather than leaving the
+// rig to load without it. A file somebody wrote and got wrong is the case where
+// saying so matters, and a rig quietly missing the words it was built from is
+// the same bug the split exists to remove.
+func (s *RecipesPublicTestSuite) TestAnAskThatWillNotLoadIsReported() {
+	tests := []struct {
+		name string
+		ask  string
+		// unreadable takes the mode off the file instead of writing nonsense.
+		unreadable bool
+		err        string
+	}{
+		{
+			name: "an ask claiming a field the contract refuses",
+			ask:  "schema: ToneSpec\nchian: []\n",
+			err:  `"chian" is unsupported`,
+		},
+		{
+			name: "an ask that is not a ToneSpec at all",
+			ask:  "schema: RigSpec\nid: theirs\n",
+			err:  "ToneSpec",
+		},
+		{
+			name:       "an ask nobody may open",
+			ask:        "schema: ToneSpec\n",
+			unreadable: true,
+			err:        "opening",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			if tt.unreadable && os.Geteuid() == 0 {
+				s.T().Skip("root reads a file whatever its mode")
+			}
+
+			dir := s.T().TempDir()
+			artists := filepath.Join(dir, "artists")
+			s.Require().NoError(os.MkdirAll(artists, 0o750))
+
+			s.Require().NoError(os.WriteFile(filepath.Join(artists, "theirs.yaml"),
+				[]byte("schema: RigSpec\nversion: 2\nid: theirs\ninstrument: bass\n"+
+					"chain:\n  - {role: amp, gear: Ampeg SVT}\n"), 0o600))
+
+			at := filepath.Join(artists, "theirs.tone.yaml")
+			s.Require().NoError(os.WriteFile(at, []byte(tt.ask), 0o600))
+
+			if tt.unreadable {
+				s.Require().NoError(os.Chmod(at, 0o000))
+			}
+
+			_, err := recipes.List(recipes.Source{Dir: dir})
+			s.Require().Error(err)
+			s.Require().Contains(err.Error(), tt.err)
+			// Named by the subject it belongs to rather than by a name with a
+			// stray ".tone" on the end.
+			s.Require().Contains(err.Error(), "theirs")
+		})
+	}
 }
 
 func TestRecipesPublicTestSuite(
