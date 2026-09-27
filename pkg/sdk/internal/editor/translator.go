@@ -42,13 +42,13 @@ type Translator struct{}
 // New returns a Translator.
 func New() *Translator { return &Translator{} }
 
-// Chain reads what a device laid out as a chain.
-func (*Translator) Chain(
+// Plan reads what a device laid out, as a plan for that device.
+func (*Translator) Plan(
 	name string,
 	got wire.DevicePreset,
 	cat *catalog.Catalog,
 ) (plan.Plan, error) {
-	return Chain(name, got, cat)
+	return Plan(name, got, cat)
 }
 
 // Controllers carries what an expression pedal or a footswitch moves.

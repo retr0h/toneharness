@@ -119,7 +119,7 @@ func Document(
 	cat *catalog.Catalog,
 	name string,
 ) (*preset.Document, bool, error) {
-	c, err := Chain(name, got, cat)
+	c, err := Plan(name, got, cat)
 	if err != nil {
 		return nil, false, err
 	}

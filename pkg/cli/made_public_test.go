@@ -70,7 +70,7 @@ func (s *MadePublicTestSuite) made(
 	mutate func(*sdk.Made),
 ) sdk.Made {
 	m := sdk.Made{
-		Chain: plan.Plan{
+		Plan: plan.Plan{
 			Name:   "Test Player",
 			Blocks: []plan.Block{{Model: "amp", Enabled: true}},
 		},

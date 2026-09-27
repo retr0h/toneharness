@@ -135,7 +135,7 @@ func Make(
 	}
 
 	return result.Made{
-		Chain:      spec,
+		Plan:       spec,
 		Added:      addedFrom(added),
 		Moved:      movedFrom(moved),
 		Unfamiliar: unfamiliar(intent),

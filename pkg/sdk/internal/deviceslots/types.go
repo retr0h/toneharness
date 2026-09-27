@@ -63,7 +63,7 @@ type Compiler interface {
 // Translator moves between what a device says and what a preset holds.
 type Translator interface {
 	// Chain reads what a device laid out as a chain.
-	Chain(name string, got wire.DevicePreset, cat *catalog.Catalog) (plan.Plan, error)
+	Plan(name string, got wire.DevicePreset, cat *catalog.Catalog) (plan.Plan, error)
 	// Controllers carries what an expression pedal or a footswitch moves.
 	Controllers(got wire.DevicePreset, cat *catalog.Catalog) *[]rig.Controller
 	// DeviceState carries the routing a device wraps a chain in.

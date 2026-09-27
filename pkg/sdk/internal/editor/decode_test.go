@@ -183,7 +183,7 @@ func (s *DecodeTestSuite) TestChainOf() {
 				title = "x"
 			}
 
-			got, err := Chain(title, wire.DevicePreset{Blocks: blocks}, cat)
+			got, err := Plan(title, wire.DevicePreset{Blocks: blocks}, cat)
 
 			if tt.errText != "" {
 				s.Require().Error(err)

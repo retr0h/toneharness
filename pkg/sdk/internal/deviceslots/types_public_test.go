@@ -105,7 +105,7 @@ func (s *TypesPublicTestSuite) TestTranslator() {
 	// The slot really holds six blocks. The double says it holds none, so a
 	// listing that shows it empty can only have asked the double.
 	tr := slotmocks.NewMockTranslator(s.ctrl)
-	tr.EXPECT().Chain("", gomock.Any(), gomock.Any()).Return(plan.Plan{}, nil)
+	tr.EXPECT().Plan("", gomock.Any(), gomock.Any()).Return(plan.Plan{}, nil)
 
 	listing, err := (&deviceslots.Flows{Catalogs: s.builtIn(), Translator: tr}).
 		List(context.Background(), dev, 0)

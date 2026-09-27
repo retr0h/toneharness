@@ -124,21 +124,6 @@ func (m *MockTranslator) EXPECT() *MockTranslatorMockRecorder {
 	return m.recorder
 }
 
-// Chain mocks base method.
-func (m *MockTranslator) Chain(name string, got wire.DevicePreset, cat *catalog.Catalog) (plan.Plan, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Chain", name, got, cat)
-	ret0, _ := ret[0].(plan.Plan)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Chain indicates an expected call of Chain.
-func (mr *MockTranslatorMockRecorder) Chain(name, got, cat any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Chain", reflect.TypeOf((*MockTranslator)(nil).Chain), name, got, cat)
-}
-
 // Controllers mocks base method.
 func (m *MockTranslator) Controllers(got wire.DevicePreset, cat *catalog.Catalog) *[]rig.Controller {
 	m.ctrl.T.Helper()
@@ -210,6 +195,21 @@ func (m *MockTranslator) Placements(doc *preset.Document, cat *catalog.Catalog) 
 func (mr *MockTranslatorMockRecorder) Placements(doc, cat any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Placements", reflect.TypeOf((*MockTranslator)(nil).Placements), doc, cat)
+}
+
+// Plan mocks base method.
+func (m *MockTranslator) Plan(name string, got wire.DevicePreset, cat *catalog.Catalog) (plan.Plan, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Plan", name, got, cat)
+	ret0, _ := ret[0].(plan.Plan)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Plan indicates an expected call of Plan.
+func (mr *MockTranslatorMockRecorder) Plan(name, got, cat any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Plan", reflect.TypeOf((*MockTranslator)(nil).Plan), name, got, cat)
 }
 
 // RoutingStates mocks base method.

@@ -1459,7 +1459,7 @@ func (s *ClientPublicTestSuite) TestBuild() {
 
 			s.Require().NoError(err)
 			s.Require().Equal(out, got.Path)
-			s.Require().NotEmpty(got.Chain.Blocks)
+			s.Require().NotEmpty(got.Plan.Blocks)
 		})
 	}
 }

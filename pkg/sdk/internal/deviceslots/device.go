@@ -236,7 +236,7 @@ func (f *Flows) chainAt(
 		return nil, nil
 	}
 
-	c, err := f.translator().Chain("", preset, cat)
+	c, err := f.translator().Plan("", preset, cat)
 	if err != nil {
 		return nil, nil
 	}

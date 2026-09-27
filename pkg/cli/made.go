@@ -56,12 +56,12 @@ func made(
 	cat *catalog.Catalog,
 ) error {
 	if _, err := fmt.Fprintf(
-		w, "\n%s%s\n\n", paint.Indent, paint.Title(w, m.Chain.Name),
+		w, "\n%s%s\n\n", paint.Indent, paint.Title(w, m.Plan.Name),
 	); err != nil {
 		return err
 	}
 
-	if err := paint.Chain(w, m.Chain, cat); err != nil {
+	if err := paint.Chain(w, m.Plan, cat); err != nil {
 		return err
 	}
 

@@ -38,7 +38,7 @@ import (
 // symbol list is what puts names back on both — and that table is longer than
 // the block list, because it holds a mono and a stereo entry for the same
 // model.
-func Chain(
+func Plan(
 	name string,
 	got wire.DevicePreset,
 	cat *catalog.Catalog,

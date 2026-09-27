@@ -311,7 +311,7 @@ func built(
 	m result.Made,
 ) string {
 	parts := make([]string, 0, 2+2*len(m.Added)+len(m.Unfamiliar))
-	parts = append(parts, m.Chain.Name, m.Path)
+	parts = append(parts, m.Plan.Name, m.Path)
 
 	for _, a := range m.Added {
 		parts = append(parts, a.Name, a.Reason)

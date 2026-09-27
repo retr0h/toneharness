@@ -75,8 +75,8 @@ func (s *TranslatorPublicTestSuite) TestChain() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			want, wantErr := editor.Chain("one", tt.got, s.cat)
-			got, err := editor.New().Chain("one", tt.got, s.cat)
+			want, wantErr := editor.Plan("one", tt.got, s.cat)
+			got, err := editor.New().Plan("one", tt.got, s.cat)
 
 			s.Require().Equal(wantErr == nil, err == nil)
 			s.Require().Equal(want, got)

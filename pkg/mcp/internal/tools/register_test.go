@@ -65,8 +65,8 @@ func (s *RegisterTestSuite) TestMustOutputSchema() {
 			name:   "a built chain",
 			schema: func() *jsonschema.Schema { return mustOutputSchema[sdk.Made]() },
 			value: sdk.Made{
-				Chain: plan.Plan{Name: "Longview", Blocks: []plan.Block{block}},
-				Path:  "longview.hlx",
+				Plan: plan.Plan{Name: "Longview", Blocks: []plan.Block{block}},
+				Path: "longview.hlx",
 			},
 		},
 		{

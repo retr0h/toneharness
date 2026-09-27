@@ -65,7 +65,7 @@ func (s *EncodeTestSuite) asPreset(
 	name string,
 	got wire.DevicePreset,
 ) *preset.Document {
-	c, err := Chain(name, got, s.cat)
+	c, err := Plan(name, got, s.cat)
 	s.Require().NoError(err)
 
 	doc, err := preset.Blank()

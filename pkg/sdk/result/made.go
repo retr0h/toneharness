@@ -28,8 +28,12 @@ import "github.com/retr0h/tonestack/pkg/sdk/plan"
 // decisions, and a wrong amp should be visible before anybody plugs in rather
 // than after.
 type Made struct {
-	// Chain is the signal path that was built.
-	Chain plan.Plan
+	// Plan is the signal path that was built, realised for one device.
+	//
+	// Named for what it is rather than for `chain`, which since 2026-09-26 means
+	// the portable half: gear in signal order, named the way a musician names it.
+	// This holds model identifiers and DSP positions, so it is the other one.
+	Plan plan.Plan
 	// Added are the blocks nobody asked for. A recipe names an amp; a rig is
 	// four or five blocks, and a choice made on the player's behalf has to be
 	// visible.
