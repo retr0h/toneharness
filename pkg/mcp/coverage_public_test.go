@@ -24,6 +24,7 @@ import (
 	"context"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -87,11 +88,26 @@ func toolName(
 	return strings.Join(path[1:], "_")
 }
 
+// sorting serialises the first walk of the command tree.
+//
+// cobra sorts a command's children in place the first time Commands() is
+// asked for them, so walking one tree from two tests at once is a write and a
+// read of the same slice. Both tests here walk cmd.Root(), which is one
+// global, and the race detector failed the gate at random rather than every
+// run: whichever test got there first did the sorting.
+//
+// Once the walk has happened the sorting is done and every later Commands()
+// only reads, so serialising the first one is enough.
+var sorting sync.Mutex
+
 // leaves is every command an agent could be asked to run: runnable, visible,
 // and not cobra's own.
 func leaves(
 	root *cobra.Command,
 ) []*cobra.Command {
+	sorting.Lock()
+	defer sorting.Unlock()
+
 	var out []*cobra.Command
 
 	var walk func(*cobra.Command)
