@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"maps"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -33,6 +34,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/cli/internal/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
@@ -362,6 +364,61 @@ func (s *ControlsRunTestSuite) TestControlsCarriesOnPastAControlTheDeviceRefuses
 
 	s.Require().NoError(err)
 	s.Require().Contains(said, "refused")
+}
+
+// settling is a bench whose first reading is the stream still coming up.
+//
+// What an HX Stomp does. Six takes of a punk chain read low 19.35 once and
+// then 31.56 to 31.73 five times over, so the first take is the one reading
+// in the set that describes the audio device rather than the chain.
+type settling struct {
+	seen int
+}
+
+func (b *settling) Name() string { return "settling" }
+
+func (b *settling) Through(
+	_ context.Context,
+	signal []float32,
+) ([]float32, error) {
+	b.seen++
+
+	// A tone an octave up stands in for an unsettled stream: it is a reading
+	// that disagrees with every other one, which is the only property of the
+	// first take that matters here.
+	hz := 110.0
+	if b.seen == 1 {
+		hz = 220.0
+	}
+
+	out := make([]float32, len(signal))
+	for i := range out {
+		out[i] = float32(0.2 * math.Sin(2*math.Pi*hz*float64(i)/sdk.Rate))
+	}
+
+	return out, nil
+}
+
+// TestTheFirstReadingAfterABenchOpensIsThrownAway covers the noise floor.
+//
+// The floor is the lower bound on every tolerance the loop solves against, so
+// one unsettled take does not merely add noise: it stretches the target until
+// anything hits it. On hardware it took the floor from 0.0010 of a band to
+// 0.1238, and a run then reported arriving while its residual grew from 1.1
+// tolerances out to 2.4.
+func (s *ControlsRunTestSuite) TestTheFirstReadingAfterABenchOpensIsThrownAway() {
+	b := &settling{}
+
+	floor, _, err := steady(s.T().Context(), b, make([]float32, sdk.Rate), 3)
+
+	s.Require().NoError(err)
+	s.Require().Equal(4, b.seen, "three takes, and one thrown away before them")
+
+	// The three kept takes are identical, so every figure sits on its own
+	// floor rather than on a spread. Keeping the first would put the centre
+	// an octave away from the other three.
+	s.Require().InDelta(floors[audio.KeyCentroid], floor[audio.KeyCentroid], 0.001,
+		"the kept takes agree, so the centre wanders by its floor and no more")
 }
 
 func TestControlsRunTestSuite(

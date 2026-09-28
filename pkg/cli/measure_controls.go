@@ -408,6 +408,25 @@ func steady(
 	signal []float32,
 	takes int,
 ) (map[audio.Figure]float64, float64, error) {
+	// One reading thrown away before any is kept, because the first one after
+	// a bench opens is the audio stream still settling rather than the chain.
+	//
+	// Six takes of a punk chain, the first against the other five: low 19.35
+	// against 31.56 to 31.73, high 80.35 against 67.96 to 68.14, the centre
+	// 2109.7Hz against 1805 to 1809. The five that follow agree to three
+	// decimal places; the first is twelve points of a band away from all of
+	// them.
+	//
+	// What that cost is every tolerance in the loop. The floor is the lower
+	// bound on all of them, so one unsettled take stretched it from 0.0010 of
+	// a band to 0.1238 and made the target that much easier to hit. A run then
+	// reported arriving while its residual grew from 1.1 tolerances out to
+	// 2.4, which is the loop saying a chain had converged as it walked away
+	// from the target.
+	if _, err := sdk.Fingerprint(ctx, bench, signal); err != nil {
+		return nil, 0, err
+	}
+
 	rows := make([]measured.Figures, 0, takes)
 
 	for range takes {
