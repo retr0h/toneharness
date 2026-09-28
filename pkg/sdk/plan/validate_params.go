@@ -66,7 +66,7 @@ func checkParam(
 
 	switch p.Type {
 	case catalog.ParamFloat:
-		f, ok := val.Float()
+		f, ok := whole(val)
 		if !ok {
 			return mismatch(blk, key, p.Type, val.Type())
 		}
@@ -108,6 +108,31 @@ func checkParam(
 }
 
 // mismatch reports a value whose kind is not the kind the catalog declares.
+// whole reads a float, accepting a whole number written without a point.
+//
+// Neither YAML nor JSON can tell 6 from 6.0. ParamValue writes a whole-numbered
+// float with the point for exactly that reason, and sigs.k8s.io/yaml marshals
+// through JSON and then flattens it away again, so a Deluxe Comp's Knee of 6
+// left the device as a float and came back as an integer.
+//
+// The catalog is what knows which it was, which is the same reason typesOf
+// exists on the way in. A plan is refused for naming a parameter that does not
+// exist or a value out of range; it is not refused for a format that cannot
+// spell the difference.
+func whole(
+	val catalog.ParamValue,
+) (float64, bool) {
+	if f, ok := val.Float(); ok {
+		return f, true
+	}
+
+	if i, ok := val.Int(); ok {
+		return float64(i), true
+	}
+
+	return 0, false
+}
+
 func mismatch(
 	blk catalog.Block,
 	key string,
@@ -126,7 +151,15 @@ func checkRange(
 	v float64,
 	p catalog.Param,
 ) error {
-	if v < p.Min || v > p.Max {
+	// Compared in the precision the device speaks. A Helix sends a parameter as
+	// a float32, so a cabinet's LowCut sitting exactly on its minimum of 19.9
+	// comes back as 19.899999618530273 and is below it by an amount that exists
+	// only because this comparison is happening in float64.
+	//
+	// A plan read off a device and written straight back was refused for holding
+	// the value the device itself reported, which is the round trip this format
+	// exists to survive.
+	if float32(v) < float32(p.Min) || float32(v) > float32(p.Max) {
 		return &catalog.BadParamError{
 			Model: string(blk.ID), Key: key,
 			Reason: fmt.Sprintf("%v out of range [%v, %v]", v, p.Min, p.Max),

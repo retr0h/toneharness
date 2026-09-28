@@ -75,6 +75,8 @@ type TuneOptions struct {
 	// Nudge is how far a control is moved to read its slope, as a fraction of
 	// its own range.
 	Nudge float64
+	// Out is where the tuned chain goes, as a rig. Empty keeps nothing.
+	Out string
 }
 
 // Genres is what a genre measures as across its records.
@@ -156,7 +158,68 @@ func Tune(
 	_, _ = fmt.Fprintf(w, "  the loop wanders %.4f of a band and %.1fHz\n",
 		inCorpusScale(floor)[audio.KeyLow], floor[audio.KeyCentroid])
 
-	return converge(ctx, w, opts, bench, signal, preset, knobs, aims, settled)
+	if err := converge(ctx, w, opts, bench, signal, preset, knobs, aims, settled); err != nil {
+		return err
+	}
+
+	return keepTuned(ctx, w, opts)
+}
+
+// keep writes the tuned chain out, so the answer survives the next preset
+// selection.
+//
+// Read back off the device rather than written from what the solver believes it
+// set. Those are two different claims and only one of them is checkable: a move
+// the pedal refused, clamped or rounded is a move the solver still has in its
+// own record, and what leaves here has to be what the hardware holds.
+//
+// A plan rather than a rig, and that is the whole point. A rig is the portable
+// half and has nowhere to put a Helix answer: gear in signal order, named the
+// way a musician names it. Every knob this loop just solved for lives on the
+// plan, so writing the rig would export the chain and throw away the tuning,
+// which is what the first version of this did.
+//
+// Nothing is written to a slot. A slot is flash and a burst of writes has
+// corrupted a setlist, so tuning happens in the edit buffer and the answer
+// leaves as a file. `presets compile --plan` is what puts it back.
+func keepTuned(
+	ctx context.Context,
+	w io.Writer,
+	opts TuneOptions,
+) error {
+	if opts.Out == "" {
+		_, _ = fmt.Fprintf(w,
+			"\n  Nothing kept. The pedal holds this until the next preset is "+
+				"selected; --out writes it as a rig.\n")
+
+		return nil
+	}
+
+	read, err := opts.Client.Current(ctx, sdk.FormatRig)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(opts.Out) //nolint:gosec // a path the caller named
+	if err != nil {
+		return fmt.Errorf("writing %s: %w", opts.Out, err)
+	}
+
+	if err := plan.Write(f, read.Plan); err != nil {
+		_ = f.Close()
+
+		return fmt.Errorf("writing %s: %w", opts.Out, err)
+	}
+
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("writing %s: %w", opts.Out, err)
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"\n  [ok] wrote %s, %d blocks as the device reports them\n",
+		opts.Out, len(read.Plan.Blocks))
+
+	return nil
 }
 
 // targetFor is what the genre's records measure as, middle and spread.

@@ -69,6 +69,40 @@ func (s *ValidateParamsPublicTestSuite) TestValidateParams() {
 			params: map[string]catalog.ParamValue{"Gain": catalog.Float(1)},
 		},
 		{
+			// Neither YAML nor JSON can spell the difference between 6 and
+			// 6.0, and sigs.k8s.io/yaml marshals through JSON and flattens
+			// the point away. A Deluxe Comp's Knee of 6 left a device as a
+			// float and came back an integer, and a plan read off the pedal
+			// and written straight back was refused for it.
+			name:   "a whole number where the catalog says float",
+			params: map[string]catalog.ParamValue{"Gain": catalog.Int(1)},
+		},
+		{
+			// A Helix sends a parameter as a float32, so a cabinet's LowCut
+			// sitting exactly on its minimum of 19.9 reads back as
+			// 19.899999618530273 and is under it by an amount that exists
+			// only in float64. Ranges are compared in the precision the
+			// device speaks.
+			name: "a float32 value sitting exactly on its bound",
+			declared: map[string]catalog.Param{
+				"LowCut": {Type: catalog.ParamFloat, Min: 19.9, Max: 500},
+			},
+			params: map[string]catalog.ParamValue{
+				"LowCut": catalog.Float(float64(float32(19.9))),
+			},
+		},
+		{
+			name: "a float32 value genuinely under its bound",
+			declared: map[string]catalog.Param{
+				"LowCut": {Type: catalog.ParamFloat, Min: 19.9, Max: 500},
+			},
+			params: map[string]catalog.ParamValue{
+				"LowCut": catalog.Float(19.0),
+			},
+			err:    catalog.ErrBadParam,
+			badKey: "LowCut",
+		},
+		{
 			name: "a switch, which has no range to check",
 			declared: map[string]catalog.Param{
 				"Bright": {
