@@ -273,8 +273,14 @@ type session struct {
 	// closing keeps the idle acknowledgement out while Close is talking.
 	closing bool
 	// inflight counts exchanges, writes and channel openings under way. While
-	// any is, the idle acknowledgement sends nothing on any channel.
+	// any is, the idle acknowledgement sends nothing on a channel somebody is
+	// waiting on an answer from.
 	inflight int
+	// delicate counts the writes and channel openings among those, which are
+	// the windows a device punishes for anything sent inside them. The events
+	// channel is acknowledged during an ordinary exchange and not during one
+	// of these.
+	delicate int
 	// passes counts the acknowledger's rounds, so a test can wait for it to
 	// have looked rather than for time to pass.
 	passes atomic.Uint64

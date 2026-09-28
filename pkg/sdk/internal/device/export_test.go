@@ -237,6 +237,25 @@ func (s *session) Windows() uint64 { return s.progress().windows }
 // for it to have looked rather than for time to pass.
 func (s *session) IdlePasses() uint64 { return s.passes.Load() }
 
+// Hold marks an operation in flight and returns the way to end it, so a test
+// can see what the idle acknowledgement does inside one.
+//
+// delicate picks which: a write or a channel opening holds every channel, an
+// ordinary exchange holds only the one it waits on.
+func (s *session) Hold(
+	delicate bool,
+) func() {
+	if delicate {
+		_ = s.beginWrite()
+
+		return s.finishWrite
+	}
+
+	_ = s.begin()
+
+	return s.finish
+}
+
 // LoopDone closes once the read loop has returned.
 func (s *session) LoopDone() <-chan struct{} { return s.loopDone }
 

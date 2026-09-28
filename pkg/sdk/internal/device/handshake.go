@@ -65,9 +65,10 @@ func (s *session) openChannel(
 	s.rxMu.Lock()
 	c.open = true
 	s.inflight++
+	s.delicate++
 	s.rxMu.Unlock()
 
-	defer s.finish()
+	defer s.finishWrite()
 
 	for i, service := range services {
 		// A channel serving two services is opened twice, from scratch, with

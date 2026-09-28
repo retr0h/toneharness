@@ -212,10 +212,27 @@ func (s *session) channel(
 	return c, nil
 }
 
-// begin marks an exchange or a write in flight, which keeps the idle
-// acknowledgement off every channel until finish. A session whose loop has
-// ended starts nothing: no read is posted to catch the answer.
+// begin marks an exchange in flight, which keeps the idle acknowledgement off
+// the channel it is waiting on until finish. A session whose loop has ended
+// starts nothing: no read is posted to catch the answer.
 func (s *session) begin() error {
+	return s.start1(false)
+}
+
+// beginWrite marks a write or a channel opening in flight.
+//
+// Apart from an exchange because of what an idle acknowledgement may do
+// inside one. A write is the window a device punishes, from its first chunk
+// through its answer and the flash pause, and an opening is the most fragile
+// moment a session has. Nothing goes out on any channel inside either.
+func (s *session) beginWrite() error {
+	return s.start1(true)
+}
+
+// start1 counts one operation in flight.
+func (s *session) start1(
+	delicate bool,
+) error {
 	if err := s.ended(); err != nil {
 		return err
 	}
@@ -225,15 +242,28 @@ func (s *session) begin() error {
 
 	s.inflight++
 
+	if delicate {
+		s.delicate++
+	}
+
 	return nil
 }
 
-// finish marks one exchange or write over.
+// finish marks one exchange over.
 func (s *session) finish() {
 	s.rxMu.Lock()
 	defer s.rxMu.Unlock()
 
 	s.inflight--
+}
+
+// finishWrite marks one write or channel opening over.
+func (s *session) finishWrite() {
+	s.rxMu.Lock()
+	defer s.rxMu.Unlock()
+
+	s.inflight--
+	s.delicate--
 }
 
 // message takes one complete envelope out of a channel's buffer. The caller

@@ -263,18 +263,38 @@ func (s *session) idleAck(
 // idleDue reports a channel owed an idle acknowledgement, and drops the
 // complete envelopes nobody asked for.
 //
-// Nothing is due on any channel while an exchange, a write or a handshake is
-// under way: a write is the window a device punishes, from its first chunk
-// through its answer and the flash pause, and before the loop nothing was
-// ever sent inside one. A partial envelope stays until the rest of it
-// arrives, because the framing has no marker to resynchronise on.
+// A write and a channel opening still hold every channel: a write is the
+// window a device punishes, from its first chunk through its answer and the
+// flash pause, and before the loop nothing was ever sent inside one.
+//
+// An ordinary exchange holds only the channel it is waiting on, and the
+// events channel is the reason. That channel carries what the device says
+// unasked and nobody sends on it, so awaitReply never acknowledges it: it
+// acknowledges the channel it is waiting on and no other. Holding it for the
+// length of every exchange deadlocked the session against the device, because
+// the device stops draining what it is sent once what it has sent goes
+// unacknowledged.
+//
+// A tune run died with the control channel 6.042s into a six second wait for
+// an opcode 30 that was never going to come, events sitting on 408 bytes
+// received against 9 acknowledged and quiet for 2.439s, and inflight at 1.
+// Every part of that is this function refusing, for the whole of an exchange,
+// to acknowledge a channel that had nothing to do with it.
+//
+// A partial envelope stays until the rest of it arrives, because the framing
+// has no marker to resynchronise on.
 func (s *session) idleDue(
 	c *channel,
 ) bool {
 	s.rxMu.Lock()
 	defer s.rxMu.Unlock()
 
-	if s.closing || s.inflight > 0 || !c.owed() || time.Since(c.lastRx) < s.budgets.idle {
+	held := s.inflight
+	if c.name == channelEvents {
+		held = s.delicate
+	}
+
+	if s.closing || held > 0 || !c.owed() || time.Since(c.lastRx) < s.budgets.idle {
 		return false
 	}
 

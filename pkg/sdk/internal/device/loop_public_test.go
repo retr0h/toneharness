@@ -475,6 +475,76 @@ func allAcks(
 	return total
 }
 
+// TestEventsAreSettledInsideAnExchange covers the deadlock this loop had.
+//
+// The events channel carries what the device says unasked and nobody sends on
+// it, so awaitReply never acknowledges it: it acknowledges the channel it is
+// waiting on and no other. While the idle acknowledgement was held off every
+// channel for the length of every exchange, nothing acknowledged events at
+// all inside one, and a device stops draining what it is sent once what it
+// has sent goes unacknowledged.
+//
+// On hardware that read as a tune run dying with the control channel 6.042s
+// into a six second wait for an opcode 30, events on 408 bytes received
+// against 9 acknowledged and quiet for 2.439s, and one exchange in flight.
+//
+// A write still holds it, which is the case the hold was written for.
+func (s *LoopPublicTestSuite) TestEventsAreSettledInsideAnExchange() {
+	tests := []struct {
+		name     string
+		delicate bool
+		settled  bool
+	}{
+		{
+			name:    "an ordinary exchange, which events has nothing to do with",
+			settled: true,
+		},
+		{
+			// The window a device punishes for anything sent inside it.
+			name:     "a write",
+			delicate: true,
+			settled:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			d := answers(s.ctrl)
+
+			b := device.ShortBudgets()
+			b.Idle = time.Millisecond
+
+			session := device.NewOpenTestSession(s.T(), device.TestSender(d.out), d.in, b)
+
+			done := session.Hold(tt.delicate)
+			defer done()
+
+			d.tell(device.FrameFor(device.EventsChannel, wire.MsgData, []byte("noise")))
+
+			s.Require().Eventually(func() bool {
+				return session.Received(device.EventsChannel) > 0
+			}, 5*time.Second, time.Millisecond)
+
+			if !tt.settled {
+				// Looked at and left alone, rather than not looked at.
+				s.looked(session)
+
+				count, _ := acks(d, device.EventsChannel)
+				s.Require().Zero(count, "nothing goes out inside a write")
+
+				return
+			}
+
+			s.Require().Eventually(func() bool {
+				count, _ := acks(d, device.EventsChannel)
+
+				return count > 0
+			}, 5*time.Second, time.Millisecond,
+				"events is settled although an exchange is in flight")
+		})
+	}
+}
+
 // TestIdleAck settles what arrives on a channel nobody is using, and never
 // inside a write.
 func (s *LoopPublicTestSuite) TestIdleAck() {

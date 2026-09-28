@@ -154,11 +154,11 @@ func (s *session) write(
 	// In flight from the first chunk through the flash pause, so the idle
 	// acknowledgement sends nothing on any channel inside the window a device
 	// punishes.
-	if err := s.begin(); err != nil {
+	if err := s.beginWrite(); err != nil {
 		return err
 	}
 
-	defer s.finish()
+	defer s.finishWrite()
 
 	if err := s.commit(ctx, c, opcode, args); err != nil {
 		return err
