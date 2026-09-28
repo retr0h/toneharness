@@ -475,6 +475,47 @@ func allAcks(
 	return total
 }
 
+// TestEventsAreSettledWithoutWaitingForQuiet covers a device that keeps
+// talking.
+//
+// The idle wait is there so a channel somebody is reading is not acknowledged
+// mid-answer. Events is never that, and waiting on it only delayed the one
+// acknowledgement the device is waiting for: it chatters about every 46ms
+// while a chain is tuned, so a 300ms wait almost never opens.
+//
+// The budget here is an hour, so a rule that waits for quiet acknowledges
+// nothing and the test fails rather than passes slowly.
+func (s *LoopPublicTestSuite) TestEventsAreSettledWithoutWaitingForQuiet() {
+	d := answers(s.ctrl)
+
+	// Idle is an hour in these budgets, which is the point.
+	session := device.NewOpenTestSession(
+		s.T(), device.TestSender(d.out), d.in, device.ShortBudgets())
+
+	d.tell(device.FrameFor(device.EventsChannel, wire.MsgData, []byte("noise")))
+
+	s.Require().Eventually(func() bool {
+		count, _ := acks(d, device.EventsChannel)
+
+		return count > 0
+	}, 5*time.Second, time.Millisecond,
+		"events is settled although it has not gone quiet")
+
+	// The control channel still waits. Somebody reads it, and an
+	// acknowledgement sent into the middle of an answer is what the wait is
+	// for.
+	d.tell(device.Reply(device.ControlChannel, []byte{0x80}))
+
+	s.Require().Eventually(func() bool {
+		return session.Received(device.ControlChannel) > 0
+	}, 5*time.Second, time.Millisecond)
+
+	s.looked(session)
+
+	count, _ := acks(d, device.ControlChannel)
+	s.Require().Zero(count, "control still waits out its idle budget")
+}
+
 // TestEventsAreSettledInsideAnExchange covers the deadlock this loop had.
 //
 // The events channel carries what the device says unasked and nobody sends on

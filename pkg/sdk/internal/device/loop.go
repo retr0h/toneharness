@@ -290,11 +290,30 @@ func (s *session) idleDue(
 	defer s.rxMu.Unlock()
 
 	held := s.inflight
+	quiet := s.budgets.idle
+
+	// The events channel is settled as soon as it owes anything, rather than
+	// once it has gone quiet.
+	//
+	// The wait exists so a channel somebody is reading is not acknowledged
+	// mid-answer, and events is never that: nothing reads it and its payloads
+	// are thrown away as they arrive. Waiting on it only ever delayed the one
+	// acknowledgement the device is waiting for.
+	//
+	// It has to be dropped rather than shortened because the device sets the
+	// pace. Events chatters about every 46ms while a chain is being tuned, so
+	// a 300ms wait almost never opens, and what acknowledgements did get out
+	// went in the gaps between bursts. A session then failed holding 63 bytes
+	// owed with the last frame 46ms old: too recent to acknowledge, and by
+	// then the device had already stopped draining what it was sent. Its
+	// acknowledgement count for the data channel was zero, so the opcode 30
+	// waiting six seconds for an answer had not even been taken in.
 	if c.name == channelEvents {
 		held = s.delicate
+		quiet = 0
 	}
 
-	if s.closing || held > 0 || !c.owed() || time.Since(c.lastRx) < s.budgets.idle {
+	if s.closing || held > 0 || !c.owed() || time.Since(c.lastRx) < quiet {
 		return false
 	}
 
