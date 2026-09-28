@@ -61,10 +61,20 @@ func Words() []string {
 	// Embedded and written by this repository, so it parses.
 	_ = json.Unmarshal(terms, &v)
 
+	// Each word once, because one may answer more than one axis and this is
+	// the list of words rather than the list of answers.
+	held := map[string]bool{}
+
 	out := []string(nil)
 
 	for _, axis := range v.Axes {
 		for term := range axis.Terms {
+			if held[term] {
+				continue
+			}
+
+			held[term] = true
+
 			out = append(out, term)
 		}
 	}
@@ -121,16 +131,21 @@ func CheckAxes(
 	order := []string(nil)
 
 	for _, word := range words {
-		axis, ok := axisOf(word)
+		// Every axis the word answers, because a compound word contradicts on
+		// each of them separately: `punchy` against `loose-low-end` is a real
+		// contradiction about the low end and says nothing about attack.
+		axes, ok := axesOf(word)
 		if !ok {
 			continue
 		}
 
-		if len(seen[axis]) == 0 {
-			order = append(order, axis)
-		}
+		for _, axis := range axes {
+			if len(seen[axis]) == 0 {
+				order = append(order, axis)
+			}
 
-		seen[axis] = append(seen[axis], word)
+			seen[axis] = append(seen[axis], word)
+		}
 	}
 
 	out := []ContestedAxis(nil)
@@ -221,25 +236,40 @@ func has(
 	return false
 }
 
-// axisOf says which axis a term belongs to.
+// axesOf says which axes a term answers.
+//
+// Usually one, and the axis structure exists to catch a contradiction: saying
+// `mid-forward` has already said `not scooped`, and a rig claiming both has
+// claimed nothing because applying both lands the knob where it started.
+//
+// More than one where a word is how players actually talk. "Punchy" is a tight
+// low end and a hard attack in one word, and a vocabulary that could not hold it
+// could not see it contradict `loose-low-end` either, because the word was not
+// in the vocabulary at all.
 //
 // An axis is what makes a term mean something: saying "mid-forward" has
 // already said "not scooped", and a rig claiming both has claimed nothing.
-func axisOf(
+func axesOf(
 	term string,
-) (string, bool) {
+) ([]string, bool) {
 	var v vocabulary
 
 	// Embedded and written by this repository, so it parses.
 	_ = json.Unmarshal(terms, &v)
 
+	var out []string
+
 	for axis, a := range v.Axes {
 		if _, ok := a.Terms[term]; ok {
-			return axis, true
+			out = append(out, axis)
 		}
 	}
 
-	return "", false
+	// Sorted, because ranging a map is not an order and a word answering two
+	// axes would report them differently each run.
+	sort.Strings(out)
+
+	return out, len(out) > 0
 }
 
 // Axis is one question the vocabulary asks, with the answers it accepts.
@@ -288,7 +318,15 @@ func Vocabulary() []Axis {
 
 		for term, means := range axis.Terms {
 			one := Defined{Term: term, Means: means}
-			if t, moves := turns[term]; moves {
+
+			// The move for this axis, because a word may answer more than one
+			// and each axis shows the control that answers it rather than
+			// whichever move happened to be written first.
+			for _, t := range turns[term] {
+				if t.axis != name {
+					continue
+				}
+
 				one.Param, one.Block, one.Steps = t.param, string(t.category), t.steps
 			}
 

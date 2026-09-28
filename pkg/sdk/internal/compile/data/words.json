@@ -20,7 +20,8 @@
       "about": "how the bottom behaves, not how much of it there is",
       "terms": {
         "tight-low-end": "the bottom stops when the note does",
-        "loose-low-end": "the bottom blooms and hangs on"
+        "loose-low-end": "the bottom blooms and hangs on",
+        "punchy": "the bottom stops when the note does, and the front of the note is what you hear first"
       }
     },
     "decay": {
@@ -44,7 +45,8 @@
       "terms": {
         "audible-pick-attack": "the pick is a sound of its own, not just a way in",
         "soft-attack": "notes arrive rather than start",
-        "percussive": "the string against the fretboard is part of the sound"
+        "percussive": "the string against the fretboard is part of the sound",
+        "punchy": "the bottom stops when the note does, and the front of the note is what you hear first"
       }
     },
     "space": {

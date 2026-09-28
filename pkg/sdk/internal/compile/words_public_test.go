@@ -161,7 +161,9 @@ func (s *WordsPublicTestSuite) TestVocabularyPairsEveryWordWithWhatItMoves() {
 	axes := compile.Vocabulary()
 	s.Require().NotEmpty(axes)
 
-	seen := map[string]bool{}
+	// How many axes each word answers, because a word answering two is the
+	// point of this rather than a mistake.
+	seen := map[string]int{}
 
 	var acting, idle int
 
@@ -173,9 +175,7 @@ func (s *WordsPublicTestSuite) TestVocabularyPairsEveryWordWithWhatItMoves() {
 		for _, w := range axis.Words {
 			s.Require().NotEmpty(w.Term)
 			s.Require().NotEmpty(w.Means, "%s means nothing", w.Term)
-			s.Require().False(seen[w.Term], "%s is on two axes", w.Term)
-
-			seen[w.Term] = true
+			seen[w.Term]++
 
 			// A word either names a control and a block or names neither. One
 			// without the other would move something nowhere.
@@ -197,10 +197,28 @@ func (s *WordsPublicTestSuite) TestVocabularyPairsEveryWordWithWhatItMoves() {
 
 	// The two lists are the same list.
 	for _, word := range compile.Words() {
-		s.Require().True(seen[word], "%s is a word and Vocabulary omits it", word)
+		s.Require().Positive(seen[word], "%s is a word and Vocabulary omits it", word)
 	}
 
 	s.Require().Len(seen, len(compile.Words()))
+
+	// A word on more than one axis carries a move on every one of them, which
+	// the loop above already required of each entry. What is asserted here is
+	// that at least one such word exists: the machinery for a compound word is
+	// worth nothing if nothing uses it, and a vocabulary that quietly went back
+	// to one axis per word would otherwise pass.
+	compound := 0
+
+	for term, axes := range seen {
+		if axes > 1 {
+			compound++
+
+			s.Require().Contains(compile.Words(), term)
+		}
+	}
+
+	s.Require().Positive(compound,
+		"no word answers more than one axis, so nothing exercises that they can")
 
 	// Six axes act and four describe, so both kinds must be represented or the
 	// checks above passed over half the vocabulary.

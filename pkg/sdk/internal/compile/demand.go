@@ -105,31 +105,35 @@ func demand(
 		// Two words from one axis cancel rather than apply, and a word on
 		// its way out must not seat a block on the way. The chain would
 		// carry an equaliser that nothing then touched.
-		if axis, ok := axisOf(h.term); ok && contested[axis] {
+		if cancels(h.term, contested) {
 			continue
 		}
 
-		t, moves := turns[h.term]
-		if !moves || t.absenceMeans != "" {
-			continue
-		}
+		// One turn per axis the word answers, so a compound word can seat a
+		// block for each. "Punchy" wants something with a Sag and something
+		// with an Attack, and a chain holding neither needs both.
+		for _, t := range turns[h.term] {
+			if t.absenceMeans != "" {
+				continue
+			}
 
-		if _, _, found := answered(blocks, t); found {
-			continue
-		}
+			if _, _, found := answered(blocks, t); found {
+				continue
+			}
 
-		pick, where, ok := somewhereFor(cat, stats, t, instrument)
-		if !ok {
-			continue
-		}
+			pick, where, ok := somewhereFor(cat, stats, t, instrument)
+			if !ok {
+				continue
+			}
 
-		blocks = insert(blocks, pick, beforeAmp(g, pick.Category))
-		added = append(added, Added{
-			Block: pick,
-			Reason: fmt.Sprintf(
-				"the ask says %s and nothing here had a %s", h.term, where,
-			),
-		})
+			blocks = insert(blocks, pick, beforeAmp(g, pick.Category))
+			added = append(added, Added{
+				Block: pick,
+				Reason: fmt.Sprintf(
+					"the ask says %s and nothing here had a %s", h.term, where,
+				),
+			})
+		}
 	}
 
 	return blocks, added
