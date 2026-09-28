@@ -37,7 +37,9 @@ package solve
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"math"
+	"slices"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
@@ -214,13 +216,17 @@ func wanted(
 
 	var rows []audio.Figure
 
-	// In the order the figures are reported, so two runs of the same request
-	// produce the same answer rather than whichever order a map yielded.
-	for _, key := range audio.MeasuredKeys() {
-		r := audio.Figure(key)
-
-		aim, named := aims[r]
-		if !named || aim.Tol <= 0 {
+	// Over the aims themselves rather than the figures a corpus reports, and
+	// the difference matters: level is a figure the device measures and no
+	// corpus states, because a record's loudness is a mastering decision. An
+	// aim on it was silently dropped, which is how a solve came to spend the
+	// amplifier's Master without anything noticing.
+	//
+	// Sorted, so two runs of the same request produce the same answer rather
+	// than whichever order a map yielded.
+	for _, r := range slices.Sorted(maps.Keys(aims)) {
+		aim := aims[r]
+		if aim.Tol <= 0 {
 			continue
 		}
 

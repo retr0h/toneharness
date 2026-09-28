@@ -106,6 +106,37 @@ func (s *SolveTestSuite) TestAnAxisTheTargetDoesNotNameIsFree() {
 	s.Require().NotContains(got.Residual, high)
 }
 
+// TestAnAxisNoCorpusReportsIsStillSolved covers level, and is a regression.
+//
+// The rows were built by walking audio.MeasuredKeys, which is what a corpus
+// states. Level is not one: a record's loudness is a mastering decision, so no
+// genre has a level to aim at. An aim on it was accepted and silently dropped.
+//
+// What that cost is on the amplifier. Level is the axis every gain control
+// moves furthest, so an unconstrained solve spends it: asked for punk, the loop
+// walked an SV Beast's Master to zero in two passes and turned the amp off.
+func (s *SolveTestSuite) TestAnAxisNoCorpusReportsIsStillSolved() {
+	s.Require().NotContains(audio.MeasuredKeys(), string(audio.KeyLevel),
+		"the premise: no corpus reports a level")
+
+	// Where that run left it: Master all but shut, the chain 8.3dB below the
+	// level it settled at before a single dial was turned.
+	master := Knob{
+		Block: 1, Param: 2, Control: "Master", At: 0.024, Low: 0, High: 1,
+		Slope: map[audio.Figure]float64{audio.KeyLevel: 40},
+	}
+
+	got, err := Toward(
+		[]Knob{master},
+		map[audio.Figure]Aim{audio.KeyLevel: {Want: -23.7, Tol: 6}},
+		map[audio.Figure]float64{audio.KeyLevel: -32.0},
+	)
+
+	s.Require().NoError(err)
+	s.Require().Len(got.Steps, 1, "the aim became a row")
+	s.Require().Positive(got.Steps[0].By, "and the row turns the amplifier back up")
+}
+
 // TestTwoAxesTwoControls covers the case the whole package exists for.
 //
 // The controls disagree: Bass pulls the centre down while lifting the low band,

@@ -157,6 +157,7 @@ func Tune(
 	}
 
 	aims = solve.Aims(target, inCorpusScale(floor))
+	aims[audio.KeyLevel] = solve.Aim{Want: settled, Tol: drift}
 
 	_, _ = fmt.Fprintf(w, "  the loop wanders %.4f of a band and %.1fHz\n",
 		inCorpusScale(floor)[audio.KeyLow], floor[audio.KeyCentroid])
@@ -386,6 +387,11 @@ func converge(
 
 		now := figuresOf(got)
 
+		// Level beside the pass, because it is the one figure no target
+		// constrains and the one a solve can spend without being told not to.
+		_, _ = fmt.Fprintf(w, "  level %.1fdB against %.1f settled\n",
+			got.Level, settled)
+
 		// Before reading any slope, because arriving needs no slopes and reading
 		// them costs a reading per control. A chain of a dozen dials would spend
 		// a minute and a half measuring what to do about a target it is already
@@ -535,6 +541,25 @@ func land(
 // backoffs is how many times a pass may halve its moves before giving up.
 const backoffs = 4
 
+// drift is how far the chain's level may move from where it started, in dB.
+//
+// Chosen rather than measured, and the only figure in the loop that is. Every
+// other tolerance comes from the spread across a genre's records, and no corpus
+// states a level because a record's loudness is a mastering decision rather
+// than a fact about the sound: the target has nothing to say here.
+//
+// Unconstrained, level is free, and a solve spends what is free. Asked for
+// punk, the loop took an SV Beast's Master from 1.000 to 0.024 and then to
+// 0.000 in two passes, turning the amplifier off to move the band shares a
+// little, and every step cleared the mute guard on the way down.
+//
+// Six, because a change of about that much stops being heard as a different
+// tone and starts being heard as a different volume, which is the point at
+// which the solve has stopped answering the question it was asked. Wide enough
+// that a gain or a drive may still be turned for its tone, narrow enough that
+// the amplifier cannot be spent.
+const drift = 6.0
+
 // scaled is a pass's moves at a fraction of their length, measured from where
 // each control started rather than from where the last attempt left it.
 func scaled(
@@ -677,6 +702,7 @@ func figuresOf(
 		audio.KeyMid:      got.Mid / perCent,
 		audio.KeyHigh:     got.High / perCent,
 		audio.KeyCentroid: got.Centroid,
+		audio.KeyLevel:    got.Level,
 	}
 
 	// The five that a reading may not have an answer for. Absent rather than
