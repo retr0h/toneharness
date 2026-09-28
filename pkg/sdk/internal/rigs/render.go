@@ -105,6 +105,11 @@ func renderAsk(
 
 	b.WriteString("\n")
 
+	// Before the subject, because it is required and a reader should meet it
+	// first. Written as a list whatever its length: a sound belongs to more than
+	// one genre often enough that the shape should not change with the count.
+	b.WriteString("genre: [" + strings.Join(opts.Genre, ", ") + "]\n\n")
+
 	b.WriteString("subject:\n  kind: artist\n")
 	fmt.Fprintf(&b, "  name: %s\n", opts.Name)
 

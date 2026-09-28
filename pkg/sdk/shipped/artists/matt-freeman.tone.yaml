@@ -20,7 +20,7 @@ instrument: bass
 # The genre the corpus tags these records with. One word where the field takes
 # one, and `corpus music genres` is what earns it words by measurement: this
 # says which distribution the records belong to, not how they sound.
-genre: punk
+genre: [punk]
 
 # No `words` yet. Nothing anybody has read describes how this record sounds in
 # terms this vocabulary carries, and the corpus measurement that could earn one

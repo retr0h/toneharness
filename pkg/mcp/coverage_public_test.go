@@ -65,6 +65,12 @@ var exempt = map[string]string{
 	"measure blocks":   "a sweep of every block, hours, and it needs the audio loop",
 	"measure controls": "a sweep of one block's controls, up to an hour, and it needs the audio loop",
 	"measure names":    "a sweep that moves every parameter to learn its name, and it needs the audio loop",
+
+	// The same shape as a sweep and for the same reasons. A pass reads a slope
+	// per control and there are three to five passes, so a chain of two dozen
+	// dials is twenty minutes of real-time audio, and it holds the pedal for
+	// all of it.
+	"tone tune": "a measure-solve-apply loop, about twenty minutes, and it needs the audio loop",
 }
 
 // toolName is what a command's tool is called: the path under the root, joined

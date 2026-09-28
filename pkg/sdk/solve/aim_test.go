@@ -39,7 +39,7 @@ type AimTestSuite struct {
 // ship, rather than from numbers typed here.
 func (s *AimTestSuite) punk() audio.Across {
 	body, err := os.ReadFile(
-		filepath.Join("..", "..", "audio", "data", "genres.json"))
+		filepath.Join("..", "audio", "data", "genres.json"))
 	s.Require().NoError(err)
 
 	var genres []audio.Genre
@@ -156,6 +156,27 @@ func (s *AimTestSuite) TestFloorTakesTheWorstOfTheChain() {
 	s.Require().InDelta(7, got[audio.KeyCentroid], 0.001,
 		"a chain is as repeatable as its least repeatable part")
 	s.Require().InDelta(0.5, got[audio.KeyLow], 0.001)
+}
+
+// TestAFigureNothingMeasuredIsNotATargetOfZero covers the absent middle.
+//
+// Across.Measured answers for dynamics, harmonics and lean whether or not any
+// recording had one, so an unmeasured figure arrives as zero. Pinning an axis to
+// zero because nobody measured it would spend the chain defending the absence of
+// a measurement.
+func (s *AimTestSuite) TestAFigureNothingMeasuredIsNotATargetOfZero() {
+	got := Aims(audio.Across{
+		Tracks:   3,
+		Centroid: audio.Spread{Low: 100, Mid: 150, High: 200},
+	}, map[audio.Figure]float64{
+		audio.KeyDynamics: 0.5,
+		audio.KeyLean:     0.01,
+	})
+
+	s.Require().Contains(got, audio.KeyCentroid)
+	s.Require().NotContains(got, audio.KeyDynamics,
+		"a floor does not turn an absent figure into a target")
+	s.Require().NotContains(got, audio.KeyLean)
 }
 
 func TestAimTestSuite(

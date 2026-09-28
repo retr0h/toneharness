@@ -215,6 +215,7 @@ func TestWritesPublicTestSuite(
 func (s *WritesPublicTestSuite) TestRigsNew() {
 	s.Run("a rig written from the gear it names", func() {
 		s.client.EXPECT().Scaffold(gomock.Any(), sdk.NewRig{
+			Genre:      []string{"rock"},
 			ID:         "matt-freeman",
 			Name:       "Matt Freeman",
 			Band:       "Rancid",
@@ -224,6 +225,7 @@ func (s *WritesPublicTestSuite) TestRigsNew() {
 		}).Return(sdk.Scaffolded{ID: "matt-freeman", Name: "Matt Freeman"}, nil)
 
 		res := call(s.T(), connect(s.T(), s.client, true), "rigs_new", tools.Scaffold{
+			Genre:      []string{"rock"},
 			ID:         "matt-freeman",
 			Name:       "Matt Freeman",
 			Band:       "Rancid",
@@ -245,7 +247,8 @@ func (s *WritesPublicTestSuite) TestRigsNew() {
 			Return(sdk.Scaffolded{}, errors.New("no model for Marshall Nonesuch"))
 
 		res := call(s.T(), connect(s.T(), s.client, true), "rigs_new", tools.Scaffold{
-			ID: "nobody", Name: "Nobody", Instrument: "bass", Amp: "Marshall Nonesuch",
+			Genre: []string{"rock"},
+			ID:    "nobody", Name: "Nobody", Instrument: "bass", Amp: "Marshall Nonesuch",
 		})
 
 		s.True(res.IsError)

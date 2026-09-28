@@ -475,6 +475,9 @@ type NewRig struct {
 	Cab string
 	// Pedals are real-world pedals, in signal order.
 	Pedals []string
+	// Genre is which genres the sound belongs to. Required, because the ask a
+	// scaffold writes carries one and a ToneSpec without one is refused.
+	Genre []string
 }
 
 // Scaffold writes a rig, after checking the gear it names exists.
@@ -503,6 +506,7 @@ func (c *Client) Scaffold(
 		Amp:        in.Amp,
 		Cab:        in.Cab,
 		Pedals:     in.Pedals,
+		Genre:      in.Genre,
 		Catalogs:   c,
 	})
 }

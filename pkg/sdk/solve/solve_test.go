@@ -283,6 +283,66 @@ func (s *SolveTestSuite) TestSmallMovesArePreferred() {
 		"the control that moves the figure furthest per turn does the work")
 }
 
+// TestTwoBlocksSharingAParamIndex covers the identity of a knob.
+//
+// Every block in a chain has a parameter 0, so a param index alone names
+// nothing. Keying on it credited one block's move to another block's slope,
+// which did not fail: it predicted a centroid of 2.8MHz, and the loop concluded
+// from that prediction that the chain could not reach the target.
+//
+// The two knobs here are deliberately opposed. If their moves are swapped the
+// prediction lands the wrong side of the target, so the residual catches it.
+func (s *SolveTestSuite) TestTwoBlocksSharingAParamIndex() {
+	amp := Knob{
+		Block: 1, Param: 0, Control: "Amp Treble", At: 0.5, Low: 0, High: 1,
+		Slope: map[audio.Figure]float64{centroid: 1000},
+	}
+	cab := Knob{
+		Block: 2, Param: 0, Control: "Cab HighCut", At: 0.5, Low: 0, High: 1,
+		Slope: map[audio.Figure]float64{centroid: -200},
+	}
+
+	got, err := Toward(
+		[]Knob{amp, cab},
+		map[audio.Figure]Aim{centroid: {Want: 900, Tol: 5}},
+		map[audio.Figure]float64{centroid: 500},
+	)
+
+	s.Require().NoError(err)
+	s.Require().Len(got.Steps, 2)
+
+	where := map[Where]string{}
+	for _, st := range got.Steps {
+		where[st.Where()] = st.Control
+	}
+
+	s.Require().Equal("Amp Treble", where[Where{Block: 1, Param: 0}])
+	s.Require().Equal("Cab HighCut", where[Where{Block: 2, Param: 0}])
+
+	s.Require().Less(got.Residual[centroid], 1.0,
+		"the prediction has to credit each move to its own block's slope")
+	s.Require().True(got.Arrived)
+}
+
+// TestReachedNeedsNoSlopes covers asking whether there is anything to do.
+//
+// Cheaper than asking what to do about it, and the difference is a reading per
+// control: a pass measures every slope from where the chain sits, at about eight
+// seconds each, so a dozen dials spend a minute and a half learning what
+// arithmetic already knew.
+func (s *SolveTestSuite) TestReachedNeedsNoSlopes() {
+	aims := map[audio.Figure]Aim{centroid: {Want: 1000, Tol: 100}}
+
+	got, arrived := Reached(aims, map[audio.Figure]float64{centroid: 960})
+	s.Require().True(arrived)
+	s.Require().InDelta(0.4, got.Residual[centroid], 0.001)
+
+	got, arrived = Reached(aims, map[audio.Figure]float64{centroid: 500})
+	s.Require().False(arrived)
+	s.Require().InDelta(5, got.Residual[centroid], 0.001)
+	s.Require().Empty(got.Steps, "it says how far off, not what to do about it")
+}
+
 func TestSolveTestSuite(
 	t *testing.T,
 ) {

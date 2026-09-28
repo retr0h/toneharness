@@ -37,7 +37,6 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
-	"github.com/retr0h/toneharness/pkg/sdk/reamp"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
@@ -153,18 +152,12 @@ func MeasureControls(
 		return fmt.Errorf("building a chain holding only %s: %w", opts.Model, err)
 	}
 
-	bench := opts.Bench
-
-	if bench == nil {
-		open, err := reamp.Open(opts.Hardware)
-		if err != nil {
-			return err
-		}
-
-		defer func() { _ = open.Close() }()
-
-		bench = open
+	bench, release, err := benchFor(opts.Bench, opts.Hardware)
+	if err != nil {
+		return err
 	}
+
+	defer release()
 
 	out := measured.Curves{
 		Device: "HX Stomp", Gear: block.Name, Block: string(block.ID),

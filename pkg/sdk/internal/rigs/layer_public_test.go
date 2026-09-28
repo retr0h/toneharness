@@ -57,7 +57,7 @@ chain:
       - { kind: cited, note: "a test says so" }
     confidence: high
 `,
-		stem + ".tone.yaml": "schema: ToneSpec\n" + extra + `
+		stem + ".tone.yaml": "schema: ToneSpec\ngenre: [rock]\n" + extra + `
 
 subject:
   kind: artist

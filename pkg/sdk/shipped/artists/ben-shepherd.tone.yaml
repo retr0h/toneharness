@@ -17,7 +17,7 @@ instrument: bass
 # The genre the corpus tags these records with. One word where the field takes
 # one, and `corpus music genres` is what earns it words by measurement: this
 # says which distribution the records belong to, not how they sound.
-genre: grunge
+genre: [grunge]
 
 # No words and no instrument. The gear beside this is sourced to somebody who
 # read a magazine or studied photographs, and nobody read here describes how

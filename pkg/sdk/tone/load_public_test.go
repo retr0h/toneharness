@@ -39,7 +39,7 @@ type LoadPublicTestSuite struct {
 func (s *LoadPublicTestSuite) TestReadsARequest() {
 	spec, err := tone.Load(strings.NewReader(`
 schema: ToneSpec
-genre: pop-punk
+genre: [pop-punk, punk]
 words:
   - term: bright
   - term: tight-low-end
@@ -53,7 +53,8 @@ nudges:
 `))
 
 	s.Require().NoError(err)
-	s.Require().Equal("pop-punk", *spec.Genre)
+	s.Require().Equal([]string{"pop-punk", "punk"}, spec.Genre,
+		"both, because the corpus tags these records with both")
 	s.Require().Len(*spec.Words, 2)
 	s.Require().Equal("bright", (*spec.Words)[0].Term)
 	// A word carries why it is believed, because that is what sizes how far it
@@ -159,15 +160,18 @@ owns:
 
 // TestWritesWhatItRead covers the round trip.
 func (s *LoadPublicTestSuite) TestWritesWhatItRead() {
-	genre := "grunge"
-	spec := tone.Spec{Schema: "ToneSpec", Genre: &genre}
+	// Two genres, because one is the case that hid the defect: the corpus tags
+	// the same players punk and pop-punk, and a field holding one word dropped
+	// whichever was written second.
+	spec := tone.Spec{Schema: "ToneSpec", Genre: []string{"punk", "pop-punk"}}
 
 	var buf bytes.Buffer
 	s.Require().NoError(tone.Write(&buf, spec))
 
 	back, err := tone.Load(&buf)
 	s.Require().NoError(err)
-	s.Require().Equal("grunge", *back.Genre)
+	s.Require().Equal([]string{"punk", "pop-punk"}, back.Genre,
+		"both of them, in the order they were written")
 }
 
 // TestWritesASetup covers the other document's round trip.
@@ -201,7 +205,8 @@ func (s *LoadPublicTestSuite) TestAnInvalidDocumentIsNotWritten() {
 
 // TestAWriteFailureIsReported covers the writer itself failing.
 func (s *LoadPublicTestSuite) TestAWriteFailureIsReported() {
-	err := tone.Write(broken{}, tone.Spec{Schema: "ToneSpec"})
+	err := tone.Write(broken{},
+		tone.Spec{Schema: "ToneSpec", Genre: []string{"rock"}})
 
 	s.Require().ErrorContains(err, "writing the ToneSpec")
 }

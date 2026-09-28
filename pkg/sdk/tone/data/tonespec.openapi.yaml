@@ -40,7 +40,7 @@ components:
         Jazz" is a genre and a Setup; "like Dirnt but chunkier" is a player and
         a nudge. This is a request rather than a form, and a request nobody
         filled in completely is the ordinary case.
-      required: [schema]
+      required: [schema, genre]
       properties:
         schema:
           type: string
@@ -51,10 +51,29 @@ components:
         like:
           $ref: "#/components/schemas/Like"
         genre:
-          type: string
-          minLength: 1
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+            pattern: "\\S"
           description: >
-            A genre, as a word rather than one of a fixed list.
+            The genres this sound belongs to, as words rather than a fixed
+            list.
+
+
+            A list, because a record belongs to more than one and the corpus
+            already says so: the same three players are tagged both `punk` and
+            `pop-punk`, and a single word would drop one of them. What it names
+            is which distribution the sound sits in, not how it sounds; the
+            words it earns are measured, and `measure genres` is what earns
+            them.
+
+
+            Required, because a request nobody can place in any company is a
+            request nothing can be compared against. Every other field here is
+            optional and this one is not, which is the contract saying that a
+            sound without a population is not a sound this can aim at.
 
 
             Not an enum, because enumerating genres in a contract means a

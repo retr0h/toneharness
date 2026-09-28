@@ -16,6 +16,10 @@ subject:
   years: { from: 2004, to: 2004 }
 
 instrument: bass
+
+# The genres the corpus tags these records with, which is what `measure genres`
+# measures a target from. A list because a record belongs to more than one.
+genre: [pop-punk, punk]
 default: true
 
 # How it should sound, in the words a person would use. Describe the result,

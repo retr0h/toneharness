@@ -198,6 +198,7 @@ type Scaffold struct {
 	Amp        string   `json:"amp"              jsonschema:"the real-world amplifier; the one thing nothing downstream recovers from getting wrong"`
 	Cab        string   `json:"cab,omitempty"    jsonschema:"the real-world cabinet; empty takes the amp's own pairing"`
 	Pedals     []string `json:"pedals,omitempty" jsonschema:"real-world pedals, in signal order"`
+	Genre      []string `json:"genre"            jsonschema:"which genres the sound belongs to, such as punk; required, because the ask written beside the rig carries one"`
 }
 
 // Build says which document presets_compile writes into a preset.

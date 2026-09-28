@@ -162,6 +162,7 @@ func (s *AskingPublicTestSuite) TestADocumentThatIsNotOneIsReported() {
 func (s *AskingPublicTestSuite) TestNotesTravelWithAFailure() {
 	got, err := asking.Resolve(context.Background(), asking.Ask{
 		Spec: s.file("insisted.yaml", `schema: ToneSpec
+genre: [rock]
 gear:
   - gear: Ampeg B-15
     role: amp

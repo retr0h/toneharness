@@ -52,9 +52,21 @@ func Aims(
 			continue
 		}
 
+		band := spread[string(key)]
+
+		// A figure nothing measured reads as a middle of zero with no spread,
+		// because Across.Measured answers for dynamics, harmonics and lean
+		// whether or not any recording had one. Aiming at that would pin the
+		// axis to zero and then spend the chain defending it, which is worse
+		// than leaving it free: zero is not a measurement, it is the absence of
+		// one.
+		if want == 0 && band.Low == 0 && band.Mid == 0 && band.High == 0 {
+			continue
+		}
+
 		// Half the ten-to-ninety band, so the tolerance is a distance from the
 		// middle rather than the width of the whole spread.
-		tol := (spread[string(key)].High - spread[string(key)].Low) / 2
+		tol := (band.High - band.Low) / 2
 
 		if got := floor[key]; tol < got {
 			tol = got

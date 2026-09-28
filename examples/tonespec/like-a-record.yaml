@@ -10,6 +10,11 @@
 
 schema: ToneSpec
 
+# Required even here, where the target is one recording rather than a
+# population. The recording is what the answer is measured against; the genre
+# says where it sits.
+genre: [rock]
+
 # How it should sound, in the words a person would use. A word carries its own
 # evidence, where anybody has any; these two have none, which is the ordinary
 # case for a request somebody typed. Turning a word into a knob position is

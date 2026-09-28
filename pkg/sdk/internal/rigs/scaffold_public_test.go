@@ -89,6 +89,7 @@ var meteor = filepath.Join(
 const meteorAsk = `# What the meteor rig is taken to be for.
 
 schema: ToneSpec
+genre: [rock]
 
 subject:
   kind: artist
@@ -149,6 +150,7 @@ func (p parentRig) ask() string {
 # More of it.
 
 schema: ToneSpec
+genre: [rock]
 aliases: [other-name]
 default: true
 
@@ -247,8 +249,11 @@ func (s *ScaffoldPublicTestSuite) TestACopyOfAnAskLessParentStillRecordsWhatItCa
 	s.Require().NoError(os.WriteFile(
 		filepath.Join(artists, "dir-angl-meteor.yaml"), raw, 0o600))
 
+	// A genre, because the parent has no ask to hand one down and the fresh ask
+	// written beside the copy requires one.
 	_, err = rigs.New(context.Background(), rigs.NewOptions{
 		Dir: dir, ID: "copy", From: "dir-angl-meteor", Name: "My Meteor",
+		Genre: []string{"rock"},
 	})
 	s.Require().NoError(err)
 

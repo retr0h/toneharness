@@ -15,6 +15,12 @@ subject:
 
 instrument: bass
 
+# No record of theirs carries a genre tag, so this is general knowledge about a
+# well-known player rather than anything measured, recorded the same way the
+# manifests' own `genres_by: llm` tags are. `measure genres` earns words only
+# from tagged records, so this places the ask and earns it nothing.
+genre: [funk metal, experimental rock]
+
 words:
   - term: loose-low-end
     evidence:

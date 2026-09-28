@@ -622,10 +622,14 @@ type ToneSpec struct {
 	// Gear Gear the request names, when somebody wants a particular thing rather than a particular sound.
 	Gear *[]Wanted `json:"gear,omitempty"`
 
-	// Genre A genre, as a word rather than one of a fixed list.
+	// Genre The genres this sound belongs to, as words rather than a fixed list.
+	//
+	// A list, because a record belongs to more than one and the corpus already says so: the same three players are tagged both `punk` and `pop-punk`, and a single word would drop one of them. What it names is which distribution the sound sits in, not how it sounds; the words it earns are measured, and `measure genres` is what earns them.
+	//
+	// Required, because a request nobody can place in any company is a request nothing can be compared against. Every other field here is optional and this one is not, which is the contract saying that a sound without a population is not a sound this can aim at.
 	//
 	// Not an enum, because enumerating genres in a contract means a release to add one and the thing that decides whether a genre works is not the schema. It is whether enough records carry the tag to have a distribution: eight from at least three artists to be usable. A genre below that is reported rather than computed from, because three records by one band is that band's sound wearing a genre's name.
-	Genre *string `json:"genre,omitempty"`
+	Genre []string `json:"genre"`
 
 	// Instrument What this is for, where the request asserts it rather than leaving it to the Setup.
 	//

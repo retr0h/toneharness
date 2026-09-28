@@ -1,4 +1,5 @@
 schema: ToneSpec
+genre: [rock]
 
 default: true
 subject:

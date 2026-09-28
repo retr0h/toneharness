@@ -611,9 +611,17 @@ func unresolved(
 	spec tone.Spec,
 	notes *Notes,
 ) {
-	if spec.Genre != nil && *spec.Genre != "" {
-		got, ok := audio.ShippedGenre(slug.Of(*spec.Genre))
-		*notes = append(*notes, genreNote(*spec.Genre, got, ok))
+	// Every genre the ask names, because a record belongs to more than one and
+	// the corpus tags the same players both punk and pop-punk. Each is reported
+	// on its own: one may have enough records behind it to compute from while
+	// another has three by one band, and collapsing them would hide which.
+	for _, named := range spec.Genre {
+		if named == "" {
+			continue
+		}
+
+		got, ok := audio.ShippedGenre(slug.Of(named))
+		*notes = append(*notes, genreNote(named, got, ok))
 	}
 
 	// Named in a fixed order, because ranging a map is not one and a request
@@ -802,10 +810,11 @@ func identify(
 ) string {
 	parts := make([]string, 0, 3)
 
-	if spec.Genre != nil && *spec.Genre != "" {
-		parts = append(parts, *spec.Genre)
-	}
-
+	// Not the genre, though every ask now carries one. A name is for a person to
+	// recognise, and a field that is always present adds nothing to one: when
+	// genre was optional it distinguished the asks that named it, and now it
+	// would only prefix every identifier in the repository with a word.
+	//
 	if spec.Like != nil {
 		for _, who := range []*string{spec.Like.Artist, spec.Like.Band, spec.Like.Song} {
 			if who != nil && *who != "" {

@@ -18,6 +18,11 @@
 
 schema: ToneSpec
 
+# Required, so a worked example states one. This one is about correcting a
+# rig by ear rather than about a population, and it still has to say which
+# company the sound keeps.
+genre: [rock]
+
 subject:
   kind: artist
   name: Mike Dirnt

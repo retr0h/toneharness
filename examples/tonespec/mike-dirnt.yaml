@@ -12,6 +12,9 @@
 
 schema: ToneSpec
 
+# What the corpus tags his records with, both of them.
+genre: [pop-punk, punk]
+
 # Who this belongs to. `kind` also takes song, genre, band or sound, so a rig
 # does not have to be attributed to a person.
 subject:

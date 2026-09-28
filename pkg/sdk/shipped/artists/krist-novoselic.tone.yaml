@@ -9,15 +9,22 @@ subject:
   kind: artist
   name: Krist Novoselic
   band: Nirvana
-  era: Nevermind
-  years: { from: 1991, to: 1991 }
+  # Nevermind is what the gear beside this describes. The span reaches 1993
+  # because the corpus also holds one In Utero track, and a record outside a
+  # rig's stated years is a record measuring other gear: the rig's own evidence
+  # says he was on Hiwatts and a converted Marshall by then. Stated wide and
+  # caveated rather than narrowed, because the record is evidence somebody
+  # gathered and dropping it to make a range tidy would be the wrong half to
+  # give up.
+  era: Nevermind, with one In Utero record the corpus also holds
+  years: { from: 1991, to: 1993 }
 
 instrument: bass
 
 # The genre the corpus tags these records with. One word where the field takes
 # one, and `corpus music genres` is what earns it words by measurement: this
 # says which distribution the records belong to, not how they sound.
-genre: grunge
+genre: [grunge]
 
 # No words and no instrument. The gear beside this is sourced to somebody who
 # read a magazine or studied photographs, and nobody read here describes how

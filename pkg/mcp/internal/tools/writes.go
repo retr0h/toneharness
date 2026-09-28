@@ -126,6 +126,7 @@ func (h *handlers) rigsNew(
 		Amp:        in.Amp,
 		Cab:        in.Cab,
 		Pedals:     in.Pedals,
+		Genre:      in.Genre,
 	})
 	if err != nil {
 		return nil, sdk.Scaffolded{}, err

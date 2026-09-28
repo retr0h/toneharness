@@ -118,7 +118,7 @@ func (s *ToneBuildPublicTestSuite) TestItReportsWhatItCouldNotHonour() {
 
 	s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
 		Ask: s.file("ask.yaml", `schema: ToneSpec
-genre: punk
+genre: [punk]
 gear:
   - gear: LA Studio Comp
     role: comp
@@ -138,7 +138,8 @@ func (s *ToneBuildPublicTestSuite) TestARequestItCannotAnswerFails() {
 	var buf bytes.Buffer
 
 	err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
-		Ask: s.file("ask.yaml", "schema: ToneSpec\nwords:\n  - term: dark\n"),
+		Ask: s.file("ask.yaml",
+			"schema: ToneSpec\ngenre: [rock]\nwords:\n  - term: dark\n"),
 	})
 
 	s.Require().ErrorContains(err, "no chain to build")

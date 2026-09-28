@@ -57,7 +57,16 @@ func (s *TranslatePublicTestSuite) SetupSuite() {
 func (s *TranslatePublicTestSuite) ask(
 	body string,
 ) tone.Spec {
-	spec, err := tone.Load(strings.NewReader("schema: ToneSpec\n" + body))
+	// A genre on every ask, because the contract requires one and most cases
+	// below are about the rest of the document. One that names its own keeps it.
+	head := "schema: ToneSpec\n"
+	if !strings.Contains(body, "genre:") {
+		// A genre the corpus has measured, so the ask resolves fully and the
+		// cases below see only the notes they are about.
+		head += "genre: [punk]\n"
+	}
+
+	spec, err := tone.Load(strings.NewReader(head + body))
 	s.Require().NoError(err)
 
 	return spec
@@ -389,7 +398,7 @@ func (s *TranslatePublicTestSuite) TestEveryRoleHasAPlaceInTheChain() {
 // problem and the caller names the next step.
 func (s *TranslatePublicTestSuite) TestARequestWithNothingInItIsRefused() {
 	_, notes, err := translate.Translate(
-		s.ask("genre: punk\ninstrument: bass\n"), s.setup(""), s.deps)
+		s.ask("genre: [punk]\ninstrument: bass\n"), s.setup(""), s.deps)
 
 	s.Require().ErrorIs(err, translate.ErrNothingToBuildFrom)
 	s.Require().NotEmpty(notes, "and it still says what it assumed on the way")
@@ -441,9 +450,12 @@ func (s *TranslatePublicTestSuite) TestAnAmbiguousNameSaysWhichModelsItFits() {
 
 	s.Require().NoError(err)
 
+	// Across every note rather than the last one. Each ask carries a genre now,
+	// so which note comes last is a fact about the reporting order and not about
+	// the ambiguous name this is looking for.
 	var said string
 	for _, note := range notes.Unmet() {
-		said = note.Said
+		said += note.Said + "\n"
 	}
 
 	s.Require().Contains(said, "fits")
@@ -456,7 +468,7 @@ func (s *TranslatePublicTestSuite) TestAnAmbiguousNameSaysWhichModelsItFits() {
 // the part somebody needs to know about.
 func (s *TranslatePublicTestSuite) TestWhatItCannotAnswerItSays() {
 	_, notes, err := translate.Translate(
-		s.ask(`genre: punk
+		s.ask(`genre: [punk]
 like:
   artist: Mike Dirnt
   recording: `+s.recording()+"\n"),
@@ -478,7 +490,7 @@ like:
 // TestAGenreNobodyHasTagged covers the answer for a word with no records.
 func (s *TranslatePublicTestSuite) TestAGenreNobodyHasTagged() {
 	_, notes, err := translate.Translate(
-		s.ask("genre: sea-shanty\nlike:\n  recording: "+s.recording()+"\n"),
+		s.ask("genre: [sea-shanty]\nlike:\n  recording: "+s.recording()+"\n"),
 		s.setup(""), s.deps)
 
 	s.Require().NoError(err)
@@ -492,7 +504,7 @@ func (s *TranslatePublicTestSuite) TestAGenreNobodyHasTagged() {
 // the note says what it measured as rather than what it cannot do.
 func (s *TranslatePublicTestSuite) TestAGenreThatEarnsWords() {
 	_, notes, err := translate.Translate(
-		s.ask("genre: grunge\nlike:\n  recording: "+s.recording()+"\n"),
+		s.ask("genre: [grunge]\nlike:\n  recording: "+s.recording()+"\n"),
 		s.setup(""), s.deps)
 
 	s.Require().NoError(err)
@@ -592,9 +604,12 @@ func (s *TranslatePublicTestSuite) TestTheIdentifierFollowsTheAsk() {
 			want: "longview",
 		},
 		{
-			name: "a genre",
-			give: "genre: punk\n",
-			want: "punk",
+			// The genre is not in the name. Every ask carries one now, so it
+			// would prefix every identifier in the repository with a word and
+			// distinguish nothing.
+			name: "a genre and nobody else",
+			give: "genre: [punk]\n",
+			want: "a-sound",
 		},
 		{
 			name: "nobody in particular",

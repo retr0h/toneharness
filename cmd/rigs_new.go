@@ -106,6 +106,8 @@ func init() {
 		"real-world cabinet; omit to take the amp's own pairing")
 	f.StringSliceVar(&rigsNewOptions.Pedals, "pedal", nil,
 		"real-world pedal, in signal order; repeat for more")
+	f.StringSliceVar(&rigsNewOptions.Genre, "genre", nil,
+		"a genre the sound belongs to, such as punk; repeat for more")
 	f.StringVar(&rigsNewCatalog, "catalog", "",
 		"a generated catalog to check against instead of the built-in one")
 	f.StringVar(&rigsNewFrom, "from", "",
@@ -114,6 +116,10 @@ func init() {
 		"what the copy is attributed to: artist, band, song, genre or sound")
 	// Fails only for a flag that does not exist, and these are defined above.
 	_ = rigsNewCmd.MarkFlagRequired("id")
+	// The ask written beside the rig carries a genre and a ToneSpec without one
+	// is refused, so a scaffold with no genre would write a document nothing
+	// can load.
+	_ = rigsNewCmd.MarkFlagRequired("genre")
 	// A copy takes its gear from the rig it copies, so naming any is either a
 	// mistake or a misunderstanding of what a copy is.
 	rigsNewCmd.MarkFlagsOneRequired("from", "amp")

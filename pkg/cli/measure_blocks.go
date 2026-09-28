@@ -106,18 +106,12 @@ func MeasureBlocks(
 
 	want := wanted(cat, opts.Category, lib.Blocks)
 
-	bench := opts.Bench
-
-	if bench == nil {
-		open, err := reamp.Open(opts.Hardware)
-		if err != nil {
-			return err
-		}
-
-		defer func() { _ = open.Close() }()
-
-		bench = open
+	bench, release, err := benchFor(opts.Bench, opts.Hardware)
+	if err != nil {
+		return err
 	}
+
+	defer release()
 
 	_, _ = fmt.Fprintf(w, "\n  %d blocks through %s, %.0fs each\n",
 		len(want), bench.Name(), opts.Seconds)

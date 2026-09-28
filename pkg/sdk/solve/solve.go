@@ -83,6 +83,19 @@ type Knob struct {
 	Slope map[audio.Figure]float64
 }
 
+// Where identifies one control: a position in the chain and an index in that
+// model's own parameter list.
+//
+// Both halves, because neither is unique on its own. Every block in a chain has
+// a parameter 0, and one block has as many parameters as it has.
+type Where struct {
+	Block int
+	Param int
+}
+
+// Where is this knob's identity.
+func (k Knob) Where() Where { return Where{Block: k.Block, Param: k.Param} }
+
 // Step is how far to move one control, and why.
 type Step struct {
 	Knob
@@ -111,6 +124,9 @@ type Result struct {
 // keeps the normal equations solvable when two controls do the same thing,
 // which two tone stacks in one chain very nearly do.
 const Damping = 1e-3
+
+// Least is the smallest move worth making, as a fraction of a control's range.
+const Least = 1e-3
 
 // Toward answers one pass: the moves that close the gap from got to the aims.
 //
@@ -159,6 +175,21 @@ func Toward(
 	out.Arrived = arrived(out.Residual)
 
 	return out, nil
+}
+
+// Reached says how far off a target is, without needing any slopes.
+//
+// Separate from Toward because knowing whether there is anything to do is
+// cheaper than knowing what to do about it. A pass reads a slope per control and
+// a reading is about eight seconds, so a chain of a dozen dials spends a minute
+// and a half finding out what it could have been told by arithmetic.
+func Reached(
+	aims map[audio.Figure]Aim,
+	got map[audio.Figure]float64,
+) (Result, bool) {
+	_, out := wanted(aims, got)
+
+	return out, out.Arrived
 }
 
 // wanted is the axes still worth solving, and the state of every axis named.
@@ -211,7 +242,14 @@ func stepsOf(
 
 	for i, k := range knobs {
 		to := math.Min(math.Max(k.At+move[i], k.Low), k.High)
-		if to == k.At {
+
+		// Anything under a thousandth of the control's own range is not a move.
+		// Two reasons, and the second is the one that bit. It cannot change a
+		// reading, so it is arithmetic noise dressed as an instruction. And
+		// every step is a message to the pedal, so a chain of sixteen dials
+		// sent sixteen of them back to back where a sweep sends one and then
+		// measures for four seconds, and the device stopped replying.
+		if math.Abs(to-k.At) < (k.High-k.Low)*Least {
 			continue
 		}
 
@@ -233,9 +271,14 @@ func after(
 	knobs []Knob,
 	steps []Step,
 ) map[audio.Figure]float64 {
-	by := make(map[int]float64, len(steps))
+	// Keyed by block and param together, because a knob is not identified by
+	// its param alone. An amplifier's fourth parameter and a cabinet's fourth
+	// are both 4, so a map on param alone credits one block's move to another
+	// block's slope. That did not fail: it predicted a centroid of 2.8MHz and
+	// the loop reported the chain would not reach the target.
+	by := make(map[Where]float64, len(steps))
 	for _, s := range steps {
-		by[s.Param] = s.By
+		by[s.Where()] = s.By
 	}
 
 	out := make(map[audio.Figure]float64, len(aims))
@@ -251,7 +294,7 @@ func after(
 	for _, r := range rows {
 		moved := got[r]
 		for _, k := range knobs {
-			moved += k.Slope[r] * by[k.Param]
+			moved += k.Slope[r] * by[k.Where()]
 		}
 
 		out[r] = math.Abs(aims[r].Want-moved) / aims[r].Tol

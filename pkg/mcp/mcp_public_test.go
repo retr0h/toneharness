@@ -191,6 +191,7 @@ chain:
 	s.Require().
 		NoError(os.WriteFile(
 			filepath.Join(dir, "artists", "their-player.tone.yaml"), []byte(`schema: ToneSpec
+genre: [rock]
 
 extends: mike-dirnt
 

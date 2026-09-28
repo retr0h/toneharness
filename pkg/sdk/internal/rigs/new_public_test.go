@@ -67,6 +67,7 @@ func (s *NewPublicTestSuite) opts(
 		ID:         "test-player",
 		Name:       "Test Player",
 		Instrument: "bass",
+		Genre:      []string{"rock"},
 		Amp:        "Ampeg SVT",
 		Catalogs:   s.catalogs(filepath.Join("testdata", "catalog.json")),
 	}
@@ -363,7 +364,8 @@ func (s *NewPublicTestSuite) TestAHalfWrittenPairLeavesNothingBehind() {
 
 	_, err := rigs.New(context.Background(), rigs.NewOptions{
 		Dir: dir, ID: "taken", Name: "Somebody", Instrument: "bass",
-		Amp: "Ampeg SVT", Catalogs: s.catalogs(filepath.Join("testdata", "catalog.json")),
+		Genre: []string{"rock"},
+		Amp:   "Ampeg SVT", Catalogs: s.catalogs(filepath.Join("testdata", "catalog.json")),
 	})
 
 	s.Require().ErrorIs(err, rigs.ErrExists)

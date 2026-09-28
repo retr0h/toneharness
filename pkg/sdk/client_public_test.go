@@ -268,7 +268,7 @@ chain:
       - { kind: cited, note: "a test says so" }
     confidence: high
 `,
-		stem + ".tone.yaml": "schema: ToneSpec\n" + extra + `
+		stem + ".tone.yaml": "schema: ToneSpec\ngenre: [rock]\n" + extra + `
 
 subject:
   kind: artist
@@ -447,7 +447,8 @@ func (s *ClientPublicTestSuite) TestUserRigsAreWrittenTo() {
 			opts: []sdk.Option{sdk.WithUserRigs(user), sdk.WithRigs(beneath)},
 			do: func(c *sdk.Client) (sdk.Scaffolded, error) {
 				return c.Scaffold(ctx, sdk.NewRig{
-					ID: "scaffolded", Name: "Somebody", Instrument: "bass", Amp: "Ampeg SVT",
+					Genre: []string{"rock"},
+					ID:    "scaffolded", Name: "Somebody", Instrument: "bass", Amp: "Ampeg SVT",
 				})
 			},
 			instrument: "bass",
@@ -1076,7 +1077,8 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 	into := func() sdk.Option { return sdk.WithRigs(s.T().TempDir()) }
 
 	base := sdk.NewRig{
-		ID: "test-player", Name: "Test Player",
+		Genre: []string{"rock"},
+		ID:    "test-player", Name: "Test Player",
 		Instrument: "bass", Amp: "Ampeg SVT",
 	}
 
@@ -1163,14 +1165,15 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 			// otherwise only found out when somebody builds from it.
 			name: "one naming gear nothing emulates",
 			in: sdk.NewRig{
-				ID: "test-player", Name: "Test Player",
+				Genre: []string{"rock"},
+				ID:    "test-player", Name: "Test Player",
 				Instrument: "bass", Amp: "No Such Amplifier",
 			},
 			err: true,
 		},
 		{
 			name: "an identifier that will not do",
-			in:   sdk.NewRig{ID: "Not An ID", Amp: "Ampeg SVT"},
+			in:   sdk.NewRig{Genre: []string{"rock"}, ID: "Not An ID", Amp: "Ampeg SVT"},
 			err:  true,
 		},
 		{
@@ -1178,7 +1181,8 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 			// run.
 			name: "a Client given nowhere to write",
 			in: sdk.NewRig{
-				ID: "test-player", Name: "Test Player",
+				Genre: []string{"rock"},
+				ID:    "test-player", Name: "Test Player",
 				Instrument: "bass", Amp: "Ampeg SVT",
 			},
 			nowhere: true,
@@ -1187,7 +1191,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 		{
 			name: "a caller who stopped waiting",
 			ctx:  cancelled(),
-			in:   sdk.NewRig{ID: "test-player", Amp: "Ampeg SVT"},
+			in:   sdk.NewRig{Genre: []string{"rock"}, ID: "test-player", Amp: "Ampeg SVT"},
 			err:  true,
 		},
 	}

@@ -250,8 +250,18 @@ func intentOf(
 	// A genre's words, after the ask's own, so anything somebody wrote by hand
 	// outranks what a measurement produced. Both carry their figures, so
 	// weightOf sizes each by how far it actually sits from the rest.
-	if ask.Genre != nil && *ask.Genre != "" {
-		out.Words = append(out.Words, genreWords(audio.ShippedGenre(slug.Of(*ask.Genre)))...)
+	// Every genre the ask names, in the order it names them, so a sound that is
+	// both punk and pop-punk gets what each earns. The words carry their own
+	// figures, so a term two genres both earn is weighed twice rather than
+	// counted once, which is right: two populations agreeing is more evidence
+	// than one.
+	for _, named := range ask.Genre {
+		if named == "" {
+			continue
+		}
+
+		out.Words = append(out.Words,
+			genreWords(audio.ShippedGenre(slug.Of(named)))...)
 	}
 
 	if ask.Technique != nil {

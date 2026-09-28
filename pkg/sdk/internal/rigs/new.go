@@ -47,6 +47,9 @@ var (
 	ErrNoDir = errors.New("no directory to write the rig into")
 	// ErrNoSuchGear reports gear this device does not model.
 	ErrNoSuchGear = errors.New("no such gear")
+	// ErrNoGenre reports a scaffold that named no genre, which the ask beside
+	// the rig requires.
+	ErrNoGenre = errors.New("name at least one genre the sound belongs to")
 )
 
 // idPattern is the shape an identifier takes: lower case words joined by
@@ -115,6 +118,12 @@ type NewOptions struct {
 	Cab string
 	// Pedals are real-world pedals, in signal order.
 	Pedals []string
+	// Genre is which genres the sound belongs to.
+	//
+	// Required, because the ask this writes beside the rig carries one and a
+	// ToneSpec without a genre is refused. A scaffold that wrote an invalid
+	// document would be a scaffold nobody can load.
+	Genre []string
 	// Catalogs hands over the catalog gear is checked against. Asked only
 	// when scaffolding from gear, since a copy checks nothing.
 	Catalogs Catalogs
@@ -145,6 +154,17 @@ func New(
 
 	if opts.Dir == "" {
 		return result.Scaffolded{}, ErrNoDir
+	}
+
+	// Refused here rather than caught by the contract later. A scaffold with no
+	// genre writes an ask that nothing can load, and "genre minimum number of
+	// items is 1" from a validator is a worse answer than saying which field the
+	// caller left out.
+	// Only a fresh scaffold. A copy takes its genre from the ask it copies, the
+	// same way it takes its gear from the rig, and asking for one it already has
+	// would be asking twice.
+	if opts.From == "" && len(opts.Genre) == 0 {
+		return result.Scaffolded{}, ErrNoGenre
 	}
 
 	body, ask, made, err := scaffoldFor(ctx, opts)
@@ -335,6 +355,12 @@ func scaffoldFor(
 			copied, askErr := scaffoldAsk(string(parent.askRaw), parent.spec.ID, opts)
 			ask = copied
 			err = errors.Join(err, askErr)
+		} else if len(opts.Genre) == 0 {
+			// A parent with no ask has no genre to hand down, and the fresh ask
+			// written beside the copy needs one. Said here rather than left to
+			// the contract, because "genre minimum number of items is 1" does
+			// not tell somebody which flag they left out.
+			err = errors.Join(err, ErrNoGenre)
 		}
 
 		return body, ask, result.Scaffolded{

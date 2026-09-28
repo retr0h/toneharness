@@ -385,7 +385,7 @@ func (s *IntentPublicTestSuite) TestAGenreBringsItsMeasuredWords() {
 		s.T().Skip("no measured genre earns a word in this binary")
 	}
 
-	got := presets.IntentOf(&tone.Spec{Genre: &usable})
+	got := presets.IntentOf(&tone.Spec{Genre: []string{usable}})
 	s.Require().NotEmpty(got.Words)
 
 	for _, w := range got.Words {
@@ -406,11 +406,11 @@ func (s *IntentPublicTestSuite) TestAGenreBringsItsMeasuredWords() {
 // would say it twice.
 func (s *IntentPublicTestSuite) TestAGenreThatBringsNothing() {
 	nothing := "sea-shanty"
-	s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: &nothing}).Words,
+	s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{nothing}}).Words,
 		"nothing measured")
 
 	empty := ""
-	s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: &empty}).Words,
+	s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{empty}}).Words,
 		"an empty genre is no genre")
 
 	// A genre that clears nothing. Punk is measured, clears the record
@@ -420,7 +420,7 @@ func (s *IntentPublicTestSuite) TestAGenreThatBringsNothing() {
 
 	for _, g := range all {
 		if g.Usable && len(g.Terms) == 0 {
-			s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: &g.Slug}).Words,
+			s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{g.Slug}}).Words,
 				"%s is measured and sets nothing apart", g.Slug)
 		}
 	}
