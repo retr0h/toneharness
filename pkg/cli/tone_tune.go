@@ -75,8 +75,11 @@ type TuneOptions struct {
 	// Nudge is how far a control is moved to read its slope, as a fraction of
 	// its own range.
 	Nudge float64
-	// Out is where the tuned chain goes, as a rig. Empty keeps nothing.
+	// Out is where the tuned chain goes, as a plan. Empty keeps nothing.
 	Out string
+	// Ask is a ToneSpec to append this round to, as a correction. Empty
+	// records nothing, which loses the only account of what was asked for.
+	Ask string
 }
 
 // Genres is what a genre measures as across its records.
@@ -158,11 +161,42 @@ func Tune(
 	_, _ = fmt.Fprintf(w, "  the loop wanders %.4f of a band and %.1fHz\n",
 		inCorpusScale(floor)[audio.KeyLow], floor[audio.KeyCentroid])
 
-	if err := converge(ctx, w, opts, bench, signal, preset, knobs, aims, settled); err != nil {
+	did, err := converge(ctx, w, opts, bench, signal, preset, knobs, aims, settled)
+	if err != nil {
 		return err
 	}
 
-	return keepTuned(ctx, w, opts)
+	if err := keepTuned(ctx, w, opts); err != nil {
+		return err
+	}
+
+	return written(w, opts, did)
+}
+
+// written appends this round to the ask, so what was asked for outlives the
+// settings it produced.
+func written(
+	w io.Writer,
+	opts TuneOptions,
+	did round,
+) error {
+	if opts.Ask == "" {
+		_, _ = fmt.Fprintf(w,
+			"  Nothing recorded. --ask appends this round to a ToneSpec, "+
+				"which is the only account of what was asked for.\n")
+
+		return nil
+	}
+
+	if err := record(opts.Ask, opts.Genre, did.steps, did.residual, did.arrived); err != nil {
+		return err
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"  [ok] appended a correction to %s, %d setting(s) moved and no "+
+			"verdict yet\n", opts.Ask, len(did.steps))
+
+	return nil
 }
 
 // keep writes the tuned chain out, so the answer survives the next preset
@@ -312,6 +346,7 @@ func knobsOf(
 				Block:   b.Pos,
 				Param:   index,
 				Control: fmt.Sprintf("%s %s", b.Model, name),
+				Setting: name,
 				At:      at,
 				Low:     spec.Min,
 				High:    spec.Max,
@@ -338,13 +373,15 @@ func converge(
 	knobs []solve.Knob,
 	aims map[audio.Figure]solve.Aim,
 	settled float64,
-) error {
+) (round, error) {
 	var best float64
+
+	var did round
 
 	for pass := 1; pass <= opts.Passes; pass++ {
 		got, err := sdk.Fingerprint(ctx, bench, signal)
 		if err != nil {
-			return err
+			return did, err
 		}
 
 		now := figuresOf(got)
@@ -356,23 +393,28 @@ func converge(
 		if at, arrived := solve.Reached(aims, now); arrived {
 			aimed(w, pass, at, furthest(at.Residual))
 
-			return nil
+			did.residual, did.arrived = at.Residual, true
+
+			return did, nil
 		}
 
 		if err := slopes(ctx, bench, signal, opts, knobs, now); err != nil {
-			return err
+			return did, err
 		}
 
 		step, err := solve.Toward(knobs, aims, now)
 		if err != nil {
-			return err
+			return did, err
 		}
 
 		worst := furthest(step.Residual)
 		aimed(w, pass, step, worst)
 
+		did.residual, did.arrived = step.Residual, step.Arrived
+		did.steps = append(did.steps, step.Steps...)
+
 		if step.Arrived {
-			return nil
+			return did, nil
 		}
 
 		if pass > 1 && worst >= best {
@@ -380,13 +422,13 @@ func converge(
 				"\n  stopped improving at %.1f tolerances out. The chain will not "+
 					"reach this target.\n", worst)
 
-			return nil
+			return did, nil
 		}
 
 		best = worst
 
 		if err := land(ctx, w, opts, bench, signal, knobs, step.Steps, settled); err != nil {
-			return err
+			return did, err
 		}
 
 		// The chain is not reloaded between passes on purpose: the next pass
@@ -398,7 +440,14 @@ func converge(
 	_, _ = fmt.Fprintf(w, "\n  %d passes and still %.1f tolerances out.\n",
 		opts.Passes, best)
 
-	return nil
+	return did, nil
+}
+
+// round is what one run of the loop did, for the correction it becomes.
+type round struct {
+	steps    []solve.Step
+	residual map[audio.Figure]float64
+	arrived  bool
 }
 
 // aimed prints one pass: what moved and how far off the target still is.

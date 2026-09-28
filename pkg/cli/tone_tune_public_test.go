@@ -403,8 +403,8 @@ func (s *TunePublicTestSuite) TestConvergeArrives() {
 		audio.KeyCentroid: {Want: 0, Tol: 100000},
 	}
 
-	s.Require().NoError(converge(context.Background(), &buf, s.opts(),
-		bench{}, make([]float32, 64), "preset.hlx", []solve.Knob{knob}, aims, -200))
+	s.Require().NoError(second(converge(context.Background(), &buf, s.opts(),
+		bench{}, make([]float32, 64), "preset.hlx", []solve.Knob{knob}, aims, -200)))
 
 	s.Require().Contains(buf.String(), "pass 1")
 	s.Require().NotContains(buf.String(), "pass 2", "it stopped when it arrived")
@@ -431,8 +431,8 @@ func (s *TunePublicTestSuite) TestConvergeStopsWhenItStopsImproving() {
 		audio.KeyCentroid: {Want: 10, Tol: 1},
 	}
 
-	s.Require().NoError(converge(context.Background(), &buf, opts,
-		&sloping{}, make([]float32, 64), "preset.hlx", []solve.Knob{knob}, aims, -200))
+	s.Require().NoError(second(converge(context.Background(), &buf, opts,
+		&sloping{}, make([]float32, 64), "preset.hlx", []solve.Knob{knob}, aims, -200)))
 
 	s.Require().Contains(buf.String(), "stopped improving")
 	s.Require().Contains(buf.String(), "will not reach this target")
@@ -454,8 +454,8 @@ func (s *TunePublicTestSuite) TestConvergeRunsOutOfPasses() {
 		audio.KeyCentroid: {Want: 9000, Tol: 1},
 	}
 
-	s.Require().NoError(converge(context.Background(), &buf, opts,
-		&sloping{}, make([]float32, 64), "preset.hlx", []solve.Knob{knob}, aims, -200))
+	s.Require().NoError(second(converge(context.Background(), &buf, opts,
+		&sloping{}, make([]float32, 64), "preset.hlx", []solve.Knob{knob}, aims, -200)))
 
 	s.Require().Contains(buf.String(), "1 passes and still")
 }
@@ -556,9 +556,9 @@ func (s *TunePublicTestSuite) TestTheBenchFailingIsReported() {
 	})
 
 	s.Run("reading where the chain sits", func() {
-		s.Require().ErrorIs(converge(context.Background(), buffer(), s.opts(),
-			bench{err: gone}, make([]float32, 64), "preset.hlx",
-			[]solve.Knob{knob}, aims, -200), gone)
+		s.Require().ErrorIs(second(converge(context.Background(), buffer(),
+			s.opts(), bench{err: gone}, make([]float32, 64), "preset.hlx",
+			[]solve.Knob{knob}, aims, -200)), gone)
 	})
 
 	s.Run("reading a slope", func() {
@@ -598,6 +598,15 @@ func (s *TunePublicTestSuite) TestSlopesReportsAControlItCannotPutBack() {
 		s.opts(), knobs, map[audio.Figure]float64{audio.KeyCentroid: 100})
 
 	s.Require().ErrorContains(err, "device refused")
+}
+
+// second is the error from a call that also answers what it did, for a case
+// that is only asserting the error.
+func second(
+	_ round,
+	err error,
+) error {
+	return err
 }
 
 func TestTunePublicTestSuite(

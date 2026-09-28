@@ -71,7 +71,16 @@ type Knob struct {
 	Block int
 	Param int
 	// Control is what the catalog calls it, for saying what was moved.
+	//
+	// A label for a person, so it carries the model as well as the parameter
+	// and is not a name anything should key on.
 	Control string
+	// Setting is the parameter's name on its own, as the catalog spells it.
+	//
+	// Apart from Control because a path into a plan is built from it, and a
+	// path has a grammar: "blocks[1].params.Bass" parses and
+	// "blocks[1].params.HD2_AmpSVBeastBrt Bass" does not.
+	Setting string
 	// At is where it sits now. Low and High are the ends of its range, from
 	// the catalog rather than assumed: 1,452 of the device's float controls do
 	// not run zero to one.

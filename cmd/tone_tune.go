@@ -35,6 +35,7 @@ var (
 	toneTuneTakes    int
 	toneTuneNudge    float64
 	toneTuneOut      string
+	toneTuneAsk      string
 	toneTuneHardware string
 	toneTuneClient   clientFlags
 )
@@ -89,6 +90,7 @@ wrong for the sound is a real answer to somebody who owns that gear.`,
 			Takes:    toneTuneTakes,
 			Nudge:    toneTuneNudge,
 			Out:      toneTuneOut,
+			Ask:      toneTuneAsk,
 			Hardware: toneTuneHardware,
 		})
 	},
@@ -113,6 +115,9 @@ func init() {
 		"how many takes the noise floor is measured from")
 	f.Float64Var(&toneTuneNudge, "nudge", 0.1,
 		"how far a control is moved to read its slope, as a fraction of its range")
+	f.StringVar(&toneTuneAsk, "ask", "",
+		"a ToneSpec to append this round to as a correction; "+
+			"without it nothing records what was asked for")
 	f.StringVar(&toneTuneOut, "out", "",
 		"where the tuned chain goes, as a rig; without it nothing is kept")
 	f.StringVar(&toneTuneHardware, "hardware", "",
