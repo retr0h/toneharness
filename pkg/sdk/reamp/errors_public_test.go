@@ -58,6 +58,24 @@ func (s *ErrorsPublicTestSuite) TestANamedDeviceThatIsNotThereListsWhatIs() {
 	s.Require().Contains(missing.Error(), "capture")
 }
 
+// TestNothingNamedAsksForADeviceRatherThanReportingAnEmptyOne covers the
+// failure somebody actually sees when no pedal is attached.
+//
+// Without --hardware there is no name to quote back, and quoting the empty
+// string reads as a bug in the tool rather than as a question for the person
+// running it.
+func (s *ErrorsPublicTestSuite) TestNothingNamedAsksForADeviceRatherThanReportingAnEmptyOne() {
+	err := &reamp.NoDeviceError{
+		Direction: "output",
+		Had:       []string{"MacBook Pro Speakers", "John’s AirPods Max"},
+	}
+
+	s.Require().NotContains(err.Error(), `matching ""`)
+	s.Require().Contains(err.Error(), "--hardware")
+	s.Require().Contains(err.Error(), "John’s AirPods Max",
+		"what was attached still travels with it")
+}
+
 // TestItUnwrapsToItsSentinel covers matching without the struct.
 func (s *ErrorsPublicTestSuite) TestItUnwrapsToItsSentinel() {
 	s.Require().True(errors.Is(&reamp.NoDeviceError{}, reamp.ErrNoDevice))

@@ -42,6 +42,8 @@ var (
 	Over = over
 	// Direction names a device kind the way somebody would say it.
 	Direction = direction
+	// Matches reports a device the caller meant, named or not.
+	Matches = matches
 	// OpenWith is Open with the audio backends named.
 	OpenWith = open
 )

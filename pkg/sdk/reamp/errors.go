@@ -44,7 +44,17 @@ type NoDeviceError struct {
 }
 
 // Error implements the error interface.
+//
+// Two sentences rather than one when nothing was named, because "no device
+// matching \"\"" reads as a bug in the tool rather than as a question for the
+// person running it.
 func (e *NoDeviceError) Error() string {
+	if e.Want == "" {
+		return fmt.Sprintf("no such audio device: no Helix %s attached, and "+
+			"nothing named with --hardware. Attached: %s",
+			e.Direction, strings.Join(e.Had, ", "))
+	}
+
 	return fmt.Sprintf("no such audio device: no %s device matching %q. "+
 		"Attached: %s", e.Direction, e.Want, strings.Join(e.Had, ", "))
 }

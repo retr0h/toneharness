@@ -98,10 +98,55 @@ func (s *ReampPublicTestSuite) TestOverGrowsWithTheSignal() {
 		"twice ten seconds of signal, and five seconds of slack")
 }
 
+// nullDevice names miniaudio's own stand-in, which these tests run the loop
+// against.
+//
+// Named rather than left empty. Naming nothing now means the pedal, and the
+// null backend's device is not one, so a test that left it blank would be
+// asking for hardware it does not have.
+const nullDevice = "null"
+
 // TestDirectionNamesADeviceKind covers what a failure calls the two.
 func (s *ReampPublicTestSuite) TestDirectionNamesADeviceKind() {
 	s.Require().Equal("input", reamp.Direction(malgo.Capture))
 	s.Require().Equal("output", reamp.Direction(malgo.Playback))
+}
+
+// TestAnUnnamedDeviceIsThePedal covers choosing without --hardware.
+//
+// A regression, and the failure was silent. strings.Contains on an empty
+// string is true of everything, so naming nothing took whichever device the
+// platform enumerated first. That was the HX Stomp all day on one machine and
+// then a pair of Bluetooth headphones, and a punk chain measured -80.3dB
+// through "John's AirPods Max" instead of refusing.
+func (s *ReampPublicTestSuite) TestAnUnnamedDeviceIsThePedal() {
+	tests := []struct {
+		name string
+		got  string
+		want string
+		is   bool
+	}{
+		{"the pedal, nothing named", "HX Stomp", "", true},
+		{"another of the family", "Helix", "", true},
+		{"speakers are not the pedal", "MacBook Pro Speakers", "", false},
+		{"nor are headphones", "John’s AirPods Max", "", false},
+		{"named, and case folded", "HX Stomp", "stomp", true},
+		{"named, and not this one", "MacBook Pro Speakers", "stomp", false},
+
+		// Named outright, so the caller has overruled the preference and gets
+		// what they asked for.
+		{"speakers, named outright", "MacBook Pro Speakers", "macbook", true},
+
+		// A prefix rather than a substring: an interface with the letters in
+		// its name is not the pedal.
+		{"an interface that merely says HX", "Behringer HX Mixer", "", false},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.is, reamp.Matches(tt.got, tt.want))
+		})
+	}
 }
 
 // TestOpenSaysWhatWasAttachedInstead covers hardware that is not there.
@@ -227,7 +272,7 @@ func (s *ReampPublicTestSuite) TestAPassPlaysSilenceOnceTheSignalRunsOut() {
 // the stream opens, the callback runs, the signal is fed out of it a frame at
 // a time, what arrives is kept, and the reading ends when both are done.
 func (s *ReampPublicTestSuite) TestThroughRunsTheWholeLoop() {
-	b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, "")
+	b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, nullDevice)
 	s.Require().NoError(err)
 
 	defer func() { _ = b.Close() }()
@@ -250,7 +295,7 @@ func (s *ReampPublicTestSuite) TestThroughRunsTheWholeLoop() {
 // blocked forever, and a campaign that hangs on block two hundred looks exactly
 // like one still working.
 func (s *ReampPublicTestSuite) TestThroughGivesUpOnADeviceThatStopped() {
-	b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, "")
+	b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, nullDevice)
 	s.Require().NoError(err)
 
 	defer func() { _ = b.Close() }()
@@ -276,7 +321,8 @@ func (s *ReampPublicTestSuite) TestThroughGivesUpOnADeviceThatStopped() {
 // No backend fakes a device that blocks on open, so the deadline is made short
 // enough that one which does open still misses it.
 func (s *ReampPublicTestSuite) TestThroughGivesUpOnADeviceThatNeverOpens() {
-	b, err := reamp.OpenClaiming([]malgo.Backend{reamp.NullBackend}, "", time.Nanosecond)
+	b, err := reamp.OpenClaiming([]malgo.Backend{reamp.NullBackend}, nullDevice,
+		time.Nanosecond)
 	s.Require().NoError(err)
 
 	defer func() { _ = b.Close() }()

@@ -176,7 +176,7 @@ func find(
 		name := d.Name()
 		had = append(had, name)
 
-		if strings.Contains(strings.ToLower(name), strings.ToLower(want)) {
+		if matches(name, want) {
 			return d.ID, name, nil
 		}
 	}
@@ -184,6 +184,47 @@ func find(
 	return malgo.DeviceID{}, "", &NoDeviceError{
 		Want: want, Direction: direction(kind), Had: had,
 	}
+}
+
+// matches reports a device the caller meant.
+//
+// A named device is a substring, case folded, because somebody types "stomp"
+// rather than the full name CoreAudio gives.
+//
+// Naming nothing means the pedal, not the first device the platform happens to
+// enumerate. That distinction is the whole of this function: strings.Contains
+// on an empty string is true of everything, so an unnamed device used to take
+// whichever one came back first. On this machine that was the HX Stomp all day
+// and then a pair of Bluetooth headphones, and the loop reported a punk chain
+// measuring -80.3dB through "John's AirPods Max" rather than refusing.
+//
+// Silence is the worst thing this could have returned. It is a reading, so
+// every figure downstream is a number rather than an error, and a measurement
+// tool that quietly measures the wrong device is worse than one that stops.
+func matches(
+	name string,
+	want string,
+) bool {
+	got := strings.ToLower(name)
+
+	if want != "" {
+		return strings.Contains(got, strings.ToLower(want))
+	}
+
+	return helix(got)
+}
+
+// helix reports an audio device belonging to the family this loop measures,
+// by the name its own driver presents: "HX Stomp", "Helix", "HX Effects".
+//
+// A prefix rather than a substring, so a mixer with "HX" somewhere in its name
+// is not mistaken for the pedal. Which models exist is the catalog's business
+// and not repeated here; this only has to tell the pedal apart from the
+// speakers, and --hardware names one outright when it cannot.
+func helix(
+	got string,
+) bool {
+	return strings.HasPrefix(got, "helix") || strings.HasPrefix(got, "hx ")
 }
 
 // direction names a device kind the way somebody would say it.
