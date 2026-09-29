@@ -410,8 +410,12 @@ func (f *FailAfter) Write(
 // Retry runs something until it works, or until patience runs out.
 var Retry = retry
 
-// ClaimAttempts is how many times a busy interface is waited on.
-const ClaimAttempts = claimAttempts
+// ClaimPatience is how long a busy interface is waited on, and ClaimBackoff
+// how long between tries.
+const (
+	ClaimPatience = claimPatience
+	ClaimBackoff  = claimBackoff
+)
 
 // Bus, Handle, Endpoints and Buses are what finding a device runs against,
 // exported so a test can supply them.

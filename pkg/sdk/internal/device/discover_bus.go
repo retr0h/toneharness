@@ -22,8 +22,10 @@ package device
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"time"
 )
 
 // bus is a USB bus this package can look at.
@@ -211,15 +213,28 @@ func claimOnce(
 		release func()
 	)
 
-	err := retry(func() error {
+	tries, waited, err := retry(func() error {
 		var err error
 		ends, release, err = dev.Claim()
 
 		return err
-	})
+	}, func(err error) bool { return errors.Is(err, ErrInterfaceBusy) })
 	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"claiming the editor interface (is HX Edit running?): %w", err)
+		// What was waited for and for how long, rather than a guess at who is
+		// holding it. "Is HX Edit running?" is the right question when somebody
+		// is at the machine and the wrong one when a campaign is running
+		// unattended, which is when this bites: five runs in a row reported it
+		// with no HX Edit and no other process of ours alive.
+		if errors.Is(err, ErrInterfaceBusy) {
+			return nil, nil, fmt.Errorf(
+				"claiming the editor interface: still held after %s and %d tries. "+
+					"Quit HX Edit if it is open; if nothing of yours has it, the "+
+					"device was claimed by something else and the wait was not "+
+					"long enough: %w",
+				waited.Round(time.Millisecond), tries, err)
+		}
+
+		return nil, nil, fmt.Errorf("claiming the editor interface: %w", err)
 	}
 
 	return ends, release, nil

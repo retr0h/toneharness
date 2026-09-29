@@ -54,8 +54,21 @@ const (
 	paceReadWait   = 2 * time.Second
 	drainReadWait  = 150 * time.Millisecond
 	drainQuietRuns = 3
-	claimAttempts  = 7
-	claimBackoff   = 50 * time.Millisecond
+	// claimPatience is how long a busy editor interface is waited on, and
+	// claimBackoff how long between tries.
+	//
+	// A budget rather than a count, because the thing worth reasoning about is
+	// how long somebody waits. Seven tries of 50ms was 300ms, which covers a
+	// previous session still letting go and nothing else: a campaign of eight
+	// runs reported five failures in a row against an interface something held
+	// for minutes, and 300ms was never going to outlast that.
+	//
+	// Three seconds, against a device command that takes about one. It cannot
+	// outlast a hold of minutes either, and it is not meant to: what it buys is
+	// that a brief hold stops being a failed run, and the refusal now says how
+	// long it waited so the next one is diagnosable.
+	claimPatience = 3 * time.Second
+	claimBackoff  = 100 * time.Millisecond
 )
 
 // budgets are how long a session waits on each thing it waits for.
@@ -495,27 +508,38 @@ func (s *session) opened() []*channel {
 	return out
 }
 
-// retry runs something until it works, or until patience runs out.
+// retry runs something until it works, or until patience runs out, and says
+// what it did.
 //
-// Cleanup after a previous session races the next claim, so an interface that
-// is busy is worth waiting on rather than reporting. Separate from the call
-// itself because the policy — how many times, how long between — is the part
-// worth being sure about, and the call is the part that needs hardware.
+// Cleanup after a previous session races the next claim, so an interface that is
+// busy is worth waiting on rather than reporting. Separate from the call itself
+// because the policy — how long, how often — is the part worth being sure
+// about, and the call is the part that needs hardware.
+//
+// again decides what is worth waiting on. Everything was, which spent the whole
+// budget on a device that was never going to appear: an interface somebody
+// holds comes free, and one that does not exist does not.
+//
+// The count and the elapsed time come back so a refusal can say how long it
+// waited. Without that, an interface held for a moment and one held for minutes
+// produce the same sentence.
 func retry(
 	attempt func() error,
-) error {
+	again func(error) bool,
+) (int, time.Duration, error) {
 	var last error
 
-	for i := range claimAttempts {
+	began := time.Now()
+
+	for tries := 1; ; tries++ {
 		if last = attempt(); last == nil {
-			return nil
+			return tries, time.Since(began), nil
 		}
 
-		// Not after the last one: nobody is waiting for anything then.
-		if i < claimAttempts-1 {
-			time.Sleep(claimBackoff)
+		if !again(last) || time.Since(began)+claimBackoff >= claimPatience {
+			return tries, time.Since(began), last
 		}
+
+		time.Sleep(claimBackoff)
 	}
-
-	return last
 }

@@ -221,7 +221,7 @@ func refused(
 	busy bool,
 ) error {
 	if busy {
-		return fmt.Errorf("the editor interface is in use, quit HX Edit: %w", err)
+		return fmt.Errorf("%w: %w", ErrInterfaceBusy, err)
 	}
 
 	return fmt.Errorf("claiming the editor interface: %w", err)
