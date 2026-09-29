@@ -31,6 +31,7 @@ var (
 	toneTuneCorpus   string
 	toneTuneDry      string
 	toneTuneSeconds  float64
+	toneTuneTries    int
 	toneTunePasses   int
 	toneTuneTakes    int
 	toneTuneNudge    float64
@@ -53,7 +54,13 @@ each control does on its own, stacks those slopes into a matrix and solves the
 matrix for the moves that close the gap. Measuring is linear in the number of
 controls and solving is arithmetic.
 
-Four things worth knowing before reading the output.
+Not every control is a dial. A cabinet's microphone is a list of twelve, and the
+fourth does not sit between the third and the fifth in any sense a slope
+describes, so lists are compared rather than solved: every setting is tried, the
+nearest is kept, and the dials are then solved from there. Twelve settings is
+twelve readings, which is cheaper than the sweep of one dial in a long chain.
+
+Five things worth knowing before reading the output.
 
 The model is local. A slope is true near where it was read and drifts away from
 it, so one solve overshoots and the answer is another pass from wherever the
@@ -63,6 +70,12 @@ The target is a point with tolerances rather than a point. A genre's records
 give a middle and a spread on every figure, so an axis its records agree about
 has to be hit and one they disagree about need not be precise. That is what
 makes a genre an easier target than it sounds.
+
+A choice is revisited. The nearest setting is the nearest before any dial has
+moved, which is not the same question as which setting a solve can finish from,
+so a run that falls short backs up to the next-nearest and solves again.
+` + "`--tries`" + ` is how many of those it is worth, and each costs a whole
+convergence.
 
 Nothing is stored. Every move is a live edit on what the pedal is playing, so
 the answer lasts until the next preset is selected and no flash is written.
@@ -87,6 +100,7 @@ wrong for the sound is a real answer to somebody who owns that gear.`,
 			Dry:      toneTuneDry,
 			Seconds:  toneTuneSeconds,
 			Passes:   toneTunePasses,
+			Tries:    toneTuneTries,
 			Takes:    toneTuneTakes,
 			Nudge:    toneTuneNudge,
 			Out:      toneTuneOut,
@@ -111,6 +125,9 @@ func init() {
 		"how much of the reference to push through per reading")
 	f.IntVar(&toneTunePasses, "passes", 5,
 		"how many times to solve before giving up on converging")
+	f.IntVar(&toneTuneTries, "tries", 2,
+		"how many settings of a chain's lists to solve the dials from; "+
+			"each past the first costs another convergence")
 	f.IntVar(&toneTuneTakes, "takes", 3,
 		"how many takes the noise floor is measured from")
 	f.Float64Var(&toneTuneNudge, "nudge", 0.1,

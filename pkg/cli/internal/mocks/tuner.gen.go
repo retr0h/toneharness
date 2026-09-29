@@ -81,6 +81,20 @@ func (m *MockTuner) EXPECT() *MockTunerMockRecorder {
 	return m.recorder
 }
 
+// Choose mocks base method.
+func (m *MockTuner) Choose(ctx context.Context, at sdk.Address, value int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Choose", ctx, at, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Choose indicates an expected call of Choose.
+func (mr *MockTunerMockRecorder) Choose(ctx, at, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Choose", reflect.TypeOf((*MockTuner)(nil).Choose), ctx, at, value)
+}
+
 // Current mocks base method.
 func (m *MockTuner) Current(ctx context.Context, as sdk.Format) (sdk.Reading, error) {
 	m.ctrl.T.Helper()

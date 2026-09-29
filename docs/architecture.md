@@ -144,7 +144,7 @@ listen     a person. Nothing above this line can hear
 say        "darker", "needs more bite" — a nudge, which is a direction and a size
    │
    ▼
-solve      tone tune — sweeps the dials, solves for the moves, measures again
+solve      tone tune — compares the lists, solves the dials, measures again
    │
    ▼
 keep       a plan, which is the only layer with room for a knob position

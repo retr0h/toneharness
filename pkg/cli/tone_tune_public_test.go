@@ -102,6 +102,12 @@ func (s *TunePublicTestSuite) ready() {
 	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	s.pedal.EXPECT().
 		Turn(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	// The lists as well as the dials. This amplifier's MidFreq is a list of
+	// three, so every run of the loop compares it before solving anything, and
+	// a suite that expected only Turn was describing a chain of dials only.
+	s.pedal.EXPECT().
+		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 }
 
 // opts is a run with the hardware faked out.
@@ -234,6 +240,10 @@ func (s *TunePublicTestSuite) TestADialThatWillNotMove() {
 			Model: catalog.ModelID("HD2_AmpSVBeastBrt"),
 		}}}}, nil)
 	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+	// The lists are compared before any dial is read, so this refusal is only
+	// reached once MidFreq has been walked.
+	s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
 	s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errors.New("no reply to opcode 30 within 6s"))
 
@@ -314,6 +324,9 @@ func (s *TunePublicTestSuite) TestItMovesTheDialsItSolvedFor() {
 			Model: catalog.ModelID("HD2_AmpSVBeastBrt"),
 		}}}}, nil)
 	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+
+	s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
 
 	moved := 0
 	s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).

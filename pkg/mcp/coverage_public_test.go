@@ -71,7 +71,7 @@ var exempt = map[string]string{
 	// per control and there are three to five passes, so a chain of two dozen
 	// dials is twenty minutes of real-time audio, and it holds the pedal for
 	// all of it.
-	"tone tune": "a measure-solve-apply loop, about twenty minutes, and it needs the audio loop",
+	"tone tune": "a compare-solve-apply loop, half an hour and up, and it needs the audio loop",
 }
 
 // toolName is what a command's tool is called: the path under the root, joined

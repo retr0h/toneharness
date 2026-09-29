@@ -53,8 +53,83 @@ last one landed, not a better model. Three to five passes is usual.
 
 **A control that is a list has no slope at all.** A cabinet's twelve microphones
 do not lie on a line, and the fourth does not sit between the third and the
-fifth in any sense a slope describes. Those are chosen by comparison rather than
-solved, which is not built yet.
+fifth in any sense a slope describes. Those are compared rather than solved, and
+the next section is how.
+
+## A list is compared, not solved
+
+Twelve microphones is twelve readings. That is cheaper than the sweep of a
+single dial in a long chain, and the comparison is exact rather than modelled:
+each setting's figures are what that setting actually produced, so there is no
+slope to be wrong about.
+
+The scoring is the axis each setting leaves furthest out, which is the measure
+the rest of the loop reports and stops on. Summing the axes instead would rank a
+setting that is slightly wrong everywhere above one that is right on everything
+but the axis the target cares about most, and "2.4 tolerances out" would then
+mean two things in one run.
+
+A setting is thrown away rather than scored when it mutes the chain, clips the
+converters, or the device refuses it, because in each case the figures describe
+something other than the setting. The clipping guard is the one that earns its
+keep: one microphone of a cabinet's twelve clipped and read a centroid of
+4,471Hz where the other eleven sat between 126 and 147. Scored, it wins every
+target asking for a bright sound, and the answer is a cabinet nobody would have
+chosen.
+
+The output names the winner and the runner-up:
+
+```
+  comparing 1 list(s), every setting of each
+    Mic: 11 of 12 settings read, nearest is 4 at 1.8 tolerances out
+      next nearest is 9 at 2.1
+```
+
+The gap between those two is the useful number. Nothing between them means the
+control does not matter for this target; tolerances between them mean it is the
+most important thing in the chain.
+
+Settings are numbers rather than names because Line 6 ship no symbol list for
+them. The catalog says a cabinet's Mic runs 0 to 11 and nothing says which
+microphone each one is, so a report can say which setting won and not what it is
+called.
+
+## Choosing and solving interleave
+
+The order is fixed and only one way round works. Choose first, then solve,
+because a choice changes every slope: the same Treble in front of two
+microphones is two different numbers, so slopes read before the choice describe
+a chain that no longer exists. Solving first would be worse, since it spends
+every dial answering a target and then moves the thing that moves furthest.
+
+**The nearest setting is not the last word.** It is the nearest with the dials
+wherever the compiler left them, and that is a different question from which
+setting a solve can finish from. A setting reading a hair nearer while leaving
+every dial against a stop is a worse answer than one reading further out with
+the whole range in hand, and nothing short of solving from both finds that out.
+So a run that falls short backs up to the next-nearest and solves again.
+
+That is not a theory. Matt Freeman's rig aimed at punk on an HX Stomp, one pass
+each:
+
+| MidFreq | read  | solved to |
+| ------- | ----- | --------- |
+| 2       | 390.5 | 52.7      |
+| 1       | 420.3 | 5.3       |
+
+The setting that read nearest solved ten times worse than the one that read
+second. Without the backing up the run reports 52.7 and stops.
+
+`--tries` is how many of those are worth paying for, and the default is two: the
+nearest, and one alternative. Each costs a whole convergence, which on a chain
+of a dozen dials over three passes is around forty readings. `--tries 1` skips
+the backing up for somebody in a hurry.
+
+Where a chain holds several lists, they are compared one at a time in signal
+order, so each is compared with the earlier ones already on their answers. The
+backing up then queues every runner-up across all of them together and tries
+whichever read nearest, rather than exhausting one control before touching the
+next. The best attempt is what gets reported, not the last one tried.
 
 ## The noise floor is the unit everything is measured in
 

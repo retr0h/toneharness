@@ -47,10 +47,15 @@ type Builds interface {
 
 // Tuner is what solving for knob positions needs: build a chain, put it in
 // front of the device, move one control and read back what the chain is.
+//
+// Both kinds of control, because a chain has both and the loop handles them
+// differently. Turns is the dials the solver moves together; Chooses is the
+// lists it compares one setting at a time.
 type Tuner interface {
 	Builds
 	Plays
 	Turns
+	Chooses
 	Reads
 }
 
@@ -73,6 +78,13 @@ type TuneOptions struct {
 	Corpus string
 	// Passes is how many times to solve before giving up on converging.
 	Passes int
+	// Tries is how many settings of a chain's lists to solve the dials from.
+	//
+	// One spends every reading on whichever setting read nearest before any
+	// dial moved, which is not the same question as which setting a solve can
+	// finish from. More than one costs a whole convergence each, so this is
+	// where somebody in a hurry trades the better answer for the afternoon.
+	Tries int
 	// Nudge is how far a control is moved to read its slope, as a fraction of
 	// its own range.
 	Nudge float64
@@ -132,6 +144,8 @@ func Tune(
 		return fmt.Errorf("%w: the chain has no dial to turn", solve.ErrNoKnobs)
 	}
 
+	lists := listsOf(made.Plan, cat)
+
 	signal, err := reference(opts.Dry, opts.Seconds)
 	if err != nil {
 		return err
@@ -144,8 +158,8 @@ func Tune(
 
 	defer release()
 
-	_, _ = fmt.Fprintf(w, "\n  %s aimed at %s, %d dials through %s\n",
-		opts.ID, opts.Genre, len(knobs), bench.Name())
+	_, _ = fmt.Fprintf(w, "\n  %s aimed at %s, %d dials and %d lists through %s\n",
+		opts.ID, opts.Genre, len(knobs), len(lists), bench.Name())
 
 	// The loop's own wander, which is the floor under every tolerance. Without
 	// it an axis the records happen to agree closely about gets a tolerance of
@@ -170,7 +184,7 @@ func Tune(
 	_, _ = fmt.Fprintf(w, "  the loop wanders %.4f of a band and %.1fHz\n",
 		inCorpusScale(floor)[audio.KeyLow], floor[audio.KeyCentroid])
 
-	did, err := converge(ctx, w, opts, bench, signal, preset, knobs, aims, settled)
+	did, err := attempt(ctx, w, opts, bench, signal, preset, knobs, lists, aims, settled)
 	if err != nil {
 		return err
 	}
