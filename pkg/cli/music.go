@@ -38,16 +38,21 @@ func MusicPlayers(
 	of []sdk.MusicPlayer,
 ) error {
 	rows := make([][]string, 0, len(of))
-	tagged := 0
+	tagged, geared := 0, 0
 
 	for _, p := range of {
 		if p.Untagged == 0 {
 			tagged++
 		}
 
+		if p.Rig {
+			geared++
+		}
+
 		rows = append(rows, []string{
 			paint.Accent(w, p.ID),
 			strconv.Itoa(p.Records),
+			rigOf(w, p),
 			listOf(w, p.Bands, "none named"),
 			genresOf(w, p),
 		})
@@ -55,11 +60,12 @@ func MusicPlayers(
 
 	return paint.Section{
 		Title:   "Who the corpus holds records for",
-		Detail:  playersHeld(len(of), tagged),
-		Headers: []string{"player", "records", "bands", "genres"},
+		Detail:  playersHeld(len(of), tagged, geared),
+		Headers: []string{"player", "records", "rig", "bands", "genres"},
 		Rows:    rows,
 		Align: []lipgloss.Position{
-			lipgloss.Left, lipgloss.Right, lipgloss.Left, lipgloss.Left,
+			lipgloss.Left, lipgloss.Right, lipgloss.Left,
+			lipgloss.Left, lipgloss.Left,
 		},
 		Empty: "no players in this corpus",
 		Summary: "the directory is the rig's identifier, and a rig named " +
@@ -67,16 +73,44 @@ func MusicPlayers(
 	}.Render(w)
 }
 
-// playersHeld says how many players are held and how many are fully tagged.
-func playersHeld(
-	players, tagged int,
+// rigOf says whether there is gear for a player.
+//
+// The absence is what the column is for, so that is the one marked. A player
+// with records and no rig earns their genres words that nothing can then be
+// built from.
+func rigOf(
+	w io.Writer,
+	p sdk.MusicPlayer,
 ) string {
-	if players == tagged {
-		return fmt.Sprintf("%s, every record carrying a genre", plural(players, "player"))
+	if p.Rig {
+		return paint.Mute(w, "yes")
 	}
 
-	return fmt.Sprintf("%s, %d with every record tagged",
-		plural(players, "player"), tagged)
+	return paint.Info(w, "none")
+}
+
+// playersHeld says how many players are held, how many are fully tagged, and
+// how many have gear.
+//
+// The players with no rig are named as a count rather than left to be counted
+// off the table, because that is the number somebody is looking for when a
+// genre will not build.
+func playersHeld(
+	players, tagged, geared int,
+) string {
+	got := plural(players, "player")
+
+	if players != tagged {
+		got += fmt.Sprintf(", %d with every record tagged", tagged)
+	} else {
+		got += ", every record carrying a genre"
+	}
+
+	if geared == players {
+		return got + ", all with gear"
+	}
+
+	return got + fmt.Sprintf(", %d with no rig", players-geared)
 }
 
 // genresOf lists a player's genres, saying how many of their records carry none.
@@ -104,11 +138,15 @@ func MusicGroups(
 	threshold bool,
 ) error {
 	rows := make([][]string, 0, len(of))
-	usable := 0
+	usable, hollow := 0, 0
 
 	for _, g := range of {
 		if g.Usable {
 			usable++
+		}
+
+		if g.Geared == 0 {
+			hollow++
 		}
 
 		row := []string{
@@ -118,7 +156,7 @@ func MusicGroups(
 		}
 
 		if threshold {
-			row = append(row, checkedOf(w, g), readsOf(w, g))
+			row = append(row, gearedOf(w, g), checkedOf(w, g), readsOf(w, g))
 		}
 
 		// Last, because it is the widest and the only one that wraps.
@@ -131,8 +169,8 @@ func MusicGroups(
 	align := []lipgloss.Position{lipgloss.Left, lipgloss.Right, lipgloss.Right}
 
 	if threshold {
-		headers = append(headers, "checked", "reads")
-		align = append(align, lipgloss.Left, lipgloss.Left)
+		headers = append(headers, "geared", "checked", "reads")
+		align = append(align, lipgloss.Left, lipgloss.Left, lipgloss.Left)
 	}
 
 	headers = append(headers, "who")
@@ -140,13 +178,31 @@ func MusicGroups(
 
 	return paint.Section{
 		Title:   "What the corpus can be selected by",
-		Detail:  groupsHeld(len(of), usable, kind, threshold),
+		Detail:  groupsHeld(len(of), usable, hollow, kind, threshold),
 		Headers: headers,
 		Rows:    rows,
 		Align:   align,
 		Empty:   "no " + kind + "s named in this corpus",
 		Summary: groupsSummary(threshold),
 	}.Render(w)
+}
+
+// gearedOf says how many of a genre's players there is gear for.
+//
+// Marked when it is none, because a genre with no geared player is one that
+// earns its words and then cannot be built: grunge reached the threshold on
+// nine records from three players and had gear for none of them.
+func gearedOf(
+	w io.Writer,
+	g sdk.MusicGroup,
+) string {
+	got := fmt.Sprintf("%d of %d", g.Geared, g.Artists)
+
+	if g.Geared == 0 {
+		return paint.Info(w, got)
+	}
+
+	return paint.Mute(w, got)
 }
 
 // whoOf names the players a group's records come from, with the count.
@@ -167,7 +223,7 @@ func whoOf(
 
 // groupsHeld says how many were found, and how many can be aimed at.
 func groupsHeld(
-	found, usable int,
+	found, usable, hollow int,
 	kind string,
 	threshold bool,
 ) string {
@@ -175,7 +231,8 @@ func groupsHeld(
 		return plural(found, kind)
 	}
 
-	return fmt.Sprintf("%s, %d worth aiming at", plural(found, kind), usable)
+	return fmt.Sprintf("%s, %d worth aiming at, %d with gear for nobody",
+		plural(found, kind), usable, hollow)
 }
 
 // groupsSummary says what the table is for.

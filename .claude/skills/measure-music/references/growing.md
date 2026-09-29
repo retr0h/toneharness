@@ -65,13 +65,22 @@ happened here: grunge earned `scooped` and `clean` off nine records from three
 players, and `tone build` then refuses the whole request, correctly, with
 "nothing in the request names gear, and nothing in it can be measured against".
 
-So adding records is half a job. Finish it or write down that you did not:
+So adding records is half a job. Finish it or write down that you did not.
 
-1. `corpus music players` says who the corpus holds.
-2. `rigs list` says who has gear.
-3. Every name in the first and not the second is a hole. Either research the
-   gear, which is the `build-a-rig` skill and is hours per player rather than
-   minutes, or create a task naming that player so the next session can.
+`corpus music players` answers it on its own. A `rig` column says who has gear
+and who has none, and the line above the table counts the ones who do not:
+
+```
+15 players, 7 with every record tagged, 1 with no rig
+```
+
+`corpus music genres` answers the same question one level up, where it matters
+more. A `geared` column reads `2 of 3`, and a genre reading `0 of 3` is one that
+earns its words and can then build nothing.
+
+Either research the gear for the players it names, which is the `build-a-rig`
+skill and takes hours per player rather than minutes, or create a task naming
+them so the next session can.
 
 **Do not leave it as a sentence in a reply.** Five players sat in the corpus
 earning genre words with no gear behind any of them, and nothing in this

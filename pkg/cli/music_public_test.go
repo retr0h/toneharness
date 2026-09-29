@@ -96,6 +96,49 @@ func (s *MusicPublicTestSuite) TestPlayersNamesWhatIsMissing() {
 	s.Require().Contains(got, "1 with every record tagged")
 }
 
+// TestPlayersMarkWhoHasNoRig covers the column and the count beside it.
+//
+// The absence is the point, so that is what is marked and what the detail line
+// counts. It is the number somebody wants when a genre will not build.
+func (s *MusicPublicTestSuite) TestPlayersMarkWhoHasNoRig() {
+	got := s.players([]sdk.MusicPlayer{
+		{ID: "mike-dirnt", Records: 3, Genres: []string{"punk"}, Rig: true},
+		{ID: "cone-mccaslin", Records: 3, Genres: []string{"punk"}},
+	})
+
+	s.Require().Contains(got, "none", "the player with no rig is marked")
+	s.Require().Contains(got, "1 with no rig")
+}
+
+// TestEveryPlayerHasGear covers the other half of that line.
+func (s *MusicPublicTestSuite) TestEveryPlayerHasGear() {
+	got := s.players([]sdk.MusicPlayer{
+		{ID: "a", Records: 1, Genres: []string{"punk"}, Rig: true},
+	})
+
+	s.Require().Contains(got, "all with gear")
+}
+
+// TestGenresSayWhenGearIsMissing covers a genre that earns words and then
+// cannot be built.
+//
+// Grunge did exactly this: nine records from three players, the threshold met,
+// and gear for none of them.
+func (s *MusicPublicTestSuite) TestGenresSayWhenGearIsMissing() {
+	got := s.groups([]sdk.MusicGroup{
+		{Name: "grunge", Slug: "grunge", Records: 9, Artists: 3, Usable: true},
+		{
+			Name: "punk", Slug: "punk", Records: 12, Artists: 4,
+			Usable: true, Geared: 3,
+		},
+	}, "genre", true)
+
+	s.Require().Contains(got, "GEARED")
+	s.Require().Contains(got, "0 of 3", "grunge has gear for nobody")
+	s.Require().Contains(got, "3 of 4")
+	s.Require().Contains(got, "1 with gear for nobody")
+}
+
 // TestEveryPlayerTagged covers the other detail line.
 func (s *MusicPublicTestSuite) TestEveryPlayerTagged() {
 	got := s.players([]sdk.MusicPlayer{

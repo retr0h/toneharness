@@ -81,7 +81,7 @@ func (s *MusicviewPublicTestSuite) TestPlayers() {
 		"ben-shepherd/notes.txt": "nothing yet",
 	})
 
-	got, err := musicview.Players(fsys, ".")
+	got, err := musicview.Players(fsys, ".", nil)
 	s.Require().NoError(err)
 	s.Require().Len(got, 2, "the directory with no manifest is skipped")
 
@@ -95,6 +95,57 @@ func (s *MusicviewPublicTestSuite) TestPlayers() {
 	s.Require().Equal([]string{"Green Day"}, got[1].Bands)
 	s.Require().Equal([]string{"pop-punk", "punk"}, got[1].Genres, "in order")
 	s.Require().Zero(got[1].Untagged)
+
+	s.Require().False(got[0].Rig, "nothing was handed in, so nobody has gear")
+	s.Require().False(got[1].Rig)
+}
+
+// TestPlayersSayWhoHasNoRig covers the join a genre that will not build turns
+// on.
+//
+// A player with records and no rig still earns their genres words, so the
+// genre reads as usable and then has nothing to build from. Five players sat
+// like that until somebody asked why a build failed.
+func (s *MusicviewPublicTestSuite) TestPlayersSayWhoHasNoRig() {
+	fsys := corpus(map[string]string{
+		"mike-dirnt/corpus.yaml":    many("Mike Dirnt", "punk", 1),
+		"cone-mccaslin/corpus.yaml": many("Cone McCaslin", "punk", 1),
+	})
+
+	got, err := musicview.Players(fsys, ".", map[string]bool{"mike-dirnt": true})
+	s.Require().NoError(err)
+	s.Require().Len(got, 2)
+
+	s.Require().Equal("cone-mccaslin", got[0].ID)
+	s.Require().False(got[0].Rig, "records and nothing to build them with")
+
+	s.Require().Equal("mike-dirnt", got[1].ID)
+	s.Require().True(got[1].Rig)
+}
+
+// TestGenresCountTheirGearedPlayers covers a genre that is hollow.
+//
+// Joined on the directory rather than on the name a group reports, because
+// those differ: a group names "Mike Dirnt" and a rig is mike-dirnt. Counting
+// on the name would report every genre as having gear for nobody.
+func (s *MusicviewPublicTestSuite) TestGenresCountTheirGearedPlayers() {
+	fsys := corpus(map[string]string{
+		"mike-dirnt/corpus.yaml":    many("Mike Dirnt", "punk", 3),
+		"cone-mccaslin/corpus.yaml": many("Cone McCaslin", "punk", 3),
+		"ben-shepherd/corpus.yaml":  many("Ben Shepherd", "grunge", 3),
+	})
+
+	got, err := musicview.Genres(fsys, ".", map[string]bool{"mike-dirnt": true})
+	s.Require().NoError(err)
+	s.Require().Len(got, 2)
+
+	s.Require().Equal("grunge", got[0].Slug)
+	s.Require().Equal(1, got[0].Artists)
+	s.Require().Zero(got[0].Geared, "a genre earning words nothing can build")
+
+	s.Require().Equal("punk", got[1].Slug)
+	s.Require().Equal(2, got[1].Artists)
+	s.Require().Equal(1, got[1].Geared, "one of the two has gear")
 }
 
 // TestGenresReportsWhatEachIsShortOf is the number somebody acts on.
@@ -108,7 +159,7 @@ func (s *MusicviewPublicTestSuite) TestGenresReportsWhatEachIsShortOf() {
 		"matt-freeman/corpus.yaml": many("Matt Freeman", "punk", 3),
 	})
 
-	got, err := musicview.Genres(fsys, ".")
+	got, err := musicview.Genres(fsys, ".", nil)
 	s.Require().NoError(err)
 	s.Require().Len(got, 1)
 
@@ -132,7 +183,7 @@ func (s *MusicviewPublicTestSuite) TestGenresCountsAUsableOne() {
 		"c/corpus.yaml": many("C", "punk", 2),
 	})
 
-	got, err := musicview.Genres(fsys, ".")
+	got, err := musicview.Genres(fsys, ".", nil)
 	s.Require().NoError(err)
 	s.Require().Len(got, 1)
 
@@ -214,8 +265,8 @@ func (s *MusicviewPublicTestSuite) TestAnEmptyCorpusIsRefused() {
 		name string
 		call func() error
 	}{
-		{"players", func() error { _, err := musicview.Players(fsys, "."); return err }},
-		{"genres", func() error { _, err := musicview.Genres(fsys, "."); return err }},
+		{"players", func() error { _, err := musicview.Players(fsys, ".", nil); return err }},
+		{"genres", func() error { _, err := musicview.Genres(fsys, ".", nil); return err }},
 		{"bands", func() error { _, err := musicview.Bands(fsys, "."); return err }},
 		{"records", func() error { _, err := musicview.Records(fsys, "."); return err }},
 	} {
@@ -235,13 +286,13 @@ func (s *MusicviewPublicTestSuite) TestAnUnreadableManifestStops() {
 		"a/corpus.yaml": "artist: A\ntracks:\n  - trak: typo\n",
 	})
 
-	_, err := musicview.Players(fsys, ".")
+	_, err := musicview.Players(fsys, ".", nil)
 	s.Require().ErrorContains(err, "a/corpus.yaml")
 }
 
 // TestATreeThatIsNotThere covers a corpus path nobody can read.
 func (s *MusicviewPublicTestSuite) TestATreeThatIsNotThere() {
-	_, err := musicview.Players(corpus(nil), "nowhere")
+	_, err := musicview.Players(corpus(nil), "nowhere", nil)
 	s.Require().ErrorContains(err, "nowhere")
 }
 

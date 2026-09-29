@@ -1481,6 +1481,40 @@ func TestClientPublicTestSuite(
 // One test for all four because they share everything but the call: the same
 // tree, the same read of the same manifests, and four views over it. Separate
 // tests would assert the same setup four times.
+// TestMusicNeedsTheRigsToAnswerWhoHasNone covers the join failing.
+//
+// A corpus listing says which of its players nothing can be built for, so it
+// reads the rigs as well as the recordings and a rig set it cannot read is a
+// listing it cannot answer. Reported rather than shrugged off: a listing that
+// quietly said nobody had gear would be worse than one that stopped, because
+// "no rig" is exactly the answer somebody is looking for.
+func (s *ClientPublicTestSuite) TestMusicNeedsTheRigsToAnswerWhoHasNone() {
+	c := sdk.New(sdk.WithRigs(s.rigsDir(
+		map[string]string{"broken.yaml": "schema: RigSpec\nid: broken\n"})))
+
+	corpus := s.T().TempDir()
+
+	tests := []struct {
+		name  string
+		check func() error
+	}{
+		{
+			name:  "who it holds records for",
+			check: func() error { _, err := c.MusicPlayers(s.T().Context(), corpus); return err },
+		},
+		{
+			name:  "what it can be selected by",
+			check: func() error { _, err := c.MusicGenres(s.T().Context(), corpus); return err },
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.Require().ErrorContains(tt.check(), "broken.yaml")
+		})
+	}
+}
+
 func (s *ClientPublicTestSuite) TestMusic() {
 	root := s.T().TempDir()
 

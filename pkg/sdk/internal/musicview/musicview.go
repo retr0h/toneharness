@@ -46,6 +46,7 @@ var ErrNoCorpus = errors.New("no manifests in the corpus")
 func Players(
 	fsys fs.FS,
 	dir string,
+	geared map[string]bool,
 ) ([]result.MusicPlayer, error) {
 	held, err := read(fsys, dir)
 	if err != nil {
@@ -61,6 +62,7 @@ func Players(
 			Instrument: p.Instrument,
 			ID:         p.ID, Artist: p.Artist, Records: len(p.Tracks),
 			Bands: bands, Genres: genres, Untagged: untagged,
+			Rig: geared[p.ID],
 		})
 	}
 
@@ -101,13 +103,60 @@ func saysOf(
 func Genres(
 	fsys fs.FS,
 	dir string,
+	geared map[string]bool,
 ) ([]result.MusicGroup, error) {
 	held, err := read(fsys, dir)
 	if err != nil {
 		return nil, err
 	}
 
-	return grouped(audio.Genres(audio.Grouping(held))), nil
+	out := grouped(audio.Genres(audio.Grouping(held)))
+
+	// Counted from held rather than from what audio.Genres answered, because
+	// a group names its players by the name their manifest gives and a rig is
+	// joined by the directory. The two differ: "Mike Dirnt" is mike-dirnt.
+	by := gearedBySlug(held, geared)
+	for i := range out {
+		out[i].Geared = by[out[i].Slug]
+	}
+
+	return out, nil
+}
+
+// gearedBySlug is how many players any gear is known for, per genre slug.
+//
+// Each player counted once for a genre however many of their records carry it,
+// which is what the players column beside it counts too.
+func gearedBySlug(
+	held []audio.Held,
+	geared map[string]bool,
+) map[string]int {
+	seen := map[string]map[string]bool{}
+
+	for _, p := range held {
+		if !geared[p.ID] {
+			continue
+		}
+
+		for _, rec := range p.Tracks {
+			for _, g := range rec.Genres {
+				key := slug.Of(g)
+
+				if seen[key] == nil {
+					seen[key] = map[string]bool{}
+				}
+
+				seen[key][p.ID] = true
+			}
+		}
+	}
+
+	out := make(map[string]int, len(seen))
+	for key, players := range seen {
+		out[key] = len(players)
+	}
+
+	return out
 }
 
 // Bands is every band the corpus names.

@@ -613,7 +613,12 @@ func (c *Client) MusicPlayers(
 		return nil, err
 	}
 
-	return musicview.Players(os.DirFS(corpus), ".")
+	geared, err := c.geared()
+	if err != nil {
+		return nil, err
+	}
+
+	return musicview.Players(os.DirFS(corpus), ".", geared)
 }
 
 // MusicBands is every band the corpus names, grouped on the slug so two
@@ -639,7 +644,32 @@ func (c *Client) MusicGenres(
 		return nil, err
 	}
 
-	return musicview.Genres(os.DirFS(corpus), ".")
+	geared, err := c.geared()
+	if err != nil {
+		return nil, err
+	}
+
+	return musicview.Genres(os.DirFS(corpus), ".", geared)
+}
+
+// geared is every rig identifier there is gear for, so a corpus listing can
+// say which of its players nothing can be built for.
+//
+// Read here rather than passed in, because a player having a rig is not a fact
+// about the corpus: the corpus is recordings and the rigs are a separate set,
+// and a caller should not have to hold both to ask one question.
+func (c *Client) geared() (map[string]bool, error) {
+	held, err := rigs.List(c.source())
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(map[string]bool, len(held.Rigs))
+	for _, k := range held.Rigs {
+		out[string(k.Rig.ID)] = true
+	}
+
+	return out, nil
 }
 
 // MusicRecords is every recording the corpus names, and whether the bass has

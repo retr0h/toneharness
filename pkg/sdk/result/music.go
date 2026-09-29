@@ -47,6 +47,13 @@ type MusicPlayer struct {
 	// with none is invisible to every genre, which is worth seeing beside a
 	// genre that is short.
 	Untagged int `json:"untagged"`
+	// Rig says whether any gear is known for them, joined on ID.
+	//
+	// A player with records and no rig is measured by nobody: their records
+	// still earn a genre its words, and a request for that genre then has
+	// nothing to build. Five sat here unnoticed until somebody asked why a
+	// genre would not build, so the tool says it rather than a page.
+	Rig bool `json:"rig"`
 }
 
 // MusicGroup is one genre or one band, and what backs it.
@@ -78,6 +85,14 @@ type MusicGroup struct {
 	// Both zero once it is.
 	ShortRecords int `json:"short_records"`
 	ShortArtists int `json:"short_artists"`
+	// Geared is how many of those players any gear is known for.
+	//
+	// A genre earns its words from records alone, so one can reach the
+	// threshold and still be hollow: grunge earned "scooped" and "clean" from
+	// nine records across three players, none of whom had a rig. Always zero
+	// for a band, which nothing is built from, and carried anyway so one type
+	// serves both.
+	Geared int `json:"geared"`
 }
 
 // MusicRecord is one recording, with the player it was measured for.
