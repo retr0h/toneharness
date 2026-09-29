@@ -106,6 +106,47 @@ func (s *TranslatePublicTestSuite) TestNamedGearResolvesToAModel() {
 		"LA Studio Comp: resolved to HD2_CompressorLAStudioComp")
 }
 
+// TestAGearNameFittingSeveralExactlyAnswersTheSameWayEveryTime is the bug this
+// exists for, and it was invisible because it was a coin toss.
+//
+// 355 of this device's 661 models share a name with another of their own
+// category, and lookup returned the first one a Go map yielded. The same ask
+// compiled to three different cabinets across twelve runs: HD2_Cab1x15TucknGo
+// at 7.2 DSP with no microphone list, and two HD2_CabMicIr models at 2.5 with
+// one. Which a chain got decided whether its most powerful control existed,
+// and it was decided by nothing.
+//
+// Run rather than asserted once, because a map order bug passes a single run
+// two times in three.
+func (s *TranslatePublicTestSuite) TestAGearNameFittingSeveralExactlyAnswersTheSameWayEveryTime() {
+	said := map[string]int{}
+
+	for range 24 {
+		_, notes, err := translate.Translate(
+			s.ask("gear:\n  - gear: 1x15 Ampeg B-15\n    role: cab\n"),
+			s.setup(""), s.deps)
+
+		s.Require().NoError(err)
+
+		for _, note := range notes {
+			if note.About == "1x15 Ampeg B-15" {
+				said[note.Said]++
+			}
+		}
+	}
+
+	s.Require().Len(said, 1, "one ask, one answer: %v", said)
+
+	for got := range said {
+		s.Require().Contains(got, "resolved to HD2_Cab1x15TucknGo")
+
+		// And the other two named, because "resolved to X" on its own reads as
+		// the only answer when it was one of three.
+		s.Require().Contains(got, "that name fits 3 exactly")
+		s.Require().Contains(got, "HD2_CabMicIr_1x15AmpegB15")
+	}
+}
+
 // TestARecordingChoosesTheAmplifier is the half no reasoning about names can
 // do.
 //

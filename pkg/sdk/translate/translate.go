@@ -355,7 +355,7 @@ func namedGear(
 		}
 
 		block, matched := lookup(deps.Catalog, want.Gear, role)
-		found := len(matched) == 1
+		found := block.ID != ""
 
 		if !found {
 			why := "the device has nothing by that name"
@@ -388,9 +388,21 @@ func namedGear(
 			// Said rather than written into the entry. Which model a name
 			// resolves to is the plan's answer, and a rig that carried one
 			// would be answering it twice.
+			said := fmt.Sprintf("resolved to %s", block.ID)
+
+			// And said when the name fitted more than one exactly, because
+			// "resolved to X" on its own reads as the only answer when it was
+			// one of several. A 1x15 Ampeg B-15 is three models, two of them
+			// carrying a microphone list and one not, and which a chain gets
+			// decides whether its most powerful control exists at all.
+			if len(matched) > 1 {
+				said = fmt.Sprintf("%s, and that name fits %d exactly: %s",
+					said, len(matched), names(matched))
+			}
+
 			*notes = append(*notes, Note{
 				About:    want.Gear,
-				Said:     fmt.Sprintf("resolved to %s", block.ID),
+				Said:     said,
 				Honoured: true,
 			})
 		}
@@ -703,7 +715,7 @@ func lookup(
 	want string,
 	role rig.Role,
 ) (catalog.Block, []catalog.Block) {
-	var matched []catalog.Block
+	var exact, matched []catalog.Block
 
 	target := strings.ToLower(want)
 
@@ -717,24 +729,37 @@ func lookup(
 			continue
 		}
 
-		// An exact name wins outright, which is how "Ampeg SVT" reaches the
-		// one called that rather than the one called "Ampeg SVT Bright".
+		// An exact name wins outright over a partial one, which is how "Ampeg
+		// SVT" reaches the one called that rather than the one called "Ampeg
+		// SVT Bright". Collected rather than returned on sight: a name is
+		// exactly right for more than one model far more often than it looks,
+		// and returning the first walked handed back whichever this map
+		// happened to yield.
 		if name == target {
-			return block, []catalog.Block{block}
+			exact = append(exact, block)
+
+			continue
 		}
 
 		matched = append(matched, block)
 	}
 
-	if len(matched) == 1 {
-		return matched[0], matched
+	if len(exact) > 0 {
+		matched = exact
 	}
 
-	// Sorted, so a request that matched several is told about them in the
-	// same order every time.
+	// Sorted before anything is chosen from it, so one request answers one way.
+	// 355 of this device's 661 models share a name with another of their own
+	// category, and unsorted the same ask compiled to three different cabinets
+	// across twelve runs: two of them carrying a microphone list and one of
+	// them not, at 2.5 DSP against 7.2.
 	sort.Slice(matched, func(i, j int) bool {
 		return matched[i].ID < matched[j].ID
 	})
+
+	if len(matched) == 1 || len(exact) > 0 {
+		return matched[0], matched
+	}
 
 	return catalog.Block{}, matched
 }
@@ -743,8 +768,12 @@ func lookup(
 //
 // By model identifier rather than by name, because the names are what
 // collided: 661 models share 468 names, so a note listing four called "Ampeg
-// SVT Nrm" tells nobody which to ask for. A model identifier is exact, and is
-// what a request's `models` field takes.
+// SVT Nrm" tells nobody which to ask for. A model identifier is exact.
+//
+// Exact and, today, unaskable: no field on either contract takes one, so this
+// tells somebody which model they got and not how to ask for another. That is
+// why 92 mic'd cabinets are unreachable, every one of them sharing its name
+// with a legacy model.
 //
 // Capped, because some names fit a dozen and a note listing all of them is
 // one nobody reads.
