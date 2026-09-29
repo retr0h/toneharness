@@ -137,6 +137,19 @@ func (s *session) deliver(
 
 		rest = remainder
 
+		// Counted before a channel is looked for, because a drain's whole job
+		// is clearing what the device has already sent and the bytes are on
+		// the wire whether or not anything here wants them.
+		//
+		// That distinction decides what the handshake's opening drain does.
+		// Nothing is open yet at that point, so every frame the device is
+		// still sending matched no channel, went uncounted, and read as
+		// quiet: the drain stopped after three windows however long the
+		// backlog was, which is the one thing it exists to wait out.
+		if f.CarriesData() && len(f.Payload) > 0 {
+			carried = true
+		}
+
 		c := s.channelFor(f)
 		if c == nil {
 			continue
@@ -164,7 +177,6 @@ func (s *session) deliver(
 
 		c.rxBytes.Add(uint32(len(f.Payload)))
 		c.lastRx = time.Now()
-		carried = true
 
 		// Nothing reads the events channel, so its bytes are counted and
 		// acknowledged, and kept nowhere.

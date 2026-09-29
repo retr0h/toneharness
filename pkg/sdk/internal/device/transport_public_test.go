@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"sync"
 	"testing"
 	"time"
 
@@ -47,6 +48,33 @@ type TransportPublicTestSuite struct {
 
 func (s *TransportPublicTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
+}
+
+// locked is somewhere a running loop can write a trace that a test also reads.
+//
+// The loop traces every read, so it is still writing while the test looks. A
+// bare bytes.Buffer is a data race here however careful the session is with its
+// own lock, because the race is between the session and the test.
+type locked struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (l *locked) Write(
+	p []byte,
+) (int, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	return l.buf.Write(p)
+}
+
+// read is what has been traced so far.
+func (l *locked) read() string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	return l.buf.String()
 }
 
 // TestDrain waits until the device genuinely has nothing left.
@@ -127,6 +155,20 @@ func (s *TransportPublicTestSuite) TestDrain() {
 			atBudget: true,
 		},
 		{
+			// Nothing is open, so no frame belongs to anybody, and every one
+			// of them used to read as quiet: the drain the handshake runs
+			// stopped after three windows however long the backlog was, which
+			// is the one thing it exists to wait out.
+			name: "one still talking before any channel is open",
+			device: func() *deviceDouble {
+				d := answers(s.ctrl)
+				d.noisy = noise
+
+				return d
+			},
+			atBudget: true,
+		},
+		{
 			name:      "a session nobody is waiting on any more",
 			device:    func() *deviceDouble { return answers(s.ctrl) },
 			cancelled: true,
@@ -146,6 +188,9 @@ func (s *TransportPublicTestSuite) TestDrain() {
 
 			session := device.NewTestSessionWith(s.T(), d.out, d.in, b)
 
+			trace := &locked{}
+			session.Trace(trace)
+
 			if tt.opened {
 				session.OpenChannels()
 			}
@@ -160,9 +205,18 @@ func (s *TransportPublicTestSuite) TestDrain() {
 			start := session.Windows()
 			started := time.Now()
 
-			session.Drain(ctx)
+			went := session.Drain(ctx)
 
 			took := time.Since(started)
+
+			// A drain that gave up says so, and says it where every other
+			// failure nobody is waiting on is recorded. Without this a
+			// handshake on a device still talking read exactly like one on a
+			// device that had nothing left.
+			if tt.atBudget {
+				s.Require().False(went, "the device never went quiet")
+				s.Require().Contains(trace.read(), "drain gave up")
+			}
 
 			if !tt.atBudget {
 				s.Require().Less(took, b.Drain,

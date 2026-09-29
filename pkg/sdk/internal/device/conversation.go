@@ -272,6 +272,16 @@ type session struct {
 	changed chan struct{}
 	// closing keeps the idle acknowledgement out while Close is talking.
 	closing bool
+	// noisyStart records that the handshake's drain gave up with the device
+	// still talking.
+	//
+	// Carried to the end of the session rather than acted on, because a device
+	// that is busy when a session opens usually settles and answers
+	// everything. It is worth knowing when one does not: a call that goes
+	// unanswered on a session that began this way is a different question from
+	// one that began clean, and having to tell them apart is what this exists
+	// for.
+	noisyStart bool
 	// inflight counts exchanges, writes and channel openings under way. While
 	// any is, the idle acknowledgement sends nothing on a channel somebody is
 	// waiting on an answer from.

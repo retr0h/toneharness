@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/vmihailenco/msgpack/v5"
@@ -337,6 +338,57 @@ func (s *HandshakePublicTestSuite) TestCall() {
 // TestHandshake opens every channel, once, and stops at the first frame the
 // bus will not take. A handshake is never retried, so a failure partway
 // through is reported rather than papered over.
+// TestASessionThatOpenedOnANoisyDeviceSaysSo covers what a later timeout
+// carries.
+//
+// The handshake drains before it opens anything, and that drain is the only
+// recovery for a device left mid-conversation by a session that died without
+// closing. It is bounded, so it can give up with the device still talking, and
+// it used to do that silently: a session that began on a backlog read exactly
+// like one that began clean, and telling them apart meant instrumenting the
+// timeout by hand.
+//
+// Noted rather than refused. A busy device usually settles and answers
+// everything, so refusing here would fail a run that works today.
+func (s *HandshakePublicTestSuite) TestASessionThatOpenedOnANoisyDeviceSaysSo() {
+	d := answers(s.ctrl)
+	d.noisy = device.FrameFor(device.EventsChannel, wire.MsgData, []byte("noise"))
+
+	b := device.ShortBudgets()
+	b.Drain = 100 * time.Millisecond
+
+	session := device.NewTestSessionWith(s.T(), d.out, d.in, b)
+
+	s.Require().NoError(session.Handshake(s.T().Context()))
+	s.Require().True(session.NoisyStart(),
+		"the drain ran out with the device still talking")
+
+	// Nothing answers this call, so it reaches the timeout, which is where the
+	// note is worth having.
+	_, err := session.Call(s.T().Context(), device.ControlChannel, 1, nil)
+
+	s.Require().ErrorContains(err, "no reply to opcode 1")
+	s.Require().ErrorContains(err, "opened with the device still talking")
+}
+
+// TestASessionThatOpenedCleanlySaysNothingExtra covers the ordinary failure.
+//
+// Almost every session opens on a quiet device, so the timeout has to read
+// exactly as it did before there was anything to add to it.
+func (s *HandshakePublicTestSuite) TestASessionThatOpenedCleanlySaysNothingExtra() {
+	d := answers(s.ctrl)
+
+	session := device.NewTestSessionWith(s.T(), d.out, d.in, device.ShortBudgets())
+
+	s.Require().NoError(session.Handshake(s.T().Context()))
+	s.Require().False(session.NoisyStart())
+
+	_, err := session.Call(s.T().Context(), device.ControlChannel, 1, nil)
+
+	s.Require().ErrorContains(err, "no reply to opcode 1")
+	s.Require().NotContains(err.Error(), "still talking")
+}
+
 func (s *HandshakePublicTestSuite) TestHandshake() {
 	tests := []struct {
 		name string

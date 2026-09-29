@@ -429,17 +429,26 @@ func (s *session) pace(
 // Bounded on purpose. A stale backlog clears in about a hundred frames; an
 // unbounded drain keeps the endpoint under load and has coincided with
 // devices locking up.
+//
+// Reports whether the device went quiet. A false is one still talking when the
+// bound ran out, which the caller decides what to do about: two of the three
+// here are closing down and have nobody to tell, and the handshake carries it
+// forward because a session that began on a noisy device is worth knowing
+// about when a later call goes unanswered.
 func (s *session) drain(
 	ctx context.Context,
-) {
+) bool {
 	timer := time.NewTimer(s.budgets.drain)
 	defer timer.Stop()
 
 	start := s.progress().windows
+	quiet := false
 
 	for ctx.Err() == nil && s.ended() == nil {
 		at := s.progress()
 		if at.quiet >= drainQuietRuns && at.windows-start >= drainQuietRuns {
+			quiet = true
+
 			break
 		}
 
@@ -454,6 +463,13 @@ func (s *session) drain(
 		break
 	}
 
+	if !quiet {
+		// Nobody is waiting on this, so the trace is where it shows, which is
+		// how every other unwaited-on failure in this loop is recorded.
+		s.tracef("ERR drain gave up after %s with the device still talking\n",
+			s.budgets.drain)
+	}
+
 	// Whatever arrived is consumed, not replayed into a later reply.
 	s.rxMu.Lock()
 	defer s.rxMu.Unlock()
@@ -461,4 +477,6 @@ func (s *session) drain(
 	for _, c := range s.chans {
 		c.buf = nil
 	}
+
+	return quiet
 }

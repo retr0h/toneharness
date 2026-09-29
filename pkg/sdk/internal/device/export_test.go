@@ -192,11 +192,21 @@ func (s *session) Handshake(
 	return s.handshake(ctx)
 }
 
-// Drain waits until the device has nothing left to say.
+// Drain waits until the device has nothing left to say, and reports whether
+// it went quiet before the bound ran out.
 func (s *session) Drain(
 	ctx context.Context,
-) {
-	s.drain(ctx)
+) bool {
+	return s.drain(ctx)
+}
+
+// NoisyStart reports that the handshake's drain gave up with the device still
+// talking.
+func (s *session) NoisyStart() bool {
+	s.rxMu.Lock()
+	defer s.rxMu.Unlock()
+
+	return s.noisyStart
 }
 
 // Trace sends the wire trace to w, which is how both directions were read off
