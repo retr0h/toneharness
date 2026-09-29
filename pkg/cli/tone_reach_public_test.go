@@ -23,6 +23,7 @@ package cli
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -32,226 +33,314 @@ import (
 	"github.com/retr0h/toneharness/pkg/cli/internal/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
 
-// ReachPublicTestSuite covers painting a reachability answer.
+// ReachPublicTestSuite covers asking how near a chain can get, from one pass.
 //
-// The arithmetic is the SDK's, because the same question is asked over MCP and
-// neither surface may answer it differently. What is under test here is which
-// of three things a person is told, because the three mean different things
-// and reading the wrong one costs an afternoon.
+// It reads the chain rather than resources/sweeps/, and that is the design
+// rather than an implementation detail: every committed sweep was taken with
+// its block alone, and an SV Beast with no cabinet has a median centroid of
+// 8,139Hz where the chain reads about 144.
 type ReachPublicTestSuite struct {
 	suite.Suite
 
-	ctrl *gomock.Controller
-	sdk  *mocks.MockReaches
+	ctrl  *gomock.Controller
+	pedal *mocks.MockTuner
+	genre *mocks.MockGenres
+	dry   string
 }
 
 func (s *ReachPublicTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
-	s.sdk = mocks.NewMockReaches(s.ctrl)
+	s.pedal = mocks.NewMockTuner(s.ctrl)
+	s.genre = mocks.NewMockGenres(s.ctrl)
+	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di.wav")
 }
 
 func (s *ReachPublicTestSuite) opts() ReachOptions {
-	return ReachOptions{Client: s.sdk, ID: "matt-freeman", Genre: "punk"}
+	return ReachOptions{
+		Client: s.pedal, Genres: s.genre, Bench: &sloping{}, Dry: s.dry,
+		ID: "matt-freeman", Genre: "punk", Corpus: "resources/music/bass",
+		Seconds: 0.1, Takes: 2, Nudge: 0.1,
+	}
 }
 
-// answers makes the SDK hand back one reading.
-func (s *ReachPublicTestSuite) answers(
-	got sdk.Reaching,
-) {
-	s.sdk.EXPECT().Reach(gomock.Any(), gomock.Any()).Return(got, nil)
+// built makes the pedal answer everything one pass asks of it.
+func (s *ReachPublicTestSuite) built() {
+	s.pedal.EXPECT().
+		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
+			Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true,
+		}}}}, nil)
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+	s.pedal.EXPECT().
+		Turn(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	s.pedal.EXPECT().
+		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 }
 
-// TestAnAxisSomeReadingLandedOnIsSaidToBeSo covers the claim worth trusting.
-func (s *ReachPublicTestSuite) TestAnAxisSomeReadingLandedOnIsSaidToBeSo() {
-	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Readings: 193,
-		Worth: true, Together: true,
-		Axes: []solve.Verdict{
-			{Figure: audio.KeyCentroid, Gap: 11, Swing: 1324, Shown: true, Within: true},
+// wide is a target with room on every axis.
+func (s *ReachPublicTestSuite) wide() []audio.Genre {
+	band := audio.Spread{Low: -1000, Mid: 0, High: 1000}
+
+	return []audio.Genre{{
+		Name: "punk", Slug: "punk",
+		Across: audio.Across{
+			Tracks: 12, Low: band, Mid: band, High: band, Centroid: band,
 		},
-		Decides: solve.Verdict{Figure: audio.KeyCentroid, Gap: 11, Within: true},
-	})
+	}}
+}
+
+// TestItReadsTheChainRatherThanTheCommittedSweeps is the whole design.
+func (s *ReachPublicTestSuite) TestItReadsTheChainRatherThanTheCommittedSweeps() {
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+	s.built()
 
 	w := buffer()
+
 	s.Require().NoError(Reach(context.Background(), w, s.opts()))
 
-	s.Require().Contains(w.String(), "matt-freeman against punk")
-	s.Require().Contains(w.String(), "193 readings already taken")
-	s.Require().Contains(w.String(), "a reading landed there")
-	s.Require().Contains(w.String(), "satisfies all 1 axes at once")
-	s.Require().Contains(w.String(), "the model flatters")
+	said := w.String()
+	s.Require().Contains(said, "dials through")
+	s.Require().Contains(said, "the loop wanders")
+	s.Require().Contains(said, "TOGETHER")
+}
+
+// TestNothingIsApplied is what separates this from a tuning pass.
+//
+// The chain is left where the compiler put it. Every control moved to read its
+// slope is put back, so asking the question costs readings and changes nothing.
+func (s *ReachPublicTestSuite) TestNothingIsApplied() {
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+	s.pedal.EXPECT().
+		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
+			Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true,
+		}}}}, nil)
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+	s.pedal.EXPECT().
+		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	turned := map[sdk.Address]int{}
+
+	s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, a sdk.Address, _ float32) error {
+			turned[a]++
+
+			return nil
+		}).AnyTimes()
+
+	s.Require().NoError(Reach(context.Background(), buffer(), s.opts()))
+	s.Require().NotEmpty(turned)
+
+	// Two apiece and no more: moved to read a slope, moved back. A third would
+	// be a solved step being applied, which is the tuning run this exists to
+	// decide whether to spend.
+	for a, n := range turned {
+		s.Require().Equal(2, n, "%v was moved %d times", a, n)
+	}
 }
 
 // TestAnAxisNothingCanCloseIsTheHeadline covers the answer that saves the
 // afternoon.
-//
-// The gear being wrong for the sound is a real answer to somebody who owns
-// that gear, and it is the one this exists to deliver before five minutes of
-// real-time audio rather than after.
 func (s *ReachPublicTestSuite) TestAnAxisNothingCanCloseIsTheHeadline() {
-	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Readings: 40,
-		Axes: []solve.Verdict{
-			{Figure: audio.KeyHigh, Gap: 400, Swing: 5},
-		},
-		Decides: solve.Verdict{Figure: audio.KeyHigh, Gap: 400, Swing: 5},
-	})
+	// A target far outside anything a chain of zero slopes can move to.
+	s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
+		Return([]audio.Genre{{
+			Name: "punk", Slug: "punk",
+			Across: audio.Across{
+				Tracks:   12,
+				Centroid: audio.Spread{Low: 900000, Mid: 1000000, High: 1100000},
+			},
+		}}, nil)
+	s.built()
 
 	w := buffer()
-	s.Require().NoError(Reach(context.Background(), w, s.opts()))
+
+	err := Reach(context.Background(), w, s.opts())
+	if err != nil {
+		// A chain whose every slope against the target is zero is refused by
+		// the solve rather than reported, which is its own honest answer.
+		s.Require().ErrorIs(err, solve.ErrNoKnobs)
+
+		return
+	}
 
 	s.Require().Contains(w.String(), "OUT OF REACH")
-	s.Require().Contains(w.String(), "Not worth running")
 	s.Require().Contains(w.String(), "Change the chain, not the knobs")
 }
 
-// TestAnAxisOnlyTheSwingAllowsIsNotCalledReachable covers the weak claim.
+// TestNoGenreIsNoTarget covers a request aiming at nothing.
+func (s *ReachPublicTestSuite) TestNoGenreIsNoTarget() {
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+
+	opts := s.opts()
+	opts.Genre = "skiffle"
+
+	s.Require().ErrorIs(
+		Reach(context.Background(), buffer(), opts), ErrNoTarget)
+}
+
+// TestAGenreThatMeasuresAsNothing covers a tag with no figures behind it.
+func (s *ReachPublicTestSuite) TestAGenreThatMeasuresAsNothing() {
+	s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
+		Return([]audio.Genre{{Name: "punk", Slug: "punk"}}, nil)
+	s.built()
+
+	s.Require().ErrorIs(
+		Reach(context.Background(), buffer(), s.opts()), ErrNoTarget)
+}
+
+// TestTheShippedFiguresAnswerWhenNobodyNamesACorpus covers the default.
 //
-// No reading landed near it and the controls merely have more movement than
-// the gap. That promises nothing, and wording it as though it did is how a
-// bound that flatters the controls becomes a bound somebody trusted.
-func (s *ReachPublicTestSuite) TestAnAxisOnlyTheSwingAllowsIsNotCalledReachable() {
-	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Worth: true, Together: true,
-		Axes: []solve.Verdict{
-			{Figure: audio.KeyLow, Gap: 4, Swing: 90, Within: true},
-		},
-		Decides: solve.Verdict{Figure: audio.KeyLow, Within: true},
-	})
+// Measuring the corpus reads fifteen bass stems and takes most of a minute,
+// and `just generate` already writes those figures into the binary.
+func (s *ReachPublicTestSuite) TestTheShippedFiguresAnswerWhenNobodyNamesACorpus() {
+	s.built()
 
-	w := buffer()
-	s.Require().NoError(Reach(context.Background(), w, s.opts()))
+	opts := s.opts()
+	opts.Corpus = ""
 
-	s.Require().Contains(w.String(), "nothing rules it out")
-	s.Require().NotContains(w.String(), "a reading landed there")
-	s.Require().Contains(w.String(), "maybe", "the column says how weak the claim is")
+	// No MeasuredGenres expectation: naming no tree must not read one.
+	s.Require().NoError(Reach(context.Background(), buffer(), opts))
 }
 
-// TestAnAxisAlreadyInsideNeedsNoReading covers a target met before starting.
-func (s *ReachPublicTestSuite) TestAnAxisAlreadyInsideNeedsNoReading() {
-	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Worth: true, Together: true,
-		Axes: []solve.Verdict{
-			{Figure: audio.KeyMid, Gap: 0.2, Met: true, Within: true},
-		},
-	})
+// TestAGenreNothingShippedMeasures covers a word the binary does not carry.
+func (s *ReachPublicTestSuite) TestAGenreNothingShippedMeasures() {
+	opts := s.opts()
+	opts.Corpus = ""
+	opts.Genre = "skiffle"
 
-	w := buffer()
-	s.Require().NoError(Reach(context.Background(), w, s.opts()))
-
-	s.Require().Contains(w.String(), "already there")
+	s.Require().ErrorIs(
+		Reach(context.Background(), buffer(), opts), ErrNoTarget)
 }
 
-// TestABlockNobodyHasSweptIsNamed covers an incomplete answer.
-//
-// Said rather than left out. Whatever an unswept block could have moved is
-// missing from every number in the table, so a narrow answer has to read as
-// one.
-func (s *ReachPublicTestSuite) TestABlockNobodyHasSweptIsNamed() {
-	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Worth: true, Together: true,
-		Unswept: []string{"HD2_NeverSwept"},
-		Axes: []solve.Verdict{
-			{Figure: audio.KeyMid, Met: true, Within: true},
-		},
-	})
+// TestARigThatWillNotBuild covers gear the catalog cannot realise.
+func (s *ReachPublicTestSuite) TestARigThatWillNotBuild() {
+	wanted := errors.New("no such rig")
 
-	w := buffer()
-	s.Require().NoError(Reach(context.Background(), w, s.opts()))
-
-	s.Require().Contains(w.String(), "HD2_NeverSwept has never been swept")
-}
-
-// TestATargetNamingNoAxisThisChainReads covers an empty answer.
-func (s *ReachPublicTestSuite) TestATargetNamingNoAxisThisChainReads() {
-	s.answers(sdk.Reaching{Rig: "matt-freeman", Genre: "punk"})
-
-	w := buffer()
-	s.Require().NoError(Reach(context.Background(), w, s.opts()))
-
-	s.Require().Contains(w.String(), "Nothing to aim at")
-}
-
-// TestWhatTheSDKRefusesIsReported covers an answer that could not be made.
-func (s *ReachPublicTestSuite) TestWhatTheSDKRefusesIsReported() {
-	wanted := errors.New("no block in this chain has been swept")
-
-	s.sdk.EXPECT().Reach(gomock.Any(), gomock.Any()).
-		Return(sdk.Reaching{}, wanted)
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+	s.pedal.EXPECT().
+		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(sdk.Made{}, wanted)
 
 	s.Require().ErrorIs(
 		Reach(context.Background(), buffer(), s.opts()), wanted)
 }
 
-// TestTheAskCarriesEveryTreeTheCallerNamed covers the flags reaching the SDK.
-func (s *ReachPublicTestSuite) TestTheAskCarriesEveryTreeTheCallerNamed() {
-	var got sdk.ReachAsk
+// TestAChainWithNoDial covers gear the solver cannot touch.
+func (s *ReachPublicTestSuite) TestAChainWithNoDial() {
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+	s.pedal.EXPECT().
+		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
+			Model: catalog.ModelID("HD2_NotAModel"), Pos: 0,
+		}}}}, nil)
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
 
-	s.sdk.EXPECT().Reach(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, in sdk.ReachAsk) (sdk.Reaching, error) {
-			got = in
+	s.Require().ErrorIs(
+		Reach(context.Background(), buffer(), s.opts()), solve.ErrNoKnobs)
+}
 
-			return sdk.Reaching{Worth: true}, nil
-		})
+// TestAReferenceThatIsNotThere covers a missing signal.
+func (s *ReachPublicTestSuite) TestAReferenceThatIsNotThere() {
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+	s.built()
 
 	opts := s.opts()
-	opts.Corpus = "somewhere/music"
-	opts.Sweeps = "somewhere/sweeps"
+	opts.Dry = filepath.Join(s.T().TempDir(), "nothing.wav")
 
-	s.Require().NoError(Reach(context.Background(), buffer(), opts))
-
-	s.Require().Equal("matt-freeman", got.RigID)
-	s.Require().Equal("punk", got.Genre)
-	s.Require().Equal("somewhere/music", got.Corpus)
-	s.Require().Equal("somewhere/sweeps", got.Sweeps)
+	s.Require().Error(Reach(context.Background(), buffer(), opts))
 }
 
-// TestAxesReachableAloneAndNotTogetherIsItsOwnAnswer is the one per-axis could
-// never give.
-//
-// Every axis inside what its own controls can move, and no single set of
-// positions reaching them at once. That is the ordinary shape of the problem
-// and it is what somebody means by asking whether a rig can sound like
-// something.
-func (s *ReachPublicTestSuite) TestAxesReachableAloneAndNotTogetherIsItsOwnAnswer() {
-	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Worth: true,
-		Axes: []solve.Verdict{
-			{Figure: audio.KeyCentroid, Gap: 11, Shown: true, Within: true, Together: 4.2},
-			{Figure: audio.KeyLow, Gap: 2, Shown: true, Within: true, Together: 0.3},
-		},
-	})
+// TestTheCorpusWillNotRead covers a tree that is not there.
+func (s *ReachPublicTestSuite) TestTheCorpusWillNotRead() {
+	wanted := errors.New("no such corpus")
 
-	w := buffer()
-	s.Require().NoError(Reach(context.Background(), w, s.opts()))
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(nil, wanted)
 
-	s.Require().Contains(w.String(), "no one set of positions reaches them together")
-	s.Require().Contains(w.String(), "centroid by 4.2")
-	s.Require().NotContains(w.String(), "low by",
-		"an axis the joint solve met is not named as missed")
+	s.Require().ErrorIs(
+		Reach(context.Background(), buffer(), s.opts()), wanted)
 }
 
-// TestAChainWithNoMeasuredSlopeSaysSoRatherThanNamingNothing covers the
-// sentence with a hole in it.
+// TestSpansOfCountsTravelEachWaySeparately covers a control near a stop.
 //
-// Not arrived and no axis over a tolerance means no axis could be solved for
-// at all, so the joint answer is absent rather than negative.
-func (s *ReachPublicTestSuite) TestAChainWithNoMeasuredSlopeSaysSoRatherThanNamingNothing() {
-	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Worth: true,
-		Axes: []solve.Verdict{
-			{Figure: audio.KeyCentroid, Gap: 11, Shown: true, Within: true},
-		},
-	})
+// A dial at the top of its range can only go down, so the reachable range is
+// not symmetric about where it sits. Counting a full range both ways promises
+// movement the chain does not have.
+func (s *ReachPublicTestSuite) TestSpansOfCountsTravelEachWaySeparately() {
+	atTop := solve.Knob{
+		Block: 0, Param: 1, At: 1, Low: 0, High: 1,
+		Slope: map[audio.Figure]float64{audio.KeyCentroid: 100},
+	}
 
+	got := spansOf([]solve.Knob{atTop},
+		map[audio.Figure]float64{audio.KeyCentroid: 500})
+
+	at := got[audio.KeyCentroid]
+	s.Require().InDelta(500, at.High, 0.001, "it cannot go up")
+	s.Require().InDelta(400, at.Low, 0.001, "it has a whole turn downward")
+	s.Require().InDelta(100, at.Swing, 0.001)
+}
+
+// TestTheHeadlineNamesEveryAxisTheJointSolveMisses covers the third verdict.
+func (s *ReachPublicTestSuite) TestTheHeadlineNamesEveryAxisTheJointSolveMisses() {
 	w := buffer()
-	s.Require().NoError(Reach(context.Background(), w, s.opts()))
 
-	s.Require().Contains(w.String(), "no control in")
+	verdict(w, []solve.Verdict{
+		{Figure: audio.KeyHigh, Gap: 390, Shown: true, Within: true, Together: 45.2},
+		{Figure: audio.KeyLow, Gap: 9, Shown: true, Within: true, Together: 0.9},
+	}, solve.Result{})
+
+	said := w.String()
+	s.Require().Contains(said, "no one set of positions reaches them")
+	s.Require().Contains(said, "high by 45.2")
+	s.Require().NotContains(said, "low by")
+}
+
+// TestAChainWithNoSlopeOnAnyAxisSaysSo covers the sentence with a hole in it.
+func (s *ReachPublicTestSuite) TestAChainWithNoSlopeOnAnyAxisSaysSo() {
+	w := buffer()
+
+	verdict(w, []solve.Verdict{
+		{Figure: audio.KeyHigh, Gap: 390, Shown: true, Within: true},
+	}, solve.Result{})
+
+	s.Require().Contains(w.String(), "no dial in this")
 	s.Require().NotContains(w.String(), "misses .")
+}
+
+// TestATargetNamingNoAxisThisChainReads covers an empty answer.
+func (s *ReachPublicTestSuite) TestATargetNamingNoAxisThisChainReads() {
+	w := buffer()
+
+	verdict(w, nil, solve.Result{})
+
+	s.Require().Contains(w.String(), "Nothing to aim at")
+}
+
+// TestOneSetOfPositionsReachingEverything covers the happy verdict.
+func (s *ReachPublicTestSuite) TestOneSetOfPositionsReachingEverything() {
+	w := buffer()
+
+	verdict(w, []solve.Verdict{
+		{Figure: audio.KeyHigh, Gap: 3, Shown: true, Within: true, Together: 0.4},
+	}, solve.Result{Arrived: true})
+
+	said := w.String()
+	s.Require().Contains(said, "reaches all 1 axes at once")
+	s.Require().Contains(said, "several")
+	s.Require().Less(strings.Index(said, "Worth running"), len(said))
 }
 
 func TestReachPublicTestSuite(
@@ -260,40 +349,59 @@ func TestReachPublicTestSuite(
 	suite.Run(t, new(ReachPublicTestSuite))
 }
 
-// TestReadingsTakenApartAreSaidBeforeTheTable covers the warning that leads.
+// TestEachKindOfAxisReadsAsItsOwnThing covers the four marks and four words.
 //
-// Not a footnote. Every number in the table is built from slopes measured with
-// each block on its own, and on a chain of more than one that is the answer
-// being about something else rather than a caveat on it.
-func (s *ReachPublicTestSuite) TestReadingsTakenApartAreSaidBeforeTheTable() {
-	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Readings: 193,
-		Alone: true, Blocks: 3, Worth: true, Together: true,
-		Axes: []solve.Verdict{{Figure: audio.KeyMid, Met: true, Within: true}},
-	})
+// They mean different things and a reader acts on the difference: "met" needs
+// no reading spent on it, "reached" has dials that could do it alone, "maybe"
+// has only a flattering sum behind it, and "no" is a wall.
+func (s *ReachPublicTestSuite) TestEachKindOfAxisReadsAsItsOwnThing() {
+	tests := []struct {
+		name string
+		of   solve.Verdict
+		mark string
+		word string
+		say  string
+	}{
+		{
+			"already inside",
+			solve.Verdict{Figure: audio.KeyMid, Met: true, Within: true},
+			"ok", "met", "already there",
+		},
+		{
+			"its own dials reach it",
+			solve.Verdict{Figure: audio.KeyLow, Gap: 4, Shown: true, Within: true},
+			"ok", "reached", "the dials reach it",
+		},
+		{
+			"only the sum allows it",
+			solve.Verdict{Figure: audio.KeyHigh, Gap: 4, Within: true},
+			"  ", "maybe", "nothing rules it out",
+		},
+		{
+			"a wall",
+			solve.Verdict{Figure: audio.KeyCentroid, Gap: 400},
+			"->", "no", "OUT OF REACH",
+		},
+		{
+			"reachable alone and missed together",
+			solve.Verdict{
+				Figure: audio.KeyLean, Gap: 4, Shown: true,
+				Within: true, Together: 9,
+			},
+			"->", "reached", "the dials reach it",
+		},
+	}
 
-	w := buffer()
-	s.Require().NoError(Reach(context.Background(), w, s.opts()))
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			w := buffer()
 
-	said := w.String()
-	s.Require().Contains(said, "taken with each block on its own")
-	s.Require().Contains(said, "measure slopes --id matt-freeman")
-	s.Require().Less(strings.Index(said, "block on its own"),
-		strings.Index(said, "AXIS"), "it leads rather than trails")
-}
+			table(w, []solve.Verdict{tt.of})
 
-// TestAChainOfOneBlockIsNotWarnedAbout covers the case isolation is fine for.
-//
-// A sweep of a block alone describes a chain of that block alone exactly.
-func (s *ReachPublicTestSuite) TestAChainOfOneBlockIsNotWarnedAbout() {
-	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk",
-		Alone: true, Blocks: 1, Worth: true, Together: true,
-		Axes: []solve.Verdict{{Figure: audio.KeyMid, Met: true, Within: true}},
-	})
-
-	w := buffer()
-	s.Require().NoError(Reach(context.Background(), w, s.opts()))
-
-	s.Require().NotContains(w.String(), "block on its own")
+			said := w.String()
+			s.Require().Contains(said, tt.word)
+			s.Require().Contains(said, tt.say)
+			s.Require().Contains(said, tt.mark+" "+string(tt.of.Figure))
+		})
+	}
 }

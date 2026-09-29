@@ -110,12 +110,6 @@ func register(
 		OutputSchema: mustOutputSchema[sdk.Resolved](),
 	}, h.toneBuild)
 	gomcp.AddTool(s, &gomcp.Tool{
-		Name:         "tone_reach",
-		Description:  "Say whether a rig could reach a genre's sound before spending a tuning run on it. Reads measurements already committed rather than touching a device, so it costs a second where tone tune costs five minutes with a pedal held throughout. Per axis: how far out the chain sits, whether a reading ever landed inside the target, and the most every control added together could move it. An axis marked out of reach is out of reach; one inside is only worth attempting, because that sum flatters the controls on purpose.",
-		Annotations:  readOnly(),
-		OutputSchema: mustOutputSchema[sdk.Reaching](),
-	}, h.toneReach)
-	gomcp.AddTool(s, &gomcp.Tool{
 		Name:         "presets_make",
 		Description:  "Build a .hlx from a shipped rig or a rig file. Read what it added and what each character word moved before putting it on a pedal. Refuses a file already at out unless the server was started with --allow-writes.",
 		Annotations:  &gomcp.ToolAnnotations{OpenWorldHint: new(false), DestructiveHint: new(true)},

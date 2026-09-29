@@ -144,7 +144,7 @@ listen     a person. Nothing above this line can hear
 say        "darker", "needs more bite" — a nudge, which is a direction and a size
    │
    ▼
-ask        tone reach — can this chain get there at all? a second, no device
+ask        tone reach — one pass, nothing applied: how near can this get?
    │
    ▼
 solve      tone tune — compares the lists, solves the dials, measures again
@@ -159,10 +159,16 @@ whole of it, including how the solve works, what a tolerance is, what the noise
 floor is for, and what the loop does when the chain cannot get there.
 
 The `reach` step is there because the expensive step can fail. A tuning run is
-five minutes of real-time audio with the pedal held throughout, and it can spend
-all of it to report that the chain will not get there. Every number that report
-rests on is already committed under `resources/sweeps/`, so the same question is
-answered from those first.
+five minutes of real-time audio and it applies every move it solves for, and it
+can spend all of that to report that the chain will not get there. `reach` reads
+the same chain once, applies nothing, and says how near the model thinks it can
+get.
+
+It reads the chain rather than `resources/sweeps/`, because every sweep there
+was taken with its block alone and an amplifier with no cabinet is a different
+signal: a median centroid of 8,139Hz where the chain reads about 144, with four
+of eleven controls moving it the other way. The committed sweeps say which
+controls are worth measuring, and the chain in hand says what they do.
 
 Two hardware facts shape the loop. A slot is flash and a burst of writes has
 corrupted a setlist, so tuning happens in the edit buffer and only the final

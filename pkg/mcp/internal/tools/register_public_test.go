@@ -156,7 +156,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 		"catalog_show", "catalog_list", "corpus_presets_show", "corpus_presets_chains",
 		"corpus_music_players", "corpus_music_bands", "corpus_music_genres",
 		"corpus_music_records",
-		"tone_build", "tone_reach", "presets_make", "rigs_show", "rigs_list", "rigs_records",
+		"tone_build", "presets_make", "rigs_show", "rigs_list", "rigs_records",
 		"measure_genres", "measure_players", "measure_recordings",
 		"device_hardware", "slots_list", "presets_show", "slots_export", "device_select",
 		"device_current", "device_play", "device_turn",
@@ -173,7 +173,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 			want: reads,
 			readOnly: map[string]bool{
 				"catalog_show": true, "catalog_list": true, "corpus_presets_show": true,
-				"tone_build": true, "tone_reach": true, "presets_make": false,
+				"tone_build": true, "presets_make": false,
 				"rigs_show": true, "rigs_list": true,
 				"device_hardware": true, "slots_list": true, "presets_show": true,
 				"slots_export": false, "device_select": false,

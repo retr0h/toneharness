@@ -48,8 +48,8 @@ func (s *MCPPublicTestSuite) TestServe() {
 		opts  mcp.Options
 		tools int
 	}{
-		{name: "without writes", opts: mcp.Options{Version: "1.2.3"}, tools: 25},
-		{name: "with writes", opts: mcp.Options{AllowWrites: true}, tools: 30},
+		{name: "without writes", opts: mcp.Options{Version: "1.2.3"}, tools: 24},
+		{name: "with writes", opts: mcp.Options{AllowWrites: true}, tools: 29},
 	}
 
 	for _, tt := range tests {

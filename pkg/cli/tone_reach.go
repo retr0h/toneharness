@@ -20,8 +20,6 @@
 
 package cli
 
-//go:generate go tool go.uber.org/mock/mockgen -source=tone_reach.go -destination=internal/mocks/reaches.gen.go -package=mocks
-
 import (
 	"context"
 	"fmt"
@@ -29,92 +27,197 @@ import (
 	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
 
-// Reaches asks whether a chain could meet a target, without running.
-type Reaches interface {
-	Reach(ctx context.Context, in sdk.ReachAsk) (sdk.Reaching, error)
-}
-
-// ReachOptions is what asking needs.
+// ReachOptions is what asking whether a chain can meet a target needs.
 type ReachOptions struct {
-	Client Reaches
+	Client   Tuner
+	Genres   Genres
+	Bench    sdk.Bench
+	Hardware string
+	Dry      string
+	Seconds  float64
+	Takes    int
 	// ID is the curated rig to ask about, and Genre what to aim it at.
 	ID    string
 	Genre string
-	// Corpus is the tree the target is measured from, and Sweeps the tree
-	// holding this chain's readings.
+	// Corpus is the tree the target is measured from. Empty reads the figures
+	// shipped with this binary.
 	Corpus string
-	Sweeps string
+	// Nudge is how far a control moves to read its slope, as a fraction of
+	// its range.
+	Nudge float64
 }
 
-// Reach prints which axes of a target this chain could reach.
+// Reach says how near a chain can get to a target, from one pass of readings.
 //
-// The arithmetic is the SDK's, because the same question is asked over MCP and
-// neither surface may answer it differently. This is the painting.
+// Read off the chain rather than out of resources/sweeps/, and that is the
+// whole design. The first version of this answered from the committed sweeps
+// and cost a second. Every one of them was taken with its block alone, which
+// is a different signal: an SV Beast swept with no cabinet has a median
+// centroid of 8,139Hz where the chain a rig builds reads about 144, and four
+// of its eleven controls move the centroid the other way. Nothing computed
+// from those numbers was about the chain it was asked about.
+//
+// So it measures. One reading to settle, one for the baseline, one per
+// control, which is a minute and a half on a chain of sixteen against five
+// minutes for the tuning run it decides whether to spend. Cheaper than the
+// thing it precedes rather than free, and every number about the chain in
+// hand.
+//
+// Nothing is applied. The chain is left where the compiler put it, and what
+// comes back is the model's own answer about what could be done from there.
 func Reach(
 	ctx context.Context,
 	w io.Writer,
 	opts ReachOptions,
 ) error {
-	got, err := opts.Client.Reach(ctx, sdk.ReachAsk{
-		RigID:  opts.ID,
-		Genre:  opts.Genre,
-		Corpus: opts.Corpus,
-		Sweeps: opts.Sweeps,
+	target, err := targetFor(ctx, TuneOptions{
+		Genres: opts.Genres, Genre: opts.Genre, Corpus: opts.Corpus,
 	})
 	if err != nil {
 		return err
 	}
 
-	_, _ = fmt.Fprintf(w, "\n  %s against %s, from %d readings already taken\n",
-		got.Rig, got.Genre, got.Readings)
-
-	// Before the table rather than under it. Every number below is built from
-	// slopes measured with each block on its own, and on a chain of more than
-	// one block that is not a caveat: it is the answer being about something
-	// else. An SV Beast swept with no cabinet reads its Treble at 12,763Hz of
-	// centroid per turn where the same control in this chain reads 3,250, and
-	// four of its eleven controls change sign.
-	if got.Alone && got.Blocks > 1 {
-		_, _ = fmt.Fprintf(w,
-			"    [!] these readings were taken with each block on its own, and "+
-				"this chain has %d.\n"+
-				"        A slope is not a property of a control: the same Treble "+
-				"into a 4x12 and\n        into a 1x15 are two different numbers. "+
-				"Read the table as what the blocks\n        do apart, not as what "+
-				"this chain does. `measure slopes --id %s` is\n        the same "+
-				"controls read in the chain itself.\n", got.Blocks, got.Rig)
+	made, _, err := built(ctx, TuneOptions{Client: opts.Client, ID: opts.ID})
+	if err != nil {
+		return err
 	}
 
-	for _, m := range got.Unswept {
-		_, _ = fmt.Fprintf(w,
-			"    [!] %s has never been swept, so nothing it could move is counted\n", m)
+	cat, err := catalog.BuiltIn()
+	if err != nil {
+		return err
 	}
 
-	axes(w, got)
-	verdict(w, got)
+	knobs := knobsOf(made.Plan, cat)
+	if len(knobs) == 0 {
+		return fmt.Errorf("%w: the chain has no dial to turn", solve.ErrNoKnobs)
+	}
+
+	signal, err := reference(opts.Dry, opts.Seconds)
+	if err != nil {
+		return err
+	}
+
+	bench, release, err := benchFor(opts.Bench, opts.Hardware)
+	if err != nil {
+		return err
+	}
+
+	defer release()
+
+	_, _ = fmt.Fprintf(w, "\n  %s against %s, %d dials through %s\n",
+		opts.ID, opts.Genre, len(knobs), bench.Name())
+
+	floor, settled, err := steady(ctx, bench, signal, opts.Takes)
+	if err != nil {
+		return err
+	}
+
+	aims := solve.Aims(target, inCorpusScale(floor))
+	if len(aims) == 0 {
+		return fmt.Errorf("%w: %q measures as nothing", ErrNoTarget, opts.Genre)
+	}
+
+	aims[audio.KeyLevel] = solve.Aim{Want: settled, Tol: drift}
+
+	now, err := sdk.Fingerprint(ctx, bench, signal)
+	if err != nil {
+		return err
+	}
+
+	from := figuresOf(now)
+
+	_, _ = fmt.Fprintf(w,
+		"  the loop wanders %.4f of a band and %.1fHz, reading %d controls\n",
+		inCorpusScale(floor)[audio.KeyLow], floor[audio.KeyCentroid], len(knobs))
+
+	if err := slopes(ctx, bench, signal, TuneOptions{
+		Client: opts.Client, Nudge: opts.Nudge,
+	}, knobs, from); err != nil {
+		return err
+	}
+
+	axes := solve.Reachable(aims, spansOf(knobs, from))
+
+	joint, err := solve.Best(knobs, aims, from, jointPasses)
+	if err != nil {
+		return err
+	}
+
+	for i := range axes {
+		axes[i].Together = joint.Residual[axes[i].Figure]
+	}
+
+	table(w, axes)
+	verdict(w, axes, joint)
 
 	return nil
 }
 
-// axes prints one line per axis the target names, worst first.
-func axes(
+// jointPasses is how many times the joint solve re-solves from where clamping
+// left it.
+//
+// Five, matching what the loop takes on hardware. The slopes are fixed here so
+// it converges rather than wandering, and it stops as soon as a pass stops
+// improving.
+const jointPasses = 5
+
+// spansOf is what each axis reads now and the most the dials could move it.
+//
+// The swing is every control's slope across its own remaining travel, added
+// up. It flatters them: it assumes each slope holds across a range it was read
+// locally and that every control pulls the same way, neither of which is true.
+// That is the useful direction. A gap wider than this is one nothing
+// optimistic closes, so it refuses well and promises badly.
+func spansOf(
+	knobs []solve.Knob,
+	from map[audio.Figure]float64,
+) map[audio.Figure]solve.Span {
+	out := make(map[audio.Figure]solve.Span, len(from))
+
+	for key, at := range from {
+		span := solve.Span{From: at, Low: at, High: at}
+
+		for _, k := range knobs {
+			slope := k.Slope[key]
+
+			// Each way separately, because a control sitting near a stop has
+			// more travel one way than the other and the reachable range is
+			// not symmetric about where it sits.
+			up := slope * (k.High - k.At)
+			down := slope * (k.Low - k.At)
+
+			span.High += max(up, down)
+			span.Low += min(up, down)
+			span.Swing += max(up, down) - min(up, down)
+		}
+
+		out[key] = span
+	}
+
+	return out
+}
+
+// table prints one line per axis, worst first.
+func table(
 	w io.Writer,
-	got sdk.Reaching,
+	axes []solve.Verdict,
 ) {
 	_, _ = fmt.Fprintf(w, "\n    %-12s %9s %9s %9s\n",
 		"AXIS", "OUT BY", "ALONE", "TOGETHER")
 
-	for _, v := range got.Axes {
+	for _, v := range axes {
 		mark, say := "  ", "nothing rules it out"
 
 		switch {
 		case v.Met:
 			mark, say = "ok", "already there"
 		case v.Shown:
-			mark, say = "ok", "a reading landed there"
+			mark, say = "ok", "the dials reach it"
 		case !v.Within:
 			mark, say = "->", "OUT OF REACH"
 		}
@@ -129,10 +232,6 @@ func axes(
 }
 
 // onItsOwn is what the per-axis check made of this figure, in a word.
-//
-// A word rather than the swing itself, because the swing runs into the
-// thousands on a chain of sixteen dials and a number that large reads as
-// precision when it is a bound that flatters every control in the chain.
 func onItsOwn(
 	v solve.Verdict,
 ) string {
@@ -151,66 +250,62 @@ func onItsOwn(
 // verdict is the answer the table was working towards.
 func verdict(
 	w io.Writer,
-	got sdk.Reaching,
+	axes []solve.Verdict,
+	joint solve.Result,
 ) {
-	if len(got.Axes) == 0 {
+	// Emptiness and refusal are different answers, and Worth reports false for
+	// both: no axis named, and some axis out of reach. Reading them as one
+	// printed "the target names no axis this chain reads" over a table that
+	// had just named one and marked it OUT OF REACH.
+	if len(axes) == 0 {
 		_, _ = fmt.Fprintf(w,
 			"\n  Nothing to aim at: the target names no axis this chain reads.\n")
 
 		return
 	}
 
-	if !got.Worth {
+	worst, _ := solve.Worth(axes)
+
+	if !worst.Within {
 		_, _ = fmt.Fprintf(w,
-			"\n  Not worth running. %s is %.1f tolerances out and every control "+
-				"in this chain, added up and pulling together, moves it %.1f.\n"+
-				"  The gear is wrong for this sound. Change the chain, not the knobs.\n",
-			got.Decides.Figure, got.Decides.Gap, got.Decides.Swing)
+			"\n  Not worth running. %s is %.1f tolerances out and every dial in "+
+				"this chain,\n  added up and pulling together, moves it %.1f.\n"+
+				"  The gear is wrong for this sound. Change the chain, not the "+
+				"knobs.\n", worst.Figure, worst.Gap, worst.Swing)
 
 		return
 	}
 
-	if got.Together {
+	if joint.Arrived {
 		_, _ = fmt.Fprintf(w,
-			"\n  Worth running. In the model one set of positions satisfies all "+
-				"%d axes at once.\n"+
-				"  In the model, and the model flatters: its slopes were read one "+
-				"control\n  at a time and hold only near where they were read. "+
-				"Every shipped rig\n  reads this way against every measured genre, "+
-				"and hardware does not agree.\n", len(got.Axes))
+			"\n  Worth running. One set of positions reaches all %d axes at once, "+
+				"in the model.\n  The slopes behind that were read where the chain "+
+				"sits now and drift away\n  from it, so the loop will take several "+
+				"passes to find them.\n", len(axes))
 
 		return
 	}
 
-	// The answer that per-axis could never give. Every axis reachable on its
-	// own and no single set of positions reaching them together is the ordinary
-	// case, and it is what somebody means by asking whether a rig can sound
-	// like something.
 	var missed []string
 
-	for _, v := range got.Axes {
+	for _, v := range axes {
 		if v.Together > 1 {
 			missed = append(missed,
 				fmt.Sprintf("%s by %.1f", v.Figure, v.Together))
 		}
 	}
 
-	// Nothing over a tolerance and still not arrived means no axis could be
-	// solved for at all: every slope against them is zero, so the joint answer
-	// is absent rather than negative. Naming no axis would print a sentence
-	// with a hole in it.
 	if len(missed) == 0 {
 		_, _ = fmt.Fprintf(w,
 			"\n  Worth running, though nothing here can say how it will go: no "+
-				"control in\n  this chain has a measured slope on any axis the "+
-				"target names.\n")
+				"dial in this\n  chain has a slope on any axis the target names.\n")
 
 		return
 	}
 
 	_, _ = fmt.Fprintf(w,
 		"\n  Every axis is reachable on its own and no one set of positions "+
-			"reaches them together.\n  Solved as a whole the model still misses "+
+			"reaches them\n  together. Solved as a whole the model still misses "+
 			"%s.\n  Worth running, and expect the loop to trade one axis off "+
 			"against another.\n", strings.Join(missed, ", "))
 }

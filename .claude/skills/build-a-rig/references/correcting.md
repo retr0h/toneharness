@@ -30,54 +30,44 @@ satisfying the three.
 mise exec -- go run main.go tone reach --id matt-freeman --genre punk
 ```
 
-A second, no device, no signal. It reads the committed sweeps and says, per
-axis, how far the chain sits from the target and the most its controls could
-move it.
+One pass of readings and nothing applied: a reading to settle, one for the
+baseline, one per control. A minute and a half on a chain of sixteen, against
+five minutes for the tuning run it decides whether to spend, and the chain is
+left where the compiler put it.
 
 ```
-  matt-freeman against punk, from 193 readings already taken
+  matt-freeman against punk, 16 dials through HX Stomp
+  the loop wanders 0.0013 of a band and 3.1Hz, reading 16 controls
 
-    AXIS             OUT BY   CAN MOVE
-    ok centroid        11.0     1324.2  a reading landed there
-    ok high             6.7     1611.1  a reading landed there
-    ok low              2.7       58.9  a reading landed there
+    AXIS            OUT BY     ALONE  TOGETHER
+    -> high          390.6   reached      45.2  the dials reach it
+    -> centroid       52.9   reached       4.2  the dials reach it
+    ok low             9.4   reached       0.9  the dials reach it
+    ok mid             0.3       met       0.3  already there
 ```
 
-The two columns are different kinds of claim and the difference matters.
+**ALONE is what that axis's own dials could do for it, ignoring the others.**
+It flatters them: it assumes each slope holds across a whole range it was read
+locally and that every dial pulls the same way. So it refuses well and promises
+badly, and an axis marked OUT OF REACH is out of reach while one inside is only
+worth attempting.
 
-**"a reading landed there" is measured.** Some position of some control actually
-produced that figure, so a setting exists and the loop's job is to find it.
-Nothing was modelled to say it.
+**TOGETHER is what is left once every axis is solved at once**, which is the
+question somebody actually means. A dial can put the centroid where a target
+wants it and can put the low band where the target wants it, and those are two
+different positions of one dial. Every axis above is reachable alone and none
+of them together.
 
-**CAN MOVE is a bound that flatters the controls**, on purpose. It sums every
-control as though they all pulled the same way and assumes each slope holds
-across a range it was only read locally. That is why it refuses well and
-promises badly: an axis marked OUT OF REACH is out of reach, and one inside
-means only that nothing rules it out.
+It is worth trusting because it predicts what the loop then does. Reach said
+high would still be 45.2 tolerances out; the tuning run that followed reported
+46.4.
 
-So the answer is never "this will work". It is "worth running" or:
+### It reads the chain, and this is why
 
-```
-  Not worth running. high is 400.0 tolerances out and every control in this
-  chain, added up and pulling together, moves it 5.0.
-  The gear is wrong for this sound. Change the chain, not the knobs.
-```
-
-Worth knowing about the current data: that refusal has never fired on any
-shipped rig against any measured genre. Per-axis reachability is not what makes
-a target hard. Hitting nine axes at once is, and only the solve finds that out.
-
-The answer is only as good as what has been swept. A block with no readings is
-named, and whatever it could have moved is missing from every number.
-
-### The readings are of blocks apart, and a chain is not its blocks apart
-
-Every sweep under `resources/sweeps/` was taken with its block alone. The file
-says so in `isolated`, and `measured/curves.go` calls that the most important
-field it carries.
-
-It matters more than it sounds. Measured on an HX Stomp, matt-freeman's chain,
-centroid in hertz per full turn:
+`resources/sweeps/` cannot answer this. Every sweep there was taken with its
+block alone, which the file records in `isolated` and `measured/curves.go`
+calls the most important field it carries. Measured on an HX Stomp,
+matt-freeman's chain, centroid in hertz per full turn:
 
 | control | swept alone | in the chain |
 | ------- | ----------: | -----------: |
@@ -89,12 +79,18 @@ centroid in hertz per full turn:
 | Sag     |      +1,393 |       **-239** |
 
 Four to ten times too large everywhere, and four of eleven controls point the
-wrong way. An amplifier swept with no cabinet in front of it has no speaker
-rolloff, so every figure it reads is of a signal no chain ever produces.
+wrong way. Nor is it only the slopes: that amplifier swept alone has a median
+centroid of 8,139Hz where the chain reads about 144. An amplifier with no
+cabinet in front of it has no speaker rolloff, so every figure it reads is of a
+signal no chain produces.
 
-`tone reach` says so before its table when the chain holds more than one block.
-`measure slopes --id <rig>` reads the same controls in the chain itself, one
-reading each, which is what a tuning pass spends.
+The first version of this command answered from those readings and cost a
+second. It said every shipped rig reached every measured genre, which is what a
+false premise buys.
+
+So the committed sweeps say **which controls are worth putting in a matrix**,
+and nothing more. `measure slopes --id <rig>` prints live beside committed for
+any chain, which is how that was found.
 
 ## How the solve actually works
 

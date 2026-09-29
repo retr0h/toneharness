@@ -42,7 +42,6 @@ type Client interface {
 	ChainMeasurements(ctx context.Context, instrument string) (sdk.Measured, error)
 	Rigs(ctx context.Context) (sdk.Rigs, error)
 	Rig(ctx context.Context, id string) (sdk.Rig, error)
-	Reach(ctx context.Context, in sdk.ReachAsk) (sdk.Reaching, error)
 	Backing(ctx context.Context, corpus string) ([]sdk.Backing, error)
 	Scaffold(ctx context.Context, in sdk.NewRig) (sdk.Scaffolded, error)
 	Tone(ctx context.Context, in sdk.Ask) (sdk.Resolved, error)

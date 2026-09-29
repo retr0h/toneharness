@@ -361,9 +361,27 @@ func targetFor(
 	ctx context.Context,
 	opts TuneOptions,
 ) (audio.Across, error) {
+	// The figures shipped with this binary when nobody named a tree. `just
+	// generate` writes them from the same corpus, and measuring it again reads
+	// fifteen bass stems and takes most of a minute against milliseconds for
+	// the arithmetic around it.
+	//
+	// A caller who named a tree means that tree, and answering from what was
+	// committed would be figures of other records than the ones asked about.
+	if opts.Corpus == "" {
+		got, ok := audio.ShippedGenre(opts.Genre)
+		if !ok {
+			return audio.Across{}, fmt.Errorf(
+				"%w: nothing shipped with this binary measures %q",
+				ErrNoTarget, opts.Genre)
+		}
+
+		return got.Across, nil
+	}
+
 	found, err := opts.Genres.MeasuredGenres(ctx, opts.Corpus)
 	if err != nil {
-		return audio.Across{}, err
+		return audio.Across{}, fmt.Errorf("reading %s: %w", opts.Corpus, err)
 	}
 
 	for _, g := range found {

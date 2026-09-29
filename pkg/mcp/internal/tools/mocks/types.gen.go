@@ -286,21 +286,6 @@ func (mr *MockClientMockRecorder) Open(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Open", reflect.TypeOf((*MockClient)(nil).Open), ctx)
 }
 
-// Reach mocks base method.
-func (m *MockClient) Reach(ctx context.Context, in sdk.ReachAsk) (sdk.Reaching, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Reach", ctx, in)
-	ret0, _ := ret[0].(sdk.Reaching)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Reach indicates an expected call of Reach.
-func (mr *MockClientMockRecorder) Reach(ctx, in any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reach", reflect.TypeOf((*MockClient)(nil).Reach), ctx, in)
-}
-
 // Rig mocks base method.
 func (m *MockClient) Rig(ctx context.Context, id string) (sdk.Rig, error) {
 	m.ctrl.T.Helper()

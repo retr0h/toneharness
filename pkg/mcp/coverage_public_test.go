@@ -73,6 +73,11 @@ var exempt = map[string]string{
 	// dials is twenty minutes of real-time audio, and it holds the pedal for
 	// all of it.
 	"tone tune": "a compare-solve-apply loop, half an hour and up, and it needs the audio loop",
+	// Was a tool until it had to start measuring. Answering from the committed
+	// sweeps cost a second and was about a chain nobody had: every one was
+	// taken with its block alone, and an amplifier with no cabinet reads a
+	// median centroid of 8,139Hz where the chain reads 144.
+	"tone reach": "a reading per control through the audio loop, and it holds the pedal for all of it",
 }
 
 // toolName is what a command's tool is called: the path under the root, joined
