@@ -134,6 +134,84 @@ func (s *CurvesPublicTestSuite) TestApartIsWhatAListHasInsteadOfASlope() {
 	s.Require().InDelta(21, got, 0.001, "146.9 down to 125.9")
 }
 
+// TestWanderIgnoresTheOneReadingThatDisagrees covers the noise floor.
+//
+// The real numbers: six takes of one untouched chain read the low band at 19.35
+// once and then 31.56 to 31.73 five times over. Apart called that a wander of
+// twelve points of a band when five of the six agreed to three decimal places.
+func (s *CurvesPublicTestSuite) TestWanderIgnoresTheOneReadingThatDisagrees() {
+	takes := []measured.Point{
+		at(0, 19.3455), at(1, 31.6200), at(2, 31.6314),
+		at(3, 31.7295), at(4, 31.5585), at(5, 31.7011),
+	}
+
+	apart, ok := measured.Apart(takes, "centroid")
+	s.Require().True(ok)
+	s.Require().InDelta(12.384, apart, 0.001, "the outlier sets both ends")
+
+	got, ok := measured.Wander(takes, "centroid")
+	s.Require().True(ok)
+	s.Require().InDelta(0.171, got, 0.001, "31.5585 to 31.7295, without the first")
+}
+
+// TestWanderThrowsAwayOneReadingWhicheverItIs covers the outlier not being
+// first.
+//
+// The settling take always is, and it is discarded before these are taken. What
+// is left is a reading that came back odd for some other reason, and where it
+// sits in the set is not knowable in advance.
+func (s *CurvesPublicTestSuite) TestWanderThrowsAwayOneReadingWhicheverItIs() {
+	tests := []struct {
+		name string
+		of   []measured.Point
+	}{
+		{"first", []measured.Point{at(0, 99), at(1, 10), at(2, 11), at(3, 12)}},
+		{"in the middle", []measured.Point{at(0, 10), at(1, 99), at(2, 11), at(3, 12)}},
+		{"last", []measured.Point{at(0, 10), at(1, 11), at(2, 12), at(3, 99)}},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, ok := measured.Wander(tt.of, "centroid")
+
+			s.Require().True(ok)
+			s.Require().InDelta(2, got, 0.001, "10 to 12, whichever one was 99")
+		})
+	}
+}
+
+// TestWanderOnThreeReadings covers what the loop actually asks for.
+//
+// Three takes is the default, so this is the ordinary case rather than an edge
+// of it: one reading is thrown away and the two that agree are the floor.
+func (s *CurvesPublicTestSuite) TestWanderOnThreeReadings() {
+	got, ok := measured.Wander([]measured.Point{
+		at(0, 31.60), at(1, 31.70), at(2, 19.35),
+	}, "centroid")
+
+	s.Require().True(ok)
+	s.Require().InDelta(0.1, got, 0.001, "31.60 to 31.70, without the odd one")
+}
+
+// TestWanderKeepsBothOfTwo covers too few readings to throw one away.
+//
+// With two there is no middle for one of them to be furthest from, and
+// discarding either would leave a spread of nothing and call it certainty.
+func (s *CurvesPublicTestSuite) TestWanderKeepsBothOfTwo() {
+	got, ok := measured.Wander([]measured.Point{at(0, 10), at(1, 14)}, "centroid")
+
+	s.Require().True(ok)
+	s.Require().InDelta(4, got, 0.001)
+}
+
+// TestWanderSaysWhenNothingAnswered covers a figure absent everywhere.
+func (s *CurvesPublicTestSuite) TestWanderSaysWhenNothingAnswered() {
+	_, ok := measured.Wander([]measured.Point{at(0, 100)}, "decay")
+
+	s.Require().False(ok,
+		"no reading carried a decay, which is not a spread of zero")
+}
+
 // TestApartSaysWhenNothingAnswered covers a figure absent everywhere.
 func (s *CurvesPublicTestSuite) TestApartSaysWhenNothingAnswered() {
 	_, ok := measured.Apart([]measured.Point{at(0, 100)}, "decay")

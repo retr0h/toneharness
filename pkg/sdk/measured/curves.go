@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"sort"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
@@ -252,6 +253,96 @@ func Apart(
 	}
 
 	return high - low, seen
+}
+
+// Wander is how far a figure's readings sit from each other once the one
+// furthest from the middle is thrown away.
+//
+// Apart with the worst outlier removed, and the same units, so the two are
+// directly comparable. Apart is right for a list control, where the readings
+// are settings and the whole range is the answer. It is wrong for readings
+// that are all supposed to be the same, because it is a maximum minus a
+// minimum and one disagreeing value sets both ends of it.
+//
+// That is the noise floor. Six takes of one untouched chain read the low band
+// at 19.35 once and then 31.56 to 31.73 five times over, and Apart called the
+// loop's wander twelve points of a band when five of the six readings agreed
+// to three decimal places. The floor is the lower bound on every tolerance a
+// solve runs against, so that one reading stretched the target a hundredfold
+// and the solve reported arriving while it walked away.
+//
+// Fewer than three readings are returned as Apart does: with two there is no
+// middle to be furthest from, and throwing one away would leave a spread of
+// nothing and call it certainty.
+func Wander(
+	points []Point,
+	figure audio.Figure,
+) (float64, bool) {
+	got := make([]float64, 0, len(points))
+
+	for _, p := range points {
+		if v, ok := p.figure(figure); ok {
+			got = append(got, v)
+		}
+	}
+
+	if len(got) == 0 {
+		return 0, false
+	}
+
+	if len(got) < 3 {
+		return spread(got), true
+	}
+
+	return spread(without(got, furthest(got))), true
+}
+
+// furthest is which reading sits furthest from the middle of them.
+//
+// The median rather than the mean, because the value being looked for is the
+// one dragging the mean about.
+func furthest(
+	got []float64,
+) int {
+	middle := median(got)
+
+	at, worst := 0, -1.0
+
+	for i, v := range got {
+		if off := math.Abs(v - middle); off > worst {
+			at, worst = i, off
+		}
+	}
+
+	return at
+}
+
+// median is the middle of some readings, sorted without disturbing the caller's
+// order.
+func median(
+	got []float64,
+) float64 {
+	by := make([]float64, len(got))
+	copy(by, got)
+	sort.Float64s(by)
+
+	half := len(by) / 2
+	if len(by)%2 == 1 {
+		return by[half]
+	}
+
+	return (by[half-1] + by[half]) / 2
+}
+
+// without is some readings with the one at an index left out.
+func without(
+	got []float64,
+	at int,
+) []float64 {
+	out := make([]float64, 0, len(got)-1)
+	out = append(out, got[:at]...)
+
+	return append(out, got[at+1:]...)
 }
 
 // figure reads one of a point's figures by name.

@@ -448,8 +448,16 @@ func steady(
 
 	out := map[audio.Figure]float64{}
 
+	// Wander rather than Apart, so one take that disagrees with the rest does
+	// not become the floor on its own.
+	//
+	// Both are needed and they catch different things. The discarded first
+	// reading above is the stream settling, which is known and always the
+	// first; this is any other reading that comes back odd, whichever one it
+	// is. With the discard alone the floor still came back at 0.2615 of a band
+	// about one run in nine, against 0.0002 either side of it.
 	for _, f := range measured.Named() {
-		apart, ok := measured.Apart(points, f)
+		apart, ok := measured.Wander(points, f)
 		if !ok {
 			continue
 		}
