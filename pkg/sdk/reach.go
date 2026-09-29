@@ -67,6 +67,16 @@ type Reaching struct {
 	// between a narrow answer and a wrong one.
 	Readings int      `json:"readings"`
 	Unswept  []string `json:"unswept,omitempty"`
+	// Alone says the readings behind this answer were taken with each block
+	// on its own, and Blocks how many the chain holds. Alone on a chain of
+	// more than one means the answer is not about that chain.
+	//
+	// Measured rather than argued: an SV Beast swept with no cabinet reads
+	// its Treble at 12,763Hz of centroid per turn, and the same control in
+	// the chain a rig builds reads 3,250. Four of its eleven controls change
+	// sign. Every committed sweep is isolated.
+	Alone  bool `json:"alone"`
+	Blocks int  `json:"blocks"`
 	// Axes is every axis the target names, worst first.
 	Axes []solve.Verdict `json:"axes"`
 	// Worth is whether every axis is at least not ruled out, and Decides the
@@ -158,6 +168,8 @@ func (c *Client) Reach(
 	return Reaching{
 		Rig:      in.RigID,
 		Genre:    in.Genre,
+		Alone:    isolated(reach),
+		Blocks:   len(made.Plan.Blocks),
 		Readings: readings(reach),
 		Unswept:  unswept,
 		Axes:     axes,
@@ -370,6 +382,19 @@ func from(
 // perCent is what a sweep reports a share as, against the fraction a corpus
 // reports the same share as.
 const perCent = 100
+
+// isolated says any reading behind the answer was taken with its block alone.
+func isolated(
+	reach map[audio.Figure]measured.Reach,
+) bool {
+	for _, got := range reach {
+		if got.Alone {
+			return true
+		}
+	}
+
+	return false
+}
 
 // readings is the most any one figure was measured, which is how many
 // measurements the answer rests on.

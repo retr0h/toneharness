@@ -66,6 +66,7 @@ var exempt = map[string]string{
 	"measure blocks":   "a sweep of every block, hours, and it needs the audio loop",
 	"measure controls": "a sweep of one block's controls, up to an hour, and it needs the audio loop",
 	"measure names":    "a sweep that moves every parameter to learn its name, and it needs the audio loop",
+	"measure slopes":   "a reading per control through the audio loop, and it holds the pedal for all of it",
 
 	// The same shape as a sweep and for the same reasons. A pass reads a slope
 	// per control and there are three to five passes, so a chain of two dozen

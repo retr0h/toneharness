@@ -65,6 +65,15 @@ type Reach struct {
 	// flattering could close, so this refuses a target rather than promising
 	// one.
 	Swing float64
+	// Alone says every sweep behind this figure was taken with its block on
+	// its own, so none of it describes the chain.
+	//
+	// The field Curves.Isolated exists to carry, and it is load-bearing. An
+	// amplifier swept with no cabinet in front of it has no speaker rolloff,
+	// so its Treble moved the centroid 12,763Hz per turn where the same
+	// control in a real chain moves it 3,250, and its Mid moved the centroid
+	// the other way entirely. Four of eleven controls changed sign.
+	Alone bool
 	// Readings is how many positions carried this figure, and Straight the
 	// least straight of the slopes that went into Swing.
 	//
@@ -110,9 +119,12 @@ func reachOf(
 		read     []float64
 		swing    float64
 		straight = math.Inf(1)
+		alone    bool
 	)
 
 	for _, curves := range of {
+		alone = alone || curves.Isolated
+
 		for _, curve := range curves.Controls {
 			for _, p := range curve.Points {
 				if v, ok := p.figure(figure); ok {
@@ -149,6 +161,7 @@ func reachOf(
 		High:     slices.Max(read),
 		Mid:      median(read),
 		Swing:    swing,
+		Alone:    alone,
 		Readings: len(read),
 		Straight: straight,
 	}, true

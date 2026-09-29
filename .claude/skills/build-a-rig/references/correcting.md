@@ -70,6 +70,32 @@ a target hard. Hitting nine axes at once is, and only the solve finds that out.
 The answer is only as good as what has been swept. A block with no readings is
 named, and whatever it could have moved is missing from every number.
 
+### The readings are of blocks apart, and a chain is not its blocks apart
+
+Every sweep under `resources/sweeps/` was taken with its block alone. The file
+says so in `isolated`, and `measured/curves.go` calls that the most important
+field it carries.
+
+It matters more than it sounds. Measured on an HX Stomp, matt-freeman's chain,
+centroid in hertz per full turn:
+
+| control | swept alone | in the chain |
+| ------- | ----------: | -----------: |
+| Treble  |      12,763 |        3,250 |
+| ChVol   |      13,133 |        3,051 |
+| Drive   |      12,147 |        1,921 |
+| Bass    |      -7,871 |         -831 |
+| Mid     |      -6,724 |     **+3,593** |
+| Sag     |      +1,393 |       **-239** |
+
+Four to ten times too large everywhere, and four of eleven controls point the
+wrong way. An amplifier swept with no cabinet in front of it has no speaker
+rolloff, so every figure it reads is of a signal no chain ever produces.
+
+`tone reach` says so before its table when the chain holds more than one block.
+`measure slopes --id <rig>` reads the same controls in the chain itself, one
+reading each, which is what a tuning pass spends.
+
 ## How the solve actually works
 
 One amplifier with nine controls at five positions each is 1,953,125

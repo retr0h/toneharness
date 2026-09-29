@@ -23,6 +23,7 @@ package cli
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -257,4 +258,42 @@ func TestReachPublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(ReachPublicTestSuite))
+}
+
+// TestReadingsTakenApartAreSaidBeforeTheTable covers the warning that leads.
+//
+// Not a footnote. Every number in the table is built from slopes measured with
+// each block on its own, and on a chain of more than one that is the answer
+// being about something else rather than a caveat on it.
+func (s *ReachPublicTestSuite) TestReadingsTakenApartAreSaidBeforeTheTable() {
+	s.answers(sdk.Reaching{
+		Rig: "matt-freeman", Genre: "punk", Readings: 193,
+		Alone: true, Blocks: 3, Worth: true, Together: true,
+		Axes: []solve.Verdict{{Figure: audio.KeyMid, Met: true, Within: true}},
+	})
+
+	w := buffer()
+	s.Require().NoError(Reach(context.Background(), w, s.opts()))
+
+	said := w.String()
+	s.Require().Contains(said, "taken with each block on its own")
+	s.Require().Contains(said, "measure slopes --id matt-freeman")
+	s.Require().Less(strings.Index(said, "block on its own"),
+		strings.Index(said, "AXIS"), "it leads rather than trails")
+}
+
+// TestAChainOfOneBlockIsNotWarnedAbout covers the case isolation is fine for.
+//
+// A sweep of a block alone describes a chain of that block alone exactly.
+func (s *ReachPublicTestSuite) TestAChainOfOneBlockIsNotWarnedAbout() {
+	s.answers(sdk.Reaching{
+		Rig: "matt-freeman", Genre: "punk",
+		Alone: true, Blocks: 1, Worth: true, Together: true,
+		Axes: []solve.Verdict{{Figure: audio.KeyMid, Met: true, Within: true}},
+	})
+
+	w := buffer()
+	s.Require().NoError(Reach(context.Background(), w, s.opts()))
+
+	s.Require().NotContains(w.String(), "block on its own")
 }

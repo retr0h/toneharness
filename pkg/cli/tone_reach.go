@@ -71,6 +71,23 @@ func Reach(
 	_, _ = fmt.Fprintf(w, "\n  %s against %s, from %d readings already taken\n",
 		got.Rig, got.Genre, got.Readings)
 
+	// Before the table rather than under it. Every number below is built from
+	// slopes measured with each block on its own, and on a chain of more than
+	// one block that is not a caveat: it is the answer being about something
+	// else. An SV Beast swept with no cabinet reads its Treble at 12,763Hz of
+	// centroid per turn where the same control in this chain reads 3,250, and
+	// four of its eleven controls change sign.
+	if got.Alone && got.Blocks > 1 {
+		_, _ = fmt.Fprintf(w,
+			"    [!] these readings were taken with each block on its own, and "+
+				"this chain has %d.\n"+
+				"        A slope is not a property of a control: the same Treble "+
+				"into a 4x12 and\n        into a 1x15 are two different numbers. "+
+				"Read the table as what the blocks\n        do apart, not as what "+
+				"this chain does. `measure slopes --id %s` is\n        the same "+
+				"controls read in the chain itself.\n", got.Blocks, got.Rig)
+	}
+
 	for _, m := range got.Unswept {
 		_, _ = fmt.Fprintf(w,
 			"    [!] %s has never been swept, so nothing it could move is counted\n", m)

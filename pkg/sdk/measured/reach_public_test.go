@@ -197,3 +197,44 @@ func TestReachPublicTestSuite(
 ) {
 	suite.Run(t, new(ReachPublicTestSuite))
 }
+
+// TestASweepTakenWithTheBlockAloneSaysSo is the field that decides whether the
+// answer is about the chain.
+//
+// Every committed sweep is isolated, and summing them describes a set of
+// blocks apart rather than a chain. Measured on an HX Stomp: an SV Beast swept
+// with no cabinet reads its Treble at 12,763Hz of centroid per turn, the same
+// control in the chain a rig builds reads 3,250, and four of its eleven
+// controls change sign.
+func (s *ReachPublicTestSuite) TestASweepTakenWithTheBlockAloneSaysSo() {
+	one := curves(map[string]measured.Curve{
+		"Treble": dial(0, 1, measured.Fit{PerTurn: 100, Straight: 1}, 100, 200),
+	})
+	one.Isolated = true
+
+	s.Require().True(measured.Reaches(one)[audio.KeyCentroid].Alone)
+
+	together := curves(map[string]measured.Curve{
+		"Treble": dial(0, 1, measured.Fit{PerTurn: 100, Straight: 1}, 100, 200),
+	})
+
+	s.Require().False(measured.Reaches(together)[audio.KeyCentroid].Alone)
+}
+
+// TestOneIsolatedSweepTaintsTheWholeAnswer covers a mixed chain.
+//
+// A chain measured half in place and half apart is not half trustworthy: the
+// blocks swept apart are in the same sum as the ones swept in place, so the
+// sum is of both.
+func (s *ReachPublicTestSuite) TestOneIsolatedSweepTaintsTheWholeAnswer() {
+	apart := curves(map[string]measured.Curve{
+		"Treble": dial(0, 1, measured.Fit{PerTurn: 100, Straight: 1}, 100, 200),
+	})
+	apart.Isolated = true
+
+	inPlace := curves(map[string]measured.Curve{
+		"HighCut": dial(0, 1, measured.Fit{PerTurn: 50, Straight: 1}, 80, 300),
+	})
+
+	s.Require().True(measured.Reaches(inPlace, apart)[audio.KeyCentroid].Alone)
+}
