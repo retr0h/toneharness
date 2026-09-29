@@ -20,6 +20,34 @@ closes it ten seconds after the last one, or when a call fails on the bus.
 even while a session holds the editor interface, because it enumerates by
 descriptor and opens nothing. It reads what is attached and claims nothing.
 
+## When the interface is claimed and nothing of yours has it
+
+A claim refused with `kIOReturnExclusiveAccess` says "another client -- usually
+a kernel driver -- holds the device open", and the tool waits three seconds
+before reporting it. The refusal says how long it waited and how many tries that
+was, so a hold of a moment and a hold of minutes read differently.
+
+Quit HX Edit first, because it is usually that. When nothing of yours has it, ask
+who does before rerunning:
+
+```bash
+ioreg -c IOUSBHostInterface -l -w 0 | grep -B 2 -A 6 -i "HX Stomp"
+```
+
+The editor interface is number 0. Healthy, `bInterfaceNumber = 0` carries nothing
+but `AppleUSBHostCompositeDevice`, which splits a composite device rather than
+claiming anything, and Apple's audio driver sits on interfaces 1 and 2 with
+`AppleUSBAudioStreamPropertiesReady = Yes`. A driver attached to interface 0 is
+the thing to find: it means macOS matched something to the editor interface and
+is holding it.
+
+Seen once, on 2026-09-28: five consecutive runs refused, then the sixth ran. It
+began a few runs after the pedal was power cycled, which is when macOS
+re-enumerates the device and matches drivers to it again. Nothing of ours was
+alive, HX Edit was not open, and no MCP server was running. An abrupt kill is not
+the cause: the kernel releases a dead process's claim, and two runs killed that
+way were followed by clean ones.
+
 ## The six rules that keep a device alive
 
 Each was learned by ignoring it, and each cost hardware.
