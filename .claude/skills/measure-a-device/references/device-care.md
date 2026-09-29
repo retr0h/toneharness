@@ -5,7 +5,7 @@ writes took a setlist past what a power cycle could clear, and a device stops
 accepting them after about a dozen racing commits.
 
 Measuring is the workload most likely to do it. Loading a different chain over
-and over is the method: once per block to say what each of 665 sounds like, and
+and over is the method: once per block to say what each of 661 sounds like, and
 once per control to put a chain back between sweeps. Through a slot write that is
 a flash write every time, **for readings nobody wanted to keep**.
 

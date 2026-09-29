@@ -24,7 +24,7 @@ over every HX Stomp preset in the corpus, so it is a measurement rather than a
 claim. Two things make that work, and both matter if the rig is hand-edited.
 
 A lifted rig records `models:`, the exact model each piece of gear resolved to.
-**665 models share only 469 names**, and one name can match two channels of the
+**661 models share only 468 names**, and one name can match two channels of the
 same amplifier, so a rig carrying the name alone would rebuild into a different
 preset. Deleting that line makes compiling fall back to resolving the name, which
 is right for a rig somebody wrote and wrong for one lifted off hardware.

@@ -31,7 +31,7 @@ rather than a description of one. Read `cmd/` only to change a command.
 
 Never write a list into this skill. The figures a reading is reported in have
 changed, a control's range comes from the catalog rather than from zero to one,
-and the device carries 665 blocks that Line 6 rename between releases. Ask the
+and the device carries 661 blocks that Line 6 rename between releases. Ask the
 tool. The one exception is
 [the input and output enums](references/enums.md), which are the device's own
 firmware constants and which no command can print.

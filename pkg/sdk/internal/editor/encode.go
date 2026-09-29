@@ -276,7 +276,7 @@ func valuesOf(
 // device: an amp whose Master and channel volume are absent rather than
 // stated comes out 50dB down, which reads as a chain that is present and
 // silent, and a campaign measuring every block that way measures its own
-// noise floor 665 times.
+// noise floor 661 times.
 //
 // The catalog states a default for every parameter Line 6 ships, so there is
 // always a better answer than zero. A value the chain does carry wins, zero

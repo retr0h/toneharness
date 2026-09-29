@@ -333,7 +333,7 @@ func compile(
 // planFor is a plan holding one block, named by model rather than by gear.
 //
 // A plan rather than a rig because a sweep is device work: it wants this one
-// model and no other. 665 models share 469 names, so "Ampeg SVT" matches both
+// model and no other. 661 models share 468 names, so "Ampeg SVT" matches both
 // of its channels, and a rig naming the gear would measure whichever the
 // compiler picked and file it under both. Only a plan can pin the model.
 //

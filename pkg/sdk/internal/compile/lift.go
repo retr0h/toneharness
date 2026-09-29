@@ -33,8 +33,8 @@ import (
 // Lift reads a preset into a rig.
 //
 // Every block records both the gear it emulates and the exact model it was,
-// keyed by device. The name alone cannot identify a model — 665 of them share
-// 469 names — so a rig that only carried the name would rebuild into a
+// keyed by device. The name alone cannot identify a model — 661 of them share
+// 468 names — so a rig that only carried the name would rebuild into a
 // different preset.
 func Lift(
 	doc *preset.Document,

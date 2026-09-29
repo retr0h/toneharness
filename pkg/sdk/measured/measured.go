@@ -30,7 +30,7 @@
 // request is solved with is measured fresh for the chain being tuned, because
 // a slope belongs to its chain, so storing one per block would be rebuilding
 // it before anything used it. What no amount of solving can work out is which
-// of 665 blocks belongs in the chain to begin with, and that is what a
+// of 661 blocks belongs in the chain to begin with, and that is what a
 // fingerprint is for.
 package measured
 

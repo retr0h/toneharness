@@ -63,7 +63,11 @@ func (s *MeasureTestSuite) TestWantedSkipsWhatIsNotABlock() {
 		s.Require().NotContains(block.ID, "@")
 	}
 
-	s.Require().Len(got, len(s.cat.Blocks)-4)
+	// Every block, because the catalog no longer holds anything that is not
+	// one. The four device attributes are dropped where they are read rather
+	// than here, so this counts what the catalog has instead of subtracting
+	// them again.
+	s.Require().Len(got, len(s.cat.Blocks))
 }
 
 // TestWantedNarrowsToOneKind covers --category.
@@ -122,7 +126,7 @@ func (s *MeasureTestSuite) TestPlanForWritesADocumentThatParses() {
 
 // TestPlanForPinsOneModel is why a sweep writes a plan and not a rig.
 //
-// 665 models share 469 names, so "Ampeg SVT" matches both of its channels and
+// 661 models share 468 names, so "Ampeg SVT" matches both of its channels and
 // a rig naming the gear would measure whichever the compiler picked.
 func (s *MeasureTestSuite) TestPlanForPinsOneModel() {
 	spec := PlanFor(measured.Block{
@@ -153,15 +157,17 @@ func (s *MeasureTestSuite) TestPlanForCanBeBypassed() {
 // TestEveryBlockCompilesIntoAPlanThatValidates is the check that would have
 // caught the lost reverb before a campaign spent ninety five minutes.
 //
-// Structure rather than the whole of Validate. The question is whether every
-// block makes a document that names a model and survives being written, and
-// 29 blocks carry an assumed DSP cost that the budget layer refuses outright,
-// which is a fact about the catalog rather than about writing a plan.
+// The whole of Validate, budget included. It was narrowed to
+// ValidateStructure while 29 blocks carried an assumed DSP cost the budget
+// layer refuses outright, which got the tree green and hid the thing worth
+// knowing: those costs were in Line 6's own file and the generator was
+// throwing them away.
 func (s *MeasureTestSuite) TestEveryBlockCompilesIntoAPlanThatValidates() {
 	for _, block := range Wanted(s.cat, "", nil) {
 		spec := PlanFor(block, true)
 
-		s.Require().NoErrorf(plan.ValidateStructure(s.cat, spec),
+		s.Require().NoErrorf(
+			plan.Validate(s.cat, spec, plan.LimitsFor(s.cat.Device)),
 			"%s (%q) does not make a valid plan", block.ID, block.Name)
 
 		var buf bytes.Buffer

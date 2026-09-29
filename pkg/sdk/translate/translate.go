@@ -742,7 +742,7 @@ func lookup(
 // names lists what a gear name matched, for a message somebody can act on.
 //
 // By model identifier rather than by name, because the names are what
-// collided: 665 models share 469 names, so a note listing four called "Ampeg
+// collided: 661 models share 468 names, so a note listing four called "Ampeg
 // SVT Nrm" tells nobody which to ask for. A model identifier is exact, and is
 // what a request's `models` field takes.
 //

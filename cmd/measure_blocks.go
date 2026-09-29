@@ -44,7 +44,7 @@ var measureBlocksCmd = &cobra.Command{
 	Long: `Play a reference recording through every block the device has, one at a
 time, and keep what comes back.
 
-One reading per block rather than a sweep of each. There are 665 blocks on an
+One reading per block rather than a sweep of each. There are 661 blocks on an
 HX Stomp carrying about five thousand controls between them, so sweeping all of
 them is a hundred and sixty hours. It is also the wrong thing to want: the
 matrix a request is solved with is measured fresh for the chain being tuned,

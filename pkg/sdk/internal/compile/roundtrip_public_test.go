@@ -85,7 +85,7 @@ func (s *RoundTripPublicTestSuite) TestLiftAndLower() {
 
 // TestLift records what a block actually was.
 func (s *RoundTripPublicTestSuite) TestLift() {
-	// A gear name does not identify a model: 665 of them share 469 names, and
+	// A gear name does not identify a model: 661 of them share 468 names, and
 	// "Ampeg SVT" matches both channels. Without the identifier a rig rebuilds
 	// into a different preset.
 	doc, err := preset.Read(bytes.NewReader(s.read(s.fixtures()[0])))

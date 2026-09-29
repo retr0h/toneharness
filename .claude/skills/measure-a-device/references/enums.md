@@ -1,7 +1,7 @@
 # The input and output enums
 
 **The exception to asking the tool.** No command prints these. The catalog holds
-the 665 blocks a chain is made of, and the Input and Output blocks are the
+the 661 blocks a chain is made of, and the Input and Output blocks are the
 device's own fixed structure rather than catalog entries, so `catalog show` on any
 model answers with that model's parameters and never with these. They live in HX
 Edit's own resources, at

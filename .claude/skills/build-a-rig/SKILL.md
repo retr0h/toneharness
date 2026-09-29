@@ -34,7 +34,7 @@ What a document may say is the contract, not a page about it:
 `pkg/sdk/rig/data/rigspec.openapi.yaml`. Their `description:` fields are the
 grammar, and the tool refuses a document that breaks it.
 
-Never work from a list written into this skill. The device carries 665 blocks
+Never work from a list written into this skill. The device carries 661 blocks
 across four models and Line 6 rename things between releases, so a list here
 is right the day it is written and wrong after the next one, with nothing
 marking the moment. The same goes for the shipped rigs, the block categories

@@ -172,7 +172,7 @@ func (s *ClientPublicTestSuite) TestWithCatalog() {
 // TestWithDevice covers using the built-in catalog for another pedal.
 //
 // Checked against the name the listing carries rather than how many blocks it
-// holds. A Helix LT carries the same 665 as an HX Stomp, so a count would pass
+// holds. A Helix LT carries the same 661 as an HX Stomp, so a count would pass
 // for the wrong reason on the one case most worth pinning down.
 func (s *ClientPublicTestSuite) TestWithDevice() {
 	tests := []struct {

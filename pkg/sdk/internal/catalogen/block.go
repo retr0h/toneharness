@@ -47,15 +47,30 @@ func block(
 		b.Stereo = *m.Stereo
 	}
 
-	if m.Load != nil {
-		b.DSP = catalog.DSPCost{Mono: *m.Load, Prov: catalog.ProvOfficial}
+	// Either figure makes the cost Line 6's rather than ours. A block that
+	// runs only in stereo carries `load_stereo` and no `load`, because there is
+	// no mono placement of it to charge for, and reading only `load` threw that
+	// number away and recorded the cost as assumed.
+	//
+	// What that cost is every reverb, every rotary, the stereo delays and the
+	// stereo sends and returns: 32 blocks whose real cost was in the file all
+	// along. A block with an assumed cost may not reach a user, so `space`, one
+	// of the six axes an ask can move, acted on a reverb that could never
+	// build.
+	if m.Load != nil || m.LoadStereo != nil {
+		b.DSP = catalog.DSPCost{Prov: catalog.ProvOfficial}
+
+		if m.Load != nil {
+			b.DSP.Mono = *m.Load
+		}
+
 		if m.LoadStereo != nil {
 			b.DSP.Stereo = *m.LoadStereo
 		}
 	} else {
-		// Line 6 states no cost for utility blocks. Recording it as assumed
-		// keeps such a block out of any preset handed to a user, which is the
-		// conservative reading and the safe one.
+		// Line 6 states no cost at all. Recording it as assumed keeps such a
+		// block out of any preset handed to a user, which is the conservative
+		// reading and the safe one.
 		b.DSP = catalog.DSPCost{Prov: catalog.ProvAssumed}
 	}
 

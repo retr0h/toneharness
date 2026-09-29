@@ -24,7 +24,7 @@ blocks:
 ## Why the model is pinned
 
 `model` is what the gear actually resolved to, and it is not belt and braces:
-**665 models share only 469 names.** "Ampeg SVT" matches both channels, so a
+**661 models share only 468 names.** "Ampeg SVT" matches both channels, so a
 document carrying the name alone rebuilds into a different preset.
 
 `params` are device parameters under their own names, as distinct from the rig's

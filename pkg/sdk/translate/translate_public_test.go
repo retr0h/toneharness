@@ -441,7 +441,7 @@ func (s *TranslatePublicTestSuite) TestInsistRefusesRatherThanSubstitute() {
 
 // TestAnAmbiguousNameSaysWhichModelsItFits covers the names that collide.
 //
-// 665 models share 469 names, so "Ampeg SVT" fits four. The note lists model
+// 661 models share 468 names, so "Ampeg SVT" fits four. The note lists model
 // identifiers rather than names, because the names are what collided.
 func (s *TranslatePublicTestSuite) TestAnAmbiguousNameSaysWhichModelsItFits() {
 	_, notes, err := translate.Translate(

@@ -72,7 +72,7 @@ func (*BadValueError) Unwrap() error { return ErrBadValue }
 
 // path addresses one value inside a section.
 //
-// Every map key in a preset is an integer. There are 665 of them across the
+// Every map key in a preset is an integer. There are 661 of them across the
 // captures and not one is a string, so a step is an integer whichever kind of
 // container it lands in, and the container decides whether it reads as a map
 // key or an array index.

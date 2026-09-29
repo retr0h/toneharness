@@ -42,7 +42,7 @@ mise exec -- go run main.go measure controls --model HD2_AmpUSDripmanNorm --json
 ```
 
 `blocks` takes one reading per block at its own defaults. Sweeping every control
-of all 665 is about a hundred and sixty hours, and it is also the wrong thing to
+of all 661 is about a hundred and sixty hours, and it is also the wrong thing to
 want, because a slope belongs to its chain and a stored one would be rebuilt
 before anything used it. What cannot be worked out at solve time is which blocks
 belong in the chain to begin with, and that needs one number per block.

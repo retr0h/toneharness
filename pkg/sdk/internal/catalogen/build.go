@@ -137,6 +137,15 @@ func Build(
 				continue
 			}
 
+			// Line 6 lists device attributes alongside models, the same way it
+			// lists them alongside parameters: @dt, @global_params, @powercab
+			// and @variax. They carry no name and no parameters, nothing puts
+			// one in a chain, and counting them as blocks made the catalog
+			// claim four blocks the device does not have.
+			if strings.HasPrefix(m.SymbolicID, "@") {
+				continue
+			}
+
 			out.Blocks[catalog.ModelID(m.SymbolicID)] = block(m, family, gear[m.SymbolicID])
 		}
 	}

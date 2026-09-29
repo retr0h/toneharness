@@ -152,7 +152,7 @@ func cabKey(
 // modelOf resolves a device's own model name to the catalog's.
 //
 // A device names a mono and a stereo instance of the same model separately —
-// 833 symbols cover 665 blocks — while the catalog names the model once, the
+// 833 symbols cover 661 blocks — while the catalog names the model once, the
 // way Line 6's own model files do. Trimming the suffix is what joins them, and
 // 813 of 833 symbols land on a block that way.
 //

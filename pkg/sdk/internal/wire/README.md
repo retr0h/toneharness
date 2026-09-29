@@ -553,8 +553,8 @@ nothing needed it. A preset somebody wants is a preset they want kept, and
 `slots import` already did that.
 
 **Measuring needs the opposite, and the difference is hardware rather than
-taste.** Saying which of 665 blocks belongs in a chain means loading each one,
-hearing it, and throwing it away. Through a slot that is 665 writes to flash for
+taste.** Saying which of 661 blocks belongs in a chain means loading each one,
+hearing it, and throwing it away. Through a slot that is 661 writes to flash for
 readings nobody wanted, and [the rules below](#rules-that-keep-a-device-alive)
 say what a burst of flash writes does: it took a setlist past what a power cycle
 could clear, and a device stops accepting writes after about a dozen racing
