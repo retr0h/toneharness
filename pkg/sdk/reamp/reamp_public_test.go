@@ -149,6 +149,63 @@ func (s *ReampPublicTestSuite) TestAnUnnamedDeviceIsThePedal() {
 	}
 }
 
+// TestALoopTheBackendIsResamplingIsRefused covers the rate check.
+//
+// config.SampleRate is a request. miniaudio answers a device that cannot meet
+// it by resampling rather than by refusing, so the loop asks the backend what
+// it actually negotiated and stops when that is not the rate every committed
+// figure was taken at.
+//
+// Refused rather than converted: a resampler's artefacts would land in a figure
+// whose only purpose is comparison against resources/sweeps/, and a reading
+// that is merely plausible is the failure this loop keeps having.
+func (s *ReampPublicTestSuite) TestALoopTheBackendIsResamplingIsRefused() {
+	tests := []struct {
+		name    string
+		in, out uint32
+		refused bool
+	}{
+		{name: "the rate everything was measured at", in: 48000, out: 48000},
+		{
+			// What Line 6's own driver or another interface may give.
+			name: "a backend resampling the capture side",
+			in:   44100, out: 48000, refused: true,
+		},
+		{
+			// Negotiated separately, so one side is enough to spoil a reading.
+			name: "and the playback side",
+			in:   48000, out: 96000, refused: true,
+		},
+		{name: "both", in: 44100, out: 44100, refused: true},
+	}
+
+	b := &reamp.Bench{}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := b.Rated(tt.in, tt.out)
+
+			if !tt.refused {
+				s.Require().NoError(err)
+
+				return
+			}
+
+			s.Require().ErrorIs(err, reamp.ErrRate)
+
+			var wrong *reamp.RateError
+			s.Require().ErrorAs(err, &wrong)
+			s.Require().Equal(uint32(48000), wrong.Want)
+			s.Require().Equal(tt.in, wrong.Capture)
+			s.Require().Equal(tt.out, wrong.Playback)
+
+			// It says what to do about it, because the answer is a setting on
+			// the machine rather than anything in this repository.
+			s.Require().ErrorContains(err, "--hardware")
+		})
+	}
+}
+
 // TestOpenSaysWhatWasAttachedInstead covers hardware that is not there.
 //
 // The one test here that touches the audio system. It asks for a device

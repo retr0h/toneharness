@@ -30,6 +30,46 @@ import (
 // ErrNoDevice is returned when the named hardware is not attached.
 var ErrNoDevice = errors.New("no such audio device")
 
+// ErrRate is returned when the audio backend is not running the loop at the
+// rate every committed figure was taken at.
+var ErrRate = errors.New("the audio device is not running at the measuring rate")
+
+// RateError says what the backend negotiated, and against what.
+//
+// Refused rather than resampled. Every figure in resources/sweeps/ and the
+// reference recording are 48kHz, and a reading taken at another rate is not
+// comparable to them however good the resampler is: the converter's own
+// artefacts land in a number whose entire purpose is being compared to the
+// committed ones.
+//
+// Loud rather than quiet, because miniaudio will resample instead of refusing
+// and the reading that comes back is a plausible figure rather than an error.
+// That is the shape of every measuring bug this loop has had: the first take
+// after a bench opens, the audio device that was a pair of headphones, the
+// noise floor one odd reading set. None of them failed; they all answered.
+type RateError struct {
+	// Name is the device the loop opened.
+	Name string
+	// Want is the rate the reference and the committed figures are at.
+	Want uint32
+	// Capture and Playback are what the backend negotiated for each
+	// direction, which is where a silent resample shows.
+	Capture  uint32
+	Playback uint32
+}
+
+// Error implements the error interface.
+func (e *RateError) Error() string {
+	return fmt.Sprintf(
+		"%s: %s negotiated %dHz in and %dHz out, and every committed figure is "+
+			"at %dHz. Set the device to %dHz, or name one that runs at it with "+
+			"--hardware",
+		ErrRate, e.Name, e.Capture, e.Playback, e.Want, e.Want)
+}
+
+// Unwrap returns ErrRate so callers can match with errors.Is.
+func (*RateError) Unwrap() error { return ErrRate }
+
 // NoDeviceError says what was asked for and what was actually attached.
 //
 // The list travels with it because the answer to "that device is not here" is

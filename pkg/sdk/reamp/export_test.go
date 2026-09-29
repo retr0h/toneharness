@@ -109,3 +109,11 @@ func (p *Pass) Frame(
 
 // Got is what has come back so far.
 func (p *Pass) Got() []float32 { return p.got }
+
+// Rated reports whether the rates a backend negotiated are the ones every
+// committed figure was taken at.
+func (b *Bench) Rated(
+	in, out uint32,
+) error {
+	return b.rated(in, out)
+}

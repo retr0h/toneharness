@@ -25,6 +25,25 @@ An HX Stomp is a class-compliant USB audio interface, 8 in and 8 out, fixed at
 48kHz unless Line 6's own driver is installed. macOS sees it with nothing
 installed.
 
+The loop asks for 48kHz and then checks what the audio backend actually gave
+it, because those are different answers. miniaudio meets a device that cannot
+run the requested rate by resampling rather than by refusing, so the reading
+comes back as a plausible figure instead of an error.
+
+It refuses that rather than converting. `resources/dry/bass-di.wav` is 48kHz and
+so is every reading in `resources/sweeps/`, and a figure taken at another rate
+cannot be filed beside those: the resampler's own artefacts land in the number.
+A run on a machine with Line 6's driver installed, or through an interface
+`--hardware` names that runs at something else, stops and says both rates:
+
+```
+the audio device is not running at the measuring rate: HX Stomp negotiated
+44100Hz in and 48000Hz out, and every committed figure is at 48000Hz
+```
+
+The fix is a setting on the machine or a different `--hardware`, not anything
+in this repository.
+
 ## Which channel is which
 
 | The computer sends on | Arrives at                  |

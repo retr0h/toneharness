@@ -44,8 +44,19 @@ import (
 	"github.com/gen2brain/malgo"
 )
 
-// Rate is the only sample rate an HX Stomp runs at without Line 6's own
-// driver installed, so everything here is fixed to it rather than negotiated.
+// Rate is the sample rate every committed figure was taken at.
+//
+// Not an assumption about the device. An HX Stomp presents itself
+// class-compliant at 48kHz with nothing installed, which is why this has never
+// bitten, but Line 6's own driver and any other interface --hardware names may
+// run at something else. So the loop asks the device for this rate and then
+// checks what the backend actually gave it, rather than setting it and
+// believing it.
+//
+// What makes it fixed rather than negotiated is the data, not the hardware:
+// resources/dry/bass-di.wav is 48kHz and so is every reading in
+// resources/sweeps/. A figure taken at another rate cannot be filed beside
+// those, so the loop refuses instead.
 const Rate = 48000
 
 // Silence before and after the signal.
@@ -158,6 +169,24 @@ func open(
 
 // Name is what the hardware calls itself.
 func (b *Bench) Name() string { return b.name }
+
+// rated refuses a loop the backend is resampling.
+//
+// Both directions, because they are negotiated separately and a reading is only
+// as comparable as the worse of the two.
+//
+// Takes the two rates rather than the device, so the decision can be checked
+// without an audio interface: reading them off a device is the caller's job and
+// deciding what they mean is this one's.
+func (b *Bench) rated(
+	in, out uint32,
+) error {
+	if in == Rate && out == Rate {
+		return nil
+	}
+
+	return &RateError{Name: b.name, Want: Rate, Capture: in, Playback: out}
+}
 
 // find picks one device of a kind, or says what was attached instead.
 func find(
@@ -287,6 +316,18 @@ func (b *Bench) Through(
 
 	defer device.Uninit()
 	defer func() { _ = device.Stop() }()
+
+	// Asked for above and checked here, because the two are different
+	// questions. config.SampleRate is a request, and miniaudio answers a
+	// device that cannot meet it by resampling rather than by refusing: the
+	// internal rates are what the backend actually negotiated, and they differ
+	// from the requested one exactly when a converter is in the path.
+	if err := b.rated(
+		device.CaptureInternalSampleRate(),
+		device.PlaybackInternalSampleRate(),
+	); err != nil {
+		return nil, err
+	}
 
 	// A budget rather than a wait. A device that stops delivering callbacks
 	// leaves this blocked forever otherwise, and a campaign that hangs on

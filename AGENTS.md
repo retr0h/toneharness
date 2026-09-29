@@ -83,14 +83,14 @@ whose label says it carries USB when it does not.
 Every number that describes hardware is somebody else's different number, and
 each of these has already been a bug:
 
-| Varies with     | Do not hardcode                                                                                  |
-| --------------- | ------------------------------------------------------------------------------------------------ |
-| the Helix model | how many audio channels it presents. Ask the device; a Stomp is 8 in and 8 out                   |
-| the Helix model | the routing enum indices. The same file carries separate lists for a Stomp, an LT and the plugin |
-| the Helix model | how many blocks, paths and snapshots it holds. `plan.LimitsFor` answers from the catalog         |
-| the computer    | the audio device's name and its backend. `--hardware` names one                                  |
-| the computer    | the sample rate, which is 48kHz only while Line 6's own driver is absent                         |
-| the room        | whether a cable loops the output back to the input, or the return comes over USB                 |
+| Varies with     | Do not hardcode                                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| the Helix model | how many audio channels it presents. Ask the device; a Stomp is 8 in and 8 out                                     |
+| the Helix model | the routing enum indices. The same file carries separate lists for a Stomp, an LT and the plugin                   |
+| the Helix model | how many blocks, paths and snapshots it holds. `plan.LimitsFor` answers from the catalog                           |
+| the computer    | the audio device's name and its backend. `--hardware` names one                                                    |
+| the computer    | the sample rate. 48kHz is what every committed figure was taken at, and the loop checks it rather than assuming it |
+| the room        | whether a cable loops the output back to the input, or the return comes over USB                                   |
 
 A figure measured on one device is a figure about that device. Say which.
 
