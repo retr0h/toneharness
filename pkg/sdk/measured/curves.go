@@ -350,7 +350,7 @@ func without(
 // Two of them can be absent: a transient needs a note starting and a decay
 // needs one ending, and a reading holding neither has no answer rather than
 // an answer of zero.
-func (p Point) figure(
+func (p Figures) figure(
 	name audio.Figure,
 ) (float64, bool) {
 	switch name {

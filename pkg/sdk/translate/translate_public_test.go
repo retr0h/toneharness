@@ -172,7 +172,7 @@ func (s *TranslatePublicTestSuite) TestARecordingChoosesTheAmplifier() {
 		}
 	}
 
-	s.Require().Contains(said, "closest of 224 measured",
+	s.Require().Contains(said, "closest of 222 measured",
 		"the note says what it chose from and why")
 }
 
@@ -850,7 +850,7 @@ func (s *TranslatePublicTestSuite) TestAnImpulseResponseSomebodyOwnsIsChosen() {
 			"HD2_ImpulseResponse1024": {
 				ID: "HD2_ImpulseResponse1024", Name: "IR 1024",
 				Category: "amp",
-				Figures:  measured.Figures{Centroid: 140, Low: 93, Mid: 7},
+				Figures:  measured.Figures{Centroid: 140, Level: -20, Low: 93, Mid: 7},
 			},
 		},
 	}

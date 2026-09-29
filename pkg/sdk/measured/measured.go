@@ -119,7 +119,39 @@ type Block struct {
 // A refusal has no figures at all, and a clipped reading has figures that
 // describe the clipping. Neither should be ranked against a target, and both
 // are kept so that a later run can see what happened rather than find a gap.
-func (b Block) Measured() bool { return b.Refused == "" && !b.Clipped }
+//
+// A reading near the ceiling counts as clipped whatever the flag says, and
+// that is not pedantry. Clipping is not a cliff at the number a guard picks:
+// a converter shapes a signal well before it hard-clips, and the flat tops
+// make harmonics that were never in the block. Fifteen readings sit within
+// 3dB of the guard, and two of them are bass amplifiers. HD2_AmpSVT4Pro, an
+// Ampeg SVT-4 Pro that a shipped rig names, reads 3.24% of its energy in the
+// low band and 96.74% in the high. An Ampeg does not do that. The converters
+// do.
+//
+// Left in the file rather than removed from it, the same way a clipped
+// reading is: what happened is worth keeping and only what is ranked matters.
+func (b Block) Measured() bool {
+	return b.Refused == "" && !b.Clipped && b.Level <= nearCeiling
+}
+
+// nearCeiling is the level above which a reading is the converters' rather
+// than the block's.
+//
+// Two decibels below full scale, against the half a decibel `measure blocks`
+// writes Clipped with. That guard catches a signal already flat-topped and
+// misses the one about to be.
+//
+// Two rather than more, because this is a floor under what is demonstrably
+// broken and not a claim that everything quieter is sound. It excludes ten
+// readings. Both of the bass amplifiers are there, and so are the filters
+// reading 99.97% of their energy in the high band. A delay at -2.35 dBFS
+// reading 94% low is left in, because nothing about it says the converters
+// shaped it.
+//
+// The real fix is the generator's threshold and 661 readings taken again.
+// Until then the readers apply the honest line.
+const nearCeiling = -2.0
 
 // Library is every block a device was measured on.
 type Library struct {

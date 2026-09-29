@@ -79,10 +79,7 @@ matt-freeman's chain, centroid in hertz per full turn:
 | Sag     |      +1,393 |       **-239** |
 
 Four to ten times too large everywhere, and four of eleven controls point the
-wrong way. Nor is it only the slopes: that amplifier swept alone has a median
-centroid of 8,139Hz where the chain reads about 144. An amplifier with no
-cabinet in front of it has no speaker rolloff, so every figure it reads is of a
-signal no chain produces.
+wrong way.
 
 The first version of this command answered from those readings and cost a
 second. It said every shipped rig reached every measured genre, which is what a
@@ -91,6 +88,40 @@ false premise buys.
 So the committed sweeps say **which controls are worth putting in a matrix**,
 and nothing more. `measure slopes --id <rig>` prints live beside committed for
 any chain, which is how that was found.
+
+### Neither number is trustworthy while the loop adds a signal of its own
+
+The table above is measured and the reason first written under it was wrong, so
+read it as a disagreement rather than as a verdict on which side is right.
+
+What is now known, on an HX Stomp with the cable rig:
+
+- The empty loop is healthy. It reads a centroid of 108Hz and 96.6% of its
+  energy below 250Hz, which is a bass DI.
+- A chain of a compressor, an Ampeg SVT and an 8x10 reads a centroid of 2,197Hz
+  and **84% of its energy above 2kHz**. An 8x10 does not pass that.
+- Across the committed fingerprints, every family reads the empty loop's own
+  0.005% in the high band except the full amplifiers, which read a median of
+  **46.4%** and sit 12dB louder than everything else. The preamps of the same
+  modelled circuits read 0.047%.
+- The cabinet in that chain is rendering: its Distance moves the centroid
+  12.4Hz per turn and its Level 31Hz. But its **High Cut, which sweeps 500Hz to
+  20kHz, moves the centroid by -0.001Hz per turn**. A signal with 84% of its
+  energy above 2kHz cannot ignore a high cut.
+
+So the high-frequency energy is arriving after the cabinet rather than through
+it. The output destination is `Multi (1/4", XLR, Digital, USB 1/2)`, which
+drives the quarter-inch jack the cable returns to the input, and
+[signal-path.md](../../measure-a-device/references/signal-path.md) says of that
+destination that whether it oscillates depends on the gain around it. Gain is
+what separates the amplifiers from every other family.
+
+It is not fixable by choosing another destination: that page also records that
+bare USB was tried and gives silence.
+
+**Until that is settled, any reading of a chain holding an amplifier is
+suspect, and so is any fingerprint of one.** That is 111 of the 661 committed
+readings and every hardware figure this loop produces for a real rig.
 
 ## How the solve actually works
 

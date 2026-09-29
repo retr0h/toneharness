@@ -164,11 +164,15 @@ can spend all of that to report that the chain will not get there. `reach` reads
 the same chain once, applies nothing, and says how near the model thinks it can
 get.
 
-It reads the chain rather than `resources/sweeps/`, because every sweep there
-was taken with its block alone and an amplifier with no cabinet is a different
-signal: a median centroid of 8,139Hz where the chain reads about 144, with four
-of eleven controls moving it the other way. The committed sweeps say which
-controls are worth measuring, and the chain in hand says what they do.
+It reads the chain rather than `resources/sweeps/`, because a slope measured
+with a block alone is not the slope that block has in a chain: four of eleven
+controls on one amplifier move the centroid the other way.
+
+Read what it says with care. On an HX Stomp the empty loop is healthy and a
+chain holding an amplifier is not, and
+[correcting.md](../.claude/skills/build-a-rig/references/correcting.md#neither-number-is-trustworthy-while-the-loop-adds-a-signal-of-its-own)
+has the measurements. Until that is settled every hardware figure for a chain
+with an amplifier in it is suspect.
 
 Two hardware facts shape the loop. A slot is flash and a burst of writes has
 corrupted a setlist, so tuning happens in the edit buffer and only the final

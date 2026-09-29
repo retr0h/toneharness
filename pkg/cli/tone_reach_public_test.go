@@ -343,65 +343,31 @@ func (s *ReachPublicTestSuite) TestOneSetOfPositionsReachingEverything() {
 	s.Require().Less(strings.Index(said, "Worth running"), len(said))
 }
 
+// TestTheTableSaysWhatItReadsAndWhatItWants covers the columns that matter.
+//
+// A distance in tolerances is unreadable on its own, and hiding the readings
+// behind it hid a fault for a whole session: "high, 390 out" sounds like a
+// chain that needs tuning, and "reads 0.8433, wants 0" is an 8x10 cabinet
+// passing 84% of its energy above 2kHz, which no cabinet does.
+func (s *ReachPublicTestSuite) TestTheTableSaysWhatItReadsAndWhatItWants() {
+	w := buffer()
+
+	table(w, []solve.Verdict{
+		{Figure: audio.KeyHigh, From: 0.8433, Want: 0, Gap: 390.6, Together: 45.9},
+		{Figure: audio.KeyLow, From: 0.1543, Want: 0.97, Gap: 9.4, Shown: true, Within: true},
+	})
+
+	said := w.String()
+	s.Require().Contains(said, "READS")
+	s.Require().Contains(said, "WANTS")
+	s.Require().Contains(said, "0.8433")
+	s.Require().Contains(said, "down", "which way it has to move")
+	s.Require().Contains(said, "up")
+	s.Require().Contains(said, "OUT OF REACH")
+}
+
 func TestReachPublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(ReachPublicTestSuite))
-}
-
-// TestEachKindOfAxisReadsAsItsOwnThing covers the four marks and four words.
-//
-// They mean different things and a reader acts on the difference: "met" needs
-// no reading spent on it, "reached" has dials that could do it alone, "maybe"
-// has only a flattering sum behind it, and "no" is a wall.
-func (s *ReachPublicTestSuite) TestEachKindOfAxisReadsAsItsOwnThing() {
-	tests := []struct {
-		name string
-		of   solve.Verdict
-		mark string
-		word string
-		say  string
-	}{
-		{
-			"already inside",
-			solve.Verdict{Figure: audio.KeyMid, Met: true, Within: true},
-			"ok", "met", "already there",
-		},
-		{
-			"its own dials reach it",
-			solve.Verdict{Figure: audio.KeyLow, Gap: 4, Shown: true, Within: true},
-			"ok", "reached", "the dials reach it",
-		},
-		{
-			"only the sum allows it",
-			solve.Verdict{Figure: audio.KeyHigh, Gap: 4, Within: true},
-			"  ", "maybe", "nothing rules it out",
-		},
-		{
-			"a wall",
-			solve.Verdict{Figure: audio.KeyCentroid, Gap: 400},
-			"->", "no", "OUT OF REACH",
-		},
-		{
-			"reachable alone and missed together",
-			solve.Verdict{
-				Figure: audio.KeyLean, Gap: 4, Shown: true,
-				Within: true, Together: 9,
-			},
-			"->", "reached", "the dials reach it",
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			w := buffer()
-
-			table(w, []solve.Verdict{tt.of})
-
-			said := w.String()
-			s.Require().Contains(said, tt.word)
-			s.Require().Contains(said, tt.say)
-			s.Require().Contains(said, tt.mark+" "+string(tt.of.Figure))
-		})
-	}
 }

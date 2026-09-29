@@ -207,8 +207,8 @@ func table(
 	w io.Writer,
 	axes []solve.Verdict,
 ) {
-	_, _ = fmt.Fprintf(w, "\n    %-12s %9s %9s %9s\n",
-		"AXIS", "OUT BY", "ALONE", "TOGETHER")
+	_, _ = fmt.Fprintf(w, "\n    %-12s %10s %10s %6s %8s %8s\n",
+		"AXIS", "READS", "WANTS", "WAY", "OUT BY", "TOGETHER")
 
 	for _, v := range axes {
 		mark, say := "  ", "nothing rules it out"
@@ -226,24 +226,18 @@ func table(
 			mark = "->"
 		}
 
-		_, _ = fmt.Fprintf(w, "    %s %-9s %9.1f %9s %9.1f  %s\n",
-			mark, v.Figure, v.Gap, onItsOwn(v), v.Together, say)
-	}
-}
+		// Which way, because "390 out" says nothing about what would help and
+		// the block that closes a gap is the one pointing along it.
+		way := "up"
+		if v.Want < v.From {
+			way = "down"
+		}
 
-// onItsOwn is what the per-axis check made of this figure, in a word.
-func onItsOwn(
-	v solve.Verdict,
-) string {
-	switch {
-	case v.Met:
-		return "met"
-	case v.Shown:
-		return "reached"
-	case v.Within:
-		return "maybe"
-	default:
-		return "no"
+		// What it reads and what it wants, not only how far apart they are.
+		// A distance in tolerances is unreadable on its own: 390 of them
+		// sounds like a broken chain and can be a tenth of a band.
+		_, _ = fmt.Fprintf(w, "    %s %-9s %10.4g %10.4g %6s %8.1f %8.1f  %s\n",
+			mark, v.Figure, v.From, v.Want, way, v.Gap, v.Together, say)
 	}
 }
 

@@ -210,3 +210,21 @@ func TestMeasuredPublicTestSuite(
 ) {
 	suite.Run(t, new(MeasuredPublicTestSuite))
 }
+
+// TestAReadingAtTheCeilingIsNotTheBlocks covers the guard the flag missed.
+//
+// Clipping is not a cliff at the number a guard picks. `measure blocks` marks
+// Clipped at half a decibel below full scale, and ten readings sit between
+// that and two decibels below it with the converters plainly in them:
+// HD2_AmpSVT4Pro, an Ampeg SVT-4 Pro a shipped rig names, reads 3.24% of its
+// energy low and 96.74% high. An Ampeg does not do that.
+func (s *MeasuredPublicTestSuite) TestAReadingAtTheCeilingIsNotTheBlocks() {
+	at := func(level float64) measured.Block {
+		return measured.Block{Figures: measured.Figures{Level: level}}
+	}
+
+	s.Require().False(at(-0.94).Measured(), "an amplifier reading 97% high")
+	s.Require().False(at(-1.99).Measured())
+	s.Require().True(at(-2.01).Measured())
+	s.Require().True(at(-20).Measured(), "the ordinary reading")
+}

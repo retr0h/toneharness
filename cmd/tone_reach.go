@@ -117,6 +117,8 @@ func init() {
 		"how far a control is moved to read its slope, as a fraction of its range")
 	f.StringVar(&toneReachHardware, "hardware", "",
 		"which attached audio device to push the signal through")
+	f.StringVar(&toneReachClient.rigs, "rigs", "",
+		"a directory of rigs to use instead of yours, beside the built-in ones")
 	f.StringVar(&toneReachClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&toneReachClient.device, "device", "", deviceUsage)
