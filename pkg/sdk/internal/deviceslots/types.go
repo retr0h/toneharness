@@ -76,6 +76,11 @@ type Translator interface {
 	Footswitches(got wire.DevicePreset, cat *catalog.Catalog) *[]rig.Footswitch
 	// Placements turns a preset into what a device lays out.
 	Placements(doc *preset.Document, cat *catalog.Catalog) ([]wire.Placement, error)
+	// PlacedControllers turns what a preset says moves into what a device
+	// stores, which needs the catalog because a device knows no names.
+	PlacedControllers(
+		doc *preset.Document, cat *catalog.Catalog,
+	) ([]wire.PlacedController, error)
 	// Snapshots carries what the device recalls on a footswitch.
 	Snapshots(got wire.DevicePreset) *[]rig.Snapshot
 	// SnapshotStates reads what a preset's own snapshots recall, for writing

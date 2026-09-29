@@ -149,6 +149,19 @@ func (f *Flows) documentFor(
 	// three snapshots recalling the same sound under the blank's names.
 	wire.PlaceSnapshots(out, f.translator().SnapshotStates(doc))
 
+	// And what a pedal moves. Without this a preset could say
+	// `moves: [{by: expression, role: amp, setting: drive}]`, the compiler
+	// resolved it and the file kept it, and the assignment reached no device:
+	// the slot came back with the section absent.
+	movers, err := f.translator().PlacedControllers(doc, cat)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := wire.PlaceControllers(out, movers); err != nil {
+		return nil, err
+	}
+
 	// And the routing, for the same reason. A chain is written into the
 	// sixteen positions a device gives it and never into the four its input,
 	// split, join and output sit on, so without this a preset keeps the

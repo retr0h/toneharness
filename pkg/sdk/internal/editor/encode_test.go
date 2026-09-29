@@ -22,6 +22,7 @@ package editor
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -85,6 +86,95 @@ func (s *EncodeTestSuite) asPreset(
 	}
 
 	return doc
+}
+
+// read decodes one capture the way a device's answer is read.
+func (s *EncodeTestSuite) read(
+	name string,
+) wire.DevicePreset {
+	got, err := wire.DecodePreset(s.capture(name))
+	s.Require().NoError(err)
+
+	return got
+}
+
+// withController builds a preset from a capture and hangs one processor's
+// worth of assignments off it, the way compile.Controllers writes them.
+func (s *EncodeTestSuite) withController(
+	body string,
+) *preset.Document {
+	doc := s.asPreset("one", s.read("preset.bin"))
+
+	doc.Data.Tone[controllerKey] = preset.Tone{
+		processorKey: json.RawMessage(body),
+	}
+
+	return doc
+}
+
+// aParameter is a position on the first processor and a parameter the block
+// there actually carries.
+//
+// Discovered rather than named, so the test does not depend on which capture it
+// reads or on a model keeping a control across a firmware release.
+func (s *EncodeTestSuite) aParameter(
+	doc *preset.Document,
+) (int, string) {
+	c, err := doc.Spec()
+	s.Require().NoError(err)
+
+	for _, b := range c.Blocks {
+		if b.DSP != 0 {
+			continue
+		}
+
+		model, ok := s.cat.SymbolNumber(b.Model)
+		if !ok {
+			continue
+		}
+
+		sym, _ := s.cat.Symbol(model)
+
+		blk, ok := s.cat.Block(b.Model)
+		if !ok {
+			continue
+		}
+
+		for _, name := range sym.Params {
+			if _, carried := blk.Params[name]; carried {
+				return b.Pos, name
+			}
+		}
+	}
+
+	s.Require().Fail("no block in this capture carries a parameter")
+
+	return 0, ""
+}
+
+// blockAt is the block a preset stores at a position on the first processor.
+func (s *EncodeTestSuite) blockAt(
+	doc *preset.Document,
+	pos int,
+) plan.Block {
+	c, err := doc.Spec()
+	s.Require().NoError(err)
+
+	got, ok := blockAtPath(c.Blocks, 0, pos)
+	s.Require().True(ok)
+
+	return got
+}
+
+// model is the model table number of the block at a position.
+func (s *EncodeTestSuite) model(
+	doc *preset.Document,
+	pos int,
+) int {
+	got, ok := s.cat.SymbolNumber(s.blockAt(doc, pos).Model)
+	s.Require().True(ok)
+
+	return got
 }
 
 // TestAPresetSurvivesGoingBackToTheDevice is the claim this file exists for.
@@ -503,4 +593,179 @@ func TestEncodeTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(EncodeTestSuite))
+}
+
+// TestPlacedControllersReadsTheSectionRatherThanThePlan is the bug this
+// resolver was written with and then found by putting it on hardware.
+//
+// A preset keeps what moves under `tone.controller`, and a plan built from that
+// preset carries its blocks and not its assignments. Resolving off Spec
+// therefore found nothing, wrote an empty section, and the slot came back with
+// no controllers at all — which reads exactly like the bug it was meant to fix.
+func (s *EncodeTestSuite) TestPlacedControllersReadsTheSectionRatherThanThePlan() {
+	pos, name := s.aParameter(s.withController(`{}`))
+
+	doc := s.withController(fmt.Sprintf(`{"block%d":{%q:{
+		"@controller": 2, "@min": 0.3, "@max": 0.85, "@snapshot_disable": true}}}`,
+		pos, name))
+
+	got, err := PlacedControllers(doc, s.cat)
+	s.Require().NoError(err)
+	s.Require().Len(got, 1)
+
+	one := got[0]
+	s.Require().Equal(2, one.Controller)
+	s.Require().Equal(pos, one.Block, "the position the preset stores it at")
+	s.Require().InDelta(0.3, one.Min, 0.0001)
+	s.Require().InDelta(0.85, one.Max, 0.0001)
+	s.Require().True(one.NoSnapshot)
+
+	// The parameter's place in the model's own list, which is the only thing a
+	// device stores. Whatever number it is, it has to name the same control
+	// again when the section is read back.
+	sym, ok := s.cat.Symbol(s.model(doc, pos))
+	s.Require().True(ok)
+	s.Require().Equal(name, sym.Params[one.Param])
+}
+
+// TestPlacedControllersFallsBackToTheParametersOwnRange covers the ends being
+// left out.
+//
+// Zero and one are right for most parameters here and wrong for every one
+// measured in hertz or decibels, so an assignment that names neither end gets
+// the knob's own.
+func (s *EncodeTestSuite) TestPlacedControllersFallsBackToTheParametersOwnRange() {
+	pos, name := s.aParameter(s.withController(`{}`))
+
+	doc := s.withController(
+		fmt.Sprintf(`{"block%d":{%q:{"@controller": 2}}}`, pos, name))
+
+	got, err := PlacedControllers(doc, s.cat)
+	s.Require().NoError(err)
+	s.Require().Len(got, 1)
+
+	blk, ok := s.cat.Block(s.blockAt(doc, pos).Model)
+	s.Require().True(ok)
+
+	s.Require().InDelta(blk.Params[name].Min, got[0].Min, 0.0001)
+	s.Require().InDelta(blk.Params[name].Max, got[0].Max, 0.0001)
+}
+
+// TestPlacedControllersSkipsWhatDoesNotLineUp covers a hand-edited preset.
+//
+// Both paths into a preset have been through check, where a block the chain
+// does not have and a control the model does not carry are reported with every
+// other complaint about the rig. What is left is somebody's own edit, and
+// writing it would put a controller on whatever happens to sit at that number.
+func (s *EncodeTestSuite) TestPlacedControllersSkipsWhatDoesNotLineUp() {
+	tests := []struct {
+		name string
+		body string
+	}{
+		{"a block the chain does not have", `{"block9":{"Mix":{"@controller":2}}}`},
+		{"a control the model does not carry", `{"block0":{"Nope":{"@controller":2}}}`},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, err := PlacedControllers(s.withController(tt.body), s.cat)
+
+			s.Require().NoError(err)
+			s.Require().Empty(got)
+		})
+	}
+
+	// Named against a control the block really has, so it reaches the check
+	// for the controller number rather than being skipped before it.
+	s.Run("no controller number", func() {
+		pos, name := s.aParameter(s.withController(`{}`))
+
+		got, err := PlacedControllers(s.withController(
+			fmt.Sprintf(`{"block%d":{%q:{"@min":0.3}}}`, pos, name)), s.cat)
+
+		s.Require().NoError(err)
+		s.Require().Empty(got)
+	})
+
+	// A model the catalog does not carry, which is a preset built against
+	// another firmware release.
+	s.Run("a model this catalog has no number for", func() {
+		pos, name := s.aParameter(s.withController(`{}`))
+
+		doc := s.withController(
+			fmt.Sprintf(`{"block%d":{%q:{"@controller":2}}}`, pos, name))
+
+		c, err := doc.Spec()
+		s.Require().NoError(err)
+
+		for i := range c.Blocks {
+			if c.Blocks[i].DSP == 0 && c.Blocks[i].Pos == pos {
+				c.Blocks[i].Model = "HD2_NoSuchModel"
+			}
+		}
+
+		s.Require().NoError(doc.SetSpec(c))
+
+		got, err := PlacedControllers(doc, s.cat)
+
+		s.Require().NoError(err)
+		s.Require().Empty(got)
+	})
+}
+
+// TestPlacedControllersReportsASectionItCannotRead covers a hand-edited file.
+//
+// Every one of these is somebody's own edit rather than anything this writes,
+// and each is reported rather than skipped: a key that is not a number says the
+// file is wrong, where an assignment that does not line up only says the chain
+// moved under it.
+func (s *EncodeTestSuite) TestPlacedControllersReportsASectionItCannotRead() {
+	tests := []struct {
+		name string
+		body string
+		says string
+	}{
+		{"a processor body that is not an object", `["nope"]`, "says moves"},
+		{"a block key that is not a number", `{"blockX":{"Mix":{"@controller":2}}}`, "blockX"},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			_, err := PlacedControllers(s.withController(tt.body), s.cat)
+
+			s.Require().ErrorContains(err, tt.says)
+		})
+	}
+}
+
+// TestPlacedControllersReportsAChainItCannotRead covers the plan failing.
+//
+// The assignments are read from the controller section and the blocks they
+// point at from the chain, so a chain that will not parse stops this before any
+// assignment is resolved.
+func (s *EncodeTestSuite) TestPlacedControllersReportsAChainItCannotRead() {
+	doc := s.withController(`{"block0":{"Mix":{"@controller":2}}}`)
+	doc.Data.Tone["dspNope"] = preset.Tone{}
+
+	_, err := PlacedControllers(doc, s.cat)
+
+	s.Require().ErrorContains(err, "dspNope")
+}
+
+// TestPlacedControllersReportsAKeyItCannotRead covers a malformed section.
+func (s *EncodeTestSuite) TestPlacedControllersReportsAKeyItCannotRead() {
+	doc := s.withController(`{"block1":{"Drive":{"@controller":2}}}`)
+	doc.Data.Tone[controllerKey]["dspX"] = doc.Data.Tone[controllerKey][processorKey]
+
+	_, err := PlacedControllers(doc, s.cat)
+
+	s.Require().ErrorContains(err, "dspX")
+}
+
+// TestAPresetThatMovesNothingResolvesNothing covers the common case.
+func (s *EncodeTestSuite) TestAPresetThatMovesNothingResolvesNothing() {
+	got, err := PlacedControllers(s.asPreset("one", s.read("preset.bin")), s.cat)
+
+	s.Require().NoError(err)
+	s.Require().Empty(got)
 }

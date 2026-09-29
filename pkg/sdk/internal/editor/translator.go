@@ -92,6 +92,14 @@ func (*Translator) Placements(
 	return Placements(doc, cat)
 }
 
+// PlacedControllers turns what a preset says moves into what a device stores.
+func (*Translator) PlacedControllers(
+	doc *preset.Document,
+	cat *catalog.Catalog,
+) ([]wire.PlacedController, error) {
+	return PlacedControllers(doc, cat)
+}
+
 // Snapshots carries what the device recalls on a footswitch.
 func (*Translator) Snapshots(
 	got wire.DevicePreset,

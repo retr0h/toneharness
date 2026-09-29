@@ -183,6 +183,21 @@ func (mr *MockTranslatorMockRecorder) Footswitches(got, cat any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Footswitches", reflect.TypeOf((*MockTranslator)(nil).Footswitches), got, cat)
 }
 
+// PlacedControllers mocks base method.
+func (m *MockTranslator) PlacedControllers(doc *preset.Document, cat *catalog.Catalog) ([]wire.PlacedController, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PlacedControllers", doc, cat)
+	ret0, _ := ret[0].([]wire.PlacedController)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PlacedControllers indicates an expected call of PlacedControllers.
+func (mr *MockTranslatorMockRecorder) PlacedControllers(doc, cat any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlacedControllers", reflect.TypeOf((*MockTranslator)(nil).PlacedControllers), doc, cat)
+}
+
 // Placements mocks base method.
 func (m *MockTranslator) Placements(doc *preset.Document, cat *catalog.Catalog) ([]wire.Placement, error) {
 	m.ctrl.T.Helper()
