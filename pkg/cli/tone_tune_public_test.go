@@ -24,6 +24,8 @@ import (
 	"context"
 	"errors"
 	"math"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -613,4 +615,125 @@ func TestTunePublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(TunePublicTestSuite))
+}
+
+// askWith writes a ToneSpec carrying a nudges block and returns where it went.
+func (s *TunePublicTestSuite) askWith(
+	nudges string,
+) string {
+	at := filepath.Join(s.T().TempDir(), "ask.tone.yaml")
+
+	s.Require().NoError(os.WriteFile(at, []byte(`schema: ToneSpec
+subject:
+  kind: artist
+  name: Matt Freeman
+instrument: bass
+genre: [punk]
+`+nudges), 0o600))
+
+	return at
+}
+
+// TestANudgeOnTheAskMovesTheTarget is the conversational half of the loop.
+//
+// A nudge lives on the ask rather than on a flag, because it is a decision
+// about how something should sound and it has to survive the session that made
+// it. The run says what moved, since a target that shifted silently cannot be
+// told from a chain that drifted.
+func (s *TunePublicTestSuite) TestANudgeOnTheAskMovesTheTarget() {
+	s.ready()
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+	opts := s.opts()
+	opts.Ask = s.askWith("nudges:\n  - word: darker\n")
+
+	var buf bytes.Buffer
+	s.Require().NoError(Tune(context.Background(), &buf, opts))
+
+	s.Require().Contains(buf.String(), `"darker" moves centroid`)
+	s.Require().Contains(buf.String(), "of a tolerance")
+}
+
+// TestNothingSaidLeavesTheTargetAlone covers a first answer.
+func (s *TunePublicTestSuite) TestNothingSaidLeavesTheTargetAlone() {
+	s.ready()
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+	opts := s.opts()
+	opts.Ask = s.askWith("")
+
+	var buf bytes.Buffer
+	s.Require().NoError(Tune(context.Background(), &buf, opts))
+
+	s.Require().NotContains(buf.String(), "of a tolerance")
+}
+
+// TestAWordItCannotUseStopsTheRun covers refusing rather than ignoring.
+//
+// Running on with the instruction dropped would report a tone nobody asked for.
+func (s *TunePublicTestSuite) TestAWordItCannotUseStopsTheRun() {
+	s.ready()
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+	opts := s.opts()
+	opts.Ask = s.askWith("nudges:\n  - word: chunky\n")
+
+	err := Tune(context.Background(), buffer(), opts)
+
+	s.Require().ErrorContains(err, "chunky")
+}
+
+// TestAnAskThatIsNotThereIsReported covers the path being wrong.
+func (s *TunePublicTestSuite) TestAnAskThatIsNotThereIsReported() {
+	s.ready()
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+	opts := s.opts()
+	opts.Ask = filepath.Join(s.T().TempDir(), "nowhere.tone.yaml")
+
+	err := Tune(context.Background(), buffer(), opts)
+
+	s.Require().ErrorContains(err, "nowhere.tone.yaml")
+}
+
+// TestAWordMovesWhatItCanAndSaysWhatItCannot covers both halves of one word.
+//
+// "Punchier" is a tight low end and a hard attack. This target constrains the
+// low band and says nothing about the attack, so one figure moves and the other
+// is reported as free rather than moved quietly or dropped in silence.
+//
+// It is also the comparative of a word ending in y, which resolves back to
+// "punchy" rather than being refused.
+func (s *TunePublicTestSuite) TestAWordMovesWhatItCanAndSaysWhatItCannot() {
+	s.ready()
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+	opts := s.opts()
+	opts.Ask = s.askWith("nudges:\n  - word: punchier\n")
+
+	var buf bytes.Buffer
+	s.Require().NoError(Tune(context.Background(), &buf, opts))
+
+	s.Require().Contains(buf.String(), `"punchier" moves low`)
+	s.Require().Contains(buf.String(), "which this genre leaves free")
+}
+
+// TestAnAskItCannotReadIsReported covers a file that is not a ToneSpec.
+func (s *TunePublicTestSuite) TestAnAskItCannotReadIsReported() {
+	s.ready()
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+	at := filepath.Join(s.T().TempDir(), "ask.tone.yaml")
+	s.Require().NoError(os.WriteFile(at, []byte("schema: Setup\n"), 0o600))
+
+	opts := s.opts()
+	opts.Ask = at
+
+	s.Require().Error(Tune(context.Background(), buffer(), opts))
 }

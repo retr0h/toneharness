@@ -37,6 +37,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // Builds turns a curated rig into a preset a device will load.
@@ -159,6 +160,13 @@ func Tune(
 	aims = solve.Aims(target, inCorpusScale(floor))
 	aims[audio.KeyLevel] = solve.Aim{Want: settled, Tol: drift}
 
+	// After the floor, because a nudge is measured in tolerances and a
+	// tolerance is not known until the loop's own wander is.
+	aims, err = nudged(w, opts, aims)
+	if err != nil {
+		return err
+	}
+
 	_, _ = fmt.Fprintf(w, "  the loop wanders %.4f of a band and %.1fHz\n",
 		inCorpusScale(floor)[audio.KeyLow], floor[audio.KeyCentroid])
 
@@ -255,6 +263,83 @@ func keepTuned(
 		opts.Out, len(read.Plan.Blocks))
 
 	return nil
+}
+
+// nudged moves the target by what somebody said after hearing it.
+//
+// Read off the ask rather than a flag of its own. A nudge is a decision about
+// how something should sound, so it belongs beside the words and the genre in
+// the ToneSpec, which is also what makes the next session start where this one
+// finished rather than from the corpus again.
+//
+// Nothing to say leaves the target alone, which is the ordinary case: a first
+// answer has not been heard yet, so there is nothing to move from.
+func nudged(
+	w io.Writer,
+	opts TuneOptions,
+	aims map[audio.Figure]solve.Aim,
+) (map[audio.Figure]solve.Aim, error) {
+	if opts.Ask == "" {
+		return aims, nil
+	}
+
+	said, err := nudgesOn(opts.Ask)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(said) == 0 {
+		return aims, nil
+	}
+
+	of, err := sdk.Nudges(said)
+	if err != nil {
+		return nil, err
+	}
+
+	out := solve.Nudge(aims, of)
+
+	// What moved and by how much, because a target that shifted silently is one
+	// nobody can tell from a chain that drifted.
+	for _, n := range of {
+		was, ok := aims[n.Key]
+		if !ok {
+			_, _ = fmt.Fprintf(w,
+				"  %q asks for %s, which this genre leaves free\n", n.Term, n.Key)
+
+			continue
+		}
+
+		_, _ = fmt.Fprintf(w,
+			"  %q moves %s from %.4g to %.4g, %g of a tolerance\n",
+			n.Term, n.Key, was.Want, out[n.Key].Want, n.Steps)
+	}
+
+	return out, nil
+}
+
+// nudgesOn reads the nudges off a ToneSpec.
+func nudgesOn(
+	at string,
+) ([]tone.Nudge, error) {
+	f, err := os.Open(at) //nolint:gosec // a path the caller named
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", at, err)
+	}
+
+	spec, err := tone.Load(f)
+
+	_ = f.Close()
+
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", at, err)
+	}
+
+	if spec.Nudges == nil {
+		return nil, nil
+	}
+
+	return *spec.Nudges, nil
 }
 
 // targetFor is what the genre's records measure as, middle and spread.

@@ -83,6 +83,48 @@ A healthy floor on an HX Stomp is around 0.0002 to 0.003 of a band and a few
 hertz. Ten times that means something is wrong with the loop, and the thing to
 check first is the signal path rather than the block being measured.
 
+## Saying it: nudges live on the ask
+
+A nudge goes in the ToneSpec's `nudges`, not on a flag, because it is a decision
+about how something should sound and it has to outlive the session that made it.
+`tone tune --ask` reads them.
+
+```yaml
+nudges:
+  - word: darker
+  - word: punchier
+    steps: 2
+```
+
+The word carries the direction: `dark` is already the highs axis downward, so
+there is no "less" to say. Write the comparative if that reads better, since
+`darker` and `dark` resolve to the same move.
+
+What comes back says what moved:
+
+```
+"darker" moves centroid from 144 to 105.1, 1 of a tolerance
+"punchier" moves low from 0.97 to 0.7967, 2 of a tolerance
+"punchier" moves transient from 0.76 to 0.9908, 2 of a tolerance
+```
+
+Three things that output shows.
+
+**One word can move two figures.** "Punchy" is a tight low end and a hard attack,
+and the vocabulary holds it that way because that is how players talk. Both
+figures move, and `steps` scales both.
+
+**A word the vocabulary does not know stops the run**, and so does one whose axis
+nothing measures. Four of the ten axes have no figure: how much room is on a
+part, how loud the strings are under a hand, which pickup was used, whether a
+filter is moving. Saying "more space" is a real instruction that this cannot act
+on, and it says so rather than running on with it dropped. A nudge ignored in
+silence would report a tone nobody asked for.
+
+**A figure the genre leaves free is left free.** A genre pins what its records
+agree about and shrugs at the rest, and a nudge cannot move a target that was
+never set.
+
 ## One step is one tolerance
 
 A person says "a bit darker" and means a noticeable amount. A tolerance is the
