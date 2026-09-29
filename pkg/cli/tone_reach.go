@@ -22,6 +22,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -29,8 +30,36 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
+
+// ErrSquealing is a reading of the loop rather than of the chain.
+//
+// Refused rather than reported, because every figure a run produces is built
+// on this one. A warning above a table of numbers nobody can trust is a table
+// of numbers somebody will act on.
+var ErrSquealing = errors.New("the loop is oscillating")
+
+// endsInACab says the last block in a chain is a cabinet.
+func endsInACab(
+	made plan.Plan,
+	cat *catalog.Catalog,
+) bool {
+	var last catalog.ModelID
+
+	at := -1
+
+	for _, b := range made.Blocks {
+		if b.Pos > at {
+			at, last = b.Pos, b.Model
+		}
+	}
+
+	blk, ok := cat.Blocks[last]
+
+	return ok && blk.Category == catalog.CategoryCab
+}
 
 // ReachOptions is what asking whether a chain can meet a target needs.
 type ReachOptions struct {
@@ -130,6 +159,14 @@ func Reach(
 	}
 
 	from := figuresOf(now)
+
+	// Before anything is computed from it. Every number below rests on this
+	// reading, and a chain giving back more high end than went in is not a
+	// chain being read at all.
+	if say, bad := Squealing(from, figuresOfDry(signal),
+		endsInACab(made.Plan, cat)); bad {
+		return fmt.Errorf("%w: %s", ErrSquealing, say)
+	}
 
 	_, _ = fmt.Fprintf(w,
 		"  the loop wanders %.4f of a band and %.1fHz, reading %d controls\n",

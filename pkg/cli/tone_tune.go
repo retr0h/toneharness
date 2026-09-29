@@ -184,6 +184,19 @@ func Tune(
 	_, _ = fmt.Fprintf(w, "  the loop wanders %.4f of a band and %.1fHz\n",
 		inCorpusScale(floor)[audio.KeyLow], floor[audio.KeyCentroid])
 
+	first, err := sdk.Fingerprint(ctx, bench, signal)
+	if err != nil {
+		return err
+	}
+
+	// Before a single control is moved. This loop applies what it solves for,
+	// so a reading of the loop rather than of the chain does not produce a
+	// wrong answer, it produces a chain turned to match one.
+	if say, bad := Squealing(figuresOf(first), figuresOfDry(signal),
+		endsInACab(made.Plan, cat)); bad {
+		return fmt.Errorf("%w: %s", ErrSquealing, say)
+	}
+
 	did, err := attempt(ctx, w, opts, bench, signal, preset, knobs, lists, aims, settled)
 	if err != nil {
 		return err

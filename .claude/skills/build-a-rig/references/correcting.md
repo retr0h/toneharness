@@ -89,39 +89,61 @@ So the committed sweeps say **which controls are worth putting in a matrix**,
 and nothing more. `measure slopes --id <rig>` prints live beside committed for
 any chain, which is how that was found.
 
-### Neither number is trustworthy while the loop adds a signal of its own
+### The loop oscillates, and every reading of an amplifier was of that
 
-The table above is measured and the reason first written under it was wrong, so
-read it as a disagreement rather than as a verdict on which side is right.
+The cable rig sends the pedal's output back into its own input, and the output
+destination is `Multi (1/4", XLR, Digital, USB 1/2)`, which drives the
+quarter-inch jack that lead comes from. With enough gain around that loop it
+squeals, and an amplifier is where the gain is.
 
-What is now known, on an HX Stomp with the cable rig:
+Measured on an HX Stomp. Matt Freeman's chain, a compressor into an Ampeg SVT
+into an 8x10, with nothing changed but the amplifier's ChVol and Master:
 
-- The empty loop is healthy. It reads a centroid of 108Hz and 96.6% of its
-  energy below 250Hz, which is a bass DI.
-- A chain of a compressor, an Ampeg SVT and an 8x10 reads a centroid of 2,197Hz
-  and **84% of its energy above 2kHz**. An 8x10 does not pass that.
-- Across the committed fingerprints, every family reads the empty loop's own
-  0.005% in the high band except the full amplifiers, which read a median of
-  **46.4%** and sit 12dB louder than everything else. The preamps of the same
-  modelled circuits read 0.047%.
-- The cabinet in that chain is rendering: its Distance moves the centroid
-  12.4Hz per turn and its Level 31Hz. But its **High Cut, which sweeps 500Hz to
-  20kHz, moves the centroid by -0.001Hz per turn**. A signal with 84% of its
-  energy above 2kHz cannot ignore a high cut.
+| ChVol/Master | below 250Hz | above 2kHz | centroid | level     |
+| ------------ | ----------: | ---------: | -------: | --------: |
+| 0.2          |       98.4% |       0.0% |    112Hz | -53.4dB   |
+| **0.5**      |   **99.8%** |   **0.0%** | **96Hz** | **-26.4dB** |
+| 0.7          |       31.3% |      68.2% |  1,814Hz | -25.8dB   |
+| 0.8 / 1.0    |       15.4% |      84.3% |  2,197Hz | -23.6dB   |
 
-So the high-frequency energy is arriving after the cabinet rather than through
-it. The output destination is `Multi (1/4", XLR, Digital, USB 1/2)`, which
-drives the quarter-inch jack the cable returns to the input, and
-[signal-path.md](../../measure-a-device/references/signal-path.md) says of that
-destination that whether it oscillates depends on the gain around it. Gain is
-what separates the amplifiers from every other family.
+It starts between 0.5 and 0.7. Below that the chain reads like a bass rig and
+costs three decibels of level to do it.
 
-It is not fixable by choosing another destination: that page also records that
-bare USB was tried and gives silence.
+Push digital silence through at full gain and a 2.6kHz tone comes back at
+-19.3dB. That is self-oscillation with nothing put in.
 
-**Until that is settled, any reading of a chain holding an amplifier is
-suspect, and so is any fingerprint of one.** That is 111 of the 661 committed
-readings and every hardware figure this loop produces for a real rig.
+**It is not a level problem and silence does not catch it.** The squeal sat at
+-23.6dB against -26.4dB for the clean reading, so no level guard separates
+them. And silence comes back clean at 0.7, because an amplifier's gain rises
+with what is put into it, so the loop only runs away once there is signal.
+
+**What catches it is an invariant.** A cabinet is a loudspeaker and a
+loudspeaker is a low pass: a chain ending in one can remove energy above 2kHz
+and cannot add it. The reference has 0.01% up there. Anything giving back more
+than it was handed is not the chain being read.
+
+`tone tune` and `tone reach` refuse on that rather than reporting it, because
+every figure they produce rests on the reading and tune turns knobs to match
+it. `measure chain` says it and prints the numbers anyway, which is what a
+diagnostic is for.
+
+**So take this section's table as a disagreement rather than a verdict, and
+treat any committed reading of an amplifier the same way.** That is 111 of the
+661 fingerprints: across the whole library every family reads the empty loop's
+own 0.005% in the high band except the full amplifiers, which read a median of
+46.4% and sit 12dB louder. The preamps of the same circuits read 0.047%.
+
+### Read what is loaded, without loading anything
+
+```bash
+mise exec -- go run main.go measure chain
+```
+
+Nothing is built, nothing is loaded and no control moves. Play a preset, turn a
+knob with `device turn`, and read what that did. It is the primitive the rest
+of this assumed and did not have, and its absence is why a chain reading 84% of
+its energy above 2kHz went a whole session unnoticed: every other command folds
+the figure into a distance from a target before anybody sees it.
 
 ## How the solve actually works
 
