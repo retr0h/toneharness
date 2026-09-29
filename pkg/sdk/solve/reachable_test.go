@@ -251,3 +251,141 @@ func (s *ReachableTestSuite) TestWorthOnATargetEveryAxisOfWhichIsInside() {
 	s.Require().Equal(audio.KeyCentroid, worst.Figure,
 		"the worst is still named when the answer is yes")
 }
+
+// knob is one control with a slope on the centroid.
+func knob(
+	at, low, high, slope float64,
+) Knob {
+	return Knob{
+		Block: 0, Param: int(low*1000 + high), At: at, Low: low, High: high,
+		Slope: map[audio.Figure]float64{audio.KeyCentroid: slope},
+	}
+}
+
+// TestBestClosesAGapOneControlCanCover covers the ordinary case.
+func (s *ReachableTestSuite) TestBestClosesAGapOneControlCanCover() {
+	got, err := Best(
+		[]Knob{knob(0.5, 0, 1, 1000)},
+		one(600),
+		map[audio.Figure]float64{audio.KeyCentroid: 100},
+		5,
+	)
+
+	s.Require().NoError(err)
+	s.Require().True(got.Arrived)
+	s.Require().LessOrEqual(got.Residual[audio.KeyCentroid], 1.0)
+}
+
+// TestBestRefusesAGapNoPositionReaches is the answer per-axis could not give.
+//
+// The control has half a turn left and moves the centroid a thousand per turn,
+// so five hundred is everything it has and the target is four thousand away.
+// No amount of iterating finds what is not there.
+func (s *ReachableTestSuite) TestBestRefusesAGapNoPositionReaches() {
+	got, err := Best(
+		[]Knob{knob(0.5, 0, 1, 1000)},
+		one(4100),
+		map[audio.Figure]float64{audio.KeyCentroid: 100},
+		5,
+	)
+
+	s.Require().NoError(err)
+	s.Require().False(got.Arrived)
+	s.Require().Greater(got.Residual[audio.KeyCentroid], 1.0)
+}
+
+// TestBestTradesTwoAxesAgainstOneControl is why the axes go in together.
+//
+// One dial, two axes, and it moves them in opposite directions. Each axis is
+// reachable on its own and no position reaches both, which is the whole reason
+// Reachable checking them one at a time ruled nothing out.
+func (s *ReachableTestSuite) TestBestTradesTwoAxesAgainstOneControl() {
+	both := Knob{
+		Block: 0, Param: 1, At: 0.5, Low: 0, High: 1,
+		Slope: map[audio.Figure]float64{
+			audio.KeyCentroid: 1000,
+			audio.KeyLow:      -1000,
+		},
+	}
+
+	aims := map[audio.Figure]Aim{
+		audio.KeyCentroid: {Want: 400, Tol: 1},
+		audio.KeyLow:      {Want: 400, Tol: 1},
+	}
+
+	from := map[audio.Figure]float64{audio.KeyCentroid: 100, audio.KeyLow: 100}
+
+	// Alone, each is 300 out against 500 of movement, so neither is refused.
+	for _, v := range Reachable(aims, map[audio.Figure]Span{
+		audio.KeyCentroid: {From: 100, Low: 100, High: 600, Swing: 1000},
+		audio.KeyLow:      {From: 100, Low: 100, High: 600, Swing: 1000},
+	}) {
+		s.Require().True(v.Within, "%s is reachable on its own", v.Figure)
+	}
+
+	got, err := Best([]Knob{both}, aims, from, 5)
+
+	s.Require().NoError(err)
+	s.Require().False(got.Arrived,
+		"one dial cannot raise the centroid and the low band at once")
+}
+
+// TestBestStopsWhenAPassStopsImproving covers clamping making things worse.
+//
+// The answer wanted is the nearest the chain got, not wherever the last pass
+// landed.
+func (s *ReachableTestSuite) TestBestStopsWhenAPassStopsImproving() {
+	got, err := Best(
+		[]Knob{knob(0.5, 0, 1, 1000)},
+		one(600),
+		map[audio.Figure]float64{audio.KeyCentroid: 100},
+		50,
+	)
+
+	s.Require().NoError(err)
+	s.Require().LessOrEqual(got.Residual[audio.KeyCentroid], 1.0,
+		"fifty passes are no worse than the pass that arrived")
+}
+
+// TestBestOnAChainNothingCanTurn covers a system with no lever at all.
+func (s *ReachableTestSuite) TestBestOnAChainNothingCanTurn() {
+	_, err := Best(
+		[]Knob{knob(0.5, 0, 1, 0)},
+		one(600),
+		map[audio.Figure]float64{audio.KeyCentroid: 100},
+		5,
+	)
+
+	s.Require().ErrorIs(err, ErrNoKnobs)
+}
+
+// TestBestOnATargetAlreadyMet covers nothing to do.
+func (s *ReachableTestSuite) TestBestOnATargetAlreadyMet() {
+	got, err := Best(
+		[]Knob{knob(0.5, 0, 1, 1000)},
+		one(100.5),
+		map[audio.Figure]float64{audio.KeyCentroid: 100},
+		5,
+	)
+
+	s.Require().NoError(err)
+	s.Require().True(got.Arrived)
+}
+
+// TestBestDoesNotOverwriteItsOwnAnswer covers the aliasing that bit.
+//
+// The residual is the Result's own map. Writing the next pass's readings over
+// it reported a centroid of 141 hertz as 141 tolerances out, while Arrived
+// still said the chain had got there.
+func (s *ReachableTestSuite) TestBestDoesNotOverwriteItsOwnAnswer() {
+	got, err := Best(
+		[]Knob{knob(0.5, 0, 1, 1000)},
+		one(600),
+		map[audio.Figure]float64{audio.KeyCentroid: 100},
+		5,
+	)
+
+	s.Require().NoError(err)
+	s.Require().Equal(got.Arrived, arrived(got.Residual),
+		"the verdict and the numbers behind it have to agree")
+}

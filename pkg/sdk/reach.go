@@ -24,8 +24,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
@@ -71,6 +73,14 @@ type Reaching struct {
 	// axis that settled it.
 	Worth   bool          `json:"worth"`
 	Decides solve.Verdict `json:"decides"`
+	// Together is whether one set of control positions satisfies every axis at
+	// once, which is the question a person means when they ask whether a rig
+	// can sound like something.
+	//
+	// The axes are checked separately as well, and that rules nothing out: a
+	// dial that can put any one figure where a target wants it is ordinary,
+	// and it says nothing about putting nine there at the same time.
+	Together bool `json:"together"`
 }
 
 // Reach says which axes of a target a chain could meet, without running.
@@ -116,7 +126,33 @@ func (c *Client) Reach(
 	}
 
 	reach := measured.Reaches(curves...)
-	axes := solve.Reachable(aims, inTargetScale(reach))
+	spans := inTargetScale(reach)
+	axes := solve.Reachable(aims, spans)
+
+	// And again with every axis solved together, which is the question
+	// somebody is actually asking. Nine axes each reachable alone says almost
+	// nothing about nine reachable at once: a cabinet's Distance can put the
+	// centroid where a target wants it and can put the low band where the
+	// target wants it, and those are two different positions of one dial.
+	// Only the axes the sweeps read. An aim on a figure no reading carried
+	// would be solved against a reading of nought, which is not where the
+	// chain sits: it is the absence of a measurement, and spending every
+	// control defending it answers a question nobody asked.
+	measurable := solve.Only(aims, slices.Collect(maps.Keys(spans)))
+
+	joint, err := solve.Best(
+		knobsOf(curves), measurable, from(spans), jointPasses)
+	if err != nil {
+		// A chain no control of which moves any axis the target names. Said
+		// through the per-axis answer rather than refused, because "no control
+		// moves this" is exactly what somebody asked to be told.
+		joint = solve.Result{}
+	}
+
+	for i := range axes {
+		axes[i].Together = joint.Residual[axes[i].Figure]
+	}
+
 	decides, worth := solve.Worth(axes)
 
 	return Reaching{
@@ -127,6 +163,7 @@ func (c *Client) Reach(
 		Axes:     axes,
 		Worth:    worth,
 		Decides:  decides,
+		Together: joint.Arrived,
 	}, nil
 }
 
@@ -251,6 +288,68 @@ func asFraction(
 	default:
 		return got
 	}
+}
+
+// jointPasses is how many times the joint bound re-solves from where clamping
+// left it.
+//
+// Five, matching what the loop takes on hardware. The slopes are fixed here so
+// it converges rather than wandering, and it stops as soon as a pass stops
+// improving, so this is a ceiling rather than a count.
+const jointPasses = 5
+
+// knobsOf turns the committed sweeps into controls the solver can move.
+//
+// Every control that has a slope on some figure. A list is left out: it has no
+// slope, so the matrix has no row to put it in, and what a list is worth is
+// answered by comparing its settings rather than by arithmetic.
+//
+// Each control starts at the middle of its own range, because the readings
+// behind the chain's position are the median across every setting swept. A
+// control started where the compiler happens to leave it would be answering
+// against a position nothing here measured.
+func knobsOf(
+	of []measured.Curves,
+) []solve.Knob {
+	var out []solve.Knob
+
+	for block, curves := range of {
+		for name, curve := range curves.Controls {
+			if len(curve.Fits) == 0 {
+				continue
+			}
+
+			slope := make(map[audio.Figure]float64, len(curve.Fits))
+			for key, fit := range curve.Fits {
+				slope[key] = asFraction(key, fit.PerTurn)
+			}
+
+			out = append(out, solve.Knob{
+				Block:   block,
+				Param:   len(out),
+				Control: curves.Block + " " + name,
+				Setting: name,
+				At:      (curve.Span.Low + curve.Span.High) / 2,
+				Low:     curve.Span.Low,
+				High:    curve.Span.High,
+				Slope:   slope,
+			})
+		}
+	}
+
+	return out
+}
+
+// from is where the chain sits, per axis.
+func from(
+	spans map[audio.Figure]solve.Span,
+) map[audio.Figure]float64 {
+	out := make(map[audio.Figure]float64, len(spans))
+	for key, span := range spans {
+		out[key] = span.From
+	}
+
+	return out
 }
 
 // perCent is what a sweep reports a share as, against the fraction a corpus

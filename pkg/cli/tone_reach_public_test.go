@@ -66,7 +66,8 @@ func (s *ReachPublicTestSuite) answers(
 // TestAnAxisSomeReadingLandedOnIsSaidToBeSo covers the claim worth trusting.
 func (s *ReachPublicTestSuite) TestAnAxisSomeReadingLandedOnIsSaidToBeSo() {
 	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Readings: 193, Worth: true,
+		Rig: "matt-freeman", Genre: "punk", Readings: 193,
+		Worth: true, Together: true,
 		Axes: []solve.Verdict{
 			{Figure: audio.KeyCentroid, Gap: 11, Swing: 1324, Shown: true, Within: true},
 		},
@@ -79,7 +80,8 @@ func (s *ReachPublicTestSuite) TestAnAxisSomeReadingLandedOnIsSaidToBeSo() {
 	s.Require().Contains(w.String(), "matt-freeman against punk")
 	s.Require().Contains(w.String(), "193 readings already taken")
 	s.Require().Contains(w.String(), "a reading landed there")
-	s.Require().Contains(w.String(), "Worth running. 1 of 1 axes")
+	s.Require().Contains(w.String(), "satisfies all 1 axes at once")
+	s.Require().Contains(w.String(), "the model flatters")
 }
 
 // TestAnAxisNothingCanCloseIsTheHeadline covers the answer that saves the
@@ -112,7 +114,7 @@ func (s *ReachPublicTestSuite) TestAnAxisNothingCanCloseIsTheHeadline() {
 // bound that flatters the controls becomes a bound somebody trusted.
 func (s *ReachPublicTestSuite) TestAnAxisOnlyTheSwingAllowsIsNotCalledReachable() {
 	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Worth: true,
+		Rig: "matt-freeman", Genre: "punk", Worth: true, Together: true,
 		Axes: []solve.Verdict{
 			{Figure: audio.KeyLow, Gap: 4, Swing: 90, Within: true},
 		},
@@ -124,13 +126,13 @@ func (s *ReachPublicTestSuite) TestAnAxisOnlyTheSwingAllowsIsNotCalledReachable(
 
 	s.Require().Contains(w.String(), "nothing rules it out")
 	s.Require().NotContains(w.String(), "a reading landed there")
-	s.Require().Contains(w.String(), "0 of 1 axes")
+	s.Require().Contains(w.String(), "maybe", "the column says how weak the claim is")
 }
 
 // TestAnAxisAlreadyInsideNeedsNoReading covers a target met before starting.
 func (s *ReachPublicTestSuite) TestAnAxisAlreadyInsideNeedsNoReading() {
 	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Worth: true,
+		Rig: "matt-freeman", Genre: "punk", Worth: true, Together: true,
 		Axes: []solve.Verdict{
 			{Figure: audio.KeyMid, Gap: 0.2, Met: true, Within: true},
 		},
@@ -149,7 +151,7 @@ func (s *ReachPublicTestSuite) TestAnAxisAlreadyInsideNeedsNoReading() {
 // one.
 func (s *ReachPublicTestSuite) TestABlockNobodyHasSweptIsNamed() {
 	s.answers(sdk.Reaching{
-		Rig: "matt-freeman", Genre: "punk", Worth: true,
+		Rig: "matt-freeman", Genre: "punk", Worth: true, Together: true,
 		Unswept: []string{"HD2_NeverSwept"},
 		Axes: []solve.Verdict{
 			{Figure: audio.KeyMid, Met: true, Within: true},
@@ -204,6 +206,51 @@ func (s *ReachPublicTestSuite) TestTheAskCarriesEveryTreeTheCallerNamed() {
 	s.Require().Equal("punk", got.Genre)
 	s.Require().Equal("somewhere/music", got.Corpus)
 	s.Require().Equal("somewhere/sweeps", got.Sweeps)
+}
+
+// TestAxesReachableAloneAndNotTogetherIsItsOwnAnswer is the one per-axis could
+// never give.
+//
+// Every axis inside what its own controls can move, and no single set of
+// positions reaching them at once. That is the ordinary shape of the problem
+// and it is what somebody means by asking whether a rig can sound like
+// something.
+func (s *ReachPublicTestSuite) TestAxesReachableAloneAndNotTogetherIsItsOwnAnswer() {
+	s.answers(sdk.Reaching{
+		Rig: "matt-freeman", Genre: "punk", Worth: true,
+		Axes: []solve.Verdict{
+			{Figure: audio.KeyCentroid, Gap: 11, Shown: true, Within: true, Together: 4.2},
+			{Figure: audio.KeyLow, Gap: 2, Shown: true, Within: true, Together: 0.3},
+		},
+	})
+
+	w := buffer()
+	s.Require().NoError(Reach(context.Background(), w, s.opts()))
+
+	s.Require().Contains(w.String(), "no one set of positions reaches them together")
+	s.Require().Contains(w.String(), "centroid by 4.2")
+	s.Require().NotContains(w.String(), "low by",
+		"an axis the joint solve met is not named as missed")
+}
+
+// TestAChainWithNoMeasuredSlopeSaysSoRatherThanNamingNothing covers the
+// sentence with a hole in it.
+//
+// Not arrived and no axis over a tolerance means no axis could be solved for
+// at all, so the joint answer is absent rather than negative.
+func (s *ReachPublicTestSuite) TestAChainWithNoMeasuredSlopeSaysSoRatherThanNamingNothing() {
+	s.answers(sdk.Reaching{
+		Rig: "matt-freeman", Genre: "punk", Worth: true,
+		Axes: []solve.Verdict{
+			{Figure: audio.KeyCentroid, Gap: 11, Shown: true, Within: true},
+		},
+	})
+
+	w := buffer()
+	s.Require().NoError(Reach(context.Background(), w, s.opts()))
+
+	s.Require().Contains(w.String(), "no control in")
+	s.Require().NotContains(w.String(), "misses .")
 }
 
 func TestReachPublicTestSuite(

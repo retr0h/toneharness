@@ -26,8 +26,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
 
 // Reaches asks whether a chain could meet a target, without running.
@@ -85,7 +87,8 @@ func axes(
 	w io.Writer,
 	got sdk.Reaching,
 ) {
-	_, _ = fmt.Fprintf(w, "\n    %-12s %10s %10s\n", "AXIS", "OUT BY", "CAN MOVE")
+	_, _ = fmt.Fprintf(w, "\n    %-12s %9s %9s %9s\n",
+		"AXIS", "OUT BY", "ALONE", "TOGETHER")
 
 	for _, v := range got.Axes {
 		mark, say := "  ", "nothing rules it out"
@@ -99,8 +102,32 @@ func axes(
 			mark, say = "->", "OUT OF REACH"
 		}
 
-		_, _ = fmt.Fprintf(w, "    %s %-9s %10.1f %10.1f  %s\n",
-			mark, v.Figure, v.Gap, v.Swing, say)
+		if v.Together > 1 {
+			mark = "->"
+		}
+
+		_, _ = fmt.Fprintf(w, "    %s %-9s %9.1f %9s %9.1f  %s\n",
+			mark, v.Figure, v.Gap, onItsOwn(v), v.Together, say)
+	}
+}
+
+// onItsOwn is what the per-axis check made of this figure, in a word.
+//
+// A word rather than the swing itself, because the swing runs into the
+// thousands on a chain of sixteen dials and a number that large reads as
+// precision when it is a bound that flatters every control in the chain.
+func onItsOwn(
+	v solve.Verdict,
+) string {
+	switch {
+	case v.Met:
+		return "met"
+	case v.Shown:
+		return "reached"
+	case v.Within:
+		return "maybe"
+	default:
+		return "no"
 	}
 }
 
@@ -116,26 +143,57 @@ func verdict(
 		return
 	}
 
-	if got.Worth {
-		var shown int
-
-		for _, v := range got.Axes {
-			if v.Met || v.Shown {
-				shown++
-			}
-		}
-
+	if !got.Worth {
 		_, _ = fmt.Fprintf(w,
-			"\n  Worth running. %d of %d axes have a reading that already landed "+
-				"inside the target, and nothing rules the rest out.\n",
-			shown, len(got.Axes))
+			"\n  Not worth running. %s is %.1f tolerances out and every control "+
+				"in this chain, added up and pulling together, moves it %.1f.\n"+
+				"  The gear is wrong for this sound. Change the chain, not the knobs.\n",
+			got.Decides.Figure, got.Decides.Gap, got.Decides.Swing)
+
+		return
+	}
+
+	if got.Together {
+		_, _ = fmt.Fprintf(w,
+			"\n  Worth running. In the model one set of positions satisfies all "+
+				"%d axes at once.\n"+
+				"  In the model, and the model flatters: its slopes were read one "+
+				"control\n  at a time and hold only near where they were read. "+
+				"Every shipped rig\n  reads this way against every measured genre, "+
+				"and hardware does not agree.\n", len(got.Axes))
+
+		return
+	}
+
+	// The answer that per-axis could never give. Every axis reachable on its
+	// own and no single set of positions reaching them together is the ordinary
+	// case, and it is what somebody means by asking whether a rig can sound
+	// like something.
+	var missed []string
+
+	for _, v := range got.Axes {
+		if v.Together > 1 {
+			missed = append(missed,
+				fmt.Sprintf("%s by %.1f", v.Figure, v.Together))
+		}
+	}
+
+	// Nothing over a tolerance and still not arrived means no axis could be
+	// solved for at all: every slope against them is zero, so the joint answer
+	// is absent rather than negative. Naming no axis would print a sentence
+	// with a hole in it.
+	if len(missed) == 0 {
+		_, _ = fmt.Fprintf(w,
+			"\n  Worth running, though nothing here can say how it will go: no "+
+				"control in\n  this chain has a measured slope on any axis the "+
+				"target names.\n")
 
 		return
 	}
 
 	_, _ = fmt.Fprintf(w,
-		"\n  Not worth running. %s is %.1f tolerances out and every control in "+
-			"this chain, added up and pulling together, moves it %.1f.\n"+
-			"  The gear is wrong for this sound. Change the chain, not the knobs.\n",
-		got.Decides.Figure, got.Decides.Gap, got.Decides.Swing)
+		"\n  Every axis is reachable on its own and no one set of positions "+
+			"reaches them together.\n  Solved as a whole the model still misses "+
+			"%s.\n  Worth running, and expect the loop to trade one axis off "+
+			"against another.\n", strings.Join(missed, ", "))
 }

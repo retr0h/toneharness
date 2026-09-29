@@ -67,6 +67,10 @@ type Verdict struct {
 	Met    bool `json:"met"`
 	Shown  bool `json:"shown"`
 	Within bool `json:"within"`
+	// Together is what is left on this axis once every axis is solved at
+	// once, in the same tolerances. The number that answers the question
+	// somebody meant.
+	Together float64 `json:"together"`
 	// Straight is how straight the slopes behind Swing were, at their worst.
 	// Near zero, Swing is arithmetic on a number describing nothing.
 	Straight float64 `json:"straight"`
@@ -192,4 +196,102 @@ func worstFirst(
 
 		return int(a.Figure[0]) - int(b.Figure[0])
 	})
+}
+
+// Best is the nearest the model says a chain can get, with every axis solved
+// together.
+//
+// Reachable checks each axis on its own, and that turned out to rule nothing
+// out: across five shipped rigs and three measured genres every axis came back
+// reachable, every time. It is not a surprising result once stated. A
+// cabinet's Distance can put the centroid where a target wants it, and can put
+// the low band where the target wants it, and those are two different
+// positions of the same dial. Nine axes each reachable alone says almost
+// nothing about nine reachable at once, which is the question somebody is
+// actually asking.
+//
+// So this solves them together, which is what the loop does, using the slopes
+// already committed instead of reading fresh ones off a device. It is the same
+// arithmetic Toward performs on hardware: least squares over every constrained
+// axis at once, clamped to what each control actually has.
+//
+// Iterated because one pass clamps. A solve wanting more of a control than it
+// has takes what there is, and the axes that control was carrying are then
+// short by the remainder, which the next pass spends other controls on. The
+// slopes are fixed here, so this converges rather than wandering: it is the
+// same projection repeated, and it stops as soon as a pass stops improving.
+//
+// What it is not is a promise. The slopes are local and were read one control
+// at a time in whatever chain the sweep ran, so a residual this says is
+// reachable may not be. The direction of the error is the useful one: a
+// residual the model cannot close with every control pulling together is one
+// the hardware will not close either.
+func Best(
+	knobs []Knob,
+	aims map[audio.Figure]Aim,
+	from map[audio.Figure]float64,
+	passes int,
+) (Result, error) {
+	at := make(map[audio.Figure]float64, len(from))
+	maps.Copy(at, from)
+
+	_, out := wanted(aims, at)
+
+	for range passes {
+		step, err := Toward(knobs, aims, at)
+		if err != nil {
+			return out, err
+		}
+
+		if len(step.Steps) == 0 {
+			break
+		}
+
+		if worst(step.Residual) >= worst(out.Residual) {
+			// Clamping can make a pass worse than the one before it, and the
+			// answer wanted here is the nearest the chain got rather than
+			// wherever the last pass landed.
+			break
+		}
+
+		out = step
+
+		// Back into figures, because a residual is in tolerances and the next
+		// pass solves from a reading. Into a fresh map rather than over
+		// step.Residual, which is the Result's own: aliasing it overwrote the
+		// answer with the readings it was computed from, and a centroid of 141
+		// hertz was reported as 141 tolerances out.
+		//
+		// Signed the way the gap was, so an axis overshot stays overshot.
+		next := make(map[audio.Figure]float64, len(at))
+		maps.Copy(next, at)
+
+		for key, aim := range aims {
+			if aim.Tol <= 0 {
+				continue
+			}
+
+			if aim.Want < at[key] {
+				next[key] = aim.Want + step.Residual[key]*aim.Tol
+			} else {
+				next[key] = aim.Want - step.Residual[key]*aim.Tol
+			}
+		}
+
+		at = next
+
+		for i := range knobs {
+			for _, s := range step.Steps {
+				if knobs[i].Where() == s.Where() {
+					knobs[i].At = s.To
+				}
+			}
+		}
+
+		if step.Arrived {
+			break
+		}
+	}
+
+	return out, nil
 }
