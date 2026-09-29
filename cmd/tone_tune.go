@@ -119,7 +119,7 @@ func init() {
 		"a ToneSpec to append this round to as a correction; "+
 			"without it nothing records what was asked for")
 	f.StringVar(&toneTuneOut, "out", "",
-		"where the tuned chain goes, as a rig; without it nothing is kept")
+		"where the tuned chain goes, as a plan; without it nothing is kept")
 	f.StringVar(&toneTuneHardware, "hardware", "",
 		"which attached audio device to push the signal through")
 	f.StringVar(&toneTuneClient.catalog, "catalog", "",

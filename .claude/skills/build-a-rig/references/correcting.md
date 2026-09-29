@@ -202,9 +202,25 @@ That holds the catalog's order to the hardware. An index it could not test is
 untested rather than wrong, which matters: a switch correctly refuses a number
 on a dial and that says nothing about naming.
 
-## Then export what worked
+## Then keep what worked
 
-Read the device back as a rig and keep it. That is the artifact worth having,
-because it is deterministic and somebody else can compile it.
+`tone tune --out` writes a **plan**, read back off the device rather than
+written from what the solver believes it set. Those are two different claims
+and only one is checkable: a move the pedal refused, clamped or rounded is a
+move the solver still has in its own record.
+
+A plan rather than a rig, and the choice is the point. A rig's `settings` are
+seven words shared across every make of amplifier, so exporting one would keep
+the chain and throw away the tuning. Every position this loop solved for is a
+device parameter at an exact value, and the plan is the only layer with
+anywhere to put it. `presets compile --plan` puts it back.
+
+The rig is still worth having, for the other reason. It is portable, so
+somebody else can compile it on different hardware. `presets show` prints one,
+and `slots export` writes one.
+
+Nothing is written to a slot. A slot is flash and a burst of writes has
+corrupted a setlist, so tuning happens in the edit buffer and the answer leaves
+as a file.
 
 

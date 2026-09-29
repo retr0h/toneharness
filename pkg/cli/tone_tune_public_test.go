@@ -36,6 +36,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
 
@@ -736,4 +737,58 @@ func (s *TunePublicTestSuite) TestAnAskItCannotReadIsReported() {
 	opts.Ask = at
 
 	s.Require().Error(Tune(context.Background(), buffer(), opts))
+}
+
+// TestKeepWritesAPlanRatherThanARig covers which artifact --out produces.
+//
+// Both are on the reading, so writing either is one line, and the choice is
+// the point. A rig's settings are seven words shared across every make of
+// amplifier; the positions this loop just solved for are device parameters at
+// exact values, and only the plan has anywhere to put them. Writing the rig
+// would export the chain and throw away the tuning, which is what the first
+// version of this did.
+func (s *TunePublicTestSuite) TestKeepWritesAPlanRatherThanARig() {
+	s.pedal.EXPECT().Current(gomock.Any(), sdk.FormatRig).Return(sdk.Reading{
+		Name: "matt-freeman",
+		Rig:  rig.Spec{ID: "matt-freeman"},
+		Plan: plan.Plan{Blocks: []plan.Block{{
+			Model:   catalog.ModelID("HD2_AmpSVBeastBrt"),
+			Pos:     0,
+			Enabled: true,
+			Params:  plan.Params{"Master": catalog.Float(0.62)},
+		}}},
+	}, nil)
+
+	opts := s.opts()
+	opts.Out = filepath.Join(s.T().TempDir(), "tuned.yaml")
+
+	var buf bytes.Buffer
+
+	s.Require().NoError(keepTuned(context.Background(), &buf, opts))
+
+	f, err := os.Open(opts.Out)
+	s.Require().NoError(err)
+
+	defer func() { _ = f.Close() }()
+
+	got, err := plan.Load(f)
+	s.Require().NoError(err)
+
+	s.Require().Len(got.Blocks, 1)
+	at, ok := got.Blocks[0].Params["Master"].Float()
+	s.Require().True(ok)
+	s.Require().InDelta(0.62, at, 0.0001,
+		"the knob the solve landed on has to survive being written")
+}
+
+// TestKeepSaysWhichArtifactItWouldHaveWritten covers the empty --out.
+//
+// The message named a rig while the file was a plan, which is the one place
+// somebody decides what they are about to get.
+func (s *TunePublicTestSuite) TestKeepSaysWhichArtifactItWouldHaveWritten() {
+	var buf bytes.Buffer
+
+	s.Require().NoError(keepTuned(context.Background(), &buf, s.opts()))
+
+	s.Require().Contains(buf.String(), "--out writes it as a plan")
 }

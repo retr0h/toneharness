@@ -233,7 +233,7 @@ func keepTuned(
 	if opts.Out == "" {
 		_, _ = fmt.Fprintf(w,
 			"\n  Nothing kept. The pedal holds this until the next preset is "+
-				"selected; --out writes it as a rig.\n")
+				"selected; --out writes it as a plan.\n")
 
 		return nil
 	}

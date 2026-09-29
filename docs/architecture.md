@@ -147,7 +147,7 @@ say        "darker", "needs more bite" — a nudge, which is a direction and a s
 solve      tone tune — sweeps the dials, solves for the moves, measures again
    │
    ▼
-export     a rig, so the answer is something somebody else can compile
+keep       a plan, which is the only layer with room for a knob position
 ```
 
 A nudge is not a target and the difference matters:
