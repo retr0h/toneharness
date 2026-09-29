@@ -29,6 +29,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -283,17 +284,54 @@ func TestReachPublicTestSuite(
 	suite.Run(t, new(ReachPublicTestSuite))
 }
 
-// TestTheTreesDefaultToTheCommittedOnes covers naming neither.
+// TestTheSweepsDefaultToTheCommittedTree covers naming neither tree.
 //
 // An agent over MCP names a rig and a genre and nothing else, so the defaults
-// have to answer. They are repo-relative, which is what this pins: run from
-// anywhere else and they are not there, and the answer is an error naming the
-// path rather than a silent empty one.
-func (s *ReachPublicTestSuite) TestTheTreesDefaultToTheCommittedOnes() {
+// answer. The target comes from figures embedded in the binary; the readings
+// do not, because they are a tree on disk and the default is repo-relative.
+// Run from anywhere else they are not there, and the answer is an error rather
+// than a table of zeroes.
+func (s *ReachPublicTestSuite) TestTheSweepsDefaultToTheCommittedTree() {
 	_, err := sdk.New().Reach(context.Background(), sdk.ReachAsk{
 		RigID: "matt-freeman", Genre: "punk",
 	})
 
-	s.Require().ErrorContains(err, filepath.Join("resources", "music", "bass"),
-		"the default corpus is named, relative to where it ran")
+	s.Require().ErrorIs(err, sdk.ErrNoSweeps,
+		"the target resolved from the shipped figures and the readings did not")
+}
+
+// TestItReadsTheShippedFiguresWhenNobodyNamesACorpus is what makes it cheap
+// enough to ask first.
+//
+// Measuring the corpus reads fifteen bass stems and takes 47 seconds, against
+// milliseconds for everything else here. `just generate` already writes those
+// figures into the binary, and a command whose whole point is costing less
+// than the run it precedes cannot cost most of a minute.
+func (s *ReachPublicTestSuite) TestItReadsTheShippedFiguresWhenNobodyNamesACorpus() {
+	_, sweeps := s.at()
+
+	started := time.Now()
+
+	got, err := sdk.New().Reach(context.Background(), sdk.ReachAsk{
+		RigID: "matt-freeman", Genre: "punk", Sweeps: sweeps,
+	})
+
+	s.Require().NoError(err)
+	s.Require().NotEmpty(got.Axes)
+	s.Require().Less(time.Since(started), 10*time.Second,
+		"no audio was decoded, so this is arithmetic over committed readings")
+}
+
+// TestNamingACorpusMeasuresItRatherThanReadingTheShippedFigures covers the
+// other half.
+//
+// A caller who named a tree means that tree. Answering from what was committed
+// would ignore what they asked, and the figures would be of other records.
+func (s *ReachPublicTestSuite) TestNamingACorpusMeasuresItRatherThanReadingTheShippedFigures() {
+	ask := s.ask()
+	ask.Corpus = filepath.Join(s.T().TempDir(), "nothing-here")
+
+	_, err := sdk.New().Reach(context.Background(), ask)
+	s.Require().Error(err,
+		"the named tree is read even though punk is shipped with the binary")
 }

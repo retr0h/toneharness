@@ -176,6 +176,21 @@ func (c *Client) targetFor(
 		return audio.Across{}, ErrNothingToAimAt
 	}
 
+	// The embedded figures first, which `just generate` writes from the same
+	// corpus. Measuring it again reads fifteen bass stems and takes 47
+	// seconds, against milliseconds for everything else this does, and a
+	// command whose whole point is being cheap enough to ask first cannot
+	// cost most of a minute.
+	//
+	// Only where nobody named a corpus. A caller who did means that tree
+	// rather than whatever was committed, and answering from the committed
+	// one would ignore what they asked.
+	if in.Corpus == "" {
+		if got, ok := audio.ShippedGenre(in.Genre); ok {
+			return got.Across, nil
+		}
+	}
+
 	found, err := c.MeasuredGenres(ctx, in.corpus())
 	if err != nil {
 		// Named, because the tree is a default when nobody passes one and

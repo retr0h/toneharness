@@ -21,8 +21,6 @@
 package cmd
 
 import (
-	"path/filepath"
-
 	"github.com/spf13/cobra"
 
 	"github.com/retr0h/toneharness/pkg/cli"
@@ -89,12 +87,11 @@ func init() {
 	f.StringVar(&toneReachID, "id", "", "the curated rig to ask about")
 	f.StringVar(&toneReachGenre, "genre", "",
 		"what to aim it at, by the name the corpus tags records with")
-	f.StringVar(&toneReachCorpus, "corpus",
-		filepath.Join("resources", "music", "bass"),
-		"the recordings the target is measured from")
-	f.StringVar(&toneReachSweeps, "sweeps",
-		filepath.Join("resources", "sweeps", "hx-stomp"),
-		"the readings of this chain's blocks")
+	f.StringVar(&toneReachCorpus, "corpus", "",
+		"recordings to measure the target from, instead of the figures shipped "+
+			"with this binary; measuring is most of a minute")
+	f.StringVar(&toneReachSweeps, "sweeps", "",
+		"the readings of this chain's blocks; resources/sweeps/hx-stomp without it")
 	f.StringVar(&toneReachClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&toneReachClient.device, "device", "", deviceUsage)
