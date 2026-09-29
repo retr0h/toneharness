@@ -41,11 +41,11 @@ words:
           earns the word is the measurement below.
       - kind: audio
         measured: { centroid: 259 }
-        against: { centroid: 131 }
+        against: { centroid: 134 }
         note: >-
           his centroid across Continuum, Barbary Coast, Teen Town and Three
-          Views of a Secret, against a middle of 131Hz across the fifteen
-          players measured, clear by 33Hz. The widest centroid margin in the
+          Views of a Secret, against a middle of 134Hz across the sixteen
+          players measured, clear by 36Hz. The widest centroid margin in the
           corpus, and the only word here that has survived every correction to
           it.
         caveat: >-
@@ -58,7 +58,7 @@ words:
         against: { mid: 0.05 }
         note: >-
           39% of his energy sits in the mid band against a middle of 5% across
-          the fifteen players measured, clear by 6% and the widest gap any
+          the sixteen players measured, clear by 8% and the widest gap any
           player has on any axis here. Nobody wrote this word down before the
           records were measured.
         caveat: >-

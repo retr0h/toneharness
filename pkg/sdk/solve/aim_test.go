@@ -60,7 +60,7 @@ func (s *AimTestSuite) punk() audio.Across {
 //
 // Worth stating plainly because it reads as a contradiction. `measure genres`
 // reports punk earning no term, which says it is not distinctive against the
-// players who avoid it. It does not say punk has no position: twelve records
+// players who avoid it. It does not say punk has no position: fifteen records
 // give a middle and a spread on every axis, and that is what a solver needs.
 func (s *AimTestSuite) TestPunkIsATargetEvenThoughItEarnsNoWord() {
 	got := Aims(s.punk(), nil)
@@ -69,7 +69,7 @@ func (s *AimTestSuite) TestPunkIsATargetEvenThoughItEarnsNoWord() {
 
 	centre, ok := got[audio.KeyCentroid]
 	s.Require().True(ok, "punk has a centre of gravity")
-	s.Require().InDelta(133, centre.Want, 1)
+	s.Require().InDelta(144, centre.Want, 1)
 	s.Require().Positive(centre.Tol, "and a spread to allow for")
 
 	// A fraction, not a percentage: the CLI prints "97.4% low" and the figure

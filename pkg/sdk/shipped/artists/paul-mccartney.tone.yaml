@@ -36,11 +36,11 @@ words:
           below and that is the whole of its value.
       - kind: audio
         measured: { mid: 0.15 }
-        against: { mid: 0.10 }
+        against: { mid: 0.05 }
         note: >-
           15% of his energy sits in the mid band across Silly Love Songs, With
           a Little Luck and Goodnight Tonight, against a middle of 5% across
-          the fifteen players measured. Above the middle, not clear of it, so
+          the sixteen players measured. Above the middle, not clear of it, so
           the word is not earned and the records point the way the citations
           do.
         caveat: >-

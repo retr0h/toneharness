@@ -29,10 +29,10 @@ words:
         note: '"keeping the volume turned all the way up and the tone all the way down"'
       - kind: audio
         measured: { centroid: 96 }
-        against: { centroid: 172 }
+        against: { centroid: 134 }
         note: >-
-          his centroid sits at 96Hz, the darkest of the fifteen players
-          measured, against a middle of 131Hz. It no longer earns the word:
+          his centroid sits at 96Hz, the darkest of the sixteen players
+          measured, against a middle of 134Hz. It no longer earns the word:
           against eight others he was clear by 3Hz, and six more players
           between him and the middle closed that. The word is kept on the
           citation above.
@@ -83,7 +83,7 @@ played:
         caveat: >-
           two instruments, and he does not say which track took which. The
           tuning is the part this rig cannot carry: dropping the bottom on
-          heavy flats is most of why he reads 96Hz, the darkest of the fifteen
+          heavy flats is most of why he reads 96Hz, the darkest of the sixteen
           players, and no field here holds a tuning.
       - kind: user
         url: https://www.talkbass.com/threads/dangelo-voodoo.146620/

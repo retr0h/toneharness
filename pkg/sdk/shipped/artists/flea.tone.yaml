@@ -43,13 +43,13 @@ words:
           about where the record lands.
       - kind: audio
         measured: { centroid: 134 }
-        against: { centroid: 172 }
+        against: { centroid: 134 }
         note: >-
           his three records from this rig's own years measure a centroid of
-          134Hz against a middle of 131Hz across the fifteen players measured.
+          134Hz against a middle of 134Hz across the sixteen players measured.
           That is the middle of the corpus rather than the dark end of it, and
           not clear of anything, so the word is not earned. It read third
-          darkest of nine before six more players were measured. Reproduce with `go run main.go measure
+          darkest of nine before seven more players were measured. Reproduce with `go run main.go measure
           --corpus resources/music/bass`.
         caveat: >-
           the word is kept because a citation outranks a measurement here, and

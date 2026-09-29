@@ -22,7 +22,7 @@ come out generic.
 | Which way a knob moves    | swept on the device, in `resources/sweeps/`  | eleven blocks measured and shipped          |
 | What values to set        | catalog defaults, corpus medians, intent     | six axes of ten                             |
 | What a genre sounds like  | displacement over `resources/music/`         | 3 tagged, 2 earning a word                  |
-| What a player sounds like | measured over `resources/music/bass/`        | 15 players, 49 records, 4 earning a word    |
+| What a player sounds like | measured over `resources/music/bass/`        | 16 players, 52 records, 6 earning a word    |
 
 **Keep this table honest.** A pull request that finishes something marked not
 built or partly built updates the line in the same pull request and says so in

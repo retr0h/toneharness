@@ -478,12 +478,16 @@ like:
 
 	said := strings.Join(sayings(notes.Unmet()), " ")
 
-	// Punk is measured and clears the threshold, and none of the figures set it
-	// apart from the players who play none of it. So the note says that rather
-	// than that nobody has tagged anything, which is what it used to say of
-	// every genre.
+	// Punk is measured and clears the threshold, so the note says what it
+	// measured as rather than that nobody has tagged anything, which is what it
+	// used to say of every genre.
+	//
+	// It names a word now. Punk set none of the figures apart from the players
+	// who avoid it until Alkaline Trio's records joined it, and then it earned
+	// `clean`. What is asserted is that the note reports the measurement, not
+	// which word came out of it.
 	s.Require().Contains(said, "records from")
-	s.Require().Contains(said, "nothing to aim at")
+	s.Require().Contains(said, "measured across")
 	s.Require().Contains(said, "Mike Dirnt")
 }
 

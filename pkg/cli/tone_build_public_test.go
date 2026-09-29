@@ -129,8 +129,13 @@ gear:
 
 	// What punk measured as, rather than the blanket "nobody has tagged
 	// anything" this said of every genre before any were measured.
+	//
+	// It says a word now rather than "nothing to aim at": punk earned `clean`
+	// once Alkaline Trio's records joined it, which is what a genre gaining a
+	// player does. The assertion is that the answer names what was measured,
+	// not which word it happened to be.
 	s.Require().Contains(buf.String(), "records from")
-	s.Require().Contains(buf.String(), "nothing to aim at")
+	s.Require().Contains(buf.String(), "measured across")
 }
 
 // TestARequestItCannotAnswerFails covers an ask with nothing to build from.
