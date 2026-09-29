@@ -24,6 +24,52 @@ in nine dimensions may be unreachable with the controls a device has; a target
 pinning three axes and shrugging at six usually is not, and the freedom goes into
 satisfying the three.
 
+## Ask before you run
+
+```bash
+mise exec -- go run main.go tone reach --id matt-freeman --genre punk
+```
+
+A second, no device, no signal. It reads the committed sweeps and says, per
+axis, how far the chain sits from the target and the most its controls could
+move it.
+
+```
+  matt-freeman against punk, from 193 readings already taken
+
+    AXIS             OUT BY   CAN MOVE
+    ok centroid        11.0     1324.2  a reading landed there
+    ok high             6.7     1611.1  a reading landed there
+    ok low              2.7       58.9  a reading landed there
+```
+
+The two columns are different kinds of claim and the difference matters.
+
+**"a reading landed there" is measured.** Some position of some control actually
+produced that figure, so a setting exists and the loop's job is to find it.
+Nothing was modelled to say it.
+
+**CAN MOVE is a bound that flatters the controls**, on purpose. It sums every
+control as though they all pulled the same way and assumes each slope holds
+across a range it was only read locally. That is why it refuses well and
+promises badly: an axis marked OUT OF REACH is out of reach, and one inside
+means only that nothing rules it out.
+
+So the answer is never "this will work". It is "worth running" or:
+
+```
+  Not worth running. high is 400.0 tolerances out and every control in this
+  chain, added up and pulling together, moves it 5.0.
+  The gear is wrong for this sound. Change the chain, not the knobs.
+```
+
+Worth knowing about the current data: that refusal has never fired on any
+shipped rig against any measured genre. Per-axis reachability is not what makes
+a target hard. Hitting nine axes at once is, and only the solve finds that out.
+
+The answer is only as good as what has been swept. A block with no readings is
+named, and whatever it could have moved is missing from every number.
+
 ## How the solve actually works
 
 One amplifier with nine controls at five positions each is 1,953,125

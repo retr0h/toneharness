@@ -123,6 +123,31 @@ func (h *handlers) toneBuild(
 	return said("%d blocks, %d notes", len(got.Rig.Chain), len(got.Notes)), got, nil
 }
 
+// toneReach answers whether a chain could meet a target, from readings
+// already taken.
+//
+// The question worth asking before tone tune, which has no tool of its own
+// because it holds the pedal for half an hour. This holds nothing and reads
+// files.
+func (h *handlers) toneReach(
+	ctx context.Context,
+	_ *gomcp.CallToolRequest,
+	in sdk.ReachAsk,
+) (*gomcp.CallToolResult, sdk.Reaching, error) {
+	got, err := h.client.Reach(ctx, in)
+	if err != nil {
+		return nil, got, remedy(err)
+	}
+
+	if !got.Worth {
+		return said("not worth running: %s is %.1f tolerances out against %.1f of movement",
+			got.Decides.Figure, got.Decides.Gap, got.Decides.Swing), got, nil
+	}
+
+	return said("worth running, %d axes, the worst %.1f tolerances out",
+		len(got.Axes), got.Decides.Gap), got, nil
+}
+
 func (h *handlers) presetsMake(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,

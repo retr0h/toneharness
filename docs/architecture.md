@@ -144,6 +144,9 @@ listen     a person. Nothing above this line can hear
 say        "darker", "needs more bite" — a nudge, which is a direction and a size
    │
    ▼
+ask        tone reach — can this chain get there at all? a second, no device
+   │
+   ▼
 solve      tone tune — compares the lists, solves the dials, measures again
    │
    ▼
@@ -154,6 +157,12 @@ A nudge is not a target and the difference matters:
 [correcting.md](../.claude/skills/build-a-rig/references/correcting.md) is the
 whole of it, including how the solve works, what a tolerance is, what the noise
 floor is for, and what the loop does when the chain cannot get there.
+
+The `reach` step is there because the expensive step can fail. A tuning run is
+five minutes of real-time audio with the pedal held throughout, and it can spend
+all of it to report that the chain will not get there. Every number that report
+rests on is already committed under `resources/sweeps/`, so the same question is
+answered from those first.
 
 Two hardware facts shape the loop. A slot is flash and a burst of writes has
 corrupted a setlist, so tuning happens in the edit buffer and only the final
