@@ -50,6 +50,9 @@ type SlopesOptions struct {
 	// Nudge is how far a control moves to read its slope, as a fraction of
 	// its range.
 	Nudge float64
+	// Headroom is how far the chain's own output is turned down before
+	// anything is measured, in decibels, and wants to be negative.
+	Headroom float64
 	// Figure is the axis to report. Empty reports the ones a target uses
 	// most.
 	Figure string
@@ -74,7 +77,9 @@ func Slopes(
 	w io.Writer,
 	opts SlopesOptions,
 ) error {
-	made, preset, err := built(ctx, TuneOptions{Client: opts.Client, ID: opts.ID})
+	made, preset, err := built(ctx, TuneOptions{
+		Client: opts.Client, ID: opts.ID, Headroom: opts.Headroom,
+	})
 	if err != nil {
 		return err
 	}

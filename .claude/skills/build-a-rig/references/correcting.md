@@ -89,49 +89,59 @@ So the committed sweeps say **which controls are worth putting in a matrix**,
 and nothing more. `measure slopes --id <rig>` prints live beside committed for
 any chain, which is how that was found.
 
-### The loop oscillates, and every reading of an amplifier was of that
+### The loop oscillates, and the fix is the output block
 
 The cable rig sends the pedal's output back into its own input, and the output
 destination is `Multi (1/4", XLR, Digital, USB 1/2)`, which drives the
 quarter-inch jack that lead comes from. With enough gain around that loop it
 squeals, and an amplifier is where the gain is.
 
-Measured on an HX Stomp. Matt Freeman's chain, a compressor into an Ampeg SVT
-into an 8x10, with nothing changed but the amplifier's ChVol and Master:
+**`--headroom` turns the chain's own output down before anything is measured,
+and it defaults to -30dB.** That is `dsp0.outputA.gain`, which sits after every
+block, so it lowers what reaches the socket without touching the tone. Turning
+the amplifier down would work too and would be wrong: ChVol and Master are the
+sound the rig describes, and the solver would then solve for a different one.
 
-| ChVol/Master | below 250Hz | above 2kHz | centroid | level     |
-| ------------ | ----------: | ---------: | -------: | --------: |
-| 0.2          |       98.4% |       0.0% |    112Hz | -53.4dB   |
-| **0.5**      |   **99.8%** |   **0.0%** | **96Hz** | **-26.4dB** |
-| 0.7          |       31.3% |      68.2% |  1,814Hz | -25.8dB   |
-| 0.8 / 1.0    |       15.4% |      84.3% |  2,197Hz | -23.6dB   |
+Measured on matt-freeman, a compressor into an Ampeg SVT into an 8x10, sweeping
+the headroom and changing nothing else:
 
-It starts between 0.5 and 0.7. Below that the chain reads like a bass rig and
-costs three decibels of level to do it.
+| headroom | below 250Hz | above 2kHz | centroid | level     |
+| -------- | ----------: | ---------: | -------: | --------: |
+| 0        |       15.4% |      84.3% |  2,197Hz | -23.6dB   |
+| -15      |       25.3% |      73.9% |  1,941Hz | -39.2dB   |
+| -20      |       58.7% |      39.1% |  1,085Hz | -47.9dB   |
+| **-25**  |   **96.1%** |   **0.1%** | **126Hz** | -54.9dB  |
+| -30      |       96.0% |       0.1% |    126Hz | -60.0dB   |
 
-Push digital silence through at full gain and a 2.6kHz tone comes back at
--19.3dB. That is self-oscillation with nothing put in.
+It stops running away between -20 and -25, and the default is one step past
+that. It costs level, which is the trade: a squeal is loud.
 
-**It is not a level problem and silence does not catch it.** The squeal sat at
--23.6dB against -26.4dB for the clean reading, so no level guard separates
-them. And silence comes back clean at 0.7, because an amplifier's gain rises
-with what is put into it, so the loop only runs away once there is signal.
+What that is worth, same rig against punk:
 
-**What catches it is an invariant.** A cabinet is a loudspeaker and a
-loudspeaker is a low pass: a chain ending in one can remove energy above 2kHz
-and cannot add it. The reference has 0.01% up there. Anything giving back more
-than it was handed is not the chain being read.
+```
+             squealing     with headroom
+  high      0.8433 (390 out)   0.00064 (0.3, met)
+  centroid   2,197 (52.9 out)      126 (0.5, met)
+  low       0.1543 (9.4 out)      0.96 (0.1, met)
+```
 
-`tone tune` and `tone reach` refuse on that rather than reporting it, because
-every figure they produce rests on the reading and tune turns knobs to match
-it. `measure chain` says it and prints the numbers anyway, which is what a
-diagnostic is for.
+and the loop converges to 2.4 tolerances out where it stopped at 46.4 before.
 
-**So take this section's table as a disagreement rather than a verdict, and
-treat any committed reading of an amplifier the same way.** That is 111 of the
-661 fingerprints: across the whole library every family reads the empty loop's
-own 0.005% in the high band except the full amplifiers, which read a median of
-46.4% and sit 12dB louder. The preamps of the same circuits read 0.047%.
+**The guard stays, because headroom is a setting and settings get changed.** A
+cabinet is a loudspeaker and a loudspeaker is a low pass: a chain ending in one
+can remove energy above 2kHz and cannot add it. `tone tune` and `tone reach`
+refuse when it does, `measure chain` says so and prints the numbers anyway.
+
+Neither obvious test works in its place. Level does not separate them, at
+-23.6dB squealing against -26.4dB clean. Nor does pushing silence through,
+which catches the chain at full gain and not at -15, because an amplifier's
+gain rises with what is put into it.
+
+**Every committed reading of an amplifier predates this.** That is 111 of the
+661 fingerprints: across the library every family reads the empty loop's own
+0.005% in the high band except the full amplifiers, at a median of 46.4% and
+12dB louder. The preamps of the same circuits read 0.047%. They want taking
+again.
 
 ### Read what is loaded, without loading anything
 

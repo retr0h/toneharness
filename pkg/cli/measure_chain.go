@@ -103,7 +103,8 @@ func Chain(
 		now[audio.KeyLow]*perCent, now[audio.KeyMid]*perCent,
 		now[audio.KeyHigh]*perCent, now[audio.KeyCentroid], settled)
 
-	if say, bad := Squealing(now, figuresOfDry(signal), opts.EndsInACab); bad {
+	if say, bad := Squealing(
+		now, figuresOfDry(signal), inCorpusScale(floor), opts.EndsInACab); bad {
 		_, _ = fmt.Fprintf(w, "\n    [!] %s\n", say)
 	}
 
@@ -156,8 +157,23 @@ func figuresOfDry(
 //
 // Only for a chain that ends in a cabinet. Anything else may legitimately be
 // brighter than what it was given, and a drive certainly is.
+// apart is how much more of the high band a chain may give back than it was
+// handed before the reading is of the loop rather than of the chain.
+//
+// A separator between two measured populations rather than a physical limit.
+// Sweeping the headroom on matt-freeman, the readings are 73.9% above 2kHz at
+// -15dB, 39.1% at -20, and 0.1% at -25 and everywhere below. Clean readings
+// sit between 0.0% and 0.1% and squealing ones between 39% and 84%, which is a
+// factor of four hundred with nothing in between.
+//
+// Five points: fifty times above what a clean reading carries and eight times
+// below the quietest squeal. The invariant is exact and the measurement is
+// not, and this is the width of that gap rather than a claim about
+// loudspeakers.
+const apart = 0.05
+
 func Squealing(
-	now, dry map[audio.Figure]float64,
+	now, dry, wander map[audio.Figure]float64,
 	endsInACab bool,
 ) (string, bool) {
 	if !endsInACab {
@@ -167,7 +183,11 @@ func Squealing(
 	was, in := dry[audio.KeyHigh]
 	is, out := now[audio.KeyHigh]
 
-	if !in || !out || is <= was {
+	// Separated by a margin, because the comparison is between two
+	// measurements rather than two numbers and a quiet reading carries the
+	// converter's own broadband floor. A chain with 25dB of headroom reads
+	// 0.1% above 2kHz against the reference's 0.01%, at a level of -55dB.
+	if !in || !out || is <= was+apart+wander[audio.KeyHigh] {
 		return "", false
 	}
 

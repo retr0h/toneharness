@@ -34,6 +34,7 @@ var (
 	measureSlopesFigure   string
 	measureSlopesSeconds  float64
 	measureSlopesNudge    float64
+	measureSlopesHeadroom float64
 	measureSlopesClient   clientFlags
 )
 
@@ -72,6 +73,7 @@ dials is about a minute and a half, and it holds the pedal throughout.`,
 			Hardware: measureSlopesHardware,
 			Figure:   measureSlopesFigure,
 			Seconds:  measureSlopesSeconds,
+			Headroom: measureSlopesHeadroom,
 			Nudge:    measureSlopesNudge,
 		})
 	},
@@ -94,6 +96,12 @@ func init() {
 		"how far a control is moved to read its slope, as a fraction of its range")
 	f.StringVar(&measureSlopesHardware, "hardware", "",
 		"which attached audio device to push the signal through")
+	f.Float64Var(
+		&measureSlopesHeadroom,
+		"headroom",
+		measuringHeadroom,
+		"decibels to turn the chain's own output down by before measuring; the lead from the pedal back to itself oscillates without it",
+	)
 	f.StringVar(&measureSlopesClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&measureSlopesClient.device, "device", "", deviceUsage)

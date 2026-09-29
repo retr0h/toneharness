@@ -38,6 +38,7 @@ var (
 	toneTuneOut      string
 	toneTuneAsk      string
 	toneTuneHardware string
+	toneTuneHeadroom float64
 	toneTuneClient   clientFlags
 )
 
@@ -102,6 +103,7 @@ wrong for the sound is a real answer to somebody who owns that gear.`,
 			Passes:   toneTunePasses,
 			Tries:    toneTuneTries,
 			Takes:    toneTuneTakes,
+			Headroom: toneTuneHeadroom,
 			Nudge:    toneTuneNudge,
 			Out:      toneTuneOut,
 			Ask:      toneTuneAsk,
@@ -139,6 +141,12 @@ func init() {
 		"where the tuned chain goes, as a plan; without it nothing is kept")
 	f.StringVar(&toneTuneHardware, "hardware", "",
 		"which attached audio device to push the signal through")
+	f.Float64Var(
+		&toneTuneHeadroom,
+		"headroom",
+		measuringHeadroom,
+		"decibels to turn the chain's own output down by before measuring; the lead from the pedal back to itself oscillates without it",
+	)
 	f.StringVar(&toneTuneClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&toneTuneClient.device, "device", "", deviceUsage)

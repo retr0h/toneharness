@@ -69,6 +69,11 @@ type (
 		Choose(ctx context.Context, at sdk.Address, value int) error
 	}
 
+	// ReadsFiles says what a preset file holds, without a device.
+	ReadsFiles interface {
+		PresetFile(ctx context.Context, path string) (sdk.Reading, error)
+	}
+
 	// Reads says what the device is playing.
 	Reads interface {
 		Current(ctx context.Context, as sdk.Format) (sdk.Reading, error)

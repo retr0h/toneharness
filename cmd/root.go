@@ -109,3 +109,17 @@ func Execute() {
 		os.Exit(1)
 	}
 }
+
+// measuringHeadroom is how far the chain's own output is turned down before a
+// reading, in decibels.
+//
+// The measuring rig is a lead from the pedal's output back into its own input
+// and the chain's output destination drives that socket, so the chain feeds
+// itself and enough gain around the loop oscillates. This is not the
+// amplifier's output, which is the tone.
+//
+// Thirty, measured rather than chosen. On matt-freeman the chain reads 73.9%
+// of its energy above 2kHz at -15, 39.1% at -20 and 0.1% at -25, so the loop
+// stops running away between -20 and -25 and this is one step past it. It
+// costs level: the same chain reads -60dB here against -23.6dB squealing.
+const measuringHeadroom = -30

@@ -35,6 +35,7 @@ var (
 	toneReachSeconds  float64
 	toneReachTakes    int
 	toneReachNudge    float64
+	toneReachHeadroom float64
 	toneReachClient   clientFlags
 )
 
@@ -92,6 +93,7 @@ and the second is the one that saves the afternoon.`,
 			Hardware: toneReachHardware,
 			Seconds:  toneReachSeconds,
 			Takes:    toneReachTakes,
+			Headroom: toneReachHeadroom,
 			Nudge:    toneReachNudge,
 		})
 	},
@@ -119,6 +121,12 @@ func init() {
 		"which attached audio device to push the signal through")
 	f.StringVar(&toneReachClient.rigs, "rigs", "",
 		"a directory of rigs to use instead of yours, beside the built-in ones")
+	f.Float64Var(
+		&toneReachHeadroom,
+		"headroom",
+		measuringHeadroom,
+		"decibels to turn the chain's own output down by before measuring; the lead from the pedal back to itself oscillates without it",
+	)
 	f.StringVar(&toneReachClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&toneReachClient.device, "device", "", deviceUsage)

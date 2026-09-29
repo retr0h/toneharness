@@ -170,6 +170,45 @@ func (mr *MockChoosesMockRecorder) Choose(ctx, at, value any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Choose", reflect.TypeOf((*MockChooses)(nil).Choose), ctx, at, value)
 }
 
+// MockReadsFiles is a mock of ReadsFiles interface.
+type MockReadsFiles struct {
+	ctrl     *gomock.Controller
+	recorder *MockReadsFilesMockRecorder
+	isgomock struct{}
+}
+
+// MockReadsFilesMockRecorder is the mock recorder for MockReadsFiles.
+type MockReadsFilesMockRecorder struct {
+	mock *MockReadsFiles
+}
+
+// NewMockReadsFiles creates a new mock instance.
+func NewMockReadsFiles(ctrl *gomock.Controller) *MockReadsFiles {
+	mock := &MockReadsFiles{ctrl: ctrl}
+	mock.recorder = &MockReadsFilesMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockReadsFiles) EXPECT() *MockReadsFilesMockRecorder {
+	return m.recorder
+}
+
+// PresetFile mocks base method.
+func (m *MockReadsFiles) PresetFile(ctx context.Context, path string) (sdk.Reading, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PresetFile", ctx, path)
+	ret0, _ := ret[0].(sdk.Reading)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PresetFile indicates an expected call of PresetFile.
+func (mr *MockReadsFilesMockRecorder) PresetFile(ctx, path any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresetFile", reflect.TypeOf((*MockReadsFiles)(nil).PresetFile), ctx, path)
+}
+
 // MockReads is a mock of Reads interface.
 type MockReads struct {
 	ctrl     *gomock.Controller

@@ -79,6 +79,9 @@ type ReachOptions struct {
 	// Nudge is how far a control moves to read its slope, as a fraction of
 	// its range.
 	Nudge float64
+	// Headroom is how far the chain's own output is turned down before
+	// anything is measured, in decibels, and wants to be negative.
+	Headroom float64
 }
 
 // Reach says how near a chain can get to a target, from one pass of readings.
@@ -111,7 +114,9 @@ func Reach(
 		return err
 	}
 
-	made, _, err := built(ctx, TuneOptions{Client: opts.Client, ID: opts.ID})
+	made, _, err := built(ctx, TuneOptions{
+		Client: opts.Client, ID: opts.ID, Headroom: opts.Headroom,
+	})
 	if err != nil {
 		return err
 	}
@@ -163,7 +168,7 @@ func Reach(
 	// Before anything is computed from it. Every number below rests on this
 	// reading, and a chain giving back more high end than went in is not a
 	// chain being read at all.
-	if say, bad := Squealing(from, figuresOfDry(signal),
+	if say, bad := Squealing(from, figuresOfDry(signal), inCorpusScale(floor),
 		endsInACab(made.Plan, cat)); bad {
 		return fmt.Errorf("%w: %s", ErrSquealing, say)
 	}

@@ -95,6 +95,21 @@ func (mr *MockTunerMockRecorder) Choose(ctx, at, value any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Choose", reflect.TypeOf((*MockTuner)(nil).Choose), ctx, at, value)
 }
 
+// Compile mocks base method.
+func (m *MockTuner) Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Compile", ctx, in)
+	ret0, _ := ret[0].(sdk.Built)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Compile indicates an expected call of Compile.
+func (mr *MockTunerMockRecorder) Compile(ctx, in any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compile", reflect.TypeOf((*MockTuner)(nil).Compile), ctx, in)
+}
+
 // Current mocks base method.
 func (m *MockTuner) Current(ctx context.Context, as sdk.Format) (sdk.Reading, error) {
 	m.ctrl.T.Helper()
@@ -137,6 +152,21 @@ func (m *MockTuner) Play(ctx context.Context, file string) error {
 func (mr *MockTunerMockRecorder) Play(ctx, file any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockTuner)(nil).Play), ctx, file)
+}
+
+// PresetFile mocks base method.
+func (m *MockTuner) PresetFile(ctx context.Context, path string) (sdk.Reading, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PresetFile", ctx, path)
+	ret0, _ := ret[0].(sdk.Reading)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PresetFile indicates an expected call of PresetFile.
+func (mr *MockTunerMockRecorder) PresetFile(ctx, path any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresetFile", reflect.TypeOf((*MockTuner)(nil).PresetFile), ctx, path)
 }
 
 // Turn mocks base method.

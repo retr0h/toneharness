@@ -53,6 +53,8 @@ type Builds interface {
 // lists it compares one setting at a time.
 type Tuner interface {
 	Builds
+	Compiles
+	ReadsFiles
 	Plays
 	Turns
 	Chooses
@@ -88,6 +90,13 @@ type TuneOptions struct {
 	// Nudge is how far a control is moved to read its slope, as a fraction of
 	// its own range.
 	Nudge float64
+	// Headroom is how far the chain's own output is turned down before
+	// anything is measured, in decibels, and wants to be negative.
+	//
+	// A property of the measuring rig rather than of the rig being measured.
+	// The lead from the pedal's output to its own input makes the chain feed
+	// itself, and enough gain around that loop oscillates.
+	Headroom float64
 	// Out is where the tuned chain goes, as a plan. Empty keeps nothing.
 	Out string
 	// Ask is a ToneSpec to append this round to, as a correction. Empty
@@ -193,7 +202,7 @@ func Tune(
 	// so a reading of the loop rather than of the chain does not produce a
 	// wrong answer, it produces a chain turned to match one.
 	if say, bad := Squealing(figuresOf(first), figuresOfDry(signal),
-		endsInACab(made.Plan, cat)); bad {
+		inCorpusScale(floor), endsInACab(made.Plan, cat)); bad {
 		return fmt.Errorf("%w: %s", ErrSquealing, say)
 	}
 
@@ -438,11 +447,19 @@ func built(
 		return sdk.Made{}, "", err
 	}
 
-	if err := opts.Client.Play(ctx, out); err != nil {
+	// The chain's own output turned down before it is ever played, because the
+	// measuring rig feeds the chain back into itself and enough gain around
+	// that loop oscillates. Not the amplifier's output, which is the tone.
+	playing, err := quieter(ctx, opts, out, opts.Headroom)
+	if err != nil {
 		return sdk.Made{}, "", err
 	}
 
-	return made, out, nil
+	if err := opts.Client.Play(ctx, playing); err != nil {
+		return sdk.Made{}, "", err
+	}
+
+	return made, playing, nil
 }
 
 // knobsOf is every dial in the chain the solver may turn.

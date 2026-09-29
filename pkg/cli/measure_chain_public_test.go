@@ -77,7 +77,7 @@ func (s *ChainPublicTestSuite) TestSquealingCatchesAChainThatBrightenedWhatItWas
 	dry := map[audio.Figure]float64{audio.KeyHigh: 0.0001}
 
 	say, bad := Squealing(
-		map[audio.Figure]float64{audio.KeyHigh: 0.843}, dry, true)
+		map[audio.Figure]float64{audio.KeyHigh: 0.843}, dry, nil, true)
 
 	s.Require().True(bad)
 	s.Require().Contains(say, "84.3%")
@@ -89,7 +89,7 @@ func (s *ChainPublicTestSuite) TestSquealingLeavesACleanReadingAlone() {
 	dry := map[audio.Figure]float64{audio.KeyHigh: 0.0001}
 
 	_, bad := Squealing(
-		map[audio.Figure]float64{audio.KeyHigh: 0.0}, dry, true)
+		map[audio.Figure]float64{audio.KeyHigh: 0.0}, dry, nil, true)
 
 	s.Require().False(bad, "a cabinet removing high end is a cabinet working")
 }
@@ -102,7 +102,7 @@ func (s *ChainPublicTestSuite) TestSquealingLeavesACleanReadingAlone() {
 func (s *ChainPublicTestSuite) TestSquealingSaysNothingAboutAChainWithNoCabinet() {
 	_, bad := Squealing(
 		map[audio.Figure]float64{audio.KeyHigh: 0.9},
-		map[audio.Figure]float64{audio.KeyHigh: 0.0001}, false)
+		map[audio.Figure]float64{audio.KeyHigh: 0.0001}, nil, false)
 
 	s.Require().False(bad)
 }
@@ -110,11 +110,11 @@ func (s *ChainPublicTestSuite) TestSquealingSaysNothingAboutAChainWithNoCabinet(
 // TestSquealingNeedsBothReadings covers a figure nothing measured.
 func (s *ChainPublicTestSuite) TestSquealingNeedsBothReadings() {
 	_, bad := Squealing(
-		map[audio.Figure]float64{}, map[audio.Figure]float64{audio.KeyHigh: 0}, true)
+		map[audio.Figure]float64{}, map[audio.Figure]float64{audio.KeyHigh: 0}, nil, true)
 	s.Require().False(bad)
 
 	_, bad = Squealing(
-		map[audio.Figure]float64{audio.KeyHigh: 0.9}, map[audio.Figure]float64{}, true)
+		map[audio.Figure]float64{audio.KeyHigh: 0.9}, map[audio.Figure]float64{}, nil, true)
 	s.Require().False(bad)
 }
 
@@ -131,6 +131,25 @@ func (s *ChainPublicTestSuite) TestTheReferenceIsMeasuredRatherThanAssumed() {
 	s.Require().Less(got[audio.KeyHigh], 0.01,
 		"a bass DI has almost nothing above 2kHz")
 	s.Require().Greater(got[audio.KeyLow], 0.5)
+}
+
+// TestAQuietCleanReadingIsNotASqueal covers the margin.
+//
+// The invariant is exact and the measurement is not. A chain with 25dB of
+// headroom reads 0.1% above 2kHz against the reference's 0.01% at a level of
+// -55dB, which is the converter's own broadband floor and not a loudspeaker
+// adding anything. Clean readings sit between 0.0% and 0.1% and squealing ones
+// between 39% and 84%, with nothing in between.
+func (s *ChainPublicTestSuite) TestAQuietCleanReadingIsNotASqueal() {
+	dry := map[audio.Figure]float64{audio.KeyHigh: 0.0001}
+
+	_, bad := Squealing(
+		map[audio.Figure]float64{audio.KeyHigh: 0.001}, dry, nil, true)
+	s.Require().False(bad, "a tenth of a percent is the floor")
+
+	_, bad = Squealing(
+		map[audio.Figure]float64{audio.KeyHigh: 0.391}, dry, nil, true)
+	s.Require().True(bad, "the quietest squeal measured was 39%")
 }
 
 func TestChainPublicTestSuite(
