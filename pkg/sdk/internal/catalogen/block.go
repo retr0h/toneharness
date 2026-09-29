@@ -38,6 +38,7 @@ func block(
 		Category:    category(family),
 		BasedOn:     gear.BasedOn,
 		Subcategory: gear.Subcategory,
+		Family:      family,
 		CabLink:     catalog.ModelID(m.CabLink),
 		Params:      make(map[string]catalog.Param, len(m.Params)),
 		Prov:        catalog.ProvOfficial,

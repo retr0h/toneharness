@@ -130,6 +130,20 @@ type Block struct {
 	// Subcategory is Line 6's own grouping — "Guitar", "Bass". It decides
 	// which half of the catalog a request is allowed to draw from.
 	Subcategory string `json:"subcategory,omitempty"`
+	// Family is the model list this block came from, which on this device is
+	// a filename: "amp", "cab", "cabmicirs".
+	//
+	// Kept because a category is not fine enough to tell two models apart. A
+	// cabinet ships three times — legacy, mic'd, and mic'd with a pan control
+	// — and all three carry one name, one category and one subcategory.
+	// `HD2_Cab1x15TucknGo` and `HD2_CabMicIr_1x15AmpegB15` are both "1x15
+	// Ampeg B-15", and the second has a microphone list that moves a chain
+	// further than any of its dials.
+	//
+	// Folded into the category and then discarded until 2026-09-29, which is
+	// why nothing could ask for a mic'd cabinet: 448 of the 1,126 corpus
+	// presets that hold a cabinet hold one, and this tool could not name one.
+	Family string `json:"family,omitempty"`
 	// CabLink is the cabinet Line 6 pairs with this amp by default. Empty for
 	// anything that is not an amp.
 	//
