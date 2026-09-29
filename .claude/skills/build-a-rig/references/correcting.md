@@ -24,15 +24,108 @@ in nine dimensions may be unreachable with the controls a device has; a target
 pinning three axes and shrugging at six usually is not, and the freedom goes into
 satisfying the three.
 
+## How the solve actually works
+
+One amplifier with nine controls at five positions each is 1,953,125
+combinations, and a reading takes about eight seconds. Searching that is 226
+days. So nothing here searches.
+
+Instead each control is measured on its own. Move one, read what changed, and
+that is a slope: so much centroid per turn of Treble, so much low band per turn
+of Bass. Measuring is linear in the number of controls, and the readings are
+committed under `resources/sweeps/`.
+
+The slopes stack into a matrix and the matrix is solved for the moves that close
+the gap between where the chain reads and where the target sits. That is least
+squares, by the normal equations, with ridge damping scaled to each control's own
+range so a control that moves nothing cannot be handed an enormous move.
+
+Three things follow from it being a model rather than a search.
+
+**Every row is divided by its own tolerance.** A centroid is hundreds of hertz
+and a band share is under one, so without that the centroid would be the only
+axis that mattered. Scaled, a residual of 2.4 means the same thing on every axis:
+2.4 times as far out as the target allows.
+
+**The model is local, so one solve overshoots.** A slope is true near where it
+was read and drifts away from it. The answer is another pass from wherever the
+last one landed, not a better model. Three to five passes is usual.
+
+**A control that is a list has no slope at all.** A cabinet's twelve microphones
+do not lie on a line, and the fourth does not sit between the third and the
+fifth in any sense a slope describes. Those are chosen by comparison rather than
+solved, which is not built yet.
+
+## The noise floor is the unit everything is measured in
+
+Before any dial is turned, the same signal goes through the untouched chain
+several times and the spread across those readings is the loop's own wander.
+That becomes the lower bound on every tolerance, because an answer closer than
+the loop can measure is not an answer.
+
+It is worth understanding because a wrong floor does not fail, it flatters. The
+floor is the lower bound on every tolerance, so a floor ten times too large makes
+the target ten times easier and the loop reports arriving while it sits nowhere
+near. A run once converged while its residual grew from 1.1 tolerances out to
+2.4.
+
+Two things make a floor wrong, and both are handled now:
+
+- **The first reading after the audio device opens is the stream settling**, not
+  the chain. Six takes of one untouched chain read the low band at 19.35 once and
+  then 31.56 to 31.73 five times over. That reading is discarded before any is
+  kept.
+- **Any one reading can come back odd.** The spread is taken with the reading
+  furthest from the middle thrown away, so one disagreement cannot set the floor
+  on its own.
+
+A healthy floor on an HX Stomp is around 0.0002 to 0.003 of a band and a few
+hertz. Ten times that means something is wrong with the loop, and the thing to
+check first is the signal path rather than the block being measured.
+
+## One step is one tolerance
+
+A person says "a bit darker" and means a noticeable amount. A tolerance is the
+spread across a genre's own records on that axis, so a step of one asks for a
+sound as far from the target as those records sit from each other. Noticeable,
+measured, and not a fraction anybody chose.
+
+It is also the unit the loop already reports in, so "2.4 tolerances out" and
+"nudged by one" are the same measure.
+
+## Level is a target like any other
+
+The loop constrains how loud the chain is, anchored at what it measured before
+anything moved.
+
+Without that it was the axis nothing defended, and a solve spends what is free.
+Asked for punk, it walked an SV Beast's Master from 1.000 to 0.024 and then to
+0.000 in two passes, turning the amplifier off to move the band shares slightly.
+No corpus states a level, because a record's loudness is a mastering decision
+rather than a fact about the sound, so the anchor is the chain's own settled
+reading and the tolerance is the one chosen number in the loop.
+
 ## When it cannot get there
 
 A bass cabinet cannot produce what a target asks above 5 kHz, because the speaker
 stops, and no combination of the controls in front of it changes that.
 
-**That is a result, and it is reported as one** — which axes were met, which were
+**That is a result, and it is reported as one**: which axes were met, which were
 not, and by how far. Reporting success because a file was written is the failure
-this project exists to avoid. A target that cannot be reached is worth keeping:
-*the gear is wrong for the sound* is a real answer to somebody who owns that gear.
+this project exists to avoid. A target that cannot be reached is worth keeping,
+because *the gear is wrong for the sound* is a real answer to somebody who owns
+that gear.
+
+The loop says which of two things happened. It converges, or it stops improving
+and says so:
+
+```
+stopped improving at 2.7 tolerances out. The chain will not reach this target.
+```
+
+Neither is a failure of the tool. The second is the more useful answer, and it
+only means anything because the floor is honest: a stretched tolerance would
+have called the same chain converged.
 
 ## Where the edit goes
 

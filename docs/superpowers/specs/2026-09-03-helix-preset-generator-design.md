@@ -19,8 +19,8 @@ Most of the half that decides values has followed. The corpus places the blocks
 a chain almost always holds, knobs start where players set them rather than at
 Line 6's defaults, and a rig's character words move six kinds of control. What
 is still unbuilt is which way an arbitrary knob moves:
-[knowledge.md](../../knowledge.md) marks that one problem not built, and it
-waits on the Pilot's Guide parameter tables.
+[architecture.md](../../architecture.md) marks that one problem not built, and
+it waits on the Pilot's Guide parameter tables.
 
 ## Problem
 
@@ -128,7 +128,7 @@ its scaling profile.
 ## Architecture
 
 A `docs/architecture.md` was planned and never written; `CONTRIBUTING.md` and
-`docs/knowledge.md` cover that ground now. In brief:
+`docs/architecture.md` cover that ground now. In brief:
 
 - `helix-core` holds catalog, rig, synth, sources and typed errors. No output,
   no I/O outside a source, typed values at every boundary.

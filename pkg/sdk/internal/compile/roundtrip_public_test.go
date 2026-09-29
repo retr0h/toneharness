@@ -38,7 +38,7 @@ import (
 )
 
 // corpusDir holds thousands of presets other people made. It is not committed
-// — see docs/knowledge.md — so the sweep over it runs only where it exists,
+// — see docs/architecture.md — so the sweep over it runs only where it exists,
 // and the committed fixtures carry the same assertions everywhere else.
 const corpusDir = "../../resources/schemas/corpus"
 

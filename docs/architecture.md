@@ -1,8 +1,26 @@
-# What is built, and what is not
+# How toneharness is put together
 
-Orientation for somebody arriving at this repository. How to *do* any of it is
-in [the skills](../.claude/skills/), which are the authority; this page is the
-state of the work and nothing else.
+**If you read one file to understand this system, read this one.** It is written
+to be that: how the whole thing works and how the parts fit, front to back, from
+a request arriving to a knob moving on a pedal and somebody saying it is still
+wrong.
+
+What it covers, in order: why the system exists rather than copying presets, the
+three layers a request passes through, the pipeline that turns one into a
+preset, the three ways in, the loop a person sits inside, what runs on real
+hardware, what the system deliberately cannot do, and what is not built yet.
+
+Three places, three jobs, and this page is the way in to the other two:
+
+| For                              | Read                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------- |
+| how to *do* something            | [the skills](../.claude/skills/), which are the authority on their domain |
+| why something is shaped this way | [the design records](superpowers/specs/), dated and never updated         |
+| what it is and what works        | this page                                                                 |
+
+A skill is evergreen and gets updated when the code changes. A design record is
+history: it says what was decided on a date and is left alone afterwards, so it
+is the wrong place to learn how anything works today.
 
 ## Constructing is not copying
 
@@ -86,6 +104,61 @@ RigSpec      validated against the catalog
    ▼
 a person     listens, and corrects the pair                   nothing above can hear
 ```
+
+## Ways in
+
+One library, three surfaces over it, and nothing behind any of them that the
+others cannot reach.
+
+| Surface | What it is                                                        |
+| ------- | ----------------------------------------------------------------- |
+| **SDK** | `pkg/sdk`. Every operation lives here. The other two only call it |
+| **CLI** | `toneharness`, one namespace per noun, `--json` on every command  |
+| **MCP** | the same operations as tools, named after the commands            |
+
+`device select` is `device_select` and `corpus music genres` is
+`corpus_music_genres`. They are the same code rather than two implementations,
+and a test walks the command tree against the registered tools both ways, so
+neither surface can quietly gain a capability the other lacks.
+
+Three commands have no tool on purpose, and the same test holds the list of
+reasons: `measure blocks`, `measure controls` and `measure names` are sweeps.
+One reading is about eight seconds, so a twelve-control amplifier is most of an
+hour, and a tool that blocks that long is not one anybody can use.
+
+## The loop a person is in
+
+The pipeline above builds a first answer. Everything after it is correction, and
+this is the part that needs a person in it.
+
+```text
+build      tone build, or presets make from a curated rig
+   │
+   ▼
+play       device play — opcode 21, replaces what is playing, writes no flash
+   │
+   ▼
+listen     a person. Nothing above this line can hear
+   │
+   ▼
+say        "darker", "needs more bite" — a nudge, which is a direction and a size
+   │
+   ▼
+solve      tone tune — sweeps the dials, solves for the moves, measures again
+   │
+   ▼
+export     a rig, so the answer is something somebody else can compile
+```
+
+A nudge is not a target and the difference matters:
+[correcting.md](../.claude/skills/build-a-rig/references/correcting.md) is the
+whole of it, including how the solve works, what a tolerance is, what the noise
+floor is for, and what the loop does when the chain cannot get there.
+
+Two hardware facts shape the loop. A slot is flash and a burst of writes has
+corrupted a setlist, so tuning happens in the edit buffer and only the final
+answer is written. And a live edit stores nothing, so what the device holds
+drifts from every slot until it is exported.
 
 ## A chain this tool builds renders on the hardware
 

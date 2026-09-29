@@ -35,7 +35,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 )
 
-// KnowledgeTestSuite holds every page that quotes a figure to the data.
+// ArchitectureTestSuite holds every page that quotes a figure to the data.
 //
 // A page quoting the catalog or the corpus statistics goes stale when Line 6
 // ships a release or the corpus grows, and several did before anything checked
@@ -49,7 +49,7 @@ import (
 // sentence to hold honest. What is left is the status board, which is prose a
 // person reads, and the two skill sentences that earn a figure by arguing from
 // it.
-type KnowledgeTestSuite struct {
+type ArchitectureTestSuite struct {
 	suite.Suite
 	pages map[string]string
 	cat   *catalog.Catalog
@@ -59,12 +59,12 @@ type KnowledgeTestSuite struct {
 // board is the status board, and controls is the skill page arguing from
 // measured figures. Named here so a case reads as prose.
 const (
-	board    = "docs/knowledge.md"
+	board    = "docs/architecture.md"
 	controls = ".claude/skills/measure-a-device/references/unclear-controls.md"
 	trust    = ".claude/skills/measure-a-device/references/catalog-trust.md"
 )
 
-func (s *KnowledgeTestSuite) SetupSuite() {
+func (s *ArchitectureTestSuite) SetupSuite() {
 	s.pages = map[string]string{}
 
 	for _, name := range []string{board, controls, trust} {
@@ -90,7 +90,7 @@ func (s *KnowledgeTestSuite) SetupSuite() {
 // A failure names the sentence the data now supports. Either the data changed
 // and the sentence should follow it, or the page quotes something new and this
 // should learn to compute it.
-func (s *KnowledgeTestSuite) TestTheFiguresMatchTheData() {
+func (s *ArchitectureTestSuite) TestTheFiguresMatchTheData() {
 	names, controlCount := s.parameters()
 
 	unclear := 0
@@ -166,7 +166,7 @@ func (s *KnowledgeTestSuite) TestTheFiguresMatchTheData() {
 // Read with the loader the tool reads them with rather than counted as text: a
 // string count agrees with the truth until somebody reflows a manifest, and then
 // it is quietly wrong in the direction that makes this test pass.
-func (s *KnowledgeTestSuite) records() int {
+func (s *ArchitectureTestSuite) records() int {
 	held, err := audio.Manifests(os.DirFS("."), filepath.Join("resources", "music"))
 	s.Require().NoError(err)
 
@@ -182,7 +182,7 @@ func (s *KnowledgeTestSuite) records() int {
 //
 // One directory each, under the instrument they play, with the manifest
 // naming the tracks. The records themselves are not in the repository.
-func (s *KnowledgeTestSuite) players() int {
+func (s *ArchitectureTestSuite) players() int {
 	found, err := filepath.Glob(
 		filepath.Join("resources", "music", "*", "*", "corpus.yaml"))
 	s.Require().NoError(err)
@@ -191,7 +191,7 @@ func (s *KnowledgeTestSuite) players() int {
 }
 
 // model reads one model's measurements, which the page's examples depend on.
-func (s *KnowledgeTestSuite) model(
+func (s *ArchitectureTestSuite) model(
 	id catalog.ModelID,
 ) corpus.ModelStats {
 	ms, ok := s.stats.Models[id]
@@ -201,7 +201,7 @@ func (s *KnowledgeTestSuite) model(
 }
 
 // float reads a parameter's stated default.
-func (s *KnowledgeTestSuite) float(
+func (s *ArchitectureTestSuite) float(
 	b catalog.Block,
 	key string,
 ) float64 {
@@ -212,7 +212,7 @@ func (s *KnowledgeTestSuite) float(
 }
 
 // named counts the blocks the catalog maps to real-world gear.
-func (s *KnowledgeTestSuite) named() int {
+func (s *ArchitectureTestSuite) named() int {
 	n := 0
 
 	for _, b := range s.cat.Blocks {
@@ -225,7 +225,7 @@ func (s *KnowledgeTestSuite) named() int {
 }
 
 // parameters counts how often each parameter name occurs, and all of them.
-func (s *KnowledgeTestSuite) parameters() (map[string]int, int) {
+func (s *ArchitectureTestSuite) parameters() (map[string]int, int) {
 	names := map[string]int{}
 	total := 0
 
@@ -266,8 +266,8 @@ func thousands(
 	return b.String()
 }
 
-func TestKnowledgeTestSuite(
+func TestArchitectureTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(KnowledgeTestSuite))
+	suite.Run(t, new(ArchitectureTestSuite))
 }

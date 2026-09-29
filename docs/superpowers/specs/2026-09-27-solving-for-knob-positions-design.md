@@ -243,6 +243,6 @@ amplifier is most of an hour. Every block wanted in the library costs that once.
 
 **The corpus side is done.** Three genres are tagged and measured, and
 `measure genres` reports what each earns. It needed no hardware, and the result
-is on [knowledge.md](../../knowledge.md): punk has the most records of the three
-and earns nothing, so a threshold says a genre has enough behind it rather than
-that it sounds like anything in particular.
+is on [architecture.md](../../architecture.md): punk has the most records of the
+three and earns nothing, so a threshold says a genre has enough behind it rather
+than that it sounds like anything in particular.

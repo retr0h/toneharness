@@ -786,7 +786,7 @@ func (s *MainTestSuite) TestEveryTestFileIsNamedForWhatItCovers() {
 			strings.HasSuffix(path, ".gen_test.go"),
 			strings.HasPrefix(d.Name(), "export_"),
 			d.Name() == "main_test.go",
-			d.Name() == "knowledge_test.go":
+			d.Name() == "architecture_test.go":
 			return nil
 		}
 

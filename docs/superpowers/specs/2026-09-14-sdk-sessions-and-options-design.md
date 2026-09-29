@@ -510,8 +510,8 @@ against `pkg/`.
 - **`README.md`:** the "Go SDK" row mentions opening a Session.
 - **[An MCP server](2026-09-13-an-mcp-server-design.md):** a superseded-in-part
   note, because "one device call at a time" now lives in the Session.
-- **`docs/knowledge.md`:** checked in each chunk's pull request for a line this
-  finishes.
+- **`docs/architecture.md`:** checked in each chunk's pull request for a line
+  this finishes.
 
 ## Amended 2026-09-15: what a write does about a file already there
 

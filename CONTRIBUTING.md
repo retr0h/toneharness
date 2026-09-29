@@ -292,8 +292,8 @@ Four things sit outside them on purpose:
 - `toneharness <command> --help`, or `go run main.go --help` from a checkout,
   lists every command and flag. **Nothing writes that down**, because the binary
   is the only thing that cannot be out of date
-- [docs/knowledge.md](docs/knowledge.md) is the status board: what is built,
-  what is not, and why the evaluator is a person
+- [docs/architecture.md](docs/architecture.md) is the status board: what is
+  built, what is not, and why the evaluator is a person
 - Go doc on [`pkg/sdk/preset`](pkg/sdk/preset/) covers how a `.hlx` file is laid
   out
 - [`pkg/sdk/internal/wire/README.md`](pkg/sdk/internal/wire/README.md) documents

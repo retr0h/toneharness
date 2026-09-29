@@ -96,11 +96,22 @@ A figure measured on one device is a figure about that device. Say which.
 
 Three things are not in a skill, on purpose:
 
-| Task                             | Read                                                                                                                                 |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| What is built and what is not    | [docs/knowledge.md](docs/knowledge.md), the status board and why the evaluator is a person                                           |
-| Changing the shape of the system | [docs/superpowers/specs/](docs/superpowers/specs/), dated design records, superseded rather than rewritten                           |
-| Talking to a device over USB     | [`pkg/sdk/internal/wire/README.md`](pkg/sdk/internal/wire/README.md), the reverse-engineered framing, beside the code that speaks it |
+| Task                              | Read                                                                                                                                                                  |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| How the whole thing fits together | [docs/architecture.md](docs/architecture.md), the one file to read first: the layers, the pipeline, the three ways in, the loop a person is in, and what is not built |
+| Why the system is this shape      | [docs/superpowers/specs/](docs/superpowers/specs/), dated records of decisions, superseded rather than rewritten                                                      |
+| Talking to a device over USB      | [`pkg/sdk/internal/wire/README.md`](pkg/sdk/internal/wire/README.md), the reverse-engineered framing, beside the code that speaks it                                  |
+
+**A spec is history, not documentation.** It records what was decided on a date
+and is never brought up to date, so a spec and the code disagree the moment
+anything changes. How something works now is the skill that owns it, and the
+skill is what gets updated. Reading a spec to learn how the solver works today
+is how somebody came to design a feature the contract had already specified.
+
+The one that gets looked for most: **how the solve works** is
+[`build-a-rig`'s correcting.md](.claude/skills/build-a-rig/references/correcting.md).
+Slopes, least squares, what a tolerance is, the noise floor, what one step
+means, and what the loop does when it cannot get there.
 
 And four questions answer themselves from the tool rather than from any page:
 
@@ -149,10 +160,11 @@ so it is one list across sessions rather than one per session. See
 - Anything left over at the end of a piece of work, a follow-up, a decision
   nobody has made, a bug found on the way, becomes a task rather than a sentence
   in a reply. A sentence in a reply is gone after the next session.
-- When a pull request finishes something [docs/knowledge.md](docs/knowledge.md)
-  marks not built or partly built, update that line in the same pull request,
-  and say so in its description. That table is how the next session learns what
-  exists, and it fell three features behind when nobody did.
+- When a pull request finishes something
+  [docs/architecture.md](docs/architecture.md) marks not built or partly built,
+  update that line in the same pull request, and say so in its description. That
+  table is how the next session learns what exists, and it fell three features
+  behind when nobody did.
 - When a pull request changes behaviour a skill describes, update that skill in
   the same pull request. One skill owns each fact, so there is exactly one file
   to change, and a skill that has drifted is worse than no skill: it is
