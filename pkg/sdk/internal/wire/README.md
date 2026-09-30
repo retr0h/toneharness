@@ -34,6 +34,7 @@ measured one by capturing another preset.
 | Framing, channels, the handshake, opcodes 1 and 4 | tonepush PROTOCOL.md, verified on an HX Stomp |
 | Write opcodes 5 and 8, chunking, deferred commit  | tonepush PROTOCOL.md, marked confirmed there  |
 | The rules that keep a device alive                | tonepush and fretwire, learned the hard way   |
+| The impulse response opcodes and their keys       | tonepush's own source, not verified here      |
 | What the twelve offsets point at                  | measured here, off three captured presets     |
 | Model numbers indexing `Helix.sym`                | measured here, confirmed against the corpus   |
 | Footswitch label, colour and block keys           | measured here, confirmed against HX Edit      |
@@ -202,18 +203,20 @@ selecting preset 999 on a device holding 126 answers `1` and does nothing.
 
 ## What is known to work
 
-| Capability                                  | State                                     |
-| ------------------------------------------- | ----------------------------------------- |
-| Enumerate and identify a device             | implemented, verified on hardware         |
-| Framing                                     | implemented, tested against real captures |
-| Session handshake                           | implemented, verified on hardware         |
-| List presets (opcode 1)                     | implemented, verified on hardware         |
-| Read a preset without loading it (opcode 4) | implemented, verified on hardware         |
-| Write a preset (opcodes 5, 8)               | implemented, verified on hardware         |
-| Empty a slot (opcode 16)                    | implemented, verified on hardware         |
-| Move one control (opcode 30)                | implemented, verified on hardware         |
-| Replace what is playing (opcode 21)         | implemented, verified on hardware         |
-| Save from the edit buffer (opcode 71)       | not implemented                           |
+| Capability                                   | State                                     |
+| -------------------------------------------- | ----------------------------------------- |
+| Enumerate and identify a device              | implemented, verified on hardware         |
+| Framing                                      | implemented, tested against real captures |
+| Session handshake                            | implemented, verified on hardware         |
+| List presets (opcode 1)                      | implemented, verified on hardware         |
+| Read a preset without loading it (opcode 4)  | implemented, verified on hardware         |
+| Write a preset (opcodes 5, 8)                | implemented, verified on hardware         |
+| Empty a slot (opcode 16)                     | implemented, verified on hardware         |
+| Move one control (opcode 30)                 | implemented, verified on hardware         |
+| Replace what is playing (opcode 21)          | implemented, verified on hardware         |
+| Save from the edit buffer (opcode 71)        | not implemented                           |
+| Upload an impulse response (opcode 9)        | not implemented, protocol recorded below  |
+| List, describe, clear IRs (opcodes 13,12,15) | not implemented, protocol recorded below  |
 
 Verified means an HX Stomp on firmware 3.80 answered, not that a test asserts
 it. Only `../device/usb_darwin.go` needs hardware. It counts against the 99%
@@ -532,6 +535,64 @@ See `settingOf` in `../editor/encode.go`.
 Worth keeping apart when a reading looks wrong. Around 120-150Hz at any level is
 a chain that did not render. Kilohertz at 40 to 50dB below the others is a chain
 that rendered with its volume at zero.
+
+### The impulse response opcodes, recorded and not yet used
+
+Nothing here writes an impulse response. `pkg/sdk/cab` builds a loadable 48kHz
+24-bit WAV and the only way onto the pedal today is a person dragging it into HX
+Edit. What follows is tonepush's own implementation read off its source on 29
+September 2026, **not verified here**, and written down before anything is built
+because the failure mode is not a bad reading.
+
+| opcode | does                                                                        |
+| -----: | --------------------------------------------------------------------------- |
+|      9 | upload an impulse response, one RPC message on the control channel          |
+|     12 | a slot's descriptor: name, checksum and format, the same map opcode 9 sends |
+|     13 | list the slots, `{101: 2}`                                                  |
+|     15 | empty a slot, `{112: slot}`                                                 |
+
+Opcode 9's argument map:
+
+```text
+112  slot, zero based
+113  checksum of the sample bytes
+109  name
+114  format multiplier, which the editor always sends as 1
+115  length code: 2 for up to 1024 samples, 3 for up to 2048
+123  false
+124  false
+125  0
+110  the samples, binary, mono float32 little endian
+```
+
+**The length code is the dangerous field.** It declares the stored length as 256
+× 2^code samples. Shorter data is zero-padded by the device, and data *longer*
+than declared "wedges its transfer state machine hard enough to need the 9V
+adapter pulled". So the count is checked before sending rather than discovered
+afterwards, which is the same shape as every other rule in the section above.
+
+**The checksum is a wrapping 32-bit sum** of the sample bytes read as
+little-endian words. tonepush has it verified against HX Edit's own traffic.
+Their note is worth keeping: if a device rejects an upload, this is the first
+thing to suspect.
+
+**Opcode 9 answers "accepted", not "done".** The device writes to flash
+afterwards and displays "transferring data" while it does. What takes it out of
+that state is sending the end marker, opcode 254, and then re-reading the slot
+list; waiting does not. So a write finishes when the name appears in opcode 13's
+answer, and returning before that is what leaves the unit stuck.
+
+The samples must already be 48kHz mono and at most 2048 long. The wire format
+carries no sample rate, so HX Edit resamples before uploading and a 96kHz file
+sent verbatim makes the cabinet twice as long and drops its response an octave.
+`cab.Rate` and `cab.Taps` already agree with that.
+
+Two things this leaves for whoever implements it. A chain naming a user IR names
+the slot rather than the file, so something has to record which slot a built
+cabinet landed in. And this is storage: the rules above were learned when a
+burst of writes corrupted a setlist past what a power cycle could clear, so an
+IR upload wants the same deferred-commit care and the same one-at-a-time
+discipline.
 
 ### Opcode 21, which replaces what is playing without storing it
 
