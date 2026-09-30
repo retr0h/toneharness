@@ -103,16 +103,18 @@ sentence before the rest of this section: it was written the other way round for
 a day, claiming the destination was the fix, and ninety seconds of hardware
 disproved it.
 
-**The destination reduces the loop.** Every measuring command sends the chain to
-`USB 1/2` by itself rather than to Multi, looked up in the device's own list
-rather than written down as a number. It happens whatever `--headroom` says.
-Measured on matt-freeman at full gain it took the high band from 84.3% to 57.5%.
+**The destination does nothing, and it was measured rather than assumed.** One
+destination per preset at full gain: `Multi` reads 84.4% above 2kHz, `USB 1/2`
+84.2%, `USB 3/4` 84.4%, and `None` silence. Those readings are taken on USB 1/2,
+so a chain really sent to USB 3/4 alone would read nothing. On an HX Stomp the
+enum does not route: any non-zero destination sends the chain everywhere
+including the socket the measuring lead comes from, and the loop cannot be opened
+from the preset at all. The full table is in
+[signal-path.md](../../measure-a-device/references/signal-path.md#the-destination-does-not-route-and-the-loop-cannot-be-opened-from-here).
 
-**57.5% is still oscillating.** So something else closes the loop, and what has
-not been established is which: the computer monitoring its own input back out, or
-an HX Stomp's `USB 1/2` reaching the Main outs whatever the enum label implies.
-Until that is settled, a reading taken without headroom is not to be trusted
-however the output is routed.
+An earlier version of this section said the destination cut the loop from 84.3%
+to 57.5%. That 57.5% was one run of an oscillation wandering, read before anybody
+compared destinations against each other.
 
 **`--headroom` is what makes a reading clean.** It turns `dsp0.outputA.gain` down
 before anything is measured and defaults to -30dB. That gain sits after every

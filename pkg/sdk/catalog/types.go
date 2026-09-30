@@ -207,10 +207,20 @@ type Catalog struct {
 	// exist to prevent.
 	//
 	// The one that has cost an evening is entry 1 of Destinations,
-	// `Multi (1/4", XLR, Digital, USB 1/2)`. An HX Stomp's Multi does not
-	// include USB whatever the label says, so a preset left on it sends
-	// nothing up the cable and a measurement reads the converter's floor
-	// however loud the chain is.
+	// `Multi (1/4", XLR, Digital, USB 1/2)`, and what it cost the evening for
+	// is not what was first written here.
+	//
+	// It said an HX Stomp's Multi does not include USB whatever the label says,
+	// so a preset left on it sends nothing up the cable. Measured one
+	// destination at a time on 2026-09-29 that is not so: Multi delivers the
+	// chain to USB at -23.6dBFS, and so do `USB 1/2` and `USB 3/4`, all three
+	// reading the same 84% above 2kHz on a USB 1/2 capture. A chain genuinely
+	// sent to USB 3/4 alone would read silence there.
+	//
+	// So on this device the enum does not select where the chain goes. Only
+	// `None` silences it; every other value sends it everywhere, the
+	// quarter-inch socket included. Which is why the measuring loop cannot be
+	// opened from a preset: see measure-a-device's signal-path.md.
 	Sources      []string `json:"sources,omitempty"`
 	Destinations []string `json:"destinations,omitempty"`
 }

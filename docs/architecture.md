@@ -191,9 +191,13 @@ than all of it. At the -30dB default it reads 0.03% against the reference's
 [correcting.md](../.claude/skills/build-a-rig/references/correcting.md#the-loop-oscillates-and-it-takes-both-the-destination-and-the-headroom)
 has the measurements.
 
-What is still unestablished is why the loop does not open on USB alone: either
-the computer monitors its own input back out, or `USB 1/2` reaches the Main outs
-whatever the enum says.
+Why the loop does not open is settled: **the output destination does not
+route.** Measured one destination at a time, `Multi`, `USB 1/2` and `USB 3/4`
+all read the same 84% above 2kHz and only `None` gives silence, and those
+readings are taken on USB 1/2, so a chain really sent to USB 3/4 alone would
+read nothing. Every non-zero destination sends the chain everywhere including
+the socket the measuring lead comes from, so no preset can open the loop and the
+headroom is the whole fix.
 
 **The block library was re-measured on 29 September 2026 and the difference is
 the whole point of the fix.** The amplifiers' median share above 2kHz went from

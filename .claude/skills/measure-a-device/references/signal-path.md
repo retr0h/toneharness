@@ -233,19 +233,40 @@ refused on that, every one an amp or preamp, including both SV Beasts this
 project's own pipeline builds with. A guard that refuses the blocks you most
 want is the shape of that mistake.
 
-**Setting the destination does not open the loop either, and the measurement is
-the reason to believe that rather than the label.** On `USB 1/2` alone with no
-headroom, matt-freeman still gave back 57.5% of its energy above 2kHz, down from
-84.3% on Multi. Lower, and still a squeal. So one of two things is true and
-neither has been established: the computer is monitoring its own input back out,
-or an HX Stomp's `USB 1/2` reaches the Main outs whatever this enum says. Until
-somebody settles it, **both the destination and the headroom are load-bearing**,
-and a reading taken without headroom is not to be trusted however the output is
-routed.
+## The destination does not route, and the loop cannot be opened from here
 
-Which makes the honest summary of this whole section: the destination is most of
-the loop, the headroom is what makes a figure clean, and the `USB 1/2` entry may
-not mean what it says.
+**Settled on 2026-09-29 by measurement, and it contradicts the section above.**
+One destination per preset, gain at 0, matt-freeman, the share of energy above
+2kHz against a reference carrying 0.01%:
+
+| `@output` | above 2kHz | level |
+| ---------------------------------------- | ---------: | --------: |
+| 0 `None` | 0.0% | -186.7dB |
+| 1 `Multi (1/4", XLR, Digital, USB 1/2)` | 84.4% | -23.6dB |
+| **10 `USB 1/2`** | **84.2%** | **-23.6dB** |
+| **11 `USB 3/4`** | **84.4%** | **-23.6dB** |
+
+The decisive pair is 10 against 11. These readings are taken on USB 1/2, so a
+chain genuinely sent to USB 3/4 alone would read silence. It reads the same.
+
+**On an HX Stomp this enum does not select where the chain goes.** Every non-zero
+destination sends it everywhere, the quarter-inch socket included, and only
+`None` silences it. So the measuring lead always carries the chain back to the
+input, and **no value of `@output` opens the loop**. The headroom is the whole
+fix, and `--headroom 0` is never a safe reading.
+
+Two things this leaves unexplained, and both are worth knowing rather than
+tidying away. The figure just above, that moving to `USB 1/2` took the floor from
+-123.4 to -118.6dBFS, disagrees with this table and nobody has accounted for it:
+different firmware, a different preset, or a confounded test. And the catalog's
+own note that "an HX Stomp's Multi does not include USB whatever the label says"
+cannot be right as stated, because Multi delivers the chain to USB at -23.6dB in
+the table above.
+
+The tool still sets the destination. Not because it helps, which is measured, but
+because a firmware that started honouring the enum would want it right, and
+because that earlier floor measurement has not been explained. It is documented
+as doing nothing so nobody spends another afternoon believing in it.
 
 This is the trap worth recognising: **every test before it looked like an input
 problem, because the output was silent for a reason that had nothing to do with

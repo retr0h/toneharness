@@ -42,27 +42,39 @@ import (
 // 1/2)`, and Multi drives the socket that lead comes from. So the chain's
 // output arrives at its own input and it feeds itself.
 //
-// Both halves are needed, and measurement says so. Neither is sufficient.
+// **The gain is the fix. The destination does nothing, and that is measured.**
 //
-// The destination reduces the loop. Sending to `USB 1/2` by itself rather than
-// to Multi takes the chain off the socket the lead comes from, and measured on
-// matt-freeman it took the high band at full gain from 84.3% to 57.5%.
+// Read on matt-freeman on 2026-09-29, one destination per preset, gain at 0, the
+// share of energy above 2kHz against a reference carrying 0.01%:
 //
-// **It does not open the loop.** 57.5% is still oscillating, so something else
-// closes it: the computer's own monitoring of its input back out, or an HX
-// Stomp's USB 1/2 reaching the Main outs whatever the enum implies. Which of
-// those it is has not been established, and until it is, a reading taken
-// without headroom is not to be trusted however the output is routed.
+//	0  None                                  0.0%   -186.7dB
+//	1  Multi (1/4", XLR, Digital, USB 1/2)   84.4%    -23.6dB
+//	10 USB 1/2                               84.2%    -23.6dB
+//	11 USB 3/4                               84.4%    -23.6dB
 //
-// The gain is what makes the reading clean. Turning `dsp0.outputA.gain` down
-// drops the loop below unity without touching the tone, which ChVol and Master
-// are. At the -30dB default the same chain reads 0.03% against the reference's
-// 0.00%, which is the empty loop's own figure.
+// The decisive pair is 10 against 11. These readings are taken on USB 1/2, so a
+// chain genuinely sent to USB 3/4 alone would read silence. It reads the same as
+// USB 1/2 does. **On an HX Stomp this enum does not route**: every non-zero
+// destination sends the chain everywhere, the quarter-inch socket included, and
+// only None silences it. So the measuring lead always carries the chain back to
+// the input whatever this says, and the loop cannot be opened from here.
 //
-// So the order to read this in: the destination is a real improvement and the
-// headroom is the thing standing between a figure and a squeal. An earlier
-// version of this comment said the destination was the fix and worked at any
-// gain. `tone reach --headroom 0` disproves it in ninety seconds.
+// Turning `dsp0.outputA.gain` down is what makes a reading clean. It drops the
+// loop below unity without touching the tone, which ChVol and Master are. At the
+// -30dB default the same chain reads 0.03%, which is the empty loop's own figure.
+//
+// The destination is still set, for two reasons and neither is that it helps.
+// `references/signal-path.md` records an earlier measurement where moving off
+// Multi took the USB floor from -123.4 to -118.6dBFS, which disagrees with the
+// table above and has not been explained. And a firmware that started honouring
+// the enum would want it right. It is documented as doing nothing so nobody
+// spends another afternoon believing it.
+//
+// Two earlier versions of this comment were wrong in opposite directions: the
+// first said the destination was the fix and worked at any gain, the second that
+// it cut the loop from 84.3% to 57.5%. The second figure was one run of an
+// oscillation wandering, not an improvement. Both were written before the
+// experiment above.
 //
 // What it looked like while the destination was wrong: matt-freeman read 84.3%
 // of its energy above 2kHz where the reference has 0.01%, and the same chain
@@ -111,14 +123,13 @@ type Quiets interface {
 // entry is neither. What a preset says about its routing is settled when the
 // preset is written.
 //
-// by is in decibels and wants to be negative. Zero asks for no headroom, and
-// the preset is still rewritten, because the destination is worth setting at any
-// gain: it is most of the loop even though it is not all of it. Before this took
-// the destination on as well, zero returned the preset untouched, which was a
-// preset still sending to the socket the measuring lead comes from.
+// by is in decibels and wants to be negative. Zero asks for no headroom and the
+// preset is still rewritten, which costs a compile and buys nothing measurable:
+// the destination it sets is measured to make no difference. It stays for the
+// reasons above rather than because zero is a case worth serving.
 //
-// Zero does not make a reading safe. Measured, the same chain oscillates at
-// 57.5% above 2kHz with the destination set and no headroom.
+// **Zero does not make a reading safe.** The same chain oscillates at 84.2%
+// above 2kHz with no headroom, on any destination that is not None.
 func quieter(
 	ctx context.Context,
 	client Quiets,

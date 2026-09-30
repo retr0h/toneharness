@@ -145,7 +145,7 @@ func init() {
 		&toneTuneHeadroom,
 		"headroom",
 		measuringHeadroom,
-		"decibels to turn the chain's own output down by before measuring; what opens the measuring loop is the destination, which is set whatever this says, and this bounds what is left",
+		"decibels to turn the chain's own output down by before measuring; the measuring lead makes the chain feed itself and no routing stops it, so this is the only thing between a figure and a squeal",
 	)
 	f.StringVar(&toneTuneClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
