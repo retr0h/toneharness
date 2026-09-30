@@ -98,9 +98,10 @@ type Suggestion struct {
 // Shortlist is the blocks whose own readings move the unmet axes the right way.
 //
 // Ranked by the axis each leaves furthest out, best first. Every reading that
-// cannot describe its block is left out: one that clipped is a reading of the
-// clipping, one the device refused has no figures, and a block already in the
-// chain is not an addition.
+// cannot describe its block is left out, which `Block.Measured` decides: one the
+// device refused has no figures, one that clipped is a reading of the clipping,
+// and one near the ceiling is the converters' shaping whether or not the guard
+// caught it. A block already in the chain is not an addition either.
 //
 // The result is a shortlist rather than a choice, which is the whole contract
 // here. Each of these is worth eight seconds of measuring in the chain in hand,
@@ -119,7 +120,18 @@ func Shortlist(
 	out := make([]Suggestion, 0, len(lib.Blocks))
 
 	for id, block := range lib.Blocks {
-		if already[id] || block.Refused != "" || block.Clipped {
+		// Measured rather than the two flags by hand, which is what this did
+		// first and was wrong in the one case that matters. A reading within
+		// 2dB of full scale counts as clipped whatever the flag says, because
+		// a converter shapes a signal well before it hard-clips and the flat
+		// tops make harmonics that were never in the block. Two of the ten
+		// readings that excludes are bass amplifiers, one of them reading
+		// 96.74% of its energy in the high band, which an Ampeg does not do.
+		//
+		// So the flag alone would have let the brightest, most saturated
+		// readings on the device into a search for saturation, which is the
+		// failure this exclusion exists to prevent.
+		if already[id] || !block.Measured() {
 			continue
 		}
 

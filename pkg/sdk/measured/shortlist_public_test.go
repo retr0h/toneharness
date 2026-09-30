@@ -50,6 +50,11 @@ func reading(
 	return measured.Block{
 		ID: id, Name: id, Category: kind,
 		Figures: measured.Figures{
+			// A level a real reading has. Left at zero these fixtures were all
+			// at full scale, which Measured excludes as the converters' own
+			// shaping, so every one of them was silently dropped and the tests
+			// passed on empty shortlists.
+			Level:    -60,
 			Centroid: centroid, Harmonics: &harmonics,
 		},
 	}
@@ -169,7 +174,7 @@ func (s *ShortlistPublicTestSuite) TestABlockThatHurtsAnAxisSaysSo() {
 	s.Require().InDelta(395, got[0].Worst, 0.001)
 }
 
-// TestAReadingThatCannotDescribeItsBlockIsLeftOut covers the three exclusions.
+// TestAReadingThatCannotDescribeItsBlockIsLeftOut covers the four exclusions.
 //
 // A clipped reading is a reading of the clipping: flat tops make harmonics that
 // were never in the signal, so it reads as the brightest, most saturated block on
@@ -182,9 +187,17 @@ func (s *ShortlistPublicTestSuite) TestAReadingThatCannotDescribeItsBlockIsLeftO
 	refused := reading("Refused", catalog.Category("drive"), 100, 99)
 	refused.Refused = "will not load alone"
 
+	// The one the flag misses, and the reason this asks Measured rather than
+	// the flags. A converter shapes a signal well before it hard-clips, so a
+	// reading this loud is the converter's harmonics and not the block's. Two
+	// of the readings it excludes on this device are bass amplifiers.
+	loud := reading("NearTheCeiling", catalog.Category("drive"), 100, 99)
+	loud.Level = -1
+
 	lib := library(
 		clipped,
 		refused,
+		loud,
 		reading("InTheChain", catalog.Category("drive"), 100, 99),
 		reading("Honest", catalog.Category("drive"), 100, 40),
 	)
@@ -207,7 +220,7 @@ func (s *ShortlistPublicTestSuite) TestAnUnmeasuredAxisIsNotAZero() {
 	old := measured.Block{
 		ID: "Unmeasured", Name: "Unmeasured",
 		Category: catalog.Category("drive"),
-		Figures:  measured.Figures{Centroid: 100},
+		Figures:  measured.Figures{Centroid: 100, Level: -60},
 	}
 
 	got := measured.Shortlist(library(old), []measured.Want{
