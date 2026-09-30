@@ -143,14 +143,17 @@ func (b Block) Measured() bool {
 // misses the one about to be.
 //
 // Two rather than more, because this is a floor under what is demonstrably
-// broken and not a claim that everything quieter is sound. It excludes ten
-// readings. Both of the bass amplifiers are there, and so are the filters
-// reading 99.97% of their energy in the high band. A delay at -2.35 dBFS
-// reading 94% low is left in, because nothing about it says the converters
-// shaped it.
+// broken and not a claim that everything quieter is sound.
 //
-// The real fix is the generator's threshold and 661 readings taken again.
-// Until then the readers apply the honest line.
+// **It excludes nothing in the library shipped now**, and that is the point of
+// it rather than a reason to remove it. The readings it was written for were
+// taken at full output through a measuring lead the chain fed itself down: ten
+// of them sat above this line, two were bass amplifiers, and one read 99.97% of
+// its energy in the high band. Measured at -30dB nothing comes near the ceiling.
+//
+// It stays because headroom is a setting and settings get changed. A campaign
+// run at full output would put those readings back, and this is what keeps them
+// out of a ranking.
 const nearCeiling = -2.0
 
 // Library is every block a device was measured on.

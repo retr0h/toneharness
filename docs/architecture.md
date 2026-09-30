@@ -193,8 +193,18 @@ has the measurements.
 
 What is still unestablished is why the loop does not open on USB alone: either
 the computer monitors its own input back out, or `USB 1/2` reaches the Main outs
-whatever the enum says. **Every hardware figure committed here predates the fix
-and wants taking again**, which is the campaign running against it now.
+whatever the enum says.
+
+**The block library was re-measured on 29 September 2026 and the difference is
+the whole point of the fix.** The amplifiers' median share above 2kHz went from
+46.4% to 0.29%, against the empty loop's own 0.12%; the bass amplifiers'
+centroids went from 1,250-8,374Hz to 119-325Hz; and nothing sits at the
+converters' ceiling where ten readings did. Everything built on the old numbers
+was built on a squeal.
+
+23 of 661 blocks refused, 20 of them high-gain amplifiers, which is honest
+rather than wrong: a refusal says the block could not be measured. Those 20 stay
+unmeasurable until the question above is settled.
 
 Two hardware facts shape the loop. A slot is flash and a burst of writes has
 corrupted a setlist, so tuning happens in the edit buffer and only the final

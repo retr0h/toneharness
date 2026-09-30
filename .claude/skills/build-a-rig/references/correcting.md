@@ -166,16 +166,32 @@ Neither obvious test works in its place. Level does not separate them, at
 which catches the chain at full gain and not at -15, because an amplifier's
 gain rises with what is put into it.
 
-**Every committed reading of an amplifier predates this.** That is 111 of the
-661 fingerprints: across the library every family reads the empty loop's own
-0.005% in the high band except the full amplifiers, at a median of 46.4% and
-12dB louder. The preamps of the same circuits read 0.047%. They want taking
-again.
+**The library was re-measured on 2026-09-29 and this is settled.** What the old
+one looked like is worth keeping, because it is what a squeal reads as: across it
+every family read the empty loop's own 0.005% in the high band except the full
+amplifiers, at a median of 46.4% and 12dB louder, and the preamps of the same
+circuits read 0.047%.
 
-And every reading taken since predates the destination fix, so it wants taking
-again too. A campaign run on the Multi destination measured each block with its
-own output added back at its input, whether or not the guard caught it: the
-refusals are where it ran away, not where it started.
+The campaign that replaced it, at `--headroom -30` on `USB 1/2`:
+
+| | old library | now |
+| --- | ---: | ---: |
+| amplifiers' median high band | 46.4% | **0.29%** |
+| the empty loop's own high band | 0.005% | 0.12% |
+| bass amplifiers' centroids | 1,250 to 8,374Hz | **119 to 325Hz** |
+| readings at the converters' ceiling | 10 | **0** |
+| amplifiers usable | 222 | 204 |
+
+The amplifiers now sit beside the empty loop instead of forty times above it,
+which is what a chain that is not listening to itself reads like. Four hundred
+Hertz is a bass amplifier; eight thousand was the rig.
+
+**Fewer usable amplifiers is the campaign working, not failing.** 23 blocks
+refused, 20 of them amplifiers, and a refusal is a block saying it could not be
+measured rather than handing back a squeal. The old 222 included readings of
+oscillation. Those 20 are the high-gain amplifiers and they are still
+unmeasurable: see the unsettled question above about why the loop does not open
+on USB alone.
 
 ### Read what is loaded, without loading anything
 

@@ -228,3 +228,57 @@ func (s *MeasuredPublicTestSuite) TestAReadingAtTheCeilingIsNotTheBlocks() {
 	s.Require().True(at(-2.01).Measured())
 	s.Require().True(at(-20).Measured(), "the ordinary reading")
 }
+
+// TestTheShippedLibraryNamesItsInstrumentAndHeadroom holds the packed
+// measurements to the two fields that say whether they mean anything.
+//
+// The counterpart of the genre check, and here for the same reason: an unnamed
+// instrument is indistinguishable from a library packed before the field
+// existed, so without this a stale pack reads as a claim about no instrument in
+// particular. Every figure in here is a figure about a bass.
+//
+// Headroom is the one that decides whether a reading is of the chain at all. The
+// measuring lead makes the chain feed itself, and the library this replaced was
+// taken without the output turned down: its full amplifiers read a median 46.4%
+// of their energy above 2kHz where the preamps of the same circuits read 0.047%,
+// and its bass amplifiers read centroids between 1,250 and 8,374Hz where they
+// measure between 119 and 325.
+func (s *MeasuredPublicTestSuite) TestTheShippedLibraryNamesItsInstrumentAndHeadroom() {
+	lib, err := measured.BuiltIn()
+	s.Require().NoError(err)
+
+	s.Require().NotEmpty(lib.Instrument,
+		"the packed library names no instrument, so it predates the field: "+
+			"re-pack with `just pack-measured` after a campaign")
+	s.Require().Negative(lib.Headroom,
+		"a library taken at full output is a library of the measuring loop")
+}
+
+// TestNoShippedReadingSitsAtTheConvertersCeiling is the campaign's own evidence.
+//
+// The library this replaced had ten readings the near-ceiling line excluded, two
+// of them bass amplifiers, one reading 96.74% of its energy in the high band. An
+// Ampeg does not do that; the converters did, because the chain was measured at
+// full output and fed itself.
+//
+// Measured at -30dB nothing comes near the ceiling, so the guard now excludes
+// nothing. It stays because headroom is a setting and settings get changed.
+func (s *MeasuredPublicTestSuite) TestNoShippedReadingSitsAtTheConvertersCeiling() {
+	lib, err := measured.BuiltIn()
+	s.Require().NoError(err)
+
+	loud := make([]string, 0, 1)
+
+	for id, block := range lib.Blocks {
+		if block.Refused != "" {
+			continue
+		}
+
+		if block.Clipped || !block.Measured() {
+			loud = append(loud, id)
+		}
+	}
+
+	s.Require().Empty(loud,
+		"a reading this loud is the converters' shaping rather than the block's")
+}

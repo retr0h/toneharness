@@ -93,7 +93,7 @@ func (s *ToneBuildPublicTestSuite) TestTheWorkedExampleBuildsARig() {
 	s.Require().Len(spec.Chain, 2)
 	s.Require().Equal(rig.RoleAmp, spec.Chain[1].Role)
 
-	s.Require().Contains(buf.String(), "closest of 222 measured")
+	s.Require().Contains(buf.String(), "closest of 204 measured")
 }
 
 // TestWithoutASetupItSaysWhatItAssumed covers the optional half.

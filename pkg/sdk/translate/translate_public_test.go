@@ -176,7 +176,7 @@ func (s *TranslatePublicTestSuite) TestARecordingChoosesTheAmplifier() {
 		}
 	}
 
-	s.Require().Contains(said, "closest of 222 measured",
+	s.Require().Contains(said, "closest of 204 measured",
 		"the note says what it chose from and why")
 }
 
