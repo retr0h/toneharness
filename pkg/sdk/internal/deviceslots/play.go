@@ -65,7 +65,7 @@ func (f *Flows) Play(
 	// The same bytes an Import would have written. A preset is seeked through
 	// by a table of byte offsets, so one built any other way is accepted and
 	// then rendered as an empty chain.
-	body, err := f.documentFor(ctx, doc)
+	body, err := f.documentFor(ctx, s.Model().Name, doc)
 	if err != nil {
 		return err
 	}

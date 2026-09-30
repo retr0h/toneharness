@@ -28,6 +28,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
 	flowmocks "github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots/mocks"
@@ -58,8 +60,13 @@ func (s *PlayPublicTestSuite) SetupTest() {
 }
 
 func (s *PlayPublicTestSuite) dev() *playable {
+	ed := mocks.NewMockEditor(s.ctrl)
+	// What the document is built for is checked against what answered, so a
+	// session that names no device cannot be written to.
+	ed.EXPECT().Model().Return(device.Model{Name: "HX Stomp"}).AnyTimes()
+
 	return &playable{
-		MockEditor: mocks.NewMockEditor(s.ctrl),
+		MockEditor: ed,
 		MockLoaded: mocks.NewMockLoaded(s.ctrl),
 	}
 }
@@ -124,6 +131,34 @@ func (s *PlayPublicTestSuite) TestPlayReportsACatalogItCannotRead() {
 		context.Background(), s.dev(), s.preset())
 
 	s.Require().ErrorContains(err, "no catalog")
+}
+
+// TestPlayRefusesACatalogForAnotherPedal is the write nothing else guards.
+//
+// Which catalog names the gear is a static option decided before any
+// handshake, and every one of the four models this package recognises opens a
+// session just as readily. A chain resolved against the Stomp's catalog and
+// spliced into a Stomp-shaped blank, written to a Floor, is a document the
+// device accepts and then draws as empty.
+func (s *PlayPublicTestSuite) TestPlayRefusesACatalogForAnotherPedal() {
+	d := &playable{
+		MockEditor: mocks.NewMockEditor(s.ctrl),
+		MockLoaded: mocks.NewMockLoaded(s.ctrl),
+	}
+	d.MockEditor.EXPECT().Model().
+		Return(device.Model{Name: "Helix Floor"}).AnyTimes()
+
+	c := flowmocks.NewMockCatalogs(s.ctrl)
+	c.EXPECT().Catalog(gomock.Any()).DoAndReturn(
+		func(context.Context) (*catalog.Catalog, error) { return catalog.BuiltIn() },
+	)
+
+	err := (&deviceslots.Flows{Catalogs: c}).Play(
+		context.Background(), d, s.preset())
+
+	s.Require().ErrorIs(err, deviceslots.ErrWrongDevice)
+	s.Require().ErrorContains(err, "Helix Floor")
+	s.Require().ErrorContains(err, "HX Stomp")
 }
 
 // TestPlayNeedsASessionThatCanReplace covers a session without the capability.

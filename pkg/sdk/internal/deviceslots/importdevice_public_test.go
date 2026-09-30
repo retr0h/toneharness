@@ -62,8 +62,14 @@ func (w *writable) Close() error { return nil }
 
 func (s *ImportDevicePublicTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
+
+	ed := mocks.NewMockEditor(s.ctrl)
+	// What the document is built for is checked against what answered, so a
+	// session that names no device cannot be written to.
+	ed.EXPECT().Model().Return(device.Model{Name: "HX Stomp"}).AnyTimes()
+
 	s.dev = &writable{
-		MockEditor: mocks.NewMockEditor(s.ctrl),
+		MockEditor: ed,
 		MockWriter: mocks.NewMockWriter(s.ctrl),
 	}
 }
@@ -296,7 +302,10 @@ func (s *ImportDevicePublicTestSuite) TestImport() {
 
 			dev := device.Editor(s.dev)
 			if tt.readOnly {
-				dev = mocks.NewMockEditor(s.ctrl)
+				ro := mocks.NewMockEditor(s.ctrl)
+				ro.EXPECT().Model().
+					Return(device.Model{Name: "HX Stomp"}).AnyTimes()
+				dev = ro
 			}
 
 			// The destination is read before it is replaced, so that what it

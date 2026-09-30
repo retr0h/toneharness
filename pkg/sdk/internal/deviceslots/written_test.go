@@ -87,7 +87,7 @@ func (s *WrittenTestSuite) TestBuildingAPresetMatchesWhatTheDeviceWrote() {
 	doc, err := fileslots.ReadPreset(ctx, filepath.Join("testdata", "hx-stomp.written.hlx"))
 	s.Require().NoError(err)
 
-	body, err := f.documentFor(ctx, doc)
+	body, err := f.documentFor(ctx, "HX Stomp", doc)
 	s.Require().NoError(err)
 
 	got, err := wire.DecodePreset(body)
@@ -123,7 +123,7 @@ func (s *WrittenTestSuite) TestBuiltDocumentLooksLikeTheDeviceWrote() {
 		filepath.Join("testdata", "hx-stomp.written.hlx"))
 	s.Require().NoError(err)
 
-	body, err := (&Flows{Catalogs: c}).documentFor(ctx, doc)
+	body, err := (&Flows{Catalogs: c}).documentFor(ctx, "HX Stomp", doc)
 	s.Require().NoError(err)
 
 	got, err := wire.DecodePreset(body)
