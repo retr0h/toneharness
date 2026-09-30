@@ -157,7 +157,7 @@ func MeasureBlocks(
 	//
 	// The other four measuring commands pin first and say so. This was the one
 	// that did not.
-	lib.Volume = levelled(w, opts.Volume)
+	lib.Volume = levelled(w, opts.Volume, reamp.Held)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 	lib.Headroom = opts.Headroom
 

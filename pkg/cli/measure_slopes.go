@@ -33,6 +33,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/reamp"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
 
@@ -96,7 +97,7 @@ func Slopes(
 	// Pinned first, because the committed slopes this compares against were
 	// taken at a stated level and a ratio between two levels is not a ratio
 	// about the control.
-	levelled(w, opts.Volume)
+	levelled(w, opts.Volume, reamp.Held)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 
 	made, preset, _, err := built(ctx, TuneOptions{

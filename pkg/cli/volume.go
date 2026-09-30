@@ -50,6 +50,14 @@ import (
 // "nobody checked" is not the same claim as "it was silent".
 const unknownVolume = -1
 
+// holds puts the computer's output level where a campaign wants it, answering
+// where it ended up and whether it had to move.
+//
+// A function rather than a package call, because reamp.Held reaches the
+// platform and the four answers below are four branches nothing could reach
+// otherwise. reamp.Held is what every caller passes.
+type holds func(want int) (int, bool, error)
+
 // levelled puts the computer's output where a campaign wants it, and answers
 // what it is actually at.
 //
@@ -59,8 +67,9 @@ const unknownVolume = -1
 func levelled(
 	w io.Writer,
 	want int,
+	hold holds,
 ) int {
-	at, moved, err := reamp.Held(want)
+	at, moved, err := hold(want)
 
 	switch {
 	case errors.Is(err, reamp.ErrNoVolume):

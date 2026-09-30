@@ -37,6 +37,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/reamp"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
@@ -114,7 +115,7 @@ func MeasureControls(
 ) error {
 	// Pinned first, because every reading below depends on it and a level
 	// somebody left somewhere else is a different measurement.
-	level := levelled(w, opts.Volume)
+	level := levelled(w, opts.Volume, reamp.Held)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 	cat, err := opts.Client.Catalog(ctx)
 	if err != nil {

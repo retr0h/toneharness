@@ -83,27 +83,33 @@ func (s *InstrumentPublicTestSuite) TestInstrumentFor() {
 		{"a bass amp", []catalog.ModelID{"drive", "amp-bass", "cab"}, plan.Bass},
 		{
 			"a bass amp after a guitar one still decides it",
-			[]catalog.ModelID{"amp-guitar", "amp-bass"}, plan.Bass,
+			[]catalog.ModelID{"amp-guitar", "amp-bass"},
+			plan.Bass,
 		},
 		{
 			"and before one",
-			[]catalog.ModelID{"amp-bass", "amp-guitar"}, plan.Bass,
+			[]catalog.ModelID{"amp-bass", "amp-guitar"},
+			plan.Bass,
 		},
 		{
 			"a preamp is a guitar amplifier, not a chain to give up on",
-			[]catalog.ModelID{"drive", "amp-preamp"}, plan.Guitar,
+			[]catalog.ModelID{"drive", "amp-preamp"},
+			plan.Guitar,
 		},
 		{
 			"so is one tagged nothing at all",
-			[]catalog.ModelID{"amp-blank"}, plan.Guitar,
+			[]catalog.ModelID{"amp-blank"},
+			plan.Guitar,
 		},
 		{
 			"no amplifier claims no instrument",
-			[]catalog.ModelID{"drive", "cab"}, plan.NoAmp,
+			[]catalog.ModelID{"drive", "cab"},
+			plan.NoAmp,
 		},
 		{
 			"a model the catalog does not carry is not an amplifier",
-			[]catalog.ModelID{"drive", "nobody-ships-this"}, plan.NoAmp,
+			[]catalog.ModelID{"drive", "nobody-ships-this"},
+			plan.NoAmp,
 		},
 		{"an empty chain", nil, plan.NoAmp},
 	}
@@ -129,7 +135,8 @@ func (s *InstrumentPublicTestSuite) TestAmpAtIsTheFirstOne() {
 		{"the only one", []catalog.ModelID{"drive", "amp-bass", "cab"}, 1},
 		{
 			"the first, even when a later one decides the instrument",
-			[]catalog.ModelID{"drive", "amp-guitar", "amp-bass"}, 1,
+			[]catalog.ModelID{"drive", "amp-guitar", "amp-bass"},
+			1,
 		},
 		{"one nobody tagged still counts", []catalog.ModelID{"amp-blank"}, 0},
 		{"none", []catalog.ModelID{"drive", "cab"}, -1},

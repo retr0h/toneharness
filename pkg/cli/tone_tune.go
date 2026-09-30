@@ -36,6 +36,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/reamp"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
@@ -144,7 +145,7 @@ func Tune(
 	// Pinned first, and it matters more here than anywhere: the loop reads a
 	// slope, moves a dial and reads again, so a level that drifts mid-run is a
 	// slope the solver will spend dials chasing.
-	levelled(w, opts.Volume)
+	levelled(w, opts.Volume, reamp.Held)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 
 	if opts.Genre == "" {

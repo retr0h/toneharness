@@ -264,6 +264,20 @@ func (s *ControlsRunTestSuite) TestControlsSweepsDialsAndLists() {
 	s.Require().InDelta(1, dial.Span.Low, 0.001, "inches, from the catalog")
 	s.Require().InDelta(12, dial.Span.High, 0.001)
 	s.Require().True(dial.Span.FromCatalog)
+
+	// The positions themselves, not how many there are. Three readings taken
+	// at the same place are still three points, and a line through three
+	// identical points is still a fit, so the count and the fit both survive
+	// a dial that never moved. This is the curve everything downstream is
+	// built on.
+	s.Require().InDelta(1, dial.Points[0].Value, 0.001, "the bottom of the range")
+	s.Require().InDelta(6.5, dial.Points[1].Value, 0.001, "the middle")
+	s.Require().InDelta(12, dial.Points[2].Value, 0.001, "the top")
+
+	// And a list is every setting, in order, rather than twelve of one.
+	for at := range mic.Points {
+		s.Require().InDelta(float64(at), mic.Points[at].Value, 0.001)
+	}
 }
 
 // TestControlsRecordsWhatWentSilent covers a control that mutes the chain.

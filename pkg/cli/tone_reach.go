@@ -31,6 +31,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/reamp"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
 
@@ -130,7 +131,7 @@ func Reach(
 	// Pinned first. An amplifier's distortion depends on how hard it is driven,
 	// so a run at another level asks whether a different chain reaches the
 	// target.
-	levelled(w, opts.Volume)
+	levelled(w, opts.Volume, reamp.Held)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 
 	target, err := targetFor(ctx, TuneOptions{

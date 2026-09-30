@@ -65,6 +65,43 @@ func (s *LeastTestSuite) TestTwoFiguresOneControl() {
 	s.Require().InDelta(2, got[0], 0.01, "both rows agree on two")
 }
 
+// TestThePivotIsTakenFromALaterRow covers the row swap.
+//
+// Reached through eliminate rather than through least, and that is the finding
+// rather than a convenience. least forms the normal equations, and AᵀA is
+// symmetric and positive semi-definite, for which elimination without pivoting
+// is already stable: disabling the swap outright changes least's answer in the
+// fifteenth digit or not at all, whatever system it is handed. Every attempt to
+// catch it from the outside was a test that could not fail.
+//
+// So the swap is dead weight for the only caller there is today, and it is
+// exercised here because eliminate's own comment says the arithmetic below it is
+// somebody else's to call next. A guard nobody has ever executed is a guard
+// nobody knows works.
+//
+// A leading entry of exactly nothing is not a singular system when a row below
+// has one. Without the swap this is refused as having no pivot at all.
+func (s *LeastTestSuite) TestThePivotIsTakenFromALaterRow() {
+	got, err := eliminate([][]float64{{0, 1, 3}, {1, 0, 2}}, 2)
+
+	s.Require().NoError(err, "a later row has the pivot this column needs")
+	s.Require().Len(got, 2)
+	s.Require().InDelta(2, got[0], 0.001)
+	s.Require().InDelta(3, got[1], 0.001)
+}
+
+// TestThePivotIsTheLargestRather covers which row the swap picks.
+//
+// The largest remaining entry rather than the first non-zero one, so a tiny
+// leading entry is not divided by when a bigger one is available.
+func (s *LeastTestSuite) TestThePivotIsTheLargestRather() {
+	got, err := eliminate([][]float64{{1e-11, 1, 1}, {4, 0, 8}}, 2)
+
+	s.Require().NoError(err)
+	s.Require().InDelta(2, got[0], 0.001, "the row with 4 in it led")
+	s.Require().InDelta(1, got[1], 0.001)
+}
+
 // TestAnAxisWithNoToleranceBesideOneThatHasSome covers the mixed target.
 //
 // Toward reports every axis it was given and solves only the ones it can, so an

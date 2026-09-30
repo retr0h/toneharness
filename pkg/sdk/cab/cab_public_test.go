@@ -203,6 +203,38 @@ func (s *CabPublicTestSuite) TestItEndsQuietly() {
 		"the last tap is not where the energy is")
 }
 
+// TestItPutsItsEnergyAsEarlyAsItCan covers the causal fold.
+//
+// minimumPhase claims a response with "all of its energy as early as that
+// magnitude allows", and deleting the half of the fold that zeroes everything
+// past the midpoint left every test in the tree green. TestItEndsQuietly
+// checks one number, the final tap against the peak, and a response whose
+// energy is smeared across the whole buffer still ends quietly.
+//
+// The energy centroid is what moves. Neither the peak position nor the share
+// of energy in the first eighth does: both read the same to six places with
+// the fold and without it, because almost all of the energy is in the first
+// few taps either way. The centroid of this response is 1.69 taps folded and
+// 2.65 unfolded, which is the difference between a response that starts at
+// once and one that takes half again as long to.
+func (s *CabPublicTestSuite) TestItPutsItsEnergyAsEarlyAsItCan() {
+	got, err := cab.Match(
+		speaker(cab.Long, 600), speaker(cab.Long, 3000), cab.Long)
+	s.Require().NoError(err)
+
+	var all, moment float64
+
+	for at, v := range got {
+		all += v * v
+		moment += float64(at) * v * v
+	}
+
+	s.Require().Positive(all, "a response with no energy proves nothing")
+	s.Require().Less(moment/all, 2.0,
+		"a minimum-phase response puts its energy as early as its magnitude "+
+			"allows; without the fold this is 2.65 taps")
+}
+
 // TestOnlyWhatADeviceLoads covers the two lengths.
 func (s *CabPublicTestSuite) TestOnlyWhatADeviceLoads() {
 	for _, taps := range []int{0, 512, 1000, 4096} {

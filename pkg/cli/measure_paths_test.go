@@ -26,6 +26,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -264,6 +265,55 @@ func (s *MeasurePathsTestSuite) TestTheReportNamesEveryFigureItMeasured() {
 	for _, f := range measured.Named() {
 		s.Require().Contains(buf.String(), string(f),
 			"%s is measured and the report does not name it", f)
+	}
+}
+
+// TestTheReportSaysWhichWayRound covers the comparison the answer turns on.
+//
+// The line a person reads to decide whether a control is worth giving to the
+// solver. Inverting it — `moved < floor*3` — calls every control that moves a
+// figure unaimable and every control that does not aimable, and nothing
+// noticed: the suites that reach report only check that each figure is named.
+//
+// Two figures in one reading, one well over three times its floor and one well
+// under, so the two lines have to disagree.
+func (s *MeasurePathsTestSuite) TestTheReportSaysWhichWayRound() {
+	var buf bytes.Buffer
+
+	report(&buf, measured.Curve{
+		Control: "Bass",
+		Noise: map[audio.Figure]float64{
+			audio.KeyMid:  0.02,
+			audio.KeyHigh: 0.02,
+		},
+		Points: []measured.Point{
+			// Mid moves seven, against a floor of 0.06. High moves 0.01,
+			// which is under it.
+			{Value: 0, Figures: measured.Figures{Mid: 8, High: 1}},
+			{Value: 1, Figures: measured.Figures{Mid: 15, High: 1.01}},
+		},
+	})
+
+	for _, want := range []string{"mid", "high"} {
+		line := ""
+
+		for _, at := range strings.Split(buf.String(), "\n") {
+			if strings.Contains(at, want+" ") {
+				line = at
+			}
+		}
+
+		s.Require().NotEmpty(line, "the report names %s", want)
+
+		if want == "mid" {
+			s.Require().Contains(line, "real? yes",
+				"a figure well over three times its floor is worth solving for")
+
+			continue
+		}
+
+		s.Require().Contains(line, "real? no",
+			"and one under it is the noise")
 	}
 }
 
