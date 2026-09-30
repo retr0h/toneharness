@@ -160,16 +160,30 @@ type carried struct {
 	mixed      bool
 }
 
-// played records what one record was played on, and notices a genre that pools
-// two instruments.
+// played records what one record was played on, and notices a genre that cannot
+// name one instrument.
 //
-// The first instrument wins and a second clears it. A genre drawn from a bass
-// tree and a guitar tree has a centre of gravity that describes neither, and it
-// would sit in the middle looking like an ordinary answer.
+// The first instrument wins and anything disagreeing with it clears the answer. A
+// genre drawn from a bass tree and a guitar tree has a centre of gravity that
+// describes neither, and it would sit in the middle looking like an ordinary
+// answer.
+//
+// **A record that names no instrument counts as a disagreement**, which is the
+// case that is easy to get wrong. A player sitting directly under the corpus root
+// rather than under an instrument's tree has no instrument: `instrumentOf`
+// answers empty for it. Treated as "nothing yet", that player is absorbed into
+// whichever instrument the next record names, and a genre half made of records
+// nobody classified reads as pure bass. Not knowing is not agreeing.
 func (c *carried) played(
 	instrument string,
 ) {
 	if c.mixed {
+		return
+	}
+
+	if instrument == "" {
+		c.instrument, c.mixed = "", true
+
 		return
 	}
 

@@ -359,6 +359,45 @@ func (s *MeasuredGenresPublicTestSuite) TestAGenrePooledAcrossTwoInstrumentsMayN
 		"nine records from three players, and still nothing to aim at")
 }
 
+// TestARecordNamingNoInstrumentIsADisagreement covers the gap that reads as
+// agreement.
+//
+// A player sitting directly under the corpus root rather than under an
+// instrument's tree has no instrument: the manifests take it from the directory
+// above the player, and there is none. Treated as "nothing recorded yet", that
+// player is absorbed into whichever instrument the next record names, and a genre
+// half made of records nobody classified reads as pure bass and may be aimed at.
+//
+// Not knowing is not agreeing, so it clears the answer the same way a second
+// instrument does.
+func (s *MeasuredGenresPublicTestSuite) TestARecordNamingNoInstrumentIsADisagreement() {
+	// Two bass players, and one sitting at the root with no instrument above it.
+	s.playerOn("bass", "a", "punk", 100, "t1", "t2", "t3")
+	s.playerOn("bass", "b", "punk", 110, "t1", "t2", "t3")
+	s.playerOn(".", "rootling", "punk", 120, "t1", "t2", "t3")
+
+	for i, id := range []string{"w", "x"} {
+		s.player(id, "", 200+float64(i)*20, "t1")
+	}
+
+	got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+	s.Require().NoError(err)
+
+	var punk audio.Genre
+
+	for _, g := range got {
+		if g.Slug == "punk" {
+			punk = g
+		}
+	}
+
+	s.Require().Equal("punk", punk.Slug)
+	s.Require().Empty(punk.Instrument,
+		"one unclassified player means the genre names no instrument")
+	s.Require().False(punk.Usable,
+		"and nothing may aim at figures whose instrument is unknown")
+}
+
 // TestAGenreUnderTheThresholdIsStillMeasured covers reporting rather than
 // skipping.
 //
