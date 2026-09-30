@@ -179,7 +179,6 @@ func (s *MainTestSuite) TestATestFileSaysWhichKindItIs() {
 
 			return nil
 		case !strings.HasSuffix(path, "_test.go"),
-			strings.HasSuffix(path, "_public_test.go"),
 			d.Name() == "export_test.go":
 			return nil
 		}
@@ -189,9 +188,17 @@ func (s *MainTestSuite) TestATestFileSaysWhichKindItIs() {
 			return err
 		}
 
-		s.Require().False(strings.HasSuffix(f.Name.Name, "_test"),
-			"%s is in package %s, so it is a public test and its name should "+
-				"end in _public_test.go", path, f.Name.Name)
+		// Both directions. Skipping the _public_ suffix meant only one was
+		// ever checked, so fourteen files in pkg/cli sat in `package cli`
+		// under a name that says they are outside it — the inverse of the sin
+		// this test was written for, and invisible to it.
+		outside := strings.HasSuffix(f.Name.Name, "_test")
+		named := strings.HasSuffix(path, "_public_test.go")
+
+		s.Require().Equal(named, outside,
+			"%s is in package %s: a file in the _test package is named "+
+				"_public_test.go and one inside the package is named _test.go",
+			path, f.Name.Name)
 
 		return nil
 	})
@@ -795,8 +802,8 @@ func isContext(
 var coversAConcern = map[string]string{
 	"hints_test.go":                                       "every command this repository names, against the cobra tree",
 	"pkg/cli/cli_face_public_test.go":                     "the face a terminal presents, across the package",
-	"pkg/cli/measure_public_test.go":                      "the pieces three measuring commands share",
-	"pkg/cli/measure_run_public_test.go":                  "a campaign end to end",
+	"pkg/cli/measure_test.go":                             "the pieces three measuring commands share",
+	"pkg/cli/measure_run_test.go":                         "a campaign end to end",
 	"pkg/cli/internal/paint/paint_public_test.go":         "the visual language, across theme, chain and yaml",
 	"pkg/cli/measure_paths_test.go":                       "what the three measuring commands do when refused",
 	"pkg/cli/technique_test.go":                           "a helper in rig.go, which #136 renames wholesale",
