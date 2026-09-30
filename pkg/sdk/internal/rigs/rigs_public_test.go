@@ -201,55 +201,133 @@ func (s *RigsPublicTestSuite) TestFind() {
 	}
 }
 
-// TestList writes out what is on the shelf.
+// TestList covers List, which reads every rig a Source holds.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *RigsPublicTestSuite) TestList() {
-	tests := []struct {
+	for _, tt := range []struct {
 		name string
-		dir  string
-		// the identifiers the answer must carry, in any order.
-		ids []string
-		err bool
+		then func()
 	}{
 		{
-			name: "one entry per rig",
-			dir:  s.good(),
-			ids:  []string{"mike-dirnt"},
-		},
-		{
-			// A shelf with nothing on it is not a failure. Somebody who
-			// just made the directory is owed an empty answer.
-			name: "a shelf with nothing on it",
-			dir:  s.T().TempDir(),
-		},
-		{
-			name: "a directory that will not load",
-			dir:  s.mixed(),
-			err:  true,
-		},
-	}
+			name: "list",
+			then: func() {
+				tests := []struct {
+					name string
+					dir  string
+					// the identifiers the answer must carry, in any order.
+					ids []string
+					err bool
+				}{
+					{
+						name: "one entry per rig",
+						dir:  s.good(),
+						ids:  []string{"mike-dirnt"},
+					},
+					{
+						// A shelf with nothing on it is not a failure. Somebody who
+						// just made the directory is owed an empty answer.
+						name: "a shelf with nothing on it",
+						dir:  s.T().TempDir(),
+					},
+					{
+						name: "a directory that will not load",
+						dir:  s.mixed(),
+						err:  true,
+					},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						all, err := rigs.List(rigs.Source{Dir: tt.dir})
+
+						if tt.err {
+							s.Require().Error(err)
+
+							return
+						}
+
+						s.Require().NoError(err)
+						s.Require().Equal(tt.dir, all.Dir)
+
+						got := ids(all.Rigs)
+
+						for _, want := range tt.ids {
+							s.Require().Contains(got, want)
+						}
+
+						if tt.ids == nil {
+							s.Require().Empty(all.Rigs)
+						}
+					})
+				}
+			},
+		},
+		{
+			// rig to load without it. A file somebody wrote and got wrong is the case where
+			// saying so matters, and a rig quietly missing the words it was built from is
+			// the same bug the split exists to remove.
+			name: "an ask that will not load is reported",
+			then: func() {
+				tests := []struct {
+					name string
+					ask  string
+					// unreadable takes the mode off the file instead of writing nonsense.
+					unreadable bool
+					err        string
+				}{
+					{
+						name: "an ask claiming a field the contract refuses",
+						ask:  "schema: ToneSpec\nchian: []\n",
+						err:  `"chian" is unsupported`,
+					},
+					{
+						name: "an ask that is not a ToneSpec at all",
+						ask:  "schema: RigSpec\nid: theirs\n",
+						err:  "ToneSpec",
+					},
+					{
+						name:       "an ask nobody may open",
+						ask:        "schema: ToneSpec\n",
+						unreadable: true,
+						err:        "opening",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						if tt.unreadable && os.Geteuid() == 0 {
+							s.T().Skip("root reads a file whatever its mode")
+						}
+
+						dir := s.T().TempDir()
+						artists := filepath.Join(dir, "artists")
+						s.Require().NoError(os.MkdirAll(artists, 0o750))
+
+						s.Require().NoError(os.WriteFile(filepath.Join(artists, "theirs.yaml"),
+							[]byte("schema: RigSpec\nversion: 2\nid: theirs\ninstrument: bass\n"+
+								"chain:\n  - {role: amp, gear: Ampeg SVT}\n"), 0o600))
+
+						at := filepath.Join(artists, "theirs.tone.yaml")
+						s.Require().NoError(os.WriteFile(at, []byte(tt.ask), 0o600))
+
+						if tt.unreadable {
+							s.Require().NoError(os.Chmod(at, 0o000))
+						}
+
+						_, err := rigs.List(rigs.Source{Dir: dir})
+						s.Require().Error(err)
+						s.Require().Contains(err.Error(), tt.err)
+						// Named by the subject it belongs to rather than by a name with a
+						// stray ".tone" on the end.
+						s.Require().Contains(err.Error(), "theirs")
+					})
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			all, err := rigs.List(rigs.Source{Dir: tt.dir})
-
-			if tt.err {
-				s.Require().Error(err)
-
-				return
-			}
-
-			s.Require().NoError(err)
-			s.Require().Equal(tt.dir, all.Dir)
-
-			got := ids(all.Rigs)
-
-			for _, want := range tt.ids {
-				s.Require().Contains(got, want)
-			}
-
-			if tt.ids == nil {
-				s.Require().Empty(all.Rigs)
-			}
+			tt.then()
 		})
 	}
 }
@@ -350,66 +428,6 @@ func specIDs(
 
 // TestAnAskThatWillNotLoadIsReported covers the half of a pair that is wrong.
 //
-// Reported the same way a rig that will not parse is, rather than leaving the
-// rig to load without it. A file somebody wrote and got wrong is the case where
-// saying so matters, and a rig quietly missing the words it was built from is
-// the same bug the split exists to remove.
-func (s *RigsPublicTestSuite) TestAnAskThatWillNotLoadIsReported() {
-	tests := []struct {
-		name string
-		ask  string
-		// unreadable takes the mode off the file instead of writing nonsense.
-		unreadable bool
-		err        string
-	}{
-		{
-			name: "an ask claiming a field the contract refuses",
-			ask:  "schema: ToneSpec\nchian: []\n",
-			err:  `"chian" is unsupported`,
-		},
-		{
-			name: "an ask that is not a ToneSpec at all",
-			ask:  "schema: RigSpec\nid: theirs\n",
-			err:  "ToneSpec",
-		},
-		{
-			name:       "an ask nobody may open",
-			ask:        "schema: ToneSpec\n",
-			unreadable: true,
-			err:        "opening",
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			if tt.unreadable && os.Geteuid() == 0 {
-				s.T().Skip("root reads a file whatever its mode")
-			}
-
-			dir := s.T().TempDir()
-			artists := filepath.Join(dir, "artists")
-			s.Require().NoError(os.MkdirAll(artists, 0o750))
-
-			s.Require().NoError(os.WriteFile(filepath.Join(artists, "theirs.yaml"),
-				[]byte("schema: RigSpec\nversion: 2\nid: theirs\ninstrument: bass\n"+
-					"chain:\n  - {role: amp, gear: Ampeg SVT}\n"), 0o600))
-
-			at := filepath.Join(artists, "theirs.tone.yaml")
-			s.Require().NoError(os.WriteFile(at, []byte(tt.ask), 0o600))
-
-			if tt.unreadable {
-				s.Require().NoError(os.Chmod(at, 0o000))
-			}
-
-			_, err := rigs.List(rigs.Source{Dir: dir})
-			s.Require().Error(err)
-			s.Require().Contains(err.Error(), tt.err)
-			// Named by the subject it belongs to rather than by a name with a
-			// stray ".tone" on the end.
-			s.Require().Contains(err.Error(), "theirs")
-		})
-	}
-}
 
 func TestRigsPublicTestSuite(
 	t *testing.T,

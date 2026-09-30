@@ -99,66 +99,156 @@ func (s *BackingPublicTestSuite) TestARigIsNotItsOwnOrphan() {
 // TestADirectoryWithNoManifest covers a directory somebody made and has not
 // filled, which claims nothing and is nobody's problem.
 //
-// Built here rather than kept in testdata, because git does not track an
-// empty directory: as a fixture this passed locally and never ran anywhere
-// else, which is the kind of test that reports coverage it does not have.
-func (s *BackingPublicTestSuite) TestADirectoryWithNoManifest() {
-	corpus := s.T().TempDir()
+// TestBacking covers Backing, which reads which records back each rig, and
+// holds them to its era.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *BackingPublicTestSuite) TestBacking() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// empty directory: as a fixture this passed locally and never ran anywhere
+			// else, which is the kind of test that reports coverage it does not have.
+			name: "a directory with no manifest",
+			then: func() {
+				corpus := s.T().TempDir()
 
-	s.Require().NoError(os.MkdirAll(filepath.Join(corpus, "empty-dir"), 0o750))
-	s.Require().NoError(os.MkdirAll(filepath.Join(corpus, "mccartney"), 0o750))
+				s.Require().NoError(os.MkdirAll(filepath.Join(corpus, "empty-dir"), 0o750))
+				s.Require().NoError(os.MkdirAll(filepath.Join(corpus, "mccartney"), 0o750))
 
-	named, err := os.ReadFile(
-		filepath.Join("testdata", "backing", "music", "mccartney", "corpus.yaml"))
-	s.Require().NoError(err)
-	s.Require().NoError(os.WriteFile(
-		filepath.Join(corpus, "mccartney", "corpus.yaml"), named, 0o600))
+				named, err := os.ReadFile(
+					filepath.Join("testdata", "backing", "music", "mccartney", "corpus.yaml"))
+				s.Require().NoError(err)
+				s.Require().NoError(os.WriteFile(
+					filepath.Join(corpus, "mccartney", "corpus.yaml"), named, 0o600))
 
-	got, err := rigs.Backing(
-		rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")}, corpus)
-	s.Require().NoError(err)
+				got, err := rigs.Backing(
+					rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")}, corpus)
+				s.Require().NoError(err)
 
-	seen := map[string]bool{}
-	for _, b := range got {
-		seen[b.ID] = true
+				seen := map[string]bool{}
+				for _, b := range got {
+					seen[b.ID] = true
+				}
+
+				s.Require().True(seen["mccartney"], "records nobody's rig is named for")
+				s.Require().False(seen["empty-dir"], "nothing in it to report")
+			},
+		},
+		{
+			// manifest is broken, which is reported rather than passed over.
+			name: "an orphan manifest that will not read",
+			then: func() {
+				_, err := rigs.Backing(
+					rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")},
+					filepath.Join("testdata", "backing", "brokenorphan"),
+				)
+
+				s.Require().Error(err)
+			},
+		},
+		{
+			// which is caught reading the rigs' own records.
+			name: "a corpus directory that is a file",
+			then: func() {
+				_, err := rigs.Backing(
+					rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")},
+					filepath.Join("testdata", "backing", "notadir", "in-era"),
+				)
+
+				s.Require().Error(err)
+			},
+		},
+		{
+			// the scan for directories nobody claims, which is the other way in.
+			name: "a corpus that is a file with no rigs to read",
+			then: func() {
+				_, err := rigs.Backing(
+					rigs.Source{Dir: filepath.Join("testdata", "backing", "notadir")},
+					filepath.Join("testdata", "backing", "notadir", "in-era"),
+				)
+
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), "in-era")
+			},
+		},
+		{
+			// reports rather than fails: the rigs still read.
+			name: "a corpus that is not there",
+			then: func() {
+				got, err := rigs.Backing(
+					rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")},
+					filepath.Join("testdata", "backing", "nowhere"),
+				)
+
+				s.Require().NoError(err)
+				s.Require().NotEmpty(got)
+
+				for _, b := range got {
+					s.Require().Empty(b.Records)
+				}
+			},
+		},
+		{
+			name: "a manifest that will not read",
+			then: func() {
+				_, err := rigs.Backing(
+					rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")},
+					filepath.Join("testdata", "backing", "broken"),
+				)
+
+				s.Require().Error(err)
+			},
+		},
+		{
+			// is the same thing as a misspelt directory and reads the same way.
+			name: "a rig directory nobody has",
+			then: func() {
+				got, err := rigs.Backing(
+					rigs.Source{Dir: filepath.Join("testdata", "nowhere")},
+					filepath.Join("testdata", "backing", "music"),
+				)
+
+				s.Require().NoError(err)
+				s.Require().NotEmpty(got)
+
+				for _, b := range got {
+					s.Require().True(b.NoRig, b.ID)
+				}
+			},
+		},
+		{
+			name: "a corpus path that is not a directory",
+			then: func() {
+				_, err := rigs.Backing(
+					rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")},
+					filepath.Join("testdata", "backing", "notadir"),
+				)
+
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), "in-era")
+			},
+		},
+		{
+			// to fix, which is what Load does, and this reports it rather than answering
+			// about the rigs that happened to parse.
+			name: "a rig that will not read",
+			then: func() {
+				_, err := rigs.Backing(
+					rigs.Source{Dir: "testdata"},
+					filepath.Join("testdata", "backing", "music"),
+				)
+
+				s.Require().Error(err)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
-
-	s.Require().True(seen["mccartney"], "records nobody's rig is named for")
-	s.Require().False(seen["empty-dir"], "nothing in it to report")
-}
-
-// TestAnOrphanManifestThatWillNotRead covers a directory no rig claims whose
-// manifest is broken, which is reported rather than passed over.
-func (s *BackingPublicTestSuite) TestAnOrphanManifestThatWillNotRead() {
-	_, err := rigs.Backing(
-		rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")},
-		filepath.Join("testdata", "backing", "brokenorphan"),
-	)
-
-	s.Require().Error(err)
-}
-
-// TestACorpusDirectoryThatIsAFile covers the corpus argument naming a file,
-// which is caught reading the rigs' own records.
-func (s *BackingPublicTestSuite) TestACorpusDirectoryThatIsAFile() {
-	_, err := rigs.Backing(
-		rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")},
-		filepath.Join("testdata", "backing", "notadir", "in-era"),
-	)
-
-	s.Require().Error(err)
-}
-
-// TestACorpusThatIsAFileWithNoRigsToRead covers the same argument reaching
-// the scan for directories nobody claims, which is the other way in.
-func (s *BackingPublicTestSuite) TestACorpusThatIsAFileWithNoRigsToRead() {
-	_, err := rigs.Backing(
-		rigs.Source{Dir: filepath.Join("testdata", "backing", "notadir")},
-		filepath.Join("testdata", "backing", "notadir", "in-era"),
-	)
-
-	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "in-era")
 }
 
 // TestARigThatStatesNoEra covers what cannot be checked.
@@ -184,75 +274,13 @@ func (s *BackingPublicTestSuite) TestARigNobodyHasMeasured() {
 
 // TestACorpusThatIsNotThere covers the path being wrong.
 //
-// A directory nobody has is the same as a player nobody has measured, so it
-// reports rather than fails: the rigs still read.
-func (s *BackingPublicTestSuite) TestACorpusThatIsNotThere() {
-	got, err := rigs.Backing(
-		rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")},
-		filepath.Join("testdata", "backing", "nowhere"),
-	)
-
-	s.Require().NoError(err)
-	s.Require().NotEmpty(got)
-
-	for _, b := range got {
-		s.Require().Empty(b.Records)
-	}
-}
-
-// TestAManifestThatWillNotRead covers a corpus somebody broke.
-func (s *BackingPublicTestSuite) TestAManifestThatWillNotRead() {
-	_, err := rigs.Backing(
-		rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")},
-		filepath.Join("testdata", "backing", "broken"),
-	)
-
-	s.Require().Error(err)
-}
 
 // TestARigDirectoryNobodyHas covers reading a corpus with no rigs to read
 // it against.
 //
-// Not an empty answer: the records are there and nothing claims them, which
-// is the same thing as a misspelt directory and reads the same way.
-func (s *BackingPublicTestSuite) TestARigDirectoryNobodyHas() {
-	got, err := rigs.Backing(
-		rigs.Source{Dir: filepath.Join("testdata", "nowhere")},
-		filepath.Join("testdata", "backing", "music"),
-	)
-
-	s.Require().NoError(err)
-	s.Require().NotEmpty(got)
-
-	for _, b := range got {
-		s.Require().True(b.NoRig, b.ID)
-	}
-}
-
-// TestACorpusPathThatIsNotADirectory covers a corpus argument naming a file.
-func (s *BackingPublicTestSuite) TestACorpusPathThatIsNotADirectory() {
-	_, err := rigs.Backing(
-		rigs.Source{Dir: filepath.Join("testdata", "backing", "rigs")},
-		filepath.Join("testdata", "backing", "notadir"),
-	)
-
-	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "in-era")
-}
 
 // TestARigThatWillNotRead covers a rig directory holding a broken file.
 //
-// A half-read knowledge base is worse than a clear complaint about the file
-// to fix, which is what Load does, and this reports it rather than answering
-// about the rigs that happened to parse.
-func (s *BackingPublicTestSuite) TestARigThatWillNotRead() {
-	_, err := rigs.Backing(
-		rigs.Source{Dir: "testdata"},
-		filepath.Join("testdata", "backing", "music"),
-	)
-
-	s.Require().Error(err)
-}
 
 func TestBackingPublicTestSuite(
 	t *testing.T,

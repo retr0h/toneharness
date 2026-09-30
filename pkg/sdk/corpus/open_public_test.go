@@ -35,53 +35,74 @@ type OpenPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestNoPathIsTheOnesThatShip is what every caller who has not measured their
-// own corpus gets.
-func (s *OpenPublicTestSuite) TestNoPathIsTheOnesThatShip() {
-	got, err := corpus.Open("")
+// TestOpen covers Open, which reads statistics from a path, or the ones that
+// ship when there is none.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *OpenPublicTestSuite) TestOpen() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// own corpus gets.
+			name: "no path is the ones that ship",
+			then: func() {
+				got, err := corpus.Open("")
 
-	s.Require().NoError(err)
-	s.Require().NotNil(got)
-	s.Require().NotEmpty(got.Models, "the measured corpus, not an empty one")
-}
+				s.Require().NoError(err)
+				s.Require().NotNil(got)
+				s.Require().NotEmpty(got.Models, "the measured corpus, not an empty one")
+			},
+		},
+		{
+			name: "a path is read",
+			then: func() {
+				had, err := corpus.Open("")
+				s.Require().NoError(err)
 
-// TestAPathIsRead covers somebody's own statistics.
-func (s *OpenPublicTestSuite) TestAPathIsRead() {
-	had, err := corpus.Open("")
-	s.Require().NoError(err)
+				at := filepath.Join(s.T().TempDir(), "stats.json.gz")
 
-	at := filepath.Join(s.T().TempDir(), "stats.json.gz")
+				body, err := os.ReadFile(filepath.Join("data", "hx-stomp.stats.json.gz"))
+				s.Require().NoError(err)
+				s.Require().NoError(os.WriteFile(at, body, 0o600))
 
-	body, err := os.ReadFile(filepath.Join("data", "hx-stomp.stats.json.gz"))
-	s.Require().NoError(err)
-	s.Require().NoError(os.WriteFile(at, body, 0o600))
+				got, err := corpus.Open(at)
 
-	got, err := corpus.Open(at)
+				s.Require().NoError(err)
+				s.Require().Len(got.Models, len(had.Models))
+			},
+		},
+		{
+			// question about their corpus with figures from ours.
+			name: "a path that is not there is reported",
+			then: func() {
+				_, err := corpus.Open(filepath.Join(s.T().TempDir(), "nowhere.json.gz"))
 
-	s.Require().NoError(err)
-	s.Require().Len(got.Models, len(had.Models))
+				s.Require().ErrorContains(err, "nowhere.json.gz")
+			},
+		},
+		{
+			name: "a file that will not decode is reported",
+			then: func() {
+				at := filepath.Join(s.T().TempDir(), "stats.json.gz")
+				s.Require().NoError(os.WriteFile(at, []byte("not gzipped json"), 0o600))
+
+				_, err := corpus.Open(at)
+
+				s.Require().Error(err)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestAPathThatIsNotThereIsReported covers the answer being a failure rather
 // than a silent fall back to the built-in ones.
 //
-// Somebody who named a file meant that file. Falling back would answer a
-// question about their corpus with figures from ours.
-func (s *OpenPublicTestSuite) TestAPathThatIsNotThereIsReported() {
-	_, err := corpus.Open(filepath.Join(s.T().TempDir(), "nowhere.json.gz"))
-
-	s.Require().ErrorContains(err, "nowhere.json.gz")
-}
-
-// TestAFileThatWillNotDecodeIsReported covers something that is not statistics.
-func (s *OpenPublicTestSuite) TestAFileThatWillNotDecodeIsReported() {
-	at := filepath.Join(s.T().TempDir(), "stats.json.gz")
-	s.Require().NoError(os.WriteFile(at, []byte("not gzipped json"), 0o600))
-
-	_, err := corpus.Open(at)
-
-	s.Require().Error(err)
-}
 
 func TestOpenPublicTestSuite(
 	t *testing.T,

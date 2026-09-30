@@ -32,19 +32,39 @@ type TypesPublicTestSuite struct {
 	suite.Suite
 }
 
-func (s *TypesPublicTestSuite) TestTrustedAcceptsEverythingButAssumed() {
-	for _, p := range []catalog.Provenance{
-		catalog.ProvOfficial,
-		catalog.ProvMeasured,
-		catalog.ProvObserved,
-		catalog.ProvInherited,
+// TestTrusted covers Trusted, which reports whether a value carrying this
+// provenance may be relied on.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *TypesPublicTestSuite) TestTrusted() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "trusted accepts everything but assumed",
+			then: func() {
+				for _, p := range []catalog.Provenance{
+					catalog.ProvOfficial,
+					catalog.ProvMeasured,
+					catalog.ProvObserved,
+					catalog.ProvInherited,
+				} {
+					s.Require().True(p.Trusted(), "%s should be trusted", p)
+				}
+			},
+		},
+		{
+			name: "trusted rejects assumed",
+			then: func() {
+				s.Require().False(catalog.ProvAssumed.Trusted())
+			},
+		},
 	} {
-		s.Require().True(p.Trusted(), "%s should be trusted", p)
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
-}
-
-func (s *TypesPublicTestSuite) TestTrustedRejectsAssumed() {
-	s.Require().False(catalog.ProvAssumed.Trusted())
 }
 
 func (s *TypesPublicTestSuite) TestProvenanceValuesAreDistinct() {

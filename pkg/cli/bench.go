@@ -24,6 +24,24 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/reamp"
 )
 
+// opened is a bench this package opened and therefore has to give back.
+//
+// sdk.Bench is what a measuring run needs and says nothing about a lifetime,
+// because most of them are handed one. This is the narrower thing benchFor
+// returns a closer for.
+type opened interface {
+	sdk.Bench
+	Close() error
+}
+
+// opens is reamp's own, named so a test can stand in for it.
+//
+// Opening for real needs the pedal on USB and the reference going through it,
+// so the half of benchFor that succeeds is not reachable from a test otherwise,
+// and the part that matters there is the closer: a bench this package opened
+// and did not close holds the audio device until the process exits.
+var opens = func(hardware string) (opened, error) { return reamp.Open(hardware) }
+
 // benchFor is the audio loop a measuring run reads through, and how to let it
 // go.
 //
@@ -44,7 +62,7 @@ func benchFor(
 		return given, func() {}, nil
 	}
 
-	open, err := reamp.Open(hardware)
+	open, err := opens(hardware)
 	if err != nil {
 		return nil, nil, err
 	}

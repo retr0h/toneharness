@@ -37,37 +37,74 @@ type ErrorsPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestTooShortSaysWhichSideWasShort covers the detail reaching a caller.
-func (s *ErrorsPublicTestSuite) TestTooShortSaysWhichSideWasShort() {
-	_, err := cab.Capture(make([]float64, 10), make([]float64, 10), cab.Short)
+// TestError covers Error, which implements the error interface.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ErrorsPublicTestSuite) TestError() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "too short says which side was short",
+			then: func() {
+				_, err := cab.Capture(make([]float64, 10), make([]float64, 10), cab.Short)
 
-	s.Require().ErrorIs(err, cab.ErrTooShort)
+				s.Require().ErrorIs(err, cab.ErrTooShort)
 
-	var short *cab.TooShortError
-	s.Require().ErrorAs(err, &short)
+				var short *cab.TooShortError
+				s.Require().ErrorAs(err, &short)
 
-	s.Require().Equal(10, short.Sent)
-	s.Require().Equal(10, short.Back)
-	s.Require().Equal(cab.Short, short.Taps)
-	s.Require().Contains(short.Error(), "what came back")
+				s.Require().Equal(10, short.Sent)
+				s.Require().Equal(10, short.Back)
+				s.Require().Equal(cab.Short, short.Taps)
+				s.Require().Contains(short.Error(), "what came back")
+			},
+		},
+		{
+			// against what is in hand. The same shortage, and "what came back" would be
+			// the wrong word for one of them.
+			name: "match names its own two sides",
+			then: func() {
+				_, err := cab.Match(make([]float64, 4), make([]float64, 8), cab.Short)
+
+				var short *cab.TooShortError
+				s.Require().ErrorAs(err, &short)
+
+				s.Require().Equal(4, short.Sent)
+				s.Require().Equal(8, short.Back)
+				s.Require().Contains(short.Error(), "target")
+				s.Require().Contains(short.Error(), "what is in hand")
+			},
+		},
+		{
+			name: "each error unwraps to its sentinel",
+			then: func() {
+				for _, tt := range []struct {
+					name string
+					err  error
+					is   error
+				}{
+					{"too short", &cab.TooShortError{}, cab.ErrTooShort},
+					{"silence", &cab.SilenceError{}, cab.ErrTooShort},
+					{"bad length", &cab.BadLengthError{}, cab.ErrBadLength},
+				} {
+					s.Run(tt.name, func() {
+						s.Require().True(errors.Is(tt.err, tt.is))
+						s.Require().NotEmpty(tt.err.Error())
+					})
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestMatchNamesItsOwnTwoSides covers the same error reading differently.
 //
-// Capture divides what came back by what went out; Match holds a target
-// against what is in hand. The same shortage, and "what came back" would be
-// the wrong word for one of them.
-func (s *ErrorsPublicTestSuite) TestMatchNamesItsOwnTwoSides() {
-	_, err := cab.Match(make([]float64, 4), make([]float64, 8), cab.Short)
-
-	var short *cab.TooShortError
-	s.Require().ErrorAs(err, &short)
-
-	s.Require().Equal(4, short.Sent)
-	s.Require().Equal(8, short.Back)
-	s.Require().Contains(short.Error(), "target")
-	s.Require().Contains(short.Error(), "what is in hand")
-}
 
 // TestSilenceIsNotAShortSignal covers the other way the arithmetic fails.
 func (s *ErrorsPublicTestSuite) TestSilenceIsNotAShortSignal() {
@@ -134,24 +171,6 @@ func (s *ErrorsPublicTestSuite) TestWritingRefusesTheSameLengths() {
 	s.Require().ErrorAs(err, &bad)
 
 	s.Require().Equal(3, bad.Taps)
-}
-
-// TestEachErrorUnwrapsToItsSentinel covers matching without the struct.
-func (s *ErrorsPublicTestSuite) TestEachErrorUnwrapsToItsSentinel() {
-	for _, tt := range []struct {
-		name string
-		err  error
-		is   error
-	}{
-		{"too short", &cab.TooShortError{}, cab.ErrTooShort},
-		{"silence", &cab.SilenceError{}, cab.ErrTooShort},
-		{"bad length", &cab.BadLengthError{}, cab.ErrBadLength},
-	} {
-		s.Run(tt.name, func() {
-			s.Require().True(errors.Is(tt.err, tt.is))
-			s.Require().NotEmpty(tt.err.Error())
-		})
-	}
 }
 
 func TestErrorsPublicTestSuite(

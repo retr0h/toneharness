@@ -33,29 +33,51 @@ type ValidateStructurePublicTestSuite struct {
 	suite.Suite
 }
 
-func (s *ValidateStructurePublicTestSuite) TestAcceptsARigOfKnownBlocks() {
-	spec := plan.Plan{Blocks: []plan.Block{{Model: "HD2_AmpTest"}}}
+// TestValidateStructure covers ValidateStructure, which reports the first
+// block in s whose model the catalog does.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ValidateStructurePublicTestSuite) TestValidateStructure() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "accepts a rig of known blocks",
+			then: func() {
+				spec := plan.Plan{Blocks: []plan.Block{{Model: "HD2_AmpTest"}}}
 
-	s.Require().NoError(plan.ValidateStructure(newCatalog(testAmp()), spec))
-}
+				s.Require().NoError(plan.ValidateStructure(newCatalog(testAmp()), spec))
+			},
+		},
+		{
+			name: "accepts an empty rig",
+			then: func() {
+				s.Require().NoError(plan.ValidateStructure(newCatalog(), plan.Plan{}))
+			},
+		},
+		{
+			name: "rejects an unknown model",
+			then: func() {
+				spec := plan.Plan{Blocks: []plan.Block{
+					{Model: "HD2_AmpTest"},
+					{Model: "HD2_Nope"},
+				}}
 
-func (s *ValidateStructurePublicTestSuite) TestAcceptsAnEmptyRig() {
-	s.Require().NoError(plan.ValidateStructure(newCatalog(), plan.Plan{}))
-}
+				err := plan.ValidateStructure(newCatalog(testAmp()), spec)
 
-func (s *ValidateStructurePublicTestSuite) TestRejectsAnUnknownModel() {
-	spec := plan.Plan{Blocks: []plan.Block{
-		{Model: "HD2_AmpTest"},
-		{Model: "HD2_Nope"},
-	}}
+				s.Require().ErrorIs(err, plan.ErrUnknownBlock)
 
-	err := plan.ValidateStructure(newCatalog(testAmp()), spec)
-
-	s.Require().ErrorIs(err, plan.ErrUnknownBlock)
-
-	var target *plan.UnknownBlockError
-	s.Require().True(errors.As(err, &target))
-	s.Require().Equal("HD2_Nope", target.Model)
+				var target *plan.UnknownBlockError
+				s.Require().True(errors.As(err, &target))
+				s.Require().Equal("HD2_Nope", target.Model)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 func TestValidateStructurePublicTestSuite(

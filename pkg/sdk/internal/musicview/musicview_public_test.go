@@ -66,235 +66,313 @@ func one(
 	return out
 }
 
-// TestPlayers covers what each player's manifest says.
+// TestPlayers covers Players, which is every player the corpus names,
+// with what their records say.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *MusicviewPublicTestSuite) TestPlayers() {
-	fsys := corpus(map[string]string{
-		"mike-dirnt/corpus.yaml": one("Mike Dirnt", "longview", "Green Day",
-			"punk, pop-punk", "llm"),
-		// A second record with no genre, so the untagged count has something
-		// to report. A record naming none counts towards no genre at all.
-		"flea/corpus.yaml": one("Flea", "aeroplane", "", "", "") +
-			"  - track: ethiopia\n    url: https://open.spotify.com/track/y\n" +
-			"    year: 2016\n",
-		// A directory with no manifest, which is a player whose records
-		// somebody is still choosing.
-		"ben-shepherd/notes.txt": "nothing yet",
-	})
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "players",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"mike-dirnt/corpus.yaml": one("Mike Dirnt", "longview", "Green Day",
+						"punk, pop-punk", "llm"),
+					// A second record with no genre, so the untagged count has something
+					// to report. A record naming none counts towards no genre at all.
+					"flea/corpus.yaml": one("Flea", "aeroplane", "", "", "") +
+						"  - track: ethiopia\n    url: https://open.spotify.com/track/y\n" +
+						"    year: 2016\n",
+					// A directory with no manifest, which is a player whose records
+					// somebody is still choosing.
+					"ben-shepherd/notes.txt": "nothing yet",
+				})
 
-	got, err := musicview.Players(fsys, ".", nil)
-	s.Require().NoError(err)
-	s.Require().Len(got, 2, "the directory with no manifest is skipped")
+				got, err := musicview.Players(fsys, ".", nil)
+				s.Require().NoError(err)
+				s.Require().Len(got, 2, "the directory with no manifest is skipped")
 
-	s.Require().Equal("flea", got[0].ID)
-	s.Require().Equal(2, got[0].Records)
-	s.Require().Empty(got[0].Genres)
-	s.Require().Equal(2, got[0].Untagged)
+				s.Require().Equal("flea", got[0].ID)
+				s.Require().Equal(2, got[0].Records)
+				s.Require().Empty(got[0].Genres)
+				s.Require().Equal(2, got[0].Untagged)
 
-	s.Require().Equal("mike-dirnt", got[1].ID)
-	s.Require().Equal("Mike Dirnt", got[1].Artist)
-	s.Require().Equal([]string{"Green Day"}, got[1].Bands)
-	s.Require().Equal([]string{"pop-punk", "punk"}, got[1].Genres, "in order")
-	s.Require().Zero(got[1].Untagged)
+				s.Require().Equal("mike-dirnt", got[1].ID)
+				s.Require().Equal("Mike Dirnt", got[1].Artist)
+				s.Require().Equal([]string{"Green Day"}, got[1].Bands)
+				s.Require().Equal([]string{"pop-punk", "punk"}, got[1].Genres, "in order")
+				s.Require().Zero(got[1].Untagged)
 
-	s.Require().False(got[0].Rig, "nothing was handed in, so nobody has gear")
-	s.Require().False(got[1].Rig)
+				s.Require().False(got[0].Rig, "nothing was handed in, so nobody has gear")
+				s.Require().False(got[1].Rig)
+			},
+		},
+		{
+			// genre reads as usable and then has nothing to build from. Five players sat
+			// like that until somebody asked why a build failed.
+			name: "players say who has no rig",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"mike-dirnt/corpus.yaml":    many("Mike Dirnt", "punk", 1),
+					"cone-mccaslin/corpus.yaml": many("Cone McCaslin", "punk", 1),
+				})
+
+				got, err := musicview.Players(fsys, ".", map[string]bool{"mike-dirnt": true})
+				s.Require().NoError(err)
+				s.Require().Len(got, 2)
+
+				s.Require().Equal("cone-mccaslin", got[0].ID)
+				s.Require().False(got[0].Rig, "records and nothing to build them with")
+
+				s.Require().Equal("mike-dirnt", got[1].ID)
+				s.Require().True(got[1].Rig)
+			},
+		},
+		{
+			// the failure the strict manifest reader exists to prevent.
+			name: "an unreadable manifest stops",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"a/corpus.yaml": "artist: A\ntracks:\n  - trak: typo\n",
+				})
+
+				_, err := musicview.Players(fsys, ".", nil)
+				s.Require().ErrorContains(err, "a/corpus.yaml")
+			},
+		},
+		{
+			name: "a tree that is not there",
+			then: func() {
+				_, err := musicview.Players(corpus(nil), "nowhere", nil)
+				s.Require().ErrorContains(err, "nowhere")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestPlayersSayWhoHasNoRig covers the join a genre that will not build turns
 // on.
 //
-// A player with records and no rig still earns their genres words, so the
-// genre reads as usable and then has nothing to build from. Five players sat
-// like that until somebody asked why a build failed.
-func (s *MusicviewPublicTestSuite) TestPlayersSayWhoHasNoRig() {
-	fsys := corpus(map[string]string{
-		"mike-dirnt/corpus.yaml":    many("Mike Dirnt", "punk", 1),
-		"cone-mccaslin/corpus.yaml": many("Cone McCaslin", "punk", 1),
-	})
-
-	got, err := musicview.Players(fsys, ".", map[string]bool{"mike-dirnt": true})
-	s.Require().NoError(err)
-	s.Require().Len(got, 2)
-
-	s.Require().Equal("cone-mccaslin", got[0].ID)
-	s.Require().False(got[0].Rig, "records and nothing to build them with")
-
-	s.Require().Equal("mike-dirnt", got[1].ID)
-	s.Require().True(got[1].Rig)
-}
 
 // TestGenresCountTheirGearedPlayers covers a genre that is hollow.
 //
-// Joined on the directory rather than on the name a group reports, because
-// those differ: a group names "Mike Dirnt" and a rig is mike-dirnt. Counting
-// on the name would report every genre as having gear for nobody.
-func (s *MusicviewPublicTestSuite) TestGenresCountTheirGearedPlayers() {
-	fsys := corpus(map[string]string{
-		"mike-dirnt/corpus.yaml":    many("Mike Dirnt", "punk", 3),
-		"cone-mccaslin/corpus.yaml": many("Cone McCaslin", "punk", 3),
-		"ben-shepherd/corpus.yaml":  many("Ben Shepherd", "grunge", 3),
-	})
-
-	got, err := musicview.Genres(fsys, ".", map[string]bool{"mike-dirnt": true})
-	s.Require().NoError(err)
-	s.Require().Len(got, 2)
-
-	s.Require().Equal("grunge", got[0].Slug)
-	s.Require().Equal(1, got[0].Artists)
-	s.Require().Zero(got[0].Geared, "a genre earning words nothing can build")
-
-	s.Require().Equal("punk", got[1].Slug)
-	s.Require().Equal(2, got[1].Artists)
-	s.Require().Equal(1, got[1].Geared, "one of the two has gear")
-}
-
-// TestGenresReportsWhatEachIsShortOf is the number somebody acts on.
+// TestGenres covers Genres, which is every genre the corpus names, and how
+// far each is from usable.
 //
-// "Not usable" says nothing about what to do next. Two records short of eight,
-// or one player short of three, says which.
-func (s *MusicviewPublicTestSuite) TestGenresReportsWhatEachIsShortOf() {
-	// Six punk records from two players: short on both counts.
-	fsys := corpus(map[string]string{
-		"mike-dirnt/corpus.yaml":   many("Mike Dirnt", "punk", 3),
-		"matt-freeman/corpus.yaml": many("Matt Freeman", "punk", 3),
-	})
-
-	got, err := musicview.Genres(fsys, ".", nil)
-	s.Require().NoError(err)
-	s.Require().Len(got, 1)
-
-	s.Require().Equal("punk", got[0].Slug)
-	s.Require().Equal(6, got[0].Records)
-	s.Require().Equal(2, got[0].Artists)
-	s.Require().False(got[0].Usable)
-	s.Require().Equal(2, got[0].ShortRecords)
-	s.Require().Equal(1, got[0].ShortArtists)
-
-	// Every record here was tagged by a model, so a genre can clear the
-	// threshold with nobody having checked any of it.
-	s.Require().Equal(6, got[0].Unsighted)
-}
-
-// TestGenresCountsAUsableOne covers the threshold being met.
-func (s *MusicviewPublicTestSuite) TestGenresCountsAUsableOne() {
-	fsys := corpus(map[string]string{
-		"a/corpus.yaml": many("A", "punk", 3),
-		"b/corpus.yaml": many("B", "punk", 3),
-		"c/corpus.yaml": many("C", "punk", 2),
-	})
-
-	got, err := musicview.Genres(fsys, ".", nil)
-	s.Require().NoError(err)
-	s.Require().Len(got, 1)
-
-	s.Require().Equal(8, got[0].Records)
-	s.Require().Equal(3, got[0].Artists)
-	s.Require().True(got[0].Usable, "eight records from three players")
-	s.Require().Zero(got[0].ShortRecords)
-	s.Require().Zero(got[0].ShortArtists)
-}
-
-// TestBandsCarryNoThreshold covers a band never reading as unsighted.
-//
-// Nobody labels a band, so the provenance count that means something for a
-// genre must not follow it across.
-func (s *MusicviewPublicTestSuite) TestBandsCarryNoThreshold() {
-	fsys := corpus(map[string]string{
-		"mike-dirnt/corpus.yaml": one("Mike Dirnt", "longview", "Green Day",
-			"punk", "llm"),
-		"other/corpus.yaml": one("Other", "song", "Green Day", "punk", "llm"),
-	})
-
-	got, err := musicview.Bands(fsys, ".")
-	s.Require().NoError(err)
-	s.Require().Len(got, 1)
-
-	s.Require().Equal("Green Day", got[0].Name)
-	s.Require().Equal(2, got[0].Records)
-	s.Require().Equal(2, got[0].Artists)
-	s.Require().Zero(got[0].Unsighted, "a band is nobody's label")
-}
-
-// TestRecordsSaysWhichAreSeparated is what the manifest cannot say.
-//
-// A record named with no stems beside it is measured by nothing, and the
-// manifest looks complete either way.
-func (s *MusicviewPublicTestSuite) TestRecordsSaysWhichAreSeparated() {
-	fsys := corpus(map[string]string{
-		"mike-dirnt/corpus.yaml": one("Mike Dirnt", "longview", "Green Day",
-			"punk", "person") +
-			"  - track: holiday\n    url: https://open.spotify.com/track/y\n" +
-			"    year: 2004\n",
-		"mike-dirnt/stems/htdemucs/longview/bass.wav": "",
-	})
-
-	got, err := musicview.Records(fsys, ".")
-	s.Require().NoError(err)
-	s.Require().Len(got, 2)
-
-	s.Require().Equal("holiday", got[0].Track)
-	s.Require().False(got[0].Separated)
-
-	s.Require().Equal("longview", got[1].Track)
-	s.Require().True(got[1].Separated)
-	s.Require().Equal("person", got[1].DecidedBy)
-	s.Require().Equal("Green Day", got[1].Band)
-}
-
-// TestAGuitarStemCounts covers the other separator model.
-func (s *MusicviewPublicTestSuite) TestAGuitarStemCounts() {
-	fsys := corpus(map[string]string{
-		"a/corpus.yaml":                       one("A", "song", "", "", ""),
-		"a/stems/htdemucs_6s/song/guitar.wav": "",
-	})
-
-	got, err := musicview.Records(fsys, ".")
-	s.Require().NoError(err)
-	s.Require().Len(got, 1)
-	s.Require().True(got[0].Separated)
-}
-
-// TestAnEmptyCorpusIsRefused covers the path that points at nothing.
-//
-// Refused rather than answered empty, because the ordinary cause is a wrong
-// path and an empty table reads as a corpus that exists and holds nothing.
-func (s *MusicviewPublicTestSuite) TestAnEmptyCorpusIsRefused() {
-	fsys := corpus(map[string]string{"notes.txt": "no players here"})
-
+// One method and one table, so a case is a row rather than a file.
+func (s *MusicviewPublicTestSuite) TestGenres() {
 	for _, tt := range []struct {
 		name string
-		call func() error
+		then func()
 	}{
-		{"players", func() error { _, err := musicview.Players(fsys, ".", nil); return err }},
-		{"genres", func() error { _, err := musicview.Genres(fsys, ".", nil); return err }},
-		{"bands", func() error { _, err := musicview.Bands(fsys, "."); return err }},
-		{"records", func() error { _, err := musicview.Records(fsys, "."); return err }},
+		{
+			// those differ: a group names "Mike Dirnt" and a rig is mike-dirnt. Counting
+			// on the name would report every genre as having gear for nobody.
+			name: "genres count their geared players",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"mike-dirnt/corpus.yaml":    many("Mike Dirnt", "punk", 3),
+					"cone-mccaslin/corpus.yaml": many("Cone McCaslin", "punk", 3),
+					"ben-shepherd/corpus.yaml":  many("Ben Shepherd", "grunge", 3),
+				})
+
+				got, err := musicview.Genres(fsys, ".", map[string]bool{"mike-dirnt": true})
+				s.Require().NoError(err)
+				s.Require().Len(got, 2)
+
+				s.Require().Equal("grunge", got[0].Slug)
+				s.Require().Equal(1, got[0].Artists)
+				s.Require().Zero(got[0].Geared, "a genre earning words nothing can build")
+
+				s.Require().Equal("punk", got[1].Slug)
+				s.Require().Equal(2, got[1].Artists)
+				s.Require().Equal(1, got[1].Geared, "one of the two has gear")
+			},
+		},
+		{
+			// or one player short of three, says which.
+			name: "genres reports what each is short of",
+			then: func() {
+				// Six punk records from two players: short on both counts.
+				fsys := corpus(map[string]string{
+					"mike-dirnt/corpus.yaml":   many("Mike Dirnt", "punk", 3),
+					"matt-freeman/corpus.yaml": many("Matt Freeman", "punk", 3),
+				})
+
+				got, err := musicview.Genres(fsys, ".", nil)
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+
+				s.Require().Equal("punk", got[0].Slug)
+				s.Require().Equal(6, got[0].Records)
+				s.Require().Equal(2, got[0].Artists)
+				s.Require().False(got[0].Usable)
+				s.Require().Equal(2, got[0].ShortRecords)
+				s.Require().Equal(1, got[0].ShortArtists)
+
+				// Every record here was tagged by a model, so a genre can clear the
+				// threshold with nobody having checked any of it.
+				s.Require().Equal(6, got[0].Unsighted)
+			},
+		},
+		{
+			name: "genres counts a usable one",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"a/corpus.yaml": many("A", "punk", 3),
+					"b/corpus.yaml": many("B", "punk", 3),
+					"c/corpus.yaml": many("C", "punk", 2),
+				})
+
+				got, err := musicview.Genres(fsys, ".", nil)
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+
+				s.Require().Equal(8, got[0].Records)
+				s.Require().Equal(3, got[0].Artists)
+				s.Require().True(got[0].Usable, "eight records from three players")
+				s.Require().Zero(got[0].ShortRecords)
+				s.Require().Zero(got[0].ShortArtists)
+			},
+		},
 	} {
 		s.Run(tt.name, func() {
-			err := tt.call()
-			s.Require().ErrorIs(err, musicview.ErrNoCorpus)
+			tt.then()
 		})
 	}
 }
 
+// TestGenresReportsWhatEachIsShortOf is the number somebody acts on.
+//
+
+// TestBandsCarryNoThreshold covers a band never reading as unsighted.
+//
+// TestBands covers Bands, which is every band the corpus names.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MusicviewPublicTestSuite) TestBands() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// genre must not follow it across.
+			name: "bands carry no threshold",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"mike-dirnt/corpus.yaml": one("Mike Dirnt", "longview", "Green Day",
+						"punk", "llm"),
+					"other/corpus.yaml": one("Other", "song", "Green Day", "punk", "llm"),
+				})
+
+				got, err := musicview.Bands(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+
+				s.Require().Equal("Green Day", got[0].Name)
+				s.Require().Equal(2, got[0].Records)
+				s.Require().Equal(2, got[0].Artists)
+				s.Require().Zero(got[0].Unsighted, "a band is nobody's label")
+			},
+		},
+		{
+			// path and an empty table reads as a corpus that exists and holds nothing.
+			name: "an empty corpus is refused",
+			then: func() {
+				fsys := corpus(map[string]string{"notes.txt": "no players here"})
+
+				for _, tt := range []struct {
+					name string
+					call func() error
+				}{
+					{"players", func() error { _, err := musicview.Players(fsys, ".", nil); return err }},
+					{"genres", func() error { _, err := musicview.Genres(fsys, ".", nil); return err }},
+					{"bands", func() error { _, err := musicview.Bands(fsys, "."); return err }},
+					{"records", func() error { _, err := musicview.Records(fsys, "."); return err }},
+				} {
+					s.Run(tt.name, func() {
+						err := tt.call()
+						s.Require().ErrorIs(err, musicview.ErrNoCorpus)
+					})
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
+}
+
+// TestRecordsSaysWhichAreSeparated is what the manifest cannot say.
+//
+// TestRecords covers Records, which is every recording the corpus names, and
+// whether it has stems yet.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MusicviewPublicTestSuite) TestRecords() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// manifest looks complete either way.
+			name: "records says which are separated",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"mike-dirnt/corpus.yaml": one("Mike Dirnt", "longview", "Green Day",
+						"punk", "person") +
+						"  - track: holiday\n    url: https://open.spotify.com/track/y\n" +
+						"    year: 2004\n",
+					"mike-dirnt/stems/htdemucs/longview/bass.wav": "",
+				})
+
+				got, err := musicview.Records(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 2)
+
+				s.Require().Equal("holiday", got[0].Track)
+				s.Require().False(got[0].Separated)
+
+				s.Require().Equal("longview", got[1].Track)
+				s.Require().True(got[1].Separated)
+				s.Require().Equal("person", got[1].DecidedBy)
+				s.Require().Equal("Green Day", got[1].Band)
+			},
+		},
+		{
+			name: "a guitar stem counts",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"a/corpus.yaml":                       one("A", "song", "", "", ""),
+					"a/stems/htdemucs_6s/song/guitar.wav": "",
+				})
+
+				got, err := musicview.Records(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+				s.Require().True(got[0].Separated)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
+}
+
+// TestAnEmptyCorpusIsRefused covers the path that points at nothing.
+//
+
 // TestAnUnreadableManifestStops covers a typo failing loudly.
 //
-// The alternative is a genre counted short with nothing saying why, which is
-// the failure the strict manifest reader exists to prevent.
-func (s *MusicviewPublicTestSuite) TestAnUnreadableManifestStops() {
-	fsys := corpus(map[string]string{
-		"a/corpus.yaml": "artist: A\ntracks:\n  - trak: typo\n",
-	})
-
-	_, err := musicview.Players(fsys, ".", nil)
-	s.Require().ErrorContains(err, "a/corpus.yaml")
-}
-
-// TestATreeThatIsNotThere covers a corpus path nobody can read.
-func (s *MusicviewPublicTestSuite) TestATreeThatIsNotThere() {
-	_, err := musicview.Players(corpus(nil), "nowhere", nil)
-	s.Require().ErrorContains(err, "nowhere")
-}
 
 func TestMusicviewPublicTestSuite(
 	t *testing.T,

@@ -176,150 +176,168 @@ func (s *ReadPublicTestSuite) TestRead() {
 	}
 }
 
-// TestSpec extracts the signal chain a preset describes.
+// TestSpec covers Spec, which extracts the signal chain a document
+// describes.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *ReadPublicTestSuite) TestSpec() {
-	tests := []struct {
+	for _, tt := range []struct {
 		name string
-		doc  string
-		// the blocks the chain must hold, the models they name in order, and
-		// the parameters of the first.
-		blocks int
-		models []string
-		params int
-		err    bool
-		says   string
+		then func()
 	}{
 		{
-			name: "an entry naming no model is not a block",
-			doc:  `{"schema":"L6Preset","data":{"tone":{"dsp0":{"block0":{"Gain":0.5}}}}}`,
-		},
-		{
-			name: "an attribute nothing models is not a parameter",
-			doc: `{"schema":"L6Preset","data":{"tone":{"dsp0":{"block0":` +
-				`{"@model":"X","@position":0,"@no_snapshot_bypass":false,"Gain":0.5}}}}}`,
-			blocks: 1,
-			params: 1,
-		},
-		{
-			// Beside one that can be, so the two are ordered against each
-			// other before either is read.
-			name: "a processor key nothing can number",
-			doc: `{"schema":"L6Preset","data":{"tone":{` +
-				`"dspX":{},"dsp0":{}}}}`,
-			err:  true,
-			says: "dspX",
-		},
-		{
-			name: "a block that is not an object",
-			doc:  `{"schema":"L6Preset","data":{"tone":{"dsp0":{"block0":"nope"}}}}`,
-			err:  true,
-			says: "block0",
-		},
-		{
-			name: "a parameter of no kind at all",
-			doc: `{"schema":"L6Preset","data":{"tone":{"dsp0":{"block0":` +
-				`{"@model":"X","Gain":{"nested":1}}}}}}`,
-			err:  true,
-			says: "Gain",
-		},
-		{
-			// Two blocks stating no position both sit at zero, and an order
-			// that depends on which way a map ranged is one this package's
-			// round-trip guarantee cannot hold. The key breaks the tie.
-			name: "blocks that share a position",
-			doc: `{"schema":"L6Preset","data":{"tone":{"dsp0":{` +
-				`"block3":{"@model":"Third"},"block1":{"@model":"First"}}}}}`,
-			blocks: 2,
-			models: []string{"First", "Third"},
-		},
-		{
-			// dsp10 comes after dsp2, which sorting the names does not do.
-			name: "processors past the ninth",
-			doc: `{"schema":"L6Preset","data":{"tone":{` +
-				`"dsp10":{"block0":{"@model":"Later"}},` +
-				`"dsp2":{"block0":{"@model":"Earlier"}}}}}`,
-			blocks: 2,
-			models: []string{"Earlier", "Later"},
-		},
-		{
-			name: "an attribute of the wrong kind",
-			doc: `{"schema":"L6Preset","data":{"tone":{"dsp0":{"block0":` +
-				`{"@model":"X","@position":"first"}}}}}`,
-			err: true,
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			d, err := s.read(tt.doc)
-			s.Require().NoError(err)
-
-			got, err := d.Spec()
-
-			if tt.err {
-				s.Require().Error(err)
-
-				if tt.says != "" {
-					s.Require().Contains(err.Error(), tt.says)
+			name: "spec",
+			then: func() {
+				tests := []struct {
+					name string
+					doc  string
+					// the blocks the chain must hold, the models they name in order, and
+					// the parameters of the first.
+					blocks int
+					models []string
+					params int
+					err    bool
+					says   string
+				}{
+					{
+						name: "an entry naming no model is not a block",
+						doc:  `{"schema":"L6Preset","data":{"tone":{"dsp0":{"block0":{"Gain":0.5}}}}}`,
+					},
+					{
+						name: "an attribute nothing models is not a parameter",
+						doc: `{"schema":"L6Preset","data":{"tone":{"dsp0":{"block0":` +
+							`{"@model":"X","@position":0,"@no_snapshot_bypass":false,"Gain":0.5}}}}}`,
+						blocks: 1,
+						params: 1,
+					},
+					{
+						// Beside one that can be, so the two are ordered against each
+						// other before either is read.
+						name: "a processor key nothing can number",
+						doc: `{"schema":"L6Preset","data":{"tone":{` +
+							`"dspX":{},"dsp0":{}}}}`,
+						err:  true,
+						says: "dspX",
+					},
+					{
+						name: "a block that is not an object",
+						doc:  `{"schema":"L6Preset","data":{"tone":{"dsp0":{"block0":"nope"}}}}`,
+						err:  true,
+						says: "block0",
+					},
+					{
+						name: "a parameter of no kind at all",
+						doc: `{"schema":"L6Preset","data":{"tone":{"dsp0":{"block0":` +
+							`{"@model":"X","Gain":{"nested":1}}}}}}`,
+						err:  true,
+						says: "Gain",
+					},
+					{
+						// Two blocks stating no position both sit at zero, and an order
+						// that depends on which way a map ranged is one this package's
+						// round-trip guarantee cannot hold. The key breaks the tie.
+						name: "blocks that share a position",
+						doc: `{"schema":"L6Preset","data":{"tone":{"dsp0":{` +
+							`"block3":{"@model":"Third"},"block1":{"@model":"First"}}}}}`,
+						blocks: 2,
+						models: []string{"First", "Third"},
+					},
+					{
+						// dsp10 comes after dsp2, which sorting the names does not do.
+						name: "processors past the ninth",
+						doc: `{"schema":"L6Preset","data":{"tone":{` +
+							`"dsp10":{"block0":{"@model":"Later"}},` +
+							`"dsp2":{"block0":{"@model":"Earlier"}}}}}`,
+						blocks: 2,
+						models: []string{"Earlier", "Later"},
+					},
+					{
+						name: "an attribute of the wrong kind",
+						doc: `{"schema":"L6Preset","data":{"tone":{"dsp0":{"block0":` +
+							`{"@model":"X","@position":"first"}}}}}`,
+						err: true,
+					},
 				}
 
-				return
-			}
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						d, err := s.read(tt.doc)
+						s.Require().NoError(err)
 
-			s.Require().NoError(err)
-			s.Require().Len(got.Blocks, tt.blocks)
+						got, err := d.Spec()
 
-			for i, want := range tt.models {
-				s.Require().Equal(catalog.ModelID(want), got.Blocks[i].Model)
-			}
+						if tt.err {
+							s.Require().Error(err)
 
-			if tt.params > 0 {
-				s.Require().Len(got.Blocks[0].Params, tt.params)
-			}
+							if tt.says != "" {
+								s.Require().Contains(err.Error(), tt.says)
+							}
+
+							return
+						}
+
+						s.Require().NoError(err)
+						s.Require().Len(got.Blocks, tt.blocks)
+
+						for i, want := range tt.models {
+							s.Require().Equal(catalog.ModelID(want), got.Blocks[i].Model)
+						}
+
+						if tt.params > 0 {
+							s.Require().Len(got.Blocks[0].Params, tt.params)
+						}
+					})
+				}
+			},
+		},
+		{
+			// method rather than one per question.
+			name: "spec reads the fixture",
+			then: func() {
+				got, err := s.doc().Spec()
+				s.Require().NoError(err)
+
+				// Ordered by processor, then by position within it.
+				s.Require().Len(got.Blocks, 3)
+				s.Require().Equal(catalog.ModelID("HD2_CompressorLAStudioComp"), got.Blocks[0].Model)
+				s.Require().Equal(catalog.ModelID("HD2_AmpSVBeastNrm"), got.Blocks[1].Model)
+				s.Require().Equal(catalog.ModelID("HD2_ReverbSpring"), got.Blocks[2].Model)
+				s.Require().Equal(0, got.Blocks[0].DSP)
+				s.Require().Equal(1, got.Blocks[2].DSP)
+
+				// A bypassed block stays bypassed.
+				s.Require().True(got.Blocks[0].Enabled)
+				s.Require().False(got.Blocks[2].Enabled)
+
+				for _, b := range got.Blocks {
+					s.Require().NotContains(string(b.Model), "AppDSPFlow",
+						"inputs and outputs are routing, not links in a chain")
+
+					for k := range b.Params {
+						s.Require().False(strings.HasPrefix(k, "@"),
+							"attribute %q leaked into params", k)
+					}
+				}
+
+				// Every kind a parameter can be, kept as it arrived.
+				f, ok := got.Blocks[0].Params["Gain"].Float()
+				s.Require().True(ok)
+				s.Require().InDelta(0.68, f, 1e-9)
+
+				b, ok := got.Blocks[0].Params["Type"].Bool()
+				s.Require().True(ok)
+				s.Require().True(b)
+
+				i, ok := got.Blocks[1].Params["Taps"].Int()
+				s.Require().True(ok)
+				s.Require().Equal(int64(2), i)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
 		})
 	}
-}
-
-// TestSpecReadsTheFixture asks the same chain several questions, so it is one
-// method rather than one per question.
-func (s *ReadPublicTestSuite) TestSpecReadsTheFixture() {
-	got, err := s.doc().Spec()
-	s.Require().NoError(err)
-
-	// Ordered by processor, then by position within it.
-	s.Require().Len(got.Blocks, 3)
-	s.Require().Equal(catalog.ModelID("HD2_CompressorLAStudioComp"), got.Blocks[0].Model)
-	s.Require().Equal(catalog.ModelID("HD2_AmpSVBeastNrm"), got.Blocks[1].Model)
-	s.Require().Equal(catalog.ModelID("HD2_ReverbSpring"), got.Blocks[2].Model)
-	s.Require().Equal(0, got.Blocks[0].DSP)
-	s.Require().Equal(1, got.Blocks[2].DSP)
-
-	// A bypassed block stays bypassed.
-	s.Require().True(got.Blocks[0].Enabled)
-	s.Require().False(got.Blocks[2].Enabled)
-
-	for _, b := range got.Blocks {
-		s.Require().NotContains(string(b.Model), "AppDSPFlow",
-			"inputs and outputs are routing, not links in a chain")
-
-		for k := range b.Params {
-			s.Require().False(strings.HasPrefix(k, "@"),
-				"attribute %q leaked into params", k)
-		}
-	}
-
-	// Every kind a parameter can be, kept as it arrived.
-	f, ok := got.Blocks[0].Params["Gain"].Float()
-	s.Require().True(ok)
-	s.Require().InDelta(0.68, f, 1e-9)
-
-	b, ok := got.Blocks[0].Params["Type"].Bool()
-	s.Require().True(ok)
-	s.Require().True(b)
-
-	i, ok := got.Blocks[1].Params["Taps"].Int()
-	s.Require().True(ok)
-	s.Require().Equal(int64(2), i)
 }
 
 func TestReadPublicTestSuite(

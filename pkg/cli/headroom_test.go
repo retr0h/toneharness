@@ -25,6 +25,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"math"
 	"os"
 	"testing"
 
@@ -76,44 +77,148 @@ func routed() plan.Plan {
 // turned down. Sending to USB 1/2 alone reaches the computer without reaching
 // the socket.
 //
-// The gain is the other half. The output block sits after the chain, so
-// turning it down lowers the level without touching the tone. The amplifier's
-// ChVol and Master are the tone, and lowering those would have the solver
-// solve for a different sound.
-func (s *HeadroomPublicTestSuite) TestItSendsTheChainOffTheLoopAndLeavesEverythingElse() {
-	got, err := offTheLoop(routed(), 10, -30)
-	s.Require().NoError(err)
+// TestOffTheLoop covers offTheLoop, which is the plan with its output entry
+// sent somewhere the measuring.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *HeadroomPublicTestSuite) TestOffTheLoop() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// turning it down lowers the level without touching the tone. The amplifier's
+			// ChVol and Master are the tone, and lowering those would have the solver
+			// solve for a different sound.
+			name: "it sends the chain off the loop and leaves everything else",
+			then: func() {
+				got, err := offTheLoop(routed(), 10, -30)
+				s.Require().NoError(err)
 
-	var fields map[string]any
-	s.Require().NoError(
-		json.Unmarshal((*got.Device.Routing)[outputSlot], &fields))
+				var fields map[string]any
+				s.Require().NoError(
+					json.Unmarshal((*got.Device.Routing)[outputSlot], &fields))
 
-	s.Require().InDelta(10, fields[sendKey], 0.001, "off the loop")
-	s.Require().InDelta(-30, fields[gainKey], 0.001)
-	s.Require().InDelta(0.5, fields["pan"], 0.001, "the rest is left alone")
-	s.Require().Equal("HelixStomp_AppDSPFlowOutputMain", fields["@model"])
-	s.Require().Contains(*got.Device.Routing, "dsp0.outputB",
-		"the other entries travel")
+				s.Require().InDelta(10, fields[sendKey], 0.001, "off the loop")
+				s.Require().InDelta(-30, fields[gainKey], 0.001)
+				s.Require().InDelta(0.5, fields["pan"], 0.001, "the rest is left alone")
+				s.Require().Equal("HelixStomp_AppDSPFlowOutputMain", fields["@model"])
+				s.Require().Contains(*got.Device.Routing, "dsp0.outputB",
+					"the other entries travel")
+			},
+		},
+		{
+			// plan is written out and compared and a routing map shared between two of
+			// them makes the comparison meaningless.
+			name: "the plan handed over is not changed",
+			then: func() {
+				was := routed()
+
+				_, err := offTheLoop(was, 10, -30)
+				s.Require().NoError(err)
+
+				var fields map[string]any
+				s.Require().NoError(
+					json.Unmarshal((*was.Device.Routing)[outputSlot], &fields))
+
+				s.Require().InDelta(0, fields[gainKey], 0.001)
+				s.Require().InDelta(1, fields[sendKey], 0.001)
+			},
+		},
+		{
+			// that feeds itself. While zero returned the preset as built, `--headroom 0`
+			// left it sending to the socket the lead comes from, so the one setting that
+			// asked for an honest level got the least honest reading.
+			name: "no headroom still comes off the loop",
+			then: func() {
+				got, err := offTheLoop(routed(), 10, 0)
+				s.Require().NoError(err)
+
+				var fields map[string]any
+				s.Require().NoError(
+					json.Unmarshal((*got.Device.Routing)[outputSlot], &fields))
+
+				s.Require().InDelta(10, fields[sendKey], 0.001)
+				s.Require().InDelta(0, fields[gainKey], 0.001, "the gain is left as it was")
+			},
+		},
+		{
+			// routing at all, because the inputs and outputs come from the blank template
+			// while the preset is written, and returning the loud one silently is how a
+			// guard comes to pass on a chain nobody protected.
+			name: "off the loop refuses what it cannot rewrite",
+			then: func() {
+				entry := func(body string) plan.Plan {
+					routing := map[string]json.RawMessage{outputSlot: json.RawMessage(body)}
+
+					return plan.Plan{Device: &rig.DeviceState{Routing: &routing}}
+				}
+
+				for _, tt := range []struct {
+					name string
+					give plan.Plan
+					by   float64
+					is   error
+					says string
+				}{
+					{
+						name: "it carries no routing at all",
+						give: plan.Plan{},
+						by:   -30,
+						is:   ErrNoOutput,
+					},
+					{
+						name: "it carries routing with no output entry",
+						give: func() plan.Plan {
+							routing := map[string]json.RawMessage{
+								"dsp0.inputA": json.RawMessage(`{}`),
+							}
+
+							return plan.Plan{Device: &rig.DeviceState{Routing: &routing}}
+						}(),
+						by: -30,
+						is: ErrNoOutput,
+					},
+					{
+						name: "the output entry will not decode",
+						give: entry(`{`),
+						by:   -30,
+						says: outputSlot,
+					},
+					{
+						// JSON has no way to spell a NaN, so an entry built from one
+						// would be written as a preset nothing can read. It is refused
+						// where it is encoded rather than where it is typed, because that
+						// is the one place every caller passes through.
+						name: "the gain is not a number",
+						give: routed(),
+						by:   math.NaN(),
+						says: gainKey,
+					},
+				} {
+					s.Run(tt.name, func() {
+						_, err := offTheLoop(tt.give, 10, tt.by)
+
+						if tt.is != nil {
+							s.Require().ErrorIs(err, tt.is)
+
+							return
+						}
+
+						s.Require().ErrorContains(err, tt.says)
+					})
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestThePlanHandedOverIsNotChanged covers the copy.
 //
-// A caller that keeps the plan it built still holds what it built, because a
-// plan is written out and compared and a routing map shared between two of
-// them makes the comparison meaningless.
-func (s *HeadroomPublicTestSuite) TestThePlanHandedOverIsNotChanged() {
-	was := routed()
-
-	_, err := offTheLoop(was, 10, -30)
-	s.Require().NoError(err)
-
-	var fields map[string]any
-	s.Require().NoError(
-		json.Unmarshal((*was.Device.Routing)[outputSlot], &fields))
-
-	s.Require().InDelta(0, fields[gainKey], 0.001)
-	s.Require().InDelta(1, fields[sendKey], 0.001)
-}
 
 // TestTheDestinationComesFromThePresetsOwnDevice covers asking the right device.
 //
@@ -158,48 +263,10 @@ func ptr[T any](
 
 // TestNoHeadroomStillComesOffTheLoop is why zero no longer means untouched.
 //
-// A caller asking for full level is not asking to be measured through a chain
-// that feeds itself. While zero returned the preset as built, `--headroom 0`
-// left it sending to the socket the lead comes from, so the one setting that
-// asked for an honest level got the least honest reading.
-func (s *HeadroomPublicTestSuite) TestNoHeadroomStillComesOffTheLoop() {
-	got, err := offTheLoop(routed(), 10, 0)
-	s.Require().NoError(err)
 
-	var fields map[string]any
-	s.Require().NoError(
-		json.Unmarshal((*got.Device.Routing)[outputSlot], &fields))
-
-	s.Require().InDelta(10, fields[sendKey], 0.001)
-	s.Require().InDelta(0, fields[gainKey], 0.001, "the gain is left as it was")
-}
-
-// TestAPlanWithNoOutputIsRefused covers having nothing to turn down.
+// TestOffTheLoopRefusesWhatItCannotRewrite covers every plan that cannot come
+// off the measuring loop.
 //
-// Said rather than passed through. A plan compiled from a rig carries no
-// routing at all, because the inputs and outputs come from the blank template
-// while the preset is written, and returning the loud one silently is how a
-// guard comes to pass on a chain nobody protected.
-func (s *HeadroomPublicTestSuite) TestAPlanWithNoOutputIsRefused() {
-	_, err := offTheLoop(plan.Plan{}, 10, -30)
-	s.Require().ErrorIs(err, ErrNoOutput)
-
-	routing := map[string]json.RawMessage{"dsp0.inputA": json.RawMessage(`{}`)}
-
-	_, err = offTheLoop(
-		plan.Plan{Device: &rig.DeviceState{Routing: &routing}}, 10, -30)
-	s.Require().ErrorIs(err, ErrNoOutput)
-}
-
-// TestAnOutputEntryThatWillNotDecode covers a plan somebody broke.
-func (s *HeadroomPublicTestSuite) TestAnOutputEntryThatWillNotDecode() {
-	routing := map[string]json.RawMessage{outputSlot: json.RawMessage(`{`)}
-
-	_, err := offTheLoop(
-		plan.Plan{Device: &rig.DeviceState{Routing: &routing}}, 10, -30)
-
-	s.Require().ErrorContains(err, outputSlot)
-}
 
 func TestHeadroomPublicTestSuite(
 	t *testing.T,
@@ -209,122 +276,181 @@ func TestHeadroomPublicTestSuite(
 
 // TestNoHeadroomStillRewritesThePreset covers asking for no headroom.
 //
-// It reads and writes, where it used to short-circuit. The destination is what
-// opens the loop and it has to be set whatever the gain is, so the preset is
-// rebuilt: `--headroom 0` used to be the one setting that left a chain
-// measuring itself.
-func (s *HeadroomPublicTestSuite) TestNoHeadroomStillRewritesThePreset() {
-	ctrl := gomock.NewController(s.T())
-	pedal := mocks.NewMockTuner(ctrl)
-	work := s.T().TempDir()
+// TestQuieter covers quieter, which writes the plan again off the measuring
+// loop, and returns the preset.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *HeadroomPublicTestSuite) TestQuieter() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// opens the loop and it has to be set whatever the gain is, so the preset is
+			// rebuilt: `--headroom 0` used to be the one setting that left a chain
+			// measuring itself.
+			name: "no headroom still rewrites the preset",
+			then: func() {
+				ctrl := gomock.NewController(s.T())
+				pedal := mocks.NewMockTuner(ctrl)
+				work := s.T().TempDir()
 
-	pedal.EXPECT().
-		PresetFile(gomock.Any(), "already.hlx").
-		Return(sdk.Reading{Plan: routed()}, nil)
-	pedal.EXPECT().
-		Compile(gomock.Any(), gomock.Any()).
-		Return(sdk.Built{}, nil)
+				pedal.EXPECT().
+					PresetFile(gomock.Any(), "already.hlx").
+					Return(sdk.Reading{Plan: routed()}, nil)
+				pedal.EXPECT().
+					Compile(gomock.Any(), gomock.Any()).
+					Return(sdk.Built{}, nil)
 
-	got, err := quieter(context.Background(),
-		pedal, "already.hlx", work, "matt-freeman", 0)
+				got, err := quieter(context.Background(),
+					pedal, "already.hlx", work, "matt-freeman", 0)
 
-	s.Require().NoError(err)
-	s.Require().NotEqual("already.hlx", got)
+				s.Require().NoError(err)
+				s.Require().NotEqual("already.hlx", got)
+			},
+		},
+		{
+			// come from the blank template while the preset is written. The preset has
+			// them, so reading it back is how the output entry arrives complete, with its
+			// model and its output already set.
+			name: "it reads the preset back because a rig carries no routing",
+			then: func() {
+				ctrl := gomock.NewController(s.T())
+				pedal := mocks.NewMockTuner(ctrl)
+
+				pedal.EXPECT().PresetFile(gomock.Any(), "already.hlx").
+					Return(sdk.Reading{Plan: routed()}, nil)
+
+				var built sdk.Compile
+
+				pedal.EXPECT().Compile(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
+						built = in
+
+						return sdk.Built{}, nil
+					})
+
+				got, err := quieter(context.Background(),
+					pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
+
+				s.Require().NoError(err)
+				s.Require().NotEqual("already.hlx", got, "it plays the quiet one")
+				s.Require().Equal(got, built.Out)
+				s.Require().NotEmpty(built.Plan, "compiled from a plan, not from the rig")
+
+				// And the plan it wrote carries the gain.
+				f, err := os.Open(built.Plan)
+				s.Require().NoError(err)
+
+				defer func() { _ = f.Close() }()
+
+				made, err := plan.Load(f)
+				s.Require().NoError(err)
+
+				var fields map[string]any
+				s.Require().NoError(
+					json.Unmarshal((*made.Device.Routing)[outputSlot], &fields))
+				s.Require().InDelta(-30, fields[gainKey], 0.001)
+			},
+		},
+		{
+			// output entry, writing the result, compiling it. The chain stays on the
+			// measuring loop in all four, which is why none of them is a warning.
+			name: "quieter refuses what it cannot take off the loop",
+			then: func() {
+				read := errors.New("not a preset")
+				built := errors.New("the catalog does not carry that")
+
+				for _, tt := range []struct {
+					name  string
+					pedal func(*mocks.MockTuner)
+					// work answers the scratch directory the rewrite is written to, so a
+					// row can hand over one nothing may write into.
+					work func() string
+					is   error
+					says string
+				}{
+					{
+						name: "the preset will not read back",
+						pedal: func(p *mocks.MockTuner) {
+							p.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
+								Return(sdk.Reading{}, read)
+						},
+						is: read,
+					},
+					{
+						name: "the preset has no output to turn down",
+						pedal: func(p *mocks.MockTuner) {
+							p.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
+								Return(sdk.Reading{Plan: plan.Plan{}}, nil)
+						},
+						is: ErrNoOutput,
+					},
+					{
+						name: "there is nowhere to write the rewritten preset",
+						pedal: func(p *mocks.MockTuner) {
+							p.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
+								Return(sdk.Reading{Plan: routed()}, nil)
+						},
+						work: func() string {
+							held := s.T().TempDir()
+							s.Require().NoError(os.Chmod(held, 0o500))
+							s.T().Cleanup(func() {
+								s.Require().NoError(os.Chmod(held, 0o700))
+							})
+
+							return held
+						},
+						says: "matt-freeman.headroom.yaml",
+					},
+					{
+						name: "the rewritten preset will not compile",
+						pedal: func(p *mocks.MockTuner) {
+							p.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
+								Return(sdk.Reading{Plan: routed()}, nil)
+							p.EXPECT().Compile(gomock.Any(), gomock.Any()).
+								Return(sdk.Built{}, built)
+						},
+						is: built,
+					},
+				} {
+					s.Run(tt.name, func() {
+						pedal := mocks.NewMockTuner(gomock.NewController(s.T()))
+						tt.pedal(pedal)
+
+						work := s.T().TempDir()
+						if tt.work != nil {
+							work = tt.work()
+						}
+
+						_, err := quieter(context.Background(),
+							pedal, "already.hlx", work, "matt-freeman", -30)
+
+						if tt.is != nil {
+							s.Require().ErrorIs(err, tt.is)
+
+							return
+						}
+
+						s.Require().ErrorContains(err, tt.says)
+					})
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestItReadsThePresetBackBecauseARigCarriesNoRouting is the reason for the
 // round trip.
 //
-// A plan compiled from a rig has no routing at all: the inputs and outputs
-// come from the blank template while the preset is written. The preset has
-// them, so reading it back is how the output entry arrives complete, with its
-// model and its output already set.
-func (s *HeadroomPublicTestSuite) TestItReadsThePresetBackBecauseARigCarriesNoRouting() {
-	ctrl := gomock.NewController(s.T())
-	pedal := mocks.NewMockTuner(ctrl)
 
-	pedal.EXPECT().PresetFile(gomock.Any(), "already.hlx").
-		Return(sdk.Reading{Plan: routed()}, nil)
-
-	var built sdk.Compile
-
-	pedal.EXPECT().Compile(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			built = in
-
-			return sdk.Built{}, nil
-		})
-
-	got, err := quieter(context.Background(),
-		pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
-
-	s.Require().NoError(err)
-	s.Require().NotEqual("already.hlx", got, "it plays the quiet one")
-	s.Require().Equal(got, built.Out)
-	s.Require().NotEmpty(built.Plan, "compiled from a plan, not from the rig")
-
-	// And the plan it wrote carries the gain.
-	f, err := os.Open(built.Plan)
-	s.Require().NoError(err)
-
-	defer func() { _ = f.Close() }()
-
-	made, err := plan.Load(f)
-	s.Require().NoError(err)
-
-	var fields map[string]any
-	s.Require().NoError(
-		json.Unmarshal((*made.Device.Routing)[outputSlot], &fields))
-	s.Require().InDelta(-30, fields[gainKey], 0.001)
-}
-
-// TestAPresetThatWillNotReadBack covers the read failing.
-func (s *HeadroomPublicTestSuite) TestAPresetThatWillNotReadBack() {
-	ctrl := gomock.NewController(s.T())
-	pedal := mocks.NewMockTuner(ctrl)
-
-	wanted := errors.New("not a preset")
-
-	pedal.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
-		Return(sdk.Reading{}, wanted)
-
-	_, err := quieter(context.Background(),
-		pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
-
-	s.Require().ErrorIs(err, wanted)
-}
-
-// TestAPresetWithNoOutputToTurnDown covers a chain nobody can protect.
-func (s *HeadroomPublicTestSuite) TestAPresetWithNoOutputToTurnDown() {
-	ctrl := gomock.NewController(s.T())
-	pedal := mocks.NewMockTuner(ctrl)
-
-	pedal.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
-		Return(sdk.Reading{Plan: plan.Plan{}}, nil)
-
-	_, err := quieter(context.Background(),
-		pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
-
-	s.Require().ErrorIs(err, ErrNoOutput)
-}
-
-// TestTheQuietPresetThatWillNotCompile covers the write failing.
-func (s *HeadroomPublicTestSuite) TestTheQuietPresetThatWillNotCompile() {
-	ctrl := gomock.NewController(s.T())
-	pedal := mocks.NewMockTuner(ctrl)
-
-	wanted := errors.New("the catalog does not carry that")
-
-	pedal.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
-		Return(sdk.Reading{Plan: routed()}, nil)
-	pedal.EXPECT().Compile(gomock.Any(), gomock.Any()).
-		Return(sdk.Built{}, wanted)
-
-	_, err := quieter(context.Background(),
-		pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
-
-	s.Require().ErrorIs(err, wanted)
-}
+// TestQuieterRefusesWhatItCannotTakeOffTheLoop covers every way the rewrite
+// fails.
+//
 
 // TestItWarnsWhenItCannotPutTheOutputBack covers the silent wrong artifact.
 //

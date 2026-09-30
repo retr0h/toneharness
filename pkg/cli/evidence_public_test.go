@@ -111,47 +111,84 @@ func (s *EvidencePublicTestSuite) TestTheFiguresSurviveTheTrip() {
 
 // TestATimestampStaysAString is the one value a rig cannot afford to guess at.
 //
-// Rigs are written by a YAML 1.2 encoder and loaded by a 1.1 decoder, and in
-// 1.1 colon-separated digits are sexagesimal: a bare `at: 1:42` comes back as
-// the number 102. A single timestamp is the case that exposes it, because a
-// range carries a trailing `-1:45` that keeps it a string by accident.
-func (s *EvidencePublicTestSuite) TestATimestampStaysAString() {
-	var buf bytes.Buffer
+// TestEvidence covers Evidence, which writes measurements as rig evidence,
+// ready to paste into a chain.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *EvidencePublicTestSuite) TestEvidence() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// 1.1 colon-separated digits are sexagesimal: a bare `at: 1:42` comes back as
+			// the number 102. A single timestamp is the case that exposes it, because a
+			// range carries a trailing `-1:45` that keeps it a string by accident.
+			name: "a timestamp stays a string",
+			then: func() {
+				var buf bytes.Buffer
 
-	s.Require().NoError(cli.Evidence(&buf, []audio.Named{
-		{Name: "longview", Source: audio.Record{
-			URL: "https://example.com/a", At: "1:42",
-		}},
-	}))
+				s.Require().NoError(cli.Evidence(&buf, []audio.Named{
+					{Name: "longview", Source: audio.Record{
+						URL: "https://example.com/a", At: "1:42",
+					}},
+				}))
 
-	s.Require().Contains(buf.String(), `at: "1:42"`)
+				s.Require().Contains(buf.String(), `at: "1:42"`)
 
-	var got []rig.Evidence
+				var got []rig.Evidence
 
-	s.Require().NoError(yaml.Unmarshal(buf.Bytes(), &got))
-	s.Require().NotNil(got[0].At)
-	s.Require().Equal("1:42", *got[0].At)
-}
+				s.Require().NoError(yaml.Unmarshal(buf.Bytes(), &got))
+				s.Require().NotNil(got[0].At)
+				s.Require().Equal("1:42", *got[0].At)
+			},
+		},
+		{
+			name: "what the manifest knows reaches the entry",
+			then: func() {
+				var buf bytes.Buffer
 
-// TestWhatTheManifestKnowsReachesTheEntry covers the link arriving.
-func (s *EvidencePublicTestSuite) TestWhatTheManifestKnowsReachesTheEntry() {
-	var buf bytes.Buffer
+				s.Require().NoError(cli.Evidence(&buf, []audio.Named{
+					{Name: "longview", Source: audio.Record{
+						URL:  "https://open.spotify.com/track/abc",
+						At:   "1:20-1:45",
+						Note: "the bass carries the verse alone",
+					}},
+				}))
 
-	s.Require().NoError(cli.Evidence(&buf, []audio.Named{
-		{Name: "longview", Source: audio.Record{
-			URL:  "https://open.spotify.com/track/abc",
-			At:   "1:20-1:45",
-			Note: "the bass carries the verse alone",
-		}},
-	}))
+				var got []rig.Evidence
 
-	var got []rig.Evidence
+				s.Require().NoError(yaml.Unmarshal(buf.Bytes(), &got))
 
-	s.Require().NoError(yaml.Unmarshal(buf.Bytes(), &got))
+				s.Require().Equal("https://open.spotify.com/track/abc", *got[0].URL)
+				s.Require().Equal("1:20-1:45", *got[0].At)
+				s.Require().Contains(*got[0].Note, "the bass carries the verse alone")
+			},
+		},
+		{
+			// the document and then flushes the rest when it is closed, so a failure
+			// arriving late is a different path from one arriving at the start, and only
+			// walking the whole range reaches both.
+			name: "a write that fails is reported",
+			then: func() {
+				writes := &counting{}
+				s.Require().NoError(cli.Evidence(writes, s.records()))
 
-	s.Require().Equal("https://open.spotify.com/track/abc", *got[0].URL)
-	s.Require().Equal("1:20-1:45", *got[0].At)
-	s.Require().Contains(*got[0].Note, "the bass carries the verse alone")
+				for ok := range writes.n {
+					s.Run(fmt.Sprintf("after %d writes", ok), func() {
+						err := cli.Evidence(&stops{ok: ok}, s.records())
+
+						s.Require().Error(err)
+						s.Require().Contains(err.Error(), "writing evidence")
+					})
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestWithoutAManifestThereIsNoLink covers the entry a corpus with no
@@ -220,23 +257,6 @@ func (s *EvidencePublicTestSuite) TestNothingToWrite() {
 // TestAWriteThatFailsIsReported covers the output going somewhere that stops
 // accepting it.
 //
-// Every point it can fail, rather than the first. The encoder writes some of
-// the document and then flushes the rest when it is closed, so a failure
-// arriving late is a different path from one arriving at the start, and only
-// walking the whole range reaches both.
-func (s *EvidencePublicTestSuite) TestAWriteThatFailsIsReported() {
-	writes := &counting{}
-	s.Require().NoError(cli.Evidence(writes, s.records()))
-
-	for ok := range writes.n {
-		s.Run(fmt.Sprintf("after %d writes", ok), func() {
-			err := cli.Evidence(&stops{ok: ok}, s.records())
-
-			s.Require().Error(err)
-			s.Require().Contains(err.Error(), "writing evidence")
-		})
-	}
-}
 
 func TestEvidencePublicTestSuite(
 	t *testing.T,

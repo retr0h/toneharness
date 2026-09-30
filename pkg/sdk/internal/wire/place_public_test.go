@@ -374,84 +374,140 @@ func (s *PlacePublicTestSuite) TestBlank() {
 
 // TestPlaceAsWritten covers putting a chain where the preset says it goes.
 //
-// The two numberings differ by one, measured against slot 27B of an HX
-// Stomp: the preset HX Edit exported puts its six blocks at 1 through 6 and
-// the document the device sent puts the same six at 2 through 7.
+// TestPlaceAsWritten covers PlaceAsWritten, which writes a chain where
+// the preset says it goes.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *PlacePublicTestSuite) TestPlaceAsWritten() {
-	tests := []struct {
-		name      string
-		blocks    []wire.Placement
-		chainless bool
-		want      []int
-		err       error
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name: "the six blocks of the bass preset",
-			blocks: []wire.Placement{
-				s.at(s.drive(), 1), s.at(s.drive(), 2), s.at(s.drive(), 3),
-				s.at(s.drive(), 4), s.at(s.amp(), 5), s.at(s.drive(), 6),
+			// Stomp: the preset HX Edit exported puts its six blocks at 1 through 6 and
+			// the document the device sent puts the same six at 2 through 7.
+			name: "place as written",
+			then: func() {
+				tests := []struct {
+					name      string
+					blocks    []wire.Placement
+					chainless bool
+					want      []int
+					err       error
+				}{
+					{
+						name: "the six blocks of the bass preset",
+						blocks: []wire.Placement{
+							s.at(s.drive(), 1), s.at(s.drive(), 2), s.at(s.drive(), 3),
+							s.at(s.drive(), 4), s.at(s.amp(), 5), s.at(s.drive(), 6),
+						},
+						want: []int{2, 3, 4, 5, 6, 7},
+					},
+					{
+						name:   "one block at the start of a path",
+						blocks: []wire.Placement{s.at(s.drive(), 0)},
+						want:   []int{1},
+					},
+					{
+						name: "nothing at all",
+						want: []int{},
+					},
+					{
+						name:   "a position the device keeps its split on",
+						blocks: []wire.Placement{s.at(s.drive(), 8)},
+						err:    wire.ErrNoRoom,
+					},
+					{
+						name:   "a position past the end of the grid",
+						blocks: []wire.Placement{s.at(s.drive(), wire.GridSize)},
+						err:    wire.ErrNoRoom,
+					},
+					{
+						name:      "a document with no chain, which no device would send",
+						chainless: true,
+						err:       wire.ErrNotADocument,
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						doc := s.blank()
+						if tt.chainless {
+							doc = s.capture(1)
+						}
+
+						err := wire.PlaceAsWritten(doc, tt.blocks)
+
+						if tt.err != nil {
+							s.Require().ErrorIs(err, tt.err)
+
+							return
+						}
+
+						s.Require().NoError(err)
+
+						// Where the blocks landed, read back out of the document. The
+						// chain handed over is the caller's and comes back unshifted.
+						read := s.read(doc)
+
+						got := []int{}
+						for _, b := range read.Blocks {
+							got = append(got, b.Index)
+						}
+
+						s.Require().Equal(tt.want, got)
+						s.Require().Len(read.Blocks, len(tt.blocks))
+
+						for i, b := range tt.blocks {
+							s.Require().Equal(tt.want[i]-wire.GridOffset, b.Position,
+								"the caller's chain must come back as it went in")
+						}
+					})
+				}
 			},
-			want: []int{2, 3, 4, 5, 6, 7},
 		},
 		{
-			name:   "one block at the start of a path",
-			blocks: []wire.Placement{s.at(s.drive(), 0)},
-			want:   []int{1},
-		},
-		{
-			name: "nothing at all",
-			want: []int{},
-		},
-		{
-			name:   "a position the device keeps its split on",
-			blocks: []wire.Placement{s.at(s.drive(), 8)},
-			err:    wire.ErrNoRoom,
-		},
-		{
-			name:   "a position past the end of the grid",
-			blocks: []wire.Placement{s.at(s.drive(), wire.GridSize)},
-			err:    wire.ErrNoRoom,
-		},
-		{
-			name:      "a document with no chain, which no device would send",
-			chainless: true,
-			err:       wire.ErrNotADocument,
-		},
-	}
+			// device writes the model reference first, and this package wrote it last.
+			// Every chain it produced read back correctly, measured 147Hz on the
+			// hardware, and showed no blocks on the pedal.
+			name: "a chain is written the way the device wrote it",
+			then: func() {
+				for _, name := range []string{"preset.bin", "switches.bin"} {
+					raw, err := os.ReadFile(filepath.Join("testdata", name))
+					s.Require().NoError(err, name)
 
-	for _, tt := range tests {
+					read, err := wire.DecodePreset(raw)
+					s.Require().NoError(err, name)
+					s.Require().NotEmpty(read.Blocks, name)
+
+					blocks := make([]wire.Placement, 0, len(read.Blocks))
+					for _, b := range read.Blocks {
+						blocks = append(blocks, s.placementOf(b))
+					}
+
+					doc, err := wire.DecodeDocument(raw)
+					s.Require().NoError(err, name)
+
+					want, ok := doc.Section(wire.KeyTone)
+					s.Require().True(ok, name)
+
+					kept := make([]byte, len(want))
+					copy(kept, want)
+
+					s.Require().NoError(wire.PlaceAsWritten(doc, blocks), name)
+
+					got, ok := doc.Section(wire.KeyTone)
+					s.Require().True(ok, name)
+
+					s.Require().Equal(kept, []byte(got),
+						"%s: the chain a device wrote, written back, is not the same bytes",
+						name)
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			doc := s.blank()
-			if tt.chainless {
-				doc = s.capture(1)
-			}
-
-			err := wire.PlaceAsWritten(doc, tt.blocks)
-
-			if tt.err != nil {
-				s.Require().ErrorIs(err, tt.err)
-
-				return
-			}
-
-			s.Require().NoError(err)
-
-			// Where the blocks landed, read back out of the document. The
-			// chain handed over is the caller's and comes back unshifted.
-			read := s.read(doc)
-
-			got := []int{}
-			for _, b := range read.Blocks {
-				got = append(got, b.Index)
-			}
-
-			s.Require().Equal(tt.want, got)
-			s.Require().Len(read.Blocks, len(tt.blocks))
-
-			for i, b := range tt.blocks {
-				s.Require().Equal(tt.want[i]-wire.GridOffset, b.Position,
-					"the caller's chain must come back as it went in")
-			}
+			tt.then()
 		})
 	}
 }
@@ -676,43 +732,6 @@ func (s *PlacePublicTestSuite) placementOf(
 // arrived. Nothing else here can make that assertion: every other test reads
 // the result back, and reading finds a key wherever it sits.
 //
-// This is the test that was missing. A block body carries five keys, the
-// device writes the model reference first, and this package wrote it last.
-// Every chain it produced read back correctly, measured 147Hz on the
-// hardware, and showed no blocks on the pedal.
-func (s *PlacePublicTestSuite) TestAChainIsWrittenTheWayTheDeviceWroteIt() {
-	for _, name := range []string{"preset.bin", "switches.bin"} {
-		raw, err := os.ReadFile(filepath.Join("testdata", name))
-		s.Require().NoError(err, name)
-
-		read, err := wire.DecodePreset(raw)
-		s.Require().NoError(err, name)
-		s.Require().NotEmpty(read.Blocks, name)
-
-		blocks := make([]wire.Placement, 0, len(read.Blocks))
-		for _, b := range read.Blocks {
-			blocks = append(blocks, s.placementOf(b))
-		}
-
-		doc, err := wire.DecodeDocument(raw)
-		s.Require().NoError(err, name)
-
-		want, ok := doc.Section(wire.KeyTone)
-		s.Require().True(ok, name)
-
-		kept := make([]byte, len(want))
-		copy(kept, want)
-
-		s.Require().NoError(wire.PlaceAsWritten(doc, blocks), name)
-
-		got, ok := doc.Section(wire.KeyTone)
-		s.Require().True(ok, name)
-
-		s.Require().Equal(kept, []byte(got),
-			"%s: the chain a device wrote, written back, is not the same bytes",
-			name)
-	}
-}
 
 func TestPlacePublicTestSuite(
 	t *testing.T,

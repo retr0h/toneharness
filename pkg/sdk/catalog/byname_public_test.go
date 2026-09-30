@@ -44,70 +44,93 @@ func (s *ByNamePublicTestSuite) TestDevices() {
 		catalog.Devices())
 }
 
-// TestForName covers the spellings somebody might reasonably type.
+// TestForName covers ForName, which returns the built-in catalog for a
+// device, by what it is called.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *ByNamePublicTestSuite) TestForName() {
-	tests := []struct {
-		name   string
-		asked  string
-		device int
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
-		{name: "as it is printed", asked: "HX Stomp", device: catalog.HXStomp},
-		{name: "all lower", asked: "hx stomp", device: catalog.HXStomp},
-		{name: "hyphenated", asked: "helix-lt", device: catalog.HelixLT},
-		{name: "run together", asked: "helixfloor", device: catalog.HelixFloor},
-		{name: "shouted", asked: "HX STOMP XL", device: catalog.HXStompXL},
-		{name: "padded", asked: "  Helix Floor  ", device: catalog.HelixFloor},
-	}
+		{
+			name: "for name",
+			then: func() {
+				tests := []struct {
+					name   string
+					asked  string
+					device int
+				}{
+					{name: "as it is printed", asked: "HX Stomp", device: catalog.HXStomp},
+					{name: "all lower", asked: "hx stomp", device: catalog.HXStomp},
+					{name: "hyphenated", asked: "helix-lt", device: catalog.HelixLT},
+					{name: "run together", asked: "helixfloor", device: catalog.HelixFloor},
+					{name: "shouted", asked: "HX STOMP XL", device: catalog.HXStompXL},
+					{name: "padded", asked: "  Helix Floor  ", device: catalog.HelixFloor},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						got, err := catalog.ForName(tt.asked)
+						s.Require().NoError(err)
+						s.Require().Equal(tt.device, got.DeviceID)
+					})
+				}
+			},
+		},
+		{
+			// list of ones that are.
+			name: "for name something nothing ships for",
+			then: func() {
+				got, err := catalog.ForName("Kemper")
+
+				s.Require().Nil(got)
+				s.Require().ErrorIs(err, catalog.ErrNoDevice)
+				s.Require().Contains(err.Error(), `"Kemper"`)
+
+				for _, name := range catalog.Devices() {
+					s.Require().Contains(err.Error(), name)
+				}
+			},
+		},
+		{
+			// answering with the HX Stomp's would hide the mistake.
+			name: "for name nothing at all",
+			then: func() {
+				got, err := catalog.ForName("")
+
+				s.Require().Nil(got)
+				s.Require().ErrorIs(err, catalog.ErrNoDevice)
+			},
+		},
+		{
+			name: "each name reaches its own catalog",
+			then: func() {
+				stomp, err := catalog.ForName("HX Stomp")
+				s.Require().NoError(err)
+
+				floor, err := catalog.ForName("Helix Floor")
+				s.Require().NoError(err)
+
+				s.Require().Greater(len(floor.Blocks), len(stomp.Blocks),
+					"the floor unit carries blocks the Stomp has not")
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			got, err := catalog.ForName(tt.asked)
-			s.Require().NoError(err)
-			s.Require().Equal(tt.device, got.DeviceID)
+			tt.then()
 		})
 	}
 }
 
 // TestForNameSomethingNothingShipsFor answers with what it does ship for.
 //
-// The useful half of the message: "that is not one" helps nobody without the
-// list of ones that are.
-func (s *ByNamePublicTestSuite) TestForNameSomethingNothingShipsFor() {
-	got, err := catalog.ForName("Kemper")
-
-	s.Require().Nil(got)
-	s.Require().ErrorIs(err, catalog.ErrNoDevice)
-	s.Require().Contains(err.Error(), `"Kemper"`)
-
-	for _, name := range catalog.Devices() {
-		s.Require().Contains(err.Error(), name)
-	}
-}
 
 // TestForNameNothingAtAll is refused rather than taken as the default.
 //
-// An empty name reaching here is a caller that meant to pass one, and quietly
-// answering with the HX Stomp's would hide the mistake.
-func (s *ByNamePublicTestSuite) TestForNameNothingAtAll() {
-	got, err := catalog.ForName("")
-
-	s.Require().Nil(got)
-	s.Require().ErrorIs(err, catalog.ErrNoDevice)
-}
 
 // TestEachNameReachesItsOwnCatalog is what makes the names worth having.
 //
-// One catalog answering to four names would pass every test above.
-func (s *ByNamePublicTestSuite) TestEachNameReachesItsOwnCatalog() {
-	stomp, err := catalog.ForName("HX Stomp")
-	s.Require().NoError(err)
-
-	floor, err := catalog.ForName("Helix Floor")
-	s.Require().NoError(err)
-
-	s.Require().Greater(len(floor.Blocks), len(stomp.Blocks),
-		"the floor unit carries blocks the Stomp has not")
-}
 
 func TestByNamePublicTestSuite(
 	t *testing.T,

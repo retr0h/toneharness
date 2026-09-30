@@ -27,6 +27,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -390,30 +391,81 @@ func (s *MeasureRunTestSuite) TestBlocksMarksWhatClipped() {
 	s.Require().Contains(buf.String(), "CLIPPED")
 }
 
-// TestBlocksRecordsWhatWouldNotLoad covers a device declining a preset.
+// TestBlocksRecordsWhatItCouldNotMeasure covers the two ways a block ends up
+// filed as refused rather than measured.
 //
 // A refusal is a result rather than an end. Some of what the catalog lists
 // means nothing on its own, and a campaign has to get past them to reach the
-// rest.
-func (s *MeasureRunTestSuite) TestBlocksRecordsWhatWouldNotLoad() {
-	s.compiles()
-	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
-		Return(nil)
-	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
-		Return(errors.New("the device stopped taking the message")).AnyTimes()
+// rest. Which end refused is the difference between the rows: the compiler
+// never made a preset, or the device would not take the one it made. The
+// empty loop still has to build in both, or there is nothing to compare
+// against.
+func (s *MeasureRunTestSuite) TestBlocksRecordsWhatItCouldNotMeasure() {
+	// empties is the block the baseline is taken through, named because the
+	// compiler row has to let that one preset through and no other.
+	const empties = "HD2_EQSimple3Band"
 
-	var buf bytes.Buffer
+	for _, tt := range []struct {
+		name  string
+		setup func()
+	}{
+		{
+			name: "the compiler would not build the preset",
+			setup: func() {
+				s.pedal.EXPECT().Compile(gomock.Any(), gomock.Any()).
+					DoAndReturn(
+						func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
+							if !strings.Contains(in.Plan, empties) {
+								return sdk.Built{},
+									errors.New("the compiler would not have it")
+							}
 
-	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
-		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
-		Seconds: 1, Bench: bench{},
-	}))
+							s.Require().NoError(
+								os.WriteFile(in.Out, []byte("a preset"), 0o600))
 
-	for _, block := range s.read().Blocks {
-		s.Require().NotEmpty(block.Refused)
+							return sdk.Built{}, nil
+						}).AnyTimes()
+				s.pedal.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
+					Return(sdk.Reading{Plan: routedPlan()}, nil).AnyTimes()
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
+			},
+		},
+		{
+			name: "the device would not load the preset",
+			setup: func() {
+				s.compiles()
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+					Return(errors.New("the device stopped taking the message")).
+					AnyTimes()
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+			tt.setup()
+
+			var buf bytes.Buffer
+
+			s.Require().NoError(
+				MeasureBlocks(context.Background(), &buf, MeasureOptions{
+					Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
+					Seconds: 1, Bench: bench{},
+				}))
+
+			refused := 0
+
+			for _, block := range s.read().Blocks {
+				if block.Refused != "" {
+					refused++
+				}
+			}
+
+			s.Require().NotZero(refused)
+			s.Require().Contains(buf.String(), "refused")
+		})
 	}
-
-	s.Require().Contains(buf.String(), "refused")
 }
 
 // TestBlocksWritesAsItGoes is why a long run survives a pedal that drops off.
@@ -487,27 +539,6 @@ func (s *MeasureRunTestSuite) TestBlocksReportsAPresetItCannotBuild() {
 }
 
 // read is the library a run wrote.
-// TestBlocksReportsACatalogItCannotRead covers --device naming a pedal this
-// binary ships no catalog for.
-//
-// Asked of the client rather than read from the built-in one, so that
-// --catalog and --device reach the measuring commands. A campaign that cannot
-// say which models exist has nothing to measure.
-func (s *MeasureRunTestSuite) TestBlocksReportsACatalogItCannotRead() {
-	ctrl := gomock.NewController(s.T())
-	pedal := mocks.NewMockPedal(ctrl)
-	pedal.EXPECT().Catalog(gomock.Any()).
-		Return(nil, errors.New("no catalog for that pedal")).AnyTimes()
-
-	var buf bytes.Buffer
-
-	err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
-		Client: pedal, Dry: s.dry, Out: s.out, Seconds: 1, Bench: bench{},
-	})
-
-	s.Require().ErrorContains(err, "no catalog for that pedal")
-}
-
 // TestBlocksReportsSomewhereItCannotWrite covers a destination that is not
 // there.
 //
@@ -642,6 +673,68 @@ func (b stopping) Through(
 }
 
 func (stopping) Name() string { return "a bench that stops" }
+
+// TestBlocksReportsWhatStoppedItStarting covers the three refusals a campaign
+// meets before it has measured anything.
+//
+// Rows rather than methods: each is MeasureBlocks failing at a different stage
+// of the same setup, and what matters is which stage said so.
+func (s *MeasureRunTestSuite) TestBlocksReportsWhatStoppedItStarting() {
+	for _, tt := range []struct {
+		name  string
+		setup func()
+		give  MeasureOptions
+		says  string
+	}{
+		{
+			// The five measuring commands all open the loop through benchFor,
+			// and a run that cannot open it has nothing to measure.
+			name: "no bench supplied and no interface of that name",
+			give: MeasureOptions{Hardware: "no such interface anybody owns"},
+			says: "no such interface anybody owns",
+		},
+		{
+			// Every preset a campaign plays is written to a temporary
+			// directory first, so a machine with nowhere to make one cannot
+			// start.
+			name: "nowhere to build the presets",
+			setup: func() {
+				s.T().Setenv("TMPDIR",
+					filepath.Join(s.T().TempDir(), "not a directory"))
+			},
+			give: MeasureOptions{Bench: bench{}},
+			says: "making somewhere to build presets",
+		},
+		{
+			name: "the catalog will not say what the device has",
+			setup: func() {
+				s.ctrl = gomock.NewController(s.T())
+				s.pedal = mocks.NewMockPedal(s.ctrl)
+				s.pedal.EXPECT().Catalog(gomock.Any()).
+					Return(nil, errors.New("no catalog for that pedal")).
+					AnyTimes()
+			},
+			give: MeasureOptions{Bench: bench{}},
+			says: "no catalog for that pedal",
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+
+			if tt.setup != nil {
+				tt.setup()
+			}
+
+			opts := tt.give
+			opts.Client, opts.Dry, opts.Out = s.pedal, s.dry, s.out
+			opts.Category, opts.Seconds = "eq", 1
+
+			err := MeasureBlocks(context.Background(), &bytes.Buffer{}, opts)
+
+			s.Require().ErrorContains(err, tt.says)
+		})
+	}
+}
 
 func TestMeasureRunTestSuite(
 	t *testing.T,

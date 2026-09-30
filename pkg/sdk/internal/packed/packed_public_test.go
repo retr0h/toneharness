@@ -46,70 +46,106 @@ type PackedPublicTestSuite struct {
 // diff on a branch that touched nothing and a `just ready` that never settles.
 // Two generators depended on this and neither said it.
 //
-// The header rather than two calls agreeing: gzip stores the time to the
-// second, so compressing the same input twice in one test matches even when
-// the field is set, and an assertion that the two agree cannot see it. This
-// reads the field.
-func (s *PackedPublicTestSuite) TestItCarriesNoModificationTime() {
-	zr, err := gzip.NewReader(bytes.NewReader(packed.Bytes([]byte("anything"))))
-	s.Require().NoError(err)
+// TestBytes covers Bytes, which gzips a generated blob.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *PackedPublicTestSuite) TestBytes() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// second, so compressing the same input twice in one test matches even when
+			// the field is set, and an assertion that the two agree cannot see it. This
+			// reads the field.
+			name: "it carries no modification time",
+			then: func() {
+				zr, err := gzip.NewReader(bytes.NewReader(packed.Bytes([]byte("anything"))))
+				s.Require().NoError(err)
 
-	s.Require().True(zr.ModTime.IsZero(),
-		"a time in the header makes the same input compress to different bytes "+
-			"on two runs, and Refresh decides by comparing them")
+				s.Require().True(zr.ModTime.IsZero(),
+					"a time in the header makes the same input compress to different bytes "+
+						"on two runs, and Refresh decides by comparing them")
+			},
+		},
+		{
+			name: "the same input compresses to the same bytes",
+			then: func() {
+				raw := []byte(`{"device":"HX Stomp","blocks":661}`)
+
+				s.Require().Equal(packed.Bytes(raw), packed.Bytes(raw))
+			},
+		},
+		{
+			name: "it gzips what it was given",
+			then: func() {
+				raw := []byte(`{"device":"HX Stomp"}`)
+
+				zr, err := gzip.NewReader(bytes.NewReader(packed.Bytes(raw)))
+				s.Require().NoError(err)
+
+				got, err := io.ReadAll(zr)
+				s.Require().NoError(err)
+				s.Require().Equal(raw, got)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
-// TestTheSameInputCompressesToTheSameBytes is the same rule, end to end.
-func (s *PackedPublicTestSuite) TestTheSameInputCompressesToTheSameBytes() {
-	raw := []byte(`{"device":"HX Stomp","blocks":661}`)
+// TestRefresh covers Refresh, which writes body to path unless what is there
+// already matches, and says.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *PackedPublicTestSuite) TestRefresh() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "refresh writes only what changed",
+			then: func() {
+				at := filepath.Join(s.T().TempDir(), "hx-stomp.json.gz")
 
-	s.Require().Equal(packed.Bytes(raw), packed.Bytes(raw))
-}
+				// A fresh clone has no generated file, which is a write rather than a
+				// refusal.
+				wrote, err := packed.Refresh(at, []byte("one"))
+				s.Require().NoError(err)
+				s.Require().True(wrote, "there was nothing there")
 
-// TestItGzipsWhatItWasGiven covers the round trip.
-func (s *PackedPublicTestSuite) TestItGzipsWhatItWasGiven() {
-	raw := []byte(`{"device":"HX Stomp"}`)
+				// The same content again leaves it alone, which is how a regenerate stays
+				// out of a diff.
+				wrote, err = packed.Refresh(at, []byte("one"))
+				s.Require().NoError(err)
+				s.Require().False(wrote)
 
-	zr, err := gzip.NewReader(bytes.NewReader(packed.Bytes(raw)))
-	s.Require().NoError(err)
+				wrote, err = packed.Refresh(at, []byte("two"))
+				s.Require().NoError(err)
+				s.Require().True(wrote)
 
-	got, err := io.ReadAll(zr)
-	s.Require().NoError(err)
-	s.Require().Equal(raw, got)
-}
+				got, err := os.ReadFile(at)
+				s.Require().NoError(err)
+				s.Require().Equal([]byte("two"), got)
+			},
+		},
+		{
+			name: "refresh reports somewhere it cannot write",
+			then: func() {
+				at := filepath.Join(s.T().TempDir(), "nowhere", "hx-stomp.json.gz")
 
-// TestRefreshWritesOnlyWhatChanged is the whole point of it.
-func (s *PackedPublicTestSuite) TestRefreshWritesOnlyWhatChanged() {
-	at := filepath.Join(s.T().TempDir(), "hx-stomp.json.gz")
+				_, err := packed.Refresh(at, []byte("one"))
 
-	// A fresh clone has no generated file, which is a write rather than a
-	// refusal.
-	wrote, err := packed.Refresh(at, []byte("one"))
-	s.Require().NoError(err)
-	s.Require().True(wrote, "there was nothing there")
-
-	// The same content again leaves it alone, which is how a regenerate stays
-	// out of a diff.
-	wrote, err = packed.Refresh(at, []byte("one"))
-	s.Require().NoError(err)
-	s.Require().False(wrote)
-
-	wrote, err = packed.Refresh(at, []byte("two"))
-	s.Require().NoError(err)
-	s.Require().True(wrote)
-
-	got, err := os.ReadFile(at)
-	s.Require().NoError(err)
-	s.Require().Equal([]byte("two"), got)
-}
-
-// TestRefreshReportsSomewhereItCannotWrite covers a path that is not there.
-func (s *PackedPublicTestSuite) TestRefreshReportsSomewhereItCannotWrite() {
-	at := filepath.Join(s.T().TempDir(), "nowhere", "hx-stomp.json.gz")
-
-	_, err := packed.Refresh(at, []byte("one"))
-
-	s.Require().ErrorContains(err, at)
+				s.Require().ErrorContains(err, at)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 func TestPackedPublicTestSuite(

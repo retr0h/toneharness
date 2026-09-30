@@ -38,75 +38,97 @@ type MissingPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestAnAxisAlreadyInsideItsToleranceIsNotWanted covers asking for nothing.
-func (s *MissingPublicTestSuite) TestAnAxisAlreadyInsideItsToleranceIsNotWanted() {
-	aims := map[audio.Figure]solve.Aim{
-		audio.KeyCentroid: {Want: 144, Tol: 20},
+// TestUnreached covers unreached, which is the axes a target still wants, in
+// the library's own units.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MissingPublicTestSuite) TestUnreached() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "an axis already inside its tolerance is not wanted",
+			then: func() {
+				aims := map[audio.Figure]solve.Aim{
+					audio.KeyCentroid: {Want: 144, Tol: 20},
+				}
+
+				s.Require().Empty(unreached(aims,
+					map[audio.Figure]float64{audio.KeyCentroid: 150}),
+					"six hertz out of a twenty hertz tolerance needs no block")
+			},
+		},
+		{
+			// residual.
+			name: "the want carries the direction",
+			then: func() {
+				aims := map[audio.Figure]solve.Aim{
+					audio.KeyCentroid: {Want: 144, Tol: 10},
+				}
+
+				up := unreached(aims, map[audio.Figure]float64{audio.KeyCentroid: 100})
+				s.Require().Len(up, 1)
+				s.Require().Positive(up[0].Need, "it reads low, so it needs raising")
+
+				down := unreached(aims, map[audio.Figure]float64{audio.KeyCentroid: 900})
+				s.Require().Len(down, 1)
+				s.Require().Negative(down[0].Need, "it reads high, so it needs lowering")
+			},
+		},
+		{
+			// The library reports a band as a percentage. A want handed over unconverted is a
+			// hundred times wrong on four of the ten axes and entirely plausible on the rest.
+			name: "a band is converted to the librarys scale",
+			then: func() {
+				aims := map[audio.Figure]solve.Aim{
+					audio.KeyHigh:     {Want: 0.40, Tol: 0.01},
+					audio.KeyCentroid: {Want: 500, Tol: 10},
+				}
+
+				got := unreached(aims, map[audio.Figure]float64{
+					audio.KeyHigh: 0.10, audio.KeyCentroid: 100,
+				})
+
+				by := map[audio.Figure]measured.Want{}
+				for _, w := range got {
+					by[w.Figure] = w
+				}
+
+				s.Require().InDelta(30, by[audio.KeyHigh].Need, 0.001,
+					"0.30 of a fraction is 30 percentage points")
+				s.Require().InDelta(1, by[audio.KeyHigh].Tol, 0.001)
+
+				s.Require().InDelta(400, by[audio.KeyCentroid].Need, 0.001,
+					"hertz are hertz in both scales")
+				s.Require().InDelta(10, by[audio.KeyCentroid].Tol, 0.001)
+			},
+		},
+		{
+			name: "an axis with no tolerance is not wanted",
+			then: func() {
+				s.Require().Empty(unreached(
+					map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 144}},
+					map[audio.Figure]float64{audio.KeyCentroid: 9000}))
+			},
+		},
+		{
+			name: "an axis the chain did not read is not wanted",
+			then: func() {
+				s.Require().Empty(unreached(
+					map[audio.Figure]solve.Aim{audio.KeyDecay: {Want: 0.6, Tol: 0.1}},
+					map[audio.Figure]float64{}))
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
-
-	s.Require().Empty(unreached(aims,
-		map[audio.Figure]float64{audio.KeyCentroid: 150}),
-		"six hertz out of a twenty hertz tolerance needs no block")
-}
-
-// TestTheWantCarriesTheDirection is why the reading is carried rather than the
-// residual.
-func (s *MissingPublicTestSuite) TestTheWantCarriesTheDirection() {
-	aims := map[audio.Figure]solve.Aim{
-		audio.KeyCentroid: {Want: 144, Tol: 10},
-	}
-
-	up := unreached(aims, map[audio.Figure]float64{audio.KeyCentroid: 100})
-	s.Require().Len(up, 1)
-	s.Require().Positive(up[0].Need, "it reads low, so it needs raising")
-
-	down := unreached(aims, map[audio.Figure]float64{audio.KeyCentroid: 900})
-	s.Require().Len(down, 1)
-	s.Require().Negative(down[0].Need, "it reads high, so it needs lowering")
 }
 
 // TestABandIsConvertedToTheLibrarysScale is the trap this file exists to avoid.
 //
-// A target and a reading are in the corpus's units, where a band is a fraction.
-// The library reports a band as a percentage. A want handed over unconverted is a
-// hundred times wrong on four of the ten axes and entirely plausible on the rest.
-func (s *MissingPublicTestSuite) TestABandIsConvertedToTheLibrarysScale() {
-	aims := map[audio.Figure]solve.Aim{
-		audio.KeyHigh:     {Want: 0.40, Tol: 0.01},
-		audio.KeyCentroid: {Want: 500, Tol: 10},
-	}
-
-	got := unreached(aims, map[audio.Figure]float64{
-		audio.KeyHigh: 0.10, audio.KeyCentroid: 100,
-	})
-
-	by := map[audio.Figure]measured.Want{}
-	for _, w := range got {
-		by[w.Figure] = w
-	}
-
-	s.Require().InDelta(30, by[audio.KeyHigh].Need, 0.001,
-		"0.30 of a fraction is 30 percentage points")
-	s.Require().InDelta(1, by[audio.KeyHigh].Tol, 0.001)
-
-	s.Require().InDelta(400, by[audio.KeyCentroid].Need, 0.001,
-		"hertz are hertz in both scales")
-	s.Require().InDelta(10, by[audio.KeyCentroid].Tol, 0.001)
-}
-
-// TestAnAxisWithNoToleranceIsNotWanted covers an aim nothing constrains.
-func (s *MissingPublicTestSuite) TestAnAxisWithNoToleranceIsNotWanted() {
-	s.Require().Empty(unreached(
-		map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 144}},
-		map[audio.Figure]float64{audio.KeyCentroid: 9000}))
-}
-
-// TestAnAxisTheChainDidNotReadIsNotWanted covers a figure with no answer.
-func (s *MissingPublicTestSuite) TestAnAxisTheChainDidNotReadIsNotWanted() {
-	s.Require().Empty(unreached(
-		map[audio.Figure]solve.Aim{audio.KeyDecay: {Want: 0.6, Tol: 0.1}},
-		map[audio.Figure]float64{}))
-}
 
 func TestMissingPublicTestSuite(
 	t *testing.T,
@@ -175,53 +197,72 @@ func (s *MissingPublicTestSuite) TestWhyReportsTheFiguresRatherThanAVerdict() {
 
 // TestMissingSaysNothingWhenThereIsNothingToSay covers the advisory staying quiet.
 //
-// It prints after a run that did not arrive, so a run that did, or one whose
-// axes are all inside their tolerances, must produce no table at all. A
-// shortlist printed under a converged run reads as a complaint about a chain
-// that worked.
-func (s *MissingPublicTestSuite) TestMissingSaysNothingWhenThereIsNothingToSay() {
-	made := plan.Plan{Blocks: []plan.Block{
-		{Model: catalog.ModelID("HD2_AmpSVBeastBrt")},
-	}}
+// TestMissing covers missing, which prints the blocks that would close what
+// the dials could not.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MissingPublicTestSuite) TestMissing() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// axes are all inside their tolerances, must produce no table at all. A
+			// shortlist printed under a converged run reads as a complaint about a chain
+			// that worked.
+			name: "missing says nothing when there is nothing to say",
+			then: func() {
+				made := plan.Plan{Blocks: []plan.Block{
+					{Model: catalog.ModelID("HD2_AmpSVBeastBrt")},
+				}}
 
-	var buf bytes.Buffer
+				var buf bytes.Buffer
 
-	// Every axis inside its tolerance, so nothing is wanted.
-	missing(&buf, made,
-		map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 144, Tol: 50}},
-		map[audio.Figure]float64{audio.KeyCentroid: 150})
+				// Every axis inside its tolerance, so nothing is wanted.
+				missing(&buf, made,
+					map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 144, Tol: 50}},
+					map[audio.Figure]float64{audio.KeyCentroid: 150})
 
-	s.Require().Empty(buf.String())
+				s.Require().Empty(buf.String())
 
-	// And no aims at all, which is what a run with nothing to hit looks like.
-	missing(&buf, made, nil, nil)
-	s.Require().Empty(buf.String())
+				// And no aims at all, which is what a run with nothing to hit looks like.
+				missing(&buf, made, nil, nil)
+				s.Require().Empty(buf.String())
+			},
+		},
+		{
+			// table is which of 661 real blocks is worth eight seconds of measuring, and a
+			// fixture would prove only that the printing works.
+			name: "missing prints a shortlist when an axis is out",
+			then: func() {
+				made := plan.Plan{Blocks: []plan.Block{
+					{Model: catalog.ModelID("HD2_AmpSVBeastBrt")},
+				}}
+
+				var buf bytes.Buffer
+
+				// Far more harmonics than the chain reads, which is the case the shortlist
+				// exists for: no dial closes it, so the answer is a block.
+				missing(&buf, made,
+					map[audio.Figure]solve.Aim{audio.KeyHarmonics: {Want: 0.60, Tol: 0.01}},
+					map[audio.Figure]float64{audio.KeyHarmonics: 0.02})
+
+				said := buf.String()
+				s.Require().Contains(said, "the chain rather than the")
+				s.Require().Contains(said, "BLOCK")
+				s.Require().Contains(said, "harmonics",
+					"the axis it was found for is named, or the row says nothing")
+				s.Require().Contains(said, "measured on its own",
+					"the caution travels with the table, because the table is the most "+
+						"tempting thing in the output to act on directly")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestMissingPrintsAShortlistWhenAnAxisIsOut is the live path.
 //
-// Against the shipped library rather than a fixture, because the point of the
-// table is which of 661 real blocks is worth eight seconds of measuring, and a
-// fixture would prove only that the printing works.
-func (s *MissingPublicTestSuite) TestMissingPrintsAShortlistWhenAnAxisIsOut() {
-	made := plan.Plan{Blocks: []plan.Block{
-		{Model: catalog.ModelID("HD2_AmpSVBeastBrt")},
-	}}
-
-	var buf bytes.Buffer
-
-	// Far more harmonics than the chain reads, which is the case the shortlist
-	// exists for: no dial closes it, so the answer is a block.
-	missing(&buf, made,
-		map[audio.Figure]solve.Aim{audio.KeyHarmonics: {Want: 0.60, Tol: 0.01}},
-		map[audio.Figure]float64{audio.KeyHarmonics: 0.02})
-
-	said := buf.String()
-	s.Require().Contains(said, "the chain rather than the")
-	s.Require().Contains(said, "BLOCK")
-	s.Require().Contains(said, "harmonics",
-		"the axis it was found for is named, or the row says nothing")
-	s.Require().Contains(said, "measured on its own",
-		"the caution travels with the table, because the table is the most "+
-			"tempting thing in the output to act on directly")
-}

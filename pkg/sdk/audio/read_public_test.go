@@ -163,13 +163,47 @@ func (s *ReadPublicTestSuite) TestSampleRateIsReported() {
 	}
 }
 
-// TestSomethingThatIsNotAudio is refused rather than measured.
-func (s *ReadPublicTestSuite) TestSomethingThatIsNotAudio() {
-	got, rate, err := audio.Read(bytes.NewReader([]byte("this is not a wav")))
+// TestRead covers Read, which decodes a WAV into single-channel samples
+// between -1 and 1.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ReadPublicTestSuite) TestRead() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "something that is not audio",
+			then: func() {
+				got, rate, err := audio.Read(bytes.NewReader([]byte("this is not a wav")))
 
-	s.Require().Nil(got)
-	s.Require().Zero(rate)
-	s.Require().ErrorIs(err, audio.ErrNotAudio)
+				s.Require().Nil(got)
+				s.Require().Zero(rate)
+				s.Require().ErrorIs(err, audio.ErrNotAudio)
+			},
+		},
+		{
+			name: "a wav holding no samples",
+			then: func() {
+				got, gotRate, err := func() ([]float64, int, error) {
+					f, err := os.Open(s.write(nil, rate, 1, 16)) //nolint:gosec // this test's own path
+					s.Require().NoError(err)
+
+					defer func() { s.Require().NoError(f.Close()) }()
+
+					return audio.Read(f)
+				}()
+
+				s.Require().NoError(err)
+				s.Require().Empty(got)
+				s.Require().Equal(rate, gotRate)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestNothingAtAll is refused for the same reason.
@@ -178,22 +212,6 @@ func (s *ReadPublicTestSuite) TestNothingAtAll() {
 
 	s.Require().ErrorIs(err, audio.ErrNotAudio)
 	s.Require().Contains(err.Error(), "not readable audio")
-}
-
-// TestAWavHoldingNoSamples reads as nothing rather than failing.
-func (s *ReadPublicTestSuite) TestAWavHoldingNoSamples() {
-	got, gotRate, err := func() ([]float64, int, error) {
-		f, err := os.Open(s.write(nil, rate, 1, 16)) //nolint:gosec // this test's own path
-		s.Require().NoError(err)
-
-		defer func() { s.Require().NoError(f.Close()) }()
-
-		return audio.Read(f)
-	}()
-
-	s.Require().NoError(err)
-	s.Require().Empty(got)
-	s.Require().Equal(rate, gotRate)
 }
 
 // TestTheChunkedReadAgreesWithTheDecoder pins the speedup to the decoder it

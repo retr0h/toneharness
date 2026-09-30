@@ -129,176 +129,270 @@ func substituting(
 
 // TestResolve turns gear a person names into models a device has.
 //
-// "Ampeg SVT" names neither the normal nor the bright channel, so which of
-// the two comes back is arbitrary. It is pinned here because a row wants a
-// value, and TestResolveIsDeterministic is what guards that it stays put.
+// TestResolve covers Resolve, which turns a rig into a chain for the
+// device the catalog describes.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *ResolvePublicTestSuite) TestResolve() {
-	tests := []struct {
-		name   string
-		spec   rig.Spec
-		models []catalog.ModelID
-		err    string
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name:   "an amp brings the cabinet it was voiced with",
-			spec:   bassRig("Ampeg SVT", ""),
-			models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
-		},
-		{
-			name: "the chain keeps the order it was written in",
-			spec: bassRig("Ampeg SVT", "", "Klon Centaur"),
-			models: []catalog.ModelID{
-				"HD2_DistMinotaur",
-				"HD2_AmpSVBeastBrt",
-				"HD2_Cab8x10SVBeast",
+			// the two comes back is arbitrary. It is pinned here because a row wants a
+			// value, and TestResolveIsDeterministic is what guards that it stays put.
+			name: "resolve",
+			then: func() {
+				tests := []struct {
+					name   string
+					spec   rig.Spec
+					models []catalog.ModelID
+					err    string
+				}{
+					{
+						name:   "an amp brings the cabinet it was voiced with",
+						spec:   bassRig("Ampeg SVT", ""),
+						models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
+					},
+					{
+						name: "the chain keeps the order it was written in",
+						spec: bassRig("Ampeg SVT", "", "Klon Centaur"),
+						models: []catalog.ModelID{
+							"HD2_DistMinotaur",
+							"HD2_AmpSVBeastBrt",
+							"HD2_Cab8x10SVBeast",
+						},
+					},
+					{
+						// Two pedals, descriptions of equal length. The identifier
+						// decides, so the answer does not depend on map iteration order.
+						name:   "the identifier breaks a tie",
+						spec:   bassRig("Ampeg SVT", "", "Tied Pedal"),
+						models: []catalog.ModelID{"HD2_TieA", "HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
+					},
+					{
+						// "Fuzz Face" matches both the Fuzz Face and the Fuzz Face
+						// Germanium Reissue. The shorter description is the closer answer.
+						name:   "the closer description wins",
+						spec:   bassRig("Ampeg SVT", "", "Fuzz Face"),
+						models: []catalog.ModelID{"HD2_Short", "HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
+					},
+					{
+						name:   "a cabinet the rig names beats the amp's own",
+						spec:   bassRig("Ampeg SVT", "Ampeg SVT 410HLF"),
+						models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_CabNamed"},
+					},
+					{
+						// A rig outlives any one device, so it goes on naming what was
+						// really played and says separately what this device can do.
+						name:   "gear nobody models, with a stand-in the rig names",
+						spec:   substituting("Orange AD200B", "Ampeg SVT"),
+						models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
+					},
+					{
+						name: "a stand-in nobody models either",
+						spec: substituting("Orange AD200B", "Also Not A Thing"),
+						err:  `"Also Not A Thing" stands in for "Orange AD200B"`,
+					},
+					{
+						// Substituting an amplifier is not a detail, so without one the
+						// build fails rather than picking something.
+						name: "gear nobody models and no stand-in",
+						spec: substituting("Orange AD200B", ""),
+						err:  `no amp in this device's bass amps emulates "Orange AD200B"`,
+					},
+					{
+						// Line 6 does not describe every cabinet in terms of real gear,
+						// so one it cannot name is not a reason to refuse to build.
+						name:   "a cabinet nobody models falls back to the amp's",
+						spec:   bassRig("Ampeg SVT", "Some Cabinet Nobody Models"),
+						models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
+					},
+					{
+						name:   "a partial name reaching the other channel",
+						spec:   bassRig("Ampeg SVT (bright", ""),
+						models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
+					},
+					{
+						name:   "an amp that names none at all",
+						spec:   bassRig("Cabless Bass Head", ""),
+						models: []catalog.ModelID{"HD2_AmpNoCab"},
+					},
+					{
+						name:   "an amp naming a cabinet this device lacks",
+						spec:   bassRig("Dangling Bass Head", ""),
+						models: []catalog.ModelID{"HD2_AmpDanglingCab"},
+					},
+					{
+						// A bass request must not reach a guitar amp, however well the
+						// name matches.
+						name: "a request stays inside its instrument",
+						spec: bassRig("Marshall JCM-800", ""),
+						err:  "bass amps",
+					},
+					{
+						// A cabinet miss is only recoverable because the amplifier names
+						// the one it was voiced with. One that names none leaves nothing
+						// to substitute.
+						name: "a cabinet miss with nothing to fall back to",
+						spec: bassRig("Cabless Bass Head", "Some Cabinet Nobody Models"),
+						err:  "Some Cabinet Nobody Models",
+					},
+					{
+						name: "gear no model emulates",
+						spec: bassRig("Orange Rockerverb", ""),
+						err:  "Orange Rockerverb",
+					},
+					{
+						name: "a pedal no model emulates",
+						spec: bassRig("Ampeg SVT", "", "Nonexistent Fuzz"),
+						err:  "Nonexistent Fuzz",
+					},
+					{
+						// A user IR block carries a slot index, not audio. Generating one
+						// would point at whatever happened to be loaded in that slot.
+						name: "a block needing the owner's own impulse response",
+						spec: bassRig("Slotted Cab", ""),
+						err:  "Slotted Cab",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						got, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
+
+						if tt.err != "" {
+							s.Require().ErrorIs(err, compile.ErrNoSuchGear)
+							s.Require().Contains(err.Error(), tt.err)
+
+							return
+						}
+
+						s.Require().NoError(err)
+						s.Require().Equal("test", got.Name,
+							"no ask names it, so the rig's identifier does")
+						s.Require().Equal(tt.models, models(got))
+					})
+				}
 			},
 		},
 		{
-			// Two pedals, descriptions of equal length. The identifier
-			// decides, so the answer does not depend on map iteration order.
-			name:   "the identifier breaks a tie",
-			spec:   bassRig("Ampeg SVT", "", "Tied Pedal"),
-			models: []catalog.ModelID{"HD2_TieA", "HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
-		},
-		{
-			// "Fuzz Face" matches both the Fuzz Face and the Fuzz Face
-			// Germanium Reissue. The shorter description is the closer answer.
-			name:   "the closer description wins",
-			spec:   bassRig("Ampeg SVT", "", "Fuzz Face"),
-			models: []catalog.ModelID{"HD2_Short", "HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
-		},
-		{
-			name:   "a cabinet the rig names beats the amp's own",
-			spec:   bassRig("Ampeg SVT", "Ampeg SVT 410HLF"),
-			models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_CabNamed"},
-		},
-		{
-			// A rig outlives any one device, so it goes on naming what was
-			// really played and says separately what this device can do.
-			name:   "gear nobody models, with a stand-in the rig names",
-			spec:   substituting("Orange AD200B", "Ampeg SVT"),
-			models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
-		},
-		{
-			name: "a stand-in nobody models either",
-			spec: substituting("Orange AD200B", "Also Not A Thing"),
-			err:  `"Also Not A Thing" stands in for "Orange AD200B"`,
-		},
-		{
-			// Substituting an amplifier is not a detail, so without one the
-			// build fails rather than picking something.
-			name: "gear nobody models and no stand-in",
-			spec: substituting("Orange AD200B", ""),
-			err:  `no amp in this device's bass amps emulates "Orange AD200B"`,
-		},
-		{
-			// Line 6 does not describe every cabinet in terms of real gear,
-			// so one it cannot name is not a reason to refuse to build.
-			name:   "a cabinet nobody models falls back to the amp's",
-			spec:   bassRig("Ampeg SVT", "Some Cabinet Nobody Models"),
-			models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
-		},
-		{
-			name:   "a partial name reaching the other channel",
-			spec:   bassRig("Ampeg SVT (bright", ""),
-			models: []catalog.ModelID{"HD2_AmpSVBeastBrt", "HD2_Cab8x10SVBeast"},
-		},
-		{
-			name:   "an amp that names none at all",
-			spec:   bassRig("Cabless Bass Head", ""),
-			models: []catalog.ModelID{"HD2_AmpNoCab"},
-		},
-		{
-			name:   "an amp naming a cabinet this device lacks",
-			spec:   bassRig("Dangling Bass Head", ""),
-			models: []catalog.ModelID{"HD2_AmpDanglingCab"},
-		},
-		{
-			// A bass request must not reach a guitar amp, however well the
-			// name matches.
-			name: "a request stays inside its instrument",
-			spec: bassRig("Marshall JCM-800", ""),
-			err:  "bass amps",
-		},
-		{
-			// A cabinet miss is only recoverable because the amplifier names
-			// the one it was voiced with. One that names none leaves nothing
-			// to substitute.
-			name: "a cabinet miss with nothing to fall back to",
-			spec: bassRig("Cabless Bass Head", "Some Cabinet Nobody Models"),
-			err:  "Some Cabinet Nobody Models",
-		},
-		{
-			name: "gear no model emulates",
-			spec: bassRig("Orange Rockerverb", ""),
-			err:  "Orange Rockerverb",
-		},
-		{
-			name: "a pedal no model emulates",
-			spec: bassRig("Ampeg SVT", "", "Nonexistent Fuzz"),
-			err:  "Nonexistent Fuzz",
-		},
-		{
-			// A user IR block carries a slot index, not audio. Generating one
-			// would point at whatever happened to be loaded in that slot.
-			name: "a block needing the owner's own impulse response",
-			spec: bassRig("Slotted Cab", ""),
-			err:  "Slotted Cab",
-		},
-	}
+			// device: "Mike Dirnt" rather than "mike-dirnt". A rig read off disk has no ask
+			// beside it and no subject to be named after, so its identifier stands in,
+			// which beats a blank heading.
+			name: "the ask names the preset",
+			then: func() {
+				tests := []struct {
+					name   string
+					intent compile.Intent
+					want   string
+				}{
+					{
+						name:   "the ask names the subject",
+						intent: compile.Intent{Name: "Test Player"},
+						want:   "Test Player",
+					},
+					{
+						name: "no ask at all",
+						want: "test",
+					},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						got, _, _, err := compile.Resolve(
+							bassRig("Ampeg SVT", ""), tt.intent, s.cat, nil)
+
+						s.Require().NoError(err)
+						s.Require().Equal(tt.want, got.Name)
+					})
+				}
+			},
+		},
+		{
+			// chosen, it must not change because the catalog was regenerated or because
+			// a map iterated in a different order.
+			name: "resolve is deterministic",
+			then: func() {
+				first, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+				s.Require().NoError(err)
+
+				for range 20 {
+					again, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+
+					s.Require().NoError(err)
+					s.Require().Equal(models(first), models(again))
+				}
+			},
+		},
+		{
+			// a person is told about decisions made on their behalf.
+			name: "resolve names what it chose for you",
+			then: func() {
+				_, added, _, err := compile.Resolve(
+					bassRig("Ampeg SVT", "Some Cabinet Nobody Models"),
+					compile.Intent{}, s.cat, nil)
+
+				s.Require().NoError(err)
+				s.Require().NotEmpty(added, "a substitution is a choice made for somebody")
+				s.Require().Contains(added[0].Reason, "Some Cabinet Nobody Models")
+				s.Require().Zero(added[0].Share, "a substitution is not a measurement")
+			},
+		},
+		{
+			name: "resolve sets parameters",
+			then: func() {
+				tests := []struct {
+					name  string
+					spec  rig.Spec
+					check func(plan.Block)
+				}{
+					{
+						name: "every parameter starts at what Line 6 states",
+						spec: bassRig("Ampeg SVT", ""),
+						check: func(b plan.Block) {
+							blk, ok := s.cat.Block(b.Model)
+							s.Require().True(ok)
+
+							want, ok := blk.Params["Drive"].Default.Float()
+							s.Require().True(ok)
+
+							got, ok := b.Params["Drive"].Float()
+							s.Require().True(ok)
+							s.Require().InDelta(want, got, 1e-9)
+						},
+					},
+					{
+						// A value with no kind produces a preset the device rejects.
+						name: "a parameter with no stated default is skipped",
+						spec: bassRig("Ampeg SVT", "", "Nothing Real"),
+						check: func(b plan.Block) {
+							s.Require().Empty(b.Params)
+						},
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						got, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
+
+						s.Require().NoError(err)
+						s.Require().NotEmpty(got.Blocks)
+
+						tt.check(got.Blocks[0])
+					})
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			got, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
-
-			if tt.err != "" {
-				s.Require().ErrorIs(err, compile.ErrNoSuchGear)
-				s.Require().Contains(err.Error(), tt.err)
-
-				return
-			}
-
-			s.Require().NoError(err)
-			s.Require().Equal("test", got.Name,
-				"no ask names it, so the rig's identifier does")
-			s.Require().Equal(tt.models, models(got))
+			tt.then()
 		})
 	}
 }
 
 // TestTheAskNamesThePreset covers where the name on the screen comes from.
 //
-// The subject is the ask's, and it is what somebody wants to read on the
-// device: "Mike Dirnt" rather than "mike-dirnt". A rig read off disk has no ask
-// beside it and no subject to be named after, so its identifier stands in,
-// which beats a blank heading.
-func (s *ResolvePublicTestSuite) TestTheAskNamesThePreset() {
-	tests := []struct {
-		name   string
-		intent compile.Intent
-		want   string
-	}{
-		{
-			name:   "the ask names the subject",
-			intent: compile.Intent{Name: "Test Player"},
-			want:   "Test Player",
-		},
-		{
-			name: "no ask at all",
-			want: "test",
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			got, _, _, err := compile.Resolve(
-				bassRig("Ampeg SVT", ""), tt.intent, s.cat, nil)
-
-			s.Require().NoError(err)
-			s.Require().Equal(tt.want, got.Name)
-		})
-	}
-}
 
 // TestGear resolves one name, the way both halves of this project now do.
 //
@@ -370,140 +464,155 @@ func (s *ResolvePublicTestSuite) TestGear() {
 
 // TestResolveIsDeterministic is a property rather than a case.
 //
-// "Ampeg SVT" names neither the normal nor the bright channel. Whichever is
-// chosen, it must not change because the catalog was regenerated or because
-// a map iterated in a different order.
-func (s *ResolvePublicTestSuite) TestResolveIsDeterministic() {
-	first, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
-	s.Require().NoError(err)
 
-	for range 20 {
-		again, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
-
-		s.Require().NoError(err)
-		s.Require().Equal(models(first), models(again))
-	}
-}
-
-// TestResolveNamesWhatItChoseForYou covers the second return, which is what
-// a person is told about decisions made on their behalf.
-func (s *ResolvePublicTestSuite) TestResolveNamesWhatItChoseForYou() {
-	_, added, _, err := compile.Resolve(
-		bassRig("Ampeg SVT", "Some Cabinet Nobody Models"),
-		compile.Intent{}, s.cat, nil)
-
-	s.Require().NoError(err)
-	s.Require().NotEmpty(added, "a substitution is a choice made for somebody")
-	s.Require().Contains(added[0].Reason, "Some Cabinet Nobody Models")
-	s.Require().Zero(added[0].Share, "a substitution is not a measurement")
-}
-
-// TestResolveSetsParameters covers the values a block starts at.
-func (s *ResolvePublicTestSuite) TestResolveSetsParameters() {
-	tests := []struct {
-		name  string
-		spec  rig.Spec
-		check func(plan.Block)
-	}{
-		{
-			name: "every parameter starts at what Line 6 states",
-			spec: bassRig("Ampeg SVT", ""),
-			check: func(b plan.Block) {
-				blk, ok := s.cat.Block(b.Model)
-				s.Require().True(ok)
-
-				want, ok := blk.Params["Drive"].Default.Float()
-				s.Require().True(ok)
-
-				got, ok := b.Params["Drive"].Float()
-				s.Require().True(ok)
-				s.Require().InDelta(want, got, 1e-9)
-			},
-		},
-		{
-			// A value with no kind produces a preset the device rejects.
-			name: "a parameter with no stated default is skipped",
-			spec: bassRig("Ampeg SVT", "", "Nothing Real"),
-			check: func(b plan.Block) {
-				s.Require().Empty(b.Params)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			got, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
-
-			s.Require().NoError(err)
-			s.Require().NotEmpty(got.Blocks)
-
-			tt.check(got.Blocks[0])
-		})
-	}
-}
-
-// TestFit places a chain across the processors a device has.
+// TestFit covers Fit, which reports whether a chain fits the device,
+// moving blocks to the second.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *ResolvePublicTestSuite) TestFit() {
-	tests := []struct {
-		name    string
-		spec    rig.Spec
-		limits  plan.Limits
-		spilled bool
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name:   "a small chain stays on the first processor",
-			spec:   bassRig("Ampeg SVT", ""),
-			limits: twoChips(95.0),
-		},
-		{
-			// 60 + 60 + 26.67 + 7.2 cannot fit under 95 on one chip.
-			name:    "overflow moves to the second",
-			spec:    bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),
-			limits:  twoChips(95.0),
-			spilled: true,
-		},
-		{
-			// 50 stereo + 26.67 + 7.2 overflows 80; 5 mono and the rest
-			// would not, so this is the stereo figure being charged.
-			name:    "a stereo block costs its stereo figure",
-			spec:    bassRig("Ampeg SVT", "", "Wide Thing"),
-			limits:  twoChips(80.0),
-			spilled: true,
-		},
-		{
-			// Regression: overflow was moved to dsp1 unconditionally. An HX
-			// Stomp has one signal path — no preset in a corpus of 714 has a
-			// second — so a block put there produces a file the device cannot
-			// load. A chain that does not fit stays put and is rejected by
-			// validation instead.
-			name:   "a device with one path has nowhere to put overflow",
-			spec:   bassRig("Ampeg SVT", "", "Wide Thing"),
-			limits: oneChip(80.0),
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			spec, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
-			s.Require().NoError(err)
-
-			fitted := compile.Fit(spec, s.cat, tt.limits)
-
-			var second int
-
-			for _, b := range fitted.Blocks {
-				if b.DSP == 1 {
-					second++
+			name: "fit",
+			then: func() {
+				tests := []struct {
+					name    string
+					spec    rig.Spec
+					limits  plan.Limits
+					spilled bool
+				}{
+					{
+						name:   "a small chain stays on the first processor",
+						spec:   bassRig("Ampeg SVT", ""),
+						limits: twoChips(95.0),
+					},
+					{
+						// 60 + 60 + 26.67 + 7.2 cannot fit under 95 on one chip.
+						name:    "overflow moves to the second",
+						spec:    bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),
+						limits:  twoChips(95.0),
+						spilled: true,
+					},
+					{
+						// 50 stereo + 26.67 + 7.2 overflows 80; 5 mono and the rest
+						// would not, so this is the stereo figure being charged.
+						name:    "a stereo block costs its stereo figure",
+						spec:    bassRig("Ampeg SVT", "", "Wide Thing"),
+						limits:  twoChips(80.0),
+						spilled: true,
+					},
+					{
+						// Regression: overflow was moved to dsp1 unconditionally. An HX
+						// Stomp has one signal path — no preset in a corpus of 714 has a
+						// second — so a block put there produces a file the device cannot
+						// load. A chain that does not fit stays put and is rejected by
+						// validation instead.
+						name:   "a device with one path has nowhere to put overflow",
+						spec:   bassRig("Ampeg SVT", "", "Wide Thing"),
+						limits: oneChip(80.0),
+					},
 				}
-			}
 
-			if tt.spilled {
-				s.Require().Positive(second, "something must move")
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						spec, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
+						s.Require().NoError(err)
 
-				return
-			}
+						fitted := compile.Fit(spec, s.cat, tt.limits)
 
-			s.Require().Zero(second, "nothing should have moved")
+						var second int
+
+						for _, b := range fitted.Blocks {
+							if b.DSP == 1 {
+								second++
+							}
+						}
+
+						if tt.spilled {
+							s.Require().Positive(second, "something must move")
+
+							return
+						}
+
+						s.Require().Zero(second, "nothing should have moved")
+					})
+				}
+			},
+		},
+		{
+			// whatever it already held: three heavy blocks put 180 on a chip with room
+			// for 95, and the chain was rejected by validation rather than laid out.
+			name: "fit budgets each processor",
+			then: func() {
+				spec, _, _, err := compile.Resolve(
+					bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing", "Heavy Thing"),
+					compile.Intent{}, s.cat, nil)
+				s.Require().NoError(err)
+
+				used := map[int]float64{}
+
+				for _, b := range compile.Fit(spec, s.cat, twoChips(95.0)).Blocks {
+					blk, ok := s.cat.Block(b.Model)
+					s.Require().True(ok)
+
+					used[b.DSP] += blk.DSP.Mono
+				}
+
+				// Two of the three heavy blocks have somewhere to go, one on each
+				// processor. The third has nowhere, so it stays where it is and
+				// validation is what refuses the chain.
+				s.Require().Greater(used[0], 95.0,
+					"the block nothing had room for is still counted against a processor")
+				s.Require().LessOrEqual(used[1], 95.0,
+					"the second processor is not a place to put whatever did not fit")
+			},
+		},
+		{
+			// rather than of any one chain.
+			name: "fit numbers each processor from zero",
+			then: func() {
+				spec, _, _, err := compile.Resolve(
+					bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),
+					compile.Intent{}, s.cat, nil)
+				s.Require().NoError(err)
+
+				seen := map[int]map[int]bool{}
+
+				for _, b := range compile.Fit(spec, s.cat, twoChips(95.0)).Blocks {
+					if seen[b.DSP] == nil {
+						seen[b.DSP] = map[int]bool{}
+					}
+
+					s.Require().False(seen[b.DSP][b.Pos],
+						"position %d used twice on chip %d", b.Pos, b.DSP)
+					seen[b.DSP][b.Pos] = true
+				}
+
+				for dsp, positions := range seen {
+					for i := range positions {
+						s.Require().True(positions[i], "chip %d has a gap at %d", dsp, i)
+					}
+				}
+			},
+		},
+		{
+			// from dropping blocks on the floor.
+			name: "fit ignores a block the catalog lacks",
+			then: func() {
+				spec, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+				s.Require().NoError(err)
+
+				spec.Blocks[0].Model = "HD2_NotInThisCatalog"
+
+				s.Require().Len(
+					compile.Fit(spec, s.cat, twoChips(95.0)).Blocks, len(spec.Blocks))
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
 		})
 	}
 }
@@ -511,71 +620,6 @@ func (s *ResolvePublicTestSuite) TestFit() {
 // TestFitBudgetsEachProcessor covers the second processor having a ceiling
 // of its own.
 //
-// Before this, everything that overflowed the first went onto the second
-// whatever it already held: three heavy blocks put 180 on a chip with room
-// for 95, and the chain was rejected by validation rather than laid out.
-func (s *ResolvePublicTestSuite) TestFitBudgetsEachProcessor() {
-	spec, _, _, err := compile.Resolve(
-		bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing", "Heavy Thing"),
-		compile.Intent{}, s.cat, nil)
-	s.Require().NoError(err)
-
-	used := map[int]float64{}
-
-	for _, b := range compile.Fit(spec, s.cat, twoChips(95.0)).Blocks {
-		blk, ok := s.cat.Block(b.Model)
-		s.Require().True(ok)
-
-		used[b.DSP] += blk.DSP.Mono
-	}
-
-	// Two of the three heavy blocks have somewhere to go, one on each
-	// processor. The third has nowhere, so it stays where it is and
-	// validation is what refuses the chain.
-	s.Require().Greater(used[0], 95.0,
-		"the block nothing had room for is still counted against a processor")
-	s.Require().LessOrEqual(used[1], 95.0,
-		"the second processor is not a place to put whatever did not fit")
-}
-
-// TestFitNumbersEachProcessorFromZero is a property of the whole result
-// rather than of any one chain.
-func (s *ResolvePublicTestSuite) TestFitNumbersEachProcessorFromZero() {
-	spec, _, _, err := compile.Resolve(
-		bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),
-		compile.Intent{}, s.cat, nil)
-	s.Require().NoError(err)
-
-	seen := map[int]map[int]bool{}
-
-	for _, b := range compile.Fit(spec, s.cat, twoChips(95.0)).Blocks {
-		if seen[b.DSP] == nil {
-			seen[b.DSP] = map[int]bool{}
-		}
-
-		s.Require().False(seen[b.DSP][b.Pos],
-			"position %d used twice on chip %d", b.Pos, b.DSP)
-		seen[b.DSP][b.Pos] = true
-	}
-
-	for dsp, positions := range seen {
-		for i := range positions {
-			s.Require().True(positions[i], "chip %d has a gap at %d", dsp, i)
-		}
-	}
-}
-
-// TestFitIgnoresABlockTheCatalogLacks keeps a catalog from another release
-// from dropping blocks on the floor.
-func (s *ResolvePublicTestSuite) TestFitIgnoresABlockTheCatalogLacks() {
-	spec, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
-	s.Require().NoError(err)
-
-	spec.Blocks[0].Model = "HD2_NotInThisCatalog"
-
-	s.Require().Len(
-		compile.Fit(spec, s.cat, twoChips(95.0)).Blocks, len(spec.Blocks))
-}
 
 // TestNoSuchGearError covers what somebody reads when nothing matched.
 func (s *ResolvePublicTestSuite) TestNoSuchGearError() {

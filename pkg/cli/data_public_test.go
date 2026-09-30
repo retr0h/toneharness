@@ -37,57 +37,79 @@ type DataPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestItWritesSomethingAReaderCanParse is the whole point of the form.
-func (s *DataPublicTestSuite) TestItWritesSomethingAReaderCanParse() {
-	var buf bytes.Buffer
+// TestData covers Data, which writes what an operation answered, as data
+// rather than as a table.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *DataPublicTestSuite) TestData() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "it writes something a reader can parse",
+			then: func() {
+				var buf bytes.Buffer
 
-	s.Require().NoError(cli.Data(&buf, map[string]any{
-		"gear": "Ampeg SVT", "role": "amp",
-	}))
+				s.Require().NoError(cli.Data(&buf, map[string]any{
+					"gear": "Ampeg SVT", "role": "amp",
+				}))
 
-	var back map[string]any
-	s.Require().NoError(json.Unmarshal(buf.Bytes(), &back))
+				var back map[string]any
+				s.Require().NoError(json.Unmarshal(buf.Bytes(), &back))
 
-	s.Require().Equal("Ampeg SVT", back["gear"])
-	s.Require().Equal("amp", back["role"])
+				s.Require().Equal("Ampeg SVT", back["gear"])
+				s.Require().Equal("amp", back["role"])
+			},
+		},
+		{
+			// see, and a newline because the usual next thing is a pipe.
+			name: "it is indented and ends in a newline",
+			then: func() {
+				var buf bytes.Buffer
+
+				s.Require().NoError(cli.Data(&buf, map[string]int{"blocks": 2}))
+
+				s.Require().Contains(buf.String(), "\n  \"blocks\"")
+				s.Require().True(strings.HasSuffix(buf.String(), "\n"))
+			},
+		},
+		{
+			// half-written document, because a reader cannot tell a truncated one from a
+			// short one.
+			name: "something that cannot be written is reported",
+			then: func() {
+				var buf bytes.Buffer
+
+				err := cli.Data(&buf, make(chan int))
+
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), "writing the answer")
+				s.Require().Empty(buf.String())
+			},
+		},
+		{
+			name: "a writer that refuses is reported",
+			then: func() {
+				err := cli.Data(refuses{}, map[string]string{"gear": "Ampeg SVT"})
+
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), "writing the answer")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestItIsIndentedAndEndsInANewline covers the shape somebody actually reads.
 //
-// Indented because the usual reader is a person checking what an agent will
-// see, and a newline because the usual next thing is a pipe.
-func (s *DataPublicTestSuite) TestItIsIndentedAndEndsInANewline() {
-	var buf bytes.Buffer
-
-	s.Require().NoError(cli.Data(&buf, map[string]int{"blocks": 2}))
-
-	s.Require().Contains(buf.String(), "\n  \"blocks\"")
-	s.Require().True(strings.HasSuffix(buf.String(), "\n"))
-}
 
 // TestSomethingThatCannotBeWrittenIsReported covers a value with no data
 // form.
 //
-// A channel has none. The answer is an error naming the problem rather than a
-// half-written document, because a reader cannot tell a truncated one from a
-// short one.
-func (s *DataPublicTestSuite) TestSomethingThatCannotBeWrittenIsReported() {
-	var buf bytes.Buffer
-
-	err := cli.Data(&buf, make(chan int))
-
-	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "writing the answer")
-	s.Require().Empty(buf.String())
-}
-
-// TestAWriterThatRefusesIsReported covers the other half.
-func (s *DataPublicTestSuite) TestAWriterThatRefusesIsReported() {
-	err := cli.Data(refuses{}, map[string]string{"gear": "Ampeg SVT"})
-
-	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "writing the answer")
-}
 
 // errRefused is what a writer that takes nothing says.
 var errRefused = errors.New("nothing doing")

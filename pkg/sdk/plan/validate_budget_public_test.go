@@ -52,150 +52,168 @@ func (s *ValidateBudgetPublicTestSuite) blocks(
 	return out
 }
 
-// TestValidateBudget checks a chain against what the chips can carry.
+// TestValidateBudget covers ValidateBudget, which reports the first DSP
+// processor whose blocks exceed the.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
-	stereo := testAmp()
-	stereo.Stereo = true
-
-	assumed := testAmp()
-	assumed.DSP.Prov = catalog.ProvAssumed
-
-	tests := []struct {
-		name   string
-		block  catalog.Block
-		spec   plan.Plan
-		limits plan.Limits
-		is     error
-		says   string
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name: "one amp on each of two chips",
-			spec: plan.Plan{
-				Blocks: append(s.blocks(1, 0, true).Blocks, s.blocks(1, 1, true).Blocks...),
+			name: "validate budget",
+			then: func() {
+				stereo := testAmp()
+				stereo.Stereo = true
+
+				assumed := testAmp()
+				assumed.DSP.Prov = catalog.ProvAssumed
+
+				tests := []struct {
+					name   string
+					block  catalog.Block
+					spec   plan.Plan
+					limits plan.Limits
+					is     error
+					says   string
+				}{
+					{
+						name: "one amp on each of two chips",
+						spec: plan.Plan{
+							Blocks: append(s.blocks(1, 0, true).Blocks, s.blocks(1, 1, true).Blocks...),
+						},
+						limits: s.limits(),
+					},
+					{
+						name:   "four on one, at 26.67 each",
+						spec:   s.blocks(4, 0, true),
+						limits: s.limits(),
+						is:     plan.ErrOverBudget,
+					},
+					{
+						// Processors are numbered from nothing, so two of them are 0 and
+						// 1 and the first one too far is 2. `>` accepts exactly this
+						// block and indexes a costs slice of length two at two, which is
+						// a chain on a processor the device does not have.
+						name:   "a block on the first chip past the last one",
+						spec:   s.blocks(1, 2, true),
+						limits: s.limits(),
+						is:     plan.ErrBadTopology,
+					},
+					{
+						name:   "and the last chip it does have is fine",
+						spec:   s.blocks(1, 1, true),
+						limits: s.limits(),
+					},
+					{
+						// A bypassed block still occupies its position and still costs
+						// DSP, which is why the same four fail switched off.
+						name:   "four bypassed ones, which cost the same",
+						spec:   s.blocks(4, 0, false),
+						limits: s.limits(),
+						is:     plan.ErrOverBudget,
+					},
+					{
+						// Three stereo instances cost 120.3; three mono are 80.01.
+						name:   "three stereo, charged the stereo figure",
+						block:  stereo,
+						spec:   s.blocks(3, 0, true),
+						limits: s.limits(),
+						is:     plan.ErrOverBudget,
+					},
+					{
+						name:   "the same three, mono",
+						spec:   s.blocks(3, 0, true),
+						limits: s.limits(),
+					},
+					{
+						// A cost nobody stated must not decide whether somebody's rig
+						// fits.
+						name:   "a cost this project guessed at",
+						block:  assumed,
+						spec:   s.blocks(1, 0, false),
+						limits: s.limits(),
+						is:     catalog.ErrBadParam,
+						says:   "assumed",
+					},
+					{
+						name:   "a block on a chip the device does not have",
+						spec:   s.blocks(1, 5, false),
+						limits: s.limits(),
+						is:     plan.ErrBadTopology,
+					},
+					{
+						name:   "one on a chip below the first",
+						spec:   s.blocks(1, -1, false),
+						limits: s.limits(),
+						is:     plan.ErrBadTopology,
+					},
+					{
+						name:   "limits declaring no chips at all",
+						spec:   s.blocks(1, 0, false),
+						limits: plan.Limits{Paths: 0},
+						is:     plan.ErrBadTopology,
+					},
+					{
+						name:   "a model the catalog does not carry",
+						spec:   plan.Plan{Blocks: []plan.Block{{Model: "HD2_Nope"}}},
+						limits: s.limits(),
+						is:     plan.ErrUnknownBlock,
+					},
+					{
+						// Regression: ChipCeiling was once a fraction while the catalog
+						// states cost in percent, so every rig was rejected as over
+						// budget — including a single amp. A chain the device would
+						// happily load must validate.
+						name:   "three amps on the one path a Stomp has",
+						spec:   s.blocks(3, 0, true),
+						limits: plan.HXStompLimits(),
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						block := tt.block
+						if block.ID == "" {
+							block = testAmp()
+						}
+
+						err := plan.ValidateBudget(newCatalog(block), tt.spec, tt.limits)
+
+						if tt.is == nil {
+							s.Require().NoError(err)
+
+							return
+						}
+
+						s.Require().ErrorIs(err, tt.is)
+
+						if tt.says != "" {
+							s.Require().Contains(err.Error(), tt.says)
+						}
+					})
+				}
 			},
-			limits: s.limits(),
 		},
 		{
-			name:   "four on one, at 26.67 each",
-			spec:   s.blocks(4, 0, true),
-			limits: s.limits(),
-			is:     plan.ErrOverBudget,
-		},
-		{
-			// Processors are numbered from nothing, so two of them are 0 and
-			// 1 and the first one too far is 2. `>` accepts exactly this
-			// block and indexes a costs slice of length two at two, which is
-			// a chain on a processor the device does not have.
-			name:   "a block on the first chip past the last one",
-			spec:   s.blocks(1, 2, true),
-			limits: s.limits(),
-			is:     plan.ErrBadTopology,
-		},
-		{
-			name:   "and the last chip it does have is fine",
-			spec:   s.blocks(1, 1, true),
-			limits: s.limits(),
-		},
-		{
-			// A bypassed block still occupies its position and still costs
-			// DSP, which is why the same four fail switched off.
-			name:   "four bypassed ones, which cost the same",
-			spec:   s.blocks(4, 0, false),
-			limits: s.limits(),
-			is:     plan.ErrOverBudget,
-		},
-		{
-			// Three stereo instances cost 120.3; three mono are 80.01.
-			name:   "three stereo, charged the stereo figure",
-			block:  stereo,
-			spec:   s.blocks(3, 0, true),
-			limits: s.limits(),
-			is:     plan.ErrOverBudget,
-		},
-		{
-			name:   "the same three, mono",
-			spec:   s.blocks(3, 0, true),
-			limits: s.limits(),
-		},
-		{
-			// A cost nobody stated must not decide whether somebody's rig
-			// fits.
-			name:   "a cost this project guessed at",
-			block:  assumed,
-			spec:   s.blocks(1, 0, false),
-			limits: s.limits(),
-			is:     catalog.ErrBadParam,
-			says:   "assumed",
-		},
-		{
-			name:   "a block on a chip the device does not have",
-			spec:   s.blocks(1, 5, false),
-			limits: s.limits(),
-			is:     plan.ErrBadTopology,
-		},
-		{
-			name:   "one on a chip below the first",
-			spec:   s.blocks(1, -1, false),
-			limits: s.limits(),
-			is:     plan.ErrBadTopology,
-		},
-		{
-			name:   "limits declaring no chips at all",
-			spec:   s.blocks(1, 0, false),
-			limits: plan.Limits{Paths: 0},
-			is:     plan.ErrBadTopology,
-		},
-		{
-			name:   "a model the catalog does not carry",
-			spec:   plan.Plan{Blocks: []plan.Block{{Model: "HD2_Nope"}}},
-			limits: s.limits(),
-			is:     plan.ErrUnknownBlock,
-		},
-		{
-			// Regression: ChipCeiling was once a fraction while the catalog
-			// states cost in percent, so every rig was rejected as over
-			// budget — including a single amp. A chain the device would
-			// happily load must validate.
-			name:   "three amps on the one path a Stomp has",
-			spec:   s.blocks(3, 0, true),
-			limits: plan.HXStompLimits(),
-		},
-	}
+			// reads, which is one error rather than a set of cases.
+			name: "validate budget names the chip that overflowed",
+			then: func() {
+				err := plan.ValidateBudget(
+					newCatalog(testAmp()), s.blocks(4, 0, true), s.limits())
 
-	for _, tt := range tests {
+				var got *plan.OverBudgetError
+				s.Require().ErrorAs(err, &got)
+				s.Require().Equal(0, got.Chip)
+				s.Require().InDelta(106.68, got.Cost, 1e-9)
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			block := tt.block
-			if block.ID == "" {
-				block = testAmp()
-			}
-
-			err := plan.ValidateBudget(newCatalog(block), tt.spec, tt.limits)
-
-			if tt.is == nil {
-				s.Require().NoError(err)
-
-				return
-			}
-
-			s.Require().ErrorIs(err, tt.is)
-
-			if tt.says != "" {
-				s.Require().Contains(err.Error(), tt.says)
-			}
+			tt.then()
 		})
 	}
-}
-
-// TestValidateBudgetNamesTheChipThatOverflowed covers the detail a caller
-// reads, which is one error rather than a set of cases.
-func (s *ValidateBudgetPublicTestSuite) TestValidateBudgetNamesTheChipThatOverflowed() {
-	err := plan.ValidateBudget(
-		newCatalog(testAmp()), s.blocks(4, 0, true), s.limits())
-
-	var got *plan.OverBudgetError
-	s.Require().ErrorAs(err, &got)
-	s.Require().Equal(0, got.Chip)
-	s.Require().InDelta(106.68, got.Cost, 1e-9)
 }
 
 // TestCostAndCeilingShareUnits is a property of the limits themselves.

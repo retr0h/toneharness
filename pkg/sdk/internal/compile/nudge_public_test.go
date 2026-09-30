@@ -38,128 +38,154 @@ type NudgePublicTestSuite struct {
 	suite.Suite
 }
 
-// TestAWordNamesAFigureAndADirection is the base case.
-func (s *NudgePublicTestSuite) TestAWordNamesAFigureAndADirection() {
-	tests := []struct {
+// TestNudges covers Nudges, which is what a word asks of the measured
+// figures.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *NudgePublicTestSuite) TestNudges() {
+	for _, tt := range []struct {
 		name string
-		said string
-		key  string
-		up   bool
+		then func()
 	}{
-		{"the adjective", "dark", "centroid", false},
-		{"and its opposite", "bright", "centroid", true},
-		{"mids pushed", "mid-forward", "mid", true},
-		{"mids pulled", "scooped", "mid", false},
-	}
+		{
+			name: "a word names a figure and a direction",
+			then: func() {
+				tests := []struct {
+					name string
+					said string
+					key  string
+					up   bool
+				}{
+					{"the adjective", "dark", "centroid", false},
+					{"and its opposite", "bright", "centroid", true},
+					{"mids pushed", "mid-forward", "mid", true},
+					{"mids pulled", "scooped", "mid", false},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						got, err := compile.Nudges(tt.said)
+
+						s.Require().NoError(err)
+						s.Require().Len(got, 1)
+						s.Require().Equal(tt.key, got[0].Key)
+						s.Require().Equal(tt.up, got[0].Up)
+					})
+				}
+			},
+		},
+		{
+			// mean the same axis in the same direction, so refusing "darker" would make
+			// somebody look up a spelling to say a thing the tool understands.
+			name: "the comparative is what somebody actually says",
+			then: func() {
+				tests := []struct {
+					said string
+					key  string
+					up   bool
+				}{
+					{"darker", "centroid", false},
+					{"brighter", "centroid", true},
+				}
+
+				// A word ending in y takes the other form: "punchier" is "punchy", which
+				// answers two axes, so it is checked on its own below rather than here.
+				got, err := compile.Nudges("punchier")
+				s.Require().NoError(err)
+				s.Require().Len(got, 2)
+
+				for _, tt := range tests {
+					s.Run(tt.said, func() {
+						got, err := compile.Nudges(tt.said)
+
+						s.Require().NoError(err)
+						s.Require().Len(got, 1)
+						s.Require().Equal(tt.key, got[0].Key)
+						s.Require().Equal(tt.up, got[0].Up)
+					})
+				}
+			},
+		},
+		{
+			// vocabulary holds it that way because that is how players talk.
+			name: "a word may ask for two things",
+			then: func() {
+				got, err := compile.Nudges("punchy")
+
+				s.Require().NoError(err)
+				s.Require().Len(got, 2)
+
+				keys := []string{got[0].Key, got[1].Key}
+				s.Require().Contains(keys, "low")
+				s.Require().Contains(keys, "transient")
+
+				// Sorted on the figure, so the same word reports the same order every run.
+				s.Require().Equal("low", got[0].Key)
+			},
+		},
+		{
+			// pickup was used and whether a filter is moving have no figure at all. A word
+			// answering only those cannot move a target however much somebody means it, and
+			// saying so is the difference between that and a word that does nothing.
+			name: "a word nothing measures is refused",
+			then: func() {
+				_, err := compile.Nudges("quiet-strings")
+
+				s.Require().ErrorContains(err, "nothing measures")
+			},
+		},
+		{
+			name: "a word the vocabulary does not know is refused by name",
+			then: func() {
+				_, err := compile.Nudges("chunky")
+
+				s.Require().ErrorContains(err, "chunky")
+				s.Require().ErrorContains(err, "words.json")
+			},
+		},
+		{
+			// something with no figure, and neither answer is a crash or an empty list.
+			name: "every word either resolves or says why not",
+			then: func() {
+				for _, word := range compile.Words() {
+					s.Run(word, func() {
+						got, err := compile.Nudges(word)
+						if err != nil {
+							s.Require().ErrorContains(err, "nothing measures",
+								"a word this vocabulary holds is refused for one reason only")
+
+							return
+						}
+
+						s.Require().NotEmpty(got)
+
+						for _, n := range got {
+							s.Require().NotEmpty(n.Key)
+							s.Require().NotEmpty(n.Axis)
+							s.Require().Equal(word, n.Term)
+						}
+					})
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			got, err := compile.Nudges(tt.said)
-
-			s.Require().NoError(err)
-			s.Require().Len(got, 1)
-			s.Require().Equal(tt.key, got[0].Key)
-			s.Require().Equal(tt.up, got[0].Up)
+			tt.then()
 		})
 	}
 }
 
 // TestTheComparativeIsWhatSomebodyActuallySays covers the form of the word.
 //
-// The vocabulary holds the adjective and a person says the comparative. Both
-// mean the same axis in the same direction, so refusing "darker" would make
-// somebody look up a spelling to say a thing the tool understands.
-func (s *NudgePublicTestSuite) TestTheComparativeIsWhatSomebodyActuallySays() {
-	tests := []struct {
-		said string
-		key  string
-		up   bool
-	}{
-		{"darker", "centroid", false},
-		{"brighter", "centroid", true},
-	}
-
-	// A word ending in y takes the other form: "punchier" is "punchy", which
-	// answers two axes, so it is checked on its own below rather than here.
-	got, err := compile.Nudges("punchier")
-	s.Require().NoError(err)
-	s.Require().Len(got, 2)
-
-	for _, tt := range tests {
-		s.Run(tt.said, func() {
-			got, err := compile.Nudges(tt.said)
-
-			s.Require().NoError(err)
-			s.Require().Len(got, 1)
-			s.Require().Equal(tt.key, got[0].Key)
-			s.Require().Equal(tt.up, got[0].Up)
-		})
-	}
-}
 
 // TestAWordMayAskForTwoThings covers a word answering more than one axis.
 //
-// "Punchy" is a tight low end and a hard attack in one word, and the
-// vocabulary holds it that way because that is how players talk.
-func (s *NudgePublicTestSuite) TestAWordMayAskForTwoThings() {
-	got, err := compile.Nudges("punchy")
-
-	s.Require().NoError(err)
-	s.Require().Len(got, 2)
-
-	keys := []string{got[0].Key, got[1].Key}
-	s.Require().Contains(keys, "low")
-	s.Require().Contains(keys, "transient")
-
-	// Sorted on the figure, so the same word reports the same order every run.
-	s.Require().Equal("low", got[0].Key)
-}
 
 // TestAWordNothingMeasuresIsRefused covers four of the ten axes.
 //
-// How much room is on a part, how loud the strings are under a hand, which
-// pickup was used and whether a filter is moving have no figure at all. A word
-// answering only those cannot move a target however much somebody means it, and
-// saying so is the difference between that and a word that does nothing.
-func (s *NudgePublicTestSuite) TestAWordNothingMeasuresIsRefused() {
-	_, err := compile.Nudges("quiet-strings")
-
-	s.Require().ErrorContains(err, "nothing measures")
-}
-
-// TestAWordTheVocabularyDoesNotKnowIsRefusedByName covers a typo.
-func (s *NudgePublicTestSuite) TestAWordTheVocabularyDoesNotKnowIsRefusedByName() {
-	_, err := compile.Nudges("chunky")
-
-	s.Require().ErrorContains(err, "chunky")
-	s.Require().ErrorContains(err, "words.json")
-}
 
 // TestEveryWordEitherResolvesOrSaysWhyNot holds the two tables to each other.
 //
-// Every word in the vocabulary is either something a nudge can move or
-// something with no figure, and neither answer is a crash or an empty list.
-func (s *NudgePublicTestSuite) TestEveryWordEitherResolvesOrSaysWhyNot() {
-	for _, word := range compile.Words() {
-		s.Run(word, func() {
-			got, err := compile.Nudges(word)
-			if err != nil {
-				s.Require().ErrorContains(err, "nothing measures",
-					"a word this vocabulary holds is refused for one reason only")
-
-				return
-			}
-
-			s.Require().NotEmpty(got)
-
-			for _, n := range got {
-				s.Require().NotEmpty(n.Key)
-				s.Require().NotEmpty(n.Axis)
-				s.Require().Equal(word, n.Term)
-			}
-		})
-	}
-}
 
 func TestNudgePublicTestSuite(
 	t *testing.T,

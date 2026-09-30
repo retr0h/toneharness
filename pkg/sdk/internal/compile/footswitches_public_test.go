@@ -220,59 +220,77 @@ func (s *FootswitchesPublicTestSuite) TestASwitchWithNoBlockIsNotWritten() {
 // TestAChosenColourGoesBothWays covers the colour somebody picked surviving
 // the trip out of a preset and back into one.
 //
-// The device files a colour under its place in the catalog's list, and stores
-// that number rather than the light it produces. `colour` is the light, which
-// the device works out from the block.
-func (s *FootswitchesPublicTestSuite) TestAChosenColourGoesBothWays() {
-	doc := s.presetWith(`{"dsp0": {"block1": {"@fs_index": 3, "@fs_customcolor": 3,
-		"@fs_ledcolor": 525824, "@fs_label": "Dhyana Drive"}}}`)
-
-	_, made, err := compile.Lift(doc, s.cat)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(made.Footswitches)
-
-	fs := made.Footswitches[0]
-	s.Require().NotNil(fs.Led)
-	s.Require().Equal("dark orange", *fs.Led,
-		"the third colour the catalog lists, which is what the number means")
-
-	// Back the way it came.
-	back, err := preset.Blank()
-	s.Require().NoError(err)
-
-	compile.Footswitches(back, made, s.cat)
-
-	var out bytes.Buffer
-	s.Require().NoError(preset.Write(&out, back))
-	s.Require().Contains(out.String(), `"@fs_customcolor": 3`)
-}
-
-// TestAColourNobodyChoseIsNotWritten covers a plan that names no colour, and
-// one that names something this device does not have.
-func (s *FootswitchesPublicTestSuite) TestAColourNobodyChoseIsNotWritten() {
-	block, switched := 1, 3
-	nonsense := "burnt sienna"
-
-	tests := []struct {
+// TestFootswitches covers Footswitches, which writes what the pedal prints
+// under each switch.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *FootswitchesPublicTestSuite) TestFootswitches() {
+	for _, tt := range []struct {
 		name string
-		led  *string
+		then func()
 	}{
-		{name: "a plan that names no colour"},
-		{name: "a colour this device does not have", led: &nonsense},
-	}
+		{
+			// that number rather than the light it produces. `colour` is the light, which
+			// the device works out from the block.
+			name: "a chosen colour goes both ways",
+			then: func() {
+				doc := s.presetWith(`{"dsp0": {"block1": {"@fs_index": 3, "@fs_customcolor": 3,
+					"@fs_ledcolor": 525824, "@fs_label": "Dhyana Drive"}}}`)
 
-	for _, tt := range tests {
+				_, made, err := compile.Lift(doc, s.cat)
+				s.Require().NoError(err)
+				s.Require().NotEmpty(made.Footswitches)
+
+				fs := made.Footswitches[0]
+				s.Require().NotNil(fs.Led)
+				s.Require().Equal("dark orange", *fs.Led,
+					"the third colour the catalog lists, which is what the number means")
+
+				// Back the way it came.
+				back, err := preset.Blank()
+				s.Require().NoError(err)
+
+				compile.Footswitches(back, made, s.cat)
+
+				var out bytes.Buffer
+				s.Require().NoError(preset.Write(&out, back))
+				s.Require().Contains(out.String(), `"@fs_customcolor": 3`)
+			},
+		},
+		{
+			// one that names something this device does not have.
+			name: "a colour nobody chose is not written",
+			then: func() {
+				block, switched := 1, 3
+				nonsense := "burnt sienna"
+
+				tests := []struct {
+					name string
+					led  *string
+				}{
+					{name: "a plan that names no colour"},
+					{name: "a colour this device does not have", led: &nonsense},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						doc, err := preset.Blank()
+						s.Require().NoError(err)
+
+						compile.Footswitches(doc, plan.Plan{Footswitches: []rig.Footswitch{
+							{Switch: &switched, Block: &block, Led: tt.led},
+						}}, s.cat)
+
+						var out bytes.Buffer
+						s.Require().NoError(preset.Write(&out, doc))
+						s.Require().NotContains(out.String(), "@fs_customcolor")
+					})
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			doc, err := preset.Blank()
-			s.Require().NoError(err)
-
-			compile.Footswitches(doc, plan.Plan{Footswitches: []rig.Footswitch{
-				{Switch: &switched, Block: &block, Led: tt.led},
-			}}, s.cat)
-
-			var out bytes.Buffer
-			s.Require().NoError(preset.Write(&out, doc))
-			s.Require().NotContains(out.String(), "@fs_customcolor")
+			tt.then()
 		})
 	}
 }

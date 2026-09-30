@@ -69,193 +69,289 @@ func (s *SnapshotsTestSuite) blank() *preset.Document {
 
 // TestABlockIsFoundByItsPositionNotItsName is the mapping that matters.
 //
-// preset2.hlx stores block5 at position 6 and block7 at position 5, so a
-// reader trusting the name puts both on the wrong grid position and the
-// snapshot switches the wrong blocks.
-func (s *SnapshotsTestSuite) TestABlockIsFoundByItsPositionNotItsName() {
-	got := SnapshotStates(s.awkward())
+// TestSnapshotStatesReadsWhatASnapshotHolds covers reading a preset's snapshots, sound or otherwise.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *SnapshotsTestSuite) TestSnapshotStatesReadsWhatASnapshotHolds() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// reader trusting the name puts both on the wrong grid position and the
+			// snapshot switches the wrong blocks.
+			name: "a block is found by its position not its name",
+			then: func() {
+				got := SnapshotStates(s.awkward())
 
-	s.Require().Len(got, 3)
+				s.Require().Len(got, 3)
 
-	first := got[0]
-	s.Require().NotNil(first.Name)
-	s.Require().Equal("SNAPSHOT 1", *first.Name)
-	s.Require().NotNil(first.Valid)
-	s.Require().True(*first.Valid)
+				first := got[0]
+				s.Require().NotNil(first.Name)
+				s.Require().Equal("SNAPSHOT 1", *first.Name)
+				s.Require().NotNil(first.Valid)
+				s.Require().True(*first.Valid)
 
-	// block5 sits at position 6, so the device's grid position 7 — and that
-	// snapshot has it switched off.
-	on, named := first.On[6+wire.GridOffset]
-	s.Require().True(named, "block5 reached the grid")
-	s.Require().False(on, "block5 is off in the first snapshot")
+				// block5 sits at position 6, so the device's grid position 7 — and that
+				// snapshot has it switched off.
+				on, named := first.On[6+wire.GridOffset]
+				s.Require().True(named, "block5 reached the grid")
+				s.Require().False(on, "block5 is off in the first snapshot")
 
-	// block7 sits at position 5, so grid position 6, and is switched on.
-	on, named = first.On[5+wire.GridOffset]
-	s.Require().True(named, "block7 reached the grid")
-	s.Require().True(on, "block7 is on in the first snapshot")
-}
+				// block7 sits at position 5, so grid position 6, and is switched on.
+				on, named = first.On[5+wire.GridOffset]
+				s.Require().True(named, "block7 reached the grid")
+				s.Require().True(on, "block7 is on in the first snapshot")
+			},
+		},
+		{
+			name: "a preset with no snapshots",
+			then: func() {
+				doc := s.blank()
+				for key := range doc.Data.Tone {
+					if preset.SnapshotIndex(key) >= 0 {
+						delete(doc.Data.Tone, key)
+					}
+				}
 
-// TestAPresetWithNoSnapshots carries none.
-func (s *SnapshotsTestSuite) TestAPresetWithNoSnapshots() {
-	doc := s.blank()
-	for key := range doc.Data.Tone {
-		if preset.SnapshotIndex(key) >= 0 {
-			delete(doc.Data.Tone, key)
-		}
+				s.Require().Nil(SnapshotStates(doc))
+			},
+		},
+		{
+			name: "a snapshot naming nothing",
+			then: func() {
+				got := SnapshotStates(s.blank())
+
+				s.Require().Len(got, 3)
+				s.Require().Nil(got[0].On, "the template names no blocks")
+				s.Require().NotNil(got[0].Name)
+				s.Require().Equal("SNAPSHOT 1", *got[0].Name)
+			},
+		},
+		{
+			// reading both would put dsp1's block0 on dsp0's grid.
+			name: "a snapshot naming a second path",
+			then: func() {
+				doc := s.blank()
+				doc.Data.Tone["snapshot0"][snapBlocks] = json.RawMessage(
+					`{"dsp1": {"block0": true}}`)
+
+				got := SnapshotStates(doc)
+				s.Require().Nil(got[0].On)
+			},
+		},
+		{
+			name: "a field that will not read",
+			then: func() {
+				doc := s.blank()
+				doc.Data.Tone["snapshot0"][snapTempo] = json.RawMessage(`"fast"`)
+				doc.Data.Tone["snapshot0"][snapBlocks] = json.RawMessage(`"none"`)
+
+				got := SnapshotStates(doc)
+
+				s.Require().Nil(got[0].Tempo, "a tempo of zero is not what the file said")
+				s.Require().Nil(got[0].On)
+			},
+		},
+		{
+			// cannot switch a block that is not there.
+			name: "a snapshot naming a block the preset has not",
+			then: func() {
+				doc := s.blank()
+				doc.Data.Tone["snapshot0"][snapBlocks] = json.RawMessage(
+					`{"dsp0": {"block9": true}}`)
+
+				s.Require().Nil(SnapshotStates(doc)[0].On)
+			},
+		},
+		{
+			name: "a tone entry named like a snapshot",
+			then: func() {
+				doc := s.blank()
+				doc.Data.Tone["snapshotX"] = preset.Tone{}
+
+				s.Require().Len(SnapshotStates(doc), 3)
+			},
+		},
+		{
+			name: "a field a preset omits",
+			then: func() {
+				doc := s.blank()
+				delete(doc.Data.Tone["snapshot0"], snapName)
+
+				s.Require().Nil(SnapshotStates(doc)[0].Name)
+			},
+		},
+		{
+			// to a device the way an import writes one. Before this, the export wrote the
+			// template's three snapshots and the import wrote every snapshot's record from
+			// the chain itself, so a preset holding three sounds came back holding one,
+			// under names nobody chose.
+			name: "snapshots survive the round trip",
+			then: func() {
+				raw, err := os.ReadFile(filepath.Join("..", "wire", "testdata", "preset.bin"))
+				s.Require().NoError(err)
+
+				sent, err := wire.DecodePreset(raw)
+				s.Require().NoError(err)
+
+				cat, err := catalog.BuiltIn()
+				s.Require().NoError(err)
+
+				doc, empty, err := Document(sent, cat, "Round Trip")
+				s.Require().NoError(err)
+				s.Require().False(empty)
+
+				blocks, err := Placements(doc, cat)
+				s.Require().NoError(err)
+
+				out, err := wire.Blank()
+				s.Require().NoError(err)
+				s.Require().NoError(wire.PlaceAsWritten(out, blocks))
+				wire.PlaceSnapshots(out, SnapshotStates(doc))
+
+				got, err := wire.DecodePreset(out.Encode())
+				s.Require().NoError(err)
+				s.Require().Len(got.Snapshots, len(sent.Snapshots))
+
+				// The three differ from each other in this preset, which is what makes
+				// the comparison worth making: four of the six block positions are
+				// switched differently across them.
+				for i, want := range sent.Snapshots {
+					s.Require().Equal(want.Name, got.Snapshots[i].Name, "snapshot %d name", i)
+					s.Require().Equal(want.Valid, got.Snapshots[i].Valid, "snapshot %d valid", i)
+					s.Require().InDelta(want.Tempo, got.Snapshots[i].Tempo, 0.001,
+						"snapshot %d tempo", i)
+
+					// Only where the chain sits. What a device keeps its routing on is the
+					// blank's own and was never the file's to carry.
+					for _, b := range sent.Blocks {
+						s.Require().Equal(
+							want.On[b.Index], got.Snapshots[i].On[b.Index],
+							"snapshot %d at grid position %d", i, b.Index)
+					}
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
-
-	s.Require().Nil(SnapshotStates(doc))
-}
-
-// TestASnapshotNamingNothing has no record of the grid.
-func (s *SnapshotsTestSuite) TestASnapshotNamingNothing() {
-	got := SnapshotStates(s.blank())
-
-	s.Require().Len(got, 3)
-	s.Require().Nil(got[0].On, "the template names no blocks")
-	s.Require().NotNil(got[0].Name)
-	s.Require().Equal("SNAPSHOT 1", *got[0].Name)
 }
 
 // TestASnapshotNamingASecondPath is not read.
 //
-// A second processor names its entries the same way the first does, so
-// reading both would put dsp1's block0 on dsp0's grid.
-func (s *SnapshotsTestSuite) TestASnapshotNamingASecondPath() {
-	doc := s.blank()
-	doc.Data.Tone["snapshot0"][snapBlocks] = json.RawMessage(
-		`{"dsp1": {"block0": true}}`)
 
-	got := SnapshotStates(doc)
-	s.Require().Nil(got[0].On)
-}
+// TestSnapshotsIntoWritesThemBack covers putting snapshots into a preset.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *SnapshotsTestSuite) TestSnapshotsIntoWritesThemBack() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "snapshots into a preset",
+			then: func() {
+				doc := s.blank()
 
-// TestAFieldThatWillNotRead is left unset rather than read as a zero.
-func (s *SnapshotsTestSuite) TestAFieldThatWillNotRead() {
-	doc := s.blank()
-	doc.Data.Tone["snapshot0"][snapTempo] = json.RawMessage(`"fast"`)
-	doc.Data.Tone["snapshot0"][snapBlocks] = json.RawMessage(`"none"`)
+				snapshotsInto(doc, wire.DevicePreset{
+					Blocks: []wire.DeviceBlock{{Index: 2}, {Index: 3}},
+					Snapshots: []wire.DeviceSnapshot{{
+						Name:  "Verse",
+						Tempo: 92,
+						LED:   3,
+						Valid: true,
+						On:    map[int]bool{2: true, 3: false},
+					}},
+				})
 
-	got := SnapshotStates(doc)
+				entry := doc.Data.Tone["snapshot0"]
 
-	s.Require().Nil(got[0].Tempo, "a tempo of zero is not what the file said")
-	s.Require().Nil(got[0].On)
-}
+				var name string
+				s.Require().NoError(json.Unmarshal(entry[snapName], &name))
+				s.Require().Equal("Verse", name)
 
-// TestSnapshotsIntoAPreset writes what a device answered.
-func (s *SnapshotsTestSuite) TestSnapshotsIntoAPreset() {
-	doc := s.blank()
+				var valid bool
+				s.Require().NoError(json.Unmarshal(entry[snapValid], &valid))
+				s.Require().True(valid, "the template ships this false")
 
-	snapshotsInto(doc, wire.DevicePreset{
-		Blocks: []wire.DeviceBlock{{Index: 2}, {Index: 3}},
-		Snapshots: []wire.DeviceSnapshot{{
-			Name:  "Verse",
-			Tempo: 92,
-			LED:   3,
-			Valid: true,
-			On:    map[int]bool{2: true, 3: false},
-		}},
-	})
+				// By the entry each block is stored under, which is its grid position
+				// less the offset.
+				var blocks map[string]map[string]bool
+				s.Require().NoError(json.Unmarshal(entry[snapBlocks], &blocks))
+				s.Require().Equal(
+					map[string]map[string]bool{"dsp0": {"block1": true, "block2": false}},
+					blocks)
 
-	entry := doc.Data.Tone["snapshot0"]
+				// What the template carried and this does not read is still there.
+				s.Require().Contains(entry, "@pedalstate")
+			},
+		},
+		{
+			name: "snapshots into a preset without states",
+			then: func() {
+				doc := s.blank()
 
-	var name string
-	s.Require().NoError(json.Unmarshal(entry[snapName], &name))
-	s.Require().Equal("Verse", name)
+				snapshotsInto(doc, wire.DevicePreset{
+					Blocks:    []wire.DeviceBlock{{Index: 2}},
+					Snapshots: []wire.DeviceSnapshot{{Name: "Verse"}},
+				})
 
-	var valid bool
-	s.Require().NoError(json.Unmarshal(entry[snapValid], &valid))
-	s.Require().True(valid, "the template ships this false")
+				s.Require().NotContains(doc.Data.Tone["snapshot0"], snapBlocks)
+			},
+		},
+		{
+			name: "snapshots into a preset naming a block it has not",
+			then: func() {
+				doc := s.blank()
 
-	// By the entry each block is stored under, which is its grid position
-	// less the offset.
-	var blocks map[string]map[string]bool
-	s.Require().NoError(json.Unmarshal(entry[snapBlocks], &blocks))
-	s.Require().Equal(
-		map[string]map[string]bool{"dsp0": {"block1": true, "block2": false}},
-		blocks)
+				snapshotsInto(doc, wire.DevicePreset{
+					Blocks:    []wire.DeviceBlock{{Index: 9}},
+					Snapshots: []wire.DeviceSnapshot{{On: map[int]bool{2: true}}},
+				})
 
-	// What the template carried and this does not read is still there.
-	s.Require().Contains(entry, "@pedalstate")
-}
+				s.Require().NotContains(doc.Data.Tone["snapshot0"], snapBlocks)
+			},
+		},
+		{
+			name: "a fourth snapshot",
+			then: func() {
+				doc := s.blank()
 
-// TestSnapshotsIntoAPresetWithoutStates writes no block record.
-func (s *SnapshotsTestSuite) TestSnapshotsIntoAPresetWithoutStates() {
-	doc := s.blank()
+				snapshotsInto(doc, wire.DevicePreset{
+					Snapshots: []wire.DeviceSnapshot{{}, {}, {}, {Name: "Fourth"}},
+				})
 
-	snapshotsInto(doc, wire.DevicePreset{
-		Blocks:    []wire.DeviceBlock{{Index: 2}},
-		Snapshots: []wire.DeviceSnapshot{{Name: "Verse"}},
-	})
+				var name string
+				s.Require().NoError(
+					json.Unmarshal(doc.Data.Tone["snapshot3"][snapName], &name))
+				s.Require().Equal("Fourth", name)
+			},
+		},
+		{
+			name: "no snapshots to write",
+			then: func() {
+				doc := s.blank()
 
-	s.Require().NotContains(doc.Data.Tone["snapshot0"], snapBlocks)
-}
+				snapshotsInto(doc, wire.DevicePreset{})
 
-// TestSnapshotsIntoAPresetNamingABlockItHasNot writes no block record.
-func (s *SnapshotsTestSuite) TestSnapshotsIntoAPresetNamingABlockItHasNot() {
-	doc := s.blank()
-
-	snapshotsInto(doc, wire.DevicePreset{
-		Blocks:    []wire.DeviceBlock{{Index: 9}},
-		Snapshots: []wire.DeviceSnapshot{{On: map[int]bool{2: true}}},
-	})
-
-	s.Require().NotContains(doc.Data.Tone["snapshot0"], snapBlocks)
-}
-
-// TestAFourthSnapshot is written into a preset that ships three.
-func (s *SnapshotsTestSuite) TestAFourthSnapshot() {
-	doc := s.blank()
-
-	snapshotsInto(doc, wire.DevicePreset{
-		Snapshots: []wire.DeviceSnapshot{{}, {}, {}, {Name: "Fourth"}},
-	})
-
-	var name string
-	s.Require().NoError(
-		json.Unmarshal(doc.Data.Tone["snapshot3"][snapName], &name))
-	s.Require().Equal("Fourth", name)
+				var name string
+				s.Require().NoError(
+					json.Unmarshal(doc.Data.Tone["snapshot0"][snapName], &name))
+				s.Require().Equal("SNAPSHOT 1", name)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestASnapshotNamingABlockThePresetHasNot records nothing.
 //
-// A name that reaches no entry reaches no position either, and a snapshot
-// cannot switch a block that is not there.
-func (s *SnapshotsTestSuite) TestASnapshotNamingABlockThePresetHasNot() {
-	doc := s.blank()
-	doc.Data.Tone["snapshot0"][snapBlocks] = json.RawMessage(
-		`{"dsp0": {"block9": true}}`)
-
-	s.Require().Nil(SnapshotStates(doc)[0].On)
-}
-
-// TestAToneEntryNamedLikeASnapshot is not one.
-func (s *SnapshotsTestSuite) TestAToneEntryNamedLikeASnapshot() {
-	doc := s.blank()
-	doc.Data.Tone["snapshotX"] = preset.Tone{}
-
-	s.Require().Len(SnapshotStates(doc), 3)
-}
-
-// TestAFieldAPresetOmits is left unset.
-func (s *SnapshotsTestSuite) TestAFieldAPresetOmits() {
-	doc := s.blank()
-	delete(doc.Data.Tone["snapshot0"], snapName)
-
-	s.Require().Nil(SnapshotStates(doc)[0].Name)
-}
-
-// TestNoSnapshotsToWrite leaves the preset as it was.
-func (s *SnapshotsTestSuite) TestNoSnapshotsToWrite() {
-	doc := s.blank()
-
-	snapshotsInto(doc, wire.DevicePreset{})
-
-	var name string
-	s.Require().NoError(
-		json.Unmarshal(doc.Data.Tone["snapshot0"][snapName], &name))
-	s.Require().Equal("SNAPSHOT 1", name)
-}
 
 // TestAnEntryWithNoPosition is not on the grid.
 func (s *SnapshotsTestSuite) TestAnEntryWithNoPosition() {
@@ -269,55 +365,6 @@ func (s *SnapshotsTestSuite) TestAnEntryWithNoPosition() {
 
 // TestSnapshotsSurviveTheRoundTrip is what all of this is for.
 //
-// A device's own bytes, out to a preset the way an export writes one and back
-// to a device the way an import writes one. Before this, the export wrote the
-// template's three snapshots and the import wrote every snapshot's record from
-// the chain itself, so a preset holding three sounds came back holding one,
-// under names nobody chose.
-func (s *SnapshotsTestSuite) TestSnapshotsSurviveTheRoundTrip() {
-	raw, err := os.ReadFile(filepath.Join("..", "wire", "testdata", "preset.bin"))
-	s.Require().NoError(err)
-
-	sent, err := wire.DecodePreset(raw)
-	s.Require().NoError(err)
-
-	cat, err := catalog.BuiltIn()
-	s.Require().NoError(err)
-
-	doc, empty, err := Document(sent, cat, "Round Trip")
-	s.Require().NoError(err)
-	s.Require().False(empty)
-
-	blocks, err := Placements(doc, cat)
-	s.Require().NoError(err)
-
-	out, err := wire.Blank()
-	s.Require().NoError(err)
-	s.Require().NoError(wire.PlaceAsWritten(out, blocks))
-	wire.PlaceSnapshots(out, SnapshotStates(doc))
-
-	got, err := wire.DecodePreset(out.Encode())
-	s.Require().NoError(err)
-	s.Require().Len(got.Snapshots, len(sent.Snapshots))
-
-	// The three differ from each other in this preset, which is what makes
-	// the comparison worth making: four of the six block positions are
-	// switched differently across them.
-	for i, want := range sent.Snapshots {
-		s.Require().Equal(want.Name, got.Snapshots[i].Name, "snapshot %d name", i)
-		s.Require().Equal(want.Valid, got.Snapshots[i].Valid, "snapshot %d valid", i)
-		s.Require().InDelta(want.Tempo, got.Snapshots[i].Tempo, 0.001,
-			"snapshot %d tempo", i)
-
-		// Only where the chain sits. What a device keeps its routing on is the
-		// blank's own and was never the file's to carry.
-		for _, b := range sent.Blocks {
-			s.Require().Equal(
-				want.On[b.Index], got.Snapshots[i].On[b.Index],
-				"snapshot %d at grid position %d", i, b.Index)
-		}
-	}
-}
 
 func TestSnapshotsTestSuite(
 	t *testing.T,

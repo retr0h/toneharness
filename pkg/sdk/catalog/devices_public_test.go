@@ -37,70 +37,90 @@ type DevicesPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestFor covers every device a catalog ships for.
+// TestFor covers For, which returns the built-in catalog for one device.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *DevicesPublicTestSuite) TestFor() {
-	tests := []struct {
-		name   string
-		device int
-		want   string
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name:   "the device everything was written against",
-			device: catalog.HXStomp, want: "HX Stomp",
+			name: "for",
+			then: func() {
+				tests := []struct {
+					name   string
+					device int
+					want   string
+				}{
+					{
+						name:   "the device everything was written against",
+						device: catalog.HXStomp, want: "HX Stomp",
+					},
+					{name: "the bigger Stomp", device: catalog.HXStompXL, want: "HX Stomp XL"},
+					{name: "the floor unit", device: catalog.HelixFloor, want: "Helix Floor"},
+					{name: "the LT", device: catalog.HelixLT, want: "Helix LT"},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						got, err := catalog.For(tt.device)
+						s.Require().NoError(err)
+
+						s.Require().Equal(tt.want, got.Device)
+						s.Require().Equal(tt.device, got.DeviceID)
+						s.Require().NotEmpty(got.Blocks)
+						s.Require().NotEmpty(got.Symbols)
+					})
+				}
+			},
 		},
-		{name: "the bigger Stomp", device: catalog.HXStompXL, want: "HX Stomp XL"},
-		{name: "the floor unit", device: catalog.HelixFloor, want: "Helix Floor"},
-		{name: "the LT", device: catalog.HelixLT, want: "Helix LT"},
-	}
+		{
+			name: "for a device nothing ships for",
+			then: func() {
+				got, err := catalog.For(1)
 
-	for _, tt := range tests {
+				s.Require().Nil(got)
+				s.Require().ErrorIs(err, catalog.ErrNoDevice)
+				s.Require().Contains(err.Error(), "device 1")
+			},
+		},
+		{
+			// catalog under four names would pass every other test here.
+			name: "the devices differ",
+			then: func() {
+				stomp, err := catalog.For(catalog.HXStomp)
+				s.Require().NoError(err)
+
+				floor, err := catalog.For(catalog.HelixFloor)
+				s.Require().NoError(err)
+
+				s.Require().Greater(len(floor.Blocks), len(stomp.Blocks),
+					"the floor unit carries blocks the Stomp has not")
+			},
+		},
+		{
+			name: "built in is the stomp",
+			then: func() {
+				built, err := catalog.BuiltIn()
+				s.Require().NoError(err)
+
+				stomp, err := catalog.For(catalog.HXStomp)
+				s.Require().NoError(err)
+
+				s.Require().Equal(stomp.DeviceID, built.DeviceID)
+				s.Require().Equal(stomp.Device, built.Device)
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			got, err := catalog.For(tt.device)
-			s.Require().NoError(err)
-
-			s.Require().Equal(tt.want, got.Device)
-			s.Require().Equal(tt.device, got.DeviceID)
-			s.Require().NotEmpty(got.Blocks)
-			s.Require().NotEmpty(got.Symbols)
+			tt.then()
 		})
 	}
 }
 
-// TestForADeviceNothingShipsFor names what was asked for.
-func (s *DevicesPublicTestSuite) TestForADeviceNothingShipsFor() {
-	got, err := catalog.For(1)
-
-	s.Require().Nil(got)
-	s.Require().ErrorIs(err, catalog.ErrNoDevice)
-	s.Require().Contains(err.Error(), "device 1")
-}
-
 // TestTheDevicesDiffer checks the filtering actually filtered.
 //
-// A Helix Floor carries blocks an HX Stomp does not. Four copies of one
-// catalog under four names would pass every other test here.
-func (s *DevicesPublicTestSuite) TestTheDevicesDiffer() {
-	stomp, err := catalog.For(catalog.HXStomp)
-	s.Require().NoError(err)
-
-	floor, err := catalog.For(catalog.HelixFloor)
-	s.Require().NoError(err)
-
-	s.Require().Greater(len(floor.Blocks), len(stomp.Blocks),
-		"the floor unit carries blocks the Stomp has not")
-}
-
-// TestBuiltInIsTheStomp holds the promise every existing caller relies on.
-func (s *DevicesPublicTestSuite) TestBuiltInIsTheStomp() {
-	built, err := catalog.BuiltIn()
-	s.Require().NoError(err)
-
-	stomp, err := catalog.For(catalog.HXStomp)
-	s.Require().NoError(err)
-
-	s.Require().Equal(stomp.DeviceID, built.DeviceID)
-	s.Require().Equal(stomp.Device, built.Device)
-}
 
 func TestDevicesPublicTestSuite(
 	t *testing.T,

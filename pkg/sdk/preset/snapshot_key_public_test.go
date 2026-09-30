@@ -38,43 +38,63 @@ type SnapshotKeyPublicTestSuite struct {
 	suite.Suite
 }
 
+// TestSnapshotIndex covers SnapshotIndex, which reads the number a
+// snapshot is stored under, or -1.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *SnapshotKeyPublicTestSuite) TestSnapshotIndex() {
-	tests := []struct {
+	for _, tt := range []struct {
 		name string
-		key  string
-		want int
+		then func()
 	}{
-		{"the first, numbered from nothing", "snapshot0", 0},
-		{"the last an HX Stomp holds", "snapshot7", 7},
-		{"a number past what any device holds is still a number", "snapshot99", 99},
-		{"a processor is not a snapshot", "dsp0", -1},
-		{"nor is a controller assignment", "controller", -1},
-		{"the prefix with nothing after it", "snapshot", -1},
-		{"the prefix with something that is not a number", "snapshotA", -1},
-		{"a key that merely contains it", "mysnapshot0", -1},
-		{"nothing at all", "", -1},
-	}
+		{
+			name: "snapshot index",
+			then: func() {
+				tests := []struct {
+					name string
+					key  string
+					want int
+				}{
+					{"the first, numbered from nothing", "snapshot0", 0},
+					{"the last an HX Stomp holds", "snapshot7", 7},
+					{"a number past what any device holds is still a number", "snapshot99", 99},
+					{"a processor is not a snapshot", "dsp0", -1},
+					{"nor is a controller assignment", "controller", -1},
+					{"the prefix with nothing after it", "snapshot", -1},
+					{"the prefix with something that is not a number", "snapshotA", -1},
+					{"a key that merely contains it", "mysnapshot0", -1},
+					{"nothing at all", "", -1},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						s.Require().Equal(tt.want, preset.SnapshotIndex(tt.key))
+					})
+				}
+			},
+		},
+		{
+			// back out of it, in two different packages. A prefix changed in one place has
+			// to keep that working, which is what makes this worth asserting rather than
+			// reading.
+			name: "the prefix and the index agree",
+			then: func() {
+				for at := range 8 {
+					key := preset.SnapshotPrefix + strconv.Itoa(at)
+
+					s.Require().Equal(at, preset.SnapshotIndex(key), key)
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			s.Require().Equal(tt.want, preset.SnapshotIndex(tt.key))
+			tt.then()
 		})
 	}
 }
 
 // TestThePrefixAndTheIndexAgree is the round trip both readers rely on.
 //
-// One writes `SnapshotPrefix + strconv.Itoa(i)` and the other reads the number
-// back out of it, in two different packages. A prefix changed in one place has
-// to keep that working, which is what makes this worth asserting rather than
-// reading.
-func (s *SnapshotKeyPublicTestSuite) TestThePrefixAndTheIndexAgree() {
-	for at := range 8 {
-		key := preset.SnapshotPrefix + strconv.Itoa(at)
-
-		s.Require().Equal(at, preset.SnapshotIndex(key), key)
-	}
-}
 
 func TestSnapshotKeyPublicTestSuite(
 	t *testing.T,

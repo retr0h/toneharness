@@ -87,74 +87,94 @@ func (s *HeldTestSuite) answers(
 
 // TestHeldMovesTheLevelAndReadsItBack covers every answer Held has.
 //
-// The read back is not decoration: a platform that accepts the instruction and
-// rounds it, which macOS does on some hardware, leaves the rig at a level
-// nobody asked for and this is the only place that shows.
-func (s *HeldTestSuite) TestHeldMovesTheLevelAndReadsItBack() {
-	tests := []struct {
-		name     string
-		levels   []int
-		failAt   int
-		setFails bool
-		want     int
-		moved    bool
-		fails    bool
+// TestHeld covers Held, which puts the output level where a measurement wants
+// it and says what it did.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *HeldTestSuite) TestHeld() {
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name:   "already there, so nothing is set",
-			levels: []int{38}, failAt: -1, want: 38,
+			// rounds it, which macOS does on some hardware, leaves the rig at a level
+			// nobody asked for and this is the only place that shows.
+			name: "held moves the level and reads it back",
+			then: func() {
+				tests := []struct {
+					name     string
+					levels   []int
+					failAt   int
+					setFails bool
+					want     int
+					moved    bool
+					fails    bool
+				}{
+					{
+						name:   "already there, so nothing is set",
+						levels: []int{38}, failAt: -1, want: 38,
+					},
+					{
+						name:   "moved, and read back as what was asked for",
+						levels: []int{20, 38}, failAt: -1, want: 38, moved: true,
+					},
+					{
+						// The whole reason the read back exists.
+						name:   "moved, and the platform rounded it",
+						levels: []int{20, 37}, failAt: -1, want: 37, moved: true,
+					},
+					{
+						name:   "the first read failed",
+						levels: []int{}, failAt: 0, fails: true,
+					},
+					{
+						name:   "the set failed, and it says where it was",
+						levels: []int{20}, failAt: -1, setFails: true, want: 20, fails: true,
+					},
+					{
+						name:   "the read back failed after it moved",
+						levels: []int{20}, failAt: 1, moved: true, fails: true,
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						s.answers(tt.levels, tt.failAt, tt.setFails)
+
+						got, moved, err := Held(38)
+
+						s.Require().Equal(tt.moved, moved)
+						s.Require().Equal(tt.want, got)
+
+						if tt.fails {
+							s.Require().Error(err)
+
+							return
+						}
+
+						s.Require().NoError(err)
+					})
+				}
+			},
 		},
 		{
-			name:   "moved, and read back as what was asked for",
-			levels: []int{20, 38}, failAt: -1, want: 38, moved: true,
+			name: "the level asked for is the level set",
+			then: func() {
+				told := s.answers([]int{20, 38}, -1, false)
+
+				_, _, err := Held(38)
+
+				s.Require().NoError(err)
+				s.Require().Equal(38, *told)
+			},
 		},
-		{
-			// The whole reason the read back exists.
-			name:   "moved, and the platform rounded it",
-			levels: []int{20, 37}, failAt: -1, want: 37, moved: true,
-		},
-		{
-			name:   "the first read failed",
-			levels: []int{}, failAt: 0, fails: true,
-		},
-		{
-			name:   "the set failed, and it says where it was",
-			levels: []int{20}, failAt: -1, setFails: true, want: 20, fails: true,
-		},
-		{
-			name:   "the read back failed after it moved",
-			levels: []int{20}, failAt: 1, moved: true, fails: true,
-		},
+	} {
+		// No SetupTest here. Its job is to remember the platform's own
+		// functions before a row replaces them, and a second call would
+		// remember the replacements instead, so TearDownTest would put a
+		// stub back and the next suite in this binary would call it.
+		s.Run(tt.name, func() { tt.then() })
 	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			s.answers(tt.levels, tt.failAt, tt.setFails)
-
-			got, moved, err := Held(38)
-
-			s.Require().Equal(tt.moved, moved)
-			s.Require().Equal(tt.want, got)
-
-			if tt.fails {
-				s.Require().Error(err)
-
-				return
-			}
-
-			s.Require().NoError(err)
-		})
-	}
-}
-
-// TestTheLevelAskedForIsTheLevelSet covers what reaches the platform.
-func (s *HeldTestSuite) TestTheLevelAskedForIsTheLevelSet() {
-	told := s.answers([]int{20, 38}, -1, false)
-
-	_, _, err := Held(38)
-
-	s.Require().NoError(err)
-	s.Require().Equal(38, *told)
 }
 
 // TestALevelOutsideTheScaleIsRefusedBeforeThePlatform covers the guard.

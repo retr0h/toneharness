@@ -68,76 +68,145 @@ func (s *MeasuredPublicTestSuite) TestLoadReadsALibrary() {
 	s.Require().Len(s.lib.Blocks, 7)
 }
 
-// TestLoadRefusesWhatIsNotALibrary covers the three ways reading fails.
-func (s *MeasuredPublicTestSuite) TestLoadRefusesWhatIsNotALibrary() {
-	tests := []struct {
+// TestLoad covers Load, which reads a library of measurements.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasuredPublicTestSuite) TestLoad() {
+	for _, tt := range []struct {
 		name string
-		give string
-		want string
+		then func()
 	}{
-		{name: "not JSON", give: "{", want: "decoding the measurements"},
 		{
-			// A document that parses and names nothing is worse than one
-			// that fails, because every lookup against it answers "no
-			// block is close" rather than "there is no library".
-			name: "no blocks at all",
-			give: `{"device":"HX Stomp"}`,
-			want: "name no blocks",
+			name: "load refuses what is not a library",
+			then: func() {
+				tests := []struct {
+					name string
+					give string
+					want string
+				}{
+					{name: "not JSON", give: "{", want: "decoding the measurements"},
+					{
+						// A document that parses and names nothing is worse than one
+						// that fails, because every lookup against it answers "no
+						// block is close" rather than "there is no library".
+						name: "no blocks at all",
+						give: `{"device":"HX Stomp"}`,
+						want: "name no blocks",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						_, err := measured.Load(strings.NewReader(tt.give))
+
+						s.Require().ErrorContains(err, tt.want)
+					})
+				}
+			},
 		},
-	}
+		{
+			name: "load reports a read failure",
+			then: func() {
+				_, err := measured.Load(broken{})
 
-	for _, tt := range tests {
+				s.Require().ErrorContains(err, "reading the measurements")
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			_, err := measured.Load(strings.NewReader(tt.give))
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
 
-			s.Require().ErrorContains(err, tt.want)
+			tt.then()
 		})
 	}
 }
 
-// TestLoadReportsAReadFailure covers the reader itself failing.
-func (s *MeasuredPublicTestSuite) TestLoadReportsAReadFailure() {
-	_, err := measured.Load(broken{})
+// TestNearest covers Nearest, which ranks the blocks of one category by how
+// close they sit to a target.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasuredPublicTestSuite) TestNearest() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "nearest ranks by distance",
+			then: func() {
+				got := s.lib.Nearest("amp", s.dark(), measured.Spectral())
 
-	s.Require().ErrorContains(err, "reading the measurements")
-}
+				s.Require().NotEmpty(got)
+				s.Require().InDelta(0, got[0].Distance, 0.001,
+					"a block measuring exactly the target is a distance of zero from it")
+				s.Require().Equal("AmpBright", got[len(got)-1].ID,
+					"the brightest amp is furthest from a dark target")
+			},
+		},
+		{
+			name: "nearest stays in its category",
+			then: func() {
+				for _, m := range s.lib.Nearest("amp", s.dark(), measured.Spectral()) {
+					s.Require().Equal(catalog.CategoryAmp, m.Category)
+				}
 
-// TestNearestRanksByDistance covers the ordinary case.
-func (s *MeasuredPublicTestSuite) TestNearestRanksByDistance() {
-	got := s.lib.Nearest("amp", s.dark(), measured.Spectral())
+				s.Require().Len(s.lib.Nearest("cab", s.dark(), measured.Spectral()), 1)
+			},
+		},
+		{
+			// it puts a bright-looking reading of the converters at the top of a list of
+			// bright amplifiers. A refusal has no figures at all, and a zero centroid
+			// would read as the darkest block on the device.
+			name: "nearest leaves out what it cannot trust",
+			then: func() {
+				got := s.lib.Nearest("amp", s.dark(), measured.Spectral())
 
-	s.Require().NotEmpty(got)
-	s.Require().InDelta(0, got[0].Distance, 0.001,
-		"a block measuring exactly the target is a distance of zero from it")
-	s.Require().Equal("AmpBright", got[len(got)-1].ID,
-		"the brightest amp is furthest from a dark target")
-}
+				for _, m := range got {
+					s.Require().NotEqual("AmpClipped", m.ID, "a clipped reading was ranked")
+					s.Require().NotEqual("AmpRefused", m.ID, "a refusal was ranked")
+				}
 
-// TestNearestStaysInItsCategory covers a cab never answering for an amp.
-func (s *MeasuredPublicTestSuite) TestNearestStaysInItsCategory() {
-	for _, m := range s.lib.Nearest("amp", s.dark(), measured.Spectral()) {
-		s.Require().Equal(catalog.CategoryAmp, m.Category)
+				s.Require().Len(got, 4)
+			},
+		},
+		{
+			// between runs is one nobody can act on twice.
+			name: "nearest is stable",
+			then: func() {
+				first := s.lib.Nearest("amp", s.dark(), measured.Spectral())
+
+				for range 20 {
+					s.Require().Equal(first, s.lib.Nearest("amp", s.dark(), measured.Spectral()))
+				}
+
+				s.Require().Equal("AmpDark", first[0].ID,
+					"of three blocks measuring the target exactly, the first by identifier")
+			},
+		},
+		{
+			name: "weights can be given outright",
+			then: func() {
+				want := s.dark()
+				want.Level = -20
+
+				got := s.lib.Nearest("amp", want, measured.Weights{Level: 1})
+
+				s.Require().Equal("AmpLoud", got[len(got)-1].ID,
+					"weighed on level alone, the one 17 dB away is furthest")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
+		})
 	}
-
-	s.Require().Len(s.lib.Nearest("cab", s.dark(), measured.Spectral()), 1)
 }
 
 // TestNearestLeavesOutWhatItCannotTrust is the point of the two flags.
 //
-// A clipped reading's spectrum is the clipping's, not the block's, so ranking
-// it puts a bright-looking reading of the converters at the top of a list of
-// bright amplifiers. A refusal has no figures at all, and a zero centroid
-// would read as the darkest block on the device.
-func (s *MeasuredPublicTestSuite) TestNearestLeavesOutWhatItCannotTrust() {
-	got := s.lib.Nearest("amp", s.dark(), measured.Spectral())
-
-	for _, m := range got {
-		s.Require().NotEqual("AmpClipped", m.ID, "a clipped reading was ranked")
-		s.Require().NotEqual("AmpRefused", m.ID, "a refusal was ranked")
-	}
-
-	s.Require().Len(got, 4)
-}
 
 // TestSpectralIgnoresLoudness is a decision worth a test.
 //
@@ -165,35 +234,72 @@ func (s *MeasuredPublicTestSuite) TestSpectralIgnoresLoudness() {
 
 // TestNearestIsStable covers two blocks that measure identically.
 //
-// Ranked by identifier after distance, because a ranking that reshuffles
-// between runs is one nobody can act on twice.
-func (s *MeasuredPublicTestSuite) TestNearestIsStable() {
-	first := s.lib.Nearest("amp", s.dark(), measured.Spectral())
 
-	for range 20 {
-		s.Require().Equal(first, s.lib.Nearest("amp", s.dark(), measured.Spectral()))
+// TestMeasured covers Measured, which returns whether this block has a
+// reading worth using.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasuredPublicTestSuite) TestMeasured() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "measured says which readings are usable",
+			then: func() {
+				s.Require().True(s.lib.Blocks["AmpDark"].Measured())
+				s.Require().False(s.lib.Blocks["AmpClipped"].Measured())
+				s.Require().False(s.lib.Blocks["AmpRefused"].Measured())
+			},
+		},
+		{
+			// Clipped at half a decibel below full scale, and ten readings sit between
+			// that and two decibels below it with the converters plainly in them:
+			// HD2_AmpSVT4Pro, an Ampeg SVT-4 Pro a shipped rig names, reads 3.24% of its
+			// energy low and 96.74% high. An Ampeg does not do that.
+			name: "a reading at the ceiling is not the blocks",
+			then: func() {
+				at := func(level float64) measured.Block {
+					return measured.Block{Figures: measured.Figures{Level: level}}
+				}
+
+				s.Require().False(at(-0.94).Measured(), "an amplifier reading 97% high")
+				s.Require().False(at(-1.99).Measured())
+				s.Require().True(at(-2.01).Measured())
+				s.Require().True(at(-20).Measured(), "the ordinary reading")
+			},
+		},
+		{
+			// nothing. It stays because headroom is a setting and settings get changed.
+			name: "no shipped reading sits at the converters ceiling",
+			then: func() {
+				lib, err := measured.BuiltIn()
+				s.Require().NoError(err)
+
+				loud := make([]string, 0, 1)
+
+				for id, block := range lib.Blocks {
+					if block.Refused != "" {
+						continue
+					}
+
+					if block.Clipped || !block.Measured() {
+						loud = append(loud, id)
+					}
+				}
+
+				s.Require().Empty(loud,
+					"a reading this loud is the converters' shaping rather than the block's")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
+		})
 	}
-
-	s.Require().Equal("AmpDark", first[0].ID,
-		"of three blocks measuring the target exactly, the first by identifier")
-}
-
-// TestWeightsCanBeGivenOutright covers weighing a figure the default ignores.
-func (s *MeasuredPublicTestSuite) TestWeightsCanBeGivenOutright() {
-	want := s.dark()
-	want.Level = -20
-
-	got := s.lib.Nearest("amp", want, measured.Weights{Level: 1})
-
-	s.Require().Equal("AmpLoud", got[len(got)-1].ID,
-		"weighed on level alone, the one 17 dB away is furthest")
-}
-
-// TestMeasuredSaysWhichReadingsAreUsable covers the flags directly.
-func (s *MeasuredPublicTestSuite) TestMeasuredSaysWhichReadingsAreUsable() {
-	s.Require().True(s.lib.Blocks["AmpDark"].Measured())
-	s.Require().False(s.lib.Blocks["AmpClipped"].Measured())
-	s.Require().False(s.lib.Blocks["AmpRefused"].Measured())
 }
 
 // broken is a reader that always fails.
@@ -213,21 +319,6 @@ func TestMeasuredPublicTestSuite(
 
 // TestAReadingAtTheCeilingIsNotTheBlocks covers the guard the flag missed.
 //
-// Clipping is not a cliff at the number a guard picks. `measure blocks` marks
-// Clipped at half a decibel below full scale, and ten readings sit between
-// that and two decibels below it with the converters plainly in them:
-// HD2_AmpSVT4Pro, an Ampeg SVT-4 Pro a shipped rig names, reads 3.24% of its
-// energy low and 96.74% high. An Ampeg does not do that.
-func (s *MeasuredPublicTestSuite) TestAReadingAtTheCeilingIsNotTheBlocks() {
-	at := func(level float64) measured.Block {
-		return measured.Block{Figures: measured.Figures{Level: level}}
-	}
-
-	s.Require().False(at(-0.94).Measured(), "an amplifier reading 97% high")
-	s.Require().False(at(-1.99).Measured())
-	s.Require().True(at(-2.01).Measured())
-	s.Require().True(at(-20).Measured(), "the ordinary reading")
-}
 
 // TestTheShippedLibraryNamesItsInstrumentAndHeadroom holds the packed
 // measurements to the two fields that say whether they mean anything.
@@ -274,24 +365,3 @@ func (s *MeasuredPublicTestSuite) TestTheShippedLibraryNamesItsInstrumentAndHead
 // Ampeg does not do that; the converters did, because the chain was measured at
 // full output and fed itself.
 //
-// Measured at -30dB nothing comes near the ceiling, so the guard now excludes
-// nothing. It stays because headroom is a setting and settings get changed.
-func (s *MeasuredPublicTestSuite) TestNoShippedReadingSitsAtTheConvertersCeiling() {
-	lib, err := measured.BuiltIn()
-	s.Require().NoError(err)
-
-	loud := make([]string, 0, 1)
-
-	for id, block := range lib.Blocks {
-		if block.Refused != "" {
-			continue
-		}
-
-		if block.Clipped || !block.Measured() {
-			loud = append(loud, id)
-		}
-	}
-
-	s.Require().Empty(loud,
-		"a reading this loud is the converters' shaping rather than the block's")
-}

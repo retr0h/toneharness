@@ -99,149 +99,179 @@ func (s *SlopesPublicTestSuite) built() {
 // TestItPrintsTheLiveSlopeBesideTheCommittedOne is the whole point.
 // TestSlopesRefusesAReferenceForTheOtherInstrument covers the guard.
 //
-// Every figure measured by pushing a guitar recording through a bass rig
-// describes the recording rather than the chain, so what comes back is the
-// wrong instrument rather than the wrong settings. Refused before a reading is
-// taken.
-func (s *SlopesPublicTestSuite) TestSlopesRefusesAReferenceForTheOtherInstrument() {
-	{
-		s.built()
+// TestSlopes covers Slopes, which reads what each control does now and holds
+// the committed sweeps to it.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *SlopesPublicTestSuite) TestSlopes() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// describes the recording rather than the chain, so what comes back is the
+			// wrong instrument rather than the wrong settings. Refused before a reading is
+			// taken.
+			name: "slopes refuses a reference for the other instrument",
+			then: func() {
+				{
+					s.built()
 
-		// The same recording under a name that says guitar, because a reference's
-		// instrument is read off its filename: what is in the file is nobody's to
-		// know and a path is what somebody typed.
-		body, err := os.ReadFile(s.dry)
-		s.Require().NoError(err)
+					// The same recording under a name that says guitar, because a reference's
+					// instrument is read off its filename: what is in the file is nobody's to
+					// know and a path is what somebody typed.
+					body, err := os.ReadFile(s.dry)
+					s.Require().NoError(err)
 
-		wrong := filepath.Join(s.T().TempDir(), "guitar-di.wav")
-		s.Require().NoError(os.WriteFile(wrong, body, 0o600))
+					wrong := filepath.Join(s.T().TempDir(), "guitar-di.wav")
+					s.Require().NoError(os.WriteFile(wrong, body, 0o600))
 
-		opts := s.opts()
-		opts.Dry = wrong
+					opts := s.opts()
+					opts.Dry = wrong
 
-		s.Require().ErrorIs(Slopes(context.Background(), buffer(), opts), ErrWrongInstrument)
+					s.Require().ErrorIs(Slopes(context.Background(), buffer(), opts), ErrWrongInstrument)
+				}
+			},
+		},
+		{
+			name: "it prints the live slope beside the committed one",
+			then: func() {
+				s.built()
+
+				w := buffer()
+
+				s.Require().NoError(Slopes(context.Background(), w, s.opts()))
+
+				said := w.String()
+				s.Require().Contains(said, "COMMITTED")
+				s.Require().Contains(said, "RATIO")
+				s.Require().Contains(said, "HD2_AmpSVBeastBrt Treble")
+				s.Require().Contains(said, "centroid")
+			},
+		},
+		{
+			name: "one figure on its own",
+			then: func() {
+				s.built()
+
+				opts := s.opts()
+				opts.Figure = "centroid"
+
+				w := buffer()
+
+				s.Require().NoError(Slopes(context.Background(), w, opts))
+
+				s.Require().Contains(w.String(), "centroid")
+				s.Require().NotContains(w.String(), "\n  high\n")
+			},
+		},
+		{
+			name: "a figure nothing committed carries",
+			then: func() {
+				s.built()
+
+				opts := s.opts()
+				opts.Figure = "nonesuch"
+
+				w := buffer()
+
+				s.Require().NoError(Slopes(context.Background(), w, opts))
+
+				s.Require().Contains(w.String(), "nothing committed carries this figure")
+			},
+		},
+		{
+			// with a guitar is not a ratio about the control. Said rather than refused: the
+			// comparison is still the only way to see how far a committed slope is from a
+			// live one, which is what this command is for, so the run goes ahead and names
+			// which files it cannot trust.
+			name: "a committed sweep naming another instrument is said",
+			then: func() {
+				s.built()
+
+				opts := s.opts()
+				opts.Sweeps = filepath.Join("testdata", "sweeps-guitar")
+
+				w := buffer()
+
+				s.Require().NoError(Slopes(context.Background(), w, opts))
+
+				said := w.String()
+				s.Require().Contains(said, "do not name the instrument")
+				s.Require().Contains(said, "(guitar)", "and which one it named instead")
+				s.Require().Contains(said, "RATIO", "the comparison still happens")
+			},
+		},
+		{
+			name: "a chain with no dial",
+			then: func() {
+				s.pedal.EXPECT().
+					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
+						Model: catalog.ModelID("HD2_NotAModel"), Pos: 0,
+					}}}}, nil)
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+
+				s.Require().Error(Slopes(context.Background(), buffer(), s.opts()))
+			},
+		},
+		{
+			name: "the rig will not build",
+			then: func() {
+				wanted := errors.New("no such rig")
+
+				s.pedal.EXPECT().
+					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(sdk.Made{}, wanted)
+
+				s.Require().ErrorIs(
+					Slopes(context.Background(), buffer(), s.opts()), wanted)
+			},
+		},
+		{
+			name: "a reference that is not there",
+			then: func() {
+				s.pedal.EXPECT().
+					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
+						Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0,
+					}}}}, nil)
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+
+				opts := s.opts()
+				opts.Dry = filepath.Join(s.T().TempDir(), "nothing.wav")
+
+				s.Require().Error(Slopes(context.Background(), buffer(), opts))
+			},
+		},
+		{
+			name: "a sweep that will not decode",
+			then: func() {
+				s.built()
+
+				dir := s.T().TempDir()
+				s.Require().NoError(os.WriteFile(
+					filepath.Join(dir, "HD2_AmpSVBeastBrt.json"), []byte("{"), 0o600))
+
+				opts := s.opts()
+				opts.Sweeps = dir
+
+				s.Require().ErrorContains(
+					Slopes(context.Background(), buffer(), opts), "HD2_AmpSVBeastBrt.json")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
+		})
 	}
-}
-
-func (s *SlopesPublicTestSuite) TestItPrintsTheLiveSlopeBesideTheCommittedOne() {
-	s.built()
-
-	w := buffer()
-
-	s.Require().NoError(Slopes(context.Background(), w, s.opts()))
-
-	said := w.String()
-	s.Require().Contains(said, "COMMITTED")
-	s.Require().Contains(said, "RATIO")
-	s.Require().Contains(said, "HD2_AmpSVBeastBrt Treble")
-	s.Require().Contains(said, "centroid")
-}
-
-// TestOneFigureOnItsOwn covers narrowing the report.
-func (s *SlopesPublicTestSuite) TestOneFigureOnItsOwn() {
-	s.built()
-
-	opts := s.opts()
-	opts.Figure = "centroid"
-
-	w := buffer()
-
-	s.Require().NoError(Slopes(context.Background(), w, opts))
-
-	s.Require().Contains(w.String(), "centroid")
-	s.Require().NotContains(w.String(), "\n  high\n")
-}
-
-// TestAFigureNothingCommittedCarries covers an axis with no committed slope.
-func (s *SlopesPublicTestSuite) TestAFigureNothingCommittedCarries() {
-	s.built()
-
-	opts := s.opts()
-	opts.Figure = "nonesuch"
-
-	w := buffer()
-
-	s.Require().NoError(Slopes(context.Background(), w, opts))
-
-	s.Require().Contains(w.String(), "nothing committed carries this figure")
 }
 
 // TestACommittedSweepNamingAnotherInstrumentIsSaid covers the honest warning.
 //
-// A ratio between a live reading taken with a bass and a committed one taken
-// with a guitar is not a ratio about the control. Said rather than refused: the
-// comparison is still the only way to see how far a committed slope is from a
-// live one, which is what this command is for, so the run goes ahead and names
-// which files it cannot trust.
-func (s *SlopesPublicTestSuite) TestACommittedSweepNamingAnotherInstrumentIsSaid() {
-	s.built()
-
-	opts := s.opts()
-	opts.Sweeps = filepath.Join("testdata", "sweeps-guitar")
-
-	w := buffer()
-
-	s.Require().NoError(Slopes(context.Background(), w, opts))
-
-	said := w.String()
-	s.Require().Contains(said, "do not name the instrument")
-	s.Require().Contains(said, "(guitar)", "and which one it named instead")
-	s.Require().Contains(said, "RATIO", "the comparison still happens")
-}
-
-// TestAChainWithNoDial covers gear the solver cannot touch.
-func (s *SlopesPublicTestSuite) TestAChainWithNoDial() {
-	s.pedal.EXPECT().
-		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
-			Model: catalog.ModelID("HD2_NotAModel"), Pos: 0,
-		}}}}, nil)
-	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
-
-	s.Require().Error(Slopes(context.Background(), buffer(), s.opts()))
-}
-
-// TestTheRigWillNotBuild covers a rig nobody curated.
-func (s *SlopesPublicTestSuite) TestTheRigWillNotBuild() {
-	wanted := errors.New("no such rig")
-
-	s.pedal.EXPECT().
-		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(sdk.Made{}, wanted)
-
-	s.Require().ErrorIs(
-		Slopes(context.Background(), buffer(), s.opts()), wanted)
-}
-
-// TestAReferenceThatIsNotThere covers a missing signal.
-func (s *SlopesPublicTestSuite) TestAReferenceThatIsNotThere() {
-	s.pedal.EXPECT().
-		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
-			Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0,
-		}}}}, nil)
-	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
-
-	opts := s.opts()
-	opts.Dry = filepath.Join(s.T().TempDir(), "nothing.wav")
-
-	s.Require().Error(Slopes(context.Background(), buffer(), opts))
-}
-
-// TestASweepThatWillNotDecode covers a reading file somebody broke.
-func (s *SlopesPublicTestSuite) TestASweepThatWillNotDecode() {
-	s.built()
-
-	dir := s.T().TempDir()
-	s.Require().NoError(os.WriteFile(
-		filepath.Join(dir, "HD2_AmpSVBeastBrt.json"), []byte("{"), 0o600))
-
-	opts := s.opts()
-	opts.Sweeps = dir
-
-	s.Require().ErrorContains(
-		Slopes(context.Background(), buffer(), opts), "HD2_AmpSVBeastBrt.json")
-}
 
 // TestRatioSaysWhichKindOfDisagreementItIs covers the column that matters.
 //

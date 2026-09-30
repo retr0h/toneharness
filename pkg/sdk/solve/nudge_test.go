@@ -45,126 +45,155 @@ func (s *NudgeTestSuite) aims() map[audio.Figure]Aim {
 	}
 }
 
-// TestOneStepIsOneTolerance is the whole design.
-func (s *NudgeTestSuite) TestOneStepIsOneTolerance() {
-	got := Nudge(s.aims(), []Nudged{
-		{Term: "bright", Key: audio.KeyCentroid, Up: true, Steps: 1},
-	})
-
-	s.Require().InDelta(160.0, got[audio.KeyCentroid].Want, 0.001)
-	s.Require().InDelta(20.0, got[audio.KeyCentroid].Tol, 0.001,
-		"the tolerance is the unit, so moving the target does not widen it")
-}
-
-// TestDownTheAxis covers the other direction.
-func (s *NudgeTestSuite) TestDownTheAxis() {
-	got := Nudge(s.aims(), []Nudged{
-		{Term: "dark", Key: audio.KeyCentroid, Up: false, Steps: 1},
-	})
-
-	s.Require().InDelta(120.0, got[audio.KeyCentroid].Want, 0.001)
-}
-
-// TestStepsScaleIt covers "much darker" and "a touch darker".
-func (s *NudgeTestSuite) TestStepsScaleIt() {
-	tests := []struct {
-		name  string
-		steps float64
-		want  float64
+// TestNudge covers Nudge, which moves a target by what somebody heard.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *NudgeTestSuite) TestNudge() {
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
-		{"a touch", 0.5, 150},
-		{"the default when nothing says", 0, 160},
-		{"much", 3, 200},
-	}
+		{
+			name: "one step is one tolerance",
+			then: func() {
+				got := Nudge(s.aims(), []Nudged{
+					{Term: "bright", Key: audio.KeyCentroid, Up: true, Steps: 1},
+				})
 
-	for _, tt := range tests {
+				s.Require().InDelta(160.0, got[audio.KeyCentroid].Want, 0.001)
+				s.Require().InDelta(20.0, got[audio.KeyCentroid].Tol, 0.001,
+					"the tolerance is the unit, so moving the target does not widen it")
+			},
+		},
+		{
+			name: "down the axis",
+			then: func() {
+				got := Nudge(s.aims(), []Nudged{
+					{Term: "dark", Key: audio.KeyCentroid, Up: false, Steps: 1},
+				})
+
+				s.Require().InDelta(120.0, got[audio.KeyCentroid].Want, 0.001)
+			},
+		},
+		{
+			name: "steps scale it",
+			then: func() {
+				tests := []struct {
+					name  string
+					steps float64
+					want  float64
+				}{
+					{"a touch", 0.5, 150},
+					{"the default when nothing says", 0, 160},
+					{"much", 3, 200},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						got := Nudge(s.aims(), []Nudged{
+							{Key: audio.KeyCentroid, Up: true, Steps: tt.steps},
+						})
+
+						s.Require().InDelta(tt.want, got[audio.KeyCentroid].Want, 0.001)
+					})
+				}
+			},
+		},
+		{
+			// word moves two figures.
+			name: "two figures from one word",
+			then: func() {
+				got := Nudge(s.aims(), []Nudged{
+					{Term: "punchy", Key: audio.KeyCentroid, Up: true, Steps: 1},
+					{Term: "punchy", Key: audio.KeyLow, Up: false, Steps: 1},
+				})
+
+				s.Require().InDelta(160.0, got[audio.KeyCentroid].Want, 0.001)
+				s.Require().InDelta(0.85, got[audio.KeyLow].Want, 0.001)
+			},
+		},
+		{
+			// design, and a word cannot move a target that is not there.
+			name: "a figure nothing aims at is left alone",
+			then: func() {
+				got := Nudge(s.aims(), []Nudged{
+					{Term: "saturated", Key: audio.KeyHarmonics, Up: true, Steps: 1},
+				})
+
+				s.Require().NotContains(got, audio.KeyHarmonics)
+				s.Require().Len(got, 2, "and nothing else moved either")
+			},
+		},
+		{
+			name: "a tolerance of zero is not something to step by",
+			then: func() {
+				got := Nudge(map[audio.Figure]Aim{audio.KeyCentroid: {Want: 140}}, []Nudged{
+					{Key: audio.KeyCentroid, Up: true, Steps: 1},
+				})
+
+				s.Require().InDelta(140.0, got[audio.KeyCentroid].Want, 0.001)
+			},
+		},
+		{
+			// solve would spend every control chasing it and then report a chain that
+			// cannot reach the target.
+			name: "a share cannot go past the whole",
+			then: func() {
+				got := Nudge(map[audio.Figure]Aim{
+					audio.KeyLow:       {Want: 0.97, Tol: 0.2},
+					audio.KeyHarmonics: {Want: 0.1, Tol: 0.4},
+				}, []Nudged{
+					{Key: audio.KeyLow, Up: true, Steps: 1},
+					{Key: audio.KeyHarmonics, Up: false, Steps: 1},
+				})
+
+				s.Require().InDelta(1.0, got[audio.KeyLow].Want, 0.001)
+				s.Require().InDelta(0.0, got[audio.KeyHarmonics].Want, 0.001,
+					"and not below nothing either")
+			},
+		},
+		{
+			// applies.
+			name: "a figure in its own units has no ceiling",
+			then: func() {
+				got := Nudge(map[audio.Figure]Aim{audio.KeyCentroid: {Want: 140, Tol: 500}},
+					[]Nudged{{Key: audio.KeyCentroid, Up: true, Steps: 1}})
+
+				s.Require().InDelta(640.0, got[audio.KeyCentroid].Want, 0.001)
+			},
+		},
+		{
+			// at a time, and the residual reported each pass is read off these.
+			name: "the aims handed in are not changed",
+			then: func() {
+				was := s.aims()
+
+				_ = Nudge(was, []Nudged{{Key: audio.KeyCentroid, Up: true, Steps: 1}})
+
+				s.Require().InDelta(140.0, was[audio.KeyCentroid].Want, 0.001)
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			got := Nudge(s.aims(), []Nudged{
-				{Key: audio.KeyCentroid, Up: true, Steps: tt.steps},
-			})
-
-			s.Require().InDelta(tt.want, got[audio.KeyCentroid].Want, 0.001)
+			tt.then()
 		})
 	}
 }
 
 // TestTwoFiguresFromOneWord covers a word answering more than one axis.
 //
-// "punchy" is a tight low end and a hard attack, and both are measured, so one
-// word moves two figures.
-func (s *NudgeTestSuite) TestTwoFiguresFromOneWord() {
-	got := Nudge(s.aims(), []Nudged{
-		{Term: "punchy", Key: audio.KeyCentroid, Up: true, Steps: 1},
-		{Term: "punchy", Key: audio.KeyLow, Up: false, Steps: 1},
-	})
-
-	s.Require().InDelta(160.0, got[audio.KeyCentroid].Want, 0.001)
-	s.Require().InDelta(0.85, got[audio.KeyLow].Want, 0.001)
-}
 
 // TestAFigureNothingAimsAtIsLeftAlone covers a genre that shrugs at the axis.
 //
-// A genre pins the figures its records agree about and leaves the rest free by
-// design, and a word cannot move a target that is not there.
-func (s *NudgeTestSuite) TestAFigureNothingAimsAtIsLeftAlone() {
-	got := Nudge(s.aims(), []Nudged{
-		{Term: "saturated", Key: audio.KeyHarmonics, Up: true, Steps: 1},
-	})
-
-	s.Require().NotContains(got, audio.KeyHarmonics)
-	s.Require().Len(got, 2, "and nothing else moved either")
-}
-
-// TestAToleranceOfZeroIsNotSomethingToStepBy covers an unconstrained axis.
-func (s *NudgeTestSuite) TestAToleranceOfZeroIsNotSomethingToStepBy() {
-	got := Nudge(map[audio.Figure]Aim{audio.KeyCentroid: {Want: 140}}, []Nudged{
-		{Key: audio.KeyCentroid, Up: true, Steps: 1},
-	})
-
-	s.Require().InDelta(140.0, got[audio.KeyCentroid].Want, 0.001)
-}
 
 // TestAShareCannotGoPastTheWhole covers clamping.
 //
-// Asking for 1.05 of the low band asks for more energy than there is, and the
-// solve would spend every control chasing it and then report a chain that
-// cannot reach the target.
-func (s *NudgeTestSuite) TestAShareCannotGoPastTheWhole() {
-	got := Nudge(map[audio.Figure]Aim{
-		audio.KeyLow:       {Want: 0.97, Tol: 0.2},
-		audio.KeyHarmonics: {Want: 0.1, Tol: 0.4},
-	}, []Nudged{
-		{Key: audio.KeyLow, Up: true, Steps: 1},
-		{Key: audio.KeyHarmonics, Up: false, Steps: 1},
-	})
-
-	s.Require().InDelta(1.0, got[audio.KeyLow].Want, 0.001)
-	s.Require().InDelta(0.0, got[audio.KeyHarmonics].Want, 0.001,
-		"and not below nothing either")
-}
 
 // TestAFigureInItsOwnUnitsHasNoCeiling covers the other half of clamping.
 //
-// A centroid in hertz has no top this package knows, so only the floor at zero
-// applies.
-func (s *NudgeTestSuite) TestAFigureInItsOwnUnitsHasNoCeiling() {
-	got := Nudge(map[audio.Figure]Aim{audio.KeyCentroid: {Want: 140, Tol: 500}},
-		[]Nudged{{Key: audio.KeyCentroid, Up: true, Steps: 1}})
-
-	s.Require().InDelta(640.0, got[audio.KeyCentroid].Want, 0.001)
-}
 
 // TestTheAimsHandedInAreNotChanged covers the loop reading them every pass.
 //
-// A nudge applied to the same map twice would walk the target away a tolerance
-// at a time, and the residual reported each pass is read off these.
-func (s *NudgeTestSuite) TestTheAimsHandedInAreNotChanged() {
-	was := s.aims()
-
-	_ = Nudge(was, []Nudged{{Key: audio.KeyCentroid, Up: true, Steps: 1}})
-
-	s.Require().InDelta(140.0, was[audio.KeyCentroid].Want, 0.001)
-}
 
 func TestNudgeTestSuite(
 	t *testing.T,

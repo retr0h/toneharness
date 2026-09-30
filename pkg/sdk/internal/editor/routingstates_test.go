@@ -85,183 +85,221 @@ func (s *RoutingStatesTestSuite) slot(
 	return wire.Routing{}
 }
 
-// TestAnOutputCarriesWhatTheFileSays is the case the task was filed for.
-func (s *RoutingStatesTestSuite) TestAnOutputCarriesWhatTheFileSays() {
-	got := RoutingStates(s.preset0(), s.cat, s.held)
-
-	out := s.slot(got, "outputA")
-
-	// Two, not the three the catalog names: a device stores `select` under
-	// its own key rather than among the values.
-	s.Require().NotNil(out.Values)
-	s.Require().Len(*out.Values, 2)
-	s.Require().Equal(2, out.Named)
-
-	s.Require().InDelta(0.5, (*out.Values)[0], 0.0001, "pan")
-	s.Require().InDelta(-2.9, (*out.Values)[1], 0.0001, "gain")
-
-	s.Require().NotNil(out.Select)
-	s.Require().Equal(1, *out.Select)
-}
-
-// TestAnInputIsCappedAtWhatADeviceSends covers the widest gap.
-//
-// The model names seven parameters and a device sends three.
-func (s *RoutingStatesTestSuite) TestAnInputIsCappedAtWhatADeviceSends() {
-	got := RoutingStates(s.preset0(), s.cat, s.held)
-
-	in := s.slot(got, "inputA")
-
-	s.Require().NotNil(in.Values)
-	s.Require().Len(*in.Values, 3, "noiseGate, threshold and decay")
-
-	s.Require().Equal(false, (*in.Values)[0], "noiseGate")
-	s.Require().InDelta(-48, (*in.Values)[1], 0.0001, "threshold")
-	s.Require().InDelta(0.5, (*in.Values)[2], 0.0001, "decay")
-}
-
-// TestASplitCarriesItsModelAndPlace covers the fields only a split has.
-func (s *RoutingStatesTestSuite) TestASplitCarriesItsModelAndPlace() {
-	got := RoutingStates(s.preset0(), s.cat, s.held)
-
-	split := s.slot(got, "split")
-
-	s.Require().NotNil(split.Model)
-	s.Require().NotNil(split.Enabled)
-	s.Require().True(*split.Enabled)
-	s.Require().NotNil(split.Position)
-	s.Require().Equal(0, *split.Position)
-
-	s.Require().NotNil(split.Values)
-	s.Require().Len(*split.Values, 3, "BalanceA, BalanceB and bypass")
-}
-
-// TestAnInputCarriesNoModelOrPlace covers what a device keeps to itself.
-func (s *RoutingStatesTestSuite) TestAnInputCarriesNoModelOrPlace() {
-	got := RoutingStates(s.preset0(), s.cat, s.held)
-
-	in := s.slot(got, "inputA")
-
-	s.Require().Nil(in.Model, "a device knows which input is its own")
-	s.Require().Nil(in.Enabled)
-	s.Require().Nil(in.Position)
-}
-
-// TestAPresetWithNoChain carries no routing either.
-func (s *RoutingStatesTestSuite) TestAPresetWithNoChain() {
-	doc, err := preset.Blank()
-	s.Require().NoError(err)
-
-	delete(doc.Data.Tone, processorKey)
-
-	s.Require().Nil(RoutingStates(doc, s.cat, s.held))
-}
-
-// TestAPresetNamingNoneOfThem carries nothing to write.
-func (s *RoutingStatesTestSuite) TestAPresetNamingNoneOfThem() {
+// entry replaces one routing slot with a body of its own, which is what every
+// row that is about a malformed preset does.
+func (s *RoutingStatesTestSuite) entry(
+	slot, body string,
+) *preset.Document {
 	doc := s.preset0()
+	doc.Data.Tone[processorKey][slot] = json.RawMessage(body)
 
-	for _, r := range s.held {
-		delete(doc.Data.Tone[processorKey], r.Slot)
+	return doc
+}
+
+// TestRoutingStatesReadsWhatTheDeviceWrote covers every entry a preset can
+// carry, sound or otherwise.
+//
+// A device sends fewer values than a model has names for, and the two counts
+// come from different places: the count from the device's own entry, the names
+// from the model the file states. A file this tool wrote keeps them in step; a
+// file somebody edited can name anything the catalog carries, and each row is
+// one way those two can disagree.
+func (s *RoutingStatesTestSuite) TestRoutingStatesReadsWhatTheDeviceWrote() {
+	const output = "HelixStomp_AppDSPFlowOutputMain"
+
+	for _, tt := range []struct {
+		name string
+		doc  func() *preset.Document
+		then func([]wire.Routing)
+	}{
+		{
+			name: "an output carries what the file says",
+			doc:  s.preset0,
+			then: func(got []wire.Routing) {
+				out := s.slot(got, "outputA")
+
+				// Two, not the three the catalog names: a device stores
+				// `select` under its own key rather than among the values.
+				s.Require().NotNil(out.Values)
+				s.Require().Len(*out.Values, 2)
+				s.Require().Equal(2, out.Named)
+
+				s.Require().InDelta(0.5, (*out.Values)[0], 0.0001, "pan")
+				s.Require().InDelta(-2.9, (*out.Values)[1], 0.0001, "gain")
+
+				s.Require().NotNil(out.Select)
+				s.Require().Equal(1, *out.Select)
+			},
+		},
+		{
+			// The widest gap: the model names seven parameters and a device
+			// sends three.
+			name: "an input is capped at what a device sends",
+			doc:  s.preset0,
+			then: func(got []wire.Routing) {
+				in := s.slot(got, "inputA")
+
+				s.Require().NotNil(in.Values)
+				s.Require().Len(*in.Values, 3, "noiseGate, threshold and decay")
+
+				s.Require().Equal(false, (*in.Values)[0], "noiseGate")
+				s.Require().InDelta(-48, (*in.Values)[1], 0.0001, "threshold")
+				s.Require().InDelta(0.5, (*in.Values)[2], 0.0001, "decay")
+			},
+		},
+		{
+			name: "a split carries its model and its place",
+			doc:  s.preset0,
+			then: func(got []wire.Routing) {
+				split := s.slot(got, "split")
+
+				s.Require().NotNil(split.Model)
+				s.Require().NotNil(split.Enabled)
+				s.Require().True(*split.Enabled)
+				s.Require().NotNil(split.Position)
+				s.Require().Equal(0, *split.Position)
+
+				s.Require().NotNil(split.Values)
+				s.Require().Len(*split.Values, 3,
+					"BalanceA, BalanceB and bypass")
+			},
+		},
+		{
+			name: "an input carries no model or place",
+			doc:  s.preset0,
+			then: func(got []wire.Routing) {
+				in := s.slot(got, "inputA")
+
+				s.Require().Nil(in.Model,
+					"a device knows which input is its own")
+				s.Require().Nil(in.Enabled)
+				s.Require().Nil(in.Position)
+			},
+		},
+		{
+			name: "a preset with no chain carries no routing either",
+			doc: func() *preset.Document {
+				doc, err := preset.Blank()
+				s.Require().NoError(err)
+
+				delete(doc.Data.Tone, processorKey)
+
+				return doc
+			},
+			then: func(got []wire.Routing) { s.Require().Nil(got) },
+		},
+		{
+			name: "a preset naming none of them has nothing to write",
+			doc: func() *preset.Document {
+				doc := s.preset0()
+
+				for _, r := range s.held {
+					delete(doc.Data.Tone[processorKey], r.Slot)
+				}
+
+				return doc
+			},
+			then: func(got []wire.Routing) { s.Require().Nil(got) },
+		},
+		{
+			name: "an entry that will not read is skipped rather than guessed",
+			doc:  func() *preset.Document { return s.entry("outputA", `nonsense`) },
+			then: func(got []wire.Routing) {
+				for _, r := range got {
+					s.Require().NotEqual("outputA", r.Slot)
+				}
+			},
+		},
+		{
+			// The model is the only thing that says which parameters an entry
+			// has, and a list built without one would put values in the wrong
+			// places.
+			name: "an entry naming no model carries no values",
+			doc: func() *preset.Document {
+				return s.entry("outputA", `{"@output": 1}`)
+			},
+			then: func(got []wire.Routing) {
+				out := s.slot(got, "outputA")
+
+				s.Require().Nil(out.Values)
+				s.Require().NotNil(out.Select, "what it could read, it read")
+			},
+		},
+		{
+			name: "an entry naming a model nobody carries also carries none",
+			doc: func() *preset.Document {
+				return s.entry("outputA",
+					`{"@output": 1, "@model": "HD2_NoSuchFlow"}`)
+			},
+			then: func(got []wire.Routing) {
+				s.Require().Nil(s.slot(got, "outputA").Values)
+			},
+		},
+		{
+			name: "a model name that will not read is the same as naming none",
+			doc: func() *preset.Document {
+				return s.entry("outputA", `{"@model": 7}`)
+			},
+			then: func(got []wire.Routing) {
+				s.Require().Nil(s.slot(got, "outputA").Values)
+			},
+		},
+		{
+			// A return block naming two parameters in a slot the device sent
+			// three values for used to slice past the end of the list.
+			name: "a model carrying fewer parameters than the device sent",
+			doc: func() *preset.Document {
+				return s.entry("inputA",
+					`{"@model": "HD2_ReturnMono1", "Return": 0.5}`)
+			},
+			then: func(got []wire.Routing) {
+				in := s.slot(got, "inputA")
+
+				s.Require().NotNil(in.Values)
+				s.Require().Len(*in.Values, 2,
+					"what the model names, not what the device sent")
+				s.Require().Equal(2, in.Named,
+					"and the count the device is told matches")
+			},
+		},
+		{
+			// Position is the only thing naming a value on the wire, so a
+			// missing one cannot be left out without moving every value after
+			// it.
+			name: "a parameter the preset omits still takes its place",
+			doc: func() *preset.Document {
+				return s.entry("outputA",
+					`{"@output": 1, "@model": "`+output+`", "gain": -2.9}`)
+			},
+			then: func(got []wire.Routing) {
+				out := s.slot(got, "outputA")
+
+				s.Require().NotNil(out.Values)
+				s.Require().Len(*out.Values, 2)
+				s.Require().InDelta(0, (*out.Values)[0], 0.0001,
+					"the pan it does not name")
+				s.Require().InDelta(-2.9, (*out.Values)[1], 0.0001)
+			},
+		},
+		{
+			name: "a parameter that will not read leaves that one at nothing",
+			doc: func() *preset.Document {
+				return s.entry("outputA",
+					`{"@model": "`+output+`", "pan": "loud", "gain": -1}`)
+			},
+			then: func(got []wire.Routing) {
+				out := s.slot(got, "outputA")
+
+				s.Require().NotNil(out.Values)
+				s.Require().InDelta(0, (*out.Values)[0], 0.0001)
+				s.Require().InDelta(-1, (*out.Values)[1], 0.0001)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then(RoutingStates(tt.doc(), s.cat, s.held))
+		})
 	}
-
-	s.Require().Nil(RoutingStates(doc, s.cat, s.held))
-}
-
-// TestAnEntryThatWillNotRead is skipped rather than guessed at.
-func (s *RoutingStatesTestSuite) TestAnEntryThatWillNotRead() {
-	doc := s.preset0()
-	doc.Data.Tone[processorKey]["outputA"] = json.RawMessage(`nonsense`)
-
-	got := RoutingStates(doc, s.cat, s.held)
-
-	for _, r := range got {
-		s.Require().NotEqual("outputA", r.Slot)
-	}
-}
-
-// TestAnEntryNamingNoModel carries no values.
-//
-// The model is the only thing that says which parameters an entry has, and a
-// list built without one would put values in the wrong places.
-func (s *RoutingStatesTestSuite) TestAnEntryNamingNoModel() {
-	doc := s.preset0()
-	doc.Data.Tone[processorKey]["outputA"] = json.RawMessage(`{"@output": 1}`)
-
-	out := s.slot(RoutingStates(doc, s.cat, s.held), "outputA")
-
-	s.Require().Nil(out.Values)
-	s.Require().NotNil(out.Select, "what it could read, it read")
-}
-
-// TestAnEntryNamingAModelNobodyCarries also carries no values.
-func (s *RoutingStatesTestSuite) TestAnEntryNamingAModelNobodyCarries() {
-	doc := s.preset0()
-	doc.Data.Tone[processorKey]["outputA"] = json.RawMessage(
-		`{"@output": 1, "@model": "HD2_NoSuchFlow"}`)
-
-	out := s.slot(RoutingStates(doc, s.cat, s.held), "outputA")
-
-	s.Require().Nil(out.Values)
-}
-
-// TestAModelCarryingFewerParametersThanTheDeviceSent does not panic.
-//
-// The count comes from the device's own entry and the names come from the
-// model the file states, which are two sources. A file this tool wrote keeps
-// them in step; a file somebody edited can name anything the catalog carries,
-// and a return block naming two parameters in a slot the device sent three
-// values for used to slice past the end of the list.
-func (s *RoutingStatesTestSuite) TestAModelCarryingFewerParametersThanTheDeviceSent() {
-	doc := s.preset0()
-	doc.Data.Tone[processorKey]["inputA"] = json.RawMessage(
-		`{"@model": "HD2_ReturnMono1", "Return": 0.5}`)
-
-	in := s.slot(RoutingStates(doc, s.cat, s.held), "inputA")
-
-	s.Require().NotNil(in.Values)
-	s.Require().Len(*in.Values, 2, "what the model names, not what the device sent")
-	s.Require().Equal(2, in.Named, "and the count the device is told matches")
-}
-
-// TestAModelNameThatWillNotRead is the same as naming none.
-func (s *RoutingStatesTestSuite) TestAModelNameThatWillNotRead() {
-	doc := s.preset0()
-	doc.Data.Tone[processorKey]["outputA"] = json.RawMessage(`{"@model": 7}`)
-
-	out := s.slot(RoutingStates(doc, s.cat, s.held), "outputA")
-
-	s.Require().Nil(out.Values)
-}
-
-// TestAParameterThePresetOmits still takes its place.
-//
-// Position is the only thing naming a value on the wire, so a missing one
-// cannot be left out without moving every value after it.
-func (s *RoutingStatesTestSuite) TestAParameterThePresetOmits() {
-	doc := s.preset0()
-	doc.Data.Tone[processorKey]["outputA"] = json.RawMessage(
-		`{"@output": 1, "@model": "HelixStomp_AppDSPFlowOutputMain", "gain": -2.9}`)
-
-	out := s.slot(RoutingStates(doc, s.cat, s.held), "outputA")
-
-	s.Require().NotNil(out.Values)
-	s.Require().Len(*out.Values, 2)
-	s.Require().InDelta(0, (*out.Values)[0], 0.0001, "the pan it does not name")
-	s.Require().InDelta(-2.9, (*out.Values)[1], 0.0001)
-}
-
-// TestAParameterThatWillNotRead leaves that one at nothing.
-func (s *RoutingStatesTestSuite) TestAParameterThatWillNotRead() {
-	doc := s.preset0()
-	doc.Data.Tone[processorKey]["outputA"] = json.RawMessage(
-		`{"@model": "HelixStomp_AppDSPFlowOutputMain", "pan": "loud", "gain": -1}`)
-
-	out := s.slot(RoutingStates(doc, s.cat, s.held), "outputA")
-
-	s.Require().NotNil(out.Values)
-	s.Require().InDelta(0, (*out.Values)[0], 0.0001)
-	s.Require().InDelta(-1, (*out.Values)[1], 0.0001)
 }
 
 func TestRoutingStatesTestSuite(

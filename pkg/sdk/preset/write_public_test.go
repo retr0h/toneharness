@@ -55,70 +55,87 @@ func (s *WritePublicTestSuite) doc() *preset.Document {
 	return d
 }
 
-// TestWrite puts a document back the way it came.
+// TestWrite covers Write, which encodes a preset file.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *WritePublicTestSuite) TestWrite() {
-	tests := []struct {
-		name     string
-		to       io.Writer
-		contains []string
-		err      bool
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name: "the routing and snapshots a chain says nothing about",
-			contains: []string{
-				"AppDSPFlow1Input", "snapshot0",
+			name: "write",
+			then: func() {
+				tests := []struct {
+					name     string
+					to       io.Writer
+					contains []string
+					err      bool
+				}{
+					{
+						name: "the routing and snapshots a chain says nothing about",
+						contains: []string{
+							"AppDSPFlow1Input", "snapshot0",
+						},
+					},
+					{
+						name: "nowhere to write it",
+						to:   &failingWriter{},
+						err:  true,
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						var buf bytes.Buffer
+
+						to := tt.to
+						if to == nil {
+							to = &buf
+						}
+
+						err := preset.Write(to, s.doc())
+
+						if tt.err {
+							s.Require().Error(err)
+
+							return
+						}
+
+						s.Require().NoError(err)
+
+						for _, want := range tt.contains {
+							s.Require().Contains(buf.String(), want)
+						}
+					})
+				}
 			},
 		},
 		{
-			name: "nowhere to write it",
-			to:   &failingWriter{},
-			err:  true,
+			// preset read and written again is the preset that was read.
+			name: "write survives a read back",
+			then: func() {
+				d := s.doc()
+
+				before, err := d.Spec()
+				s.Require().NoError(err)
+
+				var buf bytes.Buffer
+				s.Require().NoError(preset.Write(&buf, d))
+
+				again, err := preset.Read(&buf)
+				s.Require().NoError(err)
+
+				after, err := again.Spec()
+				s.Require().NoError(err)
+				s.Require().Equal(before, after)
+			},
 		},
-	}
-
-	for _, tt := range tests {
+	} {
 		s.Run(tt.name, func() {
-			var buf bytes.Buffer
-
-			to := tt.to
-			if to == nil {
-				to = &buf
-			}
-
-			err := preset.Write(to, s.doc())
-
-			if tt.err {
-				s.Require().Error(err)
-
-				return
-			}
-
-			s.Require().NoError(err)
-
-			for _, want := range tt.contains {
-				s.Require().Contains(buf.String(), want)
-			}
+			tt.then()
 		})
 	}
-}
-
-// TestWriteSurvivesAReadBack is the rule the whole package exists to keep: a
-// preset read and written again is the preset that was read.
-func (s *WritePublicTestSuite) TestWriteSurvivesAReadBack() {
-	d := s.doc()
-
-	before, err := d.Spec()
-	s.Require().NoError(err)
-
-	var buf bytes.Buffer
-	s.Require().NoError(preset.Write(&buf, d))
-
-	again, err := preset.Read(&buf)
-	s.Require().NoError(err)
-
-	after, err := again.Spec()
-	s.Require().NoError(err)
-	s.Require().Equal(before, after)
 }
 
 // TestSetSpec replaces the chain and leaves everything else alone.

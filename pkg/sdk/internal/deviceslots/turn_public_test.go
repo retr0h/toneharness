@@ -61,57 +61,78 @@ func (s *TurnPublicTestSuite) dev() *turnable {
 	}
 }
 
-// TestTurnMovesAControl covers the ordinary case and the device declining.
-func (s *TurnPublicTestSuite) TestTurnMovesAControl() {
-	ctx := context.Background()
-	at := device.Address{Block: 2, Param: 5, Model: 0, Direct: true}
-
-	tests := []struct {
+// TestTurn covers Turn, which moves one control on the preset a device is
+// playing.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *TurnPublicTestSuite) TestTurn() {
+	for _, tt := range []struct {
 		name string
-		give error
-		want string
+		then func()
 	}{
-		{name: "the device takes it"},
 		{
-			// A device declines rather than complains, so a nil here would
-			// leave a sweep recording the same sound at every step and
-			// calling it a measurement.
-			name: "the device declines",
-			give: errors.New("opcode 30, error -3"),
-			want: "setting parameter 5 on block 2",
+			name: "turn moves a control",
+			then: func() {
+				ctx := context.Background()
+				at := device.Address{Block: 2, Param: 5, Model: 0, Direct: true}
+
+				tests := []struct {
+					name string
+					give error
+					want string
+				}{
+					{name: "the device takes it"},
+					{
+						// A device declines rather than complains, so a nil here would
+						// leave a sweep recording the same sound at every step and
+						// calling it a measurement.
+						name: "the device declines",
+						give: errors.New("opcode 30, error -3"),
+						want: "setting parameter 5 on block 2",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						d := s.dev()
+						d.MockTurner.EXPECT().
+							SetParam(ctx, at, float32(0.25)).
+							Return(tt.give)
+
+						err := (&deviceslots.Flows{}).Turn(ctx, d, at, 0.25)
+
+						if tt.want == "" {
+							s.Require().NoError(err)
+
+							return
+						}
+
+						s.Require().ErrorContains(err, tt.want)
+					})
+				}
+			},
 		},
-	}
+		{
+			name: "turn needs a session that can move one",
+			then: func() {
+				err := (&deviceslots.Flows{}).Turn(
+					context.Background(),
+					mocks.NewMockEditor(s.ctrl),
+					device.Address{},
+					0.5,
+				)
 
-	for _, tt := range tests {
+				s.Require().ErrorContains(err, "cannot move a control")
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			d := s.dev()
-			d.MockTurner.EXPECT().
-				SetParam(ctx, at, float32(0.25)).
-				Return(tt.give)
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
 
-			err := (&deviceslots.Flows{}).Turn(ctx, d, at, 0.25)
-
-			if tt.want == "" {
-				s.Require().NoError(err)
-
-				return
-			}
-
-			s.Require().ErrorContains(err, tt.want)
+			tt.then()
 		})
 	}
-}
-
-// TestTurnNeedsASessionThatCanMoveOne covers a session without the capability.
-func (s *TurnPublicTestSuite) TestTurnNeedsASessionThatCanMoveOne() {
-	err := (&deviceslots.Flows{}).Turn(
-		context.Background(),
-		mocks.NewMockEditor(s.ctrl),
-		device.Address{},
-		0.5,
-	)
-
-	s.Require().ErrorContains(err, "cannot move a control")
 }
 
 // TestChooseAndSwitch covers the two kinds of value that are not a dial.

@@ -147,43 +147,61 @@ func (s *AcrossPublicTestSuite) TestAMeasureNoRecordAnsweredSaysSo() {
 	s.Require().NotContains(got, "0.00 s", "and no figure standing in for one")
 }
 
-// TestEachRecordGetsARow covers the per-record table.
-func (s *AcrossPublicTestSuite) TestEachRecordGetsARow() {
-	var buf bytes.Buffer
+// TestTracks covers Tracks, which prints one row per recording, before they
+// are read together.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *AcrossPublicTestSuite) TestTracks() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "each record gets a row",
+			then: func() {
+				var buf bytes.Buffer
 
-	s.Require().NoError(cli.Tracks(&buf, []audio.Named{
-		{Name: "basket-case", Profile: audio.Profile{
-			Low: 0.97, Centroid: 148,
-			Transient:    audio.Reading{Value: 0.77, Known: true},
-			Decay:        audio.Reading{Value: 1.72, Known: true},
-			DynamicRange: 5.5, Harmonics: audio.Spread{Mid: 0.23},
-		}},
-		{Name: "longview", Profile: audio.Profile{
-			Low: 0.94, Centroid: 152,
-			Transient:    audio.Reading{Value: 0.71, Known: true},
-			Decay:        audio.Reading{Value: 0.82, Known: true},
-			DynamicRange: 7.6, Harmonics: audio.Spread{Mid: 0.35},
-		}},
-	}))
+				s.Require().NoError(cli.Tracks(&buf, []audio.Named{
+					{Name: "basket-case", Profile: audio.Profile{
+						Low: 0.97, Centroid: 148,
+						Transient:    audio.Reading{Value: 0.77, Known: true},
+						Decay:        audio.Reading{Value: 1.72, Known: true},
+						DynamicRange: 5.5, Harmonics: audio.Spread{Mid: 0.23},
+					}},
+					{Name: "longview", Profile: audio.Profile{
+						Low: 0.94, Centroid: 152,
+						Transient:    audio.Reading{Value: 0.71, Known: true},
+						Decay:        audio.Reading{Value: 0.82, Known: true},
+						DynamicRange: 7.6, Harmonics: audio.Spread{Mid: 0.35},
+					}},
+				}))
 
-	got := buf.String()
+				got := buf.String()
 
-	s.Require().Contains(got, "basket-case")
-	s.Require().Contains(got, "longview")
-	s.Require().Contains(got, "148 Hz")
-	s.Require().Contains(got, "1.72 s")
-	s.Require().Contains(got, "7.6 dB")
-	s.Require().Contains(got, "35%")
-	s.Require().Contains(got, "2 recordings")
-}
+				s.Require().Contains(got, "basket-case")
+				s.Require().Contains(got, "longview")
+				s.Require().Contains(got, "148 Hz")
+				s.Require().Contains(got, "1.72 s")
+				s.Require().Contains(got, "7.6 dB")
+				s.Require().Contains(got, "35%")
+				s.Require().Contains(got, "2 recordings")
+			},
+		},
+		{
+			name: "no records at all",
+			then: func() {
+				var buf bytes.Buffer
 
-// TestNoRecordsAtAll covers the table with nothing in it.
-func (s *AcrossPublicTestSuite) TestNoRecordsAtAll() {
-	var buf bytes.Buffer
+				s.Require().NoError(cli.Tracks(&buf, nil))
 
-	s.Require().NoError(cli.Tracks(&buf, nil))
-
-	s.Require().Contains(buf.String(), "no recordings to measure")
+				s.Require().Contains(buf.String(), "no recordings to measure")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 func TestAcrossPublicTestSuite(

@@ -120,88 +120,249 @@ func centre(
 
 // TestMatchMakesOneCabinetMeasureLikeAnother is the whole point.
 //
-// A bright cabinet and a dark one, and the filter between them. Run the
-// bright one through that filter and what comes out should sit where the dark
-// one sits.
+// TestMatchMakesOneCabinetMeasureLikeAnother covers the impulse response it builds and the bounds it keeps.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *CabPublicTestSuite) TestMatchMakesOneCabinetMeasureLikeAnother() {
-	bright := speaker(cab.Long, 3000)
-	dark := speaker(cab.Long, 600)
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// bright one through that filter and what comes out should sit where the dark
+			// one sits.
+			name: "match makes one cabinet measure like another",
+			then: func() {
+				bright := speaker(cab.Long, 3000)
+				dark := speaker(cab.Long, 600)
 
-	before := centre(bright)
-	want := centre(dark)
+				before := centre(bright)
+				want := centre(dark)
 
-	s.Require().Greater(before, want*2,
-		"the two cabinets are far enough apart for the test to mean anything")
+				s.Require().Greater(before, want*2,
+					"the two cabinets are far enough apart for the test to mean anything")
 
-	fix, err := cab.Match(dark, bright, cab.Long)
-	s.Require().NoError(err)
-	s.Require().Len(fix, cab.Long)
+				fix, err := cab.Match(dark, bright, cab.Long)
+				s.Require().NoError(err)
+				s.Require().Len(fix, cab.Long)
 
-	after := centre(through(bright, fix))
+				after := centre(through(bright, fix))
 
-	s.Require().Less(math.Abs(after-want), math.Abs(before-want),
-		"the correction moved it toward the target rather than away")
-	s.Require().InEpsilon(want, after, 0.25,
-		"and landed within a quarter of it: %0.f Hz wanted, %.0f Hz before, "+
-			"%.0f Hz after", want, before, after)
+				s.Require().Less(math.Abs(after-want), math.Abs(before-want),
+					"the correction moved it toward the target rather than away")
+				s.Require().InEpsilon(want, after, 0.25,
+					"and landed within a quarter of it: %0.f Hz wanted, %.0f Hz before, "+
+						"%.0f Hz after", want, before, after)
+			},
+		},
+		{
+			name: "an impulse response never clips",
+			then: func() {
+				loud := make([]float64, cab.Long)
+				for i := range loud {
+					loud[i] = 50
+				}
+
+				got, err := cab.Match(loud, speaker(cab.Long, 1000), cab.Long)
+				s.Require().NoError(err)
+
+				for i, v := range got {
+					s.Require().LessOrEqualf(math.Abs(v), 1.0,
+						"tap %d is past full scale at %f", i, v)
+				}
+			},
+		},
+		{
+			// it reads as a click on every note, which is not what the cabinet did.
+			name: "it ends quietly",
+			then: func() {
+				got, err := cab.Match(
+					speaker(cab.Long, 600), speaker(cab.Long, 3000), cab.Long)
+				s.Require().NoError(err)
+
+				var peak float64
+				for _, v := range got {
+					peak = math.Max(peak, math.Abs(v))
+				}
+
+				s.Require().Less(math.Abs(got[len(got)-1]), peak*0.01,
+					"the last tap is not where the energy is")
+			},
+		},
+		{
+			// of energy in the first eighth does: both read the same to six places with
+			// the fold and without it, because almost all of the energy is in the first
+			// few taps either way. The centroid of this response is 1.69 taps folded and
+			// 2.65 unfolded, which is the difference between a response that starts at
+			// once and one that takes half again as long to.
+			name: "it puts its energy as early as it can",
+			then: func() {
+				got, err := cab.Match(
+					speaker(cab.Long, 600), speaker(cab.Long, 3000), cab.Long)
+				s.Require().NoError(err)
+
+				var all, moment float64
+
+				for at, v := range got {
+					all += v * v
+					moment += float64(at) * v * v
+				}
+
+				s.Require().Positive(all, "a response with no energy proves nothing")
+				s.Require().Less(moment/all, 2.0,
+					"a minimum-phase response puts its energy as early as its magnitude "+
+						"allows; without the fold this is 2.65 taps")
+			},
+		},
+		{
+			name: "only what a device loads",
+			then: func() {
+				for _, taps := range []int{0, 512, 1000, 4096} {
+					_, err := cab.Match(
+						speaker(4096, 600), speaker(4096, 3000), taps)
+
+					s.Require().ErrorIs(err, cab.ErrBadLength, "%d taps", taps)
+				}
+
+				for _, taps := range []int{cab.Short, cab.Long} {
+					got, err := cab.Match(speaker(4096, 600), speaker(4096, 3000), taps)
+
+					s.Require().NoError(err)
+					s.Require().Len(got, taps)
+				}
+			},
+		},
+		{
+			// correction leaves it as it was rather than inventing gain for it.
+			name: "a quiet target bin leaves the response alone",
+			then: func() {
+				flat := make([]float64, cab.Long)
+				for i := range flat {
+					flat[i] = 1
+				}
+
+				got, err := cab.Match(speaker(cab.Long, 1500), flat, cab.Long)
+
+				s.Require().NoError(err)
+
+				for i, v := range got {
+					s.Require().Falsef(math.IsNaN(v) || math.IsInf(v, 0),
+						"tap %d came back as %v", i, v)
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestCaptureRecoversWhatACabinetDid covers deconvolution.
 //
-// A known signal through a known cabinet, and dividing one by the other in
-// the frequency domain gives the cabinet back.
+// TestCaptureRecoversWhatACabinetDid covers reading a cabinet's own shape back out of a recording.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *CabPublicTestSuite) TestCaptureRecoversWhatACabinetDid() {
-	want := speaker(cab.Long, 1500)
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// the frequency domain gives the cabinet back.
+			name: "capture recovers what a cabinet did",
+			then: func() {
+				want := speaker(cab.Long, 1500)
 
-	// A sweep has energy everywhere, which is what makes the division safe.
-	sent := make([]float64, cab.Long*4)
-	for i := range sent {
-		at := float64(i) / float64(len(sent))
-		sent[i] = math.Sin(2 * math.Pi * (20 + 12000*at*at) * float64(i) /
-			float64(cab.Rate))
-	}
+				// A sweep has energy everywhere, which is what makes the division safe.
+				sent := make([]float64, cab.Long*4)
+				for i := range sent {
+					at := float64(i) / float64(len(sent))
+					sent[i] = math.Sin(2 * math.Pi * (20 + 12000*at*at) * float64(i) /
+						float64(cab.Rate))
+				}
 
-	got, err := cab.Capture(sent, through(sent, want), cab.Long)
-	s.Require().NoError(err)
-	s.Require().Len(got, cab.Long)
+				got, err := cab.Capture(sent, through(sent, want), cab.Long)
+				s.Require().NoError(err)
+				s.Require().Len(got, cab.Long)
 
-	s.Require().InEpsilon(centre(want), centre(got), 0.15,
-		"what came back measures like the cabinet that was in the path")
-}
+				s.Require().InEpsilon(centre(want), centre(got), 0.15,
+					"what came back measures like the cabinet that was in the path")
+			},
+		},
+		{
+			name: "not enough to work from",
+			then: func() {
+				short := make([]float64, 10)
+				fine := speaker(cab.Long, 1000)
 
-// TestAnImpulseResponseNeverClips covers what a device will load.
-func (s *CabPublicTestSuite) TestAnImpulseResponseNeverClips() {
-	loud := make([]float64, cab.Long)
-	for i := range loud {
-		loud[i] = 50
-	}
+				_, err := cab.Match(short, fine, cab.Long)
+				s.Require().ErrorIs(err, cab.ErrTooShort)
 
-	got, err := cab.Match(loud, speaker(cab.Long, 1000), cab.Long)
-	s.Require().NoError(err)
+				_, err = cab.Match(fine, short, cab.Long)
+				s.Require().ErrorIs(err, cab.ErrTooShort)
 
-	for i, v := range got {
-		s.Require().LessOrEqualf(math.Abs(v), 1.0,
-			"tap %d is past full scale at %f", i, v)
+				_, err = cab.Capture(short, fine, cab.Long)
+				s.Require().ErrorIs(err, cab.ErrTooShort)
+
+				_, err = cab.Capture(fine, short, cab.Long)
+				s.Require().ErrorIs(err, cab.ErrTooShort)
+			},
+		},
+		{
+			name: "silence is not something to divide by",
+			then: func() {
+				quiet := make([]float64, cab.Long)
+				fine := speaker(cab.Long, 1000)
+
+				_, err := cab.Capture(quiet, fine, cab.Long)
+				s.Require().ErrorIs(err, cab.ErrTooShort)
+
+				_, err = cab.Match(fine, quiet, cab.Long)
+				s.Require().ErrorIs(err, cab.ErrTooShort)
+			},
+		},
+		{
+			name: "capture only what a device loads",
+			then: func() {
+				fine := speaker(cab.Long*4, 1500)
+
+				for _, taps := range []int{0, 512, 4096} {
+					_, err := cab.Capture(fine, fine, taps)
+
+					s.Require().ErrorIs(err, cab.ErrBadLength, "%d taps", taps)
+				}
+			},
+		},
+		{
+			// energy in the first bin and leaves every other one genuinely empty, where a
+			// zero-padded tone only leaks quietly into them.
+			name: "bins holding nothing are not divided by",
+			then: func() {
+				flat := make([]float64, cab.Long*2)
+				for i := range flat {
+					flat[i] = 1
+				}
+
+				got, err := cab.Capture(flat, through(flat, speaker(cab.Long, 1500)), cab.Long)
+
+				s.Require().NoError(err)
+
+				for i, v := range got {
+					s.Require().Falsef(math.IsNaN(v) || math.IsInf(v, 0),
+						"tap %d came back as %v", i, v)
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 
 // TestItEndsQuietly covers the window on the tail.
 //
-// A response that stops abruptly has a step in it, and a step is broadband:
-// it reads as a click on every note, which is not what the cabinet did.
-func (s *CabPublicTestSuite) TestItEndsQuietly() {
-	got, err := cab.Match(
-		speaker(cab.Long, 600), speaker(cab.Long, 3000), cab.Long)
-	s.Require().NoError(err)
-
-	var peak float64
-	for _, v := range got {
-		peak = math.Max(peak, math.Abs(v))
-	}
-
-	s.Require().Less(math.Abs(got[len(got)-1]), peak*0.01,
-		"the last tap is not where the energy is")
-}
 
 // TestItPutsItsEnergyAsEarlyAsItCan covers the causal fold.
 //
@@ -211,131 +372,15 @@ func (s *CabPublicTestSuite) TestItEndsQuietly() {
 // checks one number, the final tap against the peak, and a response whose
 // energy is smeared across the whole buffer still ends quietly.
 //
-// The energy centroid is what moves. Neither the peak position nor the share
-// of energy in the first eighth does: both read the same to six places with
-// the fold and without it, because almost all of the energy is in the first
-// few taps either way. The centroid of this response is 1.69 taps folded and
-// 2.65 unfolded, which is the difference between a response that starts at
-// once and one that takes half again as long to.
-func (s *CabPublicTestSuite) TestItPutsItsEnergyAsEarlyAsItCan() {
-	got, err := cab.Match(
-		speaker(cab.Long, 600), speaker(cab.Long, 3000), cab.Long)
-	s.Require().NoError(err)
-
-	var all, moment float64
-
-	for at, v := range got {
-		all += v * v
-		moment += float64(at) * v * v
-	}
-
-	s.Require().Positive(all, "a response with no energy proves nothing")
-	s.Require().Less(moment/all, 2.0,
-		"a minimum-phase response puts its energy as early as its magnitude "+
-			"allows; without the fold this is 2.65 taps")
-}
-
-// TestOnlyWhatADeviceLoads covers the two lengths.
-func (s *CabPublicTestSuite) TestOnlyWhatADeviceLoads() {
-	for _, taps := range []int{0, 512, 1000, 4096} {
-		_, err := cab.Match(
-			speaker(4096, 600), speaker(4096, 3000), taps)
-
-		s.Require().ErrorIs(err, cab.ErrBadLength, "%d taps", taps)
-	}
-
-	for _, taps := range []int{cab.Short, cab.Long} {
-		got, err := cab.Match(speaker(4096, 600), speaker(4096, 3000), taps)
-
-		s.Require().NoError(err)
-		s.Require().Len(got, taps)
-	}
-}
-
-// TestNotEnoughToWorkFrom covers signals with too little in them.
-func (s *CabPublicTestSuite) TestNotEnoughToWorkFrom() {
-	short := make([]float64, 10)
-	fine := speaker(cab.Long, 1000)
-
-	_, err := cab.Match(short, fine, cab.Long)
-	s.Require().ErrorIs(err, cab.ErrTooShort)
-
-	_, err = cab.Match(fine, short, cab.Long)
-	s.Require().ErrorIs(err, cab.ErrTooShort)
-
-	_, err = cab.Capture(short, fine, cab.Long)
-	s.Require().ErrorIs(err, cab.ErrTooShort)
-
-	_, err = cab.Capture(fine, short, cab.Long)
-	s.Require().ErrorIs(err, cab.ErrTooShort)
-}
-
-// TestSilenceIsNotSomethingToDivideBy covers a signal holding nothing.
-func (s *CabPublicTestSuite) TestSilenceIsNotSomethingToDivideBy() {
-	quiet := make([]float64, cab.Long)
-	fine := speaker(cab.Long, 1000)
-
-	_, err := cab.Capture(quiet, fine, cab.Long)
-	s.Require().ErrorIs(err, cab.ErrTooShort)
-
-	_, err = cab.Match(fine, quiet, cab.Long)
-	s.Require().ErrorIs(err, cab.ErrTooShort)
-}
-
-// TestCaptureOnlyWhatADeviceLoads covers a length no device takes.
-func (s *CabPublicTestSuite) TestCaptureOnlyWhatADeviceLoads() {
-	fine := speaker(cab.Long*4, 1500)
-
-	for _, taps := range []int{0, 512, 4096} {
-		_, err := cab.Capture(fine, fine, taps)
-
-		s.Require().ErrorIs(err, cab.ErrBadLength, "%d taps", taps)
-	}
-}
 
 // TestBinsHoldingNothingAreNotDividedBy covers the guard on each bin.
 //
 // A sweep has energy everywhere by design; a recording of music does not, and
 // its quiet bins would come back as enormous numbers that are entirely noise.
 //
-// A constant signal is the clean case: every sample the same puts all of its
-// energy in the first bin and leaves every other one genuinely empty, where a
-// zero-padded tone only leaks quietly into them.
-func (s *CabPublicTestSuite) TestBinsHoldingNothingAreNotDividedBy() {
-	flat := make([]float64, cab.Long*2)
-	for i := range flat {
-		flat[i] = 1
-	}
-
-	got, err := cab.Capture(flat, through(flat, speaker(cab.Long, 1500)), cab.Long)
-
-	s.Require().NoError(err)
-
-	for i, v := range got {
-		s.Require().Falsef(math.IsNaN(v) || math.IsInf(v, 0),
-			"tap %d came back as %v", i, v)
-	}
-}
 
 // TestAQuietTargetBinLeavesTheResponseAlone covers the same guard in Match.
 //
-// A bin where what is in hand holds nothing has no ratio to take, and the
-// correction leaves it as it was rather than inventing gain for it.
-func (s *CabPublicTestSuite) TestAQuietTargetBinLeavesTheResponseAlone() {
-	flat := make([]float64, cab.Long)
-	for i := range flat {
-		flat[i] = 1
-	}
-
-	got, err := cab.Match(speaker(cab.Long, 1500), flat, cab.Long)
-
-	s.Require().NoError(err)
-
-	for i, v := range got {
-		s.Require().Falsef(math.IsNaN(v) || math.IsInf(v, 0),
-			"tap %d came back as %v", i, v)
-	}
-}
 
 func TestCabPublicTestSuite(
 	t *testing.T,

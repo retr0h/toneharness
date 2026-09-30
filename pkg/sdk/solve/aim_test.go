@@ -58,92 +58,150 @@ func (s *AimTestSuite) punk() audio.Across {
 
 // TestPunkIsATargetEvenThoughItEarnsNoWord covers the genre modelled first.
 //
-// Worth stating plainly because it reads as a contradiction. `measure genres`
-// reports punk earning no term, which says it is not distinctive against the
-// players who avoid it. It does not say punk has no position: fifteen records
-// give a middle and a spread on every axis, and that is what a solver needs.
-func (s *AimTestSuite) TestPunkIsATargetEvenThoughItEarnsNoWord() {
-	got := Aims(s.punk(), nil)
+// TestAims covers Aims, which turns what a body of records measures as into a
+// target.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *AimTestSuite) TestAims() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// reports punk earning no term, which says it is not distinctive against the
+			// players who avoid it. It does not say punk has no position: fifteen records
+			// give a middle and a spread on every axis, and that is what a solver needs.
+			name: "punk is a target even though it earns no word",
+			then: func() {
+				got := Aims(s.punk(), nil)
 
-	s.Require().NotEmpty(got)
+				s.Require().NotEmpty(got)
 
-	centre, ok := got[audio.KeyCentroid]
-	s.Require().True(ok, "punk has a centre of gravity")
-	s.Require().InDelta(144, centre.Want, 1)
-	s.Require().Positive(centre.Tol, "and a spread to allow for")
+				centre, ok := got[audio.KeyCentroid]
+				s.Require().True(ok, "punk has a centre of gravity")
+				s.Require().InDelta(144, centre.Want, 1)
+				s.Require().Positive(centre.Tol, "and a spread to allow for")
 
-	// A fraction, not a percentage: the CLI prints "97.4% low" and the figure
-	// behind it is 0.974. Which is the reason every row of the solve is divided
-	// by its own tolerance, because a centroid in hundreds of hertz beside a
-	// band share under one would otherwise be the only axis that mattered.
-	band, ok := got[audio.KeyLow]
-	s.Require().True(ok)
-	s.Require().Greater(band.Want, 0.9, "a bass corpus lives in the low band")
-	s.Require().Less(band.Want, 1.0)
-}
+				// A fraction, not a percentage: the CLI prints "97.4% low" and the figure
+				// behind it is 0.974. Which is the reason every row of the solve is divided
+				// by its own tolerance, because a centroid in hundreds of hertz beside a
+				// band share under one would otherwise be the only axis that mattered.
+				band, ok := got[audio.KeyLow]
+				s.Require().True(ok)
+				s.Require().Greater(band.Want, 0.9, "a bass corpus lives in the low band")
+				s.Require().Less(band.Want, 1.0)
+			},
+		},
+		{
+			name: "the spread is the tolerance",
+			then: func() {
+				got := Aims(audio.Across{
+					Tracks:   4,
+					Centroid: audio.Spread{Low: 100, Mid: 150, High: 200},
+					Low:      audio.Spread{Low: 90, Mid: 95, High: 100},
+				}, nil)
 
-// TestTheSpreadIsTheTolerance covers where close enough comes from.
-func (s *AimTestSuite) TestTheSpreadIsTheTolerance() {
-	got := Aims(audio.Across{
-		Tracks:   4,
-		Centroid: audio.Spread{Low: 100, Mid: 150, High: 200},
-		Low:      audio.Spread{Low: 90, Mid: 95, High: 100},
-	}, nil)
+				s.Require().InDelta(50, got[audio.KeyCentroid].Tol, 0.01,
+					"half the ten-to-ninety band")
+				s.Require().InDelta(5, got[audio.KeyLow].Tol, 0.01)
+			},
+		},
+		{
+			// precision the rig cannot demonstrate and the loop would never report
+			// arriving.
+			name: "the floor is the lower bound",
+			then: func() {
+				flat := audio.Across{
+					Tracks:   1,
+					Centroid: audio.Spread{Low: 150, Mid: 150, High: 150},
+				}
 
-	s.Require().InDelta(50, got[audio.KeyCentroid].Tol, 0.01,
-		"half the ten-to-ninety band")
-	s.Require().InDelta(5, got[audio.KeyLow].Tol, 0.01)
+				s.Require().NotContains(Aims(flat, nil), audio.KeyCentroid,
+					"no spread and no floor is an axis nothing can say it reached")
+
+				got := Aims(flat, map[audio.Figure]float64{audio.KeyCentroid: 2})
+				s.Require().InDelta(2, got[audio.KeyCentroid].Tol, 0.001)
+			},
+		},
+		{
+			name: "a figure no recording answered is absent",
+			then: func() {
+				got := Aims(audio.Across{
+					Tracks:   3,
+					Centroid: audio.Spread{Low: 100, Mid: 150, High: 200},
+				}, nil)
+
+				s.Require().NotContains(got, audio.KeyTransient,
+					"nothing rose, so nothing says how sharply")
+				s.Require().NotContains(got, audio.KeyDecay)
+			},
+		},
+		{
+			// recording had one, so an unmeasured figure arrives as zero. Pinning an axis to
+			// zero because nobody measured it would spend the chain defending the absence of
+			// a measurement.
+			name: "a figure nothing measured is not a target of zero",
+			then: func() {
+				got := Aims(audio.Across{
+					Tracks:   3,
+					Centroid: audio.Spread{Low: 100, Mid: 150, High: 200},
+				}, map[audio.Figure]float64{
+					audio.KeyDynamics: 0.5,
+					audio.KeyLean:     0.01,
+				})
+
+				s.Require().Contains(got, audio.KeyCentroid)
+				s.Require().NotContains(got, audio.KeyDynamics,
+					"a floor does not turn an absent figure into a target")
+				s.Require().NotContains(got, audio.KeyLean)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestTheFloorIsTheLowerBound covers records that agree exactly.
 //
-// Which is what one recording gives. Without a floor the target would ask for a
-// precision the rig cannot demonstrate and the loop would never report
-// arriving.
-func (s *AimTestSuite) TestTheFloorIsTheLowerBound() {
-	flat := audio.Across{
-		Tracks:   1,
-		Centroid: audio.Spread{Low: 150, Mid: 150, High: 150},
+
+// TestOnly covers Only, which keeps the axes named, and drops the rest.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *AimTestSuite) TestOnly() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "only keeps the axes named",
+			then: func() {
+				all := Aims(s.punk(), nil)
+				s.Require().Greater(len(all), 2)
+
+				got := Only(all, []audio.Figure{audio.KeyCentroid, audio.KeyLow})
+
+				s.Require().Len(got, 2)
+				s.Require().Contains(got, audio.KeyCentroid)
+				s.Require().NotContains(got, audio.KeyHarmonics)
+			},
+		},
+		{
+			// measured.
+			name: "only ignores an axis the target never had",
+			then: func() {
+				got := Only(map[audio.Figure]Aim{audio.KeyLow: {Want: 1, Tol: 1}},
+					[]audio.Figure{audio.KeyLow, audio.KeyDecay})
+
+				s.Require().Len(got, 1)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
-
-	s.Require().NotContains(Aims(flat, nil), audio.KeyCentroid,
-		"no spread and no floor is an axis nothing can say it reached")
-
-	got := Aims(flat, map[audio.Figure]float64{audio.KeyCentroid: 2})
-	s.Require().InDelta(2, got[audio.KeyCentroid].Tol, 0.001)
-}
-
-// TestAFigureNoRecordingAnsweredIsAbsent covers the two guarded figures.
-func (s *AimTestSuite) TestAFigureNoRecordingAnsweredIsAbsent() {
-	got := Aims(audio.Across{
-		Tracks:   3,
-		Centroid: audio.Spread{Low: 100, Mid: 150, High: 200},
-	}, nil)
-
-	s.Require().NotContains(got, audio.KeyTransient,
-		"nothing rose, so nothing says how sharply")
-	s.Require().NotContains(got, audio.KeyDecay)
-}
-
-// TestOnlyKeepsTheAxesNamed covers a partial target.
-func (s *AimTestSuite) TestOnlyKeepsTheAxesNamed() {
-	all := Aims(s.punk(), nil)
-	s.Require().Greater(len(all), 2)
-
-	got := Only(all, []audio.Figure{audio.KeyCentroid, audio.KeyLow})
-
-	s.Require().Len(got, 2)
-	s.Require().Contains(got, audio.KeyCentroid)
-	s.Require().NotContains(got, audio.KeyHarmonics)
-}
-
-// TestOnlyIgnoresAnAxisTheTargetNeverHad covers asking for a figure nobody
-// measured.
-func (s *AimTestSuite) TestOnlyIgnoresAnAxisTheTargetNeverHad() {
-	got := Only(map[audio.Figure]Aim{audio.KeyLow: {Want: 1, Tol: 1}},
-		[]audio.Figure{audio.KeyLow, audio.KeyDecay})
-
-	s.Require().Len(got, 1)
 }
 
 // TestFloorTakesTheWorstOfTheChain covers a chain's repeatability.
@@ -160,24 +218,6 @@ func (s *AimTestSuite) TestFloorTakesTheWorstOfTheChain() {
 
 // TestAFigureNothingMeasuredIsNotATargetOfZero covers the absent middle.
 //
-// Across.Measured answers for dynamics, harmonics and lean whether or not any
-// recording had one, so an unmeasured figure arrives as zero. Pinning an axis to
-// zero because nobody measured it would spend the chain defending the absence of
-// a measurement.
-func (s *AimTestSuite) TestAFigureNothingMeasuredIsNotATargetOfZero() {
-	got := Aims(audio.Across{
-		Tracks:   3,
-		Centroid: audio.Spread{Low: 100, Mid: 150, High: 200},
-	}, map[audio.Figure]float64{
-		audio.KeyDynamics: 0.5,
-		audio.KeyLean:     0.01,
-	})
-
-	s.Require().Contains(got, audio.KeyCentroid)
-	s.Require().NotContains(got, audio.KeyDynamics,
-		"a floor does not turn an absent figure into a target")
-	s.Require().NotContains(got, audio.KeyLean)
-}
 
 func TestAimTestSuite(
 	t *testing.T,

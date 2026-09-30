@@ -41,141 +41,152 @@ type MCPPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestServe covers an agent's session with the server.
+// TestServe covers Serve, which serves over any transport until ctx ends
+// or the agent disconnects.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *MCPPublicTestSuite) TestServe() {
-	tests := []struct {
-		name  string
-		opts  mcp.Options
-		tools int
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
-		{name: "without writes", opts: mcp.Options{Version: "1.2.3"}, tools: 24},
-		{name: "with writes", opts: mcp.Options{AllowWrites: true}, tools: 29},
-	}
+		{
+			name: "serve",
+			then: func() {
+				tests := []struct {
+					name  string
+					opts  mcp.Options
+					tools int
+				}{
+					{name: "without writes", opts: mcp.Options{Version: "1.2.3"}, tools: 24},
+					{name: "with writes", opts: mcp.Options{AllowWrites: true}, tools: 29},
+				}
 
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			serverEnd, clientEnd := gomcp.NewInMemoryTransports()
-			ctx, cancel := context.WithCancel(context.Background())
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						serverEnd, clientEnd := gomcp.NewInMemoryTransports()
+						ctx, cancel := context.WithCancel(context.Background())
 
-			served := make(chan error, 1)
-			go func() { served <- mcp.New(sdk.New(), tt.opts).Serve(ctx, serverEnd) }()
+						served := make(chan error, 1)
+						go func() { served <- mcp.New(sdk.New(), tt.opts).Serve(ctx, serverEnd) }()
 
-			session, err := gomcp.NewClient(
-				&gomcp.Implementation{Name: "test", Version: "test"}, nil,
-			).Connect(context.Background(), clientEnd, nil)
-			s.Require().NoError(err)
+						session, err := gomcp.NewClient(
+							&gomcp.Implementation{Name: "test", Version: "test"}, nil,
+						).Connect(context.Background(), clientEnd, nil)
+						s.Require().NoError(err)
 
-			s.Contains(session.InitializeResult().Instructions, "catalog_list")
+						s.Contains(session.InitializeResult().Instructions, "catalog_list")
 
-			listed, err := session.ListTools(context.Background(), nil)
-			s.Require().NoError(err)
-			s.Len(listed.Tools, tt.tools)
+						listed, err := session.ListTools(context.Background(), nil)
+						s.Require().NoError(err)
+						s.Len(listed.Tools, tt.tools)
 
-			dir := s.T().TempDir()
-			fromShipped := filepath.Join(dir, "shipped.hlx")
-			fromRig := filepath.Join(dir, "rig.hlx")
+						dir := s.T().TempDir()
+						fromShipped := filepath.Join(dir, "shipped.hlx")
+						fromRig := filepath.Join(dir, "rig.hlx")
 
-			// Offline tools only, against the real catalog, corpus and rigs: the
-			// SDK validates each answer against its declared schema, and only
-			// real data shows whether the two agree.
-			calls := []struct {
-				tool  string
-				args  map[string]string
-				check func(res *gomcp.CallToolResult)
-			}{
-				{
-					tool: "catalog_list",
-					args: map[string]string{"search": "SVT"},
-					check: func(res *gomcp.CallToolResult) {
-						var got sdk.Blocks
-						s.decode(res, &got)
-						s.NotEmpty(got.Matched)
-					},
-				},
-				{
-					tool: "rigs_list",
-					args: map[string]string{},
-					check: func(res *gomcp.CallToolResult) {
-						var got sdk.Rigs
-						s.decode(res, &got)
-						s.NotEmpty(got.Rigs)
-					},
-				},
-				{
-					tool: "rigs_show",
-					args: map[string]string{"id": "mike-dirnt"},
-					check: func(res *gomcp.CallToolResult) {
-						var got sdk.Rig
-						s.decode(res, &got)
-						s.Equal("mike-dirnt", got.Rig.ID)
-					},
-				},
-				{
-					tool: "corpus_presets_show",
-					args: map[string]string{"id": "HD2_AmpSVBeastBrt"},
-					check: func(res *gomcp.CallToolResult) {
-						var got tools.Model
-						s.decode(res, &got)
-						s.NotZero(got.Uses)
-					},
-				},
-				{
-					tool: "presets_make",
-					args: map[string]string{"rig_id": "mike-dirnt", "out": fromShipped},
-					check: func(res *gomcp.CallToolResult) {
-						var got built
-						s.decode(res, &got)
-						s.Require().NotNil(got.FromShipped)
-						s.Equal(fromShipped, got.FromShipped.Path)
-					},
-				},
-				{
-					tool: "presets_make",
-					args: map[string]string{
-						"rig_path": filepath.Join(
-							"..",
-							"..",
-							"examples",
-							"rigspec",
-							"mike-dirnt.yaml",
-						),
-						"out": fromRig,
-					},
-					check: func(res *gomcp.CallToolResult) {
-						var got built
-						s.decode(res, &got)
-						s.Require().NotNil(got.FromRig)
-						s.Equal(fromRig, got.FromRig.Path)
-					},
-				},
-			}
+						// Offline tools only, against the real catalog, corpus and rigs: the
+						// SDK validates each answer against its declared schema, and only
+						// real data shows whether the two agree.
+						calls := []struct {
+							tool  string
+							args  map[string]string
+							check func(res *gomcp.CallToolResult)
+						}{
+							{
+								tool: "catalog_list",
+								args: map[string]string{"search": "SVT"},
+								check: func(res *gomcp.CallToolResult) {
+									var got sdk.Blocks
+									s.decode(res, &got)
+									s.NotEmpty(got.Matched)
+								},
+							},
+							{
+								tool: "rigs_list",
+								args: map[string]string{},
+								check: func(res *gomcp.CallToolResult) {
+									var got sdk.Rigs
+									s.decode(res, &got)
+									s.NotEmpty(got.Rigs)
+								},
+							},
+							{
+								tool: "rigs_show",
+								args: map[string]string{"id": "mike-dirnt"},
+								check: func(res *gomcp.CallToolResult) {
+									var got sdk.Rig
+									s.decode(res, &got)
+									s.Equal("mike-dirnt", got.Rig.ID)
+								},
+							},
+							{
+								tool: "corpus_presets_show",
+								args: map[string]string{"id": "HD2_AmpSVBeastBrt"},
+								check: func(res *gomcp.CallToolResult) {
+									var got tools.Model
+									s.decode(res, &got)
+									s.NotZero(got.Uses)
+								},
+							},
+							{
+								tool: "presets_make",
+								args: map[string]string{"rig_id": "mike-dirnt", "out": fromShipped},
+								check: func(res *gomcp.CallToolResult) {
+									var got built
+									s.decode(res, &got)
+									s.Require().NotNil(got.FromShipped)
+									s.Equal(fromShipped, got.FromShipped.Path)
+								},
+							},
+							{
+								tool: "presets_make",
+								args: map[string]string{
+									"rig_path": filepath.Join(
+										"..",
+										"..",
+										"examples",
+										"rigspec",
+										"mike-dirnt.yaml",
+									),
+									"out": fromRig,
+								},
+								check: func(res *gomcp.CallToolResult) {
+									var got built
+									s.decode(res, &got)
+									s.Require().NotNil(got.FromRig)
+									s.Equal(fromRig, got.FromRig.Path)
+								},
+							},
+						}
 
-			for _, c := range calls {
-				res, err := session.CallTool(context.Background(), &gomcp.CallToolParams{
-					Name:      c.tool,
-					Arguments: c.args,
-				})
-				s.Require().NoError(err, c.tool)
-				s.Require().False(res.IsError, "%s: %v", c.tool, res.Content)
-				c.check(res)
-			}
+						for _, c := range calls {
+							res, err := session.CallTool(context.Background(), &gomcp.CallToolParams{
+								Name:      c.tool,
+								Arguments: c.args,
+							})
+							s.Require().NoError(err, c.tool)
+							s.Require().False(res.IsError, "%s: %v", c.tool, res.Content)
+							c.check(res)
+						}
 
-			cancel()
-			s.ErrorIs(<-served, context.Canceled)
-		})
-	}
-}
-
-// TestUserRigs covers an agent reaching somebody's own rigs, beside the
-// ones that ship, through the tools that read and build rigs.
-func (s *MCPPublicTestSuite) TestUserRigs() {
-	dir := s.T().TempDir()
-	s.Require().NoError(os.MkdirAll(filepath.Join(dir, "artists"), 0o750))
-	// Two documents, because a rig is two: the gear, and the ask it answers.
-	// What the rig extends is the ask's, since one ask departing from another is
-	// a fact about what was wanted rather than about the gear.
-	s.Require().
-		NoError(os.WriteFile(filepath.Join(dir, "artists", "their-player.yaml"), []byte(`schema: RigSpec
+						cancel()
+						s.ErrorIs(<-served, context.Canceled)
+					})
+				}
+			},
+		},
+		{
+			// ones that ship, through the tools that read and build rigs.
+			name: "user rigs",
+			then: func() {
+				dir := s.T().TempDir()
+				s.Require().NoError(os.MkdirAll(filepath.Join(dir, "artists"), 0o750))
+				// Two documents, because a rig is two: the gear, and the ask it answers.
+				// What the rig extends is the ask's, since one ask departing from another is
+				// a fact about what was wanted rather than about the gear.
+				s.Require().
+					NoError(os.WriteFile(filepath.Join(dir, "artists", "their-player.yaml"), []byte(`schema: RigSpec
 version: 2
 id: their-player
 
@@ -188,9 +199,9 @@ chain:
       - { kind: cited, note: "a test says so" }
     confidence: high
 `), 0o600))
-	s.Require().
-		NoError(os.WriteFile(
-			filepath.Join(dir, "artists", "their-player.tone.yaml"), []byte(`schema: ToneSpec
+				s.Require().
+					NoError(os.WriteFile(
+						filepath.Join(dir, "artists", "their-player.tone.yaml"), []byte(`schema: ToneSpec
 genre: [rock]
 
 extends: mike-dirnt
@@ -202,92 +213,99 @@ subject:
 confidence: high
 `), 0o600))
 
-	serverEnd, clientEnd := gomcp.NewInMemoryTransports()
-	ctx, cancel := context.WithCancel(context.Background())
+				serverEnd, clientEnd := gomcp.NewInMemoryTransports()
+				ctx, cancel := context.WithCancel(context.Background())
 
-	served := make(chan error, 1)
-	go func() {
-		served <- mcp.New(sdk.New(sdk.WithUserRigs(dir)), mcp.Options{}).Serve(ctx, serverEnd)
-	}()
+				served := make(chan error, 1)
+				go func() {
+					served <- mcp.New(sdk.New(sdk.WithUserRigs(dir)), mcp.Options{}).Serve(ctx, serverEnd)
+				}()
 
-	session, err := gomcp.NewClient(
-		&gomcp.Implementation{Name: "test", Version: "test"}, nil,
-	).Connect(context.Background(), clientEnd, nil)
-	s.Require().NoError(err)
+				session, err := gomcp.NewClient(
+					&gomcp.Implementation{Name: "test", Version: "test"}, nil,
+				).Connect(context.Background(), clientEnd, nil)
+				s.Require().NoError(err)
 
-	out := filepath.Join(s.T().TempDir(), "theirs.hlx")
+				out := filepath.Join(s.T().TempDir(), "theirs.hlx")
 
-	calls := []struct {
-		name  string
-		tool  string
-		args  map[string]string
-		check func(res *gomcp.CallToolResult)
-	}{
-		{
-			name: "rigs_list shows theirs beside the ones that ship",
-			tool: "rigs_list",
-			args: map[string]string{},
-			check: func(res *gomcp.CallToolResult) {
-				var got sdk.Rigs
-				s.decode(res, &got)
+				calls := []struct {
+					name  string
+					tool  string
+					args  map[string]string
+					check func(res *gomcp.CallToolResult)
+				}{
+					{
+						name: "rigs_list shows theirs beside the ones that ship",
+						tool: "rigs_list",
+						args: map[string]string{},
+						check: func(res *gomcp.CallToolResult) {
+							var got sdk.Rigs
+							s.decode(res, &got)
 
-				listed := make([]string, 0, len(got.Rigs))
-				for _, r := range got.Rigs {
-					listed = append(listed, r.Rig.ID)
+							listed := make([]string, 0, len(got.Rigs))
+							for _, r := range got.Rigs {
+								listed = append(listed, r.Rig.ID)
+							}
+
+							s.Contains(listed, "their-player")
+							s.Contains(listed, "mike-dirnt")
+						},
+					},
+					{
+						name: "rigs_show reads theirs",
+						tool: "rigs_show",
+						args: map[string]string{"id": "their-player"},
+						check: func(res *gomcp.CallToolResult) {
+							var got sdk.Rig
+							s.decode(res, &got)
+							s.Require().NotNil(got.Ask)
+							s.Require().NotNil(got.Ask.Subject)
+							s.Equal("Their Player", got.Ask.Subject.Name)
+						},
+					},
+					{
+						name: "rigs_show names theirs under the shipped rig it extends",
+						tool: "rigs_show",
+						args: map[string]string{"id": "mike-dirnt"},
+						check: func(res *gomcp.CallToolResult) {
+							var got sdk.Rig
+							s.decode(res, &got)
+							s.Require().Len(got.Variants, 1)
+							s.Equal("their-player", got.Variants[0].ID)
+						},
+					},
+					{
+						name: "presets_make builds theirs",
+						tool: "presets_make",
+						args: map[string]string{"rig_id": "their-player", "out": out},
+						check: func(res *gomcp.CallToolResult) {
+							var got built
+							s.decode(res, &got)
+							s.Require().NotNil(got.FromShipped)
+							s.Equal(out, got.FromShipped.Path)
+						},
+					},
 				}
 
-				s.Contains(listed, "their-player")
-				s.Contains(listed, "mike-dirnt")
-			},
-		},
-		{
-			name: "rigs_show reads theirs",
-			tool: "rigs_show",
-			args: map[string]string{"id": "their-player"},
-			check: func(res *gomcp.CallToolResult) {
-				var got sdk.Rig
-				s.decode(res, &got)
-				s.Require().NotNil(got.Ask)
-				s.Require().NotNil(got.Ask.Subject)
-				s.Equal("Their Player", got.Ask.Subject.Name)
-			},
-		},
-		{
-			name: "rigs_show names theirs under the shipped rig it extends",
-			tool: "rigs_show",
-			args: map[string]string{"id": "mike-dirnt"},
-			check: func(res *gomcp.CallToolResult) {
-				var got sdk.Rig
-				s.decode(res, &got)
-				s.Require().Len(got.Variants, 1)
-				s.Equal("their-player", got.Variants[0].ID)
-			},
-		},
-		{
-			name: "presets_make builds theirs",
-			tool: "presets_make",
-			args: map[string]string{"rig_id": "their-player", "out": out},
-			check: func(res *gomcp.CallToolResult) {
-				var got built
-				s.decode(res, &got)
-				s.Require().NotNil(got.FromShipped)
-				s.Equal(out, got.FromShipped.Path)
-			},
-		},
-	}
+				for _, c := range calls {
+					res, err := session.CallTool(context.Background(), &gomcp.CallToolParams{
+						Name:      c.tool,
+						Arguments: c.args,
+					})
+					s.Require().NoError(err, c.name)
+					s.Require().False(res.IsError, "%s: %v", c.name, res.Content)
+					c.check(res)
+				}
 
-	for _, c := range calls {
-		res, err := session.CallTool(context.Background(), &gomcp.CallToolParams{
-			Name:      c.tool,
-			Arguments: c.args,
+				cancel()
+				s.ErrorIs(<-served, context.Canceled)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
 		})
-		s.Require().NoError(err, c.name)
-		s.Require().False(res.IsError, "%s: %v", c.name, res.Content)
-		c.check(res)
 	}
-
-	cancel()
-	s.ErrorIs(<-served, context.Canceled)
 }
 
 // built is presets_make's answer as an agent reads it.

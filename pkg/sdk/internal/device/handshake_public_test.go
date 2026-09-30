@@ -95,242 +95,303 @@ func (s *HandshakePublicTestSuite) session(
 	return out
 }
 
+// TestCall covers Call, which makes one request and waits for its reply.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *HandshakePublicTestSuite) TestCall() {
-	broken := errors.New("the bus went away")
-
-	// One answer too long for a transfer, split in three the way a device
-	// sends it.
-	long := string(bytes.Repeat([]byte("a long answer "), 50))
-	envelope := wire.EncodeEnvelope(wire.Envelope{
-		Originator: wire.FromDevice, Service: 2, Body: s.answer(device.FirstTxn, 0, long),
-	})
-	third := len(envelope) / 3
-	parts := [][]byte{envelope[:third], envelope[third : 2*third], envelope[2*third:]}
-
-	tests := []struct {
-		name      string
-		channel   string
-		device    func() (*deviceDouble, device.TestSender)
-		cancelled bool
-		want      any
-		err       error
-		message   string
-		// how many reads the call took, when that is the point.
-		reads int
-		// acks is what every acknowledgement the call sent on its channel
-		// carried, in order, when that is the point.
-		acks []uint32
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			// A bus that has gone is not a device with nothing to say. Read
-			// as silence, it waited out the whole reply budget and then said
-			// no reply, which sends somebody looking at the wrong thing.
-			name:    "a device whose read fails outright",
-			channel: device.ControlChannel,
-			device: func() (*deviceDouble, device.TestSender) {
-				d := readFails(s.ctrl, broken)
+			name: "call",
+			then: func() {
+				broken := errors.New("the bus went away")
 
-				return d, d.out
-			},
-			err:     broken,
-			message: "reading from the device",
-			reads:   1,
-		},
-		{
-			// Cancellation is not silence. Reporting it as "no reply" told
-			// somebody who pressed Ctrl-C that their device had stopped
-			// answering, six seconds after they stopped waiting.
-			name:    "a call nobody is left waiting for",
-			channel: device.ControlChannel,
-			device: func() (*deviceDouble, device.TestSender) {
-				d := answers(s.ctrl)
+				// One answer too long for a transfer, split in three the way a device
+				// sends it.
+				long := string(bytes.Repeat([]byte("a long answer "), 50))
+				envelope := wire.EncodeEnvelope(wire.Envelope{
+					Originator: wire.FromDevice, Service: 2, Body: s.answer(device.FirstTxn, 0, long),
+				})
+				third := len(envelope) / 3
+				parts := [][]byte{envelope[:third], envelope[third : 2*third], envelope[2*third:]}
 
-				return d, d.out
-			},
-			cancelled: true,
-			err:       context.Canceled,
-			message:   "context canceled",
-		},
-		{
-			// A length no frame carries. The buffer is out of step with the
-			// stream and no later byte brings it back, so a channel that
-			// held it answered nothing again for the rest of the session.
-			// The answer behind it is read once the unreadable bytes are
-			// dropped.
-			name:    "a frame claiming a length nothing could hold",
-			channel: device.ControlChannel,
-			device: func() (*deviceDouble, device.TestSender) {
-				d := answers(s.ctrl,
-					device.FrameFor(device.ControlChannel, wire.MsgData,
-						[]byte{1, 0, 5, 0, 0xff, 0xff, 0xff, 0xff}),
-					s.reply(device.FirstTxn, 0, "an answer"),
-				)
+				tests := []struct {
+					name      string
+					channel   string
+					device    func() (*deviceDouble, device.TestSender)
+					cancelled bool
+					want      any
+					err       error
+					message   string
+					// how many reads the call took, when that is the point.
+					reads int
+					// acks is what every acknowledgement the call sent on its channel
+					// carried, in order, when that is the point.
+					acks []uint32
+				}{
+					{
+						// A bus that has gone is not a device with nothing to say. Read
+						// as silence, it waited out the whole reply budget and then said
+						// no reply, which sends somebody looking at the wrong thing.
+						name:    "a device whose read fails outright",
+						channel: device.ControlChannel,
+						device: func() (*deviceDouble, device.TestSender) {
+							d := readFails(s.ctrl, broken)
 
-				return d, d.out
-			},
-			want: "an answer",
-		},
-		{
-			name:    "a device that says nothing at all",
-			channel: device.ControlChannel,
-			device: func() (*deviceDouble, device.TestSender) {
-				d := answers(s.ctrl)
+							return d, d.out
+						},
+						err:     broken,
+						message: "reading from the device",
+						reads:   1,
+					},
+					{
+						// Cancellation is not silence. Reporting it as "no reply" told
+						// somebody who pressed Ctrl-C that their device had stopped
+						// answering, six seconds after they stopped waiting.
+						name:    "a call nobody is left waiting for",
+						channel: device.ControlChannel,
+						device: func() (*deviceDouble, device.TestSender) {
+							d := answers(s.ctrl)
 
-				return d, d.out
-			},
-			message: "no reply to opcode 1",
-		},
-		{
-			name:    "an answer to this call",
-			channel: device.ControlChannel,
-			device: func() (*deviceDouble, device.TestSender) {
-				d := answers(s.ctrl, s.reply(device.FirstTxn, 0, "done"))
+							return d, d.out
+						},
+						cancelled: true,
+						err:       context.Canceled,
+						message:   "context canceled",
+					},
+					{
+						// A length no frame carries. The buffer is out of step with the
+						// stream and no later byte brings it back, so a channel that
+						// held it answered nothing again for the rest of the session.
+						// The answer behind it is read once the unreadable bytes are
+						// dropped.
+						name:    "a frame claiming a length nothing could hold",
+						channel: device.ControlChannel,
+						device: func() (*deviceDouble, device.TestSender) {
+							d := answers(s.ctrl,
+								device.FrameFor(device.ControlChannel, wire.MsgData,
+									[]byte{1, 0, 5, 0, 0xff, 0xff, 0xff, 0xff}),
+								s.reply(device.FirstTxn, 0, "an answer"),
+							)
 
-				return d, d.out
-			},
-			want: "done",
-		},
-		{
-			// A long answer arrives a transfer at a time, and the device sends
-			// the next only once the host has acknowledged the last: the
-			// double releases one part per frame the session writes. The
-			// last part completes the answer, so nothing acknowledges it
-			// inside the call.
-			name:    "an answer split across three transfers",
-			channel: device.ControlChannel,
-			device: func() (*deviceDouble, device.TestSender) {
-				d := answers(s.ctrl,
-					device.FrameFor(device.ControlChannel, wire.MsgData, parts[0]),
-					device.FrameFor(device.ControlChannel, wire.MsgData, parts[1]),
-					device.FrameFor(device.ControlChannel, wire.MsgData, parts[2]),
-				)
+							return d, d.out
+						},
+						want: "an answer",
+					},
+					{
+						name:    "a device that says nothing at all",
+						channel: device.ControlChannel,
+						device: func() (*deviceDouble, device.TestSender) {
+							d := answers(s.ctrl)
 
-				return d, d.out
-			},
-			want: long,
-			acks: []uint32{
-				wire.AckBase + uint32(len(parts[0])),
-				wire.AckBase + uint32(len(parts[0])+len(parts[1])),
-			},
-		},
-		{
-			// A notification carries no transaction and is not anybody's
-			// reply. Letting one be mistaken for this reply would answer the
-			// wrong question.
-			name:    "somebody else's answer, skipped",
-			channel: device.ControlChannel,
-			device: func() (*deviceDouble, device.TestSender) {
-				d := answers(s.ctrl,
-					s.reply(device.FirstTxn+99, 0, "not yours"),
-					s.reply(device.FirstTxn, 0, "yours"),
-				)
+							return d, d.out
+						},
+						message: "no reply to opcode 1",
+					},
+					{
+						name:    "an answer to this call",
+						channel: device.ControlChannel,
+						device: func() (*deviceDouble, device.TestSender) {
+							d := answers(s.ctrl, s.reply(device.FirstTxn, 0, "done"))
 
-				return d, d.out
-			},
-			want: "yours",
-		},
-		{
-			// Whatever arrives is not guaranteed to be a reply.
-			name:    "an answer that will not decode, skipped",
-			channel: device.ControlChannel,
-			device: func() (*deviceDouble, device.TestSender) {
-				d := answers(s.ctrl,
-					device.Reply(device.ControlChannel, []byte{0xc1}),
-					s.reply(device.FirstTxn, 0, "yours"),
-				)
+							return d, d.out
+						},
+						want: "done",
+					},
+					{
+						// A long answer arrives a transfer at a time, and the device sends
+						// the next only once the host has acknowledged the last: the
+						// double releases one part per frame the session writes. The
+						// last part completes the answer, so nothing acknowledges it
+						// inside the call.
+						name:    "an answer split across three transfers",
+						channel: device.ControlChannel,
+						device: func() (*deviceDouble, device.TestSender) {
+							d := answers(s.ctrl,
+								device.FrameFor(device.ControlChannel, wire.MsgData, parts[0]),
+								device.FrameFor(device.ControlChannel, wire.MsgData, parts[1]),
+								device.FrameFor(device.ControlChannel, wire.MsgData, parts[2]),
+							)
 
-				return d, d.out
-			},
-			want: "yours",
-		},
-		{
-			name:    "a channel nobody opened",
-			channel: "nowhere",
-			device: func() (*deviceDouble, device.TestSender) {
-				d := answers(s.ctrl)
+							return d, d.out
+						},
+						want: long,
+						acks: []uint32{
+							wire.AckBase + uint32(len(parts[0])),
+							wire.AckBase + uint32(len(parts[0])+len(parts[1])),
+						},
+					},
+					{
+						// A notification carries no transaction and is not anybody's
+						// reply. Letting one be mistaken for this reply would answer the
+						// wrong question.
+						name:    "somebody else's answer, skipped",
+						channel: device.ControlChannel,
+						device: func() (*deviceDouble, device.TestSender) {
+							d := answers(s.ctrl,
+								s.reply(device.FirstTxn+99, 0, "not yours"),
+								s.reply(device.FirstTxn, 0, "yours"),
+							)
 
-				return d, d.out
-			},
-			message: "no nowhere channel",
-		},
-		{
-			name:    "a bus that will not take the request",
-			channel: device.ControlChannel,
-			device: func() (*deviceDouble, device.TestSender) {
-				d := answers(s.ctrl)
+							return d, d.out
+						},
+						want: "yours",
+					},
+					{
+						// Whatever arrives is not guaranteed to be a reply.
+						name:    "an answer that will not decode, skipped",
+						channel: device.ControlChannel,
+						device: func() (*deviceDouble, device.TestSender) {
+							d := answers(s.ctrl,
+								device.Reply(device.ControlChannel, []byte{0xc1}),
+								s.reply(device.FirstTxn, 0, "yours"),
+							)
 
-				return d, writeFails(s.ctrl, errors.New("boom")).out
-			},
-			message: "boom",
-		},
-		{
-			// Bytes that arrived are acknowledged, and a device that stops
-			// listening at that point has to be reported: an unacknowledged
-			// stream stalls.
-			name:    "a bus that will not take the acknowledgement",
-			channel: device.ControlChannel,
-			device: func() (*deviceDouble, device.TestSender) {
-				d := answers(s.ctrl, device.Reply(device.ControlChannel, []byte{0xc1}))
+							return d, d.out
+						},
+						want: "yours",
+					},
+					{
+						name:    "a channel nobody opened",
+						channel: "nowhere",
+						device: func() (*deviceDouble, device.TestSender) {
+							d := answers(s.ctrl)
 
-				return d, &device.FailAfter{Sender: d.out, OK: 1, Err: errors.New("boom")}
-			},
-			message: "boom",
-		},
-		{
-			// Status 255 is a refusal, and the code it carries is the useful
-			// half.
-			name:    "a device that refuses",
-			channel: device.ControlChannel,
-			device: func() (*deviceDouble, device.TestSender) {
-				d := answers(s.ctrl, s.reply(device.FirstTxn, 255, map[int]int{111: 7}))
+							return d, d.out
+						},
+						message: "no nowhere channel",
+					},
+					{
+						name:    "a bus that will not take the request",
+						channel: device.ControlChannel,
+						device: func() (*deviceDouble, device.TestSender) {
+							d := answers(s.ctrl)
 
-				return d, d.out
-			},
-			err:     wire.ErrRefused,
-			message: "opcode 1",
-		},
-	}
+							return d, writeFails(s.ctrl, errors.New("boom")).out
+						},
+						message: "boom",
+					},
+					{
+						// Bytes that arrived are acknowledged, and a device that stops
+						// listening at that point has to be reported: an unacknowledged
+						// stream stalls.
+						name:    "a bus that will not take the acknowledgement",
+						channel: device.ControlChannel,
+						device: func() (*deviceDouble, device.TestSender) {
+							d := answers(s.ctrl, device.Reply(device.ControlChannel, []byte{0xc1}))
 
-	for _, tc := range tests {
-		s.Run(tc.name, func() {
-			in, out := tc.device()
+							return d, &device.FailAfter{Sender: d.out, OK: 1, Err: errors.New("boom")}
+						},
+						message: "boom",
+					},
+					{
+						// Status 255 is a refusal, and the code it carries is the useful
+						// half.
+						name:    "a device that refuses",
+						channel: device.ControlChannel,
+						device: func() (*deviceDouble, device.TestSender) {
+							d := answers(s.ctrl, s.reply(device.FirstTxn, 255, map[int]int{111: 7}))
 
-			session := device.NewTestSession(s.T(), out, in.in)
-			session.OpenChannels()
-
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-
-			if tc.cancelled {
-				cancel()
-			}
-
-			got, err := session.Call(ctx, tc.channel, 1, nil)
-
-			if tc.message == "" {
-				s.Require().NoError(err)
-				s.Require().Equal(tc.want, got.Result)
-				s.Require().Equal(uint64(device.FirstTxn), got.Txn)
-
-				if tc.acks != nil {
-					s.Require().Equal(tc.acks, ackValues(in, tc.channel),
-						"each part acknowledged before the next, and the last not at all")
+							return d, d.out
+						},
+						err:     wire.ErrRefused,
+						message: "opcode 1",
+					},
 				}
 
-				return
-			}
+				for _, tc := range tests {
+					s.Run(tc.name, func() {
+						in, out := tc.device()
 
-			s.Require().Error(err)
-			s.Require().Contains(err.Error(), tc.message)
+						session := device.NewTestSession(s.T(), out, in.in)
+						session.OpenChannels()
 
-			if tc.err != nil {
-				s.Require().ErrorIs(err, tc.err)
-			}
+						ctx, cancel := context.WithCancel(context.Background())
+						defer cancel()
 
-			if tc.reads > 0 {
-				s.Require().Equal(tc.reads, in.readCount(), "within one read")
-				s.Require().NotContains(err.Error(), "no reply")
-			}
+						if tc.cancelled {
+							cancel()
+						}
+
+						got, err := session.Call(ctx, tc.channel, 1, nil)
+
+						if tc.message == "" {
+							s.Require().NoError(err)
+							s.Require().Equal(tc.want, got.Result)
+							s.Require().Equal(uint64(device.FirstTxn), got.Txn)
+
+							if tc.acks != nil {
+								s.Require().Equal(tc.acks, ackValues(in, tc.channel),
+									"each part acknowledged before the next, and the last not at all")
+							}
+
+							return
+						}
+
+						s.Require().Error(err)
+						s.Require().Contains(err.Error(), tc.message)
+
+						if tc.err != nil {
+							s.Require().ErrorIs(err, tc.err)
+						}
+
+						if tc.reads > 0 {
+							s.Require().Equal(tc.reads, in.readCount(), "within one read")
+							s.Require().NotContains(err.Error(), "no reply")
+						}
+					})
+				}
+			},
+		},
+		{
+			// everything, so refusing here would fail a run that works today.
+			name: "a session that opened on a noisy device says so",
+			then: func() {
+				d := answers(s.ctrl)
+				d.noisy = device.FrameFor(device.EventsChannel, wire.MsgData, []byte("noise"))
+
+				b := device.ShortBudgets()
+				b.Drain = 100 * time.Millisecond
+
+				session := device.NewTestSessionWith(s.T(), d.out, d.in, b)
+
+				s.Require().NoError(session.Handshake(s.T().Context()))
+				s.Require().True(session.NoisyStart(),
+					"the drain ran out with the device still talking")
+
+				// Nothing answers this call, so it reaches the timeout, which is where the
+				// note is worth having.
+				_, err := session.Call(s.T().Context(), device.ControlChannel, 1, nil)
+
+				s.Require().ErrorContains(err, "no reply to opcode 1")
+				s.Require().ErrorContains(err, "opened with the device still talking")
+			},
+		},
+		{
+			// exactly as it did before there was anything to add to it.
+			name: "a session that opened cleanly says nothing extra",
+			then: func() {
+				d := answers(s.ctrl)
+
+				session := device.NewTestSessionWith(s.T(), d.out, d.in, device.ShortBudgets())
+
+				s.Require().NoError(session.Handshake(s.T().Context()))
+				s.Require().False(session.NoisyStart())
+
+				_, err := session.Call(s.T().Context(), device.ControlChannel, 1, nil)
+
+				s.Require().ErrorContains(err, "no reply to opcode 1")
+				s.Require().NotContains(err.Error(), "still talking")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
 		})
 	}
 }
@@ -348,46 +409,9 @@ func (s *HandshakePublicTestSuite) TestCall() {
 // like one that began clean, and telling them apart meant instrumenting the
 // timeout by hand.
 //
-// Noted rather than refused. A busy device usually settles and answers
-// everything, so refusing here would fail a run that works today.
-func (s *HandshakePublicTestSuite) TestASessionThatOpenedOnANoisyDeviceSaysSo() {
-	d := answers(s.ctrl)
-	d.noisy = device.FrameFor(device.EventsChannel, wire.MsgData, []byte("noise"))
-
-	b := device.ShortBudgets()
-	b.Drain = 100 * time.Millisecond
-
-	session := device.NewTestSessionWith(s.T(), d.out, d.in, b)
-
-	s.Require().NoError(session.Handshake(s.T().Context()))
-	s.Require().True(session.NoisyStart(),
-		"the drain ran out with the device still talking")
-
-	// Nothing answers this call, so it reaches the timeout, which is where the
-	// note is worth having.
-	_, err := session.Call(s.T().Context(), device.ControlChannel, 1, nil)
-
-	s.Require().ErrorContains(err, "no reply to opcode 1")
-	s.Require().ErrorContains(err, "opened with the device still talking")
-}
 
 // TestASessionThatOpenedCleanlySaysNothingExtra covers the ordinary failure.
 //
-// Almost every session opens on a quiet device, so the timeout has to read
-// exactly as it did before there was anything to add to it.
-func (s *HandshakePublicTestSuite) TestASessionThatOpenedCleanlySaysNothingExtra() {
-	d := answers(s.ctrl)
-
-	session := device.NewTestSessionWith(s.T(), d.out, d.in, device.ShortBudgets())
-
-	s.Require().NoError(session.Handshake(s.T().Context()))
-	s.Require().False(session.NoisyStart())
-
-	_, err := session.Call(s.T().Context(), device.ControlChannel, 1, nil)
-
-	s.Require().ErrorContains(err, "no reply to opcode 1")
-	s.Require().NotContains(err.Error(), "still talking")
-}
 
 func (s *HandshakePublicTestSuite) TestHandshake() {
 	tests := []struct {

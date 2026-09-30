@@ -40,22 +40,31 @@ type ValidatePublicTestSuite struct {
 	suite.Suite
 }
 
-// TestLoadSchema reads both contracts out of an OpenAPI document.
-func (s *ValidatePublicTestSuite) TestLoadSchema() {
-	tests := []struct {
-		name    string
-		doc     []byte
-		errText string
+// TestError covers every case Error answers.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ValidatePublicTestSuite) TestError() {
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
-		{name: "the contract this binary ships", doc: tone.Schema},
 		{
-			name:    "a document it cannot read",
-			doc:     []byte("not a schema"),
-			errText: "ToneSpec schema",
-		},
-		{
-			name: "a document describing only one of the two",
-			doc: []byte(`
+			name: "load schema",
+			then: func() {
+				tests := []struct {
+					name    string
+					doc     []byte
+					errText string
+				}{
+					{name: "the contract this binary ships", doc: tone.Schema},
+					{
+						name:    "a document it cannot read",
+						doc:     []byte("not a schema"),
+						errText: "ToneSpec schema",
+					},
+					{
+						name: "a document describing only one of the two",
+						doc: []byte(`
 openapi: 3.0.3
 info: { title: Half A Contract, version: "1.0.0" }
 paths: {}
@@ -63,23 +72,76 @@ components:
   schemas:
     ToneSpec: { type: object }
 `),
-			errText: "describes no Setup",
+						errText: "describes no Setup",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						got, err := tone.LoadSchema(tt.doc)
+
+						if tt.errText != "" {
+							s.Require().Error(err)
+							s.Require().Contains(err.Error(), tt.errText)
+
+							return
+						}
+
+						s.Require().NoError(err)
+						s.Require().Len(got, 2)
+					})
+				}
+			},
 		},
-	}
+		{
+			// check as something other than a set of fields.
+			name: "against refuses what the types could not build",
+			then: func() {
+				err := tone.Against([]any{"a list, not a document"}, "ToneSpec")
 
-	for _, tt := range tests {
+				s.Require().ErrorIs(err, tone.ErrInvalid)
+				s.Require().NotEmpty(err.Error())
+			},
+		},
+		{
+			name: "invalid",
+			then: func() {
+				tests := []struct {
+					name     string
+					in       error
+					contains string
+				}{
+					{
+						// The library reports a failed field today. If it ever reports
+						// something else, that has to reach somebody rather than be
+						// swallowed.
+						name:     "a failure of some other kind",
+						in:       errors.New("something else went wrong"),
+						contains: "something else went wrong",
+					},
+					{
+						name: "a failure that names no field",
+						in: &openapi3.SchemaError{
+							Schema: openapi3.NewStringSchema(),
+							Value:  1,
+						},
+						contains: "the document",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						err := tone.Invalid(tt.in, "ToneSpec")
+
+						s.Require().ErrorIs(err, tone.ErrInvalid)
+						s.Require().Contains(err.Error(), tt.contains)
+					})
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			got, err := tone.LoadSchema(tt.doc)
-
-			if tt.errText != "" {
-				s.Require().Error(err)
-				s.Require().Contains(err.Error(), tt.errText)
-
-				return
-			}
-
-			s.Require().NoError(err)
-			s.Require().Len(got, 2)
+			tt.then()
 		})
 	}
 }
@@ -96,15 +158,6 @@ func (s *ValidatePublicTestSuite) TestAnUnreadableContractRefusesBothDocuments()
 
 	s.Require().ErrorIs(tone.Validate(tone.Spec{}), boom)
 	s.Require().ErrorIs(tone.ValidateSetup(tone.Setup{}), boom)
-}
-
-// TestAgainstRefusesWhatTheTypesCouldNotBuild covers a document reaching the
-// check as something other than a set of fields.
-func (s *ValidatePublicTestSuite) TestAgainstRefusesWhatTheTypesCouldNotBuild() {
-	err := tone.Against([]any{"a list, not a document"}, "ToneSpec")
-
-	s.Require().ErrorIs(err, tone.ErrInvalid)
-	s.Require().NotEmpty(err.Error())
 }
 
 // TestAFailureInsideAListIsWrittenTheWayTheFileIs covers the field path.
@@ -126,41 +179,6 @@ func (s *ValidatePublicTestSuite) TestAFailureInsideAListIsWrittenTheWayTheFileI
 	s.Require().ErrorAs(err, &fault)
 	s.Require().Equal("genre[1]", fault.Field)
 	s.Require().NotEmpty(fault.Reason, "and it says what was wrong with it")
-}
-
-// TestInvalid says what went wrong, whatever the library hands it.
-func (s *ValidatePublicTestSuite) TestInvalid() {
-	tests := []struct {
-		name     string
-		in       error
-		contains string
-	}{
-		{
-			// The library reports a failed field today. If it ever reports
-			// something else, that has to reach somebody rather than be
-			// swallowed.
-			name:     "a failure of some other kind",
-			in:       errors.New("something else went wrong"),
-			contains: "something else went wrong",
-		},
-		{
-			name: "a failure that names no field",
-			in: &openapi3.SchemaError{
-				Schema: openapi3.NewStringSchema(),
-				Value:  1,
-			},
-			contains: "the document",
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			err := tone.Invalid(tt.in, "ToneSpec")
-
-			s.Require().ErrorIs(err, tone.ErrInvalid)
-			s.Require().Contains(err.Error(), tt.contains)
-		})
-	}
 }
 
 func TestValidatePublicTestSuite(

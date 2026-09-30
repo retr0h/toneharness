@@ -40,29 +40,48 @@ type LeastTestSuite struct {
 
 // TestTheRidgeFallsBackWhenTheScaleUnderflows covers slopes too small to scale.
 //
-// The ridge is relative to the diagonal's size, and a diagonal that underflows
-// to zero would leave no ridge at all and divide by nothing.
-func (s *LeastTestSuite) TestTheRidgeFallsBackWhenTheScaleUnderflows() {
-	got, err := least([][]float64{{1e-200}}, []float64{1e-200}, Damping)
+// TestLeast covers least, which solves min |Ax - b| for x, preferring small
+// x.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *LeastTestSuite) TestLeast() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// to zero would leave no ridge at all and divide by nothing.
+			name: "the ridge falls back when the scale underflows",
+			then: func() {
+				got, err := least([][]float64{{1e-200}}, []float64{1e-200}, Damping)
 
-	s.Require().NoError(err)
-	s.Require().Len(got, 1)
-}
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+			},
+		},
+		{
+			name: "a system with no pivot",
+			then: func() {
+				_, err := least([][]float64{{0}}, []float64{1}, 0)
 
-// TestASystemWithNoPivot covers a column of nothing.
-func (s *LeastTestSuite) TestASystemWithNoPivot() {
-	_, err := least([][]float64{{0}}, []float64{1}, 0)
+				s.Require().ErrorIs(err, ErrSingular)
+			},
+		},
+		{
+			// ordinary shape: a target names more figures than a chain has controls.
+			name: "two figures one control",
+			then: func() {
+				got, err := least([][]float64{{2}, {1}}, []float64{4, 2}, Damping)
 
-	s.Require().ErrorIs(err, ErrSingular)
-}
-
-// TestTwoFiguresOneControl covers more rows than columns, which is the
-// ordinary shape: a target names more figures than a chain has controls.
-func (s *LeastTestSuite) TestTwoFiguresOneControl() {
-	got, err := least([][]float64{{2}, {1}}, []float64{4, 2}, Damping)
-
-	s.Require().NoError(err)
-	s.Require().InDelta(2, got[0], 0.01, "both rows agree on two")
+				s.Require().NoError(err)
+				s.Require().InDelta(2, got[0], 0.01, "both rows agree on two")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestThePivotIsTakenFromALaterRow covers the row swap.
@@ -79,28 +98,47 @@ func (s *LeastTestSuite) TestTwoFiguresOneControl() {
 // somebody else's to call next. A guard nobody has ever executed is a guard
 // nobody knows works.
 //
-// A leading entry of exactly nothing is not a singular system when a row below
-// has one. Without the swap this is refused as having no pivot at all.
-func (s *LeastTestSuite) TestThePivotIsTakenFromALaterRow() {
-	got, err := eliminate([][]float64{{0, 1, 3}, {1, 0, 2}}, 2)
+// TestEliminate covers eliminate, which solves an augmented square system by
+// Gaussian elimination with.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *LeastTestSuite) TestEliminate() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// has one. Without the swap this is refused as having no pivot at all.
+			name: "the pivot is taken from a later row",
+			then: func() {
+				got, err := eliminate([][]float64{{0, 1, 3}, {1, 0, 2}}, 2)
 
-	s.Require().NoError(err, "a later row has the pivot this column needs")
-	s.Require().Len(got, 2)
-	s.Require().InDelta(2, got[0], 0.001)
-	s.Require().InDelta(3, got[1], 0.001)
+				s.Require().NoError(err, "a later row has the pivot this column needs")
+				s.Require().Len(got, 2)
+				s.Require().InDelta(2, got[0], 0.001)
+				s.Require().InDelta(3, got[1], 0.001)
+			},
+		},
+		{
+			// leading entry is not divided by when a bigger one is available.
+			name: "the pivot is the largest rather",
+			then: func() {
+				got, err := eliminate([][]float64{{1e-11, 1, 1}, {4, 0, 8}}, 2)
+
+				s.Require().NoError(err)
+				s.Require().InDelta(2, got[0], 0.001, "the row with 4 in it led")
+				s.Require().InDelta(1, got[1], 0.001)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestThePivotIsTheLargestRather covers which row the swap picks.
 //
-// The largest remaining entry rather than the first non-zero one, so a tiny
-// leading entry is not divided by when a bigger one is available.
-func (s *LeastTestSuite) TestThePivotIsTheLargestRather() {
-	got, err := eliminate([][]float64{{1e-11, 1, 1}, {4, 0, 8}}, 2)
-
-	s.Require().NoError(err)
-	s.Require().InDelta(2, got[0], 0.001, "the row with 4 in it led")
-	s.Require().InDelta(1, got[1], 0.001)
-}
 
 // TestAnAxisWithNoToleranceBesideOneThatHasSome covers the mixed target.
 //

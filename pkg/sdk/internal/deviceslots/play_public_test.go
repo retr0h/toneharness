@@ -79,98 +79,125 @@ func (s *PlayPublicTestSuite) preset() string {
 
 // TestPlayReplacesWhatIsPlaying covers the ordinary case.
 //
-// The document handed to the device is the one an Import would have written.
-// A preset is seeked through by a table of byte offsets, so one built any
-// other way is accepted and then rendered as an empty chain.
-func (s *PlayPublicTestSuite) TestPlayReplacesWhatIsPlaying() {
-	ctx := context.Background()
-	d := s.dev()
+// TestPlay covers Play, which puts a preset in front of the device without
+// storing it anywhere.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *PlayPublicTestSuite) TestPlay() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// A preset is seeked through by a table of byte offsets, so one built any
+			// other way is accepted and then rendered as an empty chain.
+			name: "play replaces what is playing",
+			then: func() {
+				ctx := context.Background()
+				d := s.dev()
 
-	d.MockLoaded.EXPECT().
-		WriteCurrent(ctx, gomock.Any()).
-		DoAndReturn(func(_ context.Context, body []byte) error {
-			s.Require().NotEmpty(body)
+				d.MockLoaded.EXPECT().
+					WriteCurrent(ctx, gomock.Any()).
+					DoAndReturn(func(_ context.Context, body []byte) error {
+						s.Require().NotEmpty(body)
 
-			return nil
+						return nil
+					})
+
+				s.Require().NoError((&deviceslots.Flows{}).Play(ctx, d, s.preset()))
+			},
+		},
+		{
+			name: "play reports a device that refused",
+			then: func() {
+				ctx := context.Background()
+				d := s.dev()
+
+				d.MockLoaded.EXPECT().
+					WriteCurrent(ctx, gomock.Any()).
+					Return(errors.New("usb: gone"))
+
+				err := (&deviceslots.Flows{}).Play(ctx, d, s.preset())
+
+				s.Require().ErrorContains(err, "replacing what is playing")
+			},
+		},
+		{
+			name: "play reports a file it cannot read",
+			then: func() {
+				err := (&deviceslots.Flows{}).Play(
+					context.Background(), s.dev(), filepath.Join("testdata", "nope.hlx"))
+
+				s.Require().Error(err)
+			},
+		},
+		{
+			// a half-built document put in front of a pedal renders as an empty chain.
+			name: "play reports a catalog it cannot read",
+			then: func() {
+				c := flowmocks.NewMockCatalogs(s.ctrl)
+				c.EXPECT().Catalog(gomock.Any()).Return(nil, errors.New("no catalog"))
+
+				err := (&deviceslots.Flows{Catalogs: c}).Play(
+					context.Background(), s.dev(), s.preset())
+
+				s.Require().ErrorContains(err, "no catalog")
+			},
+		},
+		{
+			// handshake, and every one of the four models this package recognises opens a
+			// session just as readily. A chain resolved against the Stomp's catalog and
+			// spliced into a Stomp-shaped blank, written to a Floor, is a document the
+			// device accepts and then draws as empty.
+			name: "play refuses a catalog for another pedal",
+			then: func() {
+				d := &playable{
+					MockEditor: mocks.NewMockEditor(s.ctrl),
+					MockLoaded: mocks.NewMockLoaded(s.ctrl),
+				}
+				d.MockEditor.EXPECT().Model().
+					Return(device.Model{Name: "Helix Floor"}).AnyTimes()
+
+				c := flowmocks.NewMockCatalogs(s.ctrl)
+				c.EXPECT().Catalog(gomock.Any()).DoAndReturn(
+					func(context.Context) (*catalog.Catalog, error) { return catalog.BuiltIn() },
+				)
+
+				err := (&deviceslots.Flows{Catalogs: c}).Play(
+					context.Background(), d, s.preset())
+
+				s.Require().ErrorIs(err, deviceslots.ErrWrongDevice)
+				s.Require().ErrorContains(err, "Helix Floor")
+				s.Require().ErrorContains(err, "HX Stomp")
+			},
+		},
+		{
+			name: "play needs a session that can replace",
+			then: func() {
+				err := (&deviceslots.Flows{}).Play(
+					context.Background(),
+					mocks.NewMockEditor(s.ctrl),
+					s.preset(),
+				)
+
+				s.Require().ErrorContains(err, "cannot replace what is playing")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
 		})
-
-	s.Require().NoError((&deviceslots.Flows{}).Play(ctx, d, s.preset()))
-}
-
-// TestPlayReportsADeviceThatRefused covers the write failing.
-func (s *PlayPublicTestSuite) TestPlayReportsADeviceThatRefused() {
-	ctx := context.Background()
-	d := s.dev()
-
-	d.MockLoaded.EXPECT().
-		WriteCurrent(ctx, gomock.Any()).
-		Return(errors.New("usb: gone"))
-
-	err := (&deviceslots.Flows{}).Play(ctx, d, s.preset())
-
-	s.Require().ErrorContains(err, "replacing what is playing")
-}
-
-// TestPlayReportsAFileItCannotRead covers a path that is not a preset.
-func (s *PlayPublicTestSuite) TestPlayReportsAFileItCannotRead() {
-	err := (&deviceslots.Flows{}).Play(
-		context.Background(), s.dev(), filepath.Join("testdata", "nope.hlx"))
-
-	s.Require().Error(err)
+	}
 }
 
 // TestPlayReportsACatalogItCannotRead covers the document failing to build.
 //
-// Nothing reaches the device in that case, which is the part worth holding:
-// a half-built document put in front of a pedal renders as an empty chain.
-func (s *PlayPublicTestSuite) TestPlayReportsACatalogItCannotRead() {
-	c := flowmocks.NewMockCatalogs(s.ctrl)
-	c.EXPECT().Catalog(gomock.Any()).Return(nil, errors.New("no catalog"))
-
-	err := (&deviceslots.Flows{Catalogs: c}).Play(
-		context.Background(), s.dev(), s.preset())
-
-	s.Require().ErrorContains(err, "no catalog")
-}
 
 // TestPlayRefusesACatalogForAnotherPedal is the write nothing else guards.
 //
-// Which catalog names the gear is a static option decided before any
-// handshake, and every one of the four models this package recognises opens a
-// session just as readily. A chain resolved against the Stomp's catalog and
-// spliced into a Stomp-shaped blank, written to a Floor, is a document the
-// device accepts and then draws as empty.
-func (s *PlayPublicTestSuite) TestPlayRefusesACatalogForAnotherPedal() {
-	d := &playable{
-		MockEditor: mocks.NewMockEditor(s.ctrl),
-		MockLoaded: mocks.NewMockLoaded(s.ctrl),
-	}
-	d.MockEditor.EXPECT().Model().
-		Return(device.Model{Name: "Helix Floor"}).AnyTimes()
-
-	c := flowmocks.NewMockCatalogs(s.ctrl)
-	c.EXPECT().Catalog(gomock.Any()).DoAndReturn(
-		func(context.Context) (*catalog.Catalog, error) { return catalog.BuiltIn() },
-	)
-
-	err := (&deviceslots.Flows{Catalogs: c}).Play(
-		context.Background(), d, s.preset())
-
-	s.Require().ErrorIs(err, deviceslots.ErrWrongDevice)
-	s.Require().ErrorContains(err, "Helix Floor")
-	s.Require().ErrorContains(err, "HX Stomp")
-}
-
-// TestPlayNeedsASessionThatCanReplace covers a session without the capability.
-func (s *PlayPublicTestSuite) TestPlayNeedsASessionThatCanReplace() {
-	err := (&deviceslots.Flows{}).Play(
-		context.Background(),
-		mocks.NewMockEditor(s.ctrl),
-		s.preset(),
-	)
-
-	s.Require().ErrorContains(err, "cannot replace what is playing")
-}
 
 func TestPlayPublicTestSuite(
 	t *testing.T,

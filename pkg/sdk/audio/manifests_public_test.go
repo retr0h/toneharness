@@ -51,92 +51,149 @@ func tree(
 // TestManifestsFindsThemAtEitherDepth is why this walks rather than reads a
 // directory.
 //
-// One root answers for every instrument at once, so a listing can say what the
-// whole tree holds instead of being told which instrument to look at.
-func (s *ManifestsPublicTestSuite) TestManifestsFindsThemAtEitherDepth() {
-	fsys := tree(map[string]string{
-		"bass/mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
-			"    url: https://open.spotify.com/track/x\n    year: 1994\n",
-		"guitar/somebody/corpus.yaml": "artist: Somebody\ntracks:\n  - track: u\n" +
-			"    url: https://open.spotify.com/track/y\n    year: 1999\n",
-	})
+// TestManifests covers Manifests, which reads every manifest under a tree,
+// wherever it sits in it.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ManifestsPublicTestSuite) TestManifests() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// whole tree holds instead of being told which instrument to look at.
+			name: "manifests finds them at either depth",
+			then: func() {
+				fsys := tree(map[string]string{
+					"bass/mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n",
+					"guitar/somebody/corpus.yaml": "artist: Somebody\ntracks:\n  - track: u\n" +
+						"    url: https://open.spotify.com/track/y\n    year: 1999\n",
+				})
 
-	got, err := audio.Manifests(fsys, ".")
-	s.Require().NoError(err)
-	s.Require().Len(got, 2)
+				got, err := audio.Manifests(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 2)
 
-	// Sorted by instrument then player, so two runs read the same.
-	s.Require().Equal("bass", got[0].Instrument)
-	s.Require().Equal("mike-dirnt", got[0].ID)
-	s.Require().Equal("Mike Dirnt", got[0].Artist)
-	s.Require().Len(got[0].Tracks, 1)
+				// Sorted by instrument then player, so two runs read the same.
+				s.Require().Equal("bass", got[0].Instrument)
+				s.Require().Equal("mike-dirnt", got[0].ID)
+				s.Require().Equal("Mike Dirnt", got[0].Artist)
+				s.Require().Len(got[0].Tracks, 1)
 
-	s.Require().Equal("guitar", got[1].Instrument)
-	s.Require().Equal("somebody", got[1].ID)
+				s.Require().Equal("guitar", got[1].Instrument)
+				s.Require().Equal("somebody", got[1].ID)
+			},
+		},
+		{
+			// is the root itself, and nothing in the tree says what it holds.
+			name: "manifests pointed at one instrument",
+			then: func() {
+				fsys := tree(map[string]string{
+					"mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n",
+				})
+
+				got, err := audio.Manifests(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+				s.Require().Empty(got[0].Instrument)
+				s.Require().Equal("mike-dirnt", got[0].ID)
+			},
+		},
+		{
+			// has a manifest, so this is not a fault.
+			name: "a directory with no manifest is skipped",
+			then: func() {
+				fsys := tree(map[string]string{
+					"bass/mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n",
+					"bass/ben-shepherd/notes.txt": "nothing yet",
+				})
+
+				got, err := audio.Manifests(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+				s.Require().Equal("mike-dirnt", got[0].ID)
+			},
+		},
+		{
+			// saying why, so the path is in the error.
+			name: "an unreadable manifest names itself",
+			then: func() {
+				fsys := tree(map[string]string{
+					"bass/a/corpus.yaml": "artist: A\ntracks:\n  - trak: typo\n",
+				})
+
+				_, err := audio.Manifests(fsys, ".")
+				s.Require().ErrorContains(err, "bass/a/corpus.yaml")
+			},
+		},
+		{
+			name: "a tree that is not there",
+			then: func() {
+				_, err := audio.Manifests(tree(nil), "nowhere")
+				s.Require().Error(err)
+			},
+		},
+		{
+			// so the caller decides rather than this.
+			name: "an empty tree reads as empty",
+			then: func() {
+				got, err := audio.Manifests(tree(map[string]string{"notes.txt": "x"}), ".")
+				s.Require().NoError(err)
+				s.Require().Empty(got)
+			},
+		},
+		{
+			// comparison that actually runs rather than the instrument one.
+			name: "two players on one instrument sort by i d",
+			then: func() {
+				fsys := tree(map[string]string{
+					"bass/mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n",
+					"bass/ben-shepherd/corpus.yaml": "artist: Ben Shepherd\ntracks:\n  - track: u\n" +
+						"    url: https://open.spotify.com/track/y\n    year: 1991\n",
+				})
+
+				got, err := audio.Manifests(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 2)
+				s.Require().Equal("ben-shepherd", got[0].ID)
+				s.Require().Equal("mike-dirnt", got[1].ID)
+			},
+		},
+		{
+			name: "a manifest that will not open names itself",
+			then: func() {
+				fsys := tree(map[string]string{
+					"bass/a/corpus.yaml": "artist: A\ntracks:\n  - track: t\n" +
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n",
+				})
+
+				_, err := audio.Manifests(refusing{fsys}, ".")
+				s.Require().ErrorContains(err, "bass/a/corpus.yaml")
+				s.Require().ErrorIs(err, fs.ErrPermission)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestManifestsPointedAtOneInstrument covers the shallower tree.
 //
-// The instrument is empty rather than guessed: the directory above the player
-// is the root itself, and nothing in the tree says what it holds.
-func (s *ManifestsPublicTestSuite) TestManifestsPointedAtOneInstrument() {
-	fsys := tree(map[string]string{
-		"mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
-			"    url: https://open.spotify.com/track/x\n    year: 1994\n",
-	})
-
-	got, err := audio.Manifests(fsys, ".")
-	s.Require().NoError(err)
-	s.Require().Len(got, 1)
-	s.Require().Empty(got[0].Instrument)
-	s.Require().Equal("mike-dirnt", got[0].ID)
-}
 
 // TestADirectoryWithNoManifestIsSkipped covers the ordinary case.
 //
-// A player whose records somebody is still choosing has a directory before it
-// has a manifest, so this is not a fault.
-func (s *ManifestsPublicTestSuite) TestADirectoryWithNoManifestIsSkipped() {
-	fsys := tree(map[string]string{
-		"bass/mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
-			"    url: https://open.spotify.com/track/x\n    year: 1994\n",
-		"bass/ben-shepherd/notes.txt": "nothing yet",
-	})
-
-	got, err := audio.Manifests(fsys, ".")
-	s.Require().NoError(err)
-	s.Require().Len(got, 1)
-	s.Require().Equal("mike-dirnt", got[0].ID)
-}
 
 // TestAnUnreadableManifestNamesItself is why this refuses rather than skips.
 //
-// A manifest with a typo counted short would leave a genre short with nothing
-// saying why, so the path is in the error.
-func (s *ManifestsPublicTestSuite) TestAnUnreadableManifestNamesItself() {
-	fsys := tree(map[string]string{
-		"bass/a/corpus.yaml": "artist: A\ntracks:\n  - trak: typo\n",
-	})
-
-	_, err := audio.Manifests(fsys, ".")
-	s.Require().ErrorContains(err, "bass/a/corpus.yaml")
-}
-
-// TestATreeThatIsNotThere covers a path nobody can walk.
-func (s *ManifestsPublicTestSuite) TestATreeThatIsNotThere() {
-	_, err := audio.Manifests(tree(nil), "nowhere")
-	s.Require().Error(err)
-}
 
 // TestAnEmptyTreeReadsAsEmpty covers a walk that finds nothing.
 //
-// Not an error here. Whether nothing is worth refusing depends on what asked,
-// so the caller decides rather than this.
-func (s *ManifestsPublicTestSuite) TestAnEmptyTreeReadsAsEmpty() {
-	got, err := audio.Manifests(tree(map[string]string{"notes.txt": "x"}), ".")
-	s.Require().NoError(err)
-	s.Require().Empty(got)
-}
 
 // TestGroupingKeepsWhatCountsAndDropsTheRest covers the hand-off to Genres.
 //
@@ -168,22 +225,6 @@ func TestManifestsPublicTestSuite(
 
 // TestTwoPlayersOnOneInstrumentSortByID covers the ordinary corpus.
 //
-// Every player in resources/music/bass shares an instrument, so this is the
-// comparison that actually runs rather than the instrument one.
-func (s *ManifestsPublicTestSuite) TestTwoPlayersOnOneInstrumentSortByID() {
-	fsys := tree(map[string]string{
-		"bass/mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
-			"    url: https://open.spotify.com/track/x\n    year: 1994\n",
-		"bass/ben-shepherd/corpus.yaml": "artist: Ben Shepherd\ntracks:\n  - track: u\n" +
-			"    url: https://open.spotify.com/track/y\n    year: 1991\n",
-	})
-
-	got, err := audio.Manifests(fsys, ".")
-	s.Require().NoError(err)
-	s.Require().Len(got, 2)
-	s.Require().Equal("ben-shepherd", got[0].ID)
-	s.Require().Equal("mike-dirnt", got[1].ID)
-}
 
 // refusing is a tree that lists a manifest and then will not open it.
 //
@@ -199,16 +240,4 @@ func (r refusing) Open(
 	}
 
 	return r.FS.Open(name)
-}
-
-// TestAManifestThatWillNotOpenNamesItself covers the unreadable file.
-func (s *ManifestsPublicTestSuite) TestAManifestThatWillNotOpenNamesItself() {
-	fsys := tree(map[string]string{
-		"bass/a/corpus.yaml": "artist: A\ntracks:\n  - track: t\n" +
-			"    url: https://open.spotify.com/track/x\n    year: 1994\n",
-	})
-
-	_, err := audio.Manifests(refusing{fsys}, ".")
-	s.Require().ErrorContains(err, "bass/a/corpus.yaml")
-	s.Require().ErrorIs(err, fs.ErrPermission)
 }

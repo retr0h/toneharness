@@ -324,46 +324,82 @@ func (s *ReampPublicTestSuite) TestAPassPlaysSilenceOnceTheSignalRunsOut() {
 
 // TestThroughRunsTheWholeLoop covers playing and capturing for real.
 //
-// Against miniaudio's null backend, which presents a device that takes
-// samples and hands back silence. Everything but the converters is exercised:
-// the stream opens, the callback runs, the signal is fed out of it a frame at
-// a time, what arrives is kept, and the reading ends when both are done.
-func (s *ReampPublicTestSuite) TestThroughRunsTheWholeLoop() {
-	b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, nullDevice)
-	s.Require().NoError(err)
+// TestThrough covers Through, which plays a signal and returns what came
+// back.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ReampPublicTestSuite) TestThrough() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// samples and hands back silence. Everything but the converters is exercised:
+			// the stream opens, the callback runs, the signal is fed out of it a frame at
+			// a time, what arrives is kept, and the reading ends when both are done.
+			name: "through runs the whole loop",
+			then: func() {
+				b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, nullDevice)
+				s.Require().NoError(err)
 
-	defer func() { _ = b.Close() }()
+				defer func() { _ = b.Close() }()
 
-	s.Require().NotEmpty(b.Name())
+				s.Require().NotEmpty(b.Name())
 
-	signal := make([]float32, reamp.Rate/20)
-	got, err := b.Through(context.Background(), signal)
+				signal := make([]float32, reamp.Rate/20)
+				got, err := b.Through(context.Background(), signal)
 
-	s.Require().NoError(err)
-	s.Require().Len(got,
-		len(reamp.Pad(signal))+int(reamp.Margin.Seconds()*reamp.Rate),
-		"as many samples as were played, and the margin a converter answers "+
-			"late by")
+				s.Require().NoError(err)
+				s.Require().Len(got,
+					len(reamp.Pad(signal))+int(reamp.Margin.Seconds()*reamp.Rate),
+					"as many samples as were played, and the margin a converter answers "+
+						"late by")
+			},
+		},
+		{
+			// blocked forever, and a campaign that hangs on block two hundred looks exactly
+			// like one still working.
+			name: "through gives up on a device that stopped",
+			then: func() {
+				b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, nullDevice)
+				s.Require().NoError(err)
+
+				defer func() { _ = b.Close() }()
+
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel()
+
+				_, err = b.Through(ctx, make([]float32, reamp.Rate))
+
+				s.Require().ErrorContains(err, "stopped answering")
+			},
+		},
+		{
+			// enough that one which does open still misses it.
+			name: "through gives up on a device that never opens",
+			then: func() {
+				b, err := reamp.OpenClaiming([]malgo.Backend{reamp.NullBackend}, nullDevice,
+					time.Nanosecond)
+				s.Require().NoError(err)
+
+				defer func() { _ = b.Close() }()
+
+				_, err = b.Through(context.Background(), make([]float32, reamp.Rate))
+
+				s.Require().ErrorIs(err, reamp.ErrUnclaimed)
+				s.Require().ErrorContains(err, "Microphone access",
+					"the error says what to go and do, not only that it failed")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestThroughGivesUpOnADeviceThatStopped covers the budget.
 //
-// A device that stops delivering callbacks would otherwise leave a reading
-// blocked forever, and a campaign that hangs on block two hundred looks exactly
-// like one still working.
-func (s *ReampPublicTestSuite) TestThroughGivesUpOnADeviceThatStopped() {
-	b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, nullDevice)
-	s.Require().NoError(err)
-
-	defer func() { _ = b.Close() }()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-
-	_, err = b.Through(ctx, make([]float32, reamp.Rate))
-
-	s.Require().ErrorContains(err, "stopped answering")
-}
 
 // TestThroughGivesUpOnADeviceThatNeverOpens covers the claim deadline.
 //
@@ -375,21 +411,6 @@ func (s *ReampPublicTestSuite) TestThroughGivesUpOnADeviceThatStopped() {
 // which is the failure the budget below was already written to prevent one
 // stage later.
 //
-// No backend fakes a device that blocks on open, so the deadline is made short
-// enough that one which does open still misses it.
-func (s *ReampPublicTestSuite) TestThroughGivesUpOnADeviceThatNeverOpens() {
-	b, err := reamp.OpenClaiming([]malgo.Backend{reamp.NullBackend}, nullDevice,
-		time.Nanosecond)
-	s.Require().NoError(err)
-
-	defer func() { _ = b.Close() }()
-
-	_, err = b.Through(context.Background(), make([]float32, reamp.Rate))
-
-	s.Require().ErrorIs(err, reamp.ErrUnclaimed)
-	s.Require().ErrorContains(err, "Microphone access",
-		"the error says what to go and do, not only that it failed")
-}
 
 // TestOpenRefusesHardwareThatIsNotThere covers a name nothing answers to.
 func (s *ReampPublicTestSuite) TestOpenRefusesHardwareThatIsNotThere() {

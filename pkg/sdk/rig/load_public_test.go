@@ -45,122 +45,151 @@ chain:
   - { role: amp, gear: Ampeg SVT }
 `
 
-// TestLoad reads a rig off a reader.
+// TestLoad covers Load, which reads a rig and checks it against its own
+// contract.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *LoadPublicTestSuite) TestLoad() {
-	tests := []struct {
+	for _, tt := range []struct {
 		name string
-		in   string
-		// a reader that fails outright.
-		deaf    bool
-		errText string
+		then func()
 	}{
-		{name: "the smallest rig there is", in: smallest},
 		{
-			name:    "something that is not YAML",
-			in:      "\tnope: [",
-			errText: "decoding rig",
-		},
-		{
-			name:    "a preset, which is a different kind of document",
-			in:      `{"schema":"L6Preset","version":6}`,
-			errText: "not a valid rig",
-		},
-		{
-			// Decoding drops what the types have no field for, so this used
-			// to pass with the misspelt line quietly gone.
-			name: "a field nobody spelled right",
-			in: "schema: RigSpec\nid: x\n" +
-				"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
-				"tecnique: pick\n",
-			errText: `property "tecnique" is unsupported`,
-		},
-		{
-			name: "a field nobody spelled right, inside the chain",
-			in: "schema: RigSpec\nid: x\n" +
-				"instrument: bass\nchain:\n" +
-				"  - {role: amp, gear: Ampeg SVT, gera: nonsense}\n",
-			errText: `property "gera" is unsupported`,
-		},
-		{
-			// One version, so a rig stating another is refused rather than
-			// read as if its fields meant the same thing.
-			name: "a version this contract is not",
-			in: "schema: RigSpec\nversion: 3\nid: x\n" +
-				"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n",
-			errText: "version",
-		},
-		{
-			name: "a link that is not one",
-			in: "schema: RigSpec\nid: x\n" +
-				"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
-				"evidence:\n  - {kind: cited, url: mikes-website}\n",
-			errText: "evidence[0].url",
-		},
-		{
-			// Where in a recording, so it has to be a time.
-			name: "a place in a recording, given in words",
-			in: "schema: RigSpec\nid: x\n" +
-				"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
-				"evidence:\n  - {kind: video, url: \"https://x.test/v\", at: the end}\n",
-			errText: "evidence[0].at",
-		},
-		{
-			// Every one of these is a thing a person writes, so each lives on
-			// the ToneSpec and a rig refuses it outright rather than checking
-			// its shape. The shapes are checked in pkg/sdk/tone, which is
-			// where they are now allowed.
-			name: "what a person writes, which a rig does not carry",
-			in: "schema: RigSpec\nid: x\n" +
-				"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
-				"technique: {attack: pick}\n",
-			errText: "\"technique\" is unsupported",
-		},
-		{
-			name: "words on a rig, which is the ask's half",
-			in: "schema: RigSpec\nid: x\n" +
-				"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
-				"character:\n  - term: mid-forward\n",
-			errText: "\"character\" is unsupported",
-		},
-		{
-			// A correction is a thing a person writes, so it lives in ToneSpec
-			// and a plan refuses it outright rather than checking its shape.
-			name: "a correction, which a plan does not carry",
-			in: "schema: RigSpec\nid: x\n" +
-				"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
-				"mutations:\n  - {at: yesterday, ask: make it clunkier}\n",
-			errText: "\"mutations\" is unsupported",
-		},
-		{
-			name: "a rig holding no chain",
-			in: "schema: RigSpec\nid: x\n" +
-				"instrument: bass\nchain: []\n",
-			errText: "chain minimum number of items is 1",
-		},
-		{name: "a reader that fails", deaf: true, errText: "reading rig"},
-	}
+			name: "load",
+			then: func() {
+				tests := []struct {
+					name string
+					in   string
+					// a reader that fails outright.
+					deaf    bool
+					errText string
+				}{
+					{name: "the smallest rig there is", in: smallest},
+					{
+						name:    "something that is not YAML",
+						in:      "\tnope: [",
+						errText: "decoding rig",
+					},
+					{
+						name:    "a preset, which is a different kind of document",
+						in:      `{"schema":"L6Preset","version":6}`,
+						errText: "not a valid rig",
+					},
+					{
+						// Decoding drops what the types have no field for, so this used
+						// to pass with the misspelt line quietly gone.
+						name: "a field nobody spelled right",
+						in: "schema: RigSpec\nid: x\n" +
+							"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
+							"tecnique: pick\n",
+						errText: `property "tecnique" is unsupported`,
+					},
+					{
+						name: "a field nobody spelled right, inside the chain",
+						in: "schema: RigSpec\nid: x\n" +
+							"instrument: bass\nchain:\n" +
+							"  - {role: amp, gear: Ampeg SVT, gera: nonsense}\n",
+						errText: `property "gera" is unsupported`,
+					},
+					{
+						// One version, so a rig stating another is refused rather than
+						// read as if its fields meant the same thing.
+						name: "a version this contract is not",
+						in: "schema: RigSpec\nversion: 3\nid: x\n" +
+							"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n",
+						errText: "version",
+					},
+					{
+						name: "a link that is not one",
+						in: "schema: RigSpec\nid: x\n" +
+							"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
+							"evidence:\n  - {kind: cited, url: mikes-website}\n",
+						errText: "evidence[0].url",
+					},
+					{
+						// Where in a recording, so it has to be a time.
+						name: "a place in a recording, given in words",
+						in: "schema: RigSpec\nid: x\n" +
+							"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
+							"evidence:\n  - {kind: video, url: \"https://x.test/v\", at: the end}\n",
+						errText: "evidence[0].at",
+					},
+					{
+						// Every one of these is a thing a person writes, so each lives on
+						// the ToneSpec and a rig refuses it outright rather than checking
+						// its shape. The shapes are checked in pkg/sdk/tone, which is
+						// where they are now allowed.
+						name: "what a person writes, which a rig does not carry",
+						in: "schema: RigSpec\nid: x\n" +
+							"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
+							"technique: {attack: pick}\n",
+						errText: "\"technique\" is unsupported",
+					},
+					{
+						name: "words on a rig, which is the ask's half",
+						in: "schema: RigSpec\nid: x\n" +
+							"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
+							"character:\n  - term: mid-forward\n",
+						errText: "\"character\" is unsupported",
+					},
+					{
+						// A correction is a thing a person writes, so it lives in ToneSpec
+						// and a plan refuses it outright rather than checking its shape.
+						name: "a correction, which a plan does not carry",
+						in: "schema: RigSpec\nid: x\n" +
+							"instrument: bass\nchain:\n  - {role: amp, gear: Ampeg SVT}\n" +
+							"mutations:\n  - {at: yesterday, ask: make it clunkier}\n",
+						errText: "\"mutations\" is unsupported",
+					},
+					{
+						name: "a rig holding no chain",
+						in: "schema: RigSpec\nid: x\n" +
+							"instrument: bass\nchain: []\n",
+						errText: "chain minimum number of items is 1",
+					},
+					{name: "a reader that fails", deaf: true, errText: "reading rig"},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						in := io.Reader(strings.NewReader(tt.in))
+						if tt.deaf {
+							in = &failingReader{}
+						}
+
+						got, err := rig.Load(in)
+
+						if tt.errText != "" {
+							s.Require().Error(err)
+							s.Require().Contains(err.Error(), tt.errText)
+
+							return
+						}
+
+						s.Require().NoError(err)
+						s.Require().Equal("mike-dirnt", got.ID)
+						s.Require().Equal(rig.InstrumentBass, got.Instrument)
+						s.Require().Len(got.Chain, 1)
+						s.Require().Equal("Ampeg SVT", got.Chain[0].Gear)
+					})
+				}
+			},
+		},
+		{
+			// says which one a document may state. Nothing else compares them, and a bump
+			// that moved one and not the other would be silent.
+			name: "the contract accepts the version this package writes",
+			then: func() {
+				stated := fmt.Sprintf("version: %d\n", rig.Version)
+
+				_, err := rig.Load(strings.NewReader(stated + smallest))
+
+				s.Require().NoError(err)
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			in := io.Reader(strings.NewReader(tt.in))
-			if tt.deaf {
-				in = &failingReader{}
-			}
-
-			got, err := rig.Load(in)
-
-			if tt.errText != "" {
-				s.Require().Error(err)
-				s.Require().Contains(err.Error(), tt.errText)
-
-				return
-			}
-
-			s.Require().NoError(err)
-			s.Require().Equal("mike-dirnt", got.ID)
-			s.Require().Equal(rig.InstrumentBass, got.Instrument)
-			s.Require().Len(got.Chain, 1)
-			s.Require().Equal("Ampeg SVT", got.Chain[0].Gear)
+			tt.then()
 		})
 	}
 }
@@ -247,16 +276,6 @@ func (*failingWriter) Write(
 // TestTheContractAcceptsTheVersionThisPackageWrites keeps the constant and
 // the contract from drifting apart.
 //
-// rig.Version says which version this package reads and writes; the contract
-// says which one a document may state. Nothing else compares them, and a bump
-// that moved one and not the other would be silent.
-func (s *LoadPublicTestSuite) TestTheContractAcceptsTheVersionThisPackageWrites() {
-	stated := fmt.Sprintf("version: %d\n", rig.Version)
-
-	_, err := rig.Load(strings.NewReader(stated + smallest))
-
-	s.Require().NoError(err)
-}
 
 func TestLoadPublicTestSuite(
 	t *testing.T,

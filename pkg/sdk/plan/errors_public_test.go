@@ -34,46 +34,66 @@ type ErrorsPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestUnknownBlockError names the model nothing carries.
-func (s *ErrorsPublicTestSuite) TestUnknownBlockError() {
-	tests := []struct {
+// TestError covers Error, which implements the error interface.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ErrorsPublicTestSuite) TestError() {
+	for _, tt := range []struct {
 		name string
-		err  error
+		then func()
 	}{
-		{name: "on its own", err: &plan.UnknownBlockError{Model: "HD2_Nope"}},
 		{
-			// The model has to survive the wrapping every layer adds, or a
-			// caller cannot say which block it was.
-			name: "wrapped by a caller",
-			err: fmt.Errorf("resolving: %w",
-				&plan.UnknownBlockError{Model: "HD2_Nope"}),
+			name: "unknown block error",
+			then: func() {
+				tests := []struct {
+					name string
+					err  error
+				}{
+					{name: "on its own", err: &plan.UnknownBlockError{Model: "HD2_Nope"}},
+					{
+						// The model has to survive the wrapping every layer adds, or a
+						// caller cannot say which block it was.
+						name: "wrapped by a caller",
+						err: fmt.Errorf("resolving: %w",
+							&plan.UnknownBlockError{Model: "HD2_Nope"}),
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						s.Require().ErrorIs(tt.err, plan.ErrUnknownBlock)
+						s.Require().Contains(tt.err.Error(), "HD2_Nope")
+
+						var target *plan.UnknownBlockError
+						s.Require().True(errors.As(tt.err, &target))
+						s.Require().Equal("HD2_Nope", string(target.Model))
+					})
+				}
+			},
 		},
-	}
+		{
+			name: "over budget error names chip and cost",
+			then: func() {
+				err := &plan.OverBudgetError{Chip: 1, Cost: 1.2, Ceiling: 0.95}
 
-	for _, tt := range tests {
+				s.Require().Contains(err.Error(), "chip 1")
+				s.Require().ErrorIs(err, plan.ErrOverBudget)
+			},
+		},
+		{
+			name: "topology error carries reason",
+			then: func() {
+				err := &plan.TopologyError{Reason: "too many blocks"}
+
+				s.Require().Contains(err.Error(), "too many blocks")
+				s.Require().ErrorIs(err, plan.ErrBadTopology)
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			s.Require().ErrorIs(tt.err, plan.ErrUnknownBlock)
-			s.Require().Contains(tt.err.Error(), "HD2_Nope")
-
-			var target *plan.UnknownBlockError
-			s.Require().True(errors.As(tt.err, &target))
-			s.Require().Equal("HD2_Nope", string(target.Model))
+			tt.then()
 		})
 	}
-}
-
-func (s *ErrorsPublicTestSuite) TestOverBudgetErrorNamesChipAndCost() {
-	err := &plan.OverBudgetError{Chip: 1, Cost: 1.2, Ceiling: 0.95}
-
-	s.Require().Contains(err.Error(), "chip 1")
-	s.Require().ErrorIs(err, plan.ErrOverBudget)
-}
-
-func (s *ErrorsPublicTestSuite) TestTopologyErrorCarriesReason() {
-	err := &plan.TopologyError{Reason: "too many blocks"}
-
-	s.Require().Contains(err.Error(), "too many blocks")
-	s.Require().ErrorIs(err, plan.ErrBadTopology)
 }
 
 func (s *ErrorsPublicTestSuite) TestSentinelsAreDistinct() {

@@ -21,10 +21,26 @@
 package cli
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 )
+
+// closes is a bench that records having been given back.
+type closes struct {
+	bench
+
+	closed int
+}
+
+// Close answers with an error on purpose: benchFor discards it, and a closer
+// that only works when Close succeeds is the bug that would go unnoticed.
+func (c *closes) Close() error {
+	c.closed++
+
+	return errors.New("a close nobody reads")
+}
 
 // BenchPublicTestSuite covers choosing the audio loop a measuring run reads
 // through.
@@ -35,21 +51,75 @@ type BenchPublicTestSuite struct {
 // TestABenchTheCallerHoldsIsHandedBack is what every other test in this package
 // relies on.
 //
-// A caller who supplied one owns its lifetime, so the closer does nothing and
-// the named hardware is never looked at. That is the branch the whole suite
-// takes, which is why nothing here needs an interface, a cable and somebody in
-// the room to plug them in.
-func (s *BenchPublicTestSuite) TestABenchTheCallerHoldsIsHandedBack() {
-	held := bench{}
+// TestBenchFor covers benchFor, which is the audio loop a measuring run reads
+// through, and how to let it.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *BenchPublicTestSuite) TestBenchFor() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// the named hardware is never looked at. That is the branch the whole suite
+			// takes, which is why nothing here needs an interface, a cable and somebody in
+			// the room to plug them in.
+			name: "a bench the caller holds is handed back",
+			then: func() {
+				held := bench{}
 
-	got, release, err := benchFor(held, "a name it must not read")
+				got, release, err := benchFor(held, "a name it must not read")
 
-	s.Require().NoError(err)
-	s.Require().Equal(held, got)
-	s.Require().NotNil(release)
+				s.Require().NoError(err)
+				s.Require().Equal(held, got)
+				s.Require().NotNil(release)
 
-	release()
-	release()
+				release()
+				release()
+			},
+		},
+		{
+			// reamp.TestOpenSaysWhatWasAttachedInstead covers it against the same name.
+			name: "hardware nothing answers to is reported",
+			then: func() {
+				_, _, err := benchFor(nil, "no such interface anybody owns")
+
+				s.Require().Error(err)
+			},
+		},
+		{
+			// one this package opened must be, or the audio device stays held until the
+			// process exits. Nothing else in the package can tell those two apart, so the
+			// assertion is that the closer reached Close.
+			name: "a bench this package opened is closed by its closer",
+			then: func() {
+				held := &closes{}
+
+				was := opens
+				defer func() { opens = was }()
+
+				opens = func(hardware string) (opened, error) {
+					s.Require().Equal("a name it must read", hardware)
+
+					return held, nil
+				}
+
+				got, release, err := benchFor(nil, "a name it must read")
+
+				s.Require().NoError(err)
+				s.Require().Equal(opened(held), got)
+				s.Require().Zero(held.closed)
+
+				release()
+
+				s.Require().Equal(1, held.closed)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestHardwareNothingAnswersToIsReported is the other branch, and the only
@@ -61,13 +131,10 @@ func (s *BenchPublicTestSuite) TestABenchTheCallerHoldsIsHandedBack() {
 // refusal that belongs to whichever function opens the device. This is that
 // function.
 //
-// What the device layer does with the name is reamp's own subject, and
-// reamp.TestOpenSaysWhatWasAttachedInstead covers it against the same name.
-func (s *BenchPublicTestSuite) TestHardwareNothingAnswersToIsReported() {
-	_, _, err := benchFor(nil, "no such interface anybody owns")
 
-	s.Require().Error(err)
-}
+// TestABenchThisPackageOpenedIsClosedByItsCloser is the branch that owns a
+// lifetime.
+//
 
 func TestBenchPublicTestSuite(
 	t *testing.T,

@@ -249,43 +249,60 @@ func (s *FFTPublicTestSuite) TestATransformUndoesItself() {
 	}
 }
 
-// TestATransformFindsAToneWhereItIs covers the bins meaning what they say.
-func (s *FFTPublicTestSuite) TestATransformFindsAToneWhereItIs() {
-	const (
-		n    = 512
-		bin  = 17
-		peak = 1.0
-	)
+// TestForward covers Forward, which runs a fast Fourier transform in place.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *FFTPublicTestSuite) TestForward() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "a transform finds a tone where it is",
+			then: func() {
+				const (
+					n    = 512
+					bin  = 17
+					peak = 1.0
+				)
 
-	re := make([]float64, n)
-	im := make([]float64, n)
+				re := make([]float64, n)
+				im := make([]float64, n)
 
-	for i := range re {
-		re[i] = peak * math.Cos(2*math.Pi*bin*float64(i)/n)
-	}
+				for i := range re {
+					re[i] = peak * math.Cos(2*math.Pi*bin*float64(i)/n)
+				}
 
-	audio.Forward(re, im)
+				audio.Forward(re, im)
 
-	var loudest int
+				var loudest int
 
-	var most float64
+				var most float64
 
-	for i := range n / 2 {
-		if power := re[i]*re[i] + im[i]*im[i]; power > most {
-			most, loudest = power, i
-		}
-	}
+				for i := range n / 2 {
+					if power := re[i]*re[i] + im[i]*im[i]; power > most {
+						most, loudest = power, i
+					}
+				}
 
-	s.Require().Equal(bin, loudest)
-}
+				s.Require().Equal(bin, loudest)
+			},
+		},
+		{
+			name: "nothing to transform",
+			then: func() {
+				for _, n := range []int{0, 1} {
+					re := make([]float64, n)
+					im := make([]float64, n)
 
-// TestNothingToTransform covers the lengths that cannot be halved.
-func (s *FFTPublicTestSuite) TestNothingToTransform() {
-	for _, n := range []int{0, 1} {
-		re := make([]float64, n)
-		im := make([]float64, n)
-
-		s.Require().NotPanics(func() { audio.Forward(re, im) })
+					s.Require().NotPanics(func() { audio.Forward(re, im) })
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 

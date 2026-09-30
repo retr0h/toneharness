@@ -32,24 +32,53 @@ type SlotPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestLabel names a position the way the pedal prints it.
+// TestLabel covers Label, which renders a position the way the hardware
+// labels it — 01A through 42C.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *SlotPublicTestSuite) TestLabel() {
-	tests := []struct {
+	for _, tt := range []struct {
 		name string
-		slot int
-		want string
+		then func()
 	}{
-		{name: "the first", slot: 0, want: "01A"},
-		{name: "the second in a bank", slot: 1, want: "01B"},
-		{name: "the third", slot: 2, want: "01C"},
-		{name: "the first of the next bank", slot: 3, want: "02A"},
-		{name: "one well into the setlist", slot: 90, want: "31A"},
-		{name: "the last", slot: 125, want: "42C"},
-	}
+		{
+			name: "label",
+			then: func() {
+				tests := []struct {
+					name string
+					slot int
+					want string
+				}{
+					{name: "the first", slot: 0, want: "01A"},
+					{name: "the second in a bank", slot: 1, want: "01B"},
+					{name: "the third", slot: 2, want: "01C"},
+					{name: "the first of the next bank", slot: 3, want: "02A"},
+					{name: "one well into the setlist", slot: 90, want: "31A"},
+					{name: "the last", slot: 125, want: "42C"},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						s.Require().Equal(tt.want, slot.Label(tt.slot))
+					})
+				}
+			},
+		},
+		{
+			// either. Every slot a device has, both ways round.
+			name: "a label and its index agree",
+			then: func() {
+				for i := range 126 {
+					got, err := slot.Parse(slot.Label(i))
+
+					s.Require().NoError(err)
+					s.Require().Equal(i, got, "%s must address slot %d", slot.Label(i), i)
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			s.Require().Equal(tt.want, slot.Label(tt.slot))
+			tt.then()
 		})
 	}
 }
@@ -98,17 +127,6 @@ func (s *SlotPublicTestSuite) TestParse() {
 			s.Require().NoError(err)
 			s.Require().Equal(tt.want, got)
 		})
-	}
-}
-
-// TestALabelAndItsIndexAgree is a property of the pair rather than a case of
-// either. Every slot a device has, both ways round.
-func (s *SlotPublicTestSuite) TestALabelAndItsIndexAgree() {
-	for i := range 126 {
-		got, err := slot.Parse(slot.Label(i))
-
-		s.Require().NoError(err)
-		s.Require().Equal(i, got, "%s must address slot %d", slot.Label(i), i)
 	}
 }
 

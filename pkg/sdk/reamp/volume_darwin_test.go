@@ -46,69 +46,112 @@ type VolumeDarwinTestSuite struct {
 func (s *VolumeDarwinTestSuite) SetupTest()    { s.was = asks }
 func (s *VolumeDarwinTestSuite) TearDownTest() { asks = s.was }
 
-func (s *VolumeDarwinTestSuite) TestVolumeReadsWhatTheShellPrinted() {
-	asks = func(string) ([]byte, error) { return []byte("38\n"), nil }
+// TestVolume covers volume, which reads the output level.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *VolumeDarwinTestSuite) TestVolume() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "volume reads what the shell printed",
+			then: func() {
+				asks = func(string) ([]byte, error) { return []byte("38\n"), nil }
 
-	got, err := volume()
+				got, err := volume()
 
-	s.Require().NoError(err)
-	s.Require().Equal(38, got, "trailing newline and all")
-}
+				s.Require().NoError(err)
+				s.Require().Equal(38, got, "trailing newline and all")
+			},
+		},
+		{
+			name: "a shell that failed",
+			then: func() {
+				declined := errors.New("no such thing")
+				asks = func(string) ([]byte, error) { return nil, declined }
 
-func (s *VolumeDarwinTestSuite) TestAShellThatFailed() {
-	declined := errors.New("no such thing")
-	asks = func(string) ([]byte, error) { return nil, declined }
+				_, err := volume()
 
-	_, err := volume()
+				s.Require().ErrorIs(err, ErrVolume)
 
-	s.Require().ErrorIs(err, ErrVolume)
+				var fault *VolumeError
+				s.Require().ErrorAs(err, &fault)
+				s.Require().Equal("reading", fault.Doing)
+				s.Require().Equal(declined, fault.Said)
+			},
+		},
+		{
+			// not a number is not the same case as a shell that failed, and reading it as
+			// a level would put an arbitrary integer into a library.
+			name: "a shell that printed something else",
+			then: func() {
+				asks = func(string) ([]byte, error) { return []byte("no volume settings"), nil }
 
-	var fault *VolumeError
-	s.Require().ErrorAs(err, &fault)
-	s.Require().Equal("reading", fault.Doing)
-	s.Require().Equal(declined, fault.Said)
+				_, err := volume()
+
+				s.Require().ErrorIs(err, ErrVolume)
+
+				var fault *VolumeError
+				s.Require().ErrorAs(err, &fault)
+				s.Require().Equal("reading", fault.Doing)
+			},
+		},
+	} {
+		// No SetupTest here. Its job is to remember the shell the platform
+		// calls before a row replaces it, and a second call would remember
+		// the replacement, so TearDownTest would put a stub back.
+		s.Run(tt.name, func() { tt.then() })
+	}
 }
 
 // TestAShellThatPrintedSomethingElse is the answer nobody expects.
 //
-// osascript reports some failures on stdout and exits zero, so a reply that is
-// not a number is not the same case as a shell that failed, and reading it as
-// a level would put an arbitrary integer into a library.
-func (s *VolumeDarwinTestSuite) TestAShellThatPrintedSomethingElse() {
-	asks = func(string) ([]byte, error) { return []byte("no volume settings"), nil }
 
-	_, err := volume()
+// TestSetVolume covers setVolume, which puts the output level where a
+// measurement wants it.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *VolumeDarwinTestSuite) TestSetVolume() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "set volume says the level it was given",
+			then: func() {
+				var said string
 
-	s.Require().ErrorIs(err, ErrVolume)
+				asks = func(script string) ([]byte, error) {
+					said = script
 
-	var fault *VolumeError
-	s.Require().ErrorAs(err, &fault)
-	s.Require().Equal("reading", fault.Doing)
-}
+					return nil, nil
+				}
 
-func (s *VolumeDarwinTestSuite) TestSetVolumeSaysTheLevelItWasGiven() {
-	var said string
+				s.Require().NoError(setVolume(38))
+				s.Require().Equal("set volume output volume "+strconv.Itoa(38), said)
+			},
+		},
+		{
+			name: "set volume on a shell that failed",
+			then: func() {
+				asks = func(string) ([]byte, error) { return nil, errors.New("declined") }
 
-	asks = func(script string) ([]byte, error) {
-		said = script
+				err := setVolume(38)
 
-		return nil, nil
+				s.Require().ErrorIs(err, ErrVolume)
+
+				var fault *VolumeError
+				s.Require().ErrorAs(err, &fault)
+				s.Require().Equal("setting", fault.Doing)
+			},
+		},
+	} {
+		// No SetupTest here. Its job is to remember the shell the platform
+		// calls before a row replaces it, and a second call would remember
+		// the replacement, so TearDownTest would put a stub back.
+		s.Run(tt.name, func() { tt.then() })
 	}
-
-	s.Require().NoError(setVolume(38))
-	s.Require().Equal("set volume output volume "+strconv.Itoa(38), said)
-}
-
-func (s *VolumeDarwinTestSuite) TestSetVolumeOnAShellThatFailed() {
-	asks = func(string) ([]byte, error) { return nil, errors.New("declined") }
-
-	err := setVolume(38)
-
-	s.Require().ErrorIs(err, ErrVolume)
-
-	var fault *VolumeError
-	s.Require().ErrorAs(err, &fault)
-	s.Require().Equal("setting", fault.Doing)
 }
 
 func TestVolumeDarwinTestSuite(

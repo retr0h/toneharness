@@ -273,84 +273,104 @@ func (s *SymbolsTestSuite) controls(
 // TestReadRoutingNamesTheSocketsInTheDevicesOwnOrder covers the two lists a
 // preset's routing is written against.
 //
-// The order is the enumeration: entry 1 of the destinations is the one whose
-// label claims USB and which an HX Stomp's Multi does not carry, which is the
-// reason these are read rather than written down.
-func (s *SymbolsTestSuite) TestReadRoutingNamesTheSocketsInTheDevicesOwnOrder() {
-	dir := s.controls(`{
-	  "input_type":  {"format": ["Multi", "Guitar", "Aux"]},
-	  "output_type": {"format": ["Multi", "USB 1/2", "USB 3/4"]},
-	  "input_type_lt":  {"format": ["Guitar", "Aux"]},
-	  "output_type_lt": {"format": ["XLR"]}
-	}`)
+// TestReadRouting covers readRouting, which reads what a device can take a
+// chain's input from and send its.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *SymbolsTestSuite) TestReadRouting() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// label claims USB and which an HX Stomp's Multi does not carry, which is the
+			// reason these are read rather than written down.
+			name: "read routing names the sockets in the devices own order",
+			then: func() {
+				dir := s.controls(`{
+				  "input_type":  {"format": ["Multi", "Guitar", "Aux"]},
+				  "output_type": {"format": ["Multi", "USB 1/2", "USB 3/4"]},
+				  "input_type_lt":  {"format": ["Guitar", "Aux"]},
+				  "output_type_lt": {"format": ["XLR"]}
+				}`)
 
-	sources, destinations, err := readRouting(dir, catalog.HXStomp)
+				sources, destinations, err := readRouting(dir, catalog.HXStomp)
 
-	s.Require().NoError(err)
-	s.Require().Equal([]string{"Multi", "Guitar", "Aux"}, sources)
-	s.Require().Equal([]string{"Multi", "USB 1/2", "USB 3/4"}, destinations,
-		"kept as the device spells them: USB 1/2 loses something flattened")
+				s.Require().NoError(err)
+				s.Require().Equal([]string{"Multi", "Guitar", "Aux"}, sources)
+				s.Require().Equal([]string{"Multi", "USB 1/2", "USB 3/4"}, destinations,
+					"kept as the device spells them: USB 1/2 loses something flattened")
 
-	// An LT reads its own suffixed pair, which is why the suffix exists.
-	sources, destinations, err = readRouting(dir, catalog.HelixLT)
+				// An LT reads its own suffixed pair, which is why the suffix exists.
+				sources, destinations, err = readRouting(dir, catalog.HelixLT)
 
-	s.Require().NoError(err)
-	s.Require().Equal([]string{"Guitar", "Aux"}, sources)
-	s.Require().Equal([]string{"XLR"}, destinations)
+				s.Require().NoError(err)
+				s.Require().Equal([]string{"Guitar", "Aux"}, sources)
+				s.Require().Equal([]string{"XLR"}, destinations)
+			},
+		},
+		{
+			// these lists is still a catalog.
+			name: "routing is absent rather than fatal",
+			then: func() {
+				for _, tt := range []struct {
+					name string
+					dir  string
+				}{
+					{"no controls file at all", s.T().TempDir()},
+					{"a file naming neither list", s.controls(`{"footswitchLED": {}}`)},
+				} {
+					s.Run(tt.name, func() {
+						sources, destinations, err := readRouting(tt.dir, catalog.HXStomp)
+
+						s.Require().NoError(err)
+						s.Require().Nil(sources)
+						s.Require().Nil(destinations)
+					})
+				}
+			},
+		},
+		{
+			name: "routing reports a file it cannot read",
+			then: func() {
+				for _, tt := range []struct {
+					name string
+					body string
+					says string
+				}{
+					{
+						name: "a file that is not JSON",
+						body: "not json",
+						says: "decoding " + controlsFile,
+					},
+					{
+						name: "a sources entry that is not a control",
+						body: `{"input_type": 7}`,
+						says: "decoding " + sourceControl,
+					},
+					{
+						name: "a destinations entry that is not a control",
+						body: `{"output_type": 7}`,
+						says: "decoding " + destinationControl,
+					},
+				} {
+					s.Run(tt.name, func() {
+						_, _, err := readRouting(s.controls(tt.body), catalog.HXStomp)
+
+						s.Require().ErrorContains(err, tt.says)
+					})
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestRoutingIsAbsentRatherThanFatal covers an installation too old to have it.
 //
-// Only measuring needs to name a destination, so a catalog generated without
-// these lists is still a catalog.
-func (s *SymbolsTestSuite) TestRoutingIsAbsentRatherThanFatal() {
-	for _, tt := range []struct {
-		name string
-		dir  string
-	}{
-		{"no controls file at all", s.T().TempDir()},
-		{"a file naming neither list", s.controls(`{"footswitchLED": {}}`)},
-	} {
-		s.Run(tt.name, func() {
-			sources, destinations, err := readRouting(tt.dir, catalog.HXStomp)
-
-			s.Require().NoError(err)
-			s.Require().Nil(sources)
-			s.Require().Nil(destinations)
-		})
-	}
-}
-
-// TestRoutingReportsAFileItCannotRead covers the three failures.
-func (s *SymbolsTestSuite) TestRoutingReportsAFileItCannotRead() {
-	for _, tt := range []struct {
-		name string
-		body string
-		says string
-	}{
-		{
-			name: "a file that is not JSON",
-			body: "not json",
-			says: "decoding " + controlsFile,
-		},
-		{
-			name: "a sources entry that is not a control",
-			body: `{"input_type": 7}`,
-			says: "decoding " + sourceControl,
-		},
-		{
-			name: "a destinations entry that is not a control",
-			body: `{"output_type": 7}`,
-			says: "decoding " + destinationControl,
-		},
-	} {
-		s.Run(tt.name, func() {
-			_, _, err := readRouting(s.controls(tt.body), catalog.HXStomp)
-
-			s.Require().ErrorContains(err, tt.says)
-		})
-	}
-}
 
 func TestSymbolsTestSuite(
 	t *testing.T,

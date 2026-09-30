@@ -66,53 +66,74 @@ func (s *EmbedPublicTestSuite) TestBuiltInIsParsedOnce() {
 	s.Require().Equal(first, again)
 }
 
-// TestPackedRoundTrips covers writing a library the way this package reads one.
-func (s *EmbedPublicTestSuite) TestPackedRoundTrips() {
-	lib := `{"device":"HX Stomp","isolated":true,` +
-		`"blocks":{"A":{"id":"A","category":"amp"}}}`
+// TestPacked covers Packed, which writes a library out the way this package
+// embeds one.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *EmbedPublicTestSuite) TestPacked() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "packed round trips",
+			then: func() {
+				lib := `{"device":"HX Stomp","isolated":true,` +
+					`"blocks":{"A":{"id":"A","category":"amp"}}}`
 
-	var packed bytes.Buffer
-	s.Require().NoError(measured.Packed(&packed, strings.NewReader(lib)))
+				var packed bytes.Buffer
+				s.Require().NoError(measured.Packed(&packed, strings.NewReader(lib)))
 
-	z, err := gzip.NewReader(&packed)
-	s.Require().NoError(err)
+				z, err := gzip.NewReader(&packed)
+				s.Require().NoError(err)
 
-	back, err := measured.Load(z)
-	s.Require().NoError(err)
-	s.Require().Equal("HX Stomp", back.Device)
-	s.Require().True(back.Isolated)
-	s.Require().Len(back.Blocks, 1)
+				back, err := measured.Load(z)
+				s.Require().NoError(err)
+				s.Require().Equal("HX Stomp", back.Device)
+				s.Require().True(back.Isolated)
+				s.Require().Len(back.Blocks, 1)
+			},
+		},
+		{
+			// library is refused where somebody can still fix it rather than at the next
+			// build.
+			name: "packed refuses what it could not read",
+			then: func() {
+				var packed bytes.Buffer
+
+				s.Require().ErrorContains(
+					measured.Packed(&packed, strings.NewReader("{")),
+					"decoding the measurements")
+				s.Require().Empty(packed.Bytes())
+			},
+		},
+		{
+			name: "packed reports a read failure",
+			then: func() {
+				var packed bytes.Buffer
+
+				s.Require().ErrorContains(
+					measured.Packed(&packed, broken{}), "reading the measurements")
+			},
+		},
+		{
+			name: "packed reports a write failure",
+			then: func() {
+				lib := `{"device":"HX Stomp","isolated":true,` +
+					`"blocks":{"A":{"id":"A","category":"amp"}}}`
+
+				s.Require().Error(measured.Packed(brokenW{}, strings.NewReader(lib)))
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestPackedRefusesWhatItCouldNotRead is why packing lives beside reading.
 //
-// A file the reader cannot take is one the writer will not produce, so a bad
-// library is refused where somebody can still fix it rather than at the next
-// build.
-func (s *EmbedPublicTestSuite) TestPackedRefusesWhatItCouldNotRead() {
-	var packed bytes.Buffer
-
-	s.Require().ErrorContains(
-		measured.Packed(&packed, strings.NewReader("{")),
-		"decoding the measurements")
-	s.Require().Empty(packed.Bytes())
-}
-
-// TestPackedReportsAReadFailure covers the reader itself failing.
-func (s *EmbedPublicTestSuite) TestPackedReportsAReadFailure() {
-	var packed bytes.Buffer
-
-	s.Require().ErrorContains(
-		measured.Packed(&packed, broken{}), "reading the measurements")
-}
-
-// TestPackedReportsAWriteFailure covers the writer failing.
-func (s *EmbedPublicTestSuite) TestPackedReportsAWriteFailure() {
-	lib := `{"device":"HX Stomp","isolated":true,` +
-		`"blocks":{"A":{"id":"A","category":"amp"}}}`
-
-	s.Require().Error(measured.Packed(brokenW{}, strings.NewReader(lib)))
-}
 
 // TestUnpackRefusesWhatItCannotUse covers the two ways a packed library is
 // no good.

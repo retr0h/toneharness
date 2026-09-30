@@ -72,51 +72,87 @@ func tone(
 	return out
 }
 
-// TestHearMeasuresWhatCameBack covers the ordinary case.
-func (s *MeasuringPublicTestSuite) TestHearMeasuresWhatCameBack() {
-	back := tone(1, 0.5)
+// TestHear covers Hear, which plays a signal through the hardware and reports
+// what came back.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasuringPublicTestSuite) TestHear() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "hear measures what came back",
+			then: func() {
+				back := tone(1, 0.5)
 
-	read, got, err := sdk.Hear(context.Background(), bench{back: back}, back)
+				read, got, err := sdk.Hear(context.Background(), bench{back: back}, back)
 
-	s.Require().NoError(err)
-	s.Require().Equal(back, got, "the samples travel with the reading")
-	s.Require().Positive(read.Centroid)
-	s.Require().InDelta(1, read.Low+read.Mid+read.High, 0.001,
-		"the bands are shares of one whole")
-}
+				s.Require().NoError(err)
+				s.Require().Equal(back, got, "the samples travel with the reading")
+				s.Require().Positive(read.Centroid)
+				s.Require().InDelta(1, read.Low+read.Mid+read.High, 0.001,
+					"the bands are shares of one whole")
+			},
+		},
+		{
+			name: "hear reports hardware that would not answer",
+			then: func() {
+				_, _, err := sdk.Hear(context.Background(),
+					bench{err: errors.New("stopped answering")}, tone(1, 0.5))
 
-// TestHearReportsHardwareThatWouldNotAnswer covers the bench failing.
-func (s *MeasuringPublicTestSuite) TestHearReportsHardwareThatWouldNotAnswer() {
-	_, _, err := sdk.Hear(context.Background(),
-		bench{err: errors.New("stopped answering")}, tone(1, 0.5))
-
-	s.Require().ErrorContains(err, "through a bench")
+				s.Require().ErrorContains(err, "through a bench")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestFingerprintMeasuresTheAnswerNotTheQuestion is a bug worth a test.
 //
-// The level of the signal sent is a property of the file on disk and is the
-// same for every block. The level of what came back is the one thing a volume
-// control moves, and measuring the wrong one reports every block as equally
-// loud.
-func (s *MeasuringPublicTestSuite) TestFingerprintMeasuresTheAnswerNotTheQuestion() {
-	sent := tone(1, 0.5)
-	quieter := tone(1, 0.05)
+// TestFingerprint covers Fingerprint, which measures whatever is in front of
+// the device, at its own.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasuringPublicTestSuite) TestFingerprint() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// same for every block. The level of what came back is the one thing a volume
+			// control moves, and measuring the wrong one reports every block as equally
+			// loud.
+			name: "fingerprint measures the answer not the question",
+			then: func() {
+				sent := tone(1, 0.5)
+				quieter := tone(1, 0.05)
 
-	got, err := sdk.Fingerprint(context.Background(), bench{back: quieter}, sent)
+				got, err := sdk.Fingerprint(context.Background(), bench{back: quieter}, sent)
 
-	s.Require().NoError(err)
-	s.Require().InDelta(sdk.Level(quieter), got.Level, 0.001)
-	s.Require().Less(got.Level, sdk.Level(sent)-15,
-		"a tenth of the amplitude is twenty decibels down")
-}
+				s.Require().NoError(err)
+				s.Require().InDelta(sdk.Level(quieter), got.Level, 0.001)
+				s.Require().Less(got.Level, sdk.Level(sent)-15,
+					"a tenth of the amplitude is twenty decibels down")
+			},
+		},
+		{
+			name: "fingerprint reports hardware that would not answer",
+			then: func() {
+				_, err := sdk.Fingerprint(context.Background(),
+					bench{err: errors.New("stopped answering")}, tone(1, 0.5))
 
-// TestFingerprintReportsHardwareThatWouldNotAnswer covers the bench failing.
-func (s *MeasuringPublicTestSuite) TestFingerprintReportsHardwareThatWouldNotAnswer() {
-	_, err := sdk.Fingerprint(context.Background(),
-		bench{err: errors.New("stopped answering")}, tone(1, 0.5))
-
-	s.Require().Error(err)
+				s.Require().Error(err)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestLevelIsLoudness covers the figure a record does not carry.
@@ -150,53 +186,72 @@ func (s *MeasuringPublicTestSuite) TestLevelIsLoudness() {
 
 // TestFiguresCarriesWhatCanBeAbsent covers transient and decay.
 //
-// A transient needs a note starting and a decay needs one ending, so a
-// reading can hold neither. Zero would be an answer; absent is the truth.
-func (s *MeasuringPublicTestSuite) TestFiguresCarriesWhatCanBeAbsent() {
-	s.Run("present", func() {
-		got := sdk.Figures(audio.Profile{
-			Transient: audio.Reading{Value: 0.75, Known: true},
-			Decay:     audio.Reading{Value: 1.5, Known: true},
-		}, -20)
+// TestFigures covers Figures, which turns a reading into the shape a measured
+// library holds.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasuringPublicTestSuite) TestFigures() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// reading can hold neither. Zero would be an answer; absent is the truth.
+			name: "figures carries what can be absent",
+			then: func() {
+				s.Run("present", func() {
+					got := sdk.Figures(audio.Profile{
+						Transient: audio.Reading{Value: 0.75, Known: true},
+						Decay:     audio.Reading{Value: 1.5, Known: true},
+					}, -20)
 
-		s.Require().NotNil(got.Transient)
-		s.Require().InDelta(0.75, *got.Transient, 0.001)
-		s.Require().NotNil(got.Decay)
-		s.Require().InDelta(1.5, *got.Decay, 0.001)
-	})
+					s.Require().NotNil(got.Transient)
+					s.Require().InDelta(0.75, *got.Transient, 0.001)
+					s.Require().NotNil(got.Decay)
+					s.Require().InDelta(1.5, *got.Decay, 0.001)
+				})
 
-	s.Run("absent", func() {
-		got := sdk.Figures(audio.Profile{}, -20)
+				s.Run("absent", func() {
+					got := sdk.Figures(audio.Profile{}, -20)
 
-		s.Require().Nil(got.Transient)
-		s.Require().Nil(got.Decay)
-	})
+					s.Require().Nil(got.Transient)
+					s.Require().Nil(got.Decay)
+				})
+			},
+		},
+		{
+			// percentage, so one of the two has to move and this is where.
+			name: "figures reports shares as percentages",
+			then: func() {
+				got := sdk.Figures(audio.Profile{
+					Low: 0.93, Mid: 0.07, High: 0.0001, Centroid: 138,
+					Harmonics: audio.Spread{Low: 0.1, Mid: 0.2, High: 0.3},
+					EvenOdd:   audio.Spread{Low: -0.6, Mid: 0.3, High: 0.9},
+				}, -22.5)
+
+				s.Require().InDelta(93, got.Low, 0.001)
+				s.Require().InDelta(7, got.Mid, 0.001)
+				s.Require().InDelta(138, got.Centroid, 0.001)
+				s.Require().InDelta(-22.5, got.Level, 0.001)
+				// Measuring answers all three, so each is set rather than left absent.
+				s.Require().NotNil(got.Harmonics)
+				s.Require().NotNil(got.Lean)
+				s.Require().NotNil(got.Dynamics)
+
+				s.Require().InDelta(20, *got.Harmonics, 0.001,
+					"averaged across the three bands, because a block is one sound")
+				s.Require().InDelta(0.2, *got.Lean, 0.001)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestFiguresReportsSharesAsPercentages covers the conversion.
 //
-// A reading carries them from zero to one and every other number here is a
-// percentage, so one of the two has to move and this is where.
-func (s *MeasuringPublicTestSuite) TestFiguresReportsSharesAsPercentages() {
-	got := sdk.Figures(audio.Profile{
-		Low: 0.93, Mid: 0.07, High: 0.0001, Centroid: 138,
-		Harmonics: audio.Spread{Low: 0.1, Mid: 0.2, High: 0.3},
-		EvenOdd:   audio.Spread{Low: -0.6, Mid: 0.3, High: 0.9},
-	}, -22.5)
-
-	s.Require().InDelta(93, got.Low, 0.001)
-	s.Require().InDelta(7, got.Mid, 0.001)
-	s.Require().InDelta(138, got.Centroid, 0.001)
-	s.Require().InDelta(-22.5, got.Level, 0.001)
-	// Measuring answers all three, so each is set rather than left absent.
-	s.Require().NotNil(got.Harmonics)
-	s.Require().NotNil(got.Lean)
-	s.Require().NotNil(got.Dynamics)
-
-	s.Require().InDelta(20, *got.Harmonics, 0.001,
-		"averaged across the three bands, because a block is one sound")
-	s.Require().InDelta(0.2, *got.Lean, 0.001)
-}
 
 func TestMeasuringPublicTestSuite(
 	t *testing.T,

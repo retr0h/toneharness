@@ -112,184 +112,241 @@ func (s *ReachPublicTestSuite) wide() []audio.Genre {
 	}}
 }
 
-// TestItReadsTheChainRatherThanTheCommittedSweeps is the whole design.
-func (s *ReachPublicTestSuite) TestItReadsTheChainRatherThanTheCommittedSweeps() {
-	s.genre.EXPECT().
-		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
-	s.built()
+// TestReachSaysWhetherAChainCanGetThere covers the readings it works from, and every target it cannot answer.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "it reads the chain rather than the committed sweeps",
+			then: func() {
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+				s.built()
 
-	w := buffer()
+				w := buffer()
 
-	s.Require().NoError(Reach(context.Background(), w, s.opts()))
+				s.Require().NoError(Reach(context.Background(), w, s.opts()))
 
-	said := w.String()
-	s.Require().Contains(said, "dials through")
-	s.Require().Contains(said, "the loop wanders")
-	s.Require().Contains(said, "TOGETHER")
+				said := w.String()
+				s.Require().Contains(said, "dials through")
+				s.Require().Contains(said, "the loop wanders")
+				s.Require().Contains(said, "TOGETHER")
+			},
+		},
+		{
+			// slope is put back, so asking the question costs readings and changes nothing.
+			name: "nothing is applied",
+			then: func() {
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+				s.pedal.EXPECT().
+					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
+						Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true,
+					}}}}, nil)
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+				s.pedal.EXPECT().
+					Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+				turned := map[sdk.Address]int{}
+
+				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, a sdk.Address, _ float32) error {
+						turned[a]++
+
+						return nil
+					}).AnyTimes()
+
+				s.Require().NoError(Reach(context.Background(), buffer(), s.opts()))
+				s.Require().NotEmpty(turned)
+
+				// Two apiece and no more: moved to read a slope, moved back. A third would
+				// be a solved step being applied, which is the tuning run this exists to
+				// decide whether to spend.
+				for a, n := range turned {
+					s.Require().Equal(2, n, "%v was moved %d times", a, n)
+				}
+			},
+		},
+		{
+			// afternoon.
+			name: "an axis nothing can close is the headline",
+			then: func() {
+				// A target far outside anything a chain of zero slopes can move to.
+				s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
+					Return([]audio.Genre{{
+						Name: "punk", Slug: "punk",
+						Across: audio.Across{
+							Tracks:   12,
+							Centroid: audio.Spread{Low: 900000, Mid: 1000000, High: 1100000},
+						},
+					}}, nil)
+				s.built()
+
+				w := buffer()
+
+				err := Reach(context.Background(), w, s.opts())
+				if err != nil {
+					// A chain whose every slope against the target is zero is refused by
+					// the solve rather than reported, which is its own honest answer.
+					s.Require().ErrorIs(err, solve.ErrNoKnobs)
+
+					return
+				}
+
+				s.Require().Contains(w.String(), "OUT OF REACH")
+				s.Require().Contains(w.String(), "Change the chain, not the knobs")
+			},
+		},
+		{
+			name: "no genre is no target",
+			then: func() {
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+
+				opts := s.opts()
+				opts.Genre = "skiffle"
+
+				s.Require().ErrorIs(
+					Reach(context.Background(), buffer(), opts), ErrNoTarget)
+			},
+		},
+		{
+			name: "a genre that measures as nothing",
+			then: func() {
+				s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
+					Return([]audio.Genre{{Name: "punk", Slug: "punk"}}, nil)
+				s.built()
+
+				s.Require().ErrorIs(
+					Reach(context.Background(), buffer(), s.opts()), ErrNoTarget)
+			},
+		},
+		{
+			// and `just generate` already writes those figures into the binary.
+			name: "the shipped figures answer when nobody names a corpus",
+			then: func() {
+				s.built()
+
+				opts := s.opts()
+				opts.Corpus = ""
+
+				// No MeasuredGenres expectation: naming no tree must not read one.
+				s.Require().NoError(Reach(context.Background(), buffer(), opts))
+			},
+		},
+		{
+			name: "a genre nothing shipped measures",
+			then: func() {
+				opts := s.opts()
+				opts.Corpus = ""
+				opts.Genre = "skiffle"
+
+				s.Require().ErrorIs(
+					Reach(context.Background(), buffer(), opts), ErrNoTarget)
+			},
+		},
+		{
+			name: "a rig that will not build",
+			then: func() {
+				wanted := errors.New("no such rig")
+
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+				s.pedal.EXPECT().
+					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(sdk.Made{}, wanted)
+
+				s.Require().ErrorIs(
+					Reach(context.Background(), buffer(), s.opts()), wanted)
+			},
+		},
+		{
+			name: "a chain with no dial",
+			then: func() {
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+				s.pedal.EXPECT().
+					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
+						Model: catalog.ModelID("HD2_NotAModel"), Pos: 0,
+					}}}}, nil)
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+
+				s.Require().ErrorIs(
+					Reach(context.Background(), buffer(), s.opts()), solve.ErrNoKnobs)
+			},
+		},
+		{
+			name: "a reference that is not there",
+			then: func() {
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+				s.built()
+
+				opts := s.opts()
+				opts.Dry = filepath.Join(s.T().TempDir(), "nothing.wav")
+
+				s.Require().Error(Reach(context.Background(), buffer(), opts))
+			},
+		},
+		{
+			name: "the corpus will not read",
+			then: func() {
+				wanted := errors.New("no such corpus")
+
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(nil, wanted)
+
+				s.Require().ErrorIs(
+					Reach(context.Background(), buffer(), s.opts()), wanted)
+			},
+		},
+		{
+			// describes the recording rather than the chain, so what comes back is the
+			// wrong instrument rather than the wrong settings. Refused before a reading is
+			// taken.
+			name: "reach refuses a reference for the other instrument",
+			then: func() {
+				s.built()
+				s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
+					Return(s.wide(), nil).AnyTimes()
+
+				// The same recording under a name that says guitar, because a reference's
+				// instrument is read off its filename: what is in the file is nobody's to
+				// know and a path is what somebody typed.
+				body, err := os.ReadFile(s.dry)
+				s.Require().NoError(err)
+
+				wrong := filepath.Join(s.T().TempDir(), "guitar-di.wav")
+				s.Require().NoError(os.WriteFile(wrong, body, 0o600))
+
+				opts := s.opts()
+				opts.Dry = wrong
+
+				s.Require().ErrorIs(
+					Reach(context.Background(), buffer(), opts), ErrWrongInstrument)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
+		})
+	}
 }
 
 // TestNothingIsApplied is what separates this from a tuning pass.
 //
-// The chain is left where the compiler put it. Every control moved to read its
-// slope is put back, so asking the question costs readings and changes nothing.
-func (s *ReachPublicTestSuite) TestNothingIsApplied() {
-	s.genre.EXPECT().
-		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
-	s.pedal.EXPECT().
-		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
-			Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true,
-		}}}}, nil)
-	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
-	s.pedal.EXPECT().
-		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-
-	turned := map[sdk.Address]int{}
-
-	s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, a sdk.Address, _ float32) error {
-			turned[a]++
-
-			return nil
-		}).AnyTimes()
-
-	s.Require().NoError(Reach(context.Background(), buffer(), s.opts()))
-	s.Require().NotEmpty(turned)
-
-	// Two apiece and no more: moved to read a slope, moved back. A third would
-	// be a solved step being applied, which is the tuning run this exists to
-	// decide whether to spend.
-	for a, n := range turned {
-		s.Require().Equal(2, n, "%v was moved %d times", a, n)
-	}
-}
-
-// TestAnAxisNothingCanCloseIsTheHeadline covers the answer that saves the
-// afternoon.
-func (s *ReachPublicTestSuite) TestAnAxisNothingCanCloseIsTheHeadline() {
-	// A target far outside anything a chain of zero slopes can move to.
-	s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
-		Return([]audio.Genre{{
-			Name: "punk", Slug: "punk",
-			Across: audio.Across{
-				Tracks:   12,
-				Centroid: audio.Spread{Low: 900000, Mid: 1000000, High: 1100000},
-			},
-		}}, nil)
-	s.built()
-
-	w := buffer()
-
-	err := Reach(context.Background(), w, s.opts())
-	if err != nil {
-		// A chain whose every slope against the target is zero is refused by
-		// the solve rather than reported, which is its own honest answer.
-		s.Require().ErrorIs(err, solve.ErrNoKnobs)
-
-		return
-	}
-
-	s.Require().Contains(w.String(), "OUT OF REACH")
-	s.Require().Contains(w.String(), "Change the chain, not the knobs")
-}
-
-// TestNoGenreIsNoTarget covers a request aiming at nothing.
-func (s *ReachPublicTestSuite) TestNoGenreIsNoTarget() {
-	s.genre.EXPECT().
-		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
-
-	opts := s.opts()
-	opts.Genre = "skiffle"
-
-	s.Require().ErrorIs(
-		Reach(context.Background(), buffer(), opts), ErrNoTarget)
-}
-
-// TestAGenreThatMeasuresAsNothing covers a tag with no figures behind it.
-func (s *ReachPublicTestSuite) TestAGenreThatMeasuresAsNothing() {
-	s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
-		Return([]audio.Genre{{Name: "punk", Slug: "punk"}}, nil)
-	s.built()
-
-	s.Require().ErrorIs(
-		Reach(context.Background(), buffer(), s.opts()), ErrNoTarget)
-}
 
 // TestTheShippedFiguresAnswerWhenNobodyNamesACorpus covers the default.
 //
-// Measuring the corpus reads fifteen bass stems and takes most of a minute,
-// and `just generate` already writes those figures into the binary.
-func (s *ReachPublicTestSuite) TestTheShippedFiguresAnswerWhenNobodyNamesACorpus() {
-	s.built()
-
-	opts := s.opts()
-	opts.Corpus = ""
-
-	// No MeasuredGenres expectation: naming no tree must not read one.
-	s.Require().NoError(Reach(context.Background(), buffer(), opts))
-}
-
-// TestAGenreNothingShippedMeasures covers a word the binary does not carry.
-func (s *ReachPublicTestSuite) TestAGenreNothingShippedMeasures() {
-	opts := s.opts()
-	opts.Corpus = ""
-	opts.Genre = "skiffle"
-
-	s.Require().ErrorIs(
-		Reach(context.Background(), buffer(), opts), ErrNoTarget)
-}
-
-// TestARigThatWillNotBuild covers gear the catalog cannot realise.
-func (s *ReachPublicTestSuite) TestARigThatWillNotBuild() {
-	wanted := errors.New("no such rig")
-
-	s.genre.EXPECT().
-		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
-	s.pedal.EXPECT().
-		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(sdk.Made{}, wanted)
-
-	s.Require().ErrorIs(
-		Reach(context.Background(), buffer(), s.opts()), wanted)
-}
-
-// TestAChainWithNoDial covers gear the solver cannot touch.
-func (s *ReachPublicTestSuite) TestAChainWithNoDial() {
-	s.genre.EXPECT().
-		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
-	s.pedal.EXPECT().
-		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
-			Model: catalog.ModelID("HD2_NotAModel"), Pos: 0,
-		}}}}, nil)
-	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
-
-	s.Require().ErrorIs(
-		Reach(context.Background(), buffer(), s.opts()), solve.ErrNoKnobs)
-}
-
-// TestAReferenceThatIsNotThere covers a missing signal.
-func (s *ReachPublicTestSuite) TestAReferenceThatIsNotThere() {
-	s.genre.EXPECT().
-		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
-	s.built()
-
-	opts := s.opts()
-	opts.Dry = filepath.Join(s.T().TempDir(), "nothing.wav")
-
-	s.Require().Error(Reach(context.Background(), buffer(), opts))
-}
-
-// TestTheCorpusWillNotRead covers a tree that is not there.
-func (s *ReachPublicTestSuite) TestTheCorpusWillNotRead() {
-	wanted := errors.New("no such corpus")
-
-	s.genre.EXPECT().
-		MeasuredGenres(gomock.Any(), gomock.Any()).Return(nil, wanted)
-
-	s.Require().ErrorIs(
-		Reach(context.Background(), buffer(), s.opts()), wanted)
-}
 
 // TestSpansOfCountsTravelEachWaySeparately covers a control near a stop.
 //
@@ -311,57 +368,79 @@ func (s *ReachPublicTestSuite) TestSpansOfCountsTravelEachWaySeparately() {
 	s.Require().InDelta(100, at.Swing, 0.001)
 }
 
-// TestTheHeadlineNamesEveryAxisTheJointSolveMisses covers the third verdict.
-func (s *ReachPublicTestSuite) TestTheHeadlineNamesEveryAxisTheJointSolveMisses() {
-	w := buffer()
+// TestVerdictNamesWhatDecidesIt covers which axis a refusal is about, and the chain that reaches everything.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ReachPublicTestSuite) TestVerdictNamesWhatDecidesIt() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "the headline names every axis the joint solve misses",
+			then: func() {
+				w := buffer()
 
-	verdict(w, []solve.Verdict{
-		{Figure: audio.KeyHigh, Gap: 390, Shown: true, Within: true, Together: 45.2},
-		{Figure: audio.KeyLow, Gap: 9, Shown: true, Within: true, Together: 0.9},
-	}, solve.Result{})
+				verdict(w, []solve.Verdict{
+					{Figure: audio.KeyHigh, Gap: 390, Shown: true, Within: true, Together: 45.2},
+					{Figure: audio.KeyLow, Gap: 9, Shown: true, Within: true, Together: 0.9},
+				}, solve.Result{})
 
-	said := w.String()
-	s.Require().Contains(said, "no one set of positions reaches them")
-	s.Require().Contains(said, "high by 45.2")
-	s.Require().NotContains(said, "low by")
-}
+				said := w.String()
+				s.Require().Contains(said, "no one set of positions reaches them")
+				s.Require().Contains(said, "high by 45.2")
+				s.Require().NotContains(said, "low by")
+			},
+		},
+		{
+			name: "a chain with no slope on any axis says so",
+			then: func() {
+				w := buffer()
 
-// TestAChainWithNoSlopeOnAnyAxisSaysSo covers the sentence with a hole in it.
-func (s *ReachPublicTestSuite) TestAChainWithNoSlopeOnAnyAxisSaysSo() {
-	w := buffer()
+				verdict(w, []solve.Verdict{
+					{Figure: audio.KeyHigh, Gap: 390, Shown: true, Within: true},
+				}, solve.Result{})
 
-	verdict(w, []solve.Verdict{
-		{Figure: audio.KeyHigh, Gap: 390, Shown: true, Within: true},
-	}, solve.Result{})
+				s.Require().Contains(w.String(), "no dial in this")
+				s.Require().NotContains(w.String(), "misses .")
+			},
+		},
+		{
+			name: "a target naming no axis this chain reads",
+			then: func() {
+				w := buffer()
 
-	s.Require().Contains(w.String(), "no dial in this")
-	s.Require().NotContains(w.String(), "misses .")
-}
+				verdict(w, nil, solve.Result{})
 
-// TestATargetNamingNoAxisThisChainReads covers an empty answer.
-func (s *ReachPublicTestSuite) TestATargetNamingNoAxisThisChainReads() {
-	w := buffer()
+				s.Require().Contains(w.String(), "Nothing to aim at")
+			},
+		},
+		{
+			name: "one set of positions reaching everything",
+			then: func() {
+				w := buffer()
 
-	verdict(w, nil, solve.Result{})
+				verdict(w, []solve.Verdict{
+					{Figure: audio.KeyHigh, Gap: 3, Shown: true, Within: true, Together: 0.4},
+				}, solve.Result{Arrived: true})
 
-	s.Require().Contains(w.String(), "Nothing to aim at")
-}
+				said := w.String()
+				s.Require().Contains(said, "reaches all 1 axes at once")
+				s.Require().Contains(said, "several")
+				// Contains rather than an Index comparison: strings.Index answers -1 for
+				// a string that is not there, and -1 is less than any length, so the
+				// assertion it replaces held whatever the verdict said.
+				s.Require().Contains(said, "Worth running")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
 
-// TestOneSetOfPositionsReachingEverything covers the happy verdict.
-func (s *ReachPublicTestSuite) TestOneSetOfPositionsReachingEverything() {
-	w := buffer()
-
-	verdict(w, []solve.Verdict{
-		{Figure: audio.KeyHigh, Gap: 3, Shown: true, Within: true, Together: 0.4},
-	}, solve.Result{Arrived: true})
-
-	said := w.String()
-	s.Require().Contains(said, "reaches all 1 axes at once")
-	s.Require().Contains(said, "several")
-	// Contains rather than an Index comparison: strings.Index answers -1 for
-	// a string that is not there, and -1 is less than any length, so the
-	// assertion it replaces held whatever the verdict said.
-	s.Require().Contains(said, "Worth running")
+			tt.then()
+		})
+	}
 }
 
 // TestTheTableSaysWhatItReadsAndWhatItWants covers the columns that matter.
@@ -389,30 +468,6 @@ func (s *ReachPublicTestSuite) TestTheTableSaysWhatItReadsAndWhatItWants() {
 
 // TestReachRefusesAReferenceForTheOtherInstrument covers the guard.
 //
-// Every figure measured by pushing a guitar recording through a bass rig
-// describes the recording rather than the chain, so what comes back is the
-// wrong instrument rather than the wrong settings. Refused before a reading is
-// taken.
-func (s *ReachPublicTestSuite) TestReachRefusesAReferenceForTheOtherInstrument() {
-	s.built()
-	s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
-		Return(s.wide(), nil).AnyTimes()
-
-	// The same recording under a name that says guitar, because a reference's
-	// instrument is read off its filename: what is in the file is nobody's to
-	// know and a path is what somebody typed.
-	body, err := os.ReadFile(s.dry)
-	s.Require().NoError(err)
-
-	wrong := filepath.Join(s.T().TempDir(), "guitar-di.wav")
-	s.Require().NoError(os.WriteFile(wrong, body, 0o600))
-
-	opts := s.opts()
-	opts.Dry = wrong
-
-	s.Require().ErrorIs(
-		Reach(context.Background(), buffer(), opts), ErrWrongInstrument)
-}
 
 func TestReachPublicTestSuite(
 	t *testing.T,

@@ -41,72 +41,95 @@ func (s *NudgesPublicTestSuite) steps(
 	return &of
 }
 
-// TestWhatSomebodySaidBecomesFiguresToMove is the base case.
-func (s *NudgesPublicTestSuite) TestWhatSomebodySaidBecomesFiguresToMove() {
-	got, err := sdk.Nudges([]tonespec.Nudge{{Word: "darker"}})
+// TestNudges covers Nudges, which turns what somebody said into figures to
+// aim differently at.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *NudgesPublicTestSuite) TestNudges() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "what somebody said becomes figures to move",
+			then: func() {
+				got, err := sdk.Nudges([]tonespec.Nudge{{Word: "darker"}})
 
-	s.Require().NoError(err)
-	s.Require().Len(got, 1)
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
 
-	s.Require().Equal("darker", got[0].Term, "the word as it was said")
-	s.Require().Equal(audio.KeyCentroid, got[0].Key)
-	s.Require().False(got[0].Up)
-	s.Require().InDelta(1.0, got[0].Steps, 0.001, "one is what a person means")
-}
+				s.Require().Equal("darker", got[0].Term, "the word as it was said")
+				s.Require().Equal(audio.KeyCentroid, got[0].Key)
+				s.Require().False(got[0].Up)
+				s.Require().InDelta(1.0, got[0].Steps, 0.001, "one is what a person means")
+			},
+		},
+		{
+			name: "steps carry through",
+			then: func() {
+				got, err := sdk.Nudges([]tonespec.Nudge{
+					{Word: "darker", Steps: s.steps(2.5)},
+				})
 
-// TestStepsCarryThrough covers "much darker".
-func (s *NudgesPublicTestSuite) TestStepsCarryThrough() {
-	got, err := sdk.Nudges([]tonespec.Nudge{
-		{Word: "darker", Steps: s.steps(2.5)},
-	})
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+				s.Require().InDelta(2.5, got[0].Steps, 0.001)
+			},
+		},
+		{
+			name: "one word may move two figures",
+			then: func() {
+				got, err := sdk.Nudges([]tonespec.Nudge{
+					{Word: "punchy", Steps: s.steps(2)},
+				})
 
-	s.Require().NoError(err)
-	s.Require().Len(got, 1)
-	s.Require().InDelta(2.5, got[0].Steps, 0.001)
-}
+				s.Require().NoError(err)
+				s.Require().Len(got, 2)
 
-// TestOneWordMayMoveTwoFigures covers a word on two axes, both scaled.
-func (s *NudgesPublicTestSuite) TestOneWordMayMoveTwoFigures() {
-	got, err := sdk.Nudges([]tonespec.Nudge{
-		{Word: "punchy", Steps: s.steps(2)},
-	})
+				for _, n := range got {
+					s.Require().Equal("punchy", n.Term)
+					s.Require().InDelta(2.0, n.Steps, 0.001)
+				}
+			},
+		},
+		{
+			// said has nothing to move from.
+			name: "nothing said moves nothing",
+			then: func() {
+				got, err := sdk.Nudges(nil)
 
-	s.Require().NoError(err)
-	s.Require().Len(got, 2)
+				s.Require().NoError(err)
+				s.Require().Empty(got)
+			},
+		},
+		{
+			// reports a tone nobody asked for and nothing says the instruction was
+			// ignored. So every bad word is named, not only the first.
+			name: "every word it cannot use is reported",
+			then: func() {
+				_, err := sdk.Nudges([]tonespec.Nudge{
+					{Word: "darker"},
+					{Word: "chunky"},
+					{Word: "quiet-strings"},
+				})
 
-	for _, n := range got {
-		s.Require().Equal("punchy", n.Term)
-		s.Require().InDelta(2.0, n.Steps, 0.001)
+				s.Require().Error(err)
+				s.Require().ErrorContains(err, "chunky")
+				s.Require().ErrorContains(err, "quiet-strings")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 
 // TestNothingSaidMovesNothing covers a first answer.
 //
-// A nudge moves from wherever the last answer landed, and a run with nothing
-// said has nothing to move from.
-func (s *NudgesPublicTestSuite) TestNothingSaidMovesNothing() {
-	got, err := sdk.Nudges(nil)
-
-	s.Require().NoError(err)
-	s.Require().Empty(got)
-}
 
 // TestEveryWordItCannotUseIsReported covers the failure that matters most.
 //
-// A nudge dropped in silence is the worst outcome available: the run then
-// reports a tone nobody asked for and nothing says the instruction was
-// ignored. So every bad word is named, not only the first.
-func (s *NudgesPublicTestSuite) TestEveryWordItCannotUseIsReported() {
-	_, err := sdk.Nudges([]tonespec.Nudge{
-		{Word: "darker"},
-		{Word: "chunky"},
-		{Word: "quiet-strings"},
-	})
-
-	s.Require().Error(err)
-	s.Require().ErrorContains(err, "chunky")
-	s.Require().ErrorContains(err, "quiet-strings")
-}
 
 func TestNudgesPublicTestSuite(
 	t *testing.T,

@@ -78,150 +78,168 @@ func (s *SectionsPublicTestSuite) snapshot(
 	return name, blocks
 }
 
-// TestSections writes what each part of a song plays.
+// TestSections covers Sections, which writes a rig's song sections into
+// the preset's snapshots.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *SectionsPublicTestSuite) TestSections() {
-	tests := []struct {
-		name     string
-		sections *[]rig.Section
-		snaps    []rig.Snapshot
-		blocks   []plan.Block
-		existing string
-		want     map[string]map[string]map[string]bool
-		names    map[string]string
-		err      error
-		errText  string
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name:   "a rig with no sections",
-			blocks: sectionChain,
-			names:  map[string]string{"snapshot0": "SNAPSHOT 1"},
-		},
-		{
-			// A verse with the drive off and a chorus with it on. The amp
-			// and compressor are named by neither, so keep the chain's state.
-			name: "a verse and a chorus",
-			sections: &[]rig.Section{
-				{Name: "Verse", Bypass: roles("drive", "comp")},
-				{Name: "Chorus", Play: roles("drive")},
-			},
-			blocks: sectionChain,
-			names: map[string]string{
-				"snapshot0": "Verse", "snapshot1": "Chorus", "snapshot2": "SNAPSHOT 3",
-			},
-			want: map[string]map[string]map[string]bool{
-				"snapshot0": {"dsp0": {"block0": false, "block1": false, "block2": true}},
-				"snapshot1": {"dsp0": {"block0": true, "block1": true, "block2": true}},
-			},
-		},
-		{
-			// What a path records beside its blocks stays, and a block the
-			// chain no longer holds goes.
-			name:     "written over a snapshot that was already set up",
-			sections: &[]rig.Section{{Name: "Solo", Play: roles("drive")}},
-			blocks:   sectionChain,
-			existing: `{"dsp0": {"block7": true, "blockish": false, "split": true}}`,
-			names:    map[string]string{"snapshot0": "Solo"},
-			want: map[string]map[string]map[string]bool{
-				"snapshot0": {"dsp0": {
-					"block0": true, "block1": true, "block2": true,
-					"split": true, "blockish": false,
-				}},
-			},
-		},
-		{
-			name: "more sections than the device has snapshots",
-			sections: &[]rig.Section{
-				{Name: "Intro"}, {Name: "Verse"}, {Name: "Chorus"}, {Name: "Outro"},
-			},
-			blocks: sectionChain,
-			err:    compile.ErrTooManySections,
-		},
-		{
-			name:     "sections beside snapshots",
-			sections: &[]rig.Section{{Name: "Verse"}},
-			snaps:    []rig.Snapshot{{}},
-			blocks:   sectionChain,
-			err:      compile.ErrSectionsAndSnapshots,
-		},
-		{
-			// The chain's roles are listed, and a model the catalog does not
-			// carry has none to list.
-			name:     "a role the chain has no block for",
-			sections: &[]rig.Section{{Name: "Chorus", Bypass: roles("delay")}},
-			blocks: append([]plan.Block{{Model: "HD2_FromNewerFirmware", Pos: 3}},
-				sectionChain...),
-			err:     compile.ErrNoSuchValue,
-			errText: "sections[0].bypass: this device has no \"delay\"\n  it has: amp, comp, drive",
-		},
-		{
-			name: "a section that plays and bypasses the same role",
-			sections: &[]rig.Section{
-				{Name: "Chorus", Play: roles("drive", "amp"), Bypass: roles("drive")},
-			},
-			blocks:  sectionChain,
-			err:     compile.ErrSectionContradicts,
-			errText: "sections[0]",
-		},
-	}
+			name: "sections",
+			then: func() {
+				tests := []struct {
+					name     string
+					sections *[]rig.Section
+					snaps    []rig.Snapshot
+					blocks   []plan.Block
+					existing string
+					want     map[string]map[string]map[string]bool
+					names    map[string]string
+					err      error
+					errText  string
+				}{
+					{
+						name:   "a rig with no sections",
+						blocks: sectionChain,
+						names:  map[string]string{"snapshot0": "SNAPSHOT 1"},
+					},
+					{
+						// A verse with the drive off and a chorus with it on. The amp
+						// and compressor are named by neither, so keep the chain's state.
+						name: "a verse and a chorus",
+						sections: &[]rig.Section{
+							{Name: "Verse", Bypass: roles("drive", "comp")},
+							{Name: "Chorus", Play: roles("drive")},
+						},
+						blocks: sectionChain,
+						names: map[string]string{
+							"snapshot0": "Verse", "snapshot1": "Chorus", "snapshot2": "SNAPSHOT 3",
+						},
+						want: map[string]map[string]map[string]bool{
+							"snapshot0": {"dsp0": {"block0": false, "block1": false, "block2": true}},
+							"snapshot1": {"dsp0": {"block0": true, "block1": true, "block2": true}},
+						},
+					},
+					{
+						// What a path records beside its blocks stays, and a block the
+						// chain no longer holds goes.
+						name:     "written over a snapshot that was already set up",
+						sections: &[]rig.Section{{Name: "Solo", Play: roles("drive")}},
+						blocks:   sectionChain,
+						existing: `{"dsp0": {"block7": true, "blockish": false, "split": true}}`,
+						names:    map[string]string{"snapshot0": "Solo"},
+						want: map[string]map[string]map[string]bool{
+							"snapshot0": {"dsp0": {
+								"block0": true, "block1": true, "block2": true,
+								"split": true, "blockish": false,
+							}},
+						},
+					},
+					{
+						name: "more sections than the device has snapshots",
+						sections: &[]rig.Section{
+							{Name: "Intro"}, {Name: "Verse"}, {Name: "Chorus"}, {Name: "Outro"},
+						},
+						blocks: sectionChain,
+						err:    compile.ErrTooManySections,
+					},
+					{
+						name:     "sections beside snapshots",
+						sections: &[]rig.Section{{Name: "Verse"}},
+						snaps:    []rig.Snapshot{{}},
+						blocks:   sectionChain,
+						err:      compile.ErrSectionsAndSnapshots,
+					},
+					{
+						// The chain's roles are listed, and a model the catalog does not
+						// carry has none to list.
+						name:     "a role the chain has no block for",
+						sections: &[]rig.Section{{Name: "Chorus", Bypass: roles("delay")}},
+						blocks: append([]plan.Block{{Model: "HD2_FromNewerFirmware", Pos: 3}},
+							sectionChain...),
+						err:     compile.ErrNoSuchValue,
+						errText: "sections[0].bypass: this device has no \"delay\"\n  it has: amp, comp, drive",
+					},
+					{
+						name: "a section that plays and bypasses the same role",
+						sections: &[]rig.Section{
+							{Name: "Chorus", Play: roles("drive", "amp"), Bypass: roles("drive")},
+						},
+						blocks:  sectionChain,
+						err:     compile.ErrSectionContradicts,
+						errText: "sections[0]",
+					},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						doc, err := preset.Blank()
+						s.Require().NoError(err)
+
+						if tt.existing != "" {
+							doc.Data.Tone["snapshot0"]["blocks"] = json.RawMessage(tt.existing)
+						}
+
+						spec := rig.Spec{Sections: tt.sections}
+						made := plan.Plan{Snapshots: tt.snaps}
+
+						err = compile.Sections(doc, spec, made, tt.blocks, s.cat)
+
+						if tt.err != nil {
+							s.Require().ErrorIs(err, tt.err)
+							s.Require().Contains(err.Error(), tt.errText)
+
+							name, _ := s.snapshot(doc, "snapshot0")
+							s.Require().Equal("SNAPSHOT 1", name, "a refused rig leaves the preset alone")
+
+							return
+						}
+
+						s.Require().NoError(err)
+
+						for key, want := range tt.names {
+							name, _ := s.snapshot(doc, key)
+							s.Require().Equal(want, name)
+						}
+
+						for key, want := range tt.want {
+							_, blocks := s.snapshot(doc, key)
+							s.Require().Equal(want, blocks)
+						}
+					})
+				}
+			},
+		},
+		{
+			// catalog chose, rather than one a test handed over.
+			name: "sections refuses a role the gear cannot play",
+			then: func() {
+				doc, err := preset.Blank()
+				s.Require().NoError(err)
+
+				spec := rig.Spec{
+					Schema:     rig.SchemaName,
+					ID:         "sections",
+					Instrument: rig.InstrumentBass,
+					Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
+					Sections:   &[]rig.Section{{Name: "Chorus", Play: roles("drive")}},
+				}
+
+				made := realised(&s.Suite, spec, s.cat)
+
+				s.Require().ErrorIs(
+					compile.Sections(doc, spec, made, made.Blocks, s.cat),
+					compile.ErrNoSuchValue)
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			doc, err := preset.Blank()
-			s.Require().NoError(err)
-
-			if tt.existing != "" {
-				doc.Data.Tone["snapshot0"]["blocks"] = json.RawMessage(tt.existing)
-			}
-
-			spec := rig.Spec{Sections: tt.sections}
-			made := plan.Plan{Snapshots: tt.snaps}
-
-			err = compile.Sections(doc, spec, made, tt.blocks, s.cat)
-
-			if tt.err != nil {
-				s.Require().ErrorIs(err, tt.err)
-				s.Require().Contains(err.Error(), tt.errText)
-
-				name, _ := s.snapshot(doc, "snapshot0")
-				s.Require().Equal("SNAPSHOT 1", name, "a refused rig leaves the preset alone")
-
-				return
-			}
-
-			s.Require().NoError(err)
-
-			for key, want := range tt.names {
-				name, _ := s.snapshot(doc, key)
-				s.Require().Equal(want, name)
-			}
-
-			for key, want := range tt.want {
-				_, blocks := s.snapshot(doc, key)
-				s.Require().Equal(want, blocks)
-			}
+			tt.then()
 		})
 	}
-}
-
-// TestSectionsRefusesARoleTheGearCannotPlay reaches sections over a chain the
-// catalog chose, rather than one a test handed over.
-func (s *SectionsPublicTestSuite) TestSectionsRefusesARoleTheGearCannotPlay() {
-	doc, err := preset.Blank()
-	s.Require().NoError(err)
-
-	spec := rig.Spec{
-		Schema:     rig.SchemaName,
-		ID:         "sections",
-		Instrument: rig.InstrumentBass,
-		Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
-		Sections:   &[]rig.Section{{Name: "Chorus", Play: roles("drive")}},
-	}
-
-	made := realised(&s.Suite, spec, s.cat)
-
-	s.Require().ErrorIs(
-		compile.Sections(doc, spec, made, made.Blocks, s.cat),
-		compile.ErrNoSuchValue)
 }
 
 func TestSectionsPublicTestSuite(
