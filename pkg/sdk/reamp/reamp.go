@@ -556,14 +556,26 @@ func (b *Bench) claim(
 	waiting := time.NewTimer(within)
 	defer waiting.Stop()
 
+	// A budget already spent decides it, rather than the select inside. Both of
+	// that one's cases are ready whenever the device hands itself over in the
+	// same instant the timer fires, and a select choosing between two ready
+	// cases chooses at random, so the same call answered differently on
+	// alternate runs. The budget was spent either way.
+	//
+	// One exit for both timer paths, because they say the same thing.
 	select {
-	case got := <-out:
-		return got.device, got.err
 	case <-waiting.C:
-		b.stuck.Store(true)
-
-		return nil, &UnclaimedError{Name: b.name, After: within}
+	default:
+		select {
+		case got := <-out:
+			return got.device, got.err
+		case <-waiting.C:
+		}
 	}
+
+	b.stuck.Store(true)
+
+	return nil, &UnclaimedError{Name: b.name, After: within}
 }
 
 // over is how long a reading may take before something is wrong.
