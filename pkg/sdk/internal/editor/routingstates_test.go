@@ -205,6 +205,25 @@ func (s *RoutingStatesTestSuite) TestAnEntryNamingAModelNobodyCarries() {
 	s.Require().Nil(out.Values)
 }
 
+// TestAModelCarryingFewerParametersThanTheDeviceSent does not panic.
+//
+// The count comes from the device's own entry and the names come from the
+// model the file states, which are two sources. A file this tool wrote keeps
+// them in step; a file somebody edited can name anything the catalog carries,
+// and a return block naming two parameters in a slot the device sent three
+// values for used to slice past the end of the list.
+func (s *RoutingStatesTestSuite) TestAModelCarryingFewerParametersThanTheDeviceSent() {
+	doc := s.preset0()
+	doc.Data.Tone[processorKey]["inputA"] = json.RawMessage(
+		`{"@model": "HD2_ReturnMono1", "Return": 0.5}`)
+
+	in := s.slot(RoutingStates(doc, s.cat, s.held), "inputA")
+
+	s.Require().NotNil(in.Values)
+	s.Require().Len(*in.Values, 2, "what the model names, not what the device sent")
+	s.Require().Equal(2, in.Named, "and the count the device is told matches")
+}
+
 // TestAModelNameThatWillNotRead is the same as naming none.
 func (s *RoutingStatesTestSuite) TestAModelNameThatWillNotRead() {
 	doc := s.preset0()
