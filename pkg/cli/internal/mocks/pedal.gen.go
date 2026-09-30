@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	sdk "github.com/retr0h/toneharness/pkg/sdk"
+	catalog "github.com/retr0h/toneharness/pkg/sdk/catalog"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -247,6 +248,45 @@ func (mr *MockReadsFilesMockRecorder) PresetFile(ctx, path any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresetFile", reflect.TypeOf((*MockReadsFiles)(nil).PresetFile), ctx, path)
 }
 
+// MockNames is a mock of Names interface.
+type MockNames struct {
+	ctrl     *gomock.Controller
+	recorder *MockNamesMockRecorder
+	isgomock struct{}
+}
+
+// MockNamesMockRecorder is the mock recorder for MockNames.
+type MockNamesMockRecorder struct {
+	mock *MockNames
+}
+
+// NewMockNames creates a new mock instance.
+func NewMockNames(ctrl *gomock.Controller) *MockNames {
+	mock := &MockNames{ctrl: ctrl}
+	mock.recorder = &MockNamesMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockNames) EXPECT() *MockNamesMockRecorder {
+	return m.recorder
+}
+
+// Catalog mocks base method.
+func (m *MockNames) Catalog(ctx context.Context) (*catalog.Catalog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Catalog", ctx)
+	ret0, _ := ret[0].(*catalog.Catalog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Catalog indicates an expected call of Catalog.
+func (mr *MockNamesMockRecorder) Catalog(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Catalog", reflect.TypeOf((*MockNames)(nil).Catalog), ctx)
+}
+
 // MockReads is a mock of Reads interface.
 type MockReads struct {
 	ctrl     *gomock.Controller
@@ -308,6 +348,21 @@ func NewMockLoader(ctrl *gomock.Controller) *MockLoader {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockLoader) EXPECT() *MockLoaderMockRecorder {
 	return m.recorder
+}
+
+// Catalog mocks base method.
+func (m *MockLoader) Catalog(ctx context.Context) (*catalog.Catalog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Catalog", ctx)
+	ret0, _ := ret[0].(*catalog.Catalog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Catalog indicates an expected call of Catalog.
+func (mr *MockLoaderMockRecorder) Catalog(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Catalog", reflect.TypeOf((*MockLoader)(nil).Catalog), ctx)
 }
 
 // Compile mocks base method.
@@ -376,6 +431,21 @@ func NewMockProber(ctrl *gomock.Controller) *MockProber {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockProber) EXPECT() *MockProberMockRecorder {
 	return m.recorder
+}
+
+// Catalog mocks base method.
+func (m *MockProber) Catalog(ctx context.Context) (*catalog.Catalog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Catalog", ctx)
+	ret0, _ := ret[0].(*catalog.Catalog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Catalog indicates an expected call of Catalog.
+func (mr *MockProberMockRecorder) Catalog(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Catalog", reflect.TypeOf((*MockProber)(nil).Catalog), ctx)
 }
 
 // Compile mocks base method.
@@ -473,6 +543,21 @@ func NewMockPedal(ctrl *gomock.Controller) *MockPedal {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockPedal) EXPECT() *MockPedalMockRecorder {
 	return m.recorder
+}
+
+// Catalog mocks base method.
+func (m *MockPedal) Catalog(ctx context.Context) (*catalog.Catalog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Catalog", ctx)
+	ret0, _ := ret[0].(*catalog.Catalog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Catalog indicates an expected call of Catalog.
+func (mr *MockPedalMockRecorder) Catalog(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Catalog", reflect.TypeOf((*MockPedal)(nil).Catalog), ctx)
 }
 
 // Choose mocks base method.

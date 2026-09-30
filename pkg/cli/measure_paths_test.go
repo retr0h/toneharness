@@ -34,6 +34,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/cli/internal/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 )
 
@@ -53,6 +54,13 @@ type MeasurePathsTestSuite struct {
 func (s *MeasurePathsTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.pedal = mocks.NewMockPedal(s.ctrl)
+	// Every measuring command asks the client which models the attached
+	// device has, rather than reading the built-in HX Stomp catalog, so that
+	// --catalog and --device reach them.
+	s.pedal.EXPECT().Catalog(gomock.Any()).
+		DoAndReturn(func(context.Context) (*catalog.Catalog, error) {
+			return catalog.BuiltIn()
+		}).AnyTimes()
 }
 
 // TestCompilingSaysWhichFileItCouldNotWrite covers the scratch directory

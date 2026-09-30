@@ -43,7 +43,9 @@ type InstrumentPublicTestSuite struct {
 // blocks is a catalog just big enough to say what each model is.
 type blocks map[catalog.ModelID]catalog.Block
 
-func (b blocks) Block(id catalog.ModelID) (catalog.Block, bool) {
+func (b blocks) Block(
+	id catalog.ModelID,
+) (catalog.Block, bool) {
 	blk, ok := b[id]
 
 	return blk, ok
@@ -60,7 +62,9 @@ func (s *InstrumentPublicTestSuite) cat() blocks {
 	}
 }
 
-func (s *InstrumentPublicTestSuite) chain(models ...catalog.ModelID) plan.Plan {
+func (s *InstrumentPublicTestSuite) chain(
+	models ...catalog.ModelID,
+) plan.Plan {
 	out := plan.Plan{}
 	for at, m := range models {
 		out.Blocks = append(out.Blocks, plan.Block{Model: m, Pos: at})
@@ -139,6 +143,8 @@ func (s *InstrumentPublicTestSuite) TestAmpAtIsTheFirstOne() {
 	}
 }
 
-func TestInstrumentPublicTestSuite(t *testing.T) {
+func TestInstrumentPublicTestSuite(
+	t *testing.T,
+) {
 	suite.Run(t, new(InstrumentPublicTestSuite))
 }

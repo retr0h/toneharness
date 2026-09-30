@@ -113,6 +113,8 @@ func (s *PreferPublicTestSuite) TestTheOrderSortsAWholeCollision() {
 	}
 }
 
-func TestPreferPublicTestSuite(t *testing.T) {
+func TestPreferPublicTestSuite(
+	t *testing.T,
+) {
 	suite.Run(t, new(PreferPublicTestSuite))
 }

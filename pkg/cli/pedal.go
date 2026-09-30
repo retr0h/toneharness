@@ -24,6 +24,7 @@ import (
 	"context"
 
 	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 //go:generate go tool go.uber.org/mock/mockgen -source=pedal.go -destination=internal/mocks/pedal.gen.go -package=mocks
@@ -83,17 +84,30 @@ type (
 		PresetFile(ctx context.Context, path string) (sdk.Reading, error)
 	}
 
+	// Names says which models exist, and for which device.
+	//
+	// Asked of the client rather than read from catalog.BuiltIn, because
+	// BuiltIn is the HX Stomp's and every measuring command advertises
+	// --catalog and --device. Read straight, those flags were accepted and
+	// reached nothing: an LT owner got the Stomp's models, the Stomp's DSP
+	// budget, and readings filed under a pedal they do not own.
+	Names interface {
+		Catalog(ctx context.Context) (*catalog.Catalog, error)
+	}
+
 	// Reads says what the device is playing.
 	Reads interface {
 		Current(ctx context.Context, as sdk.Format) (sdk.Reading, error)
 	}
 )
 
-// Loader is what measuring every block needs: build a chain and play it.
+// Loader is what measuring every block needs: build a chain, play it, and
+// know which models the attached device has.
 type Loader interface {
 	Compiles
 	ReadsFiles
 	Plays
+	Names
 }
 
 // Prober is what checking parameter names needs, which is a Loader that can

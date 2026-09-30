@@ -108,7 +108,7 @@ func Slopes(
 
 	_ = preset
 
-	cat, err := catalog.BuiltIn()
+	cat, err := opts.Client.Catalog(ctx)
 	if err != nil {
 		return err
 	}
@@ -162,18 +162,19 @@ func Slopes(
 		return err
 	}
 
-	return against(w, opts, made.Plan, knobs)
+	return against(w, opts, cat, made.Plan, knobs)
 }
 
 // against prints the live slopes beside the committed ones.
 func against(
 	w io.Writer,
 	opts SlopesOptions,
+	cat *catalog.Catalog,
 	made plan.Plan,
 	knobs []solve.Knob,
 ) error {
 	committed, err := committedSlopes(
-		made, opts.Sweeps, instrumentOf(opts.Dry), w)
+		made, cat, opts.Sweeps, instrumentOf(opts.Dry), w)
 	if err != nil {
 		return err
 	}
@@ -243,16 +244,12 @@ func ratio(
 // name would match a control in the wrong block.
 func committedSlopes(
 	made plan.Plan,
+	cat *catalog.Catalog,
 	dir string,
 	reference string,
 	w io.Writer,
 ) (map[solve.Where]map[audio.Figure]float64, error) {
 	out := map[solve.Where]map[audio.Figure]float64{}
-
-	cat, err := catalog.BuiltIn()
-	if err != nil {
-		return nil, err
-	}
 
 	// Which committed sweeps say nothing about the instrument they were taken
 	// with. Said rather than refused: the comparison is still the only way to

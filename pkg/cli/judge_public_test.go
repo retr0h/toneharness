@@ -93,6 +93,8 @@ func (s *JudgePublicTestSuite) TestSelfNoiseIsItsOwnNumber() {
 	s.Require().InDelta(30.0, selfNoise, 1e-9, "how far under a reading is quiet")
 }
 
-func TestJudgePublicTestSuite(t *testing.T) {
+func TestJudgePublicTestSuite(
+	t *testing.T,
+) {
 	suite.Run(t, new(JudgePublicTestSuite))
 }

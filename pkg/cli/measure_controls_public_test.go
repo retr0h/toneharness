@@ -55,6 +55,13 @@ type ControlsRunTestSuite struct {
 func (s *ControlsRunTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.pedal = mocks.NewMockPedal(s.ctrl)
+	// Every measuring command asks the client which models the attached
+	// device has, rather than reading the built-in HX Stomp catalog, so that
+	// --catalog and --device reach them.
+	s.pedal.EXPECT().Catalog(gomock.Any()).
+		DoAndReturn(func(context.Context) (*catalog.Catalog, error) {
+			return catalog.BuiltIn()
+		}).AnyTimes()
 	s.out = filepath.Join(s.T().TempDir(), "curves.json")
 	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di.wav")
 

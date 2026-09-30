@@ -15,6 +15,7 @@ import (
 
 	sdk "github.com/retr0h/toneharness/pkg/sdk"
 	audio "github.com/retr0h/toneharness/pkg/sdk/audio"
+	catalog "github.com/retr0h/toneharness/pkg/sdk/catalog"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -79,6 +80,21 @@ func NewMockTuner(ctrl *gomock.Controller) *MockTuner {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTuner) EXPECT() *MockTunerMockRecorder {
 	return m.recorder
+}
+
+// Catalog mocks base method.
+func (m *MockTuner) Catalog(ctx context.Context) (*catalog.Catalog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Catalog", ctx)
+	ret0, _ := ret[0].(*catalog.Catalog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Catalog indicates an expected call of Catalog.
+func (mr *MockTunerMockRecorder) Catalog(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Catalog", reflect.TypeOf((*MockTuner)(nil).Catalog), ctx)
 }
 
 // Choose mocks base method.

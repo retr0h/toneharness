@@ -93,7 +93,7 @@ func MeasureBlocks(
 	w io.Writer,
 	opts MeasureOptions,
 ) error {
-	cat, err := catalog.BuiltIn()
+	cat, err := opts.Client.Catalog(ctx)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func MeasureBlocks(
 	}
 
 	lib := measured.Library{
-		Device:   "HX Stomp",
+		Device:   cat.Device,
 		Isolated: true,
 		Blocks:   map[string]measured.Block{},
 		// Said in the file rather than left to the reference's filename,

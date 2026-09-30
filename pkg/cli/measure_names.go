@@ -85,7 +85,7 @@ func MeasureNames(
 	w io.Writer,
 	opts NamesOptions,
 ) error {
-	cat, err := catalog.BuiltIn()
+	cat, err := opts.Client.Catalog(ctx)
 	if err != nil {
 		return err
 	}

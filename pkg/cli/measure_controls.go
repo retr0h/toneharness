@@ -116,7 +116,7 @@ func MeasureControls(
 	// somebody left somewhere else is a different measurement.
 	level := levelled(w, opts.Volume)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
-	cat, err := catalog.BuiltIn()
+	cat, err := opts.Client.Catalog(ctx)
 	if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func MeasureControls(
 	defer release()
 
 	out := measured.Curves{
-		Device: "HX Stomp", Gear: block.Name, Block: string(block.ID),
+		Device: cat.Device, Gear: block.Name, Block: string(block.ID),
 		Slot: alone, Isolated: true, Probed: probed,
 		Instrument: instrumentOf(opts.Dry), Headroom: opts.Headroom,
 		Volume: level,

@@ -60,6 +60,7 @@ type Tuner interface {
 	Chooses
 	Switches
 	Reads
+	Names
 }
 
 // ErrNoTarget is a request that names nothing to aim at.
@@ -165,7 +166,7 @@ func Tune(
 		return err
 	}
 
-	cat, err := catalog.BuiltIn()
+	cat, err := opts.Client.Catalog(ctx)
 	if err != nil {
 		return err
 	}

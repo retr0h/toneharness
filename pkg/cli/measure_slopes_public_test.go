@@ -54,6 +54,13 @@ type SlopesPublicTestSuite struct {
 func (s *SlopesPublicTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.pedal = mocks.NewMockTuner(s.ctrl)
+	// Every measuring command asks the client which models the attached
+	// device has, rather than reading the built-in HX Stomp catalog, so that
+	// --catalog and --device reach them.
+	s.pedal.EXPECT().Catalog(gomock.Any()).
+		DoAndReturn(func(context.Context) (*catalog.Catalog, error) {
+			return catalog.BuiltIn()
+		}).AnyTimes()
 	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di.wav")
 
 	// The preset read back and rebuilt: every command here takes its chain off
