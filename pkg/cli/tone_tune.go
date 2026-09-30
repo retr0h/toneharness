@@ -100,6 +100,12 @@ type TuneOptions struct {
 	// amplifier's distortion depends on how hard it is driven, so two runs at
 	// different levels measure two different amplifiers.
 	Volume int
+	// HeadroomTold says somebody named --headroom themselves.
+	//
+	// Carried because the default is rig-dependent and an explicit value is
+	// not. A person naming -12 on an open rig may be bounding something this
+	// cannot see, and overriding them would make the flag a suggestion.
+	HeadroomTold bool
 	// Headroom is how far the chain's own output is turned down before
 	// anything is measured, in decibels, and wants to be negative.
 	//
@@ -138,6 +144,7 @@ func Tune(
 	// slope, moves a dial and reads again, so a level that drifts mid-run is a
 	// slope the solver will spend dials chasing.
 	levelled(w, opts.Volume)
+	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 
 	if opts.Genre == "" {
 		return ErrNoTarget

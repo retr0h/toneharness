@@ -72,16 +72,17 @@ had. ` + "`--resume`" + ` picks it up again.`,
 		pedal.claim()
 
 		return cli.MeasureBlocks(cmd.Context(), cmd.OutOrStdout(), cli.MeasureOptions{
-			Client:   measureBlocksClient.client(),
-			Dry:      measureBlocksDry,
-			Out:      measureBlocksOut,
-			Category: catalog.Category(measureBlocksCategory),
-			Seconds:  measureBlocksSeconds,
-			Resume:   measureBlocksResume,
-			Retry:    measureBlocksRetry,
-			Headroom: measureBlocksHeadroom,
-			Volume:   measureBlocksVolume,
-			Hardware: measureBlocksHardware,
+			Client:       measureBlocksClient.client(),
+			Dry:          measureBlocksDry,
+			Out:          measureBlocksOut,
+			Category:     catalog.Category(measureBlocksCategory),
+			Seconds:      measureBlocksSeconds,
+			Resume:       measureBlocksResume,
+			Retry:        measureBlocksRetry,
+			Headroom:     measureBlocksHeadroom,
+			HeadroomTold: cmd.Flags().Changed("headroom"),
+			Volume:       measureBlocksVolume,
+			Hardware:     measureBlocksHardware,
 		})
 	},
 }

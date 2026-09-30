@@ -67,16 +67,17 @@ dials is about a minute and a half, and it holds the pedal throughout.`,
 		pedal.claim()
 
 		return cli.Slopes(cmd.Context(), cmd.OutOrStdout(), cli.SlopesOptions{
-			Client:   measureSlopesClient.client(),
-			ID:       measureSlopesID,
-			Sweeps:   measureSlopesSweeps,
-			Dry:      measureSlopesDry,
-			Hardware: measureSlopesHardware,
-			Figure:   measureSlopesFigure,
-			Seconds:  measureSlopesSeconds,
-			Headroom: measureSlopesHeadroom,
-			Volume:   measureSlopesVolume,
-			Nudge:    measureSlopesNudge,
+			Client:       measureSlopesClient.client(),
+			ID:           measureSlopesID,
+			Sweeps:       measureSlopesSweeps,
+			Dry:          measureSlopesDry,
+			Hardware:     measureSlopesHardware,
+			Figure:       measureSlopesFigure,
+			Seconds:      measureSlopesSeconds,
+			Headroom:     measureSlopesHeadroom,
+			HeadroomTold: cmd.Flags().Changed("headroom"),
+			Volume:       measureSlopesVolume,
+			Nudge:        measureSlopesNudge,
 		})
 	},
 }

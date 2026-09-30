@@ -60,6 +60,12 @@ type SlopesOptions struct {
 	// amplifier's distortion depends on how hard it is driven, so two runs at
 	// different levels measure two different amplifiers.
 	Volume int
+	// HeadroomTold says somebody named --headroom themselves.
+	//
+	// Carried because the default is rig-dependent and an explicit value is
+	// not. A person naming -12 on an open rig may be bounding something this
+	// cannot see, and overriding them would make the flag a suggestion.
+	HeadroomTold bool
 	// Headroom is how far the chain's own output is turned down before
 	// anything is measured, in decibels, and wants to be negative.
 	Headroom float64
@@ -91,6 +97,7 @@ func Slopes(
 	// taken at a stated level and a ratio between two levels is not a ratio
 	// about the control.
 	levelled(w, opts.Volume)
+	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 
 	made, preset, _, err := built(ctx, TuneOptions{
 		Client: opts.Client, ID: opts.ID, Headroom: opts.Headroom,

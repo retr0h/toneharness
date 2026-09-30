@@ -54,6 +54,12 @@ type MeasureOptions struct {
 	// computer's own output. Recorded either way, because a library that does
 	// not say what level it was taken at cannot be reproduced.
 	Volume int
+	// HeadroomTold says somebody named --headroom themselves.
+	//
+	// Carried because the default is rig-dependent and an explicit value is
+	// not. A person naming -12 on an open rig may be bounding something this
+	// cannot see, and overriding them would make the flag a suggestion.
+	HeadroomTold bool
 	// Headroom is how far the chain's own output is turned down before
 	// anything is measured, in decibels, and wants to be negative. The
 	// measuring lead makes the chain feed itself, and enough gain around
@@ -147,6 +153,7 @@ func MeasureBlocks(
 	// what it reads. Setting it after would calibrate against a level the
 	// campaign then changed.
 	lib.Volume = levelled(w, opts.Volume)
+	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 
 	if err := baseline(ctx, w, bench, signal, &lib, work, opts); err != nil {
 		return err
