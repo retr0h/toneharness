@@ -374,6 +374,39 @@ Level: a headphone output is hotter than a guitar input expects, so turn the
 computer down rather than up. The pedal's Aux input is built for line level and is
 entry 3 of the Sources enum if the guitar jack proves too hot.
 
+## The computer's output level is in the signal path, and the tool pins it
+
+On this rig only. The one-device rig plays out of the pedal, so the computer's
+slider reaches nothing; here it is the thing playing the reference, and moving it
+changes what every amplifier in a campaign measures as.
+
+It is a tone control rather than a level control. An amplifier's distortion
+depends on how hard it is driven, so a louder reference is not a louder reading
+of the same tone. It is a different tone.
+
+Every command that pushes audio takes `--volume`, 0 to 100, and sets the level
+before measuring rather than trusting whatever it was:
+
+```bash
+mise exec -- go run main.go measure blocks   --hardware "External Headphones,HX Stomp"   --volume 38
+```
+
+Three things to know about the number.
+
+**38 is where the committed library was taken.** It is the platform's own scale,
+which is what a person sees on the slider, so it is neither decibels nor
+comparable between machines. That is what the empty-loop baseline is for.
+
+**The level that was actually reached is written into the file**, beside the
+headroom, as `volume` on a `Library` and on a `Curves`. So a reading says which
+level it was taken at rather than leaving it to be remembered.
+
+**`-1` means the platform would not say.** Only macOS can be asked, through
+`osascript`. Elsewhere the run carries on and records `-1`, which is the honest
+answer: nothing pinned the level, so the figures are not reproducible without it.
+The run warns and does not stop, because on the one-device rig the level is not in
+the path and refusing there would be refusing for a reason that does not apply.
+
 ## The cable that closes it
 
 One 1/4" lead from the Main out back into the pedal's own input jack.

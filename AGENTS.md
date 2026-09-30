@@ -90,7 +90,7 @@ each of these has already been a bug:
 | the Helix model | how many blocks, paths and snapshots it holds. `plan.LimitsFor` answers from the catalog                                                       |
 | the computer    | the audio device's name and its backend. `--hardware` names one, or two comma separated to play and record on different devices                |
 | the computer    | the sample rate. 48kHz is what every committed figure was taken at, and the loop checks it rather than assuming it                             |
-| the computer    | **its output volume, when it is the thing playing the reference.** Nothing records it and every figure moves with it                           |
+| the computer    | **its output volume, when it is the thing playing the reference.** Every figure moves with it, so `--volume` pins it and the file records what it reached |
 | the room        | whether a cable loops the output back to the input, or the return comes over USB, or the computer plays in and the pedal's output goes nowhere |
 
 A figure measured on one device is a figure about that device. Say which.
