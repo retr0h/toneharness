@@ -82,6 +82,21 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
 			is:     plan.ErrOverBudget,
 		},
 		{
+			// Processors are numbered from nothing, so two of them are 0 and
+			// 1 and the first one too far is 2. `>` accepts exactly this
+			// block and indexes a costs slice of length two at two, which is
+			// a chain on a processor the device does not have.
+			name:   "a block on the first chip past the last one",
+			spec:   s.blocks(1, 2, true),
+			limits: s.limits(),
+			is:     plan.ErrBadTopology,
+		},
+		{
+			name:   "and the last chip it does have is fine",
+			spec:   s.blocks(1, 1, true),
+			limits: s.limits(),
+		},
+		{
 			// A bypassed block still occupies its position and still costs
 			// DSP, which is why the same four fail switched off.
 			name:   "four bypassed ones, which cost the same",

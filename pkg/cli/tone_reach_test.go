@@ -24,7 +24,6 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -358,7 +357,10 @@ func (s *ReachPublicTestSuite) TestOneSetOfPositionsReachingEverything() {
 	said := w.String()
 	s.Require().Contains(said, "reaches all 1 axes at once")
 	s.Require().Contains(said, "several")
-	s.Require().Less(strings.Index(said, "Worth running"), len(said))
+	// Contains rather than an Index comparison: strings.Index answers -1 for
+	// a string that is not there, and -1 is less than any length, so the
+	// assertion it replaces held whatever the verdict said.
+	s.Require().Contains(said, "Worth running")
 }
 
 // TestTheTableSaysWhatItReadsAndWhatItWants covers the columns that matter.

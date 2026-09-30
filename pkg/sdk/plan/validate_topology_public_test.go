@@ -94,6 +94,21 @@ func (s *ValidateTopologyPublicTestSuite) TestValidateTopology() {
 			spec: plan.Plan{Blocks: []plan.Block{{Model: "A", DSP: 5, Pos: 0}}},
 			says: "",
 		},
+		{
+			// Processors are numbered from nothing, so two of them are 0 and
+			// 1 and the first one too far is 2. Refusing only what is well
+			// past it leaves this exact block accepted by `>` where `>=`
+			// refuses it, which is a chain put on a processor the device does
+			// not have.
+			name: "a block on the first chip past the last one",
+			spec: plan.Plan{Blocks: []plan.Block{{Model: "A", DSP: 2, Pos: 0}}},
+			says: "",
+		},
+		{
+			name: "and the last chip it does have is fine",
+			spec: plan.Plan{Blocks: []plan.Block{{Model: "A", DSP: 1, Pos: 0}}},
+			ok:   true,
+		},
 	}
 
 	for _, tt := range tests {

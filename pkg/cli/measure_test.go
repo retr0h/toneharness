@@ -365,10 +365,15 @@ func (s *MeasureTestSuite) TestResampleTakesTheAskedForLength() {
 }
 
 // TestResampleStopsAtTheEndOfWhatItHas covers asking for more than exists.
+//
+// The count, not a bound. `Less(len(got), 48000*10)` admitted anything under
+// 480,000 against a true answer of 108, so breaking the stop outright — reading
+// only an eighth of what is there — passed it. A short read means every figure
+// is taken against a truncated signal.
 func (s *MeasureTestSuite) TestResampleStopsAtTheEndOfWhatItHas() {
 	got := Resample(make([]float64, 100), 44100, 10)
 
-	s.Require().Less(len(got), 48000*10)
+	s.Require().Len(got, 108, "100 samples at 44.1kHz is 108 at 48")
 }
 
 // TestReferenceAndHashReportAFileThatIsNotThere covers a missing signal.
