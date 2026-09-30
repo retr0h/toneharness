@@ -63,6 +63,25 @@ type Deps struct {
 	// answers "which of these sounds most like the target", which no amount
 	// of reasoning about names can.
 	Measured measured.Library
+	// UnknownWords reports the words an ask uses that the vocabulary does not
+	// carry, with the nearest it does.
+	//
+	// Handed in rather than called, because the vocabulary belongs to the
+	// compiler and the compiler runs after this: the pipeline at the top of
+	// this file is ToneSpec to translate to RigSpec to compile, and importing
+	// downhill would invert it. Nil means nothing checks, which is what a
+	// caller that only wants a chain resolved gets.
+	UnknownWords func(words []string) []UnknownWord
+}
+
+// UnknownWord is a word somebody used that nothing defines, and the nearest
+// one that is defined.
+type UnknownWord struct {
+	// Term is what they wrote.
+	Term string
+	// Near are the words the vocabulary does carry that look close, which may
+	// be none.
+	Near []string
 }
 
 // Note is one thing the translation did, or could not do.
@@ -133,16 +152,123 @@ func Translate(
 
 	out.Chain = chain
 
+	// After the chain, because it is about what ended up in it.
+	speakers(setup, chain, &notes)
+
 	// Said rather than silently dropped. A request carrying a genre or a
 	// player this cannot resolve is a request half answered, and the half
 	// that was not is the part somebody needs to know about.
 	unresolved(spec, &notes)
+	unknownWords(spec, deps, &notes)
 
 	if err := rig.Validate(out); err != nil {
 		return rig.Spec{}, notes, err
 	}
 
 	return out, notes, nil
+}
+
+// speakers counts the speakers in the path when the setup says where the pedal
+// goes, and says how many there are.
+//
+// Honoured, always: nothing is changed and nothing is refused. A cabinet block
+// is how a chain is made to sound like a recorded rig, so somebody chasing a
+// record through their own amplifier wants both and is right to. Somebody who
+// wants their amplifier to be the sound wants one. The difference is taste and
+// this is not the place it gets decided.
+//
+// What is said is the count, which is arithmetic on two things the person
+// stated: a cabinet block simulates a speaker, an amplifier has one, and
+// `amp-return` reaches that speaker past the amplifier's own preamp while
+// `amp-front` does not. No claim is made about what two sounds like, because
+// nothing here has measured an amplifier in anybody's room.
+func speakers(
+	setup tone.Setup,
+	chain []rig.ChainEntry,
+	notes *Notes,
+) {
+	if setup.PlaysInto == nil {
+		return
+	}
+
+	into := *setup.PlaysInto
+	if into != tone.AmpFront && into != tone.AmpReturn {
+		return
+	}
+
+	cabs := 0
+
+	for _, held := range chain {
+		if held.Role == rig.RoleCab {
+			cabs++
+		}
+	}
+
+	if cabs == 0 {
+		return
+	}
+
+	held := "a cabinet block"
+	if cabs > 1 {
+		held = fmt.Sprintf("%d cabinet blocks", cabs)
+	}
+
+	*notes = append(*notes, Note{
+		About: "plays_into",
+		Said: fmt.Sprintf(
+			"the chain holds %s and the setup plays into an amplifier, which "+
+				"has a speaker of its own. Nothing was changed: a cabinet "+
+				"block is how a chain is made to sound like the record it "+
+				"came from, and whether that is wanted through an amplifier "+
+				"is taste rather than a rule", held),
+		Honoured: true,
+	})
+}
+
+// unknownWords says which of an ask's words nothing can aim at.
+//
+// The contract has always promised this — "a word that reaches no control
+// cannot be aimed at and saying so is better than accepting it and quietly
+// doing nothing" — and nothing did it. compile.CheckWords existed, worked, and
+// was reached only by `presets make`, which is a later step: a `tone build`
+// took an ask saying `sparkly`, resolved the chain, reported every other thing
+// it did, and never mentioned the word at all.
+//
+// Not honoured, because the word did not reach a control. It is not fatal
+// either: the rest of the ask still resolves, and refusing a whole request
+// over one adjective would throw away the record and the gear beside it.
+//
+// The near words are offered rather than chosen between. `sparkly` is probably
+// `bright`, and probably is not a rig somebody asked for: a guess that lands
+// wrong aims the answer somewhere they cannot see. The gear resolver says
+// "that name fits 4 models" for the same reason.
+func unknownWords(
+	spec tone.Spec,
+	deps Deps,
+	notes *Notes,
+) {
+	if deps.UnknownWords == nil || spec.Words == nil {
+		return
+	}
+
+	said := make([]string, 0, len(*spec.Words))
+	for _, word := range *spec.Words {
+		said = append(said, word.Term)
+	}
+
+	for _, got := range deps.UnknownWords(said) {
+		near := ""
+		if len(got.Near) > 0 {
+			near = ". Did you mean " + strings.Join(got.Near, ", ") + "?"
+		}
+
+		*notes = append(*notes, Note{
+			About: got.Term,
+			Said: fmt.Sprintf(
+				"no control is moved by that word, so nothing aimed at it%s",
+				near),
+		})
+	}
 }
 
 // agrees holds the measurements to the device somebody says they have.

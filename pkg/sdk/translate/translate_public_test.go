@@ -946,6 +946,75 @@ func sayings(
 	return out
 }
 
+// TestAWordNothingAimsAtIsSaid is the promise the contract had not kept.
+//
+// "a word that reaches no control cannot be aimed at and saying so is better
+// than accepting it and quietly doing nothing" — and nothing said it. The
+// check existed in compile and was reached only by `presets make`, so a
+// `tone build` took an ask saying `sparkly`, resolved the chain, reported
+// every other thing it did, and never mentioned the word.
+func (s *TranslatePublicTestSuite) TestAWordNothingAimsAtIsSaid() {
+	deps := s.deps
+	deps.UnknownWords = func(words []string) []translate.UnknownWord {
+		out := make([]translate.UnknownWord, 0, len(words))
+		for _, w := range words {
+			if w == "bright" {
+				continue
+			}
+
+			near := []string(nil)
+			if w == "pick attack audible" {
+				near = []string{"audible-pick-attack"}
+			}
+
+			out = append(out, translate.UnknownWord{Term: w, Near: near})
+		}
+
+		return out
+	}
+
+	_, notes, err := translate.Translate(
+		s.ask("schema: ToneSpec\ngenre: [punk]\n"+
+			"gear:\n  - {gear: Ampeg SVT, role: amp}\n"+
+			"words:\n  - term: bright\n  - term: sparkly\n"+
+			"  - term: pick attack audible\n"),
+		s.setup(""), deps)
+
+	s.Require().NoError(err, "one adjective does not lose the record beside it")
+
+	said := map[string]translate.Note{}
+	for _, n := range notes {
+		said[n.About] = n
+	}
+
+	s.Require().NotContains(said, "bright", "a word it carries says nothing")
+
+	s.Require().Contains(said, "sparkly")
+	s.Require().False(said["sparkly"].Honoured, "it reached no control")
+	s.Require().NotContains(said["sparkly"].Said, "Did you mean",
+		"nothing is close, so nothing is suggested")
+
+	s.Require().Contains(said["pick attack audible"].Said,
+		"Did you mean audible-pick-attack?",
+		"offered rather than substituted: a guess that lands wrong aims the "+
+			"answer somewhere nobody can see")
+}
+
+// TestNothingCheckingWordsSaysNothing covers a caller that wants only a chain.
+func (s *TranslatePublicTestSuite) TestNothingCheckingWordsSaysNothing() {
+	_, notes, err := translate.Translate(
+		s.ask("schema: ToneSpec\ngenre: [punk]\n"+
+			"gear:\n  - {gear: Ampeg SVT, role: amp}\n"+
+			"words:\n  - term: sparkly\n"),
+		s.setup(""), s.deps)
+
+	s.Require().NoError(err)
+
+	for _, n := range notes {
+		s.Require().NotEqual("sparkly", n.About)
+	}
+}
+
 func TestTranslatePublicTestSuite(
 	t *testing.T,
 ) {

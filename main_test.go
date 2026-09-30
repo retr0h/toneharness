@@ -31,6 +31,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -430,6 +431,137 @@ func (s *MainTestSuite) TestEveryPathThisRepositoryNamesExists() {
 	})
 
 	s.Require().NoError(err)
+}
+
+// toneFieldsNothingReads names the ToneSpec and Setup fields no code outside
+// the generated types names, and what reading one would take.
+//
+// Not the same as pkg/sdk/rig's `exempt`, which holds fields that cannot
+// honestly be exercised — no bass amplifier in this catalog has a Presence
+// control. Every one of these could be read and nobody has. So the entry is
+// an outstanding decision rather than a dismissal, and the reason says what
+// the work is rather than why it does not apply.
+//
+// Three were already here when this test was written, which is why it was
+// written.
+var toneFieldsNothingReads = map[string]string{
+	"firmware": "what the pedal is running. Reading it means having " +
+		"something to compare against, and the only version the tool holds " +
+		"is the HX Edit release a catalog was generated from, which is not " +
+		"the same number. Somebody has to decide what a mismatch means " +
+		"before anything can say one.",
+	"pickups": "where an instrument's pickups are and what they are. " +
+		"`strings` is the same shape and is read — it reaches translate's " +
+		"strung and produces a note when the record and the room disagree. " +
+		"Nothing has measured what a pickup position does to the figures, " +
+		"so there is no note to make yet and inventing one would be a " +
+		"number nobody took.",
+	"caveat": "what a piece of evidence does not show, such as a live " +
+		"recording carrying the room and the PA. It is written for a person " +
+		"reading the ask rather than for the tool, and nothing yet prints " +
+		"an ask's evidence back. Reading it means deciding where that " +
+		"sentence belongs in the output.",
+}
+
+// TestEveryToneFieldIsReadBySomething is the guard write-a-spec promised.
+//
+// A rig once carried a `requires` list that nothing in this repository ever
+// read: it sat in the contract for months looking like a feature.
+// pkg/sdk/rig's TestEveryFieldAppearsInARig was written for that, and it walks
+// the RigSpec only — so the ToneSpec and the Setup had no such guard at all,
+// and write-a-spec's claim that "a test now walks both contracts" was half
+// true. A field added to them could be validated, documented and dead.
+//
+// The check is whether any non-generated, non-test Go file names the field's
+// generated identifier. That is weaker than proving it changes an answer, and
+// it is what catches the failure this is written for: a field nothing reads
+// cannot be named anywhere.
+func (s *MainTestSuite) TestEveryToneFieldIsReadBySomething() {
+	gen, err := os.ReadFile(
+		filepath.Join("pkg", "sdk", "tone", "internal", "gen", "tonespec.gen.go"))
+	s.Require().NoError(err)
+
+	// The generated struct tags are the one place a contract's spelling and
+	// Go's are written beside each other.
+	tags := regexp.MustCompile(`(?m)^\t([A-Z]\w*)\s+\S+\s+` + "`" + `json:"([a-z_]+)`)
+
+	named := map[string]string{}
+	for _, m := range tags.FindAllStringSubmatch(string(gen), -1) {
+		named[m[2]] = m[1]
+	}
+
+	s.Require().NotEmpty(named, "the generated types name no fields")
+
+	read := s.namesInSource()
+
+	dead := make([]string, 0, len(named))
+
+	for field, ident := range named {
+		switch {
+		case read[ident], toneFieldsNothingReads[field] != "":
+			continue
+		}
+
+		dead = append(dead, field+" ("+ident+")")
+	}
+
+	sort.Strings(dead)
+
+	s.Require().Empty(dead,
+		"the contract declares these and no code outside the generated types "+
+			"names them. Make something read one, or add it to "+
+			"toneFieldsNothingReads with a reason: %v", dead)
+}
+
+// namesInSource is every identifier mentioned in the tree's own Go, leaving
+// out the generated types, the files that only re-export them, and the tests.
+//
+// Tests are left out deliberately. A field a test names and nothing else is a
+// field exercised into a vacuum, which is the shape this is looking for.
+//
+// The re-export files matter more than they look. Their whole job is to
+// restate a generated name — `PlaysInto = gen.PlaysInto` — so where a field's
+// Go name is also a type's, the alias alone would satisfy this and the field
+// could still be dead. Counting them cost the first version of this test its
+// only real case.
+func (s *MainTestSuite) namesInSource() map[string]bool {
+	out := map[string]bool{}
+	word := regexp.MustCompile(`[A-Za-z_]\w*`)
+
+	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		switch {
+		case err != nil:
+			return err
+		case d.IsDir():
+			switch d.Name() {
+			case ".git", ".worktrees", ".claude", "node_modules", "gen":
+				return fs.SkipDir
+			}
+
+			return nil
+		case !strings.HasSuffix(path, ".go"),
+			strings.HasSuffix(path, "_test.go"),
+			strings.HasSuffix(path, ".gen.go"),
+			path == filepath.Join("pkg", "sdk", "tone", "types.go"),
+			path == filepath.Join("pkg", "sdk", "rig", "types.go"):
+			return nil
+		}
+
+		body, err := os.ReadFile(path) //nolint:gosec // a path this walk found
+		if err != nil {
+			return err
+		}
+
+		for _, w := range word.FindAllString(string(body), -1) {
+			out[w] = true
+		}
+
+		return nil
+	})
+
+	s.Require().NoError(err)
+
+	return out
 }
 
 // TestEveryPackageIsInTheStructureTree is the other direction.

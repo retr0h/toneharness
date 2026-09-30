@@ -37,6 +37,7 @@ import (
 	"os"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -84,6 +85,10 @@ func Resolve(
 
 	built, notes, err := translate.Translate(spec, setup, translate.Deps{
 		Catalog: cat, Measured: lib,
+		// Wired here because this is the one place above both: translate runs
+		// before compile and must not import it, and compile owns the
+		// vocabulary.
+		UnknownWords: unknownWords,
 	})
 
 	return result.Resolved{Rig: built, Notes: notes}, err
@@ -109,4 +114,22 @@ func read[T any](
 	}
 
 	return out, nil
+}
+
+// unknownWords adapts the compiler's vocabulary check to what translate takes.
+//
+// The types are separate on purpose. translate declares the shape it needs so
+// it depends on nothing downhill of itself, and this is the seam where the two
+// meet.
+func unknownWords(
+	words []string,
+) []translate.UnknownWord {
+	got := compile.CheckWords(words)
+
+	out := make([]translate.UnknownWord, 0, len(got))
+	for _, one := range got {
+		out = append(out, translate.UnknownWord{Term: one.Term, Near: one.Near})
+	}
+
+	return out
 }
