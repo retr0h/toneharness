@@ -285,6 +285,39 @@ audio, because a tone on USB 1/2 comes out of the Main outs and was heard, and
 the pedal can send the computer audio, because the chain reaches USB 1/2. Only
 that one link is missing.
 
+## A high-gain amplifier oscillates on its own, and the guard is right about it
+
+Twenty of the 661 blocks refused #189's campaign, every one an amplifier built to
+distort, plus two drives and a modulation. They refuse at every headroom the
+backoff tries, down to -78dB. Measured on `HD2_AmpRevvGenRed` alone at -30dB:
+
+| | bass reference in | silence in |
+| --------------------- | ------------------: | ------------------: |
+| level | -51.7dB | -52.8dB |
+| centroid | 1,679Hz, wander 109 | 2,347Hz, wander 0.2 |
+| below 250Hz | 27.8% | 1.1% |
+| above 2kHz | 29.3% | 43.2% |
+
+**With nothing going in it puts out the same level as a stable tone.** 1.1dB
+down, at 2,347Hz, with the centroid wandering 0.2Hz across takes. That is what
+settles it: hiss is broadband and wanders, and a tone locked to one frequency is
+feedback. These amplifiers close the loop with their own gain and no trim reaches
+them.
+
+A theory that died here, recorded so nobody revives it. `suspect` confirms with a
+30dB window on level alone, and enormous gain is noisy at idle, so it looked like
+the guard might be reading hiss as oscillation. The spectrum says tone.
+
+What does hold is the gate in front of that test: `now[High] > dry[High] + apart`,
+against a bass reference carrying 0.01% above 2kHz. **Any block that saturates at
+all opens it.** A guitar reference carries real treble, so on a guitar campaign
+this fires far less often, and that is not the guitar amplifiers behaving better.
+
+Unsettled, and it needs a hand on the hardware rather than a measurement: whether
+they oscillate because of the lead or would do it regardless. Unplug the
+quarter-inch lead and read one again. A stable tone with no path back is Line 6's
+model oscillating rather than the rig.
+
 ## The cable that closes it
 
 One 1/4" lead from the Main out back into the pedal's own input jack.
