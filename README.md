@@ -33,7 +33,7 @@ Point an agent at a checkout and tell it what you want to sound like.
 
 ## What ships in the binary
 
-|                   |                                                                                                          |
+| in the binary     | what it is                                                                                               |
 | ----------------- | -------------------------------------------------------------------------------------------------------- |
 | **661** blocks    | what an HX Stomp models, of which **224** are amplifiers and **133** cabinets. A Helix Floor is **670**. |
 | **661** measured  | every one of those blocks, played and recorded on the device rather than read off a spec sheet           |

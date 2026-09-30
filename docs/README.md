@@ -4,7 +4,7 @@ How toneharness works. For how to work *on* it, setup and conventions and
 testing, see [CONTRIBUTING.md](../CONTRIBUTING.md). These pages cover the
 domain.
 
-|                                    |                                                                                 |
+| page                               | what it covers                                                                  |
 | ---------------------------------- | ------------------------------------------------------------------------------- |
 | [architecture.md](architecture.md) | How the whole system works and fits together. The one file to read first.       |
 | [authoring.md](authoring.md)       | Writing a rig and the ask beside it by hand, with the worked examples           |
