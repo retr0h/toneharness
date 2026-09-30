@@ -207,8 +207,12 @@ converters' ceiling where ten readings did. Everything built on the old numbers
 was built on a squeal.
 
 23 of 661 blocks refused, 20 of them high-gain amplifiers, which is honest
-rather than wrong: a refusal says the block could not be measured. Those 20 stay
-unmeasurable until the question above is settled.
+rather than wrong: a refusal says the block could not be measured. **They are
+measurable and this rig cannot measure them**, which is established rather than
+assumed: with the quarter-inch lead pulled out, one of them goes from a stable
+2,347Hz tone at -52.8dB to broadband idle at -81.5dB. Their own gain closes the
+loop the lead makes and no trim reaches that. A return that is not a cable
+recovers all of them, and the Send and Return pair is the untried route.
 
 Two hardware facts shape the loop. A slot is flash and a burst of writes has
 corrupted a setlist, so tuning happens in the edit buffer and only the final
