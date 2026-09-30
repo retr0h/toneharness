@@ -308,6 +308,30 @@ func (s *TunePublicTestSuite) TestTuneReportsSomewhereItCannotWrite() {
 	s.Require().Error(Tune(context.Background(), buffer(), opts))
 }
 
+// TestKeepingATuneNeedsTheChainTheDeviceIsPlaying covers the read --out
+// depends on.
+//
+// What is kept is the chain as the device reports it after the dials moved, so
+// a file written when that read failed would be a plan claiming settings
+// nobody read back.
+//
+// Only that read. A preset that will not read back is warned about rather than
+// fatal — offTheLoop says so and carries on — which is
+// TestItWarnsWhenItCannotPutTheOutputBack's subject.
+func (s *TunePublicTestSuite) TestKeepingATuneNeedsTheChainTheDeviceIsPlaying() {
+	s.ready()
+	s.pedal.EXPECT().Current(gomock.Any(), gomock.Any()).
+		Return(sdk.Reading{}, errors.New("would not say")).AnyTimes()
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+	opts := s.opts()
+	opts.Out = filepath.Join(s.T().TempDir(), "tuned.yaml")
+
+	s.Require().ErrorContains(
+		Tune(context.Background(), buffer(), opts), "would not say")
+}
+
 // TestADialThatWillNotMove covers the device refusing a parameter.
 //
 // Aimed at a target it has to work for, because a loop that has already arrived

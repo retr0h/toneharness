@@ -38,12 +38,30 @@ import "errors"
 // The alternative was asking a person to hold a number steady across campaigns
 // weeks apart, and that is not a thing anybody does.
 
+// reads and writes are the platform's own, named so a test can stand in for
+// them on any of them.
+//
+// Held's body — read, compare, set, read back — is only reachable where a
+// platform answers at all. On everything but macOS `volume` returns ErrNoVolume
+// on the first line, so on a Linux runner the rest of that function cannot be
+// executed however many tests are written, and the one place it matters is the
+// read back: a platform that accepts a level and rounds it leaves the rig
+// somewhere nobody asked for, and nothing else notices.
+//
+// Variables rather than direct calls for the same reason volume_darwin.go
+// names `asks`: the interesting answers are on the far side of something this
+// package cannot make happen.
+var (
+	reads  = volume
+	writes = setVolume
+)
+
 // Volume is the computer's own output level, 0 to 100.
 //
 // The platform's own scale rather than decibels, because that is the number a
 // person sees on the slider and can put back. It is not linear in decibels and
 // is not comparable between machines, which is what the baseline reading is for.
-func Volume() (int, error) { return volume() }
+func Volume() (int, error) { return reads() }
 
 // SetVolume puts the computer's own output level at a stated figure.
 func SetVolume(
@@ -53,7 +71,7 @@ func SetVolume(
 		return &VolumeError{Doing: "setting", Said: errors.New("0 to 100")}
 	}
 
-	return setVolume(to)
+	return writes(to)
 }
 
 // Held puts the output level where a measurement wants it and says what it did.
@@ -65,7 +83,7 @@ func SetVolume(
 func Held(
 	want int,
 ) (int, bool, error) {
-	was, err := Volume()
+	was, err := reads()
 	if err != nil {
 		return 0, false, err
 	}
@@ -81,7 +99,7 @@ func Held(
 	// Read back rather than assumed. A platform that accepts the instruction
 	// and rounds it, which macOS does on some hardware, leaves the rig at a
 	// level nobody asked for and this is the only place that shows.
-	now, err := Volume()
+	now, err := reads()
 	if err != nil {
 		return 0, true, err
 	}
