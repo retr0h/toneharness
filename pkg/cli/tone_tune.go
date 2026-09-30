@@ -300,7 +300,7 @@ func keepTuned(
 	//
 	// Every dial the solve moved is kept, because the solve moved dials. Only
 	// the one entry that is the measuring rig rather than the tone goes back.
-	kept, err := asCompiled(ctx, opts.Client, read.Plan, asBuilt)
+	kept, err := asCompiled(ctx, w, opts.Client, read.Plan, asBuilt)
 	if err != nil {
 		return err
 	}

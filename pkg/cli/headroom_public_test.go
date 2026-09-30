@@ -21,6 +21,7 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -323,4 +324,69 @@ func (s *HeadroomPublicTestSuite) TestTheQuietPresetThatWillNotCompile() {
 		pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
 
 	s.Require().ErrorIs(err, wanted)
+}
+
+// TestItWarnsWhenItCannotPutTheOutputBack covers the silent wrong artifact.
+//
+// The plan is still returned, because every dial the solve found is in it and
+// throwing a five-minute run away over one routing entry is the worse failure.
+// But it goes back carrying the measuring rig's own output, so it is silent at
+// the quarter-inch socket, and a person not told that finds out by plugging in.
+func (s *HeadroomPublicTestSuite) TestItWarnsWhenItCannotPutTheOutputBack() {
+	measuring := routed()
+
+	for _, tt := range []struct {
+		name string
+		give sdk.Reading
+		err  error
+		says string
+	}{
+		{
+			name: "the compiled preset will not read back",
+			err:  errors.New("gone"),
+			says: "could not be read back",
+		},
+		{
+			name: "the compiled preset carries no routing",
+			give: sdk.Reading{Plan: plan.Plan{}},
+			says: "carries no routing",
+		},
+		{
+			name: "the compiled preset carries no output entry",
+			give: sdk.Reading{Plan: plan.Plan{Device: &rig.DeviceState{
+				Routing: &map[string]json.RawMessage{
+					"dsp0.inputA": json.RawMessage(`{}`),
+				},
+			}}},
+			says: "carries no " + outputSlot,
+		},
+	} {
+		s.Run(tt.name, func() {
+			ctrl := gomock.NewController(s.T())
+			pedal := mocks.NewMockTuner(ctrl)
+
+			pedal.EXPECT().
+				PresetFile(gomock.Any(), "as-built.hlx").
+				Return(tt.give, tt.err)
+
+			var buf bytes.Buffer
+
+			got, err := asCompiled(
+				context.Background(), &buf, pedal, measuring, "as-built.hlx")
+			s.Require().NoError(err)
+
+			said := buf.String()
+			s.Require().Contains(said, "[warn]")
+			s.Require().Contains(said, tt.says)
+			s.Require().Contains(said, "quarter-inch")
+			s.Require().Contains(said, "dials the solve found are unaffected",
+				"it says what is still good, or somebody throws the plan away")
+
+			// The plan comes back, measuring entry and all.
+			var fields map[string]any
+			s.Require().NoError(
+				json.Unmarshal((*got.Device.Routing)[outputSlot], &fields))
+			s.Require().InDelta(1, fields[sendKey], 0.001)
+		})
+	}
 }

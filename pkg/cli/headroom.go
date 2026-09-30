@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -306,10 +307,15 @@ func offTheLoop(
 // guessing at a default.
 //
 // A compiled preset that cannot be read, or that carries no output entry, leaves
-// the plan alone. Refusing here would throw away a tuning run over the one entry
-// nobody listens to.
+// the plan alone and says so. Refusing would throw away a tuning run over the
+// one entry nobody listens to, and staying quiet would hand somebody a plan that
+// is silent at the quarter-inch socket without telling them why.
+//
+// The writer is there for that one line. A function that can leave its answer
+// wrong in a way nothing downstream detects has to be able to say it did.
 func asCompiled(
 	ctx context.Context,
+	w io.Writer,
 	client ReadsFiles,
 	playing plan.Plan,
 	asBuilt string,
@@ -320,15 +326,21 @@ func asCompiled(
 
 	was, err := client.PresetFile(ctx, asBuilt)
 	if err != nil {
+		stillMeasuring(w, fmt.Sprintf("%s could not be read back", asBuilt))
+
 		return playing, nil //nolint:nilerr // the run is worth more than the entry
 	}
 
 	if was.Plan.Device == nil || was.Plan.Device.Routing == nil {
+		stillMeasuring(w, "the compiled preset carries no routing")
+
 		return playing, nil
 	}
 
 	entry, ok := (*was.Plan.Device.Routing)[outputSlot]
 	if !ok {
+		stillMeasuring(w, "the compiled preset carries no "+outputSlot)
+
 		return playing, nil
 	}
 
@@ -345,4 +357,22 @@ func asCompiled(
 	playing.Device = &state
 
 	return playing, nil
+}
+
+// stillMeasuring warns that a kept plan carries the measuring rig's own output.
+//
+// Which means it is sent to USB alone, so it is silent at the quarter-inch
+// socket, and carries the headroom trim, so it is quiet everywhere else. Every
+// dial the solve found is still in it, so the plan is worth keeping and worth
+// fixing by hand rather than throwing away.
+func stillMeasuring(
+	w io.Writer,
+	because string,
+) {
+	_, _ = fmt.Fprintf(w,
+		"\n  [warn] %s, so this plan keeps the output entry it was measured\n"+
+			"         through: sent to %s alone and turned down. It will be quiet\n"+
+			"         and silent at the quarter-inch socket until that entry is put\n"+
+			"         back. The dials the solve found are unaffected.\n",
+		because, offTheLoopIs)
 }
