@@ -42,6 +42,10 @@ import (
 	"github.com/retr0h/toneharness/cmd"
 	sdk "github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/shipped"
 )
 
 // mod is this module, so a test can tell its own packages from anybody's.
@@ -431,6 +435,129 @@ func (s *MainTestSuite) TestEveryPathThisRepositoryNamesExists() {
 	})
 
 	s.Require().NoError(err)
+}
+
+// TestTheReadmesNumbersAreTheOnesThatShip holds the front page to the binary.
+//
+// A README that counts things is a README that goes stale: the next firmware
+// Line 6 ship moves the block count, and a number typed once is wrong from
+// then on with nothing saying so. Every figure in "What ships in the binary"
+// is checked against what is actually embedded, and the section says a test
+// does this — so the claim has to be true as well as the numbers.
+//
+// The row rather than the page. Two of these figures are the same number
+// today — an HX Stomp holds 661 blocks and all 661 were measured — so a check
+// that the number appears somewhere passes when one of them is edited and the
+// other is not. The first version of this test did exactly that.
+//
+// The device is part of each claim rather than decoration. An HX Stomp holds
+// 661 blocks and a Helix Floor 670, and a page that said "661" without saying
+// which would be wrong for half its readers.
+func (s *MainTestSuite) TestTheReadmesNumbersAreTheOnesThatShip() {
+	stomp, err := catalog.For(catalog.HXStomp)
+	s.Require().NoError(err)
+
+	floor, err := catalog.For(catalog.HelixFloor)
+	s.Require().NoError(err)
+
+	lib, err := measured.BuiltIn()
+	s.Require().NoError(err)
+
+	stats, err := corpus.BuiltIn()
+	s.Require().NoError(err)
+
+	// The rigs rather than every file: each artist ships a rig and the ask
+	// that produced it, side by side.
+	artists, err := shipped.FS.ReadDir("artists")
+	s.Require().NoError(err)
+
+	rigs := 0
+
+	for _, one := range artists {
+		if strings.HasSuffix(one.Name(), ".yaml") &&
+			!strings.HasSuffix(one.Name(), ".tone.yaml") {
+			rigs++
+		}
+	}
+
+	said := s.readmeFigures()
+
+	for _, tt := range []struct {
+		// where is the words the row is found by, which is what a reader sees
+		// beside the number rather than a line this test counts to.
+		where string
+		want  int
+	}{
+		{"blocks", len(stomp.Blocks)},
+		{"Helix Floor", len(floor.Blocks)},
+		{"are amplifiers", s.inCategory(stomp, catalog.CategoryAmp)},
+		{"cabinets", s.inCategory(stomp, catalog.CategoryCab)},
+		{"measured", len(lib.Blocks)},
+		{"presets", stats.Presets},
+		{"rigs", rigs},
+	} {
+		got, found := said[tt.where]
+
+		s.Require().True(found,
+			"the README's table has no row saying %q", tt.where)
+		s.Require().Equal(tt.want, got, "the row saying %q", tt.where)
+	}
+}
+
+// readmeFigures reads every bolded number out of the README, keyed by the
+// words beside it.
+//
+// Keyed by what a reader sees rather than by position, so moving a row around
+// does not break this and editing a number does.
+func (s *MainTestSuite) readmeFigures() map[string]int {
+	page, err := os.ReadFile("README.md")
+	s.Require().NoError(err)
+
+	// A bolded number and the few words after it: `**661** blocks`, and
+	// `a Helix Floor is **670**` the other way round.
+	after := regexp.MustCompile(`\*\*([\d,]+)\*\* (\w+(?: \w+)?)`)
+	before := regexp.MustCompile(`(\w+(?: \w+)?) is \*\*([\d,]+)\*\*`)
+
+	out := map[string]int{}
+
+	add := func(words, digits string) {
+		n, err := strconv.Atoi(strings.ReplaceAll(digits, ",", ""))
+		s.Require().NoError(err)
+
+		if _, already := out[words]; !already {
+			out[words] = n
+		}
+	}
+
+	held := string(page)
+
+	for _, m := range after.FindAllStringSubmatch(held, -1) {
+		add(m[2], m[1])
+	}
+
+	for _, m := range before.FindAllStringSubmatch(held, -1) {
+		add(m[1], m[2])
+	}
+
+	s.Require().NotEmpty(out, "the README states no figures")
+
+	return out
+}
+
+// inCategory counts one kind of block in a catalog.
+func (s *MainTestSuite) inCategory(
+	cat *catalog.Catalog,
+	want catalog.Category,
+) int {
+	out := 0
+
+	for _, b := range cat.Blocks {
+		if b.Category == want {
+			out++
+		}
+	}
+
+	return out
 }
 
 // toneFieldsNothingReads names the ToneSpec and Setup fields no code outside
