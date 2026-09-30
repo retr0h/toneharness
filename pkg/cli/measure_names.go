@@ -35,8 +35,12 @@ import (
 
 // NamesOptions is what checking a block's parameter order needs to know.
 type NamesOptions struct {
-	Client Prober
-	Model  string
+	// Headroom is how far the chain's own output is turned down before
+	// anything is measured, in decibels, and wants to be negative. The
+	// measuring lead makes the chain feed itself.
+	Headroom float64
+	Client   Prober
+	Model    string
 }
 
 // probed is what moving one index settled.
@@ -104,7 +108,7 @@ func MeasureNames(
 	preset, err := compile(ctx, opts.Client, measured.Block{
 		ID: string(block.ID), Name: block.Name,
 		Category: block.Category,
-	}, work, true)
+	}, work, true, opts.Headroom)
 	if err != nil {
 		return err
 	}

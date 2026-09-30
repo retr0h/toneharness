@@ -59,6 +59,17 @@ type Curves struct {
 	Chain string `json:"chain"`
 	// Reference identifies the signal every reading was taken against.
 	Reference Reference `json:"reference"`
+	// Instrument is what was played through it, as the corpus names one, and
+	// Headroom how far the chain's own output was turned down while these
+	// were taken.
+	//
+	// Both because a figure is only a figure about the instrument that made it
+	// and the loop that carried it. A guitar rig ranked against readings taken
+	// with a bass is ranked against the wrong distribution, and a reading
+	// taken without headroom is of the measuring lead feeding the chain back
+	// into itself.
+	Instrument string  `json:"instrument,omitempty"`
+	Headroom   float64 `json:"headroom,omitempty"`
 	// Probed says the wire order was discovered on the device rather than read
 	// out of the catalog.
 	//

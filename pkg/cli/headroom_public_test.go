@@ -142,7 +142,7 @@ func (s *HeadroomPublicTestSuite) TestNoHeadroomLeavesThePresetAlone() {
 	// No PresetFile and no Compile expected: asking for no headroom must not
 	// read or write anything.
 	got, err := quieter(context.Background(),
-		TuneOptions{Client: pedal, ID: "matt-freeman"}, "already.hlx", 0)
+		pedal, "already.hlx", s.T().TempDir(), "matt-freeman", 0)
 
 	s.Require().NoError(err)
 	s.Require().Equal("already.hlx", got)
@@ -172,7 +172,7 @@ func (s *HeadroomPublicTestSuite) TestItReadsThePresetBackBecauseARigCarriesNoRo
 		})
 
 	got, err := quieter(context.Background(),
-		TuneOptions{Client: pedal, ID: "matt-freeman"}, "already.hlx", -30)
+		pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
 
 	s.Require().NoError(err)
 	s.Require().NotEqual("already.hlx", got, "it plays the quiet one")
@@ -205,7 +205,7 @@ func (s *HeadroomPublicTestSuite) TestAPresetThatWillNotReadBack() {
 		Return(sdk.Reading{}, wanted)
 
 	_, err := quieter(context.Background(),
-		TuneOptions{Client: pedal, ID: "matt-freeman"}, "already.hlx", -30)
+		pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
 
 	s.Require().ErrorIs(err, wanted)
 }
@@ -219,7 +219,7 @@ func (s *HeadroomPublicTestSuite) TestAPresetWithNoOutputToTurnDown() {
 		Return(sdk.Reading{Plan: plan.Plan{}}, nil)
 
 	_, err := quieter(context.Background(),
-		TuneOptions{Client: pedal, ID: "matt-freeman"}, "already.hlx", -30)
+		pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
 
 	s.Require().ErrorIs(err, ErrNoOutput)
 }
@@ -237,7 +237,7 @@ func (s *HeadroomPublicTestSuite) TestTheQuietPresetThatWillNotCompile() {
 		Return(sdk.Built{}, wanted)
 
 	_, err := quieter(context.Background(),
-		TuneOptions{Client: pedal, ID: "matt-freeman"}, "already.hlx", -30)
+		pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
 
 	s.Require().ErrorIs(err, wanted)
 }

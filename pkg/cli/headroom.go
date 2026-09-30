@@ -64,6 +64,13 @@ const (
 // ErrNoOutput is a preset with no output entry to turn down.
 var ErrNoOutput = errors.New("nothing to give headroom to")
 
+// Quiets is what lowering a preset's output takes: read the preset back for
+// the routing it arrived with, and write it again.
+type Quiets interface {
+	Compiles
+	ReadsFiles
+}
+
 // quieter writes the plan again with the chain's output gain lowered, and
 // returns the preset compiled from it.
 //
@@ -77,8 +84,8 @@ var ErrNoOutput = errors.New("nothing to give headroom to")
 // means.
 func quieter(
 	ctx context.Context,
-	opts TuneOptions,
-	already string,
+	client Quiets,
+	already, work, name string,
 	by float64,
 ) (string, error) {
 	if by == 0 {
@@ -90,7 +97,7 @@ func quieter(
 	// the blank template while the preset is written, so there is nothing in
 	// the plan to change. The preset has them, and reading it back is how the
 	// entry arrives complete, with its model and its output already set.
-	read, err := opts.Client.PresetFile(ctx, already)
+	read, err := client.PresetFile(ctx, already)
 	if err != nil {
 		return "", err
 	}
@@ -100,7 +107,7 @@ func quieter(
 		return "", err
 	}
 
-	at := filepath.Join(os.TempDir(), opts.ID+".headroom.yaml")
+	at := filepath.Join(work, name+".headroom.yaml")
 
 	f, err := os.Create(at) //nolint:gosec // a path this builds in the temp dir
 	if err != nil {
@@ -117,9 +124,9 @@ func quieter(
 		return "", fmt.Errorf("writing %s: %w", at, err)
 	}
 
-	out := filepath.Join(os.TempDir(), opts.ID+".headroom.hlx")
+	out := filepath.Join(work, name+".headroom.hlx")
 
-	if _, err := opts.Client.Compile(ctx, sdk.Compile{
+	if _, err := client.Compile(ctx, sdk.Compile{
 		Plan: at, Out: out, Existing: sdk.ReplaceExisting,
 	}); err != nil {
 		return "", err

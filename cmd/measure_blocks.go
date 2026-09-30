@@ -34,6 +34,7 @@ var (
 	measureBlocksResume   bool
 	measureBlocksRetry    bool
 	measureBlocksHardware string
+	measureBlocksHeadroom float64
 	measureBlocksClient   clientFlags
 )
 
@@ -77,6 +78,7 @@ had. ` + "`--resume`" + ` picks it up again.`,
 			Seconds:  measureBlocksSeconds,
 			Resume:   measureBlocksResume,
 			Retry:    measureBlocksRetry,
+			Headroom: measureBlocksHeadroom,
 			Hardware: measureBlocksHardware,
 		})
 	},
@@ -101,6 +103,12 @@ func init() {
 		"with --resume, try the ones that refused again")
 	f.StringVar(&measureBlocksHardware, "hardware", "hx stomp",
 		"which attached audio device to push the signal through")
+	f.Float64Var(
+		&measureBlocksHeadroom,
+		"headroom",
+		measuringHeadroom,
+		"decibels to turn the chain's own output down by before measuring; the lead from the pedal back to itself oscillates without it",
+	)
 	f.StringVar(&measureBlocksClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&measureBlocksClient.device, "device", "", deviceUsage)

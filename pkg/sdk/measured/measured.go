@@ -161,6 +161,24 @@ type Library struct {
 	// different one invalidates the lot, the way changing a record
 	// invalidates the words derived from it.
 	Reference Reference `json:"reference"`
+	// Instrument is what was played through it, as the corpus names one:
+	// "bass", "guitar".
+	//
+	// Every figure here is a figure about that instrument and nothing else. A
+	// bass DI and a guitar DI do not sit in the same place on any axis, so a
+	// guitar rig ranked against readings taken with a bass is ranked against
+	// the wrong distribution. Until 2026-09-29 the only trace of it was the
+	// reference recording's filename.
+	Instrument string `json:"instrument,omitempty"`
+	// Headroom is how far the chain's own output was turned down while these
+	// were taken, in decibels.
+	//
+	// Kept because it decides whether a reading is of the chain at all. The
+	// measuring lead makes the chain feed itself and enough gain around that
+	// loop oscillates, so readings taken without it are of the squeal: every
+	// one of this device's full amplifiers read a median 46.4% of its energy
+	// above 2kHz where the preamps of the same circuits read 0.047%.
+	Headroom float64 `json:"headroom,omitempty"`
 	// Baseline is the empty loop, measured first.
 	//
 	// Without it a figure says nothing. 95 Hz is not what an equaliser does

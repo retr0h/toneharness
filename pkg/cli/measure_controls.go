@@ -42,6 +42,10 @@ import (
 
 // ControlsOptions is what sweeping one block's controls needs to know.
 type ControlsOptions struct {
+	// Headroom is how far the chain's own output is turned down before
+	// anything is measured, in decibels, and wants to be negative. The
+	// measuring lead makes the chain feed itself.
+	Headroom float64
 	Client   Pedal
 	Model    string
 	Dry      string
@@ -119,7 +123,7 @@ func MeasureControls(
 		_, _ = fmt.Fprintf(w,
 			"  %s claims no wire order, so asking the device for it\n", opts.Model)
 
-		if order, err = discover(ctx, opts.Client, block, opts.Model); err != nil {
+		if order, err = discover(ctx, opts.Client, block, opts.Model, opts.Headroom); err != nil {
 			return err
 		}
 	}
@@ -147,7 +151,7 @@ func MeasureControls(
 		Category: block.Category,
 	}
 
-	preset, err := compile(ctx, opts.Client, entry, work, true)
+	preset, err := compile(ctx, opts.Client, entry, work, true, opts.Headroom)
 	if err != nil {
 		return fmt.Errorf("building a chain holding only %s: %w", opts.Model, err)
 	}
@@ -162,6 +166,7 @@ func MeasureControls(
 	out := measured.Curves{
 		Device: "HX Stomp", Gear: block.Name, Block: string(block.ID),
 		Slot: alone, Isolated: true, Probed: probed,
+		Instrument: instrumentOf(opts.Dry), Headroom: opts.Headroom,
 		Reference: measured.Reference{
 			File: opts.Dry, SHA256: sum, Seconds: opts.Seconds,
 		},
@@ -485,6 +490,7 @@ func discover(
 	client Pedal,
 	block catalog.Block,
 	model string,
+	headroom float64,
 ) ([]string, error) {
 	work, err := os.MkdirTemp("", "toneharness-order")
 	if err != nil {
@@ -495,7 +501,7 @@ func discover(
 
 	preset, err := compile(ctx, client, measured.Block{
 		ID: model, Name: block.Name, Category: block.Category,
-	}, work, true)
+	}, work, true, headroom)
 	if err != nil {
 		return nil, err
 	}

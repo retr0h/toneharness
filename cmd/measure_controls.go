@@ -36,6 +36,7 @@ var (
 	measureControlsPoints   int
 	measureControlsTakes    int
 	measureControlsHardware string
+	measureControlsHeadroom float64
 	measureControlsClient   clientFlags
 )
 
@@ -88,6 +89,7 @@ Freq swept 0..1 never leaves its bottom stop and reports as inert.`,
 				Seconds:  measureControlsSeconds,
 				Points:   measureControlsPoints,
 				Takes:    measureControlsTakes,
+				Headroom: measureControlsHeadroom,
 				Hardware: measureControlsHardware,
 			})
 	},
@@ -111,6 +113,12 @@ func init() {
 		"how many takes the noise floor is measured from")
 	f.StringVar(&measureControlsHardware, "hardware", "hx stomp",
 		"which attached audio device to push the signal through")
+	f.Float64Var(
+		&measureControlsHeadroom,
+		"headroom",
+		measuringHeadroom,
+		"decibels to turn the chain's own output down by before measuring; the lead from the pedal back to itself oscillates without it",
+	)
 	f.StringVar(&measureControlsClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&measureControlsClient.device, "device", "", deviceUsage)

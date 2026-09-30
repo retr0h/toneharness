@@ -60,7 +60,7 @@ func (s *MeasurePathsTestSuite) SetupTest() {
 func (s *MeasurePathsTestSuite) TestCompilingSaysWhichFileItCouldNotWrite() {
 	_, err := compile(context.Background(), s.pedal,
 		measured.Block{ID: "HD2_AmpUSDripmanNorm"},
-		filepath.Join(s.T().TempDir(), "no", "such", "place"), true)
+		filepath.Join(s.T().TempDir(), "no", "such", "place"), true, 0)
 
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), "HD2_AmpUSDripmanNorm.yaml")
@@ -80,7 +80,7 @@ func (s *MeasurePathsTestSuite) TestCompilingPassesThePedalsRefusalBack() {
 	_, err := compile(context.Background(), s.pedal,
 		measured.Block{
 			ID: "HD2_AmpUSDripmanNorm", Name: "US Dripman", Category: "amp",
-		}, s.T().TempDir(), true)
+		}, s.T().TempDir(), true, 0)
 
 	s.Require().ErrorIs(err, refused)
 }

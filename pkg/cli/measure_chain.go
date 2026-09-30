@@ -24,6 +24,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path/filepath"
+	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
@@ -197,4 +199,28 @@ func Squealing(
 			"that.\n      The loop is oscillating: turn the amplifier's output down "+
 			"and read it again.",
 		is*perCent, was*perCent), true
+}
+
+// instrumentOf is what a reference recording was played on.
+//
+// Read off the path, because that is where it is said. The dry signals live
+// under resources/dry/ as `bass-di.wav` and a corpus is a tree per instrument,
+// so the word is already in the name and nothing else carries it.
+//
+// Empty where the name does not say, which is honest: a reading that cannot
+// name its instrument should not claim one. A guitar rig ranked against
+// readings taken with a bass is ranked against the wrong distribution, and the
+// whole point of recording this is that somebody can tell.
+func instrumentOf(
+	dry string,
+) string {
+	name := strings.ToLower(filepath.Base(dry))
+
+	for _, known := range []string{"bass", "guitar"} {
+		if strings.Contains(name, known) {
+			return known
+		}
+	}
+
+	return ""
 }

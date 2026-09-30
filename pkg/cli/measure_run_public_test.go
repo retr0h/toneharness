@@ -22,6 +22,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"math"
 	"os"
@@ -33,7 +34,10 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/cli/internal/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // MeasureRunTestSuite covers a campaign end to end, with a pedal that answers
@@ -92,6 +96,52 @@ func (b bench) Through(
 
 func (bench) Name() string { return "a bench" }
 
+// squealing is a loop oscillating: it answers with the same high tone whatever
+// is put in, silence included.
+//
+// Which is the shape of the real fault. The measuring lead runs from the
+// pedal's output back into its own input, so with enough gain around the loop
+// the chain feeds itself, and what comes back is the loop's own note rather
+// than the reference. Three of the device's amplifiers still did it at 30dB of
+// headroom, reading between 92% and 95% of their energy above 2kHz where the
+// median was 0.41%.
+type squealing struct{}
+
+func (squealing) Through(
+	_ context.Context,
+	signal []float32,
+) ([]float32, error) {
+	out := make([]float32, len(signal))
+
+	// Well above the 2kHz the high band starts at, and the same whether the
+	// caller sent music or nothing.
+	for i := range out {
+		out[i] = float32(0.3 * math.Sin(2*math.Pi*6000*float64(i)/sdk.Rate))
+	}
+
+	return out, nil
+}
+
+func (squealing) Name() string { return "a loop feeding itself" }
+
+// routedPlan is a plan carrying the output entry a preset arrives with, which
+// is what headroom needs something to change.
+func routedPlan() plan.Plan {
+	routing := map[string]json.RawMessage{
+		"dsp0.outputA": json.RawMessage(
+			`{"@model":"HelixStomp_AppDSPFlowOutputMain","@output":1,` +
+				`"pan":0.5,"gain":0}`),
+	}
+
+	return plan.Plan{
+		Name: "scratch",
+		Blocks: []plan.Block{{
+			Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true,
+		}},
+		Device: &rig.DeviceState{Routing: &routing},
+	}
+}
+
 // compiles makes the pedal build any preset it is asked for.
 func (s *MeasureRunTestSuite) compiles() {
 	s.pedal.EXPECT().
@@ -101,6 +151,117 @@ func (s *MeasureRunTestSuite) compiles() {
 
 			return sdk.Built{}, nil
 		}).AnyTimes()
+
+	// And the read back that headroom does, which takes the routing off the
+	// preset because a plan compiled from a rig carries none.
+	s.pedal.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
+		Return(sdk.Reading{Plan: routedPlan()}, nil).AnyTimes()
+}
+
+// TestASquealingLoopIsReadAgainWithMoreHeadroom covers the backoff.
+//
+// The gain that makes the loop run away is the block's own, so the headroom
+// that stops it is per block. A bench answering the same high tone whatever is
+// put in is a loop feeding itself, and the sweep takes the reading again with
+// more headroom rather than filing the squeal.
+//
+// A gate rather than a cabinet, which exercises the harder half. A cabinet is a
+// low pass and a reading brighter than the reference settles it outright; a
+// gate may legitimately be brighter, so the only test left is whether the
+// reading depends on its input at all. Silence in, and an oscillation comes
+// back anyway.
+func (s *MeasureRunTestSuite) TestASquealingLoopIsReadAgainWithMoreHeadroom() {
+	s.compiles()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	var buf bytes.Buffer
+
+	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
+		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "gate",
+		Seconds: 0.2, Bench: squealing{}, Headroom: -30,
+	}))
+
+	// Said and stepped, which is the whole behaviour: the reading is taken
+	// again with more headroom rather than the squeal being filed.
+	said := buf.String()
+	s.Require().Contains(said, "read the loop rather than itself")
+	s.Require().Contains(said, "again at -42dB")
+	s.Require().Contains(said, "again at -54dB", "it keeps stepping")
+
+	// And a block that never came clean is marked rather than filed. A
+	// reading nobody can use is worse than a gap: a gap gets looked into.
+	for _, got := range s.read().Blocks {
+		s.Require().Contains(got.Refused, "read the loop rather than itself")
+		s.Require().False(got.Measured())
+	}
+}
+
+// TestACleanReadingIsNotTakenTwice covers the backoff staying out of the way.
+func (s *MeasureRunTestSuite) TestACleanReadingIsNotTakenTwice() {
+	s.compiles()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	var buf bytes.Buffer
+
+	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
+		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
+		Seconds: 1, Bench: bench{},
+	}))
+
+	s.Require().NotContains(buf.String(), "read the loop rather than itself")
+}
+
+// TestTheReadingsSayWhatTheyAreAbout covers the instrument and the headroom.
+//
+// Every figure is a figure about one instrument through one loop, and until
+// these were recorded the only trace of either was the reference's filename.
+func (s *MeasureRunTestSuite) TestTheReadingsSayWhatTheyAreAbout() {
+	s.compiles()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	s.Require().NoError(MeasureBlocks(context.Background(), &bytes.Buffer{},
+		MeasureOptions{
+			Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
+			Seconds: 1, Bench: bench{}, Headroom: -30,
+		}))
+
+	lib := s.read()
+	s.Require().Equal("bass", lib.Instrument)
+	s.Require().InDelta(-30, lib.Headroom, 0.001)
+}
+
+// TestACabinetBrighterThanWhatItWasGivenNeedsNoSilenceReading covers the half
+// the invariant settles outright.
+//
+// A cabinet is a loudspeaker and a loudspeaker is a low pass, so a reading
+// brighter than the reference is a reading of something else and there is
+// nothing left to test. Only a block that may legitimately brighten costs the
+// extra reading.
+func (s *MeasureRunTestSuite) TestACabinetBrighterThanWhatItWasGivenNeedsNoSilenceReading() {
+	s.compiles()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	var buf bytes.Buffer
+
+	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
+		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "cab",
+		Seconds: 0.2, Bench: squealing{},
+	}))
+
+	s.Require().Contains(buf.String(), "read the loop rather than itself")
+}
+
+// TestABenchThatStopsAnsweringMidBackoff covers the reading failing.
+func (s *MeasureRunTestSuite) TestABenchThatStopsAnsweringMidBackoff() {
+	s.compiles()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	err := MeasureBlocks(context.Background(), &bytes.Buffer{}, MeasureOptions{
+		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "gate",
+		Seconds: 0.2, Bench: bench{err: errors.New("the interface went away")},
+	})
+
+	s.Require().ErrorContains(err, "the interface went away")
 }
 
 // TestBlocksMeasuresACategory covers a campaign that works.

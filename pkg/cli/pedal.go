@@ -83,6 +83,7 @@ type (
 // Loader is what measuring every block needs: build a chain and play it.
 type Loader interface {
 	Compiles
+	ReadsFiles
 	Plays
 }
 

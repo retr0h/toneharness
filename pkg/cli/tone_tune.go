@@ -450,7 +450,8 @@ func built(
 	// The chain's own output turned down before it is ever played, because the
 	// measuring rig feeds the chain back into itself and enough gain around
 	// that loop oscillates. Not the amplifier's output, which is the tone.
-	playing, err := quieter(ctx, opts, out, opts.Headroom)
+	playing, err := quieter(
+		ctx, opts.Client, out, os.TempDir(), opts.ID, opts.Headroom)
 	if err != nil {
 		return sdk.Made{}, "", err
 	}

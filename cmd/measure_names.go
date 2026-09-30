@@ -26,8 +26,9 @@ import (
 )
 
 var (
-	measureNamesModel  string
-	measureNamesClient clientFlags
+	measureNamesModel    string
+	measureNamesHeadroom float64
+	measureNamesClient   clientFlags
 )
 
 // measureNamesCmd represents the measure names command.
@@ -66,6 +67,12 @@ func init() {
 	f := measureNamesCmd.Flags()
 	f.StringVar(&measureNamesModel, "model", "",
 		"the block to check, by its model identifier")
+	f.Float64Var(
+		&measureNamesHeadroom,
+		"headroom",
+		measuringHeadroom,
+		"decibels to turn the chain's own output down by before measuring; the lead from the pedal back to itself oscillates without it",
+	)
 	f.StringVar(&measureNamesClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&measureNamesClient.device, "device", "", deviceUsage)

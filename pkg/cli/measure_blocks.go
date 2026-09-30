@@ -45,7 +45,12 @@ import (
 
 // MeasureOptions is what measuring every block needs to know.
 type MeasureOptions struct {
-	Client   Loader
+	Client Loader
+	// Headroom is how far the chain's own output is turned down before
+	// anything is measured, in decibels, and wants to be negative. The
+	// measuring lead makes the chain feed itself, and enough gain around
+	// that loop oscillates.
+	Headroom float64
 	Dry      string
 	Out      string
 	Category catalog.Category
@@ -93,6 +98,11 @@ func MeasureBlocks(
 		Device:   "HX Stomp",
 		Isolated: true,
 		Blocks:   map[string]measured.Block{},
+		// Said in the file rather than left to the reference's filename,
+		// because a figure is a figure about one instrument through one loop
+		// and neither is recoverable from a path somebody may rename.
+		Instrument: instrumentOf(opts.Dry),
+		Headroom:   opts.Headroom,
 		Reference: measured.Reference{
 			File:    opts.Dry,
 			SHA256:  sum,
@@ -123,7 +133,7 @@ func MeasureBlocks(
 
 	defer func() { _ = os.RemoveAll(work) }()
 
-	built := build(ctx, w, opts.Client, want, work)
+	built := build(ctx, w, opts.Client, want, work, opts.Headroom)
 
 	if err := baseline(ctx, w, bench, signal, &lib, work, opts); err != nil {
 		return err
@@ -139,7 +149,8 @@ func MeasureBlocks(
 				ID: block.ID, Name: block.Name,
 				Category: block.Category, Refused: at,
 			}
-		} else if err := one(ctx, opts.Client, bench, signal, &lib, block, at); err != nil {
+		} else if err := readBackingOff(
+			ctx, w, opts, bench, signal, &lib, block, at, work); err != nil {
 			return err
 		}
 
@@ -156,6 +167,15 @@ func MeasureBlocks(
 }
 
 // one measures a single block, with its preset already built.
+//
+// Backed off per block when the reading is of the loop rather than of the
+// block, because the gain that makes the loop run away is the block's own.
+// Thirty decibels of headroom is enough for almost everything and not for the
+// loudest amplifiers: sweeping every one of them at -30, three still read
+// between 92% and 95% of their energy above 2kHz where the median was 0.41%.
+//
+// The same shape as land backing off when a pass mutes the chain. Halving is
+// not available here because headroom is already in decibels, so it steps.
 func one(
 	ctx context.Context,
 	client Plays,
@@ -189,6 +209,163 @@ func one(
 	return nil
 }
 
+// quieterSteps is how many times a block's own reading may be taken again with
+// more headroom, and by how much each time.
+//
+// Four steps of twelve decibels, which reaches -78 from a default of -30. The
+// loudest amplifier measured needed more than -30 and the empty loop reads
+// -62.68dB, so there is not much room past that: a reading quieter than the
+// loop it travelled through says nothing.
+const (
+	quieterSteps = 4
+	quieterBy    = -12.0
+)
+
+// readBackingOff measures a block, and takes the reading again with more
+// headroom while it is of the loop rather than of the block.
+//
+// Reported rather than silent, because a block that needed 78 decibels of
+// headroom is a block whose reading is near the floor and worth doubting.
+func readBackingOff(
+	ctx context.Context,
+	w io.Writer,
+	opts MeasureOptions,
+	bench sdk.Bench,
+	signal []float32,
+	lib *measured.Library,
+	block measured.Block,
+	at, work string,
+) error {
+	if err := one(ctx, opts.Client, bench, signal, lib, block, at); err != nil {
+		return err
+	}
+
+	dry := figuresOfDry(signal)
+	headroom := opts.Headroom
+
+	for range quieterSteps {
+		got, held := lib.Blocks[block.ID]
+		if !held || got.Refused != "" {
+			return nil
+		}
+
+		bad, err := suspect(ctx, opts.Client, bench, signal, got, block, dry, at)
+		if err != nil {
+			return err
+		}
+
+		if !bad {
+			return nil
+		}
+
+		headroom += quieterBy
+
+		_, _ = fmt.Fprintf(w,
+			"        %s read the loop rather than itself, again at %.0fdB\n",
+			block.ID, headroom)
+
+		next, err := compile(ctx, opts.Client, block, work, true, headroom)
+		if err != nil {
+			return err
+		}
+
+		if err := one(
+			ctx, opts.Client, bench, signal, lib, block, next); err != nil {
+			return err
+		}
+	}
+
+	// Out of steps and still reading the loop. Marked rather than filed,
+	// because the figures describe the loop and a reading nobody can use is
+	// worse than a gap: a gap gets looked into and a number gets believed.
+	got, held := lib.Blocks[block.ID]
+	if !held || got.Refused != "" {
+		return nil
+	}
+
+	bad, err := suspect(ctx, opts.Client, bench, signal, got, block, dry, at)
+	if err != nil {
+		return err
+	}
+
+	if bad {
+		lib.Blocks[block.ID] = measured.Block{
+			ID: block.ID, Name: block.Name, Category: block.Category,
+			Refused: fmt.Sprintf(
+				"read the loop rather than itself at %.0fdB of headroom", headroom),
+		}
+	}
+
+	return nil
+}
+
+// suspect says a block's reading is of the loop rather than of the block.
+//
+// Two tests, because one does not cover both kinds of block.
+//
+// A cabinet is a low pass, so a reading brighter than what went in is a
+// reading of something else. That settles every cabinet and every block that
+// cannot add high end.
+//
+// An amplifier alone is legitimately brighter than a bass DI, so the invariant
+// says nothing about it, and the loudest amplifiers are exactly the ones that
+// squeal. For those the test is whether the reading depends on its input at
+// all: push silence through and an oscillation comes back anyway, because that
+// is what self-sustaining means, while a block passing a signal has nothing to
+// pass.
+//
+// The silence reading is only taken for a block whose high band is well above
+// the loop's own, because it costs a reading and almost nothing needs it.
+func suspect(
+	ctx context.Context,
+	client Plays,
+	bench sdk.Bench,
+	signal []float32,
+	got, block measured.Block,
+	dry map[audio.Figure]float64,
+	at string,
+) (bool, error) {
+	now := figuresOf(got.Figures)
+
+	if _, bad := Squealing(now, dry, nil, endsInACabinet(block)); bad {
+		return true, nil
+	}
+
+	// Nothing to be suspicious of. A block sitting where the reference sits is
+	// a block that passed it.
+	if now[audio.KeyHigh] <= dry[audio.KeyHigh]+apart {
+		return false, nil
+	}
+
+	if err := client.Play(ctx, at); err != nil {
+		return false, nil
+	}
+
+	quiet, err := sdk.Fingerprint(ctx, bench, make([]float32, len(signal)))
+	if err != nil {
+		return false, err
+	}
+
+	// Louder than the loop's own floor with nothing put in, which is a signal
+	// the block is making rather than passing.
+	return quiet.Level > got.Level-silent, nil
+}
+
+// endsInACabinet says a single-block chain is a low pass.
+//
+// A sweep measures one block alone, so the chain ends in whatever that block
+// is. Only a cabinet makes the high band a one-way street, and an amplifier
+// measured alone is legitimately brighter than what it was given.
+//
+// Which is why this is the harder half of the problem: the loudest amplifiers
+// are exactly the blocks the invariant cannot be used on, so their readings
+// are checked against the loop's own high band instead.
+func endsInACabinet(
+	block measured.Block,
+) bool {
+	return block.Category == catalog.CategoryCab
+}
+
 // baseline measures the loop with nothing in it.
 //
 // Without it a figure says nothing. 95 Hz is not what an equaliser does to a
@@ -213,7 +390,7 @@ func baseline(
 		Category: "eq",
 	}
 
-	at, err := compile(ctx, opts.Client, empty, work, false)
+	at, err := compile(ctx, opts.Client, empty, work, false, opts.Headroom)
 	if err != nil {
 		return fmt.Errorf("building the empty loop: %w", err)
 	}
@@ -244,9 +421,10 @@ func baseline(
 func build(
 	ctx context.Context,
 	w io.Writer,
-	client Compiles,
+	client Quiets,
 	want []measured.Block,
 	work string,
+	headroom float64,
 ) map[string]string {
 	var (
 		mu   sync.Mutex
@@ -264,7 +442,7 @@ func build(
 			gate <- struct{}{}
 			defer func() { <-gate }()
 
-			at, err := compile(ctx, client, block, work, true)
+			at, err := compile(ctx, client, block, work, true, headroom)
 
 			mu.Lock()
 			defer mu.Unlock()
@@ -297,10 +475,11 @@ func build(
 // compile writes one block's rig and turns it into a preset.
 func compile(
 	ctx context.Context,
-	client Compiles,
+	client Quiets,
 	block measured.Block,
 	work string,
 	enabled bool,
+	headroom float64,
 ) (string, error) {
 	name := strings.NewReplacer("/", "-", " ", "-").Replace(block.ID)
 	spec := filepath.Join(work, name+".yaml")
@@ -327,7 +506,10 @@ func compile(
 		return "", err
 	}
 
-	return out, nil
+	// The chain's own output turned down before it is ever played. Every
+	// measuring command comes through here, so this is the one place the
+	// measuring rig's own feedback is dealt with.
+	return quieter(ctx, client, out, work, name, headroom)
 }
 
 // planFor is a plan holding one block, named by model rather than by gear.

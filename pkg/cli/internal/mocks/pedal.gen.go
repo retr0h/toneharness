@@ -301,6 +301,21 @@ func (mr *MockLoaderMockRecorder) Play(ctx, file any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockLoader)(nil).Play), ctx, file)
 }
 
+// PresetFile mocks base method.
+func (m *MockLoader) PresetFile(ctx context.Context, path string) (sdk.Reading, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PresetFile", ctx, path)
+	ret0, _ := ret[0].(sdk.Reading)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PresetFile indicates an expected call of PresetFile.
+func (mr *MockLoaderMockRecorder) PresetFile(ctx, path any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresetFile", reflect.TypeOf((*MockLoader)(nil).PresetFile), ctx, path)
+}
+
 // MockProber is a mock of Prober interface.
 type MockProber struct {
 	ctrl     *gomock.Controller
@@ -367,6 +382,21 @@ func (m *MockProber) Play(ctx context.Context, file string) error {
 func (mr *MockProberMockRecorder) Play(ctx, file any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockProber)(nil).Play), ctx, file)
+}
+
+// PresetFile mocks base method.
+func (m *MockProber) PresetFile(ctx context.Context, path string) (sdk.Reading, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PresetFile", ctx, path)
+	ret0, _ := ret[0].(sdk.Reading)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PresetFile indicates an expected call of PresetFile.
+func (mr *MockProberMockRecorder) PresetFile(ctx, path any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresetFile", reflect.TypeOf((*MockProber)(nil).PresetFile), ctx, path)
 }
 
 // Turn mocks base method.
@@ -463,6 +493,21 @@ func (m *MockPedal) Play(ctx context.Context, file string) error {
 func (mr *MockPedalMockRecorder) Play(ctx, file any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Play", reflect.TypeOf((*MockPedal)(nil).Play), ctx, file)
+}
+
+// PresetFile mocks base method.
+func (m *MockPedal) PresetFile(ctx context.Context, path string) (sdk.Reading, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PresetFile", ctx, path)
+	ret0, _ := ret[0].(sdk.Reading)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PresetFile indicates an expected call of PresetFile.
+func (mr *MockPedalMockRecorder) PresetFile(ctx, path any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresetFile", reflect.TypeOf((*MockPedal)(nil).PresetFile), ctx, path)
 }
 
 // Turn mocks base method.

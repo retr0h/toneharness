@@ -157,3 +157,34 @@ func TestChainPublicTestSuite(
 ) {
 	suite.Run(t, new(ChainPublicTestSuite))
 }
+
+// TestInstrumentOfReadsItOffTheReference covers what a reading says it is about.
+//
+// Every figure here is a figure about one instrument. A guitar rig ranked
+// against readings taken with a bass is ranked against the wrong distribution,
+// and until this was recorded the only trace of it was a filename.
+func (s *ChainPublicTestSuite) TestInstrumentOfReadsItOffTheReference() {
+	tests := []struct {
+		dry  string
+		want string
+	}{
+		{filepath.Join("resources", "dry", "bass-di.wav"), "bass"},
+		{filepath.Join("resources", "dry", "guitar-di.wav"), "guitar"},
+		{"BASS-DI.WAV", "bass"},
+		{filepath.Join("somewhere", "else", "take-3.wav"), ""},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.dry, func() {
+			s.Require().Equal(tt.want, instrumentOf(tt.dry))
+		})
+	}
+}
+
+// TestAReadingThatCannotNameItsInstrumentClaimsNone covers the honest empty.
+//
+// A reading that does not know what was played through it should not say. The
+// point of recording it is that somebody can tell, and a guess defeats that.
+func (s *ChainPublicTestSuite) TestAReadingThatCannotNameItsInstrumentClaimsNone() {
+	s.Require().Empty(instrumentOf("reference.wav"))
+}
