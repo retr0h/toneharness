@@ -77,7 +77,7 @@ func Slopes(
 	w io.Writer,
 	opts SlopesOptions,
 ) error {
-	made, preset, err := built(ctx, TuneOptions{
+	made, preset, _, err := built(ctx, TuneOptions{
 		Client: opts.Client, ID: opts.ID, Headroom: opts.Headroom,
 	})
 	if err != nil {

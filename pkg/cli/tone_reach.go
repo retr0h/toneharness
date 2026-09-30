@@ -114,7 +114,7 @@ func Reach(
 		return err
 	}
 
-	made, _, err := built(ctx, TuneOptions{
+	made, _, _, err := built(ctx, TuneOptions{
 		Client: opts.Client, ID: opts.ID, Headroom: opts.Headroom,
 	})
 	if err != nil {

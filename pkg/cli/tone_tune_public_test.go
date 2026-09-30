@@ -22,6 +22,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"math"
 	"os"
@@ -788,7 +789,8 @@ func (s *TunePublicTestSuite) TestKeepWritesAPlanRatherThanARig() {
 
 	var buf bytes.Buffer
 
-	s.Require().NoError(keepTuned(context.Background(), &buf, opts))
+	s.Require().NoError(
+		keepTuned(context.Background(), &buf, opts, "as-built.hlx"))
 
 	f, err := os.Open(opts.Out)
 	s.Require().NoError(err)
@@ -805,6 +807,67 @@ func (s *TunePublicTestSuite) TestKeepWritesAPlanRatherThanARig() {
 		"the knob the solve landed on has to survive being written")
 }
 
+// TestKeepPutsTheOutputBackToWhatWasCompiled is the measuring rig not leaking
+// into the answer.
+//
+// The chain that was tuned had been sent to USB alone and turned down 30dB so it
+// would stop feeding itself down the measuring lead. Keeping the preset as the
+// device holds it writes both of those into the plan, and the rig somebody then
+// compiles is silent at the quarter-inch socket and 30dB quiet everywhere else.
+//
+// Neither is anything the solver decided, so neither survives. The dials do.
+func (s *TunePublicTestSuite) TestKeepPutsTheOutputBackToWhatWasCompiled() {
+	// What the device is playing: off the loop at USB alone, turned down.
+	measuring := map[string]json.RawMessage{
+		outputSlot: json.RawMessage(
+			`{"@model":"HelixStomp_AppDSPFlowOutputMain",` +
+				`"@output":10,"pan":0.5,"gain":-30}`),
+	}
+
+	s.pedal.EXPECT().Current(gomock.Any(), sdk.FormatRig).Return(sdk.Reading{
+		Plan: plan.Plan{
+			Blocks: []plan.Block{{
+				Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true,
+				Params: plan.Params{"Master": catalog.Float(0.62)},
+			}},
+			Device: &rig.DeviceState{Routing: &measuring},
+		},
+	}, nil)
+
+	// What the compiler produced is answered by the suite's own PresetFile,
+	// which returns routed(): the entry a preset arrives with, on destination 1
+	// at unity. That is what a kept plan should carry.
+
+	opts := s.opts()
+	opts.Out = filepath.Join(s.T().TempDir(), "tuned.yaml")
+
+	var buf bytes.Buffer
+
+	s.Require().NoError(
+		keepTuned(context.Background(), &buf, opts, "as-built.hlx"))
+
+	f, err := os.Open(opts.Out)
+	s.Require().NoError(err)
+
+	defer func() { _ = f.Close() }()
+
+	got, err := plan.Load(f)
+	s.Require().NoError(err)
+
+	var fields map[string]any
+	s.Require().NoError(
+		json.Unmarshal((*got.Device.Routing)[outputSlot], &fields))
+
+	s.Require().InDelta(1, fields["@output"], 0.001,
+		"back on the destination the rig compiled to")
+	s.Require().InDelta(0, fields["gain"], 0.001,
+		"and without the measuring headroom")
+
+	at, ok := got.Blocks[0].Params["Master"].Float()
+	s.Require().True(ok)
+	s.Require().InDelta(0.62, at, 0.0001, "the solve's own answer is kept")
+}
+
 // TestKeepSaysWhichArtifactItWouldHaveWritten covers the empty --out.
 //
 // The message named a rig while the file was a plan, which is the one place
@@ -812,7 +875,8 @@ func (s *TunePublicTestSuite) TestKeepWritesAPlanRatherThanARig() {
 func (s *TunePublicTestSuite) TestKeepSaysWhichArtifactItWouldHaveWritten() {
 	var buf bytes.Buffer
 
-	s.Require().NoError(keepTuned(context.Background(), &buf, s.opts()))
+	s.Require().NoError(
+		keepTuned(context.Background(), &buf, s.opts(), "as-built.hlx"))
 
 	s.Require().Contains(buf.String(), "--out writes it as a plan")
 }

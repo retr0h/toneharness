@@ -279,3 +279,59 @@ func offTheLoop(
 
 	return made, nil
 }
+
+// asCompiled is the plan the device is playing with the measuring rig's own
+// output entry put back to what the compiler produced.
+//
+// Everything else is kept. The dials are what the solve decided and the whole
+// point of the run; the output entry is the rig it was measured on. A tuned plan
+// written out with it still in place is sent to USB alone, so it is silent at the
+// quarter-inch socket, and carries the headroom trim, so it is 30dB quiet
+// wherever it is not.
+//
+// Read off the compiled preset rather than remembered, because that file is what
+// the rig actually resolved to: its pan, its model and whatever gain the rig
+// itself asked for are the values to restore, and reconstructing them would be
+// guessing at a default.
+//
+// A compiled preset that cannot be read, or that carries no output entry, leaves
+// the plan alone. Refusing here would throw away a tuning run over the one entry
+// nobody listens to.
+func asCompiled(
+	ctx context.Context,
+	client ReadsFiles,
+	playing plan.Plan,
+	asBuilt string,
+) (plan.Plan, error) {
+	if playing.Device == nil || playing.Device.Routing == nil {
+		return playing, nil
+	}
+
+	was, err := client.PresetFile(ctx, asBuilt)
+	if err != nil {
+		return playing, nil //nolint:nilerr // the run is worth more than the entry
+	}
+
+	if was.Plan.Device == nil || was.Plan.Device.Routing == nil {
+		return playing, nil
+	}
+
+	entry, ok := (*was.Plan.Device.Routing)[outputSlot]
+	if !ok {
+		return playing, nil
+	}
+
+	// A copy, so a caller still holding the plan it read keeps what it read.
+	next := make(map[string]json.RawMessage, len(*playing.Device.Routing))
+	for key, body := range *playing.Device.Routing {
+		next[key] = body
+	}
+
+	next[outputSlot] = entry
+
+	state := *playing.Device
+	state.Routing = &next
+	playing.Device = &state
+
+	return playing, nil
+}

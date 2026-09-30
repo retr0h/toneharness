@@ -139,7 +139,7 @@ func Tune(
 		return fmt.Errorf("%w: %q measures as nothing", ErrNoTarget, opts.Genre)
 	}
 
-	made, preset, err := built(ctx, opts)
+	made, preset, asBuilt, err := built(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -212,7 +212,7 @@ func Tune(
 		return err
 	}
 
-	if err := keepTuned(ctx, w, opts); err != nil {
+	if err := keepTuned(ctx, w, opts, asBuilt); err != nil {
 		return err
 	}
 
@@ -266,6 +266,7 @@ func keepTuned(
 	ctx context.Context,
 	w io.Writer,
 	opts TuneOptions,
+	asBuilt string,
 ) error {
 	if opts.Out == "" {
 		_, _ = fmt.Fprintf(w,
@@ -280,12 +281,25 @@ func keepTuned(
 		return err
 	}
 
+	// The measuring rig's own two changes undone. What the device is playing was
+	// sent to USB alone and turned down 30dB so it would stop feeding itself
+	// down the measuring lead, and neither of those is anything the solver
+	// decided: keeping them writes a rig that is silent at the quarter-inch
+	// socket and 30dB quiet everywhere else.
+	//
+	// Every dial the solve moved is kept, because the solve moved dials. Only
+	// the one entry that is the measuring rig rather than the tone goes back.
+	kept, err := asCompiled(ctx, opts.Client, read.Plan, asBuilt)
+	if err != nil {
+		return err
+	}
+
 	f, err := os.Create(opts.Out) //nolint:gosec // a path the caller named
 	if err != nil {
 		return fmt.Errorf("writing %s: %w", opts.Out, err)
 	}
 
-	if err := plan.Write(f, read.Plan); err != nil {
+	if err := plan.Write(f, kept); err != nil {
 		_ = f.Close()
 
 		return fmt.Errorf("writing %s: %w", opts.Out, err)
@@ -437,31 +451,37 @@ func inCorpusScale(
 }
 
 // built compiles the rig and puts it in front of the device.
+//
+// Three answers: what was compiled, the preset being played, and the path of
+// the compiled one. The last is there because the played one is not the answer
+// to keep. It has been taken off the measuring loop, and that has to be undone
+// before anything is written out.
 func built(
 	ctx context.Context,
 	opts TuneOptions,
-) (sdk.Made, string, error) {
+) (sdk.Made, string, string, error) {
 	out := filepath.Join(os.TempDir(), opts.ID+".tune.hlx")
 
 	made, err := opts.Client.Make(ctx, opts.ID, out, sdk.ReplaceExisting)
 	if err != nil {
-		return sdk.Made{}, "", err
+		return sdk.Made{}, "", "", err
 	}
 
-	// The chain's own output turned down before it is ever played, because the
-	// measuring rig feeds the chain back into itself and enough gain around
-	// that loop oscillates. Not the amplifier's output, which is the tone.
+	// Off the measuring loop before it is ever played: the lead from the
+	// pedal's output socket into its own input makes the chain feed itself, so
+	// the output is sent to USB alone and turned down. Neither is the tone,
+	// which is why neither survives into what is kept.
 	playing, err := quieter(
 		ctx, opts.Client, out, os.TempDir(), opts.ID, opts.Headroom)
 	if err != nil {
-		return sdk.Made{}, "", err
+		return sdk.Made{}, "", "", err
 	}
 
 	if err := opts.Client.Play(ctx, playing); err != nil {
-		return sdk.Made{}, "", err
+		return sdk.Made{}, "", "", err
 	}
 
-	return made, playing, nil
+	return made, playing, out, nil
 }
 
 // knobsOf is every dial in the chain the solver may turn.

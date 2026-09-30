@@ -497,6 +497,17 @@ The rig is still worth having, for the other reason. It is portable, so
 somebody else can compile it on different hardware. `presets show` prints one,
 and `slots export` writes one.
 
+**One thing is not kept, and it is the only exception**: the output entry goes
+back to what the compiler produced. The chain being tuned was sent to USB alone
+and turned down 30dB so it would stop feeding itself down the measuring lead, and
+neither of those is anything the solver decided. Kept as the device holds them,
+the plan somebody compiles afterwards is silent at the quarter-inch socket and
+30dB quiet everywhere else.
+
+That is worth stating because it is the direction this rule usually runs. Read
+what the device holds rather than what the solver believes, except for the one
+entry that is the measuring rig rather than the tone. Every dial survives.
+
 Nothing is written to a slot. A slot is flash and a burst of writes has
 corrupted a setlist, so tuning happens in the edit buffer and the answer leaves
 as a file.
