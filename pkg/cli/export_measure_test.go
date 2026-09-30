@@ -39,6 +39,10 @@ var (
 	Sweepable = sweepable
 	// Fill works out what a control's measured positions say.
 	Fill = fill
+
+	// Drifted says when the empty loop no longer reads what the shipped
+	// library's baseline did, which means the rig changed.
+	Drifted = drifted
 	// WireOrder is a model's parameters in the order the device addresses.
 	WireOrder = wireOrder
 	// Changed is the parameters that differ between two readings.

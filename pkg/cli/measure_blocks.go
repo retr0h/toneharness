@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -407,10 +408,64 @@ func baseline(
 	lib.Baseline = got
 
 	_, _ = fmt.Fprintf(w,
-		"  baseline: centroid %.1f Hz, level %.2f dB, %.1f%% low\n\n",
+		"  baseline: centroid %.1f Hz, level %.2f dB, %.1f%% low\n",
 		got.Centroid, got.Level, got.Low)
 
+	drifted(w, got)
+
 	return nil
+}
+
+// moved is how far a baseline may sit from the shipped one before it is worth
+// saying so, in decibels of level and hertz of centroid.
+//
+// Generous, because this is for a rig somebody changed rather than for the
+// wander between two takes, which is a hundredth of these. The old rig and the
+// one that opened the loop differ by 50 hertz of centroid on a bare amplifier,
+// and a nudged volume knob moves the level by more than three.
+const (
+	movedBy  = 3.0
+	movedFar = 25.0
+)
+
+// drifted says when the empty loop no longer reads what the shipped library's
+// did.
+//
+// The baseline is the calibration and nothing else is. It carries the whole gain
+// structure of the rig in one measured number: which devices are playing and
+// recording, how loud the computer's output is set, which cable goes where. None
+// of those are recorded anywhere and every figure moves with them, so a campaign
+// that starts from a different baseline is a campaign whose readings cannot be
+// compared with the ones already committed.
+//
+// Said rather than refused, and printed before the sweep rather than after. A
+// deliberate change of rig is the reason this is expected to fire, and somebody
+// who has just rewired on purpose needs it to carry on. Somebody who has not
+// needs to know before spending eighty minutes.
+func drifted(
+	w io.Writer,
+	got measured.Figures,
+) {
+	had, err := measured.BuiltIn()
+	if err != nil {
+		return
+	}
+
+	level := got.Level - had.Baseline.Level
+	centroid := got.Centroid - had.Baseline.Centroid
+
+	if math.Abs(level) < movedBy && math.Abs(centroid) < movedFar {
+		return
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"  [warn] the empty loop reads %+.1f dB and %+.0f Hz against the shipped\n"+
+			"         library's own baseline, so this is a different measuring rig\n"+
+			"         and these readings will not compare with the committed ones.\n"+
+			"         Expected if you rewired on purpose. If not, check which\n"+
+			"         devices --hardware named and whether the computer's output\n"+
+			"         volume moved.\n",
+		level, centroid)
 }
 
 // build compiles every preset up front, across every core.

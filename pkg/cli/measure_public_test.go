@@ -431,3 +431,66 @@ func TestMeasureTestSuite(
 ) {
 	suite.Run(t, new(MeasureTestSuite))
 }
+
+// TestDriftedSaysWhenTheRigChangedUnderYou covers the only calibration there is.
+//
+// The baseline carries the whole gain structure in one measured number: which
+// devices play and record, how loud the computer's output is, which cable goes
+// where. None of that is recorded anywhere and every figure moves with it, so a
+// campaign starting from a different baseline produces readings that cannot be
+// compared with the committed ones. Eighty minutes is worth a warning first.
+func (s *MeasureTestSuite) TestDriftedSaysWhenTheRigChangedUnderYou() {
+	lib, err := measured.BuiltIn()
+	s.Require().NoError(err)
+
+	was := lib.Baseline
+
+	for _, tt := range []struct {
+		name  string
+		give  measured.Figures
+		warns bool
+	}{
+		{
+			name: "the same rig says nothing",
+			give: was,
+		},
+		{
+			// Two takes of the same rig differ by hundredths, so the window has
+			// to tolerate that or it cries wolf on every campaign.
+			name: "the wander between takes says nothing",
+			give: measured.Figures{
+				Level: was.Level + 0.05, Centroid: was.Centroid + 0.3,
+			},
+		},
+		{
+			name:  "a nudged volume knob is caught by the level",
+			give:  measured.Figures{Level: was.Level - 12, Centroid: was.Centroid},
+			warns: true,
+		},
+		{
+			// What the rig that opened the loop actually did: the old one added
+			// mids and treble to everything, so the empty loop sat higher.
+			name:  "a rewired rig is caught by the centroid",
+			give:  measured.Figures{Level: was.Level, Centroid: was.Centroid - 50},
+			warns: true,
+		},
+	} {
+		s.Run(tt.name, func() {
+			var buf bytes.Buffer
+
+			Drifted(&buf, tt.give)
+
+			if !tt.warns {
+				s.Require().Empty(buf.String())
+
+				return
+			}
+
+			said := buf.String()
+			s.Require().Contains(said, "[warn]")
+			s.Require().Contains(said, "different measuring rig")
+			s.Require().Contains(said, "volume",
+				"it names what to check, or the warning is just alarm")
+		})
+	}
+}
