@@ -152,6 +152,60 @@ func (s *ChainPublicTestSuite) TestAQuietCleanReadingIsNotASqueal() {
 	s.Require().True(bad, "the quietest squeal measured was 39%")
 }
 
+// TestChainReportsHardwareItCannotOpen covers --hardware naming no device.
+//
+// The only command here that takes no client, so the bench is all there is: a
+// name nothing answers to is the whole failure.
+func (s *ChainPublicTestSuite) TestChainReportsHardwareItCannotOpen() {
+	s.Require().Error(Chain(context.Background(), buffer(), ChainOptions{
+		Dry: s.dry, Seconds: 0.1, Takes: 2, Hardware: "no such interface",
+	}))
+}
+
+// TestChainReportsABenchThatStopsAnswering covers both reads.
+//
+// The floor is measured first and the chain second, and a bench that fails on
+// either has nothing to report: a figure against a floor nobody took is a
+// figure about nothing.
+func (s *ChainPublicTestSuite) TestChainReportsABenchThatStopsAnswering() {
+	for _, tt := range []struct {
+		name  string
+		after int
+	}{
+		{"on the floor", 0},
+		{"after the floor, on the chain", 3},
+	} {
+		s.Run(tt.name, func() {
+			var calls int
+
+			err := Chain(context.Background(), buffer(), ChainOptions{
+				Bench:   stopping{after: tt.after, calls: &calls},
+				Dry:     s.dry,
+				Seconds: 0.1, Takes: 2,
+			})
+
+			s.Require().Error(err)
+		})
+	}
+}
+
+// TestChainSaysSoWhenTheLoopIsSquealing covers the warning rather than the
+// refusal.
+//
+// This command exists to be pointed at a loop somebody is setting up, so an
+// oscillating one is what they want told about rather than stopped for. Every
+// other command refuses; this one prints and carries on.
+func (s *ChainPublicTestSuite) TestChainSaysSoWhenTheLoopIsSquealing() {
+	w := buffer()
+
+	s.Require().NoError(Chain(context.Background(), w, ChainOptions{
+		Bench: bench{clipped: true}, Dry: s.dry, Seconds: 0.1, Takes: 2,
+		EndsInACab: true,
+	}))
+
+	s.Require().Contains(w.String(), "READS", "and it still prints the reading")
+}
+
 func TestChainPublicTestSuite(
 	t *testing.T,
 ) {

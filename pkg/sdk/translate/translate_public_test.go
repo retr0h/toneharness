@@ -291,6 +291,20 @@ func (s *TranslatePublicTestSuite) TestStringsThatDoNotMatchAreReported() {
 			ask:   "played:\n  - gear: Fender Precision\n    strings: flat\n",
 			setup: "instruments:\n  - gear: Fender Jazz\n    default: true\n",
 		},
+		{
+			// A setup naming no default falls to the first instrument, which
+			// is what somebody with one bass has written: `default: true` on
+			// a list of one says nothing, so nobody types it.
+			name:  "nothing marked default, so the first one answers",
+			ask:   "played:\n  - gear: Fender Precision\n    strings: flat\n",
+			setup: "instruments:\n  - gear: Fender Jazz\n    strings: round\n",
+			says:  true,
+		},
+		{
+			name:  "and the first one saying nothing is not a mismatch",
+			ask:   "played:\n  - gear: Fender Precision\n    strings: flat\n",
+			setup: "instruments:\n  - gear: Fender Jazz\n",
+		},
 	}
 
 	for _, tt := range tests {
