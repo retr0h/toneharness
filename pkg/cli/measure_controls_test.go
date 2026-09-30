@@ -93,6 +93,25 @@ func (s *ControlsRunTestSuite) ready() {
 		Return(cabReading(nil), nil).AnyTimes()
 }
 
+// readyWithout is ready with the calls that come after the sweeps left out,
+// so a test can make one of them fail.
+func (s *ControlsRunTestSuite) readyWithout() {
+	s.pedal.EXPECT().
+		Compile(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
+			writeBlank(s.T(), in.Out)
+
+			return sdk.Built{}, nil
+		}).AnyTimes()
+	s.pedal.EXPECT().
+		Turn(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	s.pedal.EXPECT().
+		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	s.pedal.EXPECT().
+		Current(gomock.Any(), gomock.Any()).
+		Return(cabReading(nil), nil).AnyTimes()
+}
+
 // cabReading is a device read of a chain holding the cabinet alone.
 //
 // Both layers, because a read populates both: the rig is what travels with the
@@ -448,6 +467,93 @@ func (s *ControlsRunTestSuite) TestTheFirstReadingAfterABenchOpensIsThrownAway()
 	// an octave away from the other three.
 	s.Require().InDelta(floors[audio.KeyCentroid], floor[audio.KeyCentroid], 0.001,
 		"the kept takes agree, so the centre wanders by its floor and no more")
+}
+
+// TestControlsReportsACatalogItCannotRead covers --device naming a pedal this
+// binary ships no catalog for.
+func (s *ControlsRunTestSuite) TestControlsReportsACatalogItCannotRead() {
+	ctrl := gomock.NewController(s.T())
+	pedal := mocks.NewMockPedal(ctrl)
+	pedal.EXPECT().Catalog(gomock.Any()).
+		Return(nil, errors.New("no catalog for that pedal")).AnyTimes()
+
+	var buf bytes.Buffer
+
+	err := MeasureControls(context.Background(), &buf, ControlsOptions{
+		Client: pedal, Model: "HD2_CabMicIr_2x15Brute", Dry: s.dry,
+		Out: s.out, Seconds: 1, Points: 3, Takes: 2, Bench: bench{},
+	})
+
+	s.Require().ErrorContains(err, "no catalog for that pedal")
+}
+
+// TestControlsReportsHardwareItCannotOpen covers --hardware naming no device.
+func (s *ControlsRunTestSuite) TestControlsReportsHardwareItCannotOpen() {
+	s.ready()
+
+	var buf bytes.Buffer
+
+	err := MeasureControls(context.Background(), &buf, ControlsOptions{
+		Client: s.pedal, Model: "HD2_CabMicIr_2x15Brute", Dry: s.dry,
+		Out: s.out, Seconds: 1, Points: 3, Takes: 2,
+		Hardware: "no such interface",
+	})
+
+	s.Require().Error(err)
+}
+
+// TestControlsPutsThePresetBackBeforeReadingTheChain covers the last two steps.
+//
+// The chain travelling in the file is read after the sweeps, with the preset
+// put back, so what it records is what was measured rather than whatever
+// position the last control was left at. Both calls can fail, and a file
+// carrying a chain nobody read would be a file claiming a measurement it does
+// not have.
+func (s *ControlsRunTestSuite) TestControlsPutsThePresetBackBeforeReadingTheChain() {
+	for _, tt := range []struct {
+		name  string
+		setup func()
+		says  string
+	}{
+		{
+			name: "the preset would not go back",
+			setup: func() {
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+					Return(nil).Times(1)
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+					Return(errors.New("would not load")).AnyTimes()
+			},
+			says: "would not load",
+		},
+		{
+			// Only the read that asks for a rig, which is the one at the end.
+			// The sweeps read the plan, and failing those would stop the run
+			// somewhere else entirely.
+			name: "the device would not say what it is playing",
+			setup: func() {
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
+				s.pedal.EXPECT().Current(gomock.Any(), sdk.FormatRig).
+					Return(sdk.Reading{}, errors.New("would not say")).AnyTimes()
+			},
+			says: "would not say",
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+			tt.setup()
+			s.readyWithout()
+
+			var buf bytes.Buffer
+
+			err := MeasureControls(context.Background(), &buf, ControlsOptions{
+				Client: s.pedal, Model: "HD2_CabMicIr_2x15Brute", Dry: s.dry,
+				Out: s.out, Seconds: 1, Points: 3, Takes: 2, Bench: bench{},
+			})
+
+			s.Require().ErrorContains(err, tt.says)
+		})
+	}
 }
 
 func TestControlsRunTestSuite(
