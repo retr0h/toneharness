@@ -91,8 +91,13 @@ package cab
 // # None of it has been near a pedal
 //
 // Both are tested against synthetic speakers. "The arithmetic works" and "the
-// device loaded it and it sounded like the target" are different claims and only
-// the first is currently true. See the task list's cabinet verification entry.
+// device loaded it and it sounded like the target" are different claims and
+// only the first is currently true.
+//
+// What that would take: capture a cabinet whose impulse response is already
+// known, load the .wav the device wants, and measure what comes back against
+// the target this package was given. Until somebody does, nothing here may be
+// described as verified on hardware.
 //
 // # What may be sold
 //

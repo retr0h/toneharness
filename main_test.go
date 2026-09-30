@@ -839,9 +839,10 @@ var coversAConcern = map[string]string{
 // were named gate, contract and schema, for production files nobody ever
 // wrote, while signal.go, validate.go and embed.go had no counterpart at all.
 //
-// Anything starting export_ is exempt: export_test.go is Go's own idiom for
-// handing an unexported thing to an external test, and a package with several
-// of them names each for the half it opens up.
+// export_test.go is exempt, and only that name: it is Go's own idiom for
+// handing an unexported thing to an external test, which is what CONTRIBUTING
+// justifies. The exemption was a prefix, so an `export_measure_test.go` could
+// sit in pkg/cli while the other 23 packages all spelled it the one way.
 func (s *MainTestSuite) TestEveryTestFileIsNamedForWhatItCovers() {
 	var adrift []string
 
@@ -858,7 +859,7 @@ func (s *MainTestSuite) TestEveryTestFileIsNamedForWhatItCovers() {
 			return nil
 		case !strings.HasSuffix(path, "_test.go"),
 			strings.HasSuffix(path, ".gen_test.go"),
-			strings.HasPrefix(d.Name(), "export_"),
+			d.Name() == "export_test.go",
 			d.Name() == "main_test.go",
 			d.Name() == "architecture_test.go":
 			return nil
