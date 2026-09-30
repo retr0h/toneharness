@@ -36,6 +36,34 @@ energy below 250Hz is not "scooped": every isolated bass stem is mostly low.
 Words are useful for correcting a rig you have heard, not for building one from
 nothing.
 
+## One more, and it is not about the sound
+
+**Where they are plugging in.** Not a way of narrowing the ask, so it does not
+belong in the four above. It belongs in the Setup, as `plays_into`, and it
+changes on a different clock from any request: somebody who plays through a PA
+plays through a PA next week too.
+
+> "What does the pedal go into? A PA or interface, headphones, the front of an
+> amp, or an amp's effects return?"
+
+Optional, and the tool does nothing with it on its own. Ask once, put it in the
+Setup, and stop.
+
+**It does not settle whether to use a cabinet block, and do not tell somebody it
+does.** A cabinet block is how a chain is made to sound like a recorded rig, so
+somebody chasing a record may want one into a real amplifier as well, and
+somebody who wants their own amplifier to be the sound may not. Both are
+reasonable. The two amplifier answers are also different paths: the front of an
+amplifier puts its own preamp ahead of its speaker, and the effects return
+bypasses that preamp.
+
+What it is worth is honesty about the figures. Everything in
+[resources/sweeps/](../../../../resources/sweeps/) was measured through a
+cabinet block into a computer, which is one of these four, and a reading is
+worth less to somebody on another. Nothing here has measured an amplifier in
+anybody's room, so there is no correction to apply and inventing one is the
+guessing this project removed.
+
 ## When it is already answerable, build it
 
 Do not interrogate somebody who said "like this file". If the request names a

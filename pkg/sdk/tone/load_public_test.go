@@ -90,6 +90,39 @@ owns:
 	s.Require().Equal(tone.OwnedIR, (*setup.Owns)[0].Kind)
 }
 
+// TestWhatThePedalIsPluggedIntoIsOptionalAndSpelt covers plays_into.
+//
+// Optional, because it is a thing somebody may not have said and a setup
+// written before the field existed is still a setup. Four spellings and
+// nothing else, because the two amplifier entries are different questions —
+// the instrument input has the amplifier's own preamp in front of its
+// speaker, and the effects return does not — and a free-string field would
+// let somebody write "amp" and mean either.
+func (s *LoadPublicTestSuite) TestWhatThePedalIsPluggedIntoIsOptionalAndSpelt() {
+	held, err := tone.LoadSetup(strings.NewReader(
+		"schema: Setup\ndevice:\n  model: HX Stomp\n"))
+
+	s.Require().NoError(err)
+	s.Require().Nil(held.PlaysInto, "a setup that does not say says nothing")
+
+	for _, want := range []tone.PlaysInto{
+		tone.Pa, tone.Headphones, tone.AmpFront, tone.AmpReturn,
+	} {
+		got, err := tone.LoadSetup(strings.NewReader(
+			"schema: Setup\ndevice:\n  model: HX Stomp\nplays_into: " +
+				string(want) + "\n"))
+
+		s.Require().NoError(err, string(want))
+		s.Require().Equal(want, *got.PlaysInto)
+	}
+
+	_, err = tone.LoadSetup(strings.NewReader(
+		"schema: Setup\ndevice:\n  model: HX Stomp\nplays_into: amp\n"))
+
+	s.Require().ErrorIs(err, tone.ErrInvalid,
+		"`amp` is two different paths, so the contract will not take it")
+}
+
 // TestAMisspeltFieldIsRefused is why the raw document is checked first.
 //
 // Decoding drops what the types have no field for, so a request checked after

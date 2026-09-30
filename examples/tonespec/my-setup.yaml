@@ -16,3 +16,13 @@ instruments:
     # is a correction the answer can make.
     strings: flat
     default: true
+
+# What the pedal goes into, when it is worth saying. One of pa, headphones,
+# amp-front or amp-return.
+#
+# It corrects nothing: a cabinet block is how a chain is made to sound like a
+# recorded rig, so whether to use one into a real amplifier is taste rather
+# than a rule. What it is for is saying which path a reading is worth on,
+# because every figure that ships was measured through a cabinet into a
+# computer.
+plays_into: pa

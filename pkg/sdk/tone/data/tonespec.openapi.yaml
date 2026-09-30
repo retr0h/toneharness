@@ -485,6 +485,46 @@ components:
             silent in that block, and nothing could tell before this: the
             catalog knows what ships and only the owner knows what else is
             there.
+        plays_into:
+          $ref: "#/components/schemas/PlaysInto"
+
+    PlaysInto:
+      type: string
+      enum: [pa, headphones, amp-front, amp-return]
+      description: >
+        What the pedal is plugged into, when somebody says.
+
+
+        Optional, and it changes nothing on its own. It is recorded because
+        the last thing in the path is not always the cabinet block, and a
+        chain built without knowing which is a chain built for a guess.
+
+
+        `pa` is a PA, a full-range speaker or an interface: nothing after the
+        pedal colours the sound, so whatever speaker is wanted has to be in
+        the chain. `headphones` is the same path with the room left out.
+
+
+        The two amp entries are not one answer. `amp-front` goes into the
+        instrument input, so the amplifier's own preamp is in front of its
+        speaker and the chain is stacked on top of a whole amplifier.
+        `amp-return` goes into the effects return, which bypasses that preamp
+        and leaves the power section and the speaker.
+
+
+        **This does not say whether to use a cabinet block.** That is the
+        question it exists to let somebody ask rather than the answer: a
+        cabinet block is how a chain is made to sound like a recorded rig, so
+        somebody chasing a record may want one whatever they are plugged into,
+        and somebody who wants their own amplifier to be the sound may not.
+        Both are reasonable and the difference is taste rather than fact.
+
+
+        What it is not is a tone correction. Nothing here has measured an
+        amplifier in anybody's room, and an equalisation applied for one would
+        be a number nobody took. Every figure this project ships was measured
+        through a cabinet block into a computer, which is one of these four,
+        and a reading is worth less to somebody on another.
 
     Device:
       type: object

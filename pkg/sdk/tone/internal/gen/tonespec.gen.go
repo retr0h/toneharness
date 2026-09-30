@@ -126,6 +126,30 @@ func (e OwnedKind) Valid() bool {
 	}
 }
 
+// Defines values for PlaysInto.
+const (
+	AmpFront   PlaysInto = "amp-front"
+	AmpReturn  PlaysInto = "amp-return"
+	Headphones PlaysInto = "headphones"
+	Pa         PlaysInto = "pa"
+)
+
+// Valid indicates whether the value is a known member of the PlaysInto enum.
+func (e PlaysInto) Valid() bool {
+	switch e {
+	case AmpFront:
+		return true
+	case AmpReturn:
+		return true
+	case Headphones:
+		return true
+	case Pa:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Role.
 const (
 	RoleAmp    Role = "amp"
@@ -515,6 +539,19 @@ type Played struct {
 	Strings *Strings `json:"strings,omitempty"`
 }
 
+// PlaysInto What the pedal is plugged into, when somebody says.
+//
+// Optional, and it changes nothing on its own. It is recorded because the last thing in the path is not always the cabinet block, and a chain built without knowing which is a chain built for a guess.
+//
+// `pa` is a PA, a full-range speaker or an interface: nothing after the pedal colours the sound, so whatever speaker is wanted has to be in the chain. `headphones` is the same path with the room left out.
+//
+// The two amp entries are not one answer. `amp-front` goes into the instrument input, so the amplifier's own preamp is in front of its speaker and the chain is stacked on top of a whole amplifier. `amp-return` goes into the effects return, which bypasses that preamp and leaves the power section and the speaker.
+//
+// **This does not say whether to use a cabinet block.** That is the question it exists to let somebody ask rather than the answer: a cabinet block is how a chain is made to sound like a recorded rig, so somebody chasing a record may want one whatever they are plugged into, and somebody who wants their own amplifier to be the sound may not. Both are reasonable and the difference is taste rather than fact.
+//
+// What it is not is a tone correction. Nothing here has measured an amplifier in anybody's room, and an equalisation applied for one would be a number nobody took. Every figure this project ships was measured through a cabinet block into a computer, which is one of these four, and a reading is worth less to somebody on another.
+type PlaysInto string
+
 // Role What a piece of gear does in the chain.
 type Role string
 
@@ -533,8 +570,21 @@ type Setup struct {
 	// Owns Content the device does not ship with: impulse responses somebody loaded, models somebody bought.
 	//
 	// A preset naming one of these on a device that does not have it is silent in that block, and nothing could tell before this: the catalog knows what ships and only the owner knows what else is there.
-	Owns   *[]Owned    `json:"owns,omitempty"`
-	Schema SetupSchema `json:"schema"`
+	Owns *[]Owned `json:"owns,omitempty"`
+
+	// PlaysInto What the pedal is plugged into, when somebody says.
+	//
+	// Optional, and it changes nothing on its own. It is recorded because the last thing in the path is not always the cabinet block, and a chain built without knowing which is a chain built for a guess.
+	//
+	// `pa` is a PA, a full-range speaker or an interface: nothing after the pedal colours the sound, so whatever speaker is wanted has to be in the chain. `headphones` is the same path with the room left out.
+	//
+	// The two amp entries are not one answer. `amp-front` goes into the instrument input, so the amplifier's own preamp is in front of its speaker and the chain is stacked on top of a whole amplifier. `amp-return` goes into the effects return, which bypasses that preamp and leaves the power section and the speaker.
+	//
+	// **This does not say whether to use a cabinet block.** That is the question it exists to let somebody ask rather than the answer: a cabinet block is how a chain is made to sound like a recorded rig, so somebody chasing a record may want one whatever they are plugged into, and somebody who wants their own amplifier to be the sound may not. Both are reasonable and the difference is taste rather than fact.
+	//
+	// What it is not is a tone correction. Nothing here has measured an amplifier in anybody's room, and an equalisation applied for one would be a number nobody took. Every figure this project ships was measured through a cabinet block into a computer, which is one of these four, and a reading is worth less to somebody on another.
+	PlaysInto *PlaysInto  `json:"plays_into,omitempty"`
+	Schema    SetupSchema `json:"schema"`
 }
 
 // SetupSchema defines model for Setup.Schema.

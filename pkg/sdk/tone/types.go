@@ -60,6 +60,9 @@ type (
 	Strings = gen.Strings
 	// Owned is one thing on the device that did not ship with it.
 	Owned = gen.Owned
+	// PlaysInto is what the pedal is plugged into, when somebody says. The
+	// last thing in the path is not always the cabinet block.
+	PlaysInto = gen.PlaysInto
 	// OwnedKind is whether that is an impulse response or a model.
 	OwnedKind = gen.OwnedKind
 	// Subject is who or what the request is about.
@@ -157,4 +160,16 @@ const (
 const (
 	OwnedIR    = gen.OwnedIR
 	OwnedModel = gen.OwnedModel
+)
+
+// What the pedal may be plugged into.
+//
+// The two amplifier entries are different questions rather than one: the
+// instrument input puts the amplifier's own preamp in front of its speaker,
+// and the effects return bypasses that preamp and leaves the power section.
+const (
+	Pa         = gen.Pa
+	Headphones = gen.Headphones
+	AmpFront   = gen.AmpFront
+	AmpReturn  = gen.AmpReturn
 )

@@ -12,6 +12,38 @@ owns:
 Folding this into the ask would mean restating their bass in every request, and
 the twelfth one would contradict the first.
 
+## What the pedal is plugged into
+
+`plays_into`, optional, one of four: `pa`, `headphones`, `amp-front`,
+`amp-return`.
+
+```yaml
+schema: Setup
+plays_into: amp-return
+```
+
+It belongs here rather than in an ask for the same reason the bass does:
+somebody who plays through a PA plays through a PA next week too.
+
+The two amplifier entries are different paths rather than one answer spelled
+twice. `amp-front` is the instrument input, so the amplifier's own preamp sits
+in front of its speaker and the chain is stacked on a whole amplifier.
+`amp-return` is the effects return, which bypasses that preamp and leaves the
+power section and the speaker. A single `amp` would let somebody write one and
+mean the other, which is why the contract refuses it.
+
+**It does not say whether to use a cabinet block.** That is the question it
+lets somebody ask, not the answer. A cabinet block is how a chain is made to
+sound like a recorded rig, so somebody chasing a record may want one into a
+real amplifier too, and somebody who wants their own amplifier to be the sound
+may not. Both are reasonable and the difference is taste.
+
+It is also not a tone correction, and there is no plan for it to become one.
+Nothing here has measured an amplifier in anybody's room. Every figure this
+project ships was measured through a cabinet block into a computer, which is
+one of these four, and a reading is worth less to somebody on another — which
+is what recording it is for.
+
 ## Why a rig may not name what a device lacks
 
 A rig used to carry a `requires` list naming impulse responses and bought models.
