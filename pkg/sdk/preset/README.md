@@ -4,10 +4,10 @@ How a Line 6 `.hlx` file is laid out, beside the code that reads it. Line 6
 publishes no schema, so everything here was established by reading real presets:
 [the corpus](../../../resources/schemas/README.md) is those presets.
 
-**This is the maintainer's half.** What an agent needs in order to use a preset
-file is the `work-a-device` skill, and it carries distilled prose rather than
-this text. What is here is the layout itself, which somebody changing this
-package has to know and nothing can print.
+**This is the maintainer's half.** What an agent needs to use a preset file is
+the `work-a-device` skill, and it carries distilled prose rather than this text.
+What is here is the layout itself, which somebody changing this package has to
+know and nothing can print.
 
 `.hlx` files are plain JSON.
 

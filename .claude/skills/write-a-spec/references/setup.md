@@ -41,8 +41,8 @@ may not. Both are reasonable and the difference is taste.
 It is also not a tone correction, and there is no plan for it to become one.
 Nothing here has measured an amplifier in anybody's room. Every figure this
 project ships was measured through a cabinet block into a computer, which is
-one of these four, and a reading is worth less to somebody on another — which
-is what recording it is for.
+one of these four, and a reading is worth less to somebody on another. That is
+what recording it is for.
 
 ## Why a rig may not name what a device lacks
 

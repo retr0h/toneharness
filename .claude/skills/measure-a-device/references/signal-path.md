@@ -141,7 +141,7 @@ cat.DestinationAt("USB 1/2")  // the chain's output
 
 An index written into a page is right for one pedal and silently wrong for the
 next. On an HX Stomp today source 1 is `Multi (Guitar, Aux, Variax)` and
-destination 1 is `Multi (1/4", XLR, Digital, USB 1/2)` — the second is the one
+destination 1 is `Multi (1/4", XLR, Digital, USB 1/2)`. The second is the one
 that closes the loop on itself.
 
 Compare against the readings in `resources/sweeps/`, which are the only figures

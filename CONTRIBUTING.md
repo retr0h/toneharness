@@ -54,7 +54,7 @@ both to both fails both.
 
 Reddit throttles a logged-out reader to roughly a request a minute. The script
 waits a 429 out and says so on stderr. **Treat an empty answer as the throttle
-rather than as an absent source** — those look identical and confusing them is
+rather than as an absent source.** Those look identical, and confusing them is
 the failure this project keeps having.
 
 `.mcp.json` also declares a Reddit MCP server, which is convenience rather than
@@ -367,6 +367,17 @@ preference. The largest one here was the em dash. There were 242, and each stood
 in for a decision the sentence had not made about whether the clause was a new
 sentence, a parenthetical, or a list. One slopped paragraph is unremarkable. A
 repository of them reads as though nobody was home.
+
+Two of the skill's rules are mechanical, so
+`TestNoMarkdownCarriesTheTellsAToolCanSee` in `main_test.go` holds them: no em
+dash and no curly quote, in any markdown this repository maintains. It catches
+two of thirty-one, so passing it is not having run the skill. Dated records
+under `docs/superpowers/` are exempt, and so are `CODE_OF_CONDUCT.md` and
+`LICENSE.md`, which are somebody else's words kept verbatim.
+
+The rule came back once because nothing checked it. Em dashes went from 242 to
+0, and then to 45 across eighteen files including this one, over the months
+nobody was counting.
 
 ## Sourcing a rig
 
@@ -705,9 +716,15 @@ Three doubles are written by hand, because generating them buys nothing:
 
 ### File headers
 
-Every `.go` file MUST start with the MIT license header. See any existing Go
-file in the repo for the exact format. Build-tagged files put `//go:build` on
-line 1, blank line, then the header.
+Every `.go` file somebody wrote MUST start with the MIT license header. See any
+existing Go file in the repo for the exact format. Build-tagged files put
+`//go:build` on line 1, blank line, then the header.
+
+Generated files carry no header. A `*.gen.go` or `*.gen_test.go` is written by
+`go generate` from a source that has one, nobody edits it, and the formatter
+already leaves it alone. Adding a header to a file a generator overwrites means
+teaching every generator to emit it, for a licence claim on output nobody
+authored.
 
 ## Testing
 

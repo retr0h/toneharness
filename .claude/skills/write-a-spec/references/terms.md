@@ -59,12 +59,12 @@ is a correction to it.
 
 ## Five ways a word can fail, and they are different sentences
 
-- `nothing acts on this yet` — the project's gap, not the ask's
-- `this chain holds no reverb` — the rig's gap, worth knowing because adding one
+- `nothing acts on this yet`, the project's gap rather than the ask's
+- `this chain holds no reverb`, the rig's gap, worth knowing because adding one
   would answer it
 - `this chain has no reverb, so it is already dry`
 - two terms on one axis cancelling, so neither moves and the build names the axis
-- `no such word "tight low end" — did you mean tight-low-end?`
+- `no such word "tight low end". Did you mean tight-low-end?`
 
 An unknown word is reported **and the preset is still written**, because refusing
 a word would be refusing somebody the right to describe a sound. Add the missing

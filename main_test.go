@@ -1648,6 +1648,71 @@ func (s *MainTestSuite) TestEveryFunctionUnderTestHasOneSuiteMethod() {
 	s.Require().NoError(err)
 }
 
+// TestNoMarkdownCarriesTheTellsAToolCanSee holds the part of the prose rule a
+// machine can check.
+//
+// CONTRIBUTING sends every markdown change through the unslop skill, and most
+// of what that skill asks for is judgement no test can make. Two of its rules
+// are not: an em dash anywhere, and a curly quote. Those were the largest tell
+// here, 242 em dashes at the worst of it, and each one stood in for a decision
+// the sentence had not made about whether the clause was a new sentence or an
+// aside. A rule nothing checks is a rule that comes back, which is what every
+// other test in this file is here to say.
+//
+// Passing this is not having run the skill. It catches two patterns out of
+// thirty-one, and a file that clears it can still read as though nobody was
+// home.
+func (s *MainTestSuite) TestNoMarkdownCarriesTheTellsAToolCanSee() {
+	// Somebody else's words, kept verbatim on purpose. Rewriting a licence or
+	// a code of conduct to suit a house style is not an edit either of them
+	// invites.
+	verbatim := map[string]bool{
+		"CODE_OF_CONDUCT.md": true,
+		"LICENSE.md":         true,
+	}
+
+	// What git tracks rather than what is on disk, so a scratch worktree
+	// under .claude/ is not held to the rule.
+	tracked, err := exec.Command("git", "ls-files", "-z", "*.md").Output()
+	s.Require().NoError(err)
+
+	for _, path := range strings.Split(strings.TrimRight(string(tracked), "\x00"), "\x00") {
+		switch {
+		case path == "", verbatim[path]:
+			continue
+		// Dated records, superseded rather than rewritten, so the words in
+		// them are what was written on the day.
+		case strings.HasPrefix(path, "docs/superpowers/"):
+			continue
+		}
+
+		body, err := os.ReadFile(path)
+		s.Require().NoError(err)
+
+		for _, tell := range []struct {
+			what string
+			find string
+			say  string
+		}{
+			{
+				what: "an em dash", find: "\u2014",
+				say: "end the sentence or use a comma",
+			},
+			{what: "a curly quote", find: "\u2018", say: "use a straight quote"},
+			{what: "a curly quote", find: "\u2019", say: "use a straight quote"},
+			{what: "a curly quote", find: "\u201c", say: "use a straight quote"},
+			{what: "a curly quote", find: "\u201d", say: "use a straight quote"},
+		} {
+			for i, line := range strings.Split(string(body), "\n") {
+				s.Require().NotContains(line, tell.find,
+					"%s:%d carries %s: %s. CONTRIBUTING sends every markdown "+
+						"change through the unslop skill",
+					path, i+1, tell.what, tell.say)
+			}
+		}
+	}
+}
+
 func TestMainTestSuite(
 	t *testing.T,
 ) {

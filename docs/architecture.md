@@ -87,7 +87,7 @@ request      "a Mike Dirnt sound"
    │
    ▼
 the ask      pkg/sdk/shipped/artists/mike-dirnt.tone.yaml     who it is for
-   │         words: scooped, clean — or genre: grunge
+   │         words: scooped, clean. Or genre: grunge
    ▼
 the rig      pkg/sdk/shipped/artists/mike-dirnt.yaml          who plays what
    │         amp: Ampeg SVT
@@ -146,19 +146,19 @@ this is the part that needs a person in it.
 build      tone build, or presets make from a curated rig
    │
    ▼
-play       device play — opcode 21, replaces what is playing, writes no flash
+play       device play. Opcode 21, replaces what is playing, writes no flash
    │
    ▼
 listen     a person. Nothing above this line can hear
    │
    ▼
-say        "darker", "needs more bite" — a nudge, which is a direction and a size
+say        "darker", "needs more bite". A nudge, which is a direction and a size
    │
    ▼
-ask        tone reach — one pass, nothing applied: how near can this get?
+ask        tone reach. One pass, nothing applied: how near can this get?
    │
    ▼
-solve      tone tune — compares the lists, solves the dials, measures again
+solve      tone tune. Compares the lists, solves the dials, measures again
    │
    ▼
 keep       a plan, which is the only layer with room for a knob position

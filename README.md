@@ -88,7 +88,7 @@ skill's own README says how to install and use it.
 
 Each follows the [Agent Skills] format: a slim `SKILL.md` that routes, with the
 detail in reference files an agent reads only when the question calls for them.
-None of them writes down a list the tool can print — a list in a skill is right
+None of them writes down a list the tool can print. A list in a skill is right
 the day it is written and wrong after the next change, with nothing marking the
 moment.
 

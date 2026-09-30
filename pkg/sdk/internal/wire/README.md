@@ -692,7 +692,7 @@ a device needs.
 **The tag is the one that cost the most.** A device sends a preset document
 under MessagePack's string tag and takes one back under the same tag. A generic
 encoder picks the narrowest binary tag that fits, `bin16` rather than `str16`.
-The bytes are identical and the tag is not, and the device answers `error -3` —
+The bytes are identical and the tag is not, and the device answers `error -3`,
 the same code it gives for a setlist that does not exist, which is what that
 code means.
 

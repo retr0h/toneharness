@@ -97,7 +97,7 @@ resolves catches a 404 and nothing else.
 
 **Splitting a claim does not split its evidence.** Turning "thumping low end
 under a hard top" into `loose-low-end` and `bright` left both citing the rundown
-that produced the sentence — and that rundown describes the low end and says
+that produced the sentence, and that rundown describes the low end and says
 nothing about the top. One half is usually unsourced, and mechanically copying
 the citation onto both is how a guess acquires a URL. Sharing a page between two
 terms is fine when each quotes a different sentence from it. Sharing a sentence

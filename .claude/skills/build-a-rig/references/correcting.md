@@ -14,7 +14,7 @@ A target is the other kind of instruction, and there are three:
 
 - **a record** is a full point, every axis specified
 - **a player** is the median of their records, with the spread across them as a
-  tolerance — an axis their records disagree about is one the answer need not be
+  tolerance. An axis their records disagree about is one the answer need not be
   precise on
 - **a genre** is partial: distinctive on some axes and ordinary on the rest, so
   only the distinctive ones are constrained
