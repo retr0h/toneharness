@@ -87,7 +87,7 @@ each of these has already been a bug:
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | the Helix model | how many audio channels it presents. Ask the device; a Stomp is 8 in and 8 out                                                                            |
 | the Helix model | the routing enum indices. The same file carries separate lists for a Stomp, an LT and the plugin                                                          |
-| the Helix model | how many blocks, paths and snapshots it holds. `plan.LimitsFor` answers from the catalog                                                                  |
+| the Helix model | how many blocks, paths and snapshots it holds. `plan.LimitsFor` answers, keyed by the catalog's device name                                               |
 | the computer    | the audio device's name and its backend. `--hardware` names one, or two comma separated to play and record on different devices                           |
 | the computer    | the sample rate. 48kHz is what every committed figure was taken at, and the loop checks it rather than assuming it                                        |
 | the computer    | **its output volume, when it is the thing playing the reference.** Every figure moves with it, so `--volume` pins it and the file records what it reached |

@@ -24,8 +24,6 @@
 // the preset format has no published schema.
 package catalog
 
-import "strings"
-
 // ModelID is a Line 6 internal model identifier, such as "HD2_AmpAmpegSVT".
 type ModelID string
 
@@ -223,41 +221,6 @@ type Catalog struct {
 	// opened from a preset: see measure-a-device's signal-path.md.
 	Sources      []string `json:"sources,omitempty"`
 	Destinations []string `json:"destinations,omitempty"`
-}
-
-// SourceAt is the number a device files one chain input under, by name.
-//
-// By name because the number is the device family's and the name is not:
-// "USB 5/6" means the same thing on every Helix and is 15 on only some of them.
-func (c *Catalog) SourceAt(
-	name string,
-) (int, bool) {
-	return at(c.Sources, name)
-}
-
-// DestinationAt is the number a device files one chain output under, by name.
-func (c *Catalog) DestinationAt(
-	name string,
-) (int, bool) {
-	return at(c.Destinations, name)
-}
-
-// at finds a name's position in a device's own list.
-//
-// Case-insensitive, because these are written for a menu and read here as
-// values, and the same list spells "USB 1/2" and "S/PDIF" to be looked at
-// rather than matched.
-func at(
-	in []string,
-	name string,
-) (int, bool) {
-	for i, got := range in {
-		if strings.EqualFold(got, name) {
-			return i, true
-		}
-	}
-
-	return 0, false
 }
 
 // LEDColour returns what a device calls one of its footswitch colours.
