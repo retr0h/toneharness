@@ -23,6 +23,7 @@ package compile_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -160,6 +161,58 @@ func (s *DevicePublicTestSuite) TestLowerDeviceState() {
 			}
 		})
 	}
+}
+
+// TestAnOutputDestinationReachesTheBuiltPreset is the check that a map edit
+// became a file.
+//
+// Measuring goes through `quieter`, which sets `@output` on the plan's routing
+// so the chain is sent to USB rather than to the socket the measuring lead comes
+// from. Every layer of that is separately tested and the question this answers
+// is whether they join up: an edit that stops anywhere short of the preset
+// leaves a chain feeding itself while reporting that it does not.
+//
+// It is the defect shape this project has been bitten by twice. A chain whose
+// blocks were stored and read back byte for byte rendered as nothing, and a
+// loop that strode the frame buffer by two measured a figure rather than
+// failing. Neither failed; both measured.
+func (s *DevicePublicTestSuite) TestAnOutputDestinationReachesTheBuiltPreset() {
+	const usbAlone = 10
+
+	to, ok := s.cat.DestinationAt("USB 1/2")
+	s.Require().True(ok, "the device lists somewhere off the loop")
+	s.Require().Equal(usbAlone, to, "on an HX Stomp, which is what this asserts")
+
+	doc, err := preset.Blank()
+	s.Require().NoError(err)
+
+	routing := map[string]json.RawMessage{
+		"dsp0.outputA": json.RawMessage(
+			`{"@model":"HelixStomp_AppDSPFlowOutputMain",` +
+				fmt.Sprintf(`"@output":%d,"pan":0.5,"gain":-30}`, to)),
+	}
+
+	s.Require().NoError(compile.Lower(doc,
+		s.made(&rig.DeviceState{Routing: &routing}), s.cat))
+
+	// Through the file format and back, because the question is what a preset
+	// on disk says, not what a struct in hand says.
+	var written bytes.Buffer
+	s.Require().NoError(preset.Write(&written, doc))
+
+	back, err := preset.Read(bytes.NewReader(written.Bytes()))
+	s.Require().NoError(err)
+
+	entry, ok := back.Data.Tone["dsp0"]["outputA"]
+	s.Require().True(ok, "the preset carries an output to send")
+
+	var fields map[string]any
+	s.Require().NoError(json.Unmarshal(entry, &fields))
+
+	s.Require().InDelta(float64(to), fields["@output"], 0.001,
+		"the built preset sends the chain off the measuring loop")
+	s.Require().InDelta(-30, fields["gain"], 0.001,
+		"and carries the headroom, which is the half that was already working")
 }
 
 func TestDevicePublicTestSuite(
