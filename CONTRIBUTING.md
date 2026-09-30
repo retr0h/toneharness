@@ -368,16 +368,13 @@ in for a decision the sentence had not made about whether the clause was a new
 sentence, a parenthetical, or a list. One slopped paragraph is unremarkable. A
 repository of them reads as though nobody was home.
 
-Two of the skill's rules are mechanical, so
-`TestNoMarkdownCarriesTheTellsAToolCanSee` in `main_test.go` holds them: no em
-dash and no curly quote, in any markdown this repository maintains. It catches
-two of thirty-one, so passing it is not having run the skill. Dated records
-under `docs/superpowers/` are exempt, and so are `CODE_OF_CONDUCT.md` and
-`LICENSE.md`, which are somebody else's words kept verbatim.
+Nothing checks this, and the rule came back once because of it. Em dashes went
+from 242 to 0, and then to 45 across eighteen files including this one, over the
+months nobody was counting.
 
-The rule came back once because nothing checked it. Em dashes went from 242 to
-0, and then to 45 across eighteen files including this one, over the months
-nobody was counting.
+Two places are exempt. Dated records under `docs/superpowers/` are superseded
+rather than rewritten, so the words in one are what was written on the day. And
+`CODE_OF_CONDUCT.md` and `LICENSE.md` are somebody else's words kept verbatim.
 
 ## Sourcing a rig
 
