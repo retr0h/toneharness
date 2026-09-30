@@ -41,11 +41,7 @@ func Made(
 	m sdk.Made,
 	cat *catalog.Catalog,
 ) error {
-	if err := made(w, m, cat); err != nil {
-		return fmt.Errorf("reporting: %w", err)
-	}
-
-	return nil
+	return reporting(made(w, m, cat))
 }
 
 // made writes the parts, so a failure part way through is reported rather

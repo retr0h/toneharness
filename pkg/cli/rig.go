@@ -49,7 +49,7 @@ func Rigs(
 		})
 	}
 
-	return wrapReport(paint.Section{
+	return reporting(paint.Section{
 		Title:   "Rigs",
 		Detail:  r.Dir,
 		Headers: []string{"id", "name", "instrument", "amp", "source"},
@@ -88,7 +88,7 @@ func Rig(
 		d.Note = "no ask beside it, so nothing records what this was built for"
 	}
 
-	return wrapReport(d.Render(w))
+	return reporting(d.Render(w))
 }
 
 // named is what to call a rig, which only its ask knows.
@@ -276,17 +276,6 @@ func technique(
 	}
 
 	return strings.Join(parts, ", ")
-}
-
-// wrapReport gives a reporting failure the same shape everywhere.
-func wrapReport(
-	err error,
-) error {
-	if err == nil {
-		return nil
-	}
-
-	return fmt.Errorf("reporting: %w", err)
 }
 
 // Scaffolded says what rig was written and what to do with it.

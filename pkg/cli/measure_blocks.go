@@ -355,7 +355,7 @@ func suspect(
 ) (bool, error) {
 	now := figuresOf(got.Figures)
 
-	if _, bad := Squealing(now, dry, nil, endsInACabinet(block)); bad {
+	if _, bad := Squealing(now, dry, nil, blockIsACab(block)); bad {
 		return true, nil
 	}
 
@@ -379,7 +379,7 @@ func suspect(
 	return quiet.Level > got.Level-silent, nil
 }
 
-// endsInACabinet says a single-block chain is a low pass.
+// blockIsACab says a single-block chain is a low pass.
 //
 // A sweep measures one block alone, so the chain ends in whatever that block
 // is. Only a cabinet makes the high band a one-way street, and an amplifier
@@ -388,7 +388,7 @@ func suspect(
 // Which is why this is the harder half of the problem: the loudest amplifiers
 // are exactly the blocks the invariant cannot be used on, so their readings
 // are checked against the loop's own high band instead.
-func endsInACabinet(
+func blockIsACab(
 	block measured.Block,
 ) bool {
 	return block.Category == catalog.CategoryCab

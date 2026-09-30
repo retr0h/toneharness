@@ -228,7 +228,7 @@ func Tune(
 	// so a reading of the loop rather than of the chain does not produce a
 	// wrong answer, it produces a chain turned to match one.
 	if say, bad := Squealing(figuresOf(first), figuresOfDry(signal),
-		inCorpusScale(floor), endsInACab(made.Plan, cat)); bad {
+		inCorpusScale(floor), chainEndsInACab(made.Plan, cat)); bad {
 		return fmt.Errorf("%w: %s", ErrSquealing, say)
 	}
 

@@ -20,35 +20,24 @@
 
 package cli
 
-import (
-	"fmt"
-	"io"
+import "fmt"
 
-	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
-
-	"github.com/retr0h/toneharness/pkg/sdk"
-)
-
-// Attached prints what is on the bus, one device to a row.
-func Attached(
-	w io.Writer,
-	a sdk.Attached,
+// reporting gives a reporting failure the same shape everywhere.
+//
+// Every command that paints a table ends by rendering one, and a render that
+// fails says only what the writer said. The prefix is what tells somebody the
+// work succeeded and only the printing did not.
+//
+// Nil in, nil out, so a caller can hand it a render's result directly rather
+// than wrapping the call in an `if`. It was written twice under two names and
+// twice more inline, which is four places for one sentence to be worded
+// differently.
+func reporting(
+	err error,
 ) error {
-	rows := make([][]string, 0, len(a.Devices))
-
-	for _, d := range a.Devices {
-		rows = append(rows, []string{
-			paint.Accent(w, d.Model),
-			paint.Mute(w, fmt.Sprintf("%04x:%04x", d.Vendor, d.Product)),
-			paint.Mute(w, fmt.Sprintf("%d.%d", d.Bus, d.Address)),
-			fmt.Sprintf("%d", d.DeviceID),
-		})
+	if err == nil {
+		return nil
 	}
 
-	return reporting(paint.Section{
-		Title:   "Attached",
-		Headers: []string{"device", "usb", "bus", "preset device id"},
-		Rows:    rows,
-		Empty:   "no Helix devices attached",
-	}.Render(w))
+	return fmt.Errorf("reporting: %w", err)
 }

@@ -155,14 +155,3 @@ func params(
 		Empty:   "no parameters",
 	}.Render(w))
 }
-
-// reporting gives a reporting failure the same shape everywhere.
-func reporting(
-	err error,
-) error {
-	if err == nil {
-		return nil
-	}
-
-	return fmt.Errorf("reporting: %w", err)
-}

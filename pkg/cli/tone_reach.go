@@ -41,8 +41,13 @@ import (
 // of numbers somebody will act on.
 var ErrSquealing = errors.New("the loop is oscillating")
 
-// endsInACab says the last block in a chain is a cabinet.
-func endsInACab(
+// chainEndsInACab says the last block in a chain is a cabinet.
+//
+// Named for the chain because there is a second question with almost this
+// name: blockIsACab, in measure_blocks.go, answers it of one block a sweep
+// already read. They take different types and neither is the other's special
+// case, so what they share is the bool they both hand to Squealing.
+func chainEndsInACab(
 	made plan.Plan,
 	cat *catalog.Catalog,
 ) bool {
@@ -194,7 +199,7 @@ func Reach(
 	// reading, and a chain giving back more high end than went in is not a
 	// chain being read at all.
 	if say, bad := Squealing(from, figuresOfDry(signal), inCorpusScale(floor),
-		endsInACab(made.Plan, cat)); bad {
+		chainEndsInACab(made.Plan, cat)); bad {
 		return fmt.Errorf("%w: %s", ErrSquealing, say)
 	}
 
