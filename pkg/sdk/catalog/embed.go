@@ -26,6 +26,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"sync"
 )
 
 // The generated catalogs, one per device this tool can write a preset for.
@@ -73,7 +74,23 @@ var packed = map[int][]byte{
 // The HX Stomp's. It is the device everything here was written against, the
 // only one that has been written to over USB, and the only one the corpus
 // statistics describe. For another, see For.
-func BuiltIn() (*Catalog, error) { return decode(builtIn) }
+func BuiltIn() (*Catalog, error) { return For(HXStomp) }
+
+// held is each device's catalog, decoded once.
+//
+// Decoding is a gzip and a JSON parse over 661 blocks, about 12ms on a fast
+// machine, and the bytes are a compile-time constant that cannot change while
+// the process runs. Callers ask far more often than that reads: `quieter` asks
+// for one per preset it builds, so tuning a chain re-read the same file once
+// per pass per preset, and on a slower machine that was enough to pass a ten
+// minute test timeout.
+//
+// Safe to share because nothing writes to a loaded catalog. Everything that
+// builds one — catalogen — builds a new one.
+var held = struct {
+	sync.Mutex
+	by map[int]*Catalog
+}{by: map[int]*Catalog{}}
 
 // decode reads a gzipped catalog.
 //

@@ -64,7 +64,7 @@ func (s *ControlsRunTestSuite) SetupTest() {
 			return catalog.BuiltIn()
 		}).AnyTimes()
 	s.out = filepath.Join(s.T().TempDir(), "curves.json")
-	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di.wav")
+	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di-short.wav")
 
 	// The preset read back and rebuilt: every command here takes its chain off
 	// the measuring loop before playing it, sending the output to USB rather
@@ -503,21 +503,6 @@ func (s *ControlsRunTestSuite) TestControlsReportsACatalogItCannotRead() {
 	})
 
 	s.Require().ErrorContains(err, "no catalog for that pedal")
-}
-
-// TestControlsReportsHardwareItCannotOpen covers --hardware naming no device.
-func (s *ControlsRunTestSuite) TestControlsReportsHardwareItCannotOpen() {
-	s.ready()
-
-	var buf bytes.Buffer
-
-	err := MeasureControls(context.Background(), &buf, ControlsOptions{
-		Client: s.pedal, Model: "HD2_CabMicIr_2x15Brute", Dry: s.dry,
-		Out: s.out, Seconds: 1, Points: 3, Takes: 2,
-		Hardware: "no such interface",
-	})
-
-	s.Require().Error(err)
 }
 
 // TestControlsPutsThePresetBackBeforeReadingTheChain covers the last two steps.

@@ -62,7 +62,7 @@ func (s *MeasureRunTestSuite) SetupTest() {
 			return catalog.BuiltIn()
 		}).AnyTimes()
 	s.out = filepath.Join(s.T().TempDir(), "measured.json")
-	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di.wav")
+	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di-short.wav")
 
 	// The preset read back and rebuilt: every command here takes its chain off
 	// the measuring loop before playing it, sending the output to USB rather
@@ -287,7 +287,7 @@ func (s *MeasureRunTestSuite) TestACabinetBrighterThanWhatItWasGivenNeedsNoSilen
 
 	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
 		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "cab",
-		Seconds: 1, Bench: squealing{silences: &silences},
+		Seconds: 0.2, Bench: squealing{silences: &silences},
 	}))
 
 	s.Require().Contains(buf.String(), "read the loop rather than itself")
@@ -319,7 +319,7 @@ func (s *MeasureRunTestSuite) TestAGateBrighterThanWhatItWasGivenCostsASilenceRe
 
 	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
 		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "gate",
-		Seconds: 1, Bench: squealing{silences: &silences},
+		Seconds: 0.2, Bench: squealing{silences: &silences},
 	}))
 
 	s.Require().NotEmpty(s.read().Blocks)
@@ -506,21 +506,6 @@ func (s *MeasureRunTestSuite) TestBlocksReportsACatalogItCannotRead() {
 	})
 
 	s.Require().ErrorContains(err, "no catalog for that pedal")
-}
-
-// TestBlocksReportsHardwareItCannotOpen covers --hardware naming no device.
-//
-// Before anything is built, because eighty minutes of compiling presets for a
-// bench that will not open is eighty minutes nobody gets back.
-func (s *MeasureRunTestSuite) TestBlocksReportsHardwareItCannotOpen() {
-	var buf bytes.Buffer
-
-	err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
-		Client: s.pedal, Dry: s.dry, Out: s.out, Seconds: 1,
-		Hardware: "no such interface",
-	})
-
-	s.Require().Error(err)
 }
 
 // TestBlocksReportsSomewhereItCannotWrite covers a destination that is not

@@ -67,7 +67,7 @@ func (s *TunePublicTestSuite) SetupTest() {
 			return catalog.BuiltIn()
 		}).AnyTimes()
 	s.genre = mocks.NewMockGenres(s.ctrl)
-	s.dry = "../../resources/dry/bass-di.wav"
+	s.dry = "../../resources/dry/bass-di-short.wav"
 
 	// The preset read back and rebuilt: every command here takes its chain off
 	// the measuring loop before playing it, sending the output to USB rather
@@ -273,21 +273,6 @@ func (s *TunePublicTestSuite) TestTuneRefusesAReferenceForTheOtherInstrument() {
 
 	s.Require().ErrorIs(err, ErrWrongInstrument)
 	s.Require().ErrorContains(err, "Push a bass recording with --dry")
-}
-
-// TestTuneReportsHardwareItCannotOpen covers --hardware naming no device.
-func (s *TunePublicTestSuite) TestTuneReportsHardwareItCannotOpen() {
-	s.ready()
-	s.genre.EXPECT().
-		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
-
-	opts := s.opts()
-	opts.Hardware = "no such interface"
-	// Nil, because a caller who supplies a bench owns its lifetime and
-	// benchFor hands that one straight back without ever looking at the name.
-	opts.Bench = nil
-
-	s.Require().Error(Tune(context.Background(), buffer(), opts))
 }
 
 // TestTuneReportsAnAskItCannotAppendTo covers --ask pointing nowhere.

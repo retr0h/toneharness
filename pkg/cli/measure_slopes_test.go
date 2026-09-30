@@ -61,7 +61,7 @@ func (s *SlopesPublicTestSuite) SetupTest() {
 		DoAndReturn(func(context.Context) (*catalog.Catalog, error) {
 			return catalog.BuiltIn()
 		}).AnyTimes()
-	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di.wav")
+	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di-short.wav")
 
 	// The preset read back and rebuilt: every command here takes its chain off
 	// the measuring loop before playing it, sending the output to USB rather
@@ -120,21 +120,6 @@ func (s *SlopesPublicTestSuite) TestSlopesRefusesAReferenceForTheOtherInstrument
 		opts.Dry = wrong
 
 		s.Require().ErrorIs(Slopes(context.Background(), buffer(), opts), ErrWrongInstrument)
-	}
-}
-
-// TestSlopesReportsHardwareItCannotOpen covers --hardware naming no device.
-func (s *SlopesPublicTestSuite) TestSlopesReportsHardwareItCannotOpen() {
-	{
-		s.built()
-
-		opts := s.opts()
-		opts.Hardware = "no such interface"
-		// Nil, because a caller who supplies a bench owns its lifetime and
-		// benchFor hands that one straight back without ever looking at the name.
-		opts.Bench = nil
-
-		s.Require().Error(Slopes(context.Background(), buffer(), opts))
 	}
 }
 

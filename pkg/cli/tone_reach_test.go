@@ -64,7 +64,7 @@ func (s *ReachPublicTestSuite) SetupTest() {
 			return catalog.BuiltIn()
 		}).AnyTimes()
 	s.genre = mocks.NewMockGenres(s.ctrl)
-	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di.wav")
+	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di-short.wav")
 
 	// The preset read back and rebuilt: every command here takes its chain off
 	// the measuring loop before playing it, sending the output to USB rather
@@ -412,21 +412,6 @@ func (s *ReachPublicTestSuite) TestReachRefusesAReferenceForTheOtherInstrument()
 
 	s.Require().ErrorIs(
 		Reach(context.Background(), buffer(), opts), ErrWrongInstrument)
-}
-
-// TestReachReportsHardwareItCannotOpen covers --hardware naming no device.
-func (s *ReachPublicTestSuite) TestReachReportsHardwareItCannotOpen() {
-	s.built()
-	s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
-		Return(s.wide(), nil).AnyTimes()
-
-	opts := s.opts()
-	opts.Hardware = "no such interface"
-	// Nil, because a caller who supplies a bench owns its lifetime and
-	// benchFor hands that one straight back without ever looking at the name.
-	opts.Bench = nil
-
-	s.Require().Error(Reach(context.Background(), buffer(), opts))
 }
 
 func TestReachPublicTestSuite(

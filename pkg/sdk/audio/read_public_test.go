@@ -211,8 +211,12 @@ func (s *ReadPublicTestSuite) TestAWavHoldingNoSamples() {
 // samples do not divide evenly, which moves the reported duration by a
 // forty-four-thousandth of a second and moves no figure at all.
 func (s *ReadPublicTestSuite) TestTheChunkedReadAgreesWithTheDecoder() {
+	// The short take rather than every recording here. Both are real studio
+	// multitracks and the claim is about the reader rather than about any one
+	// file, so one is enough — and decoding the 3:35 take twice, which is what
+	// this does per file, cost 326 seconds of a CI run under the race detector.
 	paths, err := filepath.Glob(
-		filepath.Join("..", "..", "..", "resources", "dry", "*.wav"))
+		filepath.Join("..", "..", "..", "resources", "dry", "*-short.wav"))
 	s.Require().NoError(err)
 	s.Require().NotEmpty(paths, "no recordings to check against")
 

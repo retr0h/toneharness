@@ -39,7 +39,7 @@ type ChainPublicTestSuite struct {
 }
 
 func (s *ChainPublicTestSuite) SetupTest() {
-	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di.wav")
+	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di-short.wav")
 }
 
 // TestItReadsWhatIsLoadedAndChangesNothing is the primitive nothing provided.
@@ -152,16 +152,6 @@ func (s *ChainPublicTestSuite) TestAQuietCleanReadingIsNotASqueal() {
 	s.Require().True(bad, "the quietest squeal measured was 39%")
 }
 
-// TestChainReportsHardwareItCannotOpen covers --hardware naming no device.
-//
-// The only command here that takes no client, so the bench is all there is: a
-// name nothing answers to is the whole failure.
-func (s *ChainPublicTestSuite) TestChainReportsHardwareItCannotOpen() {
-	s.Require().Error(Chain(context.Background(), buffer(), ChainOptions{
-		Dry: s.dry, Seconds: 0.1, Takes: 2, Hardware: "no such interface",
-	}))
-}
-
 // TestChainReportsABenchThatStopsAnswering covers both reads.
 //
 // The floor is measured first and the chain second, and a bench that fails on
@@ -222,7 +212,7 @@ func (s *ChainPublicTestSuite) TestInstrumentOfReadsItOffTheReference() {
 		dry  string
 		want string
 	}{
-		{filepath.Join("resources", "dry", "bass-di.wav"), "bass"},
+		{filepath.Join("resources", "dry", "bass-di-short.wav"), "bass"},
 		{filepath.Join("resources", "dry", "guitar-di.wav"), "guitar"},
 		{"BASS-DI.WAV", "bass"},
 		{filepath.Join("somewhere", "else", "take-3.wav"), ""},

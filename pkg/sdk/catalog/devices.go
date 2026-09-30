@@ -64,5 +64,20 @@ func For(
 		return nil, &NoDeviceError{Device: device}
 	}
 
-	return decode(body)
+	// Decoded once per device, and see held for why that matters.
+	held.Lock()
+	defer held.Unlock()
+
+	if got, already := held.by[device]; already {
+		return got, nil
+	}
+
+	got, err := decode(body)
+	if err != nil {
+		return nil, err
+	}
+
+	held.by[device] = got
+
+	return got, nil
 }

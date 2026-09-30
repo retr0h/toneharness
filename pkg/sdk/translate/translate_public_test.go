@@ -84,7 +84,7 @@ func (s *TranslatePublicTestSuite) setup(
 
 // recording is the one file this repository can always measure.
 func (s *TranslatePublicTestSuite) recording() string {
-	return filepath.Join("..", "..", "..", "resources", "dry", "bass-di.wav")
+	return filepath.Join("..", "..", "..", "resources", "dry", "bass-di-short.wav")
 }
 
 // TestNamedGearResolvesToAModel covers the deterministic half.
