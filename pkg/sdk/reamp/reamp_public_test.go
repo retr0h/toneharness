@@ -525,6 +525,40 @@ func (s *ReampPublicTestSuite) TestChannelsInAnswersOneRatherThanDividingByNothi
 	}
 }
 
+// TestTwoSidedIsWhatOpensTheLoop covers the answer pkg/cli asks for.
+//
+// The headroom trim exists because a lead from the pedal's output to its own
+// input makes the chain hear itself. Two devices means the pedal's output
+// reaches nothing, so there is no path back and the trim spends thirty
+// decibels on a problem that is absent. Getting this wrong either squeals or
+// throws away signal, and both are silent.
+func (s *ReampPublicTestSuite) TestTwoSidedIsWhatOpensTheLoop() {
+	tests := []struct {
+		name string
+		want string
+		two  bool
+	}{
+		{"one device is the loop", "HX Stomp", false},
+		{"two devices open it", "External Headphones,HX Stomp", true},
+		{"spaces round the comma still open it", "speakers , stomp", true},
+		{"naming nothing is one device", "", false},
+		{
+			// Somebody typing the same name twice has described one device.
+			name: "the same device twice is not two", want: "HX Stomp,HX Stomp",
+		},
+		{
+			name: "and the same name with spaces round it is still not two",
+			want: "HX Stomp, HX Stomp",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.two, reamp.TwoSided(tt.want))
+		})
+	}
+}
+
 func TestReampPublicTestSuite(
 	t *testing.T,
 ) {

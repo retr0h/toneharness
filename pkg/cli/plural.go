@@ -18,7 +18,28 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// Package mocks holds generated test doubles for the cli package's interfaces.
-package mocks
+package cli
 
-//go:generate go tool go.uber.org/mock/mockgen -source=../types.go -destination=types.gen.go -package=mocks
+import "fmt"
+
+// Plural renders a count with its noun, so a setlist of one does not read as
+// "1 slots".
+//
+// One of it, in its own file, because three files render counts and it had
+// been written twice in this package: `Plural` here and an unexported `plural`
+// in music.go, identical down to the format string.
+//
+// Naive on purpose. Every noun this prints takes an `s` — slot, block, player,
+// record, genre — and a table of irregular plurals would be a table to keep in
+// step with whatever gets printed next. A noun that needs one is a reason to
+// write that sentence out rather than to grow this.
+func Plural(
+	n int,
+	noun string,
+) string {
+	if n == 1 {
+		return "1 " + noun
+	}
+
+	return fmt.Sprintf("%d %ss", n, noun)
+}

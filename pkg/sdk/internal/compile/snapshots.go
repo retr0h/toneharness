@@ -30,8 +30,9 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
-// snapshotPrefix marks a tone entry holding a snapshot.
-const snapshotPrefix = "snapshot"
+// snapshotPrefix is preset.SnapshotPrefix, which owns the key a snapshot is
+// stored under because both this and the editor write the same map with it.
+const snapshotPrefix = preset.SnapshotPrefix
 
 // Keys a preset stores a snapshot under. A device owns these names.
 const (
@@ -57,7 +58,7 @@ func snapshotsOf(
 	keys := make([]string, 0, len(doc.Data.Tone))
 
 	for key := range doc.Data.Tone {
-		if strings.HasPrefix(key, snapshotPrefix) && snapshotIndex(key) >= 0 {
+		if strings.HasPrefix(key, snapshotPrefix) && preset.SnapshotIndex(key) >= 0 {
 			keys = append(keys, key)
 		}
 	}
@@ -67,7 +68,7 @@ func snapshotsOf(
 	}
 
 	sort.Slice(keys, func(i, j int) bool {
-		return snapshotIndex(keys[i]) < snapshotIndex(keys[j])
+		return preset.SnapshotIndex(keys[i]) < preset.SnapshotIndex(keys[j])
 	})
 
 	out := make([]rig.Snapshot, 0, len(keys))
@@ -159,23 +160,6 @@ func restoreSnapshots(
 
 		doc.Data.Tone[snapshotPrefix+strconv.Itoa(i)] = entry
 	}
-}
-
-// snapshotIndex reads the number a snapshot is stored under, or -1.
-func snapshotIndex(
-	key string,
-) int {
-	rest, ok := strings.CutPrefix(key, snapshotPrefix)
-	if !ok {
-		return -1
-	}
-
-	n, err := strconv.Atoi(rest)
-	if err != nil {
-		return -1
-	}
-
-	return n
 }
 
 // decode reads one of a snapshot's fields, leaving it unset when absent.

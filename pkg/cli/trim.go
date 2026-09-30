@@ -23,7 +23,8 @@ package cli
 import (
 	"fmt"
 	"io"
-	"strings"
+
+	"github.com/retr0h/toneharness/pkg/sdk/reamp"
 )
 
 // This file decides whether the headroom trim is needed, from the rig.
@@ -75,11 +76,12 @@ func trimFor(
 
 // openLoop reports a rig where the pedal's output reaches nothing.
 //
-// Two names in --hardware, which `reamp` reads as play through the first and
-// record from the second. That arrangement is the whole reason the loop can be
-// open: the cable into the pedal carries only what the computer plays.
+// reamp owns what --hardware may say, so it answers this rather than this
+// looking for a comma itself. Two names there means play through the first and
+// record from the second, and that arrangement is the whole reason the loop can
+// be open: the cable into the pedal carries only what the computer plays.
 func openLoop(
 	hardware string,
 ) bool {
-	return strings.Contains(hardware, ",")
+	return reamp.TwoSided(hardware)
 }

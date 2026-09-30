@@ -80,7 +80,7 @@ func Sections(
 	room := 0
 
 	for key := range doc.Data.Tone {
-		if snapshotIndex(key) >= 0 {
+		if preset.SnapshotIndex(key) >= 0 {
 			room++
 		}
 	}

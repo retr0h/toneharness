@@ -120,12 +120,22 @@ func (bench) Name() string { return "a bench" }
 // than the reference. Three of the device's amplifiers still did it at 30dB of
 // headroom, reading between 92% and 95% of their energy above 2kHz where the
 // median was 0.41%.
-type squealing struct{}
+type squealing struct {
+	// silences counts the readings taken with nothing put in, which is the
+	// extra one a block the invariant cannot settle costs. A cabinet is a low
+	// pass, so brighter than its input settles it outright and this stays at
+	// nothing.
+	silences *int
+}
 
-func (squealing) Through(
+func (b squealing) Through(
 	_ context.Context,
 	signal []float32,
 ) ([]float32, error) {
+	if b.silences != nil && nothingIn(signal) {
+		*b.silences++
+	}
+
 	out := make([]float32, len(signal))
 
 	// Well above the 2kHz the high band starts at, and the same whether the
@@ -138,6 +148,20 @@ func (squealing) Through(
 }
 
 func (squealing) Name() string { return "a loop feeding itself" }
+
+// nothingIn reports a signal with nothing in it, which is what a silence
+// reading sends. Not `silent`, which is a level this package already names.
+func nothingIn(
+	signal []float32,
+) bool {
+	for _, v := range signal {
+		if v != 0 {
+			return false
+		}
+	}
+
+	return len(signal) > 0
+}
 
 // routedPlan is a plan carrying the output entry a preset arrives with, which
 // is what headroom needs something to change.
@@ -256,14 +280,51 @@ func (s *MeasureRunTestSuite) TestACabinetBrighterThanWhatItWasGivenNeedsNoSilen
 	s.compiles()
 	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-	var buf bytes.Buffer
+	var (
+		buf      bytes.Buffer
+		silences int
+	)
 
 	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
 		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "cab",
-		Seconds: 0.2, Bench: squealing{},
+		Seconds: 1, Bench: squealing{silences: &silences},
 	}))
 
 	s.Require().Contains(buf.String(), "read the loop rather than itself")
+
+	// Not one. The message above is printed on both sides of this split, so
+	// the silence readings are the only thing that tells them apart:
+	// inverting the cabinet test leaves the message intact and this is what
+	// notices.
+	s.Require().NotEmpty(s.read().Blocks)
+	s.Require().Zero(silences,
+		"a loudspeaker cannot add high energy, so the invariant settles it "+
+			"outright and nothing is played into silence")
+}
+
+// TestAGateBrighterThanWhatItWasGivenCostsASilenceReading is the other half.
+//
+// A gate may legitimately be brighter than what it was given, so the invariant
+// cannot settle it and the only question left is whether the reading depends on
+// its input at all. That costs a second reading per block, which is what makes
+// the cabinet case worth having.
+func (s *MeasureRunTestSuite) TestAGateBrighterThanWhatItWasGivenCostsASilenceReading() {
+	s.compiles()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	var (
+		buf      bytes.Buffer
+		silences int
+	)
+
+	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
+		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "gate",
+		Seconds: 1, Bench: squealing{silences: &silences},
+	}))
+
+	s.Require().NotEmpty(s.read().Blocks)
+	s.Require().Positive(silences,
+		"the silence reading a cabinet does not need")
 }
 
 // TestABenchThatStopsAnsweringMidBackoff covers the reading failing.

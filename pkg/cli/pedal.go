@@ -27,8 +27,6 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
-//go:generate go tool go.uber.org/mock/mockgen -source=pedal.go -destination=internal/mocks/pedal.gen.go -package=mocks
-
 // What measuring a device needs from one, split by who needs it.
 //
 // Interfaces rather than *sdk.Client, because a campaign that walks six

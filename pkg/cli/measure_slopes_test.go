@@ -181,6 +181,29 @@ func (s *SlopesPublicTestSuite) TestAFigureNothingCommittedCarries() {
 	s.Require().Contains(w.String(), "nothing committed carries this figure")
 }
 
+// TestACommittedSweepNamingAnotherInstrumentIsSaid covers the honest warning.
+//
+// A ratio between a live reading taken with a bass and a committed one taken
+// with a guitar is not a ratio about the control. Said rather than refused: the
+// comparison is still the only way to see how far a committed slope is from a
+// live one, which is what this command is for, so the run goes ahead and names
+// which files it cannot trust.
+func (s *SlopesPublicTestSuite) TestACommittedSweepNamingAnotherInstrumentIsSaid() {
+	s.built()
+
+	opts := s.opts()
+	opts.Sweeps = filepath.Join("testdata", "sweeps-guitar")
+
+	w := buffer()
+
+	s.Require().NoError(Slopes(context.Background(), w, opts))
+
+	said := w.String()
+	s.Require().Contains(said, "do not name the instrument")
+	s.Require().Contains(said, "(guitar)", "and which one it named instead")
+	s.Require().Contains(said, "RATIO", "the comparison still happens")
+}
+
 // TestAChainWithNoDial covers gear the solver cannot touch.
 func (s *SlopesPublicTestSuite) TestAChainWithNoDial() {
 	s.pedal.EXPECT().

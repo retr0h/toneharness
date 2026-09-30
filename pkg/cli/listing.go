@@ -76,19 +76,6 @@ func Listing(
 	}.Render(w)
 }
 
-// Plural renders a count with its noun, so a setlist of one does not read as
-// "1 slots".
-func Plural(
-	n int,
-	noun string,
-) string {
-	if n == 1 {
-		return "1 " + noun
-	}
-
-	return fmt.Sprintf("%d %ss", n, noun)
-}
-
 // Flow reads a chain as one line of categories.
 //
 // Categories rather than model names, because a listing is for finding the

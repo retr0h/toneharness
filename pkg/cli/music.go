@@ -98,7 +98,7 @@ func rigOf(
 func playersHeld(
 	players, tagged, geared int,
 ) string {
-	got := plural(players, "player")
+	got := Plural(players, "player")
 
 	if players != tagged {
 		got += fmt.Sprintf(", %d with every record tagged", tagged)
@@ -228,11 +228,11 @@ func groupsHeld(
 	threshold bool,
 ) string {
 	if !threshold {
-		return plural(found, kind)
+		return Plural(found, kind)
 	}
 
 	return fmt.Sprintf("%s, %d worth aiming at, %d with gear for nobody",
-		plural(found, kind), usable, hollow)
+		Plural(found, kind), usable, hollow)
 }
 
 // groupsSummary says what the table is for.
@@ -258,11 +258,11 @@ func readsOf(
 
 	short := make([]string, 0, 2)
 	if g.ShortRecords > 0 {
-		short = append(short, plural(g.ShortRecords, "record")+" short")
+		short = append(short, Plural(g.ShortRecords, "record")+" short")
 	}
 
 	if g.ShortArtists > 0 {
-		short = append(short, plural(g.ShortArtists, "player")+" short")
+		short = append(short, Plural(g.ShortArtists, "player")+" short")
 	}
 
 	return paint.Info(w, strings.Join(short, ", "))
@@ -314,7 +314,7 @@ func MusicRecords(
 
 	return paint.Section{
 		Title:   "Every record the corpus names",
-		Detail:  fmt.Sprintf("%s, %d separated", plural(len(of), "record"), ready),
+		Detail:  fmt.Sprintf("%s, %d separated", Plural(len(of), "record"), ready),
 		Headers: []string{"player", "track", "year", "band", "genres", "tagged by", "stems"},
 		Rows:    rows,
 		Align: []lipgloss.Position{
@@ -365,18 +365,6 @@ func listOf(
 	}
 
 	return strings.Join(of, ", ")
-}
-
-// plural counts something and names it, so a table's detail line reads.
-func plural(
-	n int,
-	name string,
-) string {
-	if n == 1 {
-		return "1 " + name
-	}
-
-	return fmt.Sprintf("%d %ss", n, name)
 }
 
 // MeasuredGenres prints what each genre measured as against the rest.
@@ -431,7 +419,7 @@ func measuredHeld(
 	found, earning int,
 ) string {
 	return fmt.Sprintf("%s measured, %d earning a word",
-		plural(found, "genre"), earning)
+		Plural(found, "genre"), earning)
 }
 
 // aimedAt says whether enough backs a genre to compute from it.

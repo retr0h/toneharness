@@ -27,6 +27,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -199,6 +200,14 @@ func (s *ControlsRunTestSuite) moves(
 }
 
 // run sweeps a model and returns what landed on disk.
+//
+// A run where nothing carried signal writes a document naming no controls,
+// which LoadCurves refuses on purpose, and that comes back as an empty Curves
+// rather than a failure. So an assertion of the form NotContains(got.Controls,
+// "Mic") holds whether the control was dropped for a reason or the whole
+// document was unreadable. A test that means "nothing was usable" says Empty,
+// and one that means "this one was dropped and others were not" says NotEmpty
+// first.
 func (s *ControlsRunTestSuite) run(
 	model string,
 	b sdk.Bench,
@@ -338,9 +347,18 @@ func (s *ControlsRunTestSuite) TestControlsRecordsWhatClipped() {
 		turning{after: 2, to: bench{clipped: true}, calls: &calls})
 
 	s.Require().NoError(err)
-	s.Require().Contains(said, "clipped")
-	s.Require().NotContains(got.Controls, "Mic",
-		"every microphone hit the ceiling, so none of them is a reading")
+	s.Require().Empty(got.Controls,
+		"every microphone hit the ceiling, so none of them is a reading and "+
+			"the document names nothing")
+
+	// Each of the twelve, by count rather than by the word appearing once.
+	// Dropping the clipped branch leaves a document naming Mic, which the
+	// assertion above catches, but it also stops saying which settings were
+	// thrown away and why, which is what somebody reads to decide whether to
+	// back the headroom off.
+	s.Require().GreaterOrEqual(strings.Count(said, "clipped"), 12,
+		"each of the twelve microphones says so, and every position of every "+
+			"dial beside them, rather than the run saying it once")
 }
 
 // TestControlsRefusesWhenTheDeviceNamesNothingEither covers the last resort.

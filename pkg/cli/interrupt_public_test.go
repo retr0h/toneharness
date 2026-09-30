@@ -30,7 +30,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/retr0h/toneharness/pkg/cli"
-	"github.com/retr0h/toneharness/pkg/cli/mocks"
+	"github.com/retr0h/toneharness/pkg/cli/internal/mocks"
 )
 
 type InterruptPublicTestSuite struct {

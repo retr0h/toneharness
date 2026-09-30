@@ -161,6 +161,26 @@ func sides(
 	return strings.TrimSpace(play), strings.TrimSpace(rec)
 }
 
+// TwoSided reports a name that asks for one device to play through and another
+// to record from.
+//
+// Off sides, so the syntax has one home. pkg/cli decides whether to apply the
+// headroom trim from this, and it had answered by looking for a comma itself:
+// two readings of one rule, and the one that only sniffed for the character
+// would have disagreed the moment this took a second separator or refused an
+// empty half.
+//
+// What it means is a rig where the pedal's output reaches nothing, because the
+// cable into the pedal carries only what the computer plays. That is the whole
+// reason the measuring loop can be open.
+func TwoSided(
+	want string,
+) bool {
+	play, rec := sides(want)
+
+	return play != rec
+}
+
 // open is Open with the audio backends named.
 //
 // Nil is every backend the platform has, which is what a person wants. A test

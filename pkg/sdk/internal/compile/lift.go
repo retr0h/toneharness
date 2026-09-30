@@ -222,7 +222,7 @@ func modelledKeys(
 
 	if snapshots != nil {
 		for key := range doc.Data.Tone {
-			if snapshotIndex(key) >= 0 {
+			if preset.SnapshotIndex(key) >= 0 {
 				out[key] = true
 			}
 		}

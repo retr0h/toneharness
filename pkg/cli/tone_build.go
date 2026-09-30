@@ -33,8 +33,6 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
-//go:generate go tool go.uber.org/mock/mockgen -source=tone_build.go -destination=internal/mocks/resolver.gen.go -package=mocks
-
 // Resolver turns a request and a setup into the rig they describe.
 //
 // Declared here rather than taking *sdk.Client, because this is all this

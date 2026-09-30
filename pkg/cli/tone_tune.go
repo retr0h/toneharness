@@ -19,8 +19,6 @@
 // DEALINGS IN THE SOFTWARE.
 package cli
 
-//go:generate go tool go.uber.org/mock/mockgen -source=tone_tune.go -destination=internal/mocks/tuner.gen.go -package=mocks
-
 import (
 	"context"
 	"errors"
