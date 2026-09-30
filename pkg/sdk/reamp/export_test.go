@@ -44,6 +44,10 @@ var (
 	Direction = direction
 	// Matches reports a device the caller meant, named or not.
 	Matches = matches
+
+	// Sides splits a hardware name into the device to play through and the
+	// device to record from.
+	Sides = sides
 	// OpenWith is Open with the audio backends named.
 	OpenWith = open
 )

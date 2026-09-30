@@ -112,7 +112,7 @@ func init() {
 	f.IntVar(&measureControlsTakes, "takes", 3,
 		"how many takes the noise floor is measured from")
 	f.StringVar(&measureControlsHardware, "hardware", "hx stomp",
-		"which attached audio device to push the signal through")
+		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted")
 	f.Float64Var(
 		&measureControlsHeadroom,
 		"headroom",

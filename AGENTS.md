@@ -83,16 +83,27 @@ whose label says it carries USB when it does not.
 Every number that describes hardware is somebody else's different number, and
 each of these has already been a bug:
 
-| Varies with     | Do not hardcode                                                                                                    |
-| --------------- | ------------------------------------------------------------------------------------------------------------------ |
-| the Helix model | how many audio channels it presents. Ask the device; a Stomp is 8 in and 8 out                                     |
-| the Helix model | the routing enum indices. The same file carries separate lists for a Stomp, an LT and the plugin                   |
-| the Helix model | how many blocks, paths and snapshots it holds. `plan.LimitsFor` answers from the catalog                           |
-| the computer    | the audio device's name and its backend. `--hardware` names one                                                    |
-| the computer    | the sample rate. 48kHz is what every committed figure was taken at, and the loop checks it rather than assuming it |
-| the room        | whether a cable loops the output back to the input, or the return comes over USB                                   |
+| Varies with     | Do not hardcode                                                                                                                                |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| the Helix model | how many audio channels it presents. Ask the device; a Stomp is 8 in and 8 out                                                                 |
+| the Helix model | the routing enum indices. The same file carries separate lists for a Stomp, an LT and the plugin                                               |
+| the Helix model | how many blocks, paths and snapshots it holds. `plan.LimitsFor` answers from the catalog                                                       |
+| the computer    | the audio device's name and its backend. `--hardware` names one, or two comma separated to play and record on different devices                |
+| the computer    | the sample rate. 48kHz is what every committed figure was taken at, and the loop checks it rather than assuming it                             |
+| the computer    | **its output volume, when it is the thing playing the reference.** Nothing records it and every figure moves with it                           |
+| the room        | whether a cable loops the output back to the input, or the return comes over USB, or the computer plays in and the pedal's output goes nowhere |
 
 A figure measured on one device is a figure about that device. Say which.
+
+**The measuring rig itself is a variable, and the one that has mattered most.**
+Playing the reference out of the pedal's own output means the chain hears
+itself, because that socket carries the chain's output too, and a whole library
+was measured of that squeal. Playing out of the computer's own output opens the
+loop. The two rigs do not produce the same numbers even for a block neither
+refused: an Ampeg SVT reads 12.7% of its energy in the mids on one and 4.0% on
+the other. So which rig a figure came from is part of the figure, and
+[measure-a-device's signal-path](.claude/skills/measure-a-device/references/signal-path.md)
+is the page that owns it.
 
 Three things are not in a skill, on purpose:
 

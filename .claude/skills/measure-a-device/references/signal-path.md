@@ -328,11 +328,51 @@ amplifier idling, which is what it should look like. The control that makes this
 reading rather than a measurement of nothing is that -81.5dB carries structure
 where `@output: None` gave -186.7dB, so the chain reaches USB and is merely quiet.
 
-So **these 23 blocks are measurable and this rig is what cannot measure them.**
-What recovers them is a return that is not a cable loop, which is #192. The Send
-and Return pair is the untried route and it is the same path a NAM capture of real
-hardware needs. Note that it is where the signal comes *back* that matters: #191
-established the output destination does nothing.
+So **these 23 blocks are measurable and the one-device rig is what cannot measure
+them.** And there is a rig that can.
+
+## The rig that opens the loop: play through the computer, record off USB
+
+**Measured 2026-09-29 and it works.** A 3.5mm lead from the computer's own
+headphone output into the pedal's quarter-inch input, the pedal's output
+connected to nothing, and the reading taken off USB as before:
+
+```bash
+mise exec -- go run main.go measure chain   --hardware "External Headphones,HX Stomp"
+```
+
+Two names separated by a comma play through the first and record from the second.
+One name is one device both ways, which is the old rig.
+
+Why it opens the loop: that cable carries only what the computer plays. The
+chain's output never reaches it, so there is no path back at all rather than one
+held below unity. `HD2_AmpRevvGenRed`, which the one-device rig refused:
+
+| | one device, -30dB | **two devices, -30dB** | **two devices, no trim** |
+| --------------- | ----------------: | ---------------------: | -----------------------: |
+| above 2kHz | 29.3% | **1.2%** | **1.2%** |
+| below 250Hz | 27.8% | **78.9%** | **78.9%** |
+| centroid | 1,679Hz | **257Hz** | **256Hz** |
+| level | -51.7dB | -57.5dB | **-27.5dB** |
+| level on silence | -52.8dB | **-108.5dB** | |
+| signal over silence | **1.1dB** | **51dB** | **81dB** |
+
+Three things that table settles. The oscillation is gone rather than reduced: 1.2%
+above 2kHz against the reference's 0.01%, and silence reads the converter floor at
+-108.5dB with a centroid wandering 67Hz, which is noise rather than the locked
+0.2Hz tone the old rig produced. The spectrum is identical with and without the
+headroom trim, so **the trim was only ever fighting the feedback** and costs 30dB
+of signal over the floor for nothing here. And a bass through a high-gain
+amplifier reads low-heavy, which is what it should have read all along.
+
+**The price is two clocks.** They drift, which `reamp`'s package comment warns
+about, and it is harmless for where energy sits and how loud it is. It is not
+harmless for deconvolving an impulse response, so `pkg/sdk/cab` wants the one
+device rig or its own alignment.
+
+Level: a headphone output is hotter than a guitar input expects, so turn the
+computer down rather than up. The pedal's Aux input is built for line level and is
+entry 3 of the Sources enum if the guitar jack proves too hot.
 
 ## The cable that closes it
 

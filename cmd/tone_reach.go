@@ -118,7 +118,7 @@ func init() {
 	f.Float64Var(&toneReachNudge, "nudge", 0.1,
 		"how far a control is moved to read its slope, as a fraction of its range")
 	f.StringVar(&toneReachHardware, "hardware", "",
-		"which attached audio device to push the signal through")
+		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted")
 	f.StringVar(&toneReachClient.rigs, "rigs", "",
 		"a directory of rigs to use instead of yours, beside the built-in ones")
 	f.Float64Var(

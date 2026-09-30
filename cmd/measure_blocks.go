@@ -102,7 +102,7 @@ func init() {
 	f.BoolVar(&measureBlocksRetry, "retry", false,
 		"with --resume, try the ones that refused again")
 	f.StringVar(&measureBlocksHardware, "hardware", "hx stomp",
-		"which attached audio device to push the signal through")
+		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted")
 	f.Float64Var(
 		&measureBlocksHeadroom,
 		"headroom",

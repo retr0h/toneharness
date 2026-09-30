@@ -140,7 +140,7 @@ func init() {
 	f.StringVar(&toneTuneOut, "out", "",
 		"where the tuned chain goes, as a plan; without it nothing is kept")
 	f.StringVar(&toneTuneHardware, "hardware", "",
-		"which attached audio device to push the signal through")
+		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted")
 	f.Float64Var(
 		&toneTuneHeadroom,
 		"headroom",

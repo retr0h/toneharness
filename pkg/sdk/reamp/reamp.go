@@ -26,9 +26,22 @@
 // measurement of a pedal possible at all, because a record is the far end of
 // a whole signal chain and cannot say what any one control did.
 //
-// Playback and capture share one clock. Two separate streams drift, and a
-// drifting pair would show up as a measurement that changed slowly over an
-// evening for no reason anybody could find.
+// Playback and capture are one device by default, so they share one clock. Two
+// separate streams drift, and a drifting pair shows up as a measurement that
+// changes slowly over an evening for no reason anybody can find.
+//
+// Two devices are allowed anyway, because on an HX Stomp one device is what
+// closes the measuring loop. The chain can only be reached through the physical
+// input jack, and the only way to get the computer's signal to that jack is a
+// cable off the pedal's own output, which carries the chain's output with it. So
+// the chain hears itself, and 23 of 661 blocks have enough gain to keep that
+// going past any trim. Playing through the computer's own output instead opens
+// the loop rather than holding it below unity: that cable carries nothing but
+// what the computer plays.
+//
+// The drift is the price and it is worth naming. It is harmless for what this
+// measures, which is where energy sits and how loud it is, and it is not
+// harmless for anything deconvolving an impulse response.
 package reamp
 
 import (
@@ -117,14 +130,35 @@ type Bench struct {
 
 // Open finds a device by name and gets ready to push signal through it.
 //
-// The name is matched loosely and case-insensitively, so "hx stomp" finds
-// what CoreAudio calls "HX Stomp". Both directions have to be the same piece
-// of hardware: playing into one device and recording from another is two
-// clocks, and the drift between them is not measurable after the fact.
+// The name is matched loosely and case-insensitively, so "hx stomp" finds what
+// CoreAudio calls "HX Stomp".
+//
+// **Two names separated by a comma play through the first and record from the
+// second**, as in "MacBook Pro Speakers,HX Stomp". That is how the measuring
+// loop is opened rather than quieted: see the package comment. One name means
+// one device both ways, which is the default and the only arrangement that
+// shares a clock.
 func Open(
 	want string,
 ) (*Bench, error) {
 	return open(nil, want)
+}
+
+// sides splits what a caller asked for into the device to play through and the
+// device to record from.
+//
+// One name is both. Two are taken in the order the signal travels, out of the
+// first and back into the second, which is the order somebody describes a rig
+// in. Surrounding spaces go, so "speakers, stomp" works.
+func sides(
+	want string,
+) (string, string) {
+	play, rec, split := strings.Cut(want, ",")
+	if !split {
+		return want, want
+	}
+
+	return strings.TrimSpace(play), strings.TrimSpace(rec)
 }
 
 // open is Open with the audio backends named.
@@ -144,21 +178,31 @@ func open(
 
 	b := &Bench{ctx: ctx}
 
-	play, name, err := find(ctx, malgo.Playback, want)
+	wantPlay, wantRec := sides(want)
+
+	play, playing, err := find(ctx, malgo.Playback, wantPlay)
 	if err != nil {
 		b.Close()
 
 		return nil, err
 	}
 
-	rec, _, err := find(ctx, malgo.Capture, want)
+	rec, recording, err := find(ctx, malgo.Capture, wantRec)
 	if err != nil {
 		b.Close()
 
 		return nil, err
 	}
 
-	b.play, b.rec, b.name = play, rec, name
+	b.play, b.rec = play, rec
+
+	// Named as the signal travels when the two differ, because an error saying
+	// one device's name while the other is the broken one sends somebody to the
+	// wrong end of the rig.
+	b.name = playing
+	if playing != recording {
+		b.name = playing + " into " + recording
+	}
 
 	if b.claiming == 0 {
 		b.claiming = Claiming
@@ -364,8 +408,9 @@ type pass struct {
 // previous one played, and keeping it before the buffer is refilled is what
 // holds the two in step.
 //
-// The signal goes out on both channels, which is what the loop is: a cable
-// from the device's output back to its own input.
+// The signal goes out on the first channel only. A mono cable takes that one,
+// and writing a copy per channel would put this frame's second sample into the
+// next frame on a device presenting one.
 func (p *pass) frame(
 	output, input []byte,
 	frames int,

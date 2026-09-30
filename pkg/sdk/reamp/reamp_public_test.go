@@ -501,3 +501,51 @@ func TestReampPublicTestSuite(
 ) {
 	suite.Run(t, new(ReampPublicTestSuite))
 }
+
+// TestSidesSplitsThePlaybackDeviceFromTheCaptureOne is how the measuring loop is
+// opened.
+//
+// One device both ways is what closes it. The chain can only be reached through
+// the physical input jack, and the only cable that reaches it from the computer
+// comes off the pedal's own output, carrying the chain's output with it. Playing
+// through the computer's own output instead means the cable carries nothing but
+// the reference, so there is no path back at all.
+func (s *ReampPublicTestSuite) TestSidesSplitsThePlaybackDeviceFromTheCaptureOne() {
+	for _, tt := range []struct {
+		name      string
+		give      string
+		play, rec string
+	}{
+		{
+			name: "one name is one device both ways",
+			give: "hx stomp",
+			play: "hx stomp", rec: "hx stomp",
+		},
+		{
+			// In the order the signal travels, which is the order somebody
+			// describes a rig in: out of the first, back into the second.
+			name: "two names play through the first and record from the second",
+			give: "MacBook Pro Speakers,HX Stomp",
+			play: "MacBook Pro Speakers", rec: "HX Stomp",
+		},
+		{
+			name: "spaces around the comma are somebody typing, not a device",
+			give: "speakers , stomp",
+			play: "speakers", rec: "stomp",
+		},
+		{
+			// Naming nothing still means the pedal rather than whichever device
+			// the platform enumerates first, which is matches' job and must not
+			// be broken by splitting.
+			name: "nothing named stays nothing named on both sides",
+			give: "",
+			play: "", rec: "",
+		},
+	} {
+		s.Run(tt.name, func() {
+			play, rec := reamp.Sides(tt.give)
+			s.Require().Equal(tt.play, play, "the device played through")
+			s.Require().Equal(tt.rec, rec, "the device recorded from")
+		})
+	}
+}
