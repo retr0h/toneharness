@@ -514,7 +514,7 @@ func placedOne(
 	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) (wire.PlacedController, bool) {
-	b, ok := blockAtPath(blocks, path, pos)
+	b, ok := plan.BlockAt(blocks, path, pos)
 	if !ok {
 		return wire.PlacedController{}, false
 	}
@@ -549,24 +549,6 @@ func placedOne(
 	out.NoSnapshot, _ = attrs[ctlNoSnapshot].(bool)
 
 	return out, true
-}
-
-// blockAtPath finds the block at a position on one processor.
-//
-// By position along the path rather than by place in the list, because a chain
-// read off a device numbers its blocks the way the device laid them out and one
-// that states its positions leaves gaps in them.
-func blockAtPath(
-	blocks []plan.Block,
-	path, pos int,
-) (plan.Block, bool) {
-	for _, b := range blocks {
-		if b.DSP == path && b.Pos == pos {
-			return b, true
-		}
-	}
-
-	return plan.Block{}, false
 }
 
 // travelOf is the ends of a controller's sweep.

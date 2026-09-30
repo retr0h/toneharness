@@ -135,7 +135,7 @@ func checkControllers(
 		// out, and a chain that states its positions leaves gaps in them.
 		path := at(c.Path, 0)
 
-		at, ok := blockAt(blocks, path, c.Block)
+		at, ok := plan.BlockAt(blocks, path, c.Block)
 		if !ok {
 			out = append(out, &NoSuchBlockError{
 				Field: fmt.Sprintf("controllers[%d].block", i),
@@ -170,24 +170,6 @@ func checkControllers(
 	}
 
 	return errors.Join(out...)
-}
-
-// blockAt finds the block sitting at a position on one processor.
-//
-// Both, because both paths of a device that has two count their blocks from
-// zero. A chain laid across them holds two blocks numbered 0, and a position
-// on its own would find whichever came first.
-func blockAt(
-	blocks []plan.Block,
-	path, position int,
-) (plan.Block, bool) {
-	for _, b := range blocks {
-		if b.DSP == path && b.Pos == position {
-			return b, true
-		}
-	}
-
-	return plan.Block{}, false
 }
 
 // slicesContainFold reports whether a value is in a list, ignoring case.

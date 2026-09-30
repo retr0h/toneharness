@@ -247,7 +247,7 @@ func Best(
 			break
 		}
 
-		if worst(step.Residual) >= worst(out.Residual) {
+		if Worst(step.Residual) >= Worst(out.Residual) {
 			// Clamping can make a pass worse than the one before it, and the
 			// answer wanted here is the nearest the chain got rather than
 			// wherever the last pass landed.

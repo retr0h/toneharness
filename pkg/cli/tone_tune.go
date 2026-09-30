@@ -24,7 +24,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -600,7 +599,7 @@ func converge(
 		// a minute and a half measuring what to do about a target it is already
 		// inside.
 		if at, arrived := solve.Reached(aims, now); arrived {
-			aimed(w, pass, at, furthest(at.Residual))
+			aimed(w, pass, at, solve.Worst(at.Residual))
 
 			did.residual, did.arrived = at.Residual, true
 
@@ -616,7 +615,7 @@ func converge(
 			return did, err
 		}
 
-		worst := furthest(step.Residual)
+		worst := solve.Worst(step.Residual)
 		aimed(w, pass, step, worst)
 
 		did.residual, did.arrived = step.Residual, step.Arrived
@@ -952,16 +951,3 @@ func figuresOf(
 // perCent is what a sweep reports a share as, against the fraction a corpus
 // reports the same share as.
 const perCent = 100
-
-// furthest is how far the worst axis still is, in its own tolerances.
-func furthest(
-	residual map[audio.Figure]float64,
-) float64 {
-	var out float64
-
-	for _, off := range residual {
-		out = math.Max(out, off)
-	}
-
-	return out
-}

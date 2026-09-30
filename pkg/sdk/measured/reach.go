@@ -132,7 +132,11 @@ func reachOf(
 				}
 			}
 
-			moved, worst, ok := movement(curve, figure)
+			// wasStraight rather than `worst`, which reads as the worst figure
+			// and is this one control's own straightness. The accumulator
+			// beside it keeps the least straight of them, which is where the
+			// word worst would belong.
+			moved, wasStraight, ok := movement(curve, figure)
 			if !ok {
 				continue
 			}
@@ -143,8 +147,8 @@ func reachOf(
 			// describes neither half, and counting its full range as movement
 			// is arithmetic on a number with no referent. This amplifier's
 			// Bias reads 0.21 straight and its Hum 0.11.
-			swing += moved * worst
-			straight = math.Min(straight, worst)
+			swing += moved * wasStraight
+			straight = math.Min(straight, wasStraight)
 		}
 	}
 

@@ -349,7 +349,7 @@ func backedUp(
 	runners []solve.Runner,
 	best round,
 ) (round, error) {
-	at := furthest(best.residual)
+	at := solve.Worst(best.residual)
 
 	for i, r := range runners {
 		// One fewer than Tries, because the first attempt was already spent
@@ -379,7 +379,7 @@ func backedUp(
 			return best, err
 		}
 
-		if got := furthest(did.residual); got < at {
+		if got := solve.Worst(did.residual); got < at {
 			best, at = did, got
 		}
 

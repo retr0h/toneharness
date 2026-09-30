@@ -160,7 +160,7 @@ func (s *EncodeTestSuite) blockAt(
 	c, err := doc.Spec()
 	s.Require().NoError(err)
 
-	got, ok := blockAtPath(c.Blocks, 0, pos)
+	got, ok := plan.BlockAt(c.Blocks, 0, pos)
 	s.Require().True(ok)
 
 	return got

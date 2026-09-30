@@ -410,7 +410,7 @@ func (s *ChoosePublicTestSuite) TestBackedUpTriesTheRunnerUpAndKeepsTheBetterOfT
 	s.Require().NoError(err)
 	s.Require().Equal([]int{9}, chosen, "the runner-up was actually applied")
 	s.Require().Contains(w.String(), "Mic goes to 9")
-	s.Require().InDelta(4, furthest(got.residual), 0.001,
+	s.Require().InDelta(4, solve.Worst(got.residual), 0.001,
 		"a worse attempt does not replace a better one")
 }
 
@@ -468,7 +468,7 @@ func (s *ChoosePublicTestSuite) TestBackedUpIgnoresARunnerNamingAControlTheChain
 		[]solve.Runner{{Where: solve.Where{Block: 9, Param: 9}}}, first)
 
 	s.Require().NoError(err)
-	s.Require().InDelta(4, furthest(got.residual), 0.001)
+	s.Require().InDelta(4, solve.Worst(got.residual), 0.001)
 }
 
 func TestChoosePublicTestSuite(

@@ -125,7 +125,7 @@ func Nearest(
 		out = append(out, Option{
 			Value:    value,
 			Residual: at.Residual,
-			Worst:    worst(at.Residual),
+			Worst:    Worst(at.Residual),
 			Arrived:  at.Arrived,
 		})
 	}
@@ -198,8 +198,13 @@ func Runners(
 	return out
 }
 
-// worst is how far the furthest axis is, in its own tolerances.
-func worst(
+// Worst is how far the furthest axis is, in its own tolerances.
+//
+// Exported because pkg/cli reports it and had grown a byte-identical copy
+// under another name for want of this one. What a residual means is this
+// package's to say: it is what Toward produced and it is in tolerances rather
+// than in any figure's own units, so the reduction over it belongs here.
+func Worst(
 	residual map[audio.Figure]float64,
 ) float64 {
 	var out float64
