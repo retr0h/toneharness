@@ -150,6 +150,26 @@ func (s *ToneBuildPublicTestSuite) TestARequestItCannotAnswerFails() {
 	s.Require().ErrorContains(err, "no chain to build")
 }
 
+// TestARequestItCannotAnswerStillAnswersAsData covers --json on a failure.
+//
+// The notes are written whether the build succeeded or not, and the error is
+// still returned, because what could not be honoured is the useful half either
+// way. An agent reading the data surface gets the reasons rather than an exit
+// code and nothing.
+func (s *ToneBuildPublicTestSuite) TestARequestItCannotAnswerStillAnswersAsData() {
+	var buf bytes.Buffer
+
+	err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
+		Ask: s.file("ask.yaml",
+			"schema: ToneSpec\ngenre: [rock]\nwords:\n  - term: dark\n"),
+		AsData: true,
+	})
+
+	s.Require().ErrorContains(err, "no chain to build")
+	s.Require().NotEmpty(buf.String(), "and the notes still arrive")
+	s.Require().Contains(buf.String(), "{", "as data rather than as a table")
+}
+
 // TestADocumentItCannotReadIsReported covers both files.
 func (s *ToneBuildPublicTestSuite) TestADocumentItCannotReadIsReported() {
 	tests := []struct {

@@ -156,6 +156,21 @@ func (s *MissingPublicTestSuite) TestWhyReportsTheFiguresRatherThanAVerdict() {
 
 	s.Require().Contains(why(measured.Suggestion{}), "nothing in the right direction",
 		"a block that helps with none of it says so rather than printing blank")
+
+	// Two axes, so the separator between them is there. A block that closes
+	// more than one gap is the interesting kind and its line read as one
+	// figure run into the next.
+	two := measured.Suggestion{
+		Helps: []audio.Figure{audio.KeyHarmonics, audio.KeyCentroid},
+		Moves: map[audio.Figure]float64{
+			audio.KeyHarmonics: 12.5, audio.KeyCentroid: -84,
+		},
+	}
+	said = why(two)
+
+	s.Require().Contains(said, "harmonics +12.5")
+	s.Require().Contains(said, "centroid -84")
+	s.Require().Contains(said, ", ", "the two are separated rather than run together")
 }
 
 // TestMissingSaysNothingWhenThereIsNothingToSay covers the advisory staying quiet.

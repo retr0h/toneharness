@@ -254,6 +254,16 @@ func (s *BuildTestSuite) TestBuildReportsWhatItCannotRead() {
 			says:      "reading",
 		},
 		{
+			// Line 6 keeps its routing lists in the same file as the
+			// footswitch colours, and one entry that will not decode there
+			// means nothing can name a destination. Refused rather than
+			// generated without them, because measuring is what needs them
+			// and a catalog missing them looks complete.
+			name:      "routing lists that will not decode",
+			resources: filepath.Join("testdata", "badrouting"),
+			says:      "decoding input_type",
+		},
+		{
 			name:    "a gear map that will not decode",
 			gearMap: filepath.Join("testdata", "badmap.json"),
 			says:    "gear map",

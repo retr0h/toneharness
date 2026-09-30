@@ -361,6 +361,24 @@ func (s *NamesTestSuite) TestNamesReportAPedalThatWillNotLoadThePreset() {
 	s.Require().ErrorContains(err, "the device said no")
 }
 
+// TestNamesReportsACatalogItCannotRead covers --device naming a pedal this
+// binary ships no catalog for.
+//
+// First, because the model a probe is asked about is looked up in it and a
+// binary that cannot say which models exist has nothing to probe.
+func (s *NamesTestSuite) TestNamesReportsACatalogItCannotRead() {
+	ctrl := gomock.NewController(s.T())
+	pedal := mocks.NewMockPedal(ctrl)
+	pedal.EXPECT().Catalog(gomock.Any()).
+		Return(nil, errors.New("no catalog for that pedal")).AnyTimes()
+
+	err := MeasureNames(context.Background(), buffer(), NamesOptions{
+		Client: pedal, Model: "HD2_CabMicIr_2x15Brute",
+	})
+
+	s.Require().ErrorContains(err, "no catalog for that pedal")
+}
+
 func TestNamesTestSuite(
 	t *testing.T,
 ) {
