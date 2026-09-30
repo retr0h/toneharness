@@ -247,6 +247,13 @@ func intentOf(
 		}
 	}
 
+	// What the ask says it is for, which a genre's figures have to agree with.
+	// Empty leaves it to the Setup and claims nothing either way.
+	wants := ""
+	if ask.Instrument != nil {
+		wants = string(*ask.Instrument)
+	}
+
 	// A genre's words, after the ask's own, so anything somebody wrote by hand
 	// outranks what a measurement produced. Both carry their figures, so
 	// weightOf sizes each by how far it actually sits from the rest.
@@ -260,8 +267,8 @@ func intentOf(
 			continue
 		}
 
-		out.Words = append(out.Words,
-			genreWords(audio.ShippedGenre(slug.Of(named)))...)
+		got, ok := audio.ShippedGenre(slug.Of(named))
+		out.Words = append(out.Words, genreWords(got, ok, wants)...)
 	}
 
 	if ask.Technique != nil {
@@ -290,10 +297,21 @@ func intentOf(
 func genreWords(
 	got audio.Genre,
 	ok bool,
+	wants string,
 ) []compile.Word {
 	// Under the threshold is reported, never computed from: eight records from
-	// three players, or a request for the genre gets one band's sound.
+	// three players, or a request for the genre gets one band's sound. A genre
+	// pooled across two instruments clears Usable for the same reason.
 	if !ok || !got.Usable {
+		return nil
+	}
+
+	// Measured on another instrument, which is not a weaker version of the same
+	// claim. Every word here carries the figures that earned it and those
+	// figures size the step a control moves, so a bass genre's `dark` handed to
+	// a guitar build moves a guitar control by how far a bass sat from other
+	// basses. The words are dropped and translate says why.
+	if wants != "" && got.Instrument != "" && wants != got.Instrument {
 		return nil
 	}
 

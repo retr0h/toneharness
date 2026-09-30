@@ -62,6 +62,22 @@ type Genre struct {
 	// Usable says whether enough backs it to be computed from rather than
 	// reported: eight records from at least three players.
 	Usable bool `json:"usable"`
+	// Instrument is what the records these figures came from were played on.
+	//
+	// Recorded because the figures are meaningless without it and carry no
+	// hint of it otherwise. A bass guitar's centre of gravity sits an octave
+	// below a guitar's, so this corpus puts every genre's centroid between 90
+	// and 182Hz, and a guitar chain aimed at one of those is not close to it:
+	// it is being asked to sound like a different instrument.
+	//
+	// Nothing in the figures refuses that on its own. The solve converges,
+	// reports its tolerances met, and is wrong about what it was asked, which
+	// is the failure this project has to expect.
+	//
+	// Empty when the records disagree, which means the tree held more than one
+	// instrument and the genre pooled them. Nothing may aim at that: see
+	// Usable, which it also clears.
+	Instrument string `json:"instrument,omitempty"`
 }
 
 // Genres measures every genre the manifests name, against the rest.
@@ -103,13 +119,19 @@ func GenresMeasured(
 
 		across := Together(in.profiles)
 
+		// One instrument or none. A genre pooled across two is not a genre
+		// these figures describe, so it is reported and may not be aimed at.
+		enough := len(in.profiles) >= genreRecords &&
+			len(in.players) >= genrePlayers
+
 		out = append(out, Genre{
 			Name: in.name, Slug: key,
 			Records: len(in.profiles), Players: len(in.players),
-			Against: len(others),
-			Across:  across,
-			Terms:   displaced(across, others),
-			Usable:  len(in.profiles) >= genreRecords && len(in.players) >= genrePlayers,
+			Against:    len(others),
+			Across:     across,
+			Terms:      displaced(across, others),
+			Instrument: in.instrument,
+			Usable:     enough && in.instrument != "",
 		})
 	}
 
@@ -131,6 +153,35 @@ type carried struct {
 	name     string
 	profiles []Profile
 	players  map[string]bool
+	// instrument is what every record of it was played on, and empty when they
+	// were not all played on the same one. Empty rather than a list because
+	// there is nothing to do with a mixed genre but refuse to aim at it.
+	instrument string
+	mixed      bool
+}
+
+// played records what one record was played on, and notices a genre that pools
+// two instruments.
+//
+// The first instrument wins and a second clears it. A genre drawn from a bass
+// tree and a guitar tree has a centre of gravity that describes neither, and it
+// would sit in the middle looking like an ordinary answer.
+func (c *carried) played(
+	instrument string,
+) {
+	if c.mixed {
+		return
+	}
+
+	if c.instrument == "" {
+		c.instrument = instrument
+
+		return
+	}
+
+	if c.instrument != instrument {
+		c.instrument, c.mixed = "", true
+	}
 }
 
 // profilesByGenre measures every player and files each record under the genres
@@ -174,6 +225,7 @@ func profilesByGenre(
 
 				tagged[key].profiles = append(tagged[key].profiles, n.Profile)
 				tagged[key].players[p.ID] = true
+				tagged[key].played(p.Instrument)
 			}
 		}
 

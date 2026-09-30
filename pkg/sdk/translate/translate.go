@@ -567,6 +567,7 @@ func genreNote(
 	want string,
 	got audio.Genre,
 	ok bool,
+	wants string,
 ) Note {
 	switch {
 	case !ok:
@@ -574,6 +575,31 @@ func genreNote(
 			About: want,
 			Said: "no records carry that genre, so there is no distribution " +
 				"to aim at. Tag some and measure them",
+		}
+	case got.Instrument == "":
+		// A genre pooled across two instruments. Its centre of gravity sits
+		// between them and describes neither.
+		return Note{
+			About: want,
+			Said: fmt.Sprintf(
+				"the %d records carrying that genre were not all played on one "+
+					"instrument, so their figures describe none of them and "+
+					"nothing may aim at them",
+				got.Records),
+		}
+	case wants != "" && wants != got.Instrument:
+		// The one that would otherwise converge and be wrong. A bass corpus
+		// puts every genre's centroid between 90 and 182Hz, and a guitar chain
+		// solved against that is not near it: it is being asked to sound like
+		// another instrument, and every dial would be spent doing it.
+		return Note{
+			About: want,
+			Said: fmt.Sprintf(
+				"that genre is measured on %s and this asks for %s, so its "+
+					"figures are not a target for this: %s sits about an octave "+
+					"from %s and the solve would spend every control getting "+
+					"there. Measure %s records carrying it",
+				got.Instrument, wants, got.Instrument, wants, wants),
 		}
 	case !got.Usable:
 		return Note{
@@ -623,6 +649,14 @@ func unresolved(
 	spec tone.Spec,
 	notes *Notes,
 ) {
+	// What the ask says it is for, which is what a genre's figures have to
+	// agree with. Empty when the request leaves it to the Setup, and then
+	// nothing is claimed either way.
+	wants := ""
+	if spec.Instrument != nil {
+		wants = string(*spec.Instrument)
+	}
+
 	// Every genre the ask names, because a record belongs to more than one and
 	// the corpus tags the same players both punk and pop-punk. Each is reported
 	// on its own: one may have enough records behind it to compute from while
@@ -633,7 +667,7 @@ func unresolved(
 		}
 
 		got, ok := audio.ShippedGenre(slug.Of(named))
-		*notes = append(*notes, genreNote(named, got, ok))
+		*notes = append(*notes, genreNote(named, got, ok, wants))
 	}
 
 	// Named in a fixed order, because ranging a map is not one and a request

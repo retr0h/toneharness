@@ -84,7 +84,8 @@
         "margin": 0.04999999999999999
       }
     ],
-    "usable": true
+    "usable": true,
+    "instrument": "bass"
   },
   {
     "name": "pop-punk",
@@ -153,7 +154,8 @@
         "margin": 0.009999999999999981
       }
     ],
-    "usable": true
+    "usable": true,
+    "instrument": "bass"
   },
   {
     "name": "punk",
@@ -222,6 +224,7 @@
         "margin": 0.009999999999999981
       }
     ],
-    "usable": true
+    "usable": true,
+    "instrument": "bass"
   }
 ]

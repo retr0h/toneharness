@@ -571,12 +571,63 @@ func (s *TranslatePublicTestSuite) TestAGenreThatEarnsWords() {
 // records somebody tagged.
 func (s *TranslatePublicTestSuite) TestAGenreUnderTheThreshold() {
 	got := translate.GenreNote("emo", audio.Genre{
-		Name: "emo", Slug: "emo", Records: 3, Players: 1,
-	}, true)
+		Name: "emo", Slug: "emo", Records: 3, Players: 1, Instrument: "bass",
+	}, true, "bass")
 
 	s.Require().Contains(got.Said, "3 records from 1 players")
 	s.Require().Contains(got.Said, "under the eight from three")
 	s.Require().Contains(got.Said, "wearing a genre's name")
+}
+
+// TestAGenreMeasuredOnAnotherInstrument is the one that would otherwise
+// converge and be wrong.
+//
+// Every figure in this repository was measured on bass, which puts each genre's
+// centroid between 90 and 182Hz. Aim a guitar chain at one of those and the
+// solve does not fail: it spends every dial driving the chain an octave down,
+// reports its tolerances met, and has answered a question nobody asked.
+//
+// So it is said before any of that happens, and it names both sides. A note
+// saying only "out of reach" would send somebody looking at the gear.
+func (s *TranslatePublicTestSuite) TestAGenreMeasuredOnAnotherInstrument() {
+	got := translate.GenreNote("grunge", audio.Genre{
+		Name: "grunge", Slug: "grunge", Records: 9, Players: 3,
+		Instrument: "bass", Usable: true,
+	}, true, "guitar")
+
+	s.Require().Contains(got.Said, "measured on bass")
+	s.Require().Contains(got.Said, "asks for guitar")
+	s.Require().Contains(got.Said, "octave")
+}
+
+// TestAGenrePooledAcrossInstrumentsIsRefused covers figures describing nothing.
+//
+// Reported apart from the threshold, because the count is not what is wrong
+// with it: nine records from three players is plenty, and a centre of gravity
+// halfway between a bass and a guitar is not a target either.
+func (s *TranslatePublicTestSuite) TestAGenrePooledAcrossInstrumentsIsRefused() {
+	got := translate.GenreNote("punk", audio.Genre{
+		Name: "punk", Slug: "punk", Records: 9, Players: 3,
+	}, true, "bass")
+
+	s.Require().Contains(got.Said, "not all played on one instrument")
+	s.Require().Contains(got.Said, "9 records")
+}
+
+// TestAnAskNamingNoInstrumentClaimsNothing covers leaving it to the Setup.
+//
+// A request may say nothing about the instrument, and then there is no
+// disagreement to report: the note says what the genre measured as, the same as
+// it always did.
+func (s *TranslatePublicTestSuite) TestAnAskNamingNoInstrumentClaimsNothing() {
+	got := translate.GenreNote("grunge", audio.Genre{
+		Name: "grunge", Slug: "grunge", Records: 9, Players: 3,
+		Instrument: "bass", Usable: true,
+		Terms: []audio.Derived{{Term: "scooped"}},
+	}, true, "")
+
+	s.Require().Contains(got.Said, "measured across")
+	s.Require().NotContains(got.Said, "asks for")
 }
 
 // TestNothingToBuildFromIsRefused covers an empty ask.

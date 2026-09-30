@@ -12,6 +12,19 @@ players who do not play it, and a guitar's centre of gravity sits an octave abov
 a bass guitar's, so pointing this at the whole tree would compare bass genres
 against guitarists and earn every one of them `dark`.
 
+**Which instrument it was is recorded on the genre**, and a genre whose records
+were not all played on one is reported with no instrument and may not be aimed
+at. Its centre of gravity sits between the two and describes neither, which is
+worse than too few records: the figures look like an ordinary middle nothing was
+played at.
+
+That field is what stops the mistake downstream. Everything measured here so far
+is bass, so every genre's centroid sits between 90 and 182Hz, and an ask for a
+guitar tone in one of those genres used to resolve to a bass target with nothing
+saying so. The solve does not fail on that. It spends every control driving the
+chain an octave down and reports its tolerances met. `tone build` now says which
+instrument each side is and refuses to treat the figures as a target.
+
 The first counts what somebody wrote into the manifests, which is a file read. The
 second measures the recordings and takes minutes per record. What each genre
 measured as is packed into the binary by `mise exec -- just generate`, so asking

@@ -37,10 +37,20 @@ come out generic.
 | Who plays what            | `pkg/sdk/shipped/`, a hand-written pair each | thin, grows by correction                   |
 | Gear to model ID          | `resources/schemas/gear-map.json`            | 575 models                                  |
 | What order blocks go in   | statistics over `resources/schemas/corpus/`  | added blocks placed; a rig's own order kept |
-| Which way a knob moves    | swept on the device, in `resources/sweeps/`  | eleven blocks measured and shipped          |
+| Which way a knob moves    | swept on the device, in `resources/sweeps/`  | eleven blocks measured and shipped, on bass |
 | What values to set        | catalog defaults, corpus medians, intent     | six axes of ten                             |
-| What a genre sounds like  | displacement over `resources/music/`         | 3 tagged, 2 earning a word                  |
+| What a genre sounds like  | displacement over `resources/music/`         | 3 tagged, 2 earning a word, all bass        |
 | What a player sounds like | measured over `resources/music/bass/`        | 16 players, 52 records, 6 earning a word    |
+
+**Every measurement here is of a bass, and that is a limit rather than a
+default.** The corpus tree holds `bass/` and nothing else, so each genre's
+centroid sits between 90 and 182Hz, and every block was swept with
+`resources/dry/bass-di.wav` through it. A guitar ask aimed at one of those
+figures is not a near miss: it is a request to sound like another instrument,
+and the solve would spend every control getting there and report that it
+arrived. A genre now records which instrument it was measured on and the tool
+says so rather than aiming, which is the guard, not a fix. What closes it is
+guitar records in the corpus and a guitar campaign on the device.
 
 **Keep this table honest.** A pull request that finishes something marked not
 built or partly built updates the line in the same pull request and says so in

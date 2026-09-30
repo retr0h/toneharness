@@ -449,10 +449,51 @@ func (s *IntentPublicTestSuite) TestAGenreUnderTheThresholdContributesNothing() 
 		Terms: []audio.Derived{{Term: "scooped", Key: audio.KeyMid, Mine: 0.01, Others: 0.06}},
 	}
 
-	s.Require().Empty(presets.GenreWords(short, true),
+	s.Require().Empty(presets.GenreWords(short, true, "bass"),
 		"three records by one band is that band, whatever it earned")
 
 	// And the same genre once enough backs it.
 	short.Records, short.Players, short.Usable = 8, 3, true
-	s.Require().Len(presets.GenreWords(short, true), 1)
+	s.Require().Len(presets.GenreWords(short, true, "bass"), 1)
+}
+
+// TestAGenreMeasuredOnAnotherInstrumentContributesNothing is the case that
+// would otherwise move a control by the wrong amount.
+//
+// Every word carries the figures that earned it, and those figures size the
+// step. So a bass genre's `scooped` handed to a guitar build does not merely
+// point the wrong way: it moves a guitar control by how far a bass sat from
+// other basses, and the build reports the word as measured evidence.
+//
+// Dropped here and explained by translate, which is the split everywhere else
+// in this file: saying it twice is how two reports come to disagree.
+func (s *IntentPublicTestSuite) TestAGenreMeasuredOnAnotherInstrumentContributesNothing() {
+	got := audio.Genre{
+		Name: "grunge", Slug: "grunge", Records: 9, Players: 3,
+		Instrument: "bass", Usable: true,
+		Terms: []audio.Derived{
+			{Term: "scooped", Key: audio.KeyMid, Mine: 0.01, Others: 0.06},
+		},
+	}
+
+	s.Require().Empty(presets.GenreWords(got, true, "guitar"),
+		"a bass population says nothing about a guitar")
+	s.Require().Len(presets.GenreWords(got, true, "bass"), 1,
+		"and everything about a bass")
+	s.Require().Len(presets.GenreWords(got, true, ""), 1,
+		"an ask naming no instrument leaves it to the Setup")
+}
+
+// TestAGenrePooledAcrossInstrumentsContributesNothing covers figures that
+// describe neither instrument.
+func (s *IntentPublicTestSuite) TestAGenrePooledAcrossInstrumentsContributesNothing() {
+	mixed := audio.Genre{
+		Name: "punk", Slug: "punk", Records: 9, Players: 3,
+		Terms: []audio.Derived{
+			{Term: "scooped", Key: audio.KeyMid, Mine: 0.01, Others: 0.06},
+		},
+	}
+
+	s.Require().Empty(presets.GenreWords(mixed, true, "bass"),
+		"a centre of gravity between two instruments is not either one")
 }

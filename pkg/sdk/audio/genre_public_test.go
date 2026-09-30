@@ -202,7 +202,19 @@ func (s *MeasuredGenresPublicTestSuite) player(
 	hz float64,
 	tracks ...string,
 ) {
-	dir := filepath.Join(s.root, "bass", id)
+	s.playerOn("bass", id, genres, hz, tracks...)
+}
+
+// playerOn is the same, under a named instrument's tree.
+//
+// The instrument is the directory above the player, which is how the manifests
+// record it and the only place it is written down.
+func (s *MeasuredGenresPublicTestSuite) playerOn(
+	instrument, id, genres string,
+	hz float64,
+	tracks ...string,
+) {
+	dir := filepath.Join(s.root, instrument, id)
 
 	body := "artist: " + id + "\ntracks:\n"
 
@@ -277,6 +289,74 @@ func (s *MeasuredGenresPublicTestSuite) TestAGenreStandsOnThePlayersWhoDoNotPlay
 	}
 
 	s.Require().True(terms["bright"], "3kHz against 200Hz")
+}
+
+// TestEveryShippedGenreNamesItsInstrument holds the generated file to the field.
+//
+// The check is here rather than left to the reader because an unnamed instrument
+// and a genre pooled across two are the same empty string, and a genres.json
+// generated before the field existed would read as the second. That turns a
+// stale file into a wrong refusal with a confident explanation, so this fails
+// instead: regenerate with `go generate ./pkg/sdk/audio`.
+func (s *MeasuredGenresPublicTestSuite) TestEveryShippedGenreNamesItsInstrument() {
+	all, err := audio.Shipped()
+	s.Require().NoError(err)
+	s.Require().NotEmpty(all)
+
+	for _, g := range all {
+		s.Require().NotEmpty(g.Instrument,
+			"%s names no instrument, so the shipped file predates the field",
+			g.Slug)
+	}
+}
+
+// TestAGenreRecordsWhichInstrumentItWasMeasuredOn is why the field exists.
+//
+// Without it a genre's figures carry no hint of what they describe, and they do
+// not read as wrong: this corpus is bass, so every genre's centroid sits between
+// 90 and 182Hz, and a guitar chain solved against one of those converges,
+// reports its tolerances met, and has been asked to sound like another
+// instrument.
+func (s *MeasuredGenresPublicTestSuite) TestAGenreRecordsWhichInstrumentItWasMeasuredOn() {
+	s.player("a", "punk", 3000, "t1", "t2", "t3")
+	s.player("b", "punk", 3100, "t1", "t2", "t3")
+	s.player("c", "punk", 3200, "t1", "t2", "t3")
+
+	for i, id := range []string{"w", "x"} {
+		s.player(id, "", 200+float64(i)*20, "t1")
+	}
+
+	got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+	s.Require().NoError(err)
+	s.Require().Len(got, 1)
+
+	s.Require().Equal("bass", got[0].Instrument)
+	s.Require().True(got[0].Usable)
+}
+
+// TestAGenrePooledAcrossTwoInstrumentsMayNotBeAimedAt is the mixed case.
+//
+// Its centre of gravity sits between the two and describes neither. That is
+// worse than too few records, because the figures look ordinary: a genre half
+// bass and half guitar reads as a plausible middle nothing was played at.
+func (s *MeasuredGenresPublicTestSuite) TestAGenrePooledAcrossTwoInstrumentsMayNotBeAimedAt() {
+	s.playerOn("bass", "a", "punk", 100, "t1", "t2", "t3")
+	s.playerOn("bass", "b", "punk", 110, "t1", "t2", "t3")
+	s.playerOn("guitar", "c", "punk", 3000, "t1", "t2", "t3")
+
+	for i, id := range []string{"w", "x"} {
+		s.player(id, "", 200+float64(i)*20, "t1")
+	}
+
+	got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+	s.Require().NoError(err)
+	s.Require().Len(got, 1)
+
+	s.Require().Equal(9, got[0].Records, "it is still measured and reported")
+	s.Require().Equal(3, got[0].Players)
+	s.Require().Empty(got[0].Instrument, "no one instrument describes it")
+	s.Require().False(got[0].Usable,
+		"nine records from three players, and still nothing to aim at")
 }
 
 // TestAGenreUnderTheThresholdIsStillMeasured covers reporting rather than
