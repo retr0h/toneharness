@@ -42,3 +42,4 @@ resources/schemas/gear-map.json
 # rather than redistribution. resources/dry/README.md says where to get them.
 resources/dry/**
 !resources/dry/README.md
+!resources/dry/*.wav
