@@ -114,6 +114,47 @@ func (s *HeadroomPublicTestSuite) TestThePlanHandedOverIsNotChanged() {
 	s.Require().InDelta(1, fields[sendKey], 0.001)
 }
 
+// TestTheDestinationComesFromThePresetsOwnDevice covers asking the right device.
+//
+// Every catalog shipped today puts `USB 1/2` at 10, so this asserts a habit
+// rather than a difference: each case is checked against what that device's own
+// list says, so the day one of them moves it, this passes and the measuring rig
+// keeps working. Asserting 10 four times would pass that day too, and be wrong.
+func (s *HeadroomPublicTestSuite) TestTheDestinationComesFromThePresetsOwnDevice() {
+	for _, tt := range []struct {
+		name   string
+		device *int
+	}{
+		{name: "an HX Stomp", device: ptr(catalog.HXStomp)},
+		{name: "a Helix LT", device: ptr(catalog.HelixLT)},
+		{name: "a preset naming no device", device: nil},
+		{name: "a device no catalog ships for", device: ptr(1)},
+	} {
+		s.Run(tt.name, func() {
+			made := routed()
+			made.Device.Id = tt.device
+
+			to, err := sendTo(made)
+			s.Require().NoError(err)
+
+			want, err := catalogFor(made)
+			s.Require().NoError(err)
+
+			at, ok := want.DestinationAt("USB 1/2")
+			s.Require().True(ok)
+			s.Require().Equal(at, to,
+				"the number this device files it under, not another's")
+		})
+	}
+}
+
+// ptr is an address for a literal, which a preset's device id wants.
+func ptr[T any](
+	v T,
+) *T {
+	return &v
+}
+
 // TestNoHeadroomStillComesOffTheLoop is why zero no longer means untouched.
 //
 // A caller asking for full level is not asking to be measured through a chain

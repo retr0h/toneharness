@@ -113,23 +113,17 @@ func quieter(
 	already, work, name string,
 	by float64,
 ) (string, error) {
-	cat, err := catalog.BuiltIn()
-	if err != nil {
-		return "", err
-	}
-
-	to, ok := cat.DestinationAt(offTheLoopIs)
-	if !ok {
-		return "", fmt.Errorf("%w: this device has no %s to send to",
-			ErrNoOutput, offTheLoopIs)
-	}
-
 	// Read back off the preset that was just built, because a plan compiled
 	// from a rig carries no routing at all: the inputs and outputs come from
 	// the blank template while the preset is written, so there is nothing in
 	// the plan to change. The preset has them, and reading it back is how the
 	// entry arrives complete, with its model and its output already set.
 	read, err := client.PresetFile(ctx, already)
+	if err != nil {
+		return "", err
+	}
+
+	to, err := sendTo(read.Plan)
 	if err != nil {
 		return "", err
 	}
@@ -165,6 +159,57 @@ func quieter(
 	}
 
 	return out, nil
+}
+
+// sendTo is the number this preset's own device files the off-the-loop
+// destination under.
+//
+// Resolved against the device the preset says it is for, not against the
+// built-in catalog, which is the HX Stomp's whatever is attached.
+//
+// All four catalogs shipped today put `USB 1/2` at 10, so this changes no
+// number. It is the difference between a number that happens to be right and one
+// that was asked for: the destination lists are per device family, the same file
+// carries a separate one for a Stomp, an LT and the plugin, and a Stomp's lists
+// four Returns it has no sockets for. Nothing promises the next firmware keeps
+// them aligned, and a wrong destination here does not fail. It sends the chain
+// back down the measuring lead and every reading after it is of the rig
+// listening to itself.
+//
+// A preset naming no device, or one no catalog ships for, falls back to the
+// built-in. That is the HX Stomp's, which is the only device anything here has
+// been written to over USB, so it is the right guess rather than no answer.
+func sendTo(
+	made plan.Plan,
+) (int, error) {
+	cat, err := catalogFor(made)
+	if err != nil {
+		return 0, err
+	}
+
+	to, ok := cat.DestinationAt(offTheLoopIs)
+	if !ok {
+		return 0, fmt.Errorf("%w: this device has no %s to send to",
+			ErrNoOutput, offTheLoopIs)
+	}
+
+	return to, nil
+}
+
+// catalogFor is the catalog of the device a preset was written by.
+func catalogFor(
+	made plan.Plan,
+) (*catalog.Catalog, error) {
+	if made.Device == nil || made.Device.Id == nil {
+		return catalog.BuiltIn()
+	}
+
+	cat, err := catalog.For(*made.Device.Id)
+	if err != nil {
+		return catalog.BuiltIn()
+	}
+
+	return cat, nil
 }
 
 // offTheLoop is the plan with its output entry sent somewhere the measuring
