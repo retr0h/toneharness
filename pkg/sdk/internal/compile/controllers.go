@@ -21,6 +21,8 @@ package compile
 
 import (
 	"encoding/json"
+	"maps"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -204,7 +206,7 @@ func controllersOf(
 			continue
 		}
 
-		for _, key := range sortedKeys(blocks) {
+		for _, key := range slices.Sorted(maps.Keys(blocks)) {
 			out = append(out, controllersAt(blocks[key], key, path, cat)...)
 		}
 	}
@@ -238,7 +240,7 @@ func controllersAt(
 
 	out := []rig.Controller(nil)
 
-	for _, parameter := range sortedKeys(params) {
+	for _, parameter := range slices.Sorted(maps.Keys(params)) {
 		var fields map[string]json.RawMessage
 		if err := json.Unmarshal(params[parameter], &fields); err != nil {
 			continue

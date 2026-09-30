@@ -22,6 +22,8 @@ package compile
 
 import (
 	"encoding/json"
+	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -79,7 +81,7 @@ func footswitchesOf(
 			continue
 		}
 
-		for _, key := range sortedKeys(blocks) {
+		for _, key := range slices.Sorted(maps.Keys(blocks)) {
 			fs, ok := footswitchOf(blocks[key], key, path, cat)
 			if !ok {
 				continue
@@ -272,20 +274,6 @@ func sorted(
 ) []string {
 	out := make([]string, 0, len(entry))
 	for k := range entry {
-		out = append(out, k)
-	}
-
-	sort.Strings(out)
-
-	return out
-}
-
-// sortedKeys returns a raw map's keys in order.
-func sortedKeys(
-	m map[string]json.RawMessage,
-) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
 		out = append(out, k)
 	}
 
