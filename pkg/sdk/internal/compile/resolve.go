@@ -131,13 +131,13 @@ func Resolve(
 		return plan.Plan{}, nil, nil, missedErr
 	}
 
-	blocks, added := fill(blocks, cat, stats, instrument)
+	blocks, said, added := fill(blocks, said, cat, stats, instrument)
 
 	// After fill, because what a chain of this kind usually has is the wider
 	// claim and should not be displaced by one word. Before specFor, because
 	// a block arriving later would miss the corpus medians and start on
 	// catalog defaults.
-	blocks, asked := demand(blocks, cat, stats, intent, instrument)
+	blocks, said, asked := demand(blocks, said, cat, stats, intent, instrument)
 	added = append(added, asked...)
 
 	built := specFor(spec, intent, blocks, stats)

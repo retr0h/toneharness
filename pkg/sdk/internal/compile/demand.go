@@ -24,6 +24,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // needs is what a claim cannot mean anything without.
@@ -62,18 +63,19 @@ var needs = map[string]catalog.Category{
 // already earned has somewhere to land, and says which word asked for it.
 func demand(
 	blocks []catalog.Block,
+	said []*rig.Settings,
 	cat *catalog.Catalog,
 	stats *corpus.Stats,
 	intent Intent,
 	instrument string,
-) ([]catalog.Block, []Added) {
+) ([]catalog.Block, []*rig.Settings, []Added) {
 	if stats == nil {
-		return blocks, nil
+		return blocks, said, nil
 	}
 
 	g, known := stats.Grammar[instrument]
 	if !known {
-		return blocks, nil
+		return blocks, said, nil
 	}
 
 	var added []Added
@@ -91,7 +93,7 @@ func demand(
 			continue
 		}
 
-		blocks = insert(blocks, pick, beforeAmp(g, want))
+		blocks, said = insert(blocks, said, pick, beforeAmp(g, want))
 		added = append(added, Added{
 			Block:  pick,
 			Reason: fmt.Sprintf("the ask says %s, which needs one", c),
@@ -126,7 +128,7 @@ func demand(
 				continue
 			}
 
-			blocks = insert(blocks, pick, beforeAmp(g, pick.Category))
+			blocks, said = insert(blocks, said, pick, beforeAmp(g, pick.Category))
 			added = append(added, Added{
 				Block: pick,
 				Reason: fmt.Sprintf(
@@ -136,7 +138,7 @@ func demand(
 		}
 	}
 
-	return blocks, added
+	return blocks, said, added
 }
 
 // claimed is everything an ask says that might name a block.

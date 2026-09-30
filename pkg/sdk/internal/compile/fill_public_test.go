@@ -21,6 +21,7 @@
 package compile_test
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,6 +32,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 type FillPublicTestSuite struct {
@@ -356,4 +358,86 @@ func TestFillPublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(FillPublicTestSuite))
+}
+
+// TestSettingsFollowTheirBlockWhenOneIsFilledInFront is a bug that shipped.
+//
+// A rig's `settings` were held in a slice built index by index against the chain
+// the person typed, and `saidKnobs` paired `said[i]` with the resolved block at
+// the same index. But a block the corpus fills in ahead of the amplifier is
+// spliced into the middle, shifting the amplifier and everything after it one to
+// the right, and nothing moved the settings with them. So every setting after an
+// insertion point was applied to its neighbour.
+//
+// It did not reliably fail, which is why it survived. `level` maps to several
+// parameter names that different categories share, so a value meant for an
+// amplifier's Master could be written to a compressor's Level with no error at
+// all. That is a preset which measures fine and is not what was asked for.
+//
+// The shipped rig that shows the shift is Bootsy Collins': it names a filter then
+// an amplifier, the corpus fills a compressor in front of the amplifier because
+// almost every chain has one, and the amplifier arrives at index 2 while the
+// settings for index 1 still describe it. That rig escapes only because its
+// amplifier entry carries no settings.
+func (s *FillPublicTestSuite) TestSettingsFollowTheirBlockWhenOneIsFilledInFront() {
+	// A compressor in almost every chain, and ahead of the amplifier, which is
+	// what the corpus actually says and what does the splicing.
+	stats := s.grammar(
+		map[catalog.Category]corpus.CategoryStats{
+			catalog.CategoryDrive: {Chains: 95, Before: 95},
+		},
+		map[catalog.ModelID]corpus.ModelStats{"HD2_DistMinotaur": {Uses: 40}},
+		map[catalog.ModelID]int{"HD2_DistMinotaur": 40},
+	)
+
+	// The amplifier is the only block the rig names, and it names a drive for it.
+	//
+	// Drive rather than level, because this suite's fixture catalog is minimal:
+	// its amplifier carries a Drive and no Level, ChVol or Master, and the block
+	// filled in front of it carries a Gain. So drive is a word only the
+	// amplifier can answer, which is what makes the assertion below mean
+	// something rather than passing on a coincidence of names.
+	spec := bassRig("Ampeg SVT", "")
+	const want = 0.11
+
+	drive := want
+	spec.Chain[0].Settings = &rig.Settings{Drive: &drive}
+
+	built, added, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, stats)
+	s.Require().NoError(err)
+	s.Require().Len(added, 1, "the corpus fills one block in")
+
+	// It went in ahead of the amplifier, which is the condition for the bug.
+	filled, ok := s.cat.Block(built.Blocks[0].Model)
+	s.Require().True(ok)
+	s.Require().Equal(catalog.CategoryDrive, filled.Category,
+		"the filled block sits first, so the amplifier has shifted right")
+
+	amp, err2 := s.cat.Block(built.Blocks[1].Model)
+	s.Require().True(err2)
+	s.Require().Equal(catalog.CategoryAmp, amp.Category)
+
+	// And the level is on the amplifier, not on the block that displaced it.
+	s.Require().True(holds(built.Blocks[1].Params, want),
+		"the level the rig wrote for its amplifier has to reach the amplifier")
+	s.Require().False(holds(built.Blocks[0].Params, want),
+		"and must not reach the block the corpus filled in front of it")
+}
+
+// holds reports a parameter set to a value, whatever the control is called.
+//
+// By value rather than by name, because the point is which block received it:
+// `level` resolves to Master or ChVol on an amplifier and to Level on a
+// compressor, so naming the control would assume the answer.
+func holds(
+	params plan.Params,
+	want float64,
+) bool {
+	for _, got := range params {
+		if at, ok := got.Float(); ok && math.Abs(at-want) < 0.0001 {
+			return true
+		}
+	}
+
+	return false
 }
