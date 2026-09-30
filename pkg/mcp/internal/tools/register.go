@@ -21,6 +21,7 @@
 package tools
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,6 +35,33 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
+
+// addTool registers one tool, with every failure carrying its remedy.
+//
+// Wrapping here rather than in each handler, because the CLI already paid for
+// the other way round: Hint was called by hand from four commands and none of
+// them were the device ones, so the errors an unplugged pedal produces were
+// the errors with no next step. `hinting` now walks cobra's whole tree. This
+// is the same walk, done at the one place a tool can enter the server.
+//
+// A handler that wants to say more still can. remedy only adds to the errors
+// it recognises and hands everything else back untouched, so wrapping twice
+// changes nothing.
+func addTool[In, Out any](
+	s *gomcp.Server,
+	t *gomcp.Tool,
+	h gomcp.ToolHandlerFor[In, Out],
+) {
+	gomcp.AddTool(s, t, func(
+		ctx context.Context,
+		req *gomcp.CallToolRequest,
+		in In,
+	) (*gomcp.CallToolResult, Out, error) {
+		res, out, err := h(ctx, req, in)
+
+		return res, out, remedy(err)
+	})
+}
 
 // handlers holds what every tool shares.
 type handlers struct {
@@ -73,146 +101,146 @@ func register(
 ) io.Closer {
 	h := &handlers{client: c, pedal: newPedal(c, idle), allowWrites: allowWrites}
 
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "catalog_list",
 		Description:  "Find blocks the device models, by name, real-world gear, category or instrument. Use this before naming any model: a model it does not find does not exist.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[sdk.Blocks](),
 	}, h.catalogList)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "catalog_show",
 		Description:  "One block's parameters, their ranges and defaults, and its DSP cost.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[catalog.Block](),
 	}, h.catalogShow)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "corpus_presets_show",
 		Description:  "How players set one model across measured presets: median and quartiles per parameter. A narrow spread is consensus; a wide one is taste.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[Model](),
 	}, h.corpusPresetsShow)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "rigs_list",
 		Description:  "The rigs that ship with toneharness.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[sdk.Rigs](),
 	}, h.rigsList)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "rigs_show",
 		Description:  "One shipped rig, and the rigs that extend it.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[sdk.Rig](),
 	}, h.rigsShow)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "tone_build",
 		Description:  "Turn a ToneSpec and a Setup into the rig they describe. Gear named by hand resolves against the catalog; gear left unnamed is chosen by measuring a recording against every block. Read the notes: they say what it could not honour and what it assumed. Answers with the rig rather than writing a file.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[sdk.Resolved](),
 	}, h.toneBuild)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "presets_make",
 		Description:  "Build a .hlx from a shipped rig or a rig file. Read what it added and what each character word moved before putting it on a pedal. Refuses a file already at out unless the server was started with --allow-writes.",
 		Annotations:  &gomcp.ToolAnnotations{OpenWorldHint: new(false), DestructiveHint: new(true)},
 		OutputSchema: mustOutputSchema[Outcome](),
 	}, h.presetsMake)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "corpus_presets_chains",
 		Description:  "What a chain of one instrument almost always holds, across the measured presets: how often each kind of block appears and which side of the amplifier it sits. What a build uses to place a block a rig did not name.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[sdk.Measured](),
 	}, h.corpusPresetsChains)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "corpus_music_players",
 		Description:  "Who the music corpus holds records for, and how many each. A file read: it costs nothing, where measuring the same records costs minutes apiece.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[[]sdk.MusicPlayer](),
 	}, h.corpusMusicPlayers)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "corpus_music_bands",
 		Description:  "Which bands made the records in the corpus, grouped on one slug so two spellings of a name count once.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[[]sdk.MusicGroup](),
 	}, h.corpusMusicBands)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "corpus_music_genres",
 		Description:  "Which genres are tagged in the corpus, how many records carry each and how many different players those come from. The player count is the half usually short, and a fourth album by one band cannot fix it.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[[]sdk.MusicGroup](),
 	}, h.corpusMusicGenres)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "corpus_music_records",
 		Description:  "Every recording the corpus names, with the year, the band and the genres its manifest gives it.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[[]sdk.MusicRecord](),
 	}, h.corpusMusicRecords)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "rigs_records",
 		Description:  "Every rig held to the era its ask claims. A record made outside that period measures other gear, so this reports which records fall outside it. It reports rather than refuses: which half is wrong is a judgement only somebody who knows the player can make.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[[]sdk.Backing](),
 	}, h.rigsRecords)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "measure_genres",
 		Description:  "What each genre measures as against the players who play none of it, and which words that earns. Reads the recordings, so it costs minutes per record; corpus_music_genres answers what is tagged without measuring anything. Point it at one instrument: a bass centroid sits an octave below a guitar's.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[[]audio.Genre](),
 	}, h.measureGenres)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "measure_players",
 		Description:  "What each player's records measure as, and the words that earns them against the others. A word is earned by sitting clear of the rest, so one player alone earns nothing. Reads the recordings, so it costs minutes per record; corpus_music_players answers what the corpus holds for a file read. Point it at one instrument.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[[]audio.Player](),
 	}, h.measurePlayers)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "measure_recordings",
 		Description:  "Measure a directory of recordings, one entry per file and the figures they make together. Separate the instrument out first: a mix measures the band, so a figure taken from one describes the arrangement rather than the player.",
 		Annotations:  readOnly(),
 		OutputSchema: mustOutputSchema[Recorded](),
 	}, h.measureRecordings)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "device_hardware",
 		Description:  "The Line 6 Helix hardware attached over USB. HX Edit must be quit for any tool that reaches the pedal.",
 		Annotations:  &gomcp.ToolAnnotations{ReadOnlyHint: true},
 		OutputSchema: mustOutputSchema[sdk.Attached](),
 	}, h.deviceHardware)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "slots_list",
 		Description:  "Every slot on the attached pedal and what it holds.",
 		Annotations:  &gomcp.ToolAnnotations{ReadOnlyHint: true},
 		OutputSchema: mustOutputSchema[sdk.Listing](),
 	}, h.slotsList)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "presets_show",
 		Description:  "One slot on the pedal, read back as a rig.",
 		Annotations:  &gomcp.ToolAnnotations{ReadOnlyHint: true},
 		OutputSchema: mustOutputSchema[Shown](),
 	}, h.presetsShow)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "slots_export",
 		Description:  "Write one slot to a file: a rig by default, or the device's own .hlx with as=hlx. Refuses a file already at out unless the server was started with --allow-writes.",
 		Annotations:  &gomcp.ToolAnnotations{ReadOnlyHint: false, DestructiveHint: new(true)},
 		OutputSchema: mustOutputSchema[sdk.Written](),
 	}, h.slotsExport)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "device_select",
 		Description:  "Load a slot on the pedal, as pressing its footswitch does. Changes nothing stored.",
 		Annotations:  &gomcp.ToolAnnotations{DestructiveHint: new(false), IdempotentHint: true},
 		OutputSchema: mustOutputSchema[sdk.Change](),
 	}, h.deviceSelect)
 
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "device_current",
 		Description:  "What the pedal is playing right now, read back as a rig. The only way to see a live edit: a turn is not stored, so nothing else shows what it did.",
 		Annotations:  &gomcp.ToolAnnotations{ReadOnlyHint: true},
 		OutputSchema: mustOutputSchema[Shown](),
 	}, h.deviceCurrent)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "device_play",
 		Description:  "Put a .hlx in front of somebody without storing it. Writes no flash and lasts until the next preset is selected, which is the right way to try something: prefer it to slots_import every time, because a slot is flash.",
 		Annotations:  &gomcp.ToolAnnotations{DestructiveHint: new(false)},
 		OutputSchema: mustOutputSchema[sdk.Change](),
 	}, h.devicePlay)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "device_turn",
 		Description:  "Move one control on what the pedal is playing, as a hand does. Writes no flash, and the next preset selection undoes it. Read the chain back with presets_show first: a parameter has no name on the wire, only a position in the model's own list, and counting down a printed table mislabels every control while the numbers stay plausible.",
 		Annotations:  &gomcp.ToolAnnotations{DestructiveHint: new(false)},
@@ -223,31 +251,31 @@ func register(
 		return h.pedal
 	}
 
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "rigs_new",
 		Description:  "Write a rig and the ask beside it from the gear it names, after checking the catalog carries that gear. Refuses a file already there unless the server was started with --allow-writes.",
 		Annotations:  destructive(),
 		OutputSchema: mustOutputSchema[sdk.Scaffolded](),
 	}, h.rigsNew)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "presets_compile",
 		Description:  "Turn a rig file or a plan file into a .hlx. A rig names gear and is realised against the catalog on the way through; a plan already names the models and every knob, which is what an exported slot tuned by hand is. One or the other, never both.",
 		Annotations:  destructive(),
 		OutputSchema: mustOutputSchema[sdk.Built](),
 	}, h.presetsCompile)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "slots_import",
 		Description:  "Put a .hlx into a slot on the pedal. Whatever the slot held is saved to a file first and then gone from the pedal.",
 		Annotations:  destructive(),
 		OutputSchema: mustOutputSchema[sdk.Change](),
 	}, h.slotsImport)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "slots_copy",
 		Description:  "Copy one slot onto another. The destination's old preset is saved to a file first.",
 		Annotations:  destructive(),
 		OutputSchema: mustOutputSchema[sdk.Change](),
 	}, h.slotsCopy)
-	gomcp.AddTool(s, &gomcp.Tool{
+	addTool(s, &gomcp.Tool{
 		Name:         "slots_swap",
 		Description:  "Exchange two slots. Both are saved to files first. One slot holding no preset makes it a move: the preset lands there and the slot it came from is emptied. Two slots holding no preset are refused.",
 		Annotations:  destructive(),

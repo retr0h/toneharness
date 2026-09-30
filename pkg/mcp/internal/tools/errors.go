@@ -120,6 +120,31 @@ func remedy(
 		return fmt.Errorf("%w, call catalog_list to find one", err)
 	case errors.Is(err, sdk.ErrNoSuchRig):
 		return fmt.Errorf("%w, call rigs_list to see the rigs that ship", err)
+	case errors.Is(err, sdk.ErrNoDevice):
+		// A pedal powered from a charger rather than a data port looks
+		// exactly like one that is switched off, and the power light is on
+		// either way. Worth saying, because the agent cannot see the light
+		// and the person it is talking to will check that first.
+		return fmt.Errorf("%w: ask whether it is in a USB data port rather "+
+			"than a charger, then call device_hardware", err)
+	case errors.Is(err, sdk.ErrBus):
+		// The session is gone either way and reopening is usually enough.
+		// When it is not, the endpoint has stalled, and the wire README is
+		// unambiguous: "the interface will not be claimed again until the
+		// device is power cycled." An agent that does not know that retries
+		// into a wall, which is worse than a person doing it.
+		return fmt.Errorf("%w: call it again, and if it keeps failing ask for "+
+			"the pedal to be powered off and on", err)
+	case errors.Is(err, sdk.ErrNothingToBuildFrom):
+		// The next move is a question, not a guess. A recording is measured
+		// against every block the device has; an adjective has to be earned
+		// against a population of players before it means anything.
+		return fmt.Errorf("%w. Name a record to sound like, a player, or the "+
+			"gear itself: `like: { recording: take.wav }` resolves fully, and "+
+			"an adjective on its own does not", err)
+	case errors.Is(err, sdk.ErrEmptySlot):
+		return fmt.Errorf("%w, call slots_list to see which slots hold "+
+			"anything", err)
 	default:
 		return err
 	}

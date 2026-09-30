@@ -54,7 +54,7 @@ func (h *handlers) catalogShow(
 ) (*gomcp.CallToolResult, catalog.Block, error) {
 	block, err := h.client.Block(ctx, in.ID)
 	if err != nil {
-		return nil, catalog.Block{}, remedy(err)
+		return nil, catalog.Block{}, err
 	}
 
 	return said("%s is %s", block.ID, block.Name), block, nil
@@ -101,7 +101,7 @@ func (h *handlers) rigsShow(
 ) (*gomcp.CallToolResult, sdk.Rig, error) {
 	found, err := h.client.Rig(ctx, in.ID)
 	if err != nil {
-		return nil, sdk.Rig{}, remedy(err)
+		return nil, sdk.Rig{}, err
 	}
 
 	return said("rig %s, extended by %d others", in.ID, len(found.Variants)), found, nil
@@ -117,7 +117,7 @@ func (h *handlers) toneBuild(
 		// The notes still travel. A request that could not be honoured has
 		// usually said why in them, and the error alone is the half that does
 		// not help.
-		return nil, got, remedy(err)
+		return nil, got, err
 	}
 
 	return said("%d blocks, %d notes", len(got.Rig.Chain), len(got.Notes)), got, nil
@@ -143,7 +143,7 @@ func (h *handlers) presetsMake(
 	case in.RigID != "":
 		made, err := h.client.Make(ctx, in.RigID, in.Out, h.existing())
 		if err != nil {
-			return nil, Outcome{}, remedy(h.refused(in.Out, err))
+			return nil, Outcome{}, h.refused(in.Out, err)
 		}
 
 		return said("wrote %s from rig %s", in.Out, in.RigID), Outcome{FromShipped: &made}, nil

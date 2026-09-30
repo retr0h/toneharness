@@ -23,6 +23,7 @@ package tools_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"slices"
 	"testing"
@@ -35,6 +36,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/mcp/internal/tools"
 	"github.com/retr0h/toneharness/pkg/mcp/internal/tools/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 // connect puts the tools on a server and a client session in front of it,
@@ -148,6 +150,59 @@ func structured(
 
 type RegisterPublicTestSuite struct {
 	suite.Suite
+}
+
+// TestEveryDeviceToolCarriesItsRemedy is the asymmetry the CLI already fixed.
+//
+// Hint was called by hand from four commands and none of them were the device
+// ones, so an unplugged pedal was the one error with no next step. The MCP
+// side had the same shape: remedy existed and four of twenty-nine handlers
+// called it, none of them the ones that reach hardware.
+//
+// Every tool that opens the pedal, so the next one registered is covered by
+// having been registered rather than by somebody remembering.
+func (s *RegisterPublicTestSuite) TestEveryDeviceToolCarriesItsRemedy() {
+	for _, tool := range []struct {
+		name string
+		args any
+	}{
+		{"device_current", map[string]any{}},
+		{"device_select", map[string]any{"slot": "1A"}},
+		{"slots_list", map[string]any{}},
+		{"presets_show", map[string]any{"slot": "1A"}},
+		{"slots_export", map[string]any{"slot": "1A", "out": "x.hlx"}},
+		{"device_turn", map[string]any{"block": 1, "param": 1, "value": 0.5}},
+	} {
+		s.Run(tool.name, func() {
+			ctrl := gomock.NewController(s.T())
+			c := mocks.NewMockClient(ctrl)
+			c.EXPECT().Open(gomock.Any()).Return(nil, sdk.ErrNoDevice).AnyTimes()
+
+			res := call(s.T(), connect(s.T(), c, true), tool.name, tool.args)
+
+			s.True(res.IsError, "an unattached pedal is an error")
+			s.Contains(text(s.T(), res), "USB data port",
+				"and one the agent can act on")
+		})
+	}
+}
+
+// TestAnErrorWithNoRemedyIsLeftAlone is the other half of the wrapper.
+//
+// remedy adds to the errors it recognises and hands the rest back as they
+// were, so a tool that fails for its own reasons still says its own thing.
+func (s *RegisterPublicTestSuite) TestAnErrorWithNoRemedyIsLeftAlone() {
+	ctrl := gomock.NewController(s.T())
+	c := mocks.NewMockClient(ctrl)
+	c.EXPECT().Open(gomock.Any()).
+		Return(nil, errors.New("the editor interface is in use, quit HX Edit")).
+		AnyTimes()
+
+	res := call(s.T(), connect(s.T(), c, true), "device_current", map[string]any{})
+
+	s.True(res.IsError)
+	s.Contains(text(s.T(), res), "quit HX Edit")
+	s.NotContains(text(s.T(), res), "USB data port")
 }
 
 // TestRegister covers which tools an agent is offered.
