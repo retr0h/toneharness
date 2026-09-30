@@ -132,3 +132,37 @@ func (e *UnclaimedError) Error() string {
 
 // Unwrap returns ErrUnclaimed so callers can match with errors.Is.
 func (*UnclaimedError) Unwrap() error { return ErrUnclaimed }
+
+// ErrNoVolume is a platform whose output level this cannot read or set.
+//
+// Reported rather than worked around. A campaign on such a platform is a
+// campaign whose level nothing pinned, and the honest answer is to say which
+// rather than to record a number that was never checked.
+var ErrNoVolume = errors.New("this platform's output volume cannot be read")
+
+// ErrVolume reports reading or setting the computer's output level failing.
+//
+// Apart from ErrNoVolume, which is a platform that was never going to answer.
+// This one is a platform that would and did not, and the two want different
+// answers: the first carries on, the second is somebody's to look at.
+var ErrVolume = errors.New("the computer's output volume")
+
+// VolumeError says which way the attempt failed.
+type VolumeError struct {
+	// Doing is "reading" or "setting".
+	Doing string
+	// Said is what the platform said, which is the detail errors.As reaches.
+	Said error
+}
+
+// Error implements the error interface.
+func (e *VolumeError) Error() string {
+	return fmt.Sprintf("%s %s: %s", e.Doing, ErrVolume, e.Said)
+}
+
+// Unwrap returns ErrVolume so callers can match with errors.Is.
+//
+// The platform's own error is on Said rather than in the chain. Unwrapping to
+// it instead would make errors.Is(err, ErrVolume) false, which is the whole
+// thing a caller wants to ask.
+func (*VolumeError) Unwrap() error { return ErrVolume }

@@ -70,10 +70,18 @@ func levelled(
 				"         computer are not reproducible without it.\n")
 
 		return unknownVolume
-	case err != nil:
+	case errors.Is(err, reamp.ErrVolume):
 		_, _ = fmt.Fprintf(w,
 			"  [warn] the computer's output level could not be set to %d: %v.\n"+
 				"         Carrying on at whatever it is, which is recorded.\n", want, err)
+
+		return unknownVolume
+	case err != nil:
+		// Anything else is not something this knows the shape of, so it says
+		// so rather than describing it as a level that would not move.
+		_, _ = fmt.Fprintf(w,
+			"  [warn] the computer's output level: %v.\n"+
+				"         Carrying on at whatever it is, which is recorded.\n", err)
 
 		return unknownVolume
 	case moved:

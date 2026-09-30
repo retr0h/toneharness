@@ -42,12 +42,12 @@ func volume() (int, error) {
 	out, err := exec.Command(
 		osascript, "-e", "output volume of (get volume settings)").Output()
 	if err != nil {
-		return 0, &VolumeError{Doing: "reading", Err: err}
+		return 0, &VolumeError{Doing: "reading", Said: err}
 	}
 
 	got, err := strconv.Atoi(strings.TrimSpace(string(out)))
 	if err != nil {
-		return 0, &VolumeError{Doing: "reading", Err: err}
+		return 0, &VolumeError{Doing: "reading", Said: err}
 	}
 
 	return got, nil
@@ -60,7 +60,7 @@ func setVolume(
 	err := exec.Command(
 		osascript, "-e", "set volume output volume "+strconv.Itoa(to)).Run()
 	if err != nil {
-		return &VolumeError{Doing: "setting", Err: err}
+		return &VolumeError{Doing: "setting", Said: err}
 	}
 
 	return nil

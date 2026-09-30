@@ -65,14 +65,26 @@ func (s *VolumePublicTestSuite) TestSetVolumeRefusesWhatIsNotALevel() {
 }
 
 // TestVolumeErrorSaysWhichWayItFailed covers the type's own contract.
+//
+// It matches ErrVolume rather than the platform's own error, because a caller
+// asking "did the level fail" cannot name what osascript or a Windows API
+// returns. The platform's answer is on Said, which errors.As reaches — in the
+// chain instead, it would make errors.Is(err, ErrVolume) false, which is the
+// one question worth asking.
 func (s *VolumePublicTestSuite) TestVolumeErrorSaysWhichWayItFailed() {
 	inner := errors.New("the platform declined")
-	err := &reamp.VolumeError{Doing: "reading", Err: inner}
+	err := &reamp.VolumeError{Doing: "reading", Said: inner}
 
 	s.Require().ErrorContains(err, "reading")
 	s.Require().ErrorContains(err, "output volume")
 	s.Require().ErrorContains(err, "the platform declined")
-	s.Require().ErrorIs(err, inner, "the platform's own error has to stay reachable")
+	s.Require().ErrorIs(err, reamp.ErrVolume)
+	s.Require().NotErrorIs(err, reamp.ErrNoVolume,
+		"a platform that failed is not a platform that was never going to answer")
+
+	var fault *reamp.VolumeError
+	s.Require().ErrorAs(err, &fault)
+	s.Require().Equal(inner, fault.Said, "and the platform's own error is reachable")
 }
 
 // TestWhatThePlatformAnswers covers the two worlds this compiles into.

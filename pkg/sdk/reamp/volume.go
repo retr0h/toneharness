@@ -38,27 +38,6 @@ import "errors"
 // The alternative was asking a person to hold a number steady across campaigns
 // weeks apart, and that is not a thing anybody does.
 
-// ErrNoVolume is a platform whose output level this cannot read or set.
-//
-// Reported rather than worked around. A campaign on such a platform is a
-// campaign whose level nothing pinned, and the honest answer is to say which
-// rather than to record a number that was never checked.
-var ErrNoVolume = errors.New("this platform's output volume cannot be read")
-
-// VolumeError says which way the attempt failed.
-type VolumeError struct {
-	// Doing is "reading" or "setting".
-	Doing string
-	// Err is what the platform said.
-	Err error
-}
-
-func (e *VolumeError) Error() string {
-	return e.Doing + " the computer's output volume: " + e.Err.Error()
-}
-
-func (e *VolumeError) Unwrap() error { return e.Err }
-
 // Volume is the computer's own output level, 0 to 100.
 //
 // The platform's own scale rather than decibels, because that is the number a
@@ -71,7 +50,7 @@ func SetVolume(
 	to int,
 ) error {
 	if to < 0 || to > 100 {
-		return &VolumeError{Doing: "setting", Err: errors.New("0 to 100")}
+		return &VolumeError{Doing: "setting", Said: errors.New("0 to 100")}
 	}
 
 	return setVolume(to)
