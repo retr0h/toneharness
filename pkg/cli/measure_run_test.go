@@ -426,6 +426,118 @@ func (s *MeasureRunTestSuite) TestBlocksReportsAPresetItCannotBuild() {
 }
 
 // read is the library a run wrote.
+// TestBlocksReportsACatalogItCannotRead covers --device naming a pedal this
+// binary ships no catalog for.
+//
+// Asked of the client rather than read from the built-in one, so that
+// --catalog and --device reach the measuring commands. A campaign that cannot
+// say which models exist has nothing to measure.
+func (s *MeasureRunTestSuite) TestBlocksReportsACatalogItCannotRead() {
+	ctrl := gomock.NewController(s.T())
+	pedal := mocks.NewMockPedal(ctrl)
+	pedal.EXPECT().Catalog(gomock.Any()).
+		Return(nil, errors.New("no catalog for that pedal")).AnyTimes()
+
+	var buf bytes.Buffer
+
+	err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
+		Client: pedal, Dry: s.dry, Out: s.out, Seconds: 1, Bench: bench{},
+	})
+
+	s.Require().ErrorContains(err, "no catalog for that pedal")
+}
+
+// TestBlocksReportsHardwareItCannotOpen covers --hardware naming no device.
+//
+// Before anything is built, because eighty minutes of compiling presets for a
+// bench that will not open is eighty minutes nobody gets back.
+func (s *MeasureRunTestSuite) TestBlocksReportsHardwareItCannotOpen() {
+	var buf bytes.Buffer
+
+	err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
+		Client: s.pedal, Dry: s.dry, Out: s.out, Seconds: 1,
+		Hardware: "no such interface",
+	})
+
+	s.Require().Error(err)
+}
+
+// TestBlocksReportsSomewhereItCannotWrite covers a destination that is not
+// there.
+//
+// The library is written after every block rather than at the end, because a
+// run that holds its results loses them all when the pedal drops off the bus,
+// which it has done. So the first write is also the first chance to find out
+// that the path is wrong, and it is worth finding out then rather than after
+// the last block.
+func (s *MeasureRunTestSuite) TestBlocksReportsSomewhereItCannotWrite() {
+	s.compiles()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	var buf bytes.Buffer
+
+	err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
+		Client: s.pedal, Dry: s.dry, Seconds: 1, Category: "eq",
+		Out:   filepath.Join(s.T().TempDir(), "nowhere", "measured.json"),
+		Bench: bench{},
+	})
+
+	s.Require().ErrorContains(err, "measured.json")
+}
+
+// TestBlocksResumesFromWhatIsAlreadyThere covers --resume.
+//
+// A campaign is most of an hour and the pedal drops off the bus, so the point
+// is to not measure again what is already on disk. The baseline comes back
+// with it: a second baseline taken an hour later is a different loop, and
+// every block already in the file was measured against the first one.
+func (s *MeasureRunTestSuite) TestBlocksResumesFromWhatIsAlreadyThere() {
+	s.compiles()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	var buf bytes.Buffer
+
+	// One pass, then the same run again with --resume.
+	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
+		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
+		Seconds: 1, Bench: bench{},
+	}))
+
+	first := s.read()
+	s.Require().NotEmpty(first.Blocks)
+
+	var again bytes.Buffer
+
+	s.Require().NoError(MeasureBlocks(context.Background(), &again, MeasureOptions{
+		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
+		Seconds: 1, Bench: bench{}, Resume: true,
+	}))
+
+	second := s.read()
+
+	s.Require().Len(second.Blocks, len(first.Blocks))
+	s.Require().InDelta(first.Baseline.Centroid, second.Baseline.Centroid, 0.001,
+		"the baseline every block in the file was measured against")
+}
+
+// TestBlocksResumingFromNothingMeasuresEverything covers --resume with no file.
+//
+// Somebody who passes it on the first run of a campaign gets a campaign rather
+// than an error, because there is nothing in it that is a problem.
+func (s *MeasureRunTestSuite) TestBlocksResumingFromNothingMeasuresEverything() {
+	s.compiles()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	var buf bytes.Buffer
+
+	s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
+		Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
+		Seconds: 1, Bench: bench{}, Resume: true,
+	}))
+
+	s.Require().NotEmpty(s.read().Blocks)
+}
+
 func (s *MeasureRunTestSuite) read() measured.Library {
 	f, err := os.Open(s.out)
 	s.Require().NoError(err)
