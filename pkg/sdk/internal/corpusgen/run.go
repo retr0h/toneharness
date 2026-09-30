@@ -20,28 +20,8 @@
 
 package corpusgen
 
-import (
-	"bytes"
-	"compress/gzip"
-)
-
 // defaultMinSamples is how many values a parameter needs before its
 // distribution is worth recording.
 const defaultMinSamples = 5
 
 // Run measures a corpus and writes the statistics, reporting what it found.
-
-// compress gzips the statistics, which are repetitive JSON and embedded in
-// the binary.
-func compress(
-	raw []byte,
-) []byte {
-	var buf bytes.Buffer
-
-	// Compressing into a buffer cannot fail.
-	zw := gzip.NewWriter(&buf)
-	_, _ = zw.Write(raw)
-	_ = zw.Close()
-
-	return buf.Bytes()
-}

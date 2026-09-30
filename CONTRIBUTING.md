@@ -146,6 +146,8 @@ pkg/sdk/solve/       slopes into a matrix, and the moves that close a gap
 pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
   specdoc/           the shape both grammar pages share, so they read as a pair
   atomicfile/        writing a file so a crash leaves the old one, not half
+  packed/            gzipping a generated file, and rewriting it only when it
+                     changed
   fileslots/         reading and editing the slots in a .hls, .hlb or .hlx
   deviceslots/       reading and editing the slots on an attached device
   backup/            what a device slot held, kept before a write replaces it
