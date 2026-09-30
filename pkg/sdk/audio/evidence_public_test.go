@@ -58,6 +58,36 @@ func (s *EvidencePublicTestSuite) TestEveryKeyIsMeasured() {
 	}
 }
 
+// TestOnlyTheBandsAndHarmonicsAreShares pins the set every scale conversion
+// reads.
+//
+// A sweep reports a share as a percentage and a corpus as a fraction, so this
+// answer decides which figures get divided by a hundred on the way between
+// them. A figure wrongly named a share is that figure a hundred times out, and
+// one wrongly left off is the same error the other way, in silence.
+func (s *EvidencePublicTestSuite) TestOnlyTheBandsAndHarmonicsAreShares() {
+	shares := []audio.Figure{
+		audio.KeyLow, audio.KeyMid, audio.KeyHigh, audio.KeyHarmonics,
+	}
+
+	for _, key := range shares {
+		s.Require().True(key.Share(), string(key))
+	}
+
+	rest := []audio.Figure{
+		audio.KeyCentroid, audio.KeyTransient, audio.KeyDecay,
+		audio.KeyDynamics, audio.KeyLean, audio.KeyLevel,
+	}
+
+	for _, key := range rest {
+		s.Require().False(key.Share(), string(key))
+	}
+
+	s.Require().Len(audio.MeasuredKeys(), len(shares)+len(rest)-1,
+		"Level is the one figure outside MeasuredKeys; anything else added to "+
+			"the alphabet has to be answered for here too")
+}
+
 // TestAMeasureNobodyCouldTakeIsLeftOut is the difference between a figure of
 // zero and no figure.
 //

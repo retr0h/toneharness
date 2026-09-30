@@ -71,6 +71,22 @@ const (
 	KeyLevel Figure = "level"
 )
 
+// Share reports a figure measured as a fraction of the whole.
+//
+// Which figures those are is stated once, here beside the constants whose own
+// comments say "0 to 1", because a sweep reports the same figure as a
+// percentage and a corpus as a fraction. Three packages had each written this
+// list out for themselves, and an axis added to one and not the others is an
+// axis silently off by a hundred.
+func (f Figure) Share() bool {
+	switch f {
+	case KeyLow, KeyMid, KeyHigh, KeyHarmonics:
+		return true
+	default:
+		return false
+	}
+}
+
 // MeasuredKeys is every key a measurement is written under, in the order it
 // is written.
 //

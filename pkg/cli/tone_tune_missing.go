@@ -156,18 +156,18 @@ func unreached(
 
 // inLibraryScale is the inverse of inCorpusScale, for one figure.
 //
-// Written as the inverse rather than as its own table so the two cannot drift:
-// an axis added to one and not the other is an axis silently off by a hundred.
+// Which axes are shares is audio.Figure.Share's to say, so the two directions
+// cannot disagree about the set: an axis added to one and not the other is an
+// axis silently off by a hundred.
 func inLibraryScale(
 	key audio.Figure,
 	of float64,
 ) float64 {
-	switch key {
-	case audio.KeyLow, audio.KeyMid, audio.KeyHigh, audio.KeyHarmonics:
+	if key.Share() {
 		return of * perCent
-	default:
-		return of
 	}
+
+	return of
 }
 
 // inTheChain is the models already in the plan, which are not additions.

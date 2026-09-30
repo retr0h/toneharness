@@ -471,12 +471,13 @@ func inCorpusScale(
 	out := make(map[audio.Figure]float64, len(floor))
 
 	for key, got := range floor {
-		switch key {
-		case audio.KeyLow, audio.KeyMid, audio.KeyHigh, audio.KeyHarmonics:
+		if key.Share() {
 			out[key] = got / perCent
-		default:
-			out[key] = got
+
+			continue
 		}
+
+		out[key] = got
 	}
 
 	return out
@@ -907,9 +908,9 @@ func figuresOf(
 	got measured.Figures,
 ) map[audio.Figure]float64 {
 	out := map[audio.Figure]float64{
-		audio.KeyLow:      got.Low / perCent,
-		audio.KeyMid:      got.Mid / perCent,
-		audio.KeyHigh:     got.High / perCent,
+		audio.KeyLow:      got.Low,
+		audio.KeyMid:      got.Mid,
+		audio.KeyHigh:     got.High,
 		audio.KeyCentroid: got.Centroid,
 		audio.KeyLevel:    got.Level,
 	}
@@ -932,13 +933,17 @@ func figuresOf(
 			continue
 		}
 
-		if key == audio.KeyHarmonics {
-			out[key] = *at / perCent
-
-			continue
-		}
-
 		out[key] = *at
+	}
+
+	// The divide happens once, over whatever audio.Figure.Share names, rather
+	// than beside each field. Spelled out per field it was four lists in four
+	// packages, and a fifth share added to the sweep would have been divided in
+	// none of them.
+	for key, at := range out {
+		if key.Share() {
+			out[key] = at / perCent
+		}
 	}
 
 	return out

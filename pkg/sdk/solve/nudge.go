@@ -109,22 +109,9 @@ func held(
 ) float64 {
 	want = math.Max(want, 0)
 
-	if share(key) {
+	if key.Share() {
 		return math.Min(want, 1)
 	}
 
 	return want
-}
-
-// share reports a figure measured as a fraction of the whole rather than in a
-// unit of its own.
-func share(
-	key audio.Figure,
-) bool {
-	switch key {
-	case audio.KeyLow, audio.KeyMid, audio.KeyHigh, audio.KeyHarmonics:
-		return true
-	default:
-		return false
-	}
 }
