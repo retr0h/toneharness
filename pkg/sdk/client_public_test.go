@@ -137,81 +137,147 @@ func (s *ClientPublicTestSuite) TestNew() {
 	}
 }
 
-// TestWhichCatalogTheBlocksComeFrom covers the two ways a client is told
-// which models exist, and which one wins.
+// TestBlocks covers which models the client answers with, and which
+// catalog they come from.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ClientPublicTestSuite) TestWhichCatalogTheBlocksComeFrom() {
+func (s *ClientPublicTestSuite) TestBlocks() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// WithCatalog, which reads a generated catalog instead of the
-			// built-in one.
+			// The two ways a client is told which models exist, and which one
+			// wins.
 			//
 			// One method and one table, so a case is a row rather than a
 			// file.
-			name: "with catalog",
+			name: "which catalog the blocks come from",
 			then: func() {
 				for _, tt := range []struct {
 					name string
 					then func()
 				}{
 					{
-						// Naming a catalog other than the built-in one.
+						// WithCatalog, which reads a generated catalog instead of the
+						// built-in one.
+						//
+						// One method and one table, so a case is a row rather than a
+						// file.
 						name: "with catalog",
 						then: func() {
-							builtIn, err := sdk.New().Blocks(context.Background(), sdk.Filter{})
-							s.Require().NoError(err)
-
-							tests := []struct {
+							for _, tt := range []struct {
 								name string
-								path string
-								err  bool
+								then func()
 							}{
-								{name: "a catalog of its own", path: fixture("catalog.json")},
-								{name: "a catalog that is not there", path: "no.json", err: true},
-							}
+								{
+									// Naming a catalog other than the built-in one.
+									name: "with catalog",
+									then: func() {
+										builtIn, err := sdk.New().Blocks(context.Background(), sdk.Filter{})
+										s.Require().NoError(err)
 
-							for _, tt := range tests {
+										tests := []struct {
+											name string
+											path string
+											err  bool
+										}{
+											{name: "a catalog of its own", path: fixture("catalog.json")},
+											{name: "a catalog that is not there", path: "no.json", err: true},
+										}
+
+										for _, tt := range tests {
+											s.Run(tt.name, func() {
+												got, err := sdk.New(sdk.WithCatalog(tt.path)).
+													Blocks(context.Background(), sdk.Filter{})
+
+												if tt.err {
+													s.Require().Error(err)
+
+													return
+												}
+
+												s.Require().NoError(err)
+												s.Require().NotEqual(builtIn.Total, got.Total,
+													"the Client read the catalog it was given")
+											})
+										}
+									},
+								},
+								{
+									// Which of the two wins.
+									//
+									// A catalog somebody generated themselves is a stronger statement
+									// than the name of a device this binary happens to carry. Nothing
+									// else would notice this being reversed.
+									name: "with catalog beats with device",
+									then: func() {
+										floor, err := sdk.New(sdk.WithDevice("Helix Floor")).
+											Blocks(context.Background(), sdk.Filter{})
+										s.Require().NoError(err)
+
+										got, err := sdk.New(
+											sdk.WithCatalog(fixture("catalog.json")),
+											sdk.WithDevice("Helix Floor"),
+										).Blocks(context.Background(), sdk.Filter{})
+										s.Require().NoError(err)
+
+										s.Require().NotEqual(floor.Total, got.Total,
+											"the catalog somebody named is the one that was read")
+									},
+								},
+							} {
 								s.Run(tt.name, func() {
-									got, err := sdk.New(sdk.WithCatalog(tt.path)).
-										Blocks(context.Background(), sdk.Filter{})
+									// A row gets the same fresh state a method used to get.
+									s.SetupTest()
 
-									if tt.err {
-										s.Require().Error(err)
-
-										return
-									}
-
-									s.Require().NoError(err)
-									s.Require().NotEqual(builtIn.Total, got.Total,
-										"the Client read the catalog it was given")
+									tt.then()
 								})
 							}
 						},
 					},
 					{
-						// Which of the two wins.
+						// Using the built-in catalog for another pedal.
 						//
-						// A catalog somebody generated themselves is a stronger statement
-						// than the name of a device this binary happens to carry. Nothing
-						// else would notice this being reversed.
-						name: "with catalog beats with device",
+						// Checked against the name the listing carries rather than how
+						// many blocks it holds. A Helix LT carries the same 661 as an HX
+						// Stomp, so a count would pass for the wrong reason on the one
+						// case most worth pinning down.
+						name: "with device",
 						then: func() {
-							floor, err := sdk.New(sdk.WithDevice("Helix Floor")).
-								Blocks(context.Background(), sdk.Filter{})
-							s.Require().NoError(err)
+							tests := []struct {
+								name   string
+								device string
+								want   string
+								err    bool
+							}{
+								{
+									// The common case, and the device everything here was written
+									// against.
+									name: "nothing said about it", want: "HX Stomp",
+								},
+								{name: "a device that ships", device: "Helix Floor", want: "Helix Floor"},
+								{name: "loosely matched", device: "helix-lt", want: "Helix LT"},
+								{name: "a device nothing ships for", device: "Kemper", err: true},
+							}
 
-							got, err := sdk.New(
-								sdk.WithCatalog(fixture("catalog.json")),
-								sdk.WithDevice("Helix Floor"),
-							).Blocks(context.Background(), sdk.Filter{})
-							s.Require().NoError(err)
+							for _, tt := range tests {
+								s.Run(tt.name, func() {
+									got, err := sdk.New(sdk.WithDevice(tt.device)).
+										Blocks(context.Background(), sdk.Filter{})
 
-							s.Require().NotEqual(floor.Total, got.Total,
-								"the catalog somebody named is the one that was read")
+									if tt.err {
+										s.Require().Error(err)
+										// The useful half of the message: naming what it does carry.
+										s.Require().Contains(err.Error(), "HX Stomp")
+
+										return
+									}
+
+									s.Require().NoError(err)
+									s.Require().Equal(tt.want, got.Device)
+								})
+							}
 						},
 					},
 				} {
@@ -225,45 +291,53 @@ func (s *ClientPublicTestSuite) TestWhichCatalogTheBlocksComeFrom() {
 			},
 		},
 		{
-			// Using the built-in catalog for another pedal.
-			//
-			// Checked against the name the listing carries rather than how
-			// many blocks it holds. A Helix LT carries the same 661 as an HX
-			// Stomp, so a count would pass for the wrong reason on the one
-			// case most worth pinning down.
-			name: "with device",
+			// Reporting what a device can do.
+			name: "blocks",
 			then: func() {
 				tests := []struct {
-					name   string
-					device string
-					want   string
-					err    bool
+					name    string
+					ctx     context.Context
+					filter  sdk.Filter
+					matched bool
+					err     bool
 				}{
 					{
-						// The common case, and the device everything here was written
-						// against.
-						name: "nothing said about it", want: "HX Stomp",
+						name:    "the catalog in the binary",
+						filter:  sdk.Filter{Search: "klon"},
+						matched: true,
 					},
-					{name: "a device that ships", device: "Helix Floor", want: "Helix Floor"},
-					{name: "loosely matched", device: "helix-lt", want: "Helix LT"},
-					{name: "a device nothing ships for", device: "Kemper", err: true},
+					{
+						name:   "a filter nothing matches",
+						filter: sdk.Filter{Category: "no such category"},
+					},
+					{name: "a caller who stopped waiting", ctx: cancelled(), err: true},
 				}
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						got, err := sdk.New(sdk.WithDevice(tt.device)).
-							Blocks(context.Background(), sdk.Filter{})
+						ctx := tt.ctx
+						if ctx == nil {
+							ctx = context.Background()
+						}
+
+						got, err := sdk.New().Blocks(ctx, tt.filter)
 
 						if tt.err {
 							s.Require().Error(err)
-							// The useful half of the message: naming what it does carry.
-							s.Require().Contains(err.Error(), "HX Stomp")
 
 							return
 						}
 
 						s.Require().NoError(err)
-						s.Require().Equal(tt.want, got.Device)
+						s.Require().NotZero(got.Total)
+
+						if tt.matched {
+							s.Require().NotEmpty(got.Matched)
+
+							return
+						}
+
+						s.Require().Empty(got.Matched)
 					})
 				}
 			},
@@ -748,56 +822,6 @@ func (s *ClientPublicTestSuite) TestDevices() {
 			if tt.first != "" {
 				s.Require().Equal(tt.first, found.Devices[0].Model)
 			}
-		})
-	}
-}
-
-// TestBlocks covers reporting what a device can do.
-func (s *ClientPublicTestSuite) TestBlocks() {
-	tests := []struct {
-		name    string
-		ctx     context.Context
-		filter  sdk.Filter
-		matched bool
-		err     bool
-	}{
-		{
-			name:    "the catalog in the binary",
-			filter:  sdk.Filter{Search: "klon"},
-			matched: true,
-		},
-		{
-			name:   "a filter nothing matches",
-			filter: sdk.Filter{Category: "no such category"},
-		},
-		{name: "a caller who stopped waiting", ctx: cancelled(), err: true},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			ctx := tt.ctx
-			if ctx == nil {
-				ctx = context.Background()
-			}
-
-			got, err := sdk.New().Blocks(ctx, tt.filter)
-
-			if tt.err {
-				s.Require().Error(err)
-
-				return
-			}
-
-			s.Require().NoError(err)
-			s.Require().NotZero(got.Total)
-
-			if tt.matched {
-				s.Require().NotEmpty(got.Matched)
-
-				return
-			}
-
-			s.Require().Empty(got.Matched)
 		})
 	}
 }

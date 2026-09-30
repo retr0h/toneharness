@@ -44,62 +44,83 @@ type ShippedPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestEveryExampleLoads reads every worked example with the loader its own
-// `schema` line names.
+// TestEveryAskThatShipsLoads covers every shipped ask and every example
+// loading against the contract.
 //
-// Two kinds live in one directory, because a request and the setup it is
-// answered against are written together and read together, so the file says
-// which it is and this believes it.
-func (s *ShippedPublicTestSuite) TestEveryExampleLoads() {
-	paths, err := filepath.Glob(
-		filepath.Join("..", "..", "..", "examples", "tonespec", "*.yaml"))
-	s.Require().NoError(err)
-	s.Require().NotEmpty(paths, "no examples found to check")
-
-	for _, path := range paths {
-		s.Run(filepath.Base(path), func() {
-			body, err := os.ReadFile(path) //nolint:gosec // a path this glob found
-			s.Require().NoError(err)
-
-			if bytes.Contains(body, []byte("schema: "+tone.SetupSchema)) {
-				_, err = tone.LoadSetup(bytes.NewReader(body))
+// One method and one table, so a case is a row rather than a file.
+func (s *ShippedPublicTestSuite) TestEveryAskThatShipsLoads() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// Reads every worked example with the loader its own `schema`
+			// line names.
+			//
+			// Two kinds live in one directory, because a request and the
+			// setup it is answered against are written together and read
+			// together, so the file says which it is and this believes it.
+			name: "every example loads",
+			then: func() {
+				paths, err := filepath.Glob(
+					filepath.Join("..", "..", "..", "examples", "tonespec", "*.yaml"))
 				s.Require().NoError(err)
+				s.Require().NotEmpty(paths, "no examples found to check")
 
-				return
-			}
+				for _, path := range paths {
+					s.Run(filepath.Base(path), func() {
+						body, err := os.ReadFile(path) //nolint:gosec // a path this glob found
+						s.Require().NoError(err)
 
-			_, err = tone.Load(bytes.NewReader(body))
-			s.Require().NoError(err)
-		})
-	}
-}
+						if bytes.Contains(body, []byte("schema: "+tone.SetupSchema)) {
+							_, err = tone.LoadSetup(bytes.NewReader(body))
+							s.Require().NoError(err)
 
-// TestEveryShippedAskLoads reads the ask beside every rig this binary ships.
-//
-// The gap this closes was invisible from either side. pkg/sdk/rig checks every
-// shipped rig and skips the `.tone.yaml` files beside them, saying "pkg/sdk/tone
-// checks those", and pkg/sdk/tone checked `examples/` and never the shipped
-// asks. Each test was right about itself and the sentence joining them was not,
-// so the documents this project ships as its own knowledge were the only ones
-// nothing validated.
-func (s *ShippedPublicTestSuite) TestEveryShippedAskLoads() {
-	paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.tone.yaml"))
-	s.Require().NoError(err)
-	s.Require().NotEmpty(paths, "no shipped asks found to check")
+							return
+						}
 
-	for _, path := range paths {
-		s.Run(filepath.Base(path), func() {
-			body, err := fs.ReadFile(shipped.FS, path)
-			s.Require().NoError(err)
+						_, err = tone.Load(bytes.NewReader(body))
+						s.Require().NoError(err)
+					})
+				}
+			},
+		},
+		{
+			// Reads the ask beside every rig this binary ships.
+			//
+			// The gap this closes was invisible from either side. pkg/sdk/rig
+			// checks every shipped rig and skips the `.tone.yaml` files
+			// beside them, saying "pkg/sdk/tone checks those", and
+			// pkg/sdk/tone checked `examples/` and never the shipped asks.
+			// Each test was right about itself and the sentence joining them
+			// was not, so the documents this project ships as its own
+			// knowledge were the only ones nothing validated.
+			name: "every shipped ask loads",
+			then: func() {
+				paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.tone.yaml"))
+				s.Require().NoError(err)
+				s.Require().NotEmpty(paths, "no shipped asks found to check")
 
-			_, err = tone.Load(bytes.NewReader(body))
-			s.Require().NoError(err)
+				for _, path := range paths {
+					s.Run(filepath.Base(path), func() {
+						body, err := fs.ReadFile(shipped.FS, path)
+						s.Require().NoError(err)
 
-			// An ask is reached through the rig it sits beside, so one with no
-			// rig is unreachable. It loads cleanly and nothing can ever ask it.
-			beside := strings.TrimSuffix(path, ".tone.yaml") + ".yaml"
-			_, err = fs.Stat(shipped.FS, beside)
-			s.Require().NoError(err, "%s has no rig beside it", path)
+						_, err = tone.Load(bytes.NewReader(body))
+						s.Require().NoError(err)
+
+						// An ask is reached through the rig it sits beside, so one with no
+						// rig is unreachable. It loads cleanly and nothing can ever ask it.
+						beside := strings.TrimSuffix(path, ".tone.yaml") + ".yaml"
+						_, err = fs.Stat(shipped.FS, beside)
+						s.Require().NoError(err, "%s has no rig beside it", path)
+					})
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
 		})
 	}
 }

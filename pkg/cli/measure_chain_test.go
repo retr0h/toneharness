@@ -30,15 +30,15 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
-// ChainPublicTestSuite covers reading what is loaded, and the guard that says
+// ChainTestSuite covers reading what is loaded, and the guard that says
 // the reading is of the loop rather than of the chain.
-type ChainPublicTestSuite struct {
+type ChainTestSuite struct {
 	suite.Suite
 
 	dry string
 }
 
-func (s *ChainPublicTestSuite) SetupTest() {
+func (s *ChainTestSuite) SetupTest() {
 	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di-short.wav")
 }
 
@@ -46,7 +46,7 @@ func (s *ChainPublicTestSuite) SetupTest() {
 // nothing.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChainPublicTestSuite) TestChain() {
+func (s *ChainTestSuite) TestChain() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -139,7 +139,7 @@ func (s *ChainPublicTestSuite) TestChain() {
 // TestSquealing covers every case Squealing answers.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChainPublicTestSuite) TestSquealing() {
+func (s *ChainTestSuite) TestSquealing() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -241,7 +241,7 @@ func (s *ChainPublicTestSuite) TestSquealing() {
 //
 // The comparison is to this recording rather than to a number somebody chose,
 // so a different reference moves the line with it.
-func (s *ChainPublicTestSuite) TestTheReferenceIsMeasuredRatherThanAssumed() {
+func (s *ChainTestSuite) TestTheReferenceIsMeasuredRatherThanAssumed() {
 	signal, err := reference(s.dry, 1)
 	s.Require().NoError(err)
 
@@ -252,17 +252,17 @@ func (s *ChainPublicTestSuite) TestTheReferenceIsMeasuredRatherThanAssumed() {
 	s.Require().Greater(got[audio.KeyLow], 0.5)
 }
 
-func TestChainPublicTestSuite(
+func TestChainTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(ChainPublicTestSuite))
+	suite.Run(t, new(ChainTestSuite))
 }
 
 // TestReferenceIsFor covers referenceIsFor, which is what a reference
 // recording was played on.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChainPublicTestSuite) TestReferenceIsFor() {
+func (s *ChainTestSuite) TestReferenceIsFor() {
 	for _, tt := range []struct {
 		name string
 		then func()

@@ -33,8 +33,8 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
 
-// MissingPublicTestSuite covers turning missed axes into a block shortlist.
-type MissingPublicTestSuite struct {
+// MissingTestSuite covers turning missed axes into a block shortlist.
+type MissingTestSuite struct {
 	suite.Suite
 }
 
@@ -42,7 +42,7 @@ type MissingPublicTestSuite struct {
 // the library's own units.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *MissingPublicTestSuite) TestUnreached() {
+func (s *MissingTestSuite) TestUnreached() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -134,14 +134,14 @@ func (s *MissingPublicTestSuite) TestUnreached() {
 	}
 }
 
-func TestMissingPublicTestSuite(
+func TestMissingTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(MissingPublicTestSuite))
+	suite.Run(t, new(MissingTestSuite))
 }
 
 // TestInTheChainNamesWhatIsAlreadyThere covers not suggesting what a chain holds.
-func (s *MissingPublicTestSuite) TestInTheChainNamesWhatIsAlreadyThere() {
+func (s *MissingTestSuite) TestInTheChainNamesWhatIsAlreadyThere() {
 	got := inTheChain(plan.Plan{Blocks: []plan.Block{
 		{Model: catalog.ModelID("HD2_AmpSVBeastBrt")},
 		{Model: catalog.ModelID("HD2_Cab8x10SVBeast")},
@@ -160,7 +160,7 @@ func (s *MissingPublicTestSuite) TestInTheChainNamesWhatIsAlreadyThere() {
 // 40 and the other adds 4, so the numbers travel. And a block that closes one
 // axis while opening another says both, because that trade is a real answer and
 // an invisible one is not.
-func (s *MissingPublicTestSuite) TestWhyReportsTheFiguresRatherThanAVerdict() {
+func (s *MissingTestSuite) TestWhyReportsTheFiguresRatherThanAVerdict() {
 	helps := measured.Suggestion{
 		Helps: []audio.Figure{audio.KeyHarmonics},
 		Moves: map[audio.Figure]float64{audio.KeyHarmonics: 38.4},
@@ -203,7 +203,7 @@ func (s *MissingPublicTestSuite) TestWhyReportsTheFiguresRatherThanAVerdict() {
 // the dials could not.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *MissingPublicTestSuite) TestMissing() {
+func (s *MissingTestSuite) TestMissing() {
 	for _, tt := range []struct {
 		name string
 		then func()

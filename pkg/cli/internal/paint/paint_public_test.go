@@ -287,95 +287,114 @@ func (s *UIPublicTestSuite) TestDetailRenderReportsAWriterThatFails() {
 	}
 }
 
-// TestTable lays rows out in columns.
-func (s *UIPublicTestSuite) TestTable() {
-	tests := []struct {
-		name      string
-		rows      [][]string
-		align     []lipgloss.Position
-		aligned   bool
-		sameWidth bool
-		contains  string
-		silent    bool
+// TestTableCases covers painting a table, and a writer that stops partway.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *UIPublicTestSuite) TestTableCases() {
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name: "columns that line up",
-			rows: [][]string{
-				{"a", "1", "end"},
-				{"bbbb", "22", "end"},
-			},
-			align:   []lipgloss.Position{lipgloss.Left, lipgloss.Right},
-			aligned: true,
-		},
-		{
-			// A styled cell is measured by what it shows rather than by the
-			// escapes around it.
-			name: "a cell somebody painted",
-			rows: [][]string{
-				{lipgloss.NewStyle().
-					Foreground(lipgloss.Color("#ffa032")).Render("ab"), "x"},
-				{"abcd", "y"},
-			},
-			sameWidth: true,
-		},
-		{
-			name:     "rows of different lengths",
-			rows:     [][]string{{"a"}, {"bb", "cc"}},
-			contains: "cc",
-		},
-		{name: "no rows at all", silent: true},
-	}
+			// Lays rows out in columns.
+			name: "table",
+			then: func() {
+				tests := []struct {
+					name      string
+					rows      [][]string
+					align     []lipgloss.Position
+					aligned   bool
+					sameWidth bool
+					contains  string
+					silent    bool
+				}{
+					{
+						name: "columns that line up",
+						rows: [][]string{
+							{"a", "1", "end"},
+							{"bbbb", "22", "end"},
+						},
+						align:   []lipgloss.Position{lipgloss.Left, lipgloss.Right},
+						aligned: true,
+					},
+					{
+						// A styled cell is measured by what it shows rather than by the
+						// escapes around it.
+						name: "a cell somebody painted",
+						rows: [][]string{
+							{lipgloss.NewStyle().
+								Foreground(lipgloss.Color("#ffa032")).Render("ab"), "x"},
+							{"abcd", "y"},
+						},
+						sameWidth: true,
+					},
+					{
+						name:     "rows of different lengths",
+						rows:     [][]string{{"a"}, {"bb", "cc"}},
+						contains: "cc",
+					},
+					{name: "no rows at all", silent: true},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						var out bytes.Buffer
+
+						s.Require().NoError(paint.Table(&out, tt.rows, tt.align))
+
+						if tt.silent {
+							s.Require().Empty(out.String())
+
+							return
+						}
+
+						lines := strings.Split(strings.TrimRight(out.String(), "\n"), "\n")
+
+						if tt.contains != "" {
+							s.Require().Contains(out.String(), tt.contains)
+						}
+
+						if tt.sameWidth {
+							s.Require().Equal(lipgloss.Width(lines[0]), lipgloss.Width(lines[1]))
+						}
+
+						if !tt.aligned {
+							return
+						}
+
+						s.Require().Len(lines, 2)
+
+						// A right-aligned column ends at the same offset on both lines.
+						s.Require().Equal(
+							strings.Index(lines[0], "1")+1, strings.Index(lines[1], "22")+2)
+
+						// The last column starts at the same offset on both lines.
+						s.Require().Equal(
+							strings.Index(lines[0], "end"), strings.Index(lines[1], "end"))
+
+						// Nothing trails a line.
+						for _, l := range lines {
+							s.Require().Equal(l, strings.TrimRight(l, " "))
+						}
+					})
+				}
+			},
+		},
+		{
+			// A row nobody can read.
+			name: "table reports a writer that fails",
+			then: func() {
+				err := paint.Table(&failAfter{}, [][]string{{"a"}}, nil)
+
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), "writing row")
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			var out bytes.Buffer
-
-			s.Require().NoError(paint.Table(&out, tt.rows, tt.align))
-
-			if tt.silent {
-				s.Require().Empty(out.String())
-
-				return
-			}
-
-			lines := strings.Split(strings.TrimRight(out.String(), "\n"), "\n")
-
-			if tt.contains != "" {
-				s.Require().Contains(out.String(), tt.contains)
-			}
-
-			if tt.sameWidth {
-				s.Require().Equal(lipgloss.Width(lines[0]), lipgloss.Width(lines[1]))
-			}
-
-			if !tt.aligned {
-				return
-			}
-
-			s.Require().Len(lines, 2)
-
-			// A right-aligned column ends at the same offset on both lines.
-			s.Require().Equal(
-				strings.Index(lines[0], "1")+1, strings.Index(lines[1], "22")+2)
-
-			// The last column starts at the same offset on both lines.
-			s.Require().Equal(
-				strings.Index(lines[0], "end"), strings.Index(lines[1], "end"))
-
-			// Nothing trails a line.
-			for _, l := range lines {
-				s.Require().Equal(l, strings.TrimRight(l, " "))
-			}
+			tt.then()
 		})
 	}
-}
-
-// TestTableReportsAWriterThatFails covers a row nobody can read.
-func (s *UIPublicTestSuite) TestTableReportsAWriterThatFails() {
-	err := paint.Table(&failAfter{}, [][]string{{"a"}}, nil)
-
-	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "writing row")
 }
 
 func TestUIPublicTestSuite(
@@ -415,106 +434,124 @@ func (s *ChainPublicTestSuite) spec(
 	return plan.Plan{Name: "Test", Blocks: blocks}
 }
 
-// TestChain draws a chain and what it costs.
-func (s *ChainPublicTestSuite) TestChain() {
-	tests := []struct {
-		name     string
-		blocks   []plan.Block
-		contains []string
-		absent   []string
+// TestChainCases covers painting a chain, and a writer that stops partway.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ChainPublicTestSuite) TestChainCases() {
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name: "every block in it",
-			blocks: []plan.Block{
-				{Model: "amp", DSP: 0, Pos: 0, Enabled: true},
-				{Model: "cab", DSP: 0, Pos: 1, Enabled: false},
-				{Model: "weird", DSP: 1, Pos: 0, Enabled: true},
-				{Model: "ghost", DSP: 1, Pos: 1, Enabled: true},
-			},
-			contains: []string{
-				"Test Amp", "Some Amp", "Test Cab", "○", "●",
-				"ghost", "not in catalog", "?", "dsp0", "dsp1", "30.0%",
-			},
-		},
-		{
-			name: "a block needing the owner's own IR",
-			blocks: []plan.Block{
-				{Model: "amp", Enabled: true},
-				{
-					Model: "HD2_ImpulseResponse1024", Pos: 1, Enabled: true,
-					Params: plan.Params{"Index": catalog.Int(82)},
-				},
-			},
-			contains: []string{
-				// The slot is the useful thing to show, since the audio is
-				// not in the file.
-				"IR slot 82",
-				"same IRs are loaded there",
-			},
-		},
-		{
-			name: "an IR naming no slot",
-			blocks: []plan.Block{
-				{Model: "HD2_ImpulseResponse1024", Enabled: true},
-			},
-			contains: []string{"a user IR"},
-		},
-		{
-			name:     "a processor nothing uses",
-			blocks:   []plan.Block{{Model: "amp", DSP: 1, Enabled: true}},
-			contains: []string{"dsp1"},
-			absent:   []string{"dsp0"},
-		},
-		{name: "nothing at all", contains: []string{"empty"}},
-	}
+			// Draws a chain and what it costs.
+			name: "chain",
+			then: func() {
+				tests := []struct {
+					name     string
+					blocks   []plan.Block
+					contains []string
+					absent   []string
+				}{
+					{
+						name: "every block in it",
+						blocks: []plan.Block{
+							{Model: "amp", DSP: 0, Pos: 0, Enabled: true},
+							{Model: "cab", DSP: 0, Pos: 1, Enabled: false},
+							{Model: "weird", DSP: 1, Pos: 0, Enabled: true},
+							{Model: "ghost", DSP: 1, Pos: 1, Enabled: true},
+						},
+						contains: []string{
+							"Test Amp", "Some Amp", "Test Cab", "○", "●",
+							"ghost", "not in catalog", "?", "dsp0", "dsp1", "30.0%",
+						},
+					},
+					{
+						name: "a block needing the owner's own IR",
+						blocks: []plan.Block{
+							{Model: "amp", Enabled: true},
+							{
+								Model: "HD2_ImpulseResponse1024", Pos: 1, Enabled: true,
+								Params: plan.Params{"Index": catalog.Int(82)},
+							},
+						},
+						contains: []string{
+							// The slot is the useful thing to show, since the audio is
+							// not in the file.
+							"IR slot 82",
+							"same IRs are loaded there",
+						},
+					},
+					{
+						name: "an IR naming no slot",
+						blocks: []plan.Block{
+							{Model: "HD2_ImpulseResponse1024", Enabled: true},
+						},
+						contains: []string{"a user IR"},
+					},
+					{
+						name:     "a processor nothing uses",
+						blocks:   []plan.Block{{Model: "amp", DSP: 1, Enabled: true}},
+						contains: []string{"dsp1"},
+						absent:   []string{"dsp0"},
+					},
+					{name: "nothing at all", contains: []string{"empty"}},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						var out bytes.Buffer
+
+						s.Require().NoError(paint.Chain(&out, s.spec(tt.blocks...), s.cat()))
+
+						for _, want := range tt.contains {
+							s.Require().Contains(out.String(), want)
+						}
+
+						for _, unwanted := range tt.absent {
+							s.Require().NotContains(out.String(), unwanted)
+						}
+					})
+				}
+			},
+		},
+		{
+			// A writer failing at each point a chain writes.
+			name: "chain reports a writer that fails",
+			then: func() {
+				tests := []struct {
+					name   string
+					blocks []plan.Block
+					after  int
+				}{
+					{name: "with nothing to show"},
+					{name: "on the rows", blocks: []plan.Block{{Model: "amp"}}},
+					{name: "on the budget", blocks: []plan.Block{{Model: "amp"}}, after: 1},
+					{
+						name:   "on the budget's own line",
+						blocks: []plan.Block{{Model: "amp"}},
+						after:  2,
+					},
+					{
+						name: "on the warning about somebody's own IR",
+						blocks: []plan.Block{{
+							Model: "HD2_ImpulseResponse1024", Enabled: true,
+							Params: plan.Params{"Index": catalog.Int(82)},
+						}},
+						after: 3,
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						s.Require().Error(paint.Chain(
+							&failAfter{ok: tt.after}, s.spec(tt.blocks...), s.cat()))
+					})
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			var out bytes.Buffer
-
-			s.Require().NoError(paint.Chain(&out, s.spec(tt.blocks...), s.cat()))
-
-			for _, want := range tt.contains {
-				s.Require().Contains(out.String(), want)
-			}
-
-			for _, unwanted := range tt.absent {
-				s.Require().NotContains(out.String(), unwanted)
-			}
-		})
-	}
-}
-
-// TestChainReportsAWriterThatFails covers a writer failing at each point a
-// chain writes.
-func (s *ChainPublicTestSuite) TestChainReportsAWriterThatFails() {
-	tests := []struct {
-		name   string
-		blocks []plan.Block
-		after  int
-	}{
-		{name: "with nothing to show"},
-		{name: "on the rows", blocks: []plan.Block{{Model: "amp"}}},
-		{name: "on the budget", blocks: []plan.Block{{Model: "amp"}}, after: 1},
-		{
-			name:   "on the budget's own line",
-			blocks: []plan.Block{{Model: "amp"}},
-			after:  2,
-		},
-		{
-			name: "on the warning about somebody's own IR",
-			blocks: []plan.Block{{
-				Model: "HD2_ImpulseResponse1024", Enabled: true,
-				Params: plan.Params{"Index": catalog.Int(82)},
-			}},
-			after: 3,
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			s.Require().Error(paint.Chain(
-				&failAfter{ok: tt.after}, s.spec(tt.blocks...), s.cat()))
+			tt.then()
 		})
 	}
 }

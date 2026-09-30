@@ -32,18 +32,18 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
-// RecordPublicTestSuite covers writing a round of correction onto an ask.
+// RecordTestSuite covers writing a round of correction onto an ask.
 //
 // The only place a human ear's judgement will ever be written down, so what
 // matters here is that the round survives the round trip and that the verdict
 // is left empty for somebody to fill in.
-type RecordPublicTestSuite struct {
+type RecordTestSuite struct {
 	suite.Suite
 
 	ask string
 }
 
-func (s *RecordPublicTestSuite) SetupTest() {
+func (s *RecordTestSuite) SetupTest() {
 	s.ask = filepath.Join(s.T().TempDir(), "ask.yaml")
 
 	s.Require().NoError(os.WriteFile(s.ask, []byte(
@@ -51,7 +51,7 @@ func (s *RecordPublicTestSuite) SetupTest() {
 }
 
 // read loads the ask back the way anything else would.
-func (s *RecordPublicTestSuite) read() tone.Spec {
+func (s *RecordTestSuite) read() tone.Spec {
 	f, err := os.Open(s.ask)
 	s.Require().NoError(err)
 
@@ -64,7 +64,7 @@ func (s *RecordPublicTestSuite) read() tone.Spec {
 }
 
 // moved is one control the solve turned.
-func (s *RecordPublicTestSuite) moved() []solve.Step {
+func (s *RecordTestSuite) moved() []solve.Step {
 	knob := solve.Knob{
 		Block: 1, Param: 0, Control: "HD2_AmpSVBeastBrt Bass",
 		Setting: "Bass", At: 0.41, Low: 0, High: 1,
@@ -77,7 +77,7 @@ func (s *RecordPublicTestSuite) moved() []solve.Step {
 // and what it moved to the ask.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *RecordPublicTestSuite) TestRecord() {
+func (s *RecordTestSuite) TestRecord() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -208,8 +208,8 @@ func (s *RecordPublicTestSuite) TestRecord() {
 	}
 }
 
-func TestRecordPublicTestSuite(
+func TestRecordTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(RecordPublicTestSuite))
+	suite.Run(t, new(RecordTestSuite))
 }

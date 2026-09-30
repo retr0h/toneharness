@@ -36,13 +36,13 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
 
-// ChoosePublicTestSuite covers the list half of the tuning loop.
+// ChooseTestSuite covers the list half of the tuning loop.
 //
 // The dials are solved together and a list is compared one setting at a time,
 // and what is under test here is the comparing: which settings are read, which
 // are thrown away because their figures describe something other than the
 // setting, and which one the chain is left on.
-type ChoosePublicTestSuite struct {
+type ChooseTestSuite struct {
 	suite.Suite
 
 	ctrl  *gomock.Controller
@@ -51,7 +51,7 @@ type ChoosePublicTestSuite struct {
 	dry   string
 }
 
-func (s *ChoosePublicTestSuite) SetupTest() {
+func (s *ChooseTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.pedal = mocks.NewMockTuner(s.ctrl)
 	// Every measuring command asks the client which models the attached
@@ -69,14 +69,14 @@ func (s *ChoosePublicTestSuite) SetupTest() {
 // whole piece of work exists for.
 const cab = catalog.ModelID("HD2_CabMicIr_2x15Brute")
 
-func (s *ChoosePublicTestSuite) catalog() *catalog.Catalog {
+func (s *ChooseTestSuite) catalog() *catalog.Catalog {
 	cat, err := catalog.BuiltIn()
 	s.Require().NoError(err)
 
 	return cat
 }
 
-func (s *ChoosePublicTestSuite) opts() TuneOptions {
+func (s *ChooseTestSuite) opts() TuneOptions {
 	return TuneOptions{
 		Client: s.pedal, Genres: s.genre, Bench: bench{},
 		ID: "matt-freeman", Genre: "punk", Corpus: "resources/music/bass",
@@ -86,14 +86,14 @@ func (s *ChoosePublicTestSuite) opts() TuneOptions {
 
 // aims is a target on the centroid with a tolerance of one, so a residual reads
 // as the distance itself.
-func (s *ChoosePublicTestSuite) aims(
+func (s *ChooseTestSuite) aims(
 	want float64,
 ) map[audio.Figure]solve.Aim {
 	return map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: want, Tol: 1}}
 }
 
 // mic is the chain's one list, addressed the way a preset records it.
-func (s *ChoosePublicTestSuite) mic() solve.Choice {
+func (s *ChooseTestSuite) mic() solve.Choice {
 	got := listsOf(plan.Plan{Blocks: []plan.Block{{
 		Model: cab, Pos: 0, Enabled: true,
 		Params: plan.Params{"Mic": catalog.Int(4)},
@@ -108,7 +108,7 @@ func (s *ChoosePublicTestSuite) mic() solve.Choice {
 // compared rather than turned.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChoosePublicTestSuite) TestListsOf() {
+func (s *ChooseTestSuite) TestListsOf() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -211,7 +211,7 @@ func (s *ChoosePublicTestSuite) TestListsOf() {
 // The device does not coerce. A switch sent the index 1 is refused with the
 // same error it gives for a block that is not there, which reads as the address
 // being wrong rather than the value, so the two cases cannot share a call.
-func (s *ChoosePublicTestSuite) TestASwitchIsSetWithTheOtherCall() {
+func (s *ChooseTestSuite) TestASwitchIsSetWithTheOtherCall() {
 	ctrl := gomock.NewController(s.T())
 	pedal := mocks.NewMockTuner(ctrl)
 
@@ -228,7 +228,7 @@ func (s *ChoosePublicTestSuite) TestASwitchIsSetWithTheOtherCall() {
 // leaves each on its nearest.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChoosePublicTestSuite) TestCompared() {
+func (s *ChooseTestSuite) TestCompared() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -380,7 +380,7 @@ func (s *ChoosePublicTestSuite) TestCompared() {
 // setting of one list.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChoosePublicTestSuite) TestReadings() {
+func (s *ChooseTestSuite) TestReadings() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -486,7 +486,7 @@ func (s *ChoosePublicTestSuite) TestReadings() {
 // short.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChoosePublicTestSuite) TestAttempt() {
+func (s *ChooseTestSuite) TestAttempt() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -577,7 +577,7 @@ func (s *ChoosePublicTestSuite) TestAttempt() {
 // solving the dials from each.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChoosePublicTestSuite) TestBackedUp() {
+func (s *ChooseTestSuite) TestBackedUp() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -782,8 +782,8 @@ func (s *ChoosePublicTestSuite) TestBackedUp() {
 	}
 }
 
-func TestChoosePublicTestSuite(
+func TestChooseTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(ChoosePublicTestSuite))
+	suite.Run(t, new(ChooseTestSuite))
 }

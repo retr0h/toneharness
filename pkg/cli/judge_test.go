@@ -26,13 +26,13 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// JudgePublicTestSuite covers whether a live reading can be believed.
+// JudgeTestSuite covers whether a live reading can be believed.
 //
 // Two commands ask it: a sweep, which buckets a control's positions into what
 // muted the chain and what clipped it, and the list comparison, which says so
 // and drops the setting. They were two switches printing byte-identical
 // strings.
-type JudgePublicTestSuite struct {
+type JudgeTestSuite struct {
 	suite.Suite
 }
 
@@ -41,12 +41,12 @@ type JudgePublicTestSuite struct {
 // A sweep stores the answer on its Curve, where it is part of the serialised
 // contract, and the list comparison works it out again. One function, so a
 // stored floor and a recomputed one cannot be different floors.
-func (s *JudgePublicTestSuite) TestSilentBelowIsSettledLessSilent() {
+func (s *JudgeTestSuite) TestSilentBelowIsSettledLessSilent() {
 	s.Require().InDelta(-62.4, silentBelow(-32.4), 1e-9)
 	s.Require().InDelta(silent, silentBelow(0)*-1, 1e-9)
 }
 
-func (s *JudgePublicTestSuite) TestJudge() {
+func (s *JudgeTestSuite) TestJudge() {
 	floor := silentBelow(-32.4)
 
 	tests := []struct {
@@ -88,13 +88,13 @@ func (s *JudgePublicTestSuite) TestJudge() {
 // constant between them, at the same value for unrelated reasons, so retuning
 // either retuned the other in a different file. Equal today and separately
 // named, which is the point: this test fails on a merge back into one.
-func (s *JudgePublicTestSuite) TestSelfNoiseIsItsOwnNumber() {
+func (s *JudgeTestSuite) TestSelfNoiseIsItsOwnNumber() {
 	s.Require().InDelta(30.0, silent, 1e-9, "how far under settled is silence")
 	s.Require().InDelta(30.0, selfNoise, 1e-9, "how far under a reading is quiet")
 }
 
-func TestJudgePublicTestSuite(
+func TestJudgeTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(JudgePublicTestSuite))
+	suite.Run(t, new(JudgeTestSuite))
 }

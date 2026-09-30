@@ -42,9 +42,9 @@ func (c *closes) Close() error {
 	return errors.New("a close nobody reads")
 }
 
-// BenchPublicTestSuite covers choosing the audio loop a measuring run reads
+// BenchTestSuite covers choosing the audio loop a measuring run reads
 // through.
-type BenchPublicTestSuite struct {
+type BenchTestSuite struct {
 	suite.Suite
 }
 
@@ -52,7 +52,7 @@ type BenchPublicTestSuite struct {
 // and how to let it go.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *BenchPublicTestSuite) TestBenchFor() {
+func (s *BenchTestSuite) TestBenchFor() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -130,8 +130,8 @@ func (s *BenchPublicTestSuite) TestBenchFor() {
 	}
 }
 
-func TestBenchPublicTestSuite(
+func TestBenchTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(BenchPublicTestSuite))
+	suite.Run(t, new(BenchTestSuite))
 }

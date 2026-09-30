@@ -38,13 +38,13 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
 
-// ReachPublicTestSuite covers asking how near a chain can get, from one pass.
+// ReachTestSuite covers asking how near a chain can get, from one pass.
 //
 // It reads the chain rather than resources/sweeps/, and that is the design
 // rather than an implementation detail: every committed sweep was taken with
 // its block alone, and an SV Beast with no cabinet has a median centroid of
 // 8,139Hz where the chain reads about 144.
-type ReachPublicTestSuite struct {
+type ReachTestSuite struct {
 	suite.Suite
 
 	ctrl  *gomock.Controller
@@ -53,7 +53,7 @@ type ReachPublicTestSuite struct {
 	dry   string
 }
 
-func (s *ReachPublicTestSuite) SetupTest() {
+func (s *ReachTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.pedal = mocks.NewMockTuner(s.ctrl)
 	// Every measuring command asks the client which models the attached
@@ -78,7 +78,7 @@ func (s *ReachPublicTestSuite) SetupTest() {
 		Return(sdk.Built{}, nil).AnyTimes()
 }
 
-func (s *ReachPublicTestSuite) opts() ReachOptions {
+func (s *ReachTestSuite) opts() ReachOptions {
 	return ReachOptions{
 		Client: s.pedal, Genres: s.genre, Bench: &sloping{}, Dry: s.dry,
 		ID: "matt-freeman", Genre: "punk", Corpus: "resources/music/bass",
@@ -87,7 +87,7 @@ func (s *ReachPublicTestSuite) opts() ReachOptions {
 }
 
 // built makes the pedal answer everything one pass asks of it.
-func (s *ReachPublicTestSuite) built() {
+func (s *ReachTestSuite) built() {
 	s.pedal.EXPECT().
 		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
@@ -101,7 +101,7 @@ func (s *ReachPublicTestSuite) built() {
 }
 
 // wide is a target with room on every axis.
-func (s *ReachPublicTestSuite) wide() []audio.Genre {
+func (s *ReachTestSuite) wide() []audio.Genre {
 	band := audio.Spread{Low: -1000, Mid: 0, High: 1000}
 
 	return []audio.Genre{{
@@ -116,7 +116,7 @@ func (s *ReachPublicTestSuite) wide() []audio.Genre {
 // from one pass of readings.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ReachPublicTestSuite) TestReach() {
+func (s *ReachTestSuite) TestReach() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -445,7 +445,7 @@ func (s *ReachPublicTestSuite) TestReach() {
 // A dial at the top of its range can only go down, so the reachable range is
 // not symmetric about where it sits. Counting a full range both ways promises
 // movement the chain does not have.
-func (s *ReachPublicTestSuite) TestSpansOfCountsTravelEachWaySeparately() {
+func (s *ReachTestSuite) TestSpansOfCountsTravelEachWaySeparately() {
 	atTop := solve.Knob{
 		Block: 0, Param: 1, At: 1, Low: 0, High: 1,
 		Slope: map[audio.Figure]float64{audio.KeyCentroid: 100},
@@ -464,7 +464,7 @@ func (s *ReachPublicTestSuite) TestSpansOfCountsTravelEachWaySeparately() {
 // towards.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ReachPublicTestSuite) TestVerdict() {
+func (s *ReachTestSuite) TestVerdict() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -546,7 +546,7 @@ func (s *ReachPublicTestSuite) TestVerdict() {
 // behind it hid a fault for a whole session: "high, 390 out" sounds like a
 // chain that needs tuning, and "reads 0.8433, wants 0" is an 8x10 cabinet
 // passing 84% of its energy above 2kHz, which no cabinet does.
-func (s *ReachPublicTestSuite) TestTheTableSaysWhatItReadsAndWhatItWants() {
+func (s *ReachTestSuite) TestTheTableSaysWhatItReadsAndWhatItWants() {
 	w := buffer()
 
 	table(w, []solve.Verdict{
@@ -563,8 +563,8 @@ func (s *ReachPublicTestSuite) TestTheTableSaysWhatItReadsAndWhatItWants() {
 	s.Require().Contains(said, "OUT OF REACH")
 }
 
-func TestReachPublicTestSuite(
+func TestReachTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(ReachPublicTestSuite))
+	suite.Run(t, new(ReachTestSuite))
 }

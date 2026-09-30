@@ -29,19 +29,19 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
-// InstrumentPublicTestSuite covers refusing to measure a chain through the
+// InstrumentTestSuite covers refusing to measure a chain through the
 // wrong reference.
 //
 // The models are named rather than invented, because the claim rests on Line 6's
 // own Guitar and Bass tags in the catalog: a fixture asserting its own
 // subcategory would pass while the catalog said something else.
-type InstrumentPublicTestSuite struct {
+type InstrumentTestSuite struct {
 	suite.Suite
 
 	cat *catalog.Catalog
 }
 
-func (s *InstrumentPublicTestSuite) SetupSuite() {
+func (s *InstrumentTestSuite) SetupSuite() {
 	var err error
 
 	s.cat, err = catalog.BuiltIn()
@@ -49,7 +49,7 @@ func (s *InstrumentPublicTestSuite) SetupSuite() {
 }
 
 // chain is a plan holding one amplifier.
-func (s *InstrumentPublicTestSuite) chain(
+func (s *InstrumentTestSuite) chain(
 	model string,
 ) plan.Plan {
 	return plan.Plan{Blocks: []plan.Block{{
@@ -61,7 +61,7 @@ func (s *InstrumentPublicTestSuite) chain(
 // by the amplifiers in it.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *InstrumentPublicTestSuite) TestChainIsFor() {
+func (s *InstrumentTestSuite) TestChainIsFor() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -140,7 +140,7 @@ func (s *InstrumentPublicTestSuite) TestChainIsFor() {
 // measured through the wrong reference.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *InstrumentPublicTestSuite) TestSameInstrument() {
+func (s *InstrumentTestSuite) TestSameInstrument() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -193,8 +193,8 @@ func (s *InstrumentPublicTestSuite) TestSameInstrument() {
 	}
 }
 
-func TestInstrumentPublicTestSuite(
+func TestInstrumentTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(InstrumentPublicTestSuite))
+	suite.Run(t, new(InstrumentTestSuite))
 }

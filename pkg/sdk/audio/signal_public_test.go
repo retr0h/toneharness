@@ -112,58 +112,83 @@ func (s *SignalPublicTestSuite) TestTheFloorIsRelativeToTheRecording() {
 	s.Require().Equal(audio.Playing(loud), audio.Playing(quiet))
 }
 
-// TestRestsNoLongerInflateTheDynamicRange is the defect this fixes.
+// TestWhatARestDoesToAReading covers the silence between notes, which used to
+// be measured as part of them.
 //
-// A part that rests half the time used to report the gap between its loudest
-// note and the noise floor, which is not how dynamic the playing is.
-func (s *SignalPublicTestSuite) TestRestsNoLongerInflateTheDynamicRange() {
-	steady := audio.Measure(s.part(6, 0.5, 0.05), rate)
-	resting := audio.Measure(s.part(6, 0.5, 2.0), rate)
+// One method and one table, so a case is a row rather than a file.
+func (s *SignalPublicTestSuite) TestWhatARestDoesToAReading() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The defect this fixes.
+			//
+			// A part that rests half the time used to report the gap between
+			// its loudest note and the noise floor, which is not how dynamic
+			// the playing is.
+			name: "rests no longer inflate the dynamic range",
+			then: func() {
+				steady := audio.Measure(s.part(6, 0.5, 0.05), rate)
+				resting := audio.Measure(s.part(6, 0.5, 2.0), rate)
 
-	// The notes are identical; only the silence between them differs.
-	s.Require().InDelta(steady.DynamicRange, resting.DynamicRange, 3.0,
-		"the rests between notes are not part of how dynamic the playing is")
-}
+				// The notes are identical; only the silence between them differs.
+				s.Require().InDelta(steady.DynamicRange, resting.DynamicRange, 3.0,
+					"the rests between notes are not part of how dynamic the playing is")
+			},
+		},
+		{
+			// The other measurement silence broke.
+			//
+			// A note that is cut off by the player stopping did not decay
+			// over the rest that follows it, and timing one reports the gap
+			// rather than the ring.
+			name: "decay stops at a rest",
+			then: func() {
+				// One note that rings, then a long silence.
+				got := audio.Measure(
+					append(audio.Plucked(110, 1.0, rate, 0.8, 2), audio.Silence(5.0, rate)...),
+					rate)
 
-// TestDecayStopsAtARest covers the other measurement silence broke.
-//
-// A note that is cut off by the player stopping did not decay over the rest
-// that follows it, and timing one reports the gap rather than the ring.
-func (s *SignalPublicTestSuite) TestDecayStopsAtARest() {
-	// One note that rings, then a long silence.
-	got := audio.Measure(
-		append(audio.Plucked(110, 1.0, rate, 0.8, 2), audio.Silence(5.0, rate)...),
-		rate)
+				s.Require().True(got.Decay.Known)
+				s.Require().Less(got.Decay.Value, 2.0,
+					"the five seconds of silence are not part of the note")
+				s.Require().Positive(got.Decay.Value)
+			},
+		},
+		{
+			// The honest answer's limit.
+			//
+			// A note cut off before it has fallen to a quarter cannot be said
+			// to have decayed in any particular time. All that is known is
+			// that it rang until the playing stopped, and that is what comes
+			// back: the time to the rest, not the length of the recording and
+			// not the silence after it.
+			name: "a note still ringing when the playing stops",
+			then: func() {
+				// A slow decay, cut short: at this rate the note is nowhere near a
+				// quarter of its peak when the silence arrives.
+				const sounding = 0.5
 
-	s.Require().True(got.Decay.Known)
-	s.Require().Less(got.Decay.Value, 2.0,
-		"the five seconds of silence are not part of the note")
-	s.Require().Positive(got.Decay.Value)
-}
+				got := audio.Measure(
+					append(
+						audio.Plucked(110, sounding, rate, 0.8, 0.2),
+						audio.Silence(4.0, rate)...),
+					rate)
 
-// TestANoteStillRingingWhenThePlayingStops is the honest answer's limit.
-//
-// A note cut off before it has fallen to a quarter cannot be said to have
-// decayed in any particular time. All that is known is that it rang until the
-// playing stopped, and that is what comes back: the time to the rest, not the
-// length of the recording and not the silence after it.
-func (s *SignalPublicTestSuite) TestANoteStillRingingWhenThePlayingStops() {
-	// A slow decay, cut short: at this rate the note is nowhere near a
-	// quarter of its peak when the silence arrives.
-	const sounding = 0.5
-
-	got := audio.Measure(
-		append(
-			audio.Plucked(110, sounding, rate, 0.8, 0.2),
-			audio.Silence(4.0, rate)...),
-		rate)
-
-	// Still a measurement rather than an absence. The playing stopping is an
-	// observed event; what makes a decay unknown is the recording ending
-	// while the note is still above a quarter.
-	s.Require().True(got.Decay.Known)
-	s.Require().InDelta(sounding, got.Decay.Value, 0.05,
-		"it rang until the playing stopped, and no longer")
+				// Still a measurement rather than an absence. The playing stopping is an
+				// observed event; what makes a decay unknown is the recording ending
+				// while the note is still above a quarter.
+				s.Require().True(got.Decay.Known)
+				s.Require().InDelta(sounding, got.Decay.Value, 0.05,
+					"it rang until the playing stopped, and no longer")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestQuietestIsWhereItSays guards the one number this all turns on.

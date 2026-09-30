@@ -178,50 +178,71 @@ var yes = true
 // second is the other processor, on a device that has one.
 var second = 1
 
-// TestLowerWritesWhatMoves covers the assignments reaching a compiled preset.
-func (s *ControllersPublicTestSuite) TestLowerWritesWhatMoves() {
-	made := realised(&s.Suite, bassRig("Ampeg SVT", ""), s.cat)
-	made.Controllers = []rig.Controller{
-		{Controller: 2, Block: 0, Parameter: "Drive", Min: sweep(0.3), Max: sweep(0.85)},
+// TestLower covers writing what moves back into a preset, and the two it
+// refuses.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ControllersPublicTestSuite) TestLower() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The assignments reaching a compiled preset.
+			name: "lower writes what moves",
+			then: func() {
+				made := realised(&s.Suite, bassRig("Ampeg SVT", ""), s.cat)
+				made.Controllers = []rig.Controller{
+					{Controller: 2, Block: 0, Parameter: "Drive", Min: sweep(0.3), Max: sweep(0.85)},
+				}
+
+				doc, err := preset.Blank()
+				s.Require().NoError(err)
+				s.Require().NoError(compile.Lower(doc, made, s.cat))
+
+				body, err := json.Marshal(doc.Data.Tone["controller"])
+				s.Require().NoError(err)
+				s.Require().JSONEq(
+					`{"dsp0":{"block0":{"Drive":{"@controller":2,"@max":0.85,"@min":0.3}}}}`,
+					string(body))
+			},
+		},
+		{
+			// The check that runs before anything is written, so a plan
+			// naming a block its own chain does not have fails rather than
+			// building a preset with the pedal on nothing.
+			name: "lower refuses an assignment it cannot make",
+			then: func() {
+				made := realised(&s.Suite, bassRig("Ampeg SVT", ""), s.cat)
+				made.Controllers = []rig.Controller{
+					{Controller: 2, Block: 9, Parameter: "Drive"},
+				}
+
+				doc, err := preset.Blank()
+				s.Require().NoError(err)
+				s.Require().ErrorIs(compile.Lower(doc, made, s.cat), compile.ErrNoSuchBlock)
+				s.Require().NotContains(doc.Data.Tone, "controller")
+			},
+		},
+		{
+			// A plan naming the second path on a chain that has one.
+			name: "lower refuses a processor the device does not have",
+			then: func() {
+				made := realised(&s.Suite, bassRig("Ampeg SVT", ""), s.cat)
+				made.Controllers = []rig.Controller{
+					{Controller: 2, Block: 0, Path: &second, Parameter: "Drive"},
+				}
+
+				doc, err := preset.Blank()
+				s.Require().NoError(err)
+				s.Require().ErrorIs(compile.Lower(doc, made, s.cat), compile.ErrNoSuchBlock)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
-
-	doc, err := preset.Blank()
-	s.Require().NoError(err)
-	s.Require().NoError(compile.Lower(doc, made, s.cat))
-
-	body, err := json.Marshal(doc.Data.Tone["controller"])
-	s.Require().NoError(err)
-	s.Require().JSONEq(
-		`{"dsp0":{"block0":{"Drive":{"@controller":2,"@max":0.85,"@min":0.3}}}}`,
-		string(body))
-}
-
-// TestLowerRefusesAnAssignmentItCannotMake covers the check that runs before
-// anything is written, so a plan naming a block its own chain does not have
-// fails rather than building a preset with the pedal on nothing.
-func (s *ControllersPublicTestSuite) TestLowerRefusesAnAssignmentItCannotMake() {
-	made := realised(&s.Suite, bassRig("Ampeg SVT", ""), s.cat)
-	made.Controllers = []rig.Controller{
-		{Controller: 2, Block: 9, Parameter: "Drive"},
-	}
-
-	doc, err := preset.Blank()
-	s.Require().NoError(err)
-	s.Require().ErrorIs(compile.Lower(doc, made, s.cat), compile.ErrNoSuchBlock)
-	s.Require().NotContains(doc.Data.Tone, "controller")
-}
-
-// TestLowerRefusesAProcessorTheDeviceDoesNotHave covers a plan naming the
-// second path on a chain that has one.
-func (s *ControllersPublicTestSuite) TestLowerRefusesAProcessorTheDeviceDoesNotHave() {
-	made := realised(&s.Suite, bassRig("Ampeg SVT", ""), s.cat)
-	made.Controllers = []rig.Controller{
-		{Controller: 2, Block: 0, Path: &second, Parameter: "Drive"},
-	}
-
-	doc, err := preset.Blank()
-	s.Require().NoError(err)
-	s.Require().ErrorIs(compile.Lower(doc, made, s.cat), compile.ErrNoSuchBlock)
 }
 
 // controllerPreset is a preset carrying one controller section, for reading.
@@ -243,101 +264,122 @@ func (s *ControllersPublicTestSuite) controllerPreset(
 	return doc
 }
 
-// TestLiftReadsWhatMoves covers the other half of writing an assignment.
+// TestLift covers lifting what moves out of a preset, and a section it does
+// not carry.
 //
-// Without this a preset built from a rig that named a move round-tripped at the
-// byte level and came back with nothing a reader could see, which is the same
-// shape of bug as a field written and never read. Every malformed case answers
-// with nothing rather than failing: a preset is a device's file and half an
-// assignment is not worth refusing a whole chain over.
-func (s *ControllersPublicTestSuite) TestLiftReadsWhatMoves() {
-	tests := []struct {
+// One method and one table, so a case is a row rather than a file.
+func (s *ControllersPublicTestSuite) TestLift() {
+	for _, tt := range []struct {
 		name string
-		body string
-		want []rig.Controller
+		then func()
 	}{
 		{
-			name: "a pedal on a knob",
-			body: `{"dsp0":{"block0":{"Drive":` +
-				`{"@controller":2,"@min":0.3,"@max":0.85,"@snapshot_disable":true}}}}`,
-			want: []rig.Controller{{
-				Controller: 2, Block: 0, Parameter: "Drive",
-				Min: sweep(0.3), Max: sweep(0.85), NoSnapshot: &yes,
-			}},
-		},
-		{
-			// Two parameters on one block, which is what a pedal on the drive
-			// and a switch on the level looks like.
-			name: "one block with two assignments",
-			body: `{"dsp0":{"block0":{` +
-				`"Bass":{"@controller":1},"Drive":{"@controller":2}}}}`,
-			want: []rig.Controller{
-				{Controller: 1, Block: 0, Parameter: "Bass"},
-				{Controller: 2, Block: 0, Parameter: "Drive"},
-			},
-		},
-		{
-			// The second processor is carried, because a block number alone
-			// does not say which block on a device with two paths.
-			name: "an assignment on the second path",
-			body: `{"dsp1":{"block0":{"Drive":{"@controller":2}}}}`,
-			want: []rig.Controller{
-				{Controller: 2, Block: 0, Path: &second, Parameter: "Drive"},
-			},
-		},
-		{
-			// Nothing says what moves it, which is the one field an assignment
-			// cannot be read without.
-			name: "an entry with no controller number",
-			body: `{"dsp0":{"block0":{"Drive":{"@min":0.3}}}}`,
-		},
-		{
-			name: "a processor key that is not a number",
-			body: `{"dspX":{"block0":{"Drive":{"@controller":2}}}}`,
-		},
-		{
-			name: "a block key that is not a number",
-			body: `{"dsp0":{"blockX":{"Drive":{"@controller":2}}}}`,
-		},
-		{
-			name: "a processor holding something that is not blocks",
-			body: `{"dsp0":7}`,
-		},
-		{
-			name: "a block holding something that is not parameters",
-			body: `{"dsp0":{"block0":7}}`,
-		},
-		{
-			name: "a parameter holding something that is not fields",
-			body: `{"dsp0":{"block0":{"Drive":7}}}`,
-		},
-		{
-			name: "a section with nothing in it",
-			body: `{}`,
-		},
-	}
+			// The other half of writing an assignment.
+			//
+			// Without this a preset built from a rig that named a move
+			// round-tripped at the byte level and came back with nothing a
+			// reader could see, which is the same shape of bug as a field
+			// written and never read. Every malformed case answers with
+			// nothing rather than failing: a preset is a device's file and
+			// half an assignment is not worth refusing a whole chain over.
+			name: "lift reads what moves",
+			then: func() {
+				tests := []struct {
+					name string
+					body string
+					want []rig.Controller
+				}{
+					{
+						name: "a pedal on a knob",
+						body: `{"dsp0":{"block0":{"Drive":` +
+							`{"@controller":2,"@min":0.3,"@max":0.85,"@snapshot_disable":true}}}}`,
+						want: []rig.Controller{{
+							Controller: 2, Block: 0, Parameter: "Drive",
+							Min: sweep(0.3), Max: sweep(0.85), NoSnapshot: &yes,
+						}},
+					},
+					{
+						// Two parameters on one block, which is what a pedal on the drive
+						// and a switch on the level looks like.
+						name: "one block with two assignments",
+						body: `{"dsp0":{"block0":{` +
+							`"Bass":{"@controller":1},"Drive":{"@controller":2}}}}`,
+						want: []rig.Controller{
+							{Controller: 1, Block: 0, Parameter: "Bass"},
+							{Controller: 2, Block: 0, Parameter: "Drive"},
+						},
+					},
+					{
+						// The second processor is carried, because a block number alone
+						// does not say which block on a device with two paths.
+						name: "an assignment on the second path",
+						body: `{"dsp1":{"block0":{"Drive":{"@controller":2}}}}`,
+						want: []rig.Controller{
+							{Controller: 2, Block: 0, Path: &second, Parameter: "Drive"},
+						},
+					},
+					{
+						// Nothing says what moves it, which is the one field an assignment
+						// cannot be read without.
+						name: "an entry with no controller number",
+						body: `{"dsp0":{"block0":{"Drive":{"@min":0.3}}}}`,
+					},
+					{
+						name: "a processor key that is not a number",
+						body: `{"dspX":{"block0":{"Drive":{"@controller":2}}}}`,
+					},
+					{
+						name: "a block key that is not a number",
+						body: `{"dsp0":{"blockX":{"Drive":{"@controller":2}}}}`,
+					},
+					{
+						name: "a processor holding something that is not blocks",
+						body: `{"dsp0":7}`,
+					},
+					{
+						name: "a block holding something that is not parameters",
+						body: `{"dsp0":{"block0":7}}`,
+					},
+					{
+						name: "a parameter holding something that is not fields",
+						body: `{"dsp0":{"block0":{"Drive":7}}}`,
+					},
+					{
+						name: "a section with nothing in it",
+						body: `{}`,
+					},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						_, made, err := compile.Lift(s.controllerPreset(tt.body), s.cat)
+						s.Require().NoError(err)
+						s.Equal(tt.want, made.Controllers)
+					})
+				}
+			},
+		},
+		{
+			// A preset that says nothing about what moves, which is most of
+			// them.
+			name: "lift leaves an absent section alone",
+			then: func() {
+				doc, err := preset.Blank()
+				s.Require().NoError(err)
+
+				doc.Data.Tone["dsp0"]["block0"] = json.RawMessage(
+					`{"@model": "HD2_AmpSVBeastNrm", "@position": 0, "@enabled": true}`)
+
+				_, made, err := compile.Lift(doc, s.cat)
+				s.Require().NoError(err)
+				s.Nil(made.Controllers)
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			_, made, err := compile.Lift(s.controllerPreset(tt.body), s.cat)
-			s.Require().NoError(err)
-			s.Equal(tt.want, made.Controllers)
+			tt.then()
 		})
 	}
-}
-
-// TestLiftLeavesAnAbsentSectionAlone covers a preset that says nothing about
-// what moves, which is most of them.
-func (s *ControllersPublicTestSuite) TestLiftLeavesAnAbsentSectionAlone() {
-	doc, err := preset.Blank()
-	s.Require().NoError(err)
-
-	doc.Data.Tone["dsp0"]["block0"] = json.RawMessage(
-		`{"@model": "HD2_AmpSVBeastNrm", "@position": 0, "@enabled": true}`)
-
-	_, made, err := compile.Lift(doc, s.cat)
-	s.Require().NoError(err)
-	s.Nil(made.Controllers)
 }
 
 func TestControllersPublicTestSuite(

@@ -40,8 +40,8 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
-// HeadroomPublicTestSuite covers taking a preset off the measuring loop.
-type HeadroomPublicTestSuite struct {
+// HeadroomTestSuite covers taking a preset off the measuring loop.
+type HeadroomTestSuite struct {
 	suite.Suite
 }
 
@@ -73,7 +73,7 @@ func routed() plan.Plan {
 // sent somewhere the measuring lead does not reach, and its gain set.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *HeadroomPublicTestSuite) TestOffTheLoop() {
+func (s *HeadroomTestSuite) TestOffTheLoop() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -209,7 +209,7 @@ func (s *HeadroomPublicTestSuite) TestOffTheLoop() {
 // rather than a difference: each case is checked against what that device's own
 // list says, so the day one of them moves it, this passes and the measuring rig
 // keeps working. Asserting 10 four times would pass that day too, and be wrong.
-func (s *HeadroomPublicTestSuite) TestTheDestinationComesFromThePresetsOwnDevice() {
+func (s *HeadroomTestSuite) TestTheDestinationComesFromThePresetsOwnDevice() {
 	for _, tt := range []struct {
 		name   string
 		device *int
@@ -244,17 +244,17 @@ func ptr[T any](
 	return &v
 }
 
-func TestHeadroomPublicTestSuite(
+func TestHeadroomTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(HeadroomPublicTestSuite))
+	suite.Run(t, new(HeadroomTestSuite))
 }
 
 // TestQuieter covers quieter, which writes the plan again off the measuring
 // loop, and returns the preset compiled from it.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *HeadroomPublicTestSuite) TestQuieter() {
+func (s *HeadroomTestSuite) TestQuieter() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -424,7 +424,7 @@ func (s *HeadroomPublicTestSuite) TestQuieter() {
 // throwing a five-minute run away over one routing entry is the worse failure.
 // But it goes back carrying the measuring rig's own output, so it is silent at
 // the quarter-inch socket, and a person not told that finds out by plugging in.
-func (s *HeadroomPublicTestSuite) TestItWarnsWhenItCannotPutTheOutputBack() {
+func (s *HeadroomTestSuite) TestItWarnsWhenItCannotPutTheOutputBack() {
 	measuring := routed()
 
 	for _, tt := range []struct {

@@ -575,41 +575,66 @@ func (s *WritePublicTestSuite) TestEmptySlot() {
 	}
 }
 
-// TestWriteCurrent replaces what a device is playing, storing nothing.
+// TestWriteCurrent covers writing the edit buffer, and a device that refuses
+// it.
 //
-// The document and no slot, which is the difference that matters: every
-// argument a slot write carries names where to put it, and this one has
-// nowhere to put it. That is not a saving, it is the point. A slot is flash,
-// a burst of flash writes has taken a setlist past what a power cycle could
-// clear, and measuring a device's blocks means loading hundreds of chains
-// nobody wants to keep.
+// One method and one table, so a case is a row rather than a file.
 func (s *WritePublicTestSuite) TestWriteCurrent() {
-	d := s.completes()
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// Replaces what a device is playing, storing nothing.
+			//
+			// The document and no slot, which is the difference that matters:
+			// every argument a slot write carries names where to put it, and
+			// this one has nowhere to put it. That is not a saving, it is the
+			// point. A slot is flash, a burst of flash writes has taken a
+			// setlist past what a power cycle could clear, and measuring a
+			// device's blocks means loading hundreds of chains nobody wants
+			// to keep.
+			name: "write current",
+			then: func() {
+				d := s.completes()
 
-	s.Require().NoError(
-		s.session(d).WriteCurrent(context.Background(), []byte("a preset")))
+				s.Require().NoError(
+					s.session(d).WriteCurrent(context.Background(), []byte("a preset")))
 
-	s.Require().Equal(
-		wire.EncodeRequest(wire.Request{
-			Txn:    device.FirstTxn,
-			Opcode: 21,
-			Args:   []wire.Arg{wire.Blob(110, []byte("a preset"))},
-		}),
-		s.stream(d),
-		"the document, and nothing saying where to put it")
-}
+				s.Require().Equal(
+					wire.EncodeRequest(wire.Request{
+						Txn:    device.FirstTxn,
+						Opcode: 21,
+						Args:   []wire.Arg{wire.Blob(110, []byte("a preset"))},
+					}),
+					s.stream(d),
+					"the document, and nothing saying where to put it")
+			},
+		},
+		{
+			// The device declining the swap.
+			//
+			// Read the same way a slot write's refusal is, so a caller hears
+			// no rather than going on to measure whatever the device was
+			// already playing and filing it under the chain it thought it had
+			// loaded.
+			name: "a write current a device refuses",
+			then: func() {
+				d := answers(s.ctrl, s.answer(device.FirstTxn, 255))
 
-// TestAWriteCurrentADeviceRefuses covers the device declining the swap.
-//
-// Read the same way a slot write's refusal is, so a caller hears no rather
-// than going on to measure whatever the device was already playing and
-// filing it under the chain it thought it had loaded.
-func (s *WritePublicTestSuite) TestAWriteCurrentADeviceRefuses() {
-	d := answers(s.ctrl, s.answer(device.FirstTxn, 255))
+				err := s.session(d).WriteCurrent(context.Background(), []byte("a preset"))
 
-	err := s.session(d).WriteCurrent(context.Background(), []byte("a preset"))
+				s.Require().ErrorIs(err, wire.ErrRefused)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
 
-	s.Require().ErrorIs(err, wire.ErrRefused)
+			tt.then()
+		})
+	}
 }
 
 // TestAWriteOnAChannelNobodyOpened covers a session that never handshook.

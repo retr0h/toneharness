@@ -36,14 +36,14 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
-// SlopesPublicTestSuite covers holding a committed sweep to the chain it is
+// SlopesTestSuite covers holding a committed sweep to the chain it is
 // being used in.
 //
 // The disagreement it settles is real and measured: `tone reach` answers from
 // the committed slopes and says every rig reaches every genre, `tone tune`
 // reads its slopes live and stopped 5.3 tolerances out on the same rig and
 // target. The sweeps were taken with each block alone.
-type SlopesPublicTestSuite struct {
+type SlopesTestSuite struct {
 	suite.Suite
 
 	ctrl  *gomock.Controller
@@ -51,7 +51,7 @@ type SlopesPublicTestSuite struct {
 	dry   string
 }
 
-func (s *SlopesPublicTestSuite) SetupTest() {
+func (s *SlopesTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.pedal = mocks.NewMockTuner(s.ctrl)
 	// Every measuring command asks the client which models the attached
@@ -75,7 +75,7 @@ func (s *SlopesPublicTestSuite) SetupTest() {
 		Return(sdk.Built{}, nil).AnyTimes()
 }
 
-func (s *SlopesPublicTestSuite) opts() SlopesOptions {
+func (s *SlopesTestSuite) opts() SlopesOptions {
 	return SlopesOptions{
 		Client: s.pedal, Bench: &sloping{}, Dry: s.dry,
 		ID: "matt-freeman", Seconds: 0.1, Takes: 2, Nudge: 0.1,
@@ -85,7 +85,7 @@ func (s *SlopesPublicTestSuite) opts() SlopesOptions {
 
 // built makes the pedal answer with a chain whose blocks have committed
 // readings.
-func (s *SlopesPublicTestSuite) built() {
+func (s *SlopesTestSuite) built() {
 	s.pedal.EXPECT().
 		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
@@ -100,7 +100,7 @@ func (s *SlopesPublicTestSuite) built() {
 // the committed sweeps to it.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *SlopesPublicTestSuite) TestSlopes() {
+func (s *SlopesTestSuite) TestSlopes() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -287,7 +287,7 @@ func (s *SlopesPublicTestSuite) TestSlopes() {
 // A sign change is not a bigger difference, it is a different answer: a control
 // whose slope flipped is one the solver pushes the wrong way, confidently, on
 // every pass. Four of the SV Beast's eleven do.
-func (s *SlopesPublicTestSuite) TestRatioSaysWhichKindOfDisagreementItIs() {
+func (s *SlopesTestSuite) TestRatioSaysWhichKindOfDisagreementItIs() {
 	tests := []struct {
 		name    string
 		is, was float64
@@ -308,8 +308,8 @@ func (s *SlopesPublicTestSuite) TestRatioSaysWhichKindOfDisagreementItIs() {
 	}
 }
 
-func TestSlopesPublicTestSuite(
+func TestSlopesTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(SlopesPublicTestSuite))
+	suite.Run(t, new(SlopesTestSuite))
 }

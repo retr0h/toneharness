@@ -43,51 +43,71 @@ type ShippedPublicTestSuite struct {
 	suite.Suite
 }
 
-func (s *ShippedPublicTestSuite) TestEveryShippedRigLoads() {
-	paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.yaml"))
-	s.Require().NoError(err)
-	s.Require().NotEmpty(paths, "no rigs found to check")
-
-	for _, path := range paths {
-		// The ask beside each rig lives in the same directory and is a
-		// different document. pkg/sdk/tone checks those; this one is the rigs.
-		if strings.HasSuffix(path, ".tone.yaml") {
-			continue
-		}
-
-		s.Run(filepath.Base(path), func() {
-			f, err := shipped.FS.Open(path)
-			s.Require().NoError(err)
-
-			defer func() { s.Require().NoError(f.Close()) }()
-
-			spec, err := rig.Load(f)
-			s.Require().NoError(err)
-
-			s.Require().Equal(spec.ID+".yaml", filepath.Base(path),
-				"a rig must be findable by name without opening it")
-		})
-	}
-}
-
-// TestEveryExampleLoads checks the fully-filled rigs the docs point at.
+// TestEveryRigThatShipsLoads covers every rig and every example loading
+// against the contract.
 //
-// An example that no longer parses is worse than no example: it is the first
-// thing somebody copies.
-func (s *ShippedPublicTestSuite) TestEveryExampleLoads() {
-	paths, err := filepath.Glob(filepath.Join("..", "..", "..", "examples", "rigspec", "*.yaml"))
-	s.Require().NoError(err)
-	s.Require().NotEmpty(paths, "no examples found to check")
+// One method and one table, so a case is a row rather than a file.
+func (s *ShippedPublicTestSuite) TestEveryRigThatShipsLoads() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "every shipped rig loads",
+			then: func() {
+				paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.yaml"))
+				s.Require().NoError(err)
+				s.Require().NotEmpty(paths, "no rigs found to check")
 
-	for _, path := range paths {
-		s.Run(filepath.Base(path), func() {
-			f, err := os.Open(path)
-			s.Require().NoError(err)
+				for _, path := range paths {
+					// The ask beside each rig lives in the same directory and is a
+					// different document. pkg/sdk/tone checks those; this one is the rigs.
+					if strings.HasSuffix(path, ".tone.yaml") {
+						continue
+					}
 
-			defer func() { s.Require().NoError(f.Close()) }()
+					s.Run(filepath.Base(path), func() {
+						f, err := shipped.FS.Open(path)
+						s.Require().NoError(err)
 
-			_, err = rig.Load(f)
-			s.Require().NoError(err)
+						defer func() { s.Require().NoError(f.Close()) }()
+
+						spec, err := rig.Load(f)
+						s.Require().NoError(err)
+
+						s.Require().Equal(spec.ID+".yaml", filepath.Base(path),
+							"a rig must be findable by name without opening it")
+					})
+				}
+			},
+		},
+		{
+			// Checks the fully-filled rigs the docs point at.
+			//
+			// An example that no longer parses is worse than no example: it
+			// is the first thing somebody copies.
+			name: "every example loads",
+			then: func() {
+				paths, err := filepath.Glob(filepath.Join("..", "..", "..", "examples", "rigspec", "*.yaml"))
+				s.Require().NoError(err)
+				s.Require().NotEmpty(paths, "no examples found to check")
+
+				for _, path := range paths {
+					s.Run(filepath.Base(path), func() {
+						f, err := os.Open(path)
+						s.Require().NoError(err)
+
+						defer func() { s.Require().NoError(f.Close()) }()
+
+						_, err = rig.Load(f)
+						s.Require().NoError(err)
+					})
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
 		})
 	}
 }

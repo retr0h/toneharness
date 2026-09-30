@@ -603,28 +603,49 @@ func (s *ShippedPublicTestSuite) TestShippedParses() {
 	}
 }
 
-// TestShippedGenreFindsOneBySlug covers the lookup a request goes through.
-func (s *ShippedPublicTestSuite) TestShippedGenreFindsOneBySlug() {
-	all, err := audio.Shipped()
-	s.Require().NoError(err)
-
-	if len(all) == 0 {
-		s.T().Skip("no genres measured into this binary")
-	}
-
-	got, ok := audio.ShippedGenre(all[0].Slug)
-	s.Require().True(ok)
-	s.Require().Equal(all[0].Slug, got.Slug)
-}
-
-// TestAGenreNothingMeasured is the answer for a word nobody has records for.
+// TestShippedGenreFindsOneBySlug covers looking a shipped genre up, and the
+// slug nothing measured.
 //
-// Not an error. A request may name anything, and the honest answer is that
-// nothing was measured rather than that something went wrong.
-func (s *ShippedPublicTestSuite) TestAGenreNothingMeasured() {
-	got, ok := audio.ShippedGenre("no-such-genre")
-	s.Require().False(ok)
-	s.Require().Zero(got.Records)
+// One method and one table, so a case is a row rather than a file.
+func (s *ShippedPublicTestSuite) TestShippedGenreFindsOneBySlug() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The lookup a request goes through.
+			name: "shipped genre finds one by slug",
+			then: func() {
+				all, err := audio.Shipped()
+				s.Require().NoError(err)
+
+				if len(all) == 0 {
+					s.T().Skip("no genres measured into this binary")
+				}
+
+				got, ok := audio.ShippedGenre(all[0].Slug)
+				s.Require().True(ok)
+				s.Require().Equal(all[0].Slug, got.Slug)
+			},
+		},
+		{
+			// The answer for a word nobody has records for.
+			//
+			// Not an error. A request may name anything, and the honest
+			// answer is that nothing was measured rather than that something
+			// went wrong.
+			name: "a genre nothing measured",
+			then: func() {
+				got, ok := audio.ShippedGenre("no-such-genre")
+				s.Require().False(ok)
+				s.Require().Zero(got.Records)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 func TestShippedPublicTestSuite(

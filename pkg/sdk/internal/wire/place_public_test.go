@@ -533,104 +533,124 @@ func (s *PlacePublicTestSuite) TestNoRoomError() {
 	s.Require().ErrorIs(err, wire.ErrNoRoom)
 }
 
-// TestPlaceOnAChainTheDeviceDidNotWrite covers grids no device produces.
+// TestPlaceOnWhatTheDeviceDidNotWrite covers placing a section into a
+// document this tool did not get from a device.
 //
-// Every one of these is reached by rebuilding the chain rather than by
-// asking a capture for something it does not have.
-func (s *PlacePublicTestSuite) TestPlaceOnAChainTheDeviceDidNotWrite() {
-	tests := []struct {
-		name  string
-		chain []byte
-		want  int
+// One method and one table, so a case is a row rather than a file.
+func (s *PlacePublicTestSuite) TestPlaceOnWhatTheDeviceDidNotWrite() {
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name:  "a grid shorter than the device lays out",
-			chain: []byte{0x91, 0x82, 0x13, 0x08, 0x14, 0xc0},
-			want:  0,
-		},
-		{
-			name:  "a position that is not a map",
-			chain: []byte{0x91, 0x2a},
-			want:  0,
-		},
-		{
-			name:  "a position not saying what kind it is",
-			chain: []byte{0x91, 0x81, 0x14, 0xc0},
-			want:  0,
-		},
-		{
-			name:  "a kind that is not a number",
-			chain: []byte{0x91, 0x82, 0x13, 0xa1, 0x61, 0x14, 0xc0},
-			want:  0,
-		},
-	}
+			// Grids no device produces.
+			//
+			// Every one of these is reached by rebuilding the chain rather
+			// than by asking a capture for something it does not have.
+			name: "place on a chain the device did not write",
+			then: func() {
+				tests := []struct {
+					name  string
+					chain []byte
+					want  int
+				}{
+					{
+						name:  "a grid shorter than the device lays out",
+						chain: []byte{0x91, 0x82, 0x13, 0x08, 0x14, 0xc0},
+						want:  0,
+					},
+					{
+						name:  "a position that is not a map",
+						chain: []byte{0x91, 0x2a},
+						want:  0,
+					},
+					{
+						name:  "a position not saying what kind it is",
+						chain: []byte{0x91, 0x81, 0x14, 0xc0},
+						want:  0,
+					},
+					{
+						name:  "a kind that is not a number",
+						chain: []byte{0x91, 0x82, 0x13, 0xa1, 0x61, 0x14, 0xc0},
+						want:  0,
+					},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						doc := s.blank()
+
+						body, ok := doc.Section(0)
+						s.Require().True(ok)
+
+						doc.SetSection(0, s.replace(body, wire.Path{22}, tt.chain))
+
+						s.Require().NoError(wire.Place(doc, nil))
+						s.Require().Len(s.read(doc).Blocks, tt.want)
+					})
+				}
+			},
+		},
+		{
+			// The same for section 10.
+			name: "place on snapshots the device did not write",
+			then: func() {
+				tests := []struct {
+					name    string
+					snaps   []byte
+					section []byte
+					err     error
+				}{
+					{
+						name:    "a section with no snapshot list at all",
+						section: []byte{0x81, 0x06, 0x00},
+						err:     wire.ErrNoSuchPath,
+					},
+					{
+						name:  "a snapshot list that is not a list",
+						snaps: []byte{0x2a},
+						err:   wire.ErrNoSuchPath,
+					},
+					{
+						name:  "a snapshot with no record of the grid",
+						snaps: []byte{0x91, 0x80},
+					},
+					{
+						name:  "a snapshot keeping a shorter record than the grid",
+						snaps: []byte{0x91, 0x81, 0x03, 0x91, 0x92, 0xc2, 0xc2},
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						doc := s.blank()
+
+						if tt.section != nil {
+							doc.SetSection(10, tt.section)
+						} else {
+							body, ok := doc.Section(10)
+							s.Require().True(ok)
+
+							doc.SetSection(10, s.replace(body, wire.Path{10}, tt.snaps))
+						}
+
+						err := wire.Place(doc, []wire.Placement{s.drive()})
+
+						if tt.err != nil {
+							s.Require().ErrorIs(err, tt.err)
+
+							return
+						}
+
+						s.Require().NoError(err)
+						s.Require().Len(s.read(doc).Blocks, 1)
+					})
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			doc := s.blank()
-
-			body, ok := doc.Section(0)
-			s.Require().True(ok)
-
-			doc.SetSection(0, s.replace(body, wire.Path{22}, tt.chain))
-
-			s.Require().NoError(wire.Place(doc, nil))
-			s.Require().Len(s.read(doc).Blocks, tt.want)
-		})
-	}
-}
-
-// TestPlaceOnSnapshotsTheDeviceDidNotWrite covers the same for section 10.
-func (s *PlacePublicTestSuite) TestPlaceOnSnapshotsTheDeviceDidNotWrite() {
-	tests := []struct {
-		name    string
-		snaps   []byte
-		section []byte
-		err     error
-	}{
-		{
-			name:    "a section with no snapshot list at all",
-			section: []byte{0x81, 0x06, 0x00},
-			err:     wire.ErrNoSuchPath,
-		},
-		{
-			name:  "a snapshot list that is not a list",
-			snaps: []byte{0x2a},
-			err:   wire.ErrNoSuchPath,
-		},
-		{
-			name:  "a snapshot with no record of the grid",
-			snaps: []byte{0x91, 0x80},
-		},
-		{
-			name:  "a snapshot keeping a shorter record than the grid",
-			snaps: []byte{0x91, 0x81, 0x03, 0x91, 0x92, 0xc2, 0xc2},
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			doc := s.blank()
-
-			if tt.section != nil {
-				doc.SetSection(10, tt.section)
-			} else {
-				body, ok := doc.Section(10)
-				s.Require().True(ok)
-
-				doc.SetSection(10, s.replace(body, wire.Path{10}, tt.snaps))
-			}
-
-			err := wire.Place(doc, []wire.Placement{s.drive()})
-
-			if tt.err != nil {
-				s.Require().ErrorIs(err, tt.err)
-
-				return
-			}
-
-			s.Require().NoError(err)
-			s.Require().Len(s.read(doc).Blocks, 1)
+			tt.then()
 		})
 	}
 }

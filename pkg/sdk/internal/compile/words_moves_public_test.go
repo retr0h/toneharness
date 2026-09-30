@@ -58,50 +58,94 @@ func described(
 	return compile.Intent{Words: words}
 }
 
-// TestWordsReachTheAmplifier covers a word turning a real knob.
+// TestWordsReachTheAmplifier covers a word landing on the amplifier's own
+// controls, and a chain with no amplifier to land on.
 //
-// Drive, because it is the one control every amplifier in this fixture
-// carries. Which parameter each axis moves is covered against a block built
-// for it in move_test.go; what this proves is that a rig's words reach the
-// amplifier at all.
+// One method and one table, so a case is a row rather than a file.
 func (s *WordsMovePublicTestSuite) TestWordsReachTheAmplifier() {
-	tests := []struct {
+	for _, tt := range []struct {
 		name string
-		term string
-		up   bool
+		then func()
 	}{
-		{name: "pushed harder", term: "saturated", up: true},
-		{name: "backed off", term: "clean"},
-	}
+		{
+			// A word turning a real knob.
+			//
+			// Drive, because it is the one control every amplifier in this
+			// fixture carries. Which parameter each axis moves is covered
+			// against a block built for it in move_test.go; what this proves
+			// is that a rig's words reach the amplifier at all.
+			name: "words reach the amplifier",
+			then: func() {
+				tests := []struct {
+					name string
+					term string
+					up   bool
+				}{
+					{name: "pushed harder", term: "saturated", up: true},
+					{name: "backed off", term: "clean"},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						plain, _, _, err := compile.Resolve(
+							bassRig("Ampeg SVT", ""),
+							compile.Intent{},
+							s.cat,
+							nil,
+						)
+						s.Require().NoError(err)
+
+						got, _, moved, err := compile.Resolve(
+							bassRig("Ampeg SVT", ""), described(tt.term), s.cat, nil)
+						s.Require().NoError(err)
+
+						s.Require().Len(moved, 1)
+						s.Require().True(moved[0].Acted())
+						s.Require().Equal("Drive", moved[0].Param)
+
+						was := s.paramOf(plain, "Drive")
+						now := s.paramOf(got, "Drive")
+
+						if tt.up {
+							s.Require().Greater(now, was)
+
+							return
+						}
+
+						s.Require().Less(now, was)
+					})
+				}
+			},
+		},
+		{
+			// An ask describing a sound the rig has nowhere to make.
+			//
+			// The words are still what somebody asked for, so they are
+			// reported as moving nothing rather than dropped.
+			name: "words survive a chain with no amplifier",
+			then: func() {
+				spec := rig.Spec{
+					Schema:     rig.SchemaName,
+					ID:         "test",
+					Instrument: rig.InstrumentBass,
+					Chain: []rig.ChainEntry{
+						{Role: rig.RoleOther, Gear: "Klon Centaur"},
+					},
+				}
+
+				_, _, moved, err := compile.Resolve(spec, described("mid-forward"), s.cat, nil)
+
+				s.Require().NoError(err)
+				s.Require().Len(moved, 1)
+				s.Require().False(moved[0].Acted())
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			plain, _, _, err := compile.Resolve(
-				bassRig("Ampeg SVT", ""),
-				compile.Intent{},
-				s.cat,
-				nil,
-			)
-			s.Require().NoError(err)
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
 
-			got, _, moved, err := compile.Resolve(
-				bassRig("Ampeg SVT", ""), described(tt.term), s.cat, nil)
-			s.Require().NoError(err)
-
-			s.Require().Len(moved, 1)
-			s.Require().True(moved[0].Acted())
-			s.Require().Equal("Drive", moved[0].Param)
-
-			was := s.paramOf(plain, "Drive")
-			now := s.paramOf(got, "Drive")
-
-			if tt.up {
-				s.Require().Greater(now, was)
-
-				return
-			}
-
-			s.Require().Less(now, was)
+			tt.then()
 		})
 	}
 }
@@ -138,28 +182,6 @@ func (s *WordsMovePublicTestSuite) TestAnAskThatSaysNothingMovesNothing() {
 
 	s.Require().NoError(err)
 	s.Require().Empty(moved)
-}
-
-// TestWordsSurviveAChainWithNoAmplifier covers an ask describing a sound the
-// rig has nowhere to make.
-//
-// The words are still what somebody asked for, so they are reported as moving
-// nothing rather than dropped.
-func (s *WordsMovePublicTestSuite) TestWordsSurviveAChainWithNoAmplifier() {
-	spec := rig.Spec{
-		Schema:     rig.SchemaName,
-		ID:         "test",
-		Instrument: rig.InstrumentBass,
-		Chain: []rig.ChainEntry{
-			{Role: rig.RoleOther, Gear: "Klon Centaur"},
-		},
-	}
-
-	_, _, moved, err := compile.Resolve(spec, described("mid-forward"), s.cat, nil)
-
-	s.Require().NoError(err)
-	s.Require().Len(moved, 1)
-	s.Require().False(moved[0].Acted())
 }
 
 // TestTwoWordsForOneAxisMoveNothing covers an ask answering one question

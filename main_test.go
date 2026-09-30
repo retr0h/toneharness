@@ -1394,8 +1394,353 @@ func (s *MainTestSuite) TestTheSDKReadsOneVariable() {
 		"the one variable pkg/sdk reads is XDG_STATE_HOME")
 }
 
+// TestEverySuiteIsNamedForItsFileKind covers the other half of the naming rule.
+//
+// CONTRIBUTING pairs each suffix with a suite name: *_public_test.go carries
+// {Name}PublicTestSuite and *_test.go carries {Name}TestSuite.
+// TestATestFileSaysWhichKindItIs already holds the suffix against the package
+// clause, which leaves the suite name unchecked, and twelve files in pkg/cli
+// sat in `package cli` under a PublicTestSuite. A reader looking for the
+// external suite of a package finds those first and they are not it.
+func (s *MainTestSuite) TestEverySuiteIsNamedForItsFileKind() {
+	fset := token.NewFileSet()
+
+	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		switch {
+		case err != nil:
+			return err
+		case d.IsDir():
+			if name := d.Name(); name == ".git" || name == ".worktrees" ||
+				name == "node_modules" {
+				return fs.SkipDir
+			}
+
+			return nil
+		case !strings.HasSuffix(path, "_test.go"),
+			d.Name() == "export_test.go",
+			strings.Contains(d.Name(), ".gen"):
+			return nil
+		}
+
+		f, err := parser.ParseFile(fset, path, nil, 0)
+		if err != nil {
+			return err
+		}
+
+		outside := strings.HasSuffix(path, "_public_test.go")
+
+		for _, decl := range f.Decls {
+			gen, ok := decl.(*ast.GenDecl)
+			if !ok || gen.Tok != token.TYPE {
+				continue
+			}
+
+			for _, spec := range gen.Specs {
+				named, ok := spec.(*ast.TypeSpec)
+				if !ok || !strings.HasSuffix(named.Name.Name, "TestSuite") {
+					continue
+				}
+
+				public := strings.HasSuffix(named.Name.Name, "PublicTestSuite")
+
+				s.Require().Equal(outside, public,
+					"%s declares %s: a suite in a _public_test.go file is "+
+						"named {Name}PublicTestSuite and one in a _test.go "+
+						"file {Name}TestSuite",
+					path, named.Name.Name)
+			}
+		}
+
+		return nil
+	})
+
+	s.Require().NoError(err)
+}
+
+// TestEveryFunctionUnderTestHasOneSuiteMethod holds the rule that had drifted
+// furthest.
+//
+// CONTRIBUTING: one suite method per function under test, with success, errors
+// and edge cases as rows in one table. Nothing checked it, and 559 methods
+// across 101 files were above it — MeasureBlocks had 17, Translate 35,
+// audio.Measure 23. Every rule in this file holds; every rule that had no test
+// in it had drifted, which is the argument for this one existing.
+//
+// A method is attributed to the function whose name its own name carries, and
+// otherwise to the least shared function it calls, because a call every method
+// makes is setup rather than the subject.
+func (s *MainTestSuite) TestEveryFunctionUnderTestHasOneSuiteMethod() {
+	fset := token.NewFileSet()
+
+	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		switch {
+		case err != nil:
+			return err
+		case !d.IsDir():
+			return nil
+		case d.Name() == ".git" || d.Name() == ".worktrees" ||
+			d.Name() == "node_modules" || d.Name() == ".claude":
+			return fs.SkipDir
+		}
+
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return err
+		}
+
+		// Every function the package declares, so a suite in a file named for
+		// something else is still held against the package it tests.
+		declared := map[string]bool{}
+
+		for _, entry := range entries {
+			name := entry.Name()
+			if entry.IsDir() || !strings.HasSuffix(name, ".go") ||
+				strings.HasSuffix(name, "_test.go") ||
+				strings.Contains(name, ".gen") {
+				continue
+			}
+
+			f, err := parser.ParseFile(fset, filepath.Join(path, name), nil, 0)
+			if err != nil {
+				return err
+			}
+
+			for _, decl := range f.Decls {
+				fn, ok := decl.(*ast.FuncDecl)
+				if !ok || len(fn.Name.Name) < 3 {
+					continue
+				}
+
+				// Plumbing an interface asks for rather than a subject
+				// anybody writes a suite about.
+				switch fn.Name.Name {
+				case "Error", "String", "Unwrap", "MarshalJSON",
+					"UnmarshalJSON":
+					continue
+				}
+
+				declared[fn.Name.Name] = true
+			}
+		}
+
+		if len(declared) == 0 {
+			return nil
+		}
+
+		// Which methods call each declared function, and the source of each
+		// method so the subject can be picked from it.
+		calls := map[string]map[where]bool{}
+		methods := map[where]bool{}
+
+		for _, entry := range entries {
+			name := entry.Name()
+			if entry.IsDir() || !strings.HasSuffix(name, "_test.go") {
+				continue
+			}
+
+			at := filepath.Join(path, name)
+
+			f, err := parser.ParseFile(fset, at, nil, 0)
+			if err != nil {
+				return err
+			}
+
+			for _, decl := range f.Decls {
+				fn, ok := decl.(*ast.FuncDecl)
+				if !ok || fn.Recv == nil || !strings.HasPrefix(fn.Name.Name, "Test") {
+					continue
+				}
+
+				recv := receiverOf(fn)
+				if !strings.HasSuffix(recv, "TestSuite") {
+					continue
+				}
+
+				held := where{suite: recv, fn: fn.Name.Name}
+				methods[held] = true
+
+				ast.Inspect(fn.Body, func(n ast.Node) bool {
+					call, ok := n.(*ast.CallExpr)
+					if !ok {
+						return true
+					}
+
+					named := ""
+
+					switch fun := call.Fun.(type) {
+					case *ast.Ident:
+						named = fun.Name
+					case *ast.SelectorExpr:
+						named = fun.Sel.Name
+					}
+
+					if declared[named] {
+						if calls[named] == nil {
+							calls[named] = map[where]bool{}
+						}
+
+						calls[named][held] = true
+					}
+
+					return true
+				})
+			}
+		}
+
+		// A function all but one of a suite's methods call is that suite's
+		// setup rather than its subject, so it names no group.
+		for fn, by := range calls {
+			held := map[string]int{}
+			for method := range by {
+				held[method.suite]++
+			}
+
+			for suite, n := range held {
+				total := 0
+				for method := range methods {
+					if method.suite == suite {
+						total++
+					}
+				}
+
+				if total > 2 && n >= total-1 {
+					for method := range by {
+						if method.suite == suite {
+							delete(calls[fn], method)
+						}
+					}
+				}
+			}
+		}
+
+		// Four pairs the attribution reads as one function and are two. Named
+		// rather than worked around, so each stays a decision somebody made:
+		// the heuristic picks the least shared function a method calls when
+		// the method's own name matches none, and in each of these the two
+		// methods are about two functions that share a call.
+		//
+		//   New and WithBackupDir        an option, and the defaults without it
+		//   Measured and MeasuredKeys    the readings, and the keys naming them
+		//   Error and Match              a cabinet's error type, and matching one
+		//   accessors and UnmarshalJSON  reading a value, and decoding one
+		twoFunctions := map[string]bool{
+			"pkg/sdk WithBackupDir":  true,
+			"pkg/sdk/audio Measured": true,
+			"pkg/sdk/cab Match":      true,
+			"pkg/sdk/catalog Type":   true,
+		}
+
+		for _, at := range subjects(methods, calls) {
+			if twoFunctions[filepath.ToSlash(path)+" "+at.fn] {
+				continue
+			}
+
+			s.Require().LessOrEqual(len(at.methods), 1,
+				"%s has %d suite methods for %s (%v): CONTRIBUTING wants one "+
+					"method per function under test, with the cases as rows "+
+					"in one table",
+				path, len(at.methods), at.fn, at.methods)
+		}
+
+		return nil
+	})
+
+	s.Require().NoError(err)
+}
+
 func TestMainTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(MainTestSuite))
+}
+
+// receiverOf is the type name a method hangs off, pointer or not.
+func receiverOf(
+	fn *ast.FuncDecl,
+) string {
+	if len(fn.Recv.List) == 0 {
+		return ""
+	}
+
+	switch held := fn.Recv.List[0].Type.(type) {
+	case *ast.StarExpr:
+		if named, ok := held.X.(*ast.Ident); ok {
+			return named.Name
+		}
+	case *ast.Ident:
+		return held.Name
+	}
+
+	return ""
+}
+
+// where is one suite and one function in it.
+type where struct{ suite, fn string }
+
+// covering is one function and the suite methods that are about it.
+type covering struct {
+	fn      string
+	methods []string
+}
+
+// subjects decides which function each suite method is about.
+//
+// The method's own name first: TestMeasure is about Measure however many other
+// functions it calls on the way. Otherwise the least shared function it calls,
+// because one every method in the suite calls is that suite's setup while one a
+// single method calls is what that method is for. Grouped per suite, so two
+// suites over the same function in one package are not read as one.
+func subjects(
+	methods map[where]bool,
+	calls map[string]map[where]bool,
+) []covering {
+	held := map[where][]string{}
+
+	for method := range methods {
+		var called []string
+
+		for fn, by := range calls {
+			if by[method] {
+				called = append(called, fn)
+			}
+		}
+
+		if len(called) == 0 {
+			continue
+		}
+
+		sort.Strings(called)
+
+		pick := ""
+
+		for _, fn := range called {
+			if strings.Contains(strings.ToLower(method.fn), strings.ToLower(fn)) &&
+				len(fn) > len(pick) {
+				pick = fn
+			}
+		}
+
+		if pick == "" {
+			pick = called[0]
+			for _, fn := range called {
+				if len(calls[fn]) < len(calls[pick]) {
+					pick = fn
+				}
+			}
+		}
+
+		key := where{suite: method.suite, fn: pick}
+		held[key] = append(held[key], method.fn)
+	}
+
+	out := make([]covering, 0, len(held))
+
+	for key, names := range held {
+		sort.Strings(names)
+		out = append(out, covering{fn: key.fn, methods: names})
+	}
+
+	sort.Slice(out, func(i, j int) bool { return out[i].fn < out[j].fn })
+
+	return out
 }

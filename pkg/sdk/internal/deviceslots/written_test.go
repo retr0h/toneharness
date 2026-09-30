@@ -55,93 +55,114 @@ type WrittenTestSuite struct {
 	suite.Suite
 }
 
-// TestBuildingAPresetMatchesWhatTheDeviceWrote is the regression.
+// TestTheDocumentThisBuildsMatchesTheDevices covers a built preset against
+// one the device wrote, both ways round.
 //
-// Not a comparison of the whole document: a device writes a build string and
-// a name this cannot reproduce, and neither is the chain. What has to match
-// is the part that decides whether anything is heard.
-func (s *WrittenTestSuite) TestBuildingAPresetMatchesWhatTheDeviceWrote() {
-	ctx := context.Background()
+// One method and one table, so a case is a row rather than a file.
+func (s *WrittenTestSuite) TestTheDocumentThisBuildsMatchesTheDevices() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The regression.
+			//
+			// Not a comparison of the whole document: a device writes a build
+			// string and a name this cannot reproduce, and neither is the
+			// chain. What has to match is the part that decides whether
+			// anything is heard.
+			name: "building a preset matches what the device wrote",
+			then: func() {
+				ctx := context.Background()
 
-	written, err := os.ReadFile(filepath.Join("testdata", "hx-stomp.written.bin"))
-	s.Require().NoError(err)
+				written, err := os.ReadFile(filepath.Join("testdata", "hx-stomp.written.bin"))
+				s.Require().NoError(err)
 
-	want, err := wire.DecodePreset(written)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(want.Blocks,
-		"the fixture must hold a chain, or this proves nothing")
+				want, err := wire.DecodePreset(written)
+				s.Require().NoError(err)
+				s.Require().NotEmpty(want.Blocks,
+					"the fixture must hold a chain, or this proves nothing")
 
-	// What importing the exported file builds, which is what would be sent.
-	//
-	// The device's own catalog, because a chain is written as model numbers
-	// and only the catalog turns the names in a file back into them.
-	c := mocks.NewMockCatalogs(gomock.NewController(s.T()))
-	c.EXPECT().Catalog(gomock.Any()).DoAndReturn(
-		func(context.Context) (*catalog.Catalog, error) {
-			return catalog.BuiltIn()
+				// What importing the exported file builds, which is what would be sent.
+				//
+				// The device's own catalog, because a chain is written as model numbers
+				// and only the catalog turns the names in a file back into them.
+				c := mocks.NewMockCatalogs(gomock.NewController(s.T()))
+				c.EXPECT().Catalog(gomock.Any()).DoAndReturn(
+					func(context.Context) (*catalog.Catalog, error) {
+						return catalog.BuiltIn()
+					},
+				).AnyTimes()
+
+				f := &Flows{Catalogs: c}
+
+				doc, err := fileslots.ReadPreset(ctx, filepath.Join("testdata", "hx-stomp.written.hlx"))
+				s.Require().NoError(err)
+
+				body, err := f.documentFor(ctx, "HX Stomp", doc)
+				s.Require().NoError(err)
+
+				got, err := wire.DecodePreset(body)
+				s.Require().NoError(err)
+
+				s.Require().Len(got.Blocks, len(want.Blocks),
+					"a built preset must carry the same chain the device wrote")
+			},
 		},
-	).AnyTimes()
+		{
+			// Compares the bytes, not the model.
+			//
+			// The chain decoding the same is not enough. What the pedal
+			// renders from is the document, and a document can carry the
+			// right blocks and still be one the device draws as empty.
+			name: "built document looks like the device wrote",
+			then: func() {
+				ctx := context.Background()
 
-	f := &Flows{Catalogs: c}
+				written, err := os.ReadFile(filepath.Join("testdata", "hx-stomp.written.bin"))
+				s.Require().NoError(err)
 
-	doc, err := fileslots.ReadPreset(ctx, filepath.Join("testdata", "hx-stomp.written.hlx"))
-	s.Require().NoError(err)
+				c := mocks.NewMockCatalogs(gomock.NewController(s.T()))
+				c.EXPECT().Catalog(gomock.Any()).DoAndReturn(
+					func(context.Context) (*catalog.Catalog, error) { return catalog.BuiltIn() },
+				).AnyTimes()
 
-	body, err := f.documentFor(ctx, "HX Stomp", doc)
-	s.Require().NoError(err)
+				doc, err := fileslots.ReadPreset(ctx,
+					filepath.Join("testdata", "hx-stomp.written.hlx"))
+				s.Require().NoError(err)
 
-	got, err := wire.DecodePreset(body)
-	s.Require().NoError(err)
+				body, err := (&Flows{Catalogs: c}).documentFor(ctx, "HX Stomp", doc)
+				s.Require().NoError(err)
 
-	s.Require().Len(got.Blocks, len(want.Blocks),
-		"a built preset must carry the same chain the device wrote")
+				got, err := wire.DecodePreset(body)
+				s.Require().NoError(err)
+
+				want, err := wire.DecodePreset(written)
+				s.Require().NoError(err)
+
+				// Every block, with the same number of values. A device writes a 2x15
+				// cabinet with seven where its symbol list holds eight, and the extra one
+				// is what made a preset render empty.
+				s.Require().Len(got.Blocks, len(want.Blocks))
+
+				for i := range want.Blocks {
+					s.Require().Equal(want.Blocks[i].Model, got.Blocks[i].Model,
+						"block %d is a different model", i)
+					s.Require().Len(got.Blocks[i].Values, len(want.Blocks[i].Values),
+						"block %d carries %d values where the device wrote %d",
+						i, len(got.Blocks[i].Values), len(want.Blocks[i].Values))
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 func TestWrittenTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(WrittenTestSuite))
-}
-
-// TestBuiltDocumentLooksLikeTheDeviceWrote compares the bytes, not the model.
-//
-// The chain decoding the same is not enough. What the pedal renders from is
-// the document, and a document can carry the right blocks and still be one
-// the device draws as empty.
-func (s *WrittenTestSuite) TestBuiltDocumentLooksLikeTheDeviceWrote() {
-	ctx := context.Background()
-
-	written, err := os.ReadFile(filepath.Join("testdata", "hx-stomp.written.bin"))
-	s.Require().NoError(err)
-
-	c := mocks.NewMockCatalogs(gomock.NewController(s.T()))
-	c.EXPECT().Catalog(gomock.Any()).DoAndReturn(
-		func(context.Context) (*catalog.Catalog, error) { return catalog.BuiltIn() },
-	).AnyTimes()
-
-	doc, err := fileslots.ReadPreset(ctx,
-		filepath.Join("testdata", "hx-stomp.written.hlx"))
-	s.Require().NoError(err)
-
-	body, err := (&Flows{Catalogs: c}).documentFor(ctx, "HX Stomp", doc)
-	s.Require().NoError(err)
-
-	got, err := wire.DecodePreset(body)
-	s.Require().NoError(err)
-
-	want, err := wire.DecodePreset(written)
-	s.Require().NoError(err)
-
-	// Every block, with the same number of values. A device writes a 2x15
-	// cabinet with seven where its symbol list holds eight, and the extra one
-	// is what made a preset render empty.
-	s.Require().Len(got.Blocks, len(want.Blocks))
-
-	for i := range want.Blocks {
-		s.Require().Equal(want.Blocks[i].Model, got.Blocks[i].Model,
-			"block %d is a different model", i)
-		s.Require().Len(got.Blocks[i].Values, len(want.Blocks[i].Values),
-			"block %d carries %d values where the device wrote %d",
-			i, len(got.Blocks[i].Values), len(want.Blocks[i].Values))
-	}
 }

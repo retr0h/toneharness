@@ -110,18 +110,90 @@ func (s *ReadPublicTestSuite) TestASineSurvivesTheTrip() {
 	}
 }
 
-// TestTheMeasurementsAreTheSameOffDisk is why the decoder matters.
-func (s *ReadPublicTestSuite) TestTheMeasurementsAreTheSameOffDisk() {
-	want := audio.Square(200, 1.0, rate, 0.5)
-	direct := audio.Measure(want, rate)
+// TestTheChunkedReadAgreesWithTheDecoder covers reading a file in chunks,
+// which has to measure as the whole decoded file does.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ReadPublicTestSuite) TestTheChunkedReadAgreesWithTheDecoder() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// Why the decoder matters.
+			name: "the measurements are the same off disk",
+			then: func() {
+				want := audio.Square(200, 1.0, rate, 0.5)
+				direct := audio.Measure(want, rate)
 
-	got, gotRate := s.read(s.write(want, rate, 1, 16))
-	fromDisk := audio.Measure(got, gotRate)
+				got, gotRate := s.read(s.write(want, rate, 1, 16))
+				fromDisk := audio.Measure(got, gotRate)
 
-	s.Require().InDelta(direct.Low, fromDisk.Low, 0.01)
-	s.Require().InDelta(direct.Mid, fromDisk.Mid, 0.01)
-	s.Require().InDelta(direct.Centroid, fromDisk.Centroid, 5)
-	s.Require().InDelta(direct.Harmonics.Mid, fromDisk.Harmonics.Mid, 0.02)
+				s.Require().InDelta(direct.Low, fromDisk.Low, 0.01)
+				s.Require().InDelta(direct.Mid, fromDisk.Mid, 0.01)
+				s.Require().InDelta(direct.Centroid, fromDisk.Centroid, 5)
+				s.Require().InDelta(direct.Harmonics.Mid, fromDisk.Harmonics.Mid, 0.02)
+			},
+		},
+		{
+			// Pins the speedup to the decoder it replaced.
+			//
+			// Read decodes in chunks through a reused buffer instead of
+			// calling the decoder's FullPCMBuffer, which is a 51x difference
+			// on the reference recording and therefore worth having. It is
+			// only worth having if it reads the same samples, and "the same"
+			// is not an assumption anybody should have to take on trust in a
+			// project whose whole output is measurements.
+			//
+			// So this decodes every shipped recording both ways and holds the
+			// ten figures against each other. The one difference it allows is
+			// the last frame: the decoder's chunked reader stops one short of
+			// FullPCMBuffer on a file whose samples do not divide evenly,
+			// which moves the reported duration by a forty-four-thousandth of
+			// a second and moves no figure at all.
+			name: "the chunked read agrees with the decoder",
+			then: func() {
+				// The short take rather than every recording here. Both are real studio
+				// multitracks and the claim is about the reader rather than about any one
+				// file, so one is enough — and decoding the 3:35 take twice, which is what
+				// this does per file, cost 326 seconds of a CI run under the race detector.
+				paths, err := filepath.Glob(
+					filepath.Join("..", "..", "..", "resources", "dry", "*-short.wav"))
+				s.Require().NoError(err)
+				s.Require().NotEmpty(paths, "no recordings to check against")
+
+				for _, at := range paths {
+					s.Run(filepath.Base(at), func() {
+						mine, rate := s.read(at)
+						theirs, alsoRate := s.viaFullPCMBuffer(at)
+
+						s.Require().Equal(alsoRate, rate)
+						s.Require().InDelta(len(theirs), len(mine), 1,
+							"a chunked read may stop one frame short and no further")
+
+						was := audio.Measure(theirs, alsoRate)
+						now := audio.Measure(mine, rate)
+
+						// The duration is the one thing a dropped frame moves, so it is
+						// bounded rather than matched. Two frames rather than one, because
+						// the difference is one frame and the bound on one frame fails by a
+						// floating point hair. The exact claim is the sample count above,
+						// which is integers and needs no slack.
+						s.Require().InDelta(was.Seconds, now.Seconds, 2/float64(rate))
+
+						// Everything else matched whole, not figure by figure, because the
+						// one that would drift unnoticed is the one nobody thought to name.
+						was.Seconds, now.Seconds = 0, 0
+						s.Require().Equal(was, now)
+					})
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestStereoIsAveragedToOne covers several channels becoming one.
@@ -163,8 +235,7 @@ func (s *ReadPublicTestSuite) TestSampleRateIsReported() {
 	}
 }
 
-// TestRead covers Read, which decodes a WAV into single-channel samples
-// between -1 and 1.
+// TestRead covers reading a wav off disk, and a file with nothing in it.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *ReadPublicTestSuite) TestRead() {
@@ -173,96 +244,66 @@ func (s *ReadPublicTestSuite) TestRead() {
 		then func()
 	}{
 		{
-			// Refused rather than measured.
-			name: "something that is not audio",
+			// Read, which decodes a WAV into single-channel samples between
+			// -1 and 1.
+			//
+			// One method and one table, so a case is a row rather than a
+			// file.
+			name: "read",
 			then: func() {
-				got, rate, err := audio.Read(bytes.NewReader([]byte("this is not a wav")))
+				for _, tt := range []struct {
+					name string
+					then func()
+				}{
+					{
+						// Refused rather than measured.
+						name: "something that is not audio",
+						then: func() {
+							got, rate, err := audio.Read(bytes.NewReader([]byte("this is not a wav")))
 
-				s.Require().Nil(got)
-				s.Require().Zero(rate)
-				s.Require().ErrorIs(err, audio.ErrNotAudio)
+							s.Require().Nil(got)
+							s.Require().Zero(rate)
+							s.Require().ErrorIs(err, audio.ErrNotAudio)
+						},
+					},
+					{
+						// Reads as nothing rather than failing.
+						name: "a wav holding no samples",
+						then: func() {
+							got, gotRate, err := func() ([]float64, int, error) {
+								f, err := os.Open(s.write(nil, rate, 1, 16)) //nolint:gosec // this test's own path
+								s.Require().NoError(err)
+
+								defer func() { s.Require().NoError(f.Close()) }()
+
+								return audio.Read(f)
+							}()
+
+							s.Require().NoError(err)
+							s.Require().Empty(got)
+							s.Require().Equal(rate, gotRate)
+						},
+					},
+				} {
+					s.Run(tt.name, func() {
+						tt.then()
+					})
+				}
 			},
 		},
 		{
-			// Reads as nothing rather than failing.
-			name: "a wav holding no samples",
+			// Refused for the same reason.
+			name: "nothing at all",
 			then: func() {
-				got, gotRate, err := func() ([]float64, int, error) {
-					f, err := os.Open(s.write(nil, rate, 1, 16)) //nolint:gosec // this test's own path
-					s.Require().NoError(err)
+				_, _, err := audio.Read(bytes.NewReader(nil))
 
-					defer func() { s.Require().NoError(f.Close()) }()
-
-					return audio.Read(f)
-				}()
-
-				s.Require().NoError(err)
-				s.Require().Empty(got)
-				s.Require().Equal(rate, gotRate)
+				s.Require().ErrorIs(err, audio.ErrNotAudio)
+				s.Require().Contains(err.Error(), "not readable audio")
 			},
 		},
 	} {
 		s.Run(tt.name, func() {
 			tt.then()
-		})
-	}
-}
-
-// TestNothingAtAll is refused for the same reason.
-func (s *ReadPublicTestSuite) TestNothingAtAll() {
-	_, _, err := audio.Read(bytes.NewReader(nil))
-
-	s.Require().ErrorIs(err, audio.ErrNotAudio)
-	s.Require().Contains(err.Error(), "not readable audio")
-}
-
-// TestTheChunkedReadAgreesWithTheDecoder pins the speedup to the decoder it
-// replaced.
-//
-// Read decodes in chunks through a reused buffer instead of calling the
-// decoder's FullPCMBuffer, which is a 51x difference on the reference recording
-// and therefore worth having. It is only worth having if it reads the same
-// samples, and "the same" is not an assumption anybody should have to take on
-// trust in a project whose whole output is measurements.
-//
-// So this decodes every shipped recording both ways and holds the ten figures
-// against each other. The one difference it allows is the last frame: the
-// decoder's chunked reader stops one short of FullPCMBuffer on a file whose
-// samples do not divide evenly, which moves the reported duration by a
-// forty-four-thousandth of a second and moves no figure at all.
-func (s *ReadPublicTestSuite) TestTheChunkedReadAgreesWithTheDecoder() {
-	// The short take rather than every recording here. Both are real studio
-	// multitracks and the claim is about the reader rather than about any one
-	// file, so one is enough — and decoding the 3:35 take twice, which is what
-	// this does per file, cost 326 seconds of a CI run under the race detector.
-	paths, err := filepath.Glob(
-		filepath.Join("..", "..", "..", "resources", "dry", "*-short.wav"))
-	s.Require().NoError(err)
-	s.Require().NotEmpty(paths, "no recordings to check against")
-
-	for _, at := range paths {
-		s.Run(filepath.Base(at), func() {
-			mine, rate := s.read(at)
-			theirs, alsoRate := s.viaFullPCMBuffer(at)
-
-			s.Require().Equal(alsoRate, rate)
-			s.Require().InDelta(len(theirs), len(mine), 1,
-				"a chunked read may stop one frame short and no further")
-
-			was := audio.Measure(theirs, alsoRate)
-			now := audio.Measure(mine, rate)
-
-			// The duration is the one thing a dropped frame moves, so it is
-			// bounded rather than matched. Two frames rather than one, because
-			// the difference is one frame and the bound on one frame fails by a
-			// floating point hair. The exact claim is the sample count above,
-			// which is integers and needs no slack.
-			s.Require().InDelta(was.Seconds, now.Seconds, 2/float64(rate))
-
-			// Everything else matched whole, not figure by figure, because the
-			// one that would drift unnoticed is the one nobody thought to name.
-			was.Seconds, now.Seconds = 0, 0
-			s.Require().Equal(was, now)
 		})
 	}
 }

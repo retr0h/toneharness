@@ -27,8 +27,8 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// OpenLoopPublicTestSuite covers deciding the headroom trim from the rig.
-type OpenLoopPublicTestSuite struct {
+// OpenLoopTestSuite covers deciding the headroom trim from the rig.
+type OpenLoopTestSuite struct {
 	suite.Suite
 }
 
@@ -39,7 +39,7 @@ type OpenLoopPublicTestSuite struct {
 // nothing there is no path back, and the same chain reads the same spectrum
 // with and without the trim, 30dB apart in level. So applying it there spends
 // thirty decibels of signal over the noise floor on a problem that is absent.
-func (s *OpenLoopPublicTestSuite) TestTheTrimFollowsTheRigUnlessSomebodySaidOtherwise() {
+func (s *OpenLoopTestSuite) TestTheTrimFollowsTheRigUnlessSomebodySaidOtherwise() {
 	for _, tt := range []struct {
 		name     string
 		hardware string
@@ -93,8 +93,8 @@ func (s *OpenLoopPublicTestSuite) TestTheTrimFollowsTheRigUnlessSomebodySaidOthe
 	}
 }
 
-func TestOpenLoopPublicTestSuite(
+func TestOpenLoopTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(OpenLoopPublicTestSuite))
+	suite.Run(t, new(OpenLoopTestSuite))
 }

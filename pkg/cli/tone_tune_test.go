@@ -41,13 +41,13 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
 
-// TunePublicTestSuite covers solving a chain for a target, without hardware.
+// TuneTestSuite covers solving a chain for a target, without hardware.
 //
 // The bench is a fake that answers the same sine whatever is asked of it, so
 // every slope reads as zero and the loop's arithmetic is what is under test
 // rather than an amplifier. What a device decides is whether the slopes were
 // true, and only the pedal answers that.
-type TunePublicTestSuite struct {
+type TuneTestSuite struct {
 	suite.Suite
 
 	ctrl  *gomock.Controller
@@ -56,7 +56,7 @@ type TunePublicTestSuite struct {
 	dry   string
 }
 
-func (s *TunePublicTestSuite) SetupTest() {
+func (s *TuneTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.pedal = mocks.NewMockTuner(s.ctrl)
 	// Every measuring command asks the client which models the attached
@@ -83,7 +83,7 @@ func (s *TunePublicTestSuite) SetupTest() {
 
 // punk is a target with room on every axis, so a chain that cannot move
 // arrives rather than churning.
-func (s *TunePublicTestSuite) punk() []audio.Genre {
+func (s *TuneTestSuite) punk() []audio.Genre {
 	// Wide enough that whatever the fake bench answers is inside it, because
 	// what is under test here is the loop rather than an amplifier.
 	wide := audio.Spread{Low: -1000, Mid: 0, High: 1000}
@@ -99,7 +99,7 @@ func (s *TunePublicTestSuite) punk() []audio.Genre {
 
 // aimedHigh is a target far enough off that the solve has work to do, and
 // tight enough that it cannot shrug the axis off.
-func (s *TunePublicTestSuite) aimedHigh() []audio.Genre {
+func (s *TuneTestSuite) aimedHigh() []audio.Genre {
 	return []audio.Genre{{
 		Name: "punk", Slug: "punk",
 		Across: audio.Across{
@@ -110,7 +110,7 @@ func (s *TunePublicTestSuite) aimedHigh() []audio.Genre {
 }
 
 // ready makes the pedal answer everything the loop asks of it.
-func (s *TunePublicTestSuite) ready() {
+func (s *TuneTestSuite) ready() {
 	s.pedal.EXPECT().
 		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
@@ -130,7 +130,7 @@ func (s *TunePublicTestSuite) ready() {
 }
 
 // opts is a run with the hardware faked out.
-func (s *TunePublicTestSuite) opts() TuneOptions {
+func (s *TuneTestSuite) opts() TuneOptions {
 	return TuneOptions{
 		Client: s.pedal, Genres: s.genre, Bench: bench{},
 		ID: "matt-freeman", Genre: "punk", Corpus: "resources/music/bass",
@@ -142,7 +142,7 @@ func (s *TunePublicTestSuite) opts() TuneOptions {
 // how close it got.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TunePublicTestSuite) TestTune() {
+func (s *TuneTestSuite) TestTune() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -627,7 +627,7 @@ func (*sloping) Name() string { return "a bench that answers differently" }
 // muted the chain.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TunePublicTestSuite) TestLand() {
+func (s *TuneTestSuite) TestLand() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -730,7 +730,7 @@ func (s *TunePublicTestSuite) TestLand() {
 // or it stops improving.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TunePublicTestSuite) TestConverge() {
+func (s *TuneTestSuite) TestConverge() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -875,7 +875,7 @@ func (s *TunePublicTestSuite) TestConverge() {
 // chain currently sits.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TunePublicTestSuite) TestSlopes() {
+func (s *TuneTestSuite) TestSlopes() {
 	for _, tt := range []struct {
 		name string
 		then func()
@@ -963,7 +963,7 @@ func (s *TunePublicTestSuite) TestSlopes() {
 }
 
 // TestApplyReportsADeviceThatRefuses covers a move the pedal will not take.
-func (s *TunePublicTestSuite) TestApplyReportsADeviceThatRefuses() {
+func (s *TuneTestSuite) TestApplyReportsADeviceThatRefuses() {
 	s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errors.New("device refused the request"))
 
@@ -984,14 +984,14 @@ func second(
 	return err
 }
 
-func TestTunePublicTestSuite(
+func TestTuneTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(TunePublicTestSuite))
+	suite.Run(t, new(TuneTestSuite))
 }
 
 // askWith writes a ToneSpec carrying a nudges block and returns where it went.
-func (s *TunePublicTestSuite) askWith(
+func (s *TuneTestSuite) askWith(
 	nudges string,
 ) string {
 	at := filepath.Join(s.T().TempDir(), "ask.tone.yaml")
@@ -1010,7 +1010,7 @@ genre: [punk]
 // TestKeepTuned covers every case keepTuned answers.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TunePublicTestSuite) TestKeepTuned() {
+func (s *TuneTestSuite) TestKeepTuned() {
 	for _, tt := range []struct {
 		name string
 		then func()

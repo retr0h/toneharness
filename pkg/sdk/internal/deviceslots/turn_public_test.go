@@ -190,55 +190,78 @@ func (s *TurnPublicTestSuite) TestChooseAndSwitch() {
 	})
 }
 
-// TestLoadedReadsTheEditBuffer covers reading what a device is playing.
-func (s *TurnPublicTestSuite) TestLoadedReadsTheEditBuffer() {
-	ctx := context.Background()
-
-	tests := []struct {
+// TestLoaded covers reading the edit buffer, and needing a session that can
+// read it.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *TurnPublicTestSuite) TestLoaded() {
+	for _, tt := range []struct {
 		name string
-		give []byte
-		err  error
-		want string
+		then func()
 	}{
 		{
-			// A device answering with no document is playing nothing, which
-			// is not the same as a read that failed.
-			name: "nothing is loaded",
-			want: "playing no preset",
-		},
-		{
-			name: "the read fails",
-			err:  errors.New("usb: gone"),
-			want: "reading what is loaded",
-		},
-		{
-			name: "the answer is not a preset",
-			give: []byte("not a document"),
-			want: "reading slot",
-		},
-	}
+			// Reading what a device is playing.
+			name: "loaded reads the edit buffer",
+			then: func() {
+				ctx := context.Background()
 
-	for _, tt := range tests {
+				tests := []struct {
+					name string
+					give []byte
+					err  error
+					want string
+				}{
+					{
+						// A device answering with no document is playing nothing, which
+						// is not the same as a read that failed.
+						name: "nothing is loaded",
+						want: "playing no preset",
+					},
+					{
+						name: "the read fails",
+						err:  errors.New("usb: gone"),
+						want: "reading what is loaded",
+					},
+					{
+						name: "the answer is not a preset",
+						give: []byte("not a document"),
+						want: "reading slot",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						d := s.dev()
+						d.MockLoaded.EXPECT().ReadCurrent(ctx).Return(tt.give, tt.err)
+
+						_, err := (&deviceslots.Flows{}).Loaded(ctx, d, result.FormatPreset)
+
+						s.Require().ErrorContains(err, tt.want)
+					})
+				}
+			},
+		},
+		{
+			// A session without the capability.
+			name: "loaded needs a session that can read",
+			then: func() {
+				_, err := (&deviceslots.Flows{}).Loaded(
+					context.Background(),
+					mocks.NewMockEditor(s.ctrl),
+					result.FormatPreset,
+				)
+
+				s.Require().ErrorContains(err, "cannot read what is loaded")
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			d := s.dev()
-			d.MockLoaded.EXPECT().ReadCurrent(ctx).Return(tt.give, tt.err)
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
 
-			_, err := (&deviceslots.Flows{}).Loaded(ctx, d, result.FormatPreset)
-
-			s.Require().ErrorContains(err, tt.want)
+			tt.then()
 		})
 	}
-}
-
-// TestLoadedNeedsASessionThatCanRead covers a session without the capability.
-func (s *TurnPublicTestSuite) TestLoadedNeedsASessionThatCanRead() {
-	_, err := (&deviceslots.Flows{}).Loaded(
-		context.Background(),
-		mocks.NewMockEditor(s.ctrl),
-		result.FormatPreset,
-	)
-
-	s.Require().ErrorContains(err, "cannot read what is loaded")
 }
 
 func TestTurnPublicTestSuite(
