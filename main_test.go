@@ -425,6 +425,73 @@ func (s *MainTestSuite) TestEveryPathThisRepositoryNamesExists() {
 	s.Require().NoError(err)
 }
 
+// TestEveryPackageIsInTheStructureTree is the other direction.
+//
+// TestEveryPathThisRepositoryNamesExists checks that a path CONTRIBUTING names
+// is there. It cannot catch a package CONTRIBUTING never named, and three had
+// gone unnamed: `solve`, which pkg/cli imports in six files, `shipped/artists`,
+// and two view packages the tree called by a name nothing has ever been called
+// — `corpusview/`, against the real `musicview/` and `presetsview/`.
+//
+// That tree is how somebody finds their way around before they know the code,
+// and the import table beside it is the whole answer to what an outside caller
+// may reach for. A wrong name there costs more than no name: it sends a reader
+// looking for a directory that is not there.
+func (s *MainTestSuite) TestEveryPackageIsInTheStructureTree() {
+	page, err := os.ReadFile("CONTRIBUTING.md")
+	s.Require().NoError(err)
+
+	held := string(page)
+
+	err = filepath.Walk("pkg", func(path string, info os.FileInfo, err error) error {
+		if err != nil || !info.IsDir() {
+			return err
+		}
+
+		// A directory holding no Go of its own is not a package. data/, gen/,
+		// testdata/ and mocks/ are the tree's furniture rather than its shape,
+		// and `internal` itself is a marker rather than a package.
+		switch info.Name() {
+		case "data", "gen", "testdata", "mocks":
+			return filepath.SkipDir
+		case "internal":
+			return nil
+		}
+
+		found, err := filepath.Glob(filepath.Join(path, "*.go"))
+		if err != nil || len(found) == 0 {
+			return err
+		}
+
+		// A `package main` under pkg/ is something `go:generate` runs rather
+		// than something anybody imports — genrepack, pack, the two datagens.
+		// Naming each in the tree would fill it with plumbing.
+		body, err := os.ReadFile(found[0]) //nolint:gosec // a path this walk found
+		if err != nil {
+			return err
+		}
+
+		if strings.Contains(string(body), "\npackage main\n") {
+			return nil
+		}
+
+		// The tree writes a public package as its whole path and an internal
+		// one as its basename indented under `internal/`, which is how it
+		// stays readable. Either spelling counts as naming it.
+		want := path + "/"
+		if strings.Contains(path, "/internal/") {
+			want = filepath.Base(path) + "/"
+		}
+
+		s.Require().Contains(held, want,
+			"CONTRIBUTING's project structure does not name %s", path)
+
+		return nil
+	})
+
+	s.Require().NoError(err)
+}
+
 // TestEveryGeneratedPageIsLeftOutOfTheFormatter holds the two steps of the
 // gate to the same answer.
 //

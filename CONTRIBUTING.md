@@ -113,9 +113,11 @@ main.go              a single call into cmd
 cmd/                 cobra wiring: flags to a Client call to a renderer
 pkg/cli/             how results look: theme, tables, detail, help
 pkg/cli/internal/    the primitives every renderer shares. Invisible outside pkg/cli.
+  paint/             the theme, the tables and the detail blocks
 pkg/mcp/             the MCP server an agent runs: New, Run, RunOver, and Held for
                      whether it holds the pedal at that moment
 pkg/mcp/internal/    one handler per tool. Invisible outside pkg/mcp.
+  tools/             the handlers, and what registers them on a server
 pkg/sdk/             the library. One directory, and the one that leaves.
 pkg/sdk/client.go    the Client every wrapper rallies around
 pkg/sdk/alias.go     the answer types, named here and declared in result
@@ -128,6 +130,7 @@ pkg/sdk/rig/         RigSpec, its contract in data/, and its validation
 pkg/sdk/rig/internal/
   gen/               Go types generated from the contract
 pkg/sdk/shipped/     curated rigs: which gear a player uses
+  artists/           one file per player, and the evidence for each claim
 pkg/sdk/plan/        a resolved chain: what compile produces and editor reads
 pkg/sdk/catalog/     what a device can do: blocks, parameters, DSP costs
 pkg/sdk/corpus/      what real presets say about a device, measured
@@ -139,6 +142,7 @@ pkg/sdk/cab/         build a cabinet the device does not have: capture one, or
                      match a target
 pkg/sdk/preset/      read and write a .hlx preset file
 pkg/sdk/slot/        addressing, 01A to 42C
+pkg/sdk/solve/       slopes into a matrix, and the moves that close a gap
 pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
   specdoc/           the shape both grammar pages share, so they read as a pair
   atomicfile/        writing a file so a crash leaves the old one, not half
@@ -147,7 +151,10 @@ pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
   backup/            what a device slot held, kept before a write replaces it
   presets/  rigs/    building and compiling a preset, and the rigs to build from
   attached/          listing what is on the bus
-  catalogview/  corpusview/    reading the catalog and the measurements
+  catalogview/  musicview/  presetsview/   reading the catalog, the music and
+                     the measured presets
+  asking/            the questions a request too vague to build needs
+  slug/              a human name becomes the identifier a contract demands
   catalogen/  corpusgen/       generating the catalog and the measurements
   compile/           a rig becomes a preset, and a preset becomes a rig
   editor/            what a device says becomes a chain, and back again
@@ -205,14 +212,15 @@ packages are the nouns it takes and hands back.
 | write, read or validate a request         | `tone`                                    |
 | turn a request and a setup into a rig     | `translate`                               |
 | write, read or validate a rig             | `rig`                                     |
-| use the rigs that ship                    | `rigs`                                    |
+| use the rigs that ship                    | `shipped`                                 |
 | ask what a device can do                  | `catalog`                                 |
 | read what the corpus measured             | `corpus`                                  |
 | measure what a recording sounds like      | `audio`                                   |
 | read what a device measured               | `measured`                                |
 | push a signal through hardware            | `reamp`                                   |
 | build an impulse response                 | `cab`                                     |
-| read a resolved chain                     | `chain`                                   |
+| solve a chain's controls towards a target | `solve`                                   |
+| read a resolved chain                     | `plan`                                    |
 | read or write a `.hlx`                    | `preset`                                  |
 | name a slot                               | `slot`                                    |
 | read what an operation answered           | `result`, or the same types through `sdk` |
