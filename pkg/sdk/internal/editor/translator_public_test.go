@@ -85,6 +85,20 @@ func (s *TranslatorPublicTestSuite) TestPlan() {
 }
 
 // TestControllers covers naming what a controller moves, through the type.
+// TestPlacedControllers covers turning what a preset says moves into what a
+// device stores, through the type.
+func (s *TranslatorPublicTestSuite) TestPlacedControllers() {
+	doc, empty, err := editor.Document(s.got, s.cat, "one")
+	s.Require().NoError(err)
+	s.Require().False(empty)
+
+	want, wantErr := editor.PlacedControllers(doc, s.cat)
+	got, err := editor.New().PlacedControllers(doc, s.cat)
+
+	s.Require().Equal(wantErr == nil, err == nil)
+	s.Require().Equal(want, got)
+}
+
 func (s *TranslatorPublicTestSuite) TestControllers() {
 	s.Require().Equal(
 		editor.Controllers(s.got, s.cat),

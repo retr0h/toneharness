@@ -86,6 +86,7 @@ func (s *PresetsPublicTestSuite) attachedTo() *sdk.Client {
 	dev.MockEditor.EXPECT().Model().Return(device.Model{Name: "HX Stomp"}).AnyTimes()
 	dev.MockEditor.EXPECT().Presets(gomock.Any(), 0).Return(listing(), nil).AnyTimes()
 	dev.MockEditor.EXPECT().ReadPreset(gomock.Any(), 0, gomock.Any()).Return(body, nil).AnyTimes()
+	dev.MockLoaded.EXPECT().ReadCurrent(gomock.Any()).Return(body, nil).AnyTimes()
 	dev.MockEditor.EXPECT().Close().Return(nil)
 	dev.MockWriter.EXPECT().
 		WriteNamedPreset(gomock.Any(), 0, gomock.Any(), gomock.Any(), gomock.Any()).
@@ -164,6 +165,37 @@ func (s *PresetsPublicTestSuite) TestPresets() {
 		s.Require().NoError(err)
 		s.Require().NoError(again.Close())
 	})
+}
+
+// TestCurrent covers reading what the device is playing.
+//
+// The edit buffer rather than a slot, which is the difference that matters
+// after Turn: a control moved with Turn shows here and not in the slot it came
+// from, so reading the slot back reads as though nothing happened.
+func (s *PresetsPublicTestSuite) TestCurrent() {
+	tests := []struct {
+		name   string
+		client func() *sdk.Client
+		says   string
+	}{
+		{name: "a device that is not there", client: s.absent, says: "no device found"},
+		{name: "a device, in a Session of its own", client: s.attachedTo},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, err := tt.client().Current(context.Background(), sdk.FormatRig)
+
+			if tt.says != "" {
+				s.Require().ErrorContains(err, tt.says)
+
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotEmpty(got.Name)
+		})
+	}
 }
 
 // TestPreset covers reading one slot on the device as a rig.

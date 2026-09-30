@@ -946,6 +946,75 @@ func sayings(
 	return out
 }
 
+// TestTwoSpeakersInThePathAreCounted covers plays_into.
+//
+// A cabinet block simulates a speaker and an amplifier has one, so a chain
+// holding a cabinet played into an amplifier has both. Said rather than
+// changed: a cabinet block is how a chain is made to sound like the record it
+// came from, so somebody chasing a record through their own amplifier wants
+// both and is right to, and the tool does not get to decide that.
+func (s *TranslatePublicTestSuite) TestTwoSpeakersInThePathAreCounted() {
+	chain := "gear:\n  - {gear: Ampeg SVT, role: amp}\n  - {gear: 8x10, role: cab}\n"
+
+	for _, tt := range []struct {
+		name string
+		into string
+		says bool
+	}{
+		{name: "into the front of an amplifier", into: "plays_into: amp-front\n", says: true},
+		{name: "into an amplifier's effects return", into: "plays_into: amp-return\n", says: true},
+		{
+			// A PA has no speaker of its own, so the cabinet block is the only
+			// one in the path and there is nothing to say.
+			name: "into a PA", into: "plays_into: pa\n",
+		},
+		{name: "into headphones", into: "plays_into: headphones\n"},
+		{name: "a setup that does not say", into: ""},
+	} {
+		s.Run(tt.name, func() {
+			_, notes, err := translate.Translate(
+				s.ask(chain), s.setup(tt.into), s.deps)
+
+			s.Require().NoError(err)
+
+			said := ""
+
+			for _, n := range notes {
+				if n.About == "plays_into" {
+					said = n.Said
+
+					s.Require().True(n.Honoured, "nothing was changed")
+				}
+			}
+
+			if !tt.says {
+				s.Require().Empty(said)
+
+				return
+			}
+
+			s.Require().Contains(said, "a cabinet block")
+			s.Require().Contains(said, "speaker of its own")
+		})
+	}
+}
+
+// TestAnAmplifierWithNoCabinetSaysNothing is the other half of the count.
+//
+// Nothing to report: one speaker in the path is the amplifier's, which is what
+// somebody plugging into one already knows.
+func (s *TranslatePublicTestSuite) TestAnAmplifierWithNoCabinetSaysNothing() {
+	_, notes, err := translate.Translate(
+		s.ask("gear:\n  - {gear: Ampeg SVT, role: amp}\n"),
+		s.setup("plays_into: amp-front\n"), s.deps)
+
+	s.Require().NoError(err)
+
+	for _, n := range notes {
+		s.Require().NotEqual("plays_into", n.About)
+	}
+}
+
 // TestAWordNothingAimsAtIsSaid is the promise the contract had not kept.
 //
 // "a word that reaches no control cannot be aimed at and saying so is better

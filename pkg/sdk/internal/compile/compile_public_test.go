@@ -163,6 +163,43 @@ func (s *CompilePublicTestSuite) TestSections() {
 	}
 }
 
+// TestMoves covers turning what a foot reaches into assignments, through the
+// type.
+//
+// The same shape as TestSections above: the method is one line delegating to
+// the function, so what is worth asserting is that it delegates and leaves the
+// plan where the function would.
+func (s *CompilePublicTestSuite) TestMoves() {
+	blocks := []plan.Block{{Model: "HD2_AmpSVBeastNrm", Enabled: true}}
+
+	moved := []rig.Move{{
+		By: rig.MoveByExpression, Role: rig.RoleAmp, Setting: "Drive",
+	}}
+
+	tests := []struct {
+		name string
+		spec rig.Spec
+	}{
+		{name: "a rig naming nothing a foot reaches"},
+		{
+			name: "one that names a pedal and a dial",
+			spec: rig.Spec{Moves: &moved},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			first, second := plan.Plan{Blocks: blocks}, plan.Plan{Blocks: blocks}
+
+			want := compile.Moves(&first, tt.spec, blocks, s.cat)
+			got := compile.New().Moves(&second, tt.spec, blocks, s.cat)
+
+			s.Require().Equal(want == nil, got == nil)
+			s.Require().Equal(first, second)
+		})
+	}
+}
+
 // TestControllers covers writing what moves through the type.
 func (s *CompilePublicTestSuite) TestControllers() {
 	blocks := []plan.Block{{Model: "HD2_AmpSVBeastNrm", Enabled: true}}
