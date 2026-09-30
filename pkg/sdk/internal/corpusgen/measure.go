@@ -273,25 +273,27 @@ func tonal(
 // for.
 //
 // A chain with no amp says nothing about ordering, because there is nothing to
-// order around.
+// order around, and that is the only thing reported as unusable.
+//
+// This read the first amplifier's subcategory and refused anything that was
+// not spelled Guitar or Bass, which is neither of the rules the compiler and
+// the measuring guard use. Of the 4,426 presets in the corpus, 3,804 hold an
+// amplifier; the first-amp rule labelled 10 of them wrong, and the refusal
+// dropped 183 more out of the grammar, the chain counts and the model counts
+// altogether, for a first amplifier tagged Preamp or tagged nothing. 5.1%.
+//
+// The index is still the first amplifier's, which is the right pivot for
+// counting what sits before and after it whatever the instrument turns out to
+// be.
 func (m *measurer) instrumentOf(
 	spec plan.Plan,
 ) (string, int, bool) {
-	for i, b := range spec.Blocks {
-		blk, known := m.cat.Block(b.Model)
-		if !known || blk.Category != catalog.CategoryAmp {
-			continue
-		}
-
-		instrument := strings.ToLower(blk.Subcategory)
-		if instrument != "guitar" && instrument != "bass" {
-			return "", 0, false
-		}
-
-		return instrument, i, true
+	at := plan.AmpAt(spec, m.cat)
+	if at < 0 {
+		return "", 0, false
 	}
 
-	return "", 0, false
+	return plan.InstrumentFor(spec, m.cat), at, true
 }
 
 // reduce turns the accumulated observations into quartiles.

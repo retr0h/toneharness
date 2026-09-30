@@ -51,40 +51,19 @@ var ErrWrongInstrument = errors.New("the reference is not this chain's instrumen
 
 // chainIsFor is the instrument a chain is for, by the amplifiers in it.
 //
-// Line 6 tag every amplifier Guitar or Bass and that tag is in the catalog, so
-// the chain says what it is for without anybody writing it down.
+// plan.InstrumentFor holds the rule, shared with the compiler and the corpus
+// measurer, and the three have to agree: this refuses a rig for the instrument
+// the rig itself says it is, so a different answer here is a bass rig turned
+// away from a bass recording.
 //
-// **Every amplifier, and a bass one anywhere decides it.** That is the rule
-// `compile` uses when it lifts a preset, and the two have to agree or this
-// refuses a rig for the instrument the rig itself says it is. Returning on the
-// first amplifier found is not the same rule: a chain holding a guitar amp
-// before a bass amp reads as bass to the compiler and would have read as guitar
-// here, so a bass rig pushed a bass recording would have been refused.
-//
-// Where they differ on purpose: `compile` answers guitar for a chain with no
-// amplifier at all, because a rig's `instrument` field has to say something.
-// This answers nothing. An effect serves either instrument, so there is no claim
-// to make, and a guard that invents one would refuse a delay being measured.
+// The empty answer is kept rather than turned into a word. An effect serves
+// either instrument, so a chain with no amplifier makes no claim, and a guard
+// that invented one would refuse a delay being measured.
 func chainIsFor(
 	made plan.Plan,
 	cat *catalog.Catalog,
 ) string {
-	found := ""
-
-	for _, b := range made.Blocks {
-		blk, known := cat.Block(b.Model)
-		if !known || blk.Category != catalog.CategoryAmp {
-			continue
-		}
-
-		if blk.Subcategory == "Bass" {
-			return "bass"
-		}
-
-		found = "guitar"
-	}
-
-	return found
+	return plan.InstrumentFor(made, cat)
 }
 
 // sameInstrument refuses a chain about to be measured through the wrong

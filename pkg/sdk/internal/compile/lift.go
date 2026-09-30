@@ -198,15 +198,11 @@ func instrumentOf(
 	c plan.Plan,
 	cat *catalog.Catalog,
 ) rig.Instrument {
-	for _, b := range c.Blocks {
-		blk, known := cat.Block(b.Model)
-		if !known || blk.Category != catalog.CategoryAmp {
-			continue
-		}
-
-		if blk.Subcategory == "Bass" {
-			return rig.InstrumentBass
-		}
+	// Guitar for a chain with no amplifier, because a rig's `instrument` field
+	// has to hold something. That is this caller's decision rather than the
+	// rule's, which is why plan.InstrumentFor answers NoAmp and leaves it.
+	if plan.InstrumentFor(c, cat) == plan.Bass {
+		return rig.InstrumentBass
 	}
 
 	return rig.InstrumentGuitar
