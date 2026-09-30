@@ -77,13 +77,18 @@ func BuiltIn() (*Catalog, error) { return decode(builtIn) }
 
 // decode reads a gzipped catalog.
 //
+// The parameter is `body` rather than `packed`, which would shadow the
+// package-level map of that name above. Nothing here reads that map, so the
+// shadow was harmless and would have stopped being harmless the moment
+// somebody needed it.
+//
 // Separate from BuiltIn so a corrupted archive can be exercised. The embedded
 // copy is a compile-time constant and cannot be damaged at run time, but a
 // build that shipped a truncated one should say so rather than panic.
 func decode(
-	packed []byte,
+	body []byte,
 ) (*Catalog, error) {
-	zr, err := gzip.NewReader(bytes.NewReader(packed))
+	zr, err := gzip.NewReader(bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("opening the built-in catalog: %w", err)
 	}

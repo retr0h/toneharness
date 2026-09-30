@@ -917,24 +917,28 @@ func figuresOf(
 	// The five that a reading may not have an answer for. Absent rather than
 	// zero, because a transient needs a note starting and a figure of zero
 	// would be solved for as though it had been measured.
-	for key, got := range map[audio.Figure]*float64{
+	// `at` rather than `got` for the loop variable, because the map it ranges
+	// over is built from the `got` parameter and a second `got` inside the body
+	// shadows it. Harmless while nothing in the body needs the reading itself,
+	// and a compile error the first time something does.
+	for key, at := range map[audio.Figure]*float64{
 		audio.KeyTransient: got.Transient,
 		audio.KeyDecay:     got.Decay,
 		audio.KeyDynamics:  got.Dynamics,
 		audio.KeyHarmonics: got.Harmonics,
 		audio.KeyLean:      got.Lean,
 	} {
-		if got == nil {
+		if at == nil {
 			continue
 		}
 
 		if key == audio.KeyHarmonics {
-			out[key] = *got / perCent
+			out[key] = *at / perCent
 
 			continue
 		}
 
-		out[key] = *got
+		out[key] = *at
 	}
 
 	return out

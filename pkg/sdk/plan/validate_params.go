@@ -107,7 +107,6 @@ func checkParam(
 	}
 }
 
-// mismatch reports a value whose kind is not the kind the catalog declares.
 // whole reads a float, accepting a whole number written without a point.
 //
 // Neither YAML nor JSON can tell 6 from 6.0. ParamValue writes a whole-numbered
@@ -133,6 +132,7 @@ func whole(
 	return 0, false
 }
 
+// mismatch reports a value whose kind is not the kind the catalog declares.
 func mismatch(
 	blk catalog.Block,
 	key string,

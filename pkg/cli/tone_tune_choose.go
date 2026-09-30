@@ -358,7 +358,10 @@ func backedUp(
 	for i, r := range runners {
 		// One fewer than Tries, because the first attempt was already spent
 		// on every list's nearest setting.
-		if i+1 >= opts.Tries || len(runners) == 0 {
+		//
+		// No test for an empty runners: this ranges over it, so an empty one
+		// never enters the loop at all.
+		if i+1 >= opts.Tries {
 			break
 		}
 
