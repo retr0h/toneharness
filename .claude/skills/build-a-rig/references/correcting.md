@@ -89,7 +89,7 @@ So the committed sweeps say **which controls are worth putting in a matrix**,
 and nothing more. `measure slopes --id <rig>` prints live beside committed for
 any chain, which is how that was found.
 
-### The loop oscillates, and the fix is where the chain is sent
+### The loop oscillates, and it takes both the destination and the headroom
 
 The cable rig sends the pedal's output back into its own input. A preset
 compiled from a plan inherits the blank template's routing, which sends the
@@ -98,28 +98,37 @@ quarter-inch jack that lead comes from. So the chain arrives at its own input.
 With enough gain around that loop it squeals, and an amplifier is where the gain
 is.
 
-**The destination is the fix.** Every measuring command now sends the chain to
-`USB 1/2` by itself, which reaches the computer without reaching the socket, so
-the lead carries only the reference recording and the loop is open. It is looked
-up in the device's own destination list rather than written down as a number,
-because the lists are per device family. Nothing has to be asked for: it happens
-whatever `--headroom` says.
+**Two things are done about it and neither is sufficient on its own.** Read that
+sentence before the rest of this section: it was written the other way round for
+a day, claiming the destination was the fix, and ninety seconds of hardware
+disproved it.
 
-**`--headroom` is the second half, and it was treated as the whole of it for a
-fortnight.** It turns `dsp0.outputA.gain` down before anything is measured and
-defaults to -30dB. That gain sits after every block, so it lowers the level
-without touching the tone, where turning the amplifier down would work and would
-be wrong: ChVol and Master are the sound the rig describes, and the solver would
-then solve for a different one. It is kept because it bounds an amplifier's own
-hiss and anything left going round the rig, and because every reading committed
-here was taken with it.
+**The destination reduces the loop.** Every measuring command sends the chain to
+`USB 1/2` by itself rather than to Multi, looked up in the device's own list
+rather than written down as a number. It happens whatever `--headroom` says.
+Measured on matt-freeman at full gain it took the high band from 84.3% to 57.5%.
 
-Why the gain alone was not enough: a block built to distort has enough gain to
-close the loop from -78dB, four steps past the default. In one campaign 14 of
-the first 125 blocks refused on exactly that, every one an amp or a preamp,
-**including both SV Beasts this project's own pipeline builds with**. A guard
-that refuses the blocks you most want measured is how a symptom fix announces
-itself.
+**57.5% is still oscillating.** So something else closes the loop, and what has
+not been established is which: the computer monitoring its own input back out, or
+an HX Stomp's `USB 1/2` reaching the Main outs whatever the enum label implies.
+Until that is settled, a reading taken without headroom is not to be trusted
+however the output is routed.
+
+**`--headroom` is what makes a reading clean.** It turns `dsp0.outputA.gain` down
+before anything is measured and defaults to -30dB. That gain sits after every
+block, so it lowers the level without touching the tone, where turning the
+amplifier down would work and would be wrong: ChVol and Master are the sound the
+rig describes, and the solver would then solve for a different one.
+
+At the default, matt-freeman reads **0.03% above 2kHz against the reference's
+0.00%**, which is the empty loop's own figure. That is the check to run on a new
+rig: `tone reach --id <rig> --genre <genre>` and look at the high band.
+
+Gain alone was not enough either, which is what the destination is for. A block
+built to distort has enough of its own to close the loop from -78dB, four steps
+past the default. In one campaign 14 of the first 125 blocks refused on exactly
+that, every one an amp or a preamp, **including both SV Beasts this project's own
+pipeline builds with**.
 
 Measured on matt-freeman, a compressor into an Ampeg SVT into an 8x10, sweeping
 the headroom on the Multi destination and changing nothing else. These are

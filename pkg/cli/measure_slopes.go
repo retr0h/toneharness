@@ -26,6 +26,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
@@ -91,6 +92,10 @@ func Slopes(
 		return err
 	}
 
+	if err := sameInstrument(made.Plan, cat, opts.Dry); err != nil {
+		return err
+	}
+
 	knobs := knobsOf(made.Plan, cat)
 	if len(knobs) == 0 {
 		return fmt.Errorf("%w: the chain has no dial to turn", solve.ErrNoKnobs)
@@ -146,7 +151,8 @@ func against(
 	made plan.Plan,
 	knobs []solve.Knob,
 ) error {
-	committed, err := committedSlopes(made, opts.Sweeps)
+	committed, err := committedSlopes(
+		made, opts.Sweeps, instrumentOf(opts.Dry), w)
 	if err != nil {
 		return err
 	}
@@ -217,6 +223,8 @@ func ratio(
 func committedSlopes(
 	made plan.Plan,
 	dir string,
+	reference string,
+	w io.Writer,
 ) (map[solve.Where]map[audio.Figure]float64, error) {
 	out := map[solve.Where]map[audio.Figure]float64{}
 
@@ -224,6 +232,14 @@ func committedSlopes(
 	if err != nil {
 		return nil, err
 	}
+
+	// Which committed sweeps say nothing about the instrument they were taken
+	// with. Said rather than refused: the comparison is still the only way to
+	// see how far a committed slope is from a live one, which is what this
+	// command is for. But a ratio between a reading of one instrument and a
+	// reading of another is not a ratio about the control, and a file that
+	// predates the field cannot say which it is.
+	var silent []string
 
 	for _, b := range made.Blocks {
 		at := filepath.Join(dir, string(b.Model)+".json")
@@ -239,6 +255,14 @@ func committedSlopes(
 
 		if err != nil {
 			return nil, fmt.Errorf("reading %s: %w", at, err)
+		}
+
+		switch {
+		case curves.Instrument == "":
+			silent = append(silent, string(b.Model))
+		case reference != "" && curves.Instrument != reference:
+			silent = append(silent, fmt.Sprintf("%s (%s)",
+				b.Model, curves.Instrument))
 		}
 
 		order := wireOrder(cat, string(b.Model))
@@ -257,6 +281,16 @@ func committedSlopes(
 
 			out[solve.Where{Block: b.Pos, Param: index}] = slope
 		}
+	}
+
+	if len(silent) > 0 {
+		_, _ = fmt.Fprintf(w,
+			"\n  %d of these blocks' committed sweeps do not name the instrument\n"+
+				"  they were taken with, or name another: %s.\n"+
+				"  Every figure committed here was taken with a bass, and the\n"+
+				"  files predate the field that says so, so a RATIO below may be\n"+
+				"  the two instruments rather than the control.\n",
+			len(silent), strings.Join(silent, ", "))
 	}
 
 	return out, nil

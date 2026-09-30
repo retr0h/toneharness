@@ -233,6 +233,20 @@ refused on that, every one an amp or preamp, including both SV Beasts this
 project's own pipeline builds with. A guard that refuses the blocks you most
 want is the shape of that mistake.
 
+**Setting the destination does not open the loop either, and the measurement is
+the reason to believe that rather than the label.** On `USB 1/2` alone with no
+headroom, matt-freeman still gave back 57.5% of its energy above 2kHz, down from
+84.3% on Multi. Lower, and still a squeal. So one of two things is true and
+neither has been established: the computer is monitoring its own input back out,
+or an HX Stomp's `USB 1/2` reaches the Main outs whatever this enum says. Until
+somebody settles it, **both the destination and the headroom are load-bearing**,
+and a reading taken without headroom is not to be trusted however the output is
+routed.
+
+Which makes the honest summary of this whole section: the destination is most of
+the loop, the headroom is what makes a figure clean, and the `USB 1/2` entry may
+not mean what it says.
+
 This is the trap worth recognising: **every test before it looked like an input
 problem, because the output was silent for a reason that had nothing to do with
 the input.** Establish the return before blaming the send.

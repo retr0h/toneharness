@@ -126,6 +126,10 @@ func Reach(
 		return err
 	}
 
+	if err := sameInstrument(made.Plan, cat, opts.Dry); err != nil {
+		return err
+	}
+
 	knobs := knobsOf(made.Plan, cat)
 	if len(knobs) == 0 {
 		return fmt.Errorf("%w: the chain has no dial to turn", solve.ErrNoKnobs)

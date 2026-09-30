@@ -41,19 +41,27 @@ import (
 // 1/2)`, and Multi drives the socket that lead comes from. So the chain's
 // output arrives at its own input and it feeds itself.
 //
-// Two things follow, and they are fixed in that order.
+// Both halves are needed, and measurement says so. Neither is sufficient.
 //
-// The destination is the cause. Sending to `USB 1/2` by itself reaches the
-// computer without reaching the quarter-inch socket, so the lead carries only
-// the reference recording being played and the loop is open. That is the fix,
-// and it is the one that works at any gain.
+// The destination reduces the loop. Sending to `USB 1/2` by itself rather than
+// to Multi takes the chain off the socket the lead comes from, and measured on
+// matt-freeman it took the high band at full gain from 84.3% to 57.5%.
 //
-// The gain is the second half, and it was the whole of it before the
-// destination was: turning `dsp0.outputA.gain` down drops the loop's gain
-// below unity without touching the tone, which ChVol and Master are. It is
-// kept because it also bounds what an amplifier's own hiss and any remaining
-// path around the rig can do, and because the readings this project has
-// committed were taken with it.
+// **It does not open the loop.** 57.5% is still oscillating, so something else
+// closes it: the computer's own monitoring of its input back out, or an HX
+// Stomp's USB 1/2 reaching the Main outs whatever the enum implies. Which of
+// those it is has not been established, and until it is, a reading taken
+// without headroom is not to be trusted however the output is routed.
+//
+// The gain is what makes the reading clean. Turning `dsp0.outputA.gain` down
+// drops the loop below unity without touching the tone, which ChVol and Master
+// are. At the -30dB default the same chain reads 0.03% against the reference's
+// 0.00%, which is the empty loop's own figure.
+//
+// So the order to read this in: the destination is a real improvement and the
+// headroom is the thing standing between a figure and a squeal. An earlier
+// version of this comment said the destination was the fix and worked at any
+// gain. `tone reach --headroom 0` disproves it in ninety seconds.
 //
 // What it looked like while the destination was wrong: matt-freeman read 84.3%
 // of its energy above 2kHz where the reference has 0.01%, and the same chain
@@ -103,10 +111,13 @@ type Quiets interface {
 // preset is written.
 //
 // by is in decibels and wants to be negative. Zero asks for no headroom, and
-// the preset is still rewritten: the destination is what opens the loop and a
-// caller wanting full level wants it open too. Before this took the
-// destination on as well, zero returned the preset untouched, which was a
+// the preset is still rewritten, because the destination is worth setting at any
+// gain: it is most of the loop even though it is not all of it. Before this took
+// the destination on as well, zero returned the preset untouched, which was a
 // preset still sending to the socket the measuring lead comes from.
+//
+// Zero does not make a reading safe. Measured, the same chain oscillates at
+// 57.5% above 2kHz with the destination set and no headroom.
 func quieter(
 	ctx context.Context,
 	client Quiets,

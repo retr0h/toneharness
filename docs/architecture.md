@@ -182,12 +182,18 @@ Read what it says with care. On an HX Stomp the empty loop is healthy and a
 chain holding an amplifier was not, because a preset compiled here inherited the
 blank template's output destination and Multi drives the socket the measuring
 lead comes from, so the chain arrived back at its own input. Every measuring
-command now sends the chain to USB alone instead, and
-[correcting.md](../.claude/skills/build-a-rig/references/correcting.md#the-loop-oscillates-and-the-fix-is-where-the-chain-is-sent)
-has the measurements and why turning the output down was not enough on its own.
-The code is in and tested; no campaign has been run on it yet, so **every
-hardware figure committed here was taken through the loop and wants taking
-again.**
+command now sends the chain to USB alone and turns its output down, and **it
+takes both**: on USB alone with no headroom the same chain still gave back 57.5%
+above 2kHz against 84.3% on Multi, so the destination is most of the loop rather
+than all of it. At the -30dB default it reads 0.03% against the reference's
+0.00%, which is verified on hardware.
+[correcting.md](../.claude/skills/build-a-rig/references/correcting.md#the-loop-oscillates-and-it-takes-both-the-destination-and-the-headroom)
+has the measurements.
+
+What is still unestablished is why the loop does not open on USB alone: either
+the computer monitors its own input back out, or `USB 1/2` reaches the Main outs
+whatever the enum says. **Every hardware figure committed here predates the fix
+and wants taking again**, which is the campaign running against it now.
 
 Two hardware facts shape the loop. A slot is flash and a burst of writes has
 corrupted a setlist, so tuning happens in the edit buffer and only the final
