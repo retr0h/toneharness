@@ -10,26 +10,9 @@ md_site_dir := ""
 
 md_extra_excludes := ""
 
-# Coverage target for this repository.
-#
-# Not 100%, and the missing part is two files, both of them hardware.
-#
-# pkg/sdk/internal/device/usb_darwin.go is every call this project makes into
-# IOKit, translation and nothing more, and there is no way to reach it without
-# a device on the bus. Everything it forwards to — finding a device, choosing
-# between two, claiming an interface, waiting on a busy one, framing, sequence
-# numbers, acknowledgements — is behind an interface and covered.
-#
-# pkg/sdk/reamp/reamp.go is the same shape for audio: opening a duplex stream
-# and running its callback. miniaudio ships a null backend that would let a
-# test run the loop without an interface, and it is compiled out of the
-# bindings this uses, so the callback genuinely cannot be reached from a test.
-# What it feeds — padding a signal, reading and writing frame buffers, the
-# budget a reading gets, naming a device kind, saying what was attached when
-# the named one is not — is covered.
-#
-# It is counted rather than excluded on purpose. An exclusion hides a file's
-# size; a target says what is not reachable and gets worse if that file grows.
+# Not 100%: usb_darwin.go and reamp.go are the IOKit and audio-callback
+# translation layers, unreachable without hardware. Counted rather than
+# excluded, so the number gets worse if either grows.
 go_coverage_target := "99"
 
 # --- Fetch ---
@@ -173,25 +156,6 @@ forum-search QUERY SUB="":
 # just web "site:talkbass.com geddy lee ampeg cabinets 1977"
 web QUERY:
     uvx --with curl_cffi python3 resources/read_forum.py --web "{{ QUERY }}"
-
-# Test one package with coverage, which is the loop while working
-#
-# Prints every function short of full coverage, and the package total. The
-# repository is gated at 99%, so a gap found here is one nobody has to go
-# back for later.
-#
-#     just cov ./pkg/sdk/internal/editor/
-#
-# Tests that live outside the package they cover need --coverpkg; see
-# Testing in CONTRIBUTING.md.
-cov PKG *ARGS:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    mkdir -p {{ go_coverage_dir }}
-    go test -coverprofile={{ go_coverage_dir }}/one.out {{ ARGS }} {{ PKG }}
-    echo
-    go tool cover -func={{ go_coverage_dir }}/one.out | grep -v '100.0%$' \
-      || echo "  every statement covered"
 
 # Put the measured library into the form the sdk embeds
 #

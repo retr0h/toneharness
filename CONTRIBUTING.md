@@ -716,20 +716,17 @@ line 1, blank line, then the header.
 Run the tests for what you are editing, with coverage, and nothing else:
 
 ```bash
-just cov ./pkg/sdk/internal/editor/    # the package you touched
+just go_packages=./pkg/sdk/internal/editor/ go-unit-cov
 ```
 
-It prints every function short of full coverage and the package total. The
-repository is gated at 99%, so a gap seen here is one nobody has to come back
-for: filling it while the code is fresh costs a test, and finding it at the gate
-costs re-reading why the code is shaped that way.
+It prints every function and its coverage. The repository is gated at 99%, so a
+gap seen here is one nobody has to come back for: filling it while the code is
+fresh costs a test, and finding it at the gate costs re-reading why the code is
+shaped that way.
 
-Tests that live outside the package they cover need `--coverpkg`, which `cov`
-passes through:
-
-```bash
-just cov ./pkg/cli/ --coverpkg=./pkg/cli/...
-```
+`go-unit-cov-gaps` is the same run with only the files short of full coverage,
+opened as a heatmap. Both come from the shared justfiles rather than from
+anything here, which is why `go_packages` is the way to scope them.
 
 `just ready` and the full suite are for when a branch is going somewhere, not
 for between edits. The gate installs tools, regenerates, formats, vets and runs
