@@ -182,6 +182,23 @@ type Library struct {
 	// one of this device's full amplifiers read a median 46.4% of its energy
 	// above 2kHz where the preamps of the same circuits read 0.047%.
 	Headroom float64 `json:"headroom,omitempty"`
+	// Volume is the computer's own output level while these were taken, on the
+	// platform's own 0 to 100 scale, and -1 where the platform would not say.
+	//
+	// Recorded because it is a tone control rather than a level control, which
+	// is the thing about it that is easy to get wrong. An amplifier's
+	// distortion depends on how hard it is driven, so a campaign taken at a
+	// different setting measures every amplifier as a different amplifier, not
+	// as the same one louder.
+	//
+	// It only reaches the signal at all on a rig that plays the reference out
+	// of the computer's own output, which is the rig that opens the measuring
+	// loop. On the one-device rig the pedal plays and this is not in the path.
+	//
+	// Not comparable between machines: the scale is the slider's, not decibels,
+	// and two laptops at 38 put out different levels. Baseline is what makes
+	// two libraries comparable. This is what makes one reproducible.
+	Volume int `json:"volume,omitempty"`
 	// Baseline is the empty loop, measured first.
 	//
 	// Without it a figure says nothing. 95 Hz is not what an equaliser does

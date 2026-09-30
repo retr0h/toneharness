@@ -47,6 +47,13 @@ import (
 // MeasureOptions is what measuring every block needs to know.
 type MeasureOptions struct {
 	Client Loader
+	// Volume is where the computer's own output level is put before anything
+	// is measured, 0 to 100.
+	//
+	// Only in the signal path on the rig that plays the reference out of the
+	// computer's own output. Recorded either way, because a library that does
+	// not say what level it was taken at cannot be reproduced.
+	Volume int
 	// Headroom is how far the chain's own output is turned down before
 	// anything is measured, in decibels, and wants to be negative. The
 	// measuring lead makes the chain feed itself, and enough gain around
@@ -135,6 +142,11 @@ func MeasureBlocks(
 	defer func() { _ = os.RemoveAll(work) }()
 
 	built := build(ctx, w, opts.Client, want, work, opts.Headroom)
+
+	// Before the baseline, because the baseline is a reading and this decides
+	// what it reads. Setting it after would calibrate against a level the
+	// campaign then changed.
+	lib.Volume = levelled(w, opts.Volume)
 
 	if err := baseline(ctx, w, bench, signal, &lib, work, opts); err != nil {
 		return err

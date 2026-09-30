@@ -123,3 +123,23 @@ func Execute() {
 // stops running away between -20 and -25 and this is one step past it. It
 // costs level: the same chain reads -60dB here against -23.6dB squealing.
 const measuringHeadroom = -30
+
+// measuringVolume is where the computer's own output level is put before a
+// reading, on the platform's own 0 to 100 scale.
+//
+// Set rather than asked for, because left to a person it drifts between
+// campaigns weeks apart and drifts silently. It is a tone control rather than a
+// level control: an amplifier's distortion depends on how hard it is driven, so
+// a campaign at a different setting measures every amplifier as a different
+// amplifier and not as the same one louder.
+//
+// Thirty-eight, measured rather than chosen, and the number is about this
+// machine. At it the loudest block in the library reads -56.8dB with the
+// converters' floor at -108.5, so 52dB of signal with 55dB still under the
+// near-ceiling line. Higher would drive the amplifiers harder for no room
+// gained; lower would spend the floor.
+//
+// It only reaches the signal on the rig that plays the reference out of the
+// computer's own output, which is the rig that opens the measuring loop. On the
+// one-device rig the pedal plays and this is not in the path.
+const measuringVolume = 38
