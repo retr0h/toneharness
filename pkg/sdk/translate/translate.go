@@ -789,10 +789,17 @@ func lookup(
 	// them not, at 2.5 DSP against 7.2.
 	//
 	// By family first, because which of two models a name means is a decision
-	// and the alphabet is not one. A model identifier still breaks the tie
-	// inside a family, where nothing else distinguishes them.
+	// and the alphabet is not one. catalog.Block.Preferred holds that decision,
+	// shared with the compiler's own sort so the two cannot answer "which Ampeg
+	// SVT" differently. A model identifier still breaks the tie inside a family,
+	// where nothing else distinguishes them.
+	//
+	// A rig cannot pin a model and is not supposed to: it names gear a person
+	// recognises, which is what makes it portable. A plan names the model
+	// outright, which is what `presets compile --plan` takes and `tone tune
+	// --out` writes, so anything needing the legacy cabinet says so there.
 	sort.Slice(matched, func(i, j int) bool {
-		if a, b := preferred(matched[i]), preferred(matched[j]); a != b {
+		if a, b := matched[i].Preferred(), matched[j].Preferred(); a != b {
 			return a < b
 		}
 
@@ -804,59 +811,6 @@ func lookup(
 	}
 
 	return catalog.Block{}, matched
-}
-
-// preferred is how far down the list a model's family sits, lowest first.
-//
-// A name that fits more than one model has to mean one of them, and these are
-// the two places where that choice is a real one.
-//
-// An amplifier before a preamp. A rig naming "Ampeg SVT" means the amplifier;
-// 108 names on this device are both, and until this existed the answer was
-// whichever sorted first, which happened to be right because HD2_Amp precedes
-// HD2_Preamp. Right by the alphabet is not right by decision.
-//
-// A mic'd cabinet before a legacy one. The same cabinet ships three times and
-// all three carry one name: `HD2_Cab1x15TucknGo` at 7.2 DSP with nothing but
-// floats, and two `HD2_CabMicIr` models at 2.5 carrying Mic, Angle and
-// Position. The mic'd one costs a third of the DSP and gives three more
-// controls, one of them the twelve-microphone list the comparison in
-// build-a-rig exists for, and 448 of the 1,126 corpus presets holding a
-// cabinet hold a mic'd one. Without this the legacy model won every time and
-// nothing could reach the others.
-//
-// The pan variant sits behind the plain one. Pan is a stereo placement control
-// and a bass rig has no use for it, so it is a control the solve would spend
-// readings on for nothing.
-//
-// A family not named here sorts last and among themselves by identifier, which
-// is every other collision on the device: two models of one family with one
-// name are two spellings of the same thing.
-//
-// **A rig cannot pin a model and is not supposed to.** It names gear a person
-// recognises, which is what makes it portable, and this is how that name
-// resolves. A plan names the model outright, which is what `presets compile
-// --plan` takes and what `tone tune --out` writes, so anything needing the
-// legacy cabinet says so there.
-func preferred(
-	block catalog.Block,
-) int {
-	for at, family := range preferences {
-		if block.Family == family {
-			return at
-		}
-	}
-
-	return len(preferences)
-}
-
-// preferences is the order families are chosen in, first the most wanted.
-//
-// Only the families where the choice is a real one. Amplifiers and preamps
-// share a category and 108 names; the cabinets ship the same speaker three
-// times under one name.
-var preferences = []string{
-	"amp", "preamp", "cabmicirs", "cabmicirswithpan", "cab",
 }
 
 // names lists what a gear name matched, for a message somebody can act on.

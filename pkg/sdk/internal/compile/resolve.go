@@ -300,46 +300,11 @@ func closer(
 
 	// Then the family, because which of two equally-named models a name means
 	// is a decision and the identifier is not one.
-	if x, y := preferred(a), preferred(b); x != y {
+	if x, y := a.Preferred(), b.Preferred(); x != y {
 		return x < y
 	}
 
 	return a.ID < b.ID
-}
-
-// preferred is how far down the list a model's family sits, lowest first.
-//
-// The same order translate uses, and it has to be: two resolvers answering
-// "which Ampeg SVT" differently is the bug the comment on gear describes.
-//
-// An amplifier before a preamp, because a rig naming "Ampeg SVT" means the
-// amplifier and 108 names on this device are both.
-//
-// A mic'd cabinet before a legacy one. The same speaker ships three times
-// under one name: HD2_Cab1x15TucknGo at 7.2 DSP carrying only floats, and two
-// HD2_CabMicIr models at 2.5 carrying Mic, Angle and Position. A third of the
-// cost for three more controls, one of them the twelve-microphone list the
-// comparison in build-a-rig exists for, and 448 of the 1,126 corpus presets
-// that hold a cabinet hold a mic'd one.
-//
-// The pan variant last of the two, because pan is stereo placement and a bass
-// rig has no use for it: a control the solve would spend readings on for
-// nothing.
-func preferred(
-	block catalog.Block,
-) int {
-	for at, family := range preferences {
-		if block.Family == family {
-			return at
-		}
-	}
-
-	return len(preferences)
-}
-
-// preferences is the order families are chosen in, the most wanted first.
-var preferences = []string{
-	"amp", "preamp", "cabmicirs", "cabmicirswithpan", "cab",
 }
 
 // eligible reports whether a block could be the gear being looked for.
