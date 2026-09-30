@@ -496,6 +496,35 @@ func (s *ReampPublicTestSuite) TestAPassOnAMonoDevice() {
 		"the next frame's own sample, not a second copy of this one")
 }
 
+// TestChannelsInAnswersOneRatherThanDividingByNothing covers the two guards.
+//
+// The stride is worked out from the buffer rather than assumed, because how
+// many channels a device presents varies with the model. Both guards answer
+// one rather than failing: a callback is on the audio thread, and an answer
+// of zero there divides by nothing on the next frame.
+func (s *ReampPublicTestSuite) TestChannelsInAnswersOneRatherThanDividingByNothing() {
+	tests := []struct {
+		name   string
+		buf    []byte
+		frames int
+		want   int
+	}{
+		{"stereo float32", make([]byte, 8*2*4), 8, 2},
+		{"mono", make([]byte, 8*4), 8, 1},
+		{"eight in, which is what a Stomp presents", make([]byte, 4*8*4), 4, 8},
+		{"no frames at all", make([]byte, 64), 0, 1},
+		{"a negative count", make([]byte, 64), -1, 1},
+		{"a buffer too short for one frame", make([]byte, 2), 8, 1},
+		{"no buffer", nil, 8, 1},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, reamp.ChannelsIn(tt.buf, tt.frames))
+		})
+	}
+}
+
 func TestReampPublicTestSuite(
 	t *testing.T,
 ) {

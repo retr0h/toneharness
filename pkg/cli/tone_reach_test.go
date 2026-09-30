@@ -23,6 +23,7 @@ package cli
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -384,6 +385,48 @@ func (s *ReachPublicTestSuite) TestTheTableSaysWhatItReadsAndWhatItWants() {
 	s.Require().Contains(said, "down", "which way it has to move")
 	s.Require().Contains(said, "up")
 	s.Require().Contains(said, "OUT OF REACH")
+}
+
+// TestReachRefusesAReferenceForTheOtherInstrument covers the guard.
+//
+// Every figure measured by pushing a guitar recording through a bass rig
+// describes the recording rather than the chain, so what comes back is the
+// wrong instrument rather than the wrong settings. Refused before a reading is
+// taken.
+func (s *ReachPublicTestSuite) TestReachRefusesAReferenceForTheOtherInstrument() {
+	s.built()
+	s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
+		Return(s.wide(), nil).AnyTimes()
+
+	// The same recording under a name that says guitar, because a reference's
+	// instrument is read off its filename: what is in the file is nobody's to
+	// know and a path is what somebody typed.
+	body, err := os.ReadFile(s.dry)
+	s.Require().NoError(err)
+
+	wrong := filepath.Join(s.T().TempDir(), "guitar-di.wav")
+	s.Require().NoError(os.WriteFile(wrong, body, 0o600))
+
+	opts := s.opts()
+	opts.Dry = wrong
+
+	s.Require().ErrorIs(
+		Reach(context.Background(), buffer(), opts), ErrWrongInstrument)
+}
+
+// TestReachReportsHardwareItCannotOpen covers --hardware naming no device.
+func (s *ReachPublicTestSuite) TestReachReportsHardwareItCannotOpen() {
+	s.built()
+	s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
+		Return(s.wide(), nil).AnyTimes()
+
+	opts := s.opts()
+	opts.Hardware = "no such interface"
+	// Nil, because a caller who supplies a bench owns its lifetime and
+	// benchFor hands that one straight back without ever looking at the name.
+	opts.Bench = nil
+
+	s.Require().Error(Reach(context.Background(), buffer(), opts))
 }
 
 func TestReachPublicTestSuite(

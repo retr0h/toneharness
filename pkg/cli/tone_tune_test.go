@@ -246,6 +246,83 @@ func (s *TunePublicTestSuite) TestAReferenceThatIsNotThere() {
 	s.Require().Error(Tune(context.Background(), buffer(), opts))
 }
 
+// TestTuneRefusesAReferenceForTheOtherInstrument covers the guard.
+//
+// Every figure measured by pushing a guitar recording through a bass rig
+// describes the recording rather than the chain, so the solve would spend its
+// dials closing a gap that is the wrong instrument rather than the wrong
+// settings. Refused before a single reading is taken.
+func (s *TunePublicTestSuite) TestTuneRefusesAReferenceForTheOtherInstrument() {
+	s.ready()
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+	// The same recording under a name that says guitar, because the reference's
+	// instrument is read off its filename: what is in the file is nobody's to
+	// know and a path is what somebody typed.
+	body, err := os.ReadFile(s.dry)
+	s.Require().NoError(err)
+
+	wrong := filepath.Join(s.T().TempDir(), "guitar-di.wav")
+	s.Require().NoError(os.WriteFile(wrong, body, 0o600))
+
+	opts := s.opts()
+	opts.Dry = wrong
+
+	err = Tune(context.Background(), buffer(), opts)
+
+	s.Require().ErrorIs(err, ErrWrongInstrument)
+	s.Require().ErrorContains(err, "Push a bass recording with --dry")
+}
+
+// TestTuneReportsHardwareItCannotOpen covers --hardware naming no device.
+func (s *TunePublicTestSuite) TestTuneReportsHardwareItCannotOpen() {
+	s.ready()
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+	opts := s.opts()
+	opts.Hardware = "no such interface"
+	// Nil, because a caller who supplies a bench owns its lifetime and
+	// benchFor hands that one straight back without ever looking at the name.
+	opts.Bench = nil
+
+	s.Require().Error(Tune(context.Background(), buffer(), opts))
+}
+
+// TestTuneReportsAnAskItCannotAppendTo covers --ask pointing nowhere.
+//
+// The ask is the only account of what was asked for, so a round that solved
+// and could not record it is a failure rather than a note: the settings on the
+// pedal last until the next preset is selected and nothing else remembers why
+// they are there.
+func (s *TunePublicTestSuite) TestTuneReportsAnAskItCannotAppendTo() {
+	s.ready()
+	s.pedal.EXPECT().Current(gomock.Any(), gomock.Any()).
+		Return(sdk.Reading{Plan: routed()}, nil).AnyTimes()
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+	opts := s.opts()
+	opts.Ask = filepath.Join(s.T().TempDir(), "nowhere", "ask.yaml")
+
+	s.Require().Error(Tune(context.Background(), buffer(), opts))
+}
+
+// TestTuneReportsSomewhereItCannotWrite covers --out pointing nowhere.
+func (s *TunePublicTestSuite) TestTuneReportsSomewhereItCannotWrite() {
+	s.ready()
+	s.pedal.EXPECT().Current(gomock.Any(), gomock.Any()).
+		Return(sdk.Reading{Plan: routed()}, nil).AnyTimes()
+	s.genre.EXPECT().
+		MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+	opts := s.opts()
+	opts.Out = filepath.Join(s.T().TempDir(), "nowhere", "tuned.yaml")
+
+	s.Require().Error(Tune(context.Background(), buffer(), opts))
+}
+
 // TestADialThatWillNotMove covers the device refusing a parameter.
 //
 // Aimed at a target it has to work for, because a loop that has already arrived

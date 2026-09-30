@@ -97,6 +97,47 @@ func (s *SlopesPublicTestSuite) built() {
 }
 
 // TestItPrintsTheLiveSlopeBesideTheCommittedOne is the whole point.
+// TestSlopesRefusesAReferenceForTheOtherInstrument covers the guard.
+//
+// Every figure measured by pushing a guitar recording through a bass rig
+// describes the recording rather than the chain, so what comes back is the
+// wrong instrument rather than the wrong settings. Refused before a reading is
+// taken.
+func (s *SlopesPublicTestSuite) TestSlopesRefusesAReferenceForTheOtherInstrument() {
+	{
+		s.built()
+
+		// The same recording under a name that says guitar, because a reference's
+		// instrument is read off its filename: what is in the file is nobody's to
+		// know and a path is what somebody typed.
+		body, err := os.ReadFile(s.dry)
+		s.Require().NoError(err)
+
+		wrong := filepath.Join(s.T().TempDir(), "guitar-di.wav")
+		s.Require().NoError(os.WriteFile(wrong, body, 0o600))
+
+		opts := s.opts()
+		opts.Dry = wrong
+
+		s.Require().ErrorIs(Slopes(context.Background(), buffer(), opts), ErrWrongInstrument)
+	}
+}
+
+// TestSlopesReportsHardwareItCannotOpen covers --hardware naming no device.
+func (s *SlopesPublicTestSuite) TestSlopesReportsHardwareItCannotOpen() {
+	{
+		s.built()
+
+		opts := s.opts()
+		opts.Hardware = "no such interface"
+		// Nil, because a caller who supplies a bench owns its lifetime and
+		// benchFor hands that one straight back without ever looking at the name.
+		opts.Bench = nil
+
+		s.Require().Error(Slopes(context.Background(), buffer(), opts))
+	}
+}
+
 func (s *SlopesPublicTestSuite) TestItPrintsTheLiveSlopeBesideTheCommittedOne() {
 	s.built()
 
