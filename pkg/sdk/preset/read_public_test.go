@@ -176,8 +176,7 @@ func (s *ReadPublicTestSuite) TestRead() {
 	}
 }
 
-// TestSpec covers Spec, which extracts the signal chain a document
-// describes.
+// TestSpec covers Spec, which extracts the signal chain a payload describes.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *ReadPublicTestSuite) TestSpec() {
@@ -186,6 +185,7 @@ func (s *ReadPublicTestSuite) TestSpec() {
 		then func()
 	}{
 		{
+			// Extracts the signal chain a preset describes.
 			name: "spec",
 			then: func() {
 				tests := []struct {
@@ -291,7 +291,8 @@ func (s *ReadPublicTestSuite) TestSpec() {
 			},
 		},
 		{
-			// method rather than one per question.
+			// Asks the same chain several questions, so it is one method
+			// rather than one per question.
 			name: "spec reads the fixture",
 			then: func() {
 				got, err := s.doc().Spec()

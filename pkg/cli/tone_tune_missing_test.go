@@ -48,6 +48,7 @@ func (s *MissingPublicTestSuite) TestUnreached() {
 		then func()
 	}{
 		{
+			// Asking for nothing.
 			name: "an axis already inside its tolerance is not wanted",
 			then: func() {
 				aims := map[audio.Figure]solve.Aim{
@@ -60,7 +61,7 @@ func (s *MissingPublicTestSuite) TestUnreached() {
 			},
 		},
 		{
-			// residual.
+			// Why the reading is carried rather than the residual.
 			name: "the want carries the direction",
 			then: func() {
 				aims := map[audio.Figure]solve.Aim{
@@ -77,8 +78,12 @@ func (s *MissingPublicTestSuite) TestUnreached() {
 			},
 		},
 		{
-			// The library reports a band as a percentage. A want handed over unconverted is a
-			// hundred times wrong on four of the ten axes and entirely plausible on the rest.
+			// The trap this file exists to avoid.
+			//
+			// A target and a reading are in the corpus's units, where a band
+			// is a fraction. The library reports a band as a percentage. A
+			// want handed over unconverted is a hundred times wrong on four
+			// of the ten axes and entirely plausible on the rest.
 			name: "a band is converted to the librarys scale",
 			then: func() {
 				aims := map[audio.Figure]solve.Aim{
@@ -105,6 +110,7 @@ func (s *MissingPublicTestSuite) TestUnreached() {
 			},
 		},
 		{
+			// An aim nothing constrains.
 			name: "an axis with no tolerance is not wanted",
 			then: func() {
 				s.Require().Empty(unreached(
@@ -113,6 +119,7 @@ func (s *MissingPublicTestSuite) TestUnreached() {
 			},
 		},
 		{
+			// A figure with no answer.
 			name: "an axis the chain did not read is not wanted",
 			then: func() {
 				s.Require().Empty(unreached(
@@ -126,9 +133,6 @@ func (s *MissingPublicTestSuite) TestUnreached() {
 		})
 	}
 }
-
-// TestABandIsConvertedToTheLibrarysScale is the trap this file exists to avoid.
-//
 
 func TestMissingPublicTestSuite(
 	t *testing.T,
@@ -195,8 +199,6 @@ func (s *MissingPublicTestSuite) TestWhyReportsTheFiguresRatherThanAVerdict() {
 	s.Require().Contains(said, ", ", "the two are separated rather than run together")
 }
 
-// TestMissingSaysNothingWhenThereIsNothingToSay covers the advisory staying quiet.
-//
 // TestMissing covers missing, which prints the blocks that would close what
 // the dials could not.
 //
@@ -207,9 +209,12 @@ func (s *MissingPublicTestSuite) TestMissing() {
 		then func()
 	}{
 		{
-			// axes are all inside their tolerances, must produce no table at all. A
-			// shortlist printed under a converged run reads as a complaint about a chain
-			// that worked.
+			// The advisory staying quiet.
+			//
+			// It prints after a run that did not arrive, so a run that did,
+			// or one whose axes are all inside their tolerances, must produce
+			// no table at all. A shortlist printed under a converged run
+			// reads as a complaint about a chain that worked.
 			name: "missing says nothing when there is nothing to say",
 			then: func() {
 				made := plan.Plan{Blocks: []plan.Block{
@@ -231,8 +236,12 @@ func (s *MissingPublicTestSuite) TestMissing() {
 			},
 		},
 		{
-			// table is which of 661 real blocks is worth eight seconds of measuring, and a
-			// fixture would prove only that the printing works.
+			// The live path.
+			//
+			// Against the shipped library rather than a fixture, because the
+			// point of the table is which of 661 real blocks is worth eight
+			// seconds of measuring, and a fixture would prove only that the
+			// printing works.
 			name: "missing prints a shortlist when an axis is out",
 			then: func() {
 				made := plan.Plan{Blocks: []plan.Block{
@@ -263,6 +272,3 @@ func (s *MissingPublicTestSuite) TestMissing() {
 		})
 	}
 }
-
-// TestMissingPrintsAShortlistWhenAnAxisIsOut is the live path.
-//

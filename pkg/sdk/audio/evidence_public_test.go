@@ -38,13 +38,8 @@ func (s *EvidencePublicTestSuite) keys() []audio.Figure {
 	return audio.MeasuredKeys()
 }
 
-// TestEveryKeyIsMeasured covers the order naming exactly what is produced.
-//
-// A key in the order that nothing measures would write an absent figure into
-// a rig; a key measured but missing from the order would be dropped silently.
-//
-// TestMeasured covers Measured, which is what one recording measures as,
-// keyed for a rig's evidence.
+// TestMeasured covers Measured, which is what several recordings measure as
+// together, keyed for a rig's evidence.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *EvidencePublicTestSuite) TestMeasured() {
@@ -53,7 +48,15 @@ func (s *EvidencePublicTestSuite) TestMeasured() {
 		then func()
 	}{
 		{
-			// not answer writes fewer keys, which is the point of the two below.
+			// The order naming exactly what is produced.
+			//
+			// A key in the order that nothing measures would write an absent
+			// figure into a rig; a key measured but missing from the order
+			// would be dropped silently.
+			//
+			// Measured against a recording that answered everything. A
+			// profile that did not answer writes fewer keys, which is the
+			// point of the two below.
 			name: "every key is measured",
 			then: func() {
 				got := audio.Profile{
@@ -69,8 +72,12 @@ func (s *EvidencePublicTestSuite) TestMeasured() {
 			},
 		},
 		{
-			// carried `decay: 3.0` into a rig and was compared against a preset's real
-			// decay as though somebody had measured it.
+			// The difference between a figure of zero and no figure.
+			//
+			// An earlier version wrote all nine keys always, so a tone that
+			// never decayed carried `decay: 3.0` into a rig and was compared
+			// against a preset's real decay as though somebody had measured
+			// it.
 			name: "a measure nobody could take is left out",
 			then: func() {
 				got := audio.Profile{Centroid: 175}.Measured()
@@ -81,6 +88,7 @@ func (s *EvidencePublicTestSuite) TestMeasured() {
 			},
 		},
 		{
+			// The same across records.
 			name: "a gathered measure nobody could take is left out",
 			then: func() {
 				got := audio.Together([]audio.Profile{{Centroid: 175}, {Centroid: 185}}).
@@ -92,6 +100,7 @@ func (s *EvidencePublicTestSuite) TestMeasured() {
 			},
 		},
 		{
+			// A profile writing every key.
 			name: "one recording is named in full",
 			then: func() {
 				got := audio.Profile{
@@ -112,7 +121,10 @@ func (s *EvidencePublicTestSuite) TestMeasured() {
 			},
 		},
 		{
-			// unless both are written under the same name.
+			// The two agreeing.
+			//
+			// A rig cannot compare a figure from one recording against a
+			// figure from four unless both are written under the same name.
 			name: "gathered recordings are named the same way",
 			then: func() {
 				one := audio.Profile{Centroid: 175}.Measured()
@@ -126,7 +138,10 @@ func (s *EvidencePublicTestSuite) TestMeasured() {
 			},
 		},
 		{
-			// precision the transform does not have.
+			// The numbers being readable.
+			//
+			// The bins are about 10Hz apart, so a centroid to six places
+			// claims a precision the transform does not have.
 			name: "figures are rounded to what they can claim",
 			then: func() {
 				got := audio.Profile{
@@ -143,7 +158,7 @@ func (s *EvidencePublicTestSuite) TestMeasured() {
 			},
 		},
 		{
-			// middle rather than an end.
+			// A gathered measurement writing the middle rather than an end.
 			name: "the middle is what is carried",
 			then: func() {
 				got := audio.Together([]audio.Profile{
@@ -154,10 +169,14 @@ func (s *EvidencePublicTestSuite) TestMeasured() {
 			},
 		},
 		{
-			// written, on the reasoning that a rig could then tell a figure of zero from a
-			// figure nobody took. That had it backwards. The absent key is what tells them
-			// apart, and writing a number for a measure nobody could take is how a
-			// generated tone came to carry a decay of three seconds into a rig.
+			// An empty measurement.
+			//
+			// This test used to assert the opposite, that all nine keys are
+			// always written, on the reasoning that a rig could then tell a
+			// figure of zero from a figure nobody took. That had it
+			// backwards. The absent key is what tells them apart, and writing
+			// a number for a measure nobody could take is how a generated
+			// tone came to carry a decay of three seconds into a rig.
 			name: "nothing measured names only what it could",
 			then: func() {
 				got := audio.Across{}.Measured()
@@ -248,14 +267,8 @@ func (s *EvidencePublicTestSuite) TestOnlyTheBandsAndHarmonicsAreShares() {
 			"the alphabet has to be answered for here too")
 }
 
-// TestAMeasureNobodyCouldTakeIsLeftOut is the difference between a figure of
-// zero and no figure.
-//
-
-// TestAGatheredMeasureThatWasTakenIsWritten covers the other side of it.
-//
 // TestMeasuredKeys covers MeasuredKeys, which is every key a measurement is
-// written under, in the order it.
+// written under, in the order it is written.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *EvidencePublicTestSuite) TestMeasuredKeys() {
@@ -264,8 +277,11 @@ func (s *EvidencePublicTestSuite) TestMeasuredKeys() {
 		then func()
 	}{
 		{
-			// single recording uses. Three so the middle is the middle rather than an
-			// end.
+			// The other side of it.
+			//
+			// The middle of the records that answered, written under the same
+			// key a single recording uses. Three so the middle is the middle
+			// rather than an end.
 			name: "a gathered measure that was taken is written",
 			then: func() {
 				got := audio.Together([]audio.Profile{
@@ -293,6 +309,7 @@ func (s *EvidencePublicTestSuite) TestMeasuredKeys() {
 			},
 		},
 		{
+			// Evidence written twice reading the same way.
 			name: "the order is stable",
 			then: func() {
 				s.Require().Equal(audio.MeasuredKeys(), audio.MeasuredKeys())
@@ -304,15 +321,6 @@ func (s *EvidencePublicTestSuite) TestMeasuredKeys() {
 		})
 	}
 }
-
-// TestGatheredRecordingsAreNamedTheSameWay covers the two agreeing.
-//
-
-// TestFiguresAreRoundedToWhatTheyCanClaim covers the numbers being readable.
-//
-
-// TestNothingMeasuredNamesOnlyWhatItCould covers an empty measurement.
-//
 
 func TestEvidencePublicTestSuite(
 	t *testing.T,

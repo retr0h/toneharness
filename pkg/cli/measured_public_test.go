@@ -101,6 +101,7 @@ func (s *MeasuredPublicTestSuite) TestMeasured() {
 		then func()
 	}{
 		{
+			// What the corpus says, in both of its shapes.
 			name: "measured",
 			then: func() {
 				tests := []struct {
@@ -193,7 +194,8 @@ func (s *MeasuredPublicTestSuite) TestMeasured() {
 			},
 		},
 		{
-			// must not swap places between runs.
+			// Two categories used equally often, which must not swap places
+			// between runs.
 			name: "measured does not shuffle",
 			then: func() {
 				var first string

@@ -258,6 +258,7 @@ func (s *FFTPublicTestSuite) TestForward() {
 		then func()
 	}{
 		{
+			// The bins meaning what they say.
 			name: "a transform finds a tone where it is",
 			then: func() {
 				const (
@@ -289,6 +290,7 @@ func (s *FFTPublicTestSuite) TestForward() {
 			},
 		},
 		{
+			// The lengths that cannot be halved.
 			name: "nothing to transform",
 			then: func() {
 				for _, n := range []int{0, 1} {

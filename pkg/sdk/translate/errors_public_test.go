@@ -37,8 +37,6 @@ type ErrorsPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestAWrongDeviceNamesBothOfThem covers the detail reaching a caller.
-//
 // TestError covers Error, which implements the error interface.
 //
 // One method and one table, so a case is a row rather than a file.
@@ -48,7 +46,11 @@ func (s *ErrorsPublicTestSuite) TestError() {
 		then func()
 	}{
 		{
-			// in hand, or point the setup at the one the readings came from.
+			// The detail reaching a caller.
+			//
+			// Both, because which one is wrong decides the fix: re-measure on
+			// the device in hand, or point the setup at the one the readings
+			// came from.
 			name: "a wrong device names both of them",
 			then: func() {
 				err := error(&translate.WrongDeviceError{
@@ -67,7 +69,7 @@ func (s *ErrorsPublicTestSuite) TestError() {
 			},
 		},
 		{
-			// substitute.
+			// The same for a refusal to substitute.
 			name: "insisting carries the gear and the reason",
 			then: func() {
 				err := error(&translate.InsistedError{

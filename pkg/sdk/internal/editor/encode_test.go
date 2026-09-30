@@ -177,10 +177,8 @@ func (s *EncodeTestSuite) model(
 	return got
 }
 
-// TestAPresetSurvivesGoingBackToTheDevice is the claim this file exists for.
-//
-// TestPlacements covers Placements, which turns a preset into the blocks a
-// device grid holds.
+// TestPlacements covers Placements, which turns a preset into what a device
+// lays out.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *EncodeTestSuite) TestPlacements() {
@@ -189,8 +187,11 @@ func (s *EncodeTestSuite) TestPlacements() {
 		then func()
 	}{
 		{
-			// way an import writes one, and read again. A block that comes back changed
-			// is a tone somebody would hear go wrong.
+			// The claim this file exists for.
+			//
+			// Every capture is read the way `presets show` reads one, written
+			// back the way an import writes one, and read again. A block that
+			// comes back changed is a tone somebody would hear go wrong.
 			name: "a preset survives going back to the device",
 			then: func() {
 				for _, name := range []string{"preset.bin", "switches.bin", "empty.bin"} {
@@ -214,7 +215,8 @@ func (s *EncodeTestSuite) TestPlacements() {
 			},
 		},
 		{
-			// something a device has no number for.
+			// The ways a preset can name something a device has no number
+			// for.
 			name: "placements of reports what it cannot write",
 			then: func() {
 				tests := []struct {
@@ -315,13 +317,6 @@ func (s *EncodeTestSuite) TestPlacements() {
 	}
 }
 
-// TestValuesFollowTheCatalogsWord covers the typing JSON cannot carry.
-//
-// "e" is in the model table and not in the catalog's block, which is the
-// shape of a real mismatch rather than an artificial one: a cabinet's symbol
-// list ends in `IrData`, the catalog's block does not carry it, and a device
-// writes the entry without it. Ninety-two cabinets are like that.
-//
 // TestValuesOf covers valuesOf, which puts a block's parameters back in the
 // order a device reads them.
 //
@@ -332,8 +327,17 @@ func (s *EncodeTestSuite) TestValuesOf() {
 		then func()
 	}{
 		{
-			// the extra value produces a chain entry a device stores, hands back
-			// unchanged, and renders as an empty chain.
+			// The typing JSON cannot carry.
+			//
+			// "e" is in the model table and not in the catalog's block, which
+			// is the shape of a real mismatch rather than an artificial one:
+			// a cabinet's symbol list ends in `IrData`, the catalog's block
+			// does not carry it, and a device writes the entry without it.
+			// Ninety-two cabinets are like that.
+			//
+			// This used to expect "e" to take its place holding a zero. That
+			// was the bug: the extra value produces a chain entry a device
+			// stores, hands back unchanged, and renders as an empty chain.
 			name: "values follow the catalogs word",
 			then: func() {
 				sym := catalog.Symbol{Params: []string{"a", "b", "c", "d", "e"}}
@@ -415,10 +419,14 @@ func (s *EncodeTestSuite) TestValuesOf() {
 			},
 		},
 		{
-			// measure one block names the model and nothing else, every absent parameter
-			// went to the device as zero, and an amp with its Master and channel volume at
-			// zero came back 50dB down. That reads as a chain that loaded and passed no
-			// signal, which is a different bug from the one it was.
+			// A parameter nobody set.
+			//
+			// The failure it exists for was silent and cost a night. A plan
+			// built to measure one block names the model and nothing else,
+			// every absent parameter went to the device as zero, and an amp
+			// with its Master and channel volume at zero came back 50dB down.
+			// That reads as a chain that loaded and passed no signal, which
+			// is a different bug from the one it was.
 			name: "a setting falls back to the catalogs default",
 			then: func() {
 				sym := catalog.Symbol{Params: []string{"Master", "ChVol", "MidFreq", "Bright"}}
@@ -457,9 +465,6 @@ func (s *EncodeTestSuite) TestValuesOf() {
 		})
 	}
 }
-
-// TestASettingFallsBackToTheCatalogsDefault covers a parameter nobody set.
-//
 
 // TestMicOf covers the value a cabinet sends past its named ones.
 func (s *EncodeTestSuite) TestMicOf() {
@@ -632,9 +637,6 @@ func TestEncodeTestSuite(
 	suite.Run(t, new(EncodeTestSuite))
 }
 
-// TestPlacedControllersReadsTheSectionRatherThanThePlan is the bug this
-// resolver was written with and then found by putting it on hardware.
-//
 // TestPlacedControllers covers PlacedControllers, which turns what a preset
 // says moves into what a device stores.
 //
@@ -645,9 +647,14 @@ func (s *EncodeTestSuite) TestPlacedControllers() {
 		then func()
 	}{
 		{
-			// preset carries its blocks and not its assignments. Resolving off Spec
-			// therefore found nothing, wrote an empty section, and the slot came back with
-			// no controllers at all — which reads exactly like the bug it was meant to fix.
+			// The bug this resolver was written with and then found by
+			// putting it on hardware.
+			//
+			// A preset keeps what moves under `tone.controller`, and a plan
+			// built from that preset carries its blocks and not its
+			// assignments. Resolving off Spec therefore found nothing, wrote
+			// an empty section, and the slot came back with no controllers at
+			// all — which reads exactly like the bug it was meant to fix.
 			name: "placed controllers reads the section rather than the plan",
 			then: func() {
 				pos, name := s.aParameter(s.withController(`{}`))
@@ -676,8 +683,11 @@ func (s *EncodeTestSuite) TestPlacedControllers() {
 			},
 		},
 		{
-			// measured in hertz or decibels, so an assignment that names neither end gets
-			// the knob's own.
+			// The ends being left out.
+			//
+			// Zero and one are right for most parameters here and wrong for
+			// every one measured in hertz or decibels, so an assignment that
+			// names neither end gets the knob's own.
 			name: "placed controllers falls back to the parameters own range",
 			then: func() {
 				pos, name := s.aParameter(s.withController(`{}`))
@@ -697,9 +707,13 @@ func (s *EncodeTestSuite) TestPlacedControllers() {
 			},
 		},
 		{
-			// does not have and a control the model does not carry are reported with every
-			// other complaint about the rig. What is left is somebody's own edit, and
-			// writing it would put a controller on whatever happens to sit at that number.
+			// A hand-edited preset.
+			//
+			// Both paths into a preset have been through check, where a block
+			// the chain does not have and a control the model does not carry
+			// are reported with every other complaint about the rig. What is
+			// left is somebody's own edit, and writing it would put a
+			// controller on whatever happens to sit at that number.
 			name: "placed controllers skips what does not line up",
 			then: func() {
 				tests := []struct {
@@ -758,9 +772,13 @@ func (s *EncodeTestSuite) TestPlacedControllers() {
 			},
 		},
 		{
-			// and each is reported rather than skipped: a key that is not a number says the
-			// file is wrong, where an assignment that does not line up only says the chain
-			// moved under it.
+			// A hand-edited file.
+			//
+			// Every one of these is somebody's own edit rather than anything
+			// this writes, and each is reported rather than skipped: a key
+			// that is not a number says the file is wrong, where an
+			// assignment that does not line up only says the chain moved
+			// under it.
 			name: "placed controllers reports a section it cannot read",
 			then: func() {
 				tests := []struct {
@@ -782,8 +800,11 @@ func (s *EncodeTestSuite) TestPlacedControllers() {
 			},
 		},
 		{
-			// point at from the chain, so a chain that will not parse stops this before any
-			// assignment is resolved.
+			// The plan failing.
+			//
+			// The assignments are read from the controller section and the
+			// blocks they point at from the chain, so a chain that will not
+			// parse stops this before any assignment is resolved.
 			name: "placed controllers reports a chain it cannot read",
 			then: func() {
 				doc := s.withController(`{"block0":{"Mix":{"@controller":2}}}`)
@@ -795,6 +816,7 @@ func (s *EncodeTestSuite) TestPlacedControllers() {
 			},
 		},
 		{
+			// A malformed section.
 			name: "placed controllers reports a key it cannot read",
 			then: func() {
 				doc := s.withController(`{"block1":{"Drive":{"@controller":2}}}`)
@@ -806,6 +828,7 @@ func (s *EncodeTestSuite) TestPlacedControllers() {
 			},
 		},
 		{
+			// The common case.
 			name: "a preset that moves nothing resolves nothing",
 			then: func() {
 				got, err := PlacedControllers(s.asPreset("one", s.read("preset.bin")), s.cat)
@@ -820,16 +843,3 @@ func (s *EncodeTestSuite) TestPlacedControllers() {
 		})
 	}
 }
-
-// TestPlacedControllersFallsBackToTheParametersOwnRange covers the ends being
-// left out.
-//
-
-// TestPlacedControllersSkipsWhatDoesNotLineUp covers a hand-edited preset.
-//
-
-// TestPlacedControllersReportsASectionItCannotRead covers a hand-edited file.
-//
-
-// TestPlacedControllersReportsAChainItCannotRead covers the plan failing.
-//

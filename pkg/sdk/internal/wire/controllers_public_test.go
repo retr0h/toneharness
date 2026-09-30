@@ -54,8 +54,6 @@ func (s *ControllersPublicTestSuite) read(
 	return got
 }
 
-// TestAnAssignmentSurvivesBeingWrittenAndRead is the whole point.
-//
 // TestPlaceControllers covers PlaceControllers, which writes what an
 // expression pedal or a footswitch moves.
 //
@@ -66,9 +64,13 @@ func (s *ControllersPublicTestSuite) TestPlaceControllers() {
 		then func()
 	}{
 		{
-			// the compiler resolved it and the file kept it, and the section never reached
-			// the device: place.go wrote the chain and the snapshots and nothing else, so
-			// importing such a preset and reading it back showed no controllers at all.
+			// The whole point.
+			//
+			// A rig could say `moves: [{by: expression, role: amp, setting:
+			// drive}]` and the compiler resolved it and the file kept it, and
+			// the section never reached the device: place.go wrote the chain
+			// and the snapshots and nothing else, so importing such a preset
+			// and reading it back showed no controllers at all.
 			name: "an assignment survives being written and read",
 			then: func() {
 				doc := s.blank()
@@ -96,7 +98,11 @@ func (s *ControllersPublicTestSuite) TestPlaceControllers() {
 			},
 		},
 		{
-			// from a release that had no such switch rather than as one with it off.
+			// The flags map.
+			//
+			// The device writes it either way, so a section without it reads
+			// as a preset from a release that had no such switch rather than
+			// as one with it off.
 			name: "the switch off is written rather than left out",
 			then: func() {
 				doc := s.blank()
@@ -111,7 +117,10 @@ func (s *ControllersPublicTestSuite) TestPlaceControllers() {
 			},
 		},
 		{
-			// two parameters at once.
+			// A list rather than a single entry.
+			//
+			// The section holds a list per controller, so one expression
+			// pedal may move two parameters at once.
 			name: "two assignments on one controller",
 			then: func() {
 				doc := s.blank()
@@ -130,6 +139,7 @@ func (s *ControllersPublicTestSuite) TestPlaceControllers() {
 			},
 		},
 		{
+			// The index being the controller.
 			name: "controllers on different numbers",
 			then: func() {
 				doc := s.blank()
@@ -148,8 +158,11 @@ func (s *ControllersPublicTestSuite) TestPlaceControllers() {
 			},
 		},
 		{
-			// and a file that names none end up saying the file's thing rather than the
-			// slot's.
+			// A preset that assigns nothing.
+			//
+			// The whole section is written every time, so a slot that held an
+			// assignment and a file that names none end up saying the file's
+			// thing rather than the slot's.
 			name: "none clears the section",
 			then: func() {
 				doc := s.blank()
@@ -164,7 +177,11 @@ func (s *ControllersPublicTestSuite) TestPlaceControllers() {
 			},
 		},
 		{
-			// refuse it, so the refusal has to come before the write rather than after.
+			// The bounds.
+			//
+			// Ten slots, and a malformed section is written to flash before
+			// anything can refuse it, so the refusal has to come before the
+			// write rather than after.
 			name: "a controller the device does not have is refused",
 			then: func() {
 				tests := []struct {
@@ -191,18 +208,6 @@ func (s *ControllersPublicTestSuite) TestPlaceControllers() {
 		})
 	}
 }
-
-// TestTheSwitchOffIsWrittenRatherThanLeftOut covers the flags map.
-//
-
-// TestTwoAssignmentsOnOneController covers a list rather than a single entry.
-//
-
-// TestNoneClearsTheSection covers a preset that assigns nothing.
-//
-
-// TestAControllerTheDeviceDoesNotHaveIsRefused covers the bounds.
-//
 
 func TestControllersPublicTestSuite(
 	t *testing.T,

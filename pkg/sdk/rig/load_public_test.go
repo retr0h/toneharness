@@ -55,6 +55,7 @@ func (s *LoadPublicTestSuite) TestLoad() {
 		then func()
 	}{
 		{
+			// Reads a rig off a reader.
 			name: "load",
 			then: func() {
 				tests := []struct {
@@ -176,8 +177,12 @@ func (s *LoadPublicTestSuite) TestLoad() {
 			},
 		},
 		{
-			// says which one a document may state. Nothing else compares them, and a bump
-			// that moved one and not the other would be silent.
+			// Keeps the constant and the contract from drifting apart.
+			//
+			// rig.Version says which version this package reads and writes;
+			// the contract says which one a document may state. Nothing else
+			// compares them, and a bump that moved one and not the other
+			// would be silent.
 			name: "the contract accepts the version this package writes",
 			then: func() {
 				stated := fmt.Sprintf("version: %d\n", rig.Version)
@@ -272,10 +277,6 @@ func (*failingWriter) Write(
 ) (int, error) {
 	return 0, errors.New("boom")
 }
-
-// TestTheContractAcceptsTheVersionThisPackageWrites keeps the constant and
-// the contract from drifting apart.
-//
 
 func TestLoadPublicTestSuite(
 	t *testing.T,

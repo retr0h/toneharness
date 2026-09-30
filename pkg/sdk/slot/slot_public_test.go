@@ -42,6 +42,7 @@ func (s *SlotPublicTestSuite) TestLabel() {
 		then func()
 	}{
 		{
+			// Names a position the way the pedal prints it.
 			name: "label",
 			then: func() {
 				tests := []struct {
@@ -65,7 +66,8 @@ func (s *SlotPublicTestSuite) TestLabel() {
 			},
 		},
 		{
-			// either. Every slot a device has, both ways round.
+			// A property of the pair rather than a case of either. Every slot
+			// a device has, both ways round.
 			name: "a label and its index agree",
 			then: func() {
 				for i := range 126 {

@@ -109,8 +109,6 @@ func (s *EvidencePublicTestSuite) TestTheFiguresSurviveTheTrip() {
 	s.Require().InDelta(175, m[string(audio.KeyCentroid)], 1e-9)
 }
 
-// TestATimestampStaysAString is the one value a rig cannot afford to guess at.
-//
 // TestEvidence covers Evidence, which writes measurements as rig evidence,
 // ready to paste into a chain.
 //
@@ -121,9 +119,13 @@ func (s *EvidencePublicTestSuite) TestEvidence() {
 		then func()
 	}{
 		{
-			// 1.1 colon-separated digits are sexagesimal: a bare `at: 1:42` comes back as
-			// the number 102. A single timestamp is the case that exposes it, because a
-			// range carries a trailing `-1:45` that keeps it a string by accident.
+			// The one value a rig cannot afford to guess at.
+			//
+			// Rigs are written by a YAML 1.2 encoder and loaded by a 1.1
+			// decoder, and in 1.1 colon-separated digits are sexagesimal: a
+			// bare `at: 1:42` comes back as the number 102. A single
+			// timestamp is the case that exposes it, because a range carries
+			// a trailing `-1:45` that keeps it a string by accident.
 			name: "a timestamp stays a string",
 			then: func() {
 				var buf bytes.Buffer
@@ -144,6 +146,7 @@ func (s *EvidencePublicTestSuite) TestEvidence() {
 			},
 		},
 		{
+			// The link arriving.
 			name: "what the manifest knows reaches the entry",
 			then: func() {
 				var buf bytes.Buffer
@@ -166,9 +169,13 @@ func (s *EvidencePublicTestSuite) TestEvidence() {
 			},
 		},
 		{
-			// the document and then flushes the rest when it is closed, so a failure
-			// arriving late is a different path from one arriving at the start, and only
-			// walking the whole range reaches both.
+			// The output going somewhere that stops accepting it.
+			//
+			// Every point it can fail, rather than the first. The encoder
+			// writes some of the document and then flushes the rest when it
+			// is closed, so a failure arriving late is a different path from
+			// one arriving at the start, and only walking the whole range
+			// reaches both.
 			name: "a write that fails is reported",
 			then: func() {
 				writes := &counting{}
@@ -253,10 +260,6 @@ func (s *EvidencePublicTestSuite) TestNothingToWrite() {
 	s.Require().NoError(yaml.Unmarshal([]byte(got), &back))
 	s.Require().Empty(back)
 }
-
-// TestAWriteThatFailsIsReported covers the output going somewhere that stops
-// accepting it.
-//
 
 func TestEvidencePublicTestSuite(
 	t *testing.T,

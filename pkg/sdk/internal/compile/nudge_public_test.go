@@ -48,6 +48,7 @@ func (s *NudgePublicTestSuite) TestNudges() {
 		then func()
 	}{
 		{
+			// The base case.
 			name: "a word names a figure and a direction",
 			then: func() {
 				tests := []struct {
@@ -75,8 +76,12 @@ func (s *NudgePublicTestSuite) TestNudges() {
 			},
 		},
 		{
-			// mean the same axis in the same direction, so refusing "darker" would make
-			// somebody look up a spelling to say a thing the tool understands.
+			// The form of the word.
+			//
+			// The vocabulary holds the adjective and a person says the
+			// comparative. Both mean the same axis in the same direction, so
+			// refusing "darker" would make somebody look up a spelling to say
+			// a thing the tool understands.
 			name: "the comparative is what somebody actually says",
 			then: func() {
 				tests := []struct {
@@ -107,7 +112,11 @@ func (s *NudgePublicTestSuite) TestNudges() {
 			},
 		},
 		{
-			// vocabulary holds it that way because that is how players talk.
+			// A word answering more than one axis.
+			//
+			// "Punchy" is a tight low end and a hard attack in one word, and
+			// the vocabulary holds it that way because that is how players
+			// talk.
 			name: "a word may ask for two things",
 			then: func() {
 				got, err := compile.Nudges("punchy")
@@ -124,9 +133,13 @@ func (s *NudgePublicTestSuite) TestNudges() {
 			},
 		},
 		{
-			// pickup was used and whether a filter is moving have no figure at all. A word
-			// answering only those cannot move a target however much somebody means it, and
-			// saying so is the difference between that and a word that does nothing.
+			// Four of the ten axes.
+			//
+			// How much room is on a part, how loud the strings are under a
+			// hand, which pickup was used and whether a filter is moving have
+			// no figure at all. A word answering only those cannot move a
+			// target however much somebody means it, and saying so is the
+			// difference between that and a word that does nothing.
 			name: "a word nothing measures is refused",
 			then: func() {
 				_, err := compile.Nudges("quiet-strings")
@@ -135,6 +148,7 @@ func (s *NudgePublicTestSuite) TestNudges() {
 			},
 		},
 		{
+			// A typo.
 			name: "a word the vocabulary does not know is refused by name",
 			then: func() {
 				_, err := compile.Nudges("chunky")
@@ -144,7 +158,11 @@ func (s *NudgePublicTestSuite) TestNudges() {
 			},
 		},
 		{
-			// something with no figure, and neither answer is a crash or an empty list.
+			// Holds the two tables to each other.
+			//
+			// Every word in the vocabulary is either something a nudge can
+			// move or something with no figure, and neither answer is a crash
+			// or an empty list.
 			name: "every word either resolves or says why not",
 			then: func() {
 				for _, word := range compile.Words() {
@@ -174,18 +192,6 @@ func (s *NudgePublicTestSuite) TestNudges() {
 		})
 	}
 }
-
-// TestTheComparativeIsWhatSomebodyActuallySays covers the form of the word.
-//
-
-// TestAWordMayAskForTwoThings covers a word answering more than one axis.
-//
-
-// TestAWordNothingMeasuresIsRefused covers four of the ten axes.
-//
-
-// TestEveryWordEitherResolvesOrSaysWhyNot holds the two tables to each other.
-//
 
 func TestNudgePublicTestSuite(
 	t *testing.T,

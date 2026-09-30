@@ -157,6 +157,7 @@ func (s *AcrossPublicTestSuite) TestTracks() {
 		then func()
 	}{
 		{
+			// The per-record table.
 			name: "each record gets a row",
 			then: func() {
 				var buf bytes.Buffer
@@ -188,6 +189,7 @@ func (s *AcrossPublicTestSuite) TestTracks() {
 			},
 		},
 		{
+			// The table with nothing in it.
 			name: "no records at all",
 			then: func() {
 				var buf bytes.Buffer

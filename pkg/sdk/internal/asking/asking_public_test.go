@@ -72,8 +72,6 @@ func (s *AskingPublicTestSuite) file(
 	return to
 }
 
-// TestTheWorkedExampleResolves holds the examples to the code.
-//
 // TestResolve covers Resolve, which reads a request and answers with the rig
 // it resolves to.
 //
@@ -84,7 +82,11 @@ func (s *AskingPublicTestSuite) TestResolve() {
 		then func()
 	}{
 		{
-			// thing anybody runs, and it says the tool is broken when the example is.
+			// Holds the examples to the code.
+			//
+			// A worked example that stopped working is worse than none: it is
+			// the first thing anybody runs, and it says the tool is broken
+			// when the example is.
 			name: "the worked example resolves",
 			then: func() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
@@ -98,7 +100,11 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			},
 		},
 		{
-			// in the room, and the answer says what it assumed rather than refusing.
+			// A request that says nothing about what is owned.
+			//
+			// Somebody asking what a record sounds like has not necessarily
+			// said what is in the room, and the answer says what it assumed
+			// rather than refusing.
 			name: "a setup is optional",
 			then: func() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
@@ -110,6 +116,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			},
 		},
 		{
+			// Both paths that read a file.
 			name: "a document that is not there is reported",
 			then: func() {
 				absent := filepath.Join(s.T().TempDir(), "nowhere.yaml")
@@ -137,7 +144,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			},
 		},
 		{
-			// ToneSpec.
+			// A file that reads but is not a ToneSpec.
 			name: "a document that is not one is reported",
 			then: func() {
 				tests := []struct {
@@ -167,7 +174,11 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			},
 		},
 		{
-			// the error on its own is the half that does not help.
+			// Why both halves come back.
+			//
+			// A request that could not be honoured has usually said why in
+			// the notes, and the error on its own is the half that does not
+			// help.
 			name: "notes travel with a failure",
 			then: func() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
@@ -185,6 +196,7 @@ gear:
 			},
 		},
 		{
+			// The guard every operation carries.
 			name: "a cancelled context is refused",
 			then: func() {
 				ctx, cancel := context.WithCancel(context.Background())
@@ -203,12 +215,6 @@ gear:
 		})
 	}
 }
-
-// TestASetupIsOptional covers a request that says nothing about what is owned.
-//
-
-// TestNotesTravelWithAFailure is why both halves come back.
-//
 
 func TestAskingPublicTestSuite(
 	t *testing.T,

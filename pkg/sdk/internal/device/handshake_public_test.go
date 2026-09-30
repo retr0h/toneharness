@@ -346,7 +346,23 @@ func (s *HandshakePublicTestSuite) TestCall() {
 			},
 		},
 		{
-			// everything, so refusing here would fail a run that works today.
+			// TestHandshake opens every channel, once, and stops at the first
+			// frame the bus will not take. A handshake is never retried, so a
+			// failure partway through is reported rather than papered over.
+			// TestASessionThatOpenedOnANoisyDeviceSaysSo covers what a later
+			// timeout carries.
+			//
+			// The handshake drains before it opens anything, and that drain
+			// is the only recovery for a device left mid-conversation by a
+			// session that died without closing. It is bounded, so it can
+			// give up with the device still talking, and it used to do that
+			// silently: a session that began on a backlog read exactly like
+			// one that began clean, and telling them apart meant
+			// instrumenting the timeout by hand.
+			//
+			// Noted rather than refused. A busy device usually settles and
+			// answers everything, so refusing here would fail a run that
+			// works today.
 			name: "a session that opened on a noisy device says so",
 			then: func() {
 				d := answers(s.ctrl)
@@ -370,7 +386,11 @@ func (s *HandshakePublicTestSuite) TestCall() {
 			},
 		},
 		{
-			// exactly as it did before there was anything to add to it.
+			// The ordinary failure.
+			//
+			// Almost every session opens on a quiet device, so the timeout
+			// has to read exactly as it did before there was anything to add
+			// to it.
 			name: "a session that opened cleanly says nothing extra",
 			then: func() {
 				d := answers(s.ctrl)
@@ -395,23 +415,6 @@ func (s *HandshakePublicTestSuite) TestCall() {
 		})
 	}
 }
-
-// TestHandshake opens every channel, once, and stops at the first frame the
-// bus will not take. A handshake is never retried, so a failure partway
-// through is reported rather than papered over.
-// TestASessionThatOpenedOnANoisyDeviceSaysSo covers what a later timeout
-// carries.
-//
-// The handshake drains before it opens anything, and that drain is the only
-// recovery for a device left mid-conversation by a session that died without
-// closing. It is bounded, so it can give up with the device still talking, and
-// it used to do that silently: a session that began on a backlog read exactly
-// like one that began clean, and telling them apart meant instrumenting the
-// timeout by hand.
-//
-
-// TestASessionThatOpenedCleanlySaysNothingExtra covers the ordinary failure.
-//
 
 func (s *HandshakePublicTestSuite) TestHandshake() {
 	tests := []struct {

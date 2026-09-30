@@ -111,8 +111,6 @@ func (s *WritePublicTestSuite) session(
 	return out
 }
 
-// TestWritePreset puts a document into a slot.
-//
 // TestWritePreset covers WritePreset, which puts a document into a slot.
 //
 // One method and one table, so a case is a row rather than a file.
@@ -122,8 +120,12 @@ func (s *WritePublicTestSuite) TestWritePreset() {
 		then func()
 	}{
 		{
-			// is success: the erase and program that follow never reach the wire. A
-			// refusal, or a status nobody has seen, fails.
+			// Puts a document into a slot.
+			//
+			// Both 0 and 1 have been seen on hardware for a write that
+			// landed, so either is success: the erase and program that follow
+			// never reach the wire. A refusal, or a status nobody has seen,
+			// fails.
 			name: "write preset",
 			then: func() {
 				large := bytes.Repeat([]byte{0x2a}, 2000)
@@ -332,9 +334,13 @@ func (s *WritePublicTestSuite) TestWritePreset() {
 			},
 		},
 		{
-			// acknowledgements. Sending a whole preset at once fills its receive window
-			// and stalls the endpoint, and the interface will not be claimed again until
-			// the device is power cycled.
+			// A property of the transfer rather than a case of the call.
+			//
+			// A device takes 256 bytes of stream data per frame and paces the
+			// sender with acknowledgements. Sending a whole preset at once
+			// fills its receive window and stalls the endpoint, and the
+			// interface will not be claimed again until the device is power
+			// cycled.
 			name: "a message goes out in pieces a device can pace",
 			then: func() {
 				d := s.completes()
@@ -358,10 +364,17 @@ func (s *WritePublicTestSuite) TestWritePreset() {
 			},
 		},
 		{
-			// left holding half a message, and a later call feeding it a fresh request
-			// is the held-session stall all over again, so the timeout ends the session:
-			// the error matches ErrBus, the next call sends nothing, and Close still
-			// attempts the closing hellos.
+			// Reproduces what stalled a pedal's USB endpoint on hardware: a
+			// chunk released by a frame on another channel rather than its
+			// own acknowledgement, and nothing acking after it.
+			// pkg/sdk/internal/wire/README.md cites the trace.
+			//
+			// A timeout here does not merely fail the write. The data channel
+			// would be left holding half a message, and a later call feeding
+			// it a fresh request is the held-session stall all over again, so
+			// the timeout ends the session: the error matches ErrBus, the
+			// next call sends nothing, and Close still attempts the closing
+			// hellos.
 			name: "a chunk the device never acks stops the message",
 			then: func() {
 				d := answers(s.ctrl)
@@ -414,10 +427,15 @@ func (s *WritePublicTestSuite) TestWritePreset() {
 			},
 		},
 		{
-			// too, which released a chunk on any transfer, the unrelated frame included.
-			// What proves the fix is the order: chunk N+1 is never written until chunk
-			// N's own acknowledgement has been served, never merely a frame on some other
-			// channel.
+			// A notification that arrives on another channel while a message
+			// paces: pace waits for its own channel's acknowledgement, not
+			// any transfer.
+			//
+			// A count of chunks that all eventually went out would pass on
+			// the old logic too, which released a chunk on any transfer, the
+			// unrelated frame included. What proves the fix is the order:
+			// chunk N+1 is never written until chunk N's own acknowledgement
+			// has been served, never merely a frame on some other channel.
 			name: "an unrelated frame does not release the next chunk",
 			then: func() {
 				d := s.completes()
@@ -453,8 +471,11 @@ func (s *WritePublicTestSuite) TestWritePreset() {
 			},
 		},
 		{
-			// write landing on the first stacks its commit. The pause is the only thing
-			// keeping them apart.
+			// The wait that is real.
+			//
+			// Nothing on the wire says when the erase and program finish, so
+			// a second write landing on the first stacks its commit. The
+			// pause is the only thing keeping them apart.
 			name: "a write is paced for the flash",
 			then: func() {
 				b := device.ShortBudgets()
@@ -482,24 +503,6 @@ func (s *WritePublicTestSuite) TestWritePreset() {
 	}
 }
 
-// TestAMessageGoesOutInPiecesADeviceCanPace is a property of the transfer
-// rather than a case of the call.
-//
-
-// TestAChunkTheDeviceNeverAcksStopsTheMessage reproduces what stalled a
-// pedal's USB endpoint on hardware: a chunk released by a frame on another
-// channel rather than its own acknowledgement, and nothing acking after it.
-// pkg/sdk/internal/wire/README.md cites the trace.
-//
-
-// TestAnUnrelatedFrameDoesNotReleaseTheNextChunk covers a notification that
-// arrives on another channel while a message paces: pace waits for its own
-// channel's acknowledgement, not any transfer.
-//
-
-// TestAWriteIsPacedForTheFlash covers the wait that is real.
-//
-
 // TestWriteNamedPreset carries the name the slot takes.
 //
 // A paste or an import carries one; editing a preset in place leaves whatever
@@ -514,8 +517,6 @@ func (s *WritePublicTestSuite) TestWriteNamedPreset() {
 		"a device reads an unterminated name as running into what follows")
 }
 
-// TestEmptySlot takes what a slot holds away again.
-//
 // TestEmptySlot covers EmptySlot, which takes away what a slot holds.
 //
 // One method and one table, so a case is a row rather than a file.
@@ -525,10 +526,13 @@ func (s *WritePublicTestSuite) TestEmptySlot() {
 		then func()
 	}{
 		{
-			// the half of a device call that cannot be guessed: opcode 16 on the data
-			// channel, the setlist and the slot, and no document. That is what went to an
-			// HX Stomp on 15 September 2026, after which the slot read back as no
-			// document at all.
+			// Takes what a slot holds away again.
+			//
+			// The request is compared whole, because the arguments and their
+			// order are the half of a device call that cannot be guessed:
+			// opcode 16 on the data channel, the setlist and the slot, and no
+			// document. That is what went to an HX Stomp on 15 September
+			// 2026, after which the slot read back as no document at all.
 			name: "empty slot",
 			then: func() {
 				d := s.completes()
@@ -546,7 +550,12 @@ func (s *WritePublicTestSuite) TestEmptySlot() {
 			},
 		},
 		{
-			// caller hears no, rather than a slot silently left as it was.
+			// The answer a device gives to an opcode or a slot it will not
+			// have.
+			//
+			// An empty goes out as a write does, so a refusal is read the
+			// same way: the caller hears no, rather than a slot silently left
+			// as it was.
 			name: "an empty a device refuses",
 			then: func() {
 				d := answers(s.ctrl, s.answer(device.FirstTxn, 255))
@@ -602,10 +611,6 @@ func (s *WritePublicTestSuite) TestAWriteCurrentADeviceRefuses() {
 
 	s.Require().ErrorIs(err, wire.ErrRefused)
 }
-
-// TestAnEmptyADeviceRefuses covers the answer a device gives to an opcode or
-// a slot it will not have.
-//
 
 // TestAWriteOnAChannelNobodyOpened covers a session that never handshook.
 func (s *WritePublicTestSuite) TestAWriteOnAChannelNobodyOpened() {

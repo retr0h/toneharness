@@ -71,18 +71,21 @@ func (s *RoutingPublicTestSuite) slot(
 	return wire.DeviceRouting{}
 }
 
-// TestAnOutputTakesItsOwnValues covers the case the task was filed for.
-//
-// TestPlaceRoutingWritesWhatTheDeviceReads covers putting routing back into a preset, entry by entry.
+// TestPlaceRouting covers PlaceRouting, which writes what a device wraps a
+// chain in.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *RoutingPublicTestSuite) TestPlaceRoutingWritesWhatTheDeviceReads() {
+func (s *RoutingPublicTestSuite) TestPlaceRouting() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// the preset being written into rather than from the file.
+			// The case the task was filed for.
+			//
+			// A preset whose output gain is -2.9 arrived at 0, because the
+			// gain came from the preset being written into rather than from
+			// the file.
 			name: "an output takes its own values",
 			then: func() {
 				doc := s.blank()
@@ -106,6 +109,7 @@ func (s *RoutingPublicTestSuite) TestPlaceRoutingWritesWhatTheDeviceReads() {
 			},
 		},
 		{
+			// The fields only a split and a join have.
 			name: "a split moves and switches off",
 			then: func() {
 				doc := s.blank()
@@ -126,6 +130,7 @@ func (s *RoutingPublicTestSuite) TestPlaceRoutingWritesWhatTheDeviceReads() {
 			},
 		},
 		{
+			// The longest value list a device sends.
 			name: "a join takes every setting",
 			then: func() {
 				doc := s.blank()
@@ -145,6 +150,7 @@ func (s *RoutingPublicTestSuite) TestPlaceRoutingWritesWhatTheDeviceReads() {
 			},
 		},
 		{
+			// What makes every field optional.
 			name: "what nobody names is left alone",
 			then: func() {
 				doc := s.blank()
@@ -163,7 +169,10 @@ func (s *RoutingPublicTestSuite) TestPlaceRoutingWritesWhatTheDeviceReads() {
 			},
 		},
 		{
-			// replaced rather than the values inside it.
+			// A file naming a split the blank has not.
+			//
+			// The parameter list changes length with the model, so the whole
+			// map is replaced rather than the values inside it.
 			name: "a split takes another model",
 			then: func() {
 				doc := s.blank()
@@ -182,6 +191,7 @@ func (s *RoutingPublicTestSuite) TestPlaceRoutingWritesWhatTheDeviceReads() {
 			},
 		},
 		{
+			// Ignored rather than reported.
 			name: "a slot nothing knows",
 			then: func() {
 				doc := s.blank()
@@ -192,6 +202,7 @@ func (s *RoutingPublicTestSuite) TestPlaceRoutingWritesWhatTheDeviceReads() {
 			},
 		},
 		{
+			// The caller's mistake, and is reported.
 			name: "a value that will not encode",
 			then: func() {
 				doc := s.blank()
@@ -205,6 +216,7 @@ func (s *RoutingPublicTestSuite) TestPlaceRoutingWritesWhatTheDeviceReads() {
 			},
 		},
 		{
+			// Changes nothing.
 			name: "no routing",
 			then: func() {
 				doc := s.blank()
@@ -215,6 +227,7 @@ func (s *RoutingPublicTestSuite) TestPlaceRoutingWritesWhatTheDeviceReads() {
 			},
 		},
 		{
+			// Has nowhere to put any of it.
 			name: "a preset with no chain",
 			then: func() {
 				doc := wire.NewDocument(s.blank(), []int8{wire.KeySnapshots})
@@ -229,9 +242,13 @@ func (s *RoutingPublicTestSuite) TestPlaceRoutingWritesWhatTheDeviceReads() {
 			},
 		},
 		{
-			// for something it does not have, the same way place.go's own tests do it.
-			// None of these can arrive from hardware, and a writer that trusted the shape
-			// would splice bytes into the middle of somebody's preset.
+			// Grids no device produces.
+			//
+			// Each one is reached by rebuilding the chain rather than by
+			// asking a capture for something it does not have, the same way
+			// place.go's own tests do it. None of these can arrive from
+			// hardware, and a writer that trusted the shape would splice
+			// bytes into the middle of somebody's preset.
 			name: "routing on a chain the device did not write",
 			then: func() {
 				values := []any{1.0}
@@ -285,7 +302,9 @@ func (s *RoutingPublicTestSuite) TestPlaceRoutingWritesWhatTheDeviceReads() {
 			},
 		},
 	} {
-		s.Run(tt.name, func() { tt.then() })
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 
@@ -310,9 +329,6 @@ func (s *RoutingPublicTestSuite) TestBlankRouting() {
 	s.Require().False(by["inputA"].HasModel, "a device knows its own input")
 }
 
-// TestASplitTakesAnotherModel covers a file naming a split the blank has not.
-//
-
 // replace swaps what a path holds, so a chain no device writes can be built.
 func (s *RoutingPublicTestSuite) replace(
 	body []byte,
@@ -327,9 +343,6 @@ func (s *RoutingPublicTestSuite) replace(
 
 	return append(out, body[end:]...)
 }
-
-// TestRoutingOnAChainTheDeviceDidNotWrite covers grids no device produces.
-//
 
 func TestRoutingPublicTestSuite(
 	t *testing.T,

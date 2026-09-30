@@ -35,15 +35,17 @@ type LoadPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestLoadReadsARequest covers the ask, and every document that is not one.
+// TestLoad covers Load, which reads a request and checks it against its own
+// contract.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *LoadPublicTestSuite) TestLoadReadsARequest() {
+func (s *LoadPublicTestSuite) TestLoad() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The ordinary case.
 			name: "reads a request",
 			then: func() {
 				spec, err := tone.Load(strings.NewReader(`
@@ -78,8 +80,11 @@ nudges:
 			},
 		},
 		{
-			// decoding is checked with its own mistake already removed: the line would be
-			// gone and nothing said about it.
+			// Why the raw document is checked first.
+			//
+			// Decoding drops what the types have no field for, so a request
+			// checked after decoding is checked with its own mistake already
+			// removed: the line would be gone and nothing said about it.
 			name: "a misspelt field is refused",
 			then: func() {
 				_, err := tone.Load(strings.NewReader("schema: ToneSpec\ngnere: punk\n"))
@@ -89,6 +94,7 @@ nudges:
 			},
 		},
 		{
+			// A file holding a list.
 			name: "a document that is not fields is refused",
 			then: func() {
 				_, err := tone.Load(strings.NewReader("- one\n- two\n"))
@@ -98,6 +104,7 @@ nudges:
 			},
 		},
 		{
+			// A file that is not YAML at all.
 			name: "unreadable y a m l is refused",
 			then: func() {
 				_, err := tone.Load(strings.NewReader("\tschema: [unclosed\n"))
@@ -113,15 +120,17 @@ nudges:
 	}
 }
 
-// TestLoadSetupReadsASetupDocument covers the setup document, its optional fields and what is refused.
+// TestLoadSetup covers LoadSetup, which reads what somebody has and checks it
+// against its own contract.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *LoadPublicTestSuite) TestLoadSetupReadsASetupDocument() {
+func (s *LoadPublicTestSuite) TestLoadSetup() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The other document.
 			name: "reads a setup",
 			then: func() {
 				setup, err := tone.LoadSetup(strings.NewReader(`
@@ -145,11 +154,15 @@ owns:
 			},
 		},
 		{
-			// written before the field existed is still a setup. Four spellings and
-			// nothing else, because the two amplifier entries are different questions —
-			// the instrument input has the amplifier's own preamp in front of its
-			// speaker, and the effects return does not — and a free-string field would
-			// let somebody write "amp" and mean either.
+			// Plays_into.
+			//
+			// Optional, because it is a thing somebody may not have said and
+			// a setup written before the field existed is still a setup. Four
+			// spellings and nothing else, because the two amplifier entries
+			// are different questions — the instrument input has the
+			// amplifier's own preamp in front of its speaker, and the effects
+			// return does not — and a free-string field would let somebody
+			// write "amp" and mean either.
 			name: "what the pedal is plugged into is optional and spelt",
 			then: func() {
 				held, err := tone.LoadSetup(strings.NewReader(
@@ -177,7 +190,11 @@ owns:
 			},
 		},
 		{
-			// which is true and unhelpful to somebody who passed the wrong file.
+			// Passing a Setup where the ask goes.
+			//
+			// The enum would refuse it anyway and say `schema` is not an
+			// allowed value, which is true and unhelpful to somebody who
+			// passed the wrong file.
 			name: "the wrong document says so",
 			then: func() {
 				_, err := tone.Load(strings.NewReader("schema: Setup\n"))
@@ -190,6 +207,7 @@ owns:
 			},
 		},
 		{
+			// The reader itself failing.
 			name: "a read failure is reported",
 			then: func() {
 				_, err := tone.LoadSetup(iotest{})
@@ -198,10 +216,14 @@ owns:
 			},
 		},
 		{
-			// hold it, so without the second check this returns a document with the field
-			// silently zeroed and no error at all. The contract caps a year at 2100, so
-			// the number has to arrive somewhere uncapped: `slot` on an owned impulse
-			// response has a minimum and no maximum.
+			// The case the schema allows.
+			//
+			// JSON Schema calls 2000000000000000000000 an integer and Go's
+			// int cannot hold it, so without the second check this returns a
+			// document with the field silently zeroed and no error at all.
+			// The contract caps a year at 2100, so the number has to arrive
+			// somewhere uncapped: `slot` on an owned impulse response has a
+			// minimum and no maximum.
 			name: "a number too large for the types is refused",
 			then: func() {
 				_, err := tone.LoadSetup(strings.NewReader(`
@@ -222,27 +244,16 @@ owns:
 	}
 }
 
-// TestWhatThePedalIsPluggedIntoIsOptionalAndSpelt covers plays_into.
-//
-
-// TestAMisspeltFieldIsRefused is why the raw document is checked first.
-//
-
-// TestTheWrongDocumentSaysSo covers passing a Setup where the ask goes.
-//
-
-// TestANumberTooLargeForTheTypesIsRefused is the case the schema allows.
-//
-
-// TestWriteWritesBackWhatItRead covers the round trip and a writer that fails.
+// TestWrite covers Write, which renders a request.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *LoadPublicTestSuite) TestWriteWritesBackWhatItRead() {
+func (s *LoadPublicTestSuite) TestWrite() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The round trip.
 			name: "writes what it read",
 			then: func() {
 				// Two genres, because one is the case that hid the defect: the corpus tags
@@ -260,6 +271,7 @@ func (s *LoadPublicTestSuite) TestWriteWritesBackWhatItRead() {
 			},
 		},
 		{
+			// The writer itself failing.
 			name: "a write failure is reported",
 			then: func() {
 				err := tone.Write(broken{},
@@ -275,15 +287,16 @@ func (s *LoadPublicTestSuite) TestWriteWritesBackWhatItRead() {
 	}
 }
 
-// TestWriteSetupWritesASetup covers writing a setup, and refusing one that is not valid.
+// TestWriteSetup covers WriteSetup, which renders what somebody has.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *LoadPublicTestSuite) TestWriteSetupWritesASetup() {
+func (s *LoadPublicTestSuite) TestWriteSetup() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The other document's round trip.
 			name: "writes a setup",
 			then: func() {
 				setup := tone.Setup{
@@ -300,7 +313,10 @@ func (s *LoadPublicTestSuite) TestWriteSetupWritesASetup() {
 			},
 		},
 		{
-			// world that nothing else will accept.
+			// The check before the render.
+			//
+			// Writing one that does not meet its own contract would put a
+			// file into the world that nothing else will accept.
 			name: "an invalid document is not written",
 			then: func() {
 				var buf bytes.Buffer
@@ -318,9 +334,6 @@ func (s *LoadPublicTestSuite) TestWriteSetupWritesASetup() {
 		})
 	}
 }
-
-// TestAnInvalidDocumentIsNotWritten covers the check before the render.
-//
 
 // iotest is a reader that always fails.
 type iotest struct{}

@@ -66,8 +66,8 @@ func one(
 	return out
 }
 
-// TestPlayers covers Players, which is every player the corpus names,
-// with what their records say.
+// TestPlayers covers Players, which is every player the corpus names, with
+// what their records say.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *MusicviewPublicTestSuite) TestPlayers() {
@@ -76,6 +76,7 @@ func (s *MusicviewPublicTestSuite) TestPlayers() {
 		then func()
 	}{
 		{
+			// What each player's manifest says.
 			name: "players",
 			then: func() {
 				fsys := corpus(map[string]string{
@@ -111,8 +112,12 @@ func (s *MusicviewPublicTestSuite) TestPlayers() {
 			},
 		},
 		{
-			// genre reads as usable and then has nothing to build from. Five players sat
-			// like that until somebody asked why a build failed.
+			// The join a genre that will not build turns on.
+			//
+			// A player with records and no rig still earns their genres
+			// words, so the genre reads as usable and then has nothing to
+			// build from. Five players sat like that until somebody asked why
+			// a build failed.
 			name: "players say who has no rig",
 			then: func() {
 				fsys := corpus(map[string]string{
@@ -132,7 +137,11 @@ func (s *MusicviewPublicTestSuite) TestPlayers() {
 			},
 		},
 		{
-			// the failure the strict manifest reader exists to prevent.
+			// A typo failing loudly.
+			//
+			// The alternative is a genre counted short with nothing saying
+			// why, which is the failure the strict manifest reader exists to
+			// prevent.
 			name: "an unreadable manifest stops",
 			then: func() {
 				fsys := corpus(map[string]string{
@@ -144,6 +153,7 @@ func (s *MusicviewPublicTestSuite) TestPlayers() {
 			},
 		},
 		{
+			// A corpus path nobody can read.
 			name: "a tree that is not there",
 			then: func() {
 				_, err := musicview.Players(corpus(nil), "nowhere", nil)
@@ -157,12 +167,6 @@ func (s *MusicviewPublicTestSuite) TestPlayers() {
 	}
 }
 
-// TestPlayersSayWhoHasNoRig covers the join a genre that will not build turns
-// on.
-//
-
-// TestGenresCountTheirGearedPlayers covers a genre that is hollow.
-//
 // TestGenres covers Genres, which is every genre the corpus names, and how
 // far each is from usable.
 //
@@ -173,8 +177,12 @@ func (s *MusicviewPublicTestSuite) TestGenres() {
 		then func()
 	}{
 		{
-			// those differ: a group names "Mike Dirnt" and a rig is mike-dirnt. Counting
-			// on the name would report every genre as having gear for nobody.
+			// A genre that is hollow.
+			//
+			// Joined on the directory rather than on the name a group
+			// reports, because those differ: a group names "Mike Dirnt" and a
+			// rig is mike-dirnt. Counting on the name would report every
+			// genre as having gear for nobody.
 			name: "genres count their geared players",
 			then: func() {
 				fsys := corpus(map[string]string{
@@ -197,7 +205,10 @@ func (s *MusicviewPublicTestSuite) TestGenres() {
 			},
 		},
 		{
-			// or one player short of three, says which.
+			// The number somebody acts on.
+			//
+			// "Not usable" says nothing about what to do next. Two records
+			// short of eight, or one player short of three, says which.
 			name: "genres reports what each is short of",
 			then: func() {
 				// Six punk records from two players: short on both counts.
@@ -223,6 +234,7 @@ func (s *MusicviewPublicTestSuite) TestGenres() {
 			},
 		},
 		{
+			// The threshold being met.
 			name: "genres counts a usable one",
 			then: func() {
 				fsys := corpus(map[string]string{
@@ -249,11 +261,6 @@ func (s *MusicviewPublicTestSuite) TestGenres() {
 	}
 }
 
-// TestGenresReportsWhatEachIsShortOf is the number somebody acts on.
-//
-
-// TestBandsCarryNoThreshold covers a band never reading as unsighted.
-//
 // TestBands covers Bands, which is every band the corpus names.
 //
 // One method and one table, so a case is a row rather than a file.
@@ -263,7 +270,10 @@ func (s *MusicviewPublicTestSuite) TestBands() {
 		then func()
 	}{
 		{
-			// genre must not follow it across.
+			// A band never reading as unsighted.
+			//
+			// Nobody labels a band, so the provenance count that means
+			// something for a genre must not follow it across.
 			name: "bands carry no threshold",
 			then: func() {
 				fsys := corpus(map[string]string{
@@ -283,7 +293,11 @@ func (s *MusicviewPublicTestSuite) TestBands() {
 			},
 		},
 		{
-			// path and an empty table reads as a corpus that exists and holds nothing.
+			// The path that points at nothing.
+			//
+			// Refused rather than answered empty, because the ordinary cause
+			// is a wrong path and an empty table reads as a corpus that
+			// exists and holds nothing.
 			name: "an empty corpus is refused",
 			then: func() {
 				fsys := corpus(map[string]string{"notes.txt": "no players here"})
@@ -311,8 +325,6 @@ func (s *MusicviewPublicTestSuite) TestBands() {
 	}
 }
 
-// TestRecordsSaysWhichAreSeparated is what the manifest cannot say.
-//
 // TestRecords covers Records, which is every recording the corpus names, and
 // whether it has stems yet.
 //
@@ -323,7 +335,10 @@ func (s *MusicviewPublicTestSuite) TestRecords() {
 		then func()
 	}{
 		{
-			// manifest looks complete either way.
+			// What the manifest cannot say.
+			//
+			// A record named with no stems beside it is measured by nothing,
+			// and the manifest looks complete either way.
 			name: "records says which are separated",
 			then: func() {
 				fsys := corpus(map[string]string{
@@ -348,6 +363,7 @@ func (s *MusicviewPublicTestSuite) TestRecords() {
 			},
 		},
 		{
+			// The other separator model.
 			name: "a guitar stem counts",
 			then: func() {
 				fsys := corpus(map[string]string{
@@ -367,12 +383,6 @@ func (s *MusicviewPublicTestSuite) TestRecords() {
 		})
 	}
 }
-
-// TestAnEmptyCorpusIsRefused covers the path that points at nothing.
-//
-
-// TestAnUnreadableManifestStops covers a typo failing loudly.
-//
 
 func TestMusicviewPublicTestSuite(
 	t *testing.T,

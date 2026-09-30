@@ -229,7 +229,7 @@ func (s *CorpusPublicTestSuite) TestAPlayerWithNoManifestIsMeasuredAsFound() {
 }
 
 // TestCorpus covers Corpus, which measures every player under a tree and
-// derives what each one's.
+// derives what each one's figures say against the others.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *CorpusPublicTestSuite) TestCorpus() {
@@ -238,7 +238,8 @@ func (s *CorpusPublicTestSuite) TestCorpus() {
 		then func()
 	}{
 		{
-			// the reading rather than silently measuring the tree instead.
+			// A corpus somebody broke, which stops the reading rather than
+			// silently measuring the tree instead.
 			name: "a manifest that will not read",
 			then: func() {
 				s.record("mike-dirnt", "one", audio.Sine(110, 1, rate, 0.8))
@@ -252,8 +253,17 @@ func (s *CorpusPublicTestSuite) TestCorpus() {
 			},
 		},
 		{
-			// fail to open; only one fails for every user, and a test that skips itself
-			// for root is a test that does not run where it matters.
+			// A manifest that is there and will not open.
+			//
+			// Distinct from one that is absent, which measures the tree as
+			// found: a manifest nobody can read is a statement of what to
+			// measure that nobody can read, and measuring the tree instead
+			// would quietly use records somebody took out.
+			//
+			// A symlink to itself rather than a file with its permissions
+			// removed. Both fail to open; only one fails for every user, and
+			// a test that skips itself for root is a test that does not run
+			// where it matters.
 			name: "a manifest that cannot be opened",
 			then: func() {
 				s.record("mike-dirnt", "one", audio.Sine(110, 1, rate, 0.8))
@@ -268,6 +278,7 @@ func (s *CorpusPublicTestSuite) TestCorpus() {
 			},
 		},
 		{
+			// The path being wrong.
 			name: "a tree that is not there",
 			then: func() {
 				_, err := audio.Corpus(os.DirFS(s.root), "nowhere")
@@ -277,6 +288,7 @@ func (s *CorpusPublicTestSuite) TestCorpus() {
 			},
 		},
 		{
+			// A .wav that will not read.
 			name: "a recording that is not one",
 			then: func() {
 				full := filepath.Join(s.root, "mike-dirnt", "broken.wav")
@@ -297,15 +309,6 @@ func (s *CorpusPublicTestSuite) TestCorpus() {
 		})
 	}
 }
-
-// TestAManifestThatCannotBeOpened covers a manifest that is there and will
-// not open.
-//
-// Distinct from one that is absent, which measures the tree as found: a
-// manifest nobody can read is a statement of what to measure that nobody can
-// read, and measuring the tree instead would quietly use records somebody
-// took out.
-//
 
 // TestADirectoryWithNoRecordingsIsNotAPlayer covers a manifest waiting for
 // audio somebody has not separated yet.

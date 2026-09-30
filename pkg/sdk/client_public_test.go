@@ -137,65 +137,135 @@ func (s *ClientPublicTestSuite) TestNew() {
 	}
 }
 
-// TestWithCatalog covers WithCatalog, which reads a generated catalog
-// instead of the built-in one.
+// TestWhichCatalogTheBlocksComeFrom covers the two ways a client is told
+// which models exist, and which one wins.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ClientPublicTestSuite) TestWithCatalog() {
+func (s *ClientPublicTestSuite) TestWhichCatalogTheBlocksComeFrom() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// WithCatalog, which reads a generated catalog instead of the
+			// built-in one.
+			//
+			// One method and one table, so a case is a row rather than a
+			// file.
 			name: "with catalog",
 			then: func() {
-				builtIn, err := sdk.New().Blocks(context.Background(), sdk.Filter{})
-				s.Require().NoError(err)
-
-				tests := []struct {
+				for _, tt := range []struct {
 					name string
-					path string
-					err  bool
+					then func()
 				}{
-					{name: "a catalog of its own", path: fixture("catalog.json")},
-					{name: "a catalog that is not there", path: "no.json", err: true},
-				}
+					{
+						// Naming a catalog other than the built-in one.
+						name: "with catalog",
+						then: func() {
+							builtIn, err := sdk.New().Blocks(context.Background(), sdk.Filter{})
+							s.Require().NoError(err)
 
-				for _, tt := range tests {
+							tests := []struct {
+								name string
+								path string
+								err  bool
+							}{
+								{name: "a catalog of its own", path: fixture("catalog.json")},
+								{name: "a catalog that is not there", path: "no.json", err: true},
+							}
+
+							for _, tt := range tests {
+								s.Run(tt.name, func() {
+									got, err := sdk.New(sdk.WithCatalog(tt.path)).
+										Blocks(context.Background(), sdk.Filter{})
+
+									if tt.err {
+										s.Require().Error(err)
+
+										return
+									}
+
+									s.Require().NoError(err)
+									s.Require().NotEqual(builtIn.Total, got.Total,
+										"the Client read the catalog it was given")
+								})
+							}
+						},
+					},
+					{
+						// Which of the two wins.
+						//
+						// A catalog somebody generated themselves is a stronger statement
+						// than the name of a device this binary happens to carry. Nothing
+						// else would notice this being reversed.
+						name: "with catalog beats with device",
+						then: func() {
+							floor, err := sdk.New(sdk.WithDevice("Helix Floor")).
+								Blocks(context.Background(), sdk.Filter{})
+							s.Require().NoError(err)
+
+							got, err := sdk.New(
+								sdk.WithCatalog(fixture("catalog.json")),
+								sdk.WithDevice("Helix Floor"),
+							).Blocks(context.Background(), sdk.Filter{})
+							s.Require().NoError(err)
+
+							s.Require().NotEqual(floor.Total, got.Total,
+								"the catalog somebody named is the one that was read")
+						},
+					},
+				} {
 					s.Run(tt.name, func() {
-						got, err := sdk.New(sdk.WithCatalog(tt.path)).
-							Blocks(context.Background(), sdk.Filter{})
+						// A row gets the same fresh state a method used to get.
+						s.SetupTest()
 
-						if tt.err {
-							s.Require().Error(err)
-
-							return
-						}
-
-						s.Require().NoError(err)
-						s.Require().NotEqual(builtIn.Total, got.Total,
-							"the Client read the catalog it was given")
+						tt.then()
 					})
 				}
 			},
 		},
 		{
-			// name of a device this binary happens to carry. Nothing else would notice
-			// this being reversed.
-			name: "with catalog beats with device",
+			// Using the built-in catalog for another pedal.
+			//
+			// Checked against the name the listing carries rather than how
+			// many blocks it holds. A Helix LT carries the same 661 as an HX
+			// Stomp, so a count would pass for the wrong reason on the one
+			// case most worth pinning down.
+			name: "with device",
 			then: func() {
-				floor, err := sdk.New(sdk.WithDevice("Helix Floor")).
-					Blocks(context.Background(), sdk.Filter{})
-				s.Require().NoError(err)
+				tests := []struct {
+					name   string
+					device string
+					want   string
+					err    bool
+				}{
+					{
+						// The common case, and the device everything here was written
+						// against.
+						name: "nothing said about it", want: "HX Stomp",
+					},
+					{name: "a device that ships", device: "Helix Floor", want: "Helix Floor"},
+					{name: "loosely matched", device: "helix-lt", want: "Helix LT"},
+					{name: "a device nothing ships for", device: "Kemper", err: true},
+				}
 
-				got, err := sdk.New(
-					sdk.WithCatalog(fixture("catalog.json")),
-					sdk.WithDevice("Helix Floor"),
-				).Blocks(context.Background(), sdk.Filter{})
-				s.Require().NoError(err)
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						got, err := sdk.New(sdk.WithDevice(tt.device)).
+							Blocks(context.Background(), sdk.Filter{})
 
-				s.Require().NotEqual(floor.Total, got.Total,
-					"the catalog somebody named is the one that was read")
+						if tt.err {
+							s.Require().Error(err)
+							// The useful half of the message: naming what it does carry.
+							s.Require().Contains(err.Error(), "HX Stomp")
+
+							return
+						}
+
+						s.Require().NoError(err)
+						s.Require().Equal(tt.want, got.Device)
+					})
+				}
 			},
 		},
 	} {
@@ -207,50 +277,6 @@ func (s *ClientPublicTestSuite) TestWithCatalog() {
 		})
 	}
 }
-
-// TestWithDevice covers using the built-in catalog for another pedal.
-//
-// Checked against the name the listing carries rather than how many blocks it
-// holds. A Helix LT carries the same 661 as an HX Stomp, so a count would pass
-// for the wrong reason on the one case most worth pinning down.
-func (s *ClientPublicTestSuite) TestWithDevice() {
-	tests := []struct {
-		name   string
-		device string
-		want   string
-		err    bool
-	}{
-		{
-			// The common case, and the device everything here was written
-			// against.
-			name: "nothing said about it", want: "HX Stomp",
-		},
-		{name: "a device that ships", device: "Helix Floor", want: "Helix Floor"},
-		{name: "loosely matched", device: "helix-lt", want: "Helix LT"},
-		{name: "a device nothing ships for", device: "Kemper", err: true},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			got, err := sdk.New(sdk.WithDevice(tt.device)).
-				Blocks(context.Background(), sdk.Filter{})
-
-			if tt.err {
-				s.Require().Error(err)
-				// The useful half of the message: naming what it does carry.
-				s.Require().Contains(err.Error(), "HX Stomp")
-
-				return
-			}
-
-			s.Require().NoError(err)
-			s.Require().Equal(tt.want, got.Device)
-		})
-	}
-}
-
-// TestWithCatalogBeatsWithDevice covers which of the two wins.
-//
 
 // TestWithStats covers naming statistics other than the built-in ones.
 func (s *ClientPublicTestSuite) TestWithStats() {
@@ -319,8 +345,8 @@ func (s *ClientPublicTestSuite) rigsDir(
 	return dir
 }
 
-// TestWithUserRigs covers WithUserRigs, which layers somebody's own
-// directory of rigs over the ones that.
+// TestWithUserRigs covers WithUserRigs, which layers somebody's own directory
+// of rigs over the ones that ship, or over the directory WithRigs named.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *ClientPublicTestSuite) TestWithUserRigs() {
@@ -329,7 +355,8 @@ func (s *ClientPublicTestSuite) TestWithUserRigs() {
 		then func()
 	}{
 		{
-			// ship: what Rigs lists, and what Rig and Build find.
+			// Somebody's own rigs layered over the ones that ship: what Rigs
+			// lists, and what Rig and Build find.
 			name: "with user rigs",
 			then: func() {
 				tests := []struct {
@@ -458,7 +485,8 @@ func (s *ClientPublicTestSuite) TestWithUserRigs() {
 			},
 		},
 		{
-			// Client has a directory of somebody's own, and what Extend copies from.
+			// Where Scaffold and Extend write when a Client has a directory
+			// of somebody's own, and what Extend copies from.
 			name: "user rigs are written to",
 			then: func() {
 				ctx := context.Background()
@@ -1661,8 +1689,6 @@ func (s *ClientPublicTestSuite) TestMusicRefusesATreeWithNoManifests() {
 	s.Require().Error(err)
 }
 
-// TestMeasuredGenres covers measuring the audio rather than counting manifests.
-//
 // TestMeasuredGenres covers every case MeasuredGenres answers.
 //
 // One method and one table, so a case is a row rather than a file.
@@ -1672,8 +1698,12 @@ func (s *ClientPublicTestSuite) TestMeasuredGenres() {
 		then func()
 	}{
 		{
-			// wrote down. Against a tree this test builds, so the assertion does not depend
-			// on whichever records somebody has on disk.
+			// Measuring the audio rather than counting manifests.
+			//
+			// The slow half: it reads the recordings, where MusicGenres reads
+			// what somebody wrote down. Against a tree this test builds, so
+			// the assertion does not depend on whichever records somebody has
+			// on disk.
 			name: "measured genres",
 			then: func() {
 				root := s.T().TempDir()
@@ -1696,6 +1726,7 @@ func (s *ClientPublicTestSuite) TestMeasuredGenres() {
 			},
 		},
 		{
+			// A path nobody can walk.
 			name: "measured genres refuses a tree that is not there",
 			then: func() {
 				_, err := sdk.New().MeasuredGenres(
@@ -1713,10 +1744,8 @@ func (s *ClientPublicTestSuite) TestMeasuredGenres() {
 	}
 }
 
-// TestMeasuredPlayers covers measuring each player's records.
-//
-// TestMeasuredPlayers covers MeasuredPlayers, which is what each
-// player's records measure as, and the words that.
+// TestMeasuredPlayers covers MeasuredPlayers, which is what each player's
+// records measure as, and the words that earns them against the others.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *ClientPublicTestSuite) TestMeasuredPlayers() {
@@ -1725,9 +1754,13 @@ func (s *ClientPublicTestSuite) TestMeasuredPlayers() {
 		then func()
 	}{
 		{
-			// where MusicPlayers reads what somebody wrote down. A word is earned by sitting
-			// clear of the other players, so one player alone earns nothing and an empty
-			// answer is the ordinary result rather than a fault.
+			// Measuring each player's records.
+			//
+			// The slow half of the pair, the way MeasuredGenres is: this
+			// reads the audio where MusicPlayers reads what somebody wrote
+			// down. A word is earned by sitting clear of the other players,
+			// so one player alone earns nothing and an empty answer is the
+			// ordinary result rather than a fault.
 			name: "measured players",
 			then: func() {
 				root := s.T().TempDir()
@@ -1749,6 +1782,7 @@ func (s *ClientPublicTestSuite) TestMeasuredPlayers() {
 			},
 		},
 		{
+			// A path nobody can walk.
 			name: "measured players refuses a tree that is not there",
 			then: func() {
 				_, err := sdk.New().MeasuredPlayers(
@@ -1766,10 +1800,9 @@ func (s *ClientPublicTestSuite) TestMeasuredPlayers() {
 	}
 }
 
-// TestMeasuredRecordings covers measuring a directory of separated audio.
-//
-// TestMeasuredRecordings covers MeasuredRecordings, which is what a
-// directory of recordings measures as, one entry.
+// TestMeasuredRecordings covers MeasuredRecordings, which is what a directory
+// of recordings measures as, one entry per file and the figures they make
+// together.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *ClientPublicTestSuite) TestMeasuredRecordings() {
@@ -1778,8 +1811,11 @@ func (s *ClientPublicTestSuite) TestMeasuredRecordings() {
 		then func()
 	}{
 		{
-			// somebody points at the output of a separation run before any of it has been
-			// filed under a player.
+			// Measuring a directory of separated audio.
+			//
+			// A directory of files rather than a corpus tree, and no
+			// manifest: this is what somebody points at the output of a
+			// separation run before any of it has been filed under a player.
 			name: "measured recordings",
 			then: func() {
 				empty := s.T().TempDir()
@@ -1794,6 +1830,7 @@ func (s *ClientPublicTestSuite) TestMeasuredRecordings() {
 			},
 		},
 		{
+			// A wrong path.
 			name: "measured recordings refuses a directory that is not there",
 			then: func() {
 				_, _, err := sdk.New().MeasuredRecordings(

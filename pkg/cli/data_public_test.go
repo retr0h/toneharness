@@ -47,6 +47,7 @@ func (s *DataPublicTestSuite) TestData() {
 		then func()
 	}{
 		{
+			// The whole point of the form.
 			name: "it writes something a reader can parse",
 			then: func() {
 				var buf bytes.Buffer
@@ -63,7 +64,11 @@ func (s *DataPublicTestSuite) TestData() {
 			},
 		},
 		{
-			// see, and a newline because the usual next thing is a pipe.
+			// The shape somebody actually reads.
+			//
+			// Indented because the usual reader is a person checking what an
+			// agent will see, and a newline because the usual next thing is a
+			// pipe.
 			name: "it is indented and ends in a newline",
 			then: func() {
 				var buf bytes.Buffer
@@ -75,8 +80,11 @@ func (s *DataPublicTestSuite) TestData() {
 			},
 		},
 		{
-			// half-written document, because a reader cannot tell a truncated one from a
-			// short one.
+			// A value with no data form.
+			//
+			// A channel has none. The answer is an error naming the problem
+			// rather than a half-written document, because a reader cannot
+			// tell a truncated one from a short one.
 			name: "something that cannot be written is reported",
 			then: func() {
 				var buf bytes.Buffer
@@ -89,6 +97,7 @@ func (s *DataPublicTestSuite) TestData() {
 			},
 		},
 		{
+			// The other half.
 			name: "a writer that refuses is reported",
 			then: func() {
 				err := cli.Data(refuses{}, map[string]string{"gear": "Ampeg SVT"})
@@ -103,13 +112,6 @@ func (s *DataPublicTestSuite) TestData() {
 		})
 	}
 }
-
-// TestItIsIndentedAndEndsInANewline covers the shape somebody actually reads.
-//
-
-// TestSomethingThatCannotBeWrittenIsReported covers a value with no data
-// form.
-//
 
 // errRefused is what a writer that takes nothing says.
 var errRefused = errors.New("nothing doing")

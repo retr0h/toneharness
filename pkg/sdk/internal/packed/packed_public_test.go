@@ -38,14 +38,6 @@ type PackedPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestItCarriesNoModificationTime is the invariant Refresh rests on.
-//
-// Both generators compare the bytes they would write against the bytes already
-// committed, and gzip's header carries a modification time. Setting it would
-// rewrite the committed file on every run with identical content, which is a
-// diff on a branch that touched nothing and a `just ready` that never settles.
-// Two generators depended on this and neither said it.
-//
 // TestBytes covers Bytes, which gzips a generated blob.
 //
 // One method and one table, so a case is a row rather than a file.
@@ -55,9 +47,19 @@ func (s *PackedPublicTestSuite) TestBytes() {
 		then func()
 	}{
 		{
-			// second, so compressing the same input twice in one test matches even when
-			// the field is set, and an assertion that the two agree cannot see it. This
-			// reads the field.
+			// The invariant Refresh rests on.
+			//
+			// Both generators compare the bytes they would write against the
+			// bytes already committed, and gzip's header carries a
+			// modification time. Setting it would rewrite the committed file
+			// on every run with identical content, which is a diff on a
+			// branch that touched nothing and a `just ready` that never
+			// settles. Two generators depended on this and neither said it.
+			//
+			// The header rather than two calls agreeing: gzip stores the time
+			// to the second, so compressing the same input twice in one test
+			// matches even when the field is set, and an assertion that the
+			// two agree cannot see it. This reads the field.
 			name: "it carries no modification time",
 			then: func() {
 				zr, err := gzip.NewReader(bytes.NewReader(packed.Bytes([]byte("anything"))))
@@ -69,6 +71,7 @@ func (s *PackedPublicTestSuite) TestBytes() {
 			},
 		},
 		{
+			// The same rule, end to end.
 			name: "the same input compresses to the same bytes",
 			then: func() {
 				raw := []byte(`{"device":"HX Stomp","blocks":661}`)
@@ -77,6 +80,7 @@ func (s *PackedPublicTestSuite) TestBytes() {
 			},
 		},
 		{
+			// The round trip.
 			name: "it gzips what it was given",
 			then: func() {
 				raw := []byte(`{"device":"HX Stomp"}`)
@@ -97,7 +101,7 @@ func (s *PackedPublicTestSuite) TestBytes() {
 }
 
 // TestRefresh covers Refresh, which writes body to path unless what is there
-// already matches, and says.
+// already matches, and says whether it wrote.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *PackedPublicTestSuite) TestRefresh() {
@@ -106,6 +110,7 @@ func (s *PackedPublicTestSuite) TestRefresh() {
 		then func()
 	}{
 		{
+			// The whole point of it.
 			name: "refresh writes only what changed",
 			then: func() {
 				at := filepath.Join(s.T().TempDir(), "hx-stomp.json.gz")
@@ -132,6 +137,7 @@ func (s *PackedPublicTestSuite) TestRefresh() {
 			},
 		},
 		{
+			// A path that is not there.
 			name: "refresh reports somewhere it cannot write",
 			then: func() {
 				at := filepath.Join(s.T().TempDir(), "nowhere", "hx-stomp.json.gz")

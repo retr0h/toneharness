@@ -210,6 +210,7 @@ func (s *RigsPublicTestSuite) TestList() {
 		then func()
 	}{
 		{
+			// Writes out what is on the shelf.
 			name: "list",
 			then: func() {
 				tests := []struct {
@@ -264,9 +265,13 @@ func (s *RigsPublicTestSuite) TestList() {
 			},
 		},
 		{
-			// rig to load without it. A file somebody wrote and got wrong is the case where
-			// saying so matters, and a rig quietly missing the words it was built from is
-			// the same bug the split exists to remove.
+			// The half of a pair that is wrong.
+			//
+			// Reported the same way a rig that will not parse is, rather than
+			// leaving the rig to load without it. A file somebody wrote and
+			// got wrong is the case where saying so matters, and a rig
+			// quietly missing the words it was built from is the same bug the
+			// split exists to remove.
 			name: "an ask that will not load is reported",
 			then: func() {
 				tests := []struct {
@@ -425,9 +430,6 @@ func specIDs(
 
 	return out
 }
-
-// TestAnAskThatWillNotLoadIsReported covers the half of a pair that is wrong.
-//
 
 func TestRigsPublicTestSuite(
 	t *testing.T,

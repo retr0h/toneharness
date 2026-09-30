@@ -53,7 +53,7 @@ func (s *ValidateBudgetPublicTestSuite) blocks(
 }
 
 // TestValidateBudget covers ValidateBudget, which reports the first DSP
-// processor whose blocks exceed the.
+// processor whose blocks exceed the ceiling in lim.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
@@ -62,6 +62,7 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
 		then func()
 	}{
 		{
+			// Checks a chain against what the chips can carry.
 			name: "validate budget",
 			then: func() {
 				stereo := testAmp()
@@ -197,7 +198,8 @@ func (s *ValidateBudgetPublicTestSuite) TestValidateBudget() {
 			},
 		},
 		{
-			// reads, which is one error rather than a set of cases.
+			// The detail a caller reads, which is one error rather than a set
+			// of cases.
 			name: "validate budget names the chip that overflowed",
 			then: func() {
 				err := plan.ValidateBudget(

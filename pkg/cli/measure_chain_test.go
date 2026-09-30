@@ -52,6 +52,7 @@ func (s *ChainPublicTestSuite) TestChain() {
 		then func()
 	}{
 		{
+			// The primitive nothing provided.
 			name: "it reads what is loaded and changes nothing",
 			then: func() {
 				w := buffer()
@@ -68,6 +69,7 @@ func (s *ChainPublicTestSuite) TestChain() {
 			},
 		},
 		{
+			// A missing signal.
 			name: "a reference that is not there",
 			then: func() {
 				s.Require().Error(Chain(context.Background(), buffer(), ChainOptions{
@@ -77,8 +79,11 @@ func (s *ChainPublicTestSuite) TestChain() {
 			},
 		},
 		{
-			// either has nothing to report: a figure against a floor nobody took is a
-			// figure about nothing.
+			// Both reads.
+			//
+			// The floor is measured first and the chain second, and a bench
+			// that fails on either has nothing to report: a figure against a
+			// floor nobody took is a figure about nothing.
 			name: "chain reports a bench that stops answering",
 			then: func() {
 				for _, tt := range []struct {
@@ -103,8 +108,12 @@ func (s *ChainPublicTestSuite) TestChain() {
 			},
 		},
 		{
-			// oscillating one is what they want told about rather than stopped for. Every
-			// other command refuses; this one prints and carries on.
+			// The warning rather than the refusal.
+			//
+			// This command exists to be pointed at a loop somebody is setting
+			// up, so an oscillating one is what they want told about rather
+			// than stopped for. Every other command refuses; this one prints
+			// and carries on.
 			name: "chain says so when the loop is squealing",
 			then: func() {
 				w := buffer()
@@ -127,8 +136,6 @@ func (s *ChainPublicTestSuite) TestChain() {
 	}
 }
 
-// TestSquealingCatchesAChainThatBrightenedWhatItWasGiven is the invariant.
-//
 // TestSquealing covers every case Squealing answers.
 //
 // One method and one table, so a case is a row rather than a file.
@@ -138,11 +145,14 @@ func (s *ChainPublicTestSuite) TestSquealing() {
 		then func()
 	}{
 		{
-			// ending in one can remove energy above 2kHz and cannot add it. Measured on an
-			// HX Stomp: a compressor into an Ampeg SVT into an 8x10 gave back 84.3% of its
-			// energy above 2kHz against 0.01% in the reference, and the same chain with
-			// the amplifier's output at 0.5 gave back 0.0% at a level three decibels
-			// lower.
+			// The invariant.
+			//
+			// A cabinet is a loudspeaker and a loudspeaker is a low pass, so
+			// a chain ending in one can remove energy above 2kHz and cannot
+			// add it. Measured on an HX Stomp: a compressor into an Ampeg SVT
+			// into an 8x10 gave back 84.3% of its energy above 2kHz against
+			// 0.01% in the reference, and the same chain with the amplifier's
+			// output at 0.5 gave back 0.0% at a level three decibels lower.
 			name: "squealing catches a chain that brightened what it was given",
 			then: func() {
 				dry := map[audio.Figure]float64{audio.KeyHigh: 0.0001}
@@ -156,6 +166,7 @@ func (s *ChainPublicTestSuite) TestSquealing() {
 			},
 		},
 		{
+			// The chain that is fine.
 			name: "squealing leaves a clean reading alone",
 			then: func() {
 				dry := map[audio.Figure]float64{audio.KeyHigh: 0.0001}
@@ -167,8 +178,11 @@ func (s *ChainPublicTestSuite) TestSquealing() {
 			},
 		},
 		{
-			// Anything else may legitimately be brighter than what it was given, and a
-			// drive certainly is.
+			// The limit of it.
+			//
+			// Only a chain ending in a loudspeaker makes the high band a
+			// one-way street. Anything else may legitimately be brighter than
+			// what it was given, and a drive certainly is.
 			name: "squealing says nothing about a chain with no cabinet",
 			then: func() {
 				_, bad := Squealing(
@@ -179,6 +193,7 @@ func (s *ChainPublicTestSuite) TestSquealing() {
 			},
 		},
 		{
+			// A figure nothing measured.
 			name: "squealing needs both readings",
 			then: func() {
 				_, bad := Squealing(
@@ -191,10 +206,14 @@ func (s *ChainPublicTestSuite) TestSquealing() {
 			},
 		},
 		{
-			// headroom reads 0.1% above 2kHz against the reference's 0.01% at a level of
-			// -55dB, which is the converter's own broadband floor and not a loudspeaker
-			// adding anything. Clean readings sit between 0.0% and 0.1% and squealing ones
-			// between 39% and 84%, with nothing in between.
+			// The margin.
+			//
+			// The invariant is exact and the measurement is not. A chain with
+			// 25dB of headroom reads 0.1% above 2kHz against the reference's
+			// 0.01% at a level of -55dB, which is the converter's own
+			// broadband floor and not a loudspeaker adding anything. Clean
+			// readings sit between 0.0% and 0.1% and squealing ones between
+			// 39% and 84%, with nothing in between.
 			name: "a quiet clean reading is not a squeal",
 			then: func() {
 				dry := map[audio.Figure]float64{audio.KeyHigh: 0.0001}
@@ -218,9 +237,6 @@ func (s *ChainPublicTestSuite) TestSquealing() {
 	}
 }
 
-// TestSquealingSaysNothingAboutAChainWithNoCabinet covers the limit of it.
-//
-
 // TestTheReferenceIsMeasuredRatherThanAssumed covers what the gap is against.
 //
 // The comparison is to this recording rather than to a number somebody chose,
@@ -236,24 +252,12 @@ func (s *ChainPublicTestSuite) TestTheReferenceIsMeasuredRatherThanAssumed() {
 	s.Require().Greater(got[audio.KeyLow], 0.5)
 }
 
-// TestAQuietCleanReadingIsNotASqueal covers the margin.
-//
-
-// TestChainReportsABenchThatStopsAnswering covers both reads.
-//
-
-// TestChainSaysSoWhenTheLoopIsSquealing covers the warning rather than the
-// refusal.
-//
-
 func TestChainPublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(ChainPublicTestSuite))
 }
 
-// TestInstrumentOfReadsItOffTheReference covers what a reading says it is about.
-//
 // TestReferenceIsFor covers referenceIsFor, which is what a reference
 // recording was played on.
 //
@@ -264,8 +268,12 @@ func (s *ChainPublicTestSuite) TestReferenceIsFor() {
 		then func()
 	}{
 		{
-			// against readings taken with a bass is ranked against the wrong distribution,
-			// and until this was recorded the only trace of it was a filename.
+			// What a reading says it is about.
+			//
+			// Every figure here is a figure about one instrument. A guitar
+			// rig ranked against readings taken with a bass is ranked against
+			// the wrong distribution, and until this was recorded the only
+			// trace of it was a filename.
 			name: "instrument of reads it off the reference",
 			then: func() {
 				tests := []struct {
@@ -286,7 +294,11 @@ func (s *ChainPublicTestSuite) TestReferenceIsFor() {
 			},
 		},
 		{
-			// point of recording it is that somebody can tell, and a guess defeats that.
+			// The honest empty.
+			//
+			// A reading that does not know what was played through it should
+			// not say. The point of recording it is that somebody can tell,
+			// and a guess defeats that.
 			name: "a reading that cannot name its instrument claims none",
 			then: func() {
 				s.Require().Empty(referenceIsFor("reference.wav"))
@@ -301,6 +313,3 @@ func (s *ChainPublicTestSuite) TestReferenceIsFor() {
 		})
 	}
 }
-
-// TestAReadingThatCannotNameItsInstrumentClaimsNone covers the honest empty.
-//

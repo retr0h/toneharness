@@ -43,6 +43,7 @@ func (s *ErrorsPublicTestSuite) TestError() {
 		then func()
 	}{
 		{
+			// Names the model nothing carries.
 			name: "unknown block error",
 			then: func() {
 				tests := []struct {

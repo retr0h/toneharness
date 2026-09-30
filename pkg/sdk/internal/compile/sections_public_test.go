@@ -78,8 +78,8 @@ func (s *SectionsPublicTestSuite) snapshot(
 	return name, blocks
 }
 
-// TestSections covers Sections, which writes a rig's song sections into
-// the preset's snapshots.
+// TestSections covers Sections, which writes a rig's song sections into a
+// preset's snapshots.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *SectionsPublicTestSuite) TestSections() {
@@ -88,6 +88,7 @@ func (s *SectionsPublicTestSuite) TestSections() {
 		then func()
 	}{
 		{
+			// Writes what each part of a song plays.
 			name: "sections",
 			then: func() {
 				tests := []struct {
@@ -214,7 +215,8 @@ func (s *SectionsPublicTestSuite) TestSections() {
 			},
 		},
 		{
-			// catalog chose, rather than one a test handed over.
+			// Reaches sections over a chain the catalog chose, rather than
+			// one a test handed over.
 			name: "sections refuses a role the gear cannot play",
 			then: func() {
 				doc, err := preset.Blank()

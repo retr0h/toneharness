@@ -79,8 +79,6 @@ func library(
 	}
 }
 
-// TestItFindsTheBlockThatClosesTheGap is the whole point.
-//
 // TestShortlist covers Shortlist, which is the blocks whose own readings move
 // the unmet axes the right way.
 //
@@ -91,9 +89,13 @@ func (s *ShortlistPublicTestSuite) TestShortlist() {
 		then func()
 	}{
 		{
-			// block, and the fingerprints already say which blocks make harmonics. Before
-			// this, the loop reported the axis it missed and stopped, which left somebody
-			// reading a failure with nothing to do about it.
+			// The whole point.
+			//
+			// A chain that cannot reach the harmonics a target wants is a
+			// chain missing a block, and the fingerprints already say which
+			// blocks make harmonics. Before this, the loop reported the axis
+			// it missed and stopped, which left somebody reading a failure
+			// with nothing to do about it.
 			name: "it finds the block that closes the gap",
 			then: func() {
 				lib := library(
@@ -117,8 +119,12 @@ func (s *ShortlistPublicTestSuite) TestShortlist() {
 			},
 		},
 		{
-			// overshoots by eight tolerances is not a better answer than one that lands. The
-			// distance is what is ranked, not the direction.
+			// A block that goes too far.
+			//
+			// Its dials would have to come back, which is the solver's job,
+			// but a block that overshoots by eight tolerances is not a better
+			// answer than one that lands. The distance is what is ranked, not
+			// the direction.
 			name: "an overshoot is a gap too",
 			then: func() {
 				lib := library(
@@ -137,9 +143,13 @@ func (s *ShortlistPublicTestSuite) TestShortlist() {
 			},
 		},
 		{
-			// is right on everything but the axis the target cares about, and then "2.4
-			// tolerances out" would mean two different things in one run. The same measure
-			// the list comparison ranks a cabinet's microphones by.
+			// The scoring choice.
+			//
+			// Summing would rank a block that is slightly wrong on everything
+			// above one that is right on everything but the axis the target
+			// cares about, and then "2.4 tolerances out" would mean two
+			// different things in one run. The same measure the list
+			// comparison ranks a cabinet's microphones by.
 			name: "the worst axis decides rather than the sum",
 			then: func() {
 				lib := library(
@@ -163,8 +173,12 @@ func (s *ShortlistPublicTestSuite) TestShortlist() {
 			},
 		},
 		{
-			// another is a real answer, and the loop measures the chain afterwards, which is
-			// what settles it. What is not acceptable is the trade being invisible.
+			// The trade being visible.
+			//
+			// Nothing refuses it. A block that closes the gap it was found
+			// for while opening another is a real answer, and the loop
+			// measures the chain afterwards, which is what settles it. What
+			// is not acceptable is the trade being invisible.
 			name: "a block that hurts an axis says so",
 			then: func() {
 				lib := library(reading("Bright", catalog.Category("drive"), 4000, 40))
@@ -182,9 +196,13 @@ func (s *ShortlistPublicTestSuite) TestShortlist() {
 			},
 		},
 		{
-			// were never in the signal, so it reads as the brightest, most saturated block on
-			// the device and is not one. That is the one that would win this ranking every
-			// time if it were let in.
+			// The four exclusions.
+			//
+			// A clipped reading is a reading of the clipping: flat tops make
+			// harmonics that were never in the signal, so it reads as the
+			// brightest, most saturated block on the device and is not one.
+			// That is the one that would win this ranking every time if it
+			// were let in.
 			name: "a reading that cannot describe its block is left out",
 			then: func() {
 				clipped := reading("Clipped", catalog.Category("drive"), 100, 99)
@@ -217,9 +235,13 @@ func (s *ShortlistPublicTestSuite) TestShortlist() {
 			},
 		},
 		{
-			// measured before that has a gap. Scored as zero it would rank against measured
-			// blocks and win or lose on whichever direction zero happened to favour, which
-			// is a confident answer about something nobody measured.
+			// The pointer figures earning their keep.
+			//
+			// Harmonics, dynamics and lean were added after the first sweeps
+			// ran, so a block measured before that has a gap. Scored as zero
+			// it would rank against measured blocks and win or lose on
+			// whichever direction zero happened to favour, which is a
+			// confident answer about something nobody measured.
 			name: "an unmeasured axis is not a zero",
 			then: func() {
 				old := measured.Block{
@@ -237,6 +259,7 @@ func (s *ShortlistPublicTestSuite) TestShortlist() {
 			},
 		},
 		{
+			// A chain that reached its target.
 			name: "nothing wanted is no shortlist",
 			then: func() {
 				s.Require().Empty(measured.Shortlist(
@@ -244,6 +267,7 @@ func (s *ShortlistPublicTestSuite) TestShortlist() {
 			},
 		},
 		{
+			// What a report can print.
 			name: "the limit takes the best few",
 			then: func() {
 				lib := library(
@@ -262,7 +286,11 @@ func (s *ShortlistPublicTestSuite) TestShortlist() {
 			},
 		},
 		{
-			// between runs on identical data, which reads as the measurement moving.
+			// Ranging a map.
+			//
+			// Two blocks that score alike have to come back in one order or a
+			// report differs between runs on identical data, which reads as
+			// the measurement moving.
 			name: "ties come back in the same order",
 			then: func() {
 				lib := library(
@@ -285,24 +313,6 @@ func (s *ShortlistPublicTestSuite) TestShortlist() {
 		})
 	}
 }
-
-// TestAnOvershootIsAGapToo covers a block that goes too far.
-//
-
-// TestTheWorstAxisDecidesRatherThanTheSum is the scoring choice.
-//
-
-// TestABlockThatHurtsAnAxisSaysSo covers the trade being visible.
-//
-
-// TestAReadingThatCannotDescribeItsBlockIsLeftOut covers the four exclusions.
-//
-
-// TestAnUnmeasuredAxisIsNotAZero is the pointer figures earning their keep.
-//
-
-// TestTiesComeBackInTheSameOrder covers ranging a map.
-//
 
 // TestCategoriesNarrowsToWhatIsWorthAdding covers the caller's own question.
 //

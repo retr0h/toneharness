@@ -77,6 +77,7 @@ func (s *MeasuredPublicTestSuite) TestLoad() {
 		then func()
 	}{
 		{
+			// The three ways reading fails.
 			name: "load refuses what is not a library",
 			then: func() {
 				tests := []struct {
@@ -105,6 +106,7 @@ func (s *MeasuredPublicTestSuite) TestLoad() {
 			},
 		},
 		{
+			// The reader itself failing.
 			name: "load reports a read failure",
 			then: func() {
 				_, err := measured.Load(broken{})
@@ -132,6 +134,7 @@ func (s *MeasuredPublicTestSuite) TestNearest() {
 		then func()
 	}{
 		{
+			// The ordinary case.
 			name: "nearest ranks by distance",
 			then: func() {
 				got := s.lib.Nearest("amp", s.dark(), measured.Spectral())
@@ -144,6 +147,7 @@ func (s *MeasuredPublicTestSuite) TestNearest() {
 			},
 		},
 		{
+			// A cab never answering for an amp.
 			name: "nearest stays in its category",
 			then: func() {
 				for _, m := range s.lib.Nearest("amp", s.dark(), measured.Spectral()) {
@@ -154,9 +158,13 @@ func (s *MeasuredPublicTestSuite) TestNearest() {
 			},
 		},
 		{
-			// it puts a bright-looking reading of the converters at the top of a list of
-			// bright amplifiers. A refusal has no figures at all, and a zero centroid
-			// would read as the darkest block on the device.
+			// The point of the two flags.
+			//
+			// A clipped reading's spectrum is the clipping's, not the
+			// block's, so ranking it puts a bright-looking reading of the
+			// converters at the top of a list of bright amplifiers. A refusal
+			// has no figures at all, and a zero centroid would read as the
+			// darkest block on the device.
 			name: "nearest leaves out what it cannot trust",
 			then: func() {
 				got := s.lib.Nearest("amp", s.dark(), measured.Spectral())
@@ -170,7 +178,10 @@ func (s *MeasuredPublicTestSuite) TestNearest() {
 			},
 		},
 		{
-			// between runs is one nobody can act on twice.
+			// Two blocks that measure identically.
+			//
+			// Ranked by identifier after distance, because a ranking that
+			// reshuffles between runs is one nobody can act on twice.
 			name: "nearest is stable",
 			then: func() {
 				first := s.lib.Nearest("amp", s.dark(), measured.Spectral())
@@ -184,6 +195,7 @@ func (s *MeasuredPublicTestSuite) TestNearest() {
 			},
 		},
 		{
+			// Weighing a figure the default ignores.
 			name: "weights can be given outright",
 			then: func() {
 				want := s.dark()
@@ -204,9 +216,6 @@ func (s *MeasuredPublicTestSuite) TestNearest() {
 		})
 	}
 }
-
-// TestNearestLeavesOutWhatItCannotTrust is the point of the two flags.
-//
 
 // TestSpectralIgnoresLoudness is a decision worth a test.
 //
@@ -232,9 +241,6 @@ func (s *MeasuredPublicTestSuite) TestSpectralIgnoresLoudness() {
 		"two blocks with the same spectrum and 17 dB between them rank alike")
 }
 
-// TestNearestIsStable covers two blocks that measure identically.
-//
-
 // TestMeasured covers Measured, which returns whether this block has a
 // reading worth using.
 //
@@ -245,6 +251,7 @@ func (s *MeasuredPublicTestSuite) TestMeasured() {
 		then func()
 	}{
 		{
+			// The flags directly.
 			name: "measured says which readings are usable",
 			then: func() {
 				s.Require().True(s.lib.Blocks["AmpDark"].Measured())
@@ -253,10 +260,14 @@ func (s *MeasuredPublicTestSuite) TestMeasured() {
 			},
 		},
 		{
-			// Clipped at half a decibel below full scale, and ten readings sit between
-			// that and two decibels below it with the converters plainly in them:
-			// HD2_AmpSVT4Pro, an Ampeg SVT-4 Pro a shipped rig names, reads 3.24% of its
-			// energy low and 96.74% high. An Ampeg does not do that.
+			// The guard the flag missed.
+			//
+			// Clipping is not a cliff at the number a guard picks. `measure
+			// blocks` marks Clipped at half a decibel below full scale, and
+			// ten readings sit between that and two decibels below it with
+			// the converters plainly in them: HD2_AmpSVT4Pro, an Ampeg SVT-4
+			// Pro a shipped rig names, reads 3.24% of its energy low and
+			// 96.74% high. An Ampeg does not do that.
 			name: "a reading at the ceiling is not the blocks",
 			then: func() {
 				at := func(level float64) measured.Block {
@@ -270,7 +281,17 @@ func (s *MeasuredPublicTestSuite) TestMeasured() {
 			},
 		},
 		{
-			// nothing. It stays because headroom is a setting and settings get changed.
+			// The campaign's own evidence.
+			//
+			// The library this replaced had ten readings the near-ceiling
+			// line excluded, two of them bass amplifiers, one reading 96.74%
+			// of its energy in the high band. An Ampeg does not do that; the
+			// converters did, because the chain was measured at full output
+			// and fed itself.
+			//
+			// Measured at -30dB nothing comes near the ceiling, so the guard
+			// now excludes nothing. It stays because headroom is a setting
+			// and settings get changed.
 			name: "no shipped reading sits at the converters ceiling",
 			then: func() {
 				lib, err := measured.BuiltIn()
@@ -317,9 +338,6 @@ func TestMeasuredPublicTestSuite(
 	suite.Run(t, new(MeasuredPublicTestSuite))
 }
 
-// TestAReadingAtTheCeilingIsNotTheBlocks covers the guard the flag missed.
-//
-
 // TestTheShippedLibraryNamesItsInstrumentAndHeadroom holds the packed
 // measurements to the two fields that say whether they mean anything.
 //
@@ -357,11 +375,3 @@ func (s *MeasuredPublicTestSuite) TestTheShippedLibraryNamesItsInstrumentAndHead
 		"the library records neither a headroom trim nor a pinned output level, "+
 			"so nothing says what level these were taken at")
 }
-
-// TestNoShippedReadingSitsAtTheConvertersCeiling is the campaign's own evidence.
-//
-// The library this replaced had ten readings the near-ceiling line excluded, two
-// of them bass amplifiers, one reading 96.74% of its energy in the high band. An
-// Ampeg does not do that; the converters did, because the chain was measured at
-// full output and fed itself.
-//

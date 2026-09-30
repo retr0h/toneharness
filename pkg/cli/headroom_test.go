@@ -69,16 +69,8 @@ func routed() plan.Plan {
 	}
 }
 
-// TestItSendsTheChainOffTheLoopAndLeavesEverythingElse is the whole job.
-//
-// The destination is the half that matters. A chain sent to Multi arrives back
-// at its own input down the measuring lead, and a high-gain amplifier has
-// enough of its own gain to keep that oscillating however far the output is
-// turned down. Sending to USB 1/2 alone reaches the computer without reaching
-// the socket.
-//
 // TestOffTheLoop covers offTheLoop, which is the plan with its output entry
-// sent somewhere the measuring.
+// sent somewhere the measuring lead does not reach, and its gain set.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *HeadroomPublicTestSuite) TestOffTheLoop() {
@@ -87,9 +79,19 @@ func (s *HeadroomPublicTestSuite) TestOffTheLoop() {
 		then func()
 	}{
 		{
-			// turning it down lowers the level without touching the tone. The amplifier's
-			// ChVol and Master are the tone, and lowering those would have the solver
-			// solve for a different sound.
+			// The whole job.
+			//
+			// The destination is the half that matters. A chain sent to Multi
+			// arrives back at its own input down the measuring lead, and a
+			// high-gain amplifier has enough of its own gain to keep that
+			// oscillating however far the output is turned down. Sending to
+			// USB 1/2 alone reaches the computer without reaching the socket.
+			//
+			// The gain is the other half. The output block sits after the
+			// chain, so turning it down lowers the level without touching the
+			// tone. The amplifier's ChVol and Master are the tone, and
+			// lowering those would have the solver solve for a different
+			// sound.
 			name: "it sends the chain off the loop and leaves everything else",
 			then: func() {
 				got, err := offTheLoop(routed(), 10, -30)
@@ -108,8 +110,12 @@ func (s *HeadroomPublicTestSuite) TestOffTheLoop() {
 			},
 		},
 		{
-			// plan is written out and compared and a routing map shared between two of
-			// them makes the comparison meaningless.
+			// The copy.
+			//
+			// A caller that keeps the plan it built still holds what it
+			// built, because a plan is written out and compared and a routing
+			// map shared between two of them makes the comparison
+			// meaningless.
 			name: "the plan handed over is not changed",
 			then: func() {
 				was := routed()
@@ -126,9 +132,13 @@ func (s *HeadroomPublicTestSuite) TestOffTheLoop() {
 			},
 		},
 		{
-			// that feeds itself. While zero returned the preset as built, `--headroom 0`
-			// left it sending to the socket the lead comes from, so the one setting that
-			// asked for an honest level got the least honest reading.
+			// Why zero no longer means untouched.
+			//
+			// A caller asking for full level is not asking to be measured
+			// through a chain that feeds itself. While zero returned the
+			// preset as built, `--headroom 0` left it sending to the socket
+			// the lead comes from, so the one setting that asked for an
+			// honest level got the least honest reading.
 			name: "no headroom still comes off the loop",
 			then: func() {
 				got, err := offTheLoop(routed(), 10, 0)
@@ -143,71 +153,47 @@ func (s *HeadroomPublicTestSuite) TestOffTheLoop() {
 			},
 		},
 		{
-			// routing at all, because the inputs and outputs come from the blank template
-			// while the preset is written, and returning the loud one silently is how a
-			// guard comes to pass on a chain nobody protected.
-			name: "off the loop refuses what it cannot rewrite",
+			// Having nothing to turn down.
+			//
+			// Said rather than passed through. A plan compiled from a rig
+			// carries no routing at all, because the inputs and outputs come
+			// from the blank template while the preset is written, and
+			// returning the loud one silently is how a guard comes to pass on
+			// a chain nobody protected.
+			name: "a plan with no output is refused",
 			then: func() {
-				entry := func(body string) plan.Plan {
-					routing := map[string]json.RawMessage{outputSlot: json.RawMessage(body)}
+				_, err := offTheLoop(plan.Plan{}, 10, -30)
+				s.Require().ErrorIs(err, ErrNoOutput)
 
-					return plan.Plan{Device: &rig.DeviceState{Routing: &routing}}
-				}
+				routing := map[string]json.RawMessage{"dsp0.inputA": json.RawMessage(`{}`)}
 
-				for _, tt := range []struct {
-					name string
-					give plan.Plan
-					by   float64
-					is   error
-					says string
-				}{
-					{
-						name: "it carries no routing at all",
-						give: plan.Plan{},
-						by:   -30,
-						is:   ErrNoOutput,
-					},
-					{
-						name: "it carries routing with no output entry",
-						give: func() plan.Plan {
-							routing := map[string]json.RawMessage{
-								"dsp0.inputA": json.RawMessage(`{}`),
-							}
+				_, err = offTheLoop(
+					plan.Plan{Device: &rig.DeviceState{Routing: &routing}}, 10, -30)
+				s.Require().ErrorIs(err, ErrNoOutput)
+			},
+		},
+		{
+			// A plan somebody broke.
+			name: "an output entry that will not decode",
+			then: func() {
+				routing := map[string]json.RawMessage{outputSlot: json.RawMessage(`{`)}
 
-							return plan.Plan{Device: &rig.DeviceState{Routing: &routing}}
-						}(),
-						by: -30,
-						is: ErrNoOutput,
-					},
-					{
-						name: "the output entry will not decode",
-						give: entry(`{`),
-						by:   -30,
-						says: outputSlot,
-					},
-					{
-						// JSON has no way to spell a NaN, so an entry built from one
-						// would be written as a preset nothing can read. It is refused
-						// where it is encoded rather than where it is typed, because that
-						// is the one place every caller passes through.
-						name: "the gain is not a number",
-						give: routed(),
-						by:   math.NaN(),
-						says: gainKey,
-					},
-				} {
-					s.Run(tt.name, func() {
-						_, err := offTheLoop(tt.give, 10, tt.by)
+				_, err := offTheLoop(
+					plan.Plan{Device: &rig.DeviceState{Routing: &routing}}, 10, -30)
 
-						if tt.is != nil {
-							s.Require().ErrorIs(err, tt.is)
+				s.Require().ErrorContains(err, outputSlot)
+			},
+		},
+		{
+			// JSON has no way to spell a NaN, so an entry built from one would
+			// be written as a preset nothing can read. It is refused where it
+			// is encoded rather than where it is typed, because that is the
+			// one place every caller passes through.
+			name: "a gain that is not a number is refused",
+			then: func() {
+				_, err := offTheLoop(routed(), 10, math.NaN())
 
-							return
-						}
-
-						s.Require().ErrorContains(err, tt.says)
-					})
-				}
+				s.Require().ErrorContains(err, gainKey)
 			},
 		},
 	} {
@@ -216,9 +202,6 @@ func (s *HeadroomPublicTestSuite) TestOffTheLoop() {
 		})
 	}
 }
-
-// TestThePlanHandedOverIsNotChanged covers the copy.
-//
 
 // TestTheDestinationComesFromThePresetsOwnDevice covers asking the right device.
 //
@@ -261,23 +244,14 @@ func ptr[T any](
 	return &v
 }
 
-// TestNoHeadroomStillComesOffTheLoop is why zero no longer means untouched.
-//
-
-// TestOffTheLoopRefusesWhatItCannotRewrite covers every plan that cannot come
-// off the measuring loop.
-//
-
 func TestHeadroomPublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(HeadroomPublicTestSuite))
 }
 
-// TestNoHeadroomStillRewritesThePreset covers asking for no headroom.
-//
 // TestQuieter covers quieter, which writes the plan again off the measuring
-// loop, and returns the preset.
+// loop, and returns the preset compiled from it.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *HeadroomPublicTestSuite) TestQuieter() {
@@ -286,9 +260,12 @@ func (s *HeadroomPublicTestSuite) TestQuieter() {
 		then func()
 	}{
 		{
-			// opens the loop and it has to be set whatever the gain is, so the preset is
-			// rebuilt: `--headroom 0` used to be the one setting that left a chain
-			// measuring itself.
+			// Asking for no headroom.
+			//
+			// It reads and writes, where it used to short-circuit. The
+			// destination is what opens the loop and it has to be set
+			// whatever the gain is, so the preset is rebuilt: `--headroom 0`
+			// used to be the one setting that left a chain measuring itself.
 			name: "no headroom still rewrites the preset",
 			then: func() {
 				ctrl := gomock.NewController(s.T())
@@ -310,9 +287,13 @@ func (s *HeadroomPublicTestSuite) TestQuieter() {
 			},
 		},
 		{
-			// come from the blank template while the preset is written. The preset has
-			// them, so reading it back is how the output entry arrives complete, with its
-			// model and its output already set.
+			// The reason for the round trip.
+			//
+			// A plan compiled from a rig has no routing at all: the inputs
+			// and outputs come from the blank template while the preset is
+			// written. The preset has them, so reading it back is how the
+			// output entry arrives complete, with its model and its output
+			// already set.
 			name: "it reads the preset back because a rig carries no routing",
 			then: func() {
 				ctrl := gomock.NewController(s.T())
@@ -354,87 +335,80 @@ func (s *HeadroomPublicTestSuite) TestQuieter() {
 			},
 		},
 		{
-			// output entry, writing the result, compiling it. The chain stays on the
-			// measuring loop in all four, which is why none of them is a warning.
-			name: "quieter refuses what it cannot take off the loop",
+			// The read failing.
+			name: "a preset that will not read back",
 			then: func() {
-				read := errors.New("not a preset")
-				built := errors.New("the catalog does not carry that")
+				ctrl := gomock.NewController(s.T())
+				pedal := mocks.NewMockTuner(ctrl)
 
-				for _, tt := range []struct {
-					name  string
-					pedal func(*mocks.MockTuner)
-					// work answers the scratch directory the rewrite is written to, so a
-					// row can hand over one nothing may write into.
-					work func() string
-					is   error
-					says string
-				}{
-					{
-						name: "the preset will not read back",
-						pedal: func(p *mocks.MockTuner) {
-							p.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
-								Return(sdk.Reading{}, read)
-						},
-						is: read,
-					},
-					{
-						name: "the preset has no output to turn down",
-						pedal: func(p *mocks.MockTuner) {
-							p.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
-								Return(sdk.Reading{Plan: plan.Plan{}}, nil)
-						},
-						is: ErrNoOutput,
-					},
-					{
-						name: "there is nowhere to write the rewritten preset",
-						pedal: func(p *mocks.MockTuner) {
-							p.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
-								Return(sdk.Reading{Plan: routed()}, nil)
-						},
-						work: func() string {
-							held := s.T().TempDir()
-							s.Require().NoError(os.Chmod(held, 0o500))
-							s.T().Cleanup(func() {
-								s.Require().NoError(os.Chmod(held, 0o700))
-							})
+				wanted := errors.New("not a preset")
 
-							return held
-						},
-						says: "matt-freeman.headroom.yaml",
-					},
-					{
-						name: "the rewritten preset will not compile",
-						pedal: func(p *mocks.MockTuner) {
-							p.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
-								Return(sdk.Reading{Plan: routed()}, nil)
-							p.EXPECT().Compile(gomock.Any(), gomock.Any()).
-								Return(sdk.Built{}, built)
-						},
-						is: built,
-					},
-				} {
-					s.Run(tt.name, func() {
-						pedal := mocks.NewMockTuner(gomock.NewController(s.T()))
-						tt.pedal(pedal)
+				pedal.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
+					Return(sdk.Reading{}, wanted)
 
-						work := s.T().TempDir()
-						if tt.work != nil {
-							work = tt.work()
-						}
+				_, err := quieter(context.Background(),
+					pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
 
-						_, err := quieter(context.Background(),
-							pedal, "already.hlx", work, "matt-freeman", -30)
+				s.Require().ErrorIs(err, wanted)
+			},
+		},
+		{
+			// A chain nobody can protect.
+			name: "a preset with no output to turn down",
+			then: func() {
+				ctrl := gomock.NewController(s.T())
+				pedal := mocks.NewMockTuner(ctrl)
 
-						if tt.is != nil {
-							s.Require().ErrorIs(err, tt.is)
+				pedal.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
+					Return(sdk.Reading{Plan: plan.Plan{}}, nil)
 
-							return
-						}
+				_, err := quieter(context.Background(),
+					pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
 
-						s.Require().ErrorContains(err, tt.says)
-					})
-				}
+				s.Require().ErrorIs(err, ErrNoOutput)
+			},
+		},
+		{
+			// The write failing.
+			name: "the quiet preset that will not compile",
+			then: func() {
+				ctrl := gomock.NewController(s.T())
+				pedal := mocks.NewMockTuner(ctrl)
+
+				wanted := errors.New("the catalog does not carry that")
+
+				pedal.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
+					Return(sdk.Reading{Plan: routed()}, nil)
+				pedal.EXPECT().Compile(gomock.Any(), gomock.Any()).
+					Return(sdk.Built{}, wanted)
+
+				_, err := quieter(context.Background(),
+					pedal, "already.hlx", s.T().TempDir(), "matt-freeman", -30)
+
+				s.Require().ErrorIs(err, wanted)
+			},
+		},
+		{
+			// The preset is rewritten on disk before it is compiled, so a
+			// directory nothing can write to stops the chain coming off the
+			// measuring loop. Saying which path it was is the whole of the
+			// report.
+			name: "there is nowhere to write the rewritten preset",
+			then: func() {
+				pedal := mocks.NewMockTuner(gomock.NewController(s.T()))
+				pedal.EXPECT().PresetFile(gomock.Any(), gomock.Any()).
+					Return(sdk.Reading{Plan: routed()}, nil)
+
+				work := s.T().TempDir()
+				s.Require().NoError(os.Chmod(work, 0o500))
+				s.T().Cleanup(func() {
+					s.Require().NoError(os.Chmod(work, 0o700))
+				})
+
+				_, err := quieter(context.Background(),
+					pedal, "already.hlx", work, "matt-freeman", -30)
+
+				s.Require().ErrorContains(err, "matt-freeman.headroom.yaml")
 			},
 		},
 	} {
@@ -443,14 +417,6 @@ func (s *HeadroomPublicTestSuite) TestQuieter() {
 		})
 	}
 }
-
-// TestItReadsThePresetBackBecauseARigCarriesNoRouting is the reason for the
-// round trip.
-//
-
-// TestQuieterRefusesWhatItCannotTakeOffTheLoop covers every way the rewrite
-// fails.
-//
 
 // TestItWarnsWhenItCannotPutTheOutputBack covers the silent wrong artifact.
 //

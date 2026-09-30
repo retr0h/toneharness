@@ -38,8 +38,8 @@ type SnapshotKeyPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestSnapshotIndex covers SnapshotIndex, which reads the number a
-// snapshot is stored under, or -1.
+// TestSnapshotIndex covers SnapshotIndex, which reads the number a snapshot
+// is stored under, or -1.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *SnapshotKeyPublicTestSuite) TestSnapshotIndex() {
@@ -74,9 +74,12 @@ func (s *SnapshotKeyPublicTestSuite) TestSnapshotIndex() {
 			},
 		},
 		{
-			// back out of it, in two different packages. A prefix changed in one place has
-			// to keep that working, which is what makes this worth asserting rather than
-			// reading.
+			// The round trip both readers rely on.
+			//
+			// One writes `SnapshotPrefix + strconv.Itoa(i)` and the other
+			// reads the number back out of it, in two different packages. A
+			// prefix changed in one place has to keep that working, which is
+			// what makes this worth asserting rather than reading.
 			name: "the prefix and the index agree",
 			then: func() {
 				for at := range 8 {
@@ -92,9 +95,6 @@ func (s *SnapshotKeyPublicTestSuite) TestSnapshotIndex() {
 		})
 	}
 }
-
-// TestThePrefixAndTheIndexAgree is the round trip both readers rely on.
-//
 
 func TestSnapshotKeyPublicTestSuite(
 	t *testing.T,

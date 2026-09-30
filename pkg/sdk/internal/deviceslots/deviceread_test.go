@@ -115,8 +115,8 @@ func (s *DeviceReadTestSuite) unknownModel() []byte {
 	return s.encode(map[int8]any{0: map[int8]any{22: []any{block(99999)}}})
 }
 
-// TestDeviceReading covers deviceReading, which turns a device's answer
-// for one slot into a reading.
+// TestDeviceReading covers deviceReading, which turns a device's answer for
+// one slot into a reading.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *DeviceReadTestSuite) TestDeviceReading() {
@@ -125,6 +125,7 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 		then func()
 	}{
 		{
+			// Turns what a device answered into a reading.
 			name: "device reading",
 			then: func() {
 				tests := []struct {

@@ -60,6 +60,7 @@ func (s *WritePublicTestSuite) TestWrite() {
 		then func()
 	}{
 		{
+			// The file being a WAV.
 			name: "a device can read what it wrote",
 			then: func() {
 				of := make([]float64, cab.Long)
@@ -88,7 +89,11 @@ func (s *WritePublicTestSuite) TestWrite() {
 			},
 		},
 		{
-			// half a response and plays the rest as whatever was in memory.
+			// The header describing the file it is in.
+			//
+			// A length field that disagrees with the bytes after it is how a
+			// device reads half a response and plays the rest as whatever was
+			// in memory.
 			name: "the sizes add up",
 			then: func() {
 				var buf bytes.Buffer
@@ -108,8 +113,12 @@ func (s *WritePublicTestSuite) TestWrite() {
 			},
 		},
 		{
-			// somebody's record, and the difference decides whether it may be sold. A
-			// note beside the file is lost the first time somebody shares the file alone.
+			// What a file leaving the building needs.
+			//
+			// The tooling cannot tell a capture from a match from a filter
+			// fitted to somebody's record, and the difference decides whether
+			// it may be sold. A note beside the file is lost the first time
+			// somebody shares the file alone.
 			name: "where it came from travels inside",
 			then: func() {
 				var buf bytes.Buffer
@@ -127,6 +136,7 @@ func (s *WritePublicTestSuite) TestWrite() {
 			},
 		},
 		{
+			// One made from nothing measured.
 			name: "provenance without a chain",
 			then: func() {
 				made := s.made()
@@ -141,6 +151,7 @@ func (s *WritePublicTestSuite) TestWrite() {
 			},
 		},
 		{
+			// What is written being what was built.
 			name: "samples survive the round trip",
 			then: func() {
 				of := make([]float64, cab.Short)
@@ -163,7 +174,10 @@ func (s *WritePublicTestSuite) TestWrite() {
 			},
 		},
 		{
-			// the opposite sign.
+			// A click rather than a clip.
+			//
+			// A sample past full scale that wrapped would come back as a loud
+			// sample of the opposite sign.
 			name: "a sample past full scale is clamped not wrapped",
 			then: func() {
 				of := make([]float64, cab.Short)
@@ -181,6 +195,7 @@ func (s *WritePublicTestSuite) TestWrite() {
 			},
 		},
 		{
+			// A length no device takes.
 			name: "only what a device loads",
 			then: func() {
 				var buf bytes.Buffer
@@ -193,9 +208,13 @@ func (s *WritePublicTestSuite) TestWrite() {
 			},
 		},
 		{
-			// provenance chunk, then the samples, and the samples are by far the largest
-			// part: a disk that fills does it there, and stopping only in the first
-			// hundred bytes would never have reached the write that matters.
+			// Somewhere it cannot write.
+			//
+			// Stopped at each stage rather than once. A file is a header,
+			// then the provenance chunk, then the samples, and the samples
+			// are by far the largest part: a disk that fills does it there,
+			// and stopping only in the first hundred bytes would never have
+			// reached the write that matters.
 			name: "a writer that fails is reported",
 			then: func() {
 				for _, after := range []int{0, 20, 50, 100, 200, 1000, 2000} {
@@ -208,10 +227,14 @@ func (s *WritePublicTestSuite) TestWrite() {
 			},
 		},
 		{
-			// the provenance chunk, then the data marker, the length, and the samples.
-			// Two of those are four bytes each and sit between two much larger writes, so
-			// stopping a writer after a number of bytes lands in them only by luck. This
-			// stops on the nth call, which reaches each of them exactly.
+			// The stages a byte count misses.
+			//
+			// A file is written in fifteen calls: eleven for the header
+			// fields, one for the provenance chunk, then the data marker, the
+			// length, and the samples. Two of those are four bytes each and
+			// sit between two much larger writes, so stopping a writer after
+			// a number of bytes lands in them only by luck. This stops on the
+			// nth call, which reaches each of them exactly.
 			name: "every write is reported when it fails",
 			then: func() {
 				for call := 1; call <= 15; call++ {
@@ -229,21 +252,6 @@ func (s *WritePublicTestSuite) TestWrite() {
 		})
 	}
 }
-
-// TestTheSizesAddUp covers the header describing the file it is in.
-//
-
-// TestWhereItCameFromTravelsInside is what a file leaving the building needs.
-//
-
-// TestASamplePastFullScaleIsClampedNotWrapped is a click rather than a clip.
-//
-
-// TestAWriterThatFailsIsReported covers somewhere it cannot write.
-//
-
-// TestEveryWriteIsReportedWhenItFails covers the stages a byte count misses.
-//
 
 // refuses is a writer that takes every call but one.
 type refuses struct {

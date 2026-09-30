@@ -33,9 +33,6 @@ type PreferPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestAnAmplifierBeatsAPreampOfTheSameName is the decision the order exists
-// for.
-//
 // TestPreferred covers Preferred, which is how far down the list this block's
 // family sits, lowest first.
 //
@@ -46,10 +43,14 @@ func (s *PreferPublicTestSuite) TestPreferred() {
 		then func()
 	}{
 		{
-			// existed the winner was whichever sorted first by identifier, which happened
-			// to be the amplifier because HD2_Amp precedes HD2_Preamp. Right by the
-			// alphabet is not right by decision, and the next device to rename a family
-			// would have flipped it silently.
+			// The decision the order exists for.
+			//
+			// 108 names on this device are both an amplifier and a preamp.
+			// Before this existed the winner was whichever sorted first by
+			// identifier, which happened to be the amplifier because HD2_Amp
+			// precedes HD2_Preamp. Right by the alphabet is not right by
+			// decision, and the next device to rename a family would have
+			// flipped it silently.
 			name: "an amplifier beats a preamp of the same name",
 			then: func() {
 				amp := catalog.Block{ID: "HD2_AmpSVBeastBrt", Family: "amp"}
@@ -59,9 +60,13 @@ func (s *PreferPublicTestSuite) TestPreferred() {
 			},
 		},
 		{
-			// third of the DSP and carries the twelve-microphone list a comparison solves
-			// over, so a name that fits both has to mean that one, and the pan variant
-			// sits behind the plain one because a bass rig has no use for stereo
+			// The other real collision.
+			//
+			// The same speaker ships three times under one name. The mic'd
+			// model costs a third of the DSP and carries the
+			// twelve-microphone list a comparison solves over, so a name that
+			// fits both has to mean that one, and the pan variant sits behind
+			// the plain one because a bass rig has no use for stereo
 			// placement.
 			name: "a micd cabinet beats the legacy one",
 			then: func() {
@@ -74,7 +79,11 @@ func (s *PreferPublicTestSuite) TestPreferred() {
 			},
 		},
 		{
-			// thing, so the identifier decides and the family says nothing.
+			// Every other collision on the device.
+			//
+			// Two models of one family carrying one name are two spellings of
+			// the same thing, so the identifier decides and the family says
+			// nothing.
 			name: "a family nobody ranked sorts last",
 			then: func() {
 				ranked := catalog.Block{ID: "HD2_AmpSVBeastBrt", Family: "amp"}
@@ -87,8 +96,11 @@ func (s *PreferPublicTestSuite) TestPreferred() {
 			},
 		},
 		{
-			// and the compiler each run, which is why the order lives on the block rather
-			// than beside either of them.
+			// How both resolvers use it.
+			//
+			// Sorting by Preferred and then by identifier is the shape the
+			// gear resolver and the compiler each run, which is why the order
+			// lives on the block rather than beside either of them.
 			name: "the order sorts a whole collision",
 			then: func() {
 				got := []catalog.Block{
@@ -126,15 +138,6 @@ func (s *PreferPublicTestSuite) TestPreferred() {
 		})
 	}
 }
-
-// TestAMicdCabinetBeatsTheLegacyOne covers the other real collision.
-//
-
-// TestAFamilyNobodyRankedSortsLast is every other collision on the device.
-//
-
-// TestTheOrderSortsAWholeCollision is how both resolvers use it.
-//
 
 func TestPreferPublicTestSuite(
 	t *testing.T,

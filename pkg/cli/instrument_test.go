@@ -67,6 +67,7 @@ func (s *InstrumentPublicTestSuite) TestChainIsFor() {
 		then func()
 	}{
 		{
+			// The claim underneath the guard.
 			name: "the catalogs own tags decide what a chain is for",
 			then: func() {
 				bass := s.cat.Blocks["HD2_AmpSVBeastNrm"]
@@ -78,10 +79,15 @@ func (s *InstrumentPublicTestSuite) TestChainIsFor() {
 			},
 		},
 		{
-			// bass amplifier, so that is the rig's own `instrument` field. Returning on the
-			// first amplifier found reads a guitar-amp-then-bass-amp chain as guitar, and
-			// then this guard refuses a bass rig pushed a bass recording. The two rules have
-			// to be the same rule.
+			// The divergence that would have refused a rig for the instrument
+			// it says it is.
+			//
+			// The compiler scans every amplifier and answers bass if any one
+			// of them is a bass amplifier, so that is the rig's own
+			// `instrument` field. Returning on the first amplifier found
+			// reads a guitar-amp-then-bass-amp chain as guitar, and then this
+			// guard refuses a bass rig pushed a bass recording. The two rules
+			// have to be the same rule.
 			name: "a bass amp anywhere decides it",
 			then: func() {
 				// A guitar amplifier first, a bass amplifier after it.
@@ -102,13 +108,17 @@ func (s *InstrumentPublicTestSuite) TestChainIsFor() {
 			},
 		},
 		{
+			// Not over-correcting.
 			name: "a guitar only chain still answers guitar",
 			then: func() {
 				s.Require().Equal("guitar", chainIsFor(s.chain("HD2_AmpBrit2203"), s.cat))
 			},
 		},
 		{
-			// refusing one would stop somebody measuring a delay.
+			// Claiming nothing.
+			//
+			// An effect serves either instrument, so there is no disagreement
+			// to find and refusing one would stop somebody measuring a delay.
 			name: "a chain with no amplifier names no instrument",
 			then: func() {
 				s.Require().Empty(chainIsFor(s.chain("HD2_CabMicIr_2x15Brute"), s.cat))
@@ -126,15 +136,8 @@ func (s *InstrumentPublicTestSuite) TestChainIsFor() {
 	}
 }
 
-// TestABassAmpAnywhereDecidesIt is the divergence that would have refused a
-// rig for the instrument it says it is.
-//
-
-// TestAChainWithNoAmplifierNamesNoInstrument covers claiming nothing.
-//
-
 // TestSameInstrument covers sameInstrument, which refuses a chain about to be
-// measured through the wrong.
+// measured through the wrong reference.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *InstrumentPublicTestSuite) TestSameInstrument() {
@@ -143,6 +146,7 @@ func (s *InstrumentPublicTestSuite) TestSameInstrument() {
 		then func()
 	}{
 		{
+			// The ordinary case.
 			name: "a bass chain through a bass reference is fine",
 			then: func() {
 				s.Require().NoError(sameInstrument(
@@ -150,10 +154,14 @@ func (s *InstrumentPublicTestSuite) TestSameInstrument() {
 			},
 		},
 		{
-			// missing slope is handled. Those make one figure doubtful and the run still
-			// says something. This makes every figure an answer about the reference rather
-			// than the chain, and five minutes of measuring would report tolerances met
-			// against a target the recording invented.
+			// The whole point.
+			//
+			// Refused rather than reported, which is the opposite of how a
+			// squeal or a missing slope is handled. Those make one figure
+			// doubtful and the run still says something. This makes every
+			// figure an answer about the reference rather than the chain, and
+			// five minutes of measuring would report tolerances met against a
+			// target the recording invented.
 			name: "a bass chain through a guitar reference is refused",
 			then: func() {
 				err := sameInstrument(
@@ -167,7 +175,11 @@ func (s *InstrumentPublicTestSuite) TestSameInstrument() {
 			},
 		},
 		{
-			// refusing it would be the tool inventing a disagreement out of a filename.
+			// Somebody's own recording.
+			//
+			// A file called `di.wav` or `take-3.wav` is not a claim about an
+			// instrument, and refusing it would be the tool inventing a
+			// disagreement out of a filename.
 			name: "a reference naming neither is not refused",
 			then: func() {
 				s.Require().NoError(sameInstrument(
@@ -180,12 +192,6 @@ func (s *InstrumentPublicTestSuite) TestSameInstrument() {
 		})
 	}
 }
-
-// TestABassChainThroughAGuitarReferenceIsRefused is the whole point.
-//
-
-// TestAReferenceNamingNeitherIsNotRefused covers somebody's own recording.
-//
 
 func TestInstrumentPublicTestSuite(
 	t *testing.T,

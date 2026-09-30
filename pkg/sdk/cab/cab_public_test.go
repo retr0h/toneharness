@@ -118,19 +118,21 @@ func centre(
 	return weighted / total
 }
 
-// TestMatchMakesOneCabinetMeasureLikeAnother is the whole point.
-//
-// TestMatchMakesOneCabinetMeasureLikeAnother covers the impulse response it builds and the bounds it keeps.
+// TestMatch covers Match, which builds the filter that turns one response
+// into another.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *CabPublicTestSuite) TestMatchMakesOneCabinetMeasureLikeAnother() {
+func (s *CabPublicTestSuite) TestMatch() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// bright one through that filter and what comes out should sit where the dark
-			// one sits.
+			// The whole point.
+			//
+			// A bright cabinet and a dark one, and the filter between them.
+			// Run the bright one through that filter and what comes out
+			// should sit where the dark one sits.
 			name: "match makes one cabinet measure like another",
 			then: func() {
 				bright := speaker(cab.Long, 3000)
@@ -156,6 +158,7 @@ func (s *CabPublicTestSuite) TestMatchMakesOneCabinetMeasureLikeAnother() {
 			},
 		},
 		{
+			// What a device will load.
 			name: "an impulse response never clips",
 			then: func() {
 				loud := make([]float64, cab.Long)
@@ -173,7 +176,11 @@ func (s *CabPublicTestSuite) TestMatchMakesOneCabinetMeasureLikeAnother() {
 			},
 		},
 		{
-			// it reads as a click on every note, which is not what the cabinet did.
+			// The window on the tail.
+			//
+			// A response that stops abruptly has a step in it, and a step is
+			// broadband: it reads as a click on every note, which is not what
+			// the cabinet did.
 			name: "it ends quietly",
 			then: func() {
 				got, err := cab.Match(
@@ -190,11 +197,22 @@ func (s *CabPublicTestSuite) TestMatchMakesOneCabinetMeasureLikeAnother() {
 			},
 		},
 		{
-			// of energy in the first eighth does: both read the same to six places with
-			// the fold and without it, because almost all of the energy is in the first
-			// few taps either way. The centroid of this response is 1.69 taps folded and
-			// 2.65 unfolded, which is the difference between a response that starts at
-			// once and one that takes half again as long to.
+			// The causal fold.
+			//
+			// minimumPhase claims a response with "all of its energy as early
+			// as that magnitude allows", and deleting the half of the fold
+			// that zeroes everything past the midpoint left every test in the
+			// tree green. TestItEndsQuietly checks one number, the final tap
+			// against the peak, and a response whose energy is smeared across
+			// the whole buffer still ends quietly.
+			//
+			// The energy centroid is what moves. Neither the peak position
+			// nor the share of energy in the first eighth does: both read the
+			// same to six places with the fold and without it, because almost
+			// all of the energy is in the first few taps either way. The
+			// centroid of this response is 1.69 taps folded and 2.65
+			// unfolded, which is the difference between a response that
+			// starts at once and one that takes half again as long to.
 			name: "it puts its energy as early as it can",
 			then: func() {
 				got, err := cab.Match(
@@ -215,6 +233,7 @@ func (s *CabPublicTestSuite) TestMatchMakesOneCabinetMeasureLikeAnother() {
 			},
 		},
 		{
+			// The two lengths.
 			name: "only what a device loads",
 			then: func() {
 				for _, taps := range []int{0, 512, 1000, 4096} {
@@ -233,7 +252,11 @@ func (s *CabPublicTestSuite) TestMatchMakesOneCabinetMeasureLikeAnother() {
 			},
 		},
 		{
-			// correction leaves it as it was rather than inventing gain for it.
+			// The same guard in Match.
+			//
+			// A bin where what is in hand holds nothing has no ratio to take,
+			// and the correction leaves it as it was rather than inventing
+			// gain for it.
 			name: "a quiet target bin leaves the response alone",
 			then: func() {
 				flat := make([]float64, cab.Long)
@@ -258,18 +281,19 @@ func (s *CabPublicTestSuite) TestMatchMakesOneCabinetMeasureLikeAnother() {
 	}
 }
 
-// TestCaptureRecoversWhatACabinetDid covers deconvolution.
-//
-// TestCaptureRecoversWhatACabinetDid covers reading a cabinet's own shape back out of a recording.
+// TestCapture covers Capture, which recovers what a cabinet did to a signal.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *CabPublicTestSuite) TestCaptureRecoversWhatACabinetDid() {
+func (s *CabPublicTestSuite) TestCapture() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// the frequency domain gives the cabinet back.
+			// Deconvolution.
+			//
+			// A known signal through a known cabinet, and dividing one by the
+			// other in the frequency domain gives the cabinet back.
 			name: "capture recovers what a cabinet did",
 			then: func() {
 				want := speaker(cab.Long, 1500)
@@ -291,6 +315,7 @@ func (s *CabPublicTestSuite) TestCaptureRecoversWhatACabinetDid() {
 			},
 		},
 		{
+			// Signals with too little in them.
 			name: "not enough to work from",
 			then: func() {
 				short := make([]float64, 10)
@@ -310,6 +335,7 @@ func (s *CabPublicTestSuite) TestCaptureRecoversWhatACabinetDid() {
 			},
 		},
 		{
+			// A signal holding nothing.
 			name: "silence is not something to divide by",
 			then: func() {
 				quiet := make([]float64, cab.Long)
@@ -323,6 +349,7 @@ func (s *CabPublicTestSuite) TestCaptureRecoversWhatACabinetDid() {
 			},
 		},
 		{
+			// A length no device takes.
 			name: "capture only what a device loads",
 			then: func() {
 				fine := speaker(cab.Long*4, 1500)
@@ -335,8 +362,16 @@ func (s *CabPublicTestSuite) TestCaptureRecoversWhatACabinetDid() {
 			},
 		},
 		{
-			// energy in the first bin and leaves every other one genuinely empty, where a
-			// zero-padded tone only leaks quietly into them.
+			// The guard on each bin.
+			//
+			// A sweep has energy everywhere by design; a recording of music
+			// does not, and its quiet bins would come back as enormous
+			// numbers that are entirely noise.
+			//
+			// A constant signal is the clean case: every sample the same puts
+			// all of its energy in the first bin and leaves every other one
+			// genuinely empty, where a zero-padded tone only leaks quietly
+			// into them.
 			name: "bins holding nothing are not divided by",
 			then: func() {
 				flat := make([]float64, cab.Long*2)
@@ -360,27 +395,6 @@ func (s *CabPublicTestSuite) TestCaptureRecoversWhatACabinetDid() {
 		})
 	}
 }
-
-// TestItEndsQuietly covers the window on the tail.
-//
-
-// TestItPutsItsEnergyAsEarlyAsItCan covers the causal fold.
-//
-// minimumPhase claims a response with "all of its energy as early as that
-// magnitude allows", and deleting the half of the fold that zeroes everything
-// past the midpoint left every test in the tree green. TestItEndsQuietly
-// checks one number, the final tap against the peak, and a response whose
-// energy is smeared across the whole buffer still ends quietly.
-//
-
-// TestBinsHoldingNothingAreNotDividedBy covers the guard on each bin.
-//
-// A sweep has energy everywhere by design; a recording of music does not, and
-// its quiet bins would come back as enormous numbers that are entirely noise.
-//
-
-// TestAQuietTargetBinLeavesTheResponseAlone covers the same guard in Match.
-//
 
 func TestCabPublicTestSuite(
 	t *testing.T,

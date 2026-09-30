@@ -217,9 +217,6 @@ func (s *FootswitchesPublicTestSuite) TestASwitchWithNoBlockIsNotWritten() {
 	s.Require().NotContains(out.String(), "orphan")
 }
 
-// TestAChosenColourGoesBothWays covers the colour somebody picked surviving
-// the trip out of a preset and back into one.
-//
 // TestFootswitches covers Footswitches, which writes what the pedal prints
 // under each switch.
 //
@@ -230,8 +227,13 @@ func (s *FootswitchesPublicTestSuite) TestFootswitches() {
 		then func()
 	}{
 		{
-			// that number rather than the light it produces. `colour` is the light, which
-			// the device works out from the block.
+			// The colour somebody picked surviving the trip out of a preset
+			// and back into one.
+			//
+			// The device files a colour under its place in the catalog's
+			// list, and stores that number rather than the light it produces.
+			// `colour` is the light, which the device works out from the
+			// block.
 			name: "a chosen colour goes both ways",
 			then: func() {
 				doc := s.presetWith(`{"dsp0": {"block1": {"@fs_index": 3, "@fs_customcolor": 3,
@@ -258,7 +260,8 @@ func (s *FootswitchesPublicTestSuite) TestFootswitches() {
 			},
 		},
 		{
-			// one that names something this device does not have.
+			// A plan that names no colour, and one that names something this
+			// device does not have.
 			name: "a colour nobody chose is not written",
 			then: func() {
 				block, switched := 1, 3

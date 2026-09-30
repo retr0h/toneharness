@@ -96,9 +96,6 @@ func (s *SlopesPublicTestSuite) built() {
 		Turn(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 }
 
-// TestItPrintsTheLiveSlopeBesideTheCommittedOne is the whole point.
-// TestSlopesRefusesAReferenceForTheOtherInstrument covers the guard.
-//
 // TestSlopes covers Slopes, which reads what each control does now and holds
 // the committed sweeps to it.
 //
@@ -109,9 +106,14 @@ func (s *SlopesPublicTestSuite) TestSlopes() {
 		then func()
 	}{
 		{
-			// describes the recording rather than the chain, so what comes back is the
-			// wrong instrument rather than the wrong settings. Refused before a reading is
-			// taken.
+			// TestItPrintsTheLiveSlopeBesideTheCommittedOne is the whole
+			// point. TestSlopesRefusesAReferenceForTheOtherInstrument covers
+			// the guard.
+			//
+			// Every figure measured by pushing a guitar recording through a
+			// bass rig describes the recording rather than the chain, so what
+			// comes back is the wrong instrument rather than the wrong
+			// settings. Refused before a reading is taken.
 			name: "slopes refuses a reference for the other instrument",
 			then: func() {
 				{
@@ -150,6 +152,7 @@ func (s *SlopesPublicTestSuite) TestSlopes() {
 			},
 		},
 		{
+			// Narrowing the report.
 			name: "one figure on its own",
 			then: func() {
 				s.built()
@@ -166,6 +169,7 @@ func (s *SlopesPublicTestSuite) TestSlopes() {
 			},
 		},
 		{
+			// An axis with no committed slope.
 			name: "a figure nothing committed carries",
 			then: func() {
 				s.built()
@@ -181,10 +185,14 @@ func (s *SlopesPublicTestSuite) TestSlopes() {
 			},
 		},
 		{
-			// with a guitar is not a ratio about the control. Said rather than refused: the
-			// comparison is still the only way to see how far a committed slope is from a
-			// live one, which is what this command is for, so the run goes ahead and names
-			// which files it cannot trust.
+			// The honest warning.
+			//
+			// A ratio between a live reading taken with a bass and a
+			// committed one taken with a guitar is not a ratio about the
+			// control. Said rather than refused: the comparison is still the
+			// only way to see how far a committed slope is from a live one,
+			// which is what this command is for, so the run goes ahead and
+			// names which files it cannot trust.
 			name: "a committed sweep naming another instrument is said",
 			then: func() {
 				s.built()
@@ -203,6 +211,7 @@ func (s *SlopesPublicTestSuite) TestSlopes() {
 			},
 		},
 		{
+			// Gear the solver cannot touch.
 			name: "a chain with no dial",
 			then: func() {
 				s.pedal.EXPECT().
@@ -216,6 +225,7 @@ func (s *SlopesPublicTestSuite) TestSlopes() {
 			},
 		},
 		{
+			// A rig nobody curated.
 			name: "the rig will not build",
 			then: func() {
 				wanted := errors.New("no such rig")
@@ -229,6 +239,7 @@ func (s *SlopesPublicTestSuite) TestSlopes() {
 			},
 		},
 		{
+			// A missing signal.
 			name: "a reference that is not there",
 			then: func() {
 				s.pedal.EXPECT().
@@ -245,6 +256,7 @@ func (s *SlopesPublicTestSuite) TestSlopes() {
 			},
 		},
 		{
+			// A reading file somebody broke.
 			name: "a sweep that will not decode",
 			then: func() {
 				s.built()
@@ -269,9 +281,6 @@ func (s *SlopesPublicTestSuite) TestSlopes() {
 		})
 	}
 }
-
-// TestACommittedSweepNamingAnotherInstrumentIsSaid covers the honest warning.
-//
 
 // TestRatioSaysWhichKindOfDisagreementItIs covers the column that matters.
 //

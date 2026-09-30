@@ -104,21 +104,24 @@ func (s *ChoosePublicTestSuite) mic() solve.Choice {
 	return got[0]
 }
 
-// TestListsOfFindsTheListsAndLeavesTheDialsAlone is the counterpart to knobsOf.
-//
-// TestListsOfFindsTheChoicesInAChain covers which controls are lists rather than dials.
+// TestListsOf covers listsOf, which is every control in the chain that is
+// compared rather than turned.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChoosePublicTestSuite) TestListsOfFindsTheChoicesInAChain() {
+func (s *ChoosePublicTestSuite) TestListsOf() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// with its dials and the other with its lists, and neither may see the other's
-			// controls. A list in the matrix is a row built from a slope that does not
-			// exist; a dial in the comparison is twelve readings of something that has a
-			// slope and did not need them.
+			// The counterpart to knobsOf.
+			//
+			// A cabinet carries both kinds, so the same block has to answer
+			// one function with its dials and the other with its lists, and
+			// neither may see the other's controls. A list in the matrix is a
+			// row built from a slope that does not exist; a dial in the
+			// comparison is twelve readings of something that has a slope and
+			// did not need them.
 			name: "lists of finds the lists and leaves the dials alone",
 			then: func() {
 				made := plan.Plan{Blocks: []plan.Block{{
@@ -144,8 +147,17 @@ func (s *ChoosePublicTestSuite) TestListsOfFindsTheChoicesInAChain() {
 			},
 		},
 		{
-			// dials, and one of them is a Bright that moves a bass chain further than
-			// several of the knobs the solver was already spending readings on.
+			// The kind that used to be skipped.
+			//
+			// A switch is a choice of two and is compared on the same
+			// machinery: the ranking does not care how many settings there
+			// are. It carries Flip, because the device does not coerce and
+			// setting one takes the other wire call.
+			//
+			// An SVT 4 Pro is the case worth having. It carries four switches
+			// beside its dials, and one of them is a Bright that moves a bass
+			// chain further than several of the knobs the solver was already
+			// spending readings on.
 			name: "lists of finds a switch as a choice of two",
 			then: func() {
 				made := plan.Plan{Blocks: []plan.Block{{
@@ -176,6 +188,7 @@ func (s *ChoosePublicTestSuite) TestListsOfFindsTheChoicesInAChain() {
 			},
 		},
 		{
+			// A chain built elsewhere.
 			name: "lists of on a block the catalog does not carry",
 			then: func() {
 				s.Require().Empty(listsOf(plan.Plan{Blocks: []plan.Block{{
@@ -192,13 +205,6 @@ func (s *ChoosePublicTestSuite) TestListsOfFindsTheChoicesInAChain() {
 		})
 	}
 }
-
-// TestListsOfFindsASwitchAsAChoiceOfTwo covers the kind that used to be skipped.
-//
-// A switch is a choice of two and is compared on the same machinery: the
-// ranking does not care how many settings there are. It carries Flip, because
-// the device does not coerce and setting one takes the other wire call.
-//
 
 // TestASwitchIsSetWithTheOtherCall is why Flip is carried at all.
 //
@@ -218,20 +224,23 @@ func (s *ChoosePublicTestSuite) TestASwitchIsSetWithTheOtherCall() {
 		solve.Choice{Block: 0, Param: 3, Flip: true, Options: []int{0, 1}}, 1))
 }
 
-// TestComparedLeavesTheChainOnTheNearestSetting is the whole point.
-//
-// TestComparedLeavesTheChainOnItsBestSetting covers walking a list, and giving up.
+// TestCompared covers compared, which tries every setting of every list and
+// leaves each on its nearest.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChoosePublicTestSuite) TestComparedLeavesTheChainOnItsBestSetting() {
+func (s *ChoosePublicTestSuite) TestCompared() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// read twelve different figures and exactly one of them is nearest the target.
-			// What is checked is the last Choose, because that is what the chain is playing
-			// when the dials are then solved.
+			// The whole point.
+			//
+			// The bench answers a different centroid every reading, so the
+			// twelve settings read twelve different figures and exactly one
+			// of them is nearest the target. What is checked is the last
+			// Choose, because that is what the chain is playing when the
+			// dials are then solved.
 			name: "compared leaves the chain on the nearest setting",
 			then: func() {
 				var chosen []int
@@ -264,8 +273,12 @@ func (s *ChoosePublicTestSuite) TestComparedLeavesTheChainOnItsBestSetting() {
 			},
 		},
 		{
-			// control does not matter for this target, and tolerances between them say it
-			// is the most important thing in the chain.
+			// What a person reads.
+			//
+			// The gap between them is the useful number: nothing between them
+			// says this control does not matter for this target, and
+			// tolerances between them say it is the most important thing in
+			// the chain.
 			name: "compared reports the winner and the runner up",
 			then: func() {
 				s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -283,8 +296,11 @@ func (s *ChoosePublicTestSuite) TestComparedLeavesTheChainOnItsBestSetting() {
 			},
 		},
 		{
-			// zero. A control nothing could read is not a control that reads best at its
-			// first setting.
+			// Every setting failing.
+			//
+			// Said rather than silent, and the chain left alone rather than
+			// put on setting zero. A control nothing could read is not a
+			// control that reads best at its first setting.
 			name: "compared leaves a list it could not read where it was",
 			then: func() {
 				s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -302,6 +318,7 @@ func (s *ChoosePublicTestSuite) TestComparedLeavesTheChainOnItsBestSetting() {
 			},
 		},
 		{
+			// A loop that cannot measure.
 			name: "compared gives up when the bench does",
 			then: func() {
 				s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -317,9 +334,13 @@ func (s *ChoosePublicTestSuite) TestComparedLeavesTheChainOnItsBestSetting() {
 			},
 		},
 		{
-			// the other eleven still answer. The same refusal on the setting that won
-			// leaves the chain on whichever setting the walk happened to end on, which is
-			// not the answer and not a chain anybody asked for.
+			// The one refusal that is fatal.
+			//
+			// A setting refused while the comparison walks it is one fewer
+			// candidate and the other eleven still answer. The same refusal
+			// on the setting that won leaves the chain on whichever setting
+			// the walk happened to end on, which is not the answer and not a
+			// chain anybody asked for.
 			name: "compared gives up when the winner will not apply",
 			then: func() {
 				wanted := errors.New("no reply to opcode 30 within 6s")
@@ -355,24 +376,25 @@ func (s *ChoosePublicTestSuite) TestComparedLeavesTheChainOnItsBestSetting() {
 	}
 }
 
-// TestComparedReportsTheWinnerAndTheRunnerUp covers what a person reads.
-//
-
-// TestReadingsThrowsAwayASettingWhoseFiguresAreNotOfTheSetting is the guard.
-//
-// TestReadingsMeasuresEverySetting covers a reading that is not of the setting, and the two ways it stops.
+// TestReadings covers readings, which is what the chain measures at each
+// setting of one list.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChoosePublicTestSuite) TestReadingsMeasuresEverySetting() {
+func (s *ChoosePublicTestSuite) TestReadings() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// clipping one is the dangerous one because it reads as a finding: one
-			// microphone of a cabinet's twelve clipped and read a centroid of 4,471Hz where
-			// the other eleven sat between 126 and 147. Scored, it wins every target asking
-			// for a bright sound, and the answer is a cabinet nobody would have chosen.
+			// The guard.
+			//
+			// Three ways a reading describes something other than the
+			// microphone, and the clipping one is the dangerous one because
+			// it reads as a finding: one microphone of a cabinet's twelve
+			// clipped and read a centroid of 4,471Hz where the other eleven
+			// sat between 126 and 147. Scored, it wins every target asking
+			// for a bright sound, and the answer is a cabinet nobody would
+			// have chosen.
 			name: "readings throws away a setting whose figures are not of the setting",
 			then: func() {
 				tests := []struct {
@@ -406,8 +428,12 @@ func (s *ChoosePublicTestSuite) TestReadingsMeasuresEverySetting() {
 			},
 		},
 		{
-			// nothing about the other eleven, and giving up on the whole comparison would
-			// throw away eleven readings already paid for.
+			// A refusal.
+			//
+			// Reported and skipped rather than fatal. A device refusing one
+			// index says nothing about the other eleven, and giving up on the
+			// whole comparison would throw away eleven readings already paid
+			// for.
 			name: "readings carries on past a setting the device refuses",
 			then: func() {
 				s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), 0).
@@ -427,8 +453,11 @@ func (s *ChoosePublicTestSuite) TestReadingsMeasuresEverySetting() {
 			},
 		},
 		{
-			// is the loop losing its ability to measure anything, so carrying on would
-			// rank twelve settings on nothing.
+			// The one fatal case.
+			//
+			// A bench that cannot hand a signal back is not a setting that
+			// read badly. It is the loop losing its ability to measure
+			// anything, so carrying on would rank twelve settings on nothing.
 			name: "readings gives up when the bench itself fails",
 			then: func() {
 				s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -452,27 +481,22 @@ func (s *ChoosePublicTestSuite) TestReadingsMeasuresEverySetting() {
 	}
 }
 
-// TestReadingsCarriesOnPastASettingTheDeviceRefuses covers a refusal.
-//
-
-// TestComparedLeavesAListItCouldNotReadWhereItWas covers every setting failing.
-//
-
-// TestReadingsGivesUpWhenTheBenchItselfFails covers the one fatal case.
-//
-
-// TestAttemptWithNoListsIsJustTheSolve covers a chain of dials only.
-//
-// TestAttemptRunsTheWholePassInOrder covers comparing, then solving, then backing off.
+// TestAttempt covers attempt, which is the two halves interleaved: choose the
+// lists, solve the dials, and back up to another setting if the solve fell
+// short.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChoosePublicTestSuite) TestAttemptRunsTheWholePassInOrder() {
+func (s *ChoosePublicTestSuite) TestAttempt() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// it must not pay for the comparison or print a heading about it.
+			// A chain of dials only.
+			//
+			// Most chains. An amplifier into a cabinet of floats has nothing
+			// to compare, so it must not pay for the comparison or print a
+			// heading about it.
 			name: "attempt with no lists is just the solve",
 			then: func() {
 				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -494,8 +518,11 @@ func (s *ChoosePublicTestSuite) TestAttemptRunsTheWholePassInOrder() {
 			},
 		},
 		{
-			// then a solve, then a second solve from another setting because the first fell
-			// short.
+			// The whole interleave.
+			//
+			// The order is what is under test: the heading, then a list left
+			// on a setting, then a solve, then a second solve from another
+			// setting because the first fell short.
 			name: "attempt compares then solves then backs up",
 			then: func() {
 				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -521,6 +548,7 @@ func (s *ChoosePublicTestSuite) TestAttemptRunsTheWholePassInOrder() {
 			},
 		},
 		{
+			// The first half failing.
 			name: "attempt gives up if the comparison does",
 			then: func() {
 				s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -545,20 +573,22 @@ func (s *ChoosePublicTestSuite) TestAttemptRunsTheWholePassInOrder() {
 	}
 }
 
-// TestBackedUpTriesTheRunnerUpAndKeepsTheBetterOfTheTwo is the interleave.
-//
-// TestBackedUpTriesTheRunnerUp covers the second-best setting, when it is worth trying and when the run stops.
+// TestBackedUp covers backedUp, which tries the next-nearest settings,
+// solving the dials from each.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChoosePublicTestSuite) TestBackedUpTriesTheRunnerUp() {
+func (s *ChoosePublicTestSuite) TestBackedUp() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// one a solve can finish from, so the loop backs up. What it must not do is
-			// report the last attempt: the answer to a target is the best chain anybody
-			// demonstrated.
+			// The interleave.
+			//
+			// A setting that reads nearest before any dial has moved is not
+			// necessarily the one a solve can finish from, so the loop backs
+			// up. What it must not do is report the last attempt: the answer
+			// to a target is the best chain anybody demonstrated.
 			name: "backed up tries the runner up and keeps the better of the two",
 			then: func() {
 				var chosen []int
@@ -597,8 +627,11 @@ func (s *ChoosePublicTestSuite) TestBackedUpTriesTheRunnerUp() {
 			},
 		},
 		{
-			// three passes is around forty readings. Twelve of those is not a tuning
-			// session, it is an afternoon.
+			// The bound on the expensive half.
+			//
+			// Each attempt is a whole convergence, which on a chain of a
+			// dozen dials over three passes is around forty readings. Twelve
+			// of those is not a tuning session, it is an afternoon.
 			name: "backed up stops at tries",
 			then: func() {
 				var chosen []int
@@ -636,8 +669,8 @@ func (s *ChoosePublicTestSuite) TestBackedUpTriesTheRunnerUp() {
 			},
 		},
 		{
-			// ranking, which is a programming error rather than a device one and so is
-			// skipped rather than reported.
+			// A stale ranking, which is a programming error rather than a
+			// device one and so is skipped rather than reported.
 			name: "backed up ignores a runner naming a control the chain does not have",
 			then: func() {
 				knob := solve.Knob{Block: 0, Param: 1, Control: "Bass", At: 0.4, Low: 0, High: 1}
@@ -654,7 +687,11 @@ func (s *ChoosePublicTestSuite) TestBackedUpTriesTheRunnerUp() {
 			},
 		},
 		{
-			// already inside its tolerances, which is a quarter of an hour buying nothing.
+			// The happy exit.
+			//
+			// Every attempt past an arrival is a convergence spent improving
+			// on a chain already inside its tolerances, which is a quarter of
+			// an hour buying nothing.
 			name: "backed up stops on the first attempt that arrives",
 			then: func() {
 				var chosen []int
@@ -697,6 +734,7 @@ func (s *ChoosePublicTestSuite) TestBackedUpTriesTheRunnerUp() {
 			},
 		},
 		{
+			// The apply failing.
 			name: "backed up reports a device that refuses the runner up",
 			then: func() {
 				wanted := errors.New("no reply to opcode 30 within 6s")
@@ -716,6 +754,7 @@ func (s *ChoosePublicTestSuite) TestBackedUpTriesTheRunnerUp() {
 			},
 		},
 		{
+			// The convergence failing.
 			name: "backed up reports a solve that cannot measure",
 			then: func() {
 				s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -743,21 +782,8 @@ func (s *ChoosePublicTestSuite) TestBackedUpTriesTheRunnerUp() {
 	}
 }
 
-// TestBackedUpStopsAtTries covers the bound on the expensive half.
-//
-
 func TestChoosePublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(ChoosePublicTestSuite))
 }
-
-// TestComparedGivesUpWhenTheWinnerWillNotApply covers the one refusal that is
-// fatal.
-//
-
-// TestAttemptComparesThenSolvesThenBacksUp covers the whole interleave.
-//
-
-// TestBackedUpStopsOnTheFirstAttemptThatArrives covers the happy exit.
-//

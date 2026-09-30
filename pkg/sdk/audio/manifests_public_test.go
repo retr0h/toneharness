@@ -48,9 +48,6 @@ func tree(
 	return out
 }
 
-// TestManifestsFindsThemAtEitherDepth is why this walks rather than reads a
-// directory.
-//
 // TestManifests covers Manifests, which reads every manifest under a tree,
 // wherever it sits in it.
 //
@@ -61,7 +58,11 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 		then func()
 	}{
 		{
-			// whole tree holds instead of being told which instrument to look at.
+			// Why this walks rather than reads a directory.
+			//
+			// One root answers for every instrument at once, so a listing can
+			// say what the whole tree holds instead of being told which
+			// instrument to look at.
 			name: "manifests finds them at either depth",
 			then: func() {
 				fsys := tree(map[string]string{
@@ -86,7 +87,11 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			},
 		},
 		{
-			// is the root itself, and nothing in the tree says what it holds.
+			// The shallower tree.
+			//
+			// The instrument is empty rather than guessed: the directory
+			// above the player is the root itself, and nothing in the tree
+			// says what it holds.
 			name: "manifests pointed at one instrument",
 			then: func() {
 				fsys := tree(map[string]string{
@@ -102,7 +107,10 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			},
 		},
 		{
-			// has a manifest, so this is not a fault.
+			// The ordinary case.
+			//
+			// A player whose records somebody is still choosing has a
+			// directory before it has a manifest, so this is not a fault.
 			name: "a directory with no manifest is skipped",
 			then: func() {
 				fsys := tree(map[string]string{
@@ -118,7 +126,10 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			},
 		},
 		{
-			// saying why, so the path is in the error.
+			// Why this refuses rather than skips.
+			//
+			// A manifest with a typo counted short would leave a genre short
+			// with nothing saying why, so the path is in the error.
 			name: "an unreadable manifest names itself",
 			then: func() {
 				fsys := tree(map[string]string{
@@ -130,6 +141,7 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			},
 		},
 		{
+			// A path nobody can walk.
 			name: "a tree that is not there",
 			then: func() {
 				_, err := audio.Manifests(tree(nil), "nowhere")
@@ -137,7 +149,10 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			},
 		},
 		{
-			// so the caller decides rather than this.
+			// A walk that finds nothing.
+			//
+			// Not an error here. Whether nothing is worth refusing depends on
+			// what asked, so the caller decides rather than this.
 			name: "an empty tree reads as empty",
 			then: func() {
 				got, err := audio.Manifests(tree(map[string]string{"notes.txt": "x"}), ".")
@@ -146,7 +161,11 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			},
 		},
 		{
-			// comparison that actually runs rather than the instrument one.
+			// The ordinary corpus.
+			//
+			// Every player in resources/music/bass shares an instrument, so
+			// this is the comparison that actually runs rather than the
+			// instrument one.
 			name: "two players on one instrument sort by i d",
 			then: func() {
 				fsys := tree(map[string]string{
@@ -164,6 +183,7 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			},
 		},
 		{
+			// The unreadable file.
 			name: "a manifest that will not open names itself",
 			then: func() {
 				fsys := tree(map[string]string{
@@ -182,18 +202,6 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 		})
 	}
 }
-
-// TestManifestsPointedAtOneInstrument covers the shallower tree.
-//
-
-// TestADirectoryWithNoManifestIsSkipped covers the ordinary case.
-//
-
-// TestAnUnreadableManifestNamesItself is why this refuses rather than skips.
-//
-
-// TestAnEmptyTreeReadsAsEmpty covers a walk that finds nothing.
-//
 
 // TestGroupingKeepsWhatCountsAndDropsTheRest covers the hand-off to Genres.
 //
@@ -222,9 +230,6 @@ func TestManifestsPublicTestSuite(
 ) {
 	suite.Run(t, new(ManifestsPublicTestSuite))
 }
-
-// TestTwoPlayersOnOneInstrumentSortByID covers the ordinary corpus.
-//
 
 // refusing is a tree that lists a manifest and then will not open it.
 //

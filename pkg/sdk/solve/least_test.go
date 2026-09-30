@@ -38,8 +38,6 @@ type LeastTestSuite struct {
 	suite.Suite
 }
 
-// TestTheRidgeFallsBackWhenTheScaleUnderflows covers slopes too small to scale.
-//
 // TestLeast covers least, which solves min |Ax - b| for x, preferring small
 // x.
 //
@@ -50,7 +48,11 @@ func (s *LeastTestSuite) TestLeast() {
 		then func()
 	}{
 		{
-			// to zero would leave no ridge at all and divide by nothing.
+			// Slopes too small to scale.
+			//
+			// The ridge is relative to the diagonal's size, and a diagonal
+			// that underflows to zero would leave no ridge at all and divide
+			// by nothing.
 			name: "the ridge falls back when the scale underflows",
 			then: func() {
 				got, err := least([][]float64{{1e-200}}, []float64{1e-200}, Damping)
@@ -60,6 +62,7 @@ func (s *LeastTestSuite) TestLeast() {
 			},
 		},
 		{
+			// A column of nothing.
 			name: "a system with no pivot",
 			then: func() {
 				_, err := least([][]float64{{0}}, []float64{1}, 0)
@@ -68,7 +71,8 @@ func (s *LeastTestSuite) TestLeast() {
 			},
 		},
 		{
-			// ordinary shape: a target names more figures than a chain has controls.
+			// More rows than columns, which is the ordinary shape: a target
+			// names more figures than a chain has controls.
 			name: "two figures one control",
 			then: func() {
 				got, err := least([][]float64{{2}, {1}}, []float64{4, 2}, Damping)
@@ -84,22 +88,8 @@ func (s *LeastTestSuite) TestLeast() {
 	}
 }
 
-// TestThePivotIsTakenFromALaterRow covers the row swap.
-//
-// Reached through eliminate rather than through least, and that is the finding
-// rather than a convenience. least forms the normal equations, and AᵀA is
-// symmetric and positive semi-definite, for which elimination without pivoting
-// is already stable: disabling the swap outright changes least's answer in the
-// fifteenth digit or not at all, whatever system it is handed. Every attempt to
-// catch it from the outside was a test that could not fail.
-//
-// So the swap is dead weight for the only caller there is today, and it is
-// exercised here because eliminate's own comment says the arithmetic below it is
-// somebody else's to call next. A guard nobody has ever executed is a guard
-// nobody knows works.
-//
 // TestEliminate covers eliminate, which solves an augmented square system by
-// Gaussian elimination with.
+// Gaussian elimination with partial pivoting.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *LeastTestSuite) TestEliminate() {
@@ -108,7 +98,25 @@ func (s *LeastTestSuite) TestEliminate() {
 		then func()
 	}{
 		{
-			// has one. Without the swap this is refused as having no pivot at all.
+			// The row swap.
+			//
+			// Reached through eliminate rather than through least, and that
+			// is the finding rather than a convenience. least forms the
+			// normal equations, and AᵀA is symmetric and positive
+			// semi-definite, for which elimination without pivoting is
+			// already stable: disabling the swap outright changes least's
+			// answer in the fifteenth digit or not at all, whatever system it
+			// is handed. Every attempt to catch it from the outside was a
+			// test that could not fail.
+			//
+			// So the swap is dead weight for the only caller there is today,
+			// and it is exercised here because eliminate's own comment says
+			// the arithmetic below it is somebody else's to call next. A
+			// guard nobody has ever executed is a guard nobody knows works.
+			//
+			// A leading entry of exactly nothing is not a singular system
+			// when a row below has one. Without the swap this is refused as
+			// having no pivot at all.
 			name: "the pivot is taken from a later row",
 			then: func() {
 				got, err := eliminate([][]float64{{0, 1, 3}, {1, 0, 2}}, 2)
@@ -120,7 +128,11 @@ func (s *LeastTestSuite) TestEliminate() {
 			},
 		},
 		{
-			// leading entry is not divided by when a bigger one is available.
+			// Which row the swap picks.
+			//
+			// The largest remaining entry rather than the first non-zero one,
+			// so a tiny leading entry is not divided by when a bigger one is
+			// available.
 			name: "the pivot is the largest rather",
 			then: func() {
 				got, err := eliminate([][]float64{{1e-11, 1, 1}, {4, 0, 8}}, 2)
@@ -136,9 +148,6 @@ func (s *LeastTestSuite) TestEliminate() {
 		})
 	}
 }
-
-// TestThePivotIsTheLargestRather covers which row the swap picks.
-//
 
 // TestAnAxisWithNoToleranceBesideOneThatHasSome covers the mixed target.
 //

@@ -54,6 +54,7 @@ func (s *ByNamePublicTestSuite) TestForName() {
 		then func()
 	}{
 		{
+			// The spellings somebody might reasonably type.
 			name: "for name",
 			then: func() {
 				tests := []struct {
@@ -79,7 +80,10 @@ func (s *ByNamePublicTestSuite) TestForName() {
 			},
 		},
 		{
-			// list of ones that are.
+			// Answers with what it does ship for.
+			//
+			// The useful half of the message: "that is not one" helps nobody
+			// without the list of ones that are.
 			name: "for name something nothing ships for",
 			then: func() {
 				got, err := catalog.ForName("Kemper")
@@ -94,7 +98,11 @@ func (s *ByNamePublicTestSuite) TestForName() {
 			},
 		},
 		{
-			// answering with the HX Stomp's would hide the mistake.
+			// Refused rather than taken as the default.
+			//
+			// An empty name reaching here is a caller that meant to pass one,
+			// and quietly answering with the HX Stomp's would hide the
+			// mistake.
 			name: "for name nothing at all",
 			then: func() {
 				got, err := catalog.ForName("")
@@ -104,6 +112,10 @@ func (s *ByNamePublicTestSuite) TestForName() {
 			},
 		},
 		{
+			// What makes the names worth having.
+			//
+			// One catalog answering to four names would pass every test
+			// above.
 			name: "each name reaches its own catalog",
 			then: func() {
 				stomp, err := catalog.ForName("HX Stomp")
@@ -122,15 +134,6 @@ func (s *ByNamePublicTestSuite) TestForName() {
 		})
 	}
 }
-
-// TestForNameSomethingNothingShipsFor answers with what it does ship for.
-//
-
-// TestForNameNothingAtAll is refused rather than taken as the default.
-//
-
-// TestEachNameReachesItsOwnCatalog is what makes the names worth having.
-//
 
 func TestByNamePublicTestSuite(
 	t *testing.T,

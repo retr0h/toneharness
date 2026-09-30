@@ -34,9 +34,6 @@ type ErrorsPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestANamedDeviceThatIsNotThereListsWhatIs covers the detail reaching a
-// caller.
-//
 // TestError covers Error, which implements the error interface.
 //
 // One method and one table, so a case is a row rather than a file.
@@ -46,7 +43,11 @@ func (s *ErrorsPublicTestSuite) TestError() {
 		then func()
 	}{
 		{
-			// here" is almost always one of the names that are, spelled differently.
+			// The detail reaching a caller.
+			//
+			// The list travels with the error because the answer to "that
+			// device is not here" is almost always one of the names that are,
+			// spelled differently.
 			name: "a named device that is not there lists what is",
 			then: func() {
 				err := error(&reamp.NoDeviceError{
@@ -68,8 +69,11 @@ func (s *ErrorsPublicTestSuite) TestError() {
 			},
 		},
 		{
-			// string reads as a bug in the tool rather than as a question for the person
-			// running it.
+			// The failure somebody actually sees when no pedal is attached.
+			//
+			// Without --hardware there is no name to quote back, and quoting
+			// the empty string reads as a bug in the tool rather than as a
+			// question for the person running it.
 			name: "nothing named asks for a device rather than reporting an empty one",
 			then: func() {
 				err := &reamp.NoDeviceError{
@@ -89,10 +93,6 @@ func (s *ErrorsPublicTestSuite) TestError() {
 		})
 	}
 }
-
-// TestNothingNamedAsksForADeviceRatherThanReportingAnEmptyOne covers the
-// failure somebody actually sees when no pedal is attached.
-//
 
 // TestItUnwrapsToItsSentinel covers matching without the struct.
 func (s *ErrorsPublicTestSuite) TestItUnwrapsToItsSentinel() {

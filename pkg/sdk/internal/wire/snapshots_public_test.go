@@ -78,6 +78,7 @@ func (s *SnapshotsPublicTestSuite) TestPlaceSnapshots() {
 		then func()
 	}{
 		{
+			// Writes all four fields and reads them back.
 			name: "everything a snapshot says",
 			then: func() {
 				doc := s.blank()
@@ -108,7 +109,11 @@ func (s *SnapshotsPublicTestSuite) TestPlaceSnapshots() {
 			},
 		},
 		{
-			// switched the same blocks and a preset holding three sounds arrived with one.
+			// The whole point of a snapshot.
+			//
+			// Before this, every snapshot took its record from the chain, so
+			// all three switched the same blocks and a preset holding three
+			// sounds arrived with one.
 			name: "three snapshots recall three sounds",
 			then: func() {
 				doc := s.blank()
@@ -128,9 +133,13 @@ func (s *SnapshotsPublicTestSuite) TestPlaceSnapshots() {
 			},
 		},
 		{
-			// a chain sits on: the first, the two in the middle and the last. A caller
-			// asking for one of those to go off is asking for a snapshot that recalls the
-			// chain with its routing bypassed, so it is refused by being ignored.
+			// A position the chain may not take.
+			//
+			// A device lays its input, its split, its join and its output on
+			// the same grid a chain sits on: the first, the two in the middle
+			// and the last. A caller asking for one of those to go off is
+			// asking for a snapshot that recalls the chain with its routing
+			// bypassed, so it is refused by being ignored.
 			name: "the routing is left alone",
 			then: func() {
 				// One of the two in the middle. Whatever it holds is the device's, and the
@@ -155,6 +164,7 @@ func (s *SnapshotsPublicTestSuite) TestPlaceSnapshots() {
 			},
 		},
 		{
+			// What the preset already held.
 			name: "a position nobody names",
 			then: func() {
 				doc := s.blank()
@@ -169,6 +179,7 @@ func (s *SnapshotsPublicTestSuite) TestPlaceSnapshots() {
 			},
 		},
 		{
+			// Writes the ones it can.
 			name: "more snapshots than the preset holds",
 			then: func() {
 				doc := s.blank()
@@ -182,6 +193,7 @@ func (s *SnapshotsPublicTestSuite) TestPlaceSnapshots() {
 			},
 		},
 		{
+			// Changes nothing.
 			name: "no snapshots",
 			then: func() {
 				doc := s.blank()
@@ -193,6 +205,7 @@ func (s *SnapshotsPublicTestSuite) TestPlaceSnapshots() {
 			},
 		},
 		{
+			// Has none to overwrite.
 			name: "a preset keeping no snapshots",
 			then: func() {
 				doc := wire.NewDocument(s.blank(), []int8{wire.KeyTone})
@@ -205,8 +218,12 @@ func (s *SnapshotsPublicTestSuite) TestPlaceSnapshots() {
 			},
 		},
 		{
-			// snapshot written without knowing would switch the routing off. Writing a
-			// chain refuses such a document first, so nothing is lost by saying nothing.
+			// Left alone.
+			//
+			// Which positions hold the routing is only knowable from the
+			// chain, and a snapshot written without knowing would switch the
+			// routing off. Writing a chain refuses such a document first, so
+			// nothing is lost by saying nothing.
 			name: "a preset with no chain",
 			then: func() {
 				doc := wire.NewDocument(s.blank(), []int8{wire.KeySnapshots})
@@ -224,15 +241,6 @@ func (s *SnapshotsPublicTestSuite) TestPlaceSnapshots() {
 		})
 	}
 }
-
-// TestThreeSnapshotsRecallThreeSounds is the whole point of a snapshot.
-//
-
-// TestTheRoutingIsLeftAlone covers a position the chain may not take.
-//
-
-// TestAPresetWithNoChain is left alone.
-//
 
 func TestSnapshotsPublicTestSuite(
 	t *testing.T,

@@ -38,31 +38,20 @@ type MeasurePublicTestSuite struct {
 	suite.Suite
 }
 
-// TestMeasureReadsWhatASignalIs covers every number a recording measures as.
+// TestMeasure covers Measure, which reads a recording into the numbers that
+// describe it.
 //
-// Each row is a signal whose answer can be stated before it is measured, and
-// most compare two signals rather than assert one figure, because what the
-// definitions have to get right is the ordering between two sounds. They are
-// this project's own rather than a known algorithm, so they are worth less
-// than the transform underneath them until something predictable has been
-// pointed at them.
-//
-// One method and one table, so a new figure is a row rather than a file.
-func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
-	// struck is silence and then a note starting at once, which is the
-	// sharpest start there is and the only shape with a rise to clamp.
-	struck := func(amp, pluck float64) []float64 {
-		return append(audio.Silence(0.3, rate),
-			audio.Plucked(110, 0.7, rate, amp, pluck)...)
-	}
-
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasurePublicTestSuite) TestMeasure() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// One frequency, so its energy is in whichever band holds it, its centroid is
-			// that frequency, and there is nothing above it.
+			// The simplest thing there is.
+			//
+			// One frequency, so its energy is in whichever band holds it, its
+			// centroid is that frequency, and there is nothing above it.
 			name: "a sine is all fundamental",
 			then: func() {
 				got := audio.Measure(audio.Sine(100, 1.0, rate, 0.8), rate)
@@ -79,7 +68,8 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			name: "the three bands sum to one",
+			// What makes the three shares readable.
+			name: "bands sum to one",
 			then: func() {
 				for _, hz := range []float64{80, 500, 5000} {
 					s.Run("", func() {
@@ -91,6 +81,7 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
+			// The edges being where they are said to be.
 			name: "each band catches its own",
 			then: func() {
 				low := audio.Measure(audio.Sine(80, 0.5, rate, 0.7), rate)
@@ -103,6 +94,7 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
+			// The centroid tracking the sound.
 			name: "a higher note sits higher",
 			then: func() {
 				deep := audio.Measure(audio.Sine(60, 0.5, rate, 0.7), rate)
@@ -112,9 +104,12 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			// A square holds every odd multiple of its fundamental and no even ones, so
-			// it should read as harmonically rich and leaning odd. That lean is the
-			// difference between a valve's warmth and a fuzz's edge.
+			// Distortion's own signature.
+			//
+			// A square holds every odd multiple of its fundamental and no
+			// even ones, so it should read as harmonically rich and leaning
+			// odd. That lean is the difference between a valve's warmth and a
+			// fuzz's edge.
 			name: "a square is odd harmonics",
 			then: func() {
 				clean := audio.Measure(audio.Sine(200, 0.5, rate, 0.5), rate)
@@ -126,6 +121,7 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
+			// The three numbers being a range.
 			name: "a spread is ordered",
 			then: func() {
 				got := audio.Measure(audio.Plucked(110, 2.0, rate, 0.9, 4), rate)
@@ -138,10 +134,12 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			// A tone that never changes measures the same in every window, so its three
-			// numbers sit almost on top of each other. A note that is struck and then
-			// dies away does not, and a median alone would report the two as the same
-			// kind of measurement.
+			// The reason the range is kept.
+			//
+			// A tone that never changes measures the same in every window, so
+			// its three numbers sit almost on top of each other. A note that
+			// is struck and then dies away does not, and a median alone would
+			// report the two as the same kind of measurement.
 			name: "a note that changes spreads wider",
 			then: func() {
 				steady := audio.Measure(audio.Sine(110, 2.0, rate, 0.8), rate)
@@ -154,6 +152,7 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
+			// Decay separating them.
 			name: "a plucked note decays faster than a tone held",
 			then: func() {
 				held := audio.Measure(audio.Sine(110, 2.0, rate, 0.8), rate)
@@ -167,6 +166,7 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
+			// Decay tracking the envelope.
 			name: "a harder pluck decays sooner",
 			then: func() {
 				slow := audio.Measure(audio.Plucked(110, 2.0, rate, 0.8, 2), rate)
@@ -178,11 +178,14 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			// Three notes: one long, one short, one long. Timed from the loudest frame in
-			// the recording, the answer is whichever single note happened to peak highest.
-			// Timed per note, it is the middle of the three, which is what describes the
-			// playing rather than one moment of it.
-			name: "decay is per note rather than per recording",
+			// The whole of what changed.
+			//
+			// Three notes: one long, one short, one long. Timed from the
+			// loudest frame in the recording, the answer is whichever single
+			// note happened to peak highest. Timed per note, it is the middle
+			// of the three, which is what describes the playing rather than
+			// one moment of it.
+			name: "decay is per note not per recording",
 			then: func() {
 				samples := make([]float64, 0, rate*4)
 
@@ -201,10 +204,13 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			// On a dense line the loudest frame is one accent, and the level drops back to
-			// the ongoing playing straight after it. Timing that one fall reported the
-			// accent rather than the notes, which is how a bassist whose notes ring read
-			// 0.03s across three records.
+			// The failure this replaced.
+			//
+			// On a dense line the loudest frame is one accent, and the level
+			// drops back to the ongoing playing straight after it. Timing
+			// that one fall reported the accent rather than the notes, which
+			// is how a bassist whose notes ring read 0.03s across three
+			// records.
 			name: "an accent does not decide the decay",
 			then: func() {
 				var samples []float64
@@ -224,6 +230,7 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
+			// Dynamic range on something unchanging.
 			name: "a steady tone is not dynamic",
 			then: func() {
 				got := audio.Measure(audio.Sine(220, 1.0, rate, 0.7), rate)
@@ -233,6 +240,7 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
+			// The other end of the same measurement.
 			name: "a plucked note is dynamic",
 			then: func() {
 				steady := audio.Measure(audio.Sine(110, 2.0, rate, 0.8), rate)
@@ -243,16 +251,19 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			// The ordering here was measured before it was asserted. Across a struck
-			// note, a swelled one, a held tone, a square and noise, the struck cases land
-			// above 0.94 and everything gradual below 0.1. An earlier definition measured
-			// how much the rises varied among themselves and put a cleanly struck note at
-			// zero, because one rise has nothing to vary against.
+			// What separates a pick from a swell.
+			//
+			// The ordering here was measured before it was asserted. Across a
+			// struck note, a swelled one, a held tone, a square and noise,
+			// the struck cases land above 0.94 and everything gradual below
+			// 0.1. An earlier definition measured how much the rises varied
+			// among themselves and put a cleanly struck note at zero, because
+			// one rise has nothing to vary against.
 			name: "a sudden start reads as transient",
 			then: func() {
 				// Silence, then a note starting at once: the sharpest start there is.
 				struck := audio.Measure(
-					struck(0.9, 6), rate)
+					append(audio.Silence(0.3, rate), audio.Plucked(110, 0.7, rate, 0.9, 6)...), rate)
 				ringing := audio.Measure(
 					append(audio.Silence(0.3, rate), audio.Plucked(110, 0.7, rate, 0.9, 1)...), rate)
 
@@ -271,13 +282,18 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			// The number alone cannot tell them apart: a swell's largest rise is 2.9% of
-			// its peak and a held sine's is 2.5%. What separates them is where the signal
-			// starts. A swell begins at 0.2% of its peak and climbs; a sine is already at
-			// 92% of its peak in the first frame and has nowhere to climb from.
-			// Reporting the sine's 2.5% as a transient read it as a note swelled in over
-			// three seconds, which is the opposite of a tone that simply began.
-			name: "a tone's attack is not measurable",
+			// No attack from a gradual one.
+			//
+			// The number alone cannot tell them apart: a swell's largest rise
+			// is 2.9% of its peak and a held sine's is 2.5%. What separates
+			// them is where the signal starts. A swell begins at 0.2% of its
+			// peak and climbs; a sine is already at 92% of its peak in the
+			// first frame and has nowhere to climb from.
+			//
+			// Reporting the sine's 2.5% as a transient read it as a note
+			// swelled in over three seconds, which is the opposite of a tone
+			// that simply began.
+			name: "a tones attack is not measurable",
 			then: func() {
 				tone := audio.Measure(audio.Sine(110, 3.0, rate, 0.8), rate)
 				swelled := audio.Measure(audio.Swell(110, 1.0, rate, 0.8), rate)
@@ -291,22 +307,27 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
+			// It measuring the start, not the level.
 			name: "transient ignores how loud",
 			then: func() {
 				quiet := audio.Measure(
 					append(audio.Silence(0.3, rate), audio.Plucked(110, 0.7, rate, 0.2, 6)...), rate)
 				loud := audio.Measure(
-					struck(0.9, 6), rate)
+					append(audio.Silence(0.3, rate), audio.Plucked(110, 0.7, rate, 0.9, 6)...), rate)
 
 				s.Require().InDelta(quiet.Transient.Value, loud.Transient.Value, 0.05)
 			},
 		},
 		{
-			// Silence and then a note struck at once: the rise into it is the whole of the
-			// peak, measured at exactly 1.0000, and nothing should report more than all of
-			// it.
-			// The note on its own is not this case. It is at full level in its first
-			// frame, so it has no rise to clamp and no attack to report.
+			// The one case that could push it past.
+			//
+			// Silence and then a note struck at once: the rise into it is the
+			// whole of the peak, measured at exactly 1.0000, and nothing
+			// should report more than all of it.
+			//
+			// The note on its own is not this case. It is at full level in
+			// its first frame, so it has no rise to clamp and no attack to
+			// report.
 			name: "transient never exceeds one",
 			then: func() {
 				got := audio.Measure(
@@ -321,6 +342,7 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
+			// Every measurement surviving no signal.
 			name: "silence measures as nothing",
 			then: func() {
 				got := audio.Measure(audio.Silence(0.5, rate), rate)
@@ -340,7 +362,8 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			name: "no samples at all is an empty profile rather than a guess",
+			// As an empty profile rather than a guess.
+			name: "no samples at all",
 			then: func() {
 				got := audio.Measure(nil, rate)
 
@@ -350,7 +373,8 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			name: "a rate of nothing is a caller's mistake rather than a division by zero",
+			// A caller's mistake, not a division by zero.
+			name: "a rate of nothing",
 			then: func() {
 				got := audio.Measure(audio.Sine(100, 0.5, rate, 0.5), 0)
 
@@ -359,7 +383,8 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			name: "audio below one frame of anything",
+			// Audio below one frame of anything.
+			name: "too short to measure",
 			then: func() {
 				got := audio.Measure([]float64{0.1, -0.1, 0.2}, rate)
 
@@ -369,8 +394,10 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			// The opposite of a sine, and the case that catches a band measurement which
-			// quietly puts everything in one place.
+			// A spectrum with no shape.
+			//
+			// The opposite of a sine, and the case that catches a band
+			// measurement which quietly puts everything in one place.
 			name: "noise is spread across everything",
 			then: func() {
 				got := audio.Measure(audio.Noise(1.0, rate, 0.5, 7), rate)
@@ -380,8 +407,11 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 		{
-			// The same signal twice as loud is the same sound. Anything here that changes
-			// with amplitude alone is measuring the recording level, not the playing.
+			// The shares being shares.
+			//
+			// The same signal twice as loud is the same sound. Anything here
+			// that changes with amplitude alone is measuring the recording
+			// level, not the playing.
 			name: "loudness does not move the shape",
 			then: func() {
 				quiet := audio.Measure(audio.Square(150, 1.0, rate, 0.2), rate)
@@ -394,7 +424,9 @@ func (s *MeasurePublicTestSuite) TestMeasureReadsWhatASignalIs() {
 			},
 		},
 	} {
-		s.Run(tt.name, func() { tt.then() })
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 

@@ -60,14 +60,18 @@ func (s *AcrossPublicTestSuite) TestTogether() {
 		then func()
 	}{
 		{
+			// The number of recordings reaching the answer.
 			name: "it counts what went in",
 			then: func() {
 				s.Require().Equal(4, audio.Together(s.records()).Tracks)
 			},
 		},
 		{
-			// ends are the extreme records. That is stated rather than hidden, and this
-			// holds it to it.
+			// The whole point of gathering them.
+			//
+			// Four records is too few for the ends to be a tenth in from
+			// anything, so the ends are the extreme records. That is stated
+			// rather than hidden, and this holds it to it.
 			name: "the width is the records disagreeing",
 			then: func() {
 				got := audio.Together(s.records())
@@ -79,8 +83,12 @@ func (s *AcrossPublicTestSuite) TestTogether() {
 			},
 		},
 		{
-			// second, because its take is half silence. Gathering four records should
-			// leave that as one voice rather than the result.
+			// The middle holding.
+			//
+			// One stem measured a decay of 0.15s where the others rang for
+			// about a second, because its take is half silence. Gathering
+			// four records should leave that as one voice rather than the
+			// result.
 			name: "a record that disagrees does not become the answer",
 			then: func() {
 				got := audio.Together(s.records())
@@ -90,7 +98,7 @@ func (s *AcrossPublicTestSuite) TestTogether() {
 			},
 		},
 		{
-			// number each.
+			// Spreads folding into one number each.
 			name: "a tracks own range contributes its middle",
 			then: func() {
 				got := audio.Together([]audio.Profile{
@@ -104,6 +112,7 @@ func (s *AcrossPublicTestSuite) TestTogether() {
 			},
 		},
 		{
+			// A corpus of one.
 			name: "one recording is its own middle",
 			then: func() {
 				got := audio.Together([]audio.Profile{{Centroid: 150}})
@@ -115,6 +124,7 @@ func (s *AcrossPublicTestSuite) TestTogether() {
 			},
 		},
 		{
+			// An empty answer rather than a guess.
 			name: "no recordings at all",
 			then: func() {
 				got := audio.Together(nil)
@@ -125,6 +135,7 @@ func (s *AcrossPublicTestSuite) TestTogether() {
 			},
 		},
 		{
+			// Nothing being quietly dropped.
 			name: "every measure is gathered",
 			then: func() {
 				got := audio.Together([]audio.Profile{
@@ -156,8 +167,12 @@ func (s *AcrossPublicTestSuite) TestTogether() {
 			},
 		},
 		{
-			// the ones that did not as zero drags every answer down for a reason that has
-			// nothing to do with the playing.
+			// A corpus where only some records answer.
+			//
+			// The middle has to come from the records that had the
+			// measurement. Counting the ones that did not as zero drags every
+			// answer down for a reason that has nothing to do with the
+			// playing.
 			name: "a recording that declines is left out",
 			then: func() {
 				got := audio.Together([]audio.Profile{
@@ -172,6 +187,7 @@ func (s *AcrossPublicTestSuite) TestTogether() {
 			},
 		},
 		{
+			// A corpus where none could.
 			name: "no recording answered",
 			then: func() {
 				got := audio.Together([]audio.Profile{{Centroid: 150}, {Centroid: 160}})
@@ -187,16 +203,6 @@ func (s *AcrossPublicTestSuite) TestTogether() {
 		})
 	}
 }
-
-// TestTheWidthIsTheRecordsDisagreeing is the whole point of gathering them.
-//
-
-// TestARecordThatDisagreesDoesNotBecomeTheAnswer covers the middle holding.
-//
-
-// TestARecordingThatDeclinesIsLeftOut covers a corpus where only some records
-// answer.
-//
 
 func TestAcrossPublicTestSuite(
 	t *testing.T,

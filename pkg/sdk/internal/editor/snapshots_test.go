@@ -67,19 +67,21 @@ func (s *SnapshotsTestSuite) blank() *preset.Document {
 	return doc
 }
 
-// TestABlockIsFoundByItsPositionNotItsName is the mapping that matters.
-//
-// TestSnapshotStatesReadsWhatASnapshotHolds covers reading a preset's snapshots, sound or otherwise.
+// TestSnapshotStates covers SnapshotStates, which reads what a preset's own
+// snapshots recall.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *SnapshotsTestSuite) TestSnapshotStatesReadsWhatASnapshotHolds() {
+func (s *SnapshotsTestSuite) TestSnapshotStates() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// reader trusting the name puts both on the wrong grid position and the
-			// snapshot switches the wrong blocks.
+			// The mapping that matters.
+			//
+			// preset2.hlx stores block5 at position 6 and block7 at position
+			// 5, so a reader trusting the name puts both on the wrong grid
+			// position and the snapshot switches the wrong blocks.
 			name: "a block is found by its position not its name",
 			then: func() {
 				got := SnapshotStates(s.awkward())
@@ -105,6 +107,7 @@ func (s *SnapshotsTestSuite) TestSnapshotStatesReadsWhatASnapshotHolds() {
 			},
 		},
 		{
+			// None.
 			name: "a preset with no snapshots",
 			then: func() {
 				doc := s.blank()
@@ -118,6 +121,7 @@ func (s *SnapshotsTestSuite) TestSnapshotStatesReadsWhatASnapshotHolds() {
 			},
 		},
 		{
+			// Has no record of the grid.
 			name: "a snapshot naming nothing",
 			then: func() {
 				got := SnapshotStates(s.blank())
@@ -129,7 +133,10 @@ func (s *SnapshotsTestSuite) TestSnapshotStatesReadsWhatASnapshotHolds() {
 			},
 		},
 		{
-			// reading both would put dsp1's block0 on dsp0's grid.
+			// Not read.
+			//
+			// A second processor names its entries the same way the first
+			// does, so reading both would put dsp1's block0 on dsp0's grid.
 			name: "a snapshot naming a second path",
 			then: func() {
 				doc := s.blank()
@@ -141,6 +148,7 @@ func (s *SnapshotsTestSuite) TestSnapshotStatesReadsWhatASnapshotHolds() {
 			},
 		},
 		{
+			// Left unset rather than read as a zero.
 			name: "a field that will not read",
 			then: func() {
 				doc := s.blank()
@@ -154,7 +162,10 @@ func (s *SnapshotsTestSuite) TestSnapshotStatesReadsWhatASnapshotHolds() {
 			},
 		},
 		{
-			// cannot switch a block that is not there.
+			// Records nothing.
+			//
+			// A name that reaches no entry reaches no position either, and a
+			// snapshot cannot switch a block that is not there.
 			name: "a snapshot naming a block the preset has not",
 			then: func() {
 				doc := s.blank()
@@ -165,6 +176,7 @@ func (s *SnapshotsTestSuite) TestSnapshotStatesReadsWhatASnapshotHolds() {
 			},
 		},
 		{
+			// Not one.
 			name: "a tone entry named like a snapshot",
 			then: func() {
 				doc := s.blank()
@@ -174,6 +186,7 @@ func (s *SnapshotsTestSuite) TestSnapshotStatesReadsWhatASnapshotHolds() {
 			},
 		},
 		{
+			// Left unset.
 			name: "a field a preset omits",
 			then: func() {
 				doc := s.blank()
@@ -183,10 +196,14 @@ func (s *SnapshotsTestSuite) TestSnapshotStatesReadsWhatASnapshotHolds() {
 			},
 		},
 		{
-			// to a device the way an import writes one. Before this, the export wrote the
-			// template's three snapshots and the import wrote every snapshot's record from
-			// the chain itself, so a preset holding three sounds came back holding one,
-			// under names nobody chose.
+			// What all of this is for.
+			//
+			// A device's own bytes, out to a preset the way an export writes
+			// one and back to a device the way an import writes one. Before
+			// this, the export wrote the template's three snapshots and the
+			// import wrote every snapshot's record from the chain itself, so
+			// a preset holding three sounds came back holding one, under
+			// names nobody chose.
 			name: "snapshots survive the round trip",
 			then: func() {
 				raw, err := os.ReadFile(filepath.Join("..", "wire", "testdata", "preset.bin"))
@@ -240,18 +257,17 @@ func (s *SnapshotsTestSuite) TestSnapshotStatesReadsWhatASnapshotHolds() {
 	}
 }
 
-// TestASnapshotNamingASecondPath is not read.
-//
-
-// TestSnapshotsIntoWritesThemBack covers putting snapshots into a preset.
+// TestSnapshotsInto covers snapshotsInto, which writes what each of a
+// device's snapshots recalls into a preset.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *SnapshotsTestSuite) TestSnapshotsIntoWritesThemBack() {
+func (s *SnapshotsTestSuite) TestSnapshotsInto() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// Writes what a device answered.
 			name: "snapshots into a preset",
 			then: func() {
 				doc := s.blank()
@@ -290,6 +306,7 @@ func (s *SnapshotsTestSuite) TestSnapshotsIntoWritesThemBack() {
 			},
 		},
 		{
+			// Writes no block record.
 			name: "snapshots into a preset without states",
 			then: func() {
 				doc := s.blank()
@@ -303,6 +320,7 @@ func (s *SnapshotsTestSuite) TestSnapshotsIntoWritesThemBack() {
 			},
 		},
 		{
+			// Writes no block record.
 			name: "snapshots into a preset naming a block it has not",
 			then: func() {
 				doc := s.blank()
@@ -316,6 +334,7 @@ func (s *SnapshotsTestSuite) TestSnapshotsIntoWritesThemBack() {
 			},
 		},
 		{
+			// Written into a preset that ships three.
 			name: "a fourth snapshot",
 			then: func() {
 				doc := s.blank()
@@ -331,6 +350,7 @@ func (s *SnapshotsTestSuite) TestSnapshotsIntoWritesThemBack() {
 			},
 		},
 		{
+			// The preset as it was.
 			name: "no snapshots to write",
 			then: func() {
 				doc := s.blank()
@@ -350,9 +370,6 @@ func (s *SnapshotsTestSuite) TestSnapshotsIntoWritesThemBack() {
 	}
 }
 
-// TestASnapshotNamingABlockThePresetHasNot records nothing.
-//
-
 // TestAnEntryWithNoPosition is not on the grid.
 func (s *SnapshotsTestSuite) TestAnEntryWithNoPosition() {
 	doc := s.blank()
@@ -362,9 +379,6 @@ func (s *SnapshotsTestSuite) TestAnEntryWithNoPosition() {
 	s.Require().NotContains(positionsOf(doc), "block0")
 	s.Require().NotContains(positionsOf(doc), "block1")
 }
-
-// TestSnapshotsSurviveTheRoundTrip is what all of this is for.
-//
 
 func TestSnapshotsTestSuite(
 	t *testing.T,

@@ -84,16 +84,17 @@ func (s *ManifestPublicTestSuite) TestASourceIsOptional() {
 	s.Require().Empty(got.Tracks[1].Source)
 }
 
-// TestReadManifestRefusesWhatItCannotTrust covers every manifest that is not a manifest, and the two things one may say beyond its records.
+// TestReadManifest covers ReadManifest, which reads a corpus manifest.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
+func (s *ManifestPublicTestSuite) TestReadManifest() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// the link it stands in for.
+			// The fallback held to the same shape as the link it stands in
+			// for.
 			name: "a bad source is caught here",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
@@ -106,7 +107,10 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
-			// measures nothing is worse than one that refuses.
+			// A field nobody meant to write.
+			//
+			// `track` and `tracks` are one letter apart, and a manifest that
+			// silently measures nothing is worse than one that refuses.
 			name: "a typo stops",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader("artist: x\ntrack:\n  - track: y\n"))
@@ -115,7 +119,11 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
-			// which says nothing about which song was wrong.
+			// The check happening where it can be acted on.
+			//
+			// Left until build time this surfaces against
+			// `chain[0].evidence[1].at`, which says nothing about which song
+			// was wrong.
 			name: "a bad timestamp is caught here",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
@@ -128,9 +136,13 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
-			// evidence nobody can trace is an assertion with numbers on it. Three players
-			// carried three tracks each with no links between them before this was
-			// refused, and nothing said so.
+			// The reason a manifest exists.
+			//
+			// The figures measured from a record travel into a rig as
+			// evidence, and evidence nobody can trace is an assertion with
+			// numbers on it. Three players carried three tracks each with no
+			// links between them before this was refused, and nothing said
+			// so.
 			name: "a record with no link is refused",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
@@ -142,8 +154,12 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
-			// measures another rig. Without the year nothing can say so, and four of the
-			// nine rigs here turned out to be measuring records from the wrong decade.
+			// Holding a record to an era.
+			//
+			// A rig's gear claims describe a period and a record from another
+			// one measures another rig. Without the year nothing can say so,
+			// and four of the nine rigs here turned out to be measuring
+			// records from the wrong decade.
 			name: "a record with no year is refused",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
@@ -155,9 +171,12 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
-			// take apart from the live one and the remaster. Anything else names a file,
-			// and the mistake it prevents is invisible once the audio is on disk and
-			// measuring fine.
+			// The link naming a recording rather than a copy of one.
+			//
+			// A Spotify track link identifies one master, which is what tells
+			// the album take apart from the live one and the remaster.
+			// Anything else names a file, and the mistake it prevents is
+			// invisible once the audio is on disk and measuring fine.
 			name: "a url somewhere else is refused",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
@@ -170,8 +189,11 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
-			// same song is up there as the album take, a live take and three lyric
-			// videos.
+			// The fallback being offered as the evidence.
+			//
+			// YouTube is where the audio comes down from, never what a rig
+			// quotes: the same song is up there as the album take, a live
+			// take and three lyric videos.
 			name: "a you tube url is refused",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
@@ -183,6 +205,7 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
+			// A host spotdl cannot fetch from.
 			name: "a source somewhere else is refused",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
@@ -196,9 +219,13 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
-			// malformed host walks straight past it: "http://[::1" is missing the bracket
-			// that closes an IPv6 address. It reaches the host check, which cannot parse
-			// it and therefore cannot match it against anything.
+			// A link that looks like one and is not.
+			//
+			// The shape check ahead of this only asks for `https://` and no
+			// spaces, so a malformed host walks straight past it:
+			// "http://[::1" is missing the bracket that closes an IPv6
+			// address. It reaches the host check, which cannot parse it and
+			// therefore cannot match it against anything.
 			name: "a url the parser cannot read is refused",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
@@ -210,6 +237,7 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
+			// The other thing a rig will refuse.
 			name: "a bad link is caught here",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
@@ -220,6 +248,7 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
+			// A record naming nothing.
 			name: "an entry with no track stops",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
@@ -229,6 +258,7 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
+			// A file that is not a manifest at all.
 			name: "it is not yaml",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader("\tnot: [a manifest"))
@@ -237,6 +267,7 @@ func (s *ManifestPublicTestSuite) TestReadManifestRefusesWhatItCannotTrust() {
 			},
 		},
 		{
+			// The field reading off disk.
 			name: "a manifest may carry genres",
 			then: func() {
 				m, err := audio.ReadManifest(strings.NewReader(`
@@ -255,7 +286,11 @@ tracks:
 			},
 		},
 		{
-			// word in a list, and the review list exists to tell them apart.
+			// The provenance rule.
+			//
+			// A model's guess and somebody's answer read identically once
+			// they are both a word in a list, and the review list exists to
+			// tell them apart.
 			name: "a genre says who decided it",
 			then: func() {
 				tests := []struct {
@@ -312,7 +347,9 @@ tracks:
 			},
 		},
 	} {
-		s.Run(tt.name, func() { tt.then() })
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 
@@ -329,26 +366,6 @@ func (s *ManifestPublicTestSuite) TestItNamesNoFiles() {
 	}
 }
 
-// TestATypoStops covers a field nobody meant to write.
-//
-
-// TestABadTimestampIsCaughtHere covers the check happening where it can be
-// acted on.
-//
-
-// TestARecordWithNoLinkIsRefused covers the reason a manifest exists.
-//
-
-// TestARecordWithNoYearIsRefused covers holding a record to an era.
-//
-
-// TestAUrlSomewhereElseIsRefused covers the link naming a recording rather
-// than a copy of one.
-//
-
-// TestAYouTubeUrlIsRefused covers the fallback being offered as the evidence.
-//
-
 // TestASourceFromYouTubeIsAccepted covers the ordinary fallback.
 func (s *ManifestPublicTestSuite) TestASourceFromYouTubeIsAccepted() {
 	got := s.read(
@@ -359,19 +376,17 @@ func (s *ManifestPublicTestSuite) TestASourceFromYouTubeIsAccepted() {
 	s.Require().Equal("https://www.youtube.com/watch?v=abc", got.Tracks[0].Source)
 }
 
-// TestAUrlTheParserCannotReadIsRefused covers a link that looks like one and
-// is not.
-//
-
-// TestJoinAttachesTheSourceToEveryReading covers matching readings to the records they came from.
+// TestJoin covers Join, which attaches what the manifest knows to what was
+// measured.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ManifestPublicTestSuite) TestJoinAttachesTheSourceToEveryReading() {
+func (s *ManifestPublicTestSuite) TestJoin() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// A measurement gaining its link.
 			name: "join attaches the source",
 			then: func() {
 				got := s.read(full).Join([]audio.Named{
@@ -387,6 +402,7 @@ func (s *ManifestPublicTestSuite) TestJoinAttachesTheSourceToEveryReading() {
 			},
 		},
 		{
+			// Nothing being dropped for want of a link.
 			name: "join keeps everything",
 			then: func() {
 				in := []audio.Named{{Name: "longview"}, {Name: "nothing-named-this"}}
@@ -395,6 +411,7 @@ func (s *ManifestPublicTestSuite) TestJoinAttachesTheSourceToEveryReading() {
 			},
 		},
 		{
+			// A manifest written by a person.
 			name: "join ignores case",
 			then: func() {
 				got := s.read(
@@ -406,19 +423,23 @@ func (s *ManifestPublicTestSuite) TestJoinAttachesTheSourceToEveryReading() {
 			},
 		},
 	} {
-		s.Run(tt.name, func() { tt.then() })
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 
-// TestUnmatchedReportsWhatDoesNotLineUp covers a manifest and a tree that disagree.
+// TestUnmatched covers Unmatched, which is what the manifest and the
+// recordings disagree about.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ManifestPublicTestSuite) TestUnmatchedReportsWhatDoesNotLineUp() {
+func (s *ManifestPublicTestSuite) TestUnmatched() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The two mistakes worth telling.
 			name: "unmatched reports both directions",
 			then: func() {
 				missing, unnamed := s.read(full).Unmatched([]audio.Named{
@@ -433,6 +454,7 @@ func (s *ManifestPublicTestSuite) TestUnmatchedReportsWhatDoesNotLineUp() {
 			},
 		},
 		{
+			// The ordinary case.
 			name: "unmatched is quiet when they agree",
 			then: func() {
 				missing, unnamed := s.read(full).Unmatched([]audio.Named{
@@ -445,24 +467,27 @@ func (s *ManifestPublicTestSuite) TestUnmatchedReportsWhatDoesNotLineUp() {
 			},
 		},
 	} {
-		s.Run(tt.name, func() { tt.then() })
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 
-// TestGenresCountsRecordsAndPlayers covers what decides whether a genre can be
-// aimed at.
-//
-// TestGenresCountsWhatWasMeasured covers pooling readings by genre.
+// TestGenres covers Genres, which is every genre the manifests name, with
+// what backs each one.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ManifestPublicTestSuite) TestGenresCountsWhatWasMeasured() {
+func (s *ManifestPublicTestSuite) TestGenres() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// sound wearing its name, and the figures cannot tell those apart, so the count
-			// is the only thing that can.
+			// What decides whether a genre can be aimed at.
+			//
+			// Eight records from three players. Under either number the genre
+			// is one band's sound wearing its name, and the figures cannot
+			// tell those apart, so the count is the only thing that can.
 			name: "genres counts records and players",
 			then: func() {
 				of := func(artist string, genres ...[]string) audio.Manifest {
@@ -511,8 +536,11 @@ func (s *ManifestPublicTestSuite) TestGenresCountsWhatWasMeasured() {
 			},
 		},
 		{
-			// than deducted: the count is still eight, and somebody should know none of it
-			// was checked.
+			// What the review list reads.
+			//
+			// A genre can reach the threshold entirely on guesses, which is
+			// reported rather than deducted: the count is still eight, and
+			// somebody should know none of it was checked.
 			name: "a models genres are counted",
 			then: func() {
 				all := []audio.Manifest{
@@ -541,7 +569,9 @@ func (s *ManifestPublicTestSuite) TestGenresCountsWhatWasMeasured() {
 			},
 		},
 	} {
-		s.Run(tt.name, func() { tt.then() })
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 
@@ -564,25 +594,22 @@ func (s *ManifestPublicTestSuite) TestAGenreFromOneBandIsNotUsable() {
 		"nine records by one band is that band, not a genre")
 }
 
-// TestAGenreSaysWhoDecidedIt covers the provenance rule.
-//
-
-// TestAModelsGenresAreCounted covers what the review list reads.
-//
-
-// TestBandsGroupsOnTheSlug covers two spellings of one band counting once.
-//
-// TestBandsGroupsPlayersByTheirBand covers grouping on the slug, and the band nobody named.
+// TestBands covers Bands, which is every band the manifests name, with what
+// backs each one.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ManifestPublicTestSuite) TestBandsGroupsPlayersByTheirBand() {
+func (s *ManifestPublicTestSuite) TestBands() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// bands. Reported under the spelling first seen, because somebody reading the
-			// answer wants the band and not the slug.
+			// Two spellings of one band counting once.
+			//
+			// The corpus groups on the slug, so a name typed two ways must
+			// not read as two bands. Reported under the spelling first seen,
+			// because somebody reading the answer wants the band and not the
+			// slug.
 			name: "bands groups on the slug",
 			then: func() {
 				all := []audio.Manifest{
@@ -608,19 +635,21 @@ func (s *ManifestPublicTestSuite) TestBandsGroupsPlayersByTheirBand() {
 			},
 		},
 		{
-			// has to answer nothing rather than an empty band.
+			// The corpus as it stands.
+			//
+			// No record carried a band before the field existed, so reading
+			// one without it has to answer nothing rather than an empty band.
 			name: "a band is optional",
 			then: func() {
 				s.Require().Empty(audio.Bands([]audio.Manifest{s.read(full)}))
 			},
 		},
 	} {
-		s.Run(tt.name, func() { tt.then() })
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
-
-// TestABandIsOptional covers the corpus as it stands.
-//
 
 func TestManifestPublicTestSuite(
 	t *testing.T,

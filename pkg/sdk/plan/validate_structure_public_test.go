@@ -34,7 +34,7 @@ type ValidateStructurePublicTestSuite struct {
 }
 
 // TestValidateStructure covers ValidateStructure, which reports the first
-// block in s whose model the catalog does.
+// block in s whose model the catalog does not hold.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *ValidateStructurePublicTestSuite) TestValidateStructure() {

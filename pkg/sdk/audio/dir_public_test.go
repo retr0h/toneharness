@@ -186,6 +186,7 @@ func (s *DirPublicTestSuite) TestMeasureAll() {
 		then func()
 	}{
 		{
+			// The error saying which one failed.
 			name: "a file that is not audio is named",
 			then: func() {
 				s.Require().NoError(os.WriteFile(
@@ -198,9 +199,13 @@ func (s *DirPublicTestSuite) TestMeasureAll() {
 			},
 		},
 		{
-			// there, it is not a directory, it ends in .wav, and opening it finds nothing.
-			// Stems are often symlinked into place from somewhere else, and the half of
-			// that which breaks is this.
+			// A file the walk lists and the read then fails on.
+			//
+			// A dangling symlink is the ordinary way that happens: the
+			// directory entry is there, it is not a directory, it ends in
+			// .wav, and opening it finds nothing. Stems are often symlinked
+			// into place from somewhere else, and the half of that which
+			// breaks is this.
 			name: "a recording that cannot be read is named",
 			then: func() {
 				s.Require().NoError(os.Symlink(
@@ -215,7 +220,7 @@ func (s *DirPublicTestSuite) TestMeasureAll() {
 			},
 		},
 		{
-			// swallowed.
+			// A caller's mistake, reported rather than swallowed.
 			name: "a root that is not there",
 			then: func() {
 				_, err := audio.MeasureAll(os.DirFS(s.root), "no-such-directory")
@@ -232,10 +237,6 @@ func (s *DirPublicTestSuite) TestMeasureAll() {
 		})
 	}
 }
-
-// TestARecordingThatCannotBeReadIsNamed covers a file the walk lists and the
-// read then fails on.
-//
 
 func TestDirPublicTestSuite(
 	t *testing.T,

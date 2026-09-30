@@ -77,8 +77,6 @@ func (s *PlayPublicTestSuite) preset() string {
 	return filepath.Join("testdata", "hx-stomp.written.hlx")
 }
 
-// TestPlayReplacesWhatIsPlaying covers the ordinary case.
-//
 // TestPlay covers Play, which puts a preset in front of the device without
 // storing it anywhere.
 //
@@ -89,8 +87,12 @@ func (s *PlayPublicTestSuite) TestPlay() {
 		then func()
 	}{
 		{
-			// A preset is seeked through by a table of byte offsets, so one built any
-			// other way is accepted and then rendered as an empty chain.
+			// The ordinary case.
+			//
+			// The document handed to the device is the one an Import would
+			// have written. A preset is seeked through by a table of byte
+			// offsets, so one built any other way is accepted and then
+			// rendered as an empty chain.
 			name: "play replaces what is playing",
 			then: func() {
 				ctx := context.Background()
@@ -108,6 +110,7 @@ func (s *PlayPublicTestSuite) TestPlay() {
 			},
 		},
 		{
+			// The write failing.
 			name: "play reports a device that refused",
 			then: func() {
 				ctx := context.Background()
@@ -123,6 +126,7 @@ func (s *PlayPublicTestSuite) TestPlay() {
 			},
 		},
 		{
+			// A path that is not a preset.
 			name: "play reports a file it cannot read",
 			then: func() {
 				err := (&deviceslots.Flows{}).Play(
@@ -132,7 +136,11 @@ func (s *PlayPublicTestSuite) TestPlay() {
 			},
 		},
 		{
-			// a half-built document put in front of a pedal renders as an empty chain.
+			// The document failing to build.
+			//
+			// Nothing reaches the device in that case, which is the part
+			// worth holding: a half-built document put in front of a pedal
+			// renders as an empty chain.
 			name: "play reports a catalog it cannot read",
 			then: func() {
 				c := flowmocks.NewMockCatalogs(s.ctrl)
@@ -145,10 +153,14 @@ func (s *PlayPublicTestSuite) TestPlay() {
 			},
 		},
 		{
-			// handshake, and every one of the four models this package recognises opens a
-			// session just as readily. A chain resolved against the Stomp's catalog and
-			// spliced into a Stomp-shaped blank, written to a Floor, is a document the
-			// device accepts and then draws as empty.
+			// The write nothing else guards.
+			//
+			// Which catalog names the gear is a static option decided before
+			// any handshake, and every one of the four models this package
+			// recognises opens a session just as readily. A chain resolved
+			// against the Stomp's catalog and spliced into a Stomp-shaped
+			// blank, written to a Floor, is a document the device accepts and
+			// then draws as empty.
 			name: "play refuses a catalog for another pedal",
 			then: func() {
 				d := &playable{
@@ -172,6 +184,7 @@ func (s *PlayPublicTestSuite) TestPlay() {
 			},
 		},
 		{
+			// A session without the capability.
 			name: "play needs a session that can replace",
 			then: func() {
 				err := (&deviceslots.Flows{}).Play(
@@ -192,12 +205,6 @@ func (s *PlayPublicTestSuite) TestPlay() {
 		})
 	}
 }
-
-// TestPlayReportsACatalogItCannotRead covers the document failing to build.
-//
-
-// TestPlayRefusesACatalogForAnotherPedal is the write nothing else guards.
-//
 
 func TestPlayPublicTestSuite(
 	t *testing.T,

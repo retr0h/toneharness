@@ -32,8 +32,8 @@ type MatchPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestMatches covers Matches, which reports whether a block is what
-// somebody meant by a gear name.
+// TestMatches covers Matches, which reports whether a block is what somebody
+// meant by a gear name.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *MatchPublicTestSuite) TestMatches() {

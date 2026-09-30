@@ -90,7 +90,8 @@ func rigOf(
 	}
 }
 
-// TestLift covers Lift, which reads a preset into a rig.
+// TestLift covers Lift, which reads a preset into the rig it describes and
+// the plan that realises it.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *LiftPublicTestSuite) TestLift() {
@@ -99,6 +100,7 @@ func (s *LiftPublicTestSuite) TestLift() {
 		then func()
 	}{
 		{
+			// Reads a preset as a rig.
 			name: "lift",
 			then: func() {
 				tests := []struct {
@@ -264,6 +266,7 @@ func (s *LiftPublicTestSuite) TestLift() {
 			},
 		},
 		{
+			// Writes a plan into a preset.
 			name: "lower",
 			then: func() {
 				tests := []struct {

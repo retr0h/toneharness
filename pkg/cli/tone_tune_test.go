@@ -138,15 +138,17 @@ func (s *TunePublicTestSuite) opts() TuneOptions {
 	}
 }
 
-// TestTuneWalksAChainTowardATarget covers every way a run ends: arrived, refused, or stopped by something it could not read or write.
+// TestTune covers Tune, which solves a chain's controls for a target and says
+// how close it got.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
+func (s *TunePublicTestSuite) TestTune() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// Arriving on the first pass.
 			name: "a target it can already meet",
 			then: func() {
 				s.ready()
@@ -159,6 +161,7 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// A target nobody measured.
 			name: "a genre nothing is tagged with",
 			then: func() {
 				s.genre.EXPECT().
@@ -172,6 +175,7 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// A request that aims at nothing.
 			name: "no genre at all",
 			then: func() {
 				opts := s.opts()
@@ -181,6 +185,7 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// A tree that is not there.
 			name: "the corpus will not read",
 			then: func() {
 				s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
@@ -191,6 +196,7 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// A tag with no figures behind it.
 			name: "a genre that measures as nothing",
 			then: func() {
 				s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
@@ -201,6 +207,7 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// Gear the catalog cannot realise.
 			name: "a rig that will not build",
 			then: func() {
 				s.genre.EXPECT().
@@ -214,8 +221,12 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
-			// nothing to turn. Refused rather than reported as arrived: a request that
-			// cannot be acted on is not a request that was satisfied.
+			// A chain the solver cannot touch.
+			//
+			// A block the catalog does not carry contributes no control, so
+			// the chain has nothing to turn. Refused rather than reported as
+			// arrived: a request that cannot be acted on is not a request
+			// that was satisfied.
 			name: "a chain with no dial",
 			then: func() {
 				s.genre.EXPECT().
@@ -232,6 +243,7 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// A device that will not load it.
 			name: "the pedal refuses the chain",
 			then: func() {
 				s.genre.EXPECT().
@@ -249,6 +261,7 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// A missing signal.
 			name: "a reference that is not there",
 			then: func() {
 				s.ready()
@@ -262,9 +275,13 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
-			// describes the recording rather than the chain, so the solve would spend its
-			// dials closing a gap that is the wrong instrument rather than the wrong
-			// settings. Refused before a single reading is taken.
+			// The guard.
+			//
+			// Every figure measured by pushing a guitar recording through a
+			// bass rig describes the recording rather than the chain, so the
+			// solve would spend its dials closing a gap that is the wrong
+			// instrument rather than the wrong settings. Refused before a
+			// single reading is taken.
 			name: "tune refuses a reference for the other instrument",
 			then: func() {
 				s.ready()
@@ -290,9 +307,12 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
-			// and could not record it is a failure rather than a note: the settings on the
-			// pedal last until the next preset is selected and nothing else remembers why
-			// they are there.
+			// --ask pointing nowhere.
+			//
+			// The ask is the only account of what was asked for, so a round
+			// that solved and could not record it is a failure rather than a
+			// note: the settings on the pedal last until the next preset is
+			// selected and nothing else remembers why they are there.
 			name: "tune reports an ask it cannot append to",
 			then: func() {
 				s.ready()
@@ -308,6 +328,7 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// --out pointing nowhere.
 			name: "tune reports somewhere it cannot write",
 			then: func() {
 				s.ready()
@@ -323,8 +344,15 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
-			// fatal — offTheLoop says so and carries on — which is
-			// TestItWarnsWhenItCannotPutTheOutputBack's subject.
+			// The read --out depends on.
+			//
+			// What is kept is the chain as the device reports it after the
+			// dials moved, so a file written when that read failed would be a
+			// plan claiming settings nobody read back.
+			//
+			// Only that read. A preset that will not read back is warned
+			// about rather than fatal — offTheLoop says so and carries on —
+			// which is TestItWarnsWhenItCannotPutTheOutputBack's subject.
 			name: "keeping a tune needs the chain the device is playing",
 			then: func() {
 				s.ready()
@@ -341,7 +369,10 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
-			// reads no slopes and so never touches a dial.
+			// The device refusing a parameter.
+			//
+			// Aimed at a target it has to work for, because a loop that has
+			// already arrived reads no slopes and so never touches a dial.
 			name: "a dial that will not move",
 			then: func() {
 				s.genre.EXPECT().
@@ -364,8 +395,12 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
-			// moves, so no control can close the gap. Refused rather than reported as
-			// arrived, because a request nothing can act on is not one that was satisfied.
+			// A solve with nowhere to go.
+			//
+			// Every slope is zero because the fake bench answers the same
+			// signal whatever moves, so no control can close the gap. Refused
+			// rather than reported as arrived, because a request nothing can
+			// act on is not one that was satisfied.
 			name: "a target the chain cannot reach",
 			then: func() {
 				s.ready()
@@ -384,9 +419,12 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
-			// somewhere to go and the moves reach the pedal. What is asserted is that they
-			// were sent, because whether they were the right moves is a question only
-			// hardware answers.
+			// The applying half.
+			//
+			// A bench whose answer changes gives every control a slope, so
+			// the solve has somewhere to go and the moves reach the pedal.
+			// What is asserted is that they were sent, because whether they
+			// were the right moves is a question only hardware answers.
 			name: "it moves the dials it solved for",
 			then: func() {
 				s.genre.EXPECT().
@@ -420,9 +458,13 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
-			// about how something should sound and it has to survive the session that made
-			// it. The run says what moved, since a target that shifted silently cannot be
-			// told from a chain that drifted.
+			// The conversational half of the loop.
+			//
+			// A nudge lives on the ask rather than on a flag, because it is a
+			// decision about how something should sound and it has to survive
+			// the session that made it. The run says what moved, since a
+			// target that shifted silently cannot be told from a chain that
+			// drifted.
 			name: "a nudge on the ask moves the target",
 			then: func() {
 				s.ready()
@@ -440,6 +482,7 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// A first answer.
 			name: "nothing said leaves the target alone",
 			then: func() {
 				s.ready()
@@ -456,6 +499,10 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// Refusing rather than ignoring.
+			//
+			// Running on with the instruction dropped would report a tone
+			// nobody asked for.
 			name: "a word it cannot use stops the run",
 			then: func() {
 				s.ready()
@@ -471,6 +518,7 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// The path being wrong.
 			name: "an ask that is not there is reported",
 			then: func() {
 				s.ready()
@@ -486,7 +534,15 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
-			// "punchy" rather than being refused.
+			// Both halves of one word.
+			//
+			// "Punchier" is a tight low end and a hard attack. This target
+			// constrains the low band and says nothing about the attack, so
+			// one figure moves and the other is reported as free rather than
+			// moved quietly or dropped in silence.
+			//
+			// It is also the comparative of a word ending in y, which
+			// resolves back to "punchy" rather than being refused.
 			name: "a word moves what it can and says what it cannot",
 			then: func() {
 				s.ready()
@@ -504,6 +560,7 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 			},
 		},
 		{
+			// A file that is not a ToneSpec.
 			name: "an ask it cannot read is reported",
 			then: func() {
 				s.ready()
@@ -528,29 +585,6 @@ func (s *TunePublicTestSuite) TestTuneWalksAChainTowardATarget() {
 		})
 	}
 }
-
-// TestAChainWithNoDial covers a chain the solver cannot touch.
-//
-
-// TestTuneRefusesAReferenceForTheOtherInstrument covers the guard.
-//
-
-// TestTuneReportsAnAskItCannotAppendTo covers --ask pointing nowhere.
-//
-
-// TestKeepingATuneNeedsTheChainTheDeviceIsPlaying covers the read --out
-// depends on.
-//
-// What is kept is the chain as the device reports it after the dials moved, so
-// a file written when that read failed would be a plan claiming settings
-// nobody read back.
-//
-
-// TestADialThatWillNotMove covers the device refusing a parameter.
-//
-
-// TestATargetTheChainCannotReach covers a solve with nowhere to go.
-//
 
 // buffer is somewhere for a run's report to go when nothing reads it.
 func buffer() *bytes.Buffer { return &bytes.Buffer{} }
@@ -589,29 +623,29 @@ func (b *sloping) Through(
 
 func (*sloping) Name() string { return "a bench that answers differently" }
 
-// TestItMovesTheDialsItSolvedFor covers the applying half.
-//
-
-// TestLandBacksOffWhenTheMovesMuteTheChain covers the guard on silence.
-//
-// Called directly, because reaching it through a whole run means counting how
-// many readings a chain of eleven dials takes and a test that knows that breaks
-// when a block gains a parameter.
-//
-// TestLandAppliesTheMovesOrBacksOff covers a move that mutes the chain, one that does not, and a device that refuses.
+// TestLand covers land, which applies a pass's moves and backs off if they
+// muted the chain.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TunePublicTestSuite) TestLandAppliesTheMovesOrBacksOff() {
+func (s *TunePublicTestSuite) TestLand() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// one tolerance out partly by taking the amplifier's Master from 1.0 to 0.037,
-			// and the pass after it read 643 tolerances out because every figure was
-			// computed on hiss. Level is not an axis any corpus states, so nothing in the
-			// target defends it, and two takes of silence agree to the last digit so the
-			// noise floor cannot catch it either.
+			// The guard on silence.
+			//
+			// Called directly, because reaching it through a whole run means
+			// counting how many readings a chain of eleven dials takes and a
+			// test that knows that breaks when a block gains a parameter.
+			//
+			// The failure it exists for reported the solver working. A first
+			// pass reached one tolerance out partly by taking the amplifier's
+			// Master from 1.0 to 0.037, and the pass after it read 643
+			// tolerances out because every figure was computed on hiss. Level
+			// is not an axis any corpus states, so nothing in the target
+			// defends it, and two takes of silence agree to the last digit so
+			// the noise floor cannot catch it either.
 			name: "land backs off when the moves mute the chain",
 			then: func() {
 				tried := []float32{}
@@ -640,6 +674,7 @@ func (s *TunePublicTestSuite) TestLandAppliesTheMovesOrBacksOff() {
 			},
 		},
 		{
+			// The ordinary pass.
 			name: "land accepts moves that keep the chain audible",
 			then: func() {
 				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -659,6 +694,7 @@ func (s *TunePublicTestSuite) TestLandAppliesTheMovesOrBacksOff() {
 			},
 		},
 		{
+			// The same, one layer up.
 			name: "land reports a device that refuses",
 			then: func() {
 				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -690,15 +726,17 @@ func (s *TunePublicTestSuite) TestLandAppliesTheMovesOrBacksOff() {
 // Which is what makes a slope non-zero and so what makes the solver produce a
 // move at all. The fake that answers identically is enough to test the
 
-// TestConvergeTakesPassesUntilItStops covers the three ways the loop ends a pass.
+// TestConverge covers converge, which runs the loop until the target is met
+// or it stops improving.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TunePublicTestSuite) TestConvergeTakesPassesUntilItStops() {
+func (s *TunePublicTestSuite) TestConverge() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The loop meeting its target and stopping.
 			name: "converge arrives",
 			then: func() {
 				knob := solve.Knob{Block: 0, Param: 1, Control: "Bass", At: 0.4, Low: 0, High: 1}
@@ -719,9 +757,13 @@ func (s *TunePublicTestSuite) TestConvergeTakesPassesUntilItStops() {
 			},
 		},
 		{
-			// starts, so each pass is further out than the last. Reported rather than run to
-			// the pass limit: a chain that cannot reach a target says so, and the gear being
-			// wrong for the sound is a real answer to somebody who owns that gear.
+			// A target out of reach.
+			//
+			// The bench's centroid climbs every reading and the target sits
+			// below where it starts, so each pass is further out than the
+			// last. Reported rather than run to the pass limit: a chain that
+			// cannot reach a target says so, and the gear being wrong for the
+			// sound is a real answer to somebody who owns that gear.
 			name: "converge stops when it stops improving",
 			then: func() {
 				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -746,6 +788,7 @@ func (s *TunePublicTestSuite) TestConvergeTakesPassesUntilItStops() {
 			},
 		},
 		{
+			// The other way it gives up.
 			name: "converge runs out of passes",
 			then: func() {
 				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -769,8 +812,12 @@ func (s *TunePublicTestSuite) TestConvergeTakesPassesUntilItStops() {
 			},
 		},
 		{
-			// carry on with whatever the last reading was. A campaign that hangs or invents
-			// a figure on block two hundred looks exactly like one still working.
+			// The audio loop going away mid-run.
+			//
+			// Four places read from it, and every one of them has to say so
+			// rather than carry on with whatever the last reading was. A
+			// campaign that hangs or invents a figure on block two hundred
+			// looks exactly like one still working.
 			name: "the bench failing is reported",
 			then: func() {
 				gone := errors.New("the device stopped answering")
@@ -824,21 +871,21 @@ func (s *TunePublicTestSuite) TestConvergeTakesPassesUntilItStops() {
 	}
 }
 
-// TestConvergeStopsWhenItStopsImproving covers a target out of reach.
-//
-
-// TestSlopesReadsDownwardFromATopStop covers a control already at its maximum.
-//
-// TestSlopesReadsWhatEachDialDoes covers reading a slope, and the two ways the device stops it.
+// TestSlopes covers slopes, which reads what each control does from where the
+// chain currently sits.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TunePublicTestSuite) TestSlopesReadsWhatEachDialDoes() {
+func (s *TunePublicTestSuite) TestSlopes() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// cannot be pushed further and would otherwise read as having no slope at all.
+			// A control already at its maximum.
+			//
+			// Nudged away from whichever stop it is against, because a
+			// control at its top cannot be pushed further and would otherwise
+			// read as having no slope at all.
 			name: "slopes reads downward from a top stop",
 			then: func() {
 				var asked []float32
@@ -866,6 +913,7 @@ func (s *TunePublicTestSuite) TestSlopesReadsWhatEachDialDoes() {
 			},
 		},
 		{
+			// The pedal saying no mid-read.
 			name: "slopes reports a device that refuses",
 			then: func() {
 				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -882,7 +930,11 @@ func (s *TunePublicTestSuite) TestSlopesReadsWhatEachDialDoes() {
 			},
 		},
 		{
-			// through, so failing to put one back skews every figure after it.
+			// The second move failing.
+			//
+			// A control left where a slope was read is a control the next
+			// reading is taken through, so failing to put one back skews
+			// every figure after it.
 			name: "slopes reports a control it cannot put back",
 			then: func() {
 				first := s.pedal.EXPECT().
@@ -923,12 +975,6 @@ func (s *TunePublicTestSuite) TestApplyReportsADeviceThatRefuses() {
 	s.Require().ErrorContains(err, "device refused")
 }
 
-// TestTheBenchFailingIsReported covers the audio loop going away mid-run.
-//
-
-// TestSlopesReportsAControlItCannotPutBack covers the second move failing.
-//
-
 // second is the error from a call that also answers what it did, for a case
 // that is only asserting the error.
 func second(
@@ -961,34 +1007,23 @@ genre: [punk]
 	return at
 }
 
-// TestANudgeOnTheAskMovesTheTarget is the conversational half of the loop.
-//
-
-// TestAWordItCannotUseStopsTheRun covers refusing rather than ignoring.
-//
-
-// TestAWordMovesWhatItCanAndSaysWhatItCannot covers both halves of one word.
-//
-// "Punchier" is a tight low end and a hard attack. This target constrains the
-// low band and says nothing about the attack, so one figure moves and the other
-// is reported as free rather than moved quietly or dropped in silence.
-//
-
-// TestKeepWritesAPlanRatherThanARig covers which artifact --out produces.
-//
-// TestKeepTunedWritesWhatTheRunSettledOn covers the artifact a finished run leaves.
+// TestKeepTuned covers every case keepTuned answers.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TunePublicTestSuite) TestKeepTunedWritesWhatTheRunSettledOn() {
+func (s *TunePublicTestSuite) TestKeepTuned() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// the point. A rig's settings are seven words shared across every make of
-			// amplifier; the positions this loop just solved for are device parameters at
-			// exact values, and only the plan has anywhere to put them. Writing the rig
-			// would export the chain and throw away the tuning, which is what the first
+			// Which artifact --out produces.
+			//
+			// Both are on the reading, so writing either is one line, and the
+			// choice is the point. A rig's settings are seven words shared
+			// across every make of amplifier; the positions this loop just
+			// solved for are device parameters at exact values, and only the
+			// plan has anywhere to put them. Writing the rig would export the
+			// chain and throw away the tuning, which is what the first
 			// version of this did.
 			name: "keep writes a plan rather than a rig",
 			then: func() {
@@ -1027,6 +1062,17 @@ func (s *TunePublicTestSuite) TestKeepTunedWritesWhatTheRunSettledOn() {
 			},
 		},
 		{
+			// The measuring rig not leaking into the answer.
+			//
+			// The chain that was tuned had been sent to USB alone and turned
+			// down 30dB so it would stop feeding itself down the measuring
+			// lead. Keeping the preset as the device holds it writes both of
+			// those into the plan, and the rig somebody then compiles is
+			// silent at the quarter-inch socket and 30dB quiet everywhere
+			// else.
+			//
+			// Neither is anything the solver decided, so neither survives.
+			// The dials do.
 			name: "keep puts the output back to what was compiled",
 			then: func() {
 				// What the device is playing: off the loop at USB alone, turned down.
@@ -1081,7 +1127,10 @@ func (s *TunePublicTestSuite) TestKeepTunedWritesWhatTheRunSettledOn() {
 			},
 		},
 		{
-			// somebody decides what they are about to get.
+			// The empty --out.
+			//
+			// The message named a rig while the file was a plan, which is the
+			// one place somebody decides what they are about to get.
 			name: "keep says which artifact it would have written",
 			then: func() {
 				var buf bytes.Buffer
@@ -1101,15 +1150,3 @@ func (s *TunePublicTestSuite) TestKeepTunedWritesWhatTheRunSettledOn() {
 		})
 	}
 }
-
-// TestKeepPutsTheOutputBackToWhatWasCompiled is the measuring rig not leaking
-// into the answer.
-//
-// The chain that was tuned had been sent to USB alone and turned down 30dB so it
-// would stop feeding itself down the measuring lead. Keeping the preset as the
-// device holds it writes both of those into the plan, and the rig somebody then
-// compiles is silent at the quarter-inch socket and 30dB quiet everywhere else.
-//
-
-// TestKeepSaysWhichArtifactItWouldHaveWritten covers the empty --out.
-//

@@ -87,15 +87,17 @@ func (s *TranslatePublicTestSuite) recording() string {
 	return filepath.Join("..", "..", "..", "resources", "dry", "bass-di-short.wav")
 }
 
-// TestTranslateResolvesAnAskIntoARig covers every shape of ask that resolves, and what the resolution is allowed to decide.
+// TestTranslate covers Translate, which turns a request and a setup into a
+// rig.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TranslatePublicTestSuite) TestTranslateResolvesAnAskIntoARig() {
+func (s *TranslatePublicTestSuite) TestTranslate() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The deterministic half.
 			name: "named gear resolves to a model",
 			then: func() {
 				got, notes, err := translate.Translate(
@@ -116,7 +118,19 @@ func (s *TranslatePublicTestSuite) TestTranslateResolvesAnAskIntoARig() {
 			},
 		},
 		{
-			// two times in three.
+			// The bug this exists for, and it was invisible because it was a
+			// coin toss.
+			//
+			// 355 of this device's 661 models share a name with another of
+			// their own category, and lookup returned the first one a Go map
+			// yielded. The same ask compiled to three different cabinets
+			// across twelve runs: HD2_Cab1x15TucknGo at 7.2 DSP with no
+			// microphone list, and two HD2_CabMicIr models at 2.5 with one.
+			// Which a chain got decided whether its most powerful control
+			// existed, and it was decided by nothing.
+			//
+			// Run rather than asserted once, because a map order bug passes a
+			// single run two times in three.
 			name: "a gear name fitting several exactly answers the same way every time",
 			then: func() {
 				said := map[string]int{}
@@ -152,9 +166,12 @@ func (s *TranslatePublicTestSuite) TestTranslateResolvesAnAskIntoARig() {
 			},
 		},
 		{
-			// comparison is between two of the same kind of thing, and the answer is the
-			// nearest of two hundred and twenty four rather than whichever name somebody
-			// wrote down.
+			// The half no reasoning about names can do.
+			//
+			// The recording is measured through the same figures every block
+			// was, so the comparison is between two of the same kind of
+			// thing, and the answer is the nearest of two hundred and twenty
+			// four rather than whichever name somebody wrote down.
 			name: "a recording chooses the amplifier",
 			then: func() {
 				got, notes, err := translate.Translate(
@@ -179,6 +196,7 @@ func (s *TranslatePublicTestSuite) TestTranslateResolvesAnAskIntoARig() {
 			},
 		},
 		{
+			// What makes a RigSpec worth sharing.
 			name: "the same ask twice is the same rig",
 			then: func() {
 				body := "words:\n  - term: punchy\nlike:\n  recording: " + s.recording() + "\n"
@@ -195,10 +213,14 @@ func (s *TranslatePublicTestSuite) TestTranslateResolvesAnAskIntoARig() {
 			},
 		},
 		{
-			// the rig says only which gear answered. A rig carrying the words too would be
-			// a second place for the answer to live, and turning them into knob positions
-			// here would be the guessing the whole project removed: that happens once, in
-			// the compiler, which is the only place the resolved chain exists.
+			// The line this does not cross.
+			//
+			// How it should sound is what somebody asked for, so it stays on
+			// the ask and the rig says only which gear answered. A rig
+			// carrying the words too would be a second place for the answer
+			// to live, and turning them into knob positions here would be the
+			// guessing the whole project removed: that happens once, in the
+			// compiler, which is the only place the resolved chain exists.
 			name: "words stay on the ask",
 			then: func() {
 				got, _, err := translate.Translate(
@@ -219,7 +241,11 @@ func (s *TranslatePublicTestSuite) TestTranslateResolvesAnAskIntoARig() {
 			},
 		},
 		{
-			// a request listing gear is not stating a signal path.
+			// Gear listed in any order.
+			//
+			// A drive ahead of an amplifier is a different sound from one
+			// behind it, and a request listing gear is not stating a signal
+			// path.
 			name: "a chain is ordered by signal path",
 			then: func() {
 				got, _, err := translate.Translate(
@@ -247,10 +273,14 @@ like:
 			},
 		},
 		{
-			// and an amplifier chosen by measuring a record played on flats is chosen
-			// against a spectrum nobody will reproduce on rounds. Nothing here has measured
-			// what that does, so the mismatch is reported rather than corrected for:
-			// applying a number nobody measured is the guessing this project removed.
+			// #128's honest half.
+			//
+			// Flatwounds against roundwounds is a larger difference than most
+			// pedals make, and an amplifier chosen by measuring a record
+			// played on flats is chosen against a spectrum nobody will
+			// reproduce on rounds. Nothing here has measured what that does,
+			// so the mismatch is reported rather than corrected for: applying
+			// a number nobody measured is the guessing this project removed.
 			name: "strings that do not match are reported",
 			then: func() {
 				tests := []struct {
@@ -322,11 +352,15 @@ like:
 			},
 		},
 		{
-			// stating one: a drive goes in front of the amplifier whichever order somebody
-			// typed. That is right for the common case and wrong for somebody who means it,
-			// and a drive behind the amplifier is a known way to use one rather than a
-			// mistake. Before this the only route was to build the rig and edit a line,
-			// which is an edit nobody records the reason for.
+			// A drive behind the amplifier.
+			//
+			// A chain is sorted into the ordinary signal path, because
+			// listing gear is not stating one: a drive goes in front of the
+			// amplifier whichever order somebody typed. That is right for the
+			// common case and wrong for somebody who means it, and a drive
+			// behind the amplifier is a known way to use one rather than a
+			// mistake. Before this the only route was to build the rig and
+			// edit a line, which is an edit nobody records the reason for.
 			name: "a request may say where a block goes",
 			then: func() {
 				tests := []struct {
@@ -403,8 +437,18 @@ like:
 			},
 		},
 		{
-			// path is the honest answer for it, so it lands after everything that has
-			// one, and this pins that rather than leaving it to whatever a map iterates.
+			// The rest of the signal path.
+			//
+			// The ordering test above walks the four roles a request usually
+			// names. This walks the ones it rarely does, because a role
+			// nothing places falls to the end of the chain, and falling to
+			// the end is right for a role nobody has an opinion about and
+			// wrong for a wah.
+			//
+			// A pitch block is the fallthrough on purpose: no fixed place in
+			// a signal path is the honest answer for it, so it lands after
+			// everything that has one, and this pins that rather than leaving
+			// it to whatever a map iterates.
 			name: "every role has a place in the chain",
 			then: func() {
 				got, _, err := translate.Translate(
@@ -439,9 +483,13 @@ like:
 			},
 		},
 		{
-			// is refused with a sentinel rather than guessed at. Which question to ask
-			// next depends on whether a person or an agent is asking, so the SDK names the
-			// problem and the caller names the next step.
+			// The vague ask.
+			//
+			// "Punk bass" is a real request and there is nothing in it to
+			// resolve, so it is refused with a sentinel rather than guessed
+			// at. Which question to ask next depends on whether a person or
+			// an agent is asking, so the SDK names the problem and the caller
+			// names the next step.
 			name: "a request with nothing in it is refused",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -452,8 +500,12 @@ like:
 			},
 		},
 		{
-			// of them reported "could not", which told somebody the tool had failed at
-			// something it had in fact decided.
+			// How a note reads.
+			//
+			// Both of these are the same assumption about the same absent
+			// setup, and one of them reported "could not", which told
+			// somebody the tool had failed at something it had in fact
+			// decided.
 			name: "an assumption is something that happened",
 			then: func() {
 				_, notes, _ := translate.Translate(
@@ -476,6 +528,7 @@ like:
 			},
 		},
 		{
+			// An empty ask.
 			name: "nothing to build from is refused",
 			then: func() {
 				_, _, err := translate.Translate(s.ask("words:\n  - term: dark\n"), s.setup(""), s.deps)
@@ -484,6 +537,7 @@ like:
 			},
 		},
 		{
+			// What somebody plays.
 			name: "the setup decides the instrument",
 			then: func() {
 				tests := []struct {
@@ -525,8 +579,12 @@ like:
 			},
 		},
 		{
-			// identifier is what carries the attribution across: it is how a rig is found
-			// again, and a rig named after nobody could not be.
+			// What a rig is named after.
+			//
+			// Who the rig is for is the ask's to say and no longer sits on
+			// the rig, so the identifier is what carries the attribution
+			// across: it is how a rig is found again, and a rig named after
+			// nobody could not be.
 			name: "the identifier follows the ask",
 			then: func() {
 				tests := []struct {
@@ -577,6 +635,7 @@ like:
 			},
 		},
 		{
+			// An entry that names none.
 			name: "gear with no role is looked for anywhere",
 			then: func() {
 				got, _, err := translate.Translate(
@@ -588,6 +647,7 @@ like:
 			},
 		},
 		{
+			// The ordinary case.
 			name: "a setup naming the same device is fine",
 			then: func() {
 				_, _, err := translate.Translate(
@@ -598,6 +658,7 @@ like:
 			},
 		},
 		{
+			// The setup unlocking it.
 			name: "an impulse response somebody owns is chosen",
 			then: func() {
 				only := s.deps
@@ -623,20 +684,39 @@ like:
 			},
 		},
 		{
-			// holding a cabinet played into an amplifier has both. Said rather than
-			// changed: a cabinet block is how a chain is made to sound like the record it
-			// came from, so somebody chasing a record through their own amplifier wants
-			// both and is right to, and the tool does not get to decide that.
+			// Plays_into.
+			//
+			// A cabinet block simulates a speaker and an amplifier has one,
+			// so a chain holding a cabinet played into an amplifier has both.
+			// Said rather than changed: a cabinet block is how a chain is
+			// made to sound like the record it came from, so somebody chasing
+			// a record through their own amplifier wants both and is right
+			// to, and the tool does not get to decide that.
 			name: "two speakers in the path are counted",
 			then: func() {
 				chain := "gear:\n  - {gear: Ampeg SVT, role: amp}\n  - {gear: 8x10, role: cab}\n"
 
 				for _, tt := range []struct {
 					name string
-					into string
-					says bool
+					// chain overrides the one-cabinet chain above, for a row
+					// about how many are counted.
+					chain string
+					into  string
+					says  bool
+					// held is what the note should name the speakers as.
+					held string
 				}{
 					{name: "into the front of an amplifier", into: "plays_into: amp-front\n", says: true},
+					{
+						// Two cabinet blocks and an amplifier's own speaker is
+						// three speakers in the path, so the note counts them
+						// rather than naming one.
+						name: "two cabinet blocks in the path are counted",
+						chain: "gear:\n  - {gear: Ampeg SVT, role: amp}\n" +
+							"  - {gear: 8x10, role: cab}\n  - {gear: 4x10, role: cab}\n",
+						into: "plays_into: amp-front\n", says: true,
+						held: "2 cabinet blocks",
+					},
 					{name: "into an amplifier's effects return", into: "plays_into: amp-return\n", says: true},
 					{
 						// A PA has no speaker of its own, so the cabinet block is the only
@@ -647,8 +727,13 @@ like:
 					{name: "a setup that does not say", into: ""},
 				} {
 					s.Run(tt.name, func() {
+						use := chain
+						if tt.chain != "" {
+							use = tt.chain
+						}
+
 						_, notes, err := translate.Translate(
-							s.ask(chain), s.setup(tt.into), s.deps)
+							s.ask(use), s.setup(tt.into), s.deps)
 
 						s.Require().NoError(err)
 
@@ -668,14 +753,22 @@ like:
 							return
 						}
 
-						s.Require().Contains(said, "a cabinet block")
+						held := tt.held
+						if held == "" {
+							held = "a cabinet block"
+						}
+
+						s.Require().Contains(said, held)
 						s.Require().Contains(said, "speaker of its own")
 					})
 				}
 			},
 		},
 		{
-			// somebody plugging into one already knows.
+			// The other half of the count.
+			//
+			// Nothing to report: one speaker in the path is the amplifier's,
+			// which is what somebody plugging into one already knows.
 			name: "an amplifier with no cabinet says nothing",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -690,10 +783,14 @@ like:
 			},
 		},
 		{
-			// than accepting it and quietly doing nothing" — and nothing said it. The
-			// check existed in compile and was reached only by `presets make`, so a
-			// `tone build` took an ask saying `sparkly`, resolved the chain, reported
-			// every other thing it did, and never mentioned the word.
+			// The promise the contract had not kept.
+			//
+			// "a word that reaches no control cannot be aimed at and saying
+			// so is better than accepting it and quietly doing nothing" — and
+			// nothing said it. The check existed in compile and was reached
+			// only by `presets make`, so a `tone build` took an ask saying
+			// `sparkly`, resolved the chain, reported every other thing it
+			// did, and never mentioned the word.
 			name: "a word nothing aims at is said",
 			then: func() {
 				deps := s.deps
@@ -743,6 +840,7 @@ like:
 			},
 		},
 		{
+			// A caller that wants only a chain.
 			name: "nothing checking words says nothing",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -759,9 +857,13 @@ like:
 			},
 		},
 		{
-			// share a category, so a rig naming "Ampeg SVT" could reach either. It means
-			// the amplifier. Until the family decided it the answer was whichever sorted
-			// first, which happened to be right because HD2_Amp precedes HD2_Preamp, and
+			// The other collision.
+			//
+			// 108 names on this device are both a full amplifier and a
+			// preamp, and they share a category, so a rig naming "Ampeg SVT"
+			// could reach either. It means the amplifier. Until the family
+			// decided it the answer was whichever sorted first, which
+			// happened to be right because HD2_Amp precedes HD2_Preamp, and
 			// right by the alphabet is not right by decision.
 			name: "an amplifier is preferred to a preamp of the same name",
 			then: func() {
@@ -784,7 +886,21 @@ like:
 			},
 		},
 		{
-			// already used, including one 260 lines away in this same file.
+			// A bug this had for as long as `identify` had a slug rule of its
+			// own.
+			//
+			// It mapped a space to a hyphen, deleted everything else and
+			// never collapsed the runs that left behind, so "Earth, Wind &
+			// Fire" became "earth-wind--fire". The contract's pattern for an
+			// id is `^[a-z0-9]+(-[a-z0-9]+)*$`, which forbids two hyphens
+			// together, so Translate resolved the entire chain, chose an
+			// amplifier by measurement, and then refused to write the rig it
+			// had just built. Any ampersand, comma or double space in a band,
+			// artist or song did it.
+			//
+			// The rule is `slug.Of` now, which every other identifier in the
+			// repository already used, including one 260 lines away in this
+			// same file.
 			name: "an ampersand in a name still validates",
 			then: func() {
 				for _, name := range []string{
@@ -815,56 +931,17 @@ like:
 	}
 }
 
-// TestAGearNameFittingSeveralExactlyAnswersTheSameWayEveryTime is the bug this
-// exists for, and it was invisible because it was a coin toss.
-//
-// 355 of this device's 661 models share a name with another of their own
-// category, and lookup returned the first one a Go map yielded. The same ask
-// compiled to three different cabinets across twelve runs: HD2_Cab1x15TucknGo
-// at 7.2 DSP with no microphone list, and two HD2_CabMicIr models at 2.5 with
-// one. Which a chain got decided whether its most powerful control existed,
-// and it was decided by nothing.
-//
-
-// TestARecordingChoosesTheAmplifier is the half no reasoning about names can
-// do.
-//
-
-// TestWordsStayOnTheAsk is the line this does not cross.
-//
-
-// TestAChainIsOrderedBySignalPath covers gear listed in any order.
-//
-
-// TestStringsThatDoNotMatchAreReported covers #128's honest half.
-//
-
-// TestARequestMaySayWhereABlockGoes covers a drive behind the amplifier.
-//
-
-// TestEveryRoleHasAPlaceInTheChain covers the rest of the signal path.
-//
-// The ordering test above walks the four roles a request usually names. This
-// walks the ones it rarely does, because a role nothing places falls to the
-// end of the chain, and falling to the end is right for a role nobody has an
-// opinion about and wrong for a wah.
-//
-
-// TestARequestWithNothingInItIsRefused covers the vague ask.
-//
-
-// TestAnAssumptionIsSomethingThatHappened covers how a note reads.
-//
-
-// TestUnmetSaysWhatAnAskDidNotGet covers everything the resolution could not honour, which is what a person reads before plugging in.
+// TestUnmet covers Unmet, which is the notes describing what could not be
+// done.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *TranslatePublicTestSuite) TestUnmetSaysWhatAnAskDidNotGet() {
+func (s *TranslatePublicTestSuite) TestUnmet() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The gear being the point.
 			name: "insist refuses rather than substitute",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -876,7 +953,11 @@ func (s *TranslatePublicTestSuite) TestUnmetSaysWhatAnAskDidNotGet() {
 			},
 		},
 		{
-			// identifiers rather than names, because the names are what collided.
+			// The names that collide.
+			//
+			// 661 models share 468 names, so "Ampeg SVT" fits four. The note
+			// lists model identifiers rather than names, because the names
+			// are what collided.
 			name: "an ambiguous name says which models it fits",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -898,7 +979,10 @@ func (s *TranslatePublicTestSuite) TestUnmetSaysWhatAnAskDidNotGet() {
 			},
 		},
 		{
-			// the part somebody needs to know about.
+			// A genre and a player.
+			//
+			// A request carrying either is half answered, and the half that
+			// was not is the part somebody needs to know about.
 			name: "what it cannot answer it says",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -926,6 +1010,29 @@ like:
 			},
 		},
 		{
+			// The one that would otherwise converge and be wrong. A bass
+			// corpus puts every genre's centroid between 90 and 182Hz, and a
+			// guitar chain solved against that is not near it: it is being
+			// asked to sound like another instrument, and every dial would be
+			// spent doing it. Which instrument the ask states is the only
+			// thing that catches it, so it travels into the note.
+			name: "the ask names one instrument and the genre is measured on another",
+			then: func() {
+				_, notes, err := translate.Translate(
+					s.ask("instrument: guitar\ngenre: [punk]\nlike:\n  recording: "+
+						s.recording()+"\n"),
+					s.setup(""), s.deps)
+
+				s.Require().NoError(err)
+
+				said := strings.Join(sayings(notes.Unmet()), " ")
+				s.Require().Contains(said, "is measured on bass")
+				s.Require().Contains(said, "this asks for guitar")
+				s.Require().Contains(said, "about an octave")
+			},
+		},
+		{
+			// The answer for a word with no records.
 			name: "a genre nobody has tagged",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -938,7 +1045,11 @@ like:
 			},
 		},
 		{
-			// the note says what it measured as rather than what it cannot do.
+			// The answer somebody asked for.
+			//
+			// Grunge is displaced on two axes against the players who play
+			// none of it, so the note says what it measured as rather than
+			// what it cannot do.
 			name: "a genre that earns words",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -953,6 +1064,7 @@ like:
 			},
 		},
 		{
+			// A path that is not audio.
 			name: "a recording it cannot read is said",
 			then: func() {
 				tests := []struct{ name, give, want string }{
@@ -979,7 +1091,7 @@ like:
 			},
 		},
 		{
-			// previous answer.
+			// The one kind of ask that needs a previous answer.
 			name: "a nudge has nothing to move from",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -992,8 +1104,17 @@ like:
 			},
 		},
 		{
-			// yet listened to, which is the state a person needs shown rather than left to
-			// be rediscovered.
+			// What a rebuild does with rounds of correction somebody already
+			// made.
+			//
+			// Nothing, and says so. A correction's paths point into the plan
+			// it was made against and this builds a new one, so the settings
+			// those rounds arrived at are not in the answer. Left unsaid it
+			// reads as a rebuild that carried them.
+			//
+			// The entry with no verdict is the one that matters: it has been
+			// built and not yet listened to, which is the state a person
+			// needs shown rather than left to be rediscovered.
 			name: "a correction history is read out and not replayed",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -1015,6 +1136,10 @@ like:
 			},
 		},
 		{
+			// The cap.
+			//
+			// Some names fit a dozen, and a note listing all of them is one
+			// nobody reads.
 			name: "a gear name fitting many says so without listing them all",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -1028,7 +1153,7 @@ like:
 			},
 		},
 		{
-			// no reading covers.
+			// Asking for a kind of block that no reading covers.
 			name: "a role nothing is measured for is said",
 			then: func() {
 				empty := s.deps
@@ -1050,8 +1175,12 @@ like:
 			},
 		},
 		{
-			// those readings ranks that device's blocks. Run against another it answers
-			// confidently with models the device in hand may not even have.
+			// Not a warning.
+			//
+			// Every block was measured on one piece of hardware, and a
+			// ranking built from those readings ranks that device's blocks.
+			// Run against another it answers confidently with models the
+			// device in hand may not even have.
 			name: "a setup naming another device is refused",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -1064,8 +1193,12 @@ like:
 			},
 		},
 		{
-			// sounds like something on the device it was built on and like nothing at all
-			// on anybody else's. The reading for one is of an empty slot.
+			// A block that carries an index rather than any audio.
+			//
+			// What is in that slot is whatever its owner put there, so a
+			// chain naming one sounds like something on the device it was
+			// built on and like nothing at all on anybody else's. The reading
+			// for one is of an empty slot.
 			name: "an impulse response nobody loaded is not chosen",
 			then: func() {
 				quiet := measured.Figures{Centroid: 111, Low: 99, Mid: 1}
@@ -1098,15 +1231,6 @@ like:
 		})
 	}
 }
-
-// TestAnAmbiguousNameSaysWhichModelsItFits covers the names that collide.
-//
-
-// TestWhatItCannotAnswerItSays covers a genre and a player.
-//
-
-// TestAGenreThatEarnsWords covers the answer somebody asked for.
-//
 
 // TestAGenreUnderTheThreshold covers the count being reported.
 //
@@ -1175,27 +1299,6 @@ func (s *TranslatePublicTestSuite) TestAnAskNamingNoInstrumentClaimsNothing() {
 	s.Require().NotContains(got.Said, "asks for")
 }
 
-// TestTheIdentifierFollowsTheAsk covers what a rig is named after.
-//
-
-// TestACorrectionHistoryIsReadOutAndNotReplayed covers what a rebuild does
-// with rounds of correction somebody already made.
-//
-// Nothing, and says so. A correction's paths point into the plan it was made
-// against and this builds a new one, so the settings those rounds arrived at
-// are not in the answer. Left unsaid it reads as a rebuild that carried them.
-//
-
-// TestAGearNameFittingManySaysSoWithoutListingThemAll covers the cap.
-//
-
-// TestASetupNamingAnotherDeviceIsRefused is not a warning.
-//
-
-// TestAnImpulseResponseNobodyLoadedIsNotChosen covers a block that carries an
-// index rather than any audio.
-//
-
 // sayings is what a set of notes said.
 func sayings(
 	notes translate.Notes,
@@ -1208,23 +1311,11 @@ func sayings(
 	return out
 }
 
-// TestTwoSpeakersInThePathAreCounted covers plays_into.
-//
-
-// TestAnAmplifierWithNoCabinetSaysNothing is the other half of the count.
-//
-
-// TestAWordNothingAimsAtIsSaid is the promise the contract had not kept.
-//
-
 func TestTranslatePublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(TranslatePublicTestSuite))
 }
-
-// TestAnAmplifierIsPreferredToAPreampOfTheSameName covers the other collision.
-//
 
 // TestALegacyModelIsReachableByTheNameLine6GivesIt covers the other side of
 // the family preference.
@@ -1280,14 +1371,3 @@ func (s *TranslatePublicTestSuite) TestNoMicdCabinetClaimsToBeALegacyModel() {
 
 	s.Require().Positive(mics, "the catalog carries mic'd cabinets at all")
 }
-
-// TestAnAmpersandInANameStillValidates is a bug this had for as long as
-// `identify` had a slug rule of its own.
-//
-// It mapped a space to a hyphen, deleted everything else and never collapsed the
-// runs that left behind, so "Earth, Wind & Fire" became "earth-wind--fire". The
-// contract's pattern for an id is `^[a-z0-9]+(-[a-z0-9]+)*$`, which forbids two
-// hyphens together, so Translate resolved the entire chain, chose an amplifier by
-// measurement, and then refused to write the rig it had just built. Any
-// ampersand, comma or double space in a band, artist or song did it.
-//

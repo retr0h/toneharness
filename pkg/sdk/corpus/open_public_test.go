@@ -45,7 +45,7 @@ func (s *OpenPublicTestSuite) TestOpen() {
 		then func()
 	}{
 		{
-			// own corpus gets.
+			// What every caller who has not measured their own corpus gets.
 			name: "no path is the ones that ship",
 			then: func() {
 				got, err := corpus.Open("")
@@ -56,6 +56,7 @@ func (s *OpenPublicTestSuite) TestOpen() {
 			},
 		},
 		{
+			// Somebody's own statistics.
 			name: "a path is read",
 			then: func() {
 				had, err := corpus.Open("")
@@ -74,7 +75,11 @@ func (s *OpenPublicTestSuite) TestOpen() {
 			},
 		},
 		{
-			// question about their corpus with figures from ours.
+			// The answer being a failure rather than a silent fall back to
+			// the built-in ones.
+			//
+			// Somebody who named a file meant that file. Falling back would
+			// answer a question about their corpus with figures from ours.
 			name: "a path that is not there is reported",
 			then: func() {
 				_, err := corpus.Open(filepath.Join(s.T().TempDir(), "nowhere.json.gz"))
@@ -83,6 +88,7 @@ func (s *OpenPublicTestSuite) TestOpen() {
 			},
 		},
 		{
+			// Something that is not statistics.
 			name: "a file that will not decode is reported",
 			then: func() {
 				at := filepath.Join(s.T().TempDir(), "stats.json.gz")
@@ -99,10 +105,6 @@ func (s *OpenPublicTestSuite) TestOpen() {
 		})
 	}
 }
-
-// TestAPathThatIsNotThereIsReported covers the answer being a failure rather
-// than a silent fall back to the built-in ones.
-//
 
 func TestOpenPublicTestSuite(
 	t *testing.T,

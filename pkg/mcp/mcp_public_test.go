@@ -41,8 +41,8 @@ type MCPPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestServe covers Serve, which serves over any transport until ctx ends
-// or the agent disconnects.
+// TestServe covers Serve, which serves over any transport until ctx ends or
+// the agent disconnects.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *MCPPublicTestSuite) TestServe() {
@@ -51,6 +51,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 		then func()
 	}{
 		{
+			// An agent's session with the server.
 			name: "serve",
 			then: func() {
 				tests := []struct {
@@ -177,7 +178,8 @@ func (s *MCPPublicTestSuite) TestServe() {
 			},
 		},
 		{
-			// ones that ship, through the tools that read and build rigs.
+			// An agent reaching somebody's own rigs, beside the ones that
+			// ship, through the tools that read and build rigs.
 			name: "user rigs",
 			then: func() {
 				dir := s.T().TempDir()

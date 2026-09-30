@@ -54,6 +54,7 @@ func (s *NudgeTestSuite) TestNudge() {
 		then func()
 	}{
 		{
+			// The whole design.
 			name: "one step is one tolerance",
 			then: func() {
 				got := Nudge(s.aims(), []Nudged{
@@ -66,6 +67,7 @@ func (s *NudgeTestSuite) TestNudge() {
 			},
 		},
 		{
+			// The other direction.
 			name: "down the axis",
 			then: func() {
 				got := Nudge(s.aims(), []Nudged{
@@ -76,6 +78,7 @@ func (s *NudgeTestSuite) TestNudge() {
 			},
 		},
 		{
+			// "much darker" and "a touch darker".
 			name: "steps scale it",
 			then: func() {
 				tests := []struct {
@@ -100,7 +103,10 @@ func (s *NudgeTestSuite) TestNudge() {
 			},
 		},
 		{
-			// word moves two figures.
+			// A word answering more than one axis.
+			//
+			// "punchy" is a tight low end and a hard attack, and both are
+			// measured, so one word moves two figures.
 			name: "two figures from one word",
 			then: func() {
 				got := Nudge(s.aims(), []Nudged{
@@ -113,7 +119,11 @@ func (s *NudgeTestSuite) TestNudge() {
 			},
 		},
 		{
-			// design, and a word cannot move a target that is not there.
+			// A genre that shrugs at the axis.
+			//
+			// A genre pins the figures its records agree about and leaves the
+			// rest free by design, and a word cannot move a target that is
+			// not there.
 			name: "a figure nothing aims at is left alone",
 			then: func() {
 				got := Nudge(s.aims(), []Nudged{
@@ -125,6 +135,7 @@ func (s *NudgeTestSuite) TestNudge() {
 			},
 		},
 		{
+			// An unconstrained axis.
 			name: "a tolerance of zero is not something to step by",
 			then: func() {
 				got := Nudge(map[audio.Figure]Aim{audio.KeyCentroid: {Want: 140}}, []Nudged{
@@ -135,8 +146,11 @@ func (s *NudgeTestSuite) TestNudge() {
 			},
 		},
 		{
-			// solve would spend every control chasing it and then report a chain that
-			// cannot reach the target.
+			// Clamping.
+			//
+			// Asking for 1.05 of the low band asks for more energy than there
+			// is, and the solve would spend every control chasing it and then
+			// report a chain that cannot reach the target.
 			name: "a share cannot go past the whole",
 			then: func() {
 				got := Nudge(map[audio.Figure]Aim{
@@ -153,7 +167,10 @@ func (s *NudgeTestSuite) TestNudge() {
 			},
 		},
 		{
-			// applies.
+			// The other half of clamping.
+			//
+			// A centroid in hertz has no top this package knows, so only the
+			// floor at zero applies.
 			name: "a figure in its own units has no ceiling",
 			then: func() {
 				got := Nudge(map[audio.Figure]Aim{audio.KeyCentroid: {Want: 140, Tol: 500}},
@@ -163,7 +180,11 @@ func (s *NudgeTestSuite) TestNudge() {
 			},
 		},
 		{
-			// at a time, and the residual reported each pass is read off these.
+			// The loop reading them every pass.
+			//
+			// A nudge applied to the same map twice would walk the target
+			// away a tolerance at a time, and the residual reported each pass
+			// is read off these.
 			name: "the aims handed in are not changed",
 			then: func() {
 				was := s.aims()
@@ -179,21 +200,6 @@ func (s *NudgeTestSuite) TestNudge() {
 		})
 	}
 }
-
-// TestTwoFiguresFromOneWord covers a word answering more than one axis.
-//
-
-// TestAFigureNothingAimsAtIsLeftAlone covers a genre that shrugs at the axis.
-//
-
-// TestAShareCannotGoPastTheWhole covers clamping.
-//
-
-// TestAFigureInItsOwnUnitsHasNoCeiling covers the other half of clamping.
-//
-
-// TestTheAimsHandedInAreNotChanged covers the loop reading them every pass.
-//
 
 func TestNudgeTestSuite(
 	t *testing.T,

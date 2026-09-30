@@ -50,18 +50,21 @@ func spanOf(
 	}
 }
 
-// TestATargetSomeReadingAlreadyLandedOn is the claim worth trusting.
-//
-// TestReachableSaysWhetherAChainCanGetThere covers asking what the sweeps already know, before a single reading is taken.
+// TestReachable covers Reachable, which says which axes of a target are worth
+// spending readings on.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ReachableTestSuite) TestReachableSaysWhetherAChainCanGetThere() {
+func (s *ReachableTestSuite) TestReachable() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// where the target wants, so a setting exists and the loop's job is to find it.
+			// The claim worth trusting.
+			//
+			// Nothing is modelled to make it. A reading actually taken of
+			// these blocks sat where the target wants, so a setting exists
+			// and the loop's job is to find it.
 			name: "a target some reading already landed on",
 			then: func() {
 				got := Reachable(one(500), spanOf(100, 90, 900, 0))
@@ -74,9 +77,12 @@ func (s *ReachableTestSuite) TestReachableSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
-			// the gap. That refuses nothing and promises nothing: the sum assumes every
-			// control pulls the same way, which they do not, and finding out is what the
-			// loop is for.
+			// The weaker claim.
+			//
+			// No reading landed near the target, but the controls have more
+			// movement than the gap. That refuses nothing and promises
+			// nothing: the sum assumes every control pulls the same way,
+			// which they do not, and finding out is what the loop is for.
 			name: "a swing wide enough is not a promise",
 			then: func() {
 				got := Reachable(one(500), spanOf(100, 90, 110, 800))
@@ -86,6 +92,7 @@ func (s *ReachableTestSuite) TestReachableSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
+			// An axis needing no work.
 			name: "a chain already inside is met",
 			then: func() {
 				got := Reachable(one(100.5), spanOf(100, 100, 100, 0))
@@ -95,8 +102,11 @@ func (s *ReachableTestSuite) TestReachableSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
-			// to its centre, so a reading one tolerance outside the range still shows the
-			// target is touchable.
+			// The edge.
+			//
+			// A chain has to be carried to the edge of what counts as
+			// arriving rather than to its centre, so a reading one tolerance
+			// outside the range still shows the target is touchable.
 			name: "the tolerance widens the target at both ends",
 			then: func() {
 				aims := map[audio.Figure]Aim{audio.KeyCentroid: {Want: 110.5, Tol: 1}}
@@ -108,14 +118,19 @@ func (s *ReachableTestSuite) TestReachableSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
-			// axis is not a chain that cannot reach it, and calling it unreachable would
-			// talk somebody out of a run that would have worked.
+			// A figure with no readings.
+			//
+			// Left out rather than reported as out of reach. A chain nobody
+			// swept on an axis is not a chain that cannot reach it, and
+			// calling it unreachable would talk somebody out of a run that
+			// would have worked.
 			name: "an axis nothing measured is left out",
 			then: func() {
 				s.Require().Empty(Reachable(one(500), map[audio.Figure]Span{}))
 			},
 		},
 		{
+			// A target that pins nothing.
 			name: "an axis with no tolerance is left out",
 			then: func() {
 				aims := map[audio.Figure]Aim{audio.KeyCentroid: {Want: 500, Tol: 0}}
@@ -124,8 +139,12 @@ func (s *ReachableTestSuite) TestReachableSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
-			// wall. Reading the wall first is what stops somebody tuning for an afternoon,
-			// so it sorts above an axis that is further out and reachable.
+			// The order.
+			//
+			// A wide gap the controls can close is work; a narrow one they
+			// cannot is a wall. Reading the wall first is what stops somebody
+			// tuning for an afternoon, so it sorts above an axis that is
+			// further out and reachable.
 			name: "the wall is reported before the distance",
 			then: func() {
 				aims := map[audio.Figure]Aim{
@@ -147,9 +166,12 @@ func (s *ReachableTestSuite) TestReachableSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
-			// no order, so a comparator right in one direction and wrong in the other
-			// reports a different worst axis run to run, and the worst axis is the whole
-			// answer.
+			// The comparator.
+			//
+			// Two axes out of reach and two inside, handed over in both
+			// orders. A map has no order, so a comparator right in one
+			// direction and wrong in the other reports a different worst axis
+			// run to run, and the worst axis is the whole answer.
 			name: "the order is the same whichever way the map was walked",
 			then: func() {
 				aims := map[audio.Figure]Aim{
@@ -183,6 +205,7 @@ func (s *ReachableTestSuite) TestReachableSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
+			// The last tie-break.
 			name: "two axes equally far order the same way twice",
 			then: func() {
 				aims := map[audio.Figure]Aim{
@@ -202,24 +225,29 @@ func (s *ReachableTestSuite) TestReachableSaysWhetherAChainCanGetThere() {
 			},
 		},
 	} {
-		s.Run(tt.name, func() { tt.then() })
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 
-// TestATargetNoReadingReachedAndNoControlCanClose is the refusal.
-//
-// TestWorthNamesWhatDecidesTheVerdict covers which axis a refusal is about.
+// TestWorth covers Worth, which says whether a whole target is worth
+// attempting, and which axis decides it.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ReachableTestSuite) TestWorthNamesWhatDecidesTheVerdict() {
+func (s *ReachableTestSuite) TestWorth() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// and 110, the target is at 5,000, and every control added together moves the
-			// axis 50. No arrangement of them gets there, and saying so costs a second
-			// against the five minutes the loop spends discovering it.
+			// The refusal.
+			//
+			// The whole point of the thing. Every reading of these blocks sat
+			// between 90 and 110, the target is at 5,000, and every control
+			// added together moves the axis 50. No arrangement of them gets
+			// there, and saying so costs a second against the five minutes
+			// the loop spends discovering it.
 			name: "a target no reading reached and no control can close",
 			then: func() {
 				got := Reachable(one(5000), spanOf(100, 90, 110, 50))
@@ -234,7 +262,11 @@ func (s *ReachableTestSuite) TestWorthNamesWhatDecidesTheVerdict() {
 			},
 		},
 		{
-			// are, because a target is met only when every axis it names is.
+			// The whole-target answer.
+			//
+			// One unreachable axis is an unreachable target however
+			// comfortable the others are, because a target is met only when
+			// every axis it names is.
 			name: "worth names the axis that decides",
 			then: func() {
 				aims := map[audio.Figure]Aim{
@@ -252,6 +284,7 @@ func (s *ReachableTestSuite) TestWorthNamesWhatDecidesTheVerdict() {
 			},
 		},
 		{
+			// A chain with no readings at all.
 			name: "worth on nothing measured",
 			then: func() {
 				_, ok := Worth(nil)
@@ -259,6 +292,7 @@ func (s *ReachableTestSuite) TestWorthNamesWhatDecidesTheVerdict() {
 			},
 		},
 		{
+			// The other exit.
 			name: "worth on a target every axis of which is inside",
 			then: func() {
 				worst, ok := Worth(Reachable(one(200), spanOf(100, 50, 250, 0)))
@@ -269,33 +303,17 @@ func (s *ReachableTestSuite) TestWorthNamesWhatDecidesTheVerdict() {
 			},
 		},
 	} {
-		s.Run(tt.name, func() { tt.then() })
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
-
-// TestASwingWideEnoughIsNotAPromise covers the weaker claim.
-//
-
-// TestTheToleranceWidensTheTargetAtBothEnds covers the edge.
-//
-
-// TestAnAxisNothingMeasuredIsLeftOut covers a figure with no readings.
-//
-
-// TestTheWallIsReportedBeforeTheDistance covers the order.
-//
-
-// TestWorthNamesTheAxisThatDecides covers the whole-target answer.
-//
 
 func TestReachableTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(ReachableTestSuite))
 }
-
-// TestTheOrderIsTheSameWhicheverWayTheMapWasWalked covers the comparator.
-//
 
 // knob is one control with a slope on the centroid.
 func knob(
@@ -307,15 +325,17 @@ func knob(
 	}
 }
 
-// TestBestFindsThePositionsThatCloseTheGap covers the search over settings, and where it stops.
+// TestBest covers Best, which is the nearest the model says a chain can get,
+// with every axis solved together.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ReachableTestSuite) TestBestFindsThePositionsThatCloseTheGap() {
+func (s *ReachableTestSuite) TestBest() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The ordinary case.
 			name: "best closes a gap one control can cover",
 			then: func() {
 				got, err := Best(
@@ -331,8 +351,12 @@ func (s *ReachableTestSuite) TestBestFindsThePositionsThatCloseTheGap() {
 			},
 		},
 		{
-			// so five hundred is everything it has and the target is four thousand away.
-			// No amount of iterating finds what is not there.
+			// The answer per-axis could not give.
+			//
+			// The control has half a turn left and moves the centroid a
+			// thousand per turn, so five hundred is everything it has and the
+			// target is four thousand away. No amount of iterating finds what
+			// is not there.
 			name: "best refuses a gap no position reaches",
 			then: func() {
 				got, err := Best(
@@ -348,8 +372,12 @@ func (s *ReachableTestSuite) TestBestFindsThePositionsThatCloseTheGap() {
 			},
 		},
 		{
-			// reachable on its own and no position reaches both, which is the whole reason
-			// Reachable checking them one at a time ruled nothing out.
+			// Why the axes go in together.
+			//
+			// One dial, two axes, and it moves them in opposite directions.
+			// Each axis is reachable on its own and no position reaches both,
+			// which is the whole reason Reachable checking them one at a time
+			// ruled nothing out.
 			name: "best trades two axes against one control",
 			then: func() {
 				both := Knob{
@@ -383,7 +411,10 @@ func (s *ReachableTestSuite) TestBestFindsThePositionsThatCloseTheGap() {
 			},
 		},
 		{
-			// landed.
+			// Clamping making things worse.
+			//
+			// The answer wanted is the nearest the chain got, not wherever
+			// the last pass landed.
 			name: "best stops when a pass stops improving",
 			then: func() {
 				got, err := Best(
@@ -399,6 +430,7 @@ func (s *ReachableTestSuite) TestBestFindsThePositionsThatCloseTheGap() {
 			},
 		},
 		{
+			// A system with no lever at all.
 			name: "best on a chain nothing can turn",
 			then: func() {
 				_, err := Best(
@@ -412,6 +444,7 @@ func (s *ReachableTestSuite) TestBestFindsThePositionsThatCloseTheGap() {
 			},
 		},
 		{
+			// Nothing to do.
 			name: "best on a target already met",
 			then: func() {
 				got, err := Best(
@@ -426,8 +459,12 @@ func (s *ReachableTestSuite) TestBestFindsThePositionsThatCloseTheGap() {
 			},
 		},
 		{
-			// it reported a centroid of 141 hertz as 141 tolerances out, while Arrived
-			// still said the chain had got there.
+			// The aliasing that bit.
+			//
+			// The residual is the Result's own map. Writing the next pass's
+			// readings over it reported a centroid of 141 hertz as 141
+			// tolerances out, while Arrived still said the chain had got
+			// there.
 			name: "best does not overwrite its own answer",
 			then: func() {
 				got, err := Best(
@@ -443,18 +480,8 @@ func (s *ReachableTestSuite) TestBestFindsThePositionsThatCloseTheGap() {
 			},
 		},
 	} {
-		s.Run(tt.name, func() { tt.then() })
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
-
-// TestBestRefusesAGapNoPositionReaches is the answer per-axis could not give.
-//
-
-// TestBestTradesTwoAxesAgainstOneControl is why the axes go in together.
-//
-
-// TestBestStopsWhenAPassStopsImproving covers clamping making things worse.
-//
-
-// TestBestDoesNotOverwriteItsOwnAnswer covers the aliasing that bit.
-//

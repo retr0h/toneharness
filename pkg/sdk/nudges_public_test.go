@@ -51,6 +51,7 @@ func (s *NudgesPublicTestSuite) TestNudges() {
 		then func()
 	}{
 		{
+			// The base case.
 			name: "what somebody said becomes figures to move",
 			then: func() {
 				got, err := sdk.Nudges([]tonespec.Nudge{{Word: "darker"}})
@@ -65,6 +66,7 @@ func (s *NudgesPublicTestSuite) TestNudges() {
 			},
 		},
 		{
+			// "much darker".
 			name: "steps carry through",
 			then: func() {
 				got, err := sdk.Nudges([]tonespec.Nudge{
@@ -77,6 +79,7 @@ func (s *NudgesPublicTestSuite) TestNudges() {
 			},
 		},
 		{
+			// A word on two axes, both scaled.
 			name: "one word may move two figures",
 			then: func() {
 				got, err := sdk.Nudges([]tonespec.Nudge{
@@ -93,7 +96,10 @@ func (s *NudgesPublicTestSuite) TestNudges() {
 			},
 		},
 		{
-			// said has nothing to move from.
+			// A first answer.
+			//
+			// A nudge moves from wherever the last answer landed, and a run
+			// with nothing said has nothing to move from.
 			name: "nothing said moves nothing",
 			then: func() {
 				got, err := sdk.Nudges(nil)
@@ -103,8 +109,12 @@ func (s *NudgesPublicTestSuite) TestNudges() {
 			},
 		},
 		{
-			// reports a tone nobody asked for and nothing says the instruction was
-			// ignored. So every bad word is named, not only the first.
+			// The failure that matters most.
+			//
+			// A nudge dropped in silence is the worst outcome available: the
+			// run then reports a tone nobody asked for and nothing says the
+			// instruction was ignored. So every bad word is named, not only
+			// the first.
 			name: "every word it cannot use is reported",
 			then: func() {
 				_, err := sdk.Nudges([]tonespec.Nudge{
@@ -124,12 +134,6 @@ func (s *NudgesPublicTestSuite) TestNudges() {
 		})
 	}
 }
-
-// TestNothingSaidMovesNothing covers a first answer.
-//
-
-// TestEveryWordItCannotUseIsReported covers the failure that matters most.
-//
 
 func TestNudgesPublicTestSuite(
 	t *testing.T,

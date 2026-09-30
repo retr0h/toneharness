@@ -85,8 +85,6 @@ func (s *HeldTestSuite) answers(
 	return told
 }
 
-// TestHeldMovesTheLevelAndReadsItBack covers every answer Held has.
-//
 // TestHeld covers Held, which puts the output level where a measurement wants
 // it and says what it did.
 //
@@ -97,8 +95,12 @@ func (s *HeldTestSuite) TestHeld() {
 		then func()
 	}{
 		{
-			// rounds it, which macOS does on some hardware, leaves the rig at a level
-			// nobody asked for and this is the only place that shows.
+			// Every answer Held has.
+			//
+			// The read back is not decoration: a platform that accepts the
+			// instruction and rounds it, which macOS does on some hardware,
+			// leaves the rig at a level nobody asked for and this is the only
+			// place that shows.
 			name: "held moves the level and reads it back",
 			then: func() {
 				tests := []struct {
@@ -158,6 +160,7 @@ func (s *HeldTestSuite) TestHeld() {
 			},
 		},
 		{
+			// What reaches the platform.
 			name: "the level asked for is the level set",
 			then: func() {
 				told := s.answers([]int{20, 38}, -1, false)
@@ -169,10 +172,10 @@ func (s *HeldTestSuite) TestHeld() {
 			},
 		},
 	} {
-		// No SetupTest here. Its job is to remember the platform's own
-		// functions before a row replaces them, and a second call would
-		// remember the replacements instead, so TearDownTest would put a
-		// stub back and the next suite in this binary would call it.
+		// No SetupTest here. Its job is to remember the platform's own functions
+		// before a row replaces them, and a second call would remember the
+		// replacements, so TearDownTest would put a stub back and the next
+		// suite in this binary would call it.
 		s.Run(tt.name, func() { tt.then() })
 	}
 }

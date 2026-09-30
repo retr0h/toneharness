@@ -93,6 +93,7 @@ func (s *MadePublicTestSuite) TestMade() {
 		then func()
 	}{
 		{
+			// Saying what was built and what it chose.
 			name: "made",
 			then: func() {
 				tests := []struct {
@@ -274,10 +275,14 @@ func (s *MadePublicTestSuite) TestMade() {
 			},
 		},
 		{
-			// heard, what was not understood, and where the file went — and a writer that
-			// fails at any seam must be reported rather than leaving a half-written
-			// summary and a success. Every seam, rather than a list of indices that goes
-			// stale the moment a part is added.
+			// A report nobody can read.
+			//
+			// It is written in parts — a title, the chain, what was added,
+			// what was heard, what was not understood, and where the file
+			// went — and a writer that fails at any seam must be reported
+			// rather than leaving a half-written summary and a success. Every
+			// seam, rather than a list of indices that goes stale the moment
+			// a part is added.
 			name: "made reports a failing writer",
 			then: func() {
 				full := s.made(func(m *sdk.Made) {
@@ -310,9 +315,6 @@ func (s *MadePublicTestSuite) TestMade() {
 		})
 	}
 }
-
-// TestMadeReportsAFailingWriter covers a report nobody can read.
-//
 
 // counting accepts every write and says how many there were.
 type counting struct{ n int }

@@ -43,10 +43,8 @@ func (s *BuildTestSuite) opts() Options {
 	}
 }
 
-// TestBuild turns a licensed HX Edit installation into a catalog.
-//
-// TestBuild covers Build, which reads Line 6's model definitions and
-// produces a catalog for one device.
+// TestBuild covers Build, which reads Line 6's model definitions and produces
+// a catalog for one device.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *BuildTestSuite) TestBuild() {
@@ -55,7 +53,11 @@ func (s *BuildTestSuite) TestBuild() {
 		then func()
 	}{
 		{
-			// because the arrange and act are identical and only the question changes.
+			// Turns a licensed HX Edit installation into a catalog.
+			//
+			// Every row builds from the same fixture and asks one thing of
+			// the result, because the arrange and act are identical and only
+			// the question changes.
 			name: "build",
 			then: func() {
 				tests := []struct {
@@ -203,9 +205,12 @@ func (s *BuildTestSuite) TestBuild() {
 			},
 		},
 		{
-			// only says what real gear each one emulates. Naming no map is that choice;
-			// naming one that is not there is a mistake, and covered beside the other
-			// failures.
+			// The half of the sources that is optional.
+			//
+			// The catalog is usable without it: the models supply every
+			// value, and the map only says what real gear each one emulates.
+			// Naming no map is that choice; naming one that is not there is a
+			// mistake, and covered beside the other failures.
 			name: "build without a gear map",
 			then: func() {
 				o := s.opts()
@@ -220,7 +225,7 @@ func (s *BuildTestSuite) TestBuild() {
 			},
 		},
 		{
-			// arriving malformed.
+			// The sources going missing or arriving malformed.
 			name: "build reports what it cannot read",
 			then: func() {
 				unreadable := s.T().TempDir()
@@ -326,9 +331,6 @@ func (s *BuildTestSuite) TestBuild() {
 		})
 	}
 }
-
-// TestBuildWithoutAGearMap covers the half of the sources that is optional.
-//
 
 func TestBuildTestSuite(
 	t *testing.T,

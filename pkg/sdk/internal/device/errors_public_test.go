@@ -52,7 +52,8 @@ func (s *ErrorsPublicTestSuite) TestError() {
 			},
 		},
 		{
-			// decode, which is how a protocol change becomes visible.
+			// A device answering with something nobody can decode, which is
+			// how a protocol change becomes visible.
 			name: "not a preset error",
 			then: func() {
 				tests := []struct {

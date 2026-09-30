@@ -96,9 +96,6 @@ func (s *BackingPublicTestSuite) TestARigIsNotItsOwnOrphan() {
 	}
 }
 
-// TestADirectoryWithNoManifest covers a directory somebody made and has not
-// filled, which claims nothing and is nobody's problem.
-//
 // TestBacking covers Backing, which reads which records back each rig, and
 // holds them to its era.
 //
@@ -109,8 +106,13 @@ func (s *BackingPublicTestSuite) TestBacking() {
 		then func()
 	}{
 		{
-			// empty directory: as a fixture this passed locally and never ran anywhere
-			// else, which is the kind of test that reports coverage it does not have.
+			// A directory somebody made and has not filled, which claims
+			// nothing and is nobody's problem.
+			//
+			// Built here rather than kept in testdata, because git does not
+			// track an empty directory: as a fixture this passed locally and
+			// never ran anywhere else, which is the kind of test that reports
+			// coverage it does not have.
 			name: "a directory with no manifest",
 			then: func() {
 				corpus := s.T().TempDir()
@@ -138,7 +140,8 @@ func (s *BackingPublicTestSuite) TestBacking() {
 			},
 		},
 		{
-			// manifest is broken, which is reported rather than passed over.
+			// A directory no rig claims whose manifest is broken, which is
+			// reported rather than passed over.
 			name: "an orphan manifest that will not read",
 			then: func() {
 				_, err := rigs.Backing(
@@ -150,7 +153,8 @@ func (s *BackingPublicTestSuite) TestBacking() {
 			},
 		},
 		{
-			// which is caught reading the rigs' own records.
+			// The corpus argument naming a file, which is caught reading the
+			// rigs' own records.
 			name: "a corpus directory that is a file",
 			then: func() {
 				_, err := rigs.Backing(
@@ -162,7 +166,8 @@ func (s *BackingPublicTestSuite) TestBacking() {
 			},
 		},
 		{
-			// the scan for directories nobody claims, which is the other way in.
+			// The same argument reaching the scan for directories nobody
+			// claims, which is the other way in.
 			name: "a corpus that is a file with no rigs to read",
 			then: func() {
 				_, err := rigs.Backing(
@@ -175,7 +180,10 @@ func (s *BackingPublicTestSuite) TestBacking() {
 			},
 		},
 		{
-			// reports rather than fails: the rigs still read.
+			// The path being wrong.
+			//
+			// A directory nobody has is the same as a player nobody has
+			// measured, so it reports rather than fails: the rigs still read.
 			name: "a corpus that is not there",
 			then: func() {
 				got, err := rigs.Backing(
@@ -192,6 +200,7 @@ func (s *BackingPublicTestSuite) TestBacking() {
 			},
 		},
 		{
+			// A corpus somebody broke.
 			name: "a manifest that will not read",
 			then: func() {
 				_, err := rigs.Backing(
@@ -203,7 +212,11 @@ func (s *BackingPublicTestSuite) TestBacking() {
 			},
 		},
 		{
-			// is the same thing as a misspelt directory and reads the same way.
+			// Reading a corpus with no rigs to read it against.
+			//
+			// Not an empty answer: the records are there and nothing claims
+			// them, which is the same thing as a misspelt directory and reads
+			// the same way.
 			name: "a rig directory nobody has",
 			then: func() {
 				got, err := rigs.Backing(
@@ -220,6 +233,7 @@ func (s *BackingPublicTestSuite) TestBacking() {
 			},
 		},
 		{
+			// A corpus argument naming a file.
 			name: "a corpus path that is not a directory",
 			then: func() {
 				_, err := rigs.Backing(
@@ -232,8 +246,12 @@ func (s *BackingPublicTestSuite) TestBacking() {
 			},
 		},
 		{
-			// to fix, which is what Load does, and this reports it rather than answering
-			// about the rigs that happened to parse.
+			// A rig directory holding a broken file.
+			//
+			// A half-read knowledge base is worse than a clear complaint
+			// about the file to fix, which is what Load does, and this
+			// reports it rather than answering about the rigs that happened
+			// to parse.
 			name: "a rig that will not read",
 			then: func() {
 				_, err := rigs.Backing(
@@ -271,16 +289,6 @@ func (s *BackingPublicTestSuite) TestARigNobodyHasMeasured() {
 
 	s.Require().Empty(got.Records)
 }
-
-// TestACorpusThatIsNotThere covers the path being wrong.
-//
-
-// TestARigDirectoryNobodyHas covers reading a corpus with no rigs to read
-// it against.
-//
-
-// TestARigThatWillNotRead covers a rig directory holding a broken file.
-//
 
 func TestBackingPublicTestSuite(
 	t *testing.T,

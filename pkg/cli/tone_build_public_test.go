@@ -66,8 +66,6 @@ func (s *ToneBuildPublicTestSuite) examples(
 	return filepath.Join("examples", "tonespec", name)
 }
 
-// TestTheWorkedExampleBuildsARig holds the examples to the code.
-//
 // TestToneBuild covers ToneBuild, which reads a request and a setup and
 // writes the rig they resolve to.
 //
@@ -78,7 +76,11 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 		then func()
 	}{
 		{
-			// thing somebody runs, and it says the tool is broken when the example is.
+			// Holds the examples to the code.
+			//
+			// A worked example that stopped working is worse than none: it is
+			// the first thing somebody runs, and it says the tool is broken
+			// when the example is.
 			name: "the worked example builds a rig",
 			then: func() {
 				out := filepath.Join(s.T().TempDir(), "rig.yaml")
@@ -107,7 +109,11 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 			},
 		},
 		{
-			// they own, so the rig says what it assumed rather than refusing.
+			// The optional half.
+			//
+			// Somebody asking what a record sounds like has not necessarily
+			// said what they own, so the rig says what it assumed rather than
+			// refusing.
 			name: "without a setup it says what it assumed",
 			then: func() {
 				var buf bytes.Buffer
@@ -122,6 +128,7 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 			},
 		},
 		{
+			// The half of an ask it drops.
 			name: "it reports what it could not honour",
 			then: func() {
 				var buf bytes.Buffer
@@ -149,6 +156,7 @@ gear:
 			},
 		},
 		{
+			// An ask with nothing to build from.
 			name: "a request it cannot answer fails",
 			then: func() {
 				var buf bytes.Buffer
@@ -162,9 +170,12 @@ gear:
 			},
 		},
 		{
-			// still returned, because what could not be honoured is the useful half either
-			// way. An agent reading the data surface gets the reasons rather than an exit
-			// code and nothing.
+			// --json on a failure.
+			//
+			// The notes are written whether the build succeeded or not, and
+			// the error is still returned, because what could not be honoured
+			// is the useful half either way. An agent reading the data
+			// surface gets the reasons rather than an exit code and nothing.
 			name: "a request it cannot answer still answers as data",
 			then: func() {
 				var buf bytes.Buffer
@@ -181,6 +192,7 @@ gear:
 			},
 		},
 		{
+			// Both files.
 			name: "a document it cannot read is reported",
 			then: func() {
 				tests := []struct {
@@ -220,6 +232,7 @@ gear:
 			},
 		},
 		{
+			// A bad output path.
 			name: "somewhere it cannot write is reported",
 			then: func() {
 				var buf bytes.Buffer
@@ -233,9 +246,13 @@ gear:
 			},
 		},
 		{
-			// looks does not need a catalog and six hundred measurements to produce one.
-			// And optional, the way every collaborator in this repository is: the cases
-			// above hand in nothing and reach the real one.
+			// The seam.
+			//
+			// Declared here rather than taking *sdk.Client, so a test for how
+			// an answer looks does not need a catalog and six hundred
+			// measurements to produce one. And optional, the way every
+			// collaborator in this repository is: the cases above hand in
+			// nothing and reach the real one.
 			name: "a stand in resolves instead of the real thing",
 			then: func() {
 				ctrl := gomock.NewController(s.T())
@@ -264,7 +281,10 @@ gear:
 			},
 		},
 		{
-			// they are printed before the error is returned.
+			// The other half.
+			//
+			// A request that could not be honoured has usually said why in
+			// the notes, so they are printed before the error is returned.
 			name: "a stand ins failure is reported with its notes",
 			then: func() {
 				ctrl := gomock.NewController(s.T())
@@ -285,24 +305,12 @@ gear:
 			},
 		},
 	} {
-		// No SetupTest here: it moves to the checkout root with a relative
-		// path, and testify has already run it for this method. Calling it
-		// again would go up two more levels.
+		// No SetupTest here: it moves to the checkout root by a relative path,
+		// and testify has already run it for this method, so a second call
+		// would go up two more levels.
 		s.Run(tt.name, func() { tt.then() })
 	}
 }
-
-// TestWithoutASetupItSaysWhatItAssumed covers the optional half.
-//
-
-// TestARequestItCannotAnswerStillAnswersAsData covers --json on a failure.
-//
-
-// TestAStandInResolvesInsteadOfTheRealThing covers the seam.
-//
-
-// TestAStandInsFailureIsReportedWithItsNotes covers the other half.
-//
 
 func TestToneBuildPublicTestSuite(
 	t *testing.T,

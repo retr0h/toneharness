@@ -127,10 +127,8 @@ func substituting(
 	return spec
 }
 
-// TestResolve turns gear a person names into models a device has.
-//
-// TestResolve covers Resolve, which turns a rig into a chain for the
-// device the catalog describes.
+// TestResolve covers Resolve, which turns a rig, the ask beside it and a
+// catalog into a chain.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *ResolvePublicTestSuite) TestResolve() {
@@ -139,8 +137,12 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 		then func()
 	}{
 		{
-			// the two comes back is arbitrary. It is pinned here because a row wants a
-			// value, and TestResolveIsDeterministic is what guards that it stays put.
+			// Turns gear a person names into models a device has.
+			//
+			// "Ampeg SVT" names neither the normal nor the bright channel, so
+			// which of the two comes back is arbitrary. It is pinned here
+			// because a row wants a value, and TestResolveIsDeterministic is
+			// what guards that it stays put.
 			name: "resolve",
 			then: func() {
 				tests := []struct {
@@ -277,9 +279,13 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 			},
 		},
 		{
-			// device: "Mike Dirnt" rather than "mike-dirnt". A rig read off disk has no ask
-			// beside it and no subject to be named after, so its identifier stands in,
-			// which beats a blank heading.
+			// Where the name on the screen comes from.
+			//
+			// The subject is the ask's, and it is what somebody wants to read
+			// on the device: "Mike Dirnt" rather than "mike-dirnt". A rig
+			// read off disk has no ask beside it and no subject to be named
+			// after, so its identifier stands in, which beats a blank
+			// heading.
 			name: "the ask names the preset",
 			then: func() {
 				tests := []struct {
@@ -310,8 +316,11 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 			},
 		},
 		{
-			// chosen, it must not change because the catalog was regenerated or because
-			// a map iterated in a different order.
+			// A property rather than a case.
+			//
+			// "Ampeg SVT" names neither the normal nor the bright channel.
+			// Whichever is chosen, it must not change because the catalog was
+			// regenerated or because a map iterated in a different order.
 			name: "resolve is deterministic",
 			then: func() {
 				first, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
@@ -326,7 +335,8 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 			},
 		},
 		{
-			// a person is told about decisions made on their behalf.
+			// The second return, which is what a person is told about
+			// decisions made on their behalf.
 			name: "resolve names what it chose for you",
 			then: func() {
 				_, added, _, err := compile.Resolve(
@@ -340,6 +350,7 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 			},
 		},
 		{
+			// The values a block starts at.
 			name: "resolve sets parameters",
 			then: func() {
 				tests := []struct {
@@ -390,9 +401,6 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 		})
 	}
 }
-
-// TestTheAskNamesThePreset covers where the name on the screen comes from.
-//
 
 // TestGear resolves one name, the way both halves of this project now do.
 //
@@ -462,11 +470,7 @@ func (s *ResolvePublicTestSuite) TestGear() {
 	}
 }
 
-// TestResolveIsDeterministic is a property rather than a case.
-//
-
-// TestFit covers Fit, which reports whether a chain fits the device,
-// moving blocks to the second.
+// TestFit covers Fit, which drops what a device has no room for.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *ResolvePublicTestSuite) TestFit() {
@@ -475,6 +479,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 		then func()
 	}{
 		{
+			// Places a chain across the processors a device has.
 			name: "fit",
 			then: func() {
 				tests := []struct {
@@ -542,8 +547,12 @@ func (s *ResolvePublicTestSuite) TestFit() {
 			},
 		},
 		{
-			// whatever it already held: three heavy blocks put 180 on a chip with room
-			// for 95, and the chain was rejected by validation rather than laid out.
+			// The second processor having a ceiling of its own.
+			//
+			// Before this, everything that overflowed the first went onto the
+			// second whatever it already held: three heavy blocks put 180 on
+			// a chip with room for 95, and the chain was rejected by
+			// validation rather than laid out.
 			name: "fit budgets each processor",
 			then: func() {
 				spec, _, _, err := compile.Resolve(
@@ -570,7 +579,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 			},
 		},
 		{
-			// rather than of any one chain.
+			// A property of the whole result rather than of any one chain.
 			name: "fit numbers each processor from zero",
 			then: func() {
 				spec, _, _, err := compile.Resolve(
@@ -598,7 +607,8 @@ func (s *ResolvePublicTestSuite) TestFit() {
 			},
 		},
 		{
-			// from dropping blocks on the floor.
+			// Keeps a catalog from another release from dropping blocks on
+			// the floor.
 			name: "fit ignores a block the catalog lacks",
 			then: func() {
 				spec, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
@@ -616,10 +626,6 @@ func (s *ResolvePublicTestSuite) TestFit() {
 		})
 	}
 }
-
-// TestFitBudgetsEachProcessor covers the second processor having a ceiling
-// of its own.
-//
 
 // TestNoSuchGearError covers what somebody reads when nothing matched.
 func (s *ResolvePublicTestSuite) TestNoSuchGearError() {

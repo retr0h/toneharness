@@ -34,8 +34,8 @@ type RefitPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestRefit covers Refit, which moves a rig's controller assignments
-// onto where the fit put the.
+// TestRefit covers Refit, which moves a rig's controller assignments onto
+// where the fit put the blocks.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *RefitPublicTestSuite) TestRefit() {
@@ -44,6 +44,7 @@ func (s *RefitPublicTestSuite) TestRefit() {
 		then func()
 	}{
 		{
+			// Where an assignment ends up after a chain is laid out.
 			name: "refit",
 			then: func() {
 				// Three blocks, the last of which the fit put on the second processor
@@ -110,7 +111,8 @@ func (s *RefitPublicTestSuite) TestRefit() {
 			},
 		},
 		{
-			// same numbers and the same fit.
+			// A switch following its block, which is the same numbers and the
+			// same fit.
 			name: "refit moves a footswitch",
 			then: func() {
 				before := []plan.Block{{Pos: 0}, {Pos: 1}, {Pos: 2}}
@@ -139,7 +141,7 @@ func (s *RefitPublicTestSuite) TestRefit() {
 			},
 		},
 		{
-			// is nothing to move.
+			// The common case, where there is nothing to move.
 			name: "refit leaves a plan that assigns nothing",
 			then: func() {
 				made := plan.Plan{Name: "test"}

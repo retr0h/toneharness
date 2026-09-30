@@ -82,6 +82,7 @@ func (s *MeasuringPublicTestSuite) TestHear() {
 		then func()
 	}{
 		{
+			// The ordinary case.
 			name: "hear measures what came back",
 			then: func() {
 				back := tone(1, 0.5)
@@ -96,6 +97,7 @@ func (s *MeasuringPublicTestSuite) TestHear() {
 			},
 		},
 		{
+			// The bench failing.
 			name: "hear reports hardware that would not answer",
 			then: func() {
 				_, _, err := sdk.Hear(context.Background(),
@@ -111,10 +113,8 @@ func (s *MeasuringPublicTestSuite) TestHear() {
 	}
 }
 
-// TestFingerprintMeasuresTheAnswerNotTheQuestion is a bug worth a test.
-//
 // TestFingerprint covers Fingerprint, which measures whatever is in front of
-// the device, at its own.
+// the device, at its own defaults.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *MeasuringPublicTestSuite) TestFingerprint() {
@@ -123,9 +123,12 @@ func (s *MeasuringPublicTestSuite) TestFingerprint() {
 		then func()
 	}{
 		{
-			// same for every block. The level of what came back is the one thing a volume
-			// control moves, and measuring the wrong one reports every block as equally
-			// loud.
+			// A bug worth a test.
+			//
+			// The level of the signal sent is a property of the file on disk
+			// and is the same for every block. The level of what came back is
+			// the one thing a volume control moves, and measuring the wrong
+			// one reports every block as equally loud.
 			name: "fingerprint measures the answer not the question",
 			then: func() {
 				sent := tone(1, 0.5)
@@ -140,6 +143,7 @@ func (s *MeasuringPublicTestSuite) TestFingerprint() {
 			},
 		},
 		{
+			// The bench failing.
 			name: "fingerprint reports hardware that would not answer",
 			then: func() {
 				_, err := sdk.Fingerprint(context.Background(),
@@ -184,8 +188,6 @@ func (s *MeasuringPublicTestSuite) TestLevelIsLoudness() {
 	}
 }
 
-// TestFiguresCarriesWhatCanBeAbsent covers transient and decay.
-//
 // TestFigures covers Figures, which turns a reading into the shape a measured
 // library holds.
 //
@@ -196,7 +198,11 @@ func (s *MeasuringPublicTestSuite) TestFigures() {
 		then func()
 	}{
 		{
-			// reading can hold neither. Zero would be an answer; absent is the truth.
+			// Transient and decay.
+			//
+			// A transient needs a note starting and a decay needs one ending,
+			// so a reading can hold neither. Zero would be an answer; absent
+			// is the truth.
 			name: "figures carries what can be absent",
 			then: func() {
 				s.Run("present", func() {
@@ -220,7 +226,11 @@ func (s *MeasuringPublicTestSuite) TestFigures() {
 			},
 		},
 		{
-			// percentage, so one of the two has to move and this is where.
+			// The conversion.
+			//
+			// A reading carries them from zero to one and every other number
+			// here is a percentage, so one of the two has to move and this is
+			// where.
 			name: "figures reports shares as percentages",
 			then: func() {
 				got := sdk.Figures(audio.Profile{
@@ -249,9 +259,6 @@ func (s *MeasuringPublicTestSuite) TestFigures() {
 		})
 	}
 }
-
-// TestFiguresReportsSharesAsPercentages covers the conversion.
-//
 
 func TestMeasuringPublicTestSuite(
 	t *testing.T,

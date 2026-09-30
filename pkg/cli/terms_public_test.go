@@ -120,11 +120,8 @@ func (s *TermsPublicTestSuite) earned() []audio.Player {
 	}}
 }
 
-// TestAWriteThatFailsIsReported covers the output going somewhere that stops
-// accepting it.
-//
 // TestPlayerTerms covers PlayerTerms, which writes what each player's records
-// earned them, as words ready.
+// earned them, as words ready to paste into an ask.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *TermsPublicTestSuite) TestPlayerTerms() {
@@ -133,8 +130,12 @@ func (s *TermsPublicTestSuite) TestPlayerTerms() {
 		then func()
 	}{
 		{
-			// the document and flushes the rest when it is closed, so a late failure is a
-			// different path from an early one.
+			// The output going somewhere that stops accepting it.
+			//
+			// Every point it can fail, rather than the first: the encoder
+			// writes some of the document and flushes the rest when it is
+			// closed, so a late failure is a different path from an early
+			// one.
 			name: "a write that fails is reported",
 			then: func() {
 				writes := &counting{}
@@ -151,7 +152,7 @@ func (s *TermsPublicTestSuite) TestPlayerTerms() {
 			},
 		},
 		{
-			// which is one line and not a document.
+			// The other output, which is one line and not a document.
 			name: "a write that fails with nothing earned is reported",
 			then: func() {
 				err := cli.PlayerTerms(&stops{}, []audio.Player{{ID: "les-claypool", Records: 3}})

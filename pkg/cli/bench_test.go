@@ -48,11 +48,8 @@ type BenchPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestABenchTheCallerHoldsIsHandedBack is what every other test in this package
-// relies on.
-//
-// TestBenchFor covers benchFor, which is the audio loop a measuring run reads
-// through, and how to let it.
+// TestBenchFor covers choosing the audio loop a measuring run reads through,
+// and how to let it go.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *BenchPublicTestSuite) TestBenchFor() {
@@ -61,9 +58,11 @@ func (s *BenchPublicTestSuite) TestBenchFor() {
 		then func()
 	}{
 		{
-			// the named hardware is never looked at. That is the branch the whole suite
-			// takes, which is why nothing here needs an interface, a cable and somebody in
-			// the room to plug them in.
+			// What every other test in this package relies on. A caller who
+			// supplied one owns its lifetime, so the closer does nothing and
+			// the named hardware is never looked at. That is the branch the
+			// whole suite takes, which is why nothing here needs an
+			// interface, a cable and somebody in the room to plug them in.
 			name: "a bench the caller holds is handed back",
 			then: func() {
 				held := bench{}
@@ -79,7 +78,16 @@ func (s *BenchPublicTestSuite) TestBenchFor() {
 			},
 		},
 		{
-			// reamp.TestOpenSaysWhatWasAttachedInstead covers it against the same name.
+			// The only case here that opens audio, and one rather than one
+			// per command: five commands each had one, and each spent three
+			// to six seconds on continuous integration initialising an audio
+			// subsystem that is not there. Twenty seconds of a unit suite to
+			// assert a refusal that belongs to whichever function opens the
+			// device, which is this one.
+			//
+			// What the device layer does with the name is reamp's own
+			// subject, and reamp.TestOpenSaysWhatWasAttachedInstead covers it
+			// against the same name.
 			name: "hardware nothing answers to is reported",
 			then: func() {
 				_, _, err := benchFor(nil, "no such interface anybody owns")
@@ -88,9 +96,11 @@ func (s *BenchPublicTestSuite) TestBenchFor() {
 			},
 		},
 		{
-			// one this package opened must be, or the audio device stays held until the
-			// process exits. Nothing else in the package can tell those two apart, so the
-			// assertion is that the closer reached Close.
+			// The branch that owns a lifetime. A bench handed back to a
+			// caller who did not open it must not be closed, and one this
+			// package opened must be, or the audio device stays held until
+			// the process exits. Nothing else in the package can tell those
+			// two apart, so the assertion is that the closer reached Close.
 			name: "a bench this package opened is closed by its closer",
 			then: func() {
 				held := &closes{}
@@ -116,25 +126,9 @@ func (s *BenchPublicTestSuite) TestBenchFor() {
 			},
 		},
 	} {
-		s.Run(tt.name, func() {
-			tt.then()
-		})
+		s.Run(tt.name, func() { tt.then() })
 	}
 }
-
-// TestHardwareNothingAnswersToIsReported is the other branch, and the only
-// test here that opens audio.
-//
-// One test rather than one per command. Five commands each had one, and each
-// spent three to six seconds on continuous integration initialising an audio
-// subsystem that is not there — twenty seconds of a unit suite to assert a
-// refusal that belongs to whichever function opens the device. This is that
-// function.
-//
-
-// TestABenchThisPackageOpenedIsClosedByItsCloser is the branch that owns a
-// lifetime.
-//
 
 func TestBenchPublicTestSuite(
 	t *testing.T,

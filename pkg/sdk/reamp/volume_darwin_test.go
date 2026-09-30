@@ -82,8 +82,12 @@ func (s *VolumeDarwinTestSuite) TestVolume() {
 			},
 		},
 		{
-			// not a number is not the same case as a shell that failed, and reading it as
-			// a level would put an arbitrary integer into a library.
+			// The answer nobody expects.
+			//
+			// osascript reports some failures on stdout and exits zero, so a
+			// reply that is not a number is not the same case as a shell that
+			// failed, and reading it as a level would put an arbitrary
+			// integer into a library.
 			name: "a shell that printed something else",
 			then: func() {
 				asks = func(string) ([]byte, error) { return []byte("no volume settings"), nil }
@@ -98,15 +102,12 @@ func (s *VolumeDarwinTestSuite) TestVolume() {
 			},
 		},
 	} {
-		// No SetupTest here. Its job is to remember the shell the platform
-		// calls before a row replaces it, and a second call would remember
-		// the replacement, so TearDownTest would put a stub back.
+		// No SetupTest here. Its job is to remember the shell the platform calls
+		// before a row replaces it, and a second call would remember the
+		// replacement, so TearDownTest would put a stub back.
 		s.Run(tt.name, func() { tt.then() })
 	}
 }
-
-// TestAShellThatPrintedSomethingElse is the answer nobody expects.
-//
 
 // TestSetVolume covers setVolume, which puts the output level where a
 // measurement wants it.
@@ -147,9 +148,9 @@ func (s *VolumeDarwinTestSuite) TestSetVolume() {
 			},
 		},
 	} {
-		// No SetupTest here. Its job is to remember the shell the platform
-		// calls before a row replaces it, and a second call would remember
-		// the replacement, so TearDownTest would put a stub back.
+		// No SetupTest here. Its job is to remember the shell the platform calls
+		// before a row replaces it, and a second call would remember the
+		// replacement, so TearDownTest would put a stub back.
 		s.Run(tt.name, func() { tt.then() })
 	}
 }

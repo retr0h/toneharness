@@ -361,6 +361,244 @@ func (s *ControlsRunTestSuite) TestControlsRecordsWhatClipped() {
 			"dial beside them, rather than the run saying it once")
 }
 
+// TestControlsRefusesWhenTheDeviceNamesNothingEither covers the last resort.
+//
+// An equaliser has no symbol entry, so the catalog cannot say which index is
+// which and the device is asked instead. When the device answers nothing at any
+// index there is no third place to look, and a sweep that went ahead would file
+// every curve under a guess. That is the one case still refused.
+//
+// The refusal used to cover every unclaimed block, which left the equalisers
+// undescribed: one measures as the baseline at its defaults, because flat is
+// what it ships at, so its curves are the only thing that says what it does.
+func (s *ControlsRunTestSuite) TestControlsRefusesWhenTheDeviceNamesNothingEither() {
+	s.ready()
+
+	_, _, err := s.run("HD2_EQSimple3Band", bench{})
+
+	s.Require().ErrorContains(err, "named no parameter")
+}
+
+// TestControlsRefusesAModelNobodyHas covers a name that is not a block.
+func (s *ControlsRunTestSuite) TestControlsRefusesAModelNobodyHas() {
+	_, _, err := s.run("nothing calls itself this", bench{})
+
+	s.Require().ErrorContains(err, "the catalog has no")
+}
+
+// TestMeasureControls covers MeasureControls, which sweeps every control of
+// one block, alone, and writes what each of them does.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ControlsRunTestSuite) TestMeasureControls() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// A missing signal.
+			name: "controls reports a reference it cannot read",
+			then: func() {
+				var buf bytes.Buffer
+
+				err := MeasureControls(context.Background(), &buf, ControlsOptions{
+					Client: s.pedal, Model: "HD2_CabMicIr_2x15Brute",
+					Dry: "nowhere.wav", Out: s.out, Seconds: 1, Points: 3, Takes: 2,
+					Bench: bench{},
+				})
+
+				s.Require().ErrorContains(err, "nowhere.wav")
+			},
+		},
+		{
+			// --device naming a pedal this binary ships no catalog for.
+			name: "controls reports a catalog it cannot read",
+			then: func() {
+				ctrl := gomock.NewController(s.T())
+				pedal := mocks.NewMockPedal(ctrl)
+				pedal.EXPECT().Catalog(gomock.Any()).
+					Return(nil, errors.New("no catalog for that pedal")).AnyTimes()
+
+				var buf bytes.Buffer
+
+				err := MeasureControls(context.Background(), &buf, ControlsOptions{
+					Client: pedal, Model: "HD2_CabMicIr_2x15Brute", Dry: s.dry,
+					Out: s.out, Seconds: 1, Points: 3, Takes: 2, Bench: bench{},
+				})
+
+				s.Require().ErrorContains(err, "no catalog for that pedal")
+			},
+		},
+		{
+			// The last two steps.
+			//
+			// The chain travelling in the file is read after the sweeps, with
+			// the preset put back, so what it records is what was measured
+			// rather than whatever position the last control was left at.
+			// Both calls can fail, and a file carrying a chain nobody read
+			// would be a file claiming a measurement it does not have.
+			name: "controls puts the preset back before reading the chain",
+			then: func() {
+				for _, tt := range []struct {
+					name  string
+					setup func()
+					says  string
+				}{
+					{
+						name: "the preset would not go back",
+						setup: func() {
+							s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+								Return(nil).Times(1)
+							s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+								Return(errors.New("would not load")).AnyTimes()
+						},
+						says: "would not load",
+					},
+					{
+						// Only the read that asks for a rig, which is the one at the end.
+						// The sweeps read the plan, and failing those would stop the run
+						// somewhere else entirely.
+						name: "the device would not say what it is playing",
+						setup: func() {
+							s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+								Return(nil).AnyTimes()
+							s.pedal.EXPECT().Current(gomock.Any(), sdk.FormatRig).
+								Return(sdk.Reading{}, errors.New("would not say")).AnyTimes()
+						},
+						says: "would not say",
+					},
+				} {
+					s.Run(tt.name, func() {
+						s.SetupTest()
+						tt.setup()
+						s.readyWithout()
+
+						var buf bytes.Buffer
+
+						err := MeasureControls(context.Background(), &buf, ControlsOptions{
+							Client: s.pedal, Model: "HD2_CabMicIr_2x15Brute", Dry: s.dry,
+							Out: s.out, Seconds: 1, Points: 3, Takes: 2, Bench: bench{},
+						})
+
+						s.Require().ErrorContains(err, tt.says)
+					})
+				}
+			},
+		},
+		{
+			// The five measuring commands all open the loop through benchFor,
+			// and the preset is built before the loop is opened, so this is
+			// the one refusal that arrives after the compiler has already
+			// done its work.
+			name: "no bench supplied and no interface of that name",
+			then: func() {
+				s.ready()
+
+				err := MeasureControls(context.Background(), &bytes.Buffer{},
+					ControlsOptions{
+						Client: s.pedal, Model: "HD2_CabMicIr_2x15Brute",
+						Dry: s.dry, Out: s.out, Seconds: 1, Points: 3, Takes: 2,
+						Hardware: "no such interface anybody owns",
+					})
+
+				s.Require().ErrorContains(err, "no such interface anybody owns")
+			},
+		},
+		{
+			// A sweep builds one preset and plays it several hundred times,
+			// so a machine with nowhere to write it cannot start.
+			name: "there is nowhere to build the preset",
+			then: func() {
+				s.T().Setenv("TMPDIR",
+					filepath.Join(s.T().TempDir(), "not a directory"))
+
+				_, _, err := s.run("HD2_CabMicIr_2x15Brute", bench{})
+
+				s.Require().ErrorContains(err,
+					"making somewhere to build a preset")
+			},
+		},
+		{
+			// The directory is made on the way, so the path being wrong is
+			// only found out at the write itself, after the whole sweep has
+			// been taken. Losing an hour of readings to a mistyped path is
+			// the reason it says which path.
+			name: "the curves have nowhere to go",
+			then: func() {
+				s.ready()
+
+				held := s.T().TempDir()
+
+				err := MeasureControls(context.Background(), &bytes.Buffer{},
+					ControlsOptions{
+						Client: s.pedal, Model: "HD2_CabMicIr_2x15Brute",
+						Dry: s.dry, Out: held, Seconds: 1, Points: 3,
+						Takes: 2, Bench: bench{},
+					})
+
+				s.Require().ErrorContains(err, held)
+			},
+		},
+		{
+			// The preset is loaded again before each control is swept,
+			// because a control stays where the last sweep left it and the
+			// next one would be measured on a chain the first skewed.
+			name: "the device will not load the preset for a sweep",
+			then: func() {
+				s.pedal.EXPECT().
+					Compile(gomock.Any(), gomock.Any()).
+					DoAndReturn(
+						func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
+							writeBlank(s.T(), in.Out)
+
+							return sdk.Built{}, nil
+						}).AnyTimes()
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+					Return(errors.New("the device stopped taking the message")).
+					AnyTimes()
+
+				_, _, err := s.run("HD2_CabMicIr_2x15Brute", bench{})
+
+				s.Require().ErrorContains(err,
+					"the device stopped taking the message")
+			},
+		},
+		{
+			// The noise floor is read before any control moves, so a bench
+			// that stops there stops the sweep rather than costing one
+			// reading of one position.
+			name: "the bench stops while the noise floor is being read",
+			then: func() {
+				s.ready()
+
+				calls := 0
+
+				_, _, err := s.run("HD2_CabMicIr_2x15Brute",
+					stopping{after: 0, calls: &calls})
+
+				s.Require().ErrorContains(err, "stopped answering")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
+		})
+	}
+}
+
+// TestControlsReportsAChainItCannotBuild covers the compiler failing.
+func (s *ControlsRunTestSuite) TestControlsReportsAChainItCannotBuild() {
+	s.pedal.EXPECT().Compile(gomock.Any(), gomock.Any()).
+		Return(sdk.Built{}, errors.New("will not build")).AnyTimes()
+
+	_, _, err := s.run("HD2_CabMicIr_2x15Brute", bench{})
+
+	s.Require().ErrorContains(err, "building a chain holding only")
+}
+
 // TestControlsCarriesOnPastAControlTheDeviceRefuses covers a declined move.
 func (s *ControlsRunTestSuite) TestControlsCarriesOnPastAControlTheDeviceRefuses() {
 	s.pedal.EXPECT().
@@ -438,205 +676,6 @@ func (s *ControlsRunTestSuite) TestTheFirstReadingAfterABenchOpensIsThrownAway()
 	s.Require().InDelta(floors[audio.KeyCentroid], floor[audio.KeyCentroid], 0.001,
 		"the kept takes agree, so the centre wanders by its floor and no more")
 }
-
-// TestControlsPutsThePresetBackBeforeReadingTheChain covers the last two steps.
-//
-// TestMeasureControls covers MeasureControls, which sweeps every control of
-// one block, alone, and writes what.
-//
-// One method and one table, so a case is a row rather than a file.
-func (s *ControlsRunTestSuite) TestMeasureControls() {
-	for _, tt := range []struct {
-		name string
-		then func()
-	}{
-		{
-			// put back, so what it records is what was measured rather than whatever
-			// position the last control was left at. Both calls can fail, and a file
-			// carrying a chain nobody read would be a file claiming a measurement it does
-			// not have.
-			name: "controls puts the preset back before reading the chain",
-			then: func() {
-				for _, tt := range []struct {
-					name  string
-					setup func()
-					says  string
-				}{
-					{
-						name: "the preset would not go back",
-						setup: func() {
-							s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
-								Return(nil).Times(1)
-							s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
-								Return(errors.New("would not load")).AnyTimes()
-						},
-						says: "would not load",
-					},
-					{
-						// Only the read that asks for a rig, which is the one at the end.
-						// The sweeps read the plan, and failing those would stop the run
-						// somewhere else entirely.
-						name: "the device would not say what it is playing",
-						setup: func() {
-							s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
-								Return(nil).AnyTimes()
-							s.pedal.EXPECT().Current(gomock.Any(), sdk.FormatRig).
-								Return(sdk.Reading{}, errors.New("would not say")).AnyTimes()
-						},
-						says: "would not say",
-					},
-				} {
-					s.Run(tt.name, func() {
-						s.SetupTest()
-						tt.setup()
-						s.readyWithout()
-
-						var buf bytes.Buffer
-
-						err := MeasureControls(context.Background(), &buf, ControlsOptions{
-							Client: s.pedal, Model: "HD2_CabMicIr_2x15Brute", Dry: s.dry,
-							Out: s.out, Seconds: 1, Points: 3, Takes: 2, Bench: bench{},
-						})
-
-						s.Require().ErrorContains(err, tt.says)
-					})
-				}
-			},
-		},
-		{
-			// different stage of the same setup and which stage said so is the whole of
-			// the report. The last resort is worth naming: an equaliser has no symbol
-			// entry, so the catalog cannot say which index is which and the device is
-			// asked instead. When the device answers nothing at any index there is no
-			// third place to look, and a sweep that went ahead would file every curve
-			// under a guess.
-			name: "controls refuses what it cannot sweep",
-			then: func() {
-				for _, tt := range []struct {
-					name  string
-					setup func()
-					model string
-					dry   string
-					// hardware names an interface instead of handing over a bench, which
-					// is the one row that opens the loop for real.
-					hardware string
-					// held asks for the curves to be written somewhere that is already a
-					// directory, because the path is only checked at the write.
-					held bool
-					says string
-				}{
-					{
-						name: "the catalog will not say what the device has",
-						setup: func() {
-							s.ctrl = gomock.NewController(s.T())
-							s.pedal = mocks.NewMockPedal(s.ctrl)
-							s.pedal.EXPECT().Catalog(gomock.Any()).
-								Return(nil, errors.New("no catalog for that pedal")).
-								AnyTimes()
-						},
-						says: "no catalog for that pedal",
-					},
-					{
-						name:  "the model is not a block",
-						model: "nothing calls itself this",
-						says:  "the catalog has no",
-					},
-					{
-						name: "the reference cannot be read",
-						dry:  "nowhere.wav",
-						says: "nowhere.wav",
-					},
-					{
-						name: "there is nowhere to build the preset",
-						setup: func() {
-							s.T().Setenv("TMPDIR",
-								filepath.Join(s.T().TempDir(), "not a directory"))
-						},
-						says: "making somewhere to build a preset",
-					},
-					{
-						name: "the chain will not compile",
-						setup: func() {
-							s.pedal.EXPECT().Compile(gomock.Any(), gomock.Any()).
-								Return(sdk.Built{}, errors.New("will not build")).AnyTimes()
-						},
-						says: "building a chain holding only",
-					},
-					{
-						// The preset is built before the loop is opened, so this is the
-						// one refusal that arrives after the compiler has done its work.
-						name:     "no bench supplied and no interface of that name",
-						setup:    s.ready,
-						hardware: "no such interface anybody owns",
-						says:     "no such interface anybody owns",
-					},
-					{
-						name:  "the device names no parameter at any index",
-						setup: s.ready,
-						model: "HD2_EQSimple3Band",
-						says:  "named no parameter",
-					},
-					{
-						// The directory is made on the way, so the path being wrong is
-						// only found out at the write itself, after the whole sweep has
-						// been taken. Losing an hour of readings to a mistyped path is
-						// the reason it says which path.
-						name:  "the curves have nowhere to go",
-						setup: s.ready,
-						held:  true,
-					},
-				} {
-					s.Run(tt.name, func() {
-						s.SetupTest()
-
-						if tt.setup != nil {
-							tt.setup()
-						}
-
-						opts := ControlsOptions{
-							Client: s.pedal, Model: "HD2_CabMicIr_2x15Brute", Dry: s.dry,
-							Out: s.out, Seconds: 1, Points: 3, Takes: 2, Bench: bench{},
-						}
-
-						if tt.model != "" {
-							opts.Model = tt.model
-						}
-
-						if tt.dry != "" {
-							opts.Dry = tt.dry
-						}
-
-						says := tt.says
-
-						if tt.held {
-							opts.Out = s.T().TempDir()
-							says = opts.Out
-						}
-
-						if tt.hardware != "" {
-							opts.Bench, opts.Hardware = nil, tt.hardware
-						}
-
-						err := MeasureControls(context.Background(), &bytes.Buffer{}, opts)
-
-						s.Require().ErrorContains(err, says)
-					})
-				}
-			},
-		},
-	} {
-		s.Run(tt.name, func() {
-			// A row gets the same fresh state a method used to get.
-			s.SetupTest()
-
-			tt.then()
-		})
-	}
-}
-
-// TestControlsRefusesWhatItCannotSweep covers every way a sweep stops before
-// it has a curve.
-//
 
 func TestControlsRunTestSuite(
 	t *testing.T,

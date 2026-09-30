@@ -112,15 +112,17 @@ func (s *ReachPublicTestSuite) wide() []audio.Genre {
 	}}
 }
 
-// TestReachSaysWhetherAChainCanGetThere covers the readings it works from, and every target it cannot answer.
+// TestReach covers Reach, which says how near a chain can get to a target,
+// from one pass of readings.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
+func (s *ReachPublicTestSuite) TestReach() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The whole design.
 			name: "it reads the chain rather than the committed sweeps",
 			then: func() {
 				s.genre.EXPECT().
@@ -138,7 +140,11 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
-			// slope is put back, so asking the question costs readings and changes nothing.
+			// What separates this from a tuning pass.
+			//
+			// The chain is left where the compiler put it. Every control
+			// moved to read its slope is put back, so asking the question
+			// costs readings and changes nothing.
 			name: "nothing is applied",
 			then: func() {
 				s.genre.EXPECT().
@@ -173,7 +179,7 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
-			// afternoon.
+			// The answer that saves the afternoon.
 			name: "an axis nothing can close is the headline",
 			then: func() {
 				// A target far outside anything a chain of zero slopes can move to.
@@ -203,6 +209,7 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
+			// A request aiming at nothing.
 			name: "no genre is no target",
 			then: func() {
 				s.genre.EXPECT().
@@ -216,6 +223,7 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
+			// A tag with no figures behind it.
 			name: "a genre that measures as nothing",
 			then: func() {
 				s.genre.EXPECT().MeasuredGenres(gomock.Any(), gomock.Any()).
@@ -227,7 +235,11 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
-			// and `just generate` already writes those figures into the binary.
+			// The default.
+			//
+			// Measuring the corpus reads fifteen bass stems and takes most of
+			// a minute, and `just generate` already writes those figures into
+			// the binary.
 			name: "the shipped figures answer when nobody names a corpus",
 			then: func() {
 				s.built()
@@ -240,6 +252,7 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
+			// A word the binary does not carry.
 			name: "a genre nothing shipped measures",
 			then: func() {
 				opts := s.opts()
@@ -251,6 +264,7 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
+			// Gear the catalog cannot realise.
 			name: "a rig that will not build",
 			then: func() {
 				wanted := errors.New("no such rig")
@@ -266,6 +280,7 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
+			// Gear the solver cannot touch.
 			name: "a chain with no dial",
 			then: func() {
 				s.genre.EXPECT().
@@ -282,6 +297,7 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
+			// A missing signal.
 			name: "a reference that is not there",
 			then: func() {
 				s.genre.EXPECT().
@@ -295,6 +311,7 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
+			// A tree that is not there.
 			name: "the corpus will not read",
 			then: func() {
 				wanted := errors.New("no such corpus")
@@ -307,9 +324,12 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 			},
 		},
 		{
-			// describes the recording rather than the chain, so what comes back is the
-			// wrong instrument rather than the wrong settings. Refused before a reading is
-			// taken.
+			// The guard.
+			//
+			// Every figure measured by pushing a guitar recording through a
+			// bass rig describes the recording rather than the chain, so what
+			// comes back is the wrong instrument rather than the wrong
+			// settings. Refused before a reading is taken.
 			name: "reach refuses a reference for the other instrument",
 			then: func() {
 				s.built()
@@ -332,6 +352,84 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 					Reach(context.Background(), buffer(), opts), ErrWrongInstrument)
 			},
 		},
+		{
+			// The five measuring commands all open the loop through benchFor,
+			// and one that cannot open it has nothing to read the chain with.
+			name: "no bench supplied and no interface of that name",
+			then: func() {
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+				s.built()
+
+				opts := s.opts()
+				opts.Bench, opts.Hardware = nil, "no such interface anybody owns"
+
+				s.Require().ErrorContains(
+					Reach(context.Background(), buffer(), opts),
+					"no such interface anybody owns")
+			},
+		},
+		{
+			// The empty loop is read before any dial is touched, so a bench
+			// that stops there stops the run rather than costing one reading.
+			name: "the bench stops before the loop has been read",
+			then: func() {
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+				s.built()
+
+				calls := 0
+				opts := s.opts()
+				opts.Bench = stopping{after: 0, calls: &calls}
+
+				s.Require().ErrorContains(
+					Reach(context.Background(), buffer(), opts),
+					"stopped answering")
+			},
+		},
+		{
+			// One reading past the empty loop, which is the chain's own. Every
+			// number below it rests on that reading, so there is nothing to
+			// report without it.
+			name: "the bench stops on the chain's own reading",
+			then: func() {
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+				s.built()
+
+				calls := 0
+				opts := s.opts()
+				opts.Bench = stopping{after: opts.Takes + 1, calls: &calls}
+
+				s.Require().ErrorContains(
+					Reach(context.Background(), buffer(), opts),
+					"stopped answering")
+			},
+		},
+		{
+			// A slope is read by turning a dial and measuring again, so a
+			// device that will not turn one leaves the run with no slopes and
+			// nothing to say about what the chain can reach.
+			name: "the device will not turn a dial",
+			then: func() {
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
+				s.pedal.EXPECT().
+					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
+						Model: catalog.ModelID("HD2_AmpSVBeastBrt"),
+						Pos:   0, Enabled: true,
+					}}}}, nil)
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+				s.pedal.EXPECT().
+					Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(errors.New("the device declined the move")).AnyTimes()
+
+				s.Require().ErrorContains(
+					Reach(context.Background(), buffer(), s.opts()),
+					"the device declined the move")
+			},
+		},
 	} {
 		s.Run(tt.name, func() {
 			// A row gets the same fresh state a method used to get.
@@ -341,12 +439,6 @@ func (s *ReachPublicTestSuite) TestReachSaysWhetherAChainCanGetThere() {
 		})
 	}
 }
-
-// TestNothingIsApplied is what separates this from a tuning pass.
-//
-
-// TestTheShippedFiguresAnswerWhenNobodyNamesACorpus covers the default.
-//
 
 // TestSpansOfCountsTravelEachWaySeparately covers a control near a stop.
 //
@@ -368,15 +460,17 @@ func (s *ReachPublicTestSuite) TestSpansOfCountsTravelEachWaySeparately() {
 	s.Require().InDelta(100, at.Swing, 0.001)
 }
 
-// TestVerdictNamesWhatDecidesIt covers which axis a refusal is about, and the chain that reaches everything.
+// TestVerdict covers verdict, which is the answer the table was working
+// towards.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ReachPublicTestSuite) TestVerdictNamesWhatDecidesIt() {
+func (s *ReachPublicTestSuite) TestVerdict() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The third verdict.
 			name: "the headline names every axis the joint solve misses",
 			then: func() {
 				w := buffer()
@@ -393,6 +487,7 @@ func (s *ReachPublicTestSuite) TestVerdictNamesWhatDecidesIt() {
 			},
 		},
 		{
+			// The sentence with a hole in it.
 			name: "a chain with no slope on any axis says so",
 			then: func() {
 				w := buffer()
@@ -406,6 +501,7 @@ func (s *ReachPublicTestSuite) TestVerdictNamesWhatDecidesIt() {
 			},
 		},
 		{
+			// An empty answer.
 			name: "a target naming no axis this chain reads",
 			then: func() {
 				w := buffer()
@@ -416,6 +512,7 @@ func (s *ReachPublicTestSuite) TestVerdictNamesWhatDecidesIt() {
 			},
 		},
 		{
+			// The happy verdict.
 			name: "one set of positions reaching everything",
 			then: func() {
 				w := buffer()
@@ -465,9 +562,6 @@ func (s *ReachPublicTestSuite) TestTheTableSaysWhatItReadsAndWhatItWants() {
 	s.Require().Contains(said, "up")
 	s.Require().Contains(said, "OUT OF REACH")
 }
-
-// TestReachRefusesAReferenceForTheOtherInstrument covers the guard.
-//
 
 func TestReachPublicTestSuite(
 	t *testing.T,

@@ -64,6 +64,7 @@ func (s *WritePublicTestSuite) TestWrite() {
 		then func()
 	}{
 		{
+			// Puts a document back the way it came.
 			name: "write",
 			then: func() {
 				tests := []struct {
@@ -112,7 +113,8 @@ func (s *WritePublicTestSuite) TestWrite() {
 			},
 		},
 		{
-			// preset read and written again is the preset that was read.
+			// The rule the whole package exists to keep: a preset read and
+			// written again is the preset that was read.
 			name: "write survives a read back",
 			then: func() {
 				d := s.doc()

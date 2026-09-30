@@ -83,6 +83,7 @@ func (s *RecordPublicTestSuite) TestRecord() {
 		then func()
 	}{
 		{
+			// The whole of what a correction holds.
 			name: "a round is written down",
 			then: func() {
 				s.Require().NoError(record(s.ask, "punk", s.moved(),
@@ -110,8 +111,12 @@ func (s *RecordPublicTestSuite) TestRecord() {
 			},
 		},
 		{
-			// has a grammar, and the contract refuses one built from the label: the first
-			// round written was rejected for exactly that.
+			// The two names a control has.
+			//
+			// Control carries the model for a person to read and has a space
+			// in it. A path has a grammar, and the contract refuses one built
+			// from the label: the first round written was rejected for
+			// exactly that.
 			name: "the path uses the setting rather than the label",
 			then: func() {
 				s.Require().NoError(record(s.ask, "punk", s.moved(), nil, false))
@@ -124,7 +129,11 @@ func (s *RecordPublicTestSuite) TestRecord() {
 			},
 		},
 		{
-			// this holds why they are what they are, in the order they were asked.
+			// The append-only shape.
+			//
+			// Never replayed and never rewritten: the plan holds the current
+			// settings and this holds why they are what they are, in the
+			// order they were asked.
 			name: "rounds accumulate",
 			then: func() {
 				s.Require().NoError(record(s.ask, "punk", s.moved(), nil, true))
@@ -137,8 +146,11 @@ func (s *RecordPublicTestSuite) TestRecord() {
 			},
 		},
 		{
-			// settings alone, so the reason is what lets somebody judge the interpretation
-			// rather than only the values.
+			// The reason a later reader needs.
+			//
+			// A round that arrived and one that ran out of room look
+			// identical in the settings alone, so the reason is what lets
+			// somebody judge the interpretation rather than only the values.
 			name: "a round that did not arrive says so",
 			then: func() {
 				s.Require().NoError(record(s.ask, "punk", s.moved(),
@@ -151,6 +163,7 @@ func (s *RecordPublicTestSuite) TestRecord() {
 			},
 		},
 		{
+			// A path nobody wrote.
 			name: "an ask that is not there",
 			then: func() {
 				err := record(filepath.Join(s.T().TempDir(), "nope.yaml"), "punk", nil, nil, true)
@@ -159,6 +172,7 @@ func (s *RecordPublicTestSuite) TestRecord() {
 			},
 		},
 		{
+			// A file that will not load.
 			name: "an ask that is not a tone spec",
 			then: func() {
 				s.Require().NoError(os.WriteFile(s.ask, []byte("schema: RigSpec\n"), 0o600))
@@ -167,6 +181,7 @@ func (s *RecordPublicTestSuite) TestRecord() {
 			},
 		},
 		{
+			// The file going away underneath it.
 			name: "an ask it cannot write",
 			then: func() {
 				dir := s.T().TempDir()
@@ -192,16 +207,6 @@ func (s *RecordPublicTestSuite) TestRecord() {
 		})
 	}
 }
-
-// TestThePathUsesTheSettingRatherThanTheLabel covers the two names a control
-// has.
-//
-
-// TestRoundsAccumulate covers the append-only shape.
-//
-
-// TestARoundThatDidNotArriveSaysSo covers the reason a later reader needs.
-//
 
 func TestRecordPublicTestSuite(
 	t *testing.T,

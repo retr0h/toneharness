@@ -58,8 +58,8 @@ func specWith(
 	return rig.Spec{Moves: &moves}
 }
 
-// TestMoves covers Moves, which turns what a rig says a foot reaches into the
-// assignments a plan holds.
+// TestMoves covers Moves, which turns what a rig says a foot reaches into a
+// plan's assignments.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *MovesPublicTestSuite) TestMoves() {
@@ -68,6 +68,7 @@ func (s *MovesPublicTestSuite) TestMoves() {
 		then func()
 	}{
 		{
+			// What a plan ends up holding.
 			name: "moves resolve to assignments",
 			then: func() {
 				tests := []struct {
@@ -133,8 +134,11 @@ func (s *MovesPublicTestSuite) TestMoves() {
 			},
 		},
 		{
-			// point: the alternative is a preset where the pedal under somebody's foot is
-			// on a control that is not there.
+			// Every way a move does not resolve.
+			//
+			// Each is a rig describing a pedal that would do nothing, and
+			// saying so is the point: the alternative is a preset where the
+			// pedal under somebody's foot is on a control that is not there.
 			name: "moves refuse what cannot be built",
 			then: func() {
 				tests := []struct {
@@ -206,7 +210,11 @@ func (s *MovesPublicTestSuite) TestMoves() {
 			},
 		},
 		{
-			// Building from both would leave the pedal holding two sets nobody combined.
+			// A rig's moves over a plan's own.
+			//
+			// A move is what somebody wants and a controller is what a device
+			// stored. Building from both would leave the pedal holding two
+			// sets nobody combined.
 			name: "moves refuse a plan that already assigns",
 			then: func() {
 				made := plan.Plan{Controllers: []rig.Controller{
@@ -227,12 +235,6 @@ func (s *MovesPublicTestSuite) TestMoves() {
 		})
 	}
 }
-
-// TestMovesRefuseWhatCannotBeBuilt covers every way a move does not resolve.
-//
-
-// TestMovesRefuseAPlanThatAlreadyAssigns covers a rig's moves over a plan's own.
-//
 
 func TestMovesPublicTestSuite(
 	t *testing.T,

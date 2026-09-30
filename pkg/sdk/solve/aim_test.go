@@ -56,8 +56,6 @@ func (s *AimTestSuite) punk() audio.Across {
 	return audio.Across{}
 }
 
-// TestPunkIsATargetEvenThoughItEarnsNoWord covers the genre modelled first.
-//
 // TestAims covers Aims, which turns what a body of records measures as into a
 // target.
 //
@@ -68,9 +66,13 @@ func (s *AimTestSuite) TestAims() {
 		then func()
 	}{
 		{
-			// reports punk earning no term, which says it is not distinctive against the
-			// players who avoid it. It does not say punk has no position: fifteen records
-			// give a middle and a spread on every axis, and that is what a solver needs.
+			// The genre modelled first.
+			//
+			// Worth stating plainly because it reads as a contradiction.
+			// `measure genres` reports punk earning no term, which says it is
+			// not distinctive against the players who avoid it. It does not
+			// say punk has no position: fifteen records give a middle and a
+			// spread on every axis, and that is what a solver needs.
 			name: "punk is a target even though it earns no word",
 			then: func() {
 				got := Aims(s.punk(), nil)
@@ -93,6 +95,7 @@ func (s *AimTestSuite) TestAims() {
 			},
 		},
 		{
+			// Where close enough comes from.
 			name: "the spread is the tolerance",
 			then: func() {
 				got := Aims(audio.Across{
@@ -107,8 +110,11 @@ func (s *AimTestSuite) TestAims() {
 			},
 		},
 		{
-			// precision the rig cannot demonstrate and the loop would never report
-			// arriving.
+			// Records that agree exactly.
+			//
+			// Which is what one recording gives. Without a floor the target
+			// would ask for a precision the rig cannot demonstrate and the
+			// loop would never report arriving.
 			name: "the floor is the lower bound",
 			then: func() {
 				flat := audio.Across{
@@ -124,6 +130,7 @@ func (s *AimTestSuite) TestAims() {
 			},
 		},
 		{
+			// The two guarded figures.
 			name: "a figure no recording answered is absent",
 			then: func() {
 				got := Aims(audio.Across{
@@ -137,9 +144,13 @@ func (s *AimTestSuite) TestAims() {
 			},
 		},
 		{
-			// recording had one, so an unmeasured figure arrives as zero. Pinning an axis to
-			// zero because nobody measured it would spend the chain defending the absence of
-			// a measurement.
+			// The absent middle.
+			//
+			// Across.Measured answers for dynamics, harmonics and lean
+			// whether or not any recording had one, so an unmeasured figure
+			// arrives as zero. Pinning an axis to zero because nobody
+			// measured it would spend the chain defending the absence of a
+			// measurement.
 			name: "a figure nothing measured is not a target of zero",
 			then: func() {
 				got := Aims(audio.Across{
@@ -163,9 +174,6 @@ func (s *AimTestSuite) TestAims() {
 	}
 }
 
-// TestTheFloorIsTheLowerBound covers records that agree exactly.
-//
-
 // TestOnly covers Only, which keeps the axes named, and drops the rest.
 //
 // One method and one table, so a case is a row rather than a file.
@@ -175,6 +183,7 @@ func (s *AimTestSuite) TestOnly() {
 		then func()
 	}{
 		{
+			// A partial target.
 			name: "only keeps the axes named",
 			then: func() {
 				all := Aims(s.punk(), nil)
@@ -188,7 +197,7 @@ func (s *AimTestSuite) TestOnly() {
 			},
 		},
 		{
-			// measured.
+			// Asking for a figure nobody measured.
 			name: "only ignores an axis the target never had",
 			then: func() {
 				got := Only(map[audio.Figure]Aim{audio.KeyLow: {Want: 1, Tol: 1}},
@@ -215,9 +224,6 @@ func (s *AimTestSuite) TestFloorTakesTheWorstOfTheChain() {
 		"a chain is as repeatable as its least repeatable part")
 	s.Require().InDelta(0.5, got[audio.KeyLow], 0.001)
 }
-
-// TestAFigureNothingMeasuredIsNotATargetOfZero covers the absent middle.
-//
 
 func TestAimTestSuite(
 	t *testing.T,

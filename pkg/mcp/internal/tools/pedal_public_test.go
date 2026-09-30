@@ -57,8 +57,8 @@ type step struct {
 	afterIdle bool
 }
 
-// TestClose covers Close, which lets the pedal go, and returns what
-// closing its Session reported.
+// TestClose covers Close, which lets the pedal go, and returns what closing
+// its Session reported.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *PedalPublicTestSuite) TestClose() {
@@ -67,6 +67,7 @@ func (s *PedalPublicTestSuite) TestClose() {
 		then func()
 	}{
 		{
+			// What a device tool does with the pedal.
 			name: "on pedal",
 			then: func() {
 				listing := sdk.Listing{Slots: []sdk.Held{{}}}
@@ -201,7 +202,8 @@ func (s *PedalPublicTestSuite) TestClose() {
 			},
 		},
 		{
-			// server: go-sdk does not recover the handler, so the process would die.
+			// A call that panics, which cannot go through a server: go-sdk
+			// does not recover the handler, so the process would die.
 			name: "on pedal panicking",
 			then: func() {
 				s.Run("a call that panics lets the Session go", func() {
@@ -234,6 +236,7 @@ func (s *PedalPublicTestSuite) TestClose() {
 			},
 		},
 		{
+			// Letting the pedal go when the server stops.
 			name: "close",
 			then: func() {
 				ended := errors.New("the read loop ended")

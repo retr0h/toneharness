@@ -76,6 +76,7 @@ func (s *EmbedPublicTestSuite) TestPacked() {
 		then func()
 	}{
 		{
+			// Writing a library the way this package reads one.
 			name: "packed round trips",
 			then: func() {
 				lib := `{"device":"HX Stomp","isolated":true,` +
@@ -95,8 +96,11 @@ func (s *EmbedPublicTestSuite) TestPacked() {
 			},
 		},
 		{
-			// library is refused where somebody can still fix it rather than at the next
-			// build.
+			// Why packing lives beside reading.
+			//
+			// A file the reader cannot take is one the writer will not
+			// produce, so a bad library is refused where somebody can still
+			// fix it rather than at the next build.
 			name: "packed refuses what it could not read",
 			then: func() {
 				var packed bytes.Buffer
@@ -108,6 +112,7 @@ func (s *EmbedPublicTestSuite) TestPacked() {
 			},
 		},
 		{
+			// The reader itself failing.
 			name: "packed reports a read failure",
 			then: func() {
 				var packed bytes.Buffer
@@ -117,6 +122,7 @@ func (s *EmbedPublicTestSuite) TestPacked() {
 			},
 		},
 		{
+			// The writer failing.
 			name: "packed reports a write failure",
 			then: func() {
 				lib := `{"device":"HX Stomp","isolated":true,` +
@@ -131,9 +137,6 @@ func (s *EmbedPublicTestSuite) TestPacked() {
 		})
 	}
 }
-
-// TestPackedRefusesWhatItCouldNotRead is why packing lives beside reading.
-//
 
 // TestUnpackRefusesWhatItCannotUse covers the two ways a packed library is
 // no good.

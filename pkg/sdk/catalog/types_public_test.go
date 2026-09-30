@@ -33,7 +33,7 @@ type TypesPublicTestSuite struct {
 }
 
 // TestTrusted covers Trusted, which reports whether a value carrying this
-// provenance may be relied on.
+// provenance may be relied on for a preset handed to a user.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *TypesPublicTestSuite) TestTrusted() {

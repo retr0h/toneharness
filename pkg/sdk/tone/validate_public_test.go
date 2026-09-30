@@ -49,6 +49,7 @@ func (s *ValidatePublicTestSuite) TestError() {
 		then func()
 	}{
 		{
+			// Reads both contracts out of an OpenAPI document.
 			name: "load schema",
 			then: func() {
 				tests := []struct {
@@ -94,7 +95,8 @@ components:
 			},
 		},
 		{
-			// check as something other than a set of fields.
+			// A document reaching the check as something other than a set of
+			// fields.
 			name: "against refuses what the types could not build",
 			then: func() {
 				err := tone.Against([]any{"a list, not a document"}, "ToneSpec")
@@ -104,6 +106,7 @@ components:
 			},
 		},
 		{
+			// What went wrong, whatever the library hands it.
 			name: "invalid",
 			then: func() {
 				tests := []struct {

@@ -270,11 +270,8 @@ func (s *SymbolsTestSuite) controls(
 	return dir
 }
 
-// TestReadRoutingNamesTheSocketsInTheDevicesOwnOrder covers the two lists a
-// preset's routing is written against.
-//
 // TestReadRouting covers readRouting, which reads what a device can take a
-// chain's input from and send its.
+// chain's input from and send its output to.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *SymbolsTestSuite) TestReadRouting() {
@@ -283,8 +280,12 @@ func (s *SymbolsTestSuite) TestReadRouting() {
 		then func()
 	}{
 		{
-			// label claims USB and which an HX Stomp's Multi does not carry, which is the
-			// reason these are read rather than written down.
+			// The two lists a preset's routing is written against.
+			//
+			// The order is the enumeration: entry 1 of the destinations is
+			// the one whose label claims USB and which an HX Stomp's Multi
+			// does not carry, which is the reason these are read rather than
+			// written down.
 			name: "read routing names the sockets in the devices own order",
 			then: func() {
 				dir := s.controls(`{
@@ -310,7 +311,10 @@ func (s *SymbolsTestSuite) TestReadRouting() {
 			},
 		},
 		{
-			// these lists is still a catalog.
+			// An installation too old to have it.
+			//
+			// Only measuring needs to name a destination, so a catalog
+			// generated without these lists is still a catalog.
 			name: "routing is absent rather than fatal",
 			then: func() {
 				for _, tt := range []struct {
@@ -331,6 +335,7 @@ func (s *SymbolsTestSuite) TestReadRouting() {
 			},
 		},
 		{
+			// The three failures.
 			name: "routing reports a file it cannot read",
 			then: func() {
 				for _, tt := range []struct {
@@ -368,9 +373,6 @@ func (s *SymbolsTestSuite) TestReadRouting() {
 		})
 	}
 }
-
-// TestRoutingIsAbsentRatherThanFatal covers an installation too old to have it.
-//
 
 func TestSymbolsTestSuite(
 	t *testing.T,

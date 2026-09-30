@@ -44,15 +44,17 @@ func at(
 	}
 }
 
-// TestFittedReadsTheSlopeOffACurve covers what a straight line is and when a curve is not one.
+// TestFitted covers Fitted, which is the slope of one figure across a
+// control's measured positions.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *CurvesPublicTestSuite) TestFittedReadsTheSlopeOffACurve() {
+func (s *CurvesPublicTestSuite) TestFitted() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The ordinary case.
 			name: "fitted reads a straight line",
 			then: func() {
 				got := measured.Fitted([]measured.Point{
@@ -66,8 +68,12 @@ func (s *CurvesPublicTestSuite) TestFittedReadsTheSlopeOffACurve() {
 			},
 		},
 		{
-			// falls steadily to 3,769Hz. No single slope is true anywhere along it, and
-			// the average of a rise and a fall describes neither.
+			// What keeps a slope honest.
+			//
+			// This amplifier's Master leaps from 130Hz to 10,795Hz over one
+			// step and then falls steadily to 3,769Hz. No single slope is
+			// true anywhere along it, and the average of a rise and a fall
+			// describes neither.
 			name: "fitted says when a curve is not a line",
 			then: func() {
 				got := measured.Fitted([]measured.Point{
@@ -80,6 +86,7 @@ func (s *CurvesPublicTestSuite) TestFittedReadsTheSlopeOffACurve() {
 			},
 		},
 		{
+			// A curve with one point.
 			name: "fitted refuses to guess from too little",
 			then: func() {
 				for _, tt := range []struct {
@@ -105,8 +112,11 @@ func (s *CurvesPublicTestSuite) TestFittedReadsTheSlopeOffACurve() {
 			},
 		},
 		{
-			// reading can hold neither. Counting an absence as zero would put a step in
-			// the curve that nothing measured.
+			// Transient and decay.
+			//
+			// A transient needs a note starting and a decay needs one ending,
+			// so a reading can hold neither. Counting an absence as zero
+			// would put a step in the curve that nothing measured.
 			name: "fitted ignores a figure that is absent",
 			then: func() {
 				known := 0.5
@@ -122,6 +132,7 @@ func (s *CurvesPublicTestSuite) TestFittedReadsTheSlopeOffACurve() {
 			},
 		},
 		{
+			// A flat curve.
 			name: "fitted on a figure that does not move",
 			then: func() {
 				got := measured.Fitted([]measured.Point{
@@ -140,21 +151,17 @@ func (s *CurvesPublicTestSuite) TestFittedReadsTheSlopeOffACurve() {
 	}
 }
 
-// TestFittedSaysWhenACurveIsNotALine is what keeps a slope honest.
-//
-
-// TestFittedIgnoresAFigureThatIsAbsent covers transient and decay.
-//
-
-// TestApartIsWhatAListHasInsteadOfASlope covers the distance between a list's settings.
+// TestApart covers Apart, which is how far a figure's readings sit from each
+// other.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *CurvesPublicTestSuite) TestApartIsWhatAListHasInsteadOfASlope() {
+func (s *CurvesPublicTestSuite) TestApart() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// A categorical control.
 			name: "apart is what a list has instead of a slope",
 			then: func() {
 				got, ok := measured.Apart([]measured.Point{
@@ -166,6 +173,7 @@ func (s *CurvesPublicTestSuite) TestApartIsWhatAListHasInsteadOfASlope() {
 			},
 		},
 		{
+			// A figure absent everywhere.
 			name: "apart says when nothing answered",
 			then: func() {
 				_, ok := measured.Apart([]measured.Point{at(0, 100)}, "decay")
@@ -175,6 +183,7 @@ func (s *CurvesPublicTestSuite) TestApartIsWhatAListHasInsteadOfASlope() {
 			},
 		},
 		{
+			// An unknown name.
 			name: "a figure nobody named is not invented",
 			then: func() {
 				_, ok := measured.Apart([]measured.Point{at(0, 1), at(1, 2)}, "loudness")
@@ -189,19 +198,22 @@ func (s *CurvesPublicTestSuite) TestApartIsWhatAListHasInsteadOfASlope() {
 	}
 }
 
-// TestWanderIgnoresTheOneReadingThatDisagrees covers the noise floor.
-//
-// TestWanderIsHowFarRepeatedReadingsMove covers throwing away the reading that disagrees, and what is left.
+// TestWander covers Wander, which is how far a figure's readings sit from
+// each other once the one furthest from the middle is thrown away.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *CurvesPublicTestSuite) TestWanderIsHowFarRepeatedReadingsMove() {
+func (s *CurvesPublicTestSuite) TestWander() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// once and then 31.56 to 31.73 five times over. Apart called that a wander of
-			// twelve points of a band when five of the six agreed to three decimal places.
+			// The noise floor.
+			//
+			// The real numbers: six takes of one untouched chain read the low
+			// band at 19.35 once and then 31.56 to 31.73 five times over.
+			// Apart called that a wander of twelve points of a band when five
+			// of the six agreed to three decimal places.
 			name: "wander ignores the one reading that disagrees",
 			then: func() {
 				takes := []measured.Point{
@@ -219,8 +231,12 @@ func (s *CurvesPublicTestSuite) TestWanderIsHowFarRepeatedReadingsMove() {
 			},
 		},
 		{
-			// is left is a reading that came back odd for some other reason, and where it
-			// sits in the set is not knowable in advance.
+			// The outlier not being first.
+			//
+			// The settling take always is, and it is discarded before these
+			// are taken. What is left is a reading that came back odd for
+			// some other reason, and where it sits in the set is not knowable
+			// in advance.
 			name: "wander throws away one reading whichever it is",
 			then: func() {
 				tests := []struct {
@@ -243,7 +259,11 @@ func (s *CurvesPublicTestSuite) TestWanderIsHowFarRepeatedReadingsMove() {
 			},
 		},
 		{
-			// of it: one reading is thrown away and the two that agree are the floor.
+			// What the loop actually asks for.
+			//
+			// Three takes is the default, so this is the ordinary case rather
+			// than an edge of it: one reading is thrown away and the two that
+			// agree are the floor.
 			name: "wander on three readings",
 			then: func() {
 				got, ok := measured.Wander([]measured.Point{
@@ -255,7 +275,11 @@ func (s *CurvesPublicTestSuite) TestWanderIsHowFarRepeatedReadingsMove() {
 			},
 		},
 		{
-			// discarding either would leave a spread of nothing and call it certainty.
+			// Too few readings to throw one away.
+			//
+			// With two there is no middle for one of them to be furthest
+			// from, and discarding either would leave a spread of nothing and
+			// call it certainty.
 			name: "wander keeps both of two",
 			then: func() {
 				got, ok := measured.Wander([]measured.Point{at(0, 10), at(1, 14)}, "centroid")
@@ -265,6 +289,7 @@ func (s *CurvesPublicTestSuite) TestWanderIsHowFarRepeatedReadingsMove() {
 			},
 		},
 		{
+			// A figure absent everywhere.
 			name: "wander says when nothing answered",
 			then: func() {
 				_, ok := measured.Wander([]measured.Point{at(0, 100)}, "decay")
@@ -279,16 +304,6 @@ func (s *CurvesPublicTestSuite) TestWanderIsHowFarRepeatedReadingsMove() {
 		})
 	}
 }
-
-// TestWanderThrowsAwayOneReadingWhicheverItIs covers the outlier not being
-// first.
-//
-
-// TestWanderOnThreeReadings covers what the loop actually asks for.
-//
-
-// TestWanderKeepsBothOfTwo covers too few readings to throw one away.
-//
 
 // TestEveryNamedFigureCanBeRead holds the list to the type.
 //
@@ -314,22 +329,25 @@ func (s *CurvesPublicTestSuite) TestEveryNamedFigureCanBeRead() {
 	s.Require().Len(measured.Named(), 10)
 }
 
-// TestAFigureNoReadingCarriedIsAbsentRatherThanZero covers the older sweeps.
-//
-// TestLoadCurvesReadsWhatASweepWrote covers the document a sweep leaves, and what is refused.
+// TestLoadCurves covers LoadCurves, which reads what every control of one
+// block does.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *CurvesPublicTestSuite) TestLoadCurvesReadsWhatASweepWrote() {
+func (s *CurvesPublicTestSuite) TestLoadCurves() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// measured, so a file taken before that carries five figures where the type
-			// names ten. Decoded into plain numbers they came back as zero and could not
-			// be told from a control that genuinely does not move one: a whole column of
-			// zeroes fits a perfectly straight line, and Fitted would report the slope
-			// with a straightness of one.
+			// The older sweeps.
+			//
+			// Dynamics, harmonics and lean were added after the first curves
+			// were measured, so a file taken before that carries five figures
+			// where the type names ten. Decoded into plain numbers they came
+			// back as zero and could not be told from a control that
+			// genuinely does not move one: a whole column of zeroes fits a
+			// perfectly straight line, and Fitted would report the slope with
+			// a straightness of one.
 			name: "a figure no reading carried is absent rather than zero",
 			then: func() {
 				older, err := measured.LoadCurves(strings.NewReader(`{
@@ -368,6 +386,7 @@ func (s *CurvesPublicTestSuite) TestLoadCurvesReadsWhatASweepWrote() {
 			},
 		},
 		{
+			// The round trip.
 			name: "load curves reads what was written",
 			then: func() {
 				got, err := measured.LoadCurves(strings.NewReader(`{
@@ -383,6 +402,7 @@ func (s *CurvesPublicTestSuite) TestLoadCurvesReadsWhatASweepWrote() {
 			},
 		},
 		{
+			// The two ways reading fails.
 			name: "load curves refuses what is not curves",
 			then: func() {
 				for _, tt := range []struct{ name, give, want string }{
@@ -405,6 +425,7 @@ func (s *CurvesPublicTestSuite) TestLoadCurvesReadsWhatASweepWrote() {
 			},
 		},
 		{
+			// The reader itself failing.
 			name: "load curves reports a read failure",
 			then: func() {
 				_, err := measured.LoadCurves(broken{})

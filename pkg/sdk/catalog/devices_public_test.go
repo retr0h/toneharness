@@ -46,6 +46,7 @@ func (s *DevicesPublicTestSuite) TestFor() {
 		then func()
 	}{
 		{
+			// Every device a catalog ships for.
 			name: "for",
 			then: func() {
 				tests := []struct {
@@ -76,6 +77,7 @@ func (s *DevicesPublicTestSuite) TestFor() {
 			},
 		},
 		{
+			// Names what was asked for.
 			name: "for a device nothing ships for",
 			then: func() {
 				got, err := catalog.For(1)
@@ -86,7 +88,11 @@ func (s *DevicesPublicTestSuite) TestFor() {
 			},
 		},
 		{
-			// catalog under four names would pass every other test here.
+			// Checks the filtering actually filtered.
+			//
+			// A Helix Floor carries blocks an HX Stomp does not. Four copies
+			// of one catalog under four names would pass every other test
+			// here.
 			name: "the devices differ",
 			then: func() {
 				stomp, err := catalog.For(catalog.HXStomp)
@@ -100,6 +106,7 @@ func (s *DevicesPublicTestSuite) TestFor() {
 			},
 		},
 		{
+			// Holds the promise every existing caller relies on.
 			name: "built in is the stomp",
 			then: func() {
 				built, err := catalog.BuiltIn()
@@ -118,9 +125,6 @@ func (s *DevicesPublicTestSuite) TestFor() {
 		})
 	}
 }
-
-// TestTheDevicesDiffer checks the filtering actually filtered.
-//
 
 func TestDevicesPublicTestSuite(
 	t *testing.T,

@@ -322,8 +322,6 @@ func (s *ReampPublicTestSuite) TestAPassPlaysSilenceOnceTheSignalRunsOut() {
 		"nothing is played once there is nothing left to play")
 }
 
-// TestThroughRunsTheWholeLoop covers playing and capturing for real.
-//
 // TestThrough covers Through, which plays a signal and returns what came
 // back.
 //
@@ -334,9 +332,13 @@ func (s *ReampPublicTestSuite) TestThrough() {
 		then func()
 	}{
 		{
-			// samples and hands back silence. Everything but the converters is exercised:
-			// the stream opens, the callback runs, the signal is fed out of it a frame at
-			// a time, what arrives is kept, and the reading ends when both are done.
+			// Playing and capturing for real.
+			//
+			// Against miniaudio's null backend, which presents a device that
+			// takes samples and hands back silence. Everything but the
+			// converters is exercised: the stream opens, the callback runs,
+			// the signal is fed out of it a frame at a time, what arrives is
+			// kept, and the reading ends when both are done.
 			name: "through runs the whole loop",
 			then: func() {
 				b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, nullDevice)
@@ -357,8 +359,11 @@ func (s *ReampPublicTestSuite) TestThrough() {
 			},
 		},
 		{
-			// blocked forever, and a campaign that hangs on block two hundred looks exactly
-			// like one still working.
+			// The budget.
+			//
+			// A device that stops delivering callbacks would otherwise leave
+			// a reading blocked forever, and a campaign that hangs on block
+			// two hundred looks exactly like one still working.
 			name: "through gives up on a device that stopped",
 			then: func() {
 				b, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend}, nullDevice)
@@ -375,7 +380,19 @@ func (s *ReampPublicTestSuite) TestThrough() {
 			},
 		},
 		{
-			// enough that one which does open still misses it.
+			// The claim deadline.
+			//
+			// The failure it exists for is a device that neither opens nor
+			// refuses. On macOS that is a program with no Microphone
+			// permission: CoreAudio blocks inside the first capture while the
+			// system waits for somebody to answer a dialog, and a terminal
+			// running unattended has nobody to answer it. A sweep sat there
+			// for six minutes having measured nothing before this had a
+			// deadline, which is the failure the budget below was already
+			// written to prevent one stage later.
+			//
+			// No backend fakes a device that blocks on open, so the deadline
+			// is made short enough that one which does open still misses it.
 			name: "through gives up on a device that never opens",
 			then: func() {
 				b, err := reamp.OpenClaiming([]malgo.Backend{reamp.NullBackend}, nullDevice,
@@ -397,20 +414,6 @@ func (s *ReampPublicTestSuite) TestThrough() {
 		})
 	}
 }
-
-// TestThroughGivesUpOnADeviceThatStopped covers the budget.
-//
-
-// TestThroughGivesUpOnADeviceThatNeverOpens covers the claim deadline.
-//
-// The failure it exists for is a device that neither opens nor refuses. On
-// macOS that is a program with no Microphone permission: CoreAudio blocks
-// inside the first capture while the system waits for somebody to answer a
-// dialog, and a terminal running unattended has nobody to answer it. A sweep
-// sat there for six minutes having measured nothing before this had a deadline,
-// which is the failure the budget below was already written to prevent one
-// stage later.
-//
 
 // TestOpenRefusesHardwareThatIsNotThere covers a name nothing answers to.
 func (s *ReampPublicTestSuite) TestOpenRefusesHardwareThatIsNotThere() {

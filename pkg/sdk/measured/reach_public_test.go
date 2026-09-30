@@ -61,18 +61,21 @@ func curves(
 	return measured.Curves{Controls: controls}
 }
 
-// TestTheRangeIsWhatWasActuallyRead is the number worth trusting.
-//
-// TestReachesReportsWhatTheSweepsCover covers turning a library of sweeps into what a chain can move.
+// TestReaches covers Reaches, which is what a chain's blocks were measured
+// doing, per figure.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ReachPublicTestSuite) TestReachesReportsWhatTheSweepsCover() {
+func (s *ReachPublicTestSuite) TestReaches() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// inside them is one some setting of this chain demonstrably hit.
+			// The number worth trusting.
+			//
+			// Nothing modelled. These are readings the hardware produced, so
+			// a target inside them is one some setting of this chain
+			// demonstrably hit.
 			name: "the range is what was actually read",
 			then: func() {
 				got := measured.Reaches(curves(map[string]measured.Curve{
@@ -87,7 +90,10 @@ func (s *ReachPublicTestSuite) TestReachesReportsWhatTheSweepsCover() {
 			},
 		},
 		{
-			// device's float controls are neither.
+			// A dial's contribution.
+			//
+			// Across the span it was swept over rather than nought to one:
+			// 1,452 of this device's float controls are neither.
 			name: "swing is the slope across the whole range",
 			then: func() {
 				got := measured.Reaches(curves(map[string]measured.Curve{
@@ -99,10 +105,13 @@ func (s *ReachPublicTestSuite) TestReachesReportsWhatTheSweepsCover() {
 			},
 		},
 		{
-			// control whose readings rise and then fall has a slope describing neither
-			// half. This amplifier's Bias reads 0.21 straight and its Hum 0.11, and
-			// counting their whole range as movement is arithmetic on a number with no
-			// referent.
+			// What keeps Swing honest.
+			//
+			// Straight is the fraction of a figure's movement the line
+			// accounts for, so a control whose readings rise and then fall
+			// has a slope describing neither half. This amplifier's Bias
+			// reads 0.21 straight and its Hum 0.11, and counting their whole
+			// range as movement is arithmetic on a number with no referent.
 			name: "a bent slope contributes less than a straight one",
 			then: func() {
 				bent := measured.Reaches(curves(map[string]measured.Curve{
@@ -119,7 +128,11 @@ func (s *ReachPublicTestSuite) TestReachesReportsWhatTheSweepsCover() {
 			},
 		},
 		{
-			// and a list is not one. A cabinet's twelve microphones do not lie on one.
+			// A control with no slope at all.
+			//
+			// Counted as fully straight, because straightness is a statement
+			// about a line and a list is not one. A cabinet's twelve
+			// microphones do not lie on one.
 			name: "a list contributes the distance between its settings",
 			then: func() {
 				mic := measured.Curve{
@@ -138,7 +151,10 @@ func (s *ReachPublicTestSuite) TestReachesReportsWhatTheSweepsCover() {
 			},
 		},
 		{
-			// what any one of them can.
+			// A chain rather than a block.
+			//
+			// A chain is its blocks, and the question is what the chain can
+			// do rather than what any one of them can.
 			name: "every block in the chain counts",
 			then: func() {
 				got := measured.Reaches(
@@ -158,8 +174,11 @@ func (s *ReachPublicTestSuite) TestReachesReportsWhatTheSweepsCover() {
 			},
 		},
 		{
-			// chain sitting at nought on it, and the difference decides whether somebody
-			// is told a target is out of reach.
+			// An axis nothing measured.
+			//
+			// Absent rather than zero, because a chain nobody swept on an
+			// axis is not a chain sitting at nought on it, and the difference
+			// decides whether somebody is told a target is out of reach.
 			name: "a figure no reading carried is absent",
 			then: func() {
 				got := measured.Reaches(curves(map[string]measured.Curve{
@@ -172,13 +191,14 @@ func (s *ReachPublicTestSuite) TestReachesReportsWhatTheSweepsCover() {
 			},
 		},
 		{
+			// Being handed nothing.
 			name: "no sweeps at all",
 			then: func() {
 				s.Require().Empty(measured.Reaches())
 			},
 		},
 		{
-			// measured but produced neither.
+			// A curve that was measured but produced neither.
 			name: "a control with no slope and no spread adds nothing",
 			then: func() {
 				bare := measured.Curve{
@@ -198,10 +218,14 @@ func (s *ReachPublicTestSuite) TestReachesReportsWhatTheSweepsCover() {
 			},
 		},
 		{
-			// blocks apart rather than a chain. Measured on an HX Stomp: an SV Beast swept
-			// with no cabinet reads its Treble at 12,763Hz of centroid per turn, the same
-			// control in the chain a rig builds reads 3,250, and four of its eleven
-			// controls change sign.
+			// The field that decides whether the answer is about the chain.
+			//
+			// Every committed sweep is isolated, and summing them describes a
+			// set of blocks apart rather than a chain. Measured on an HX
+			// Stomp: an SV Beast swept with no cabinet reads its Treble at
+			// 12,763Hz of centroid per turn, the same control in the chain a
+			// rig builds reads 3,250, and four of its eleven controls change
+			// sign.
 			name: "a sweep taken with the block alone says so",
 			then: func() {
 				one := curves(map[string]measured.Curve{
@@ -219,8 +243,11 @@ func (s *ReachPublicTestSuite) TestReachesReportsWhatTheSweepsCover() {
 			},
 		},
 		{
-			// blocks swept apart are in the same sum as the ones swept in place, so the
-			// sum is of both.
+			// A mixed chain.
+			//
+			// A chain measured half in place and half apart is not half
+			// trustworthy: the blocks swept apart are in the same sum as the
+			// ones swept in place, so the sum is of both.
 			name: "one isolated sweep taints the whole answer",
 			then: func() {
 				apart := curves(map[string]measured.Curve{
@@ -236,35 +263,14 @@ func (s *ReachPublicTestSuite) TestReachesReportsWhatTheSweepsCover() {
 			},
 		},
 	} {
-		s.Run(tt.name, func() { tt.then() })
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
-
-// TestSwingIsTheSlopeAcrossTheWholeRange covers a dial's contribution.
-//
-
-// TestABentSlopeContributesLessThanAStraightOne is what keeps Swing honest.
-//
-
-// TestAListContributesTheDistanceBetweenItsSettings covers a control with no
-// slope at all.
-//
-
-// TestEveryBlockInTheChainCounts covers a chain rather than a block.
-//
-
-// TestAFigureNoReadingCarriedIsAbsent covers an axis nothing measured.
-//
 
 func TestReachPublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(ReachPublicTestSuite))
 }
-
-// TestASweepTakenWithTheBlockAloneSaysSo is the field that decides whether the
-// answer is about the chain.
-//
-
-// TestOneIsolatedSweepTaintsTheWholeAnswer covers a mixed chain.
-//

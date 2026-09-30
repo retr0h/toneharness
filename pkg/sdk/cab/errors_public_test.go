@@ -46,6 +46,7 @@ func (s *ErrorsPublicTestSuite) TestError() {
 		then func()
 	}{
 		{
+			// The detail reaching a caller.
 			name: "too short says which side was short",
 			then: func() {
 				_, err := cab.Capture(make([]float64, 10), make([]float64, 10), cab.Short)
@@ -62,8 +63,11 @@ func (s *ErrorsPublicTestSuite) TestError() {
 			},
 		},
 		{
-			// against what is in hand. The same shortage, and "what came back" would be
-			// the wrong word for one of them.
+			// The same error reading differently.
+			//
+			// Capture divides what came back by what went out; Match holds a
+			// target against what is in hand. The same shortage, and "what
+			// came back" would be the wrong word for one of them.
 			name: "match names its own two sides",
 			then: func() {
 				_, err := cab.Match(make([]float64, 4), make([]float64, 8), cab.Short)
@@ -78,6 +82,7 @@ func (s *ErrorsPublicTestSuite) TestError() {
 			},
 		},
 		{
+			// Matching without the struct.
 			name: "each error unwraps to its sentinel",
 			then: func() {
 				for _, tt := range []struct {
@@ -102,9 +107,6 @@ func (s *ErrorsPublicTestSuite) TestError() {
 		})
 	}
 }
-
-// TestMatchNamesItsOwnTwoSides covers the same error reading differently.
-//
 
 // TestSilenceIsNotAShortSignal covers the other way the arithmetic fails.
 func (s *ErrorsPublicTestSuite) TestSilenceIsNotAShortSignal() {

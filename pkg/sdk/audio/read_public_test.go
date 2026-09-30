@@ -173,6 +173,7 @@ func (s *ReadPublicTestSuite) TestRead() {
 		then func()
 	}{
 		{
+			// Refused rather than measured.
 			name: "something that is not audio",
 			then: func() {
 				got, rate, err := audio.Read(bytes.NewReader([]byte("this is not a wav")))
@@ -183,6 +184,7 @@ func (s *ReadPublicTestSuite) TestRead() {
 			},
 		},
 		{
+			// Reads as nothing rather than failing.
 			name: "a wav holding no samples",
 			then: func() {
 				got, gotRate, err := func() ([]float64, int, error) {

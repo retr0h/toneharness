@@ -372,10 +372,8 @@ func (s *PlacePublicTestSuite) TestBlank() {
 	s.Require().Empty(s.read(doc).Blocks, "each call gets its own document")
 }
 
-// TestPlaceAsWritten covers putting a chain where the preset says it goes.
-//
-// TestPlaceAsWritten covers PlaceAsWritten, which writes a chain where
-// the preset says it goes.
+// TestPlaceAsWritten covers PlaceAsWritten, which writes a chain where the
+// preset says it goes.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *PlacePublicTestSuite) TestPlaceAsWritten() {
@@ -384,8 +382,12 @@ func (s *PlacePublicTestSuite) TestPlaceAsWritten() {
 		then func()
 	}{
 		{
-			// Stomp: the preset HX Edit exported puts its six blocks at 1 through 6 and
-			// the document the device sent puts the same six at 2 through 7.
+			// Putting a chain where the preset says it goes.
+			//
+			// The two numberings differ by one, measured against slot 27B of
+			// an HX Stomp: the preset HX Edit exported puts its six blocks at
+			// 1 through 6 and the document the device sent puts the same six
+			// at 2 through 7.
 			name: "place as written",
 			then: func() {
 				tests := []struct {
@@ -467,9 +469,19 @@ func (s *PlacePublicTestSuite) TestPlaceAsWritten() {
 			},
 		},
 		{
-			// device writes the model reference first, and this package wrote it last.
-			// Every chain it produced read back correctly, measured 147Hz on the
-			// hardware, and showed no blocks on the pedal.
+			// The byte order of a block.
+			//
+			// A device's own preset is read, its chain is written straight
+			// back into the document it came out of, and the chain section
+			// has to be the bytes that arrived. Nothing else here can make
+			// that assertion: every other test reads the result back, and
+			// reading finds a key wherever it sits.
+			//
+			// This is the test that was missing. A block body carries five
+			// keys, the device writes the model reference first, and this
+			// package wrote it last. Every chain it produced read back
+			// correctly, measured 147Hz on the hardware, and showed no blocks
+			// on the pedal.
 			name: "a chain is written the way the device wrote it",
 			then: func() {
 				for _, name := range []string{"preset.bin", "switches.bin"} {
@@ -724,14 +736,6 @@ func (s *PlacePublicTestSuite) placementOf(
 		CabModel: b.CabModel,
 	}
 }
-
-// TestAChainIsWrittenTheWayTheDeviceWroteIt covers the byte order of a block.
-//
-// A device's own preset is read, its chain is written straight back into the
-// document it came out of, and the chain section has to be the bytes that
-// arrived. Nothing else here can make that assertion: every other test reads
-// the result back, and reading finds a key wherever it sits.
-//
 
 func TestPlacePublicTestSuite(
 	t *testing.T,

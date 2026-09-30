@@ -48,15 +48,17 @@ func read(
 	return map[audio.Figure]float64{audio.KeyCentroid: centroid}
 }
 
-// TestNearestRanksTheSettingsByHowCloseTheyGet covers ordering a list's settings against a target.
+// TestNearest covers Nearest, which ranks a list's settings by how near the
+// target each one read.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChooseTestSuite) TestNearestRanksTheSettingsByHowCloseTheyGet() {
+func (s *ChooseTestSuite) TestNearest() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
+			// The whole point.
 			name: "nearest puts the closest setting first",
 			then: func() {
 				got := Nearest(s.aimed(100), map[int]map[audio.Figure]float64{
@@ -75,8 +77,11 @@ func (s *ChooseTestSuite) TestNearestRanksTheSettingsByHowCloseTheyGet() {
 			},
 		},
 		{
-			// arrives with no dial moved is one whose dials are all still free for the next
-			// round of asking.
+			// A list answering on its own.
+			//
+			// Worth reporting rather than folding into the ranking, because a
+			// chain that arrives with no dial moved is one whose dials are
+			// all still free for the next round of asking.
 			name: "nearest says when a setting already arrives",
 			then: func() {
 				got := Nearest(s.aimed(100), map[int]map[audio.Figure]float64{
@@ -89,9 +94,13 @@ func (s *ChooseTestSuite) TestNearestRanksTheSettingsByHowCloseTheyGet() {
 			},
 		},
 		{
-			// badly wrong on the other. Summed, setting 1 wins on two axes out of the two;
-			// on the worst axis, which is the measure the rest of the loop stops on, setting
-			// 0 wins. Ranked any other way "2.4 tolerances out" would mean one thing in the
+			// The scoring choice.
+			//
+			// Setting 0 is slightly wrong on both axes and setting 1 is right
+			// on one and badly wrong on the other. Summed, setting 1 wins on
+			// two axes out of the two; on the worst axis, which is the
+			// measure the rest of the loop stops on, setting 0 wins. Ranked
+			// any other way "2.4 tolerances out" would mean one thing in the
 			// comparison and another in the passes that follow it.
 			name: "nearest ranks on the worst axis rather than the sum",
 			then: func() {
@@ -111,7 +120,11 @@ func (s *ChooseTestSuite) TestNearestRanksTheSettingsByHowCloseTheyGet() {
 			},
 		},
 		{
-			// between two microphones, and a map walked twice yields two orders.
+			// Keeps one request answering one way.
+			//
+			// Two settings equally far from a target is not unusual: a target
+			// may sit between two microphones, and a map walked twice yields
+			// two orders.
 			name: "nearest breaks ties on the setting",
 			then: func() {
 				for range 8 {
@@ -127,9 +140,13 @@ func (s *ChooseTestSuite) TestNearestRanksTheSettingsByHowCloseTheyGet() {
 			},
 		},
 		{
-			// reaches this, and the ranking is over what was readable rather than over
-			// every setting the control has. One clipped microphone of twelve read 4,471Hz
-			// where the other eleven sat between 126 and 147, so scored it would have won
+			// The guard's effect.
+			//
+			// A setting that muted the chain, clipped the converters or was
+			// refused never reaches this, and the ranking is over what was
+			// readable rather than over every setting the control has. One
+			// clipped microphone of twelve read 4,471Hz where the other
+			// eleven sat between 126 and 147, so scored it would have won
 			// every target asking for brightness.
 			name: "nearest scores nothing it was not handed a reading for",
 			then: func() {
@@ -144,6 +161,7 @@ func (s *ChooseTestSuite) TestNearestRanksTheSettingsByHowCloseTheyGet() {
 			},
 		},
 		{
+			// A list no setting of which was readable.
 			name: "nearest on nothing readable",
 			then: func() {
 				s.Require().Empty(Nearest(s.aimed(100), nil))
@@ -155,18 +173,6 @@ func (s *ChooseTestSuite) TestNearestRanksTheSettingsByHowCloseTheyGet() {
 		})
 	}
 }
-
-// TestNearestSaysWhenASettingAlreadyArrives covers a list answering on its own.
-//
-
-// TestNearestRanksOnTheWorstAxisRatherThanTheSum covers the scoring choice.
-//
-
-// TestNearestBreaksTiesOnTheSetting keeps one request answering one way.
-//
-
-// TestNearestScoresNothingItWasNotHandedAReadingFor covers the guard's effect.
-//
 
 // TestWhereIdentifiesAChoiceTheWayItIdentifiesAKnob covers the shared address.
 //
@@ -180,19 +186,21 @@ func (s *ChooseTestSuite) TestWhereIdentifiesAChoiceTheWayItIdentifiesAKnob() {
 	s.Require().Equal(k.Where(), c.Where())
 }
 
-// TestRunnersLeavesOutEachListsNearest covers what an alternative is.
-//
-// TestRunnersOrdersWhatWasNotChosen covers the settings left after each list's nearest.
+// TestRunners covers Runners, which is every setting other than each list's
+// nearest, in the order worth trying them.
 //
 // One method and one table, so a case is a row rather than a file.
-func (s *ChooseTestSuite) TestRunnersOrdersWhatWasNotChosen() {
+func (s *ChooseTestSuite) TestRunners() {
 	for _, tt := range []struct {
 		name string
 		then func()
 	}{
 		{
-			// runners list holding it would spend a whole convergence re-solving the chain
-			// it just solved.
+			// What an alternative is.
+			//
+			// The nearest is already applied, so it is not something to back
+			// up to. A runners list holding it would spend a whole
+			// convergence re-solving the chain it just solved.
 			name: "runners leaves out each lists nearest",
 			then: func() {
 				where := Where{Block: 1, Param: 4}
@@ -213,9 +221,13 @@ func (s *ChooseTestSuite) TestRunnersOrdersWhatWasNotChosen() {
 			},
 		},
 		{
-			// try whichever runner-up read nearest, not exhaust one control before touching
-			// the other. Each reading costs a whole convergence, so spending the first on
-			// the second-best reading anywhere is the order most likely to pay.
+			// Why it is one queue.
+			//
+			// A chain with a cabinet's microphone and an amplifier's mid
+			// frequency should try whichever runner-up read nearest, not
+			// exhaust one control before touching the other. Each reading
+			// costs a whole convergence, so spending the first on the
+			// second-best reading anywhere is the order most likely to pay.
 			name: "runners orders across every list rather than within one",
 			then: func() {
 				mic := Where{Block: 1, Param: 4}
@@ -236,6 +248,7 @@ func (s *ChooseTestSuite) TestRunnersOrdersWhatWasNotChosen() {
 			},
 		},
 		{
+			// Nothing to back up to.
 			name: "runners on a list with one readable setting",
 			then: func() {
 				where := Where{Block: 0, Param: 1}
@@ -247,6 +260,7 @@ func (s *ChooseTestSuite) TestRunnersOrdersWhatWasNotChosen() {
 			},
 		},
 		{
+			// Keeps a run reproducible.
 			name: "runners ties order the same way twice",
 			then: func() {
 				first := Where{Block: 0, Param: 1}
@@ -269,8 +283,12 @@ func (s *ChooseTestSuite) TestRunnersOrdersWhatWasNotChosen() {
 			},
 		},
 		{
-			// a target sits between two microphones. Without the setting to fall back on a
-			// map's order decides which one a run spends its second convergence on.
+			// The last tie-break.
+			//
+			// Two settings of one control equally far from a target, which is
+			// ordinary when a target sits between two microphones. Without
+			// the setting to fall back on a map's order decides which one a
+			// run spends its second convergence on.
 			name: "runners ties within one list order on the setting",
 			then: func() {
 				where := Where{Block: 0, Param: 1}
@@ -296,14 +314,8 @@ func (s *ChooseTestSuite) TestRunnersOrdersWhatWasNotChosen() {
 	}
 }
 
-// TestRunnersOrdersAcrossEveryListRatherThanWithinOne is why it is one queue.
-//
-
 func TestChooseTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(ChooseTestSuite))
 }
-
-// TestRunnersTiesWithinOneListOrderOnTheSetting covers the last tie-break.
-//

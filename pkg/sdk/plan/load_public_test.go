@@ -48,8 +48,8 @@ blocks:
     enabled: true
 `
 
-// TestLoad covers Load, which reads a plan, refusing any field it does
-// not know.
+// TestLoad covers Load, which reads a plan, refusing any field it does not
+// know.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *LoadPublicTestSuite) TestLoad() {
@@ -58,6 +58,7 @@ func (s *LoadPublicTestSuite) TestLoad() {
 		then func()
 	}{
 		{
+			// Reads a plan off a reader.
 			name: "load",
 			then: func() {
 				tests := []struct {
@@ -130,8 +131,12 @@ func (s *LoadPublicTestSuite) TestLoad() {
 			},
 		},
 		{
-			// nothing in this package assembles: the routing, footswitches and snapshots a
-			// device wraps a chain in, every one of them holding raw JSON.
+			// The plan a device read produces.
+			//
+			// Off disk rather than built here, because the shape that broke
+			// this is one nothing in this package assembles: the routing,
+			// footswitches and snapshots a device wraps a chain in, every one
+			// of them holding raw JSON.
 			name: "load reads a lifted preset",
 			then: func() {
 				at := filepath.Join("..", "..", "..", "examples", "plan", "dir-angl-meteor.yaml")
@@ -172,9 +177,12 @@ func (s *LoadPublicTestSuite) TestLoad() {
 			},
 		},
 		{
-			// whether a field has been written down, this one about whether writing it down
-			// produces a plan. A fixture nothing parses would satisfy the first and mean
-			// nothing.
+			// Reads the fixture the coverage test counts fields in.
+			//
+			// Two tests over one file, because they ask different things:
+			// that one is about whether a field has been written down, this
+			// one about whether writing it down produces a plan. A fixture
+			// nothing parses would satisfy the first and mean nothing.
 			name: "load reads every field this format models",
 			then: func() {
 				f, err := os.Open(filepath.Join("testdata", "everything.yaml"))
@@ -214,8 +222,6 @@ func (s *LoadPublicTestSuite) TestLoad() {
 	}
 }
 
-// TestWriteReadsBack covers a plan surviving the round trip.
-//
 // TestWrite covers Write, which writes a plan out as YAML.
 //
 // One method and one table, so a case is a row rather than a file.
@@ -225,7 +231,10 @@ func (s *LoadPublicTestSuite) TestWrite() {
 		then func()
 	}{
 		{
-			// what they hand back has to be the same plan.
+			// A plan surviving the round trip.
+			//
+			// The point of writing one at all: `presets show` hands somebody
+			// a plan, and what they hand back has to be the same plan.
 			name: "write reads back",
 			then: func() {
 				first, err := plan.Load(strings.NewReader(smallest +
@@ -242,10 +251,14 @@ func (s *LoadPublicTestSuite) TestWrite() {
 			},
 		},
 		{
-			// its kind in unexported fields and an attribute is raw JSON, so neither is
-			// reachable by a decoder working off the struct: the only caller that wrote a
-			// plan wrote blocks with no params and no attrs, and nothing noticed that
-			// everything else came back empty.
+			// A knob surviving the round trip.
+			//
+			// The assertion whose absence let a plan be lossy for months. A
+			// ParamValue keeps its kind in unexported fields and an attribute
+			// is raw JSON, so neither is reachable by a decoder working off
+			// the struct: the only caller that wrote a plan wrote blocks with
+			// no params and no attrs, and nothing noticed that everything
+			// else came back empty.
 			name: "write reads back every parameter kind",
 			then: func() {
 				first := plan.Plan{
@@ -277,6 +290,7 @@ func (s *LoadPublicTestSuite) TestWrite() {
 			},
 		},
 		{
+			// The error nothing else would.
 			name: "write reports a writer that fails",
 			then: func() {
 				err := plan.Write(deaf{}, plan.Plan{Name: "x", Blocks: []plan.Block{{}}})
@@ -290,16 +304,6 @@ func (s *LoadPublicTestSuite) TestWrite() {
 		})
 	}
 }
-
-// TestWriteReadsBackEveryParameterKind covers a knob surviving the round trip.
-//
-
-// TestLoadReadsALiftedPreset covers the plan a device read produces.
-//
-
-// TestLoadReadsEveryFieldThisFormatModels reads the fixture the coverage test
-// counts fields in.
-//
 
 // deaf is a writer that refuses everything.
 type deaf struct{}

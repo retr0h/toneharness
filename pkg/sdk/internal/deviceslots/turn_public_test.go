@@ -71,6 +71,7 @@ func (s *TurnPublicTestSuite) TestTurn() {
 		then func()
 	}{
 		{
+			// The ordinary case and the device declining.
 			name: "turn moves a control",
 			then: func() {
 				ctx := context.Background()
@@ -113,6 +114,7 @@ func (s *TurnPublicTestSuite) TestTurn() {
 			},
 		},
 		{
+			// A session without the capability.
 			name: "turn needs a session that can move one",
 			then: func() {
 				err := (&deviceslots.Flows{}).Turn(

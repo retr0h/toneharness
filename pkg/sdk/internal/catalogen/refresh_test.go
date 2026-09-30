@@ -64,8 +64,8 @@ func (s *RefreshTestSuite) written(
 	return c
 }
 
-// TestRefresh covers Refresh, which builds the catalog and writes it
-// only when it differs from the one.
+// TestRefresh covers Refresh, which builds the catalog and writes it only
+// when it differs from the one already there.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *RefreshTestSuite) TestRefresh() {
@@ -74,7 +74,8 @@ func (s *RefreshTestSuite) TestRefresh() {
 		then func()
 	}{
 		{
-			// installation, or not, when the machine has none.
+			// Building a catalog out of somebody's HX Edit installation, or
+			// not, when the machine has none.
 			name: "refresh",
 			then: func() {
 				tests := []struct {
@@ -164,7 +165,11 @@ func (s *RefreshTestSuite) TestRefresh() {
 			},
 		},
 		{
-			// not written, so nothing shows up as a change nobody made.
+			// Running it again.
+			//
+			// go generate runs on every `just ready`. A catalog that has not
+			// changed is not written, so nothing shows up as a change nobody
+			// made.
 			name: "refresh leaves an unchanged catalog alone",
 			then: func() {
 				out := filepath.Join(s.T().TempDir(), "catalog.json")
@@ -192,9 +197,6 @@ func (s *RefreshTestSuite) TestRefresh() {
 		})
 	}
 }
-
-// TestRefreshLeavesAnUnchangedCatalogAlone covers running it again.
-//
 
 func TestRefreshTestSuite(
 	t *testing.T,
