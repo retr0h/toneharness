@@ -116,7 +116,8 @@ func MeasureBlocks(
 		// because a figure is a figure about one instrument through one loop
 		// and neither is recoverable from a path somebody may rename.
 		Instrument: instrumentOf(opts.Dry),
-		Headroom:   opts.Headroom,
+		// Headroom is set after the trim rather than here, because the trim is
+		// what decides it and this literal is built before the rig is known.
 		Reference: measured.Reference{
 			File:    opts.Dry,
 			SHA256:  sum,
@@ -147,13 +148,20 @@ func MeasureBlocks(
 
 	defer func() { _ = os.RemoveAll(work) }()
 
-	built := build(ctx, w, opts.Client, want, work, opts.Headroom)
-
-	// Before the baseline, because the baseline is a reading and this decides
-	// what it reads. Setting it after would calibrate against a level the
-	// campaign then changed.
+	// Before anything is built, because the headroom is compiled into every
+	// preset and the trim decides what it is. This ran after `build` for one
+	// commit, which baked the untrimmed value into all 661 block presets while
+	// the baseline was then compiled at the trimmed one: every block read 30dB
+	// quieter than the empty loop it is compared against, on an open-loop rig
+	// and only there. The library also recorded the value it did not use.
+	//
+	// The other four measuring commands pin first and say so. This was the one
+	// that did not.
 	lib.Volume = levelled(w, opts.Volume)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
+	lib.Headroom = opts.Headroom
+
+	built := build(ctx, w, opts.Client, want, work, opts.Headroom)
 
 	if err := baseline(ctx, w, bench, signal, &lib, work, opts); err != nil {
 		return err
