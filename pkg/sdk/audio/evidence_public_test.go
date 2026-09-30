@@ -58,6 +58,42 @@ func (s *EvidencePublicTestSuite) TestEveryKeyIsMeasured() {
 	}
 }
 
+// TestSpreadsCarriesTheSameGuardMeasuredDoes is the other side of Measured.
+//
+// Measured writes what one recording answered; this writes what a population
+// of them agreed about, and a target's tolerances come from it. Both leave out
+// a figure nobody could take rather than writing the number it would have
+// been: a spread of zero on an axis nothing measured reads as total agreement,
+// which is the tightest tolerance there is and the one a solver will spend
+// every control defending.
+func (s *EvidencePublicTestSuite) TestSpreadsCarriesTheSameGuardMeasuredDoes() {
+	answered := audio.Across{
+		Low:       audio.Spread{Low: 0.2, Mid: 0.3, High: 0.4},
+		Transient: audio.Ranged{From: 4, Spread: audio.Spread{Mid: 0.5}},
+		Decay:     audio.Ranged{From: 2, Spread: audio.Spread{Mid: 2.9}},
+	}.Spreads()
+
+	// The seven every recording answers, and the two that need a note
+	// starting and a note ending.
+	s.Require().Len(answered, len(audio.MeasuredKeys()))
+
+	for _, key := range audio.MeasuredKeys() {
+		s.Require().Contains(answered, string(key))
+	}
+
+	s.Require().InDelta(0.3, answered[string(audio.KeyLow)].Mid, 0.001)
+	s.Require().InDelta(0.5, answered[string(audio.KeyTransient)].Mid, 0.001)
+	s.Require().InDelta(2.9, answered[string(audio.KeyDecay)].Mid, 0.001)
+
+	// And a population where no record answered either.
+	silent := audio.Across{Low: audio.Spread{Mid: 0.3}}.Spreads()
+
+	s.Require().NotContains(silent, string(audio.KeyTransient),
+		"no record's notes started, so there is nothing to agree about")
+	s.Require().NotContains(silent, string(audio.KeyDecay))
+	s.Require().Contains(silent, string(audio.KeyLow), "the rest still arrives")
+}
+
 // TestOnlyTheBandsAndHarmonicsAreShares pins the set every scale conversion
 // reads.
 //

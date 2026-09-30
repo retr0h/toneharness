@@ -37,10 +37,22 @@ import (
 // is what a person can put back by hand if this ever goes wrong.
 const osascript = "/usr/bin/osascript"
 
+// asks runs one line of AppleScript and hands back what it printed.
+//
+// A variable because it is the only thing in this package that leaves the
+// process, and the four answers either side of it — a shell that failed, a
+// shell that printed something that is not a number, a level read, a level set
+// — are four branches nothing could reach otherwise. A test stands its own
+// function here; nothing else assigns it.
+var asks = func(
+	script string,
+) ([]byte, error) {
+	return exec.Command(osascript, "-e", script).Output()
+}
+
 // volume reads the output level.
 func volume() (int, error) {
-	out, err := exec.Command(
-		osascript, "-e", "output volume of (get volume settings)").Output()
+	out, err := asks("output volume of (get volume settings)")
 	if err != nil {
 		return 0, &VolumeError{Doing: "reading", Said: err}
 	}
@@ -57,9 +69,7 @@ func volume() (int, error) {
 func setVolume(
 	to int,
 ) error {
-	err := exec.Command(
-		osascript, "-e", "set volume output volume "+strconv.Itoa(to)).Run()
-	if err != nil {
+	if _, err := asks("set volume output volume " + strconv.Itoa(to)); err != nil {
 		return &VolumeError{Doing: "setting", Said: err}
 	}
 

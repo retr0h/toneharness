@@ -107,6 +107,27 @@ func (s *ValidatePublicTestSuite) TestAgainstRefusesWhatTheTypesCouldNotBuild() 
 	s.Require().NotEmpty(err.Error())
 }
 
+// TestAFailureInsideAListIsWrittenTheWayTheFileIs covers the field path.
+//
+// A schema points at a value with a JSON pointer, where every step is a name:
+// `genre.1`. Somebody looking at their own YAML sees a list, so a step that is
+// a position is written as one. It is the same rule rig applies to a RigSpec,
+// deliberately: the two contracts are read by the same person holding both
+// files, and a ToneSpec error spelling a position differently would read as a
+// different kind of fault rather than the same one in the other document.
+func (s *ValidatePublicTestSuite) TestAFailureInsideAListIsWrittenTheWayTheFileIs() {
+	err := tone.Validate(tone.Spec{Genre: []string{"punk", ""}})
+
+	s.Require().ErrorIs(err, tone.ErrInvalid)
+	s.Require().ErrorContains(err, "genre[1]")
+	s.Require().NotContains(err.Error(), "genre.1")
+
+	var fault *tone.InvalidError
+	s.Require().ErrorAs(err, &fault)
+	s.Require().Equal("genre[1]", fault.Field)
+	s.Require().NotEmpty(fault.Reason, "and it says what was wrong with it")
+}
+
 // TestInvalid says what went wrong, whatever the library hands it.
 func (s *ValidatePublicTestSuite) TestInvalid() {
 	tests := []struct {
