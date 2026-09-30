@@ -67,6 +67,37 @@ func (s *InstrumentPublicTestSuite) TestTheCatalogsOwnTagsDecideWhatAChainIsFor(
 	s.Require().Equal("bass", chainIsFor(s.chain("HD2_AmpSVBeastNrm"), s.cat))
 }
 
+// TestABassAmpAnywhereDecidesIt is the divergence that would have refused a
+// rig for the instrument it says it is.
+//
+// The compiler scans every amplifier and answers bass if any one of them is a
+// bass amplifier, so that is the rig's own `instrument` field. Returning on the
+// first amplifier found reads a guitar-amp-then-bass-amp chain as guitar, and
+// then this guard refuses a bass rig pushed a bass recording. The two rules have
+// to be the same rule.
+func (s *InstrumentPublicTestSuite) TestABassAmpAnywhereDecidesIt() {
+	// A guitar amplifier first, a bass amplifier after it.
+	both := plan.Plan{Blocks: []plan.Block{
+		{Model: catalog.ModelID("HD2_AmpBrit2203"), Pos: 0, Enabled: true},
+		{Model: catalog.ModelID("HD2_AmpSVBeastNrm"), Pos: 1, Enabled: true},
+	}}
+
+	guitar := s.cat.Blocks["HD2_AmpBrit2203"]
+	s.Require().Equal(catalog.CategoryAmp, guitar.Category)
+	s.Require().NotEqual("Bass", guitar.Subcategory,
+		"the first amplifier here is not a bass amplifier")
+
+	s.Require().Equal("bass", chainIsFor(both, s.cat))
+
+	s.Require().NoError(sameInstrument(both, s.cat, "resources/dry/bass-di.wav"),
+		"and a bass reference through it is not refused")
+}
+
+// TestAGuitarOnlyChainStillAnswersGuitar covers not over-correcting.
+func (s *InstrumentPublicTestSuite) TestAGuitarOnlyChainStillAnswersGuitar() {
+	s.Require().Equal("guitar", chainIsFor(s.chain("HD2_AmpBrit2203"), s.cat))
+}
+
 // TestAChainWithNoAmplifierNamesNoInstrument covers claiming nothing.
 //
 // An effect serves either instrument, so there is no disagreement to find and

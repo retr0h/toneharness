@@ -49,20 +49,28 @@ import (
 // reference.
 var ErrWrongInstrument = errors.New("the reference is not this chain's instrument")
 
-// chainIsFor is the instrument a chain is for, by the amplifier in it.
+// chainIsFor is the instrument a chain is for, by the amplifiers in it.
 //
 // Line 6 tag every amplifier Guitar or Bass and that tag is in the catalog, so
-// the chain says what it is for without anybody writing it down. A chain with no
-// amplifier names nothing: an effect serves either instrument, so there is no
-// claim to make and nothing to refuse.
+// the chain says what it is for without anybody writing it down.
 //
-// The same rule `compile` uses when it lifts a preset, and deliberately so: a
-// rig's `instrument` field and this answer have to agree, or a rig would be
-// refused for an instrument it says it is for.
+// **Every amplifier, and a bass one anywhere decides it.** That is the rule
+// `compile` uses when it lifts a preset, and the two have to agree or this
+// refuses a rig for the instrument the rig itself says it is. Returning on the
+// first amplifier found is not the same rule: a chain holding a guitar amp
+// before a bass amp reads as bass to the compiler and would have read as guitar
+// here, so a bass rig pushed a bass recording would have been refused.
+//
+// Where they differ on purpose: `compile` answers guitar for a chain with no
+// amplifier at all, because a rig's `instrument` field has to say something.
+// This answers nothing. An effect serves either instrument, so there is no claim
+// to make, and a guard that invents one would refuse a delay being measured.
 func chainIsFor(
 	made plan.Plan,
 	cat *catalog.Catalog,
 ) string {
+	found := ""
+
 	for _, b := range made.Blocks {
 		blk, known := cat.Block(b.Model)
 		if !known || blk.Category != catalog.CategoryAmp {
@@ -73,10 +81,10 @@ func chainIsFor(
 			return "bass"
 		}
 
-		return "guitar"
+		found = "guitar"
 	}
 
-	return ""
+	return found
 }
 
 // sameInstrument refuses a chain about to be measured through the wrong
