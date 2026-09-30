@@ -311,7 +311,7 @@ func sweep(
 		Span:        measured.Span{Low: c.low, High: c.high, FromCatalog: true},
 		Noise:       noise,
 		Settled:     settled,
-		SilentBelow: settled - silent,
+		SilentBelow: silentBelow(settled),
 	}
 
 	_, _ = fmt.Fprintf(w, "  %s (index %d, %s), %d positions from %g to %g\n",
@@ -334,20 +334,18 @@ func sweep(
 			return nil, err
 		}
 
-		if got.Level < curve.SilentBelow {
+		switch verdict, why := judge(got.Level, curve.SilentBelow); verdict {
+		case tooQuiet:
 			curve.MutedAt = append(curve.MutedAt, at)
-			_, _ = fmt.Fprintf(w,
-				"    %8g  silent, so its figures are of the noise\n", at)
+			_, _ = fmt.Fprintf(w, "    %8g  %s\n", at, why)
 
 			continue
-		}
-
-		if got.Level > clipped {
+		case tooLoud:
 			curve.ClippedAt = append(curve.ClippedAt, at)
-			_, _ = fmt.Fprintf(w,
-				"    %8g  clipped, so its figures are the converters'\n", at)
+			_, _ = fmt.Fprintf(w, "    %8g  %s\n", at, why)
 
 			continue
+		case believable:
 		}
 
 		curve.Points = append(curve.Points, measured.Point{Value: at, Figures: got})

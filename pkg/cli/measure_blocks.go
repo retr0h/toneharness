@@ -376,8 +376,18 @@ func suspect(
 
 	// Louder than the loop's own floor with nothing put in, which is a signal
 	// the block is making rather than passing.
-	return quiet.Level > got.Level-silent, nil
+	return quiet.Level > got.Level-selfNoise, nil
 }
+
+// selfNoise is how far under a block's own reading its silence may sit before
+// the block is making the sound rather than passing it.
+//
+// The same 30dB a sweep uses to call a reading the noise floor's, and not the
+// same number: that one separates a muted control from a working one, this one
+// separates a block that oscillates from one that is quiet when fed nothing.
+// They were one constant, so retuning the sweep would have retuned the squeal
+// detector, in a different file, silently.
+const selfNoise = 30.0
 
 // blockIsACab says a single-block chain is a low pass.
 //

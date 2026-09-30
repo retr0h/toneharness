@@ -220,17 +220,13 @@ func readings(
 			return nil, err
 		}
 
-		switch {
-		case got.Level < settled-silent:
-			_, _ = fmt.Fprintf(w,
-				"    %s %-3d silent, so its figures are of the noise\n", c.Setting, at)
-		case got.Level > clipped:
-			_, _ = fmt.Fprintf(w,
-				"    %s %-3d clipped, so its figures are the converters'\n",
-				c.Setting, at)
-		default:
-			out[at] = figuresOf(got)
+		if verdict, why := judge(got.Level, silentBelow(settled)); verdict != believable {
+			_, _ = fmt.Fprintf(w, "    %s %-3d %s\n", c.Setting, at, why)
+
+			continue
 		}
+
+		out[at] = figuresOf(got)
 	}
 
 	return out, nil
