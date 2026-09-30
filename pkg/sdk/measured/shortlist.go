@@ -181,8 +181,8 @@ func suggest(
 	read := 0
 
 	for _, w := range want {
-		was, had := figureOf(baseline, w.Figure)
-		now, has := figureOf(block.Figures, w.Figure)
+		was, had := baseline.figure(w.Figure)
+		now, has := block.figure(w.Figure)
 
 		if !had || !has {
 			continue
@@ -223,51 +223,6 @@ func suggest(
 	sort.Slice(out.Hurts, func(i, j int) bool { return out.Hurts[i] < out.Hurts[j] })
 
 	return out, true
-}
-
-// figureOf reads one axis off a reading, and says whether it was measured.
-//
-// The three pointer figures answer false where they are absent, which is what
-// keeps an unmeasured axis out of a score rather than in it as a zero.
-func figureOf(
-	f Figures,
-	key audio.Figure,
-) (float64, bool) {
-	switch key {
-	case audio.KeyCentroid:
-		return f.Centroid, true
-	case audio.KeyLevel:
-		return f.Level, true
-	case audio.KeyLow:
-		return f.Low, true
-	case audio.KeyMid:
-		return f.Mid, true
-	case audio.KeyHigh:
-		return f.High, true
-	case audio.KeyTransient:
-		return value(f.Transient)
-	case audio.KeyDecay:
-		return value(f.Decay)
-	case audio.KeyDynamics:
-		return value(f.Dynamics)
-	case audio.KeyHarmonics:
-		return value(f.Harmonics)
-	case audio.KeyLean:
-		return value(f.Lean)
-	}
-
-	return 0, false
-}
-
-// value is a pointer figure and whether it was measured at all.
-func value(
-	of *float64,
-) (float64, bool) {
-	if of == nil {
-		return 0, false
-	}
-
-	return *of, true
 }
 
 // Categories narrows a shortlist to the kinds of block worth adding.

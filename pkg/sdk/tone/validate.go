@@ -35,6 +35,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -155,10 +156,58 @@ func invalid(
 		return fmt.Errorf("%w: %s: %w", ErrInvalid, name, err)
 	}
 
-	field := strings.Join(fault.JSONPointer(), ".")
+	field := fieldOf(fault)
 	if field == "" {
 		field = "the document"
 	}
 
-	return &InvalidError{Document: name, Field: field, Reason: fault.Reason}
+	return &InvalidError{Document: name, Field: field, Reason: reasonOf(fault)}
+}
+
+// fieldOf names what failed, the way the file writes it.
+//
+// A schema points at a value with a JSON pointer, where every step is a name:
+// `chain.0.role`. Somebody looking at their own YAML sees a list, so the steps
+// that are positions are written as ones: `chain[0].role`.
+//
+// The same rule `rig` applies to a RigSpec, deliberately. The two contracts are
+// read by the same person holding both files, and a ToneSpec error that spelled a
+// position differently from a RigSpec error would read as a different kind of
+// fault rather than the same one in the other document.
+func fieldOf(
+	err *openapi3.SchemaError,
+) string {
+	var out strings.Builder
+
+	for _, step := range err.JSONPointer() {
+		if _, err := strconv.Atoi(step); err == nil {
+			fmt.Fprintf(&out, "[%s]", step)
+
+			continue
+		}
+
+		if out.Len() > 0 {
+			out.WriteString(".")
+		}
+
+		out.WriteString(step)
+	}
+
+	return out.String()
+}
+
+// reasonOf says what was wrong with it, without repeating the field.
+//
+// The fallback is the point. `SchemaError.Reason` is empty for some failures, and
+// this used to pass it through, so a document could be refused with an
+// InvalidError carrying no explanation at all: a field name and a blank. The
+// error's own text is worse prose than a reason and is not nothing.
+func reasonOf(
+	err *openapi3.SchemaError,
+) string {
+	if err.Reason != "" {
+		return err.Reason
+	}
+
+	return err.Error()
 }
