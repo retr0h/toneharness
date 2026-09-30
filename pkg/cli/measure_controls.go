@@ -351,10 +351,16 @@ func sweep(
 }
 
 // fill works out what the measured positions say.
+//
+// A list and a switch get a spread and no slope; a dial gets a slope. The split
+// is the same one the solver makes, and getting it wrong here is not visible
+// downstream: a line through a switch's two points fits perfectly by
+// construction, so it would carry a slope with Straight at 1.0 and be believed
+// over every dial on the block.
 func fill(
 	curve *measured.Curve,
 ) {
-	if curve.Kind == "int" {
+	if curve.Kind == "int" || curve.Kind == "bool" {
 		curve.Spread = map[audio.Figure]float64{}
 
 		for _, f := range measured.Named() {

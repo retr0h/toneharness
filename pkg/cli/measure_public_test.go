@@ -318,7 +318,7 @@ func (s *MeasureTestSuite) TestWireOrderIsNotTheSortedOne() {
 }
 
 // TestFillGivesADialASlopeAndAListASpread covers the split.
-func (s *MeasureTestSuite) TestFillGivesADialASlopeAndAListASpread() {
+func (s *MeasureTestSuite) TestFillGivesADialASlopeAndAListOrSwitchASpread() {
 	points := []measured.Point{
 		{Value: 0, Figures: measured.Figures{Centroid: 100}},
 		{Value: 1, Figures: measured.Figures{Centroid: 200}},
@@ -337,6 +337,18 @@ func (s *MeasureTestSuite) TestFillGivesADialASlopeAndAListASpread() {
 	s.Require().NotEmpty(list.Spread)
 	s.Require().Nil(list.Fits, "a list of settings has no slope")
 	s.Require().InDelta(100, list.Spread["centroid"], 0.001)
+
+	// A switch goes with the list, and getting this wrong is invisible
+	// downstream. A line through two points fits perfectly by construction, so
+	// a switch given a slope would carry Straight at 1.0 and be believed over
+	// every dial on the block, while its own spread stayed empty and the report
+	// said it moved nothing.
+	sw := measured.Curve{Kind: "bool", Points: points}
+	Fill(&sw)
+
+	s.Require().NotEmpty(sw.Spread, "off against on is a spread")
+	s.Require().Nil(sw.Fits, "two positions is not a slope")
+	s.Require().InDelta(100, sw.Spread["centroid"], 0.001)
 }
 
 // TestResampleTakesTheAskedForLength covers the rate change.
