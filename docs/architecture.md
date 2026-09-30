@@ -169,10 +169,15 @@ with a block alone is not the slope that block has in a chain: four of eleven
 controls on one amplifier move the centroid the other way.
 
 Read what it says with care. On an HX Stomp the empty loop is healthy and a
-chain holding an amplifier is not, and
-[correcting.md](../.claude/skills/build-a-rig/references/correcting.md#neither-number-is-trustworthy-while-the-loop-adds-a-signal-of-its-own)
-has the measurements. Until that is settled every hardware figure for a chain
-with an amplifier in it is suspect.
+chain holding an amplifier was not, because a preset compiled here inherited the
+blank template's output destination and Multi drives the socket the measuring
+lead comes from, so the chain arrived back at its own input. Every measuring
+command now sends the chain to USB alone instead, and
+[correcting.md](../.claude/skills/build-a-rig/references/correcting.md#the-loop-oscillates-and-the-fix-is-where-the-chain-is-sent)
+has the measurements and why turning the output down was not enough on its own.
+The code is in and tested; no campaign has been run on it yet, so **every
+hardware figure committed here was taken through the loop and wants taking
+again.**
 
 Two hardware facts shape the loop. A slot is flash and a burst of writes has
 corrupted a setlist, so tuning happens in the edit buffer and only the final

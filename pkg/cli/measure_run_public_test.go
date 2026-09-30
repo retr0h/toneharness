@@ -56,6 +56,14 @@ func (s *MeasureRunTestSuite) SetupTest() {
 	s.pedal = mocks.NewMockPedal(s.ctrl)
 	s.out = filepath.Join(s.T().TempDir(), "measured.json")
 	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di.wav")
+
+	// The preset read back and rebuilt: every command here takes its chain off
+	// the measuring loop before playing it, sending the output to USB rather
+	// than to the socket the measuring lead comes from. What that rewrite does
+	// is offTheLoop's own test, so it is answered here rather than asserted.
+	s.pedal.EXPECT().
+		PresetFile(gomock.Any(), gomock.Any()).
+		Return(sdk.Reading{Plan: routed()}, nil).AnyTimes()
 }
 
 // bench hands back a tone loud enough to measure.

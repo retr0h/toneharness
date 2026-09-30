@@ -125,7 +125,7 @@ func init() {
 		&toneReachHeadroom,
 		"headroom",
 		measuringHeadroom,
-		"decibels to turn the chain's own output down by before measuring; the lead from the pedal back to itself oscillates without it",
+		"decibels to turn the chain's own output down by before measuring; what opens the measuring loop is the destination, which is set whatever this says, and this bounds what is left",
 	)
 	f.StringVar(&toneReachClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")

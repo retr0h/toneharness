@@ -29,26 +29,39 @@ import (
 	"path/filepath"
 
 	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
-// This file lowers the one gain that is not part of the tone.
+// This file takes a preset off the measuring loop before it is measured.
 //
-// The measuring rig is a lead from the pedal's output back into its own input,
-// and the chain's output destination is `Multi (1/4", XLR, Digital, USB 1/2)`,
-// which drives the socket that lead comes from. So the chain feeds itself, and
-// with enough gain around that it oscillates: matt-freeman read 84.3% of its
-// energy above 2kHz where the reference has 0.01%, and the same chain with the
-// amplifier turned down read 0.0% for three decibels less level.
+// The measuring rig is a lead from the pedal's output socket back into its own
+// input. A preset compiled from a plan inherits the blank template's routing,
+// which sends the chain to destination 1, `Multi (1/4", XLR, Digital, USB
+// 1/2)`, and Multi drives the socket that lead comes from. So the chain's
+// output arrives at its own input and it feeds itself.
 //
-// Turning the amplifier down is the wrong fix. ChVol and Master are the tone,
-// so measuring with them lowered measures a different sound from the one the
-// rig describes, and the solver would then solve for that one.
+// Two things follow, and they are fixed in that order.
 //
-// `dsp0.outputA.gain` sits after the whole chain. Lowering it drops what
-// reaches the quarter-inch socket and what reaches the computer by the same
-// amount, so the loop gain falls below unity while the spectrum stays the
-// chain's own.
+// The destination is the cause. Sending to `USB 1/2` by itself reaches the
+// computer without reaching the quarter-inch socket, so the lead carries only
+// the reference recording being played and the loop is open. That is the fix,
+// and it is the one that works at any gain.
+//
+// The gain is the second half, and it was the whole of it before the
+// destination was: turning `dsp0.outputA.gain` down drops the loop's gain
+// below unity without touching the tone, which ChVol and Master are. It is
+// kept because it also bounds what an amplifier's own hiss and any remaining
+// path around the rig can do, and because the readings this project has
+// committed were taken with it.
+//
+// What it looked like while the destination was wrong: matt-freeman read 84.3%
+// of its energy above 2kHz where the reference has 0.01%, and the same chain
+// with the amplifier turned down read 0.0% for three decibels less level. The
+// gain alone was not enough for a high-gain amplifier, which has enough of its
+// own to close the loop from -78dB: 14 of the first 125 blocks in a campaign
+// refused, every one of them an amp or preamp built to distort, the two SV
+// Beasts this project's own pipeline uses among them.
 
 // outputSlot is the routing entry the chain's output sits in, and gainKey the
 // parameter inside it.
@@ -59,7 +72,17 @@ import (
 const (
 	outputSlot = "dsp0.outputA"
 	gainKey    = "gain"
+	sendKey    = "@output"
 )
+
+// offTheLoopIs is the destination a measured chain sends to, by the name the
+// device's own list gives it.
+//
+// By name rather than by number. The lists are per device family, so the
+// position `USB 1/2` sits at on an HX Stomp is not the position it sits at on
+// an LT or in the plugin, and a number written here would be right for one of
+// them.
+const offTheLoopIs = "USB 1/2"
 
 // ErrNoOutput is a preset with no output entry to turn down.
 var ErrNoOutput = errors.New("nothing to give headroom to")
@@ -71,25 +94,34 @@ type Quiets interface {
 	ReadsFiles
 }
 
-// quieter writes the plan again with the chain's output gain lowered, and
-// returns the preset compiled from it.
+// quieter writes the plan again off the measuring loop, and returns the preset
+// compiled from it.
 //
 // A round trip through a plan rather than a live edit, because routing is not
 // a block: `device turn` addresses a block and a parameter, and an output
 // entry is neither. What a preset says about its routing is settled when the
 // preset is written.
 //
-// by is in decibels and wants to be negative. Zero leaves the preset alone and
-// returns the one already built, which is what a caller asking for no headroom
-// means.
+// by is in decibels and wants to be negative. Zero asks for no headroom, and
+// the preset is still rewritten: the destination is what opens the loop and a
+// caller wanting full level wants it open too. Before this took the
+// destination on as well, zero returned the preset untouched, which was a
+// preset still sending to the socket the measuring lead comes from.
 func quieter(
 	ctx context.Context,
 	client Quiets,
 	already, work, name string,
 	by float64,
 ) (string, error) {
-	if by == 0 {
-		return already, nil
+	cat, err := catalog.BuiltIn()
+	if err != nil {
+		return "", err
+	}
+
+	to, ok := cat.DestinationAt(offTheLoopIs)
+	if !ok {
+		return "", fmt.Errorf("%w: this device has no %s to send to",
+			ErrNoOutput, offTheLoopIs)
 	}
 
 	// Read back off the preset that was just built, because a plan compiled
@@ -102,7 +134,7 @@ func quieter(
 		return "", err
 	}
 
-	lowered, err := withGain(read.Plan, by)
+	lowered, err := offTheLoop(read.Plan, to, by)
 	if err != nil {
 		return "", err
 	}
@@ -135,14 +167,17 @@ func quieter(
 	return out, nil
 }
 
-// withGain is the plan with its output entry's gain set.
+// offTheLoop is the plan with its output entry sent somewhere the measuring
+// lead does not reach, and its gain set.
 //
-// The entry is left alone when the plan carries none, and a caller is told
-// rather than left guessing: a plan with no output to turn down cannot be given
-// headroom, and silently returning the loud one is how a guard comes to pass on
-// a chain nobody protected.
-func withGain(
+// Both at once because both live in the same entry and the entry is rewritten
+// whole. A caller with no output entry is told rather than left guessing: a
+// plan with no output to redirect cannot be taken off the loop, and silently
+// returning the one that feeds itself is how a guard comes to pass on a chain
+// nobody protected.
+func offTheLoop(
 	made plan.Plan,
+	to int,
 	by float64,
 ) (plan.Plan, error) {
 	if made.Device == nil || made.Device.Routing == nil {
@@ -161,12 +196,23 @@ func withGain(
 		return plan.Plan{}, fmt.Errorf("reading %s: %w", outputSlot, err)
 	}
 
-	set, err := json.Marshal(by)
+	send, err := json.Marshal(to)
 	if err != nil {
-		return plan.Plan{}, fmt.Errorf("writing %s: %w", gainKey, err)
+		return plan.Plan{}, fmt.Errorf("writing %s: %w", sendKey, err)
 	}
 
-	fields[gainKey] = set
+	fields[sendKey] = send
+
+	// Zero leaves the gain as the preset had it, so asking for no headroom
+	// changes only where the chain is sent.
+	if by != 0 {
+		set, err := json.Marshal(by)
+		if err != nil {
+			return plan.Plan{}, fmt.Errorf("writing %s: %w", gainKey, err)
+		}
+
+		fields[gainKey] = set
+	}
 
 	body, err := json.Marshal(fields)
 	if err != nil {

@@ -60,6 +60,17 @@ func (s *TunePublicTestSuite) SetupTest() {
 	s.pedal = mocks.NewMockTuner(s.ctrl)
 	s.genre = mocks.NewMockGenres(s.ctrl)
 	s.dry = "../../resources/dry/bass-di.wav"
+
+	// The preset read back and rebuilt: every command here takes its chain off
+	// the measuring loop before playing it, sending the output to USB rather
+	// than to the socket the measuring lead comes from. What that rewrite does
+	// is offTheLoop's own test, so it is answered here rather than asserted.
+	s.pedal.EXPECT().
+		PresetFile(gomock.Any(), gomock.Any()).
+		Return(sdk.Reading{Plan: routed()}, nil).AnyTimes()
+	s.pedal.EXPECT().
+		Compile(gomock.Any(), gomock.Any()).
+		Return(sdk.Built{}, nil).AnyTimes()
 }
 
 // punk is a target with room on every axis, so a chain that cannot move

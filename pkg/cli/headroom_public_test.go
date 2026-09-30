@@ -38,12 +38,17 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
-// HeadroomPublicTestSuite covers lowering the one gain that is not the tone.
+// HeadroomPublicTestSuite covers taking a preset off the measuring loop.
 type HeadroomPublicTestSuite struct {
 	suite.Suite
 }
 
 // routed is a plan carrying the output entry a preset arrives with.
+//
+// `"@output":1` is what the blank template gives it, and entry 1 is
+// `Multi (1/4", XLR, Digital, USB 1/2)`, which drives the socket the measuring
+// lead comes from. So this is the plan that feeds itself, which is the one
+// worth testing against.
 func routed() plan.Plan {
 	entry := json.RawMessage(`{"@model":"HelixStomp_AppDSPFlowOutputMain",` +
 		`"@output":1,"pan":0.5,"gain":0}`)
@@ -62,20 +67,27 @@ func routed() plan.Plan {
 	}
 }
 
-// TestItSetsTheOutputGainAndLeavesEverythingElse is the whole job.
+// TestItSendsTheChainOffTheLoopAndLeavesEverythingElse is the whole job.
 //
-// The output block sits after the chain, so turning it down lowers what
-// reaches the quarter-inch socket the measuring lead comes from without
-// touching the tone. The amplifier's ChVol and Master are the tone, and
-// lowering those would have the solver solve for a different sound.
-func (s *HeadroomPublicTestSuite) TestItSetsTheOutputGainAndLeavesEverythingElse() {
-	got, err := withGain(routed(), -30)
+// The destination is the half that matters. A chain sent to Multi arrives back
+// at its own input down the measuring lead, and a high-gain amplifier has
+// enough of its own gain to keep that oscillating however far the output is
+// turned down. Sending to USB 1/2 alone reaches the computer without reaching
+// the socket.
+//
+// The gain is the other half. The output block sits after the chain, so
+// turning it down lowers the level without touching the tone. The amplifier's
+// ChVol and Master are the tone, and lowering those would have the solver
+// solve for a different sound.
+func (s *HeadroomPublicTestSuite) TestItSendsTheChainOffTheLoopAndLeavesEverythingElse() {
+	got, err := offTheLoop(routed(), 10, -30)
 	s.Require().NoError(err)
 
 	var fields map[string]any
 	s.Require().NoError(
 		json.Unmarshal((*got.Device.Routing)[outputSlot], &fields))
 
+	s.Require().InDelta(10, fields[sendKey], 0.001, "off the loop")
 	s.Require().InDelta(-30, fields[gainKey], 0.001)
 	s.Require().InDelta(0.5, fields["pan"], 0.001, "the rest is left alone")
 	s.Require().Equal("HelixStomp_AppDSPFlowOutputMain", fields["@model"])
@@ -91,7 +103,7 @@ func (s *HeadroomPublicTestSuite) TestItSetsTheOutputGainAndLeavesEverythingElse
 func (s *HeadroomPublicTestSuite) TestThePlanHandedOverIsNotChanged() {
 	was := routed()
 
-	_, err := withGain(was, -30)
+	_, err := offTheLoop(was, 10, -30)
 	s.Require().NoError(err)
 
 	var fields map[string]any
@@ -99,6 +111,25 @@ func (s *HeadroomPublicTestSuite) TestThePlanHandedOverIsNotChanged() {
 		json.Unmarshal((*was.Device.Routing)[outputSlot], &fields))
 
 	s.Require().InDelta(0, fields[gainKey], 0.001)
+	s.Require().InDelta(1, fields[sendKey], 0.001)
+}
+
+// TestNoHeadroomStillComesOffTheLoop is why zero no longer means untouched.
+//
+// A caller asking for full level is not asking to be measured through a chain
+// that feeds itself. While zero returned the preset as built, `--headroom 0`
+// left it sending to the socket the lead comes from, so the one setting that
+// asked for an honest level got the least honest reading.
+func (s *HeadroomPublicTestSuite) TestNoHeadroomStillComesOffTheLoop() {
+	got, err := offTheLoop(routed(), 10, 0)
+	s.Require().NoError(err)
+
+	var fields map[string]any
+	s.Require().NoError(
+		json.Unmarshal((*got.Device.Routing)[outputSlot], &fields))
+
+	s.Require().InDelta(10, fields[sendKey], 0.001)
+	s.Require().InDelta(0, fields[gainKey], 0.001, "the gain is left as it was")
 }
 
 // TestAPlanWithNoOutputIsRefused covers having nothing to turn down.
@@ -108,13 +139,13 @@ func (s *HeadroomPublicTestSuite) TestThePlanHandedOverIsNotChanged() {
 // while the preset is written, and returning the loud one silently is how a
 // guard comes to pass on a chain nobody protected.
 func (s *HeadroomPublicTestSuite) TestAPlanWithNoOutputIsRefused() {
-	_, err := withGain(plan.Plan{}, -30)
+	_, err := offTheLoop(plan.Plan{}, 10, -30)
 	s.Require().ErrorIs(err, ErrNoOutput)
 
 	routing := map[string]json.RawMessage{"dsp0.inputA": json.RawMessage(`{}`)}
 
-	_, err = withGain(
-		plan.Plan{Device: &rig.DeviceState{Routing: &routing}}, -30)
+	_, err = offTheLoop(
+		plan.Plan{Device: &rig.DeviceState{Routing: &routing}}, 10, -30)
 	s.Require().ErrorIs(err, ErrNoOutput)
 }
 
@@ -122,8 +153,8 @@ func (s *HeadroomPublicTestSuite) TestAPlanWithNoOutputIsRefused() {
 func (s *HeadroomPublicTestSuite) TestAnOutputEntryThatWillNotDecode() {
 	routing := map[string]json.RawMessage{outputSlot: json.RawMessage(`{`)}
 
-	_, err := withGain(
-		plan.Plan{Device: &rig.DeviceState{Routing: &routing}}, -30)
+	_, err := offTheLoop(
+		plan.Plan{Device: &rig.DeviceState{Routing: &routing}}, 10, -30)
 
 	s.Require().ErrorContains(err, outputSlot)
 }
@@ -134,18 +165,29 @@ func TestHeadroomPublicTestSuite(
 	suite.Run(t, new(HeadroomPublicTestSuite))
 }
 
-// TestNoHeadroomLeavesThePresetAlone covers asking for nothing.
-func (s *HeadroomPublicTestSuite) TestNoHeadroomLeavesThePresetAlone() {
+// TestNoHeadroomStillRewritesThePreset covers asking for no headroom.
+//
+// It reads and writes, where it used to short-circuit. The destination is what
+// opens the loop and it has to be set whatever the gain is, so the preset is
+// rebuilt: `--headroom 0` used to be the one setting that left a chain
+// measuring itself.
+func (s *HeadroomPublicTestSuite) TestNoHeadroomStillRewritesThePreset() {
 	ctrl := gomock.NewController(s.T())
 	pedal := mocks.NewMockTuner(ctrl)
+	work := s.T().TempDir()
 
-	// No PresetFile and no Compile expected: asking for no headroom must not
-	// read or write anything.
+	pedal.EXPECT().
+		PresetFile(gomock.Any(), "already.hlx").
+		Return(sdk.Reading{Plan: routed()}, nil)
+	pedal.EXPECT().
+		Compile(gomock.Any(), gomock.Any()).
+		Return(sdk.Built{}, nil)
+
 	got, err := quieter(context.Background(),
-		pedal, "already.hlx", s.T().TempDir(), "matt-freeman", 0)
+		pedal, "already.hlx", work, "matt-freeman", 0)
 
 	s.Require().NoError(err)
-	s.Require().Equal("already.hlx", got)
+	s.Require().NotEqual("already.hlx", got)
 }
 
 // TestItReadsThePresetBackBecauseARigCarriesNoRouting is the reason for the

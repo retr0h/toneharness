@@ -219,6 +219,20 @@ Set `data.tone.dsp0.outputA.@output` to **10**, USB 1/2 by itself. The floor
 moves from -123.4 to -118.6 dBFS, which is the amplifier idling rather than
 nothing at all.
 
+**Every measuring command does this for you now.** `quieter` in
+`pkg/cli/headroom.go` reads the compiled preset back, looks `USB 1/2` up in the
+device's own destination list rather than writing 10 down, and rebuilds the
+preset before anything is played. So this section is why, not a step to carry
+out: a plan compiled here cannot be left on Multi.
+
+It went unfixed for a fortnight because the gain was treated as the fix instead.
+Turning `dsp0.outputA.gain` down does drop the loop below unity for most blocks,
+and it is still done, but an amplifier built to distort has enough gain of its
+own to keep oscillating from -78dB. In one campaign 14 of the first 125 blocks
+refused on that, every one an amp or preamp, including both SV Beasts this
+project's own pipeline builds with. A guard that refuses the blocks you most
+want is the shape of that mistake.
+
 This is the trap worth recognising: **every test before it looked like an input
 problem, because the output was silent for a reason that had nothing to do with
 the input.** Establish the return before blaming the send.
@@ -248,8 +262,9 @@ Mac  --USB 1/2-->  Main out  --cable-->  Input jack
 Mac  <--USB 1/2--  USB record  <-------------+
 ```
 
-Set `@input: 2`, the Guitar jack, and `@output: 10`, USB 1/2 by itself. **The
-chain must not reach the Main outs, or its own output races back round the
+Set `@input: 2`, the Guitar jack, and `@output: 10`, USB 1/2 by itself, which
+[the tool now does itself](#the-output-block-must-not-put-the-chain-back-on-the-loop).
+**The chain must not reach the Main outs, or its own output races back round the
 cable.** That is not theoretical: on 27 September 2026 a run on the blank
 template's `@output: 1` oscillated, and the reading was a stable tone near
 12kHz whose level followed whatever gain the block added. It looks like a
