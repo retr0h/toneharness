@@ -199,12 +199,21 @@ read nothing. Every non-zero destination sends the chain everywhere including
 the socket the measuring lead comes from, so no preset can open the loop and the
 headroom is the whole fix.
 
-**The block library was re-measured on 29 September 2026 and the difference is
-the whole point of the fix.** The amplifiers' median share above 2kHz went from
-46.4% to 0.29%, against the empty loop's own 0.12%; the bass amplifiers'
-centroids went from 1,250-8,374Hz to 119-325Hz; and nothing sits at the
-converters' ceiling where ten readings did. Everything built on the old numbers
-was built on a squeal.
+**The block library was measured three times on 29 September 2026, and the third
+is the one to trust.** The rig that opens the loop plays the reference out of
+the computer's own output into the pedal's input, with the pedal's output
+connected to nothing, so there is no path back and no trim is needed: 660 of 661
+blocks measured, against 638 on the rig where the pedal fed itself. The one
+still refused is a reverse delay, which plays back what came before when silence
+goes in, so the guard is what is wrong there rather than the block. It also
+changes which gear is chosen: the nearest amplifier to a bass DI was Grammatico
+GSG at 115Hz against a 138Hz target and is now Interstate Zed at 148Hz.
+
+What the second campaign fixed, and why the first was indefensible: The
+amplifiers' median share above 2kHz went from 46.4% to 0.29%, against the empty
+loop's own 0.12%; the bass amplifiers' centroids went from 1,250-8,374Hz to
+119-325Hz; and nothing sits at the converters' ceiling where ten readings did.
+Everything built on the old numbers was built on a squeal.
 
 23 of 661 blocks refused, 20 of them high-gain amplifiers, which is honest
 rather than wrong: a refusal says the block could not be measured. **They are

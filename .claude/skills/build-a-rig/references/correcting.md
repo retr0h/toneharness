@@ -174,7 +174,29 @@ every family read the empty loop's own 0.005% in the high band except the full
 amplifiers, at a median of 46.4% and 12dB louder, and the preamps of the same
 circuits read 0.047%.
 
-The campaign that replaced it, at `--headroom -30` on `USB 1/2`:
+**Measured a third time on the rig that opens the loop**, which is the one to
+trust: the computer plays the reference into the pedal's input and the pedal's
+output goes nowhere, so nothing feeds back and no trim is needed.
+
+| | squealing library | quieted library | **open loop** |
+| --------------------------- | ----------------: | --------------: | ------------: |
+| amplifiers' median high band | 46.4% | 0.29% | **0.11%** |
+| the empty loop's own | 0.005% | 0.12% | 0.30% |
+| amplifiers usable | 222 | 204 | **224** |
+| blocks refused | 111 unusable | 23 | **1** |
+| headroom needed | -30dB | -30dB | **none** |
+
+Every high-gain amplifier measures now. The one block still refused is a
+**reverse delay**, and that is the guard rather than the block: fed silence it
+plays back the reversed buffer of what came before, so "still loud with nothing
+going in" is what it does for a living.
+
+It changes which gear gets chosen, not just the numbers. Asked for the nearest
+amplifier to a bass DI, the squealing library and the quieted one both answered
+Grammatico GSG at 115Hz against a 138Hz target. This one answers Interstate Zed
+at 148Hz. Thirteen hertz closer, from a shortlist 20 amplifiers larger.
+
+What the first two campaigns read, kept because it is what a squeal reads as:
 
 | | old library | now |
 | --- | ---: | ---: |

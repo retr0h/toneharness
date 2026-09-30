@@ -250,8 +250,21 @@ func (s *MeasuredPublicTestSuite) TestTheShippedLibraryNamesItsInstrumentAndHead
 	s.Require().NotEmpty(lib.Instrument,
 		"the packed library names no instrument, so it predates the field: "+
 			"re-pack with `just pack-measured` after a campaign")
-	s.Require().Negative(lib.Headroom,
-		"a library taken at full output is a library of the measuring loop")
+
+	// One of the two, not headroom specifically. This asserted a negative
+	// headroom until the rig changed under it, on the reasoning that a library
+	// taken at full output is a library of the measuring loop. That was true of
+	// the rig where the pedal played its own reference back into itself, and is
+	// false of the one where the computer plays: there the loop is open, the
+	// trim buys nothing, and the level that matters is the computer's own.
+	//
+	// So what has to hold is that the library says what level it was taken at
+	// by one mechanism or the other. Both absent is a library nobody can
+	// reproduce, and the test that pinned the wrong one was a test about a
+	// cable.
+	s.Require().True(lib.Headroom < 0 || lib.Volume > 0,
+		"the library records neither a headroom trim nor a pinned output level, "+
+			"so nothing says what level these were taken at")
 }
 
 // TestNoShippedReadingSitsAtTheConvertersCeiling is the campaign's own evidence.
