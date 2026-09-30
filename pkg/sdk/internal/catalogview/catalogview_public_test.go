@@ -25,8 +25,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/catalogview"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/catalogview"
 )
 
 type CatalogViewPublicTestSuite struct {
@@ -275,7 +275,7 @@ func (s *CatalogViewPublicTestSuite) TestNotFoundError() {
 
 	s.Require().Contains(err.Error(), "HD2_Nope")
 	s.Require().Contains(err.Error(), "665")
-	s.Require().NotContains(err.Error(), "tonestack")
+	s.Require().NotContains(err.Error(), "toneharness")
 	s.Require().ErrorIs(err, catalogview.ErrNotFound)
 }
 

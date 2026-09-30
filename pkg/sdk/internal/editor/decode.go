@@ -26,37 +26,37 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
-// Chain turns a device's answer into a chain the rest of this speaks.
+// Plan turns a device's answer into a plan the rest of this speaks.
 //
 // The device names nothing. A block carries a number into the device's own
 // model table and its parameters arrive as a bare array, so the catalog's
 // symbol list is what puts names back on both — and that table is longer than
 // the block list, because it holds a mono and a stereo entry for the same
 // model.
-func Chain(
+func Plan(
 	name string,
 	got wire.DevicePreset,
 	cat *catalog.Catalog,
-) (chain.Chain, error) {
+) (plan.Plan, error) {
 	if len(cat.Symbols) == 0 {
-		return chain.Chain{}, fmt.Errorf(
+		return plan.Plan{}, fmt.Errorf(
 			"this catalog has no model table, so a preset read off the device " +
-				"cannot be named: regenerate it with go generate in the tonestack repository")
+				"cannot be named: regenerate it with go generate in the toneharness repository")
 	}
 
-	out := chain.Chain{Name: name, Blocks: make([]chain.Block, 0, len(got.Blocks))}
+	out := plan.Plan{Name: name, Blocks: make([]plan.Block, 0, len(got.Blocks))}
 
 	cabs := 0
 
 	for _, b := range got.Blocks {
 		sym, ok := cat.Symbol(b.Model)
 		if !ok {
-			return chain.Chain{}, fmt.Errorf(
+			return plan.Plan{}, fmt.Errorf(
 				"block %d names model %d, which this catalog's table of %d does "+
 					"not reach: it was generated from a different release",
 				b.Index, b.Model, len(cat.Symbols))
@@ -75,7 +75,7 @@ func Chain(
 
 		params[attrType] = catalog.Int(typeOf(model, cat, len(b.Cab) > 0))
 
-		out.Blocks = append(out.Blocks, chain.Block{
+		out.Blocks = append(out.Blocks, plan.Block{
 			Model: model,
 			// A cabinet standing on its own sends one value past what its
 			// model names, and that is the microphone. Dropping it loses a
@@ -152,7 +152,7 @@ func cabKey(
 // modelOf resolves a device's own model name to the catalog's.
 //
 // A device names a mono and a stereo instance of the same model separately —
-// 833 symbols cover 665 blocks — while the catalog names the model once, the
+// 833 symbols cover 661 blocks — while the catalog names the model once, the
 // way Line 6's own model files do. Trimming the suffix is what joins them, and
 // 813 of 833 symbols land on a block that way.
 //

@@ -24,9 +24,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Select makes one preset the active one on the given session.

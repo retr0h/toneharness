@@ -29,7 +29,7 @@ import (
 	"github.com/go-audio/wav"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // CorpusPublicTestSuite covers measuring several players and comparing them.
@@ -228,40 +228,86 @@ func (s *CorpusPublicTestSuite) TestAPlayerWithNoManifestIsMeasuredAsFound() {
 	s.Require().Equal(3, got[0].Records)
 }
 
-// TestAManifestThatWillNotRead covers a corpus somebody broke, which stops
-// the reading rather than silently measuring the tree instead.
-func (s *CorpusPublicTestSuite) TestAManifestThatWillNotRead() {
-	s.record("mike-dirnt", "one", audio.Sine(110, 1, rate, 0.8))
-	s.Require().NoError(os.WriteFile(
-		filepath.Join(s.root, "mike-dirnt", "corpus.yaml"),
-		[]byte("tracks:\n  - track: one\n    note: a note: with a colon\n"), 0o600))
-
-	_, err := audio.Corpus(os.DirFS(s.root), ".")
-
-	s.Require().Error(err)
-}
-
-// TestAManifestThatCannotBeOpened covers a manifest that is there and will
-// not open.
+// TestCorpus covers Corpus, which measures every player under a tree and
+// derives what each one's figures say against the others.
 //
-// Distinct from one that is absent, which measures the tree as found: a
-// manifest nobody can read is a statement of what to measure that nobody can
-// read, and measuring the tree instead would quietly use records somebody
-// took out.
-//
-// A symlink to itself rather than a file with its permissions removed. Both
-// fail to open; only one fails for every user, and a test that skips itself
-// for root is a test that does not run where it matters.
-func (s *CorpusPublicTestSuite) TestAManifestThatCannotBeOpened() {
-	s.record("mike-dirnt", "one", audio.Sine(110, 1, rate, 0.8))
+// One method and one table, so a case is a row rather than a file.
+func (s *CorpusPublicTestSuite) TestCorpus() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// A corpus somebody broke, which stops the reading rather than
+			// silently measuring the tree instead.
+			name: "a manifest that will not read",
+			then: func() {
+				s.record("mike-dirnt", "one", audio.Sine(110, 1, rate, 0.8))
+				s.Require().NoError(os.WriteFile(
+					filepath.Join(s.root, "mike-dirnt", "corpus.yaml"),
+					[]byte("tracks:\n  - track: one\n    note: a note: with a colon\n"), 0o600))
 
-	at := filepath.Join(s.root, "mike-dirnt", "corpus.yaml")
-	s.Require().NoError(os.Symlink("corpus.yaml", at))
+				_, err := audio.Corpus(os.DirFS(s.root), ".")
 
-	_, err := audio.Corpus(os.DirFS(s.root), ".")
+				s.Require().Error(err)
+			},
+		},
+		{
+			// A manifest that is there and will not open.
+			//
+			// Distinct from one that is absent, which measures the tree as
+			// found: a manifest nobody can read is a statement of what to
+			// measure that nobody can read, and measuring the tree instead
+			// would quietly use records somebody took out.
+			//
+			// A symlink to itself rather than a file with its permissions
+			// removed. Both fail to open; only one fails for every user, and
+			// a test that skips itself for root is a test that does not run
+			// where it matters.
+			name: "a manifest that cannot be opened",
+			then: func() {
+				s.record("mike-dirnt", "one", audio.Sine(110, 1, rate, 0.8))
 
-	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "mike-dirnt")
+				at := filepath.Join(s.root, "mike-dirnt", "corpus.yaml")
+				s.Require().NoError(os.Symlink("corpus.yaml", at))
+
+				_, err := audio.Corpus(os.DirFS(s.root), ".")
+
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), "mike-dirnt")
+			},
+		},
+		{
+			// The path being wrong.
+			name: "a tree that is not there",
+			then: func() {
+				_, err := audio.Corpus(os.DirFS(s.root), "nowhere")
+
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), "nowhere")
+			},
+		},
+		{
+			// A .wav that will not read.
+			name: "a recording that is not one",
+			then: func() {
+				full := filepath.Join(s.root, "mike-dirnt", "broken.wav")
+				s.Require().NoError(os.MkdirAll(filepath.Dir(full), 0o750))
+				s.Require().NoError(os.WriteFile(full, []byte("not a wav"), 0o600))
+
+				_, err := audio.Corpus(os.DirFS(s.root), ".")
+
+				s.Require().Error(err)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
+		})
+	}
 }
 
 // TestADirectoryWithNoRecordingsIsNotAPlayer covers a manifest waiting for
@@ -290,25 +336,6 @@ func (s *CorpusPublicTestSuite) TestTheOrderIsFixed() {
 	s.Require().Equal("flea", got[0].ID)
 	s.Require().Equal("mike-dirnt", got[1].ID)
 	s.Require().Equal("pino-palladino", got[2].ID)
-}
-
-// TestATreeThatIsNotThere covers the path being wrong.
-func (s *CorpusPublicTestSuite) TestATreeThatIsNotThere() {
-	_, err := audio.Corpus(os.DirFS(s.root), "nowhere")
-
-	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "nowhere")
-}
-
-// TestARecordingThatIsNotOne covers a .wav that will not read.
-func (s *CorpusPublicTestSuite) TestARecordingThatIsNotOne() {
-	full := filepath.Join(s.root, "mike-dirnt", "broken.wav")
-	s.Require().NoError(os.MkdirAll(filepath.Dir(full), 0o750))
-	s.Require().NoError(os.WriteFile(full, []byte("not a wav"), 0o600))
-
-	_, err := audio.Corpus(os.DirFS(s.root), ".")
-
-	s.Require().Error(err)
 }
 
 func TestCorpusPublicTestSuite(

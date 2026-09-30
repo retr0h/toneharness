@@ -34,10 +34,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/mcp/internal/tools"
-	"github.com/retr0h/tonestack/pkg/mcp/internal/tools/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/mcp/internal/tools"
+	"github.com/retr0h/toneharness/pkg/mcp/internal/tools/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 type DevicePublicTestSuite struct {
@@ -120,7 +120,7 @@ func hxEdit(
 
 // TestDevicesList covers what is attached, and one call at a time.
 func (s *DevicePublicTestSuite) TestDevicesList() {
-	s.run("devices_list", []deviceRow{
+	s.run("device_hardware", []deviceRow{
 		{
 			name: "a pedal attached",
 			args: tools.None{},
@@ -178,7 +178,7 @@ func (s *DevicePublicTestSuite) TestDevicesList() {
 		session := connect(s.T(), s.client, false)
 		devices := func() {
 			_, _ = session.CallTool(context.Background(), &gomcp.CallToolParams{
-				Name: "devices_list", Arguments: tools.None{},
+				Name: "device_hardware", Arguments: tools.None{},
 			})
 		}
 
@@ -205,7 +205,7 @@ func (s *DevicePublicTestSuite) TestDevicesList() {
 
 // TestPresetsList covers reading the setlist.
 func (s *DevicePublicTestSuite) TestPresetsList() {
-	s.run("presets_list", []deviceRow{
+	s.run("slots_list", []deviceRow{
 		{
 			name: "a setlist",
 			args: tools.None{},
@@ -232,7 +232,7 @@ func (s *DevicePublicTestSuite) TestPresetsList() {
 
 // TestPresetShow covers reading one slot.
 func (s *DevicePublicTestSuite) TestPresetShow() {
-	s.run("preset_show", []deviceRow{
+	s.run("presets_show", []deviceRow{
 		{
 			name: "a slot by its label",
 			args: tools.Slot{Slot: "01B"},
@@ -275,7 +275,7 @@ func (s *DevicePublicTestSuite) TestPresetExport() {
 	// something to write.
 	setlist := filepath.Join("..", "..", "..", "sdk", "testdata", "setlist.hls")
 
-	s.run("preset_export", []deviceRow{
+	s.run("slots_export", []deviceRow{
 		{
 			name: "a path nothing is at",
 			args: tools.Export{Slot: "01A", Out: fresh},
@@ -389,7 +389,7 @@ func (s *DevicePublicTestSuite) TestPresetExport() {
 
 // TestPresetSelect covers loading a slot.
 func (s *DevicePublicTestSuite) TestPresetSelect() {
-	s.run("preset_select", []deviceRow{
+	s.run("device_select", []deviceRow{
 		{
 			name: "a slot by its label",
 			args: tools.Slot{Slot: "07A"},
@@ -417,6 +417,176 @@ func (s *DevicePublicTestSuite) TestPresetSelect() {
 		{
 			name:  "HX Edit holding the pedal",
 			args:  tools.Slot{Slot: "07A"},
+			setup: hxEdit,
+			want:  "quit HX Edit",
+			err:   true,
+		},
+	})
+}
+
+// TestDeviceCurrent covers reading back what the pedal is playing.
+//
+// The only way to see a live edit. A turn stores nothing, so no slot read shows
+// what it did, and this is what a measuring run uses to state what it measured
+// rather than what it asked for.
+func (s *DevicePublicTestSuite) TestDeviceCurrent() {
+	s.run("device_current", []deviceRow{
+		{
+			name: "a chain in front of somebody",
+			args: tools.None{},
+			setup: func(_ *mocks.MockClient, pedal *mocks.MockSession) {
+				pedal.EXPECT().Current(gomock.Any(), sdk.FormatRig).
+					Return(sdk.Reading{Name: "Chinky Monkey"}, nil)
+			},
+			want: "the pedal is playing Chinky Monkey",
+			check: func(s *DevicePublicTestSuite, res *gomcp.CallToolResult) {
+				var got tools.Shown
+				structured(s.T(), res, &got)
+				s.Equal("Chinky Monkey", got.Name)
+			},
+		},
+		{
+			name: "a pedal that will not answer",
+			args: tools.None{},
+			setup: func(_ *mocks.MockClient, pedal *mocks.MockSession) {
+				pedal.EXPECT().Current(gomock.Any(), gomock.Any()).
+					Return(sdk.Reading{}, errors.New("the device stopped answering"))
+			},
+			want: "the device stopped answering",
+			err:  true,
+		},
+		{
+			name:  "HX Edit holding the pedal",
+			args:  tools.None{},
+			setup: hxEdit,
+			want:  "quit HX Edit",
+			err:   true,
+		},
+	})
+}
+
+// TestDevicePlay covers putting a preset in front of somebody.
+//
+// It writes no flash, which is the whole reason it exists: auditioning through
+// a slot is a flash write per attempt, and a burst of those took a setlist past
+// what a power cycle could clear.
+func (s *DevicePublicTestSuite) TestDevicePlay() {
+	s.run("device_play", []deviceRow{
+		{
+			name: "a preset played and nothing stored",
+			args: tools.Play{Preset: "mine.hlx"},
+			setup: func(_ *mocks.MockClient, pedal *mocks.MockSession) {
+				pedal.EXPECT().Play(gomock.Any(), "mine.hlx").Return(nil)
+			},
+			want:  "the pedal is playing mine.hlx, and holds what it held",
+			moved: true,
+		},
+		{
+			name: "a preset the device refuses",
+			args: tools.Play{Preset: "broken.hlx"},
+			setup: func(_ *mocks.MockClient, pedal *mocks.MockSession) {
+				pedal.EXPECT().Play(gomock.Any(), "broken.hlx").
+					Return(errors.New("not a preset document"))
+			},
+			want: "not a preset document",
+			err:  true,
+		},
+		{
+			name:  "HX Edit holding the pedal",
+			args:  tools.Play{Preset: "mine.hlx"},
+			setup: hxEdit,
+			want:  "quit HX Edit",
+			err:   true,
+		},
+	})
+}
+
+// TestDeviceTurn covers moving one control on what is playing.
+//
+// Three kinds of value and exactly one of them per call, because a device does
+// not coerce: a value's tag is its type on the wire, and a switch handed 1.0 is
+// refused with the same error a block that is not there gives.
+//
+// Every row states the wire address it expects. A block a preset records at
+// position 4 answers to 5, and getting that wrong moves a different block while
+// every number stays plausible.
+func (s *DevicePublicTestSuite) TestDeviceTurn() {
+	dial := float32(0.75)
+	mic := 3
+	on := true
+
+	s.run("device_turn", []deviceRow{
+		{
+			name: "a dial, addressed one past the position a preset records",
+			args: tools.Turn{Block: 4, Param: 1, Value: &dial},
+			setup: func(_ *mocks.MockClient, pedal *mocks.MockSession) {
+				pedal.EXPECT().
+					Turn(gomock.Any(), sdk.Address{Block: 5, Param: 1, Direct: true}, dial).
+					Return(nil)
+			},
+			want:  "block 4 parameter 1 moved, and nothing was written",
+			moved: true,
+		},
+		{
+			name: "one of a list, such as a microphone",
+			args: tools.Turn{Block: 0, Param: 2, Choice: &mic},
+			setup: func(_ *mocks.MockClient, pedal *mocks.MockSession) {
+				pedal.EXPECT().
+					Choose(gomock.Any(), sdk.Address{Block: 1, Param: 2, Direct: true}, mic).
+					Return(nil)
+			},
+			want:  "block 0 parameter 2 moved",
+			moved: true,
+		},
+		{
+			name: "a switch on a cabinet fused into an amplifier",
+			args: tools.Turn{Block: 2, Param: 7, Switch: &on, Model: 1},
+			setup: func(_ *mocks.MockClient, pedal *mocks.MockSession) {
+				pedal.EXPECT().
+					Switch(gomock.Any(),
+						sdk.Address{Block: 3, Param: 7, Model: 1, Direct: true}, on).
+					Return(nil)
+			},
+			want:  "block 2 parameter 7 moved",
+			moved: true,
+		},
+		{
+			// The value some blocks carry past their own list.
+			name: "direct addressing turned off",
+			args: tools.Turn{Block: 1, Param: 0, Value: &dial, Direct: new(false)},
+			setup: func(_ *mocks.MockClient, pedal *mocks.MockSession) {
+				pedal.EXPECT().
+					Turn(gomock.Any(), sdk.Address{Block: 2, Param: 0, Direct: false}, dial).
+					Return(nil)
+			},
+			want:  "block 1 parameter 0 moved",
+			moved: true,
+		},
+		{
+			name: "no value at all",
+			args: tools.Turn{Block: 4, Param: 1},
+			want: tools.ErrOneValue.Error(),
+			err:  true,
+		},
+		{
+			name: "two kinds of value at once",
+			args: tools.Turn{Block: 4, Param: 1, Value: &dial, Switch: &on},
+			want: tools.ErrOneValue.Error(),
+			err:  true,
+		},
+		{
+			name: "a parameter the block does not have",
+			args: tools.Turn{Block: 4, Param: 99, Value: &dial},
+			setup: func(_ *mocks.MockClient, pedal *mocks.MockSession) {
+				pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(errors.New("device refused the request"))
+			},
+			want: "device refused the request",
+			err:  true,
+		},
+		{
+			name:  "HX Edit holding the pedal",
+			args:  tools.Turn{Block: 4, Param: 1, Value: &dial},
 			setup: hxEdit,
 			want:  "quit HX Edit",
 			err:   true,

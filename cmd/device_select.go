@@ -1,0 +1,71 @@
+// Copyright (c) 2026 John Dewey
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+package cmd
+
+import (
+	"github.com/spf13/cobra"
+
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
+)
+
+var (
+	presetsSelectSetlist int
+	presetsSelectSlot    int
+)
+
+// deviceSelectCmd represents the device select command.
+var deviceSelectCmd = &cobra.Command{
+	Use:   "select",
+	Short: "Load a preset on the device",
+	Long: `Make one preset the active one.
+
+The device loads it and starts making that sound, which is what stepping on the
+footswitch does. Nothing is written: the slot it came from is untouched, so this
+is the one device command that changes what you hear without changing what the
+device holds.`,
+	Args: cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		pedal.claim()
+
+		change, err := newClient().Select(cmd.Context(),
+			slot.Address{Setlist: presetsSelectSetlist, Slot: presetsSelectSlot})
+		if err != nil {
+			return err
+		}
+
+		return answer(cmd, change, cli.Change)
+	},
+}
+
+func init() {
+	deviceCmd.AddCommand(deviceSelectCmd)
+
+	f := deviceSelectCmd.Flags()
+	f.IntVar(&presetsSelectSetlist, "setlist", 0, "which setlist to load from")
+	f.Var(
+		slot.NewValue(&presetsSelectSlot),
+		"slot",
+		"which slot — a label the pedal shows such as 31A, or a number from zero",
+	)
+	// Fails only for a flag that does not exist, and these are defined above.
+	_ = deviceSelectCmd.MarkFlagRequired("slot")
+}

@@ -1,0 +1,271 @@
+// Copyright (c) 2026 John Dewey
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+package deviceslots_test
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
+
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+)
+
+// TurnPublicTestSuite covers moving a control on what a device is playing.
+type TurnPublicTestSuite struct {
+	suite.Suite
+
+	ctrl *gomock.Controller
+}
+
+// turnable is a session that can move a control and read what is loaded.
+type turnable struct {
+	*mocks.MockEditor
+	*mocks.MockTurner
+	*mocks.MockLoaded
+}
+
+func (*turnable) Close() error { return nil }
+
+func (s *TurnPublicTestSuite) SetupTest() {
+	s.ctrl = gomock.NewController(s.T())
+}
+
+func (s *TurnPublicTestSuite) dev() *turnable {
+	return &turnable{
+		MockEditor: mocks.NewMockEditor(s.ctrl),
+		MockTurner: mocks.NewMockTurner(s.ctrl),
+		MockLoaded: mocks.NewMockLoaded(s.ctrl),
+	}
+}
+
+// TestTurn covers Turn, which moves one control on the preset a device is
+// playing.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *TurnPublicTestSuite) TestTurn() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The ordinary case and the device declining.
+			name: "turn moves a control",
+			then: func() {
+				ctx := context.Background()
+				at := device.Address{Block: 2, Param: 5, Model: 0, Direct: true}
+
+				tests := []struct {
+					name string
+					give error
+					want string
+				}{
+					{name: "the device takes it"},
+					{
+						// A device declines rather than complains, so a nil here would
+						// leave a sweep recording the same sound at every step and
+						// calling it a measurement.
+						name: "the device declines",
+						give: errors.New("opcode 30, error -3"),
+						want: "setting parameter 5 on block 2",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						d := s.dev()
+						d.MockTurner.EXPECT().
+							SetParam(ctx, at, float32(0.25)).
+							Return(tt.give)
+
+						err := (&deviceslots.Flows{}).Turn(ctx, d, at, 0.25)
+
+						if tt.want == "" {
+							s.Require().NoError(err)
+
+							return
+						}
+
+						s.Require().ErrorContains(err, tt.want)
+					})
+				}
+			},
+		},
+		{
+			// A session without the capability.
+			name: "turn needs a session that can move one",
+			then: func() {
+				err := (&deviceslots.Flows{}).Turn(
+					context.Background(),
+					mocks.NewMockEditor(s.ctrl),
+					device.Address{},
+					0.5,
+				)
+
+				s.Require().ErrorContains(err, "cannot move a control")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
+		})
+	}
+}
+
+// TestChooseAndSwitch covers the two kinds of value that are not a dial.
+//
+// They exist because a device does not coerce: a cabinet's microphone is an
+// index and an amplifier's Bright is a switch, and each refuses a float with
+// the same error a block that is not there gives.
+func (s *TurnPublicTestSuite) TestChooseAndSwitch() {
+	ctx := context.Background()
+	at := device.Address{Block: 2, Param: 5, Direct: true}
+
+	s.Run("a microphone", func() {
+		d := s.dev()
+		d.MockTurner.EXPECT().SetChoice(ctx, at, 3).Return(nil)
+
+		s.Require().NoError((&deviceslots.Flows{}).Choose(ctx, d, at, 3))
+	})
+
+	s.Run("a microphone the device refuses", func() {
+		d := s.dev()
+		d.MockTurner.EXPECT().SetChoice(ctx, at, 99).
+			Return(errors.New("error -3"))
+
+		s.Require().ErrorContains(
+			(&deviceslots.Flows{}).Choose(ctx, d, at, 99), "to choice 99")
+	})
+
+	s.Run("a switch", func() {
+		d := s.dev()
+		d.MockTurner.EXPECT().SetSwitch(ctx, at, true).Return(nil)
+
+		s.Require().NoError((&deviceslots.Flows{}).Switch(ctx, d, at, true))
+	})
+
+	s.Run("a switch the device refuses", func() {
+		d := s.dev()
+		d.MockTurner.EXPECT().SetSwitch(ctx, at, false).
+			Return(errors.New("error -3"))
+
+		s.Require().ErrorContains(
+			(&deviceslots.Flows{}).Switch(ctx, d, at, false), "to false")
+	})
+
+	s.Run("a session that cannot move a control", func() {
+		plain := mocks.NewMockEditor(s.ctrl)
+
+		s.Require().ErrorContains(
+			(&deviceslots.Flows{}).Choose(ctx, plain, at, 1),
+			"cannot move a control")
+		s.Require().ErrorContains(
+			(&deviceslots.Flows{}).Switch(ctx, plain, at, true),
+			"cannot move a control")
+	})
+}
+
+// TestLoaded covers reading the edit buffer, and needing a session that can
+// read it.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *TurnPublicTestSuite) TestLoaded() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// Reading what a device is playing.
+			name: "loaded reads the edit buffer",
+			then: func() {
+				ctx := context.Background()
+
+				tests := []struct {
+					name string
+					give []byte
+					err  error
+					want string
+				}{
+					{
+						// A device answering with no document is playing nothing, which
+						// is not the same as a read that failed.
+						name: "nothing is loaded",
+						want: "playing no preset",
+					},
+					{
+						name: "the read fails",
+						err:  errors.New("usb: gone"),
+						want: "reading what is loaded",
+					},
+					{
+						name: "the answer is not a preset",
+						give: []byte("not a document"),
+						want: "reading slot",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						d := s.dev()
+						d.MockLoaded.EXPECT().ReadCurrent(ctx).Return(tt.give, tt.err)
+
+						_, err := (&deviceslots.Flows{}).Loaded(ctx, d, result.FormatPreset)
+
+						s.Require().ErrorContains(err, tt.want)
+					})
+				}
+			},
+		},
+		{
+			// A session without the capability.
+			name: "loaded needs a session that can read",
+			then: func() {
+				_, err := (&deviceslots.Flows{}).Loaded(
+					context.Background(),
+					mocks.NewMockEditor(s.ctrl),
+					result.FormatPreset,
+				)
+
+				s.Require().ErrorContains(err, "cannot read what is loaded")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
+		})
+	}
+}
+
+func TestTurnPublicTestSuite(
+	t *testing.T,
+) {
+	suite.Run(t, new(TurnPublicTestSuite))
+}

@@ -26,15 +26,15 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"strings"
+	"sync"
 )
 
 // The generated catalogs, one per device this tool can write a preset for.
 //
 // They ship inside the binary so nothing about describing, validating or
 // writing a preset needs HX Edit installed. Generating them does, see
-// docs/catalog.md, but that happens once per Line 6 release, on one machine,
-// not on every machine that runs this.
+// the measure-a-device skill, but that happens once per Line 6 release, on one
+// machine, not on every machine that runs this.
 //
 // Gzipped because it is repetitive JSON: about 1MB becomes about 74KB, so
 // four of them cost roughly 300KB of binary.
@@ -69,106 +69,43 @@ var packed = map[int][]byte{
 	HelixLT:    helixLT,
 }
 
-// devices are the catalogs this binary carries, in the order they were
-// generated, which puts first the device everything here was written against.
-//
-// One list rather than a name map and an id map, so a device cannot be added
-// to half of them.
-var devices = []struct {
-	// Name is how Line 6 markets the device.
-	Name string
-	// ID is what a preset carries in data.device.
-	ID int
-}{
-	{"HX Stomp", HXStomp},
-	{"HX Stomp XL", HXStompXL},
-	{"Helix Floor", HelixFloor},
-	{"Helix LT", HelixLT},
-}
-
-// Devices names every device this binary carries a catalog for.
-func Devices() []string {
-	out := make([]string, 0, len(devices))
-
-	for _, d := range devices {
-		out = append(out, d.Name)
-	}
-
-	return out
-}
-
-// ForName returns the built-in catalog for a device, by what it is called.
-//
-// Loosely matched, so "Helix LT", "helix lt" and "helix-lt" all reach the same
-// catalog. Somebody naming their own pedal should not have to guess which
-// spelling this tool wants.
-func ForName(
-	name string,
-) (*Catalog, error) {
-	want := fold(name)
-
-	for _, d := range devices {
-		if fold(d.Name) == want {
-			return For(d.ID)
-		}
-	}
-
-	return nil, &UnknownDeviceError{Name: name, Known: Devices()}
-}
-
-// fold reduces a device name to what matching cares about.
-//
-// Letters and digits. Everything else is somebody's spacing or punctuation,
-// and none of it distinguishes one Line 6 device from another.
-func fold(
-	name string,
-) string {
-	var out strings.Builder
-
-	for _, r := range strings.ToLower(name) {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
-			out.WriteRune(r)
-		}
-	}
-
-	return out.String()
-}
-
 // BuiltIn returns the catalog compiled into this binary.
 //
 // The HX Stomp's. It is the device everything here was written against, the
 // only one that has been written to over USB, and the only one the corpus
 // statistics describe. For another, see For.
-func BuiltIn() (*Catalog, error) { return decode(builtIn) }
+func BuiltIn() (*Catalog, error) { return For(HXStomp) }
 
-// For returns the built-in catalog for one device.
+// held is each device's catalog, decoded once.
 //
-// By the id a preset carries in data.device, which is also what filtered the
-// model table when the catalog was generated.
+// Decoding is a gzip and a JSON parse over 661 blocks, about 12ms on a fast
+// machine, and the bytes are a compile-time constant that cannot change while
+// the process runs. Callers ask far more often than that reads: `quieter` asks
+// for one per preset it builds, so tuning a chain re-read the same file once
+// per pass per preset, and on a slower machine that was enough to pass a ten
+// minute test timeout.
 //
-// Only an HX Stomp has been checked against real hardware. The other three are
-// read from Line 6's own files and describe devices nobody here has written
-// to.
-func For(
-	device int,
-) (*Catalog, error) {
-	body, ok := packed[device]
-	if !ok {
-		return nil, &NoDeviceError{Device: device}
-	}
-
-	return decode(body)
-}
+// Safe to share because nothing writes to a loaded catalog. Everything that
+// builds one — catalogen — builds a new one.
+var held = struct {
+	sync.Mutex
+	by map[int]*Catalog
+}{by: map[int]*Catalog{}}
 
 // decode reads a gzipped catalog.
+//
+// The parameter is `body` rather than `packed`, which would shadow the
+// package-level map of that name above. Nothing here reads that map, so the
+// shadow was harmless and would have stopped being harmless the moment
+// somebody needed it.
 //
 // Separate from BuiltIn so a corrupted archive can be exercised. The embedded
 // copy is a compile-time constant and cannot be damaged at run time, but a
 // build that shipped a truncated one should say so rather than panic.
 func decode(
-	packed []byte,
+	body []byte,
 ) (*Catalog, error) {
-	zr, err := gzip.NewReader(bytes.NewReader(packed))
+	zr, err := gzip.NewReader(bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("opening the built-in catalog: %w", err)
 	}

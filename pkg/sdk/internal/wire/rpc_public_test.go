@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/vmihailenco/msgpack/v5"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 type RPCPublicTestSuite struct {
@@ -90,6 +90,10 @@ func (s *RPCPublicTestSuite) TestEncodeRequest() {
 				wire.Text(109, "Mike Dirnt"),
 				wire.Flag(123, false),
 				wire.Blob(110, []byte{0x01, 0x02}),
+				// A parameter's value, which rides as float32 and nothing
+				// else: a device takes the tag as the type and refuses the
+				// same number carried any other way.
+				wire.Real(119, 0.25),
 			},
 			wantArgs: map[int8]any{
 				// Terminated, because a device reads a name that is not as
@@ -99,6 +103,7 @@ func (s *RPCPublicTestSuite) TestEncodeRequest() {
 				// Under MessagePack's string tag, which is what a device
 				// sends a preset document as and what it takes one back as.
 				110: "\x01\x02",
+				119: float32(0.25),
 			},
 		},
 		// The tag is the difference between a write that lands and one

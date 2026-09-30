@@ -50,11 +50,11 @@ func (s *WhereTestSuite) TestWhere() {
 		{
 			name:  "the state directory, when there is one",
 			state: filepath.Join("xdg", "state"),
-			want:  []string{"xdg", "state", "tonestack", "presets"},
+			want:  []string{"xdg", "state", "toneharness", "presets"},
 		},
 		{
 			name: "under the home directory, when there is not",
-			want: []string{".local", "state", "tonestack", "presets"},
+			want: []string{".local", "state", "toneharness", "presets"},
 		},
 		{
 			name:    "nowhere to call home",

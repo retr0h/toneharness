@@ -20,7 +20,11 @@
 
 package sdk
 
-import "github.com/retr0h/tonestack/pkg/sdk/result"
+import (
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+)
 
 // What every operation answers with.
 //
@@ -53,20 +57,24 @@ type (
 	// Built is a preset compiled from a rig.
 	Built = result.Built
 
-	// Made is a preset built from a recipe.
+	// Made is a preset built from a rig.
 	Made = result.Made
-	// Added is a block put in the chain that the recipe did not name.
+	// Added is a block put in the chain that the rig did not name.
 	Added = result.Added
 	// Unfamiliar is a character term nothing defines.
 	Unfamiliar = result.Unfamiliar
-	// Moved is what a character term did to a parameter.
+	// Moved is what a word did to a parameter.
 	Moved = result.Moved
 
-	// Recipes is every rig under one directory.
-	Recipes = result.Recipes
-	// Recipe is one rig, and what reading it needs that the rig does not
+	// Rigs is every rig under one directory.
+	Rigs = result.Rigs
+	// Known is one rig and the ask it answers.
+	Known = result.Known
+	// Rig is one rig, and what reading it needs that the rig does not
 	// carry.
-	Recipe = result.Recipe
+	Rig = result.Rig
+	// Resolved is what a request and a setup turned into.
+	Resolved = result.Resolved
 	// Variant is a rig that extends another.
 	Variant = result.Variant
 	// Backing is which records back a rig, and whether they were made when
@@ -74,7 +82,7 @@ type (
 	Backing = result.Backing
 	// Record is one record measured for a rig.
 	Record = result.Record
-	// Scaffolded is a recipe this wrote.
+	// Scaffolded is a rig this wrote.
 	Scaffolded = result.Scaffolded
 
 	// Attached is what is on the bus that this recognises.
@@ -90,6 +98,8 @@ type (
 
 	// Format is what an export is written as: FormatRig or FormatPreset.
 	Format = result.Format
+	// Address says which control a live edit moves.
+	Address = device.Address
 
 	// Existing is what a write does about a file already at its path:
 	// ReplaceExisting or KeepExisting.
@@ -133,3 +143,34 @@ const (
 
 // DumpEnv names a file to write a device's raw answer to.
 const DumpEnv = result.DumpEnv
+
+// What the music corpus holds, read off the manifests.
+type (
+	// MusicPlayer is one player's corpus, as their manifest describes it.
+	MusicPlayer = result.MusicPlayer
+	// MusicGroup is one genre or one band, and what backs it.
+	MusicGroup = result.MusicGroup
+	// MusicRecord is one recording, with the player it was measured for.
+	MusicRecord = result.MusicRecord
+)
+
+// MeasuredGenre is one genre measured against the players who do not play it.
+type MeasuredGenre = audio.Genre
+
+// At addresses one control by the position a preset records for its block.
+//
+// The one place the arithmetic between the two numbers lives. A device lays a
+// preset out on a grid that keeps the input at 0, so a block a preset records
+// at position P answers to P+1 on the wire, and Address.Block is the wire's
+// number. Measured on an HX Stomp: addressing 5 moved the block recorded at
+// position 4, and addressing 0 was refused because the input is not a block.
+//
+// Every caller that speaks positions goes through this. Both the CLI and the
+// MCP server did the +1 themselves for a while, which is two copies of a fact
+// and the shape of bug where one of them is corrected and the other is not.
+func Control(
+	block int,
+	param int,
+) Address {
+	return Address{Block: block + 1, Param: param, Direct: true}
+}

@@ -28,8 +28,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
 )
 
 type DiscoverPublicTestSuite struct {

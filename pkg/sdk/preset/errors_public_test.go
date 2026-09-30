@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 )
 
 // ErrorsPublicTestSuite covers what somebody reads when a file is not a

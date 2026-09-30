@@ -20,7 +20,7 @@
 
 package result
 
-import "github.com/retr0h/tonestack/pkg/sdk/catalog"
+import "github.com/retr0h/toneharness/pkg/sdk/catalog"
 
 // Blocks is what a device can do, narrowed to what was asked for.
 //
@@ -29,12 +29,12 @@ import "github.com/retr0h/tonestack/pkg/sdk/catalog"
 // holds six or six hundred.
 type Blocks struct {
 	// Device is what the catalog calls the hardware.
-	Device string
+	Device string `json:"device"`
 	// Source says where the catalog came from. Empty when nothing recorded
 	// it, which is different from a source nobody recognises.
-	Source string
+	Source string `json:"source"`
 	// Total is how many blocks the catalog holds, before any filtering.
-	Total int
+	Total int `json:"total"`
 	// Matched are the blocks that came through the filter.
-	Matched []catalog.Block
+	Matched []catalog.Block `json:"matched"`
 }

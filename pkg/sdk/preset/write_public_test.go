@@ -32,9 +32,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 )
 
 // WritePublicTestSuite covers writing a .hlx and putting a chain into one.
@@ -55,70 +55,89 @@ func (s *WritePublicTestSuite) doc() *preset.Document {
 	return d
 }
 
-// TestWrite puts a document back the way it came.
+// TestWrite covers Write, which encodes a preset file.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *WritePublicTestSuite) TestWrite() {
-	tests := []struct {
-		name     string
-		to       io.Writer
-		contains []string
-		err      bool
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name: "the routing and snapshots a chain says nothing about",
-			contains: []string{
-				"AppDSPFlow1Input", "snapshot0",
+			// Puts a document back the way it came.
+			name: "write",
+			then: func() {
+				tests := []struct {
+					name     string
+					to       io.Writer
+					contains []string
+					err      bool
+				}{
+					{
+						name: "the routing and snapshots a chain says nothing about",
+						contains: []string{
+							"AppDSPFlow1Input", "snapshot0",
+						},
+					},
+					{
+						name: "nowhere to write it",
+						to:   &failingWriter{},
+						err:  true,
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						var buf bytes.Buffer
+
+						to := tt.to
+						if to == nil {
+							to = &buf
+						}
+
+						err := preset.Write(to, s.doc())
+
+						if tt.err {
+							s.Require().Error(err)
+
+							return
+						}
+
+						s.Require().NoError(err)
+
+						for _, want := range tt.contains {
+							s.Require().Contains(buf.String(), want)
+						}
+					})
+				}
 			},
 		},
 		{
-			name: "nowhere to write it",
-			to:   &failingWriter{},
-			err:  true,
+			// The rule the whole package exists to keep: a preset read and
+			// written again is the preset that was read.
+			name: "write survives a read back",
+			then: func() {
+				d := s.doc()
+
+				before, err := d.Spec()
+				s.Require().NoError(err)
+
+				var buf bytes.Buffer
+				s.Require().NoError(preset.Write(&buf, d))
+
+				again, err := preset.Read(&buf)
+				s.Require().NoError(err)
+
+				after, err := again.Spec()
+				s.Require().NoError(err)
+				s.Require().Equal(before, after)
+			},
 		},
-	}
-
-	for _, tt := range tests {
+	} {
 		s.Run(tt.name, func() {
-			var buf bytes.Buffer
-
-			to := tt.to
-			if to == nil {
-				to = &buf
-			}
-
-			err := preset.Write(to, s.doc())
-
-			if tt.err {
-				s.Require().Error(err)
-
-				return
-			}
-
-			s.Require().NoError(err)
-
-			for _, want := range tt.contains {
-				s.Require().Contains(buf.String(), want)
-			}
+			tt.then()
 		})
 	}
-}
-
-// TestWriteSurvivesAReadBack is the rule the whole package exists to keep: a
-// preset read and written again is the preset that was read.
-func (s *WritePublicTestSuite) TestWriteSurvivesAReadBack() {
-	d := s.doc()
-
-	before, err := d.Spec()
-	s.Require().NoError(err)
-
-	var buf bytes.Buffer
-	s.Require().NoError(preset.Write(&buf, d))
-
-	again, err := preset.Read(&buf)
-	s.Require().NoError(err)
-
-	after, err := again.Spec()
-	s.Require().NoError(err)
-	s.Require().Equal(before, after)
 }
 
 // TestSetSpec replaces the chain and leaves everything else alone.
@@ -128,7 +147,7 @@ func (s *WritePublicTestSuite) TestSetSpec() {
 		doc  *preset.Document
 		// a document read from this, for shapes the fixture does not have.
 		raw      string
-		spec     chain.Chain
+		spec     plan.Plan
 		contains []string
 		absent   []string
 		// the keys each tone entry is left holding, sorted.
@@ -137,9 +156,9 @@ func (s *WritePublicTestSuite) TestSetSpec() {
 		{
 			name: "the blocks that were on that processor are gone",
 			doc:  s.doc(),
-			spec: chain.Chain{
+			spec: plan.Plan{
 				Name: "Replaced",
-				Blocks: []chain.Block{{
+				Blocks: []plan.Block{{
 					Model:   "HD2_AmpBrit2204",
 					Params:  map[string]catalog.ParamValue{"Drive": catalog.Float(0.25)},
 					Enabled: true,
@@ -151,9 +170,9 @@ func (s *WritePublicTestSuite) TestSetSpec() {
 		{
 			name: "a document with no tone at all gets one",
 			doc:  &preset.Document{Schema: "L6Preset"},
-			spec: chain.Chain{
+			spec: plan.Plan{
 				Name:   "New",
-				Blocks: []chain.Block{{Model: "HD2_AmpX", Enabled: true}},
+				Blocks: []plan.Block{{Model: "HD2_AmpX", Enabled: true}},
 			},
 			contains: []string{"HD2_AmpX"},
 		},
@@ -164,8 +183,8 @@ func (s *WritePublicTestSuite) TestSetSpec() {
 			raw: `{"schema":"L6Preset","data":{"tone":{"dsp0":{` +
 				`"block0":{"@model":"Old","@position":0},` +
 				`"split":{"@model":"HD2_Split"}}}}}`,
-			spec: chain.Chain{
-				Blocks: []chain.Block{{Model: "New", Enabled: true}},
+			spec: plan.Plan{
+				Blocks: []plan.Block{{Model: "New", Enabled: true}},
 			},
 			contains: []string{"HD2_Split"},
 			absent:   []string{`"Old"`},
@@ -179,8 +198,8 @@ func (s *WritePublicTestSuite) TestSetSpec() {
 				`"dsp1":{"block0":{"@model":"OldB"},"block3":{"@model":"OldC"},` +
 				`"inputA":{"@model":"InB"},"outputA":{"@model":"OutB"}},` +
 				`"snapshot0":{"block0":true}}}}`,
-			spec: chain.Chain{
-				Blocks: []chain.Block{{Model: "New", Enabled: true}},
+			spec: plan.Plan{
+				Blocks: []plan.Block{{Model: "New", Enabled: true}},
 			},
 			absent: []string{`"OldA"`, `"OldB"`, `"OldC"`},
 			keys: map[string][]string{
@@ -228,15 +247,15 @@ func (s *WritePublicTestSuite) TestNew() {
 
 	tests := []struct {
 		name string
-		spec chain.Chain
+		spec plan.Plan
 		err  bool
 		says string
 	}{
 		{
 			name: "a chain of one block",
-			spec: chain.Chain{
+			spec: plan.Plan{
 				Name: "From Scratch",
-				Blocks: []chain.Block{{
+				Blocks: []plan.Block{{
 					Model:   "HD2_AmpSVBeastNrm",
 					Params:  map[string]catalog.ParamValue{"Drive": catalog.Float(0.53)},
 					Enabled: true,
@@ -247,8 +266,8 @@ func (s *WritePublicTestSuite) TestNew() {
 			// An attribute is the device's to set. A parameter named like
 			// one would overwrite it in every preset generated.
 			name: "a parameter named like an attribute",
-			spec: chain.Chain{
-				Blocks: []chain.Block{{
+			spec: plan.Plan{
+				Blocks: []plan.Block{{
 					Model:  "HD2_AmpSVBeastNrm",
 					Params: map[string]catalog.ParamValue{"@model": catalog.Enum("nope")},
 				}},
@@ -258,8 +277,8 @@ func (s *WritePublicTestSuite) TestNew() {
 		},
 		{
 			name: "a value with no kind at all",
-			spec: chain.Chain{
-				Blocks: []chain.Block{{
+			spec: plan.Plan{
+				Blocks: []plan.Block{{
 					Model:  "X",
 					Params: map[string]catalog.ParamValue{"Gain": zero},
 				}},

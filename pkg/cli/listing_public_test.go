@@ -26,10 +26,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 // ListingPublicTestSuite covers drawing what a setlist holds.
@@ -51,7 +51,7 @@ func (s *ListingPublicTestSuite) listing() sdk.Listing {
 	return sdk.Listing{
 		Name: "HX Stomp",
 		Slots: []sdk.Held{
-			{Slot: 0, Name: "Chunky Monkey", Blocks: []chain.Block{
+			{Slot: 0, Name: "Chunky Monkey", Blocks: []plan.Block{
 				{Model: "HD2_AmpSVBeastNrm"},
 				{Model: "HD2_Cab8x10SVBeast"},
 			}},
@@ -94,7 +94,7 @@ func (s *ListingPublicTestSuite) TestListing() {
 			// One slot rather than "1 slots".
 			name: "a setlist of one",
 			in: sdk.Listing{Name: "HX Stomp", Slots: []sdk.Held{
-				{Slot: 0, Name: "Only", Blocks: []chain.Block{{Model: "HD2_AmpSVBeastNrm"}}},
+				{Slot: 0, Name: "Only", Blocks: []plan.Block{{Model: "HD2_AmpSVBeastNrm"}}},
 			}},
 			contains: []string{"1 slot ", "1 in use"},
 		},
@@ -103,7 +103,7 @@ func (s *ListingPublicTestSuite) TestListing() {
 			// chain rather than left out of it.
 			name: "a block nothing names",
 			in: sdk.Listing{Name: "HX Stomp", Slots: []sdk.Held{
-				{Slot: 0, Name: "Odd", Blocks: []chain.Block{{Model: "HD2_FromNewerFirmware"}}},
+				{Slot: 0, Name: "Odd", Blocks: []plan.Block{{Model: "HD2_FromNewerFirmware"}}},
 			}},
 			contains: []string{"?"},
 		},
@@ -149,13 +149,13 @@ func (s *ListingPublicTestSuite) TestPlural() {
 func (s *ListingPublicTestSuite) TestFlow() {
 	tests := []struct {
 		name   string
-		blocks []chain.Block
+		blocks []plan.Block
 		want   string
 	}{
 		{name: "nothing in the chain", want: ""},
 		{
 			name:   "a model this catalog does not carry",
-			blocks: []chain.Block{{Model: "HD2_FromNewerFirmware"}},
+			blocks: []plan.Block{{Model: "HD2_FromNewerFirmware"}},
 			want:   "?",
 		},
 	}

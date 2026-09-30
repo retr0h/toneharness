@@ -28,7 +28,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/setlist"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/setlist"
 )
 
 type ReadPublicTestSuite struct {

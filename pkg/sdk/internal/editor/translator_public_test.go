@@ -27,9 +27,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/editor"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/editor"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // TranslatorPublicTestSuite covers the package's work reached as a value.
@@ -63,8 +63,8 @@ func (s *TranslatorPublicTestSuite) TestNew() {
 	s.Require().NotNil(editor.New())
 }
 
-// TestChain covers reading what a device laid out, through the type.
-func (s *TranslatorPublicTestSuite) TestChain() {
+// TestPlan covers reading what a device laid out, through the type.
+func (s *TranslatorPublicTestSuite) TestPlan() {
 	tests := []struct {
 		name string
 		got  wire.DevicePreset
@@ -75,8 +75,8 @@ func (s *TranslatorPublicTestSuite) TestChain() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			want, wantErr := editor.Chain("one", tt.got, s.cat)
-			got, err := editor.New().Chain("one", tt.got, s.cat)
+			want, wantErr := editor.Plan("one", tt.got, s.cat)
+			got, err := editor.New().Plan("one", tt.got, s.cat)
 
 			s.Require().Equal(wantErr == nil, err == nil)
 			s.Require().Equal(want, got)
@@ -85,6 +85,20 @@ func (s *TranslatorPublicTestSuite) TestChain() {
 }
 
 // TestControllers covers naming what a controller moves, through the type.
+// TestPlacedControllers covers turning what a preset says moves into what a
+// device stores, through the type.
+func (s *TranslatorPublicTestSuite) TestPlacedControllers() {
+	doc, empty, err := editor.Document(s.got, s.cat, "one")
+	s.Require().NoError(err)
+	s.Require().False(empty)
+
+	want, wantErr := editor.PlacedControllers(doc, s.cat)
+	got, err := editor.New().PlacedControllers(doc, s.cat)
+
+	s.Require().Equal(wantErr == nil, err == nil)
+	s.Require().Equal(want, got)
+}
+
 func (s *TranslatorPublicTestSuite) TestControllers() {
 	s.Require().Equal(
 		editor.Controllers(s.got, s.cat),

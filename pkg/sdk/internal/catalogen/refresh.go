@@ -20,11 +20,11 @@
 package catalogen
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/retr0h/toneharness/pkg/sdk/internal/packed"
 )
 
 // Refreshed says what refreshing a catalog did.
@@ -75,7 +75,7 @@ func Refresh(
 	// A catalog holds no channels, functions or NaN floats, so encoding it
 	// cannot fail.
 	raw, _ := json.Marshal(c)
-	body := compress(raw)
+	body := packed.Bytes(raw)
 
 	out := Refreshed{Path: opts.OutputPath, Source: c.Source, Blocks: len(c.Blocks)}
 
@@ -85,12 +85,13 @@ func Refresh(
 		}
 	}
 
-	if was, err := os.ReadFile(opts.OutputPath); err == nil && bytes.Equal(was, body) {
-		return out, nil
+	wrote, err := packed.Refresh(opts.OutputPath, body)
+	if err != nil {
+		return Refreshed{}, err
 	}
 
-	if err := os.WriteFile(opts.OutputPath, body, 0o600); err != nil {
-		return Refreshed{}, fmt.Errorf("writing %s: %w", opts.OutputPath, err)
+	if !wrote {
+		return out, nil
 	}
 
 	out.Changed = true

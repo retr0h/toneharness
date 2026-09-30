@@ -23,8 +23,8 @@ package sdk
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/presets"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // once opens a Session, makes one call on it and closes it.
@@ -79,10 +79,39 @@ func (c *Client) Preset(
 	})
 }
 
+// Current reads what the attached device is playing, as the rig it describes.
+//
+// The edit buffer rather than a slot, which is the difference that matters
+// after Turn: a control moved with Turn shows here and not in the slot it came
+// from, so reading the slot back reads as though nothing happened.
+func (c *Client) Current(
+	ctx context.Context,
+	as Format,
+) (Reading, error) {
+	return once(ctx, c, func(s *Session) (Reading, error) {
+		return s.Current(ctx, as)
+	})
+}
+
+// Play puts a preset file in front of the attached device without storing it.
+//
+// Nothing is written to a slot, so this is what auditioning is: the cost of
+// trying a chain is the time it takes to hear it rather than a flash write.
+func (c *Client) Play(
+	ctx context.Context,
+	file string,
+) error {
+	_, err := once(ctx, c, func(s *Session) (struct{}, error) {
+		return struct{}{}, s.Play(ctx, file)
+	})
+
+	return err
+}
+
 // Export writes one slot on the attached device out to a file, as a rig or as
 // the device's own file.
 //
-// existing says what happens to a file already at out, as it does for Build.
+// existing says what happens to a file already at out, as it does for Make.
 func (c *Client) Export(
 	ctx context.Context,
 	at slot.Address,
@@ -156,6 +185,57 @@ func (c *Client) Select(
 	})
 }
 
+// Turn moves one control on the preset the attached device is playing.
+//
+// Neither written nor selected: the change lands in the preset in front of
+// somebody and is heard at once. The block is its position in the chain and
+// the parameter its position in that model's list, which is the only thing
+// that identifies either on the wire, and the value is in the parameter's own
+// units.
+//
+// This is the operation a sweep is made of, and writing a preset per step is
+// not a substitute: a slot given a new document goes on sounding like what it
+// held before.
+func (c *Client) Turn(
+	ctx context.Context,
+	at Address,
+	value float32,
+) error {
+	_, err := once(ctx, c, func(s *Session) (struct{}, error) {
+		return struct{}{}, s.Turn(ctx, at, value)
+	})
+
+	return err
+}
+
+// Choose picks one of a parameter's settings on the preset the attached
+// device is playing, for the ones that are a list rather than a range.
+func (c *Client) Choose(
+	ctx context.Context,
+	at Address,
+	value int,
+) error {
+	_, err := once(ctx, c, func(s *Session) (struct{}, error) {
+		return struct{}{}, s.Choose(ctx, at, value)
+	})
+
+	return err
+}
+
+// Switch turns one of a parameter's switches on or off on the preset the
+// attached device is playing.
+func (c *Client) Switch(
+	ctx context.Context,
+	at Address,
+	on bool,
+) error {
+	_, err := once(ctx, c, func(s *Session) (struct{}, error) {
+		return struct{}{}, s.Switch(ctx, at, on)
+	})
+
+	return err
+}
+
 // PresetFile reads a standalone .hlx as the rig it describes.
 //
 // The same rig a slot on a device or in a setlist reads as, which is the
@@ -174,8 +254,11 @@ func (c *Client) PresetFile(
 // A struct rather than three arguments, because three paths of one type are
 // too easy to pass in the wrong order.
 type Compile struct {
-	// Rig is the rig file to build.
+	// Rig is the rig file to build. Name this or Plan, not both.
 	Rig string
+	// Plan is a plan file to build, for work that has already chosen its
+	// models. Name this or Rig, not both.
+	Plan string
 	// Template is a preset to write the chain into. Empty uses an untouched
 	// one the device itself wrote.
 	Template string
@@ -187,7 +270,10 @@ type Compile struct {
 	Existing Existing
 }
 
-// Compile builds a preset from a rig on disk.
+// Compile lowers a rig or a plan on disk into a preset.
+//
+// No ask, and no words resolved: what the document says is what gets written.
+// Make is the one that resolves an ask.
 func (c *Client) Compile(
 	ctx context.Context,
 	in Compile,
@@ -195,6 +281,7 @@ func (c *Client) Compile(
 	return presets.Compile(ctx, presets.CompileOptions{
 		Deps:         presets.Deps{Catalogs: c},
 		RigPath:      in.Rig,
+		PlanPath:     in.Plan,
 		TemplatePath: in.Template,
 		OutputPath:   in.Out,
 		Existing:     in.Existing,

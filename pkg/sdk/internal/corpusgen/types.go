@@ -22,7 +22,7 @@
 //
 // It runs when the corpus changes, not on every build. The result is
 // committed and embedded, so nobody needs the 67MB of presets to use what was
-// learned from them. See docs/knowledge.md.
+// learned from them. See docs/architecture.md.
 package corpusgen
 
 // Options says what to measure and where to put the result.

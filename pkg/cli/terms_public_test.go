@@ -26,8 +26,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // TermsPublicTestSuite covers the earned words written as evidence to paste.
@@ -107,7 +107,7 @@ func (s *TermsPublicTestSuite) TestWhatToDoWithItIsSaidOnce() {
 		}}},
 	})
 
-	s.Require().Contains(got, "Paste under the rig of the player it names")
+	s.Require().Contains(got, "Paste under the ask of the player it names")
 	s.Require().Contains(got, "an argument, not a verdict")
 }
 
@@ -120,33 +120,52 @@ func (s *TermsPublicTestSuite) earned() []audio.Player {
 	}}
 }
 
-// TestAWriteThatFailsIsReported covers the output going somewhere that stops
-// accepting it.
+// TestPlayerTerms covers PlayerTerms, which writes what each player's records
+// earned them, as words ready to paste into an ask.
 //
-// Every point it can fail, rather than the first: the encoder writes some of
-// the document and flushes the rest when it is closed, so a late failure is a
-// different path from an early one.
-func (s *TermsPublicTestSuite) TestAWriteThatFailsIsReported() {
-	writes := &counting{}
-	s.Require().NoError(cli.PlayerTerms(writes, s.earned()))
+// One method and one table, so a case is a row rather than a file.
+func (s *TermsPublicTestSuite) TestPlayerTerms() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The output going somewhere that stops accepting it.
+			//
+			// Every point it can fail, rather than the first: the encoder
+			// writes some of the document and flushes the rest when it is
+			// closed, so a late failure is a different path from an early
+			// one.
+			name: "a write that fails is reported",
+			then: func() {
+				writes := &counting{}
+				s.Require().NoError(cli.PlayerTerms(writes, s.earned()))
 
-	for ok := range writes.n {
-		s.Run(fmt.Sprintf("after %d writes", ok), func() {
-			err := cli.PlayerTerms(&stops{ok: ok}, s.earned())
+				for ok := range writes.n {
+					s.Run(fmt.Sprintf("after %d writes", ok), func() {
+						err := cli.PlayerTerms(&stops{ok: ok}, s.earned())
 
-			s.Require().Error(err)
-			s.Require().Contains(err.Error(), "writing terms")
+						s.Require().Error(err)
+						s.Require().Contains(err.Error(), "writing terms")
+					})
+				}
+			},
+		},
+		{
+			// The other output, which is one line and not a document.
+			name: "a write that fails with nothing earned is reported",
+			then: func() {
+				err := cli.PlayerTerms(&stops{}, []audio.Player{{ID: "les-claypool", Records: 3}})
+
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), "writing terms")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
 		})
 	}
-}
-
-// TestAWriteThatFailsWithNothingEarnedIsReported covers the other output,
-// which is one line and not a document.
-func (s *TermsPublicTestSuite) TestAWriteThatFailsWithNothingEarnedIsReported() {
-	err := cli.PlayerTerms(&stops{}, []audio.Player{{ID: "les-claypool", Records: 3}})
-
-	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "writing terms")
 }
 
 func TestTermsPublicTestSuite(

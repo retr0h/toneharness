@@ -1,0 +1,7 @@
+schema: RigSpec
+version: 2
+id: took-both
+instrument: bass
+chain:
+  - { role: amp, gear: Acoustic 360, capture: both }
+  - { role: cab, gear: Acoustic 361, capture: miked }

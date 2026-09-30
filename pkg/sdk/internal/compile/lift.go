@@ -21,29 +21,28 @@
 package compile
 
 import (
-	"encoding/json"
 	"fmt"
-	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Lift reads a preset into a rig.
 //
 // Every block records both the gear it emulates and the exact model it was,
-// keyed by device. The name alone cannot identify a model — 665 of them share
-// 469 names — so a rig that only carried the name would rebuild into a
+// keyed by device. The name alone cannot identify a model — 661 of them share
+// 468 names — so a rig that only carried the name would rebuild into a
 // different preset.
 func Lift(
 	doc *preset.Document,
 	cat *catalog.Catalog,
-) (rig.Spec, error) {
+) (rig.Spec, plan.Plan, error) {
 	c, err := doc.Spec()
 	if err != nil {
-		return rig.Spec{}, fmt.Errorf("reading the chain: %w", err)
+		return rig.Spec{}, plan.Plan{}, fmt.Errorf("reading the chain: %w", err)
 	}
 
 	device := cat.Device
@@ -54,121 +53,77 @@ func Lift(
 	entries := make([]rig.ChainEntry, 0, len(c.Blocks))
 
 	for _, b := range c.Blocks {
-		entries = append(entries, entryFor(b, cat, device))
+		entries = append(entries, entryFor(b, cat))
 	}
 
 	snapshots := snapshotsOf(doc)
 	switches := footswitchesOf(doc, cat)
+	movers := controllersOf(doc, cat)
 
 	out := rig.Spec{
-		Schema:       rig.SchemaName,
-		Version:      &version,
-		ID:           identifier(doc.Data.Meta.Name),
-		Subject:      rig.Subject{Kind: rig.KindSound, Name: subjectName(doc)},
-		Chain:        entries,
-		Instrument:   instrumentOf(c, cat),
+		Schema:     rig.SchemaName,
+		Version:    &version,
+		ID:         slug.Of(doc.Data.Meta.Name),
+		Chain:      entries,
+		Instrument: instrumentFieldFor(c, cat),
+	}
+
+	// The same preset read twice, into the two documents it is. The rig is the
+	// gear in signal order, which reads the same on hardware nobody has written
+	// a driver for; the plan is everything that only means anything on this one.
+	//
+	// Both, rather than one and a conversion, because they come out of one
+	// decode and a caller wanting the portable half should not have to throw the
+	// other away and read the file again to get it back.
+	made := plan.Plan{
+		Name:         doc.Data.Meta.Name,
+		Rig:          out.ID,
+		Blocks:       c.Blocks,
+		Snapshots:    deref(snapshots),
+		Footswitches: deref(switches),
+		Controllers:  deref(movers),
 		Target:       &rig.Target{Device: &device},
-		Snapshots:    snapshots,
-		Footswitches: switches,
-		Device:       deviceState(doc, modelledKeys(doc, snapshots, switches)),
+		Device:       deviceState(doc, modelledKeys(doc, snapshots, switches, movers)),
 	}
 
 	// A rig this package produced must be one anybody else can read. Lifting
 	// something that does not meet its own contract is a bug here, not input
 	// worth passing on.
 	if err := rig.Validate(out); err != nil {
-		return rig.Spec{}, fmt.Errorf("lifting %q: %w", doc.Data.Meta.Name, err)
+		return rig.Spec{}, plan.Plan{}, fmt.Errorf(
+			"lifting %q: %w", doc.Data.Meta.Name, err)
 	}
 
-	return out, nil
+	return out, made, nil
 }
 
-// subjectName is what the rig is called.
-//
-// A preset carries a name and nothing about who plays it, so a lifted rig is
-// a sound rather than an artist until somebody says otherwise.
-func subjectName(
-	doc *preset.Document,
-) string {
-	if name := strings.TrimSpace(doc.Data.Meta.Name); name != "" {
-		return name
+// deref reads an optional list as a list, since absent and empty are the same
+// thing to a plan: nothing to write.
+func deref[T any](
+	of *[]T,
+) []T {
+	if of == nil {
+		return nil
 	}
 
-	return "Untitled"
-}
-
-// identifier turns a preset name into the shape the schema states for one.
-func identifier(
-	name string,
-) string {
-	var b strings.Builder
-
-	for _, r := range strings.ToLower(name) {
-		switch {
-		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
-			b.WriteRune(r)
-		default:
-			b.WriteByte('-')
-		}
-	}
-
-	id := strings.Trim(collapse(b.String()), "-")
-	if id == "" {
-		return "untitled"
-	}
-
-	return id
-}
-
-// collapse reduces runs of hyphens to one, which the pattern requires.
-func collapse(
-	s string,
-) string {
-	for strings.Contains(s, "--") {
-		s = strings.ReplaceAll(s, "--", "-")
-	}
-
-	return s
+	return *of
 }
 
 // entryFor describes one block as gear.
+//
+// The gear and the role, and nothing about the device. Which model answered, the
+// parameters it was set to and where it sat are the plan's, and the plan gets
+// them from the blocks this same read produced rather than from a copy here.
 func entryFor(
-	b chain.Block,
+	b plan.Block,
 	cat *catalog.Catalog,
-	device string,
 ) rig.ChainEntry {
 	blk, known := cat.Block(b.Model)
 
-	pos, path := b.Pos, b.DSP
-
-	entry := rig.ChainEntry{
-		Gear:     gearName(blk, b.Model, known),
-		Enabled:  &b.Enabled,
-		Models:   &map[string]string{device: string(b.Model)},
-		Position: &pos,
-		Path:     &path,
+	return rig.ChainEntry{
+		Gear: gearName(blk, b.Model, known),
+		Role: roleFor(blk.Category, known),
 	}
-
-	entry.Role = roleFor(blk.Category, known)
-
-	params := map[string]any{}
-
-	for key, v := range b.Params {
-		params[key] = v
-	}
-
-	// Attributes the device owns travel alongside the parameters. They are
-	// @-prefixed, so nothing can collide, and a rig that dropped them would
-	// rebuild into a preset that differs from the one it was read from.
-	for key, raw := range b.Attrs {
-		params[key] = json.RawMessage(raw)
-	}
-
-	if len(params) > 0 {
-		entry.Params = &params
-	}
-
-	return entry
 }
 
 // gearName describes a block the way a person would.
@@ -235,23 +190,19 @@ var roles = map[catalog.Category]rig.Role{
 	catalog.CategoryOther:   rig.RoleOther,
 }
 
-// instrumentOf reports which instrument a chain is for, from its amplifier.
+// instrumentFieldFor reports which instrument a chain is for, from its amplifier.
 //
 // Line 6 tag amps Guitar or Bass. A chain with no amp names no instrument, so
 // guitar stands as the more common default.
-func instrumentOf(
-	c chain.Chain,
+func instrumentFieldFor(
+	c plan.Plan,
 	cat *catalog.Catalog,
 ) rig.Instrument {
-	for _, b := range c.Blocks {
-		blk, known := cat.Block(b.Model)
-		if !known || blk.Category != catalog.CategoryAmp {
-			continue
-		}
-
-		if blk.Subcategory == "Bass" {
-			return rig.InstrumentBass
-		}
+	// Guitar for a chain with no amplifier, because a rig's `instrument` field
+	// has to hold something. That is this caller's decision rather than the
+	// rule's, which is why plan.InstrumentFor answers NoAmp and leaves it.
+	if plan.InstrumentFor(c, cat) == plan.Bass {
+		return rig.InstrumentBass
 	}
 
 	return rig.InstrumentGuitar
@@ -265,12 +216,13 @@ func modelledKeys(
 	doc *preset.Document,
 	snapshots *[]rig.Snapshot,
 	switches *[]rig.Footswitch,
+	movers *[]rig.Controller,
 ) map[string]bool {
 	out := map[string]bool{}
 
 	if snapshots != nil {
 		for key := range doc.Data.Tone {
-			if snapshotIndex(key) >= 0 {
+			if preset.SnapshotIndex(key) >= 0 {
 				out[key] = true
 			}
 		}
@@ -278,6 +230,10 @@ func modelledKeys(
 
 	if switches != nil {
 		out[footswitchKey] = true
+	}
+
+	if movers != nil {
+		out[controllerKey] = true
 	}
 
 	return out

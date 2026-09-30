@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	device "github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	wire "github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	device "github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	wire "github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -266,6 +266,125 @@ func (m *MockSelector) SelectPreset(ctx context.Context, setlist, slot int) erro
 func (mr *MockSelectorMockRecorder) SelectPreset(ctx, setlist, slot any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectPreset", reflect.TypeOf((*MockSelector)(nil).SelectPreset), ctx, setlist, slot)
+}
+
+// MockTurner is a mock of Turner interface.
+type MockTurner struct {
+	ctrl     *gomock.Controller
+	recorder *MockTurnerMockRecorder
+	isgomock struct{}
+}
+
+// MockTurnerMockRecorder is the mock recorder for MockTurner.
+type MockTurnerMockRecorder struct {
+	mock *MockTurner
+}
+
+// NewMockTurner creates a new mock instance.
+func NewMockTurner(ctrl *gomock.Controller) *MockTurner {
+	mock := &MockTurner{ctrl: ctrl}
+	mock.recorder = &MockTurnerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTurner) EXPECT() *MockTurnerMockRecorder {
+	return m.recorder
+}
+
+// SetChoice mocks base method.
+func (m *MockTurner) SetChoice(ctx context.Context, at device.Address, value int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetChoice", ctx, at, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetChoice indicates an expected call of SetChoice.
+func (mr *MockTurnerMockRecorder) SetChoice(ctx, at, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetChoice", reflect.TypeOf((*MockTurner)(nil).SetChoice), ctx, at, value)
+}
+
+// SetParam mocks base method.
+func (m *MockTurner) SetParam(ctx context.Context, at device.Address, value float32) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetParam", ctx, at, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetParam indicates an expected call of SetParam.
+func (mr *MockTurnerMockRecorder) SetParam(ctx, at, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetParam", reflect.TypeOf((*MockTurner)(nil).SetParam), ctx, at, value)
+}
+
+// SetSwitch mocks base method.
+func (m *MockTurner) SetSwitch(ctx context.Context, at device.Address, on bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetSwitch", ctx, at, on)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetSwitch indicates an expected call of SetSwitch.
+func (mr *MockTurnerMockRecorder) SetSwitch(ctx, at, on any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSwitch", reflect.TypeOf((*MockTurner)(nil).SetSwitch), ctx, at, on)
+}
+
+// MockLoaded is a mock of Loaded interface.
+type MockLoaded struct {
+	ctrl     *gomock.Controller
+	recorder *MockLoadedMockRecorder
+	isgomock struct{}
+}
+
+// MockLoadedMockRecorder is the mock recorder for MockLoaded.
+type MockLoadedMockRecorder struct {
+	mock *MockLoaded
+}
+
+// NewMockLoaded creates a new mock instance.
+func NewMockLoaded(ctrl *gomock.Controller) *MockLoaded {
+	mock := &MockLoaded{ctrl: ctrl}
+	mock.recorder = &MockLoadedMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockLoaded) EXPECT() *MockLoadedMockRecorder {
+	return m.recorder
+}
+
+// ReadCurrent mocks base method.
+func (m *MockLoaded) ReadCurrent(ctx context.Context) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadCurrent", ctx)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadCurrent indicates an expected call of ReadCurrent.
+func (mr *MockLoadedMockRecorder) ReadCurrent(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadCurrent", reflect.TypeOf((*MockLoaded)(nil).ReadCurrent), ctx)
+}
+
+// WriteCurrent mocks base method.
+func (m *MockLoaded) WriteCurrent(ctx context.Context, document []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteCurrent", ctx, document)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WriteCurrent indicates an expected call of WriteCurrent.
+func (mr *MockLoadedMockRecorder) WriteCurrent(ctx, document any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteCurrent", reflect.TypeOf((*MockLoaded)(nil).WriteCurrent), ctx, document)
 }
 
 // MockEditor is a mock of Editor interface.

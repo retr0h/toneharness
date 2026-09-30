@@ -34,16 +34,17 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
-	slotmocks "github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	slotmocks "github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // flows are the operations, naming gear against the catalog at path. An empty
@@ -67,9 +68,10 @@ func flows(
 
 // said renders a reading the way something displaying one would.
 //
-// The assertions here are about what was read, and what was read is a rig.
-// Rendering it in the test rather than importing the one renderer keeps these
-// operations free of anything that knows what a terminal is.
+// The assertions here are about what was read, and what was read is a rig and
+// the plan that realises it on the device it came off. Rendering both in the
+// test rather than importing the one renderer keeps these operations free of
+// anything that knows what a terminal is.
 func said(
 	t *testing.T,
 	r result.Reading,
@@ -87,6 +89,7 @@ func said(
 	var buf bytes.Buffer
 
 	require.NoError(t, rig.Write(&buf, r.Rig))
+	require.NoError(t, plan.Write(&buf, r.Plan))
 
 	return r.Name + "\n" + buf.String()
 }
@@ -294,8 +297,11 @@ func (s *DevicePublicTestSuite) TestShow() {
 			answer: s.answer("switches.bin"),
 			contains: []string{
 				"schema: RigSpec",
-				// The name comes from the listing.
-				"name: B15 Eras",
+				// The name comes from the listing, and reaches the rig as its
+				// identifier. A rig carries no subject: who a sound is for is
+				// something a person writes on an ask, and a preset read off a
+				// device says only what the pedal had in that slot.
+				"id: b15-eras",
 				// Somebody labelled and coloured these switches, and a rig
 				// carries what the pedal shows rather than what the block is
 				// called.
@@ -308,7 +314,7 @@ func (s *DevicePublicTestSuite) TestShow() {
 			name:     "a preset in another setlist",
 			at:       slotpkg.Address{Setlist: 1, Slot: 24},
 			answer:   s.answer("switches.bin"),
-			contains: []string{"name: B15 Eras"},
+			contains: []string{"id: b15-eras"},
 		},
 		{
 			name:     "one holding no blocks",

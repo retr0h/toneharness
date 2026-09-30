@@ -30,10 +30,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 )
 
 // ErrNoPresets reports that a corpus directory held nothing to measure.
@@ -204,9 +204,9 @@ func (m *measurer) record(
 
 // grammarOf records what a chain contained and where, for its instrument.
 func (m *measurer) grammarOf(
-	spec chain.Chain,
+	spec plan.Plan,
 ) {
-	instrument, ampAt, ok := m.instrumentOf(spec)
+	instrument, ampAt, ok := m.chainIsFor(spec)
 	if !ok {
 		return
 	}
@@ -269,29 +269,31 @@ func tonal(
 	return c != catalog.CategoryAmp && c != catalog.CategoryUtility
 }
 
-// instrumentOf finds the amp in a chain and reports which instrument it is
+// chainIsFor finds the amp in a chain and reports which instrument it is
 // for.
 //
 // A chain with no amp says nothing about ordering, because there is nothing to
-// order around.
-func (m *measurer) instrumentOf(
-	spec chain.Chain,
+// order around, and that is the only thing reported as unusable.
+//
+// This read the first amplifier's subcategory and refused anything that was
+// not spelled Guitar or Bass, which is neither of the rules the compiler and
+// the measuring guard use. Of the 4,426 presets in the corpus, 3,804 hold an
+// amplifier; the first-amp rule labelled 10 of them wrong, and the refusal
+// dropped 183 more out of the grammar, the chain counts and the model counts
+// altogether, for a first amplifier tagged Preamp or tagged nothing. 5.1%.
+//
+// The index is still the first amplifier's, which is the right pivot for
+// counting what sits before and after it whatever the instrument turns out to
+// be.
+func (m *measurer) chainIsFor(
+	spec plan.Plan,
 ) (string, int, bool) {
-	for i, b := range spec.Blocks {
-		blk, known := m.cat.Block(b.Model)
-		if !known || blk.Category != catalog.CategoryAmp {
-			continue
-		}
-
-		instrument := strings.ToLower(blk.Subcategory)
-		if instrument != "guitar" && instrument != "bass" {
-			return "", 0, false
-		}
-
-		return instrument, i, true
+	at := plan.AmpAt(spec, m.cat)
+	if at < 0 {
+		return "", 0, false
 	}
 
-	return "", 0, false
+	return plan.InstrumentFor(spec, m.cat), at, true
 }
 
 // reduce turns the accumulated observations into quartiles.

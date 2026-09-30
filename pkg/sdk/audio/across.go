@@ -32,25 +32,27 @@ package audio
 // mixes ran 842Hz to 1338Hz, which is the band rather than the bass.
 type Across struct {
 	// Tracks is how many recordings went into it.
-	Tracks int
+	Tracks int `json:"tracks"`
 
 	// Low, Mid and High are each band's share, across the recordings.
-	Low, Mid, High Spread
+	Low  Spread `json:"low"`
+	Mid  Spread `json:"mid"`
+	High Spread `json:"high"`
 
 	// Centroid is the spectrum's centre of gravity, in hertz.
-	Centroid Spread
+	Centroid Spread `json:"centroid"`
 	// Transient is how sharply notes start, from zero to one. Only the
 	// recordings whose level rose at all are in it.
-	Transient Ranged
+	Transient Ranged `json:"transient"`
 	// Decay is how long a note takes to fall to a quarter, in seconds. Only
 	// the recordings whose notes fell that far are in it.
-	Decay Ranged
+	Decay Ranged `json:"decay"`
 	// DynamicRange is the gap between loudest and typical, in decibels.
-	DynamicRange Spread
+	DynamicRange Spread `json:"dynamic_range"`
 	// Harmonics is the share of energy above the fundamental.
-	Harmonics Spread
+	Harmonics Spread `json:"harmonics"`
 	// EvenOdd leans positive for even harmonics and negative for odd.
-	EvenOdd Spread
+	EvenOdd Spread `json:"even_odd"`
 }
 
 // Together gathers several recordings into one measurement.
@@ -99,7 +101,7 @@ type Ranged struct {
 
 	// From is how many recordings contributed a reading. Zero means none
 	// could, and the spread inside is empty rather than small.
-	From int
+	From int `json:"from"`
 }
 
 // whichever is the spread of one measure across the recordings that had it.

@@ -32,8 +32,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/mcp"
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/mcp"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 type StdioPublicTestSuite struct {
@@ -114,7 +114,7 @@ func (s *StdioPublicTestSuite) TestRunOver() {
 	}{
 		{
 			// A client that asks one thing and closes its end straight away,
-			// the way piping a request into `tonestack mcp start` does. The
+			// the way piping a request into `toneharness mcp start` does. The
 			// client is gone, so the session is over rather than broken.
 			name: "a client that hangs up while its reply is written",
 			streams: func() (io.Reader, io.Writer) {

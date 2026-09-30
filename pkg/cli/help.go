@@ -25,7 +25,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 )
 
 // Item is one named thing in a help listing: a command, or a flag.
@@ -40,7 +40,7 @@ type Item struct {
 // adapts itself to this, so the layout is decided in one place and can be
 // tested without building a command tree.
 type Help struct {
-	// Name is the full invocation, such as "tonestack presets make".
+	// Name is the full invocation, such as "toneharness presets make".
 	Name string
 	// Description is the long form, shown under the name.
 	Description string

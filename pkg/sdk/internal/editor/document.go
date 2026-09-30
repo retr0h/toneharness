@@ -24,10 +24,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Controllers carries what an expression pedal or a footswitch moves.
@@ -119,7 +119,7 @@ func Document(
 	cat *catalog.Catalog,
 	name string,
 ) (*preset.Document, bool, error) {
-	c, err := Chain(name, got, cat)
+	c, err := Plan(name, got, cat)
 	if err != nil {
 		return nil, false, err
 	}

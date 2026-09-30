@@ -28,10 +28,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/setlist"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/setlist"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // EditPublicTestSuite covers the operations that write a file: copying,
@@ -277,8 +277,9 @@ func (s *EditPublicTestSuite) TestExport() {
 		catalog string
 		out     string
 
-		// what the written file must say.
+		// what the written file must say, and what it must not.
 		wrote []string
+		lacks []string
 		// what showing the written file must say, for the device's own
 		// format.
 		shows []string
@@ -295,11 +296,13 @@ func (s *EditPublicTestSuite) TestExport() {
 			out:     "one.yaml",
 			wrote: []string{
 				"schema: RigSpec",
-				"gear:",
-				// A lifted rig records the exact model, since a name does not
-				// identify one.
-				"models:",
+				// Gear named the way a musician names it.
+				"gear: Ampeg SVT (normal channel)",
 			},
+			// A rig is the portable layer. Which model each piece of gear
+			// resolved to belongs to the plan, and an export of a rig carries
+			// none of it.
+			lacks: []string{"HD2_", "blocks:", "params:"},
 		},
 		{
 			name:  "the device's own file, when asked for",
@@ -390,6 +393,10 @@ func (s *EditPublicTestSuite) TestExport() {
 
 				for _, want := range tt.wrote {
 					s.Require().Contains(string(raw), want)
+				}
+
+				for _, unwanted := range tt.lacks {
+					s.Require().NotContains(string(raw), unwanted)
 				}
 			}
 

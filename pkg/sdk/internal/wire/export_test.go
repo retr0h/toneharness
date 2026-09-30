@@ -74,12 +74,3 @@ const (
 	KeyTone      = int8(keyTone)
 	KeySnapshots = int8(keySnapshots)
 )
-
-// Flag returns an argument carrying a boolean. Nothing in the package sends
-// one; the encoding tests build one to cover every kind an argument can be.
-func Flag(
-	key int,
-	v bool,
-) Arg {
-	return Arg{Key: key, Flag: v, Kind: ArgFlag}
-}

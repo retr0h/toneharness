@@ -25,68 +25,88 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 type MatchPublicTestSuite struct {
 	suite.Suite
 }
 
+// TestMatches covers Matches, which reports whether a block is what somebody
+// meant by a gear name.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *MatchPublicTestSuite) TestMatches() {
-	svt := catalog.Block{Name: "Ampeg SVT Nrm", BasedOn: "Ampeg SVT® (normal channel)"}
-	original := catalog.Block{Name: "Line 6 Litigator", BasedOn: "Line 6 Original"}
-	klon := catalog.Block{Name: "Minotaur", BasedOn: "Klon® Centaur"}
-
-	tests := []struct {
-		name  string
-		block catalog.Block
-		want  string
-		match bool
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
-		{"the gear a block emulates", svt, "Ampeg SVT", true},
 		{
-			"a trademark symbol nobody types",
-			klon, "Klon Centaur", true,
-		},
-		{
-			"a model's own name, which is the only handle a Line 6 original has",
-			original, "Line 6 Litigator", true,
-		},
-		{"a name in a different case", svt, "ampeg svt", true},
-		{"a name with the spacing off", svt, "  Ampeg   SVT  ", true},
-		{"part of a name", klon, "Minotaur", true},
-		{
-			// Line 6 call it "8x10 Ampeg SVT-E"; everyone who owns one calls
-			// it an Ampeg 8x10. Requiring the same word order would reject
-			// the name a person actually types.
-			"a name written in the order a person says it",
-			catalog.Block{Name: "8x10 Ampeg SVT-E"},
-			"Ampeg 8x10", true,
-		},
-		{
-			"a word the name does not hold",
-			catalog.Block{Name: "8x10 Ampeg SVT-E"},
-			"Ampeg 4x10", false,
-		},
-		{"gear this is not", svt, "Marshall JCM800", false},
-		{"nothing at all", svt, "", false},
-		{"nothing but spaces", svt, "   ", false},
-	}
+			name: "matches",
+			then: func() {
+				svt := catalog.Block{Name: "Ampeg SVT Nrm", BasedOn: "Ampeg SVT® (normal channel)"}
+				original := catalog.Block{Name: "Line 6 Litigator", BasedOn: "Line 6 Original"}
+				klon := catalog.Block{Name: "Minotaur", BasedOn: "Klon® Centaur"}
 
-	for _, tc := range tests {
-		s.Run(tc.name, func() {
-			s.Require().Equal(tc.match, tc.block.Matches(tc.want))
+				tests := []struct {
+					name  string
+					block catalog.Block
+					want  string
+					match bool
+				}{
+					{"the gear a block emulates", svt, "Ampeg SVT", true},
+					{
+						"a trademark symbol nobody types",
+						klon, "Klon Centaur", true,
+					},
+					{
+						"a model's own name, which is the only handle a Line 6 original has",
+						original, "Line 6 Litigator", true,
+					},
+					{"a name in a different case", svt, "ampeg svt", true},
+					{"a name with the spacing off", svt, "  Ampeg   SVT  ", true},
+					{"part of a name", klon, "Minotaur", true},
+					{
+						// Line 6 call it "8x10 Ampeg SVT-E"; everyone who owns one calls
+						// it an Ampeg 8x10. Requiring the same word order would reject
+						// the name a person actually types.
+						"a name written in the order a person says it",
+						catalog.Block{Name: "8x10 Ampeg SVT-E"},
+						"Ampeg 8x10", true,
+					},
+					{
+						"a word the name does not hold",
+						catalog.Block{Name: "8x10 Ampeg SVT-E"},
+						"Ampeg 4x10", false,
+					},
+					{"gear this is not", svt, "Marshall JCM800", false},
+					{"nothing at all", svt, "", false},
+					{"nothing but spaces", svt, "   ", false},
+				}
+
+				for _, tc := range tests {
+					s.Run(tc.name, func() {
+						s.Require().Equal(tc.match, tc.block.Matches(tc.want))
+					})
+				}
+			},
+		},
+		{
+			name: "a model that emulates nothing still matches by name",
+			then: func() {
+				// Every Line 6 original reads "Line 6 Original" as the gear it is based
+				// on, so matching that alone would make all of them impossible to ask for.
+				b := catalog.Block{Name: "Glitz", BasedOn: "Line 6 Original"}
+
+				s.Require().True(b.Matches("Glitz"))
+				s.Require().True(b.Matches("Line 6 Original"))
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
 		})
 	}
-}
-
-func (s *MatchPublicTestSuite) TestAModelThatEmulatesNothingStillMatchesByName() {
-	// Every Line 6 original reads "Line 6 Original" as the gear it is based
-	// on, so matching that alone would make all of them impossible to ask for.
-	b := catalog.Block{Name: "Glitz", BasedOn: "Line 6 Original"}
-
-	s.Require().True(b.Matches("Glitz"))
-	s.Require().True(b.Matches("Line 6 Original"))
 }
 
 func TestMatchPublicTestSuite(

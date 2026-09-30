@@ -27,15 +27,21 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // PlacePublicTestSuite covers writing a chain into a preset.
 //
-// Everything here is checked by reading the result back with the decoder the
-// rest of this project uses, rather than against the bytes this package
-// produced. A block that goes in and does not come out is the failure that
-// matters.
+// Most of it is checked by reading the result back with the decoder the rest
+// of this project uses. A block that goes in and does not come out is one
+// failure that matters.
+//
+// It is not the only one, and reading back alone cannot see the other. The
+// decoder walks the MessagePack and finds a key wherever it sits; the device
+// seeks to where it put one. So a chain carrying the right keys in the wrong
+// order reads back perfectly and renders as an empty chain, which is what
+// happened. TestAChainIsWrittenTheWayTheDeviceWroteIt is the half that
+// compares bytes, and it is the only test here a reordering can fail.
 type PlacePublicTestSuite struct {
 	suite.Suite
 }
@@ -366,86 +372,154 @@ func (s *PlacePublicTestSuite) TestBlank() {
 	s.Require().Empty(s.read(doc).Blocks, "each call gets its own document")
 }
 
-// TestPlaceAsWritten covers putting a chain where the preset says it goes.
+// TestPlaceAsWritten covers PlaceAsWritten, which writes a chain where the
+// preset says it goes.
 //
-// The two numberings differ by one, measured against slot 27B of an HX
-// Stomp: the preset HX Edit exported puts its six blocks at 1 through 6 and
-// the document the device sent puts the same six at 2 through 7.
+// One method and one table, so a case is a row rather than a file.
 func (s *PlacePublicTestSuite) TestPlaceAsWritten() {
-	tests := []struct {
-		name      string
-		blocks    []wire.Placement
-		chainless bool
-		want      []int
-		err       error
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name: "the six blocks of the bass preset",
-			blocks: []wire.Placement{
-				s.at(s.drive(), 1), s.at(s.drive(), 2), s.at(s.drive(), 3),
-				s.at(s.drive(), 4), s.at(s.amp(), 5), s.at(s.drive(), 6),
+			// Putting a chain where the preset says it goes.
+			//
+			// The two numberings differ by one, measured against slot 27B of
+			// an HX Stomp: the preset HX Edit exported puts its six blocks at
+			// 1 through 6 and the document the device sent puts the same six
+			// at 2 through 7.
+			name: "place as written",
+			then: func() {
+				tests := []struct {
+					name      string
+					blocks    []wire.Placement
+					chainless bool
+					want      []int
+					err       error
+				}{
+					{
+						name: "the six blocks of the bass preset",
+						blocks: []wire.Placement{
+							s.at(s.drive(), 1), s.at(s.drive(), 2), s.at(s.drive(), 3),
+							s.at(s.drive(), 4), s.at(s.amp(), 5), s.at(s.drive(), 6),
+						},
+						want: []int{2, 3, 4, 5, 6, 7},
+					},
+					{
+						name:   "one block at the start of a path",
+						blocks: []wire.Placement{s.at(s.drive(), 0)},
+						want:   []int{1},
+					},
+					{
+						name: "nothing at all",
+						want: []int{},
+					},
+					{
+						name:   "a position the device keeps its split on",
+						blocks: []wire.Placement{s.at(s.drive(), 8)},
+						err:    wire.ErrNoRoom,
+					},
+					{
+						name:   "a position past the end of the grid",
+						blocks: []wire.Placement{s.at(s.drive(), wire.GridSize)},
+						err:    wire.ErrNoRoom,
+					},
+					{
+						name:      "a document with no chain, which no device would send",
+						chainless: true,
+						err:       wire.ErrNotADocument,
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						doc := s.blank()
+						if tt.chainless {
+							doc = s.capture(1)
+						}
+
+						err := wire.PlaceAsWritten(doc, tt.blocks)
+
+						if tt.err != nil {
+							s.Require().ErrorIs(err, tt.err)
+
+							return
+						}
+
+						s.Require().NoError(err)
+
+						// Where the blocks landed, read back out of the document. The
+						// chain handed over is the caller's and comes back unshifted.
+						read := s.read(doc)
+
+						got := []int{}
+						for _, b := range read.Blocks {
+							got = append(got, b.Index)
+						}
+
+						s.Require().Equal(tt.want, got)
+						s.Require().Len(read.Blocks, len(tt.blocks))
+
+						for i, b := range tt.blocks {
+							s.Require().Equal(tt.want[i]-wire.GridOffset, b.Position,
+								"the caller's chain must come back as it went in")
+						}
+					})
+				}
 			},
-			want: []int{2, 3, 4, 5, 6, 7},
 		},
 		{
-			name:   "one block at the start of a path",
-			blocks: []wire.Placement{s.at(s.drive(), 0)},
-			want:   []int{1},
-		},
-		{
-			name: "nothing at all",
-			want: []int{},
-		},
-		{
-			name:   "a position the device keeps its split on",
-			blocks: []wire.Placement{s.at(s.drive(), 8)},
-			err:    wire.ErrNoRoom,
-		},
-		{
-			name:   "a position past the end of the grid",
-			blocks: []wire.Placement{s.at(s.drive(), wire.GridSize)},
-			err:    wire.ErrNoRoom,
-		},
-		{
-			name:      "a document with no chain, which no device would send",
-			chainless: true,
-			err:       wire.ErrNotADocument,
-		},
-	}
+			// The byte order of a block.
+			//
+			// A device's own preset is read, its chain is written straight
+			// back into the document it came out of, and the chain section
+			// has to be the bytes that arrived. Nothing else here can make
+			// that assertion: every other test reads the result back, and
+			// reading finds a key wherever it sits.
+			//
+			// This is the test that was missing. A block body carries five
+			// keys, the device writes the model reference first, and this
+			// package wrote it last. Every chain it produced read back
+			// correctly, measured 147Hz on the hardware, and showed no blocks
+			// on the pedal.
+			name: "a chain is written the way the device wrote it",
+			then: func() {
+				for _, name := range []string{"preset.bin", "switches.bin"} {
+					raw, err := os.ReadFile(filepath.Join("testdata", name))
+					s.Require().NoError(err, name)
 
-	for _, tt := range tests {
+					read, err := wire.DecodePreset(raw)
+					s.Require().NoError(err, name)
+					s.Require().NotEmpty(read.Blocks, name)
+
+					blocks := make([]wire.Placement, 0, len(read.Blocks))
+					for _, b := range read.Blocks {
+						blocks = append(blocks, s.placementOf(b))
+					}
+
+					doc, err := wire.DecodeDocument(raw)
+					s.Require().NoError(err, name)
+
+					want, ok := doc.Section(wire.KeyTone)
+					s.Require().True(ok, name)
+
+					kept := make([]byte, len(want))
+					copy(kept, want)
+
+					s.Require().NoError(wire.PlaceAsWritten(doc, blocks), name)
+
+					got, ok := doc.Section(wire.KeyTone)
+					s.Require().True(ok, name)
+
+					s.Require().Equal(kept, []byte(got),
+						"%s: the chain a device wrote, written back, is not the same bytes",
+						name)
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			doc := s.blank()
-			if tt.chainless {
-				doc = s.capture(1)
-			}
-
-			err := wire.PlaceAsWritten(doc, tt.blocks)
-
-			if tt.err != nil {
-				s.Require().ErrorIs(err, tt.err)
-
-				return
-			}
-
-			s.Require().NoError(err)
-
-			// Where the blocks landed, read back out of the document. The
-			// chain handed over is the caller's and comes back unshifted.
-			read := s.read(doc)
-
-			got := []int{}
-			for _, b := range read.Blocks {
-				got = append(got, b.Index)
-			}
-
-			s.Require().Equal(tt.want, got)
-			s.Require().Len(read.Blocks, len(tt.blocks))
-
-			for i, b := range tt.blocks {
-				s.Require().Equal(tt.want[i]-wire.GridOffset, b.Position,
-					"the caller's chain must come back as it went in")
-			}
+			tt.then()
 		})
 	}
 }
@@ -459,104 +533,124 @@ func (s *PlacePublicTestSuite) TestNoRoomError() {
 	s.Require().ErrorIs(err, wire.ErrNoRoom)
 }
 
-// TestPlaceOnAChainTheDeviceDidNotWrite covers grids no device produces.
+// TestPlaceOnWhatTheDeviceDidNotWrite covers placing a section into a
+// document this tool did not get from a device.
 //
-// Every one of these is reached by rebuilding the chain rather than by
-// asking a capture for something it does not have.
-func (s *PlacePublicTestSuite) TestPlaceOnAChainTheDeviceDidNotWrite() {
-	tests := []struct {
-		name  string
-		chain []byte
-		want  int
+// One method and one table, so a case is a row rather than a file.
+func (s *PlacePublicTestSuite) TestPlaceOnWhatTheDeviceDidNotWrite() {
+	for _, tt := range []struct {
+		name string
+		then func()
 	}{
 		{
-			name:  "a grid shorter than the device lays out",
-			chain: []byte{0x91, 0x82, 0x13, 0x08, 0x14, 0xc0},
-			want:  0,
-		},
-		{
-			name:  "a position that is not a map",
-			chain: []byte{0x91, 0x2a},
-			want:  0,
-		},
-		{
-			name:  "a position not saying what kind it is",
-			chain: []byte{0x91, 0x81, 0x14, 0xc0},
-			want:  0,
-		},
-		{
-			name:  "a kind that is not a number",
-			chain: []byte{0x91, 0x82, 0x13, 0xa1, 0x61, 0x14, 0xc0},
-			want:  0,
-		},
-	}
+			// Grids no device produces.
+			//
+			// Every one of these is reached by rebuilding the chain rather
+			// than by asking a capture for something it does not have.
+			name: "place on a chain the device did not write",
+			then: func() {
+				tests := []struct {
+					name  string
+					chain []byte
+					want  int
+				}{
+					{
+						name:  "a grid shorter than the device lays out",
+						chain: []byte{0x91, 0x82, 0x13, 0x08, 0x14, 0xc0},
+						want:  0,
+					},
+					{
+						name:  "a position that is not a map",
+						chain: []byte{0x91, 0x2a},
+						want:  0,
+					},
+					{
+						name:  "a position not saying what kind it is",
+						chain: []byte{0x91, 0x81, 0x14, 0xc0},
+						want:  0,
+					},
+					{
+						name:  "a kind that is not a number",
+						chain: []byte{0x91, 0x82, 0x13, 0xa1, 0x61, 0x14, 0xc0},
+						want:  0,
+					},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						doc := s.blank()
+
+						body, ok := doc.Section(0)
+						s.Require().True(ok)
+
+						doc.SetSection(0, s.replace(body, wire.Path{22}, tt.chain))
+
+						s.Require().NoError(wire.Place(doc, nil))
+						s.Require().Len(s.read(doc).Blocks, tt.want)
+					})
+				}
+			},
+		},
+		{
+			// The same for section 10.
+			name: "place on snapshots the device did not write",
+			then: func() {
+				tests := []struct {
+					name    string
+					snaps   []byte
+					section []byte
+					err     error
+				}{
+					{
+						name:    "a section with no snapshot list at all",
+						section: []byte{0x81, 0x06, 0x00},
+						err:     wire.ErrNoSuchPath,
+					},
+					{
+						name:  "a snapshot list that is not a list",
+						snaps: []byte{0x2a},
+						err:   wire.ErrNoSuchPath,
+					},
+					{
+						name:  "a snapshot with no record of the grid",
+						snaps: []byte{0x91, 0x80},
+					},
+					{
+						name:  "a snapshot keeping a shorter record than the grid",
+						snaps: []byte{0x91, 0x81, 0x03, 0x91, 0x92, 0xc2, 0xc2},
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						doc := s.blank()
+
+						if tt.section != nil {
+							doc.SetSection(10, tt.section)
+						} else {
+							body, ok := doc.Section(10)
+							s.Require().True(ok)
+
+							doc.SetSection(10, s.replace(body, wire.Path{10}, tt.snaps))
+						}
+
+						err := wire.Place(doc, []wire.Placement{s.drive()})
+
+						if tt.err != nil {
+							s.Require().ErrorIs(err, tt.err)
+
+							return
+						}
+
+						s.Require().NoError(err)
+						s.Require().Len(s.read(doc).Blocks, 1)
+					})
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			doc := s.blank()
-
-			body, ok := doc.Section(0)
-			s.Require().True(ok)
-
-			doc.SetSection(0, s.replace(body, wire.Path{22}, tt.chain))
-
-			s.Require().NoError(wire.Place(doc, nil))
-			s.Require().Len(s.read(doc).Blocks, tt.want)
-		})
-	}
-}
-
-// TestPlaceOnSnapshotsTheDeviceDidNotWrite covers the same for section 10.
-func (s *PlacePublicTestSuite) TestPlaceOnSnapshotsTheDeviceDidNotWrite() {
-	tests := []struct {
-		name    string
-		snaps   []byte
-		section []byte
-		err     error
-	}{
-		{
-			name:    "a section with no snapshot list at all",
-			section: []byte{0x81, 0x06, 0x00},
-			err:     wire.ErrNoSuchPath,
-		},
-		{
-			name:  "a snapshot list that is not a list",
-			snaps: []byte{0x2a},
-			err:   wire.ErrNoSuchPath,
-		},
-		{
-			name:  "a snapshot with no record of the grid",
-			snaps: []byte{0x91, 0x80},
-		},
-		{
-			name:  "a snapshot keeping a shorter record than the grid",
-			snaps: []byte{0x91, 0x81, 0x03, 0x91, 0x92, 0xc2, 0xc2},
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			doc := s.blank()
-
-			if tt.section != nil {
-				doc.SetSection(10, tt.section)
-			} else {
-				body, ok := doc.Section(10)
-				s.Require().True(ok)
-
-				doc.SetSection(10, s.replace(body, wire.Path{10}, tt.snaps))
-			}
-
-			err := wire.Place(doc, []wire.Placement{s.drive()})
-
-			if tt.err != nil {
-				s.Require().ErrorIs(err, tt.err)
-
-				return
-			}
-
-			s.Require().NoError(err)
-			s.Require().Len(s.read(doc).Blocks, 1)
+			tt.then()
 		})
 	}
 }
@@ -644,6 +738,23 @@ func (s *PlacePublicTestSuite) messagePackBool(
 	}
 
 	return []byte{0xc2}
+}
+
+// placementOf turns a block the device wrote back into one to write.
+func (s *PlacePublicTestSuite) placementOf(
+	b wire.DeviceBlock,
+) wire.Placement {
+	return wire.Placement{
+		Position: b.Index - wire.GridOffset,
+		Model:    b.Model,
+		Values:   b.Values,
+		Named:    b.Named,
+		Enabled:  b.Enabled,
+		Class:    b.Class,
+		Cab:      b.Cab,
+		CabNamed: b.CabNamed,
+		CabModel: b.CabModel,
+	}
 }
 
 func TestPlacePublicTestSuite(

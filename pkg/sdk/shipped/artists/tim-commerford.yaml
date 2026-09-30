@@ -1,0 +1,64 @@
+# Tim Commerford — Rage Against the Machine
+#
+# Two SVT heads and two 8x10s. One rig here, because a preset is one signal
+# path and he runs several at once.
+#
+# The ask this rig answers is in tim-commerford.tone.yaml beside it.
+
+schema: RigSpec
+version: 2
+id: tim-commerford
+
+instrument: bass
+
+chain:
+  - role: amp
+    gear: Ampeg SVT
+    stage: true
+    evidence:
+      - kind: cited
+        url: https://www.mixonline.com/the-wire/why-tim-commerford-will-never-give-his-ampeg-svts-430713
+        note: >-
+          "In Rage, I used two Ampeg SVT-2PRO heads and two Ampeg 8x10
+          cabinets"
+        caveat: >-
+          the 2PRO rather than the vintage SVT this device models, and he
+          says in the same piece that he is "a multiple amp kind of guy",
+          one on all the time and one for when he wants the sound different.
+          A preset is one path, so this is the one that is always on.
+      - kind: cited
+        url: https://tapeop.com/interviews/28/gggarth-richardson
+        note: >-
+          Garth Richardson, who produced the record, on how it was cut: "we
+          had brought in a big concert P.A. system and we had Brad Wilk
+          sitting behind the actual P.A. with his drums and we had Tom's
+          guitar, Tim's bass and Zack's vocals coming though the P.A."
+        caveat: >-
+          which describes the room rather than the bass rig, and says the
+          amplifier was not the only thing making the sound in it. Nothing
+          here names the amplifier for the sessions; the quote above is him
+          describing his Rage rig years later.
+      - kind: cited
+        url: https://www.guitarworld.com/artists/bassists/tim-commerford-rage-against-the-machine-bass-tone
+        note: >-
+          the nearest thing to how he records, and it is the wrong album:
+          "Commerford's favorite recorded sound with Rage Against The Machine
+          was on the group's second album, Evil Empire, on which he used two
+          SVT heads and two Classic 8x10 cabinets, both mic'd and direct." On
+          direct generally: "I let producers use as much DI as they want
+          until I start noticing it."
+        caveat: >-
+          Evil Empire is 1996 and this rig is 1992, so this is the shape of
+          his recording rather than this record's. It does put the same two
+          heads and two 8x10s in a studio, with a microphone and a DI on them
+          at once.
+    confidence: high
+
+  - role: cab
+    gear: Ampeg 8x10
+    stage: true
+    evidence:
+      - kind: cited
+        url: https://www.mixonline.com/the-wire/why-tim-commerford-will-never-give-his-ampeg-svts-430713
+        note: two Ampeg 8x10 cabinets, in the same sentence
+    confidence: high

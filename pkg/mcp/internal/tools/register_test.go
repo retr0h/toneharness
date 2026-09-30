@@ -27,10 +27,10 @@ import (
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // RegisterTestSuite covers building a tool's output schema.
@@ -43,9 +43,9 @@ type RegisterTestSuite struct {
 func (s *RegisterTestSuite) TestMustOutputSchema() {
 	// A block as a built chain holds it: every kind of parameter value, and
 	// Attrs left nil, which marshals to null.
-	block := chain.Block{
+	block := plan.Block{
 		Model: "HD2_AmpSVBeastBrt",
-		Params: chain.Params{
+		Params: plan.Params{
 			"Drive":  catalog.Float(0.41),
 			"Ch":     catalog.Int(3),
 			"Bright": catalog.Bool(true),
@@ -65,8 +65,8 @@ func (s *RegisterTestSuite) TestMustOutputSchema() {
 			name:   "a built chain",
 			schema: func() *jsonschema.Schema { return mustOutputSchema[sdk.Made]() },
 			value: sdk.Made{
-				Chain: chain.Chain{Name: "Longview", Blocks: []chain.Block{block}},
-				Path:  "longview.hlx",
+				Plan: plan.Plan{Name: "Longview", Blocks: []plan.Block{block}},
+				Path: "longview.hlx",
 			},
 		},
 		{
@@ -74,7 +74,7 @@ func (s *RegisterTestSuite) TestMustOutputSchema() {
 			schema: func() *jsonschema.Schema { return mustOutputSchema[sdk.Listing]() },
 			value: sdk.Listing{
 				Name:  "HX Stomp",
-				Slots: []sdk.Held{{Slot: 0, Name: "Longview", Blocks: []chain.Block{block}}},
+				Slots: []sdk.Held{{Slot: 0, Name: "Longview", Blocks: []plan.Block{block}}},
 			},
 		},
 		{
@@ -95,19 +95,30 @@ func (s *RegisterTestSuite) TestMustOutputSchema() {
 			},
 		},
 		{
-			// Device state a rig keeps without modelling it: raw JSON behind
-			// a pointer, and a map of it.
-			name:   "a rig carrying device state",
-			schema: func() *jsonschema.Schema { return mustOutputSchema[sdk.Recipe]() },
-			value: sdk.Recipe{Rig: rig.Spec{
-				ID:         "mike-dirnt",
-				Instrument: rig.InstrumentBass,
-				Schema:     rig.SchemaName,
-				Device: &rig.DeviceState{
-					Version: &version,
-					Meta:    &map[string]json.RawMessage{"name": json.RawMessage(`"Longview"`)},
+			// Device state a plan keeps without modelling it: raw JSON behind
+			// a pointer, and a map of it. Beside the rig, which is the same
+			// read answering what gear this is.
+			name:   "a read carrying device state",
+			schema: func() *jsonschema.Schema { return mustOutputSchema[sdk.Reading]() },
+			value: sdk.Reading{
+				Name: "Longview",
+				Rig: rig.Spec{
+					ID:         "mike-dirnt",
+					Instrument: rig.InstrumentBass,
+					Schema:     rig.SchemaName,
+					Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
 				},
-			}},
+				Plan: plan.Plan{
+					Name:   "Longview",
+					Blocks: []plan.Block{block},
+					Device: &rig.DeviceState{
+						Version: &version,
+						Meta: &map[string]json.RawMessage{
+							"name": json.RawMessage(`"Longview"`),
+						},
+					},
+				},
+			},
 		},
 		{
 			name:   "a type jsonschema cannot describe",

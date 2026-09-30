@@ -1,0 +1,931 @@
+openapi: 3.0.3
+info:
+  title: ToneSpec
+  version: "1.0.0"
+  description: >
+    What somebody wants to sound like, and what they have to work with.
+
+
+    Two documents. A ToneSpec is the ask and changes every request; a Setup is
+    what the person owns and changes when they buy something. A RigSpec is
+    what the tool writes from the two, and is not authored by hand.
+
+
+    The split is a re-split. Version 2 of RigSpec merged a former Recipe and
+    RigSpec because "their names were the wrong way round: Recipe held the
+    abstraction and RigSpec held compiler output". The lesson survived and the
+    names are now the right way round: this is the abstraction, RigSpec is the
+    output, and nothing hand-written carries a knob position unless somebody
+    can say where the number came from.
+
+
+    See docs/superpowers/specs/2026-09-19-tonespec-is-the-ask-design.md.
+
+
+    This document is the source for the Go types in pkg/sdk/tone/internal/gen.
+    Do not hand-edit those; change this and run `just generate`.
+
+paths: {}
+
+components:
+  schemas:
+    ToneSpec:
+      type: object
+      additionalProperties: false
+      description: >
+        A request for a sound, in whatever terms the person has.
+
+
+        Every field is optional and any combination is legal. "Punk, but on my
+        Jazz" is a genre and a Setup; "like Dirnt but chunkier" is a player and
+        a nudge. This is a request rather than a form, and a request nobody
+        filled in completely is the ordinary case.
+      required: [schema, genre]
+      properties:
+        schema:
+          type: string
+          enum: [ToneSpec]
+          description: >
+            What this document is, so a file says so rather than being guessed
+            at by its extension.
+        like:
+          $ref: "#/components/schemas/Like"
+        genre:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+            pattern: "\\S"
+          description: >
+            The genres this sound belongs to, as words rather than a fixed
+            list.
+
+
+            A list, because a record belongs to more than one and the corpus
+            already says so: the same three players are tagged both `punk` and
+            `pop-punk`, and a single word would drop one of them. What it names
+            is which distribution the sound sits in, not how it sounds; the
+            words it earns are measured, and `measure genres` is what earns
+            them.
+
+
+            Required, because a request nobody can place in any company is a
+            request nothing can be compared against. Every other field here is
+            optional and this one is not, which is the contract saying that a
+            sound without a population is not a sound this can aim at.
+
+
+            Not an enum, because enumerating genres in a contract means a
+            release to add one and the thing that decides whether a genre
+            works is not the schema. It is whether enough records carry the
+            tag to have a distribution: eight from at least three artists to
+            be usable. A genre below that is reported rather than computed
+            from, because three records by one band is that band's sound
+            wearing a genre's name.
+        words:
+          type: array
+          items: { $ref: "#/components/schemas/Word" }
+          description: >
+            How it should sound, in the words a person would use.
+
+
+            Checked against the shipped vocabulary, because a word that
+            reaches no control cannot be aimed at and saying so is better than
+            accepting it and quietly doing nothing. words.json lists
+            every word and what each one moves.
+        gear:
+          type: array
+          items: { $ref: "#/components/schemas/Wanted" }
+          description: >
+            Gear the request names, when somebody wants a particular thing
+            rather than a particular sound.
+        nudges:
+          type: array
+          items: { $ref: "#/components/schemas/Nudge" }
+          description: >
+            Moves from wherever the last answer landed.
+
+
+            Different in kind from everything above, which names a target.
+            Conversation is made almost entirely of these, and a request that
+            can only state targets cannot take the instruction "darker".
+        note:
+          type: string
+          description: >
+            Anything the fields above cannot hold. Read by a person, not by
+            the compiler.
+        extends:
+          type: string
+          description: >
+            Another ask this one departs from, by identifier. Only for one that
+            genuinely is a small change: asks that differ at the amplifier are
+            siblings rather than deltas.
+
+
+            An ask carries no identifier of its own. A stored one is named by
+            its file, because a filename already is an identifier and carrying
+            both is carrying something that can disagree with itself.
+        aliases:
+          type: array
+          items: { type: string, minLength: 1 }
+          description: >
+            Other names this request answers to.
+
+
+            People ask for a band as readily as a player, and for a nickname
+            as readily as either. An alias costs nothing and saves somebody
+            guessing which of them was written down.
+        subject:
+          $ref: "#/components/schemas/Subject"
+        instrument:
+          type: string
+          enum: [bass, guitar]
+          x-enum-varnames: [InstrumentBass, InstrumentGuitar]
+          description: >
+            What this is for, where the request asserts it rather than
+            leaving it to the Setup.
+
+
+            A request about a bass player is about a bass whoever is holding
+            it. A Setup naming an instrument still wins, because that is what
+            the person actually has.
+        default:
+          type: boolean
+          description: >
+            The one to assume when somebody names the subject and not the
+            request. A player whose sound changed has several, and one of
+            them is what "sounds like them" means.
+        technique:
+          $ref: "#/components/schemas/Technique"
+        played:
+          type: array
+          items: { $ref: "#/components/schemas/Played" }
+          description: >
+            The instrument the subject played, where it is known.
+
+
+            Different from a Setup's instruments, which is what the person
+            asking has in their hands. Both matter and they are not the same:
+            the difference between them is a correction the answer can make.
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+        evidence:
+          type: array
+          items: { $ref: "#/components/schemas/Evidence" }
+          description: >
+            Why the request as a whole is believed, for claims that belong to
+            no single field.
+        corrections:
+          type: array
+          items: { $ref: "#/components/schemas/Correction" }
+          description: >
+            What was asked for after hearing the last answer, and what the
+            person made of the result.
+
+
+            On the ask rather than on the plan, because a correction is a
+            round of asking. The plan it changed holds the current settings
+            and says nothing about why they are what they are.
+
+    Word:
+      type: object
+      additionalProperties: false
+      description: >
+        One thing it should sound like, and why that is believed.
+
+
+        Describe the result rather than the control: "mid-forward, not scooped",
+        never "raise the mids". Where the treble knob sits is a fact about
+        somebody's amplifier; how the record came out is a fact about the sound,
+        and only the second survives being read on other gear.
+
+
+        A word moves controls when a preset is built: six axes act, each word
+        worth one step from wherever the corpus left that control and never more
+        than a quarter of its range. How far it moves is sized from the evidence
+        here, so the evidence is not decoration. It is the difference between a
+        knob moved because somebody listened and a knob moved because a model
+        guessed.
+
+
+        An object rather than a bare string, and it was a bare string until
+        2026-09-26. Flattening it lost the weighting: every word moved a control
+        by the same amount whether somebody had measured it or a model had
+        asserted it, which is the guessing this project exists to remove.
+
+
+        A word outside the shipped vocabulary is reported and kept, not refused:
+        it moves nothing, and refusing an ask over a word would make the format
+        hostile to the person it exists for.
+      required: [term]
+      properties:
+        term:
+          type: string
+          minLength: 1
+          pattern: "\\S"
+          description: How it should sound, in the words a person would use.
+        evidence:
+          type: array
+          items: { $ref: "#/components/schemas/Evidence" }
+          description: Why this is believed.
+
+    Correction:
+      type: object
+      additionalProperties: false
+      description: >
+        One round of correction, and what a person made of the result.
+
+
+        This is the only place a human ear's judgement is written down.
+        Nothing in this system can hear; every other input is a measurement or
+        an assertion. A verdict is the one piece of information that cannot be
+        recovered later if it is not captured when it happens.
+
+
+        Append-only, and never replayed: the plan always holds the current
+        state. Reconstructing a rig from its history would be more elegant and
+        much worse to read, and a person reads this file.
+      required: [ask]
+      properties:
+        ask:
+          type: string
+          minLength: 1
+          # Something other than spaces: a name of blanks is not a name.
+          pattern: "\\S"
+          description: >
+            What was asked for, in the words used. "Clunky" is not a
+            parameter, and normalising it away loses the question.
+        changed:
+          type: array
+          items: { $ref: "#/components/schemas/Change" }
+        reason:
+          type: string
+          description: >
+            Why the ask was read that way, cited where possible. This is what
+            lets a later reader see that the interpretation was wrong, rather
+            than only that the value was.
+        verdict:
+          type: string
+          description: >
+            What it sounded like. Absent means not yet evaluated, which is
+            useful state rather than a gap.
+        at:
+          type: string
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+          description: When, so a run of corrections can be read in order.
+
+    Change:
+      type: object
+      additionalProperties: false
+      description: One field a correction moved.
+      required: [path]
+      properties:
+        path:
+          type: string
+          pattern: "^[a-z]+(\\[\\d+\\])?(\\.[a-zA-Z_][a-zA-Z0-9_]*(\\[\\d+\\])?)*$"
+          description: >
+            What moved, as a path into the plan this correction changed —
+            "chain[1].settings.drive".
+        from: {}
+        to: {}
+
+    Like:
+      type: object
+      additionalProperties: false
+      description: >
+        Something to sound like: a player, a band, a song, or a recording
+        handed over.
+
+
+        A player becomes the middle of their records with the spread across
+        them as a tolerance, so an axis their records disagree about is one the
+        answer need not be precise on. A recording becomes its own figures, and
+        is the only fully specified target of the three.
+      properties:
+        artist:
+          type: string
+          minLength: 1
+        band:
+          type: string
+          minLength: 1
+        song:
+          type: string
+          minLength: 1
+        recording:
+          type: string
+          minLength: 1
+          description: >
+            A path to audio to aim at. Measured rather than searched for, so
+            it needs no catalog entry and no citation: it is evidence of
+            itself.
+        years:
+          $ref: "#/components/schemas/Years"
+
+    Years:
+      type: object
+      additionalProperties: false
+      description: >
+        The window a request is about, where a player's sound changed over
+        their career and the request is about one part of it.
+      required: [from, to]
+      properties:
+        from: { type: integer, minimum: 1900, maximum: 2100 }
+        to: { type: integer, minimum: 1900, maximum: 2100 }
+
+    Wanted:
+      type: object
+      additionalProperties: false
+      description: >
+        A piece of gear the request asks for by name.
+
+
+        Named as a person would: "Ampeg SVT", never a model identifier. What
+        the device has to offer for it is the tool's problem.
+      required: [gear]
+      properties:
+        gear:
+          type: string
+          minLength: 1
+        role:
+          $ref: "#/components/schemas/Role"
+        capture:
+          $ref: "#/components/schemas/Capture"
+        evidence:
+          type: array
+          items: { $ref: "#/components/schemas/Evidence" }
+          description: >
+            Why this piece of gear is believed to be the right one.
+
+
+            Per claim rather than per document, because the amplifier may come
+            from an interview and the compressor from measuring a corpus.
+        insist:
+          type: boolean
+          default: false
+          description: >
+            Refuse rather than substitute.
+
+
+            False, the default, takes the nearest thing the device models and
+            says what it did. True fails the request instead, which is what
+            somebody means when the gear is the point rather than the sound.
+        after:
+          $ref: "#/components/schemas/Role"
+          description: >
+            Put this behind that role instead of where it usually goes.
+
+
+            Gear a request lists is sorted into the ordinary signal path,
+            because listing gear is not stating a signal path: a compressor
+            goes in front of the amplifier whichever order somebody typed
+            them. That is right for the common case and wrong for somebody
+            who means it.
+
+
+            A drive behind the amplifier is the case worth naming. It is a
+            known way to use one rather than a mistake, and there was no way
+            to ask for it: the only route was to build the rig and edit a
+            line of it afterwards, which is an edit nobody records the reason
+            for.
+
+
+            Naming a role rather than a number, because a request does not
+            know how many blocks the chain will end up with. "After the amp"
+            survives the compiler adding a cabinet; "position 4" does not.
+
+    Role:
+      type: string
+      description: >
+        What a piece of gear does in the chain.
+      enum: [amp, cab, drive, comp, eq, mod, delay, reverb, filter, pitch, wah, other]
+      x-enum-varnames:
+        [
+          RoleAmp,
+          RoleCab,
+          RoleDrive,
+          RoleComp,
+          RoleEQ,
+          RoleMod,
+          RoleDelay,
+          RoleReverb,
+          RoleFilter,
+          RolePitch,
+          RoleWah,
+          RoleOther,
+        ]
+
+    Nudge:
+      type: object
+      additionalProperties: false
+      description: >
+        A move along one axis from where the chain currently is.
+
+
+        Not a target: "darker" names no point. It is a direction and a size,
+        and the size is in steps rather than in a figure's own units because
+        the person saying it does not know what a centroid is. One step is a
+        change somebody would call noticeable.
+      required: [word]
+      properties:
+        word:
+          type: string
+          minLength: 1
+          description: >
+            The word said, which names the axis and the direction together:
+            `darker` is the highs axis, downward.
+        steps:
+          type: number
+          default: 1
+          minimum: 0.1
+          maximum: 5
+          description: >
+            How far. One is the default and means a noticeable move; "much
+            darker" is larger and "a touch darker" is smaller.
+
+    Setup:
+      type: object
+      additionalProperties: false
+      description: >
+        What somebody has.
+
+
+        Separate from the ask because it changes on a different clock. Folding
+        an instrument into a request would mean restating the bass, the
+        strings and the pedal every time, and the twelfth request
+        contradicting the first.
+
+
+        It is also what makes an answer fit the person rather than the record.
+        Every figure in the corpus was measured off somebody else's
+        instrument, and the difference between that and the one being held is
+        a knob position nothing could hold before this existed.
+      required: [schema]
+      properties:
+        schema:
+          type: string
+          enum: [Setup]
+        device:
+          $ref: "#/components/schemas/Device"
+        instruments:
+          type: array
+          items: { $ref: "#/components/schemas/Instrument" }
+          description: >
+            What they play. More than one, because most people have more than
+            one and they do not sound the same.
+        owns:
+          type: array
+          items: { $ref: "#/components/schemas/Owned" }
+          description: >
+            Content the device does not ship with: impulse responses somebody
+            loaded, models somebody bought.
+
+
+            A preset naming one of these on a device that does not have it is
+            silent in that block, and nothing could tell before this: the
+            catalog knows what ships and only the owner knows what else is
+            there.
+        plays_into:
+          $ref: "#/components/schemas/PlaysInto"
+
+    PlaysInto:
+      type: string
+      enum: [pa, headphones, amp-front, amp-return]
+      description: >
+        What the pedal is plugged into, when somebody says.
+
+
+        Optional, and it changes nothing on its own. It is recorded because
+        the last thing in the path is not always the cabinet block, and a
+        chain built without knowing which is a chain built for a guess.
+
+
+        `pa` is a PA, a full-range speaker or an interface: nothing after the
+        pedal colours the sound, so whatever speaker is wanted has to be in
+        the chain. `headphones` is the same path with the room left out.
+
+
+        The two amp entries are not one answer. `amp-front` goes into the
+        instrument input, so the amplifier's own preamp is in front of its
+        speaker and the chain is stacked on top of a whole amplifier.
+        `amp-return` goes into the effects return, which bypasses that preamp
+        and leaves the power section and the speaker.
+
+
+        **This does not say whether to use a cabinet block.** That is the
+        question it exists to let somebody ask rather than the answer: a
+        cabinet block is how a chain is made to sound like a recorded rig, so
+        somebody chasing a record may want one whatever they are plugged into,
+        and somebody who wants their own amplifier to be the sound may not.
+        Both are reasonable and the difference is taste rather than fact.
+
+
+        What it is not is a tone correction. Nothing here has measured an
+        amplifier in anybody's room, and an equalisation applied for one would
+        be a number nobody took. Every figure this project ships was measured
+        through a cabinet block into a computer, which is one of these four,
+        and a reading is worth less to somebody on another.
+
+    Device:
+      type: object
+      additionalProperties: false
+      description: >
+        The hardware, which decides what a chain may cost and what it may
+        hold.
+      required: [model]
+      properties:
+        model:
+          type: string
+          minLength: 1
+          description: >
+            As Line 6 name it: "HX Stomp", "Helix Floor".
+        firmware:
+          type: string
+          description: >
+            What it is running, where that matters. A block's parameters can
+            change between releases, and a measurement taken on one is not a
+            measurement of the other.
+
+    Instrument:
+      type: object
+      additionalProperties: false
+      description: >
+        One instrument somebody owns, described in what changes the sound.
+      required: [gear]
+      properties:
+        gear:
+          type: string
+          minLength: 1
+          description: >
+            As a person would say it: "Fender Jazz Bass", "Rickenbacker 4003".
+        strings:
+          $ref: "#/components/schemas/Strings"
+        pickups:
+          type: string
+          description: >
+            Where they are and what they are, when it is not what the
+            instrument shipped with.
+        default:
+          type: boolean
+          default: false
+          description: >
+            The one to assume when a request does not say. The first
+            instrument is assumed when none is marked.
+        evidence:
+          type: array
+          items: { $ref: "#/components/schemas/Evidence" }
+          description: >
+            Why it is described this way, where somebody checked rather than
+            assumed.
+
+    Strings:
+      type: string
+      description: >
+        What is on it.
+
+
+        Flatwounds and roundwounds are a larger difference than most pedals,
+        and the difference between what a record was made on and what is being
+        held is a correction the answer can make. Unknown is honest and
+        useful: it says nobody checked rather than implying either.
+      enum: [round, flat, tape, unknown]
+      x-enum-varnames: [StringsRound, StringsFlat, StringsTape, StringsUnknown]
+
+    Owned:
+      type: object
+      additionalProperties: false
+      description: >
+        One thing on the device that did not ship with it.
+      required: [kind, name]
+      properties:
+        kind:
+          type: string
+          enum: [ir, model]
+          x-enum-varnames: [OwnedIR, OwnedModel]
+        name:
+          type: string
+          minLength: 1
+        slot:
+          type: integer
+          minimum: 0
+          description: >
+            Where it is loaded, for an impulse response, which a preset
+            references by position rather than by name. A preset written
+            against somebody else's numbering points at whatever they happen
+            to have there.
+
+    Capture:
+      type: string
+      description: >
+        How this reached the tape: down a cable, through a microphone, or
+        both blended.
+
+
+        A cabinet models the air in front of a speaker, and on most bass
+        records there was none. Five of the nine rigs here measure a signal
+        that went to the desk: Geddy Lee set the rule on Caress of Steel in
+        1975 and kept it, "Use the direct bass from the low-end pickup, and
+        mike the amp for the high-end pickup"; Les Claypool put a microphone
+        up and never used it; Mike Dirnt ran an Evil Twin direct box from
+        Dookie on. Pino Palladino is the one who was only ever miked, and the
+        engineer says so: "no di's whatsoever on the album". Jaco Pastorius
+        took both at once, "a little bit of both, the highs and lows".
+
+
+        This changes no preset. Every chain still ends in a cabinet, because
+        a preset with none into a PA is not the sound either. It is here so
+        that a figure measured off a record is legible against what the
+        record was made of, and so nobody reads a cabinet as a claim that one
+        was in the signal.
+      enum: [direct, miked, both]
+      x-enum-varnames: [CaptureDirect, CaptureMiked, CaptureBoth]
+
+    Confidence:
+      type: string
+      description: >
+        How far a claim should be trusted. Set by a person, not derived. A
+        claim asserting high confidence with no evidence behind it is worth
+        showing as unverified whatever it says about itself.
+      enum: [low, medium, high]
+      x-enum-varnames: [ConfidenceLow, ConfidenceMedium, ConfidenceHigh]
+
+    Evidence:
+      type: object
+      additionalProperties: false
+      description: >
+        Why one claim is believed. Attached per claim rather than per
+        document, because the amp may come from an interview and the drive
+        figure from measuring a corpus.
+
+
+        A URL does not make a claim true. It makes it checkable, which is what
+        lets somebody correct one line instead of re-deriving a rig.
+      required: [kind]
+      properties:
+        kind:
+          $ref: "#/components/schemas/EvidenceKind"
+        url:
+          type: string
+          pattern: "^https?://\\S+$"
+          x-go-name: URL
+        at:
+          type: string
+          pattern: "^\\d{1,2}:\\d{2}(:\\d{2})?(-\\d{1,2}:\\d{2}(:\\d{2})?)?$"
+          description: >
+            Where in the source — a timestamp such as "1:42", or a range.
+        note:
+          type: string
+        caveat:
+          type: string
+          description: >
+            What the source does not show. Live footage carries the room and
+            the PA; a studio track carries the mix.
+        measured:
+          type: object
+          additionalProperties: { type: number, format: double }
+          description: >
+            Figures taken from audio, keyed by feature. Measuring a record
+            measures the record: the bass, the player, the amp, the mic, the
+            desk and the master. So these compare against another measurement
+            rather than name a knob position.
+        against:
+          type: object
+          additionalProperties: { type: number, format: double }
+          description: >
+            The same figures for the players this one was compared against,
+            keyed the same way. Written by `toneharness measure --corpus`,
+            which is where a word is earned.
+
+
+            This is what turns a word into a distance. A term whose evidence
+            carries both sides moves its control by the gap between them
+            rather than by a fixed step, so a player who reads a little
+            cleaner than everybody else gets a little less drive, and one who
+            reads twice as clean gets the whole step.
+
+
+            A figure on its own says nothing about how far to move anything:
+            12% of the energy above the fundamental is high or low only
+            against what other players read.
+
+    EvidenceKind:
+      type: string
+      description: >
+        How something came to be believed. Open by design: a new way of
+        learning is a new value here, not a new document.
+
+
+        Strongest first, ranked by how far somebody has to go to disagree:
+
+
+        `heard` is a person who played the rig and judged it. Nothing in this
+        system can hear, so a verdict outranks everything else. A mutation's
+        verdict records a round of correction; this kind attaches that
+        judgement to the claim it settled.
+
+
+        `cited` is a published rig rundown or interview. Somebody with access
+        wrote down what the player used.
+
+
+        `audio` is a measurement taken from a record, carried in `measured`.
+        Anybody holding the record can take it again, which puts it above a
+        forum post. It sits below a citation because the record holds the
+        studio as well as the player.
+
+
+        `user` is a forum thread, TalkBass or Reddit: argued and corrected in
+        public, and uneven.
+
+
+        `video` is footage. Good for how it sounds and how it is played, weak
+        for which box was on stage.
+
+
+        `corpus` is a statistic over the preset corpus, what other people's
+        presets do. It is not the music under resources/music/, which is
+        evidence of kind `audio`.
+
+
+        `llm` means a model asserted it and nobody checked — reliable for
+        well-known players, unreliable for obscure ones, and the model cannot
+        always tell which it is doing.
+
+
+        `store` is where content that did not ship with the device comes from,
+        bought or free. It is the one kind that answers "where do I get this"
+        rather than "why is this believed", and a substitute naming something
+        nobody can obtain is worth nothing without it.
+      enum: [heard, cited, audio, user, video, corpus, llm, store]
+      x-enum-varnames:
+        [
+          EvidenceHeard,
+          EvidenceCited,
+          EvidenceAudio,
+          EvidenceUser,
+          EvidenceVideo,
+          EvidenceCorpus,
+          EvidenceLLM,
+          EvidenceStore,
+        ]
+
+    Kind:
+      type: string
+      description: >
+        What a rig is attributed to. Artist is the common case, but a rig can
+        belong to a song, a genre, or to nothing at all.
+      enum: [artist, band, song, genre, sound]
+      x-enum-varnames: [KindArtist, KindBand, KindSong, KindGenre, KindSound]
+
+    Played:
+      type: object
+      additionalProperties: false
+      description: >
+        The instrument itself, which no device models and every figure
+        carries.
+
+
+        A rig names an amplifier, a cabinet and pedals, and the thing making
+        the sound is upstream of all of them. Jaco Pastorius reads a 259Hz
+        centroid against 170Hz for the other players, and the reason is a
+        fretless played near the bridge; Geddy Lee earns mid-forward on a
+        Rickenbacker. Without this those belong to nothing, and a measured
+        word moves an amplifier control that was never responsible for the
+        figure.
+
+
+        It resolves to no block and changes no preset. It is here so that two
+        rigs on the same amplifier are legible as different sounds, and so
+        that somebody reading a figure knows how much of it left the
+        instrument that way.
+      required: [gear]
+      properties:
+        gear:
+          type: string
+          minLength: 1
+          pattern: "\\S"
+          description: >
+            The instrument, as a person would say it: "Rickenbacker 4001",
+            "Fender Jazz Bass, fretless", "Hofner 500/1".
+        strings:
+          $ref: "#/components/schemas/Strings"
+        records:
+          type: array
+          items: { type: string, minLength: 1 }
+          description: >
+            Which measured records this instrument made, by their track names
+            in the corpus manifest.
+
+
+            Not called `on`. YAML reads a bare `on` as the boolean true, so
+            the field parsed as a property named "true" and the rig was
+            refused. The same trap takes `off`, `yes` and `no`.
+
+
+            The same join the corpus already uses: a directory is named for a
+            rig, and a track is named for itself. Naming them here is what
+            lets a figure be read against the thing that made it rather than
+            against the player's whole catalogue.
+
+
+            Leave it out where nobody knows. Flea says he recorded on two 1961
+            Jazz Basses and never says which took which track, so neither
+            entry carries one. Les Claypool's six is on two of his four, and
+            saying so is what stops the other two being explained by it.
+
+
+            Getting this wrong is not free. A rig here once explained a 162Hz
+            spread across one session as a four-string and a six-string, and
+            the source it already cited said both records were the six.
+        evidence:
+          type: array
+          items: { $ref: "#/components/schemas/Evidence" }
+          description: >
+            Why this is believed. A player owns several instruments and uses
+            one of them on a record, so this needs a source the way the
+            amplifier does.
+
+    Subject:
+      type: object
+      additionalProperties: false
+      description: >
+        Who or what this rig belongs to.
+
+
+        A field rather than the document's shape, because people ask for a
+        player, a song, a genre and a bare description in the same breath, and
+        making one of them primary makes the rest second-class.
+      required: [kind, name]
+      properties:
+        kind:
+          $ref: "#/components/schemas/Kind"
+        name:
+          type: string
+          minLength: 1
+          # Something other than spaces: a name of blanks is not a name.
+          pattern: "\\S"
+        band:
+          type: string
+          description: The group, where the subject is a person.
+        era:
+          type: string
+          description: >
+            When this rig applies, as a person would say it: "1994",
+            "American Idiot". A player's rig changes; a rig that does not say
+            when it applies claims to be timeless and usually is not.
+        years:
+          $ref: "#/components/schemas/Years"
+
+    Technique:
+      type: object
+      additionalProperties: false
+      description: >
+        How the instrument is played, where it changes the sound. Not modelled
+        by any device, and it still decides what the rig has to do.
+
+
+        Three things rather than a sentence, because three things are being
+        said and a sentence has to be parsed to get at them.
+
+
+        Under `target` this says how the person using the rig plays, where
+        that differs from the rig's own. The distinction is not pedantry. A
+        pick puts high-frequency attack into every note that fingers do not,
+        so a rig tuned from a picked recording sounds duller played fingered,
+        and the fix is in the amp and the compressor rather than in the
+        player. Recording both lets the difference be compensated rather than
+        discovered, and that comparison needs both sides to be the same kind
+        of value: two `attack` values can be held against each other, and two
+        sentences cannot.
+      required: [attack]
+      properties:
+        evidence:
+          type: array
+          items: { $ref: "#/components/schemas/Evidence" }
+          description: >
+            Why this is believed. Nothing measures how somebody plays out of a
+            preset, so a claim here is asserted or it is watched, and which of
+            those it was belongs beside it.
+        attack:
+          type: string
+          description: >
+            What sets the string moving. Required, because there is no playing
+            without one.
+          enum: [pick, fingers, slap, thumb, hybrid]
+          x-enum-varnames:
+            [AttackPick, AttackFingers, AttackSlap, AttackThumb, AttackHybrid]
+        position:
+          type: string
+          description: >
+            Where along the string, which decides how much fundamental there
+            is against harmonics. Omit it where it does not matter.
+          enum: [bridge, middle, neck]
+          x-enum-varnames: [PositionBridge, PositionMiddle, PositionNeck]
+        muting:
+          type: string
+          description: >
+            What damps the string. Omit it where it does not matter, and say
+            `none` where the notes ringing on is part of the sound rather than
+            the absence of a decision.
+          enum: [none, palm]
+          x-enum-varnames: [MutingNone, MutingPalm]

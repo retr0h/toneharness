@@ -25,8 +25,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
 )
 
 // MeasuredPublicTestSuite covers what a caller is handed for the corpus.

@@ -23,7 +23,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 // Hint adds the command to run next to an error somebody at a terminal can act
@@ -37,9 +37,35 @@ func Hint(
 ) error {
 	switch {
 	case errors.Is(err, sdk.ErrNoSuchBlock):
-		return fmt.Errorf("%w, try 'tonestack catalog list'", err)
-	case errors.Is(err, sdk.ErrNoSuchRecipe):
-		return fmt.Errorf("%w, try 'tonestack recipes list'", err)
+		return fmt.Errorf("%w, try 'toneharness catalog list'", err)
+	case errors.Is(err, sdk.ErrNoSuchRig):
+		return fmt.Errorf("%w, try 'toneharness rigs list'", err)
+	case errors.Is(err, sdk.ErrNoDevice):
+		// A pedal powered from a charger rather than a data port looks
+		// exactly like one that is switched off, and the first thing anybody
+		// does is check the power light, which is already on.
+		return fmt.Errorf("%w: check it is in a USB data port, then "+
+			"'toneharness device hardware'", err)
+	case errors.Is(err, sdk.ErrBus):
+		// The session is gone either way, and reopening is usually enough.
+		// When it is not, the endpoint has stalled, and the wire README is
+		// unambiguous about the only way out: "the interface will not be
+		// claimed again until the device is power cycled." Worth saying in
+		// the error, because somebody who does not know that retries into a
+		// wall.
+		return fmt.Errorf("%w: run it again, and if it keeps failing power "+
+			"the pedal off and on", err)
+	case errors.Is(err, sdk.ErrNothingToBuildFrom):
+		// The next move is a question, not a guess. A recording is worth more
+		// than an adjective because it is measured against every block the
+		// device has, where a word has to be earned against a population of
+		// players before it means anything.
+		return fmt.Errorf("%w. Name a record to sound like, a player, or the "+
+			"gear itself: `like: { recording: take.wav }` resolves fully, and "+
+			"an adjective on its own does not", err)
+	case errors.Is(err, sdk.ErrEmptySlot):
+		return fmt.Errorf("%w, try 'toneharness slots list' to see which "+
+			"slots hold anything", err)
 	default:
 		return err
 	}

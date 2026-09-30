@@ -31,7 +31,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/atomicfile"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/atomicfile"
 )
 
 // AtomicfilePublicTestSuite covers writing a file whole or not at all.
@@ -253,7 +253,7 @@ func (s *AtomicfilePublicTestSuite) TestWriteNew() {
 	}{
 		{name: "a new file"},
 		{
-			// A backup or a recipe somebody already has is never replaced.
+			// A backup or a rig somebody already has is never replaced.
 			name:  "a file already there",
 			setup: setup{existing: true},
 			is:    fs.ErrExist,

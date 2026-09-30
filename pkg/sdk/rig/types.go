@@ -20,7 +20,7 @@
 
 package rig
 
-import "github.com/retr0h/tonestack/pkg/sdk/rig/internal/gen"
+import "github.com/retr0h/toneharness/pkg/sdk/rig/internal/gen"
 
 // What a rig is made of.
 //
@@ -42,22 +42,15 @@ type (
 	SpecVersion = gen.RigSpecVersion
 	// Subject is who or what the rig is attributed to.
 	Subject = gen.Subject
+	// Kind is what a rig is attributed to: an artist, a band, a song, a
+	// genre, or nothing in particular.
+	Kind = gen.Kind
 	// ChainEntry is one piece of gear in the signal path.
 	ChainEntry = gen.ChainEntry
 	// Role is what a piece of gear does: amp, cab, drive.
 	Role = gen.Role
 	// Capture is how the signal reached the tape: direct, miked, or both.
 	Capture = gen.Capture
-	// Technique is how the instrument is played.
-	Technique = gen.Technique
-	// Position is where on the string it is played.
-	Position = gen.TechniquePosition
-	// Muting is what stops the note.
-	Muting = gen.TechniqueMuting
-	// Attack is what starts it.
-	Attack = gen.TechniqueAttack
-	// CharacterTerm is how it should sound, in the words a person would use.
-	CharacterTerm = gen.CharacterTerm
 	// Evidence is where a claim came from.
 	Evidence = gen.Evidence
 	// EvidenceKind is how far somebody has to go to disagree with one.
@@ -66,22 +59,30 @@ type (
 	Confidence = gen.Confidence
 	// Instrument is what the rig is played on.
 	Instrument = gen.Instrument
-	// Settings are the values a piece of gear is set to.
+	// Settings are the values a piece of gear is set to, in musical words that
+	// mean roughly the same on any amplifier.
 	Settings = gen.Settings
 	// Knob is one control, from 0 to 1, whatever the device's range is.
 	Knob = gen.Knob
 	// Substitute stands in for gear no device models.
 	Substitute = gen.Substitute
-	// Target is the hardware a rig was written for.
+	// Target is the hardware a plan was tuned on.
 	Target = gen.Target
-	// Mutation is a change somebody made and why.
-	Mutation = gen.Mutation
 	// Controller is a parameter an expression pedal or footswitch moves.
 	Controller = gen.Controller
 	// Footswitch is what a switch does and how it is lit.
 	Footswitch = gen.Footswitch
 	// Section is one part of a song, as the roles that play in it.
 	Section = gen.Section
+	// Move is one control an expression pedal or a footswitch sweeps, said
+	// portably: a role and one of the settings vocabulary's words.
+	Move = gen.Move
+	// MoveBy is what moves a control: an expression pedal, or a footswitch
+	// set to sweep rather than switch.
+	MoveBy = gen.MoveBy
+	// MoveSetting is which control a move reaches, in the same words a rig
+	// sets gear with.
+	MoveSetting = gen.MoveSetting
 	// Played is the instrument a rig is played on, which no device models.
 	Played = gen.Played
 	// Snapshot is one set of values a preset can recall.
@@ -103,23 +104,6 @@ const (
 	CaptureMiked  = gen.CaptureMiked
 	CaptureBoth   = gen.CaptureBoth
 
-	// Where on the string a note is played.
-	PositionBridge = gen.PositionBridge
-	PositionMiddle = gen.PositionMiddle
-	PositionNeck   = gen.PositionNeck
-
-	// What starts the note.
-	AttackPick    = gen.AttackPick
-	AttackFingers = gen.AttackFingers
-	AttackThumb   = gen.AttackThumb
-	AttackSlap    = gen.AttackSlap
-	AttackHybrid  = gen.AttackHybrid
-
-	// What stops it. Named only when there is some: "not muted" is what
-	// every unmuted note already sounds like.
-	MutingPalm = gen.MutingPalm
-	MutingNone = gen.MutingNone
-
 	// How far a claim should be trusted. Unstated reads as the lowest,
 	// because a rig that says nothing about itself has earned nothing.
 	ConfidenceLow    = gen.ConfidenceLow
@@ -140,12 +124,20 @@ const (
 	// a claim is believed.
 	EvidenceStore = gen.EvidenceStore
 
+	// What moves a control. Named rather than numbered, because the number
+	// is one device family's and a rig is meant to outlive it.
+	MoveByExpression = gen.MoveByExpression
+	MoveByFootswitch = gen.MoveByFootswitch
+
 	// What a rig is played on.
 	InstrumentBass   = gen.InstrumentBass
 	InstrumentGuitar = gen.InstrumentGuitar
 
 	// What a rig is attributed to.
 	KindArtist = gen.KindArtist
+	KindBand   = gen.KindBand
+	KindGenre  = gen.KindGenre
+	KindSong   = gen.KindSong
 	KindSound  = gen.KindSound
 
 	// SchemaName is the one value the contract accepts for its own schema

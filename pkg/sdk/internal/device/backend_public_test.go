@@ -28,7 +28,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
 )
 
 // BackendPublicTestSuite covers what a USB backend decides.
@@ -208,9 +208,12 @@ func (s *BackendPublicTestSuite) TestReadUntil() {
 func (s *BackendPublicTestSuite) TestRefused() {
 	cause := errors.New("exclusive access")
 
+	// The sentinel rather than the advice. This layer says what happened and
+	// the claim says what to do about it, because only the claim knows how long
+	// it waited, and saying "quit HX Edit" here would say it twice.
 	busy := device.Refused(cause, true)
 	s.Require().ErrorIs(busy, cause)
-	s.Require().Contains(busy.Error(), "quit HX Edit")
+	s.Require().ErrorIs(busy, device.ErrInterfaceBusy)
 
 	other := device.Refused(cause, false)
 	s.Require().ErrorIs(other, cause)
@@ -278,10 +281,10 @@ func (s *BackendPublicTestSuite) TestClaimOne() {
 		{name: "the lookup failed", err: errLookup, want: errLookup, text: "finding"},
 		{name: "no such interface", text: "no interface 0"},
 		{
-			// HX Edit holds it. The one found is given back, and the message
-			// says what to quit.
+			// HX Edit holds it. The one found is given back, and the failure
+			// carries the sentinel the claim waits on.
 			name: "held by HX Edit", ifaces: []thing{{1, 1}}, open: errBusy,
-			want: errBusy, text: "quit HX Edit", released: 1,
+			want: errBusy, text: "the editor interface is in use", released: 1,
 		},
 		{
 			name: "refused for another reason", ifaces: []thing{{1, 1}}, open: errOther,

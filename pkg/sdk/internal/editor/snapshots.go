@@ -24,10 +24,9 @@ import (
 	"encoding/json"
 	"sort"
 	"strconv"
-	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 )
 
 // Moving snapshots between a device and a file, in both directions.
@@ -40,7 +39,7 @@ import (
 
 // Keys a preset stores a snapshot under. A device owns these names.
 const (
-	snapshotPrefix = "snapshot"
+	snapshotPrefix = preset.SnapshotPrefix
 	snapName       = "@name"
 	snapTempo      = "@tempo"
 	snapLED        = "@ledcolor"
@@ -143,7 +142,7 @@ func SnapshotStates(
 	keys := make([]string, 0, len(doc.Data.Tone))
 
 	for key := range doc.Data.Tone {
-		if snapshotIndex(key) >= 0 {
+		if preset.SnapshotIndex(key) >= 0 {
 			keys = append(keys, key)
 		}
 	}
@@ -155,7 +154,7 @@ func SnapshotStates(
 	// In the order the device numbers them, which is the order it recalls
 	// them in. Nothing else refers to a snapshot by name.
 	sort.Slice(keys, func(i, j int) bool {
-		return snapshotIndex(keys[i]) < snapshotIndex(keys[j])
+		return preset.SnapshotIndex(keys[i]) < preset.SnapshotIndex(keys[j])
 	})
 
 	at := positionsOf(doc)
@@ -248,23 +247,6 @@ func snapshotOn(
 	}
 
 	return out
-}
-
-// snapshotIndex reads the number a snapshot is stored under, or -1.
-func snapshotIndex(
-	key string,
-) int {
-	rest, ok := strings.CutPrefix(key, snapshotPrefix)
-	if !ok {
-		return -1
-	}
-
-	n, err := strconv.Atoi(rest)
-	if err != nil {
-		return -1
-	}
-
-	return n
 }
 
 // readInto reads one of a snapshot's fields, leaving it unset when absent.

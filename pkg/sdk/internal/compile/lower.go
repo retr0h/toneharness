@@ -21,110 +21,114 @@
 package compile
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
-	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
-// Lower writes a rig back into a preset.
+// Fit realises a rig on the device a catalog describes.
 //
-// The document is written into rather than built, because a preset holds
-// things a rig does not model — the inputs, outputs, split and join a device
-// expects, its snapshots, its controller assignments. Building one from
-// nothing would produce a file unlike any the device has ever written.
-func Lower(
-	doc *preset.Document,
+// Deterministic rather than chosen. Every entry names gear and the catalog says
+// which model emulates it, so the same rig fits the same way every time. The
+// path for a rig somebody wrote by hand: it carries no knob positions, because
+// a position is only meaningful against the model whose knob it is and that
+// model is decided here. A build that wants the corpus or a word to set one
+// goes through Resolve instead.
+func Realise(
 	spec rig.Spec,
 	cat *catalog.Catalog,
-) error {
+) (plan.Plan, error) {
 	// Checked on the way in as well as on the way out. A rig can arrive from
 	// anywhere — a file somebody wrote, a model that generated one — and
-	// building a preset out of one that does not meet its own contract turns
-	// a legible error into a device refusing a file.
+	// building a plan out of one that does not meet its own contract turns a
+	// legible error into a device refusing a file.
 	if err := rig.Validate(spec); err != nil {
-		return err
+		return plan.Plan{}, err
 	}
 
-	blocks := make([]chain.Block, 0, len(spec.Chain))
+	blocks := make([]plan.Block, 0, len(spec.Chain))
 
 	for i, entry := range spec.Chain {
 		model, err := modelFor(entry, cat, string(spec.Instrument))
 		if err != nil {
-			return fmt.Errorf("chain entry %d: %w", i, err)
+			return plan.Plan{}, fmt.Errorf("chain entry %d: %w", i, err)
 		}
 
-		params := paramsFor(entry, cat, model)
-
-		// Over whatever the entry's own parameters said. A lifted rig
-		// carries both, and the words are the part a person edits.
 		blk, _ := cat.Block(model)
-		if err := setKnobs(
-			params, blk, entry.Settings, fmt.Sprintf("chain[%d].settings", i),
-		); err != nil {
-			return err
-		}
 
-		blocks = append(blocks, chain.Block{
-			Model:   model,
-			Params:  params,
-			Attrs:   attrsFor(entry),
-			DSP:     at(entry.Path, 0),
-			Pos:     at(entry.Position, i),
-			Enabled: entry.Enabled == nil || *entry.Enabled,
+		blocks = append(blocks, plan.Block{
+			Model: model,
+			// The catalog's defaults with no corpus behind them: Line 6 state
+			// one for every parameter and it is never invalid, while a median
+			// is an opinion about what other people did and belongs to a build
+			// that asked for one.
+			Params:  settings(blk, nil),
+			DSP:     0,
+			Pos:     i,
+			Enabled: true,
 		})
 	}
 
-	// What the rig claims beside its chain, against the catalog that has to
-	// supply it. After the chain, because a controller names the block it
-	// moves by position and that list is what says which model is there.
-	if err := check(spec, blocks, cat); err != nil {
-		return err
-	}
-
-	// Before the chain, so a rig that carries routing writes its own rather
-	// than keeping whatever the preset underneath came with.
-	restore(doc, spec.Device)
-
-	// After the device's own state, because a rig's snapshots are its own
-	// even when it carries a verbatim record of everything else.
-	if spec.Snapshots != nil {
-		pruneSnapshots(doc)
-		restoreSnapshots(doc, *spec.Snapshots)
-	}
-
-	// After the snapshots a rig carries, which a rig with sections has none
-	// of, and onto whichever snapshots the preset underneath came with.
-	if err := Sections(doc, spec, blocks, cat); err != nil {
-		return err
-	}
-
-	// After the device's own state, so a rig's own assignments win over
-	// whatever the preset underneath carried. Checked already, by check
-	// above, along with everything else the rig claims.
-	Controllers(doc, spec, blocks, cat)
-
-	Footswitches(doc, spec, cat)
-
-	// The rig names the preset, not the document underneath: compiling into
-	// an untouched preset would otherwise write out the template's own name.
-	// A lifted rig carries the label the device stored, padding and all,
-	// which is what restore has already put back.
-	name := spec.Subject.Name
-	if spec.Device != nil && spec.Device.Name != nil {
-		name = *spec.Device.Name
-	}
-
-	return doc.SetSpec(chain.Chain{Name: name, Blocks: blocks})
+	// The identifier rather than a subject's name, because a subject is what
+	// somebody asked for and lives on the ask. A rig's identifier is the only
+	// name a rig has of its own, and it is the one its file is called after.
+	return plan.Plan{Name: spec.ID, Rig: spec.ID, Blocks: blocks}, nil
 }
 
-// at reads an optional integer, falling back when a rig does not state one.
+// Lower writes a plan into a preset.
+//
+// The document is written into rather than built, because a preset holds
+// things a plan does not model — the inputs, outputs, split and join a device
+// expects, the metadata nobody documented. Building one from nothing would
+// produce a file unlike any the device has ever written.
+func Lower(
+	doc *preset.Document,
+	p plan.Plan,
+	cat *catalog.Catalog,
+) error {
+	// What the plan claims beside its chain, against the catalog that has to
+	// supply it. A plan arrives from anywhere — read off a device, exported and
+	// edited by hand — and a colour this device cannot light or a parameter the
+	// block does not carry is worth an error rather than a switch that lights
+	// wrongly and a pedal that moves nothing.
+	if err := check(p, p.Blocks, cat); err != nil {
+		return err
+	}
+
+	// Before the chain, so a plan that carries routing writes its own rather
+	// than keeping whatever the preset underneath came with.
+	restore(doc, p.Device)
+
+	// After the device's own state, because a plan's snapshots are its own
+	// even when it carries a verbatim record of everything else.
+	if len(p.Snapshots) > 0 {
+		pruneSnapshots(doc)
+		restoreSnapshots(doc, p.Snapshots)
+	}
+
+	// After the device's own state, so a plan's own assignments win over
+	// whatever the preset underneath carried. Checked already, by check above,
+	// along with everything else the plan claims.
+	Controllers(doc, p, p.Blocks, cat)
+
+	Footswitches(doc, p, cat)
+
+	// The plan names the preset, not the document underneath: compiling into
+	// an untouched preset would otherwise write out the template's own name. A
+	// lifted plan carries the label the device stored, padding and all, which
+	// is what restore has already put back.
+	if p.Device != nil && p.Device.Name != nil {
+		p.Name = *p.Device.Name
+	}
+
+	return doc.SetSpec(p)
+}
+
+// at reads an optional integer, falling back when a plan does not state one.
 func at(
 	v *int,
 	fallback int,
@@ -138,26 +142,14 @@ func at(
 
 // modelFor decides which model an entry means.
 //
-// An exact identifier recorded for this device wins, because it is what was
-// actually there. Falling back to the gear name is right for a rig written by
-// hand, and wrong for one lifted off a device: 665 models share 469 names, so
-// the name alone would resolve to a different model than the one recorded.
+// The gear name against the catalog, which is the only thing a rig says: an
+// exact model identifier is one device's internal name and lives in the plan
+// this is building rather than in the document being read.
 func modelFor(
 	entry rig.ChainEntry,
 	cat *catalog.Catalog,
 	instrument string,
 ) (catalog.ModelID, error) {
-	if entry.Models != nil {
-		if id, ok := (*entry.Models)[cat.Device]; ok {
-			// Used whether or not the catalog carries it. A preset can name
-			// a model from newer firmware than the catalog was generated
-			// from, and the catalog is what this tool knows rather than a
-			// statement about what the device had. Refusing here would
-			// rewrite somebody's preset into a different one.
-			return catalog.ModelID(id), nil
-		}
-	}
-
 	b, err := gear(cat, entry.Gear, entry.Role, instrument)
 
 	// The rig named gear this device cannot do and said what to put there
@@ -177,120 +169,4 @@ func modelFor(
 	}
 
 	return b.ID, nil
-}
-
-// paramsFor decides what every knob on a block is set to.
-//
-// The two layers mean different things, and conflating them is what makes a
-// round trip lossy.
-//
-// A rig carrying device parameters is describing a block exactly — it was
-// lifted from a preset, or somebody dialled it. Those values are the whole
-// truth, and adding catalog defaults on top would write knobs the original
-// did not have.
-//
-// A rig carrying none is describing gear rather than a block. There the
-// catalog's defaults are the answer, since Line 6 state one for every
-// parameter and it is never invalid.
-func paramsFor(
-	entry rig.ChainEntry,
-	cat *catalog.Catalog,
-	model catalog.ModelID,
-) chain.Params {
-	blk, known := cat.Block(model)
-	out := chain.Params{}
-
-	if entry.Params == nil {
-		if known {
-			for key, p := range blk.Params {
-				if p.Default.Type() == "" {
-					continue
-				}
-
-				out[key] = p.Default
-			}
-		}
-
-		return out
-	}
-
-	for key, v := range *entry.Params {
-		if strings.HasPrefix(key, "@") {
-			continue
-		}
-
-		if pv, ok := paramValue(blk, key, v, known); ok {
-			out[key] = pv
-		}
-	}
-
-	return out
-}
-
-// attrsFor pulls the device attributes back out of a rig's parameters.
-//
-// They travel together because a device mixes them in one block, and they are
-// told apart by the @ prefix the format itself uses.
-func attrsFor(
-	entry rig.ChainEntry,
-) map[string]json.RawMessage {
-	if entry.Params == nil {
-		return nil
-	}
-
-	out := map[string]json.RawMessage{}
-
-	for key, v := range *entry.Params {
-		if !strings.HasPrefix(key, "@") {
-			continue
-		}
-
-		// The value came out of a decoded document, so it encodes again.
-		raw, _ := json.Marshal(v)
-		out[key] = raw
-	}
-
-	if len(out) == 0 {
-		return nil
-	}
-
-	return out
-}
-
-// paramValue converts a rig's value into the kind the device accepts.
-//
-// A device mixes floats, integers, switches and enumerations inside one
-// block, and it does not coerce between them: given 1.5 for a three-position
-// switch it refuses the preset rather than rounding.
-func paramValue(
-	blk catalog.Block,
-	key string,
-	v any,
-	known bool,
-) (catalog.ParamValue, bool) {
-	// A round trip hands the value straight back, already typed.
-	if pv, ok := v.(catalog.ParamValue); ok {
-		return pv, pv.Type() != ""
-	}
-
-	switch t := v.(type) {
-	case bool:
-		return catalog.Bool(t), true
-	case string:
-		return catalog.Enum(t), true
-	case float64:
-		if known {
-			if p, ok := blk.Params[key]; ok && p.Default.Type() == catalog.ParamInt {
-				// Rounded rather than nudged and truncated: adding a half
-				// and cutting toward zero turns -12 into -11, and this
-				// catalog has integer parameters that go negative. An octave
-				// down became a major seventh.
-				return catalog.Int(int64(math.Round(t))), true
-			}
-		}
-
-		return catalog.Float(t), true
-	default:
-		return catalog.ParamValue{}, false
-	}
 }

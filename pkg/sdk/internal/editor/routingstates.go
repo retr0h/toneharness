@@ -23,9 +23,9 @@ package editor
 import (
 	"encoding/json"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 )
 
 // Reading what a preset wraps its chain in, for writing it to a device.
@@ -138,8 +138,14 @@ func routeValues(
 	sends int,
 	cat *catalog.Catalog,
 ) []any {
-	// sends comes from the array the device itself wrote, which is never
-	// longer than the list of names the model carries.
+	// sends is how many values the device wrote; sym is the model the *file*
+	// names. For a file this tool wrote the two agree, because routingOf fills
+	// `@model` from the same flow the blank uses. A hand-edited file can name a
+	// model carrying fewer parameters than the device sent, and slicing to
+	// sends would then be out of range. Whichever is shorter wins: a short
+	// entry is a routing the device fills in, and a panic is not an answer to a
+	// file somebody typed.
+	sends = min(sends, len(sym.Params))
 	types := typesOf(model, cat)
 	out := make([]any, 0, sends)
 

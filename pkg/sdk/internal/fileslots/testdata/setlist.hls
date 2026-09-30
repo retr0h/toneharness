@@ -2,7 +2,7 @@
   "schema": "L6Setlist",
   "version": 2,
   "meta": {
-    "application": "tonestack",
+    "application": "toneharness",
     "appversion": 1,
     "device": 2162694,
     "device_version": 0,

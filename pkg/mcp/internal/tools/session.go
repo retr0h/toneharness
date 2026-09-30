@@ -23,7 +23,7 @@ package tools
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 // sdkClient is an *sdk.Client whose Open answers the Session the tools hold.

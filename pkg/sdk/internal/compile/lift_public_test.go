@@ -26,11 +26,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 type LiftPublicTestSuite struct {
@@ -51,12 +51,12 @@ func (s *LiftPublicTestSuite) preset(
 	name string,
 	models ...catalog.ModelID,
 ) *preset.Document {
-	blocks := make([]chain.Block, 0, len(models))
+	blocks := make([]plan.Block, 0, len(models))
 	for i, m := range models {
-		blocks = append(blocks, chain.Block{Model: m, Pos: i, Enabled: true})
+		blocks = append(blocks, plan.Block{Model: m, Pos: i, Enabled: true})
 	}
 
-	doc, err := preset.New(s.cat.DeviceID, chain.Chain{Name: name, Blocks: blocks})
+	doc, err := preset.New(s.cat.DeviceID, plan.Plan{Name: name, Blocks: blocks})
 	s.Require().NoError(err)
 
 	return doc
@@ -79,194 +79,319 @@ func (s *LiftPublicTestSuite) catalogOf(
 func rigOf(
 	id, gear string,
 	inst rig.Instrument,
-	params *map[string]any,
 ) rig.Spec {
 	return rig.Spec{
 		Schema:     rig.SchemaName,
 		ID:         id,
-		Subject:    rig.Subject{Kind: rig.KindSound, Name: id},
 		Instrument: inst,
 		Chain: []rig.ChainEntry{
-			{Role: rig.RoleAmp, Gear: gear, Params: params},
+			{Role: rig.RoleAmp, Gear: gear},
 		},
 	}
 }
 
-// TestLift reads a preset as a rig.
+// TestLift covers Lift, which reads a preset into the rig it describes and
+// the plan that realises it.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *LiftPublicTestSuite) TestLift() {
-	tests := []struct {
+	for _, tt := range []struct {
 		name string
-		// what the preset is called, which is where a rig's identifier comes
-		// from.
-		title  string
-		model  catalog.ModelID
-		blocks map[catalog.ModelID]catalog.Block
-		// a document written by hand, for what preset.New cannot build.
-		raw string
-		// a preset holding no blocks at all.
-		bare bool
-
-		wantGear       string
-		wantRole       rig.Role
-		wantInstrument rig.Instrument
-		wantID         string
-		err            error
-		errText        string
+		then func()
 	}{
 		{
-			name:           "an amp emulating real gear, named the way a person would",
-			model:          "HD2_AmpSVBeastNrm",
-			wantGear:       "Ampeg SVT® (normal channel)",
-			wantInstrument: rig.InstrumentBass,
-		},
-		{
-			name:           "a Line 6 original, by its own name, since it emulates nothing",
-			model:          "HD2_AmpLine6Litigator",
-			wantGear:       "Line 6 Litigator",
-			wantInstrument: rig.InstrumentGuitar,
-		},
-		{
-			// A rig has to say what every block is, and "something this
-			// device carries and we do not recognise" is a truthful answer.
-			name:           "a model the catalog has never heard of, by identifier",
-			model:          "HD2_NotInThisCatalog",
-			wantGear:       "HD2_NotInThisCatalog",
-			wantRole:       rig.RoleOther,
-			wantInstrument: rig.InstrumentGuitar,
-		},
-		{
-			name:           "a preset with no amp in it",
-			model:          "HD2_DistMinotaur",
-			wantInstrument: rig.InstrumentGuitar,
-		},
-		{
-			// A handful of catalog entries carry an empty name and no gear,
-			// so neither handle is available and the identifier is all there
-			// is.
-			name:  "a model with no name",
-			model: "HD2_Nameless",
-			blocks: map[catalog.ModelID]catalog.Block{
-				"HD2_Nameless": {ID: "HD2_Nameless", Category: catalog.CategoryDrive},
-			},
-			wantGear: "HD2_Nameless",
-		},
-		{
-			name:  "a category this project does not know",
-			model: "HD2_Odd",
-			blocks: map[catalog.ModelID]catalog.Block{
-				"HD2_Odd": {
-					ID: "HD2_Odd", Name: "Odd",
-					Category: catalog.Category("nonsense"),
-				},
-			},
-			wantRole: rig.RoleOther,
-		},
-		{
-			name:   "a name that is already an identifier",
-			title:  "Mike Dirnt",
-			model:  "HD2_AmpSVBeastNrm",
-			wantID: "mike-dirnt",
-		},
-		{
-			name:   "a name carrying punctuation",
-			title:  "CT-Blackend",
-			model:  "HD2_AmpSVBeastNrm",
-			wantID: "ct-blackend",
-		},
-		{
-			name:   "a name somebody spaced out",
-			title:  "  Lots   of   Space  ",
-			model:  "HD2_AmpSVBeastNrm",
-			wantID: "lots-of-space",
-		},
-		{
-			name:   "a name of nothing but punctuation",
-			title:  "!!!",
-			model:  "HD2_AmpSVBeastNrm",
-			wantID: "untitled",
-		},
-		{
-			name:   "no name at all",
-			model:  "HD2_AmpSVBeastNrm",
-			wantID: "untitled",
-		},
-		{name: "a preset holding no blocks", bare: true, err: rig.ErrInvalid},
-		{
-			name: "a document it cannot read",
-			raw: `{"schema":"L6Preset","version":6,"data":{"device":2162694,` +
-				`"meta":{"name":"Bad"},"tone":{"dspX":{"block0":{"@model":"x"}}}}}`,
-			errText: "reading the chain",
-		},
-	}
+			// Reads a preset as a rig.
+			name: "lift",
+			then: func() {
+				tests := []struct {
+					name string
+					// what the preset is called, which is where a rig's identifier comes
+					// from.
+					title  string
+					model  catalog.ModelID
+					blocks map[catalog.ModelID]catalog.Block
+					// a document written by hand, for what preset.New cannot build.
+					raw string
+					// a preset holding no blocks at all.
+					bare bool
 
-	for _, tt := range tests {
+					wantGear       string
+					wantRole       rig.Role
+					wantInstrument rig.Instrument
+					wantID         string
+					err            error
+					errText        string
+				}{
+					{
+						name:           "an amp emulating real gear, named the way a person would",
+						model:          "HD2_AmpSVBeastNrm",
+						wantGear:       "Ampeg SVT® (normal channel)",
+						wantInstrument: rig.InstrumentBass,
+					},
+					{
+						name:           "a Line 6 original, by its own name, since it emulates nothing",
+						model:          "HD2_AmpLine6Litigator",
+						wantGear:       "Line 6 Litigator",
+						wantInstrument: rig.InstrumentGuitar,
+					},
+					{
+						// A rig has to say what every block is, and "something this
+						// device carries and we do not recognise" is a truthful answer.
+						name:           "a model the catalog has never heard of, by identifier",
+						model:          "HD2_NotInThisCatalog",
+						wantGear:       "HD2_NotInThisCatalog",
+						wantRole:       rig.RoleOther,
+						wantInstrument: rig.InstrumentGuitar,
+					},
+					{
+						name:           "a preset with no amp in it",
+						model:          "HD2_DistMinotaur",
+						wantInstrument: rig.InstrumentGuitar,
+					},
+					{
+						// A handful of catalog entries carry an empty name and no gear,
+						// so neither handle is available and the identifier is all there
+						// is.
+						name:  "a model with no name",
+						model: "HD2_Nameless",
+						blocks: map[catalog.ModelID]catalog.Block{
+							"HD2_Nameless": {ID: "HD2_Nameless", Category: catalog.CategoryDrive},
+						},
+						wantGear: "HD2_Nameless",
+					},
+					{
+						name:  "a category this project does not know",
+						model: "HD2_Odd",
+						blocks: map[catalog.ModelID]catalog.Block{
+							"HD2_Odd": {
+								ID: "HD2_Odd", Name: "Odd",
+								Category: catalog.Category("nonsense"),
+							},
+						},
+						wantRole: rig.RoleOther,
+					},
+					{
+						name:   "a name that is already an identifier",
+						title:  "Mike Dirnt",
+						model:  "HD2_AmpSVBeastNrm",
+						wantID: "mike-dirnt",
+					},
+					{
+						name:   "a name carrying punctuation",
+						title:  "CT-Blackend",
+						model:  "HD2_AmpSVBeastNrm",
+						wantID: "ct-blackend",
+					},
+					{
+						name:   "a name somebody spaced out",
+						title:  "  Lots   of   Space  ",
+						model:  "HD2_AmpSVBeastNrm",
+						wantID: "lots-of-space",
+					},
+					{
+						name:   "a name of nothing but punctuation",
+						title:  "!!!",
+						model:  "HD2_AmpSVBeastNrm",
+						wantID: "untitled",
+					},
+					{
+						name:   "no name at all",
+						model:  "HD2_AmpSVBeastNrm",
+						wantID: "untitled",
+					},
+					{name: "a preset holding no blocks", bare: true, err: rig.ErrInvalid},
+					{
+						name: "a document it cannot read",
+						raw: `{"schema":"L6Preset","version":6,"data":{"device":2162694,` +
+							`"meta":{"name":"Bad"},"tone":{"dspX":{"block0":{"@model":"x"}}}}}`,
+						errText: "reading the chain",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						var doc *preset.Document
+
+						switch {
+						case tt.raw != "":
+							var err error
+
+							doc, err = preset.Read(bytes.NewReader([]byte(tt.raw)))
+							s.Require().NoError(err)
+						case tt.bare:
+							var err error
+
+							doc, err = preset.New(s.cat.DeviceID, plan.Plan{Name: "Empty"})
+							s.Require().NoError(err)
+						default:
+							doc = s.preset(tt.title, tt.model)
+						}
+
+						got, _, err := compile.Lift(doc, s.catalogOf(tt.blocks))
+
+						if tt.err != nil || tt.errText != "" {
+							s.Require().Error(err)
+
+							if tt.err != nil {
+								s.Require().ErrorIs(err, tt.err)
+							}
+
+							if tt.errText != "" {
+								s.Require().Contains(err.Error(), tt.errText)
+							}
+
+							return
+						}
+
+						s.Require().NoError(err)
+						s.Require().NoError(rig.Validate(got), "a lifted rig must validate")
+
+						if tt.wantGear != "" {
+							s.Require().Equal(tt.wantGear, got.Chain[0].Gear)
+						}
+
+						if tt.wantRole != "" {
+							s.Require().Equal(tt.wantRole, got.Chain[0].Role)
+						}
+
+						if tt.wantInstrument != "" {
+							s.Require().Equal(tt.wantInstrument, got.Instrument)
+						}
+
+						if tt.wantID != "" {
+							s.Require().Equal(tt.wantID, got.ID)
+						}
+					})
+				}
+			},
+		},
+		{
+			// Writes a plan into a preset.
+			name: "lower",
+			then: func() {
+				tests := []struct {
+					name string
+					made plan.Plan
+					// a plan lifted off a preset of this model, rather than one written
+					// out here.
+					from catalog.ModelID
+
+					wantModel catalog.ModelID
+					// -1 asserts every knob is set, a positive number asserts how many.
+					exact   int
+					types   map[string]catalog.ParamType
+					ints    map[string]int64
+					errText string
+				}{
+					{
+						name: "a plan stating parameters, which are the whole truth",
+						made: ampPlan("exact", plan.Params{
+							"Drive": catalog.Float(0.8), "MidFreq": catalog.Int(2),
+							"Bright": catalog.Bool(true), "Voicing": catalog.Enum("Modern"),
+						}),
+						exact: 4,
+						// A switch stays a switch: a device given 1.5 for a
+						// three-position control refuses the preset rather than rounding.
+						types: map[string]catalog.ParamType{
+							"MidFreq": catalog.ParamInt,
+							"Bright":  catalog.ParamBool,
+							"Voicing": catalog.ParamEnum,
+						},
+					},
+					{
+						// Written as stated. Nudging by a half and truncating cuts
+						// toward zero, so this arrived as -11: an octave down turned
+						// into a major seventh, in a preset nobody would think to check.
+						name:  "a parameter somebody set below nothing",
+						made:  ampPlan("octave", plan.Params{"MidFreq": catalog.Int(-12)}),
+						types: map[string]catalog.ParamType{"MidFreq": catalog.ParamInt},
+						ints:  map[string]int64{"MidFreq": -12},
+					},
+					{
+						// "Ampeg SVT" matches both channels. The recorded identifier is
+						// what makes a lifted plan rebuild into the preset it came from.
+						name:      "the exact model, over the name it shares",
+						from:      "HD2_AmpSVBeastBrt",
+						wantModel: "HD2_AmpSVBeastBrt",
+					},
+					{
+						// Lowering asks the same question about what a plan claims beside
+						// its chain, so a colour this device cannot light fails here
+						// rather than reaching a preset.
+						name:    "a colour the device does not have",
+						made:    withSwitch(ampPlan("lit", nil), "chartruse"),
+						errText: "footswitches[0].led",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						doc := s.preset("Test", "HD2_AmpSVBeastNrm")
+
+						made := tt.made
+
+						if tt.from != "" {
+							var err error
+
+							_, made, err = compile.Lift(s.preset("Test", tt.from), s.cat)
+							s.Require().NoError(err)
+						}
+
+						err := compile.Lower(doc, made, s.cat)
+
+						if tt.errText != "" {
+							s.Require().Error(err)
+							s.Require().Contains(err.Error(), tt.errText)
+
+							return
+						}
+
+						s.Require().NoError(err)
+
+						c, err := doc.Spec()
+						s.Require().NoError(err)
+
+						if tt.wantModel != "" {
+							s.Require().Equal(tt.wantModel, c.Blocks[0].Model)
+						}
+
+						switch {
+						case tt.exact < 0:
+							s.Require().NotEmpty(c.Blocks[0].Params, "every knob is set")
+						case tt.exact > 0:
+							s.Require().Len(c.Blocks[0].Params, tt.exact)
+						}
+
+						for key, want := range tt.types {
+							s.Require().Equal(want, c.Blocks[0].Params[key].Type())
+						}
+
+						for key, want := range tt.ints {
+							got, ok := c.Blocks[0].Params[key].Int()
+							s.Require().True(ok)
+							s.Require().Equal(want, got, "%s", key)
+						}
+					})
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			var doc *preset.Document
-
-			switch {
-			case tt.raw != "":
-				var err error
-
-				doc, err = preset.Read(bytes.NewReader([]byte(tt.raw)))
-				s.Require().NoError(err)
-			case tt.bare:
-				var err error
-
-				doc, err = preset.New(s.cat.DeviceID, chain.Chain{Name: "Empty"})
-				s.Require().NoError(err)
-			default:
-				doc = s.preset(tt.title, tt.model)
-			}
-
-			got, err := compile.Lift(doc, s.catalogOf(tt.blocks))
-
-			if tt.err != nil || tt.errText != "" {
-				s.Require().Error(err)
-
-				if tt.err != nil {
-					s.Require().ErrorIs(err, tt.err)
-				}
-
-				if tt.errText != "" {
-					s.Require().Contains(err.Error(), tt.errText)
-				}
-
-				return
-			}
-
-			s.Require().NoError(err)
-			s.Require().NoError(rig.Validate(got), "a lifted rig must validate")
-
-			if tt.wantGear != "" {
-				s.Require().Equal(tt.wantGear, got.Chain[0].Gear)
-			}
-
-			if tt.wantRole != "" {
-				s.Require().Equal(tt.wantRole, got.Chain[0].Role)
-			}
-
-			if tt.wantInstrument != "" {
-				s.Require().Equal(tt.wantInstrument, got.Instrument)
-			}
-
-			if tt.wantID != "" {
-				s.Require().Equal(tt.wantID, got.ID)
-			}
+			tt.then()
 		})
 	}
 }
 
-// withSwitch puts one footswitch on a rig, lit the given colour.
+// withSwitch puts one footswitch on a plan, lit the given colour.
 func withSwitch(
-	spec rig.Spec,
+	made plan.Plan,
 	led string,
-) rig.Spec {
-	spec.Footswitches = &[]rig.Footswitch{{Led: &led}}
+) plan.Plan {
+	made.Footswitches = []rig.Footswitch{{Led: &led}}
 
-	return spec
+	return made
 }
 
-// TestLower writes a rig into a preset.
 // substituted says what to put in place of the gear a rig names.
 func substituted(
 	spec rig.Spec,
@@ -277,38 +402,46 @@ func substituted(
 	return spec
 }
 
-func (s *LiftPublicTestSuite) TestLower() {
+// ampPlan is a plan holding the bass amplifier, set as stated.
+func ampPlan(
+	name string,
+	params plan.Params,
+) plan.Plan {
+	return plan.Plan{
+		Name: name,
+		Blocks: []plan.Block{
+			{Model: "HD2_AmpSVBeastNrm", Params: params, Enabled: true},
+		},
+	}
+}
+
+// TestRealise fits a rig to the device a catalog describes.
+func (s *LiftPublicTestSuite) TestRealise() {
 	tests := []struct {
 		name   string
 		spec   rig.Spec
 		blocks map[catalog.ModelID]catalog.Block
-		// the model the destination preset already holds.
-		into catalog.ModelID
-		// a rig lifted off a preset of this model, rather than one written
-		// out here.
-		from catalog.ModelID
 
 		wantModel  catalog.ModelID
 		wantParams []string
 		absent     []string
-		exact      int
-		types      map[string]catalog.ParamType
-		ints       map[string]int64
-		err        error
-		errText    string
+		// -1 asserts every knob is set, a positive number asserts how many.
+		exact   int
+		err     error
+		errText string
 	}{
 		{name: "a rig that is not one", err: rig.ErrInvalid},
 		{
 			name:    "gear nothing on this device models",
-			spec:    rigOf("nope", "Nonesuch 900", rig.InstrumentGuitar, nil),
+			spec:    rigOf("nope", "Nonesuch 900", rig.InstrumentGuitar),
 			errText: "emulates \"Nonesuch 900\"",
 		},
 		{
 			// The rig names what was really played and says what this device
-			// should put there, so building it lands on the stand-in.
+			// should put there, so fitting it lands on the stand-in.
 			name: "gear nothing models, with a stand-in the rig names",
 			spec: substituted(
-				rigOf("stood-in", "Nonesuch 900", rig.InstrumentBass, nil),
+				rigOf("stood-in", "Nonesuch 900", rig.InstrumentBass),
 				"Ampeg SVT (normal"),
 			wantModel: "HD2_AmpSVBeastNrm",
 			exact:     -1,
@@ -316,56 +449,23 @@ func (s *LiftPublicTestSuite) TestLower() {
 		{
 			name: "a stand-in nothing models either",
 			spec: substituted(
-				rigOf("nope", "Nonesuch 900", rig.InstrumentBass, nil),
+				rigOf("nope", "Nonesuch 900", rig.InstrumentBass),
 				"Also Nonesuch"),
 			errText: `"Also Nonesuch" stands in for "Nonesuch 900"`,
 		},
 		{
-			// A rig describing gear rather than a block gets Line 6's own
-			// defaults, which are never invalid.
-			name:  "a rig stating no parameters",
-			spec:  rigOf("plain", "Ampeg SVT (normal", rig.InstrumentBass, nil),
+			// A rig describes gear rather than a block, so every knob gets
+			// Line 6's own default, which is never invalid.
+			name:  "a rig naming gear and nothing else",
+			spec:  rigOf("plain", "Ampeg SVT (normal", rig.InstrumentBass),
 			exact: -1,
-		},
-		{
-			name: "a rig stating parameters, which are the whole truth",
-			spec: rigOf("exact", "Ampeg SVT (normal", rig.InstrumentBass,
-				&map[string]any{
-					"Drive": 0.8, "MidFreq": 2.0,
-					"Bright": true, "Voicing": "Modern",
-				}),
-			exact: 4,
-			// A switch stays a switch: a device given 1.5 for a
-			// three-position control refuses the preset rather than rounding.
-			types: map[string]catalog.ParamType{
-				"MidFreq": catalog.ParamInt,
-				"Bright":  catalog.ParamBool,
-				"Voicing": catalog.ParamEnum,
-			},
-		},
-		{
-			// Written as stated. Nudging by a half and truncating cuts
-			// toward zero, so this arrived as -11: an octave down turned
-			// into a major seventh, in a preset nobody would think to check.
-			name: "a parameter somebody set below nothing",
-			spec: rigOf("octave", "Ampeg SVT (normal", rig.InstrumentBass,
-				&map[string]any{"MidFreq": -12.0}),
-			types: map[string]catalog.ParamType{"MidFreq": catalog.ParamInt},
-			ints:  map[string]int64{"MidFreq": -12},
-		},
-		{
-			// "Ampeg SVT" matches both channels. The recorded identifier is
-			// what makes a lifted rig rebuild into the preset it came from.
-			name:      "the exact model, over the name it shares",
-			from:      "HD2_AmpSVBeastBrt",
-			wantModel: "HD2_AmpSVBeastBrt",
 		},
 		{
 			// A parameter Line 6 state no default for has no kind, and
 			// writing a value with no kind produces a preset the device
 			// rejects.
 			name: "a parameter with no stated default",
-			spec: rigOf("half", "Half A Thing", rig.InstrumentGuitar, nil),
+			spec: rigOf("half", "Half A Thing", rig.InstrumentGuitar),
 			blocks: map[catalog.ModelID]catalog.Block{
 				"HD2_Half": {
 					ID: "HD2_Half", Name: "Half", BasedOn: "Half A Thing",
@@ -376,50 +476,14 @@ func (s *LiftPublicTestSuite) TestLower() {
 					},
 				},
 			},
-			into:       "HD2_Half",
 			wantParams: []string{"Drive"},
 			absent:     []string{"Missing"},
-		},
-		{
-			// Lowering asks the same question about what a rig claims beside
-			// its chain, so a colour this device cannot light fails here
-			// rather than reaching a preset.
-			name: "a colour the device does not have",
-			spec: withSwitch(
-				rigOf("lit", "Ampeg SVT (normal", rig.InstrumentBass, nil),
-				"chartruse"),
-			errText: "footswitches[0].led",
-		},
-		{
-			name: "a parameter of no known kind",
-			spec: rigOf("odd", "Ampeg SVT (normal", rig.InstrumentBass,
-				&map[string]any{"Drive": 0.8, "Nonsense": []any{1, 2}}),
-			wantParams: []string{"Drive"},
-			absent:     []string{"Nonsense"},
 		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			cat := s.catalogOf(tt.blocks)
-
-			into := tt.into
-			if into == "" {
-				into = "HD2_AmpSVBeastNrm"
-			}
-
-			doc := s.preset("Test", into)
-
-			spec := tt.spec
-
-			if tt.from != "" {
-				var err error
-
-				spec, err = compile.Lift(s.preset("Test", tt.from), cat)
-				s.Require().NoError(err)
-			}
-
-			err := compile.Lower(doc, spec, cat)
+			made, err := compile.Realise(tt.spec, s.catalogOf(tt.blocks))
 
 			if tt.err != nil || tt.errText != "" {
 				s.Require().Error(err)
@@ -436,69 +500,53 @@ func (s *LiftPublicTestSuite) TestLower() {
 			}
 
 			s.Require().NoError(err)
-
-			c, err := doc.Spec()
-			s.Require().NoError(err)
+			s.Require().Equal(tt.spec.ID, made.Rig, "a plan names the rig it realises")
 
 			if tt.wantModel != "" {
-				s.Require().Equal(tt.wantModel, c.Blocks[0].Model)
+				s.Require().Equal(tt.wantModel, made.Blocks[0].Model)
 			}
 
 			switch {
 			case tt.exact < 0:
-				s.Require().NotEmpty(c.Blocks[0].Params, "every knob is set")
+				s.Require().NotEmpty(made.Blocks[0].Params, "every knob is set")
 			case tt.exact > 0:
-				s.Require().Len(c.Blocks[0].Params, tt.exact)
+				s.Require().Len(made.Blocks[0].Params, tt.exact)
 			}
 
 			for _, want := range tt.wantParams {
-				s.Require().Contains(c.Blocks[0].Params, want)
+				s.Require().Contains(made.Blocks[0].Params, want)
 			}
 
 			for _, unwanted := range tt.absent {
-				s.Require().NotContains(c.Blocks[0].Params, unwanted)
-			}
-
-			for key, want := range tt.types {
-				s.Require().Equal(want, c.Blocks[0].Params[key].Type())
-			}
-
-			for key, want := range tt.ints {
-				got, ok := c.Blocks[0].Params[key].Int()
-				s.Require().True(ok)
-				s.Require().Equal(want, got, "%s", key)
+				s.Require().NotContains(made.Blocks[0].Params, unwanted)
 			}
 		})
 	}
 }
 
-// TestLowerPicksTheSameModelEveryTime is a property of the resolver rather
+// TestRealisePicksTheSameModelEveryTime is a property of the resolver rather
 // than a case of the call.
 //
-// Lowering used to range a map and take the first name that matched, so one
+// Fitting used to range a map and take the first name that matched, so one
 // rig became a different preset each run: six compiles of this one named an
-// amplifier, a preamp, the bright channel and twice a cabinet. A rig lifted
+// amplifier, a preamp, the bright channel and twice a cabinet. A plan lifted
 // off a device was unaffected, because it carries the model identifier, which
 // is why nothing caught it.
-func (s *LiftPublicTestSuite) TestLowerPicksTheSameModelEveryTime() {
-	spec := rigOf("stable", "Ampeg SVT", rig.InstrumentBass, nil)
+func (s *LiftPublicTestSuite) TestRealisePicksTheSameModelEveryTime() {
+	spec := rigOf("stable", "Ampeg SVT", rig.InstrumentBass)
 
 	var first catalog.ModelID
 
 	for range 20 {
-		doc, err := preset.Blank()
+		made, err := compile.Realise(spec, s.cat)
 		s.Require().NoError(err)
-		s.Require().NoError(compile.Lower(doc, spec, s.cat))
-
-		c, err := doc.Spec()
-		s.Require().NoError(err)
-		s.Require().NotEmpty(c.Blocks)
+		s.Require().NotEmpty(made.Blocks)
 
 		if first == "" {
-			first = c.Blocks[0].Model
+			first = made.Blocks[0].Model
 		}
 
-		s.Require().Equal(first, c.Blocks[0].Model, "the same rig, a different model")
+		s.Require().Equal(first, made.Blocks[0].Model, "the same rig, a different model")
 	}
 
 	// And an amplifier, because the role is half the question.

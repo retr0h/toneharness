@@ -48,9 +48,9 @@ better, or both, we have to have strict rules to protect maintainers.
 
 ## AI is Welcome Here
 
-tonestack is written with plenty of AI assistance, and many maintainers embrace
-AI tools as a productive tool in their workflow. As a project, we welcome AI as
-a tool!
+toneharness is written with plenty of AI assistance, and many maintainers
+embrace AI tools as a productive tool in their workflow. As a project, we
+welcome AI as a tool!
 
 **Our reason for the strict AI policy is not due to an anti-AI stance**, but
 instead due to the number of highly unqualified people using AI. It's the

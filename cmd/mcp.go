@@ -24,9 +24,9 @@ import "github.com/spf13/cobra"
 // mcpCmd represents the mcp command.
 var mcpCmd = &cobra.Command{
 	Use:   "mcp",
-	Short: "Serve tonestack to an agent over MCP",
+	Short: "Serve toneharness to an agent over MCP",
 	Args:  cobra.NoArgs,
-	Long: `Serve tonestack's operations to an agent over the Model Context Protocol.
+	Long: `Serve toneharness's operations to an agent over the Model Context Protocol.
 
 The catalog, the corpus, the shipped rigs, building presets and the attached
 pedal become tools an agent calls, with typed results rather than text to

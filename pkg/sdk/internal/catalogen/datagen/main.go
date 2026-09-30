@@ -31,7 +31,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/catalogen"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/catalogen"
 )
 
 // root is the repository, worked out from this file rather than from wherever

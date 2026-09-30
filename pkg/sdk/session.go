@@ -25,9 +25,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Session is one claim of the pedal and one handshake, used for as many
@@ -238,6 +238,97 @@ func (s *Session) Select(
 	return operation(ctx, s, func(f *deviceslots.Flows) (Change, error) {
 		return f.Select(ctx, s.editor, at)
 	})
+}
+
+// Turn moves one control on the preset the device is playing.
+//
+// Nothing is written and nothing is selected: the change lands in the preset
+// in front of somebody and is heard at once, which is what a knob does.
+//
+// The block is its position in the chain and the parameter its position in
+// that model's list, because position is the only thing that identifies
+// either on the wire. The value is in the parameter's own units.
+//
+// This is the operation a sweep is made of. Writing a preset for each step
+// does not work: a slot given a new document goes on sounding like what it
+// held before.
+func (s *Session) Turn(
+	ctx context.Context,
+	at Address,
+	value float32,
+) error {
+	_, err := operation(ctx, s, func(f *deviceslots.Flows) (struct{}, error) {
+		return struct{}{}, f.Turn(ctx, s.editor, at, value)
+	})
+
+	return err
+}
+
+// Current reads the preset the device is playing, as the rig it describes.
+//
+// The edit buffer rather than a slot. A control moved with Turn shows here
+// and not in the slot it came from: reading the slot back answers with the
+// stored document, unchanged, which reads as though nothing happened.
+//
+// So this is how a build checks its own work. Move a control, read what the
+// device now holds, and compare that to what was asked for.
+func (s *Session) Current(
+	ctx context.Context,
+	as Format,
+) (Reading, error) {
+	return operation(ctx, s, func(f *deviceslots.Flows) (Reading, error) {
+		return f.Loaded(ctx, s.editor, as)
+	})
+}
+
+// Choose picks one of a parameter's settings, for the ones that are a list
+// rather than a range.
+//
+// A cabinet's microphone is the one that matters most: which of eight sits in
+// front of the speaker changes the sound more than any of its knobs, and it
+// is an index rather than a position on a dial.
+func (s *Session) Choose(
+	ctx context.Context,
+	at Address,
+	value int,
+) error {
+	_, err := operation(ctx, s, func(f *deviceslots.Flows) (struct{}, error) {
+		return struct{}{}, f.Choose(ctx, s.editor, at, value)
+	})
+
+	return err
+}
+
+// Switch turns one of a parameter's switches on or off.
+//
+// A device does not coerce: an amplifier's Bright wants true and refuses 1.0.
+func (s *Session) Switch(
+	ctx context.Context,
+	at Address,
+	on bool,
+) error {
+	_, err := operation(ctx, s, func(f *deviceslots.Flows) (struct{}, error) {
+		return struct{}{}, f.Switch(ctx, s.editor, at, on)
+	})
+
+	return err
+}
+
+// Play puts a preset in front of the device without storing it anywhere.
+//
+// Nothing is written. The document goes into the edit buffer and every slot
+// keeps what it holds, which is what makes it the operation for auditioning:
+// hundreds of chains can go in front of a device without a single write to
+// flash, and flash is the part that wears out and corrupts.
+func (s *Session) Play(
+	ctx context.Context,
+	file string,
+) error {
+	_, err := operation(ctx, s, func(f *deviceslots.Flows) (struct{}, error) {
+		return struct{}{}, f.Play(ctx, s.editor, file)
+	})
+
+	return err
 }
 
 // Close ends the Session and lets the device go.

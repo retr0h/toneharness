@@ -1,0 +1,19 @@
+schema: RigSpec
+version: 2
+id: in-sections
+
+instrument: bass
+
+chain:
+  - role: amp
+    gear: Ampeg SVT
+    evidence: [{ kind: llm }]
+  - role: cab
+    gear: Ampeg SVT 410HLF
+    evidence: [{ kind: llm }]
+
+sections:
+  - name: Verse
+    bypass: [cab]
+  - name: Chorus
+    play: [cab]

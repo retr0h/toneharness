@@ -34,7 +34,7 @@
 // three should know about the other two.
 package result
 
-import "github.com/retr0h/tonestack/pkg/sdk/chain"
+import "github.com/retr0h/toneharness/pkg/sdk/plan"
 
 // Listing is what a setlist holds, slot by slot.
 //
@@ -44,9 +44,9 @@ import "github.com/retr0h/tonestack/pkg/sdk/chain"
 type Listing struct {
 	// Name is what to call this: the device that answered, or the setlist's
 	// own name when it came out of a file.
-	Name string
+	Name string `json:"name"`
 	// Slots are every position, in the order the device counts them.
-	Slots []Held
+	Slots []Held `json:"slots"`
 }
 
 // Used is how many slots hold anything.
@@ -66,12 +66,12 @@ func (l Listing) Used() int {
 type Held struct {
 	// Slot is the position, from zero. The label a pedal prints is
 	// slot.Label of it, which is a rendering decision rather than data.
-	Slot int
+	Slot int `json:"slot"`
 	// Name is what the slot is called, which a device gives every slot
 	// whether or not anything is in it.
-	Name string
+	Name string `json:"name"`
 	// Blocks are the chain it holds, empty when it holds nothing.
-	Blocks []chain.Block
+	Blocks []plan.Block `json:"blocks"`
 }
 
 // Empty says whether the slot holds a chain.

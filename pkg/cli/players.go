@@ -26,8 +26,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // Players prints what each player's records earn them against the others.
@@ -134,7 +134,7 @@ func againstOf(
 // clears `mid-forward` by four tenths of a percent, and rounding that to "0%"
 // hides the one thing the column is for.
 func figure(
-	key string,
+	key audio.Figure,
 	v float64,
 ) string {
 	if key == audio.KeyCentroid {

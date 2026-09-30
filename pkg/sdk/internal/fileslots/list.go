@@ -23,8 +23,8 @@ package fileslots
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/setlist"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/setlist"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
 )
 
 // List answers with every slot in one setlist of a file.

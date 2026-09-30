@@ -23,8 +23,8 @@ package sdk
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Setlist is a .hls setlist or .hlb backup on disk, which HX Edit writes.

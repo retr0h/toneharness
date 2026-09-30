@@ -29,17 +29,17 @@ package result
 // rig is honest, and the join between them is wrong.
 type Backing struct {
 	// ID is the rig.
-	ID string
+	ID string `json:"id"`
 	// Era is the years the rig claims, as the rig states them.
-	Era string
+	Era string `json:"era"`
 	// From and To are those years as numbers. Zero when the rig states none,
 	// which is itself worth reporting: nothing can be held to an era nobody
 	// wrote down.
-	From int
-	To   int
+	From int `json:"from"`
+	To   int `json:"to"`
 	// Records are what was measured for it, in the order the manifest names
 	// them.
-	Records []Record
+	Records []Record `json:"records"`
 	// Misnamed are track names a `played.records` entry gives that no
 	// manifest has.
 	//
@@ -47,14 +47,14 @@ type Backing struct {
 	// made it, and a name matching nothing joins to nothing. It fails exactly
 	// like the directory-name join it borrows: silently, and looking like an
 	// instrument nobody has attributed yet.
-	Misnamed []string
+	Misnamed []string `json:"misnamed"`
 	// NoRig says these records sit in a directory no rig answers to.
 	//
 	// A rig is joined to its records by the directory being named for it, and
 	// a directory named anything else is silently measured by nobody. Records
 	// arriving before the rig that will use them is the ordinary reason; a
 	// typo is the other one, and it looks identical until this says so.
-	NoRig bool
+	NoRig bool `json:"no_rig"`
 	// Direct counts the chain entries whose signal never met a microphone.
 	//
 	// The second kind of wrong-era mistake. A record made in the right years
@@ -63,20 +63,20 @@ type Backing struct {
 	// cabinet. The cabinet is not wrong, since a preset with none into a PA
 	// is not the sound either, but a figure measured off that record was not
 	// shaped by it.
-	Direct int
+	Direct int `json:"direct"`
 	// Both counts the entries that went to the desk and through a microphone
 	// at once, which is a third answer rather than a hedge. Jaco Pastorius
 	// took "a little bit of both, the highs and lows".
-	Both int
+	Both int `json:"both"`
 	// Captured counts the entries that say anything at all about how they
 	// reached the tape. Zero means nobody has established it, which is not
 	// the same as miked and must not read as it.
-	Captured int
+	Captured int `json:"captured"`
 	// Stage counts the chain entries whose only evidence is a tour.
 	//
 	// A rig rundown photographs a backline and the corpus measures records.
 	// Both are honest and they are not the same rig.
-	Stage int
+	Stage int `json:"stage"`
 }
 
 // Stated says whether the rig gives years its records can be held to.
@@ -98,9 +98,9 @@ func (b Backing) Outside() int {
 // Record is one record measured for a rig.
 type Record struct {
 	// Track is what the manifest calls it.
-	Track string
+	Track string `json:"track"`
 	// Year is when it was made.
-	Year int
+	Year int `json:"year"`
 	// Outside says the year falls outside the rig's era.
-	Outside bool
+	Outside bool `json:"outside"`
 }

@@ -11,7 +11,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # lfs, because resources/dry/ holds the reference recordings the tests
+      # measure through. Without it the checkout writes 130-byte pointer files
+      # and the wav reader answers "the header names no channels".
       - uses: actions/checkout@v7
+        with:
+          lfs: true
       - name: Set up Go
         uses: actions/setup-go@v7
         with:

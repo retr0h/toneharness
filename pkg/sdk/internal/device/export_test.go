@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // Budgets are how long a session waits on each thing, exported so a test
@@ -192,11 +192,21 @@ func (s *session) Handshake(
 	return s.handshake(ctx)
 }
 
-// Drain waits until the device has nothing left to say.
+// Drain waits until the device has nothing left to say, and reports whether
+// it went quiet before the bound ran out.
 func (s *session) Drain(
 	ctx context.Context,
-) {
-	s.drain(ctx)
+) bool {
+	return s.drain(ctx)
+}
+
+// NoisyStart reports that the handshake's drain gave up with the device still
+// talking.
+func (s *session) NoisyStart() bool {
+	s.rxMu.Lock()
+	defer s.rxMu.Unlock()
+
+	return s.noisyStart
 }
 
 // Trace sends the wire trace to w, which is how both directions were read off
@@ -236,6 +246,25 @@ func (s *session) Windows() uint64 { return s.progress().windows }
 // IdlePasses is how many rounds the acknowledger has made, so a test waits
 // for it to have looked rather than for time to pass.
 func (s *session) IdlePasses() uint64 { return s.passes.Load() }
+
+// Hold marks an operation in flight and returns the way to end it, so a test
+// can see what the idle acknowledgement does inside one.
+//
+// delicate picks which: a write or a channel opening holds every channel, an
+// ordinary exchange holds only the one it waits on.
+func (s *session) Hold(
+	delicate bool,
+) func() {
+	if delicate {
+		_ = s.beginWrite()
+
+		return s.finishWrite
+	}
+
+	_ = s.begin()
+
+	return s.finish
+}
 
 // LoopDone closes once the read loop has returned.
 func (s *session) LoopDone() <-chan struct{} { return s.loopDone }
@@ -381,8 +410,12 @@ func (f *FailAfter) Write(
 // Retry runs something until it works, or until patience runs out.
 var Retry = retry
 
-// ClaimAttempts is how many times a busy interface is waited on.
-const ClaimAttempts = claimAttempts
+// ClaimPatience is how long a busy interface is waited on, and ClaimBackoff
+// how long between tries.
+const (
+	ClaimPatience = claimPatience
+	ClaimBackoff  = claimBackoff
+)
 
 // Bus, Handle, Endpoints and Buses are what finding a device runs against,
 // exported so a test can supply them.

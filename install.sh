@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 #
-# tonestack installer
-# Usage: curl -fsSL https://github.com/retr0h/tonestack/raw/main/install.sh | bash
+# toneharness installer
+# Usage: curl -fsSL https://github.com/retr0h/toneharness/raw/main/install.sh | bash
 #
 # Env overrides:
-#   TONESTACK_VERSION       install a specific version (e.g. 1.1.1) instead of latest
-#   TONESTACK_INSTALL_DIR   force install destination, skipping the default rules
+#   TONEHARNESS_VERSION       install a specific version (e.g. 1.1.1) instead of latest
+#   TONEHARNESS_INSTALL_DIR   force install destination, skipping the default rules
 
 set -euo pipefail
-APP=tonestack
-REPO=retr0h/tonestack
+APP=toneharness
+REPO=retr0h/toneharness
 
 # Mirrors the roles in internal/cli/theme.go so the installer and the
 # installed program paint with the same palette. ACCENT is the amber a tube
@@ -32,8 +32,8 @@ have() {
 # banner prints the same block letters, split the same way, as
 # cli.Banner: the top line muted, the bottom line in the accent.
 banner() {
-    printf "\n${MUTED}▀█▀ █▀█ █▄░█ █▀▀ █▀ ▀█▀ ▄▀█ █▀▀ █▄▀${NC}\n"
-    printf "${ACCENT}░█░ █▄█ █░▀█ ██▄ ▄█ ░█░ █▀█ █▄▄ █░█${NC}\n\n"
+    printf "\n${MUTED}▀█▀ █▀█ █▄░█ █▀▀ █░█ ▄▀█ █▀█ █▄░█ █▀▀ █▀ █▀${NC}\n"
+    printf "${ACCENT}░█░ █▄█ █░▀█ ██▄ █▀█ █▀█ █▀▄ █░▀█ ██▄ ▄█ ▄█${NC}\n\n"
     printf "${MUTED}describe a guitar or bass sound, get a Line 6 Helix preset${NC}\n\n"
 }
 
@@ -64,8 +64,8 @@ http_get() {
 }
 
 resolve_version() {
-    if [ -n "${TONESTACK_VERSION:-}" ]; then
-        version="${TONESTACK_VERSION#v}"
+    if [ -n "${TONEHARNESS_VERSION:-}" ]; then
+        version="${TONEHARNESS_VERSION#v}"
         return
     fi
 
@@ -87,8 +87,8 @@ path_contains() {
 }
 
 resolve_install_dir() {
-    if [ -n "${TONESTACK_INSTALL_DIR:-}" ]; then
-        install_dir="$TONESTACK_INSTALL_DIR"
+    if [ -n "${TONEHARNESS_INSTALL_DIR:-}" ]; then
+        install_dir="$TONEHARNESS_INSTALL_DIR"
         return
     fi
 
@@ -149,10 +149,10 @@ install_binary() {
 
     chmod +x "$tmp/$APP"
     mv "$tmp/$APP" "$install_dir/$APP" \
-        || err "could not write to $install_dir — set TONESTACK_INSTALL_DIR to somewhere writable"
+        || err "could not write to $install_dir — set TONEHARNESS_INSTALL_DIR to somewhere writable"
 
-    printf "\n${MUTED}▀█▀ █▀█ █▄░█ █▀▀ █▀ ▀█▀ ▄▀█ █▀▀ █▄▀${NC}   ${MUTED}installed to${NC} ${ACCENT}%s${NC}\n" "$install_dir/$APP"
-    printf "${ACCENT}░█░ █▄█ █░▀█ ██▄ ▄█ ░█░ █▀█ █▄▄ █░█${NC}   ${MUTED}version${NC} %s\n\n" "$version"
+    printf "\n${MUTED}▀█▀ █▀█ █▄░█ █▀▀ █░█ ▄▀█ █▀█ █▄░█ █▀▀ █▀ █▀${NC}   ${MUTED}installed to${NC} ${ACCENT}%s${NC}\n" "$install_dir/$APP"
+    printf "${ACCENT}░█░ █▄█ █░▀█ ██▄ █▀█ █▀█ █▀▄ █░▀█ ██▄ ▄█ ▄█${NC}   ${MUTED}version${NC} %s\n\n" "$version"
 }
 
 report_path() {
@@ -161,7 +161,7 @@ report_path() {
         printf "    export PATH=\"%s:\$PATH\"\n\n" "$install_dir"
     fi
 
-    printf "${ACCENT}  %s${NC} ${MUTED}recipes list${NC}\n" "$APP"
+    printf "${ACCENT}  %s${NC} ${MUTED}rigs list${NC}\n" "$APP"
     printf "${ACCENT}  %s${NC} ${MUTED}presets make --id mike-dirnt --out mike.hlx${NC}\n\n" "$APP"
 }
 

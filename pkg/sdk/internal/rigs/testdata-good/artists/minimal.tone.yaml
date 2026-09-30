@@ -1,0 +1,8 @@
+schema: ToneSpec
+genre: [rock]
+
+aliases: [spare, bare]
+subject:
+  kind: genre
+  name: Minimal
+confidence: high

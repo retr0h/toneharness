@@ -23,9 +23,9 @@ import (
 	"errors"
 	"math"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // knobWord is one of the words a rig sets gear with, and the controls a device
@@ -92,7 +92,7 @@ var knobWords = []knobWord{
 // alternative is a rig that says drive on a cabinet and builds anyway, which
 // is how `drive: 0.47` sat in the example rig doing nothing.
 func setKnobs(
-	params chain.Params,
+	params plan.Params,
 	blk catalog.Block,
 	set *rig.Settings,
 	field string,

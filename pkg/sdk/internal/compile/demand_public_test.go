@@ -26,11 +26,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 type DemandPublicTestSuite struct {
@@ -48,33 +48,33 @@ func (s *DemandPublicTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-// asking builds a bass rig that says something, without saying any gear
-// beyond the amplifier.
+// svt builds a bass rig naming no gear beyond the amplifier.
 //
 // The amplifier is the SVT's normal channel, which carries a MidFreq and no
 // Mid. That is the shape this whole file is about: an amp that answers most
 // questions and not this one.
-func asking(
-	terms []string,
-	attack rig.Attack,
+func svt(
 	pedals ...string,
 ) rig.Spec {
-	spec := recipe("Ampeg SVT", "", pedals...)
+	return bassRig("Ampeg SVT", "", pedals...)
+}
 
-	if len(terms) > 0 {
-		character := make([]rig.CharacterTerm, 0, len(terms))
-		for _, t := range terms {
-			character = append(character, rig.CharacterTerm{Term: t})
-		}
-
-		spec.Character = &character
+// asking is the ask beside that rig: what it should sound like, and how it is
+// played.
+//
+// The attack is a plain string here because it is one on an Intent, which is
+// what keeps this package from depending on the shape of the document the
+// words were read out of.
+func asking(
+	terms []string,
+	attack string,
+) compile.Intent {
+	words := make([]compile.Word, 0, len(terms))
+	for _, t := range terms {
+		words = append(words, compile.Word{Term: t})
 	}
 
-	if attack != "" {
-		spec.Technique = &rig.Technique{Attack: attack}
-	}
-
-	return spec
+	return compile.Intent{Words: words, Attack: attack}
 }
 
 // statistics say nothing is near-universal, so fill adds nothing and whatever
@@ -116,7 +116,7 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 		name string
 
 		terms  []string
-		attack rig.Attack
+		attack string
 		pedals []string
 		models []catalog.ModelID
 		// where the corpus puts each kind, for the cases that check which
@@ -142,7 +142,7 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 			terms:      []string{"mid-forward"},
 			models:     []catalog.ModelID{"HD2_EQTestParametric"},
 			wantIDs:    []catalog.ModelID{"HD2_EQTestParametric"},
-			wantReason: "the rig says mid-forward and nothing here had a MidGain",
+			wantReason: "the ask says mid-forward and nothing here had a MidGain",
 		},
 		{
 			// Both sides of the axis ask the same question of the same band.
@@ -173,21 +173,21 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 			terms:      []string{"envelope-swept"},
 			models:     []catalog.ModelID{"HD2_FilterTestMutant"},
 			wantIDs:    []catalog.ModelID{"HD2_FilterTestMutant"},
-			wantReason: "the rig says envelope-swept, which needs one",
+			wantReason: "the ask says envelope-swept, which needs one",
 		},
 		{
 			// How the instrument is played is the same kind of claim as a
 			// word that names a block, and arrives from a different field.
 			name:       "slap, which is not the sound without compression",
-			attack:     rig.AttackSlap,
+			attack:     "slap",
 			models:     []catalog.ModelID{"HD2_CompTestDeluxe"},
 			wantIDs:    []catalog.ModelID{"HD2_CompTestDeluxe"},
-			wantReason: "the rig says slap, which needs one",
+			wantReason: "the ask says slap, which needs one",
 		},
 		{
 			// Every rig names an attack and most name nothing this reads.
 			name:   "an attack that asks for nothing",
-			attack: rig.AttackPick,
+			attack: "pick",
 			models: []catalog.ModelID{"HD2_CompTestDeluxe"},
 		},
 		{
@@ -202,7 +202,7 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 			// word is read after the technique has seated it.
 			name:    "two claims asking for the same kind of block",
 			terms:   []string{"percussive"},
-			attack:  rig.AttackSlap,
+			attack:  "slap",
 			models:  []catalog.ModelID{"HD2_CompTestDeluxe"},
 			wantIDs: []catalog.ModelID{"HD2_CompTestDeluxe"},
 		},
@@ -271,7 +271,7 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 			}
 
 			built, added, _, err := compile.Resolve(
-				asking(tt.terms, tt.attack, tt.pedals...), s.cat, stats)
+				svt(tt.pedals...), asking(tt.terms, tt.attack), s.cat, stats)
 
 			s.Require().NoError(err)
 
@@ -307,14 +307,14 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 // Two claims of equal weight must seat the same block every run, or the same
 // rig yields a different preset for no reason anybody chose.
 func (s *DemandPublicTestSuite) TestResolveDemandIsDeterministic() {
-	spec := asking([]string{"mid-forward", "envelope-swept"}, rig.AttackSlap)
+	intent := asking([]string{"mid-forward", "envelope-swept"}, "slap")
 	stats := s.quiet(
 		nil, "HD2_EQTestParametric", "HD2_FilterTestMutant", "HD2_CompTestDeluxe")
 
 	var first []catalog.ModelID
 
 	for range 5 {
-		_, added, _, err := compile.Resolve(spec, s.cat, stats)
+		_, added, _, err := compile.Resolve(svt(), intent, s.cat, stats)
 		s.Require().NoError(err)
 
 		got := make([]catalog.ModelID, 0, len(added))
@@ -326,7 +326,7 @@ func (s *DemandPublicTestSuite) TestResolveDemandIsDeterministic() {
 			first = got
 		}
 
-		s.Require().Equal(first, got, "the same rig must demand the same way")
+		s.Require().Equal(first, got, "the same ask must demand the same way")
 	}
 
 	s.Require().Len(first, 3)
@@ -339,6 +339,7 @@ func (s *DemandPublicTestSuite) TestResolveDemandIsDeterministic() {
 // rather than on what was added.
 func (s *DemandPublicTestSuite) TestResolveDemandLandsTheWord() {
 	_, _, moved, err := compile.Resolve(
+		svt(),
 		asking([]string{"mid-forward"}, ""),
 		s.cat,
 		s.quiet(nil, "HD2_EQTestParametric"),
@@ -378,6 +379,7 @@ func (s *DemandPublicTestSuite) TestResolveDemandNamesTheBlock() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			_, _, moved, err := compile.Resolve(
+				svt(),
 				asking([]string{"envelope-swept"}, ""),
 				s.cat,
 				s.quiet(nil, tt.models...),
@@ -393,7 +395,7 @@ func (s *DemandPublicTestSuite) TestResolveDemandNamesTheBlock() {
 
 // categoryAt returns the category of the block at a position.
 func (s *DemandPublicTestSuite) categoryAt(
-	built chain.Chain,
+	built plan.Plan,
 	i int,
 ) catalog.Category {
 	b, ok := s.cat.Block(built.Blocks[i].Model)

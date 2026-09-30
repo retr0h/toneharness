@@ -25,10 +25,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 type MoveTestSuite struct {
@@ -65,17 +65,17 @@ func (s *MoveTestSuite) blocks() []catalog.Block {
 }
 
 // built is where the corpus and the catalog left every block, before a word.
-func (s *MoveTestSuite) built() chain.Chain {
-	return chain.Chain{Blocks: []chain.Block{
-		{Model: "HD2_CompTest", Params: chain.Params{"Attack": catalog.Float(0.5)}},
+func (s *MoveTestSuite) built() plan.Plan {
+	return plan.Plan{Blocks: []plan.Block{
+		{Model: "HD2_CompTest", Params: plan.Params{"Attack": catalog.Float(0.5)}},
 		{Model: "HD2_AmpTestBass", Params: s.params()},
-		{Model: "HD2_ReverbTest", Params: chain.Params{"Mix": catalog.Float(0.5)}},
+		{Model: "HD2_ReverbTest", Params: plan.Params{"Mix": catalog.Float(0.5)}},
 	}}
 }
 
 // paramOf reads one control off whichever block holds it.
 func (s *MoveTestSuite) paramOf(
-	built chain.Chain,
+	built plan.Plan,
 	key string,
 ) float64 {
 	for _, b := range built.Blocks {
@@ -90,8 +90,8 @@ func (s *MoveTestSuite) paramOf(
 }
 
 // params is where the corpus and the catalog left things, before any word.
-func (s *MoveTestSuite) params() chain.Params {
-	return chain.Params{
+func (s *MoveTestSuite) params() plan.Params {
+	return plan.Params{
 		"Mid":    catalog.Float(0.5),
 		"Treble": catalog.Float(0.5),
 		"Drive":  catalog.Float(0.5),
@@ -179,370 +179,450 @@ func (s *MoveTestSuite) spread(
 	}
 }
 
-// TestMove covers what a word does to a knob.
+// TestMove covers move, which applies an ask's words to whichever blocks
+// answer for them.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *MoveTestSuite) TestMove() {
-	tests := []struct {
-		name  string
-		terms []string
-		// the parameter that must have moved, and where to.
-		param string
-		want  float64
-		// the term must be recorded as having moved nothing.
-		inert     bool
-		contested string
-	}{
-		{
-			// The corpus says players disagree about Mid by 0.08, so one
-			// step is 0.08.
-			name:  "a pair term moves by what players disagree about",
-			terms: []string{"mid-forward"},
-			param: "Mid", want: 0.58,
-		},
-		{
-			name:  "and the other way for the other half of the pair",
-			terms: []string{"scooped"},
-			param: "Mid", want: 0.42,
-		},
-		{
-			// Nobody measured Treble, so the step is a tenth of the range.
-			name:  "a parameter the corpus cannot measure falls back to the range",
-			terms: []string{"bright"},
-			param: "Treble", want: 0.6,
-		},
-		{
-			// clean, minimal-drive, grit-on-attack, saturated are four
-			// points on one line, so each carries its own multiple.
-			name:  "a scale term moves its own share of a step",
-			terms: []string{"minimal-drive"},
-			param: "Drive", want: 0.45,
-		},
-		{
-			name:  "and the far end of the same scale moves a whole one",
-			terms: []string{"saturated"},
-			param: "Drive", want: 0.6,
-		},
-		{
-			// The Pilot's Guide: lower values offer tighter responsiveness.
-			name:  "sag, which the guide had to explain",
-			terms: []string{"tight-low-end"},
-			param: "Sag", want: 0.4,
-		},
-		{
-			// Two answers to one question. Applying both would land back
-			// where it started and read as though the rig said nothing.
-			name:      "two words from one axis move nothing",
-			terms:     []string{"minimal-drive", "grit-on-attack"},
-			param:     "Drive",
-			want:      0.5,
-			contested: "drive",
-		},
-		{
-			name:  "a word on an axis no amplifier control answers to",
-			terms: []string{"glassy"},
-			param: "Treble", want: 0.6,
-		},
-		{
-			// The reverb's question, not the amplifier's.
-			name:  "room around the part",
-			terms: []string{"roomy"},
-			param: "Mix", want: 0.6,
-		},
-		{
-			name:  "none on it",
-			terms: []string{"dry"},
-			param: "Mix", want: 0.4,
-		},
-		{
-			// A compressor's attack decides how much of the front of a note
-			// gets past it. Slow lets the pick through; fast clamps it.
-			name:  "the pick as a sound of its own",
-			terms: []string{"percussive"},
-			param: "Attack", want: 0.6,
-		},
-		{
-			name:  "notes that arrive rather than start",
-			terms: []string{"soft-attack"},
-			param: "Attack", want: 0.4,
-		},
-		{
-			name:  "a word the vocabulary does not carry at all",
-			terms: []string{"sounds like a wet paper bag"},
-			inert: true,
-		},
-		{
-			// Its own words say the hands and the strings do this, and the
-			// rig has three plausible controls for it and no way to choose.
-			name:  "an axis nothing acts on yet",
-			terms: []string{"short-decay"},
-			inert: true,
-		},
-		{
-			// What the hands make is not something a knob answers for.
-			name:  "an axis about the player rather than the rig",
-			terms: []string{"audible-strings"},
-			inert: true,
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			built := s.built()
-
-			got := move(s.blocks(), built, said(tt.terms...), s.stats())
-
-			s.Require().Len(got, len(tt.terms))
-
-			if tt.inert {
-				s.Require().False(got[0].Acted())
-				s.Require().False(got[0].Contested())
-				// This chain answers every axis that acts, so silence here
-				// is the project's and not the rig's.
-				s.Require().False(got[0].Unanswered())
-				s.Require().False(got[0].Holds())
-
-				return
-			}
-
-			if tt.contested != "" {
-				for _, m := range got {
-					s.Require().True(m.Contested())
-					s.Require().Equal(tt.contested, m.Against)
-					s.Require().False(m.Acted())
-				}
-			}
-
-			s.Require().InDelta(tt.want, s.paramOf(built, tt.param), 1e-9)
-		})
-	}
-}
-
-// TestMoveClampsToWhatTheDeviceAccepts covers a word asking for more than
-// there is.
-//
-// A term is an opinion about direction, not a promise that the range is deep
-// enough to hold it.
-func (s *MoveTestSuite) TestMoveClampsToWhatTheDeviceAccepts() {
-	tests := []struct {
+	for _, tt := range []struct {
 		name string
-		at   float64
-		term string
-		want float64
-	}{
-		{name: "already at the top", at: 1, term: "saturated", want: 1},
-		{name: "already at the bottom", at: 0, term: "clean", want: 0},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			built := chain.Chain{Blocks: []chain.Block{
-				{Model: "HD2_AmpTestBass", Params: chain.Params{
-					"Drive": catalog.Float(tt.at),
-				}},
-			}}
-
-			got := move([]catalog.Block{s.amp()}, built, said(tt.term), s.stats())
-
-			s.Require().True(got[0].Acted())
-			s.Require().InDelta(tt.want, s.paramOf(built, "Drive"), 1e-9)
-		})
-	}
-}
-
-// TestMoveSkipsWhatTheBlockDoesNotHave covers an amplifier that models no sag.
-//
-// The word is answerable and this amplifier cannot answer it, which is worth
-// saying out loud rather than passing over.
-func (s *MoveTestSuite) TestMoveSkipsWhatTheBlockDoesNotHave() {
-	b := catalog.Block{
-		ID: "HD2_Plain", Name: "Plain Amp", Category: catalog.CategoryAmp,
-		Params: map[string]catalog.Param{
-			"Mid": {Type: catalog.ParamFloat, Min: 0, Max: 1},
-		},
-	}
-
-	built := chain.Chain{Blocks: []chain.Block{
-		{Model: "HD2_Plain", Params: chain.Params{"Mid": catalog.Float(0.5)}},
-	}}
-
-	got := move([]catalog.Block{b}, built, said("tight-low-end"), nil)
-
-	s.Require().Len(got, 1)
-	s.Require().False(got[0].Acted())
-	s.Require().True(got[0].Unanswered())
-	s.Require().Equal("the Plain Amp has no Sag", got[0].Because)
-}
-
-// TestMoveWhenTheChainIsAlreadyWhatTheWordAsked covers asking for what you
-// already have.
-//
-// Mix at zero and no reverb at all are the same signal. A rig asking to stay
-// dry, in a chain holding no reverb, got what it asked for, and saying the
-// chain could not answer would be backwards.
-func (s *MoveTestSuite) TestMoveWhenTheChainIsAlreadyWhatTheWordAsked() {
-	built := chain.Chain{Blocks: []chain.Block{
-		{Model: "HD2_AmpTestBass", Params: s.params()},
-	}}
-
-	got := move([]catalog.Block{s.amp()}, built, said("dry"), s.stats())
-
-	s.Require().Len(got, 1)
-	s.Require().True(got[0].Holds())
-	s.Require().False(got[0].Acted())
-	s.Require().False(got[0].Unanswered())
-	s.Require().Equal("this chain has no reverb, so it is already dry", got[0].Already)
-}
-
-// TestMoveTurnsTheReverbThatIsThere covers the same word with somewhere to go.
-//
-// Absence answers dry; a reverb in the chain does not, and the word has to
-// reach for the knob.
-func (s *MoveTestSuite) TestMoveTurnsTheReverbThatIsThere() {
-	built := s.built()
-
-	got := move(s.blocks(), built, said("dry"), s.stats())
-
-	s.Require().Len(got, 1)
-	s.Require().False(got[0].Holds())
-	s.Require().True(got[0].Acted())
-	s.Require().Less(s.paramOf(built, "Mix"), 0.5)
-}
-
-// TestMoveWithoutTheBlockTheWordNeeds covers a word with nowhere to land.
-//
-// A rig asking for room in a chain holding no reverb is not a word nobody has
-// taught the project: it is a chain that cannot answer.
-func (s *MoveTestSuite) TestMoveWithoutTheBlockTheWordNeeds() {
-	built := chain.Chain{Blocks: []chain.Block{
-		{Model: "HD2_AmpTestBass", Params: s.params()},
-	}}
-
-	got := move([]catalog.Block{s.amp()}, built, said("roomy"), s.stats())
-
-	s.Require().Len(got, 1)
-	s.Require().False(got[0].Acted())
-	s.Require().True(got[0].Unanswered())
-	s.Require().Equal("this chain holds no reverb", got[0].Because)
-}
-
-// TestMoveWithoutStatistics covers a build with no corpus to lean on.
-func (s *MoveTestSuite) TestMoveWithoutStatistics() {
-	built := s.built()
-
-	got := move(s.blocks(), built, said("mid-forward"), nil)
-
-	s.Require().True(got[0].Acted())
-
-	// A tenth of the range, since nothing measured this.
-	s.Require().InDelta(0.6, s.paramOf(built, "Mid"), 1e-9)
-}
-
-// TestMoveSkipsAValueItCannotDo covers a control a word cannot turn.
-//
-// A switch has no middle, so a term asking for more of it is asking for
-// something the device would refuse.
-func (s *MoveTestSuite) TestMoveSkipsAValueItCannotDo() {
-	b := catalog.Block{
-		ID: "HD2_Switched", Category: catalog.CategoryAmp,
-		Params: map[string]catalog.Param{
-			"Mid": {Type: catalog.ParamBool},
-		},
-	}
-
-	built := chain.Chain{Blocks: []chain.Block{
-		{Model: "HD2_Switched", Params: chain.Params{"Mid": catalog.Bool(true)}},
-	}}
-
-	got := move([]catalog.Block{b}, built, said("mid-forward"), nil)
-
-	s.Require().Len(got, 1)
-	s.Require().False(got[0].Acted())
-}
-
-// TestAWordFindsAControlTheAmplifierDoesNotHave covers the equaliser
-// answering a question the amplifier cannot.
-//
-// Two of the rigs here earn `mid-forward` from their own records and name an
-// amplifier with no mid control: an Ampeg B-15NF and an Acoustic 360. The
-// word reached nothing on either. An equaliser in the chain has the same band
-// under another name, and it is in the chain because somebody put it there.
-func (s *MoveTestSuite) TestAWordFindsAControlTheAmplifierDoesNotHave() {
-	// An amplifier with a bass and a treble knob and nothing between them,
-	// which is what those two amps are.
-	twoKnob := catalog.Block{
-		ID: "HD2_AmpTwoKnob", Category: catalog.CategoryAmp,
-		Params: map[string]catalog.Param{"Bass": knob, "Treble": knob},
-	}
-	eq := catalog.Block{
-		ID: "HD2_EQTest", Category: catalog.CategoryEQ,
-		Params: map[string]catalog.Param{"MidGain": knob, "HighGain": knob},
-	}
-
-	tests := []struct {
-		name   string
-		blocks []catalog.Block
-		params []chain.Params
-		want   string
-		acted  bool
+		then func()
 	}{
 		{
-			// The amplifier is the voice, so it answers first even with an
-			// equaliser standing right there.
-			name:   "an amplifier that has the control",
-			blocks: []catalog.Block{s.amp(), eq},
-			params: []chain.Params{s.params(), {"MidGain": catalog.Float(0)}},
-			want:   "Mid",
-			acted:  true,
-		},
-		{
-			name:   "an amplifier that does not, beside an equaliser that does",
-			blocks: []catalog.Block{twoKnob, eq},
-			params: []chain.Params{
-				{"Bass": catalog.Float(0.5), "Treble": catalog.Float(0.5)},
-				{"MidGain": catalog.Float(0)},
+			// Move, which applies an ask's words to whichever blocks answer
+			// for them.
+			//
+			// One method and one table, so a case is a row rather than a
+			// file.
+			name: "move",
+			then: func() {
+				for _, tt := range []struct {
+					name string
+					then func()
+				}{
+					{
+						// What a word does to a knob.
+						name: "move",
+						then: func() {
+							tests := []struct {
+								name  string
+								terms []string
+								// the parameter that must have moved, and where to.
+								param string
+								want  float64
+								// the term must be recorded as having moved nothing.
+								inert     bool
+								contested string
+							}{
+								{
+									// The corpus says players disagree about Mid by 0.08, so one
+									// step is 0.08.
+									name:  "a pair term moves by what players disagree about",
+									terms: []string{"mid-forward"},
+									param: "Mid", want: 0.58,
+								},
+								{
+									name:  "and the other way for the other half of the pair",
+									terms: []string{"scooped"},
+									param: "Mid", want: 0.42,
+								},
+								{
+									// Nobody measured Treble, so the step is a tenth of the range.
+									name:  "a parameter the corpus cannot measure falls back to the range",
+									terms: []string{"bright"},
+									param: "Treble", want: 0.6,
+								},
+								{
+									// clean, minimal-drive, grit-on-attack, saturated are four
+									// points on one line, so each carries its own multiple.
+									name:  "a scale term moves its own share of a step",
+									terms: []string{"minimal-drive"},
+									param: "Drive", want: 0.45,
+								},
+								{
+									name:  "and the far end of the same scale moves a whole one",
+									terms: []string{"saturated"},
+									param: "Drive", want: 0.6,
+								},
+								{
+									// The Pilot's Guide: lower values offer tighter responsiveness.
+									name:  "sag, which the guide had to explain",
+									terms: []string{"tight-low-end"},
+									param: "Sag", want: 0.4,
+								},
+								{
+									// Two answers to one question. Applying both would land back
+									// where it started and read as though the rig said nothing.
+									name:      "two words from one axis move nothing",
+									terms:     []string{"minimal-drive", "grit-on-attack"},
+									param:     "Drive",
+									want:      0.5,
+									contested: "drive",
+								},
+								{
+									name:  "a word on an axis no amplifier control answers to",
+									terms: []string{"glassy"},
+									param: "Treble", want: 0.6,
+								},
+								{
+									// The reverb's question, not the amplifier's.
+									name:  "room around the part",
+									terms: []string{"roomy"},
+									param: "Mix", want: 0.6,
+								},
+								{
+									name:  "none on it",
+									terms: []string{"dry"},
+									param: "Mix", want: 0.4,
+								},
+								{
+									// A compressor's attack decides how much of the front of a note
+									// gets past it. Slow lets the pick through; fast clamps it.
+									name:  "the pick as a sound of its own",
+									terms: []string{"percussive"},
+									param: "Attack", want: 0.6,
+								},
+								{
+									name:  "notes that arrive rather than start",
+									terms: []string{"soft-attack"},
+									param: "Attack", want: 0.4,
+								},
+								{
+									name:  "a word the vocabulary does not carry at all",
+									terms: []string{"sounds like a wet paper bag"},
+									inert: true,
+								},
+								{
+									// Its own words say the hands and the strings do this, and the
+									// rig has three plausible controls for it and no way to choose.
+									name:  "an axis nothing acts on yet",
+									terms: []string{"short-decay"},
+									inert: true,
+								},
+								{
+									// What the hands make is not something a knob answers for.
+									name:  "an axis about the player rather than the rig",
+									terms: []string{"audible-strings"},
+									inert: true,
+								},
+							}
+
+							for _, tt := range tests {
+								s.Run(tt.name, func() {
+									built := s.built()
+
+									got := move(s.blocks(), built, said(tt.terms...), s.stats())
+
+									s.Require().Len(got, len(tt.terms))
+
+									if tt.inert {
+										s.Require().False(got[0].Acted())
+										s.Require().False(got[0].Contested())
+										// This chain answers every axis that acts, so silence here
+										// is the project's and not the rig's.
+										s.Require().False(got[0].Unanswered())
+										s.Require().False(got[0].Holds())
+
+										return
+									}
+
+									if tt.contested != "" {
+										for _, m := range got {
+											s.Require().True(m.Contested())
+											s.Require().Equal(tt.contested, m.Against)
+											s.Require().False(m.Acted())
+										}
+									}
+
+									s.Require().InDelta(tt.want, s.paramOf(built, tt.param), 1e-9)
+								})
+							}
+						},
+					},
+					{
+						// A word asking for more than there is.
+						//
+						// A term is an opinion about direction, not a promise that the
+						// range is deep enough to hold it.
+						name: "move clamps to what the device accepts",
+						then: func() {
+							tests := []struct {
+								name string
+								at   float64
+								term string
+								want float64
+							}{
+								{name: "already at the top", at: 1, term: "saturated", want: 1},
+								{name: "already at the bottom", at: 0, term: "clean", want: 0},
+							}
+
+							for _, tt := range tests {
+								s.Run(tt.name, func() {
+									built := plan.Plan{Blocks: []plan.Block{
+										{Model: "HD2_AmpTestBass", Params: plan.Params{
+											"Drive": catalog.Float(tt.at),
+										}},
+									}}
+
+									got := move([]catalog.Block{s.amp()}, built, said(tt.term), s.stats())
+
+									s.Require().True(got[0].Acted())
+									s.Require().InDelta(tt.want, s.paramOf(built, "Drive"), 1e-9)
+								})
+							}
+						},
+					},
+					{
+						// An amplifier that models no sag.
+						//
+						// The word is answerable and this amplifier cannot answer it,
+						// which is worth saying out loud rather than passing over.
+						name: "move skips what the block does not have",
+						then: func() {
+							b := catalog.Block{
+								ID: "HD2_Plain", Name: "Plain Amp", Category: catalog.CategoryAmp,
+								Params: map[string]catalog.Param{
+									"Mid": {Type: catalog.ParamFloat, Min: 0, Max: 1},
+								},
+							}
+
+							built := plan.Plan{Blocks: []plan.Block{
+								{Model: "HD2_Plain", Params: plan.Params{"Mid": catalog.Float(0.5)}},
+							}}
+
+							got := move([]catalog.Block{b}, built, said("tight-low-end"), nil)
+
+							s.Require().Len(got, 1)
+							s.Require().False(got[0].Acted())
+							s.Require().True(got[0].Unanswered())
+							s.Require().Equal("the Plain Amp has no Sag", got[0].Because)
+						},
+					},
+					{
+						// Asking for what you already have.
+						//
+						// Mix at zero and no reverb at all are the same signal. A rig
+						// asking to stay dry, in a chain holding no reverb, got what it
+						// asked for, and saying the chain could not answer would be
+						// backwards.
+						name: "move when the chain is already what the word asked",
+						then: func() {
+							built := plan.Plan{Blocks: []plan.Block{
+								{Model: "HD2_AmpTestBass", Params: s.params()},
+							}}
+
+							got := move([]catalog.Block{s.amp()}, built, said("dry"), s.stats())
+
+							s.Require().Len(got, 1)
+							s.Require().True(got[0].Holds())
+							s.Require().False(got[0].Acted())
+							s.Require().False(got[0].Unanswered())
+							s.Require().Equal("this chain has no reverb, so it is already dry", got[0].Already)
+						},
+					},
+					{
+						// The same word with somewhere to go.
+						//
+						// Absence answers dry; a reverb in the chain does not, and the
+						// word has to reach for the knob.
+						name: "move turns the reverb that is there",
+						then: func() {
+							built := s.built()
+
+							got := move(s.blocks(), built, said("dry"), s.stats())
+
+							s.Require().Len(got, 1)
+							s.Require().False(got[0].Holds())
+							s.Require().True(got[0].Acted())
+							s.Require().Less(s.paramOf(built, "Mix"), 0.5)
+						},
+					},
+					{
+						// A word with nowhere to land.
+						//
+						// A rig asking for room in a chain holding no reverb is not a
+						// word nobody has taught the project: it is a chain that cannot
+						// answer.
+						name: "move without the block the word needs",
+						then: func() {
+							built := plan.Plan{Blocks: []plan.Block{
+								{Model: "HD2_AmpTestBass", Params: s.params()},
+							}}
+
+							got := move([]catalog.Block{s.amp()}, built, said("roomy"), s.stats())
+
+							s.Require().Len(got, 1)
+							s.Require().False(got[0].Acted())
+							s.Require().True(got[0].Unanswered())
+							s.Require().Equal("this chain holds no reverb", got[0].Because)
+						},
+					},
+					{
+						// A build with no corpus to lean on.
+						name: "move without statistics",
+						then: func() {
+							built := s.built()
+
+							got := move(s.blocks(), built, said("mid-forward"), nil)
+
+							s.Require().True(got[0].Acted())
+
+							// A tenth of the range, since nothing measured this.
+							s.Require().InDelta(0.6, s.paramOf(built, "Mid"), 1e-9)
+						},
+					},
+					{
+						// A control a word cannot turn.
+						//
+						// A switch has no middle, so a term asking for more of it is
+						// asking for something the device would refuse.
+						name: "move skips a value it cannot do",
+						then: func() {
+							b := catalog.Block{
+								ID: "HD2_Switched", Category: catalog.CategoryAmp,
+								Params: map[string]catalog.Param{
+									"Mid": {Type: catalog.ParamBool},
+								},
+							}
+
+							built := plan.Plan{Blocks: []plan.Block{
+								{Model: "HD2_Switched", Params: plan.Params{"Mid": catalog.Bool(true)}},
+							}}
+
+							got := move([]catalog.Block{b}, built, said("mid-forward"), nil)
+
+							s.Require().Len(got, 1)
+							s.Require().False(got[0].Acted())
+						},
+					},
+					{
+						// The point of weighing a term: the same word, on the same chain,
+						// moves further when the gap that earned it is wider.
+						name: "a measured word moves less than an asserted one",
+						then: func() {
+							asserted := s.built()
+							measured := s.built()
+
+							s.Require().NotEmpty(move(s.blocks(), asserted, said("clean"), nil))
+							s.Require().NotEmpty(move(s.blocks(), measured,
+								[]heard{{term: "clean", weight: 0.5}}, nil))
+
+							was, _ := s.built().Blocks[1].Params["Drive"].Float()
+							full, _ := asserted.Blocks[1].Params["Drive"].Float()
+							half, _ := measured.Blocks[1].Params["Drive"].Float()
+
+							s.Require().Less(full, half, "half a step lands nearer where it started")
+							s.Require().Less(half, was, "and still moves the control the way the word says")
+							s.Require().InDelta(was-half, (was-full)/2, 1e-9,
+								"half the weight is half the distance")
+						},
+					},
+				} {
+					s.Run(tt.name, func() {
+						tt.then()
+					})
+				}
 			},
-			want:  "MidGain",
-			acted: true,
 		},
 		{
-			// Nothing in the chain has the band, and saying which block was
-			// asked is what tells somebody why.
-			name:   "neither",
-			blocks: []catalog.Block{twoKnob},
-			params: []chain.Params{{"Bass": catalog.Float(0.5), "Treble": catalog.Float(0.5)}},
-			want:   "has no Mid",
+			// The equaliser answering a question the amplifier cannot.
+			//
+			// Two of the rigs here earn `mid-forward` from their own records
+			// and name an amplifier with no mid control: an Ampeg B-15NF and
+			// an Acoustic 360. The word reached nothing on either. An
+			// equaliser in the chain has the same band under another name,
+			// and it is in the chain because somebody put it there.
+			name: "a word finds a control the amplifier does not have",
+			then: func() {
+				// An amplifier with a bass and a treble knob and nothing between them,
+				// which is what those two amps are.
+				twoKnob := catalog.Block{
+					ID: "HD2_AmpTwoKnob", Category: catalog.CategoryAmp,
+					Params: map[string]catalog.Param{"Bass": knob, "Treble": knob},
+				}
+				eq := catalog.Block{
+					ID: "HD2_EQTest", Category: catalog.CategoryEQ,
+					Params: map[string]catalog.Param{"MidGain": knob, "HighGain": knob},
+				}
+
+				tests := []struct {
+					name   string
+					blocks []catalog.Block
+					params []plan.Params
+					want   string
+					acted  bool
+				}{
+					{
+						// The amplifier is the voice, so it answers first even with an
+						// equaliser standing right there.
+						name:   "an amplifier that has the control",
+						blocks: []catalog.Block{s.amp(), eq},
+						params: []plan.Params{s.params(), {"MidGain": catalog.Float(0)}},
+						want:   "Mid",
+						acted:  true,
+					},
+					{
+						name:   "an amplifier that does not, beside an equaliser that does",
+						blocks: []catalog.Block{twoKnob, eq},
+						params: []plan.Params{
+							{"Bass": catalog.Float(0.5), "Treble": catalog.Float(0.5)},
+							{"MidGain": catalog.Float(0)},
+						},
+						want:  "MidGain",
+						acted: true,
+					},
+					{
+						// Nothing in the chain has the band, and saying which block was
+						// asked is what tells somebody why.
+						name:   "neither",
+						blocks: []catalog.Block{twoKnob},
+						params: []plan.Params{{"Bass": catalog.Float(0.5), "Treble": catalog.Float(0.5)}},
+						want:   "has no Mid",
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						built := plan.Plan{}
+						for i, b := range tt.blocks {
+							built.Blocks = append(built.Blocks,
+								plan.Block{Model: b.ID, Params: tt.params[i]})
+						}
+
+						got := move(tt.blocks, built, said("mid-forward"), nil)
+						s.Require().Len(got, 1)
+
+						if !tt.acted {
+							s.Require().False(got[0].Acted())
+							s.Require().Contains(got[0].Because, tt.want)
+
+							return
+						}
+
+						s.Require().Equal(tt.want, got[0].Param)
+						s.Require().Greater(got[0].To, got[0].From, "mid-forward raises it")
+					})
+				}
+			},
 		},
-	}
-
-	for _, tt := range tests {
+	} {
 		s.Run(tt.name, func() {
-			built := chain.Chain{}
-			for i, b := range tt.blocks {
-				built.Blocks = append(built.Blocks,
-					chain.Block{Model: b.ID, Params: tt.params[i]})
-			}
-
-			got := move(tt.blocks, built, said("mid-forward"), nil)
-			s.Require().Len(got, 1)
-
-			if !tt.acted {
-				s.Require().False(got[0].Acted())
-				s.Require().Contains(got[0].Because, tt.want)
-
-				return
-			}
-
-			s.Require().Equal(tt.want, got[0].Param)
-			s.Require().Greater(got[0].To, got[0].From, "mid-forward raises it")
+			tt.then()
 		})
 	}
 }
 
-// TestTermsOf covers reading the words a rig described itself with, and how
+// TestTermsOf covers reading the words the ask described a sound with, and how
 // much of a step each one is worth.
+//
+// The order is checked as much as the contents. Two words on one axis cancel,
+// and the report names them as the ask wrote them, which is no help if this
+// reordered them first.
 func (s *MoveTestSuite) TestTermsOf() {
-	figures := func(mine, theirs float64, key string) *[]rig.Evidence {
-		return &[]rig.Evidence{{
-			Kind:     rig.EvidenceAudio,
+	figures := func(mine, theirs float64, key string) []tone.Evidence {
+		return []tone.Evidence{{
+			// A measurement taken off a record, which is what carries figures.
+			Kind:     tone.EvidenceKind("audio"),
 			Measured: &map[string]float64{key: mine},
 			Against:  &map[string]float64{key: theirs},
 		}}
@@ -550,15 +630,15 @@ func (s *MoveTestSuite) TestTermsOf() {
 
 	tests := []struct {
 		name string
-		in   *[]rig.CharacterTerm
+		in   []Word
 		want []heard
 	}{
-		{name: "a rig that said nothing about how it sounds"},
+		{name: "an ask that said nothing about how it sounds"},
 		{
 			// Nobody measured these, so each is worth the whole step, which
 			// is what every rig did before any of this could be weighed.
 			name: "the words, in the order they were written",
-			in: &[]rig.CharacterTerm{
+			in: []Word{
 				{Term: "mid-forward"}, {Term: "saturated"},
 			},
 			want: []heard{
@@ -569,7 +649,7 @@ func (s *MoveTestSuite) TestTermsOf() {
 			// Half the harmonics of everybody else is half a step. The word
 			// says which way; the gap says how far.
 			name: "a word with the gap that earned it",
-			in: &[]rig.CharacterTerm{
+			in: []Word{
 				{Term: "clean", Evidence: figures(0.12, 0.24, "harmonics")},
 			},
 			want: []heard{{term: "clean", weight: 0.5}},
@@ -578,14 +658,14 @@ func (s *MoveTestSuite) TestTermsOf() {
 			// A gap wider than what the others read is still one word, and
 			// one word does not decide the whole of a control.
 			name: "a gap wider than the others' own figure",
-			in: &[]rig.CharacterTerm{
+			in: []Word{
 				{Term: "mid-forward", Evidence: figures(0.09, 0.02, "mid")},
 			},
 			want: []heard{{term: "mid-forward", weight: 1}},
 		},
 		{
 			name: "a centroid, which the highs are earned from",
-			in: &[]rig.CharacterTerm{
+			in: []Word{
 				{Term: "dark", Evidence: figures(96, 170, "centroid")},
 			},
 			want: []heard{{term: "dark", weight: 0.43529411764705883}},
@@ -594,14 +674,16 @@ func (s *MoveTestSuite) TestTermsOf() {
 			// Every way the figures can fail to say anything, each of which
 			// leaves the word worth its whole step rather than nothing.
 			name: "figures that do not weigh the word",
-			in: &[]rig.CharacterTerm{
+			in: []Word{
 				// An axis no measurement speaks to.
 				{Term: "quiet-strings", Evidence: figures(0.1, 0.2, "harmonics")},
 				// A word the vocabulary does not carry.
 				{Term: "chewy", Evidence: figures(0.1, 0.2, "harmonics")},
 				// One side of the comparison missing.
-				{Term: "clean", Evidence: &[]rig.Evidence{{
-					Kind: rig.EvidenceAudio, Measured: &map[string]float64{"harmonics": 0.12},
+				{Term: "clean", Evidence: []tone.Evidence{{
+					Kind: tone.EvidenceKind(
+						"audio",
+					), Measured: &map[string]float64{"harmonics": 0.12},
 				}}},
 				// The wrong measure for this axis.
 				{Term: "bright", Evidence: figures(0.12, 0.24, "harmonics")},
@@ -623,32 +705,11 @@ func (s *MoveTestSuite) TestTermsOf() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got := termsOf(rig.Spec{Character: tt.in})
+			got := termsOf(tt.in)
 
 			s.Require().Equal(tt.want, got)
 		})
 	}
-}
-
-// TestAMeasuredWordMovesLessThanAnAssertedOne is the point of weighing a
-// term: the same word, on the same chain, moves further when the gap that
-// earned it is wider.
-func (s *MoveTestSuite) TestAMeasuredWordMovesLessThanAnAssertedOne() {
-	asserted := s.built()
-	measured := s.built()
-
-	s.Require().NotEmpty(move(s.blocks(), asserted, said("clean"), nil))
-	s.Require().NotEmpty(move(s.blocks(), measured,
-		[]heard{{term: "clean", weight: 0.5}}, nil))
-
-	was, _ := s.built().Blocks[1].Params["Drive"].Float()
-	full, _ := asserted.Blocks[1].Params["Drive"].Float()
-	half, _ := measured.Blocks[1].Params["Drive"].Float()
-
-	s.Require().Less(full, half, "half a step lands nearer where it started")
-	s.Require().Less(half, was, "and still moves the control the way the word says")
-	s.Require().InDelta(was-half, (was-full)/2, 1e-9,
-		"half the weight is half the distance")
 }
 
 func TestMoveTestSuite(

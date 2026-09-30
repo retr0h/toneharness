@@ -24,16 +24,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // MakeOptions says what to build and where to put it.
@@ -41,10 +42,11 @@ type MakeOptions struct {
 	// Deps are the collaborators this command works through.
 	Deps
 
-	// RecipeID names the curated knowledge to build from.
-	RecipeID string
-	// Rigs is where recipes live. The zero value is the rigs that ship.
-	Rigs recipes.Source
+	// RigID names the curated knowledge to build from.
+	RigID string
+	// Source is where rigs are read from. The zero value is the rigs that
+	// ship.
+	Source rigs.Source
 	// StatsPath is measured corpus statistics. Empty means the ones built
 	// into this binary.
 	StatsPath string
@@ -55,7 +57,7 @@ type MakeOptions struct {
 	Existing result.Existing
 }
 
-// Make builds a preset from a recipe and writes it, reporting what it chose.
+// Make builds a preset from a rig and writes it, reporting what it chose.
 //
 // Reporting the chain matters as much as writing the file. A generated preset
 // is a set of decisions, and a wrong amp should be visible before anyone plugs
@@ -68,10 +70,12 @@ func Make(
 		return result.Made{}, err
 	}
 
-	rec, err := opts.recipes().Find(opts.Rigs, opts.RecipeID)
+	known, err := opts.rigs().Find(opts.Source, opts.RigID)
 	if err != nil {
 		return result.Made{}, err
 	}
+
+	rec, intent := known.Rig, intentOf(known.Ask)
 
 	cat, err := opts.catalog(ctx)
 	if err != nil {
@@ -82,12 +86,12 @@ func Make(
 	// requirement, but somebody who named a file asked for those ones.
 	// Building without them would hand back a more generic preset than the
 	// one asked for, and say nothing about it.
-	stats, err := openStats(opts.StatsPath)
+	stats, err := corpus.Open(opts.StatsPath)
 	if err != nil {
 		return result.Made{}, err
 	}
 
-	spec, added, moved, err := opts.compiler().Resolve(rec, cat, stats)
+	spec, added, moved, err := opts.compiler().Resolve(rec, intent, cat, stats)
 	if err != nil {
 		return result.Made{}, err
 	}
@@ -95,70 +99,56 @@ func Make(
 	// The device the catalog describes, not whichever one this was written
 	// against: an HX Stomp holds eight blocks on one path and a Helix Floor
 	// holds 29 across two.
-	limits := chain.LimitsFor(cat.Device)
+	limits := plan.LimitsFor(cat.Device)
 
 	// Kept, because the fit renumbers: a rig names the block its pedal moves
 	// by where that block sits in the chain the rig wrote, and after the fit
 	// that number means something else.
-	before := append([]chain.Block(nil), spec.Blocks...)
+	before := append([]plan.Block(nil), spec.Blocks...)
 
 	spec = opts.compiler().Fit(spec, cat, limits)
-	rec = compile.Refit(rec, before, spec.Blocks)
 
-	if err := chain.Validate(cat, spec, limits); err != nil {
+	// The plan, not the rig. A footswitch names the block it acts on by where
+	// that block sits, and the fit is what moves it; the rig names gear by role
+	// and has no number the fit could invalidate.
+	spec = compile.Refit(spec, before, spec.Blocks)
+
+	if err := plan.Validate(cat, spec, limits); err != nil {
 		return result.Made{}, fmt.Errorf(
-			"the chain this recipe describes will not load: %w", err)
+			"the chain this rig describes will not load: %w", err)
 	}
 
 	doc := build(cat.DeviceID, spec)
 
-	// Against the chain as built rather than as the recipe wrote it: filling
+	// Against the chain as built rather than as the rig wrote it: filling
 	// and fitting add and drop blocks, and a section can only turn on what
 	// made it into the preset.
-	if err := opts.compiler().Sections(doc, rec, spec.Blocks, cat); err != nil {
+	if err := opts.compiler().Sections(doc, rec, spec, spec.Blocks, cat); err != nil {
 		return result.Made{}, err
 	}
 
-	// Against the same chain, and after the fit, because the fit is what
-	// decides which position a block ends up at. Resolve has already checked
-	// the assignments against the chain it built.
-	opts.compiler().Controllers(doc, rec, spec.Blocks, cat)
+	// After the fit, because the fit decides which position a block ends up
+	// at: a move names a role and the role's block only has a position once
+	// the chain is laid out.
+	if err := opts.compiler().Moves(&spec, rec, spec.Blocks, cat); err != nil {
+		return result.Made{}, err
+	}
 
-	// The same numbers, moved the same way: what the pedal prints under a
-	// switch names the block the switch acts on.
-	opts.compiler().Footswitches(doc, rec, cat)
+	opts.compiler().Controllers(doc, spec, spec.Blocks, cat)
+
+	opts.compiler().Footswitches(doc, spec, cat)
 
 	if err := write(opts.OutputPath, doc, opts.Existing); err != nil {
 		return result.Made{}, err
 	}
 
 	return result.Made{
-		Chain:      spec,
+		Plan:       spec,
 		Added:      addedFrom(added),
 		Moved:      movedFrom(moved),
-		Unfamiliar: unfamiliar(rec),
+		Unfamiliar: unfamiliar(intent),
 		Path:       opts.OutputPath,
 	}, nil
-}
-
-// openStats reads measured statistics, falling back to the ones in this
-// binary.
-func openStats(
-	path string,
-) (*corpus.Stats, error) {
-	if path == "" {
-		return corpus.BuiltIn()
-	}
-
-	f, err := os.Open(path) //nolint:gosec // the path is the user's own file
-	if err != nil {
-		return nil, fmt.Errorf("opening %s: %w", path, err)
-	}
-
-	// Opened read-only, so Close has nothing to report the read did not.
-	defer func() { _ = f.Close() }()
-
-	return corpus.Load(f)
 }
 
 // build puts a chain into a preset the device would recognise.
@@ -169,7 +159,7 @@ func openStats(
 // the hardware has ever written.
 func build(
 	deviceID int,
-	spec chain.Chain,
+	spec plan.Plan,
 ) *preset.Document {
 	// The blank is embedded and covered by its own test, so reading it cannot
 	// fail here. SetSpec refuses a parameter named like a block attribute,
@@ -201,16 +191,140 @@ func write(
 	return fileslots.Save(path, buf.Bytes(), existing)
 }
 
+// intentOf is what the ask contributes to the build.
+//
+// A rig with no ask beside it is legal and ordinary: somebody's own directory
+// holds rigs they wrote, and nothing obliges them to write down the ask that
+// produced one. The zero Intent is the right answer for that rather than an
+// error, because a rig already carries the settings somebody applied.
+//
+// Everything on a ToneSpec is optional and arrives as a pointer, so each field
+// is taken only where the ask actually said it.
+func intentOf(
+	ask *tone.Spec,
+) compile.Intent {
+	if ask == nil {
+		return compile.Intent{}
+	}
+
+	out := compile.Intent{}
+
+	if ask.Words != nil {
+		out.Words = make([]compile.Word, 0, len(*ask.Words))
+
+		for _, w := range *ask.Words {
+			// The evidence travels with the word. A figure measured off a
+			// record and held against what other players read is what decides
+			// how far the word moves its control, and a word arriving without
+			// it moves the whole step.
+			word := compile.Word{Term: w.Term}
+			if w.Evidence != nil {
+				word.Evidence = *w.Evidence
+			}
+
+			out.Words = append(out.Words, word)
+		}
+	}
+
+	// What the ask says it is for, which a genre's figures have to agree with.
+	// Empty leaves it to the Setup and claims nothing either way.
+	wants := ""
+	if ask.Instrument != nil {
+		wants = string(*ask.Instrument)
+	}
+
+	// A genre's words, after the ask's own, so anything somebody wrote by hand
+	// outranks what a measurement produced. Both carry their figures, so
+	// weightOf sizes each by how far it actually sits from the rest.
+	// Every genre the ask names, in the order it names them, so a sound that is
+	// both punk and pop-punk gets what each earns. The words carry their own
+	// figures, so a term two genres both earn is weighed twice rather than
+	// counted once, which is right: two populations agreeing is more evidence
+	// than one.
+	for _, named := range ask.Genre {
+		if named == "" {
+			continue
+		}
+
+		got, ok := audio.ShippedGenre(slug.Of(named))
+		out.Words = append(out.Words, genreWords(got, ok, wants)...)
+	}
+
+	if ask.Technique != nil {
+		out.Attack = string(ask.Technique.Attack)
+	}
+
+	if ask.Subject != nil {
+		out.Name = ask.Subject.Name
+	}
+
+	return out
+}
+
+// genreWords is what a genre earned, as words a build can act on.
+//
+// The measurement ships in the binary, so asking for a genre costs no audio.
+// Each word carries the figures behind it, which is what tells a word somebody
+// measured from one somebody asserted: a genre sitting just past the others
+// moves a control barely at all, and one far past it moves a full step.
+//
+// Nothing where the genre was never measured or earned nothing. Saying so is
+// translate's job, and doing it here too would say it twice.
+// Given what was found rather than finding it, so each of the three ways a
+// genre contributes nothing has a test. Only two are reachable through the
+// shipped data, and which two depends on whichever records somebody tagged.
+func genreWords(
+	got audio.Genre,
+	ok bool,
+	wants string,
+) []compile.Word {
+	// Under the threshold is reported, never computed from: eight records from
+	// three players, or a request for the genre gets one band's sound. A genre
+	// pooled across two instruments clears Usable for the same reason.
+	if !ok || !got.Usable {
+		return nil
+	}
+
+	// Measured on another instrument, which is not a weaker version of the same
+	// claim. Every word here carries the figures that earned it and those
+	// figures size the step a control moves, so a bass genre's `dark` handed to
+	// a guitar build moves a guitar control by how far a bass sat from other
+	// basses. The words are dropped and translate says why.
+	if wants != "" && got.Instrument != "" && wants != got.Instrument {
+		return nil
+	}
+
+	out := make([]compile.Word, 0, len(got.Terms))
+
+	for _, t := range got.Terms {
+		out = append(out, compile.Word{
+			Term: t.Term,
+			Evidence: []tone.Evidence{{
+				Kind:     tone.EvidenceAudio,
+				Measured: &map[string]float64{string(t.Key): t.Mine},
+				Against:  &map[string]float64{string(t.Key): t.Others},
+			}},
+		})
+	}
+
+	return out
+}
+
 // unfamiliar names the character terms nothing defines.
 //
 // Said rather than refused. A term moves no knob, so an unfamiliar one costs
 // the preset nothing, and a build that stopped over a word would be refusing
-// somebody the right to describe a sound in their own words. The rigs this
+// somebody the right to describe a sound in their own words. The asks this
 // project ships are held to the list by a test instead.
 func unfamiliar(
-	rec rig.Spec,
+	intent compile.Intent,
 ) []result.Unfamiliar {
-	unknown := compile.CheckCharacter(rec)
+	terms := make([]string, 0, len(intent.Words))
+	for _, w := range intent.Words {
+		terms = append(terms, w.Term)
+	}
+
+	unknown := compile.CheckWords(terms)
 
 	out := make([]result.Unfamiliar, 0, len(unknown))
 	for _, u := range unknown {
@@ -220,7 +334,7 @@ func unfamiliar(
 	return out
 }
 
-// addedFrom says what went into the chain that the recipe did not name.
+// addedFrom says what went into the chain that the rig did not name.
 func addedFrom(
 	added []compile.Added,
 ) []result.Added {

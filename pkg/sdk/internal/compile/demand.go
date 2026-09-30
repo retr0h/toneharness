@@ -22,14 +22,14 @@ package compile
 import (
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // needs is what a claim cannot mean anything without.
 //
-// Some of what a rig says names a block rather than a setting.
+// Some of what an ask says names a block rather than a setting.
 // `envelope-swept` does not ask for a filter to be turned up, it asserts
 // there is one: a chain with no filter does not sweep however its knobs are
 // set. Slap is the same shape of claim about how the instrument is played,
@@ -44,13 +44,13 @@ var needs = map[string]catalog.Category{
 	"slap":           catalog.CategoryComp,
 }
 
-// demand adds the blocks the rig itself asks for, which fill cannot know
+// demand adds the blocks the ask itself calls for, which fill cannot know
 // about.
 //
 // fill answers "what does a chain of this kind usually have", from the corpus
-// alone. That is the right question and it is not the only one. A rig also
+// alone. That is the right question and it is not the only one. An ask also
 // says things that need a particular block before they mean anything, and
-// until this ran nothing carried that from the rig into the chain: the words
+// until this ran nothing carried that from the ask into the chain: the words
 // were read after the blocks were chosen, so a word could only ever ask for a
 // knob that already existed.
 //
@@ -63,25 +63,26 @@ var needs = map[string]catalog.Category{
 // already earned has somewhere to land, and says which word asked for it.
 func demand(
 	blocks []catalog.Block,
+	said []*rig.Settings,
 	cat *catalog.Catalog,
 	stats *corpus.Stats,
-	spec rig.Spec,
+	intent Intent,
 	instrument string,
-) ([]catalog.Block, []Added) {
+) ([]catalog.Block, []*rig.Settings, []Added) {
 	if stats == nil {
-		return blocks, nil
+		return blocks, said, nil
 	}
 
 	g, known := stats.Grammar[instrument]
 	if !known {
-		return blocks, nil
+		return blocks, said, nil
 	}
 
 	var added []Added
 
 	// Presence first. A word wanting a control may be answerable by a block
 	// another claim has just asked for, and asking twice would seat two.
-	for _, c := range claimed(spec) {
+	for _, c := range claimed(intent) {
 		want, names := needs[c]
 		if !names || indexOf(blocks, want) >= 0 {
 			continue
@@ -92,65 +93,69 @@ func demand(
 			continue
 		}
 
-		blocks = insert(blocks, pick, beforeAmp(g, want))
+		blocks, said = insert(blocks, said, pick, beforeAmp(g, want))
 		added = append(added, Added{
 			Block:  pick,
-			Reason: fmt.Sprintf("the rig says %s, which needs one", c),
+			Reason: fmt.Sprintf("the ask says %s, which needs one", c),
 		})
 	}
 
-	terms := termsOf(spec)
+	terms := termsOf(intent.Words)
 	contested := contested(terms)
 
 	for _, h := range terms {
 		// Two words from one axis cancel rather than apply, and a word on
 		// its way out must not seat a block on the way. The chain would
 		// carry an equaliser that nothing then touched.
-		if axis, ok := axisOf(h.term); ok && contested[axis] {
+		if cancels(h.term, contested) {
 			continue
 		}
 
-		t, moves := turns[h.term]
-		if !moves || t.absenceMeans != "" {
-			continue
-		}
+		// One turn per axis the word answers, so a compound word can seat a
+		// block for each. "Punchy" wants something with a Sag and something
+		// with an Attack, and a chain holding neither needs both.
+		for _, t := range turns[h.term] {
+			if t.absenceMeans != "" {
+				continue
+			}
 
-		if _, _, found := answered(blocks, t); found {
-			continue
-		}
+			if _, _, found := answered(blocks, t); found {
+				continue
+			}
 
-		pick, where, ok := somewhereFor(cat, stats, t, instrument)
-		if !ok {
-			continue
-		}
+			pick, where, ok := somewhereFor(cat, stats, t, instrument)
+			if !ok {
+				continue
+			}
 
-		blocks = insert(blocks, pick, beforeAmp(g, pick.Category))
-		added = append(added, Added{
-			Block: pick,
-			Reason: fmt.Sprintf(
-				"the rig says %s and nothing here had a %s", h.term, where,
-			),
-		})
+			blocks, said = insert(blocks, said, pick, beforeAmp(g, pick.Category))
+			added = append(added, Added{
+				Block: pick,
+				Reason: fmt.Sprintf(
+					"the ask says %s and nothing here had a %s", h.term, where,
+				),
+			})
+		}
 	}
 
-	return blocks, added
+	return blocks, said, added
 }
 
-// claimed is everything a rig says that might name a block.
+// claimed is everything an ask says that might name a block.
 //
-// The character words and how the instrument is played, which are different
+// The words and how the instrument is played, which are different
 // fields saying the same kind of thing: not how loud, but what is there.
 func claimed(
-	spec rig.Spec,
+	intent Intent,
 ) []string {
 	out := []string{}
 
-	for _, h := range termsOf(spec) {
+	for _, h := range termsOf(intent.Words) {
 		out = append(out, h.term)
 	}
 
-	if spec.Technique != nil {
-		out = append(out, string(spec.Technique.Attack))
+	if intent.Attack != "" {
+		out = append(out, intent.Attack)
 	}
 
 	return out

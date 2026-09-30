@@ -30,14 +30,15 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/compile"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // corpusDir holds thousands of presets other people made. It is not committed
-// — see docs/knowledge.md — so the sweep over it runs only where it exists,
+// — see docs/architecture.md — so the sweep over it runs only where it exists,
 // and the committed fixtures carry the same assertions everywhere else.
 const corpusDir = "../../resources/schemas/corpus"
 
@@ -57,13 +58,13 @@ func (s *RoundTripPublicTestSuite) SetupSuite() {
 // TestLiftAndLower covers the three claims the format rests on, over every
 // preset committed with this test.
 //
-// A preset read into a rig and written back must say the same thing. A rig
-// built into a preset and read back must be the rig that went in — anything
-// RigSpec models but does not write is invisible to the first claim and
-// obvious in the second. And a rig must rebuild its preset with the original
-// gone, which is the path a shared rig takes: it reaches somebody else
-// without the preset it came from, so lowering into that preset proves
-// nothing about what the rig carries.
+// A preset read into a rig and a plan and written back must say the same
+// thing. Both documents built into a preset and read back must be what went
+// in — anything they model but do not write is invisible to the first claim
+// and obvious in the second. And they must rebuild the preset with the
+// original gone, which is the path a shared rig takes: it reaches somebody
+// else without the preset it came from, so lowering into that preset proves
+// nothing about what it carries.
 func (s *RoundTripPublicTestSuite) TestLiftAndLower() {
 	for _, path := range s.fixtures() {
 		s.Run(filepath.Base(path), func() {
@@ -77,26 +78,28 @@ func (s *RoundTripPublicTestSuite) TestLiftAndLower() {
 
 			was, now := s.backAgain(s.read(path))
 			s.Require().Equal(was, now,
-				"every field a rig models must be written as well as read")
+				"every field a rig or a plan models must be written as well as read")
 		})
 	}
 }
 
 // TestLift records what a block actually was.
 func (s *RoundTripPublicTestSuite) TestLift() {
-	// A gear name does not identify a model: 665 of them share 469 names, and
+	// A gear name does not identify a model: 661 of them share 468 names, and
 	// "Ampeg SVT" matches both channels. Without the identifier a rig rebuilds
 	// into a different preset.
 	doc, err := preset.Read(bytes.NewReader(s.read(s.fixtures()[0])))
 	s.Require().NoError(err)
 
-	spec, err := compile.Lift(doc, s.cat)
+	spec, made, err := compile.Lift(doc, s.cat)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(spec.Chain)
+	s.Require().Len(made.Blocks, len(spec.Chain))
+	s.Require().Equal(s.cat.Device, *made.Target.Device,
+		"a plan says which device it was read off")
 
-	for _, entry := range spec.Chain {
-		s.Require().NotNil(entry.Models, "every block records what it was")
-		s.Require().Contains(*entry.Models, s.cat.Device)
+	for i, entry := range spec.Chain {
+		s.Require().NotEmpty(made.Blocks[i].Model, "every block records what it was")
 		s.Require().NotEmpty(entry.Gear, "and what a person would call it")
 	}
 }
@@ -158,8 +161,8 @@ func (s *RoundTripPublicTestSuite) TestTheWholeCorpusSurvivesIt() {
 	s.Require().Positive(same)
 }
 
-// roundTrip reads a preset, lifts it to a rig, lowers it into a fresh read of
-// the same document, and returns what was written.
+// roundTrip reads a preset, lifts it, lowers the plan into a fresh read of the
+// same document, and returns what was written.
 //
 // A fresh read, because lowering writes the chain into a document rather than
 // building one: routing, snapshots and controller assignments are whatever
@@ -175,8 +178,8 @@ func (s *RoundTripPublicTestSuite) roundTrip(
 	return s.through(raw, back)
 }
 
-// fromNothing is the path a shared rig takes: read a preset, keep only the
-// rig, and build a preset out of it with the original gone.
+// fromNothing is the path a shared rig takes: read a preset, keep only what
+// was lifted, and build a preset out of it with the original gone.
 //
 // This is the claim that matters. Lowering into the preset a rig came from
 // proves little — routing and snapshots survive because nobody removed them.
@@ -194,43 +197,44 @@ func (s *RoundTripPublicTestSuite) fromNothing(
 //
 // The other direction, and the one that catches a field which reads but never
 // writes: such a field survives .hlx to .hlx because the preset underneath
-// still holds it, and disappears here because the rig is all there is. Both
-// rigs must say the same thing.
+// still holds it, and disappears here because the two documents are all there
+// is. Both pairs must say the same thing.
 func (s *RoundTripPublicTestSuite) backAgain(
 	raw []byte,
 ) (string, string) {
 	from, err := preset.Read(bytes.NewReader(raw))
 	s.Require().NoError(err)
 
-	first, err := compile.Lift(from, s.cat)
+	first, firstMade, err := compile.Lift(from, s.cat)
 	s.Require().NoError(err)
 
 	blank, err := preset.Blank()
 	s.Require().NoError(err)
-	s.Require().NoError(compile.Lower(blank, first, s.cat))
+	s.Require().NoError(compile.Lower(blank, firstMade, s.cat))
 
-	second, err := compile.Lift(blank, s.cat)
+	second, secondMade, err := compile.Lift(blank, s.cat)
 	s.Require().NoError(err)
 
-	return s.marshal(first), s.marshal(second)
+	return s.marshal(first, firstMade), s.marshal(second, secondMade)
 }
 
-// marshal renders a rig for comparison, as JSON rather than as the YAML it is
-// written in.
+// marshal renders a rig and the plan beside it for comparison, as JSON rather
+// than as the YAML they are written in.
 //
 // Go sorts a map's keys when it encodes JSON; the YAML writer orders them
 // differently for the same content, which would make this test fail over how
 // a document was laid out rather than over what it says.
 func (s *RoundTripPublicTestSuite) marshal(
 	spec rig.Spec,
+	made plan.Plan,
 ) string {
-	body, err := json.Marshal(spec)
+	body, err := json.Marshal([]any{spec, made})
 	s.Require().NoError(err)
 
 	return s.canonical(body)
 }
 
-// through lifts raw to a rig and lowers that rig into doc.
+// through lifts raw to a plan and lowers that plan into doc.
 func (s *RoundTripPublicTestSuite) through(
 	raw []byte,
 	doc *preset.Document,
@@ -238,10 +242,10 @@ func (s *RoundTripPublicTestSuite) through(
 	from, err := preset.Read(bytes.NewReader(raw))
 	s.Require().NoError(err)
 
-	spec, err := compile.Lift(from, s.cat)
+	_, made, err := compile.Lift(from, s.cat)
 	s.Require().NoError(err)
 
-	s.Require().NoError(compile.Lower(doc, spec, s.cat))
+	s.Require().NoError(compile.Lower(doc, made, s.cat))
 
 	var out bytes.Buffer
 	s.Require().NoError(preset.Write(&out, doc))

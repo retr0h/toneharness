@@ -21,11 +21,11 @@
 package compile
 
 import (
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Compiler is this package's work as a value.
@@ -43,66 +43,86 @@ type Compiler struct{}
 // New returns a Compiler.
 func New() *Compiler { return &Compiler{} }
 
-// Lift reads a preset into a rig.
+// Lift reads a preset into the rig it describes and the plan that realises it.
 func (*Compiler) Lift(
 	doc *preset.Document,
 	cat *catalog.Catalog,
-) (rig.Spec, error) {
+) (rig.Spec, plan.Plan, error) {
 	return Lift(doc, cat)
 }
 
-// Lower writes a rig back into a preset.
+// Lower writes a plan into a preset.
 func (*Compiler) Lower(
 	doc *preset.Document,
-	spec rig.Spec,
+	made plan.Plan,
 	cat *catalog.Catalog,
 ) error {
-	return Lower(doc, spec, cat)
+	return Lower(doc, made, cat)
+}
+
+// Realise turns a rig into the plan that answers it on one device.
+func (*Compiler) Realise(
+	spec rig.Spec,
+	cat *catalog.Catalog,
+) (plan.Plan, error) {
+	return Realise(spec, cat)
 }
 
 // Sections writes a rig's song sections into a preset's snapshots.
 func (*Compiler) Sections(
 	doc *preset.Document,
 	spec rig.Spec,
-	blocks []chain.Block,
+	made plan.Plan,
+	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) error {
-	return Sections(doc, spec, blocks, cat)
+	return Sections(doc, spec, made, blocks, cat)
+}
+
+// Moves turns what a rig says a foot reaches into a plan's assignments.
+func (*Compiler) Moves(
+	made *plan.Plan,
+	spec rig.Spec,
+	blocks []plan.Block,
+	cat *catalog.Catalog,
+) error {
+	return Moves(made, spec, blocks, cat)
 }
 
 // Controllers writes what an expression pedal or footswitch moves.
 func (*Compiler) Controllers(
 	doc *preset.Document,
-	spec rig.Spec,
-	blocks []chain.Block,
+	made plan.Plan,
+	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) {
-	Controllers(doc, spec, blocks, cat)
+	Controllers(doc, made, blocks, cat)
 }
 
 // Footswitches writes what the pedal prints under each switch.
 func (*Compiler) Footswitches(
 	doc *preset.Document,
-	spec rig.Spec,
+	made plan.Plan,
 	cat *catalog.Catalog,
 ) {
-	Footswitches(doc, spec, cat)
+	Footswitches(doc, made, cat)
 }
 
-// Resolve turns a rig and a catalog into a chain.
+// Resolve turns a rig, the ask beside it and a catalog into a chain.
 func (*Compiler) Resolve(
 	spec rig.Spec,
+	intent Intent,
 	cat *catalog.Catalog,
 	stats *corpus.Stats,
-) (chain.Chain, []Added, []Moved, error) {
-	return Resolve(spec, cat, stats)
+) (plan.Plan, []Added, []Moved, error) {
+	return Resolve(spec, intent, cat, stats)
 }
 
 // Fit drops what a device has no room for.
 func (*Compiler) Fit(
-	spec chain.Chain,
+	spec plan.Plan,
 	cat *catalog.Catalog,
-	lim chain.Limits,
-) chain.Chain {
+	lim plan.Limits,
+) plan.Plan {
 	return Fit(spec, cat, lim)
 }

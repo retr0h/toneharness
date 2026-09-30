@@ -23,15 +23,17 @@ package cli
 import (
 	"fmt"
 	"io"
+	"maps"
+	"slices"
 	"sort"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 )
 
 // Measured prints what the corpus says.
@@ -68,7 +70,7 @@ func model(
 
 	rows := make([][]string, 0, len(ms.Params))
 
-	for _, key := range sortedParams(ms.Params) {
+	for _, key := range slices.Sorted(maps.Keys(ms.Params)) {
 		p := ms.Params[key]
 		def := "—"
 
@@ -149,7 +151,7 @@ func grammar(
 ) error {
 	var rows [][]string
 
-	for _, instrument := range sortedGrammar(stats.Grammar) {
+	for _, instrument := range slices.Sorted(maps.Keys(stats.Grammar)) {
 		if only != "" && instrument != only {
 			continue
 		}
@@ -180,35 +182,11 @@ func grammar(
 	}).Render(w)
 }
 
-// sortedParams orders parameter keys so a listing is stable.
-func sortedParams(
-	m map[string]corpus.ParamStats,
-) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-
-	sort.Strings(out)
-
-	return out
-}
-
-// sortedGrammar orders instruments so a listing is stable.
-func sortedGrammar(
-	m map[string]corpus.Grammar,
-) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-
-	sort.Strings(out)
-
-	return out
-}
-
 // sortedCategories orders categories by how often they appear.
+//
+// Its own function, unlike the two alphabetical ones beside it that became
+// slices.Sorted(maps.Keys(m)): the order here is the frequency, so what a
+// reader sees first is what players reach for most.
 func sortedCategories(
 	m map[catalog.Category]corpus.CategoryStats,
 ) []catalog.Category {

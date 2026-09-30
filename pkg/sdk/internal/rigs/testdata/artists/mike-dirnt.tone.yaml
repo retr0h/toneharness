@@ -1,0 +1,22 @@
+schema: ToneSpec
+genre: [rock]
+
+subject:
+  kind: artist
+  name: Mike Dirnt
+  band: Green Day
+
+# How it should sound, in the words a person would use.
+words:
+  - term: mid-forward
+  - term: minimal-drive
+  - term: grit-on-attack
+  - term: tight-low-end
+  - term: short-decay
+  - term: audible-pick-attack
+
+technique:
+  attack: pick
+  position: bridge
+
+confidence: medium

@@ -23,8 +23,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 var (
@@ -35,7 +35,7 @@ var (
 // presetsCompileCmd represents the presets compile command.
 var presetsCompileCmd = &cobra.Command{
 	Use:   "compile",
-	Short: "Turn a rig into a preset a device will load",
+	Short: "Turn a rig or a plan into a preset a device will load",
 	Long: `Compile a rig into the device's own format.
 
 A rig names gear a person recognises and works on any Helix; a preset names one
@@ -55,7 +55,7 @@ which is what makes a rig read off a device rebuild exactly.`,
 			return err
 		}
 
-		return cli.Built(cmd.OutOrStdout(), built)
+		return answer(cmd, built, cli.Built)
 	},
 }
 
@@ -64,6 +64,8 @@ func init() {
 
 	f := presetsCompileCmd.Flags()
 	f.StringVar(&presetsCompileOptions.Rig, "rig", "", "the rig to compile")
+	f.StringVar(&presetsCompileOptions.Plan, "plan", "",
+		"a plan to compile, for work that has already chosen its models and knobs")
 	f.StringVar(&presetsCompileOptions.Out, "out", "",
 		"where to write the preset")
 	f.StringVar(&presetsCompileOptions.Template, "template", "",
@@ -72,6 +74,11 @@ func init() {
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&presetsCompileClient.device, "device", "", deviceUsage)
 	// Fails only for a flag that does not exist, and these are defined above.
-	_ = presetsCompileCmd.MarkFlagRequired("rig")
+	// One or the other. A rig names gear and is realised against the catalog on
+	// the way through; a plan already names the models and every knob, which is
+	// what `tone tune --out` writes and what an exported slot tuned by hand is.
+	// Given both, nothing can say which was meant.
+	presetsCompileCmd.MarkFlagsOneRequired("rig", "plan")
+	presetsCompileCmd.MarkFlagsMutuallyExclusive("rig", "plan")
 	_ = presetsCompileCmd.MarkFlagRequired("out")
 }

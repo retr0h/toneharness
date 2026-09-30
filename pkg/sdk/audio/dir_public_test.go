@@ -30,7 +30,7 @@ import (
 	"github.com/go-audio/wav"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // DirPublicTestSuite covers measuring a directory of recordings.
@@ -176,42 +176,66 @@ func (s *DirPublicTestSuite) TestAnEmptyDirectoryMeasuresAsNothing() {
 	s.Require().Empty(s.measureAll())
 }
 
-// TestAFileThatIsNotAudioIsNamed covers the error saying which one failed.
-func (s *DirPublicTestSuite) TestAFileThatIsNotAudioIsNamed() {
-	s.Require().NoError(os.WriteFile(
-		filepath.Join(s.root, "broken.wav"), []byte("not a wav at all"), 0o600))
-
-	_, err := audio.MeasureAll(os.DirFS(s.root), ".")
-
-	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "broken.wav")
-}
-
-// TestARecordingThatCannotBeReadIsNamed covers a file the walk lists and the
-// read then fails on.
+// TestMeasureAll covers MeasureAll, which measures every .wav in a tree, in
+// name order.
 //
-// A dangling symlink is the ordinary way that happens: the directory entry is
-// there, it is not a directory, it ends in .wav, and opening it finds nothing.
-// Stems are often symlinked into place from somewhere else, and the half of
-// that which breaks is this.
-func (s *DirPublicTestSuite) TestARecordingThatCannotBeReadIsNamed() {
-	s.Require().NoError(os.Symlink(
-		filepath.Join(s.root, "gone.wav"),
-		filepath.Join(s.root, "dangling.wav"),
-	))
+// One method and one table, so a case is a row rather than a file.
+func (s *DirPublicTestSuite) TestMeasureAll() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The error saying which one failed.
+			name: "a file that is not audio is named",
+			then: func() {
+				s.Require().NoError(os.WriteFile(
+					filepath.Join(s.root, "broken.wav"), []byte("not a wav at all"), 0o600))
 
-	_, err := audio.MeasureAll(os.DirFS(s.root), ".")
+				_, err := audio.MeasureAll(os.DirFS(s.root), ".")
 
-	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "dangling.wav")
-}
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), "broken.wav")
+			},
+		},
+		{
+			// A file the walk lists and the read then fails on.
+			//
+			// A dangling symlink is the ordinary way that happens: the
+			// directory entry is there, it is not a directory, it ends in
+			// .wav, and opening it finds nothing. Stems are often symlinked
+			// into place from somewhere else, and the half of that which
+			// breaks is this.
+			name: "a recording that cannot be read is named",
+			then: func() {
+				s.Require().NoError(os.Symlink(
+					filepath.Join(s.root, "gone.wav"),
+					filepath.Join(s.root, "dangling.wav"),
+				))
 
-// TestARootThatIsNotThere is a caller's mistake, reported rather than
-// swallowed.
-func (s *DirPublicTestSuite) TestARootThatIsNotThere() {
-	_, err := audio.MeasureAll(os.DirFS(s.root), "no-such-directory")
+				_, err := audio.MeasureAll(os.DirFS(s.root), ".")
 
-	s.Require().Error(err)
+				s.Require().Error(err)
+				s.Require().Contains(err.Error(), "dangling.wav")
+			},
+		},
+		{
+			// A caller's mistake, reported rather than swallowed.
+			name: "a root that is not there",
+			then: func() {
+				_, err := audio.MeasureAll(os.DirFS(s.root), "no-such-directory")
+
+				s.Require().Error(err)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
+		})
+	}
 }
 
 func TestDirPublicTestSuite(

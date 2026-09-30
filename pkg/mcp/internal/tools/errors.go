@@ -26,19 +26,26 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 var (
-	// ErrNoSource is preset_build given nothing to build from.
-	ErrNoSource = errors.New("name a recipe_id or a rig_path to build from")
-	// ErrTwoSources is preset_build given both.
-	ErrTwoSources = errors.New("name a recipe_id or a rig_path, not both")
-	// ErrNotInCatalog is corpus_model's model measured but missing from the
+	// ErrOneDocument is presets_compile given neither a rig nor a plan, or
+	// both. They are the same shape at two levels of resolution, and building
+	// from both would mean quietly picking one.
+	ErrOneDocument = errors.New("name one of rig or plan")
+	// ErrOneValue is device_turn given none of value, choice or switch, or
+	// more than one. A device does not coerce, so the kind has to be chosen.
+	ErrOneValue = errors.New("name exactly one of value, choice or switch")
+	// ErrNoSource is presets_make given nothing to build from.
+	ErrNoSource = errors.New("name a rig_id or a rig_path to build from")
+	// ErrTwoSources is presets_make given both.
+	ErrTwoSources = errors.New("name a rig_id or a rig_path, not both")
+	// ErrNotInCatalog is corpus_presets_show's model measured but missing from the
 	// catalog it was resolved against, a sign the corpus and catalog have
 	// drifted apart.
 	ErrNotInCatalog = errors.New("measured but not in the catalog")
-	// ErrWouldOverwrite is preset_build or preset_export pointed at a file
+	// ErrWouldOverwrite is presets_make or slots_export pointed at a file
 	// that already exists, on a server started without --allow-writes.
 	ErrWouldOverwrite = errors.New(
 		"a file is already there, and replacing it needs the server started with --allow-writes")
@@ -110,9 +117,34 @@ func remedy(
 ) error {
 	switch {
 	case errors.Is(err, sdk.ErrNoSuchBlock):
-		return fmt.Errorf("%w, call catalog_search to find one", err)
-	case errors.Is(err, sdk.ErrNoSuchRecipe):
+		return fmt.Errorf("%w, call catalog_list to find one", err)
+	case errors.Is(err, sdk.ErrNoSuchRig):
 		return fmt.Errorf("%w, call rigs_list to see the rigs that ship", err)
+	case errors.Is(err, sdk.ErrNoDevice):
+		// A pedal powered from a charger rather than a data port looks
+		// exactly like one that is switched off, and the power light is on
+		// either way. Worth saying, because the agent cannot see the light
+		// and the person it is talking to will check that first.
+		return fmt.Errorf("%w: ask whether it is in a USB data port rather "+
+			"than a charger, then call device_hardware", err)
+	case errors.Is(err, sdk.ErrBus):
+		// The session is gone either way and reopening is usually enough.
+		// When it is not, the endpoint has stalled, and the wire README is
+		// unambiguous: "the interface will not be claimed again until the
+		// device is power cycled." An agent that does not know that retries
+		// into a wall, which is worse than a person doing it.
+		return fmt.Errorf("%w: call it again, and if it keeps failing ask for "+
+			"the pedal to be powered off and on", err)
+	case errors.Is(err, sdk.ErrNothingToBuildFrom):
+		// The next move is a question, not a guess. A recording is measured
+		// against every block the device has; an adjective has to be earned
+		// against a population of players before it means anything.
+		return fmt.Errorf("%w. Name a record to sound like, a player, or the "+
+			"gear itself: `like: { recording: take.wav }` resolves fully, and "+
+			"an adjective on its own does not", err)
+	case errors.Is(err, sdk.ErrEmptySlot):
+		return fmt.Errorf("%w, call slots_list to see which slots hold "+
+			"anything", err)
 	default:
 		return err
 	}

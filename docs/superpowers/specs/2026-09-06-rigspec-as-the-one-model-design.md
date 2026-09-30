@@ -242,8 +242,8 @@ measure.
 
 > **Since, 2026-09-13.** The corpus row is built: it places the blocks a chain
 > almost always holds and supplies the values knobs start from. The knob
-> direction row is not. [knowledge.md](../../knowledge.md) keeps the current
-> state; this table is the state when the record was written.
+> direction row is not. [architecture.md](../../architecture.md) keeps the
+> current state; this table is the state when the record was written.
 
 Measurements taken from the corpus while writing this, as evidence that rows
 three and four are real rather than aspirational:

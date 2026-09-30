@@ -26,6 +26,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // SymbolsTestSuite covers the table a device names its models by.
@@ -234,6 +236,140 @@ func (s *SymbolsTestSuite) TestBuildReportsAnInstallationItCannotRead() {
 
 			s.Require().Error(err)
 			s.Require().Contains(err.Error(), tt.errText)
+		})
+	}
+}
+
+// TestFamilyOf covers the suffix a device's own lists carry.
+//
+// Only a Helix LT has one. The three that share the unsuffixed pair are not
+// interchangeable with each other in general, and the pair they share lists
+// four Returns an HX Stomp has no sockets for, so an entry existing is not the
+// same as the socket existing.
+func (s *SymbolsTestSuite) TestFamilyOf() {
+	s.Require().Equal("_lt", familyOf(catalog.HelixLT))
+
+	for _, device := range []int{
+		catalog.HXStomp,
+		catalog.HXStompXL,
+		catalog.HelixFloor,
+	} {
+		s.Require().Empty(familyOf(device),
+			"device %d shares the unsuffixed pair", device)
+	}
+}
+
+// controls puts a HelixControls.json in a fresh directory and returns it.
+func (s *SymbolsTestSuite) controls(
+	body string,
+) string {
+	dir := s.T().TempDir()
+	s.Require().NoError(
+		os.WriteFile(filepath.Join(dir, controlsFile), []byte(body), 0o600))
+
+	return dir
+}
+
+// TestReadRouting covers readRouting, which reads what a device can take a
+// chain's input from and send its output to.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *SymbolsTestSuite) TestReadRouting() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The two lists a preset's routing is written against.
+			//
+			// The order is the enumeration: entry 1 of the destinations is
+			// the one whose label claims USB and which an HX Stomp's Multi
+			// does not carry, which is the reason these are read rather than
+			// written down.
+			name: "read routing names the sockets in the devices own order",
+			then: func() {
+				dir := s.controls(`{
+				  "input_type":  {"format": ["Multi", "Guitar", "Aux"]},
+				  "output_type": {"format": ["Multi", "USB 1/2", "USB 3/4"]},
+				  "input_type_lt":  {"format": ["Guitar", "Aux"]},
+				  "output_type_lt": {"format": ["XLR"]}
+				}`)
+
+				sources, destinations, err := readRouting(dir, catalog.HXStomp)
+
+				s.Require().NoError(err)
+				s.Require().Equal([]string{"Multi", "Guitar", "Aux"}, sources)
+				s.Require().Equal([]string{"Multi", "USB 1/2", "USB 3/4"}, destinations,
+					"kept as the device spells them: USB 1/2 loses something flattened")
+
+				// An LT reads its own suffixed pair, which is why the suffix exists.
+				sources, destinations, err = readRouting(dir, catalog.HelixLT)
+
+				s.Require().NoError(err)
+				s.Require().Equal([]string{"Guitar", "Aux"}, sources)
+				s.Require().Equal([]string{"XLR"}, destinations)
+			},
+		},
+		{
+			// An installation too old to have it.
+			//
+			// Only measuring needs to name a destination, so a catalog
+			// generated without these lists is still a catalog.
+			name: "routing is absent rather than fatal",
+			then: func() {
+				for _, tt := range []struct {
+					name string
+					dir  string
+				}{
+					{"no controls file at all", s.T().TempDir()},
+					{"a file naming neither list", s.controls(`{"footswitchLED": {}}`)},
+				} {
+					s.Run(tt.name, func() {
+						sources, destinations, err := readRouting(tt.dir, catalog.HXStomp)
+
+						s.Require().NoError(err)
+						s.Require().Nil(sources)
+						s.Require().Nil(destinations)
+					})
+				}
+			},
+		},
+		{
+			// The three failures.
+			name: "routing reports a file it cannot read",
+			then: func() {
+				for _, tt := range []struct {
+					name string
+					body string
+					says string
+				}{
+					{
+						name: "a file that is not JSON",
+						body: "not json",
+						says: "decoding " + controlsFile,
+					},
+					{
+						name: "a sources entry that is not a control",
+						body: `{"input_type": 7}`,
+						says: "decoding " + sourceControl,
+					},
+					{
+						name: "a destinations entry that is not a control",
+						body: `{"output_type": 7}`,
+						says: "decoding " + destinationControl,
+					},
+				} {
+					s.Run(tt.name, func() {
+						_, _, err := readRouting(s.controls(tt.body), catalog.HXStomp)
+
+						s.Require().ErrorContains(err, tt.says)
+					})
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
 		})
 	}
 }

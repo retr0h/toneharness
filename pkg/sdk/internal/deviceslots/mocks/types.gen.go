@@ -13,12 +13,12 @@ import (
 	context "context"
 	reflect "reflect"
 
-	catalog "github.com/retr0h/tonestack/pkg/sdk/catalog"
-	chain "github.com/retr0h/tonestack/pkg/sdk/chain"
-	backup "github.com/retr0h/tonestack/pkg/sdk/internal/backup"
-	wire "github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	preset "github.com/retr0h/tonestack/pkg/sdk/preset"
-	rig "github.com/retr0h/tonestack/pkg/sdk/rig"
+	catalog "github.com/retr0h/toneharness/pkg/sdk/catalog"
+	backup "github.com/retr0h/toneharness/pkg/sdk/internal/backup"
+	wire "github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	plan "github.com/retr0h/toneharness/pkg/sdk/plan"
+	preset "github.com/retr0h/toneharness/pkg/sdk/preset"
+	rig "github.com/retr0h/toneharness/pkg/sdk/rig"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -86,12 +86,13 @@ func (m *MockCompiler) EXPECT() *MockCompilerMockRecorder {
 }
 
 // Lift mocks base method.
-func (m *MockCompiler) Lift(doc *preset.Document, cat *catalog.Catalog) (rig.Spec, error) {
+func (m *MockCompiler) Lift(doc *preset.Document, cat *catalog.Catalog) (rig.Spec, plan.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Lift", doc, cat)
 	ret0, _ := ret[0].(rig.Spec)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(plan.Plan)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // Lift indicates an expected call of Lift.
@@ -122,21 +123,6 @@ func NewMockTranslator(ctrl *gomock.Controller) *MockTranslator {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTranslator) EXPECT() *MockTranslatorMockRecorder {
 	return m.recorder
-}
-
-// Chain mocks base method.
-func (m *MockTranslator) Chain(name string, got wire.DevicePreset, cat *catalog.Catalog) (chain.Chain, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Chain", name, got, cat)
-	ret0, _ := ret[0].(chain.Chain)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Chain indicates an expected call of Chain.
-func (mr *MockTranslatorMockRecorder) Chain(name, got, cat any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Chain", reflect.TypeOf((*MockTranslator)(nil).Chain), name, got, cat)
 }
 
 // Controllers mocks base method.
@@ -197,6 +183,21 @@ func (mr *MockTranslatorMockRecorder) Footswitches(got, cat any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Footswitches", reflect.TypeOf((*MockTranslator)(nil).Footswitches), got, cat)
 }
 
+// PlacedControllers mocks base method.
+func (m *MockTranslator) PlacedControllers(doc *preset.Document, cat *catalog.Catalog) ([]wire.PlacedController, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PlacedControllers", doc, cat)
+	ret0, _ := ret[0].([]wire.PlacedController)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PlacedControllers indicates an expected call of PlacedControllers.
+func (mr *MockTranslatorMockRecorder) PlacedControllers(doc, cat any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlacedControllers", reflect.TypeOf((*MockTranslator)(nil).PlacedControllers), doc, cat)
+}
+
 // Placements mocks base method.
 func (m *MockTranslator) Placements(doc *preset.Document, cat *catalog.Catalog) ([]wire.Placement, error) {
 	m.ctrl.T.Helper()
@@ -210,6 +211,21 @@ func (m *MockTranslator) Placements(doc *preset.Document, cat *catalog.Catalog) 
 func (mr *MockTranslatorMockRecorder) Placements(doc, cat any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Placements", reflect.TypeOf((*MockTranslator)(nil).Placements), doc, cat)
+}
+
+// Plan mocks base method.
+func (m *MockTranslator) Plan(name string, got wire.DevicePreset, cat *catalog.Catalog) (plan.Plan, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Plan", name, got, cat)
+	ret0, _ := ret[0].(plan.Plan)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Plan indicates an expected call of Plan.
+func (mr *MockTranslatorMockRecorder) Plan(name, got, cat any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Plan", reflect.TypeOf((*MockTranslator)(nil).Plan), name, got, cat)
 }
 
 // RoutingStates mocks base method.

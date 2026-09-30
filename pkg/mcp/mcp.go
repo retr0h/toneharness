@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// Package mcp serves tonestack's operations to an agent over the Model Context
+// Package mcp serves toneharness's operations to an agent over the Model Context
 // Protocol.
 //
 // It reaches pkg/sdk and nothing else in this module, so it can leave for a
@@ -33,17 +33,17 @@ import (
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/retr0h/tonestack/pkg/mcp/internal/tools"
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/mcp/internal/tools"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 // instructions are what a connecting agent is told before its first call.
-const instructions = `tonestack builds Line 6 Helix presets from rigs, and reads and writes the pedal.
+const instructions = `toneharness builds Line 6 Helix presets from rigs, and reads and writes the pedal.
 
-Use catalog_search before naming any model. If it does not find the gear, the
+Use catalog_list before naming any model. If it does not find the gear, the
 device does not model it: say so, and never invent a model identifier.
 
-Build with preset_build, then read what it added and what each character word
+Build with presets_make, then read what it added and what each character word
 moved before putting the preset on a pedal. Quit HX Edit before any tool that
 reaches the pedal.
 
@@ -58,7 +58,7 @@ type Options struct {
 	AllowWrites bool
 }
 
-// Server is tonestack's MCP server.
+// Server is toneharness's MCP server.
 type Server struct {
 	server *gomcp.Server
 	// pedal holds the pedal between device calls.
@@ -86,7 +86,7 @@ func newServer(
 	}
 
 	s := gomcp.NewServer(
-		&gomcp.Implementation{Name: "tonestack", Version: version},
+		&gomcp.Implementation{Name: "toneharness", Version: version},
 		&gomcp.ServerOptions{Instructions: instructions},
 	)
 	held := &holding{Client: c}

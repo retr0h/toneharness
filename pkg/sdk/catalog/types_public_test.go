@@ -25,26 +25,46 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 type TypesPublicTestSuite struct {
 	suite.Suite
 }
 
-func (s *TypesPublicTestSuite) TestTrustedAcceptsEverythingButAssumed() {
-	for _, p := range []catalog.Provenance{
-		catalog.ProvOfficial,
-		catalog.ProvMeasured,
-		catalog.ProvObserved,
-		catalog.ProvInherited,
+// TestTrusted covers Trusted, which reports whether a value carrying this
+// provenance may be relied on for a preset handed to a user.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *TypesPublicTestSuite) TestTrusted() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "trusted accepts everything but assumed",
+			then: func() {
+				for _, p := range []catalog.Provenance{
+					catalog.ProvOfficial,
+					catalog.ProvMeasured,
+					catalog.ProvObserved,
+					catalog.ProvInherited,
+				} {
+					s.Require().True(p.Trusted(), "%s should be trusted", p)
+				}
+			},
+		},
+		{
+			name: "trusted rejects assumed",
+			then: func() {
+				s.Require().False(catalog.ProvAssumed.Trusted())
+			},
+		},
 	} {
-		s.Require().True(p.Trusted(), "%s should be trusted", p)
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
-}
-
-func (s *TypesPublicTestSuite) TestTrustedRejectsAssumed() {
-	s.Require().False(catalog.ProvAssumed.Trusted())
 }
 
 func (s *TypesPublicTestSuite) TestProvenanceValuesAreDistinct() {
@@ -61,6 +81,70 @@ func (s *TypesPublicTestSuite) TestProvenanceValuesAreDistinct() {
 		s.Require().False(seen[p], "duplicate provenance %q", p)
 		seen[p] = true
 	}
+}
+
+// TestSourceAtAndDestinationAt covers finding a routing position by name.
+//
+// By name because the number belongs to the device family and the name does
+// not: "USB 5/6" means the same thing on every Helix and is a different index
+// on some of them, so a hardcoded number is right on one pedal and silently
+// wrong on the next.
+func (s *TypesPublicTestSuite) TestSourceAtAndDestinationAt() {
+	cat := &catalog.Catalog{
+		Sources: []string{"Multi (Guitar, Aux, Variax)", "Guitar", "Aux", "USB 1/2"},
+		Destinations: []string{
+			`Multi (1/4", XLR, Digital, USB 1/2)`, `1/4"`, "XLR", "USB 1/2", "USB 5/6",
+		},
+	}
+
+	s.Run("a source by its own spelling", func() {
+		at, ok := cat.SourceAt("Guitar")
+		s.Require().True(ok)
+		s.Require().Equal(1, at)
+	})
+
+	s.Run("a destination by its own spelling", func() {
+		at, ok := cat.DestinationAt("USB 5/6")
+		s.Require().True(ok)
+		s.Require().Equal(4, at)
+	})
+
+	s.Run("case does not matter", func() {
+		at, ok := cat.SourceAt("aux")
+		s.Require().True(ok)
+		s.Require().Equal(2, at)
+
+		at, ok = cat.DestinationAt("usb 1/2")
+		s.Require().True(ok)
+		s.Require().Equal(3, at)
+	})
+
+	s.Run("the entry that has cost an evening", func() {
+		// The label names USB and an HX Stomp's Multi does not carry it, so a
+		// preset left on 0 sends nothing up the cable however loud the chain.
+		at, ok := cat.DestinationAt(`Multi (1/4", XLR, Digital, USB 1/2)`)
+		s.Require().True(ok)
+		s.Require().Zero(at)
+	})
+
+	s.Run("a name this device does not list", func() {
+		_, ok := cat.SourceAt("USB 5/6")
+		s.Require().False(ok, "a Stomp takes no chain input from USB 5/6")
+
+		at, ok := cat.DestinationAt("S/PDIF")
+		s.Require().False(ok)
+		s.Require().Zero(at, "and the position is not a usable answer")
+	})
+
+	s.Run("a catalog carrying no routing at all", func() {
+		bare := &catalog.Catalog{}
+
+		_, ok := bare.SourceAt("Guitar")
+		s.Require().False(ok)
+
+		_, ok = bare.DestinationAt(`1/4"`)
+		s.Require().False(ok)
+	})
 }
 
 func TestTypesPublicTestSuite(

@@ -22,16 +22,17 @@ package deviceslots
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // rawExt is what a backup of a slot nothing could read a chain out of is
@@ -75,7 +76,7 @@ func (f *Flows) Import(
 			return result.Change{}, err
 		}
 
-		body, err = f.documentFor(ctx, doc)
+		body, err = f.documentFor(ctx, s.Model().Name, doc)
 		if err != nil {
 			return result.Change{}, err
 		}
@@ -120,14 +121,52 @@ func (f *Flows) Import(
 	}, nil
 }
 
+// ErrWrongDevice reports a preset built for one pedal and written to another.
+var ErrWrongDevice = errors.New("the catalog is not this device's")
+
+// WrongDeviceError says which two disagreed.
+type WrongDeviceError struct {
+	// Attached is what answered over USB.
+	Attached string
+	// Catalog is the device the catalog gear was named against describes.
+	Catalog string
+}
+
+func (e *WrongDeviceError) Error() string {
+	return fmt.Sprintf(
+		"the catalog is %s's and the attached device is a %s: "+
+			"pass --device %q, or a preset shaped for the wrong pedal is written",
+		e.Catalog, e.Attached, e.Attached)
+}
+
+func (*WrongDeviceError) Unwrap() error { return ErrWrongDevice }
+
 // documentFor builds what a device holds out of what a file describes.
+//
+// attached is what answered over USB, and it has to be the device the catalog
+// describes. Which catalog is used is a static option decided before any
+// handshake, so nothing else connects the two: a Helix Floor is recognised,
+// opened and written to exactly as readily as a Stomp, and without this the
+// chain would be resolved against the Stomp's 661 models, spliced into a
+// Stomp-shaped blank on its fixed twenty-position grid, and put in the Floor's
+// flash. A document shaped for the wrong device is the write the whole offset
+// table exists to prevent: the device accepts it and then draws nothing.
 func (f *Flows) documentFor(
 	ctx context.Context,
+	attached string,
 	doc *preset.Document,
 ) ([]byte, error) {
 	cat, err := f.catalog(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	// Unconditional. A session only opens for a device findDevice recognised,
+	// so an attached name is always there to compare, and an escape for the
+	// empty one would be an escape a test could take and a caller could
+	// inherit.
+	if cat.Device != attached {
+		return nil, &WrongDeviceError{Attached: attached, Catalog: cat.Device}
 	}
 
 	blocks, err := f.translator().Placements(doc, cat)
@@ -148,6 +187,19 @@ func (f *Flows) documentFor(
 	// no snapshots of its own and wrong for one that does: it would leave
 	// three snapshots recalling the same sound under the blank's names.
 	wire.PlaceSnapshots(out, f.translator().SnapshotStates(doc))
+
+	// And what a pedal moves. Without this a preset could say
+	// `moves: [{by: expression, role: amp, setting: drive}]`, the compiler
+	// resolved it and the file kept it, and the assignment reached no device:
+	// the slot came back with the section absent.
+	movers, err := f.translator().PlacedControllers(doc, cat)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := wire.PlaceControllers(out, movers); err != nil {
+		return nil, err
+	}
 
 	// And the routing, for the same reason. A chain is written into the
 	// sixteen positions a device gives it and never into the four its input,

@@ -1,0 +1,9 @@
+schema: ToneSpec
+genre: [rock]
+
+subject:
+  kind: artist
+  name: Went Direct
+  era: a record that never met a microphone
+  years: { from: 1990, to: 1995 }
+confidence: low

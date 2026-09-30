@@ -28,7 +28,7 @@ package device
 import (
 	"context"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // vendorID is Line 6's USB vendor identifier. Every device this package
@@ -135,6 +135,41 @@ type Writer interface {
 type Selector interface {
 	// SelectPreset loads a preset, the way a footswitch does.
 	SelectPreset(ctx context.Context, setlist, slot int) error
+}
+
+// Turner is a session that can move one control on what a device is playing.
+//
+// Separate from Selector and from Writer, because it is neither. Selecting
+// swaps one stored preset for another and writing replaces what a slot holds;
+// this changes the preset in front of somebody without touching either. It is
+// what a knob does, and what HX Edit sends when one is dragged.
+//
+// The reason it exists at all: a preset written to a slot does not become
+// what the device plays, so a caller sweeping a control through its range has
+// no other way to be heard.
+type Turner interface {
+	// SetParam moves one parameter on the running preset.
+	SetParam(ctx context.Context, at Address, value float32) error
+	// SetChoice picks one of a parameter's settings, for the ones that are
+	// a list rather than a range. A cabinet's microphone is the one that
+	// matters: which of eight sits in front of the speaker changes the
+	// sound more than any of its knobs.
+	SetChoice(ctx context.Context, at Address, value int) error
+	// SetSwitch turns one of a parameter's switches on or off.
+	SetSwitch(ctx context.Context, at Address, on bool) error
+}
+
+// Loaded is a session that can read the preset a device is playing.
+//
+// Separate from Editor's ReadPreset, which fetches a slot. This answers with
+// the edit buffer: what somebody is hearing, including whatever has been
+// changed since it was loaded. The two differ, and the difference is the
+// whole point — a control moved live shows here and not in the slot.
+type Loaded interface {
+	// ReadCurrent fetches the preset the device has loaded.
+	ReadCurrent(ctx context.Context) ([]byte, error)
+	// WriteCurrent replaces it, storing nothing.
+	WriteCurrent(ctx context.Context, document []byte) error
 }
 
 // Editor is a session with an attached device.

@@ -1,5 +1,10 @@
 {
   "mcpServers": {
+    "toneharness": {
+      "command": "mise",
+      "args": ["exec", "--", "go", "run", "main.go", "mcp", "start"],
+      "env": {}
+    },
     "reddit": {
       "command": "npx",
       "args": [

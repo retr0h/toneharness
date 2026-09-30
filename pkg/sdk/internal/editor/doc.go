@@ -29,5 +29,5 @@
 //
 // This is the same preset a `.hlx` file holds, in the representation the
 // hardware speaks rather than the one a host stores. See
-// [github.com/retr0h/tonestack/pkg/compile] for the rig that sits above both.
+// [github.com/retr0h/toneharness/pkg/compile] for the rig that sits above both.
 package editor

@@ -27,7 +27,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // This file is the read loop: the one goroutine that reads from a device, and
@@ -263,18 +263,57 @@ func (s *session) idleAck(
 // idleDue reports a channel owed an idle acknowledgement, and drops the
 // complete envelopes nobody asked for.
 //
-// Nothing is due on any channel while an exchange, a write or a handshake is
-// under way: a write is the window a device punishes, from its first chunk
-// through its answer and the flash pause, and before the loop nothing was
-// ever sent inside one. A partial envelope stays until the rest of it
-// arrives, because the framing has no marker to resynchronise on.
+// A write and a channel opening still hold every channel: a write is the
+// window a device punishes, from its first chunk through its answer and the
+// flash pause, and before the loop nothing was ever sent inside one.
+//
+// An ordinary exchange holds only the channel it is waiting on, and the
+// events channel is the reason. That channel carries what the device says
+// unasked and nobody sends on it, so awaitReply never acknowledges it: it
+// acknowledges the channel it is waiting on and no other. Holding it for the
+// length of every exchange deadlocked the session against the device, because
+// the device stops draining what it is sent once what it has sent goes
+// unacknowledged.
+//
+// A tune run died with the control channel 6.042s into a six second wait for
+// an opcode 30 that was never going to come, events sitting on 408 bytes
+// received against 9 acknowledged and quiet for 2.439s, and inflight at 1.
+// Every part of that is this function refusing, for the whole of an exchange,
+// to acknowledge a channel that had nothing to do with it.
+//
+// A partial envelope stays until the rest of it arrives, because the framing
+// has no marker to resynchronise on.
 func (s *session) idleDue(
 	c *channel,
 ) bool {
 	s.rxMu.Lock()
 	defer s.rxMu.Unlock()
 
-	if s.closing || s.inflight > 0 || !c.owed() || time.Since(c.lastRx) < s.budgets.idle {
+	held := s.inflight
+	quiet := s.budgets.idle
+
+	// The events channel is settled as soon as it owes anything, rather than
+	// once it has gone quiet.
+	//
+	// The wait exists so a channel somebody is reading is not acknowledged
+	// mid-answer, and events is never that: nothing reads it and its payloads
+	// are thrown away as they arrive. Waiting on it only ever delayed the one
+	// acknowledgement the device is waiting for.
+	//
+	// It has to be dropped rather than shortened because the device sets the
+	// pace. Events chatters about every 46ms while a chain is being tuned, so
+	// a 300ms wait almost never opens, and what acknowledgements did get out
+	// went in the gaps between bursts. A session then failed holding 63 bytes
+	// owed with the last frame 46ms old: too recent to acknowledge, and by
+	// then the device had already stopped draining what it was sent. Its
+	// acknowledgement count for the data channel was zero, so the opcode 30
+	// waiting six seconds for an answer had not even been taken in.
+	if c.name == channelEvents {
+		held = s.delicate
+		quiet = 0
+	}
+
+	if s.closing || held > 0 || !c.owed() || time.Since(c.lastRx) < quiet {
 		return false
 	}
 
@@ -390,17 +429,26 @@ func (s *session) pace(
 // Bounded on purpose. A stale backlog clears in about a hundred frames; an
 // unbounded drain keeps the endpoint under load and has coincided with
 // devices locking up.
+//
+// Reports whether the device went quiet. A false is one still talking when the
+// bound ran out, which the caller decides what to do about: two of the three
+// here are closing down and have nobody to tell, and the handshake carries it
+// forward because a session that began on a noisy device is worth knowing
+// about when a later call goes unanswered.
 func (s *session) drain(
 	ctx context.Context,
-) {
+) bool {
 	timer := time.NewTimer(s.budgets.drain)
 	defer timer.Stop()
 
 	start := s.progress().windows
+	quiet := false
 
 	for ctx.Err() == nil && s.ended() == nil {
 		at := s.progress()
 		if at.quiet >= drainQuietRuns && at.windows-start >= drainQuietRuns {
+			quiet = true
+
 			break
 		}
 
@@ -415,6 +463,13 @@ func (s *session) drain(
 		break
 	}
 
+	if !quiet {
+		// Nobody is waiting on this, so the trace is where it shows, which is
+		// how every other unwaited-on failure in this loop is recorded.
+		s.tracef("ERR drain gave up after %s with the device still talking\n",
+			s.budgets.drain)
+	}
+
 	// Whatever arrived is consumed, not replayed into a later reply.
 	s.rxMu.Lock()
 	defer s.rxMu.Unlock()
@@ -422,4 +477,6 @@ func (s *session) drain(
 	for _, c := range s.chans {
 		c.buf = nil
 	}
+
+	return quiet
 }

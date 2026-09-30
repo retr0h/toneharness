@@ -28,9 +28,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/corpusgen"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/corpusgen"
 )
 
 type CorpusgenPublicTestSuite struct {
@@ -137,14 +137,12 @@ func (s *CorpusgenPublicTestSuite) TestRun() {
 				catalog.CategoryCab:   0,
 			},
 			// A volume block in most chains says nothing about how a tone is
-			// built. And Line 6 tag amps Guitar or Bass; a mic preamp is
-			// tagged neither, so a chain built around one belongs to no
-			// instrument's habits.
+			// built.
 			noCategory: []catalog.Category{catalog.CategoryUtility},
 			// Counted per instrument, once per chain. The Minotaur sits in
-			// nine bass chains, twice in one of them, and in two presets that
-			// belong to no instrument, one with no amp and one built around a
-			// preamp; those two are not counted, and the doubled one counts
+			// nine bass chains, twice in one of them, and in two more: one
+			// with no amp, which is counted nowhere, and one built around a
+			// mic preamp, which is a guitar chain. The doubled one counts
 			// once. A model the catalog does not know is not counted at all.
 			models: map[catalog.ModelID]int{
 				"HD2_AmpSVBeastNrm": 14,
@@ -152,7 +150,15 @@ func (s *CorpusgenPublicTestSuite) TestRun() {
 				"HD2_EqTest":        2,
 				"HD2_NotInCatalog":  0,
 			},
-			grammars: 1,
+			// Two: bass, and the guitar one the preamp chain makes.
+			//
+			// Line 6 tag some amps Bass, and everything else — Guitar, Preamp,
+			// or nothing at all — is a guitar amplifier, because the bass tag
+			// is the specific claim. This used to refuse any subcategory not
+			// spelled Guitar or Bass, which dropped the chain from the grammar,
+			// the chain count and the model counts together. Against the real
+			// corpus that was 183 of 3,804 chains with an amplifier.
+			grammars: 2,
 		},
 		{
 			// A median over too few presets is an anecdote with a decimal

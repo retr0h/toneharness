@@ -22,11 +22,12 @@ package sdk
 import (
 	"errors"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/catalogview"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/recipes"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/catalogview"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
 // EmptySwapError is a swap refused because neither slot holds a preset. It
@@ -46,8 +47,8 @@ type EmptySwapError = deviceslots.EmptySwapError
 var (
 	// ErrNoSuchBlock reports a model the catalog does not carry.
 	ErrNoSuchBlock = catalogview.ErrNotFound
-	// ErrNoSuchRecipe reports a rig nobody has written.
-	ErrNoSuchRecipe = recipes.ErrNotFound
+	// ErrNoSuchRig reports a rig nobody has written.
+	ErrNoSuchRig = rigs.ErrNotFound
 	// ErrUnknownFormat reports an export asked for a Format that is neither
 	// FormatRig nor FormatPreset.
 	ErrUnknownFormat = result.ErrUnknownFormat
@@ -64,4 +65,20 @@ var (
 	// is finished and nothing reconnects it; a caller who wants the pedal
 	// again closes it and opens another.
 	ErrBus = device.ErrBus
+
+	// ErrNothingToBuildFrom reports a request with nothing in it to resolve:
+	// no gear named, and nothing that can be measured against.
+	//
+	// Not a malformed document. "Make me a punk bass tone" is a real request
+	// that lands here, and the answer is to ask which records rather than to
+	// guess at an amplifier.
+	ErrNothingToBuildFrom = translate.ErrNothingToBuildFrom
+
+	// ErrNoDevice reports no Helix on the USB bus.
+	//
+	// Exported because a caller cannot act on what it cannot match, and the
+	// thing to do about this is specific enough to be worth saying: a pedal
+	// that is powered but plugged into a charger rather than a data port
+	// looks exactly like this.
+	ErrNoDevice = device.ErrNoDevice
 )

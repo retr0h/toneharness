@@ -1,0 +1,23 @@
+artist: Jeff Ament
+tracks:
+  - track: jeremy
+    url: https://open.spotify.com/track/62nQ8UZVqR2RMvkJHkcO2o
+    year: 1991
+    band: Pearl Jam
+    genres: [grunge]
+    genres_by: llm
+    note: Ten, 1991. The bass opens it
+  - track: even-flow
+    url: https://open.spotify.com/track/6QewNVIDKdSl8Y3ycuHIei
+    year: 1991
+    band: Pearl Jam
+    genres: [grunge]
+    genres_by: llm
+    note: Ten, 1991
+  - track: animal
+    url: https://open.spotify.com/track/2EzaNI2kE2AoBfJ8mRZLSJ
+    year: 1993
+    band: Pearl Jam
+    genres: [grunge]
+    genres_by: llm
+    note: Vs., 1993. The remaster

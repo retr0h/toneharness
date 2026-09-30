@@ -23,9 +23,9 @@ package editor
 import (
 	"encoding/json"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Keys a preset stores a routing entry under. A device owns these names.
@@ -141,11 +141,10 @@ func namedValues(
 		return out
 	}
 
-	for i, name := range sym.Params {
-		if i >= len(values) {
-			break
-		}
-
+	// Whichever runs out first. A device sends the leading values of the
+	// model's own order and stops, so the names past that point belong to
+	// parameters it did not send.
+	for i, name := range sym.Params[:min(len(sym.Params), len(values))] {
 		out[name] = values[i]
 	}
 
@@ -230,13 +229,23 @@ func pairedCabs(
 			cabEnabled: true,
 		}
 
-		for name, v := range namedValues(blk.CabLink, b.Cab, cat) {
+		// CabNamed decides both halves of this split, and it has to be one
+		// number. It is what the device said it named for this block; the
+		// catalog's own parameter count is a second opinion about the same
+		// thing, and the two disagreeing would file the value at that index
+		// twice — once under a parameter name and once as the microphone —
+		// or drop the values between them.
+		named := b.Cab
+		if b.CabNamed > 0 && b.CabNamed < len(named) {
+			named = named[:b.CabNamed]
+		}
+
+		for name, v := range namedValues(blk.CabLink, named, cat) {
 			fields[name] = v
 		}
 
-		// Anything past what the cabinet model has names for is the
-		// microphone, which a preset stores as an attribute rather than a
-		// parameter.
+		// Anything past what the device named is the microphone, which a
+		// preset stores as an attribute rather than a parameter.
 		if len(b.Cab) > b.CabNamed && b.CabNamed > 0 {
 			fields[cabMic] = b.Cab[b.CabNamed]
 		}

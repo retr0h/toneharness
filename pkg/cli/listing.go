@@ -25,12 +25,12 @@ import (
 	"io"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Listing prints what a setlist holds.
@@ -76,19 +76,6 @@ func Listing(
 	}.Render(w)
 }
 
-// Plural renders a count with its noun, so a setlist of one does not read as
-// "1 slots".
-func Plural(
-	n int,
-	noun string,
-) string {
-	if n == 1 {
-		return "1 " + noun
-	}
-
-	return fmt.Sprintf("%d %ss", n, noun)
-}
-
 // Flow reads a chain as one line of categories.
 //
 // Categories rather than model names, because a listing is for finding the
@@ -96,7 +83,7 @@ func Plural(
 // does that where four model names in a row do not.
 func Flow(
 	w io.Writer,
-	blocks []chain.Block,
+	blocks []plan.Block,
 	cat *catalog.Catalog,
 ) string {
 	parts := make([]string, 0, len(blocks))

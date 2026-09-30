@@ -212,3 +212,40 @@ func transform(
 		}
 	}
 }
+
+// Forward runs a fast Fourier transform in place.
+//
+// Exported because building an impulse response is the same arithmetic
+// pointed the other way, and a second transform written beside this one is
+// the shape of mistake this package has already paid for once: two
+// implementations of a measurement that agreed to five points on a band share
+// and thirty percent on a centroid.
+//
+// The length must be a power of two.
+func Forward(
+	re, im []float64,
+) {
+	transform(re, im)
+}
+
+// Inverse undoes Forward, in place and scaled.
+//
+// By conjugation rather than by a second transform: conjugate, run it
+// forwards, conjugate again, divide by the length. Same code, one direction,
+// nothing to keep in step.
+func Inverse(
+	re, im []float64,
+) {
+	for i := range im {
+		im[i] = -im[i]
+	}
+
+	transform(re, im)
+
+	n := float64(len(re))
+
+	for i := range re {
+		re[i] /= n
+		im[i] = -im[i] / n
+	}
+}

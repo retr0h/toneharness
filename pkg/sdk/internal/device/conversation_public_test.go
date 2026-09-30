@@ -24,14 +24,15 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // ConversationPublicTestSuite covers a session's beginning and end.
@@ -301,9 +302,14 @@ func (s *ConversationPublicTestSuite) TestClose() {
 
 // TestRetry waits on an interface a previous session has not let go of.
 func (s *ConversationPublicTestSuite) TestRetry() {
+	busy := fmt.Errorf("%w: held", device.ErrInterfaceBusy)
+
 	tests := []struct {
-		name  string
+		name string
+		// until is the try that succeeds, or zero for one that never does.
 		until int
+		// with is what the failing tries return.
+		with  error
 		tries int
 		err   bool
 	}{
@@ -313,12 +319,25 @@ func (s *ConversationPublicTestSuite) TestRetry() {
 			// reporting.
 			name:  "one that comes free",
 			until: 2,
+			with:  busy,
 			tries: 2,
 		},
 		{
+			// The budget is wall clock, so the count is whatever fits in it.
 			name:  "one that never does",
 			until: 0,
-			tries: device.ClaimAttempts,
+			with:  busy,
+			tries: int(device.ClaimPatience / device.ClaimBackoff),
+			err:   true,
+		},
+		{
+			// Everything used to be waited on, which spent the whole budget on
+			// a device that was never going to appear. An interface somebody
+			// holds comes free; one that does not exist does not.
+			name:  "a failure that waiting cannot fix",
+			until: 0,
+			with:  errors.New("no such device"),
+			tries: 1,
 			err:   true,
 		},
 	}
@@ -327,13 +346,15 @@ func (s *ConversationPublicTestSuite) TestRetry() {
 		s.Run(tt.name, func() {
 			tries := 0
 
-			err := device.Retry(func() error {
+			got, waited, err := device.Retry(func() error {
 				tries++
 				if tt.until == 0 || tries < tt.until {
-					return errors.New("busy")
+					return tt.with
 				}
 
 				return nil
+			}, func(err error) bool {
+				return errors.Is(err, device.ErrInterfaceBusy)
 			})
 
 			if tt.err {
@@ -341,6 +362,12 @@ func (s *ConversationPublicTestSuite) TestRetry() {
 			} else {
 				s.Require().NoError(err)
 			}
+
+			// Reported rather than counted by the caller, so a refusal can say
+			// how long it waited: an interface held for a moment and one held
+			// for minutes read the same without it.
+			s.Require().Equal(tries, got)
+			s.Require().LessOrEqual(waited, device.ClaimPatience)
 
 			s.Require().Equal(tt.tries, tries)
 		})

@@ -1,0 +1,7 @@
+---
+package: gen
+output: tonespec.gen.go
+generate:
+  models: true
+output-options:
+  skip-prune: true

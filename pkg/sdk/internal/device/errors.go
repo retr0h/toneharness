@@ -28,6 +28,14 @@ import (
 // ErrNoDevice reports that no recognised device is attached.
 var ErrNoDevice = errors.New("no device found")
 
+// ErrInterfaceBusy is an editor interface somebody else holds.
+//
+// A sentinel because the code that recognises it and the code that decides
+// what to do about it cannot see each other: the IOKit return is read on
+// macOS, and whether to wait on it is decided in the platform-independent
+// claim. Wrapped rather than returned bare, so the IOKit error travels with it.
+var ErrInterfaceBusy = errors.New("the editor interface is in use")
+
 // ErrBus reports a session the bus has ended: a read or a write the bus
 // refused, or the read loop stopping on its own. A session that returned it
 // is finished, and nothing reconnects it.

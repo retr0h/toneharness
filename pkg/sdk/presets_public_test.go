@@ -32,11 +32,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // PresetsPublicTestSuite covers the Client's one-shot device methods, a
@@ -80,15 +80,27 @@ func (s *PresetsPublicTestSuite) attachedTo() *sdk.Client {
 		MockEditor:   mocks.NewMockEditor(s.ctrl),
 		MockWriter:   mocks.NewMockWriter(s.ctrl),
 		MockSelector: mocks.NewMockSelector(s.ctrl),
+		MockTurner:   mocks.NewMockTurner(s.ctrl),
+		MockLoaded:   mocks.NewMockLoaded(s.ctrl),
 	}
 	dev.MockEditor.EXPECT().Model().Return(device.Model{Name: "HX Stomp"}).AnyTimes()
 	dev.MockEditor.EXPECT().Presets(gomock.Any(), 0).Return(listing(), nil).AnyTimes()
 	dev.MockEditor.EXPECT().ReadPreset(gomock.Any(), 0, gomock.Any()).Return(body, nil).AnyTimes()
+	dev.MockLoaded.EXPECT().ReadCurrent(gomock.Any()).Return(body, nil).AnyTimes()
 	dev.MockEditor.EXPECT().Close().Return(nil)
 	dev.MockWriter.EXPECT().
 		WriteNamedPreset(gomock.Any(), 0, gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil).AnyTimes()
 	dev.MockSelector.EXPECT().SelectPreset(gomock.Any(), 0, gomock.Any()).Return(nil).AnyTimes()
+	dev.MockTurner.EXPECT().
+		SetChoice(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
+	dev.MockTurner.EXPECT().
+		SetSwitch(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
+	dev.MockTurner.EXPECT().
+		SetParam(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
 
 	bus := mocks.NewMockOpener(s.ctrl)
 	bus.EXPECT().Open(gomock.Any()).Return(dev, nil)
@@ -153,6 +165,37 @@ func (s *PresetsPublicTestSuite) TestPresets() {
 		s.Require().NoError(err)
 		s.Require().NoError(again.Close())
 	})
+}
+
+// TestCurrent covers reading what the device is playing.
+//
+// The edit buffer rather than a slot, which is the difference that matters
+// after Turn: a control moved with Turn shows here and not in the slot it came
+// from, so reading the slot back reads as though nothing happened.
+func (s *PresetsPublicTestSuite) TestCurrent() {
+	tests := []struct {
+		name   string
+		client func() *sdk.Client
+		says   string
+	}{
+		{name: "a device that is not there", client: s.absent, says: "no device found"},
+		{name: "a device, in a Session of its own", client: s.attachedTo},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, err := tt.client().Current(context.Background(), sdk.FormatRig)
+
+			if tt.says != "" {
+				s.Require().ErrorContains(err, tt.says)
+
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotEmpty(got.Name)
+		})
+	}
 }
 
 // TestPreset covers reading one slot on the device as a rig.
@@ -405,17 +448,99 @@ func (s *PresetsPublicTestSuite) TestSelect() {
 	}
 }
 
-// rigFile writes a rig somebody typed, about subject, and returns its path.
+// TestTurn covers moving one control, in a Session of its own.
+func (s *PresetsPublicTestSuite) TestTurn() {
+	at := sdk.Address{Block: 2, Param: 5, Direct: true}
+
+	tests := []struct {
+		name   string
+		client func() *sdk.Client
+		says   string
+	}{
+		{name: "a device that is not there", client: s.absent, says: "no device found"},
+		{name: "a device, in a Session of its own", client: s.attachedTo},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := tt.client().Turn(context.Background(), at, 0.25)
+
+			if tt.says != "" {
+				s.Require().ErrorContains(err, tt.says)
+
+				return
+			}
+
+			s.Require().NoError(err)
+		})
+	}
+}
+
+// TestChooseAndSwitch covers the other two kinds of value, each in a Session
+// of its own.
+func (s *PresetsPublicTestSuite) TestChooseAndSwitch() {
+	at := sdk.Address{Block: 2, Param: 5, Direct: true}
+
+	s.Run("a microphone, with no device there", func() {
+		s.Require().ErrorContains(
+			s.absent().Choose(context.Background(), at, 3), "no device found")
+	})
+
+	s.Run("a switch, with no device there", func() {
+		s.Require().ErrorContains(
+			s.absent().Switch(context.Background(), at, true), "no device found")
+	})
+
+	s.Run("a microphone, on a device", func() {
+		s.Require().NoError(
+			s.attachedTo().Choose(context.Background(), at, 3))
+	})
+
+	s.Run("a switch, on a device", func() {
+		s.Require().NoError(
+			s.attachedTo().Switch(context.Background(), at, true))
+	})
+}
+
+// TestPlay covers auditioning a preset, in a Session of its own.
+//
+// Nothing is stored, which is what separates it from Import: a slot is flash,
+// and putting hundreds of chains in front of a device to measure them is the
+// shape of write burst that has corrupted a setlist.
+func (s *PresetsPublicTestSuite) TestPlay() {
+	tests := []struct {
+		name   string
+		client func() *sdk.Client
+		says   string
+	}{
+		{name: "a device that is not there", client: s.absent, says: "no device found"},
+		{name: "a preset that is not there", client: s.attachedTo, says: "nope.hlx"},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err := tt.client().Play(context.Background(), "nope.hlx")
+
+			s.Require().ErrorContains(err, tt.says)
+		})
+	}
+}
+
+// rigFile writes a rig somebody typed under the given identifier, and returns
+// its path.
+//
+// The identifier is all there is to tell two of these apart. A rig read off
+// disk arrives with no ask beside it, so there is no subject to name the preset
+// after and the identifier is what a compile reports and writes.
 func (s *PresetsPublicTestSuite) rigFile(
 	dir string,
-	subject string,
+	id string,
 ) string {
-	path := filepath.Join(dir, subject+".yaml")
+	path := filepath.Join(dir, id+".yaml")
 
 	s.Require().NoError(os.WriteFile(path, []byte(`schema: RigSpec
 version: 2
-id: typed
-subject: { kind: sound, name: `+subject+` }
+id: `+id+`
 instrument: bass
 chain:
   - { role: amp, gear: Ampeg SVT }
@@ -437,8 +562,8 @@ type compiled struct {
 // field no path reads would leave its row identical to the baseline.
 func (s *PresetsPublicTestSuite) TestCompile() {
 	dir := s.T().TempDir()
-	typed := s.rigFile(dir, "Typed")
-	other := s.rigFile(dir, "Other")
+	typed := s.rigFile(dir, "typed")
+	other := s.rigFile(dir, "other")
 
 	compile := func(ctx context.Context, in sdk.Compile) (compiled, error) {
 		built, err := sdk.New().Compile(ctx, in)
@@ -481,7 +606,7 @@ func (s *PresetsPublicTestSuite) TestCompile() {
 			name: "Rig decides what is built",
 			in:   sdk.Compile{Rig: other, Out: filepath.Join(dir, "rig.hlx")},
 			check: func(got compiled) {
-				s.Require().Equal("Other", got.built.Name)
+				s.Require().Equal("other", got.built.Name)
 				s.Require().NotEqual(base.built.Name, got.built.Name)
 			},
 		},

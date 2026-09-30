@@ -27,10 +27,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 )
 
 type MeasuredPublicTestSuite struct {
@@ -92,114 +92,133 @@ func (s *MeasuredPublicTestSuite) cat() *catalog.Catalog {
 	}}
 }
 
-// TestMeasured covers what the corpus says, in both of its shapes.
+// TestMeasured covers Measured, which prints what the corpus says.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *MeasuredPublicTestSuite) TestMeasured() {
-	tests := []struct {
+	for _, tt := range []struct {
 		name string
-		in   sdk.Measured
-		to   io.Writer
-		want []string
-		err  bool
+		then func()
 	}{
 		{
-			name: "one model's distributions",
-			in: sdk.Measured{
-				Stats: s.stats(), Catalog: s.cat(), Model: "HD2_AmpTestBass",
-			},
-			want: []string{
-				// The model is named, not just identified.
-				"Test Bass Amp",
-				"Drive",
-				// The median is what people actually set.
-				"0.440",
-				// Every band must be reachable, or the grading says nothing.
-				"unanimous", "close", "loose", "none",
-				// A parameter the catalog does not carry has no range to
-				// grade against.
-				"Ghost",
-			},
-		},
-		{
-			// The corpus measures whatever presets contained; a catalog for
-			// one device will not carry all of it. Showing the identifier is
-			// more useful than pretending the model does not exist.
-			name: "a measured model the catalog does not name",
-			in: sdk.Measured{
-				Stats:   s.stats(),
-				Catalog: &catalog.Catalog{},
-				Model:   "HD2_AmpTestBass",
-			},
-			want: []string{"HD2_AmpTestBass", "Drive"},
-		},
-		{
-			name: "the grammar of a chain",
-			in:   sdk.Measured{Stats: s.stats()},
-			want: []string{"bass", "drive", "100%"},
-		},
-		{
-			name: "an instrument nobody measured",
-			in:   sdk.Measured{Stats: s.stats(), Instrument: "guitar"},
-			want: []string{"nothing measured"},
-		},
-		{
-			name: "nowhere to write the grammar",
-			in:   sdk.Measured{Stats: s.stats()},
-			to:   &brokenWriter{},
-			err:  true,
-		},
-		{
-			name: "nowhere to write a model",
-			in: sdk.Measured{
-				Stats: s.stats(), Catalog: s.cat(), Model: "HD2_AmpTestBass",
-			},
-			to:  &brokenWriter{},
-			err: true,
-		},
-	}
+			// What the corpus says, in both of its shapes.
+			name: "measured",
+			then: func() {
+				tests := []struct {
+					name string
+					in   sdk.Measured
+					to   io.Writer
+					want []string
+					err  bool
+				}{
+					{
+						name: "one model's distributions",
+						in: sdk.Measured{
+							Stats: s.stats(), Catalog: s.cat(), Model: "HD2_AmpTestBass",
+						},
+						want: []string{
+							// The model is named, not just identified.
+							"Test Bass Amp",
+							"Drive",
+							// The median is what people actually set.
+							"0.440",
+							// Every band must be reachable, or the grading says nothing.
+							"unanimous", "close", "loose", "none",
+							// A parameter the catalog does not carry has no range to
+							// grade against.
+							"Ghost",
+						},
+					},
+					{
+						// The corpus measures whatever presets contained; a catalog for
+						// one device will not carry all of it. Showing the identifier is
+						// more useful than pretending the model does not exist.
+						name: "a measured model the catalog does not name",
+						in: sdk.Measured{
+							Stats:   s.stats(),
+							Catalog: &catalog.Catalog{},
+							Model:   "HD2_AmpTestBass",
+						},
+						want: []string{"HD2_AmpTestBass", "Drive"},
+					},
+					{
+						name: "the grammar of a chain",
+						in:   sdk.Measured{Stats: s.stats()},
+						want: []string{"bass", "drive", "100%"},
+					},
+					{
+						name: "an instrument nobody measured",
+						in:   sdk.Measured{Stats: s.stats(), Instrument: "guitar"},
+						want: []string{"nothing measured"},
+					},
+					{
+						name: "nowhere to write the grammar",
+						in:   sdk.Measured{Stats: s.stats()},
+						to:   &brokenWriter{},
+						err:  true,
+					},
+					{
+						name: "nowhere to write a model",
+						in: sdk.Measured{
+							Stats: s.stats(), Catalog: s.cat(), Model: "HD2_AmpTestBass",
+						},
+						to:  &brokenWriter{},
+						err: true,
+					},
+				}
 
-	for _, tt := range tests {
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						var buf bytes.Buffer
+
+						to := tt.to
+						if to == nil {
+							to = &buf
+						}
+
+						err := cli.Measured(to, tt.in)
+
+						if tt.err {
+							s.Require().Error(err)
+
+							return
+						}
+
+						s.Require().NoError(err)
+
+						for _, want := range tt.want {
+							s.Require().Contains(buf.String(), want)
+						}
+					})
+				}
+			},
+		},
+		{
+			// Two categories used equally often, which must not swap places
+			// between runs.
+			name: "measured does not shuffle",
+			then: func() {
+				var first string
+
+				for range 3 {
+					var buf bytes.Buffer
+
+					s.Require().NoError(cli.Measured(&buf, sdk.Measured{Stats: s.stats()}))
+
+					if first == "" {
+						first = buf.String()
+
+						continue
+					}
+
+					s.Require().Equal(first, buf.String())
+				}
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			var buf bytes.Buffer
-
-			to := tt.to
-			if to == nil {
-				to = &buf
-			}
-
-			err := cli.Measured(to, tt.in)
-
-			if tt.err {
-				s.Require().Error(err)
-
-				return
-			}
-
-			s.Require().NoError(err)
-
-			for _, want := range tt.want {
-				s.Require().Contains(buf.String(), want)
-			}
+			tt.then()
 		})
-	}
-}
-
-// TestMeasuredDoesNotShuffle covers two categories used equally often, which
-// must not swap places between runs.
-func (s *MeasuredPublicTestSuite) TestMeasuredDoesNotShuffle() {
-	var first string
-
-	for range 3 {
-		var buf bytes.Buffer
-
-		s.Require().NoError(cli.Measured(&buf, sdk.Measured{Stats: s.stats()}))
-
-		if first == "" {
-			first = buf.String()
-
-			continue
-		}
-
-		s.Require().Equal(first, buf.String())
 	}
 }
 

@@ -26,8 +26,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 type HintPublicTestSuite struct {
@@ -48,14 +48,45 @@ func (s *HintPublicTestSuite) TestHint() {
 		{
 			name: "a block the catalog does not carry",
 			err:  fmt.Errorf("%w %q", sdk.ErrNoSuchBlock, "HD2_Nope"),
-			want: "try 'tonestack catalog list'",
+			want: "try 'toneharness catalog list'",
 			is:   sdk.ErrNoSuchBlock,
 		},
 		{
 			name: "a rig nobody wrote",
-			err:  fmt.Errorf("%w %q", sdk.ErrNoSuchRecipe, "nobody"),
-			want: "try 'tonestack recipes list'",
-			is:   sdk.ErrNoSuchRecipe,
+			err:  fmt.Errorf("%w %q", sdk.ErrNoSuchRig, "nobody"),
+			want: "try 'toneharness rigs list'",
+			is:   sdk.ErrNoSuchRig,
+		},
+		{
+			// A pedal on a charger rather than a data port looks exactly like
+			// one that is switched off, and the power light is already on.
+			name: "no pedal on the bus",
+			err:  fmt.Errorf("%w", sdk.ErrNoDevice),
+			want: "USB data port",
+			is:   sdk.ErrNoDevice,
+		},
+		{
+			// Retrying is usually enough. When it is not, the endpoint has
+			// stalled and only a power cycle clears it, so the error says so
+			// rather than letting somebody retry into a wall.
+			name: "the session the bus ended",
+			err:  fmt.Errorf("%w: writing to control", sdk.ErrBus),
+			want: "power the pedal off and on",
+			is:   sdk.ErrBus,
+		},
+		{
+			// The next move is a question, not a guess: a recording resolves
+			// fully where an adjective has to be earned against a population.
+			name: "a request with nothing in it to resolve",
+			err:  fmt.Errorf("%w", sdk.ErrNothingToBuildFrom),
+			want: "Name a record to sound like",
+			is:   sdk.ErrNothingToBuildFrom,
+		},
+		{
+			name: "a slot holding nothing",
+			err:  fmt.Errorf("%w", sdk.ErrEmptySlot),
+			want: "toneharness slots list",
+			is:   sdk.ErrEmptySlot,
 		},
 		{
 			// An error with no command to suggest comes back as it was.

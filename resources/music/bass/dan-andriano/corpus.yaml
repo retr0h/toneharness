@@ -1,0 +1,23 @@
+artist: Dan Andriano
+tracks:
+  - track: this-addiction
+    url: https://open.spotify.com/track/2sTiGv2fPnxqH3igvfnaVf
+    year: 2010
+    band: Alkaline Trio
+    genres: [pop-punk, punk]
+    genres_by: llm
+    note: This Addiction, 2010
+  - track: dine-dine-my-darling
+    url: https://open.spotify.com/track/5erHygNGUkStzwvGFckRco
+    year: 2010
+    band: Alkaline Trio
+    genres: [pop-punk, punk]
+    genres_by: llm
+    note: This Addiction, 2010
+  - track: lead-poisoning
+    url: https://open.spotify.com/track/3FXVuafyH7AuWAERZw5nvs
+    year: 2010
+    band: Alkaline Trio
+    genres: [pop-punk, punk]
+    genres_by: llm
+    note: This Addiction, 2010

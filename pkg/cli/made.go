@@ -25,10 +25,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // Made says what was built and what it chose.
@@ -41,11 +41,7 @@ func Made(
 	m sdk.Made,
 	cat *catalog.Catalog,
 ) error {
-	if err := made(w, m, cat); err != nil {
-		return fmt.Errorf("reporting: %w", err)
-	}
-
-	return nil
+	return reporting(made(w, m, cat))
 }
 
 // made writes the parts, so a failure part way through is reported rather
@@ -56,12 +52,12 @@ func made(
 	cat *catalog.Catalog,
 ) error {
 	if _, err := fmt.Fprintf(
-		w, "\n%s%s\n\n", paint.Indent, paint.Title(w, m.Chain.Name),
+		w, "\n%s%s\n\n", paint.Indent, paint.Title(w, m.Plan.Name),
 	); err != nil {
 		return err
 	}
 
-	if err := paint.Chain(w, m.Chain, cat); err != nil {
+	if err := paint.Chain(w, m.Plan, cat); err != nil {
 		return err
 	}
 
@@ -160,7 +156,7 @@ func heard(
 	return nil
 }
 
-// unfamiliar names the character terms nothing defines.
+// unfamiliar names the words nothing defines.
 func unfamiliar(
 	w io.Writer,
 	all []sdk.Unfamiliar,
@@ -174,7 +170,7 @@ func unfamiliar(
 	}
 
 	for _, u := range all {
-		line := fmt.Sprintf("no such character term %q", u.Term)
+		line := fmt.Sprintf("no such word %q", u.Term)
 		if len(u.Near) > 0 {
 			line += " — did you mean " + strings.Join(u.Near, ", ") + "?"
 		}

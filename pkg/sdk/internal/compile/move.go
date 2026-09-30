@@ -23,13 +23,12 @@ package compile
 import (
 	"math"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
-// Moved is what a character term did to a parameter.
+// Moved is what a word did to a parameter.
 type Moved struct {
 	// Term is the word that moved it.
 	Term string
@@ -78,6 +77,12 @@ func (m Moved) Holds() bool { return m.Already != "" }
 // `drive` is a scale — clean, minimal-drive, grit-on-attack, saturated are
 // four positions on one line — so each term carries its own multiple.
 type turn struct {
+	// axis is the question this move answers, as words.json names it.
+	//
+	// Stated rather than inferred, because a word may answer more than one and
+	// the two tables are then checkable against each other: every axis a word
+	// declares has a move, and every move names an axis that word declares.
+	axis     string
 	category catalog.Category
 	param    string
 	steps    float64
@@ -116,51 +121,72 @@ type answers struct {
 // player and the instrument, and no amplifier, reverb or compressor has a
 // control for them. A term from one of those is recorded and moves nothing,
 // which a build says out loud.
-var turns = map[string]turn{
-	"mid-forward": {
-		category: catalog.CategoryAmp, param: "Mid", steps: 1,
+var turns = map[string][]turn{
+	"mid-forward": {{
+		axis: "mids", category: catalog.CategoryAmp, param: "Mid", steps: 1,
 		also: []answers{{catalog.CategoryEQ, "MidGain"}},
-	},
-	"scooped": {
-		category: catalog.CategoryAmp, param: "Mid", steps: -1,
+	}},
+	"scooped": {{
+		axis: "mids", category: catalog.CategoryAmp, param: "Mid", steps: -1,
 		also: []answers{{catalog.CategoryEQ, "MidGain"}},
-	},
+	}},
 
-	"dark": {
-		category: catalog.CategoryAmp, param: "Treble", steps: -1,
+	"dark": {{
+		axis: "highs", category: catalog.CategoryAmp, param: "Treble", steps: -1,
 		also: []answers{{catalog.CategoryEQ, "HighGain"}},
-	},
-	"bright": {
-		category: catalog.CategoryAmp, param: "Treble", steps: 1,
+	}},
+	"bright": {{
+		axis: "highs", category: catalog.CategoryAmp, param: "Treble", steps: 1,
 		also: []answers{{catalog.CategoryEQ, "HighGain"}},
-	},
-	"glassy": {
-		category: catalog.CategoryAmp, param: "Treble", steps: 1,
+	}},
+	"glassy": {{
+		axis: "highs", category: catalog.CategoryAmp, param: "Treble", steps: 1,
 		also: []answers{{catalog.CategoryEQ, "HighGain"}},
-	},
+	}},
 
-	"clean":          {category: catalog.CategoryAmp, param: "Drive", steps: -1},
-	"minimal-drive":  {category: catalog.CategoryAmp, param: "Drive", steps: -0.5},
-	"grit-on-attack": {category: catalog.CategoryAmp, param: "Drive", steps: 0.5},
-	"saturated":      {category: catalog.CategoryAmp, param: "Drive", steps: 1},
+	"clean":          {{axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: -1}},
+	"minimal-drive":  {{axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: -0.5}},
+	"grit-on-attack": {{axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: 0.5}},
+	"saturated":      {{axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: 1}},
 
-	"tight-low-end": {category: catalog.CategoryAmp, param: "Sag", steps: -1},
-	"loose-low-end": {category: catalog.CategoryAmp, param: "Sag", steps: 1},
+	"tight-low-end": {{axis: "low-end", category: catalog.CategoryAmp, param: "Sag", steps: -1}},
+	"loose-low-end": {{axis: "low-end", category: catalog.CategoryAmp, param: "Sag", steps: 1}},
+
+	// The first word here that answers two questions, and the reason the
+	// vocabulary had to be able to hold one. Players say "punchy" constantly
+	// and it is not a synonym for either half: it is a bottom that stops with
+	// the note and a front you hear first, together.
+	//
+	// Composed from the two terms it subsumes rather than given moves of its
+	// own. Nothing has measured what punchy is, so inventing a third pair of
+	// numbers would be the guessing this project exists to remove, while
+	// saying it means tight-low-end and percussive at once is what the word
+	// already means.
+	"punchy": {
+		{axis: "low-end", category: catalog.CategoryAmp, param: "Sag", steps: -1},
+		{axis: "attack", category: catalog.CategoryComp, param: "Attack", steps: 1},
+	},
 
 	// How much of the room is on the part, which is the reverb's own
 	// question and nothing to do with the amplifier.
-	"dry": {
-		category: catalog.CategoryReverb, param: "Mix", steps: -1,
+	"dry": {{
+		axis: "space", category: catalog.CategoryReverb, param: "Mix", steps: -1,
 		absenceMeans: "this chain has no reverb, so it is already dry",
-	},
-	"roomy": {category: catalog.CategoryReverb, param: "Mix", steps: 1},
+	}},
+	"roomy": {{axis: "space", category: catalog.CategoryReverb, param: "Mix", steps: 1}},
 
 	// A compressor's attack decides how much of the front of a note gets
 	// past it. Slow, and the pick is a sound of its own; fast, and notes
 	// arrive rather than start. A scale, like drive.
-	"soft-attack":         {category: catalog.CategoryComp, param: "Attack", steps: -1},
-	"audible-pick-attack": {category: catalog.CategoryComp, param: "Attack", steps: 0.5},
-	"percussive":          {category: catalog.CategoryComp, param: "Attack", steps: 1},
+	"soft-attack": {
+		{axis: "attack", category: catalog.CategoryComp, param: "Attack", steps: -1},
+	},
+	"audible-pick-attack": {
+		{axis: "attack", category: catalog.CategoryComp, param: "Attack", steps: 0.5},
+	},
+	"percussive": {
+		{axis: "attack", category: catalog.CategoryComp, param: "Attack", steps: 1},
+	},
 }
 
 // fallbackStep is how far a term moves a parameter the corpus cannot measure.
@@ -180,7 +206,7 @@ const fallbackStep = 0.1
 // opinion should not decide the whole of a control.
 const maxStep = 0.25
 
-// move applies a rig's character to whichever blocks answer for it.
+// move applies an ask's words to whichever blocks answer for them.
 //
 // Each axis names the kind of block it speaks to, because a word is about a
 // part of the sound and not about a box: "roomy" is the reverb's question and
@@ -189,7 +215,7 @@ const maxStep = 0.25
 // reporting only the ones that worked would read as if the rest had.
 func move(
 	blocks []catalog.Block,
-	built chain.Chain,
+	built plan.Plan,
 	terms []heard,
 	stats *corpus.Stats,
 ) []Moved {
@@ -201,13 +227,13 @@ func move(
 		// Two words from one axis are two answers to one question. Neither
 		// is applied, because applying both lands back where it started and
 		// reads as though the rig said nothing.
-		if axis, ok := axisOf(term); ok && contested[axis] {
+		if axis, against := contestedAxis(term, contested); against {
 			out = append(out, Moved{Term: term, Against: axis})
 
 			continue
 		}
 
-		t, ok := turns[term]
+		moves, ok := turns[term]
 		if !ok {
 			// A word naming a block rather than a setting is answered by
 			// that block being in the chain, and demand has already put one
@@ -224,41 +250,12 @@ func move(
 			continue
 		}
 
-		at, param, found := answered(blocks, t)
-		if found {
-			out = append(out, apply(blocks[at], built.Blocks[at].Params, h, t, param, stats))
-
-			continue
+		// One move per axis the word answers, each reported on its own. A
+		// compound word that reaches one of its controls and not the other has
+		// half an answer, and saying so is the whole point of reporting.
+		for _, t := range moves {
+			out = append(out, moveOne(blocks, built, h, t, stats))
 		}
-
-		at = indexOf(blocks, t.category)
-		if at < 0 {
-			// A word can ask for what the chain already is. Mix at zero and
-			// no reverb at all are the same signal, so a rig asking to stay
-			// dry got what it asked for and nothing is missing.
-			if t.absenceMeans != "" {
-				out = append(out, Moved{Term: term, Already: t.absenceMeans})
-
-				continue
-			}
-
-			// Otherwise something would answer for this word and this chain
-			// holds none of it, which is the rig's shape rather than a gap
-			// here.
-			out = append(out, Moved{
-				Term:    term,
-				Because: "this chain holds no " + string(t.category),
-			})
-
-			continue
-		}
-
-		// The block that usually answers is there and has no such control,
-		// and nothing else in the chain has one either.
-		out = append(out, Moved{
-			Term:    term,
-			Because: "the " + blocks[at].Name + " has no " + t.param,
-		})
 	}
 
 	return out
@@ -334,7 +331,7 @@ func indexOf(
 // apply turns one knob, or reports why it could not.
 func apply(
 	b catalog.Block,
-	params chain.Params,
+	params plan.Params,
 	h heard,
 	t turn,
 	key string,
@@ -396,17 +393,20 @@ func clamp(
 	}
 }
 
-// termsOf reads the words a rig describes itself with, in the order written.
+// termsOf reads the words an ask describes a sound with, in the order written.
+//
+// The order is kept because two words on one axis cancel and the report names
+// them as the ask wrote them, which is no help if this reordered them first.
 func termsOf(
-	spec rig.Spec,
+	words []Word,
 ) []heard {
-	if spec.Character == nil {
+	if len(words) == 0 {
 		return nil
 	}
 
-	out := make([]heard, 0, len(*spec.Character))
-	for _, c := range *spec.Character {
-		out = append(out, heard{term: c.Term, weight: weightOf(c)})
+	out := make([]heard, 0, len(words))
+	for _, word := range words {
+		out = append(out, heard{term: word.Term, weight: weightOf(word)})
 	}
 
 	return out
@@ -433,32 +433,82 @@ var measures = map[string]string{
 	"mids":  "mid",
 	"highs": "centroid",
 	"drive": "harmonics",
+
+	// Added once the sweeps measured them. Each is the figure the corpus
+	// already reports for that question, so none of it is a new measurement:
+	// a low end is the low band's share, a decay is how long a note takes to
+	// die away, and an attack is how sharply one starts.
+	//
+	// The four axes still missing have no figure to map to rather than a
+	// figure nobody has taken. Nothing here measures how much room is on a
+	// part, how loud the strings are under a hand, which pickup was used, or
+	// whether a filter is moving.
+	"low-end": "low",
+	"decay":   "decay",
+	"attack":  "transient",
 }
 
-// weightOf reads how far a term's own measurement sits from everybody else's.
+// weightOf reads how far a word's own measurement sits from everybody else's.
 //
 // The gap as a share of what the others read: a player reading half the
 // harmonics of the rest is worth half a step, and one reading none of them is
 // worth the whole step. Beyond that it stops counting, because a word is one
 // opinion and the cap on a step is what keeps one opinion off the rail.
 //
-// A term with no measurement, or one measuring something no control answers
+// A word with no measurement, or one measuring something no control answers
 // to, is worth the whole step. That is what every rig did before any of this
 // was measured, and it stays the answer where nobody has measured anything.
 func weightOf(
-	c rig.CharacterTerm,
+	w Word,
 ) float64 {
-	axis, ok := axisOf(c.Term)
+	axes, ok := axesOf(w.Term)
 	if !ok {
 		return 1
 	}
 
-	key, ok := measures[axis]
-	if !ok || c.Evidence == nil {
+	// The smallest measured displacement across the axes the word answers.
+	//
+	// Conservative on purpose, and it is what keeps a compound word from
+	// double-dipping. "Punchy" is a tight low end and a hard attack, and a
+	// recording may sit far from everybody else's low end while sitting in the
+	// middle of everybody else's attack. Taking the larger would let the
+	// better-supported half carry a claim the other half does not make.
+	//
+	// An axis nothing measured is skipped rather than counted as a full step.
+	// That is the difference from a single-axis word, where a full step is the
+	// best guess available: a compound word with evidence for one of its axes
+	// has stated where its support is, and spending a whole step on the other
+	// invents the measurement it did not make.
+	weight := math.Inf(1)
+
+	for _, axis := range axes {
+		key, measured := measures[axis]
+		if !measured {
+			continue
+		}
+
+		if got, found := displaced(w, key); found {
+			weight = math.Min(weight, got)
+		}
+	}
+
+	// Nothing measured any axis it answers, which is what every rig did before
+	// any of this was measured and stays the answer where nobody has measured
+	// anything.
+	if math.IsInf(weight, 1) {
 		return 1
 	}
 
-	for _, e := range *c.Evidence {
+	return weight
+}
+
+// displaced is how far a word's own measurement sits from everybody else's on
+// one figure, as a share of what the others read.
+func displaced(
+	w Word,
+	key string,
+) (float64, bool) {
+	for _, e := range w.Evidence {
 		if e.Measured == nil || e.Against == nil {
 			continue
 		}
@@ -470,20 +520,99 @@ func weightOf(
 			continue
 		}
 
-		return math.Min(math.Abs(mine-theirs)/math.Abs(theirs), 1)
+		return math.Min(math.Abs(mine-theirs)/math.Abs(theirs), 1), true
 	}
 
-	return 1
+	return 0, false
 }
 
-// contested finds the axes a rig spoke for more than once.
+// cancels says whether a word is one of two answers to the same question.
+//
+// Any of its axes being contested is enough. A compound word that contradicts
+// another word about the low end is cancelled whole, because the halves are not
+// separable: the word is what somebody said.
+func cancels(
+	term string,
+	contested map[string]bool,
+) bool {
+	_, against := contestedAxis(term, contested)
+
+	return against
+}
+
+// contestedAxis is the first axis of a word that something else answered too,
+// for saying which question was asked twice.
+func contestedAxis(
+	term string,
+	contested map[string]bool,
+) (string, bool) {
+	axes, ok := axesOf(term)
+	if !ok {
+		return "", false
+	}
+
+	for _, axis := range axes {
+		if contested[axis] {
+			return axis, true
+		}
+	}
+
+	return "", false
+}
+
+// moveOne turns one knob for one of a word's axes, or says why it could not.
+func moveOne(
+	blocks []catalog.Block,
+	built plan.Plan,
+	h heard,
+	t turn,
+	stats *corpus.Stats,
+) Moved {
+	at, param, found := answered(blocks, t)
+	if found {
+		return apply(blocks[at], built.Blocks[at].Params, h, t, param, stats)
+	}
+
+	at = indexOf(blocks, t.category)
+	if at < 0 {
+		// A word can ask for what the chain already is. Mix at zero and no
+		// reverb at all are the same signal, so a rig asking to stay dry got
+		// what it asked for and nothing is missing.
+		if t.absenceMeans != "" {
+			return Moved{Term: h.term, Already: t.absenceMeans}
+		}
+
+		// Otherwise something would answer for this word and this chain holds
+		// none of it, which is the rig's shape rather than a gap here.
+		return Moved{
+			Term:    h.term,
+			Because: "this chain holds no " + string(t.category),
+		}
+	}
+
+	// The block that usually answers is there and has no such control, and
+	// nothing else in the chain has one either.
+	return Moved{
+		Term:    h.term,
+		Because: "the " + blocks[at].Name + " has no " + t.param,
+	}
+}
+
+// contested finds the axes an ask spoke for more than once.
 func contested(
 	terms []heard,
 ) map[string]bool {
 	seen := map[string]int{}
 
 	for _, h := range terms {
-		if axis, ok := axisOf(h.term); ok {
+		axes, ok := axesOf(h.term)
+		if !ok {
+			continue
+		}
+
+		// One count per axis the word answers. A compound word speaks for both
+		// of its axes, so it contests either of them on its own.
+		for _, axis := range axes {
 			seen[axis]++
 		}
 	}

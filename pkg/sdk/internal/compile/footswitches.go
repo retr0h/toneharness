@@ -22,13 +22,16 @@ package compile
 
 import (
 	"encoding/json"
+	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // footswitchKey is the tone entry a preset stores footswitches under.
@@ -78,7 +81,7 @@ func footswitchesOf(
 			continue
 		}
 
-		for _, key := range sortedKeys(blocks) {
+		for _, key := range slices.Sorted(maps.Keys(blocks)) {
 			fs, ok := footswitchOf(blocks[key], key, path, cat)
 			if !ok {
 				continue
@@ -163,15 +166,15 @@ func footswitchOf(
 // rig through check.
 func Footswitches(
 	doc *preset.Document,
-	spec rig.Spec,
+	made plan.Plan,
 	cat *catalog.Catalog,
 ) {
-	if spec.Footswitches == nil {
+	if len(made.Footswitches) == 0 {
 		return
 	}
 
 	pruneFootswitches(doc)
-	restoreFootswitches(doc, *spec.Footswitches, cat)
+	restoreFootswitches(doc, made.Footswitches, cat)
 }
 
 // restoreFootswitches writes a rig's footswitches back as a preset stores
@@ -271,20 +274,6 @@ func sorted(
 ) []string {
 	out := make([]string, 0, len(entry))
 	for k := range entry {
-		out = append(out, k)
-	}
-
-	sort.Strings(out)
-
-	return out
-}
-
-// sortedKeys returns a raw map's keys in order.
-func sortedKeys(
-	m map[string]json.RawMessage,
-) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
 		out = append(out, k)
 	}
 

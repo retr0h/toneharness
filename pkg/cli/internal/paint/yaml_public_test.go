@@ -27,7 +27,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 )
 
 // YAMLPublicTestSuite covers painting a document without changing it.

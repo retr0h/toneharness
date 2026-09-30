@@ -31,14 +31,16 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/presets"
-	presetmocks "github.com/retr0h/tonestack/pkg/sdk/internal/presets/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
+	presetmocks "github.com/retr0h/toneharness/pkg/sdk/internal/presets/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 type CompilePublicTestSuite struct {
@@ -51,6 +53,13 @@ func slotFixture(
 	name string,
 ) string {
 	return filepath.Join("..", "fileslots", "testdata", name)
+}
+
+// planFixture is a plan written by hand, for what only a plan carries.
+func planFixture(
+	name string,
+) string {
+	return filepath.Join("testdata", "plans", name)
 }
 
 // catalogs hands over the catalog at path, however often it is asked.
@@ -75,7 +84,6 @@ func (s *CompilePublicTestSuite) handWritten(
 	s.Require().NoError(os.WriteFile(out, []byte(`schema: RigSpec
 version: 2
 id: typed
-subject: { kind: sound, name: Typed }
 instrument: bass
 chain:
   - { role: amp, gear: Ampeg SVT }
@@ -99,13 +107,32 @@ func (s *CompilePublicTestSuite) exported(
 	return out
 }
 
+// exportedPlan writes a slot out as the plan that realises it on this device
+// and returns where it went.
+func (s *CompilePublicTestSuite) exportedPlan(
+	dir string,
+) string {
+	read, err := (&fileslots.Flows{Catalogs: s.catalogs(slotFixture("catalog.json"))}).
+		Show(context.Background(), slotFixture("setlist.hls"), slot.Address{})
+	s.Require().NoError(err)
+
+	out := filepath.Join(dir, "plan.yaml")
+
+	var buf bytes.Buffer
+
+	s.Require().NoError(plan.Write(&buf, read.Plan))
+	s.Require().NoError(os.WriteFile(out, buf.Bytes(), 0o600))
+
+	return out
+}
+
 // unknownGear writes a valid rig naming gear no catalog carries.
 func (s *CompilePublicTestSuite) unknownGear(
 	dir string,
 ) string {
 	path := filepath.Join(dir, "unknown.yaml")
 	s.Require().NoError(os.WriteFile(path, []byte(
-		"schema: RigSpec\nid: unknown\nsubject: {kind: sound, name: Unknown}\n"+
+		"schema: RigSpec\nid: unknown\n"+
 			"instrument: guitar\nchain:\n  - {role: amp, gear: Nonesuch 900}\n"),
 		0o600))
 
@@ -118,7 +145,7 @@ func (s *CompilePublicTestSuite) emptyChain(
 ) string {
 	path := filepath.Join(dir, "bad.yaml")
 	s.Require().NoError(os.WriteFile(path, []byte(
-		"schema: RigSpec\nid: x\nsubject: {kind: artist, name: X}\n"+
+		"schema: RigSpec\nid: x\n"+
 			"instrument: bass\nchain: []\n"), 0o600))
 
 	return path
@@ -132,6 +159,11 @@ func (s *CompilePublicTestSuite) TestCompile() {
 		// which rig to build: one exported from a slot unless a case says
 		// otherwise.
 		rig string
+		// which plan to build, for a case about what only a plan carries.
+		// Exactly one of the two reaches the build, unless both says
+		// otherwise.
+		plan string
+		both bool
 		// a preset to write the chain into, rather than an untouched one.
 		template string
 		catalog  string
@@ -166,11 +198,13 @@ func (s *CompilePublicTestSuite) TestCompile() {
 			contains: []string{"inputA", "outputA", "split", "join", "snapshot0"},
 		},
 		{
-			// A lifted rig carries what the preset it came from carried, and
+			// A lifted plan carries what the preset it came from carried, and
 			// that wins over whatever the preset being written into holds.
-			// Otherwise a rig shared with somebody else would rebuild with a
-			// stranger's routing.
-			name:     "a lifted rig, written into somebody else's preset",
+			// Otherwise a plan shared with somebody else would rebuild with a
+			// stranger's routing. The rig is the portable layer and states
+			// none of it, so only a plan can make this claim.
+			name:     "a lifted plan, written into somebody else's preset",
+			plan:     "exported",
 			template: slotFixture("preset.hlx"),
 			absent:   []string{"controller"},
 		},
@@ -182,7 +216,59 @@ func (s *CompilePublicTestSuite) TestCompile() {
 			// kept.
 			contains: []string{"controller"},
 		},
+		{
+			// The pedal under somebody's foot is part of the plan, and a
+			// preset built without it is one where the pedal does nothing.
+			name:     "a plan with a pedal on a knob",
+			plan:     planFixture("with-pedal.yaml"),
+			loadable: true,
+			contains: []string{`"@controller": 2`, `"@max": 0.85`},
+		},
+		{
+			// What the pedal prints under a switch is a decision somebody
+			// made once and reads every time they play. A built preset that
+			// dropped it would give two different pedals from one plan.
+			name:     "a plan with a label under a switch",
+			plan:     planFixture("with-switch.yaml"),
+			loadable: true,
+			contains: []string{`"@fs_label": "Chunk"`},
+		},
 		{name: "a rig that is not there", rig: slotFixture("nope.yaml"), errText: "opening"},
+		{
+			// A plan is written by a driver and edited by hand, so a knob no
+			// model carries reaches here. A pedal moving whatever happens to
+			// sit at that position is worse than a refusal.
+			name:    "a plan whose pedal moves a knob the model does not have",
+			plan:    planFixture("bad-pedal.yaml"),
+			err:     compile.ErrNoSuchValue,
+			errText: "Nonesuch",
+		},
+		{name: "a plan that is not there", plan: planFixture("nope.yaml"), errText: "opening"},
+		{
+			name:    "a file that is not a plan",
+			plan:    slotFixture("setlist.hls"),
+			err:     plan.ErrNotAPlan,
+			errText: "not a readable plan",
+		},
+		{
+			// A rig is realised on the way through and a plan already is, so
+			// there is no answer to being handed both, and none to neither.
+			name: "neither a rig nor a plan",
+			rig:  "none",
+			err:  presets.ErrOnePath,
+		},
+		{
+			name: "a rig and a plan at once",
+			plan: planFixture("with-pedal.yaml"),
+			both: true,
+			err:  presets.ErrOnePath,
+		},
+		{
+			name:    "a caller who stopped waiting for a plan",
+			ctx:     cancelledContext(),
+			plan:    planFixture("with-pedal.yaml"),
+			errText: context.Canceled.Error(),
+		},
 		{
 			name:    "a file that is not a rig",
 			rig:     slotFixture("setlist.hls"),
@@ -242,16 +328,23 @@ func (s *CompilePublicTestSuite) TestCompile() {
 				out = filepath.Join(dir, tt.out)
 			}
 
-			var rigPath string
+			var rigPath, planPath string
 
-			switch tt.rig {
-			case "":
+			switch {
+			case tt.rig == "none":
+			case tt.both:
+				planPath, rigPath = tt.plan, s.handWritten(dir)
+			case tt.plan == "exported":
+				planPath = s.exportedPlan(dir)
+			case tt.plan != "":
+				planPath = tt.plan
+			case tt.rig == "":
 				rigPath = s.exported(dir)
-			case "hand-written":
+			case tt.rig == "hand-written":
 				rigPath = s.handWritten(dir)
-			case "unknown gear":
+			case tt.rig == "unknown gear":
 				rigPath = s.unknownGear(dir)
-			case "empty chain":
+			case tt.rig == "empty chain":
 				rigPath = s.emptyChain(dir)
 			default:
 				rigPath = tt.rig
@@ -266,9 +359,14 @@ func (s *CompilePublicTestSuite) TestCompile() {
 
 			if tt.unencodable {
 				compiler := presetmocks.NewMockCompiler(gomock.NewController(s.T()))
+				compiler.EXPECT().Realise(gomock.Any(), gomock.Any()).
+					DoAndReturn(compile.New().Realise)
+				compiler.EXPECT().
+					Moves(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(compile.New().Moves)
 				compiler.EXPECT().
 					Lower(gomock.Any(), gomock.Any(), gomock.Any()).
-					DoAndReturn(func(doc *preset.Document, _ rig.Spec, _ *catalog.Catalog) error {
+					DoAndReturn(func(doc *preset.Document, _ plan.Plan, _ *catalog.Catalog) error {
 						doc.Meta = json.RawMessage("{")
 
 						return nil
@@ -285,6 +383,7 @@ func (s *CompilePublicTestSuite) TestCompile() {
 			got, err := presets.Compile(ctx, presets.CompileOptions{
 				Deps:         deps,
 				RigPath:      rigPath,
+				PlanPath:     planPath,
 				TemplatePath: tt.template,
 				OutputPath:   out,
 			})

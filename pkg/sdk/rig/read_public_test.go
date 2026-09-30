@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 type ReadPublicTestSuite struct {
@@ -39,7 +39,6 @@ func spec(
 	return rig.Spec{
 		Schema:     rig.SchemaName,
 		ID:         "test",
-		Subject:    rig.Subject{Kind: rig.KindArtist, Name: "Test"},
 		Instrument: rig.InstrumentBass,
 		Chain:      chain,
 	}

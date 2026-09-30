@@ -173,7 +173,7 @@ func piped[S any](
 // A read on a USB pipe takes a timeout rather than a context, and one that
 // times out with nothing is the usual case: the device had nothing to say
 // yet. So it reads again, one slice at a time, looking at ctx between slices.
-// Keeping a read posted like this is one of the rules in docs/protocol.md.
+// Keeping a read posted like this is one of the rules in pkg/sdk/internal/wire/README.md.
 func readUntil(
 	ctx context.Context,
 	p []byte,
@@ -221,7 +221,7 @@ func refused(
 	busy bool,
 ) error {
 	if busy {
-		return fmt.Errorf("the editor interface is in use, quit HX Edit: %w", err)
+		return fmt.Errorf("%w: %w", ErrInterfaceBusy, err)
 	}
 
 	return fmt.Errorf("claiming the editor interface: %w", err)

@@ -1,0 +1,25 @@
+artist: Ben Shepherd
+tracks:
+  - track: outshined
+    url: https://open.spotify.com/track/4VwPsMcRt1HPVKIdcwY9Uj
+    year: 1991
+    band: Soundgarden
+    genres: [grunge]
+    genres_by: llm
+    note: Badmotorfinger, 1991, from the 25th anniversary remaster. His first
+      record with them, so nothing earlier belongs here
+  - track: my-wave
+    url: https://open.spotify.com/track/0rCas1F0z7t29UYlcuB81J
+    year: 1994
+    band: Soundgarden
+    genres: [grunge]
+    genres_by: llm
+    note: Superunknown, 1994. 20th anniversary edition
+  - track: spoonman
+    url: https://open.spotify.com/track/1jMaB19DiVR8OihLSuYFOt
+    year: 1994
+    band: Soundgarden
+    genres: [grunge]
+    source: https://www.youtube.com/watch?v=5O14N7PQAsM
+    genres_by: llm
+    note: Superunknown, 1994. 20th anniversary edition

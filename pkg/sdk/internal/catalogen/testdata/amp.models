@@ -81,5 +81,17 @@
     "symbolicID": "HD2_AmpUniversal",
     "name": "No Devices Listed",
     "params": []
+  },
+  {
+    "symbolicID": "@dt",
+    "name": "",
+    "load": 0.0,
+    "stereo": false,
+    "devices": [
+      {
+        "id": 2162694
+      }
+    ],
+    "params": []
   }
 ]

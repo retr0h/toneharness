@@ -18,10 +18,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// Command tonestack Describe a guitar or bass sound, get a Line 6 Helix preset.
+// Command toneharness Describe a guitar or bass sound, get a Line 6 Helix preset.
 package main
 
-import "github.com/retr0h/tonestack/cmd"
+import "github.com/retr0h/toneharness/cmd"
 
 func main() {
 	cmd.Execute()

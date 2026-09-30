@@ -22,9 +22,9 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 var (
@@ -56,7 +56,7 @@ and what this tool generates are the same kind of thing.`,
 			return err
 		}
 
-		return cli.Reading(cmd.OutOrStdout(), read)
+		return answer(cmd, read, cli.Reading)
 	},
 }
 

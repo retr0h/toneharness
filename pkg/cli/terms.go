@@ -25,11 +25,11 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // termsHeader is what somebody has to do with the output.
-const termsHeader = ` Paste under the rig of the player it names. Each term carries both sides of
+const termsHeader = ` Paste under the ask of the player it names. Each term carries both sides of
  the comparison that earned it, because the gap between them is what decides
  how far the word moves a control: half of what everybody else reads is half
  a step, not a knob on its limit.
@@ -37,8 +37,8 @@ const termsHeader = ` Paste under the rig of the player it names. Each term carr
  A word here is an argument, not a verdict. Putting one in a file is still
  somebody deciding to believe it.`
 
-// PlayerTerms writes what each player's records earned them, as character
-// terms ready to paste into a rig.
+// PlayerTerms writes what each player's records earned them, as words ready
+// to paste into an ask.
 //
 // Players who earned nothing are written as a comment rather than left out:
 // that a player's records earn no word is worth reading, and an empty
@@ -86,7 +86,7 @@ func PlayerTerms(
 	return nil
 }
 
-// termsFor is one player's earned words, as a character block.
+// termsFor is one player's earned words, as a `words:` block.
 func termsFor(
 	p audio.Player,
 ) *yaml.Node {
@@ -94,10 +94,10 @@ func termsFor(
 
 	for _, t := range p.Terms {
 		mine := &yaml.Node{Kind: yaml.MappingNode, Style: yaml.FlowStyle}
-		mine.Content = append(mine.Content, text(t.Key), number(t.Mine))
+		mine.Content = append(mine.Content, text(string(t.Key)), number(t.Mine))
 
 		theirs := &yaml.Node{Kind: yaml.MappingNode, Style: yaml.FlowStyle}
-		theirs.Content = append(theirs.Content, text(t.Key), number(t.Others))
+		theirs.Content = append(theirs.Content, text(string(t.Key)), number(t.Others))
 
 		evidence := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{
 			text("kind"), text("audio"),

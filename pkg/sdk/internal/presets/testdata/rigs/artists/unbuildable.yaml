@@ -1,0 +1,10 @@
+schema: RigSpec
+version: 2
+id: unbuildable
+
+instrument: bass
+
+chain:
+  - role: amp
+    gear: Orange Rockerverb
+    evidence: [{ kind: llm }]

@@ -27,8 +27,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 // Read decodes a preset file.
@@ -53,28 +53,28 @@ func Read(
 // splits, joins — describe routing rather than a chain and are left in the
 // document, which is why Write needs the document it came from to reproduce
 // a preset faithfully.
-func (d *Document) Spec() (chain.Chain, error) { return d.Data.Spec() }
+func (d *Document) Spec() (plan.Plan, error) { return d.Data.Spec() }
 
 // Spec extracts the signal chain a payload describes.
 //
 // This is the level a setlist addresses. A slot in a backup holds a Data and
 // nothing around it, so the conversion belongs here and Document delegates.
-func (d *Data) Spec() (chain.Chain, error) {
-	spec := chain.Chain{Name: d.Meta.Name}
+func (d *Data) Spec() (plan.Plan, error) {
+	spec := plan.Plan{Name: d.Meta.Name}
 
 	for _, key := range sortedProcessors(d.Tone) {
 		dsp, err := processorIndex(key)
 		if err != nil {
-			return chain.Chain{}, err
+			return plan.Plan{}, err
 		}
 
 		blocks, err := readBlocks(d.Tone[key])
 		if err != nil {
-			return chain.Chain{}, fmt.Errorf("%s: %w", key, err)
+			return plan.Plan{}, fmt.Errorf("%s: %w", key, err)
 		}
 
 		for _, b := range blocks {
-			spec.Blocks = append(spec.Blocks, chain.Block{
+			spec.Blocks = append(spec.Blocks, plan.Block{
 				Model:   b.Model,
 				Params:  b.Params,
 				Attrs:   b.Attrs,

@@ -28,10 +28,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/cli"
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // brokenWriter fails every write, so a reporting failure is reported rather
@@ -53,7 +53,6 @@ func valid() rig.Spec {
 		Schema:     "RigSpec",
 		Version:    &v,
 		ID:         "lead",
-		Subject:    rig.Subject{Kind: "artist", Name: "Lead"},
 		Instrument: "bass",
 		Chain:      []rig.ChainEntry{{Gear: "Ampeg SVT", Role: "amp"}},
 	}

@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // send writes one frame on a channel and advances its counter.
@@ -137,6 +137,19 @@ func (s *session) deliver(
 
 		rest = remainder
 
+		// Counted before a channel is looked for, because a drain's whole job
+		// is clearing what the device has already sent and the bytes are on
+		// the wire whether or not anything here wants them.
+		//
+		// That distinction decides what the handshake's opening drain does.
+		// Nothing is open yet at that point, so every frame the device is
+		// still sending matched no channel, went uncounted, and read as
+		// quiet: the drain stopped after three windows however long the
+		// backlog was, which is the one thing it exists to wait out.
+		if f.CarriesData() && len(f.Payload) > 0 {
+			carried = true
+		}
+
 		c := s.channelFor(f)
 		if c == nil {
 			continue
@@ -164,7 +177,6 @@ func (s *session) deliver(
 
 		c.rxBytes.Add(uint32(len(f.Payload)))
 		c.lastRx = time.Now()
-		carried = true
 
 		// Nothing reads the events channel, so its bytes are counted and
 		// acknowledged, and kept nowhere.
@@ -212,10 +224,27 @@ func (s *session) channel(
 	return c, nil
 }
 
-// begin marks an exchange or a write in flight, which keeps the idle
-// acknowledgement off every channel until finish. A session whose loop has
-// ended starts nothing: no read is posted to catch the answer.
+// begin marks an exchange in flight, which keeps the idle acknowledgement off
+// the channel it is waiting on until finish. A session whose loop has ended
+// starts nothing: no read is posted to catch the answer.
 func (s *session) begin() error {
+	return s.start1(false)
+}
+
+// beginWrite marks a write or a channel opening in flight.
+//
+// Apart from an exchange because of what an idle acknowledgement may do
+// inside one. A write is the window a device punishes, from its first chunk
+// through its answer and the flash pause, and an opening is the most fragile
+// moment a session has. Nothing goes out on any channel inside either.
+func (s *session) beginWrite() error {
+	return s.start1(true)
+}
+
+// start1 counts one operation in flight.
+func (s *session) start1(
+	delicate bool,
+) error {
 	if err := s.ended(); err != nil {
 		return err
 	}
@@ -225,15 +254,28 @@ func (s *session) begin() error {
 
 	s.inflight++
 
+	if delicate {
+		s.delicate++
+	}
+
 	return nil
 }
 
-// finish marks one exchange or write over.
+// finish marks one exchange over.
 func (s *session) finish() {
 	s.rxMu.Lock()
 	defer s.rxMu.Unlock()
 
 	s.inflight--
+}
+
+// finishWrite marks one write or channel opening over.
+func (s *session) finishWrite() {
+	s.rxMu.Lock()
+	defer s.rxMu.Unlock()
+
+	s.inflight--
+	s.delicate--
 }
 
 // message takes one complete envelope out of a channel's buffer. The caller

@@ -25,13 +25,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/fileslots"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Show reads one slot off the given session, as a rig.
@@ -213,7 +213,7 @@ func (f *Flows) chainAt(
 	s device.Editor,
 	cat *catalog.Catalog,
 	at slotpkg.Address,
-) ([]chain.Block, error) {
+) ([]plan.Block, error) {
 	body, err := s.ReadPreset(ctx, at.Setlist, at.Slot)
 
 	// An answer that is not a preset is skipped the way an undecodable one
@@ -236,7 +236,7 @@ func (f *Flows) chainAt(
 		return nil, nil
 	}
 
-	c, err := f.translator().Chain("", preset, cat)
+	c, err := f.translator().Plan("", preset, cat)
 	if err != nil {
 		return nil, nil
 	}

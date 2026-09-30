@@ -33,10 +33,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // DevicePublicTestSuite runs against a Helix on the bus.
@@ -70,11 +70,11 @@ type DevicePublicTestSuite struct {
 func (s *DevicePublicTestSuite) TestRoundTrip() {
 	ctx := context.Background()
 
-	source := s.slotFrom("TONESTACK_SOURCE_SLOT", "01A")
+	source := s.slotFrom("TONEHARNESS_SOURCE_SLOT", "01A")
 
 	// The same switch the CLI reads, so a hardware run leaves a frame trace.
 	var opts []sdk.Option
-	if os.Getenv("TONESTACK_USB_DEBUG") != "" {
+	if os.Getenv("TONEHARNESS_USB_DEBUG") != "" {
 		opts = append(opts, sdk.WithTrace(os.Stderr))
 	}
 
@@ -96,13 +96,13 @@ func (s *DevicePublicTestSuite) TestRoundTrip() {
 	want, err := session.Preset(ctx, slot.Address{Slot: source})
 	s.Require().NoError(err)
 	s.Require().NotNil(want.Doc,
-		"%s holds nothing to round-trip; set TONESTACK_SOURCE_SLOT", slot.Label(source))
+		"%s holds nothing to round-trip; set TONEHARNESS_SOURCE_SLOT", slot.Label(source))
 
 	// Writing a slot on somebody's pedal is a choice they make, not a default.
-	s.Require().NotEmpty(os.Getenv("TONESTACK_SCRATCH_SLOT"),
-		"set TONESTACK_SCRATCH_SLOT to a slot this test may overwrite, such as 42C")
+	s.Require().NotEmpty(os.Getenv("TONEHARNESS_SCRATCH_SLOT"),
+		"set TONEHARNESS_SCRATCH_SLOT to a slot this test may overwrite, such as 42C")
 
-	scratch := s.slotFrom("TONESTACK_SCRATCH_SLOT", "")
+	scratch := s.slotFrom("TONEHARNESS_SCRATCH_SLOT", "")
 	s.Require().NotEqual(source, scratch, "the scratch slot must not be the source")
 
 	before, err := session.Preset(ctx, slot.Address{Slot: scratch})

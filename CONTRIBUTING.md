@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to tonestack.
+Thanks for contributing to toneharness.
 
 ## Before you start
 
@@ -10,7 +10,7 @@ Thanks for contributing to tonestack.
   the feature/change you want to make? Please make sure you consider/address
   these discussions in your work.
 - **Backwards compatibility.** Will your change break existing consumers of
-  tonestack? It is much more likely that your change will be merged if it is
+  toneharness? It is much more likely that your change will be merged if it is
   backwards compatible. Is there an approach you can take that maintains this
   compatibility? If not, consider opening an issue first so that API changes can
   be discussed before you invest your time into a PR.
@@ -30,14 +30,10 @@ mise install
   and failed in CI.
 - **[uv].** Python package runner, and the only way Python enters this project.
   Nothing is installed into the repository: `uvx` fetches a tool, runs it and
-  leaves. Three jobs need it, each one something Go should not be doing.
-  `just md-fmt` formats markdown with [mdformat]. `just gear-map` reads the
-  Pilot's Guide PDF, whose model-name column uses a subset-embedded font no Go
-  library decodes. And separating a bass part out of a finished record runs
-  [Demucs], a trained model with no equivalent in Go. See
-  [Measure a player's sound](docs/workflows.md#measure-a-players-sound).
-- **[ffmpeg].** Converts a recording to the WAV that `tonestack measure` reads.
-  Only needed if you are measuring audio. `brew install ffmpeg`.
+  leaves. See [The language is Go](#the-language-is-go) for when that is
+  allowed, which is rarely.
+- **[ffmpeg].** Converts a recording to the WAV that `toneharness measure`
+  reads. Only needed if you are measuring audio. `brew install ffmpeg`.
 - **[just].** Task runner used for building, testing, formatting, and other
   development workflows. Install with `brew install just`.
 - **[Node] 18 or newer.** Only for the optional Reddit MCP server described
@@ -58,7 +54,7 @@ both to both fails both.
 
 Reddit throttles a logged-out reader to roughly a request a minute. The script
 waits a 429 out and says so on stderr. **Treat an empty answer as the throttle
-rather than as an absent source** — those look identical and confusing them is
+rather than as an absent source.** Those look identical, and confusing them is
 the failure this project keeps having.
 
 `.mcp.json` also declares a Reddit MCP server, which is convenience rather than
@@ -117,30 +113,50 @@ main.go              a single call into cmd
 cmd/                 cobra wiring: flags to a Client call to a renderer
 pkg/cli/             how results look: theme, tables, detail, help
 pkg/cli/internal/    the primitives every renderer shares. Invisible outside pkg/cli.
+  paint/             the theme, the tables and the detail blocks
 pkg/mcp/             the MCP server an agent runs: New, Run, RunOver, and Held for
                      whether it holds the pedal at that moment
 pkg/mcp/internal/    one handler per tool. Invisible outside pkg/mcp.
+  tools/             the handlers, and what registers them on a server
 pkg/sdk/             the library. One directory, and the one that leaves.
 pkg/sdk/client.go    the Client every wrapper rallies around
 pkg/sdk/alias.go     the answer types, named here and declared in result
 pkg/sdk/result/      what every operation answers with
+pkg/sdk/tone/        ToneSpec and Setup: the request, and what somebody owns
+pkg/sdk/tone/internal/
+  gen/               Go types generated from the contract
+pkg/sdk/translate/   a request and a setup become a rig
 pkg/sdk/rig/         RigSpec, its contract in data/, and its validation
 pkg/sdk/rig/internal/
   gen/               Go types generated from the contract
-  specdoc/           writes docs/rigspec.md from the contract
-pkg/sdk/rigs/        curated rigs: which gear a player uses
-pkg/sdk/chain/       a resolved chain: what compile produces and editor reads
+pkg/sdk/shipped/     curated rigs: which gear a player uses
+  artists/           one file per player, and the evidence for each claim
+pkg/sdk/plan/        a resolved chain: what compile produces and editor reads
 pkg/sdk/catalog/     what a device can do: blocks, parameters, DSP costs
 pkg/sdk/corpus/      what real presets say about a device, measured
+pkg/sdk/audio/       what a recording sounds like, as numbers. One
+                     implementation, and everything measured goes through it.
+pkg/sdk/measured/    what the device actually did, block by block
+pkg/sdk/reamp/       push a signal through hardware and keep what comes back
+pkg/sdk/cab/         build a cabinet the device does not have: capture one, or
+                     match a target
 pkg/sdk/preset/      read and write a .hlx preset file
 pkg/sdk/slot/        addressing, 01A to 42C
+pkg/sdk/solve/       slopes into a matrix, and the moves that close a gap
 pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
+  specdoc/           the shape both grammar pages share, so they read as a pair
+  atomicfile/        writing a file so a crash leaves the old one, not half
+  packed/            gzipping a generated file, and rewriting it only when it
+                     changed
   fileslots/         reading and editing the slots in a .hls, .hlb or .hlx
   deviceslots/       reading and editing the slots on an attached device
   backup/            what a device slot held, kept before a write replaces it
-  presets/  recipes/ building and compiling a preset, and the rigs to build from
+  presets/  rigs/    building and compiling a preset, and the rigs to build from
   attached/          listing what is on the bus
-  catalogview/  corpusview/    reading the catalog and the measurements
+  catalogview/  musicview/  presetsview/   reading the catalog, the music and
+                     the measured presets
+  asking/            the questions a request too vague to build needs
+  slug/              a human name becomes the identifier a contract demands
   catalogen/  corpusgen/       generating the catalog and the measurements
   compile/           a rig becomes a preset, and a preset becomes a rig
   editor/            what a device says becomes a chain, and back again
@@ -149,7 +165,8 @@ pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
   wire/              the framing a device speaks. Pure Go, no hardware needed.
 resources/
   schemas/           the generated catalog, the gear map, the preset corpus
-docs/                how the format, catalog and generation work
+.claude/skills/      how to do each job. Five skills, each self-contained
+docs/                what is built and what is not, and the design records
 .github/workflows/   CI
 ```
 
@@ -194,11 +211,18 @@ packages are the nouns it takes and hands back.
 | to do this                                | import                                    |
 | ----------------------------------------- | ----------------------------------------- |
 | anything that does work                   | `sdk`                                     |
+| write, read or validate a request         | `tone`                                    |
+| turn a request and a setup into a rig     | `translate`                               |
 | write, read or validate a rig             | `rig`                                     |
-| use the rigs that ship                    | `rigs`                                    |
+| use the rigs that ship                    | `shipped`                                 |
 | ask what a device can do                  | `catalog`                                 |
 | read what the corpus measured             | `corpus`                                  |
-| read a resolved chain                     | `chain`                                   |
+| measure what a recording sounds like      | `audio`                                   |
+| read what a device measured               | `measured`                                |
+| push a signal through hardware            | `reamp`                                   |
+| build an impulse response                 | `cab`                                     |
+| solve a chain's controls towards a target | `solve`                                   |
+| read a resolved chain                     | `plan`                                    |
 | read or write a `.hlx`                    | `preset`                                  |
 | name a slot                               | `slot`                                    |
 | read what an operation answered           | `result`, or the same types through `sdk` |
@@ -208,13 +232,13 @@ packages are the nouns it takes and hands back.
 `sdk.New()` with no options uses the built-in catalog and statistics, the rigs
 that ship, and whatever device is on the USB bus. Anything that describes the
 Client rather than one call is an option: `WithCatalog`, `WithStats`,
-`WithRecipes`, `WithUserRecipes`, `WithBackupDir`, `WithCapture` and
-`WithTrace`. `WithUserRecipes` layers a directory over the rigs that ship, and
-the program resolves where that directory is, as `cmd` does from
-`XDG_DATA_HOME`. Every method takes a `context.Context` first. The library reads
-no environment variable except `XDG_STATE_HOME`, so a program that wants
-`TONESTACK_USB_DUMP` or `TONESTACK_USB_DEBUG` reads them itself and passes a
-writer in, as `cmd` does.
+`WithRigs`, `WithUserRigs`, `WithBackupDir`, `WithCapture` and `WithTrace`.
+`WithUserRigs` layers a directory over the rigs that ship, and the program
+resolves where that directory is, as `cmd` does from `XDG_DATA_HOME`. Every
+method takes a `context.Context` first. The library reads no environment
+variable except `XDG_STATE_HOME`, so a program that wants `TONEHARNESS_USB_DUMP`
+or `TONEHARNESS_USB_DEBUG` reads them itself and passes a writer in, as `cmd`
+does.
 
 The Client's device methods each claim the pedal, handshake and let it go. For
 several operations in a row, `Client.Open` returns a `Session` that holds one
@@ -226,8 +250,8 @@ with no hardware. Its edits take an `out` path, because they always write a new
 file; a Session's edits take none, because they write the device and keep a
 backup. A standalone `.hlx` is read with `Client.PresetFile`. A slot is a
 `slot.Address` everywhere, and an export's format is a `Format`. The only input
-structs are `Filter`, `Compile`, `NewRecipe` and `ExtendRecipe`, and every field
-of each is read.
+structs are `Filter`, `Compile`, `NewRig` and `ExtendRig`, and every field of
+each is read.
 
 How each operation is done lives in `pkg/sdk/internal/`, where nothing outside
 the library can reach it. That is what keeps this list short, and what lets the
@@ -257,28 +281,47 @@ what a write keeps cannot come to depend on the transport.
 
 ## How the system works
 
-The domain lives in [docs/](docs/), not here. That covers turning a request into
-a signal chain, the preset format, and the device:
+**The domain lives in [.claude/skills/](.claude/skills/), not here.** Five
+skills, each authoritative for its own part and each installable on its own, so
+no fact is stated in two of them:
 
-- [docs/workflows.md](docs/workflows.md) is the usage guide: what to do, in
-  order, for the common tasks
-- [docs/commands.md](docs/commands.md) lists every command and flag, generated
-  from the CLI
-- [docs/knowledge.md](docs/knowledge.md) covers how a request becomes a signal
-  chain
-- [docs/recipes.md](docs/recipes.md) covers writing a rig, and the worked
-  example beside it
-- [docs/catalog.md](docs/catalog.md) covers what a device can do and where that
-  comes from
-- [docs/preset-format.md](docs/preset-format.md) covers how a `.hlx` file is
-  laid out
-- [docs/device.md](docs/device.md) covers reading and editing what a device
-  holds
-- [docs/protocol.md](docs/protocol.md) documents the USB protocol a device
-  speaks
+| Skill              | Owns                                                                      |
+| ------------------ | ------------------------------------------------------------------------- |
+| `build-a-rig`      | research, citing gear, resolving an ask, tuning after hearing it          |
+| `write-a-spec`     | every field on the two contracts, and which document a fact belongs in    |
+| `measure-a-device` | the reference signal, sweeps, what a control does, trusting a catalog     |
+| `measure-music`    | growing a corpus, measuring records, players and genres, deriving words   |
+| `work-a-device`    | reading and writing what a pedal holds, and the rules that keep one alive |
 
-Keep that split. A fact about the domain belongs in `docs/`; a fact about
-working on the project belongs here.
+Each is a slim `SKILL.md` that routes, with the detail in `references/` read
+only when the question calls for it. Read the skill that matches the task rather
+than all five.
+
+Four things sit outside them on purpose:
+
+- `toneharness <command> --help`, or `go run main.go --help` from a checkout,
+  lists every command and flag. **Nothing writes that down**, because the binary
+  is the only thing that cannot be out of date
+- [docs/architecture.md](docs/architecture.md) is the status board: what is
+  built, what is not, and why the evaluator is a person
+- Go doc on [`pkg/sdk/preset`](pkg/sdk/preset/) covers how a `.hlx` file is laid
+  out
+- [`pkg/sdk/internal/wire/README.md`](pkg/sdk/internal/wire/README.md) documents
+  the USB protocol a device speaks, beside the code that speaks it
+
+Keep that split. A fact about the domain belongs in the skill that owns it; a
+fact about working on the project belongs here.
+
+### A change to behaviour is a change to a skill
+
+When a pull request changes something a skill describes, it updates that skill
+in the same pull request. One skill owns each fact, so there is exactly one file
+to change, and a skill that has drifted is worse than no skill: it is confident
+and wrong.
+
+The same rule that keeps a list out of a skill decides where a fact goes. If the
+tool can print it, the skill says which command to run. If a person had to work
+it out, the skill says it, once, in the skill that owns it.
 
 ## Code style
 
@@ -325,6 +368,14 @@ in for a decision the sentence had not made about whether the clause was a new
 sentence, a parenthetical, or a list. One slopped paragraph is unremarkable. A
 repository of them reads as though nobody was home.
 
+Nothing checks this, and the rule came back once because of it. Em dashes went
+from 242 to 0, and then to 45 across eighteen files including this one, over the
+months nobody was counting.
+
+Two places are exempt. Dated records under `docs/superpowers/` are superseded
+rather than rewritten, so the words in one are what was written on the day. And
+`CODE_OF_CONDUCT.md` and `LICENSE.md` are somebody else's words kept verbatim.
+
 ## Sourcing a rig
 
 A rig's claims about real gear are the only knowledge in this repository that is
@@ -363,9 +414,10 @@ nobody established it, so it needs no paragraph explaining the absence.
 
 Which sources are worth searching, what each is good for, and which look like
 sources and are not, is
-[Where to look](docs/workflows/create-a-rig-for-a-player.md#where-to-look-and-what-not-to-accept).
-Search that list rather than the open web. What the fields themselves mean is
-[docs/recipes.md](docs/recipes.md#say-where-each-claim-came-from).
+[sources.md](.claude/skills/build-a-rig/references/sources.md). Search that list
+rather than the open web. What the fields themselves mean is the contracts'
+`description:` fields, and where each one goes is
+[pair.md](.claude/skills/write-a-spec/references/pair.md).
 
 ### Changing a source is never one file
 
@@ -378,16 +430,18 @@ Changing which **records** back a player:
 1. Fetch the new audio under the manifest's own track name.
 2. Re-separate it with `just stems IN OUT bass`. An entry with no stem measures
    as nothing.
-3. Re-measure the player: `go run main.go measure --dir <stems>`.
+3. Re-measure the player: `go run main.go measure recordings --dir <stems>`.
 4. **Re-measure the whole corpus**:
-   `go run main.go measure --corpus resources/music/bass`. This is the step that
-   gets forgotten. A word is earned by sitting outside the middle half of the
-   *other* players, so one player's records moving moves the line everybody else
-   is judged against. Nine rigs can change because one record did.
-5. Update every `character` term whose `measured` and `against` figures moved,
-   in every rig rather than only the one whose records changed.
+   `go run main.go measure players --corpus resources/music/bass`. This is the
+   step that gets forgotten. A word is earned by sitting outside the middle half
+   of the *other* players, so one player's records moving moves the line
+   everybody else is judged against. Nine rigs can change because one record
+   did.
+5. Update every word on an ask whose `measured` and `against` figures moved, in
+   every pair rather than only the one whose records changed. A word the figures
+   no longer earn goes, unless something other than a measurement holds it up.
 6. Re-run the era check:
-   `go run main.go recipes records --corpus resources/music/bass`.
+   `go run main.go rigs records --corpus resources/music/bass`.
 
 Changing a **gear or instrument** claim:
 
@@ -397,9 +451,9 @@ Changing a **gear or instrument** claim:
 3. Anything else in the file that leaned on the old source. A citation is often
    quoted twice, for the amplifier and for the instrument, and correcting one
    while leaving the other is how a file ends up arguing with itself.
-4. `just generate` if the contract changed. [docs/rigspec.md](docs/rigspec.md)
-   and the Go types are compiled from `pkg/sdk/rig/data/rigspec.openapi.yaml`
-   and are never hand-edited.
+4. `just generate` if the contract changed. The generated Go types and the Go
+   types are compiled from `pkg/sdk/rig/data/rigspec.openapi.yaml` and are never
+   hand-edited.
 5. `go run main.go presets make --id <rig>` to confirm it still builds and the
    gear still resolves.
 
@@ -455,6 +509,18 @@ A test file is named for the production file it tests. Where tests grow too
 large to read, split the production file first so each test file keeps a
 counterpart, rather than splitting tests away from the file they cover.
 
+Two kinds of test file are named for something else, and both are deliberate.
+`export_test.go` is Go's own idiom for reaching a package's internals from an
+external test, and is named that because the compiler says so. And a few tests
+cover a concern no single file owns: a round trip through a reader and a writer,
+a walk over every rig that ships, a contract loaded and checked against the
+types generated from it. Those are named for the concern.
+
+`TestEveryTestFileIsNamedForWhatItCovers` in `main_test.go` holds the rule and
+carries the list of the second kind, so each one stays a decision somebody made
+rather than a file that drifted. A test file that is neither named for a
+production file nor on that list fails.
+
 ### Errors live with whoever produces them
 
 There is no shared errors package. `catalog` owns `ErrBadParam` because
@@ -469,6 +535,40 @@ with `errors.Is` and reach the detail with `errors.As`.
 `func (*OverBudgetError) Unwrap()`. `revive`'s `unused-receiver` says rename it
 to `_`; `receiver-naming` says never use `_`. Omitting is the only form
 satisfying both.
+
+### The language is Go
+
+Go, unless Go cannot do it. Not a preference: a second language is a second home
+for decisions, and a decision with two homes drifts.
+
+That is not hypothetical here. The measuring loop was written in Python because
+it needed an audio interface, and it computed its own band shares and centre of
+gravity in a few lines of numpy. Held against `pkg/sdk/audio` on the same file,
+it read the reference bass as 98.6% low at 95Hz where the real measurement says
+93% and 138Hz. Three things differed, none of them visible in a number, and the
+result was that every block measured was incomparable with every record measured
+while both looked entirely reasonable. It also wrote its recordings through a
+library that defaults to 16-bit, so every reading was quantised before it was
+measured.
+
+Both were found by holding the two implementations against each other. Neither
+would have been found by reading either one.
+
+So Python is allowed only where there is nothing in Go to call, and the test is
+that question rather than how much quicker the script would be:
+
+- `just md-fmt` formats markdown with [mdformat].
+- `just gear-map` reads the Pilot's Guide PDF, whose model-name column uses a
+  subset-embedded font no Go library decodes.
+- `just stems` separates a bass part out of a finished record with [Demucs], a
+  trained model with no equivalent in Go. See the
+  [measure-music](.claude/skills/measure-music/README.md) skill.
+- `just forum` and `just web` reach sites that refuse an ordinary fetch, one
+  checking the TLS handshake and the other the user agent.
+
+Audio playback and capture is not on that list, and used to be. `pkg/sdk/reamp`
+opens a duplex stream through miniaudio, so pushing a signal through a pedal and
+measuring what comes back is one language from end to end.
 
 ### Generated code
 
@@ -489,7 +589,7 @@ so which directory you run it from does not matter.
 
 ### Regenerating the catalog and corpus
 
-Nobody using tonestack does this. The catalog and the corpus statistics are
+Nobody using toneharness does this. The catalog and the corpus statistics are
 committed and embedded in the binary.
 
 `just generate`, which `just ready` runs, refreshes both through `go generate`.
@@ -613,11 +713,43 @@ Three doubles are written by hand, because generating them buys nothing:
 
 ### File headers
 
-Every `.go` file MUST start with the MIT license header. See any existing Go
-file in the repo for the exact format. Build-tagged files put `//go:build` on
-line 1, blank line, then the header.
+Every `.go` file somebody wrote MUST start with the MIT license header. See any
+existing Go file in the repo for the exact format. Build-tagged files put
+`//go:build` on line 1, blank line, then the header.
+
+Generated files carry no header. A `*.gen.go` or `*.gen_test.go` is written by
+`go generate` from a source that has one, nobody edits it, and the formatter
+already leaves it alone. Adding a header to a file a generator overwrites means
+teaching every generator to emit it, for a licence claim on output nobody
+authored.
 
 ## Testing
+
+### While you are working
+
+Run the tests for what you are editing, with coverage, and nothing else:
+
+```bash
+just go_packages=./pkg/sdk/internal/editor/ go-unit-cov
+```
+
+It prints every function and its coverage. The repository is gated at 99%, so a
+gap seen here is one nobody has to come back for: filling it while the code is
+fresh costs a test, and finding it at the gate costs re-reading why the code is
+shaped that way.
+
+`go-unit-cov-gaps` is the same run with only the files short of full coverage,
+opened as a heatmap. Both come from the shared justfiles rather than from
+anything here, which is why `go_packages` is the way to scope them.
+
+`just ready` and the full suite are for when a branch is going somewhere, not
+for between edits. The gate installs tools, regenerates, formats, vets and runs
+everything with the race detector, which is minutes rather than seconds, and on
+a branch nobody is about to merge it buys nothing per change. Lint failures keep
+until then.
+
+Run the gate once, before opening a merge request, which is where it earns its
+time.
 
 ```bash
 just test           # Run all tests (lint + unit + coverage)
@@ -657,9 +789,30 @@ then puts the slot back from the copy the write kept. It checks the chain rather
 than the whole rig because import places blocks into a blank slot, so
 footswitches, snapshot state and routing come from the blank.
 
+**It cannot tell you the device can render what was written, and that gap has
+already cost a night.** Reading a preset back walks the MessagePack and finds a
+key wherever it sits; the device seeks to where it put one. So a document with
+the right keys in the wrong order round-trips perfectly and draws an empty chain
+on the pedal. This test passed throughout. What caught it was measuring the
+audio.
+
+So a preset that has to work on hardware is held to a preset hardware wrote, and
+in two ways, because one of them was not enough.
+`pkg/sdk/internal/deviceslots/testdata/hx-stomp.written.bin` is a device's own
+answer for a slot and `hx-stomp.written.hlx` is what exporting it produces, and
+building the second has to reproduce the first's chain, block for block and
+value for value. That is the comparison that read through the decoder and missed
+the key order.
+
+`TestAChainIsWrittenTheWayTheDeviceWroteIt` in `pkg/sdk/internal/wire` is the
+other: it writes a capture's own chain back into the document it came out of and
+requires the chain section to be the same bytes. Any test that reads the result
+back can miss a reordering; only a byte comparison cannot. Both run without a
+device.
+
 ```bash
-TONESTACK_SCRATCH_SLOT=42C just test-device                    # 01A into 42C
-TONESTACK_SOURCE_SLOT=12B TONESTACK_SCRATCH_SLOT=42C just test-device
+TONEHARNESS_SCRATCH_SLOT=42C just test-device                    # 01A into 42C
+TONEHARNESS_SOURCE_SLOT=12B TONEHARNESS_SCRATCH_SLOT=42C just test-device
 ```
 
 Quit HX Edit first. It sits behind the `device` build tag, so `just test` and
@@ -788,7 +941,7 @@ If you have questions, open a [Discussion] on GitHub.
 [claude code]: https://claude.ai/code
 [conventional commits]: https://www.conventionalcommits.org
 [demucs]: https://github.com/adefossez/demucs
-[discussion]: https://github.com/retr0h/tonestack/discussions
+[discussion]: https://github.com/retr0h/toneharness/discussions
 [ffmpeg]: https://ffmpeg.org
 [go]: https://go.dev
 [gofumpt]: https://github.com/mvdan/gofumpt

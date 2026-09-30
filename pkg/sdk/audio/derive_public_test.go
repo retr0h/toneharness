@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // DerivePublicTestSuite covers turning a measurement into a word.
@@ -81,88 +81,187 @@ func wide(
 	}
 }
 
-// TestAnArtistClearOfTheRestEarnsTheTerm is the whole mechanism.
-func (s *DerivePublicTestSuite) TestAnArtistClearOfTheRestEarnsTheTerm() {
-	got := audio.Derive(
-		at(300, 0.30, 0.50),
-		map[string]audio.Across{
-			"a": at(100, 0.05, 0.10),
-			"b": at(120, 0.06, 0.12),
-		},
-	)
-
-	s.Require().ElementsMatch(
-		[]string{"bright", "mid-forward", "saturated"}, s.terms(got))
-}
-
-// TestAnArtistBelowTheRestEarnsTheOtherWord covers the other direction.
-func (s *DerivePublicTestSuite) TestAnArtistBelowTheRestEarnsTheOtherWord() {
-	got := audio.Derive(
-		at(100, 0.02, 0.05),
-		map[string]audio.Across{
-			"a": at(300, 0.30, 0.50),
-			"b": at(320, 0.32, 0.55),
-		},
-	)
-
-	s.Require().ElementsMatch(
-		[]string{"dark", "scooped", "clean"}, s.terms(got))
-}
-
-// TestAMixedArtistEarnsNothing is the rule that stops a median lying.
+// TestDerive covers Derive, which is what an artist's measurements say about
+// them, against others measured the same way.
 //
-// Measured on real records, one of the three artists reads 0% mid on two and
-// 15% on a third. His median is 0%, a figure he never plays, and it sits below
-// another artist's 9%. Deriving `scooped` from that median would assert
-// something his own records contradict a third of the time, so a term needs
-// the whole range clear rather than the middle.
-func (s *DerivePublicTestSuite) TestAMixedArtistEarnsNothing() {
-	mixed := audio.Across{
-		Tracks: 3,
-		Mid:    audio.Spread{Low: 0.00, Mid: 0.00, High: 0.15},
-	}
+// One method and one table, so a case is a row rather than a file.
+func (s *DerivePublicTestSuite) TestDerive() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The whole mechanism.
+			name: "an artist clear of the rest earns the term",
+			then: func() {
+				got := audio.Derive(
+					at(300, 0.30, 0.50),
+					map[string]audio.Across{
+						"a": at(100, 0.05, 0.10),
+						"b": at(120, 0.06, 0.12),
+					},
+				)
 
-	got := audio.Derive(mixed, map[string]audio.Across{
-		"dirnt": {Tracks: 3, Mid: audio.Spread{Low: 0.04, Mid: 0.09, High: 0.15}},
-		"flea":  {Tracks: 3, Mid: audio.Spread{Low: 0.02, Mid: 0.03, High: 0.06}},
-	})
-
-	s.Require().Empty(s.terms(got), "the range straddles the others")
-}
-
-// TestOverlapEarnsNothing covers ranges that merely touch.
-func (s *DerivePublicTestSuite) TestOverlapEarnsNothing() {
-	got := audio.Derive(
-		wide(200, 0.10, 0.20),
-		map[string]audio.Across{
-			"a": wide(180, 0.09, 0.18),
-			"b": wide(220, 0.11, 0.22),
+				s.Require().ElementsMatch(
+					[]string{"bright", "mid-forward", "saturated"}, s.terms(got))
+			},
 		},
-	)
+		{
+			// The other direction.
+			name: "an artist below the rest earns the other word",
+			then: func() {
+				got := audio.Derive(
+					at(100, 0.02, 0.05),
+					map[string]audio.Across{
+						"a": at(300, 0.30, 0.50),
+						"b": at(320, 0.32, 0.55),
+					},
+				)
 
-	s.Require().Empty(s.terms(got))
-}
+				s.Require().ElementsMatch(
+					[]string{"dark", "scooped", "clean"}, s.terms(got))
+			},
+		},
+		{
+			// The rule that stops a median lying.
+			//
+			// Measured on real records, one of the three artists reads 0% mid
+			// on two and 15% on a third. His median is 0%, a figure he never
+			// plays, and it sits below another artist's 9%. Deriving
+			// `scooped` from that median would assert something his own
+			// records contradict a third of the time, so a term needs the
+			// whole range clear rather than the middle.
+			name: "a mixed artist earns nothing",
+			then: func() {
+				mixed := audio.Across{
+					Tracks: 3,
+					Mid:    audio.Spread{Low: 0.00, Mid: 0.00, High: 0.15},
+				}
 
-// TestItSaysWhatEarnedIt covers a term carrying its own reason.
-//
-// A rig records where every other claim came from, and a word derived from a
-// number is no different.
-func (s *DerivePublicTestSuite) TestItSaysWhatEarnedIt() {
-	got := audio.Derive(
-		at(300, 0.30, 0.50),
-		map[string]audio.Across{"a": at(100, 0.05, 0.10)},
-	)
+				got := audio.Derive(mixed, map[string]audio.Across{
+					"dirnt": {Tracks: 3, Mid: audio.Spread{Low: 0.04, Mid: 0.09, High: 0.15}},
+					"flea":  {Tracks: 3, Mid: audio.Spread{Low: 0.02, Mid: 0.03, High: 0.06}},
+				})
 
-	s.Require().NotEmpty(got)
+				s.Require().Empty(s.terms(got), "the range straddles the others")
+			},
+		},
+		{
+			// Ranges that merely touch.
+			name: "overlap earns nothing",
+			then: func() {
+				got := audio.Derive(
+					wide(200, 0.10, 0.20),
+					map[string]audio.Across{
+						"a": wide(180, 0.09, 0.18),
+						"b": wide(220, 0.11, 0.22),
+					},
+				)
 
-	for _, d := range got {
-		s.Require().NotEmpty(d.Key, "which figure")
-		s.Require().NotEmpty(d.Why, "and what that figure is")
-		s.Require().Equal(2, d.Of, "against how many artists")
+				s.Require().Empty(s.terms(got))
+			},
+		},
+		{
+			// A term carrying its own reason.
+			//
+			// A rig records where every other claim came from, and a word
+			// derived from a number is no different.
+			name: "it says what earned it",
+			then: func() {
+				got := audio.Derive(
+					at(300, 0.30, 0.50),
+					map[string]audio.Across{"a": at(100, 0.05, 0.10)},
+				)
 
-		// A term only exists because the two differ, so a report that
-		// printed them as the same figure would be reporting nothing.
-		s.Require().NotEqual(d.Mine, d.Others)
+				s.Require().NotEmpty(got)
+
+				for _, d := range got {
+					s.Require().NotEmpty(d.Key, "which figure")
+					s.Require().NotEmpty(d.Why, "and what that figure is")
+					s.Require().Equal(2, d.Of, "against how many artists")
+
+					// A term only exists because the two differ, so a report that
+					// printed them as the same figure would be reporting nothing.
+					s.Require().NotEqual(d.Mine, d.Others)
+				}
+			},
+		},
+		{
+			// A population of one.
+			name: "nobody to compare against derives nothing",
+			then: func() {
+				s.Require().Empty(audio.Derive(at(300, 0.3, 0.5), nil))
+				s.Require().Empty(audio.Derive(audio.Across{}, map[string]audio.Across{
+					"a": at(100, 0.05, 0.10),
+				}))
+			},
+		},
+		{
+			// An artist with no recordings in the population.
+			name: "an empty other is not a vote",
+			then: func() {
+				got := audio.Derive(at(300, 0.30, 0.50), map[string]audio.Across{
+					"a":     at(100, 0.05, 0.10),
+					"empty": {},
+				})
+
+				s.Require().NotEmpty(got)
+
+				for _, d := range got {
+					s.Require().Equal(3, d.Of)
+				}
+			},
+		},
+		{
+			// The property the rule was changed for.
+			//
+			// Clear of every other artist, one more extreme artist was enough
+			// to take a term away from somebody who had plainly earned it.
+			// Measured, one player earned three terms against two artists and
+			// none against four. Outside the middle half of the others, the
+			// extreme artist moves the upper quartile a little and takes
+			// nothing away.
+			name: "an extreme artist does not take a term away",
+			then: func() {
+				mine := at(200, 0.10, 0.20)
+
+				three := map[string]audio.Across{
+					"a": at(100, 0.10, 0.20),
+					"b": at(110, 0.10, 0.20),
+					"c": at(120, 0.10, 0.20),
+				}
+				s.Require().Equal([]string{"bright"}, s.terms(audio.Derive(mine, three)))
+
+				four := map[string]audio.Across{
+					"a": at(100, 0.10, 0.20),
+					"b": at(110, 0.10, 0.20),
+					"c": at(120, 0.10, 0.20),
+					"d": at(400, 0.10, 0.20),
+				}
+				s.Require().Equal([]string{"bright"}, s.terms(audio.Derive(mine, four)),
+					"brighter than most is still bright when somebody brighter arrives")
+			},
+		},
+		{
+			// A population that is there and has nothing in it.
+			//
+			// Different from no population at all: the map has artists, and
+			// not one of them has a recording. Nobody to sit clear of, so
+			// nothing is earned.
+			name: "every other artist empty derives nothing",
+			then: func() {
+				got := audio.Derive(at(300, 0.30, 0.50), map[string]audio.Across{
+					"a": {},
+					"b": {},
+				})
+
+				s.Require().Empty(s.terms(got))
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 
@@ -204,71 +303,6 @@ func (s *DerivePublicTestSuite) TestEveryDerivedTermIsOneTheCompilerKnows() {
 		s.Require().True(known[ax.More], "%s is not a term move.go holds", ax.More)
 		s.Require().True(known[ax.Less], "%s is not a term move.go holds", ax.Less)
 	}
-}
-
-// TestNobodyToCompareAgainstDerivesNothing covers a population of one.
-func (s *DerivePublicTestSuite) TestNobodyToCompareAgainstDerivesNothing() {
-	s.Require().Empty(audio.Derive(at(300, 0.3, 0.5), nil))
-	s.Require().Empty(audio.Derive(audio.Across{}, map[string]audio.Across{
-		"a": at(100, 0.05, 0.10),
-	}))
-}
-
-// TestAnEmptyOtherIsNotAVote covers an artist with no recordings in the
-// population.
-func (s *DerivePublicTestSuite) TestAnEmptyOtherIsNotAVote() {
-	got := audio.Derive(at(300, 0.30, 0.50), map[string]audio.Across{
-		"a":     at(100, 0.05, 0.10),
-		"empty": {},
-	})
-
-	s.Require().NotEmpty(got)
-
-	for _, d := range got {
-		s.Require().Equal(3, d.Of)
-	}
-}
-
-// TestAnExtremeArtistDoesNotTakeATermAway is the property the rule was
-// changed for.
-//
-// Clear of every other artist, one more extreme artist was enough to take a
-// term away from somebody who had plainly earned it. Measured, one player
-// earned three terms against two artists and none against four. Outside the
-// middle half of the others, the extreme artist moves the upper quartile a
-// little and takes nothing away.
-func (s *DerivePublicTestSuite) TestAnExtremeArtistDoesNotTakeATermAway() {
-	mine := at(200, 0.10, 0.20)
-
-	three := map[string]audio.Across{
-		"a": at(100, 0.10, 0.20),
-		"b": at(110, 0.10, 0.20),
-		"c": at(120, 0.10, 0.20),
-	}
-	s.Require().Equal([]string{"bright"}, s.terms(audio.Derive(mine, three)))
-
-	four := map[string]audio.Across{
-		"a": at(100, 0.10, 0.20),
-		"b": at(110, 0.10, 0.20),
-		"c": at(120, 0.10, 0.20),
-		"d": at(400, 0.10, 0.20),
-	}
-	s.Require().Equal([]string{"bright"}, s.terms(audio.Derive(mine, four)),
-		"brighter than most is still bright when somebody brighter arrives")
-}
-
-// TestEveryOtherArtistEmptyDerivesNothing covers a population that is there
-// and has nothing in it.
-//
-// Different from no population at all: the map has artists, and not one of
-// them has a recording. Nobody to sit clear of, so nothing is earned.
-func (s *DerivePublicTestSuite) TestEveryOtherArtistEmptyDerivesNothing() {
-	got := audio.Derive(at(300, 0.30, 0.50), map[string]audio.Across{
-		"a": {},
-		"b": {},
-	})
-
-	s.Require().Empty(s.terms(got))
 }
 
 func TestDerivePublicTestSuite(

@@ -32,8 +32,8 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // LoopPublicTestSuite covers the read loop: the one goroutine that reads, and
@@ -41,7 +41,7 @@ import (
 //
 // A device sends notifications unasked, and with nothing draining its
 // endpoint its queue fills and it stops taking writes. Rule 2 in
-// docs/protocol.md.
+// pkg/sdk/internal/wire/README.md.
 type LoopPublicTestSuite struct {
 	suite.Suite
 
@@ -387,44 +387,301 @@ func (s *LoopPublicTestSuite) TestLoop() {
 	}
 }
 
-// TestPaceEndsWhenTheBusDiesWhileWaiting covers a chunk's pace already
-// waiting, not just the check before it starts: a loop that ends while pace
-// is blocked in its own select wakes it directly, on the same signal a bus
-// failure discovered between two reads uses.
-func (s *LoopPublicTestSuite) TestPaceEndsWhenTheBusDiesWhileWaiting() {
-	broken := errors.New("the bus went away")
+// TestThePaceAWriteKeeps covers the idle acknowledgement a write waits on,
+// and the bus dying while it waits.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *LoopPublicTestSuite) TestThePaceAWriteKeeps() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// A chunk's pace already waiting, not just the check before it
+			// starts: a loop that ends while pace is blocked in its own
+			// select wakes it directly, on the same signal a bus failure
+			// discovered between two reads uses.
+			name: "pace ends when the bus dies while waiting",
+			then: func() {
+				broken := errors.New("the bus went away")
 
-	d := answers(s.ctrl)
-	// The chunk goes out and earns nothing: pace has only the gated budget
-	// and the bus itself to wake it.
-	d.stopAckingAfter(device.DataChannel, 0)
+				d := answers(s.ctrl)
+				// The chunk goes out and earns nothing: pace has only the gated budget
+				// and the bus itself to wake it.
+				d.stopAckingAfter(device.DataChannel, 0)
 
-	clk := s.newClock()
+				clk := s.newClock()
 
-	b := device.ShortBudgets()
-	b.After = clk.after
+				b := device.ShortBudgets()
+				b.After = clk.after
 
-	session := device.NewOpenTestSession(s.T(), d.out, d.in, b)
+				session := device.NewOpenTestSession(s.T(), d.out, d.in, b)
 
-	done := make(chan error, 1)
+				done := make(chan error, 1)
 
-	go func() {
-		done <- session.WritePreset(
-			context.Background(), 0, 3, bytes.Repeat([]byte{0x2a}, 2000))
-	}()
+				go func() {
+					done <- session.WritePreset(
+						context.Background(), 0, 3, bytes.Repeat([]byte{0x2a}, 2000))
+				}()
 
-	// Pace is now waiting on the gated budget for the first chunk's
-	// acknowledgement, which never comes.
-	<-clk.entered
+				// Pace is now waiting on the gated budget for the first chunk's
+				// acknowledgement, which never comes.
+				<-clk.entered
 
-	d.mu.Lock()
-	d.readErr, d.failAfter = broken, 0
-	d.mu.Unlock()
-	d.signal()
+				d.mu.Lock()
+				d.readErr, d.failAfter = broken, 0
+				d.mu.Unlock()
+				d.signal()
 
-	err := <-done
-	s.Require().ErrorIs(err, broken)
-	s.Require().ErrorIs(err, device.ErrBus)
+				err := <-done
+				s.Require().ErrorIs(err, broken)
+				s.Require().ErrorIs(err, device.ErrBus)
+			},
+		},
+		{
+			// Settles what arrives on a channel nobody is using, and never
+			// inside a write.
+			name: "idle ack",
+			then: func() {
+				answer := device.Reply(device.ControlChannel, []byte{0x80})
+				whole := wire.EncodeEnvelope(wire.Envelope{
+					Originator: wire.FromDevice, Service: 2, Body: bytes.Repeat([]byte{0x01}, 100),
+				})
+				partial := device.FrameFor(device.ControlChannel, wire.MsgData, whole[:20])
+				events := device.FrameFor(device.EventsChannel, wire.MsgData, []byte("noise"))
+
+				tests := []struct {
+					name    string
+					frame   []byte
+					channel string
+					// payload is how many stream bytes the frame carries, and buffered
+					// what the channel still holds once they are acknowledged.
+					payload  int
+					buffered int
+					refused  bool
+				}{
+					{
+						// Nobody asked, so nobody is going to take it off the buffer.
+						name:    "a whole answer nobody asked for",
+						frame:   answer,
+						channel: device.ControlChannel,
+						payload: len(wire.EncodeEnvelope(wire.Envelope{
+							Originator: wire.FromDevice, Service: 2, Body: []byte{0x80},
+						})),
+					},
+					{
+						// The framing has no marker to resynchronise on, so the start of
+						// an envelope is kept for the rest of it.
+						name:     "the start of one",
+						frame:    partial,
+						channel:  device.ControlChannel,
+						payload:  20,
+						buffered: 20,
+					},
+					{
+						name:    "a notification on the events channel",
+						frame:   events,
+						channel: device.EventsChannel,
+						payload: len("noise"),
+					},
+					{
+						// Nobody is waiting on it, so the trace is where it shows.
+						name:    "a bus that will not take it",
+						frame:   events,
+						channel: device.EventsChannel,
+						refused: true,
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						d := answers(s.ctrl)
+
+						out := device.TestSender(d.out)
+						if tt.refused {
+							out = &device.FailAfter{Sender: d.out, Err: errors.New("refused")}
+						}
+
+						b := device.ShortBudgets()
+						b.Idle = time.Millisecond
+
+						session := device.NewOpenTestSession(s.T(), out, d.in, b)
+						var trace bytes.Buffer
+						session.Trace(&trace)
+
+						d.tell(tt.frame)
+
+						s.Require().Eventually(func() bool {
+							return session.Received(tt.channel) > 0
+						}, 5*time.Second, time.Millisecond)
+
+						if tt.refused {
+							s.looked(session)
+							s.Require().NoError(session.Close())
+							s.Require().Contains(trace.String(), "idle ack: writing to events: refused")
+
+							return
+						}
+
+						s.Require().Eventually(func() bool {
+							count, _ := acks(d, tt.channel)
+
+							return count > 0
+						}, 5*time.Second, time.Millisecond, "acknowledged once it went quiet")
+
+						// Several rounds later, still the one: the acknowledgement settled
+						// what was owed.
+						s.looked(session)
+
+						count, ack := acks(d, tt.channel)
+						s.Require().Equal(1, count, "at most once a quiet period")
+						s.Require().Equal(wire.AckBase+uint32(tt.payload), ack)
+						s.Require().Equal(tt.buffered, session.Buffered(tt.channel))
+					})
+				}
+
+				s.Run("channels being opened", func() {
+					// Opening control takes seven frames, so the eighth is the events
+					// channel's opening. That one draws a notification on control, which
+					// is open, owed and quiet while events and data are still opening.
+					replies := make([][]byte, 0, 8)
+					for range 7 {
+						replies = append(replies, device.FrameFor(device.ControlChannel, wire.MsgAck, nil))
+					}
+
+					replies = append(replies, unaskedFrame())
+
+					d := answers(s.ctrl, replies...)
+
+					b := device.ShortBudgets()
+					b.Idle, b.Open = time.Millisecond, 100*time.Millisecond
+
+					session := device.NewTestSessionWith(s.T(), d.out, d.in, b)
+					s.Require().NoError(session.Handshake(context.Background()))
+
+					// The opening's own acknowledgements are control's two. Anything more
+					// before data's opening is done went out inside the handshake.
+					control := 0
+
+					for _, raw := range d.frames() {
+						f, _, err := wire.DecodeFrame(raw)
+						s.Require().NoError(err)
+
+						if f.Type != wire.MsgAck {
+							continue
+						}
+
+						if device.ChannelOf(f) == device.DataChannel {
+							break
+						}
+
+						if device.ChannelOf(f) == device.ControlChannel {
+							control++
+						}
+					}
+
+					s.Require().Equal(2, control, "nothing is acknowledged while channels open")
+				})
+
+				s.Run("a write going out, on any channel", func() {
+					// A notification arrives on the events channel as a write starts.
+					// Before the gate was session-wide, an acknowledgement for it went
+					// out between two data chunks.
+					clk := s.newClock()
+					d := answers(s.ctrl, s.status(device.DataChannel, device.FirstTxn, 0))
+
+					var once sync.Once
+
+					d.onWrite = func() {
+						once.Do(func() {
+							d.tell(device.FrameFor(device.EventsChannel, wire.MsgData, []byte("unasked")))
+						})
+					}
+
+					b := device.ShortBudgets()
+					b.Idle, b.After = time.Millisecond, clk.after
+
+					session := device.NewOpenTestSession(s.T(), d.out, d.in, b)
+					done := make(chan error, 1)
+
+					go func() {
+						done <- session.WritePreset(
+							context.Background(), 0, 3, bytes.Repeat([]byte{0x2a}, 2000))
+					}()
+
+					s.Require().Eventually(func() bool {
+						return session.Received(device.EventsChannel) > 0
+					}, 5*time.Second, time.Millisecond)
+
+					// The clock holds a pause between two chunks, so the message is still
+					// going out while the acknowledger looks.
+					s.looked(session)
+					s.Require().Zero(allAcks(d), "nothing is acknowledged while a message goes out")
+
+					clk.release()
+					s.Require().NoError(<-done)
+				})
+
+				s.Run("the flash pause after a write", func() {
+					// The write's answer is owed an acknowledgement, and it waits until
+					// the flash pause is over.
+					//
+					// The answer is routed at the one moment that used to break that:
+					// after the write looked through the buffer and found nothing, and
+					// before it decided whether anything was owed. Deciding on a later
+					// look than the buffer's acknowledged the whole answer inside the
+					// write, which the scheduler did on its own three times in five
+					// thousand loaded runs.
+					clk := s.newClock()
+					d := answers(s.ctrl)
+
+					b := device.ShortBudgets()
+					b.Idle, b.After = time.Millisecond, clk.after
+
+					session := device.NewOpenTestSession(s.T(), d.out, d.in, b)
+					status := s.status(device.DataChannel, device.FirstTxn, 0)
+
+					var once sync.Once
+
+					// On the write's goroutine, so it asserts rather than requires.
+					session.OnUnanswered(func() {
+						once.Do(func() {
+							d.tell(status)
+
+							s.Eventually(func() bool {
+								return session.Received(device.DataChannel) > 0
+							}, 5*time.Second, time.Millisecond, "the answer was routed")
+						})
+					})
+
+					done := make(chan error, 1)
+
+					go func() { done <- session.WritePreset(context.Background(), 0, 3, []byte{0x01}) }()
+
+					// One chunk, so the first pause is the flash pause.
+					<-clk.entered
+					s.looked(session)
+					s.Require().Zero(allAcks(d), "nothing is acknowledged while flash settles")
+
+					clk.release()
+					s.Require().NoError(<-done)
+
+					s.Require().Eventually(func() bool {
+						count, _ := acks(d, device.DataChannel)
+
+						return count > 0
+					}, 5*time.Second, time.Millisecond, "acknowledged once the pause was over")
+				})
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			// A row gets the same fresh state a method used to get.
+			s.SetupTest()
+
+			tt.then()
+		})
+	}
 }
 
 // ackValues is what each acknowledgement a session sent on a channel carried,
@@ -475,56 +732,76 @@ func allAcks(
 	return total
 }
 
-// TestIdleAck settles what arrives on a channel nobody is using, and never
-// inside a write.
-func (s *LoopPublicTestSuite) TestIdleAck() {
-	answer := device.Reply(device.ControlChannel, []byte{0x80})
-	whole := wire.EncodeEnvelope(wire.Envelope{
-		Originator: wire.FromDevice, Service: 2, Body: bytes.Repeat([]byte{0x01}, 100),
-	})
-	partial := device.FrameFor(device.ControlChannel, wire.MsgData, whole[:20])
-	events := device.FrameFor(device.EventsChannel, wire.MsgData, []byte("noise"))
+// TestEventsAreSettledWithoutWaitingForQuiet covers a device that keeps
+// talking.
+//
+// The idle wait is there so a channel somebody is reading is not acknowledged
+// mid-answer. Events is never that, and waiting on it only delayed the one
+// acknowledgement the device is waiting for: it chatters about every 46ms
+// while a chain is tuned, so a 300ms wait almost never opens.
+//
+// The budget here is an hour, so a rule that waits for quiet acknowledges
+// nothing and the test fails rather than passes slowly.
+func (s *LoopPublicTestSuite) TestEventsAreSettledWithoutWaitingForQuiet() {
+	d := answers(s.ctrl)
 
+	// Idle is an hour in these budgets, which is the point.
+	session := device.NewOpenTestSession(
+		s.T(), device.TestSender(d.out), d.in, device.ShortBudgets())
+
+	d.tell(device.FrameFor(device.EventsChannel, wire.MsgData, []byte("noise")))
+
+	s.Require().Eventually(func() bool {
+		count, _ := acks(d, device.EventsChannel)
+
+		return count > 0
+	}, 5*time.Second, time.Millisecond,
+		"events is settled although it has not gone quiet")
+
+	// The control channel still waits. Somebody reads it, and an
+	// acknowledgement sent into the middle of an answer is what the wait is
+	// for.
+	d.tell(device.Reply(device.ControlChannel, []byte{0x80}))
+
+	s.Require().Eventually(func() bool {
+		return session.Received(device.ControlChannel) > 0
+	}, 5*time.Second, time.Millisecond)
+
+	s.looked(session)
+
+	count, _ := acks(d, device.ControlChannel)
+	s.Require().Zero(count, "control still waits out its idle budget")
+}
+
+// TestEventsAreSettledInsideAnExchange covers the deadlock this loop had.
+//
+// The events channel carries what the device says unasked and nobody sends on
+// it, so awaitReply never acknowledges it: it acknowledges the channel it is
+// waiting on and no other. While the idle acknowledgement was held off every
+// channel for the length of every exchange, nothing acknowledged events at
+// all inside one, and a device stops draining what it is sent once what it
+// has sent goes unacknowledged.
+//
+// On hardware that read as a tune run dying with the control channel 6.042s
+// into a six second wait for an opcode 30, events on 408 bytes received
+// against 9 acknowledged and quiet for 2.439s, and one exchange in flight.
+//
+// A write still holds it, which is the case the hold was written for.
+func (s *LoopPublicTestSuite) TestEventsAreSettledInsideAnExchange() {
 	tests := []struct {
-		name    string
-		frame   []byte
-		channel string
-		// payload is how many stream bytes the frame carries, and buffered
-		// what the channel still holds once they are acknowledged.
-		payload  int
-		buffered int
-		refused  bool
+		name     string
+		delicate bool
+		settled  bool
 	}{
 		{
-			// Nobody asked, so nobody is going to take it off the buffer.
-			name:    "a whole answer nobody asked for",
-			frame:   answer,
-			channel: device.ControlChannel,
-			payload: len(wire.EncodeEnvelope(wire.Envelope{
-				Originator: wire.FromDevice, Service: 2, Body: []byte{0x80},
-			})),
+			name:    "an ordinary exchange, which events has nothing to do with",
+			settled: true,
 		},
 		{
-			// The framing has no marker to resynchronise on, so the start of
-			// an envelope is kept for the rest of it.
-			name:     "the start of one",
-			frame:    partial,
-			channel:  device.ControlChannel,
-			payload:  20,
-			buffered: 20,
-		},
-		{
-			name:    "a notification on the events channel",
-			frame:   events,
-			channel: device.EventsChannel,
-			payload: len("noise"),
-		},
-		{
-			// Nobody is waiting on it, so the trace is where it shows.
-			name:    "a bus that will not take it",
-			frame:   events,
-			channel: device.EventsChannel,
-			refused: true,
+			// The window a device punishes for anything sent inside it.
+			name:     "a write",
+			delicate: true,
+			settled:  false,
 		},
 	}
 
@@ -532,181 +809,38 @@ func (s *LoopPublicTestSuite) TestIdleAck() {
 		s.Run(tt.name, func() {
 			d := answers(s.ctrl)
 
-			out := device.TestSender(d.out)
-			if tt.refused {
-				out = &device.FailAfter{Sender: d.out, Err: errors.New("refused")}
-			}
-
 			b := device.ShortBudgets()
 			b.Idle = time.Millisecond
 
-			session := device.NewOpenTestSession(s.T(), out, d.in, b)
-			var trace bytes.Buffer
-			session.Trace(&trace)
+			session := device.NewOpenTestSession(s.T(), device.TestSender(d.out), d.in, b)
 
-			d.tell(tt.frame)
+			done := session.Hold(tt.delicate)
+			defer done()
+
+			d.tell(device.FrameFor(device.EventsChannel, wire.MsgData, []byte("noise")))
 
 			s.Require().Eventually(func() bool {
-				return session.Received(tt.channel) > 0
+				return session.Received(device.EventsChannel) > 0
 			}, 5*time.Second, time.Millisecond)
 
-			if tt.refused {
+			if !tt.settled {
+				// Looked at and left alone, rather than not looked at.
 				s.looked(session)
-				s.Require().NoError(session.Close())
-				s.Require().Contains(trace.String(), "idle ack: writing to events: refused")
+
+				count, _ := acks(d, device.EventsChannel)
+				s.Require().Zero(count, "nothing goes out inside a write")
 
 				return
 			}
 
 			s.Require().Eventually(func() bool {
-				count, _ := acks(d, tt.channel)
+				count, _ := acks(d, device.EventsChannel)
 
 				return count > 0
-			}, 5*time.Second, time.Millisecond, "acknowledged once it went quiet")
-
-			// Several rounds later, still the one: the acknowledgement settled
-			// what was owed.
-			s.looked(session)
-
-			count, ack := acks(d, tt.channel)
-			s.Require().Equal(1, count, "at most once a quiet period")
-			s.Require().Equal(wire.AckBase+uint32(tt.payload), ack)
-			s.Require().Equal(tt.buffered, session.Buffered(tt.channel))
+			}, 5*time.Second, time.Millisecond,
+				"events is settled although an exchange is in flight")
 		})
 	}
-
-	s.Run("channels being opened", func() {
-		// Opening control takes seven frames, so the eighth is the events
-		// channel's opening. That one draws a notification on control, which
-		// is open, owed and quiet while events and data are still opening.
-		replies := make([][]byte, 0, 8)
-		for range 7 {
-			replies = append(replies, device.FrameFor(device.ControlChannel, wire.MsgAck, nil))
-		}
-
-		replies = append(replies, unaskedFrame())
-
-		d := answers(s.ctrl, replies...)
-
-		b := device.ShortBudgets()
-		b.Idle, b.Open = time.Millisecond, 100*time.Millisecond
-
-		session := device.NewTestSessionWith(s.T(), d.out, d.in, b)
-		s.Require().NoError(session.Handshake(context.Background()))
-
-		// The opening's own acknowledgements are control's two. Anything more
-		// before data's opening is done went out inside the handshake.
-		control := 0
-
-		for _, raw := range d.frames() {
-			f, _, err := wire.DecodeFrame(raw)
-			s.Require().NoError(err)
-
-			if f.Type != wire.MsgAck {
-				continue
-			}
-
-			if device.ChannelOf(f) == device.DataChannel {
-				break
-			}
-
-			if device.ChannelOf(f) == device.ControlChannel {
-				control++
-			}
-		}
-
-		s.Require().Equal(2, control, "nothing is acknowledged while channels open")
-	})
-
-	s.Run("a write going out, on any channel", func() {
-		// A notification arrives on the events channel as a write starts.
-		// Before the gate was session-wide, an acknowledgement for it went
-		// out between two data chunks.
-		clk := s.newClock()
-		d := answers(s.ctrl, s.status(device.DataChannel, device.FirstTxn, 0))
-
-		var once sync.Once
-
-		d.onWrite = func() {
-			once.Do(func() {
-				d.tell(device.FrameFor(device.EventsChannel, wire.MsgData, []byte("unasked")))
-			})
-		}
-
-		b := device.ShortBudgets()
-		b.Idle, b.After = time.Millisecond, clk.after
-
-		session := device.NewOpenTestSession(s.T(), d.out, d.in, b)
-		done := make(chan error, 1)
-
-		go func() {
-			done <- session.WritePreset(
-				context.Background(), 0, 3, bytes.Repeat([]byte{0x2a}, 2000))
-		}()
-
-		s.Require().Eventually(func() bool {
-			return session.Received(device.EventsChannel) > 0
-		}, 5*time.Second, time.Millisecond)
-
-		// The clock holds a pause between two chunks, so the message is still
-		// going out while the acknowledger looks.
-		s.looked(session)
-		s.Require().Zero(allAcks(d), "nothing is acknowledged while a message goes out")
-
-		clk.release()
-		s.Require().NoError(<-done)
-	})
-
-	s.Run("the flash pause after a write", func() {
-		// The write's answer is owed an acknowledgement, and it waits until
-		// the flash pause is over.
-		//
-		// The answer is routed at the one moment that used to break that:
-		// after the write looked through the buffer and found nothing, and
-		// before it decided whether anything was owed. Deciding on a later
-		// look than the buffer's acknowledged the whole answer inside the
-		// write, which the scheduler did on its own three times in five
-		// thousand loaded runs.
-		clk := s.newClock()
-		d := answers(s.ctrl)
-
-		b := device.ShortBudgets()
-		b.Idle, b.After = time.Millisecond, clk.after
-
-		session := device.NewOpenTestSession(s.T(), d.out, d.in, b)
-		status := s.status(device.DataChannel, device.FirstTxn, 0)
-
-		var once sync.Once
-
-		// On the write's goroutine, so it asserts rather than requires.
-		session.OnUnanswered(func() {
-			once.Do(func() {
-				d.tell(status)
-
-				s.Eventually(func() bool {
-					return session.Received(device.DataChannel) > 0
-				}, 5*time.Second, time.Millisecond, "the answer was routed")
-			})
-		})
-
-		done := make(chan error, 1)
-
-		go func() { done <- session.WritePreset(context.Background(), 0, 3, []byte{0x01}) }()
-
-		// One chunk, so the first pause is the flash pause.
-		<-clk.entered
-		s.looked(session)
-		s.Require().Zero(allAcks(d), "nothing is acknowledged while flash settles")
-
-		clk.release()
-		s.Require().NoError(<-done)
-
-		s.Require().Eventually(func() bool {
-			count, _ := acks(d, device.DataChannel)
-
-			return count > 0
-		}, 5*time.Second, time.Millisecond, "acknowledged once the pause was over")
-	})
 }
 
 func TestLoopPublicTestSuite(

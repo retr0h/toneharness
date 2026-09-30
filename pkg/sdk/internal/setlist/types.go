@@ -29,13 +29,13 @@
 // the only file that says what the whole device currently holds.
 //
 // Neither format is published. Everything here was established by reading
-// real files. See docs/preset-format.md.
+// real files. See pkg/sdk/preset/README.md.
 package setlist
 
 import (
 	"encoding/json"
 
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 )
 
 // Schemas this package reads.

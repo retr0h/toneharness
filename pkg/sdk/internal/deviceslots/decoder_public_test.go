@@ -30,8 +30,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/vmihailenco/msgpack/v5"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // DecoderPublicTestSuite covers reading a device's answer as the preset a

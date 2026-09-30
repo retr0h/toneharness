@@ -27,7 +27,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // ErrNoResources reports that HX Edit's model definitions were not found.
@@ -137,6 +137,15 @@ func Build(
 				continue
 			}
 
+			// Line 6 lists device attributes alongside models, the same way it
+			// lists them alongside parameters: @dt, @global_params, @powercab
+			// and @variax. They carry no name and no parameters, nothing puts
+			// one in a chain, and counting them as blocks made the catalog
+			// claim four blocks the device does not have.
+			if strings.HasPrefix(m.SymbolicID, "@") {
+				continue
+			}
+
 			out.Blocks[catalog.ModelID(m.SymbolicID)] = block(m, family, gear[m.SymbolicID])
 		}
 	}
@@ -146,6 +155,12 @@ func Build(
 	}
 
 	if out.LEDColours, err = readLEDColours(opts.ResourcesDir); err != nil {
+		return nil, err
+	}
+
+	if out.Sources, out.Destinations, err = readRouting(
+		opts.ResourcesDir, opts.DeviceID,
+	); err != nil {
 		return nil, err
 	}
 

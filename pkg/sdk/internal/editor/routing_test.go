@@ -26,8 +26,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // RoutingTestSuite covers turning what a device wraps a chain in into what a
@@ -166,6 +166,24 @@ func (s *RoutingTestSuite) TestRoutingOf() {
 				"@model": "HD2_Cab1x15TucknGo", "Distance": 3.0,
 			}},
 			absent: map[string][]string{"dsp0.cab0": {"@mic"}},
+		},
+		{
+			// The count the device reported governs both halves of the split.
+			// The catalog names five parameters for this cabinet and the
+			// device says it named four, so the fifth value is the microphone
+			// and nothing else. Reading the split from the catalog instead
+			// would file that value twice: once as Level and once as @mic.
+			name: "the device named fewer than the catalog has names for",
+			blocks: []wire.DeviceBlock{{
+				Model: amp, CabNamed: 4,
+				Cab: []any{3.0, 20.0, 15000.0, 0.2, 2.0},
+			}},
+			want: map[string]map[string]any{"dsp0.cab0": {
+				"@model": "HD2_Cab1x15TucknGo", "@enabled": true, "@mic": 2.0,
+				"Distance": 3.0, "LowCut": 20.0, "HighCut": 15000.0,
+				"EarlyReflections": 0.2,
+			}},
+			absent: map[string][]string{"dsp0.cab0": {"Level"}},
 		},
 		{
 			name:    "a slot nothing recognises",

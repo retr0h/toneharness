@@ -25,12 +25,12 @@ import (
 	"io"
 	"sort"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // Blocks prints what a device can do, one block to a row.
@@ -154,15 +154,4 @@ func params(
 		Rows:    rows,
 		Empty:   "no parameters",
 	}.Render(w))
-}
-
-// reporting gives a reporting failure the same shape everywhere.
-func reporting(
-	err error,
-) error {
-	if err == nil {
-		return nil
-	}
-
-	return fmt.Errorf("reporting: %w", err)
 }

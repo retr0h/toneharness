@@ -122,16 +122,30 @@ type Block struct {
 	// in their own documentation — "Ampeg SVT (normal channel)". Empty when
 	// the model emulates nothing in particular, such as a utility block.
 	//
-	// This is what makes a recipe usable. A recipe names gear a person
+	// This is what makes a rig usable. A rig names gear a person
 	// recognises; only this field connects that to a model identifier.
 	BasedOn string `json:"based_on,omitempty"`
 	// Subcategory is Line 6's own grouping — "Guitar", "Bass". It decides
 	// which half of the catalog a request is allowed to draw from.
 	Subcategory string `json:"subcategory,omitempty"`
+	// Family is the model list this block came from, which on this device is
+	// a filename: "amp", "cab", "cabmicirs".
+	//
+	// Kept because a category is not fine enough to tell two models apart. A
+	// cabinet ships three times — legacy, mic'd, and mic'd with a pan control
+	// — and all three carry one name, one category and one subcategory.
+	// `HD2_Cab1x15TucknGo` and `HD2_CabMicIr_1x15AmpegB15` are both "1x15
+	// Ampeg B-15", and the second has a microphone list that moves a chain
+	// further than any of its dials.
+	//
+	// Folded into the category and then discarded until 2026-09-29, which is
+	// why nothing could ask for a mic'd cabinet: 448 of the 1,126 corpus
+	// presets that hold a cabinet hold one, and this tool could not name one.
+	Family string `json:"family,omitempty"`
 	// CabLink is the cabinet Line 6 pairs with this amp by default. Empty for
 	// anything that is not an amp.
 	//
-	// A recipe that names no cabinet gets this one, which is a better answer
+	// A rig that names no cabinet gets this one, which is a better answer
 	// than picking arbitrarily: it is the pairing the model was voiced with.
 	CabLink ModelID          `json:"cablink,omitempty"`
 	Params  map[string]Param `json:"params"`
@@ -180,6 +194,33 @@ type Catalog struct {
 	// else here, and generated rather than written down: a firmware that adds
 	// a colour would otherwise be reported under the wrong name.
 	LEDColours []string `json:"led_colours,omitempty"`
+	// Sources is what a device can take a chain's input from, and Destinations
+	// what it can send the output to, each in the order it numbers them.
+	//
+	// A preset stores the position rather than the name, and the positions are
+	// the device family's: the file these come from carries a separate list
+	// for a Helix LT and another for the plugin, and an HX Stomp's lists four
+	// Returns it has no sockets for. So a number written into code is right
+	// for one family and quietly wrong for the rest, which is what these
+	// exist to prevent.
+	//
+	// The one that has cost an evening is entry 1 of Destinations,
+	// `Multi (1/4", XLR, Digital, USB 1/2)`, and what it cost the evening for
+	// is not what was first written here.
+	//
+	// It said an HX Stomp's Multi does not include USB whatever the label says,
+	// so a preset left on it sends nothing up the cable. Measured one
+	// destination at a time on 2026-09-29 that is not so: Multi delivers the
+	// chain to USB at -23.6dBFS, and so do `USB 1/2` and `USB 3/4`, all three
+	// reading the same 84% above 2kHz on a USB 1/2 capture. A chain genuinely
+	// sent to USB 3/4 alone would read silence there.
+	//
+	// So on this device the enum does not select where the chain goes. Only
+	// `None` silences it; every other value sends it everywhere, the
+	// quarter-inch socket included. Which is why the measuring loop cannot be
+	// opened from a preset: see measure-a-device's signal-path.md.
+	Sources      []string `json:"sources,omitempty"`
+	Destinations []string `json:"destinations,omitempty"`
 }
 
 // LEDColour returns what a device calls one of its footswitch colours.

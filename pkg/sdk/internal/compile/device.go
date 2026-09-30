@@ -25,8 +25,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // processorPrefix marks a tone entry holding a chain rather than state.
@@ -154,7 +154,7 @@ func pruneSnapshots(
 	doc *preset.Document,
 ) {
 	for key := range doc.Data.Tone {
-		if snapshotIndex(key) >= 0 {
+		if preset.SnapshotIndex(key) >= 0 {
 			delete(doc.Data.Tone, key)
 		}
 	}

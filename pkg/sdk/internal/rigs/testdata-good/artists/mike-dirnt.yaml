@@ -1,0 +1,17 @@
+schema: RigSpec
+version: 2
+id: mike-dirnt
+
+instrument: bass
+
+chain:
+  - role: amp
+    gear: Ampeg SVT
+    evidence:
+      - { kind: llm }
+    confidence: medium
+  - role: cab
+    gear: Ampeg 8x10
+    evidence:
+      - { kind: llm }
+    confidence: medium

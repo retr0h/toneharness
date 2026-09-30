@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	preset "github.com/retr0h/tonestack/pkg/sdk/preset"
-	slot "github.com/retr0h/tonestack/pkg/sdk/slot"
+	preset "github.com/retr0h/toneharness/pkg/sdk/preset"
+	slot "github.com/retr0h/toneharness/pkg/sdk/slot"
 	gomock "go.uber.org/mock/gomock"
 )
 

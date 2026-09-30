@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // handshake opens every channel the editor uses.
@@ -37,7 +37,16 @@ import (
 func (s *session) handshake(
 	ctx context.Context,
 ) error {
-	s.drain(ctx)
+	// Noted rather than refused. A device still talking here usually settles
+	// and answers everything that follows, so refusing would turn a busy pedal
+	// into a failure where today it works. What it must not do is go
+	// unrecorded, which is how a session that started on a backlog came to
+	// look identical to one that started clean.
+	quiet := s.drain(ctx)
+
+	s.rxMu.Lock()
+	s.noisyStart = !quiet
+	s.rxMu.Unlock()
 
 	// A bus that failed during the drain is not one to open channels on.
 	if err := s.ended(); err != nil {
@@ -65,9 +74,10 @@ func (s *session) openChannel(
 	s.rxMu.Lock()
 	c.open = true
 	s.inflight++
+	s.delicate++
 	s.rxMu.Unlock()
 
-	defer s.finish()
+	defer s.finishWrite()
 
 	for i, service := range services {
 		// A channel serving two services is opened twice, from scratch, with
@@ -264,7 +274,8 @@ func (s *session) awaitReply(
 		case <-ctx.Done():
 		case <-timer.C:
 			return wire.Response{}, fmt.Errorf(
-				"%w to opcode %d within %s", errNoReply, opcode, budget)
+				"%w to opcode %d within %s%s",
+				errNoReply, opcode, budget, s.sinceOpened())
 		}
 	}
 }
@@ -348,4 +359,19 @@ func (s *session) ReadPreset(
 	}
 
 	return document(resp.Result)
+}
+
+// sinceOpened is what to add to a timeout about how the session began.
+//
+// Empty for a session that opened on a quiet device, which is almost all of
+// them, so the ordinary failure reads exactly as it did.
+func (s *session) sinceOpened() string {
+	s.rxMu.Lock()
+	defer s.rxMu.Unlock()
+
+	if !s.noisyStart {
+		return ""
+	}
+
+	return ", on a session that opened with the device still talking"
 }

@@ -30,7 +30,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // builtIn is the measured corpus for the device this tool targets.

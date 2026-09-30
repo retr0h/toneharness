@@ -26,7 +26,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
 )
 
 type FormatPublicTestSuite struct {

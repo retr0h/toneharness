@@ -31,11 +31,12 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	slotmocks "github.com/retr0h/tonestack/pkg/sdk/internal/deviceslots/mocks"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/presets"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	slotmocks "github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots/mocks"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // catalogsAt hands over the catalog at path whenever it is asked, the built-in
@@ -114,228 +115,267 @@ func (s *DeviceReadTestSuite) unknownModel() []byte {
 	return s.encode(map[int8]any{0: map[int8]any{22: []any{block(99999)}}})
 }
 
-// TestDeviceReading turns what a device answered into a reading.
+// TestDeviceReading covers deviceReading, which turns a device's answer for
+// one slot into a reading.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *DeviceReadTestSuite) TestDeviceReading() {
-	tests := []struct {
+	for _, tt := range []struct {
 		name string
-		// which answer to read: the capture unless a case says otherwise.
-		answer  string
-		slot    int
-		called  string
-		as      result.Format
-		catalog string
-		// the slot holds nothing, which is an answer rather than a failure.
-		empty bool
-		// the device's own file was asked for, so no rig is lifted.
-		fileOnly bool
-
-		contains []string
-		absent   []string
-		err      bool
-		errText  string
+		then func()
 	}{
 		{
-			name:   "a slot the device holds",
-			slot:   79,
-			called: "BAS:SVT Nrm",
-			contains: []string{
-				"schema: RigSpec",
-				"name: BAS:SVT Nrm",
+			// Turns what a device answered into a reading.
+			name: "device reading",
+			then: func() {
+				tests := []struct {
+					name string
+					// which answer to read: the capture unless a case says otherwise.
+					answer  string
+					slot    int
+					called  string
+					as      result.Format
+					catalog string
+					// the slot holds nothing, which is an answer rather than a failure.
+					empty bool
+					// the device's own file was asked for, so no rig is lifted.
+					fileOnly bool
 
-				// The slot is a factory preset, so what it holds is known
-				// before it is decoded.
-				"gear: Ampeg SVT® (normal channel)",
-				"gear: 8x10 Ampeg SVT-E",
-				"role: amp",
+					// contains is checked against the rig, plan against the plan, and
+					// absent against both: a reading answers with the portable rig and
+					// the realisation of it on the device that was read.
+					contains []string
+					plan     []string
+					absent   []string
+					err      bool
+					errText  string
+				}{
+					{
+						name:   "a slot the device holds",
+						slot:   79,
+						called: "BAS:SVT Nrm",
+						contains: []string{
+							"schema: RigSpec",
+							// The slot's name reaches the rig as its identifier. A rig
+							// carries no subject, so the name a person reads is the heading
+							// above the document rather than a field in it.
+							"id: bas-svt-nrm",
 
-				// Read from the device, and nothing else in a rig records
-				// them.
-				"snapshots:",
-				"SNAPSHOT 1",
+							// The slot is a factory preset, so what it holds is known
+							// before it is decoded.
+							"gear: Ampeg SVT® (normal channel)",
+							"gear: 8x10 Ampeg SVT-E",
+							"role: amp",
+						},
+						plan: []string{
+							// The plan names the rig it realises.
+							"rig: bas-svt-nrm",
 
-				// What the device wraps the chain in, named the way a preset
-				// names it. The models come from the catalog, because a
-				// device knows which inputs and outputs are its own and does
-				// not say.
-				"dsp0.inputA",
-				"'@model': HelixStomp_AppDSPFlowInput",
-				"threshold: -48",
-				"dsp0.split",
-				"'@model': HD2_AppDSPFlowSplitY",
-				"dsp0.join",
+							// Read from the device, and nothing else records them.
+							"snapshots:",
+							"SNAPSHOT 1",
 
-				// What the expression pedal moves, named rather than
-				// numbered. The device stores parameter 0 of the block at
-				// grid position 2, and only the catalog turns that into the
-				// volume block's Pedal.
-				"controllers:",
-				"controller: 2",
-				"parameter: Pedal",
-				"block: 1",
-			},
-		},
-		{
-			// The device stores the two as one block. A preset stores the amp
-			// with a `@cab` and the cabinet as a sibling, so both have to
-			// come out.
-			name:   "an amp carrying its own cabinet",
-			answer: "switches.bin",
-			slot:   24,
-			contains: []string{
-				"dsp0.cab0",
-				"dsp0.cab1",
-				"'@model': HD2_Cab1x15TucknGo",
-				"'@cab': cab0",
-				"'@type': 3",
-				"'@mic': 10",
-			},
-		},
-		{name: "a slot the device did not name", contains: []string{"slot 01A"}},
-		{
-			// Only the document is wanted, so the rig is work nobody asked
-			// for.
-			name:     "the device's own file",
-			as:       result.FormatPreset,
-			called:   "Chunky Monkey",
-			fileOnly: true,
-		},
-		{
-			// A slot holding nothing is not a rig: it names no gear, and a
-			// rig holds at least one thing. It is still a slot with a name,
-			// which is what lets a backup tell "nothing here" from "this
-			// failed".
-			name:   "a slot holding nothing",
-			answer: "empty",
-			slot:   4,
-			empty:  true,
-		},
-		{
-			name:     "a chain with no snapshots and no switches",
-			answer:   "bare",
-			contains: []string{"schema: RigSpec"},
-			absent:   []string{"snapshots:", "footswitches:"},
-		},
-		{name: "an answer that is not a preset", answer: "nonsense", slot: 3, errText: "slot 02A"},
-		{
-			name:    "a catalog it cannot open",
-			catalog: filepath.Join("testdata", "nope.json"),
-			err:     true,
-		},
-		{name: "a model the catalog cannot name", answer: "unknown", err: true},
-		{
-			// A catalog whose model table names an empty model produces a
-			// chain with no gear in it, which is not a rig. Saying so beats
-			// writing a document that claims to be one.
-			name:    "a chain that is not a rig",
-			answer:  "bare",
-			catalog: filepath.Join("testdata", "unnamed.catalog.json"),
-			errText: "slot 01A",
-		},
-	}
+							// What the device wraps the chain in, named the way a preset
+							// names it. The models come from the catalog, because a
+							// device knows which inputs and outputs are its own and does
+							// not say.
+							"dsp0.inputA",
+							"'@model': HelixStomp_AppDSPFlowInput",
+							"threshold: -48",
+							"dsp0.split",
+							"'@model': HD2_AppDSPFlowSplitY",
+							"dsp0.join",
 
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			var answer []byte
-
-			switch tt.answer {
-			case "":
-				answer = s.capture()
-			case "empty":
-				answer = s.empty()
-			case "bare":
-				answer = s.bare()
-			case "unknown":
-				answer = s.unknownModel()
-			case "nonsense":
-				answer = []byte("nonsense")
-			default:
-				answer = s.answerFrom(tt.answer)
-			}
-
-			f := &Flows{Catalogs: catalogsAt(s.T(), tt.catalog)}
-
-			read, err := f.deviceReading(context.Background(), answer, tt.slot, tt.called, tt.as)
-
-			if tt.err || tt.errText != "" {
-				s.Require().Error(err)
-
-				if tt.errText != "" {
-					s.Require().ErrorContains(err, tt.errText)
+							// What the expression pedal moves, named rather than
+							// numbered. The device stores parameter 0 of the block at
+							// grid position 2, and only the catalog turns that into the
+							// volume block's Pedal.
+							"controllers:",
+							"controller: 2",
+							"parameter: Pedal",
+							"block: 1",
+						},
+					},
+					{
+						// The device stores the two as one block. A preset stores the amp
+						// with a `@cab` and the cabinet as a sibling, so both have to
+						// come out.
+						name:   "an amp carrying its own cabinet",
+						answer: "switches.bin",
+						slot:   24,
+						plan: []string{
+							"dsp0.cab0",
+							"dsp0.cab1",
+							"'@model': HD2_Cab1x15TucknGo",
+							"'@cab': cab0",
+							"'@type': 3",
+							"'@mic': 10",
+						},
+					},
+					{name: "a slot the device did not name", contains: []string{"slot 01A"}},
+					{
+						// Only the document is wanted, so the rig is work nobody asked
+						// for.
+						name:     "the device's own file",
+						as:       result.FormatPreset,
+						called:   "Chunky Monkey",
+						fileOnly: true,
+					},
+					{
+						// A slot holding nothing is not a rig: it names no gear, and a
+						// rig holds at least one thing. It is still a slot with a name,
+						// which is what lets a backup tell "nothing here" from "this
+						// failed".
+						name:   "a slot holding nothing",
+						answer: "empty",
+						slot:   4,
+						empty:  true,
+					},
+					{
+						name:     "a chain with no snapshots and no switches",
+						answer:   "bare",
+						contains: []string{"schema: RigSpec"},
+						absent:   []string{"snapshots:", "footswitches:"},
+					},
+					{name: "an answer that is not a preset", answer: "nonsense", slot: 3, errText: "slot 02A"},
+					{
+						name:    "a catalog it cannot open",
+						catalog: filepath.Join("testdata", "nope.json"),
+						err:     true,
+					},
+					{name: "a model the catalog cannot name", answer: "unknown", err: true},
+					{
+						// A catalog whose model table names an empty model produces a
+						// chain with no gear in it, which is not a rig. Saying so beats
+						// writing a document that claims to be one.
+						name:    "a chain that is not a rig",
+						answer:  "bare",
+						catalog: filepath.Join("testdata", "unnamed.catalog.json"),
+						errText: "slot 01A",
+					},
 				}
 
-				return
-			}
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						var answer []byte
 
-			s.Require().NoError(err)
+						switch tt.answer {
+						case "":
+							answer = s.capture()
+						case "empty":
+							answer = s.empty()
+						case "bare":
+							answer = s.bare()
+						case "unknown":
+							answer = s.unknownModel()
+						case "nonsense":
+							answer = []byte("nonsense")
+						default:
+							answer = s.answerFrom(tt.answer)
+						}
 
-			if tt.empty {
-				s.Require().True(read.Empty())
+						f := &Flows{Catalogs: catalogsAt(s.T(), tt.catalog)}
 
-				return
-			}
+						read, err := f.deviceReading(context.Background(), answer, tt.slot, tt.called, tt.as)
 
-			s.Require().False(read.Empty())
+						if tt.err || tt.errText != "" {
+							s.Require().Error(err)
 
-			if tt.fileOnly {
-				s.Require().Equal(tt.called, read.Name)
-				s.Require().NotNil(read.Doc)
-				s.Require().Empty(read.Rig.Chain, "no rig was lifted")
+							if tt.errText != "" {
+								s.Require().ErrorContains(err, tt.errText)
+							}
 
-				return
-			}
+							return
+						}
 
-			// The name and the rig together, because a slot the device did
-			// not name is answered by the first and everything else by the
-			// second.
-			var out bytes.Buffer
+						s.Require().NoError(err)
 
-			s.Require().NoError(rig.Write(&out, read.Rig))
+						if tt.empty {
+							s.Require().True(read.Empty())
 
-			got := read.Name + "\n" + out.String()
+							return
+						}
 
-			for _, want := range tt.contains {
-				s.Require().Contains(got, want)
-			}
+						s.Require().False(read.Empty())
 
-			for _, unwanted := range tt.absent {
-				s.Require().NotContains(got, unwanted)
-			}
+						if tt.fileOnly {
+							s.Require().Equal(tt.called, read.Name)
+							s.Require().NotNil(read.Doc)
+							s.Require().Empty(read.Rig.Chain, "no rig was lifted")
+							s.Require().Empty(read.Plan.Blocks, "no plan was lifted")
+
+							return
+						}
+
+						// The name and the rig together, because a slot the device did
+						// not name is answered by the first and everything else by the
+						// second.
+						var out bytes.Buffer
+
+						s.Require().NoError(rig.Write(&out, read.Rig))
+
+						got := read.Name + "\n" + out.String()
+
+						var realised bytes.Buffer
+
+						s.Require().NoError(plan.Write(&realised, read.Plan))
+
+						for _, want := range tt.contains {
+							s.Require().Contains(got, want)
+						}
+
+						for _, want := range tt.plan {
+							s.Require().Contains(realised.String(), want)
+						}
+
+						for _, unwanted := range tt.absent {
+							s.Require().NotContains(got+realised.String(), unwanted)
+						}
+					})
+				}
+			},
+		},
+		{
+			name: "a rig read off the device rebuilds its routing",
+			then: func() {
+				// The claim this closes: a rig read over USB used to carry no routing, so
+				// compiling it fell back to whatever preset it was built into. It now
+				// carries the device's own, and building it puts that back.
+				dir := s.T().TempDir()
+				rigPath := filepath.Join(dir, "rig.yaml")
+				out := filepath.Join(dir, "out.hlx")
+
+				f := &Flows{}
+
+				read, err := f.deviceReading(context.Background(), s.capture(), 0, "", result.FormatRig)
+				s.Require().NoError(err)
+
+				var buf bytes.Buffer
+
+				s.Require().NoError(rig.Write(&buf, read.Rig))
+				s.Require().NoError(os.WriteFile(rigPath, buf.Bytes(), 0o600))
+
+				_, err = presets.Compile(context.Background(), presets.CompileOptions{
+					RigPath:    rigPath,
+					OutputPath: out,
+				})
+				s.Require().NoError(err)
+
+				built, err := os.ReadFile(out) //nolint:gosec // a path this test chose
+				s.Require().NoError(err)
+
+				got := string(built)
+				s.Require().Contains(got, `"@model": "HelixStomp_AppDSPFlowInput"`)
+				s.Require().Contains(got, `"threshold": -48`)
+				s.Require().Contains(got, `"@model": "HD2_AppDSPFlowSplitY"`)
+				s.Require().Contains(got, `"@model": "HD2_AppDSPFlowJoin"`)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
 		})
 	}
-}
-
-func (s *DeviceReadTestSuite) TestARigReadOffTheDeviceRebuildsItsRouting() {
-	// The claim this closes: a rig read over USB used to carry no routing, so
-	// compiling it fell back to whatever preset it was built into. It now
-	// carries the device's own, and building it puts that back.
-	dir := s.T().TempDir()
-	rigPath := filepath.Join(dir, "rig.yaml")
-	out := filepath.Join(dir, "out.hlx")
-
-	f := &Flows{}
-
-	read, err := f.deviceReading(context.Background(), s.capture(), 0, "", result.FormatRig)
-	s.Require().NoError(err)
-
-	var buf bytes.Buffer
-
-	s.Require().NoError(rig.Write(&buf, read.Rig))
-	s.Require().NoError(os.WriteFile(rigPath, buf.Bytes(), 0o600))
-
-	_, err = presets.Compile(context.Background(), presets.CompileOptions{
-		RigPath:    rigPath,
-		OutputPath: out,
-	})
-	s.Require().NoError(err)
-
-	built, err := os.ReadFile(out) //nolint:gosec // a path this test chose
-	s.Require().NoError(err)
-
-	got := string(built)
-	s.Require().Contains(got, `"@model": "HelixStomp_AppDSPFlowInput"`)
-	s.Require().Contains(got, `"threshold": -48`)
-	s.Require().Contains(got, `"@model": "HD2_AppDSPFlowSplitY"`)
-	s.Require().Contains(got, `"@model": "HD2_AppDSPFlowJoin"`)
 }
 
 func TestDeviceReadTestSuite(

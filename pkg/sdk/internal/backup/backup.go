@@ -49,9 +49,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/atomicfile"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/atomicfile"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // untouched is what a device calls a slot nobody has named.
@@ -67,8 +67,8 @@ type Keeper struct {
 
 // New is a Keeper writing into dir and reading answers through d.
 //
-// An empty dir is the state directory: $XDG_STATE_HOME/tonestack/presets, or
-// ~/.local/state/tonestack/presets when that variable is unset. It is worked
+// An empty dir is the state directory: $XDG_STATE_HOME/toneharness/presets, or
+// ~/.local/state/toneharness/presets when that variable is unset. It is worked
 // out when something is kept, not here, so New cannot fail.
 func New(
 	dir string,

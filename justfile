@@ -8,22 +8,11 @@ import? '.just/remote/just.just'
 # No documentation site, so md formats every markdown file in the repository.
 md_site_dir := ""
 
-# Except the one nobody writes. docs/rigspec.md is generated from the RigSpec
-# contract, and a test compares it against what the generator produces — so
-# reflowing it here would leave the page disagreeing with its own source.
-md_extra_excludes := "--exclude 'docs/rigspec.md' --exclude 'docs/commands.md'"
+md_extra_excludes := ""
 
-# Coverage target for this repository.
-#
-# Not 100%, and the missing part is one file. pkg/sdk/internal/device/usb_darwin.go
-# is every call this project makes into IOKit, translation and nothing more, and there is no way to
-# reach it without a device on the bus. Everything it forwards to — finding a
-# device, choosing between two, claiming an interface, waiting on a busy one,
-# framing, sequence numbers, acknowledgements — is behind an interface and
-# covered.
-#
-# It is counted rather than excluded on purpose. An exclusion hides a file's
-# size; a target says what is not reachable and gets worse if that file grows.
+# Not 100%: usb_darwin.go and reamp.go are the IOKit and audio-callback
+# translation layers, unreachable without hardware. Counted rather than
+# excluded, so the number gets worse if either grows.
 go_coverage_target := "99"
 
 # --- Fetch ---
@@ -47,7 +36,7 @@ test:
     just license-check
     just go-test
 
-# Round-trip a preset on an attached Helix. Overwrites TONESTACK_SCRATCH_SLOT and puts it back
+# Round-trip a preset on an attached Helix. Overwrites TONEHARNESS_SCRATCH_SLOT and puts it back
 test-device:
     go test -tags device -count=1 -v -run TestDevicePublicTestSuite ./pkg/sdk/
 
@@ -98,7 +87,7 @@ corpus:
 gear-map:
     uvx --with pypdf --with fonttools python3 resources/schemas/extract_gear_map.py
 
-# Separate one instrument out of every recording in a directory, for `tonestack measure --dir`
+# Separate one instrument out of every recording in a directory, for `toneharness measure --dir`
 #
 # A mix measures the band, so the instrument has to come out of it before any
 # number describes the player. Python because Demucs is; the same category as
@@ -113,22 +102,29 @@ gear-map:
 # carries more of the rest of the band with it.
 #
 # `--with numpy` is not optional: Demucs does not declare it and fails without it.
+#
+# The audio is named rather than globbed. A player's directory also holds its
+# corpus.yaml, and Demucs given that refuses the whole run rather than skipping
+# it, so `IN/*` separated whichever tracks sort before "corpus" and stopped.
 stems IN OUT INSTRUMENT="bass":
     #!/usr/bin/env bash
     set -euo pipefail
     model=htdemucs
     if [ "{{ INSTRUMENT }}" = "guitar" ]; then model=htdemucs_6s; fi
+    shopt -s nullglob
+    audio=({{ IN }}/*.mp3 {{ IN }}/*.wav {{ IN }}/*.flac {{ IN }}/*.m4a)
+    if [ ${#audio[@]} -eq 0 ]; then echo "no audio in {{ IN }}" >&2; exit 1; fi
     uvx --from demucs --with numpy demucs -n "$model" \
-      --two-stems={{ INSTRUMENT }} -o {{ OUT }} {{ IN }}/*
+      --two-stems={{ INSTRUMENT }} -o {{ OUT }} "${audio[@]}"
     echo "stems written to {{ OUT }}/$model — measure them with:"
-    echo "    tonestack measure --dir {{ OUT }}/$model"
+    echo "    toneharness measure --dir {{ OUT }}/$model"
 
 # Download one record into an artist's corpus, named for its manifest entry
 #
 # URL is the Spotify track the manifest links to, so the record measured is the
 # one the evidence names. When spotdl cannot find the audio, pass
 # "YOUTUBE|SPOTIFY" and it takes the audio from that video. The file is named
-# TRACK because that is what `tonestack measure --manifest` matches against.
+# TRACK because that is what `toneharness measure --manifest` matches against.
 record DIR TRACK URL:
     uvx spotdl download "{{ URL }}" --output "{{ DIR }}/{{ TRACK }}.{output-ext}"
     @test -f "{{ DIR }}/{{ TRACK }}.mp3" || { echo "no {{ DIR }}/{{ TRACK }}.mp3: see docs/workflows/add-records-to-a-corpus.md" >&2; exit 1; }
@@ -160,6 +156,16 @@ forum-search QUERY SUB="":
 # just web "site:talkbass.com geddy lee ampeg cabinets 1977"
 web QUERY:
     uvx --with curl_cffi python3 resources/read_forum.py --web "{{ QUERY }}"
+
+# Put the measured library into the form the sdk embeds
+#
+# The readings land in resources/sweeps/, where somebody looks at them. This is
+# the step that gets them into the binary, through the same reader the binary
+# uses, so a library that will not load is refused here.
+pack-measured:
+    go run ./pkg/sdk/measured/internal/pack \
+        resources/sweeps/hx-stomp/fingerprints.json \
+        pkg/sdk/measured/data/hx-stomp.json.gz
 
 # Generate code
 generate:

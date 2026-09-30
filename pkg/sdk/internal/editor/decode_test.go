@@ -27,8 +27,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // DecodeTestSuite covers turning a device's answer into a chain.
@@ -49,8 +49,8 @@ func (s *DecodeTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-// TestChainOf turns a device's answer into a chain.
-func (s *DecodeTestSuite) TestChainOf() {
+// TestPlanOf turns a device's answer into a plan for that device.
+func (s *DecodeTestSuite) TestPlanOf() {
 	tests := []struct {
 		name string
 		// what the slot is called, and the blocks the device sent.
@@ -183,7 +183,7 @@ func (s *DecodeTestSuite) TestChainOf() {
 				title = "x"
 			}
 
-			got, err := Chain(title, wire.DevicePreset{Blocks: blocks}, cat)
+			got, err := Plan(title, wire.DevicePreset{Blocks: blocks}, cat)
 
 			if tt.errText != "" {
 				s.Require().Error(err)

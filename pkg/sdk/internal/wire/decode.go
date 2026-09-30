@@ -79,6 +79,11 @@ func asInt(
 //
 // Line 6's strings are C strings whose declared length counts the trailing
 // NUL, so a name arrives one byte longer than it reads.
+//
+// Every trailing NUL rather than the one that accounts for, because a field
+// the device pads to a fixed width arrives with several and a name ending in
+// them is not a name anybody typed. Nothing observed carries more than one, so
+// this is a guard rather than a case that has happened.
 func asString(
 	v any,
 ) (string, bool) {

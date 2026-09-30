@@ -27,27 +27,27 @@ package result
 // what it held, what was kept before that happened, and where the result went.
 type Change struct {
 	// Action says what was done.
-	Action Action
+	Action Action `json:"action"`
 	// From is the slot it came from. Nil when the source was a file rather
 	// than another slot.
-	From *At
+	From *At `json:"from"`
 	// To is the slot it went to.
-	To At
+	To At `json:"to"`
 	// Replaced is what the destination held before, which nothing else
 	// records once the write has happened.
-	Replaced string
+	Replaced string `json:"replaced"`
 	// Kept are the backup files written before anything was overwritten,
 	// in the order they were made. Empty when there was nothing to keep,
 	// which is what an untouched slot answers with.
-	Kept []string
+	Kept []string `json:"kept"`
 	// Mismatch says the preset was made for a different device, so it may
 	// not load. Written anyway: the device identifier is not a reliable
 	// refusal, and somebody who moved a preset on purpose is owed the
 	// attempt rather than a veto.
-	Mismatch bool
+	Mismatch bool `json:"mismatch"`
 	// Path is the file the result went to. Empty when the write went to a
 	// device, which is written in place and has no file.
-	Path string
+	Path string `json:"path"`
 }
 
 // OnDevice says whether the write went to hardware rather than a file.
@@ -82,9 +82,9 @@ const (
 type At struct {
 	// Slot is the position, from zero. The label a pedal prints is
 	// slot.Label of it, which is a rendering decision rather than data.
-	Slot int
+	Slot int `json:"slot"`
 	// Name is what the slot is called.
-	Name string
+	Name string `json:"name"`
 }
 
 // Built is a preset compiled from a rig.
@@ -94,9 +94,9 @@ type At struct {
 // blocks where they described five is written, loads, and is wrong.
 type Built struct {
 	// Name is what the preset is called, which is the rig's subject.
-	Name string
+	Name string `json:"name"`
 	// Blocks is how many are in the chain.
-	Blocks int
+	Blocks int `json:"blocks"`
 	// Path is the file that was written.
-	Path string
+	Path string `json:"path"`
 }

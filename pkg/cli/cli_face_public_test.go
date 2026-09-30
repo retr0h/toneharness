@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/cli"
 )
 
 // ThemeFacePublicTestSuite covers the part of the visual language a caller

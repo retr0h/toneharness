@@ -34,7 +34,7 @@
 //
 // The format is not published by Line 6. It was reverse engineered by
 // tonepush and fretwire, both MIT licensed, and their documentation is what
-// this package implements. See docs/protocol.md.
+// this package implements. See pkg/sdk/internal/wire/README.md.
 package wire
 
 import (

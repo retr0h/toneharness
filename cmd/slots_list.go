@@ -1,0 +1,118 @@
+// Copyright (c) 2026 John Dewey
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+package cmd
+
+import (
+	"context"
+	"io"
+
+	"github.com/spf13/cobra"
+
+	"github.com/retr0h/toneharness/pkg/cli"
+	"github.com/retr0h/toneharness/pkg/sdk"
+)
+
+var (
+	presetsListFile    string
+	presetsListSetlist int
+	presetsListClient  clientFlags
+)
+
+// presetsListAll shows the slots holding nothing.
+//
+// A rendering choice rather than an operation one: a device answers for every
+// slot either way, and leaving the empty ones out is how somebody stops seeing
+// where the gaps are.
+var presetsListAll bool
+
+// slotsListCmd represents the slots list command.
+var slotsListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List what each slot holds",
+	Long: `List what a device holds, or what a backup file holds.
+
+With nothing else, this reads the attached device over USB. HX Edit has to be
+quit first: it claims the editor interface exclusively.
+
+With --file, it reads a backup instead, which needs no device.
+
+Slots are labelled the way the hardware labels them, so 03B here is 03B
+there.`,
+	Args: cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		// The operation answers with what is there; what to show of it and
+		// what it looks like are decided here, which is all this command
+		// does.
+		client := presetsListClient.client()
+
+		listing, err := listed(cmd.Context(), client)
+		if err != nil {
+			return err
+		}
+
+		cat, err := client.Catalog(cmd.Context())
+		if err != nil {
+			return err
+		}
+
+		return answer(cmd, listing, func(w io.Writer, l sdk.Listing) error {
+			return cli.Listing(w, l, cat, presetsListAll)
+		})
+	},
+}
+
+func init() {
+	slotsCmd.AddCommand(slotsListCmd)
+
+	f := slotsListCmd.Flags()
+	f.StringVar(
+		&presetsListFile,
+		"file",
+		"",
+		"a .hls setlist or .hlb backup written by HX Edit",
+	)
+	f.IntVar(
+		&presetsListSetlist,
+		"setlist",
+		0,
+		"which setlist, when the file is a backup holding several",
+	)
+	f.StringVar(&presetsListClient.catalog, "catalog", "",
+		"a generated catalog to use instead of the built-in one")
+	f.StringVar(&presetsListClient.device, "device", "", deviceUsage)
+	f.BoolVar(&presetsListAll, "all", false, "include empty slots")
+}
+
+// listed reads what a setlist holds, from the device or from a file.
+//
+// No file means the device itself, which is what somebody with one plugged in
+// almost always wants.
+func listed(
+	ctx context.Context,
+	client *sdk.Client,
+) (sdk.Listing, error) {
+	if presetsListFile == "" {
+		pedal.claim()
+
+		return client.Presets(ctx, presetsListSetlist)
+	}
+
+	return client.Setlist(presetsListFile).Presets(ctx, presetsListSetlist)
+}

@@ -26,21 +26,21 @@ package result
 // list of those is not an answer to "what can I write a preset to".
 type Attached struct {
 	// Devices are what was found, in the order the bus reported them.
-	Devices []Attachment
+	Devices []Attachment `json:"devices"`
 }
 
 // Attachment is one device on the bus.
 type Attachment struct {
 	// Model is the device as Line 6 markets it.
-	Model string
+	Model string `json:"model"`
 	// DeviceID is what a preset for this device carries in data.device,
 	// which is how a preset says which hardware it was made for.
-	DeviceID int
+	DeviceID int `json:"device_id"`
 	// Vendor and Product are how the bus identifies it.
-	Vendor  uint16
-	Product uint16
+	Vendor  uint16 `json:"vendor"`
+	Product uint16 `json:"product"`
 	// Bus and Address are where it is plugged in. They change between
 	// unpluggings, so they identify a device now and not later.
-	Bus     int
-	Address int
+	Bus     int `json:"bus"`
+	Address int `json:"address"`
 }

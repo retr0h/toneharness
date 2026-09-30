@@ -24,13 +24,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
 // DiscoverBusPublicTestSuite covers finding a device and claiming it.
@@ -305,15 +306,19 @@ func (s *DiscoverBusPublicTestSuite) TestOpenOver() {
 			says: "looking for a device",
 		},
 		{
+			// Carrying the sentinel, because that is what decides whether
+			// waiting is worth it. The refusal then says how long it waited
+			// rather than guessing who holds it: a campaign running unattended
+			// has no HX Edit to quit, and five runs in a row said so.
 			name: "an interface something else is holding",
 			bus: func() *busDouble {
 				h := s.helix(answers(s.ctrl))
-				h.claimErr = errors.New("busy")
+				h.claimErr = fmt.Errorf("%w: exclusive access", device.ErrInterfaceBusy)
 
 				return s.bus(nil, h)
 			},
 			err:  true,
-			says: "is HX Edit running?",
+			says: "still held after",
 		},
 		{
 			// The interface is claimed twice, and the second can fail where

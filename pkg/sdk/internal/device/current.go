@@ -22,10 +22,17 @@ package device
 
 import (
 	"context"
+
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
 
-// opReadCurrent reads the preset a device is playing.
-const opReadCurrent = 22
+// Opcodes that read and replace what a device is playing.
+const (
+	// opReadCurrent reads the preset a device is playing.
+	opReadCurrent = 22
+	// opWriteCurrent replaces it, without writing anything to a slot.
+	opWriteCurrent = 21
+)
 
 // ReadCurrent fetches the preset the device has loaded.
 //
@@ -42,4 +49,32 @@ func (s *session) ReadCurrent(
 	}
 
 	return document(resp.Result)
+}
+
+// WriteCurrent replaces the preset the device is playing.
+//
+// Nothing is stored. The document goes into the edit buffer and every slot is
+// left alone, which is what makes this the operation for auditioning: a
+// caller can put six hundred different chains in front of a device in an
+// afternoon without a single write to flash.
+//
+// That distinction is not a nicety. A burst of slot writes corrupted a
+// setlist past what a power cycle could clear, and a device tolerates about a
+// dozen racing commits before it stops accepting writes at all — see
+// [Rules that keep a device alive](../wire/README.md#rules-that-keep-a-device-alive).
+// Measuring every block the device has, one at a time, is exactly the shape
+// that rule forbids doing through slots.
+//
+// Sent down the same chunked path a slot write uses, because it carries a
+// whole preset and one frame will not hold it. The pause afterwards is not
+// for the flash, which this never touches, but for the device: it answers
+// while it is still settling the new chain, and a measurement taken inside
+// that window measures the changeover.
+func (s *session) WriteCurrent(
+	ctx context.Context,
+	document []byte,
+) error {
+	return s.write(ctx, opWriteCurrent, []wire.Arg{
+		wire.Blob(argDocument, document),
+	})
 }

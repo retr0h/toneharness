@@ -73,6 +73,9 @@ const (
 	snapBypassOn = 1
 )
 
+// noCab is what a block's cabinet model says when it carries none.
+const noCab = -1
+
 // ErrNoRoom is returned when a chain names a position that holds no block.
 var ErrNoRoom = errors.New("not a block position")
 
@@ -319,6 +322,19 @@ func entryFor(
 	out = append(out, byte(keyBlockBody))
 	out = append(out, mapHeader(5)...)
 
+	// The model comes first, and the order is not a style choice. A device
+	// seeks a block's model where it put one, so a body carrying the same
+	// five keys in any other order is stored, read back byte for byte, and
+	// rendered as nothing. Measured off the captures: every block in every
+	// one writes 24, 9, 10, 11, 12.
+	out = append(out, byte(keyModelRef))
+	out = append(out, mapHeader(3)...)
+	out = append(out, byte(keyCabHeld), boolean(len(b.Cab) > 0))
+	out = append(out, byte(keyModelNum))
+	out = append(out, encodeNumber(b.Model)...)
+	out = append(out, byte(keyCabModel))
+	out = append(out, encodeNumber(cabModelOf(b))...)
+
 	out = append(out, byte(keyClass))
 	out = append(out, encodeNumber(b.Class)...)
 	out = append(out, byte(keyEnabled))
@@ -326,16 +342,8 @@ func entryFor(
 	out = append(out, byte(keyParams))
 	out = append(out, params...)
 	out = append(out, byte(keyPairedCab))
-	out = append(out, cab...)
 
-	out = append(out, byte(keyModelRef))
-	out = append(out, mapHeader(3)...)
-	out = append(out, byte(keyCabHeld), boolean(len(b.Cab) > 0))
-	out = append(out, byte(keyModelNum))
-	out = append(out, encodeNumber(b.Model)...)
-	out = append(out, byte(keyCabModel))
-
-	return append(out, encodeNumber(cabModelOf(b))...), nil
+	return append(out, cab...), nil
 }
 
 // cabModelOf is the cabinet's model number, or the -1 that means none.
@@ -343,7 +351,7 @@ func cabModelOf(
 	b Placement,
 ) int {
 	if len(b.Cab) == 0 {
-		return -1
+		return noCab
 	}
 
 	return b.CabModel

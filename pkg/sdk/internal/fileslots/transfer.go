@@ -25,11 +25,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/atomicfile"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/atomicfile"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Export writes one slot of a file out to a file of its own.
@@ -76,7 +76,7 @@ func (f *Flows) Export(
 			return result.Written{}, err
 		}
 
-		spec, err := f.compiler().Lift(held, cat)
+		spec, _, err := f.compiler().Lift(held, cat)
 		if err != nil {
 			return result.Written{}, err
 		}

@@ -2,160 +2,117 @@
   <picture>
     <source srcset="docs/assets/logo-dark.svg" media="(prefers-color-scheme: dark)">
     <source srcset="docs/assets/logo-light.svg" media="(prefers-color-scheme: light)">
-    <img src="docs/assets/logo-dark.svg" alt="tonestack" width="500">
+    <img src="docs/assets/logo-dark.svg" alt="toneharness" width="610">
   </picture>
 </p>
 
 <p align="center">Describe a guitar or bass sound, get a Line 6 Helix preset.</p>
 
 <p align="center">
-  <a href="https://github.com/retr0h/tonestack/releases/latest"><img alt="release" src="https://img.shields.io/github/release/retr0h/tonestack.svg?style=for-the-badge"></a>
-  <a href="https://codecov.io/gh/retr0h/tonestack"><img alt="codecov" src="https://img.shields.io/codecov/c/github/retr0h/tonestack?style=for-the-badge"></a>
+  <a href="https://github.com/retr0h/toneharness/releases/latest"><img alt="release" src="https://img.shields.io/github/release/retr0h/toneharness.svg?style=for-the-badge"></a>
+  <a href="https://codecov.io/gh/retr0h/toneharness"><img alt="codecov" src="https://img.shields.io/codecov/c/github/retr0h/toneharness?style=for-the-badge"></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-MIT-brightgreen.svg?style=for-the-badge"></a>
-  <a href="https://github.com/retr0h/tonestack/actions/workflows/go.yml"><img alt="build" src="https://img.shields.io/github/actions/workflow/status/retr0h/tonestack/go.yml?style=for-the-badge"></a>
+  <a href="https://github.com/retr0h/toneharness/actions/workflows/go.yml"><img alt="build" src="https://img.shields.io/github/actions/workflow/status/retr0h/toneharness/go.yml?style=for-the-badge"></a>
   <a href="https://github.com/goreleaser"><img alt="powered by" src="https://img.shields.io/badge/powered%20by-goreleaser-green.svg?style=for-the-badge"></a>
   <a href="https://conventionalcommits.org"><img alt="conventional commits" src="https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg?style=for-the-badge"></a>
   <a href="https://just.systems"><img alt="built with just" src="https://img.shields.io/badge/Built_with-Just-black?style=for-the-badge&logo=just&logoColor=white"></a>
-  <img alt="github commit activity" src="https://img.shields.io/github/commit-activity/m/retr0h/tonestack?style=for-the-badge">
-  <a href="https://pkg.go.dev/github.com/retr0h/tonestack"><img alt="go reference" src="https://img.shields.io/badge/go-reference-00ADD8?style=for-the-badge&logo=go&logoColor=white"></a>
+  <img alt="github commit activity" src="https://img.shields.io/github/commit-activity/m/retr0h/toneharness?style=for-the-badge">
+  <a href="https://pkg.go.dev/github.com/retr0h/toneharness"><img alt="go reference" src="https://img.shields.io/badge/go-reference-00ADD8?style=for-the-badge&logo=go&logoColor=white"></a>
   <a href="https://github.com/tekk/hovnokod-badge"><img alt="hovnokod" src="https://raw.githubusercontent.com/tekk/hovnokod-badge/main/assets/badges/hovnokod-for-the-badge.svg"></a>
 </p>
 
 <p align="center">
-Names the gear a player would name, checks it against what the device can
-actually do, and writes a preset that loads. Reads and writes a plugged-in
-Helix, or works entirely offline.
+<b>Built for agents, there to empower humans.</b>
 </p>
 
-## Features
+<p align="center">
+Every block on the device was measured through it, every claim in a rig names
+where it came from, and where nothing has been measured the tool says so.
+Point an agent at a checkout and tell it what you want to sound like.
+</p>
 
-| Feature                                                                     | Description                                                                                                                                                                                                                                                                              |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [RigSpec](docs/rigspec.md)                                                  | One file describes a tone. It names the gear in the chain the way a player would, says how it should sound and how the player plays it. Every field follows an [OpenAPI contract](pkg/sdk/rig/data/rigspec.openapi.yaml), and tonestack refuses a rig that breaks it                     |
-| Shareable rigs                                                              | A rig names "Ampeg SVT", not a Line 6 model ID. Export a slot as a rig, send the file to someone, and `presets compile` builds the preset on their end                                                                                                                                   |
-| [Every claim sourced](docs/recipes.md#say-where-each-claim-came-from)       | Each piece of gear and each description records where it came from: an interview, a video timestamp, a forum thread, measured presets. A claim an AI made says so                                                                                                                        |
-| [Your agent tunes it](docs/workflows.md#correct-a-rig-you-have-heard)       | Your agent builds a rig for the player you name. Play it, say what is wrong, and it rebuilds. The rig keeps each round: what you asked, what changed, why, and your verdict. The next session starts from what worked                                                                    |
-| Talks to your Helix                                                         | Read, write, copy, swap and select presets over USB. tonestack saves a slot to a file before it overwrites it. Device access is one backend per operating system, and only macOS has one so far. Building presets works everywhere, and the HX Stomp is the device it has been tested on |
-| [MCP server](docs/workflows.md#use-it-from-an-agent)                        | `tonestack mcp start` gives an agent the catalog, the corpus, building and the pedal as tools with typed results. It cannot write to a pedal unless you start it with `--allow-writes`                                                                                                   |
-| [Go SDK](CONTRIBUTING.md#what-to-import-if-you-are-using-this-as-a-library) | The CLI is flags over `pkg/sdk`. Import it to build presets, read and write a device, or look up what a device can do from your own Go program                                                                                                                                           |
+## What ships in the binary
+
+|                   |                                                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| **661** blocks    | what an HX Stomp models, of which **224** are amplifiers and **133** cabinets. A Helix Floor is **670**. |
+| **661** measured  | every one of those blocks, played and recorded on the device rather than read off a spec sheet           |
+| **4,324** presets | what other people built, measured into the statistics that say where a control usually sits              |
+| **15** rigs       | curated, with a citation behind every piece of gear                                                      |
+
+## Quickstart
+
+Start your agent in a checkout and say what you want. Just ask:
+
+- _"Make my bass sound like Dookie"_
+- _"Like Mike Dirnt, but chunkier"_
+- _"What did Geddy Lee actually play on Hemispheres?"_
+- _"Put that on my pedal in slot 42C"_
+
+The agent researches the gear and cites it, writes the ask, resolves it to a
+rig, builds the preset and pushes it over USB. The skills below are what it
+reads to do that, and each one's README says how to use it.
+
+Nothing here can hear. You listen, say what is wrong, and it corrects the ask so
+the next session starts from what worked.
+
+Everything needed ships in the binary: the device catalog, the corpus
+statistics, the curated rigs. Building a preset needs no HX Edit and no pedal.
+
+**`toneharness <command> --help` is the command reference**, and there is no
+page duplicating it. From a checkout that is `go run main.go --help`, which
+compiles the tree and answers from the source rather than from a description of
+it. Ask for something no skill covers and an agent finds it there in two calls,
+which is why nothing here writes the commands down.
+
+Or work over MCP. `.mcp.json` starts the server with `go run`, so it compiles
+the working tree every launch and cannot serve a stale binary, and every command
+has a tool named after it: `device select` is `device_select`. Both surfaces
+call the same SDK, and a test walks the command tree against the registered
+tools in both directions, so neither can quietly gain a capability the other
+lacks.
+
+## Skills
+
+The CLI is for an agent more than for a person, so the way to use toneharness is
+to point an agent at a checkout and say what you want to sound like. Each
+skill's own README says how to install and use it.
+
+| Skill                                                         | Answers                                                                          |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [build-a-rig](.claude/skills/build-a-rig/README.md)           | _"Make my bass sound like Dookie"_, without guessing at the gear                 |
+| [write-a-spec](.claude/skills/write-a-spec/README.md)         | Which document a fact goes in, and why a field was refused                       |
+| [measure-music](.claude/skills/measure-music/README.md)       | What a player's records actually sound like, and which words the figures earn    |
+| [work-a-device](.claude/skills/work-a-device/README.md)       | What is on the pedal, getting a preset onto it, and moving slots around          |
+| [measure-a-device](.claude/skills/measure-a-device/README.md) | What a control actually does, by pushing a known signal through it and listening |
+
+Each follows the [Agent Skills] format: a slim `SKILL.md` that routes, with the
+detail in reference files an agent reads only when the question calls for them.
+None of them writes down a list the tool can print. A list in a skill is right
+the day it is written and wrong after the next change, with nothing marking the
+moment.
 
 ## Install
 
 ```bash
-curl -fsSL https://github.com/retr0h/tonestack/raw/main/install.sh | bash
+curl -fsSL https://github.com/retr0h/toneharness/raw/main/install.sh | bash
 ```
 
 Installs to `~/.local/bin` or `/usr/local/bin`, verifying SHA256 checksums.
-Override with `TONESTACK_INSTALL_DIR=/some/path`, or pin a version with
-`TONESTACK_VERSION=1.1.1`.
+Override with `TONEHARNESS_INSTALL_DIR=/some/path`, or pin a version with
+`TONEHARNESS_VERSION=1.1.1`.
 
 <details>
 <summary>Other ways</summary>
 
 ```bash
-go install github.com/retr0h/tonestack@latest
+go install github.com/retr0h/toneharness@latest
 ```
 
 Released binaries reach a Helix over USB on macOS. On Linux they build, validate
 and write presets, and the device commands say they are not supported yet.
 
 </details>
-
-## Quickstart
-
-The device catalog and a set of player rigs are built into the binary. Building
-a preset needs no HX Edit and no Helix.
-
-```bash
-tonestack recipes list                                  # the rigs that ship
-tonestack presets make --id mike-dirnt --out mike.hlx
-```
-
-```console
-  Mike Dirnt
-
-  ●  0.0  Deluxe Comp       Line 6 Original             1.8
-  ●  0.1  Ampeg SVT Brt     Ampeg SVT (bright channel)  26.6
-  ●  0.2  8x10 Ampeg SVT-E                              7.2
-
-  dsp0  ████████░░░░░░░░░░░░░░░░  35.6%
-
-  added Deluxe Comp — almost every chain has one (88% of chains)
-
-  heard mid-forward — Mid 0.79 to 0.89
-  heard grit-on-attack — Drive 0.60 to 0.72
-  heard tight-low-end — Sag 0.50 to 0.40
-  heard short-decay — nothing acts on this yet
-  heard audible-pick-attack — Attack 0.04 to 0.05
-
-  [ok] wrote mike.hlx
-```
-
-Read that before you plug anything in. Each block names the real gear it models
-and what it costs. `added` is what tonestack put in that the rig did not ask
-for, and `heard` is what each word in the rig's description did to a knob.
-
-Have a rig file of your own, one you wrote or one somebody shared? Build it the
-same way:
-
-```bash
-tonestack presets compile --rig mine.yaml --out mine.hlx
-```
-
-### Put it on the pedal
-
-With the Helix plugged in and HX Edit quit, tonestack writes the preset straight
-into a slot, and saves what that slot held to a file first:
-
-```bash
-tonestack presets import --preset mike.hlx --slot 07A
-```
-
-Device access is macOS only for now. Anywhere else, import the file with HX
-Edit.
-
-### Back up before you write
-
-**Writing replaces what is in the slot.** `presets import`, `presets copy`,
-`presets swap` and restoring a backup all overwrite. tonestack saves the old
-contents to a file before each write, but a file in your working directory is
-not a backup of your device.
-
-Back the whole device up with HX Edit first. Every reading command takes
-`--file`, so you can work against that backup with no pedal attached at all:
-
-```bash
-tonestack presets list --file device.hlb
-tonestack presets show --file device.hlb --slot 31A
-```
-
-The MCP server will not write to a pedal unless you start it with
-`--allow-writes`.
-
-Nothing here has damaged a device, and the rules that keep one alive are in
-[docs/protocol.md](docs/protocol.md). What is genuinely at risk is a preset you
-have not saved anywhere else. Use it at your own discretion.
-
-## Next
-
-| To                                                    | Read                                                                  |
-| ----------------------------------------------------- | --------------------------------------------------------------------- |
-| build a preset for a player who is not in the list    | [Create a rig](docs/workflows.md#create-a-rig-for-a-player)           |
-| use a plugged-in Helix                                | [Read the device](docs/workflows.md#read-what-a-device-holds)         |
-| change a preset after you have played it              | [Correct a rig](docs/workflows.md#correct-a-rig-you-have-heard)       |
-| see every command and flag                            | [docs/commands.md](docs/commands.md), or `tonestack <command> --help` |
-| understand how it works                               | [docs/](docs/README.md)                                               |
-| work on tonestack, including regenerating the catalog | [CONTRIBUTING.md](CONTRIBUTING.md)                                    |
-
-[docs/workflows.md](docs/workflows.md) is the usage guide, for everything past
-the quickstart.
-
-**Or ask an agent.** It runs the commands. The part worth doing yourself is
-listening:
-
-> Build me a Mike Dirnt bass tone.
-
-> Too clunky. Loosen the low end and put the drive back.
 
 ## Contributing
 
@@ -165,3 +122,5 @@ the pull request workflow.
 ## License
 
 The MIT License, see [LICENSE](LICENSE).
+
+[agent skills]: https://agentskills.io

@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // FFTPublicTestSuite covers the transform every measurement rests on.
@@ -222,6 +222,90 @@ func (s *FFTPublicTestSuite) TestTransformOfNothing() {
 	audio.Transform(re, im)
 
 	s.Require().Empty(re)
+}
+
+// TestATransformUndoesItself covers the round trip.
+func (s *FFTPublicTestSuite) TestATransformUndoesItself() {
+	const n = 256
+
+	want := make([]float64, n)
+	for i := range want {
+		want[i] = math.Sin(2*math.Pi*float64(i)/32) +
+			0.5*math.Cos(2*math.Pi*float64(i)/8)
+	}
+
+	re := make([]float64, n)
+	im := make([]float64, n)
+	copy(re, want)
+
+	audio.Forward(re, im)
+	audio.Inverse(re, im)
+
+	for i := range want {
+		s.Require().InDeltaf(want[i], re[i], 1e-9,
+			"sample %d came back as something else", i)
+		s.Require().InDeltaf(0, im[i], 1e-9,
+			"sample %d gained an imaginary part", i)
+	}
+}
+
+// TestForward covers Forward, which runs a fast Fourier transform in place.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *FFTPublicTestSuite) TestForward() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The bins meaning what they say.
+			name: "a transform finds a tone where it is",
+			then: func() {
+				const (
+					n    = 512
+					bin  = 17
+					peak = 1.0
+				)
+
+				re := make([]float64, n)
+				im := make([]float64, n)
+
+				for i := range re {
+					re[i] = peak * math.Cos(2*math.Pi*bin*float64(i)/n)
+				}
+
+				audio.Forward(re, im)
+
+				var loudest int
+
+				var most float64
+
+				for i := range n / 2 {
+					if power := re[i]*re[i] + im[i]*im[i]; power > most {
+						most, loudest = power, i
+					}
+				}
+
+				s.Require().Equal(bin, loudest)
+			},
+		},
+		{
+			// The lengths that cannot be halved.
+			name: "nothing to transform",
+			then: func() {
+				for _, n := range []int{0, 1} {
+					re := make([]float64, n)
+					im := make([]float64, n)
+
+					s.Require().NotPanics(func() { audio.Forward(re, im) })
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 func TestFFTPublicTestSuite(

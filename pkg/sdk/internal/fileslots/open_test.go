@@ -27,7 +27,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/setlist"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/setlist"
 )
 
 // OpenTestSuite covers putting a setlist back on disk.

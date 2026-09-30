@@ -24,9 +24,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
 // Attached prints what is on the bus, one device to a row.
@@ -45,14 +45,10 @@ func Attached(
 		})
 	}
 
-	if err := (paint.Section{
+	return reporting(paint.Section{
 		Title:   "Attached",
 		Headers: []string{"device", "usb", "bus", "preset device id"},
 		Rows:    rows,
 		Empty:   "no Helix devices attached",
-	}).Render(w); err != nil {
-		return fmt.Errorf("reporting: %w", err)
-	}
-
-	return nil
+	}.Render(w))
 }

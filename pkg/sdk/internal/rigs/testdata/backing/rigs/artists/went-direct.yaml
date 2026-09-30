@@ -1,0 +1,7 @@
+schema: RigSpec
+version: 2
+id: went-direct
+instrument: bass
+chain:
+  - { role: amp, gear: Ampeg SVT, capture: direct }
+  - { role: cab, gear: Ampeg 8x10, capture: direct, stage: true }

@@ -30,9 +30,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/backup"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device/mocks"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/backup"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // KeepTestSuite covers reading a slot so what it held can be kept before it

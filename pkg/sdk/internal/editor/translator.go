@@ -21,11 +21,11 @@
 package editor
 
 import (
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/chain"
-	"github.com/retr0h/tonestack/pkg/sdk/internal/wire"
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Translator is this package's work as a value.
@@ -42,13 +42,13 @@ type Translator struct{}
 // New returns a Translator.
 func New() *Translator { return &Translator{} }
 
-// Chain reads what a device laid out as a chain.
-func (*Translator) Chain(
+// Plan reads what a device laid out, as a plan for that device.
+func (*Translator) Plan(
 	name string,
 	got wire.DevicePreset,
 	cat *catalog.Catalog,
-) (chain.Chain, error) {
-	return Chain(name, got, cat)
+) (plan.Plan, error) {
+	return Plan(name, got, cat)
 }
 
 // Controllers carries what an expression pedal or a footswitch moves.
@@ -90,6 +90,14 @@ func (*Translator) Placements(
 	cat *catalog.Catalog,
 ) ([]wire.Placement, error) {
 	return Placements(doc, cat)
+}
+
+// PlacedControllers turns what a preset says moves into what a device stores.
+func (*Translator) PlacedControllers(
+	doc *preset.Document,
+	cat *catalog.Catalog,
+) ([]wire.PlacedController, error) {
+	return PlacedControllers(doc, cat)
 }
 
 // Snapshots carries what the device recalls on a footswitch.

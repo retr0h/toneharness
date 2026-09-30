@@ -24,8 +24,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // nearUniversal is how common a kind of block must be before one is added to a
@@ -34,7 +35,7 @@ import (
 // Set high on purpose. A compressor in 88% of bass chains is a convention, and
 // leaving it out produces something nobody would recognise. Drive in 62% is a
 // choice, and making it silently would be this tool having opinions it cannot
-// justify. A recipe naming a pedal always gets it, whatever the figure.
+// justify. A rig naming a pedal always gets it, whatever the figure.
 const nearUniversal = 0.75
 
 // Added records a block the chain did not ask for, and why it is there.
@@ -55,17 +56,18 @@ type Added struct {
 // defensible choice when nobody named one.
 func fill(
 	blocks []catalog.Block,
+	said []*rig.Settings,
 	cat *catalog.Catalog,
 	stats *corpus.Stats,
 	instrument string,
-) ([]catalog.Block, []Added) {
+) ([]catalog.Block, []*rig.Settings, []Added) {
 	if stats == nil {
-		return blocks, nil
+		return blocks, said, nil
 	}
 
 	g, ok := stats.Grammar[instrument]
 	if !ok {
-		return blocks, nil
+		return blocks, said, nil
 	}
 
 	present := map[catalog.Category]bool{}
@@ -88,14 +90,14 @@ func fill(
 			continue
 		}
 
-		blocks = insert(blocks, pick, s.BeforeAmp() >= 0.5)
+		blocks, said = insert(blocks, said, pick, s.BeforeAmp() >= 0.5)
 		added = append(added, Added{
 			Block: pick, Share: share,
 			Reason: "almost every chain has one",
 		})
 	}
 
-	return blocks, added
+	return blocks, said, added
 }
 
 // insert places a block on the correct side of the amp.
@@ -103,15 +105,16 @@ func fill(
 // Position is not decoration: drive ahead of an amp overdrives its input,
 // drive after it does something else entirely.
 //
-// A resolved chain always holds an amp — a recipe cannot omit one — so the
+// A resolved chain always holds an amp — a rig cannot omit one — so the
 // index is found rather than guarded against.
 func insert(
 	blocks []catalog.Block,
+	said []*rig.Settings,
 	b catalog.Block,
 	beforeAmp bool,
-) []catalog.Block {
+) ([]catalog.Block, []*rig.Settings) {
 	if !beforeAmp {
-		return append(blocks, b)
+		return append(blocks, b), append(said, nil)
 	}
 
 	at := 0
@@ -127,8 +130,49 @@ func insert(
 	out := make([]catalog.Block, 0, len(blocks)+1)
 	out = append(out, blocks[:at]...)
 	out = append(out, b)
+	out = append(out, blocks[at:]...)
 
-	return append(out, blocks[at:]...)
+	return out, spliced(said, at)
+}
+
+// spliced opens a gap at the same index the blocks did, holding no settings.
+//
+// **The parallel slice is the bug this exists to prevent, and it was a live
+// one.** `said` is what a rig wrote for each of its own blocks, built index by
+// index against the chain the person typed. A block spliced in ahead of the
+// amplifier shifts the amplifier and everything after it one to the right, and
+// `saidKnobs` pairs `said[i]` with `blocks[i]`, so without this every setting
+// after the insertion point lands on its neighbour.
+//
+// It does not reliably fail, which is why it survived. `knobWords` maps a word
+// like `level` or `mix` to several parameter names that different categories
+// share, so a value meant for an amplifier's Master can be written to a
+// compressor's Level with no error at all: a preset that measures fine and is
+// quietly not what was asked for. Where the names do not coincide it fails
+// instead with a message naming the position the person typed rather than the
+// block it actually checked.
+//
+// Bootsy Collins' rig is the one that shows it in the shipped data. It names a
+// filter then an amplifier, the corpus fills a compressor in ahead of the
+// amplifier because 88% of chains have one, and the amplifier arrives at index
+// 2 while `said[1]` still describes it. That rig is unharmed only because its
+// amplifier entry carries no settings.
+//
+// A gap past the end is appended, because `said` is never longer than `blocks`
+// and a shorter one means the caller added blocks of its own.
+func spliced(
+	said []*rig.Settings,
+	at int,
+) []*rig.Settings {
+	if at >= len(said) {
+		return append(said, nil)
+	}
+
+	out := make([]*rig.Settings, 0, len(said)+1)
+	out = append(out, said[:at]...)
+	out = append(out, nil)
+
+	return append(out, said[at:]...)
 }
 
 // commonest returns the model of a category that chains for this instrument

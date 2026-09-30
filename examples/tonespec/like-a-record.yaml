@@ -1,0 +1,44 @@
+# A request pointing at a recording, which is the kind this answers fully.
+#
+# A recording is measured rather than looked up, so it needs no catalog entry
+# and no citation: it is evidence of itself. What comes back is the nearest of
+# the device's 224 amplifiers to what that file actually measures.
+#
+#     toneharness tone build --ask examples/tonespec/like-a-record.yaml \
+#       --setup examples/tonespec/my-setup.yaml --out rig.yaml
+#     toneharness presets compile --rig rig.yaml --out a.hlx
+
+schema: ToneSpec
+
+# Required even here, where the target is one recording rather than a
+# population. The recording is what the answer is measured against; the genre
+# says where it sits.
+genre: [rock]
+
+# How it should sound, in the words a person would use. A word carries its own
+# evidence, where anybody has any; these two have none, which is the ordinary
+# case for a request somebody typed. Turning a word into a knob position is
+# the tool's job and not this document's.
+#
+# This example said `punchy` until 2026-09-26 and could not, because the
+# vocabulary held one axis per word and "punchy" answers two at once: the bottom
+# stopping when the note does, and the front of the note being audible. It says
+# it again since 2026-09-28, because a word may now answer as many axes as it
+# means and moves a control on each. `punchy` turns an amplifier's Sag down and a
+# compressor's Attack up, which is what the two halves of the word already meant.
+#
+# The contradiction check is better for it, which was the point. `punchy` beside
+# `loose-low-end` is now caught as two answers to the low end, and neither moves.
+# Before, nothing could see it: the word was not in the vocabulary at all.
+words:
+  - term: punchy
+  - term: dark
+
+like:
+  recording: resources/dry/bass-di.wav
+
+# Gear the request names, where somebody wants a particular thing rather than
+# a particular sound. Everything not named here is chosen by measuring.
+gear:
+  - gear: LA Studio Comp
+    role: comp

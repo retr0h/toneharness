@@ -21,12 +21,12 @@
 package rig_test
 
 import (
-	"encoding/json"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 type ValidatePublicTestSuite struct {
@@ -38,7 +38,6 @@ func (s *ValidatePublicTestSuite) good() rig.Spec {
 	return rig.Spec{
 		Schema:     rig.SchemaName,
 		ID:         "mike-dirnt",
-		Subject:    rig.Subject{Kind: rig.KindArtist, Name: "Mike Dirnt"},
 		Instrument: rig.InstrumentBass,
 		Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
 	}
@@ -70,19 +69,14 @@ func (s *ValidatePublicTestSuite) TestValidate() {
 				r.Chain[0].Settings = settings(0)
 				r.Chain[0].Settings.Treble = knob(1)
 				r.Chain[0].Evidence = &[]rig.Evidence{{Kind: rig.EvidenceCited}}
-				r.Mutations = &[]rig.Mutation{{Ask: "make it clunkier"}}
 			},
 		},
 		{
-			// A rig carries raw JSON it was handed — the state a device wrote
-			// — and something that is not JSON cannot be checked against
-			// anything.
-			name: "state that is not JSON at all",
-			mutate: func(r *rig.Spec) {
-				broken := json.RawMessage("not json")
-				r.Device = &rig.DeviceState{Version: &broken}
-			},
-			says: "reading the rig",
+			// A rig is checked through JSON, and a value that has no JSON
+			// cannot be checked against anything.
+			name:   "a knob holding a value that is not a number",
+			mutate: func(r *rig.Spec) { r.Chain[0].Settings = settings(math.NaN()) },
+			says:   "reading the rig",
 		},
 		{
 			name:   "a document that is not a rig",
@@ -98,16 +92,6 @@ func (s *ValidatePublicTestSuite) TestValidate() {
 			name:   "an identifier that is empty",
 			mutate: func(r *rig.Spec) { r.ID = "" },
 			field:  "id",
-		},
-		{
-			name:   "a subject of no known kind",
-			mutate: func(r *rig.Spec) { r.Subject.Kind = "robot" },
-			field:  "subject.kind",
-		},
-		{
-			name:   "a subject nobody named",
-			mutate: func(r *rig.Spec) { r.Subject.Name = "  " },
-			field:  "subject.name",
 		},
 		{
 			name:   "an instrument the catalog cannot be filtered by",
@@ -150,13 +134,6 @@ func (s *ValidatePublicTestSuite) TestValidate() {
 				r.Chain[0].Evidence = &[]rig.Evidence{{Kind: "vibes"}}
 			},
 			field: "chain[0].evidence[0].kind",
-		},
-		{
-			name: "a correction that records no request",
-			mutate: func(r *rig.Spec) {
-				r.Mutations = &[]rig.Mutation{{Ask: "  "}}
-			},
-			field: "mutations[0].ask",
 		},
 	}
 

@@ -33,7 +33,7 @@ package cli
 import (
 	"io"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 )
 
 // How the output is coloured.

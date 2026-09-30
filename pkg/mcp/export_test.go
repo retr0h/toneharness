@@ -19,7 +19,7 @@
 // DEALINGS IN THE SOFTWARE.
 package mcp
 
-import "github.com/retr0h/tonestack/pkg/mcp/internal/tools"
+import "github.com/retr0h/toneharness/pkg/mcp/internal/tools"
 
 // NewOver builds a server whose tools call c, so a test can stand a generated
 // double in for the pedal.

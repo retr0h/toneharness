@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // LEDPublicTestSuite covers naming the colour a device reports by number.
@@ -33,30 +33,50 @@ type LEDPublicTestSuite struct {
 	suite.Suite
 }
 
-func (s *LEDPublicTestSuite) TestNamesAColourByItsPosition() {
-	// The order is the contract: a device sends the position, not the name.
-	// Two of these are confirmed against hardware — a switch set to Green in
-	// HX Edit reports 6, and one set to Violet reports 9.
-	c, err := catalog.BuiltIn()
-	s.Require().NoError(err)
+// TestLEDColour covers naming a colour by its position, and a colour this
+// catalog does not know.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *LEDPublicTestSuite) TestLEDColour() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "names a colour by its position",
+			then: func() {
+				// The order is the contract: a device sends the position, not the name.
+				// Two of these are confirmed against hardware — a switch set to Green in
+				// HX Edit reports 6, and one set to Violet reports 9.
+				c, err := catalog.BuiltIn()
+				s.Require().NoError(err)
 
-	for n, want := range map[int]string{0: "auto color", 6: "green", 9: "violet"} {
-		got, ok := c.LEDColour(n)
+				for n, want := range map[int]string{0: "auto color", 6: "green", 9: "violet"} {
+					got, ok := c.LEDColour(n)
 
-		s.Require().True(ok, "%d", n)
-		s.Require().Equal(want, got, "colour %d", n)
-	}
-}
+					s.Require().True(ok, "%d", n)
+					s.Require().Equal(want, got, "colour %d", n)
+				}
+			},
+		},
+		{
+			name: "a colour this catalog does not know",
+			then: func() {
+				// A device on newer firmware may know colours the release this was
+				// generated from did not.
+				c := &catalog.Catalog{LEDColours: []string{"auto color"}}
 
-func (s *LEDPublicTestSuite) TestAColourThisCatalogDoesNotKnow() {
-	// A device on newer firmware may know colours the release this was
-	// generated from did not.
-	c := &catalog.Catalog{LEDColours: []string{"auto color"}}
+				for _, n := range []int{-1, 1, 999} {
+					_, ok := c.LEDColour(n)
 
-	for _, n := range []int{-1, 1, 999} {
-		_, ok := c.LEDColour(n)
-
-		s.Require().False(ok, "%d", n)
+					s.Require().False(ok, "%d", n)
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 

@@ -21,14 +21,13 @@
 package corpusgen
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 
-	"github.com/retr0h/tonestack/pkg/sdk/catalog"
-	"github.com/retr0h/tonestack/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/packed"
 )
 
 // Refreshed says what refreshing the corpus statistics did.
@@ -86,16 +85,17 @@ func Refresh(
 
 	// Statistics hold only numbers and strings, so encoding cannot fail.
 	raw, _ := json.Marshal(stats)
-	body := compress(raw)
+	body := packed.Bytes(raw)
 
 	out := Refreshed{Path: opts.OutputPath, Stats: stats}
 
-	if was, err := os.ReadFile(opts.OutputPath); err == nil && bytes.Equal(was, body) {
-		return out, nil
+	wrote, err := packed.Refresh(opts.OutputPath, body)
+	if err != nil {
+		return Refreshed{}, err
 	}
 
-	if err := os.WriteFile(opts.OutputPath, body, 0o600); err != nil {
-		return Refreshed{}, fmt.Errorf("writing %s: %w", opts.OutputPath, err)
+	if !wrote {
+		return out, nil
 	}
 
 	out.Changed = true

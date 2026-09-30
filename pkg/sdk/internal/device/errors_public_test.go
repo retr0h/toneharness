@@ -27,18 +27,74 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/retr0h/tonestack/pkg/sdk/internal/device"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
 )
 
 type ErrorsPublicTestSuite struct {
 	suite.Suite
 }
 
-func (s *ErrorsPublicTestSuite) TestUnknownModelErrorNamesTheProduct() {
-	err := &device.UnknownModelError{Product: 0xBEEF}
+// TestError covers Error, which implements the error interface.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ErrorsPublicTestSuite) TestError() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "unknown model error names the product",
+			then: func() {
+				err := &device.UnknownModelError{Product: 0xBEEF}
 
-	s.Require().Contains(err.Error(), "0xbeef")
-	s.Require().ErrorIs(err, device.ErrUnknownModel)
+				s.Require().Contains(err.Error(), "0xbeef")
+				s.Require().ErrorIs(err, device.ErrUnknownModel)
+			},
+		},
+		{
+			// A device answering with something nobody can decode, which is
+			// how a protocol change becomes visible.
+			name: "not a preset error",
+			then: func() {
+				tests := []struct {
+					name   string
+					result any
+					want   string
+				}{
+					{
+						name:   "a decoded document",
+						result: map[any]any{1: "a", 2: "b"},
+						want:   "map with 2 keys",
+					},
+					{
+						name:   "a run of bytes",
+						result: []byte{1, 2, 3},
+						want:   "3 bytes",
+					},
+					{
+						name:   "something else entirely",
+						result: 42,
+						want:   "int",
+					},
+					{name: "nothing recognisable at all", want: "<nil>"},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						err := &device.NotAPresetError{Result: tt.result}
+
+						s.Require().Equal(tt.want, err.Shape())
+						s.Require().Contains(err.Error(), tt.want)
+						s.Require().ErrorIs(err, device.ErrNotAPreset)
+					})
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 func (s *ErrorsPublicTestSuite) TestUnknownModelErrorSurvivesWrapping() {
@@ -51,43 +107,6 @@ func (s *ErrorsPublicTestSuite) TestUnknownModelErrorSurvivesWrapping() {
 
 func (s *ErrorsPublicTestSuite) TestSentinelsAreDistinct() {
 	s.Require().NotErrorIs(device.ErrNoDevice, device.ErrUnknownModel)
-}
-
-// TestNotAPresetError covers a device answering with something nobody can
-// decode, which is how a protocol change becomes visible.
-func (s *ErrorsPublicTestSuite) TestNotAPresetError() {
-	tests := []struct {
-		name   string
-		result any
-		want   string
-	}{
-		{
-			name:   "a decoded document",
-			result: map[any]any{1: "a", 2: "b"},
-			want:   "map with 2 keys",
-		},
-		{
-			name:   "a run of bytes",
-			result: []byte{1, 2, 3},
-			want:   "3 bytes",
-		},
-		{
-			name:   "something else entirely",
-			result: 42,
-			want:   "int",
-		},
-		{name: "nothing recognisable at all", want: "<nil>"},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			err := &device.NotAPresetError{Result: tt.result}
-
-			s.Require().Equal(tt.want, err.Shape())
-			s.Require().Contains(err.Error(), tt.want)
-			s.Require().ErrorIs(err, device.ErrNotAPreset)
-		})
-	}
 }
 
 func TestErrorsPublicTestSuite(

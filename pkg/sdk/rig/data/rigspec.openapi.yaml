@@ -149,42 +149,6 @@ components:
           EvidenceStore,
         ]
 
-    CharacterTerm:
-      type: object
-      additionalProperties: false
-      description: >
-        One thing a rig should sound like, and why that is believed.
-
-
-        Describe the result rather than the control: "mid-forward, not
-        scooped", never "raise the mids". Where the treble knob sits is a
-        fact about somebody's amplifier; how the record came out is a fact
-        about the sound, and only the second survives being read on other
-        gear.
-
-
-        A term moves controls when a preset is built: six axes act, each word
-        worth one step from wherever the corpus left that control and never
-        more than a quarter of its range. So the evidence on a term is not
-        decoration. It is the difference between a knob moved because
-        somebody listened and a knob moved because a model guessed.
-
-
-        A term outside the shipped vocabulary is reported and kept, not
-        refused: it moves nothing, and refusing a preset over a word would
-        make the format hostile to the person it exists for.
-      required: [term]
-      properties:
-        term:
-          type: string
-          minLength: 1
-          pattern: "\\S"
-          description: How it should sound, in the words a person would use.
-        evidence:
-          type: array
-          items: { $ref: "#/components/schemas/Evidence" }
-          description: Why this is believed.
-
     Confidence:
       type: string
       description: >
@@ -193,60 +157,6 @@ components:
         showing as unverified whatever it says about itself.
       enum: [low, medium, high]
       x-enum-varnames: [ConfidenceLow, ConfidenceMedium, ConfidenceHigh]
-
-    Technique:
-      type: object
-      additionalProperties: false
-      description: >
-        How the instrument is played, where it changes the sound. Not modelled
-        by any device, and it still decides what the rig has to do.
-
-
-        Three things rather than a sentence, because three things are being
-        said and a sentence has to be parsed to get at them.
-
-
-        Under `target` this says how the person using the rig plays, where
-        that differs from the rig's own. The distinction is not pedantry. A
-        pick puts high-frequency attack into every note that fingers do not,
-        so a rig tuned from a picked recording sounds duller played fingered,
-        and the fix is in the amp and the compressor rather than in the
-        player. Recording both lets the difference be compensated rather than
-        discovered, and that comparison needs both sides to be the same kind
-        of value: two `attack` values can be held against each other, and two
-        sentences cannot.
-      required: [attack]
-      properties:
-        evidence:
-          type: array
-          items: { $ref: "#/components/schemas/Evidence" }
-          description: >
-            Why this is believed. Nothing measures how somebody plays out of a
-            preset, so a claim here is asserted or it is watched, and which of
-            those it was belongs beside it.
-        attack:
-          type: string
-          description: >
-            What sets the string moving. Required, because there is no playing
-            without one.
-          enum: [pick, fingers, slap, thumb, hybrid]
-          x-enum-varnames:
-            [AttackPick, AttackFingers, AttackSlap, AttackThumb, AttackHybrid]
-        position:
-          type: string
-          description: >
-            Where along the string, which decides how much fundamental there
-            is against harmonics. Omit it where it does not matter.
-          enum: [bridge, middle, neck]
-          x-enum-varnames: [PositionBridge, PositionMiddle, PositionNeck]
-        muting:
-          type: string
-          description: >
-            What damps the string. Omit it where it does not matter, and say
-            `none` where the notes ringing on is part of the sound rather than
-            the absence of a decision.
-          enum: [none, palm]
-          x-enum-varnames: [MutingNone, MutingPalm]
 
     Years:
       type: object
@@ -258,7 +168,7 @@ components:
         `era` is prose and prose cannot be checked. A rig's audio evidence is
         measured from records, and a record made on other gear measures other
         gear: Paul McCartney's rig describes an Acoustic 360, which did not
-        exist when one of his measured records was cut. `tonestack recipes
+        exist when one of his measured records was cut. `toneharness rigs
         records` reads these and says which records fall outside the rig they
         are attached to.
 
@@ -425,7 +335,7 @@ components:
           additionalProperties: { type: number, format: double }
           description: >
             The same figures for the players this one was compared against,
-            keyed the same way. Written by `tonestack measure --corpus`,
+            keyed the same way. Written by `toneharness measure --corpus`,
             which is where a word is earned.
 
 
@@ -494,6 +404,7 @@ components:
         Scaled onto the control when the preset is written, so 0.5 is halfway
         up whether the device counts 0 to 1, -12 to 12 or 20 to 20000.
 
+
     ChainEntry:
       type: object
       additionalProperties: false
@@ -539,103 +450,11 @@ components:
           $ref: "#/components/schemas/Substitute"
         settings:
           $ref: "#/components/schemas/Settings"
-        models:
-          type: object
-          additionalProperties: { type: string }
-          description: >
-            The exact model this resolved to, keyed by device.
-
-
-            Gear names do not identify a model on their own: 665 models share
-            469 names, and "Ampeg SVT" matches both channels. A rig lifted
-            from a preset records what was actually there so it rebuilds
-            exactly; one written by hand carries none, and the gear name is
-            resolved against the catalog instead.
-
-
-            Reading a rig on a device it has no entry for falls back to the
-            name, which is the portable behaviour and the reason the name is
-            still required.
-        params:
-          type: object
-          additionalProperties: true
-          description: >
-            Device parameters by their own name — Sag, Bias X, Ripple.
-
-
-            Values are numbers, booleans or enumerated strings, because a
-            device mixes all three within one block and a switch is not a
-            number. Narrowing them to numbers turns every switch off.
-
-
-            Distinct from settings, which is the small musical vocabulary that
-            means something on any amplifier. These mean something on one, and
-            they are here because somebody dialling Sag by ear is producing the
-            one kind of knowledge nothing else can produce. Dropping it to stay
-            portable would throw away exactly what is worth keeping.
         evidence:
           type: array
           items: { $ref: "#/components/schemas/Evidence" }
         confidence:
           $ref: "#/components/schemas/Confidence"
-        position:
-          type: integer
-          description: >
-            Where the block sits on its path, when that is not simply its
-            order in the chain.
-
-
-            A device lays blocks out on a fixed grid and a preset may leave
-            gaps in it, so position carries information the array order does
-            not. A rig written by hand omits this and is laid out in order.
-        path:
-          type: integer
-          description: >
-            Which signal path the block is on, for devices that have more
-            than one. Omitted means the first, which is the only one an HX
-            Stomp has.
-        enabled:
-          type: boolean
-          default: true
-          description: >
-            Whether the gear is switched on. A bypassed pedal is still part of
-            a rig and still costs a device something to carry.
-
-    Requirement:
-      type: object
-      additionalProperties: false
-      description: >
-        Something a rig needs that a device does not ship with.
-
-
-        Only what a catalog cannot see belongs here. Whether a model exists on
-        a device tier, or needs newer firmware, is already known — the catalog
-        carries the supported device list and the release it came from. What
-        nothing can know is a third-party impulse response or purchased
-        content, so those are declared.
-      required: [kind, name]
-      properties:
-        kind:
-          type: string
-          enum: [ir, model]
-          description: >
-            `ir` is an impulse response the owner loaded themselves. `model`
-            is content that did not ship with the device.
-        name:
-          type: string
-          minLength: 1
-          # Something other than spaces: a name of blanks is not a name.
-          pattern: "\\S"
-        slot:
-          type: integer
-          description: >
-            Where the author had it loaded. A preset references the slot, not
-            the audio, so the same rig sounds different to anybody whose slot
-            holds something else.
-        url:
-          type: string
-          pattern: "^https?://\\S+$"
-          x-go-name: URL
 
     Capture:
       type: string
@@ -704,13 +523,17 @@ components:
       type: object
       additionalProperties: false
       description: >
-        Where the settings in this rig were arrived at.
+        Where the numbers in a plan were arrived at.
 
 
-        Advisory, never a restriction. A rig pinned to one device could not be
-        used on another, which would cost the portability the format exists
-        for. This says "these numbers were tuned here", so somebody on other
-        hardware knows to re-tune rather than trust.
+        A plan's, not a rig's, and it stays in this contract because the plan
+        package reads the type from here.
+
+
+        Advisory, never a restriction. A plan pinned to one device could not be
+        read on another, which would cost the portability the rig above it
+        exists for. This says "these numbers were tuned here", so somebody on
+        other hardware knows to re-tune rather than trust.
       properties:
         device:
           type: string
@@ -720,68 +543,6 @@ components:
           type: string
           description: >
             The release the catalog came from, such as "HX Edit 3.82".
-        technique:
-          $ref: "#/components/schemas/Technique"
-
-    Change:
-      type: object
-      additionalProperties: false
-      description: One field a mutation moved.
-      required: [path]
-      properties:
-        path:
-          type: string
-          pattern: "^[a-z]+(\\[\\d+\\])?(\\.[a-zA-Z_][a-zA-Z0-9_]*(\\[\\d+\\])?)*$"
-          description: >
-            What moved, as a path into this document —
-            "chain[1].settings.drive".
-        from: {}
-        to: {}
-
-    Mutation:
-      type: object
-      additionalProperties: false
-      description: >
-        One round of correction, and what a person made of the result.
-
-
-        This is the only place a human ear's judgement is written down.
-        Nothing in this system can hear; every other input is a measurement or
-        an assertion. A verdict is the one piece of information that cannot be
-        recovered later if it is not captured when it happens.
-
-
-        Append-only, and never replayed: `chain` always holds the current
-        state. Reconstructing a rig from its history would be more elegant and
-        much worse to read, and a person reads this file.
-      required: [ask]
-      properties:
-        ask:
-          type: string
-          minLength: 1
-          # Something other than spaces: a name of blanks is not a name.
-          pattern: "\\S"
-          description: >
-            What was asked for, in the words used. "Clunky" is not a
-            parameter, and normalising it away loses the question.
-        changed:
-          type: array
-          items: { $ref: "#/components/schemas/Change" }
-        reason:
-          type: string
-          description: >
-            Why the ask was read that way, cited where possible. This is what
-            lets a later reader see that the interpretation was wrong, rather
-            than only that the value was.
-        verdict:
-          type: string
-          description: >
-            What it sounded like. Absent means not yet evaluated, which is
-            useful state rather than a gap.
-        at:
-          type: string
-          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
-          description: When, so a run of corrections can be read in order.
 
     Controller:
       type: object
@@ -790,9 +551,9 @@ components:
         set to sweep a knob rather than switch a block.
 
 
-        A rig records these because they are decisions somebody made about
-        how they play, not device state. Nothing else in a rig says that the
-        pedal under your foot is on the amp's drive rather than its volume.
+        A plan records these because they are decisions somebody made about
+        how they play, not device state. Nothing else says that the pedal
+        under your foot is on the amp's drive rather than its volume.
       properties:
         controller:
           type: integer
@@ -840,6 +601,82 @@ components:
             Whether snapshots leave this assignment alone. Omitted means they
             do not.
       required: [controller, block, parameter]
+      additionalProperties: false
+
+    Move:
+      type: object
+      description: >
+        One control something sweeps, said portably: what moves it, which piece
+        of gear, and which of the rig's own setting words.
+
+
+        The counterpart of `sections`, and portable for the same reason. A
+        plan's `controllers` names a block by its position and a parameter by
+        the name one manufacturer gives it, and neither exists until a device
+        has been chosen. A rig names a role and a setting word, which mean the
+        same thing on any hardware, and the build turns the pair into the
+        numbers the device wants.
+
+
+        So a rig can finally say "the pedal under my foot is on the amp's
+        drive", which is a fact about how somebody plays rather than about a
+        Helix, and two people compiling the same rig get the same assignment.
+      properties:
+        by:
+          type: string
+          enum: [expression, footswitch]
+          description: >
+            What moves it. `expression` is a pedal, `footswitch` is a switch set
+            to sweep a knob rather than turn a block on and off.
+
+
+            Named rather than numbered, because the number is one device's:
+            an expression pedal reads 2 on an HX Stomp and a rig saying 2 would
+            be saying something about that pedal instead of about the music.
+        role:
+          $ref: "#/components/schemas/Role"
+          description: >
+            Which piece of gear it moves, by what that gear does. The first
+            block in the chain with this role, the same way a word on the ask
+            reaches the first amplifier.
+
+
+            A role the chain has no block for is refused, because a rig
+            assigning a pedal to a drive it does not have describes a pedal
+            that does nothing.
+        setting:
+          type: string
+          enum: [drive, bass, mid, treble, presence, level, mix]
+          description: >
+            Which control, in the same vocabulary `settings` uses, so it lands
+            on whichever parameter the model has for the word: `drive` reaches
+            a Drive or a Gain, `level` reaches a Level, a Ch Vol, a Master, a
+            Volume or an Output.
+
+
+            A word the model has no control for is refused with the words it
+            does take, exactly as a setting is.
+        min:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: >
+            What the control reads with the pedal at rest, from 0 to 1 over the
+            control's own range. Omitted means the bottom of it.
+        max:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: >
+            What it reads with the pedal all the way over. Omitted means the top
+            of the control's range, which is the full sweep.
+        no_snapshot:
+          type: boolean
+          description: >
+            Whether snapshots leave the assignment alone, which keeps a section
+            change from moving the pedal out from under your foot. Omitted means
+            they move it.
+      required: [by, role, setting]
       additionalProperties: false
 
     Footswitch:
@@ -1039,16 +876,15 @@ components:
         intent, kept exactly as the device wrote it.
 
 
-        A rig describes a sound, so it models gear, settings and why they were
-        chosen. A preset also carries footswitch assignments, snapshot names,
-        the blocks a device puts either side of a chain, and metadata nobody
-        documented. None of that is intent, and all of it is somebody's work.
+        A plan says which model each piece of gear resolved to and what every
+        knob is set to. A preset also carries the blocks a device puts either
+        side of a chain and metadata nobody documented. None of that is
+        intent, and all of it is somebody's work.
 
 
-        Without this a rig read out of a preset could not rebuild it: the
-        footswitches would be gone and the snapshots would be whatever the
-        template happened to hold. With it, a rig is the whole preset — which
-        is what makes it safe to be the only thing this project exchanges.
+        Without this a plan read out of a preset could not rebuild it: the
+        routing would be gone and the metadata would be whatever the template
+        happened to hold.
 
 
         Written by lifting a preset, and only then. A rig somebody typed has
@@ -1123,9 +959,20 @@ components:
       type: object
       additionalProperties: false
       description: >
-        A rig, complete. Sparse when hand-written; the same document carries
-        settings and evidence once anything has been measured or tuned.
-      required: [schema, id, subject, instrument, chain]
+        A rig: the gear in signal order, named the way a musician names it, and
+        why each piece of it is believed to be there.
+
+
+        The portable layer. Nothing here is one manufacturer's vocabulary, so a
+        rig reads the same on a device nobody has written a driver for. What
+        somebody wanted is the ToneSpec beside it, and which model each piece of
+        gear resolved to is the plan below it.
+
+
+        No knob positions, and nothing keyed by device. A position is only
+        meaningful against the model whose knob it is, and that model is in the
+        plan.
+      required: [schema, id, instrument, chain]
       properties:
         schema:
           type: string
@@ -1154,72 +1001,31 @@ components:
           pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
           description: Stable identifier, matching the filename stem.
           x-go-name: ID
-        subject:
-          $ref: "#/components/schemas/Subject"
         instrument:
           $ref: "#/components/schemas/Instrument"
-        aliases:
-          type: array
-          items: { type: string, minLength: 1, pattern: "\\S" }
-          description: >
-            Other names this rig answers to.
-
-
-            People ask for a band as readily as a player, and for a nickname as
-            readily as either. An alias costs nothing and saves somebody
-            guessing which of them was written down.
-        default:
-          type: boolean
-          description: >
-            Whether this is the rig a bare request resolves to. A player owns
-            several — by era, by song — and asking for "a Mike Dirnt sound"
-            with no qualifier has to land somewhere.
-        extends:
-          type: string
-          description: >
-            Another rig this one departs from, by identifier. Only for a rig
-            that genuinely is a small change; rigs that differ at the amp are
-            siblings, not deltas.
         chain:
           type: array
           minItems: 1
           items: { $ref: "#/components/schemas/ChainEntry" }
           description: The signal path, in order.
-        played:
-          type: array
-          items: { $ref: "#/components/schemas/Played" }
-          minItems: 1
-          description: >
-            The instruments the rig is played on, most used first.
-
-
-            A list because players use more than one and the figures know it.
-            Flea recorded I'm With You on two 1961 Jazz Basses. Les Claypool
-            took a Carl Thompson four and a de-fretted Tune six to the same
-            session, and two of his four measured records are the six.
-        technique:
-          $ref: "#/components/schemas/Technique"
-        character:
-          type: array
-          items: { $ref: "#/components/schemas/CharacterTerm" }
-          description: >
-            How it should sound, in the words a person would use.
-        confidence:
-          $ref: "#/components/schemas/Confidence"
         evidence:
           type: array
           items: { $ref: "#/components/schemas/Evidence" }
           description: >
-            Evidence for the rig as a whole. Evidence for one piece of gear
-            belongs on that entry.
-        requires:
-          type: array
-          items: { $ref: "#/components/schemas/Requirement" }
-        target:
-          $ref: "#/components/schemas/Target"
-        mutations:
-          type: array
-          items: { $ref: "#/components/schemas/Mutation" }
+            Why the gear as a whole is believed, for a citation that covers the
+            chain rather than one entry of it.
+
+
+            On the rig rather than on the ask, by the same argument that kept
+            the per-entry evidence here: a published rig that cannot say why
+            this gear is a rig nobody can check. A rig rundown covers every
+            piece of gear in it, and requiring the citation to be repeated on
+            each entry would only encourage repeating it.
+
+
+            A ToneSpec has an `evidence` of its own and it is a different claim.
+            Why the request was made is the ask's; why this gear answered it is
+            this one's.
         sections:
           type: array
           items: { $ref: "#/components/schemas/Section" }
@@ -1227,45 +1033,29 @@ components:
             The parts of a song this rig plays, each one a snapshot.
 
 
-            The way to write snapshots by hand. A rig carries sections or
-            snapshots, not both: snapshots are what a device stored, sections
-            are what somebody wants, and a build given both would have to
-            pick one without saying so. A device has a fixed number of
-            snapshots, three on an HX Stomp, and a rig with more sections than
+            The way to write snapshots by hand, and the one part of the
+            arrangement that stays here: a section is what somebody plays
+            rather than anything the device holds.
+
+
+            Sections or snapshots, never both: a plan's snapshots are what a
+            device stored, sections are what somebody wants, and a build given
+            both would have to pick one without saying so. A device has a fixed
+            number of snapshots, three on an HX Stomp, and more sections than
             that will not build.
-        snapshots:
+        moves:
           type: array
-          items: { $ref: "#/components/schemas/Snapshot" }
+          items: { $ref: "#/components/schemas/Move" }
           description: >
-            The rig's snapshots, in the order the device numbers them.
+            What an expression pedal or a footswitch sweeps, by role and setting
+            word.
 
 
-            A snapshot is a musical decision — which blocks are on, at what
-            tempo, under what name — so it is modelled rather than carried as
-            device state. What a person put on a footswitch is part of the rig.
-        footswitches:
-          type: array
-          items: { $ref: "#/components/schemas/Footswitch" }
-          description: >
-            What the pedal prints under each switch, and the colour it lights.
+            Beside `sections` and portable for the same reason: both say what
+            somebody does rather than what a device holds. A plan's
+            `controllers` is what these become once a device has been chosen,
+            and a rig read off a device carries those rather than these.
 
 
-            A label and a colour are decisions about somebody's own pedal,
-            made once and looked at every time they play, and nothing else in
-            a rig records them.
-
-
-            Read and written both ways: a preset stores them per block, and a
-            rig carrying them rebuilds that exactly.
-        controllers:
-          type: array
-          items: { $ref: "#/components/schemas/Controller" }
-          description: >
-            The parameters an expression pedal or a footswitch moves.
-
-
-            Which knob your foot is on is a decision about how you play, made
-            once and used every time. A preset stores it against a parameter
-            number nobody can read; a rig names the parameter.
-        device:
-          $ref: "#/components/schemas/DeviceState"
+            A rig may say both, because they answer different questions: a
+            section is which blocks play, a move is which knob a foot reaches.

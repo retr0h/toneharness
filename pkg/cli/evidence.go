@@ -27,7 +27,7 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // measuredCaveat is what a measurement taken off a record does not show.
@@ -90,7 +90,7 @@ func entryFor(
 	figures := n.Profile.Measured()
 
 	for _, key := range audio.MeasuredKeys() {
-		measured.Content = append(measured.Content, text(key), number(figures[key]))
+		measured.Content = append(measured.Content, text(string(key)), number(figures[string(key)]))
 	}
 
 	out := &yaml.Node{

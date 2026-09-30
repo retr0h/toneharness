@@ -25,8 +25,8 @@ import (
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/retr0h/tonestack/pkg/sdk"
-	"github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // slotsOf reads both ends of a copy or a swap.
@@ -46,7 +46,7 @@ func slotsOf(
 	return slot.Address{Slot: from}, slot.Address{Slot: to}, nil
 }
 
-func (h *handlers) presetImport(
+func (h *handlers) slotsImport(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
 	in Put,
@@ -66,7 +66,7 @@ func (h *handlers) presetImport(
 	return said("put %s into %s", in.Preset, in.Slot), change, nil
 }
 
-func (h *handlers) presetsCopy(
+func (h *handlers) slotsCopy(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
 	in Move,
@@ -86,7 +86,7 @@ func (h *handlers) presetsCopy(
 	return said("copied %s to %s", in.From, in.To), change, nil
 }
 
-func (h *handlers) presetsSwap(
+func (h *handlers) slotsSwap(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
 	in Move,
@@ -111,4 +111,49 @@ func (h *handlers) presetsSwap(
 	}
 
 	return said("swapped %s and %s", in.From, in.To), change, nil
+}
+
+func (h *handlers) rigsNew(
+	ctx context.Context,
+	_ *gomcp.CallToolRequest,
+	in Scaffold,
+) (*gomcp.CallToolResult, sdk.Scaffolded, error) {
+	made, err := h.client.Scaffold(ctx, sdk.NewRig{
+		ID:         in.ID,
+		Name:       in.Name,
+		Band:       in.Band,
+		Instrument: in.Instrument,
+		Amp:        in.Amp,
+		Cab:        in.Cab,
+		Pedals:     in.Pedals,
+		Genre:      in.Genre,
+	})
+	if err != nil {
+		return nil, sdk.Scaffolded{}, err
+	}
+
+	return said("wrote the rig %s and the ask beside it", made.ID), made, nil
+}
+
+func (h *handlers) presetsCompile(
+	ctx context.Context,
+	_ *gomcp.CallToolRequest,
+	in Build,
+) (*gomcp.CallToolResult, sdk.Built, error) {
+	if (in.Rig == "") == (in.Plan == "") {
+		return nil, sdk.Built{}, ErrOneDocument
+	}
+
+	built, err := h.client.Compile(ctx, sdk.Compile{
+		Rig:      in.Rig,
+		Plan:     in.Plan,
+		Template: in.Template,
+		Out:      in.Out,
+		Existing: h.existing(),
+	})
+	if err != nil {
+		return nil, sdk.Built{}, err
+	}
+
+	return said("%s holds %d blocks", built.Path, built.Blocks), built, nil
 }

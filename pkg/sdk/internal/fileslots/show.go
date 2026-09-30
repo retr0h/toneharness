@@ -25,9 +25,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/retr0h/tonestack/pkg/sdk/preset"
-	"github.com/retr0h/tonestack/pkg/sdk/result"
-	slotpkg "github.com/retr0h/tonestack/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
+	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
 // Show reads the rig one slot of a file describes.
@@ -93,13 +93,15 @@ func (f *Flows) reading(
 		return result.Reading{Name: doc.Data.Meta.Name}, nil
 	}
 
-	spec, err := f.compiler().Lift(doc, cat)
+	spec, made, err := f.compiler().Lift(doc, cat)
 	if err != nil {
 		return result.Reading{}, fmt.Errorf(
 			"reading slot %s: %w", slotpkg.Label(slot), err)
 	}
 
-	return result.Reading{Name: doc.Data.Meta.Name, Doc: doc, Rig: spec}, nil
+	return result.Reading{
+		Name: doc.Data.Meta.Name, Doc: doc, Rig: spec, Plan: made,
+	}, nil
 }
 
 // ReadPreset reads a standalone preset. The device flows read the file they

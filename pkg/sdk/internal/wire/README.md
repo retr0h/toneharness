@@ -1,0 +1,799 @@
+# The device protocol
+
+How to talk to a Helix over USB, and how much of it is actually known. This is
+the maintainer's half: frame layouts, message shapes, the offset table and where
+each claim came from. What somebody driving a device needs is in the
+`work-a-device` skill.
+
+Line 6 publishes nothing about this. Everything here was reverse engineered by
+other people, verified against real hardware where this document says so, and
+implemented in `pkg/sdk`.
+
+## Where this came from
+
+| Source                                                                         | What it gives                                                                                                                                            |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [tonepush](https://github.com/crmne/tonepush) (Rust, MIT)                      | [PROTOCOL.md](https://github.com/crmne/tonepush/blob/main/PROTOCOL.md), 1071 lines, every claim marked confirmed, inferred or open. The definitive text. |
+| [fretwire](https://github.com/john-baxter-dev/fretwire) (Rust, MIT/Apache-2.0) | Independent corroboration, and the widest device coverage: HX Stomp, Helix Floor and POD Go all verified.                                                |
+| [openhx](https://github.com/allansomensi/openhx) (Rust, MIT)                   | A clean sequential spec, captured off an HX Stomp XL.                                                                                                    |
+| [helix_usb](https://github.com/kempline/helix_usb) (Python)                    | The earliest effort. Found the three-channel structure. Read-only.                                                                                       |
+| `sound/usb/format.c` in the Linux kernel                                       | The authoritative product ID table.                                                                                                                      |
+
+Nothing here is copied from those projects. They are documentation this
+implementation was written against, the same way the `.hlx` format is documented
+by reading real presets.
+
+### Which of this came from where
+
+Worth keeping straight, because the two kinds of claim need re-checking in
+different ways. A borrowed one is re-checked by reading the source again; a
+measured one by capturing another preset.
+
+| Claim                                             | Where from                                    |
+| ------------------------------------------------- | --------------------------------------------- |
+| Framing, channels, the handshake, opcodes 1 and 4 | tonepush PROTOCOL.md, verified on an HX Stomp |
+| Write opcodes 5 and 8, chunking, deferred commit  | tonepush PROTOCOL.md, marked confirmed there  |
+| The rules that keep a device alive                | tonepush and fretwire, learned the hard way   |
+| The impulse response opcodes and their keys       | tonepush's own source, not verified here      |
+| What the twelve offsets point at                  | measured here, off three captured presets     |
+| Model numbers indexing `Helix.sym`                | measured here, confirmed against the corpus   |
+| Footswitch label, colour and block keys           | measured here, confirmed against HX Edit      |
+| The cabinet an amplifier carries, and `@type`     | measured here, confirmed against the corpus   |
+
+Captures live in [testdata](testdata). Three slots off an HX Stomp on firmware
+3.71, which is what every measurement above was taken from.
+
+## It is not MIDI
+
+Worth stating plainly, because it is the first place anybody looks.
+
+Line 6's Helix product manager: *"Helix doesn't really do SysEx."* Their
+knowledge base: *"Does Helix pass SysEx data via MIDI Thru? No. We actively
+filter out SysEx data through Helix."* The official MIDI documentation has no
+SysEx section at all: program change, control change and clock, nothing more.
+
+The one thing MIDI answers is a Universal Identity Request, which returns the
+model and firmware revision and no preset data whatsoever.
+
+So MIDI switches presets. It cannot read or write one. The editor protocol is
+somewhere else entirely.
+
+## The editor lives on a vendor-specific interface
+
+Verified on an HX Stomp, firmware 3.80, by reading its descriptors:
+
+| Interface | Class                      | Endpoints                             | Role                   |
+| --------- | -------------------------- | ------------------------------------- | ---------------------- |
+| **0**     | `ff/00/00` vendor-specific | bulk `0x01` OUT, `0x81` IN, 512 bytes | **the editor channel** |
+| 1–3       | `01/01`, `01/02` audio     | isochronous                           | USB audio              |
+| 4         | `01/03` MIDI streaming     | bulk `0x02`, `0x82`                   | ordinary musical MIDI  |
+| 5         | `03/00` HID                | interrupt `0x84`, 8 bytes             | switches and knobs     |
+
+Interface 0 has no kernel driver bound to it. **HX Edit claims it exclusively
+while running**, so it has to be quit before anything else can connect.
+
+This also settles a portability question: because the channel is raw USB rather
+than MIDI, iOS cannot reach it at all. Linux, macOS, Windows and Android can.
+
+## Product identifiers
+
+From the kernel's sample-rate quirk table, which is the only public list.
+
+| Product      | USB `vid:pid`                                       |
+| ------------ | --------------------------------------------------- |
+| Helix Floor  | `0e41:4241` before firmware 2.82, `0e41:4248` after |
+| Helix Rack   | `0e41:4242`, `0e41:4249`                            |
+| Helix LT     | `0e41:4244`, `0e41:424a`                            |
+| HX Effects   | `0e41:4245`                                         |
+| **HX Stomp** | `0e41:4246`                                         |
+| POD Go       | `0e41:4247`, `0e41:424b`                            |
+| HX Stomp XL  | `0e41:4253`                                         |
+
+These are unrelated to the integer a preset carries in `data.device`. Both are
+needed, and
+[the skill](../../../../.claude/skills/work-a-device/references/identity.md)
+explains why.
+
+## Framing
+
+Implemented in this package, which is pure Go and tested without hardware.
+
+There are **three** nested headers, not one. Flattening them works by accident
+because 8 + 8 = 16, and then falls apart the moment a reply is longer than one
+frame.
+
+```text
+┌─ one USB bulk transfer, which may hold SEVERAL frames ──────────────┐
+│ [0..3) payload length, u24 LE   [3] flags: 0x18 normal, 0x28 hello  │  frame
+│ [4..6) device node, u16 LE      [6..8) host node, u16 LE            │
+│ ┌─ payload ───────────────────────────────────────────────────────┐ │
+│ │ [0..2) seq, u16 BIG-endian    [2..4) type, u16 BIG-endian        │ │  channel
+│ │ [4..8) ack, u32 little-endian                                   │ │
+│ │ ┌─ stream bytes, one message may straddle frames ─────────────┐ │ │
+│ │ │ [0..2) originator, u16 LE: 1 host, 0 device                 │ │ │  envelope
+│ │ │ [2..4) service id, u16 LE, GARBAGE on some device replies   │ │ │
+│ │ │ [4..8) body length, u32 LE                                  │ │ │
+│ │ │ [8..]  MessagePack body                                     │ │ │
+│ └─└─────────────────────────────────────────────────────────────┘─┘ │
+│ padding to a 4-byte boundary; device padding is not always zero      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**The endianness is genuinely mixed.** `seq` and `type` are big-endian and
+everything else is little-endian. Getting it wrong is invisible while the values
+are small, because the high bytes are zero either way.
+
+Host frames always carry originator 1 and device frames always 0, with no
+exceptions, which makes it the cheapest check that a stream is still aligned.
+The *service* field beside it must be ignored on device replies. The same reply
+arrives carrying different values in different sessions, because it is
+uninitialised memory.
+
+`type` is a **bit field, not an enumeration**: `0x02` hello, `0x04` carries
+data, `0x08` acknowledgement, `0x10` keep-alive. A frame can carry data *and*
+piggyback an acknowledgement, so a client testing `type == 0x04` silently drops
+everything that arrives as `0x0c`.
+
+A single bulk read can carry more than one frame, so a decoder has to return
+what follows rather than discard it.
+
+### Channels, sequence and acknowledgement
+
+Three conversations, each with its own counters:
+
+| Channel | device node | host node | services  | Carries                    |
+| ------- | ----------- | --------- | --------- | -------------------------- |
+| control | `0x1001`    | `0x03ef`  | 5, then 2 | setlists, the preset list  |
+| events  | `0x1002`    | `0x03f0`  | 4         | unsolicited notifications  |
+| data    | `0x1080`    | `0x03ed`  | 6         | the current preset, params |
+
+`seq` advances on **every** frame the host sends on that channel,
+acknowledgements and keep-alives included. It starts at 0 for the opening frame
+and then jumps to **2, not 1**; the device stops answering a client that sends
+1\.
+
+`ack` is `0x1000` plus the count of stream bytes consumed on that channel, where
+a stream byte is the envelope including its own header. Sending a bare count
+instead makes the device stop responding.
+
+That formula is the host's own. The device's acknowledgements do not share it. A
+session compares them only for change, never against a computed byte count.
+
+A session also acknowledges bytes nobody asked for. A channel that received
+stream bytes outside an exchange gets one acknowledgement once it has been quiet
+for 300ms, and any whole envelopes it holds are dropped. The events channel gets
+these, because nothing reads it. So does a control or data channel that heard
+from the device between operations. None is sent, on any channel, while an
+exchange, a write or a channel opening is under way. A write counts from its
+first chunk through its answer and the 750ms flash pause, because that is the
+window a device punishes.
+
+No chunk of a write goes out without the device's acknowledgement of the one
+before it. A read that fails while a message is going out ends the read loop the
+same way any other bus failure does, and the chunk waiting on that
+acknowledgement fails with it. A pace that never gets one ends the session too,
+rather than leave the data channel holding half a message for a later call to
+feed a fresh request into. Closing a session whose loop has ended still sends a
+bare acknowledgement on every channel and then the closing hellos, as it did
+before sessions had a read loop, though nothing reads what the device answers.
+
+## Remote calls
+
+Three shapes, all MessagePack maps with integer keys:
+
+```text
+request       {102: txn, 100: opcode, 101: args}
+response      {102: txn, 103: status, 104: result}
+notification  {105: event, 106: args}
+```
+
+Transaction identifiers start at 1000 per channel and increment.
+
+Status, under key 103:
+
+| Value | Meaning                                                                                            |
+| ----- | -------------------------------------------------------------------------------------------------- |
+| `0`   | done                                                                                               |
+| `1`   | **accepted, and the operation completes later**, matched by transaction id in a later notification |
+| `255` | refused, with `{111: negative error code}` in the result                                           |
+
+A client that reads any non-zero status as failure decides every deferred
+operation failed. Status `1` is not an error, and it is also not validation:
+selecting preset 999 on a device holding 126 answers `1` and does nothing.
+
+## What is known to work
+
+| Capability                                   | State                                     |
+| -------------------------------------------- | ----------------------------------------- |
+| Enumerate and identify a device              | implemented, verified on hardware         |
+| Framing                                      | implemented, tested against real captures |
+| Session handshake                            | implemented, verified on hardware         |
+| List presets (opcode 1)                      | implemented, verified on hardware         |
+| Read a preset without loading it (opcode 4)  | implemented, verified on hardware         |
+| Write a preset (opcodes 5, 8)                | implemented, verified on hardware         |
+| Empty a slot (opcode 16)                     | implemented, verified on hardware         |
+| Move one control (opcode 30)                 | implemented, verified on hardware         |
+| Replace what is playing (opcode 21)          | implemented, verified on hardware         |
+| Save from the edit buffer (opcode 71)        | not implemented                           |
+| Upload an impulse response (opcode 9)        | not implemented, protocol recorded below  |
+| List, describe, clear IRs (opcodes 13,12,15) | not implemented, protocol recorded below  |
+
+Verified means an HX Stomp on firmware 3.80 answered, not that a test asserts
+it. Only `../device/usb_darwin.go` needs hardware. It counts against the 99%
+coverage gate rather than being excluded from it, but only on macOS. No other
+platform compiles the file, so Linux CI never builds or counts it. This package
+needs no hardware and is covered in full.
+
+## Reading one preset
+
+Opcode 4, on the control channel:
+
+```text
+request   {102: txn, 100: 4, 101: {107: setlist, 108: slot}}
+reply     the preset, as the three values described below
+```
+
+Read-only in the strongest sense: the device answers and goes on playing
+whatever it was. Nothing is selected and nothing is written.
+
+This is what `presets show` and `slots export` run.
+
+The reply carries no name. That comes from the listing, which is why reading one
+slot costs two calls.
+
+## What the device gives back is not a `.hlx`
+
+A preset arrives as a MessagePack blob whose contents are three concatenated
+MessagePack values: the magic string `l6-helix`, a 48-byte table of byte offsets
+into the blob, and the preset map itself.
+
+The `.hlx` JSON that `../presets` reads and writes is a host-side format. They
+are different representations of the same preset, and converting between them
+loses whatever neither side models.
+
+### The offset table, read off three presets
+
+Twelve offsets, each pointing at where something starts. The first is the preset
+map itself and the last two are the end of the document; the nine between point
+at the key byte of one section, in an order that is not the order the sections
+are written in:
+
+| entry | points at                                             |
+| ----- | ----------------------------------------------------- |
+| 0     | the preset map                                        |
+| 1-9   | sections `0`, `1`, `3`, `4`, `2`, `5`, `6`, `7`, `10` |
+| 10-11 | the end of the document                               |
+
+Identical across every capture. A write recomputes them from where each section
+actually landed.
+
+**The offset table is the hazard in any write.** The device seeks with it rather
+than walking the MessagePack, so a re-encode that changes any field's byte width
+shifts every offset after it. MessagePack allows several encodings of the same
+integer and the device emits wide tags where a naive encoder emits narrow ones.
+tonepush measured 91 of 103 wide tags shrinking in one preset. The device
+accepts such a write and then reads the preset as empty. Both projects lost
+hardware sessions to this before fixing it.
+
+Measured here rather than taken on trust. Decoding one of these presets and
+encoding it again with an ordinary MessagePack encoder changes its length by
++99, +135 and -25 bytes on the three captures in [testdata](testdata). Every
+offset after the first change would point at the wrong byte.
+
+`wire.Document` is the answer: it keeps every section as the bytes the device
+sent, writes the magic and the table at the widths the device used, and
+recomputes the offsets from where the sections land. A preset read and written
+back through it is the same bytes, which is asserted over all three captures.
+Changing one section moves only what follows it.
+
+The consequence for this project is larger than a bug: writing a `.hlx`
+synthesised from nothing is the least solved problem in the whole space, and
+neither project does it. The reliable shape is **read a preset off the device,
+mutate it, write it back**, which is also what
+[the RigSpec design record](../../../../docs/superpowers/specs/2026-09-06-rigspec-as-the-one-model-design.md)
+concluded from a different direction, and what the corpus said when it showed
+98.6% of real presets carrying routing that a generated one has none of.
+
+## Inside the preset map
+
+Everything is numbered. The keys below are what an HX Stomp on firmware 3.71
+answered; nothing in Line 6's files documents them.
+
+| key  | holds                                                           |
+| ---- | --------------------------------------------------------------- |
+| `0`  | the tone: `22` is the chain, as a fixed-length array of entries |
+| `3`  | footswitches: `8` is a list of switches, in order               |
+| `7`  | metadata: the firmware version the preset was written by        |
+| `10` | snapshots: `10` is the list of them                             |
+
+A chain entry is `{19: kind, 20: body}`. Kind `6` is a block somebody placed;
+every other kind is the device's own: an input, an output, a gap where nothing
+sits.
+
+An entry that is not a block is the device's own, and each is one of four
+things:
+
+| kind | holds                                                    |
+| ---- | -------------------------------------------------------- |
+| `0`  | the input: `5` is which one, and three parameters follow |
+| `1`  | the main output: `6` is which one, and two parameters    |
+| `2`  | the second input under `14`, and the split under `15`    |
+| `3`  | the second output under `16`, and the join under `17`    |
+
+A split and a join name their own model under `8`, because more than one kind of
+split exists. An input and an output name none: the device knows which are its
+own, so the catalog carries them per device, read from the same io.models file
+that lists which devices each belongs to.
+
+**The position in that array is the block's number, and it is not its place in
+the chain.** A device lays blocks on a fixed grid and leaves gaps: a preset
+holding four blocks can have them at 5, 6, 8 and 13. Footswitch assignments
+address blocks by that number, so renumbering them to 0 through 3 breaks the
+only link between a switch and the block it works on. The body holds:
+
+| key         | holds                                         |
+| ----------- | --------------------------------------------- |
+| `24` → `25` | the model, as a number, see below             |
+| `11` → `4`  | the parameters, as a bare array with no names |
+| `12` → `4`  | the cabinet an amplifier carries with it      |
+| `10`        | whether the block is switched on              |
+
+An amplifier and its cabinet are one block to a device and two entries in a
+preset: the amplifier with a `@cab` pointing at a sibling, and the cabinet under
+that name. 304 of 721 HX Stomp presets in the corpus have one.
+
+Key `12` holds the cabinet's settings, and `3` beside them says how many the
+cabinet model has names for. Anything past that is the microphone. Which cabinet
+is not in the answer, because an amplifier names the one Line 6 voiced it with
+and the catalog carries that.
+
+A preset also records what kind of block each is, which a device leaves implied.
+Measured over the corpus with no exceptions: an amplifier alone is 1, an
+amplifier carrying a cabinet is 3, a cabinet is 2, everything else is 0.
+
+A footswitch entry is `{10: ordinal, 11: body, 16: colour}` inside the list at
+`3` → `8`. The list position is the switch, so the first group is FS1, and a
+switch can carry more than one entry when it toggles several blocks.
+
+`16` is the colour somebody chose, as a position in the device's own list, and
+`0` is "Auto Color", where the light follows the block instead. Confirmed
+against hardware: a switch set to Green in HX Edit reports `6` and one set to
+Violet reports `9`.
+
+The body's `5` is the label the pedal prints. Its `6` is *not* the switch colour
+It is the block's own, the same for every block of that kind, which is why it
+stays put when somebody changes a light. That is a trap worth naming: `6`
+correlates with the colour so strongly on untouched presets that it reads as
+correct until somebody sets one.
+
+The names for those positions come from `HelixControls.json`, under
+`footswitchLED`, and are generated into the catalog rather than written down. A
+firmware that adds a colour would otherwise be reported under the wrong name.
+
+A snapshot carries `4` as its name, `5` as its tempo and `12` as its colour.
+
+## Model numbers are an index into HX Edit's own table
+
+A block names its model with a number, and that number is a position in
+`Helix.sym`, a plain JSON file in HX Edit's resources listing **833** symbols,
+each with its parameters **in the order the device sends their values**.
+
+That file is what makes a preset off the hardware readable: without it a block
+is a number and its settings are an unlabelled array.
+
+833 is larger than the 681 models in Line 6's `.models` files because the table
+holds a mono and a stereo entry for the same model. Trimming that suffix joins
+813 of them to a catalog block; the remaining 20 are hardware an HX Stomp does
+not have, a second effects loop or the flow inputs of a bigger Helix, and keep
+their own name so a rig still rebuilds them exactly.
+
+The table is generated into the catalog, so it ships in the binary rather than
+being read at run time. A catalog generated before this existed has none, and
+`presets show` against hardware says so rather than guessing.
+
+## Which channel each operation goes on
+
+Read out of tonepush's implementation rather than its prose, because the two
+differ and the implementation is the half whose writes land. Every preset
+operation is on the data channel; the control channel carries the session and
+the lists.
+
+| Op  | Operation             | Channel | Call     | Arguments                           |
+| --- | --------------------- | ------- | -------- | ----------------------------------- |
+| 0   | list setlists         | control | request  | none                                |
+| 1   | list presets          | control | request  | `107` setlist, `101`                |
+| 4   | read a slot           | data    | request  | `107`, `108` slot, `101`            |
+| 6   | rename a slot         | data    | command  | `107`, `108`, `109` name            |
+| 8   | write a slot          | data    | request  | `107`, `108`, `109`, `110` document |
+| 16  | empty a slot          | data    | request  | `107`, `108`                        |
+| 20  | select a preset       | data    | deferred | `107`, `108`                        |
+| 21  | write the edit buffer | data    | deferred | `110` document                      |
+| 22  | read the edit buffer  | data    | request  | none                                |
+| 23  | what is loaded        | data    | request  | none                                |
+| 30  | move one control      | data    | request  | `98` block, `29`, `26`, `28`, `119` |
+| 41  | bypass a block        | data    | request  | `98` block, `59` enabled            |
+| 71  | save the edit buffer  | data    | command  | `107`, `108`, `109`                 |
+
+### Opcode 30, which moves a control on the running preset
+
+The message HX Edit sends when somebody drags a knob, and the only way to change
+one control without writing a preset. Implemented here as `device.SetParam`.
+
+```text
+{102: txn, 100: 30, 101: {98: block, 29: true, 26: 0, 28: param, 119: value}}
+```
+
+| Key   | What                                                                                              |
+| ----- | ------------------------------------------------------------------------------------------------- |
+| `98`  | the block, by the device's own number for it                                                      |
+| `29`  | address the parameter the ordinary way; false reaches the value some blocks carry past their list |
+| `26`  | the block's own model, or 1 for a cabinet fused into an amplifier's slot                          |
+| `28`  | the parameter's position in that model's list                                                     |
+| `119` | the value, in the parameter's own units, as a float32                                             |
+
+The value's tag is its type and a device does not coerce it: a switch given
+`1.0` where it wants `true` is refused, and so is a float parameter given an
+integer `1`. A refusal is status 255 with `111: -3`, silently, with nothing
+applied.
+
+**Read out of [fretwire](https://github.com/john-baxter-dev/fretwire),
+[tonepush](https://github.com/crmne/tonepush) and
+[helix_usb](https://github.com/kempline/helix_usb), which recovered it
+independently and agree byte for byte.** helix_usb's is a literal byte list
+written before anybody realised it was MessagePack, which is what makes the
+agreement worth something. None of their code is here; the message shape is
+theirs and the implementation is not.
+
+What this project has not worked out is
+[which blocks answer it](../../../../measure-a-device). The input block, the
+splits and the join do. No chain block does, at any address, with any
+combination of the other three keys, and none of those projects distinguishes
+the two kinds.
+
+Two things this table settles that reading the message shapes alone did not.
+
+**Reading a slot takes three arguments, not two.** Key `101` goes out with a
+preset listing and with a slot read alike. Without it, and on the wrong channel,
+a device answers successfully with nothing at all.
+
+**A slot write is a plain request.** Not a deferred command: the device answers
+when it has the document, and the erase and program that follow never appear on
+the wire. Waiting on a completion notification that is not coming is not the
+same as pacing, which is what the 750ms settle is for.
+
+**Emptying a slot is a plain request too.** On 15 September 2026 opcode 16 went
+to an HX Stomp, on the data channel, carrying `107` for the setlist and `108`
+for the slot and nothing else. The pedal answered status 0 with no error, and
+the slot, which had held a 2387-byte preset, then read back as no document at
+all: the same answer a slot nobody has ever written gives. The slot was put back
+afterwards and matched byte for byte. So nothing observed says a deferred commit
+follows an empty, and the 750ms afterwards is not for the empty itself but for
+whatever lands next, since what an empty does to flash is no more visible on the
+wire than what a write does.
+
+## A block body's keys go in the device's order
+
+**Closed. It rendered every written preset as an empty chain for a fortnight,
+and it was one key in the wrong place.**
+
+A block body carries five keys. The device writes the model reference first:
+
+```text
+24 model reference    {23: carries a cab, 25: model number, 26: cab model}
+ 9 class
+10 enabled
+11 parameters
+12 paired cabinet
+```
+
+This package wrote the same five in ascending order, model reference last. A
+device seeks to where it put a model rather than walking the map, so it found a
+class where a model should be and rendered the block as nothing. The preset was
+stored, read back byte for byte, and showed no blocks on the pedal.
+
+What it looked like, before the cause was known:
+
+```
+01A  written by HX Edit          centroid 4034.33Hz   1-6kHz 98.76%
+39C  a chain this tool wrote     centroid  147.67Hz   1-6kHz  0.52%
+```
+
+The second is a bass going down a cable through nothing. Every reading taken
+through a preset this tool built was that, which is why bypassing an amplifier
+changed nothing and why no parameter written into a preset ever moved a figure.
+
+Fixed on 27 September 2026, and verified the way the section below says to: an
+HX Stomp played a chain this tool built, `device current` read back the model at
+its position with every parameter this tool set, and a sweep of the Ampeg SVT
+bright channel moved the centroid from 9,036Hz to 11,998Hz across its Drive.
+
+### Why nothing caught it
+
+Reading cannot. The decoder walks the MessagePack and finds a key wherever it
+sits, so a body with the right keys in the wrong order decodes perfectly. Both
+halves of `just test-device` go through that decoder, so it verified the bytes
+survived a round trip, which they did.
+
+That is the distinction [AGENTS.md](../../../../AGENTS.md) insists on, found in
+the wild: "the rig validates against the catalog", "HX Edit imported the file"
+and "the hardware loaded it" are three different claims, and only the first was
+ever being made.
+
+`TestAChainIsWrittenTheWayTheDeviceWroteIt` is what catches it now, and it is
+the only test here that can. It reads a capture, writes its chain straight back
+into the document it came from, and requires the chain section to be the bytes
+that arrived. A reordering fails it; nothing that reads the result back will.
+
+### The other half of the same night
+
+A chain that names a model and sets nothing sent every parameter as zero, and an
+amp with its Master and channel volume at zero reads 50dB down: a chain that
+loaded and passed no signal, which looks like this bug and is not. An absent
+parameter now takes the catalog's default, which Line 6 states for every one.
+See `settingOf` in `../editor/encode.go`.
+
+Worth keeping apart when a reading looks wrong. Around 120-150Hz at any level is
+a chain that did not render. Kilohertz at 40 to 50dB below the others is a chain
+that rendered with its volume at zero.
+
+### The impulse response opcodes, recorded and not yet used
+
+Nothing here writes an impulse response. `pkg/sdk/cab` builds a loadable 48kHz
+24-bit WAV and the only way onto the pedal today is a person dragging it into HX
+Edit. What follows is tonepush's own implementation read off its source on 29
+September 2026, **not verified here**, and written down before anything is built
+because the failure mode is not a bad reading.
+
+| opcode | does                                                                        |
+| -----: | --------------------------------------------------------------------------- |
+|      9 | upload an impulse response, one RPC message on the control channel          |
+|     12 | a slot's descriptor: name, checksum and format, the same map opcode 9 sends |
+|     13 | list the slots, `{101: 2}`                                                  |
+|     15 | empty a slot, `{112: slot}`                                                 |
+
+Opcode 9's argument map:
+
+```text
+112  slot, zero based
+113  checksum of the sample bytes
+109  name
+114  format multiplier, which the editor always sends as 1
+115  length code: 2 for up to 1024 samples, 3 for up to 2048
+123  false
+124  false
+125  0
+110  the samples, binary, mono float32 little endian
+```
+
+**The length code is the dangerous field.** It declares the stored length as 256
+× 2^code samples. Shorter data is zero-padded by the device, and data *longer*
+than declared "wedges its transfer state machine hard enough to need the 9V
+adapter pulled". So the count is checked before sending rather than discovered
+afterwards, which is the same shape as every other rule in the section above.
+
+**The checksum is a wrapping 32-bit sum** of the sample bytes read as
+little-endian words. tonepush has it verified against HX Edit's own traffic.
+Their note is worth keeping: if a device rejects an upload, this is the first
+thing to suspect.
+
+**Opcode 9 answers "accepted", not "done".** The device writes to flash
+afterwards and displays "transferring data" while it does. What takes it out of
+that state is sending the end marker, opcode 254, and then re-reading the slot
+list; waiting does not. So a write finishes when the name appears in opcode 13's
+answer, and returning before that is what leaves the unit stuck.
+
+The samples must already be 48kHz mono and at most 2048 long. The wire format
+carries no sample rate, so HX Edit resamples before uploading and a 96kHz file
+sent verbatim makes the cabinet twice as long and drops its response an octave.
+`cab.Rate` and `cab.Taps` already agree with that.
+
+Two things this leaves for whoever implements it. A chain naming a user IR names
+the slot rather than the file, so something has to record which slot a built
+cabinet landed in. And this is storage: the rules above were learned when a
+burst of writes corrupted a setlist past what a power cycle could clear, so an
+IR upload wants the same deferred-commit care and the same one-at-a-time
+discipline.
+
+### Opcode 21, which replaces what is playing without storing it
+
+The other half of opcode 30. A live edit moves one control on the chain in front
+of somebody; this replaces the chain.
+
+```text
+{102: txn, 100: 21, 101: {110: document}}
+```
+
+One argument, and the absence of the others is the point: every argument a slot
+write carries says where to put the preset, and this one has nowhere to put it.
+Sent down the same chunked path, because it carries a whole preset and a frame
+will not hold one. Implemented as `device.WriteCurrent` and reached from the CLI
+as `device play`.
+
+It was in the table above for a fortnight with nothing calling it, because
+nothing needed it. A preset somebody wants is a preset they want kept, and
+`slots import` already did that.
+
+**Measuring needs the opposite, and the difference is hardware rather than
+taste.** Saying which of 661 blocks belongs in a chain means loading each one,
+hearing it, and throwing it away. Through a slot that is 661 writes to flash for
+readings nobody wanted, and [the rules below](#rules-that-keep-a-device-alive)
+say what a burst of flash writes does: it took a setlist past what a power cycle
+could clear, and a device stops accepting writes after about a dozen racing
+commits.
+
+Verified on an HX Stomp on 19 September 2026. The device played an Ampeg SVT
+that was never written anywhere, `device current` read it back, and every slot
+still held what it held. What it replaces lasts until the next preset is
+selected.
+
+## Writing a preset
+
+Opcode 5 writes a document into a slot and leaves its name alone. Opcode 8
+writes one and names it, which is what a paste or an import does.
+
+```text
+opcode 5   {102: txn, 100: 5, 101: {107: setlist, 108: slot,
+                                    123: false, 124: false, 125: 0,
+                                    110: document}}
+opcode 8   the same, with 109: name
+```
+
+Keys 123, 124 and 125 go out with every write and come back unchanged. Nobody
+has established what they mean; every capture carries `false`, `false` and `0`.
+A preset listing carries the same trio.
+
+Three rules, and a device punishes each of them.
+
+**The document must be byte-exact.** One that differs in length from what its
+offset table claims leaves those offsets pointing at the wrong places. The
+device accepts the write and then reads the preset as empty. `wire.Document` is
+what keeps that from happening.
+
+**A message goes out in pieces.** A device takes 256 bytes of stream data per
+frame and paces the sender with acknowledgements. The host waits for the
+device's own acknowledgement on the data channel before sending the next chunk.
+Going too long without one stops the message rather than send it unpaced, and
+ends the session doing it, which is better than a data channel left holding half
+a message for a later call to feed a fresh request into. Sending a whole preset
+at once works against that pacing the same way. It fills the device's receive
+window and stalls the endpoint. The transfer times out, and the interface will
+not be claimed again until the device is power cycled.
+
+A trace from a session that held a device across two writes, with a read between
+them, shows why pace waits for that channel's own acknowledgement rather than
+any transfer. The device acked four chunks in turn. For the fifth, a frame on
+the control channel arrived instead of an acknowledgement, and the chunks sent
+after it went out unpaced. Those unpaced chunks are what stalled the endpoint.
+The pedal needed a power cycle.
+
+**A write is not finished when it is accepted.** The reply carries status 1,
+meaning the device took it, and completion arrives later as a notification
+carrying the same transaction with status 0. A client that treats the first as
+the end races its next write against a commit still running. A device tolerates
+about a dozen of those and then stops accepting writes at all.
+
+### What it took to make a write land
+
+On 7 September 2026 both opcodes went to an HX Stomp. Four things had to be
+right, and each produced a different failure. The message shape above describes
+HX Edit's captured traffic and was not enough on its own.
+
+|                    | what the shape above implies        | what a device takes                   |
+| ------------------ | ----------------------------------- | ------------------------------------- |
+| channel            | control                             | **data**, `0x1080/0x03ed`             |
+| arguments          | `107, 108, 109, 123, 124, 125, 110` | `107, 108, 109, 110`                  |
+| the document's tag | whatever an encoder picks           | **`str16`**, the tag it arrived under |
+| afterwards         | wait for a completion notification  | 750ms for the flash, and nothing else |
+
+**Keys 123, 124 and 125** are in HX Edit's traffic and not in the implementation
+whose writes land, which makes them something HX Edit says rather than something
+a device needs.
+
+**The tag is the one that cost the most.** A device sends a preset document
+under MessagePack's string tag and takes one back under the same tag. A generic
+encoder picks the narrowest binary tag that fits, `bin16` rather than `str16`.
+The bytes are identical and the tag is not, and the device answers `error -3`,
+the same code it gives for a setlist that does not exist, which is what that
+code means.
+
+**A write is finished when it is answered.** The erase and program that follow
+never appear on the wire. Status 0 and status 1 have both been seen for a write
+that landed, so neither is read. What remains is the pause: nothing says when
+the flash finishes, so a second write landing on the first stacks its commit.
+
+## Opening a session
+
+```text
+claim interface 0 → release → claim again      # HX Edit does this; so must we
+drain until three consecutive reads time out
+control: hello, open service 5, ack, close, READ, hello, open service 2, ack
+events:  hello, open service 4, ack
+data:    hello, open service 6, ack
+```
+
+The claim-release-claim looks like startup noise. It is not: the device carries
+channel state across connections, and the release is what clears it.
+
+The control channel is opened **twice**, from scratch, and talks on the second.
+Requests sent to service 5 time out silently, which is easy to mistake for a
+flaky device.
+
+### Two things found here, on hardware
+
+Neither appears in the sources this was written from, and both cost a session to
+find.
+
+**The device must be read after the close, before the reopen.** Sending the
+close and the new opening back to back leaves it still talking about the channel
+that went away: it never answers the reopen, `ack` stays at `0x1000` where it
+should be `0x1009`, and the first request is then ignored without any error. The
+symptom is a handshake that reports success followed by a request that times
+out.
+
+**`SetAutoDetach` must not be called on macOS.** Detaching a kernel driver is a
+Linux concept; macOS refuses it with `libusb: bad access`, which reads like a
+permissions problem and is not one. Interface 0 is vendor-specific and has no
+driver bound on any platform.
+
+`TONEHARNESS_USB_DEBUG=1` traces every frame in and out, which is how both of
+these were found.
+
+## Listing presets
+
+Opcode 1, on the control channel:
+
+```text
+request   {102: txn, 100: 1, 101: {107: setlist, 101: 2}}
+reply     {102: txn, 103: 0, 104: [ {index: {109: name, …}}, … ]}
+```
+
+The `101: 2` inside the arguments is a selector whose meaning is not known. It
+is sent because HX Edit sends it.
+
+Argument order is **not sorted**, 107 precedes 101, and integers go out in the
+narrowest unsigned form that holds them, so 1000 is a three-byte `uint16` and 2
+is a single byte. Both are what HX Edit emits, and matching it keeps a call
+byte-identical to one the device is known to accept.
+
+The reply holds one entry per slot: a map of exactly one pair, from an index to
+a detail map whose key 109 is the name. **Read entries by position, not by that
+key.** The key is the index a preset had before it was last reordered on the
+pedal, and no command accepts it as an address.
+
+Names are C strings whose declared length counts a trailing NUL, so every one
+arrives a byte longer than it reads.
+
+An HX Stomp answers with 126 entries; a Helix and an HX Stomp XL answer 128.
+
+## Rules that keep a device alive
+
+Learned by other people the hard way. Ignoring any of them risks hardware that
+needs its power supply physically pulled.
+
+1. **Never call USB reset.** Resetting the device, `libusb_reset_device` or
+   IOKit's `ResetDevice`, takes an HX Stomp off the bus and it does not come
+   back without a physical unplug.
+2. **Always have a read posted.** The device sends notifications unasked. With
+   nothing draining the IN endpoint its outgoing queue fills, at which point it
+   stops draining the incoming endpoint too and the next write times out. A
+   session keeps this with one goroutine that reads from the claim until
+   `Close`, between operations, through the 750ms flash pause and while a switch
+   is polled. Everything else waits on what that goroutine routes.
+3. **Pace deferred work on the completion notification.** Racing commits is
+   tolerated about a dozen times and then writes stop being accepted.
+4. **Handshake once per session.** Repeating it on an open channel wedges the
+   device. A timeout is to be reported, not retried by reconnecting.
+5. **Let flash settle.** A burst of renames once corrupted a setlist past what a
+   power cycle could clear.
+6. **Quit HX Edit first.** It holds interface 0 exclusively.
+
+A wedged device needs the 9V adapter unplugged. USB alone is not enough, because
+the unit stays powered and keeps its session across a replug.
+
+## Model data stays on the machine that owns it
+
+Model names, parameter ranges and artwork are Line 6's, shipped inside HX Edit
+as `HelixModelDefs.bin` and `HX_ModelCatalog.json`. Both reference projects read
+them from the user's own installation at run time and refuse to redistribute
+them. This project generates its catalog the same way. See the
+`measure-a-device` skill's `references/catalog-trust.md`.

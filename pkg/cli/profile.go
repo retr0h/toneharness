@@ -26,8 +26,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/retr0h/tonestack/pkg/cli/internal/paint"
-	"github.com/retr0h/tonestack/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
 
 // Profile prints what a recording measures as.

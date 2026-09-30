@@ -1,0 +1,9 @@
+schema: ToneSpec
+genre: [rock]
+
+subject:
+  kind: artist
+  name: Out Of Era
+  era: a decade after the records
+  years: { from: 2004, to: 2004 }
+confidence: low

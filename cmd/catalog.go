@@ -30,7 +30,7 @@ var catalogCmd = &cobra.Command{
 parameters each accepts, their real ranges, and what each costs in DSP.
 
 It ships in this binary. Maintainers regenerate it from a licensed HX Edit
-installation with go generate, and nobody using tonestack has to.`,
+installation with go generate, and nobody using toneharness has to.`,
 }
 
 // catalogPath is where list and show read the catalog from.
