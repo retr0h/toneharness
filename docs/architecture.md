@@ -32,15 +32,16 @@ The goal is a system that knows *how a chain is built*. That decomposes into six
 problems with six different sources, and conflating them is why generated tones
 come out generic.
 
-| Problem                   | Source                                       | State                                       |
-| ------------------------- | -------------------------------------------- | ------------------------------------------- |
-| Who plays what            | `pkg/sdk/shipped/`, a hand-written pair each | thin, grows by correction                   |
-| Gear to model ID          | `resources/schemas/gear-map.json`            | 575 models                                  |
-| What order blocks go in   | statistics over `resources/schemas/corpus/`  | added blocks placed; a rig's own order kept |
-| Which way a knob moves    | swept on the device, in `resources/sweeps/`  | eleven blocks measured and shipped, on bass |
-| What values to set        | catalog defaults, corpus medians, intent     | six axes of ten                             |
-| What a genre sounds like  | displacement over `resources/music/`         | 3 tagged, 2 earning a word, all bass        |
-| What a player sounds like | measured over `resources/music/bass/`        | 16 players, 52 records, 6 earning a word    |
+| Problem                   | Source                                       | State                                          |
+| ------------------------- | -------------------------------------------- | ---------------------------------------------- |
+| Who plays what            | `pkg/sdk/shipped/`, a hand-written pair each | thin, grows by correction                      |
+| Gear to model ID          | `resources/schemas/gear-map.json`            | 575 models                                     |
+| What order blocks go in   | statistics over `resources/schemas/corpus/`  | added blocks placed; a rig's own order kept    |
+| Which blocks are in it    | the gear a rig names, plus the grammar       | shortlisted by measurement when a solve stalls |
+| Which way a knob moves    | swept on the device, in `resources/sweeps/`  | eleven blocks measured and shipped, on bass    |
+| What values to set        | catalog defaults, corpus medians, intent     | six axes of ten                                |
+| What a genre sounds like  | displacement over `resources/music/`         | 3 tagged, 2 earning a word, all bass           |
+| What a player sounds like | measured over `resources/music/bass/`        | 16 players, 52 records, 6 earning a word       |
 
 **Every measurement here is of a bass, and that is a limit rather than a
 default.** The corpus tree holds `bass/` and nothing else, so each genre's

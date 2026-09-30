@@ -456,6 +456,42 @@ Neither is a failure of the tool. The second is the more useful answer, and it
 only means anything because the floor is honest: a stretched tolerance would
 have called the same chain converged.
 
+**And it now says which block would close it.** The dials being at their limits
+is the signal that the chain is wrong rather than the settings, so the run
+searches the 661 committed fingerprints for blocks whose own readings move the
+missed axes the right way, and prints the best five:
+
+```
+  The dials are at their limits, so this is the chain rather than the
+  settings. Measured alone at their own defaults, these blocks move
+  what is missing in the right direction:
+
+    BLOCK                              KIND      WHAT ITS OWN READING DOES
+    Deranged Fuzz                      distort   harmonics +38.4
+    Valve Driver                       distort   harmonics +31.2, centroid +210
+```
+
+Ranked by the axis each leaves furthest out, the same measure a list comparison
+ranks a cabinet's microphones by. A block that overshoots is not a better answer
+than one that lands: its dials would have to come back, so the distance is what
+is scored rather than the direction. A block that closes one axis and opens
+another says so on the same line, because that trade is a real answer and an
+invisible one is not.
+
+**It is a shortlist, not a choice, and the distinction is the whole of it.** Each
+fingerprint is one reading at that block's defaults with the block alone in the
+chain, so it says which blocks are worth eight seconds of measuring and not what
+one will do here. Add one, run again, and let the measurement settle it. Acting
+on the table directly is the corpus grammar's mistake with extra steps: that is
+the thing which puts a Deluxe Comp in every chain because 88% of presets have one,
+which is a reasonable default aimed at nothing.
+
+Three readings are never shortlisted. A clipped one is a reading of the clipping,
+and flat tops make harmonics that were never in the signal, so it would win a
+search for saturation every time while being the one block that cannot provide
+it. One the device refused has no figures. And a block already in the chain is
+not an addition.
+
 ## Where the edit goes
 
 Into the **rig**, not the request. A knob position is only meaningful against a

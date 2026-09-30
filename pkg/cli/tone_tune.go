@@ -216,6 +216,13 @@ func Tune(
 		return err
 	}
 
+	// Which block would close it, once the dials have stopped being the answer.
+	// After the run rather than inside a pass, because "the chain is wrong" is a
+	// conclusion about the run and one pass cannot reach it.
+	if !did.arrived {
+		missing(w, made.Plan, aims, did.read)
+	}
+
 	if err := keepTuned(ctx, w, opts, asBuilt); err != nil {
 		return err
 	}
@@ -559,6 +566,7 @@ func converge(
 		}
 
 		now := figuresOf(got)
+		did.read = now
 
 		// Level beside the pass, because it is the one figure no target
 		// constrains and the one a solve can spend without being told not to.
@@ -627,6 +635,13 @@ type round struct {
 	steps    []solve.Step
 	residual map[audio.Figure]float64
 	arrived  bool
+	// read is what the chain measured on the last pass, in the corpus's units.
+	//
+	// Carried because residual is absolute: it says an axis is 2.7 tolerances
+	// out and not which side of the target it sits on. Choosing a block to
+	// close a gap needs the direction, and a shortlist built on the wrong sign
+	// would suggest a bright block for a chain that is already too bright.
+	read map[audio.Figure]float64
 }
 
 // aimed prints one pass: what moved and how far off the target still is.
