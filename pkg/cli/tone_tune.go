@@ -91,6 +91,15 @@ type TuneOptions struct {
 	// Nudge is how far a control is moved to read its slope, as a fraction of
 	// its own range.
 	Nudge float64
+	// Volume is where the computer's own output level is put before anything is
+	// measured, 0 to 100.
+	//
+	// Only in the signal path on the rig that plays the reference out of the
+	// computer's own output, which is the rig that opens the measuring loop. Set
+	// rather than trusted either way, because it is a tone control: an
+	// amplifier's distortion depends on how hard it is driven, so two runs at
+	// different levels measure two different amplifiers.
+	Volume int
 	// Headroom is how far the chain's own output is turned down before
 	// anything is measured, in decibels, and wants to be negative.
 	//
@@ -125,6 +134,11 @@ func Tune(
 	w io.Writer,
 	opts TuneOptions,
 ) error {
+	// Pinned first, and it matters more here than anywhere: the loop reads a
+	// slope, moves a dial and reads again, so a level that drifts mid-run is a
+	// slope the solver will spend dials chasing.
+	levelled(w, opts.Volume)
+
 	if opts.Genre == "" {
 		return ErrNoTarget
 	}

@@ -42,6 +42,15 @@ import (
 
 // ControlsOptions is what sweeping one block's controls needs to know.
 type ControlsOptions struct {
+	// Volume is where the computer's own output level is put before anything is
+	// measured, 0 to 100.
+	//
+	// Only in the signal path on the rig that plays the reference out of the
+	// computer's own output, which is the rig that opens the measuring loop. Set
+	// rather than trusted either way, because it is a tone control: an
+	// amplifier's distortion depends on how hard it is driven, so two runs at
+	// different levels measure two different amplifiers.
+	Volume int
 	// Headroom is how far the chain's own output is turned down before
 	// anything is measured, in decibels, and wants to be negative. The
 	// measuring lead makes the chain feed itself.
@@ -97,6 +106,9 @@ func MeasureControls(
 	w io.Writer,
 	opts ControlsOptions,
 ) error {
+	// Pinned first, because every reading below depends on it and a level
+	// somebody left somewhere else is a different measurement.
+	level := levelled(w, opts.Volume)
 	cat, err := catalog.BuiltIn()
 	if err != nil {
 		return err
@@ -167,6 +179,7 @@ func MeasureControls(
 		Device: "HX Stomp", Gear: block.Name, Block: string(block.ID),
 		Slot: alone, Isolated: true, Probed: probed,
 		Instrument: instrumentOf(opts.Dry), Headroom: opts.Headroom,
+		Volume: level,
 		Reference: measured.Reference{
 			File: opts.Dry, SHA256: sum, Seconds: opts.Seconds,
 		},

@@ -34,8 +34,7 @@ import (
 )
 
 // NamesOptions is what checking a block's parameter order needs to know.
-type NamesOptions struct {
-	// Headroom is how far the chain's own output is turned down before
+type NamesOptions struct { // Headroom is how far the chain's own output is turned down before
 	// anything is measured, in decibels, and wants to be negative. The
 	// measuring lead makes the chain feed itself.
 	Headroom float64

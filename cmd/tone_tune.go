@@ -39,6 +39,7 @@ var (
 	toneTuneAsk      string
 	toneTuneHardware string
 	toneTuneHeadroom float64
+	toneTuneVolume   int
 	toneTuneClient   clientFlags
 )
 
@@ -104,6 +105,7 @@ wrong for the sound is a real answer to somebody who owns that gear.`,
 			Tries:    toneTuneTries,
 			Takes:    toneTuneTakes,
 			Headroom: toneTuneHeadroom,
+			Volume:   toneTuneVolume,
 			Nudge:    toneTuneNudge,
 			Out:      toneTuneOut,
 			Ask:      toneTuneAsk,
@@ -139,14 +141,22 @@ func init() {
 			"without it nothing records what was asked for")
 	f.StringVar(&toneTuneOut, "out", "",
 		"where the tuned chain goes, as a plan; without it nothing is kept")
-	f.StringVar(&toneTuneHardware, "hardware", "",
-		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted")
+	f.StringVar(
+		&toneTuneHardware,
+		"hardware",
+		"",
+		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted",
+	)
 	f.Float64Var(
 		&toneTuneHeadroom,
 		"headroom",
 		measuringHeadroom,
 		"decibels to turn the chain's own output down by before measuring; the measuring lead makes the chain feed itself and no routing stops it, so this is the only thing between a figure and a squeal",
 	)
+	f.IntVar(&toneTuneVolume, "volume", measuringVolume,
+		"where to put the computer's own output level before measuring, 0 to 100; "+
+			"it is a tone control rather than a level control, because an "+
+			"amplifier's distortion depends on how hard it is driven")
 	f.StringVar(&toneTuneClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&toneTuneClient.device, "device", "", deviceUsage)

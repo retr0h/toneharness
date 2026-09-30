@@ -55,8 +55,9 @@ would show no change and be reported as an index that reaches nothing.`,
 		pedal.claim()
 
 		return cli.MeasureNames(cmd.Context(), cmd.OutOrStdout(), cli.NamesOptions{
-			Client: measureNamesClient.client(),
-			Model:  measureNamesModel,
+			Client:   measureNamesClient.client(),
+			Model:    measureNamesModel,
+			Headroom: measureNamesHeadroom,
 		})
 	},
 }

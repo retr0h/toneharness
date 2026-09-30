@@ -79,6 +79,15 @@ type ReachOptions struct {
 	// Nudge is how far a control moves to read its slope, as a fraction of
 	// its range.
 	Nudge float64
+	// Volume is where the computer's own output level is put before anything is
+	// measured, 0 to 100.
+	//
+	// Only in the signal path on the rig that plays the reference out of the
+	// computer's own output, which is the rig that opens the measuring loop. Set
+	// rather than trusted either way, because it is a tone control: an
+	// amplifier's distortion depends on how hard it is driven, so two runs at
+	// different levels measure two different amplifiers.
+	Volume int
 	// Headroom is how far the chain's own output is turned down before
 	// anything is measured, in decibels, and wants to be negative.
 	Headroom float64
@@ -107,6 +116,11 @@ func Reach(
 	w io.Writer,
 	opts ReachOptions,
 ) error {
+	// Pinned first. An amplifier's distortion depends on how hard it is driven,
+	// so a run at another level asks whether a different chain reaches the
+	// target.
+	levelled(w, opts.Volume)
+
 	target, err := targetFor(ctx, TuneOptions{
 		Genres: opts.Genres, Genre: opts.Genre, Corpus: opts.Corpus,
 	})

@@ -36,6 +36,7 @@ var (
 	toneReachTakes    int
 	toneReachNudge    float64
 	toneReachHeadroom float64
+	toneReachVolume   int
 	toneReachClient   clientFlags
 )
 
@@ -94,6 +95,7 @@ and the second is the one that saves the afternoon.`,
 			Seconds:  toneReachSeconds,
 			Takes:    toneReachTakes,
 			Headroom: toneReachHeadroom,
+			Volume:   toneReachVolume,
 			Nudge:    toneReachNudge,
 		})
 	},
@@ -117,8 +119,12 @@ func init() {
 		"how many takes the noise floor is measured from")
 	f.Float64Var(&toneReachNudge, "nudge", 0.1,
 		"how far a control is moved to read its slope, as a fraction of its range")
-	f.StringVar(&toneReachHardware, "hardware", "",
-		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted")
+	f.StringVar(
+		&toneReachHardware,
+		"hardware",
+		"",
+		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted",
+	)
 	f.StringVar(&toneReachClient.rigs, "rigs", "",
 		"a directory of rigs to use instead of yours, beside the built-in ones")
 	f.Float64Var(
@@ -127,6 +133,10 @@ func init() {
 		measuringHeadroom,
 		"decibels to turn the chain's own output down by before measuring; the measuring lead makes the chain feed itself and no routing stops it, so this is the only thing between a figure and a squeal",
 	)
+	f.IntVar(&toneReachVolume, "volume", measuringVolume,
+		"where to put the computer's own output level before measuring, 0 to 100; "+
+			"it is a tone control rather than a level control, because an "+
+			"amplifier's distortion depends on how hard it is driven")
 	f.StringVar(&toneReachClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&toneReachClient.device, "device", "", deviceUsage)

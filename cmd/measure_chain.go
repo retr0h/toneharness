@@ -80,6 +80,10 @@ func init() {
 	f.BoolVar(&measureChainCab, "ends-in-a-cab", true,
 		"whether the loaded chain finishes with a cabinet, which makes a reading "+
 			"brighter than the reference a fault rather than a tone")
-	f.StringVar(&measureChainHardware, "hardware", "",
-		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted")
+	f.StringVar(
+		&measureChainHardware,
+		"hardware",
+		"",
+		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted",
+	)
 }

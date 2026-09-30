@@ -35,6 +35,7 @@ var (
 	measureSlopesSeconds  float64
 	measureSlopesNudge    float64
 	measureSlopesHeadroom float64
+	measureSlopesVolume   int
 	measureSlopesClient   clientFlags
 )
 
@@ -74,6 +75,7 @@ dials is about a minute and a half, and it holds the pedal throughout.`,
 			Figure:   measureSlopesFigure,
 			Seconds:  measureSlopesSeconds,
 			Headroom: measureSlopesHeadroom,
+			Volume:   measureSlopesVolume,
 			Nudge:    measureSlopesNudge,
 		})
 	},
@@ -94,14 +96,22 @@ func init() {
 		"how much of the reference to push through per reading")
 	f.Float64Var(&measureSlopesNudge, "nudge", 0.1,
 		"how far a control is moved to read its slope, as a fraction of its range")
-	f.StringVar(&measureSlopesHardware, "hardware", "",
-		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted")
+	f.StringVar(
+		&measureSlopesHardware,
+		"hardware",
+		"",
+		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted",
+	)
 	f.Float64Var(
 		&measureSlopesHeadroom,
 		"headroom",
 		measuringHeadroom,
 		"decibels to turn the chain's own output down by before measuring; the measuring lead makes the chain feed itself and no routing stops it, so this is the only thing between a figure and a squeal",
 	)
+	f.IntVar(&measureSlopesVolume, "volume", measuringVolume,
+		"where to put the computer's own output level before measuring, 0 to 100; "+
+			"it is a tone control rather than a level control, because an "+
+			"amplifier's distortion depends on how hard it is driven")
 	f.StringVar(&measureSlopesClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&measureSlopesClient.device, "device", "", deviceUsage)

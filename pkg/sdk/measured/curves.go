@@ -68,8 +68,16 @@ type Curves struct {
 	// with a bass is ranked against the wrong distribution, and a reading
 	// taken without headroom is of the measuring lead feeding the chain back
 	// into itself.
-	Instrument string  `json:"instrument,omitempty"`
-	Headroom   float64 `json:"headroom,omitempty"`
+	Instrument string `json:"instrument,omitempty"`
+	// Volume is the computer's own output level while these were swept, on the
+	// platform's own 0 to 100 scale, and -1 where the platform would not say.
+	//
+	// Recorded for the same reason Headroom is: it decides what the readings are
+	// of. It is a tone control rather than a level control, because an
+	// amplifier's distortion depends on how hard it is driven, so a sweep at
+	// another level is a sweep of a different amplifier.
+	Volume   int     `json:"volume,omitempty"`
+	Headroom float64 `json:"headroom,omitempty"`
 	// Probed says the wire order was discovered on the device rather than read
 	// out of the catalog.
 	//

@@ -37,6 +37,7 @@ var (
 	measureControlsTakes    int
 	measureControlsHardware string
 	measureControlsHeadroom float64
+	measureControlsVolume   int
 	measureControlsClient   clientFlags
 )
 
@@ -90,6 +91,7 @@ Freq swept 0..1 never leaves its bottom stop and reports as inert.`,
 				Points:   measureControlsPoints,
 				Takes:    measureControlsTakes,
 				Headroom: measureControlsHeadroom,
+				Volume:   measureControlsVolume,
 				Hardware: measureControlsHardware,
 			})
 	},
@@ -111,8 +113,16 @@ func init() {
 		"how many positions to measure a dial at; a list gets all of its settings")
 	f.IntVar(&measureControlsTakes, "takes", 3,
 		"how many takes the noise floor is measured from")
-	f.StringVar(&measureControlsHardware, "hardware", "hx stomp",
-		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted")
+	f.IntVar(&measureControlsVolume, "volume", measuringVolume,
+		"where to put the computer's own output level before measuring, 0 to 100; "+
+			"it is a tone control rather than a level control, because an "+
+			"amplifier's distortion depends on how hard it is driven")
+	f.StringVar(
+		&measureControlsHardware,
+		"hardware",
+		"hx stomp",
+		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted",
+	)
 	f.Float64Var(
 		&measureControlsHeadroom,
 		"headroom",
