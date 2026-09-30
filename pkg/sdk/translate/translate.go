@@ -951,21 +951,14 @@ func identify(
 		parts = append(parts, "a sound")
 	}
 
-	name := strings.Join(parts, "-")
-	name = strings.Map(func(r rune) rune {
-		switch {
-		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '-':
-			return r
-		case r >= 'A' && r <= 'Z':
-			return r + ('a' - 'A')
-		case r == ' ':
-			return '-'
-		}
-
-		return -1
-	}, name)
-
-	return strings.Trim(name, "-")
+	// slug.Of rather than a rule of its own, and this used to have one. It
+	// mapped a space to a hyphen, deleted everything else and never collapsed
+	// the runs it left behind, so a band with an ampersand in it produced two
+	// hyphens together: "Earth, Wind & Fire" became "earth-wind--fire". The
+	// contract's pattern for an id is `^[a-z0-9]+(-[a-z0-9]+)*$`, which forbids
+	// that, so Translate resolved the whole chain and then refused to write the
+	// rig it had built. Any ampersand, comma or double space did it.
+	return slug.Of(strings.Join(parts, "-"))
 }
 
 // instrumentFor is what the rig is played on.

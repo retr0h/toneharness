@@ -22,9 +22,9 @@ package compile
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
@@ -63,7 +63,7 @@ func Lift(
 	out := rig.Spec{
 		Schema:     rig.SchemaName,
 		Version:    &version,
-		ID:         identifier(doc.Data.Meta.Name),
+		ID:         slug.Of(doc.Data.Meta.Name),
 		Chain:      entries,
 		Instrument: instrumentOf(c, cat),
 	}
@@ -107,40 +107,6 @@ func deref[T any](
 	}
 
 	return *of
-}
-
-// identifier turns a preset name into the shape the schema states for one.
-func identifier(
-	name string,
-) string {
-	var b strings.Builder
-
-	for _, r := range strings.ToLower(name) {
-		switch {
-		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
-			b.WriteRune(r)
-		default:
-			b.WriteByte('-')
-		}
-	}
-
-	id := strings.Trim(collapse(b.String()), "-")
-	if id == "" {
-		return "untitled"
-	}
-
-	return id
-}
-
-// collapse reduces runs of hyphens to one, which the pattern requires.
-func collapse(
-	s string,
-) string {
-	for strings.Contains(s, "--") {
-		s = strings.ReplaceAll(s, "--", "-")
-	}
-
-	return s
 }
 
 // entryFor describes one block as gear.

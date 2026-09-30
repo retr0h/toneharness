@@ -1018,3 +1018,37 @@ func (s *TranslatePublicTestSuite) TestNoMicdCabinetClaimsToBeALegacyModel() {
 
 	s.Require().Positive(mics, "the catalog carries mic'd cabinets at all")
 }
+
+// TestAnAmpersandInANameStillValidates is a bug this had for as long as
+// `identify` had a slug rule of its own.
+//
+// It mapped a space to a hyphen, deleted everything else and never collapsed the
+// runs that left behind, so "Earth, Wind & Fire" became "earth-wind--fire". The
+// contract's pattern for an id is `^[a-z0-9]+(-[a-z0-9]+)*$`, which forbids two
+// hyphens together, so Translate resolved the entire chain, chose an amplifier by
+// measurement, and then refused to write the rig it had just built. Any
+// ampersand, comma or double space in a band, artist or song did it.
+//
+// The rule is `slug.Of` now, which every other identifier in the repository
+// already used, including one 260 lines away in this same file.
+func (s *TranslatePublicTestSuite) TestAnAmpersandInANameStillValidates() {
+	for _, name := range []string{
+		"Earth, Wind & Fire",
+		"Sly & The Family Stone",
+		"AC/DC",
+		"Red  Hot  Chili Peppers",
+		"Motley_Crue",
+	} {
+		s.Run(name, func() {
+			out, _, err := translate.Translate(
+				s.ask("like:\n  band: "+name+"\n  recording: "+s.recording()+"\n"),
+				s.setup(""), s.deps)
+
+			s.Require().NoError(err, "%q makes a rig the contract refuses", name)
+			s.Require().NotContains(out.ID, "--",
+				"two hyphens together are what the pattern forbids")
+			s.Require().NoError(rig.Validate(out),
+				"the rig it built has to satisfy the contract it is validated against")
+		})
+	}
+}
