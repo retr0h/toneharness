@@ -313,10 +313,26 @@ against a bass reference carrying 0.01% above 2kHz. **Any block that saturates a
 all opens it.** A guitar reference carries real treble, so on a guitar campaign
 this fires far less often, and that is not the guitar amplifiers behaving better.
 
-Unsettled, and it needs a hand on the hardware rather than a measurement: whether
-they oscillate because of the lead or would do it regardless. Unplug the
-quarter-inch lead and read one again. A stable tone with no path back is Line 6's
-model oscillating rather than the rig.
+**The lead is the cause, and the models are fine.** Same block, same silence,
+with the quarter-inch lead pulled out of the output socket:
+
+| | lead in | lead out |
+| ----------- | ------------------: | ------------------: |
+| level | -52.8dB | -81.5dB |
+| centroid | 2,347Hz, wander 0.2 | 688Hz, wander 1.3 |
+| below 250Hz | 1.1% | 54.7% |
+| above 2kHz | 43.2% | 8.5% |
+
+29dB down, the tone gone, the spectrum flipped to low-heavy broadband: a high-gain
+amplifier idling, which is what it should look like. The control that makes this a
+reading rather than a measurement of nothing is that -81.5dB carries structure
+where `@output: None` gave -186.7dB, so the chain reaches USB and is merely quiet.
+
+So **these 23 blocks are measurable and this rig is what cannot measure them.**
+What recovers them is a return that is not a cable loop, which is #192. The Send
+and Return pair is the untried route and it is the same path a NAM capture of real
+hardware needs. Note that it is where the signal comes *back* that matters: #191
+established the output destination does nothing.
 
 ## The cable that closes it
 
