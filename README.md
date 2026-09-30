@@ -40,17 +40,6 @@ Point an agent at a checkout and tell it what you want to sound like.
 | **4,324** presets | what other people built, measured into the statistics that say where a control usually sits              |
 | **15** rigs       | curated, with a citation behind every piece of gear                                                      |
 
-The numbers are exact because they are counted from what ships rather than
-written down, and a test fails when they drift. They say which device because a
-figure measured on one is a figure about that device: the HX Stomp's 661 and the
-Floor's 670 are different catalogs, and the measurements are the Stomp's, taken
-with a bass.
-
-That last part is the difference worth knowing. Anybody can list how many
-amplifier models a device has. These were each put in front of the pedal, fed a
-reference recording and measured, so "which of these is closest to the sound on
-this record" is arithmetic rather than an opinion about names.
-
 ## Quickstart
 
 Start your agent in a checkout and say what you want. Just ask:

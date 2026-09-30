@@ -442,8 +442,7 @@ func (s *MainTestSuite) TestEveryPathThisRepositoryNamesExists() {
 // A README that counts things is a README that goes stale: the next firmware
 // Line 6 ship moves the block count, and a number typed once is wrong from
 // then on with nothing saying so. Every figure in "What ships in the binary"
-// is checked against what is actually embedded, and the section says a test
-// does this — so the claim has to be true as well as the numbers.
+// is checked against what is actually embedded.
 //
 // The row rather than the page. Two of these figures are the same number
 // today — an HX Stomp holds 661 blocks and all 661 were measured — so a check
