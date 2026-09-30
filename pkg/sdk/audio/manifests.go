@@ -90,7 +90,7 @@ func Manifests(
 		player := path.Dir(at)
 
 		out = append(out, Held{
-			Instrument: instrumentOf(dir, player),
+			Instrument: instrumentDir(dir, player),
 			ID:         path.Base(player),
 			Artist:     m.Artist,
 			Tracks:     m.Tracks,
@@ -113,9 +113,9 @@ func Manifests(
 	return out, nil
 }
 
-// instrumentOf names the directory between the root and the player, or nothing
+// instrumentDir names the directory between the root and the player, or nothing
 // where the root is the instrument's own tree.
-func instrumentOf(
+func instrumentDir(
 	root, player string,
 ) string {
 	above := path.Dir(player)

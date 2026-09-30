@@ -115,7 +115,7 @@ func MeasureBlocks(
 		// Said in the file rather than left to the reference's filename,
 		// because a figure is a figure about one instrument through one loop
 		// and neither is recoverable from a path somebody may rename.
-		Instrument: instrumentOf(opts.Dry),
+		Instrument: referenceIsFor(opts.Dry),
 		// Headroom is set after the trim rather than here, because the trim is
 		// what decides it and this literal is built before the rig is known.
 		Reference: measured.Reference{

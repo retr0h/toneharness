@@ -186,7 +186,7 @@ func MeasureControls(
 	out := measured.Curves{
 		Device: cat.Device, Gear: block.Name, Block: string(block.ID),
 		Slot: alone, Isolated: true, Probed: probed,
-		Instrument: instrumentOf(opts.Dry), Headroom: opts.Headroom,
+		Instrument: referenceIsFor(opts.Dry), Headroom: opts.Headroom,
 		Volume: level,
 		Reference: measured.Reference{
 			File: opts.Dry, SHA256: sum, Seconds: opts.Seconds,

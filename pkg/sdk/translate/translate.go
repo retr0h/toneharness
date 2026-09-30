@@ -928,12 +928,12 @@ func instrumentFor(
 	if setup.Instruments != nil {
 		for _, held := range *setup.Instruments {
 			if held.Default != nil && *held.Default {
-				return instrumentOf(held, notes)
+				return gearIsFor(held, notes)
 			}
 		}
 
 		if len(*setup.Instruments) > 0 {
-			return instrumentOf((*setup.Instruments)[0], notes)
+			return gearIsFor((*setup.Instruments)[0], notes)
 		}
 	}
 
@@ -950,8 +950,15 @@ func instrumentFor(
 	return rig.InstrumentBass
 }
 
-// instrumentOf is which kind of instrument a setup entry describes.
-func instrumentOf(
+// gearIsFor is which kind of instrument a setup entry describes.
+//
+// Guitar where the gear's name does not say bass, and the note says so rather
+// than the assumption being silent. pkg/cli's referenceIsFor asks the same
+// shape of question of a reference recording's filename and answers nothing
+// where it cannot tell: a measurement may claim no instrument, and a rig's
+// instrument field may not be empty. Neither is named for the question they
+// share, because merging them would make one of the two answers wrong.
+func gearIsFor(
 	held tone.Instrument,
 	notes *Notes,
 ) rig.Instrument {

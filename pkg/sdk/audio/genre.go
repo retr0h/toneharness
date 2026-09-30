@@ -170,7 +170,7 @@ type carried struct {
 //
 // **A record that names no instrument counts as a disagreement**, which is the
 // case that is easy to get wrong. A player sitting directly under the corpus root
-// rather than under an instrument's tree has no instrument: `instrumentOf`
+// rather than under an instrument's tree has no instrument: `instrumentDir`
 // answers empty for it. Treated as "nothing yet", that player is absorbed into
 // whichever instrument the next record names, and a genre half made of records
 // nobody classified reads as pure bass. Not knowing is not agreeing.

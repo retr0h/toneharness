@@ -105,6 +105,20 @@ func (s *DecodeTestSuite) TestAsStringDropsTheTerminator() {
 		{"one that is not terminated", "Creep", "Creep", true},
 		{"nothing but a terminator", "\x00", "", true},
 		{"something that is not a string", 7, "", false},
+		{
+			// Every trailing NUL, not the one the declared length accounts
+			// for: a field the device pads to a fixed width arrives with
+			// several, and a name ending in them is not a name anybody typed.
+			name: "a field padded to a fixed width",
+			in:   "Creep\x00\x00\x00", want: "Creep", ok: true,
+		},
+		{"nothing but padding", "\x00\x00\x00", "", true},
+		{
+			// Only the trailing ones. A NUL in the middle is not padding and
+			// dropping it would join two words the device kept apart.
+			name: "one inside the name",
+			in:   "Cr\x00eep\x00", want: "Cr\x00eep", ok: true,
+		},
 	}
 
 	for _, tc := range tests {

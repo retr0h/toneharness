@@ -230,7 +230,7 @@ func (s *ChainPublicTestSuite) TestInstrumentOfReadsItOffTheReference() {
 
 	for _, tt := range tests {
 		s.Run(tt.dry, func() {
-			s.Require().Equal(tt.want, instrumentOf(tt.dry))
+			s.Require().Equal(tt.want, referenceIsFor(tt.dry))
 		})
 	}
 }
@@ -240,5 +240,5 @@ func (s *ChainPublicTestSuite) TestInstrumentOfReadsItOffTheReference() {
 // A reading that does not know what was played through it should not say. The
 // point of recording it is that somebody can tell, and a guess defeats that.
 func (s *ChainPublicTestSuite) TestAReadingThatCannotNameItsInstrumentClaimsNone() {
-	s.Require().Empty(instrumentOf("reference.wav"))
+	s.Require().Empty(referenceIsFor("reference.wav"))
 }

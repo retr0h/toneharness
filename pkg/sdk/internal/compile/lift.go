@@ -65,7 +65,7 @@ func Lift(
 		Version:    &version,
 		ID:         slug.Of(doc.Data.Meta.Name),
 		Chain:      entries,
-		Instrument: instrumentOf(c, cat),
+		Instrument: instrumentFieldFor(c, cat),
 	}
 
 	// The same preset read twice, into the two documents it is. The rig is the
@@ -190,11 +190,11 @@ var roles = map[catalog.Category]rig.Role{
 	catalog.CategoryOther:   rig.RoleOther,
 }
 
-// instrumentOf reports which instrument a chain is for, from its amplifier.
+// instrumentFieldFor reports which instrument a chain is for, from its amplifier.
 //
 // Line 6 tag amps Guitar or Bass. A chain with no amp names no instrument, so
 // guitar stands as the more common default.
-func instrumentOf(
+func instrumentFieldFor(
 	c plan.Plan,
 	cat *catalog.Catalog,
 ) rig.Instrument {

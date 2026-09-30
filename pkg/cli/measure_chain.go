@@ -201,7 +201,7 @@ func Squealing(
 		is*perCent, was*perCent), true
 }
 
-// instrumentOf is what a reference recording was played on.
+// referenceIsFor is what a reference recording was played on.
 //
 // Read off the path, because that is where it is said. The dry signals live
 // under resources/dry/ as `bass-di.wav` and a corpus is a tree per instrument,
@@ -211,7 +211,13 @@ func Squealing(
 // name its instrument should not claim one. A guitar rig ranked against
 // readings taken with a bass is ranked against the wrong distribution, and the
 // whole point of recording this is that somebody can tell.
-func instrumentOf(
+//
+// translate's gearIsFor asks a near-identical question of a setup's gear and
+// answers guitar where this answers nothing. Both are right for their caller:
+// a rig's instrument field has to hold something and says so in a note, and a
+// measurement may claim nothing. Merging them would make one of the two
+// answers wrong, which is why neither is named for the question they share.
+func referenceIsFor(
 	dry string,
 ) string {
 	name := strings.ToLower(filepath.Base(dry))

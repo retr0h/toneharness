@@ -84,7 +84,7 @@ func sameInstrument(
 	cat *catalog.Catalog,
 	dry string,
 ) error {
-	chain, reference := chainIsFor(made, cat), instrumentOf(dry)
+	chain, reference := chainIsFor(made, cat), referenceIsFor(dry)
 	if chain == "" || reference == "" || chain == reference {
 		return nil
 	}

@@ -206,7 +206,7 @@ func (m *measurer) record(
 func (m *measurer) grammarOf(
 	spec plan.Plan,
 ) {
-	instrument, ampAt, ok := m.instrumentOf(spec)
+	instrument, ampAt, ok := m.chainIsFor(spec)
 	if !ok {
 		return
 	}
@@ -269,7 +269,7 @@ func tonal(
 	return c != catalog.CategoryAmp && c != catalog.CategoryUtility
 }
 
-// instrumentOf finds the amp in a chain and reports which instrument it is
+// chainIsFor finds the amp in a chain and reports which instrument it is
 // for.
 //
 // A chain with no amp says nothing about ordering, because there is nothing to
@@ -285,7 +285,7 @@ func tonal(
 // The index is still the first amplifier's, which is the right pivot for
 // counting what sits before and after it whatever the instrument turns out to
 // be.
-func (m *measurer) instrumentOf(
+func (m *measurer) chainIsFor(
 	spec plan.Plan,
 ) (string, int, bool) {
 	at := plan.AmpAt(spec, m.cat)

@@ -175,7 +175,7 @@ func against(
 	knobs []solve.Knob,
 ) error {
 	committed, err := committedSlopes(
-		made, cat, opts.Sweeps, instrumentOf(opts.Dry), w)
+		made, cat, opts.Sweeps, referenceIsFor(opts.Dry), w)
 	if err != nil {
 		return err
 	}
