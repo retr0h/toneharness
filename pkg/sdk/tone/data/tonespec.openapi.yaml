@@ -487,6 +487,24 @@ components:
             there.
         plays_into:
           $ref: "#/components/schemas/PlaysInto"
+        technique:
+          $ref: "#/components/schemas/Technique"
+          description: >
+            How this person plays, which is the other side of the comparison
+            the Technique schema describes.
+
+
+            Here rather than on a request for the reason everything else here
+            is: a right hand changes on the same clock as a bass, which is to
+            say hardly ever, and restating it per request is how the twelfth
+            one comes to contradict the first.
+
+
+            What it buys is the one compensation nothing could make before.
+            A rig tuned from a picked recording is duller played with fingers,
+            because a pick puts high-frequency attack into every note that
+            fingers do not. With both sides stated, the difference is a knob
+            position rather than a surprise at the first rehearsal.
 
     PlaysInto:
       type: string
@@ -888,15 +906,18 @@ components:
         said and a sentence has to be parsed to get at them.
 
 
-        Under `target` this says how the person using the rig plays, where
-        that differs from the rig's own. The distinction is not pedantry. A
-        pick puts high-frequency attack into every note that fingers do not,
-        so a rig tuned from a picked recording sounds duller played fingered,
-        and the fix is in the amp and the compressor rather than in the
-        player. Recording both lets the difference be compensated rather than
-        discovered, and that comparison needs both sides to be the same kind
-        of value: two `attack` values can be held against each other, and two
-        sentences cannot.
+        Two places, and they are different claims. On a subject this is how
+        the player being emulated played. On a Setup it is how the person
+        holding the instrument plays.
+
+
+        The distinction is not pedantry. A pick puts high-frequency attack
+        into every note that fingers do not, so a rig tuned from a picked
+        recording sounds duller played fingered, and the fix is in the amp and
+        the compressor rather than in the player. Stating both sides lets the
+        difference be compensated rather than discovered, and that comparison
+        needs both to be the same kind of value: two `attack` values can be
+        held against each other, and two sentences cannot.
       required: [attack]
       properties:
         evidence:

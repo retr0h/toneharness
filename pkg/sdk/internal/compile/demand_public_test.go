@@ -270,7 +270,7 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 				stats = s.quiet(tt.cats, tt.models...)
 			}
 
-			built, added, _, err := compile.Resolve(
+			built, added, _, _, err := compile.Resolve(
 				svt(tt.pedals...), asking(tt.terms, tt.attack), s.cat, stats)
 
 			s.Require().NoError(err)
@@ -314,7 +314,7 @@ func (s *DemandPublicTestSuite) TestResolveDemandIsDeterministic() {
 	var first []catalog.ModelID
 
 	for range 5 {
-		_, added, _, err := compile.Resolve(svt(), intent, s.cat, stats)
+		_, added, _, _, err := compile.Resolve(svt(), intent, s.cat, stats)
 		s.Require().NoError(err)
 
 		got := make([]catalog.ModelID, 0, len(added))
@@ -338,7 +338,7 @@ func (s *DemandPublicTestSuite) TestResolveDemandIsDeterministic() {
 // measured a record now reaches a control, so the check is on what moved
 // rather than on what was added.
 func (s *DemandPublicTestSuite) TestResolveDemandLandsTheWord() {
-	_, _, moved, err := compile.Resolve(
+	_, _, moved, _, err := compile.Resolve(
 		svt(),
 		asking([]string{"mid-forward"}, ""),
 		s.cat,
@@ -378,7 +378,7 @@ func (s *DemandPublicTestSuite) TestResolveDemandNamesTheBlock() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			_, _, moved, err := compile.Resolve(
+			_, _, moved, _, err := compile.Resolve(
 				svt(),
 				asking([]string{"envelope-swept"}, ""),
 				s.cat,

@@ -208,14 +208,15 @@ func (mr *MockCompilerMockRecorder) Realise(spec, cat any) *gomock.Call {
 }
 
 // Resolve mocks base method.
-func (m *MockCompiler) Resolve(spec rig.Spec, intent compile.Intent, cat *catalog.Catalog, stats *corpus.Stats) (plan.Plan, []compile.Added, []compile.Moved, error) {
+func (m *MockCompiler) Resolve(spec rig.Spec, intent compile.Intent, cat *catalog.Catalog, stats *corpus.Stats) (plan.Plan, []compile.Added, []compile.Moved, compile.Compensated, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Resolve", spec, intent, cat, stats)
 	ret0, _ := ret[0].(plan.Plan)
 	ret1, _ := ret[1].([]compile.Added)
 	ret2, _ := ret[2].([]compile.Moved)
-	ret3, _ := ret[3].(error)
-	return ret0, ret1, ret2, ret3
+	ret3, _ := ret[3].(compile.Compensated)
+	ret4, _ := ret[4].(error)
+	return ret0, ret1, ret2, ret3, ret4
 }
 
 // Resolve indicates an expected call of Resolve.

@@ -176,7 +176,7 @@ func (s *KnobsPublicTestSuite) TestLowerSetsWhatTheRigSaid() {
 	spec := bassRig("Ampeg SVT", "")
 	spec.Chain[0].Settings = &rig.Settings{Drive: knob(0.47)}
 
-	made, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
+	made, _, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	doc, err := preset.Blank()
@@ -194,7 +194,7 @@ func (s *KnobsPublicTestSuite) TestResolveSetsWhatTheRigSaid() {
 	spec := bassRig("Ampeg SVT", "")
 	spec.Chain[0].Settings = &rig.Settings{Drive: knob(0.47)}
 
-	built, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
+	built, _, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 	s.Require().Equal(catalog.Float(0.47), built.Blocks[0].Params["Drive"])
 }
@@ -205,7 +205,7 @@ func (s *KnobsPublicTestSuite) TestResolveRefusesAWordTheGearHasNoControlFor() {
 	spec := bassRig("Ampeg SVT", "")
 	spec.Chain[0].Settings = &rig.Settings{Presence: knob(0.4)}
 
-	_, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
+	_, _, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, nil)
 	s.Require().ErrorIs(err, compile.ErrNoSuchValue)
 }
 

@@ -114,7 +114,7 @@ func (*Compiler) Resolve(
 	intent Intent,
 	cat *catalog.Catalog,
 	stats *corpus.Stats,
-) (plan.Plan, []Added, []Moved, error) {
+) (plan.Plan, []Added, []Moved, Compensated, error) {
 	return Resolve(spec, intent, cat, stats)
 }
 

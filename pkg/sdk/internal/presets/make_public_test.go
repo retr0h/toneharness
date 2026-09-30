@@ -72,11 +72,24 @@ func (s *MakePublicTestSuite) opts(
 // TestMake builds a preset out of a rig.
 func (s *MakePublicTestSuite) TestMake() {
 	tests := []struct {
-		name     string
-		ctx      context.Context
-		id       string
-		stats    string
-		catalog  string
+		name    string
+		ctx     context.Context
+		id      string
+		stats   string
+		catalog string
+		// setup is what the person has. The row writes it to a file, so a
+		// path that is not there is spelt as a path rather than a document.
+		setup   string
+		noSetup string
+		// playing is a fragment the compensation has to say. Empty asks for
+		// none, which is a build that made none.
+		playing string
+		// named is what the preset should be called, where the row builds a
+		// rig whose subject is not the usual one.
+		named string
+		// blocks is how many the chain should hold. Zero means the two a rig
+		// names, which is what most rows build.
+		blocks   int
 		out      string
 		contains []string
 		loadable bool
@@ -172,6 +185,37 @@ func (s *MakePublicTestSuite) TestMake() {
 			errText: "writing",
 		},
 		{
+			// Every figure in the corpus came off somebody else's playing, so
+			// a rig played with a pick is duller in the hands of somebody who
+			// uses fingers. With both sides stated the difference is a knob
+			// rather than a surprise.
+			name:     "a Setup saying how this person plays",
+			id:       "picked-player",
+			setup:    "schema: Setup\ntechnique:\n  attack: fingers\n",
+			loadable: true,
+			playing:  "you play with fingers",
+			named:    "Picked Player",
+		},
+		{
+			// Building for the record is what this did before a Setup could
+			// be named, and still the answer for somebody without one.
+			name:     "no Setup at all builds for the record",
+			id:       "test-player",
+			loadable: true,
+		},
+		{
+			name:    "a Setup named and not there",
+			id:      "test-player",
+			noSetup: "no-such-setup.yaml",
+			errText: "no-such-setup.yaml",
+		},
+		{
+			name:    "a Setup that is not a Setup",
+			id:      "test-player",
+			setup:   "schema: ToneSpec\n",
+			errText: "reading",
+		},
+		{
 			name:    "a caller who stopped waiting",
 			ctx:     cancelledContext(),
 			id:      "test-player",
@@ -195,6 +239,16 @@ func (s *MakePublicTestSuite) TestMake() {
 
 			if tt.catalog != "" {
 				o.Catalogs = s.catalogs(tt.catalog)
+			}
+
+			switch {
+			case tt.setup != "":
+				at := filepath.Join(dir, "setup.yaml")
+				s.Require().NoError(os.WriteFile(at, []byte(tt.setup), 0o600))
+
+				o.SetupPath = at
+			case tt.noSetup != "":
+				o.SetupPath = filepath.Join(dir, tt.noSetup)
 			}
 
 			ctx := tt.ctx
@@ -227,6 +281,15 @@ func (s *MakePublicTestSuite) TestMake() {
 				s.Require().Contains(got, want)
 			}
 
+			if tt.playing == "" {
+				s.Require().Empty(made.Playing.Said,
+					"nothing was compensated, so there is nothing to say")
+			} else {
+				s.Require().Contains(made.Playing.Said, tt.playing)
+				s.Require().NotEmpty(made.Playing.Term,
+					"a word was added, and the report names which")
+			}
+
 			if len(tt.written) > 0 {
 				body, err := os.ReadFile(filepath.Clean(out))
 				s.Require().NoError(err)
@@ -255,14 +318,25 @@ func (s *MakePublicTestSuite) TestMake() {
 				}
 
 				s.Require().Equal(2162694, doc.Data.Device)
-				s.Require().Equal("Test Player", doc.Data.Meta.Name)
+
+				named := tt.named
+				if named == "" {
+					named = "Test Player"
+				}
+
+				s.Require().Equal(named, doc.Data.Meta.Name)
 
 				spec, err := doc.Spec()
 				if err != nil {
 					return err
 				}
 
-				s.Require().Len(spec.Blocks, 2)
+				blocks := tt.blocks
+				if blocks == 0 {
+					blocks = 2
+				}
+
+				s.Require().Len(spec.Blocks, blocks)
 
 				return nil
 			}())
@@ -346,7 +420,7 @@ func (s *IntentPublicTestSuite) TestIntentOf() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got := presets.IntentOf(tt.ask)
+			got := presets.IntentOf(tt.ask, nil)
 
 			s.Require().Len(got.Words, tt.words)
 			s.Require().Equal(tt.attack, got.Attack)
@@ -385,7 +459,7 @@ func (s *IntentPublicTestSuite) TestAGenreBringsItsMeasuredWords() {
 		s.T().Skip("no measured genre earns a word in this binary")
 	}
 
-	got := presets.IntentOf(&tone.Spec{Genre: []string{usable}})
+	got := presets.IntentOf(&tone.Spec{Genre: []string{usable}}, nil)
 	s.Require().NotEmpty(got.Words)
 
 	for _, w := range got.Words {
@@ -406,11 +480,11 @@ func (s *IntentPublicTestSuite) TestAGenreBringsItsMeasuredWords() {
 // would say it twice.
 func (s *IntentPublicTestSuite) TestAGenreThatBringsNothing() {
 	nothing := "sea-shanty"
-	s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{nothing}}).Words,
+	s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{nothing}}, nil).Words,
 		"nothing measured")
 
 	empty := ""
-	s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{empty}}).Words,
+	s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{empty}}, nil).Words,
 		"an empty genre is no genre")
 
 	// A genre that clears nothing. Punk is measured, clears the record
@@ -420,7 +494,7 @@ func (s *IntentPublicTestSuite) TestAGenreThatBringsNothing() {
 
 	for _, g := range all {
 		if g.Usable && len(g.Terms) == 0 {
-			s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{g.Slug}}).Words,
+			s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{g.Slug}}, nil).Words,
 				"%s is measured and sets nothing apart", g.Slug)
 		}
 	}

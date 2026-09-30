@@ -1,0 +1,12 @@
+schema: ToneSpec
+genre: [rock]
+
+subject:
+  kind: artist
+  name: Picked Player
+
+# A pick, so a Setup naming fingers has something to be compensated against.
+technique:
+  attack: pick
+  evidence: [{ kind: llm }]
+confidence: medium

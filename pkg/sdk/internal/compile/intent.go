@@ -43,7 +43,12 @@ type Intent struct {
 	Words []Word
 	// Attack is what sets the string moving, where the ask says. Empty is an
 	// ask that did not say.
+	//
+	// The subject's, not the person's. Playing below is the other side.
 	Attack string
+	// Playing is how the person who will play this preset plays, where the
+	// Setup says. Empty is a Setup that did not, and compensates for nothing.
+	Playing Playing
 	// Name is what the preset should be called, which is the subject the ask
 	// names: "Mike Dirnt" is what somebody wants to read on the screen.
 	//

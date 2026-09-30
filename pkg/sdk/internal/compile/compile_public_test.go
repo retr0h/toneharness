@@ -278,8 +278,9 @@ func (s *CompilePublicTestSuite) TestResolve() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			want, wantAdded, _, wantErr := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
-			got, gotAdded, _, err := compile.New().Resolve(tt.spec, compile.Intent{}, s.cat, nil)
+			want, wantAdded, _, _, wantErr := compile.Resolve(
+				tt.spec, compile.Intent{}, s.cat, nil)
+			got, gotAdded, _, _, err := compile.New().Resolve(tt.spec, compile.Intent{}, s.cat, nil)
 
 			s.Require().Equal(wantErr == nil, err == nil)
 			s.Require().Equal(want, got)
@@ -290,7 +291,7 @@ func (s *CompilePublicTestSuite) TestResolve() {
 
 // TestFit covers dropping what a device has no room for, through the type.
 func (s *CompilePublicTestSuite) TestFit() {
-	built, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+	built, _, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	tests := []struct {

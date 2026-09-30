@@ -49,7 +49,7 @@ func Resolve(
 	intent Intent,
 	cat *catalog.Catalog,
 	stats *corpus.Stats,
-) (plan.Plan, []Added, []Moved, error) {
+) (plan.Plan, []Added, []Moved, Compensated, error) {
 	instrument := string(spec.Instrument)
 
 	blocks := make([]catalog.Block, 0, len(spec.Chain)+1)
@@ -83,7 +83,7 @@ func Resolve(
 			stand, err = findGear(
 				cat, entry.Substitute.Gear, categoryFor(entry.Role), instrument)
 			if err != nil {
-				return plan.Plan{}, nil, nil, fmt.Errorf(
+				return plan.Plan{}, nil, nil, Compensated{}, fmt.Errorf(
 					"%q stands in for %q, and nothing emulates it either: %w",
 					entry.Substitute.Gear, entry.Gear, err)
 			}
@@ -100,7 +100,7 @@ func Resolve(
 
 		if err != nil {
 			if entry.Role != rig.RoleCab || !errors.Is(err, ErrNoSuchGear) {
-				return plan.Plan{}, nil, nil, err
+				return plan.Plan{}, nil, nil, Compensated{}, err
 			}
 
 			missed, missedErr = entry.Gear, err
@@ -128,7 +128,17 @@ func Resolve(
 	} else if missed != "" {
 		// Nothing to fall back to, so the rig named a cabinet that cannot be
 		// built and saying so is the only honest answer.
-		return plan.Plan{}, nil, nil, missedErr
+		return plan.Plan{}, nil, nil, Compensated{}, missedErr
+	}
+
+	// Before fill and before demand, because the compensating word is an ask
+	// like any other from here on: demand will pull a compressor into a chain
+	// that has none because this word wants one, and the corpus decides how
+	// far the term travels.
+	held := compensate(
+		intent.Attack, intent.Playing, spokenFor(intent.Words, attackAxis))
+	if held.Word.Term != "" {
+		intent.Words = append(intent.Words, held.Word)
 	}
 
 	blocks, said, added := fill(blocks, said, cat, stats, instrument)
@@ -150,13 +160,14 @@ func Resolve(
 	// moved: a number somebody wrote down is the most explicit thing in the
 	// rig, and the only one that says exactly what they meant.
 	if err := saidKnobs(built.Blocks, blocks, said); err != nil {
-		return plan.Plan{}, nil, nil, err
+		return plan.Plan{}, nil, nil, Compensated{}, err
 	}
 
 	// Not checked here. check reads a plan's target, footswitches and
 	// controllers, and this builds none of them: a rig has nowhere to state
 	// one. Lower checks, which is where a plan arrives from a file.
-	return built, append(sub, added...), moved, nil
+	return built, append(sub, added...), moved,
+		Compensated{Term: held.Word.Term, Said: held.Said}, nil
 }
 
 // worded moves whatever in the chain answers for the words the ask used.

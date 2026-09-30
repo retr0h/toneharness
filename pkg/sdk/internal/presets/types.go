@@ -61,7 +61,7 @@ type Compiler interface {
 		intent compile.Intent,
 		cat *catalog.Catalog,
 		stats *corpus.Stats,
-	) (plan.Plan, []compile.Added, []compile.Moved, error)
+	) (plan.Plan, []compile.Added, []compile.Moved, compile.Compensated, error)
 	// Fit drops what a device has no room for.
 	Fit(spec plan.Plan, cat *catalog.Catalog, lim plan.Limits) plan.Plan
 	// Realise turns a rig into the plan that answers it on this device.

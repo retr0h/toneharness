@@ -42,8 +42,12 @@ var presetsMakeCmd = &cobra.Command{
 	Long: `Build a preset from curated knowledge.
 
 The rig names real-world gear; the catalog says what this device has. Every
-parameter is set to what Line 6 states as its default — the words in the ask
-beside the rig then move the controls they name.`,
+parameter is set to what Line 6 states as its default. The words in the ask
+beside the rig then move the controls they name.
+
+Name a setup and the build fits the person as well as the record: an ask says
+how the subject played, a setup says how you do, and the difference between two
+right hands is a knob position rather than a surprise at the first rehearsal.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		client := presetsMakeClient.client(ownRigs(presetsMakeRigs))
@@ -82,6 +86,7 @@ func init() {
 	f.StringVar(&presetsMakeClient.device, "device", "", deviceUsage)
 	f.StringVar(&presetsMakeClient.stats, "stats", "",
 		"measured corpus statistics to use instead of the built-in ones")
+	f.StringVar(&presetsMakeClient.setup, "setup", "", setupUsage)
 	f.StringVar(&presetsMakeOut, "out", "", "where to write the preset")
 	// Fails only for a flag that does not exist, and these are defined above.
 	_ = presetsMakeCmd.MarkFlagRequired("id")

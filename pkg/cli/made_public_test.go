@@ -247,6 +247,21 @@ func (s *MadePublicTestSuite) TestMade() {
 						absent: []string{"did you mean"},
 					},
 					{
+						// The one decision on the page that comes off the
+						// Setup rather than the ask, so it is reported on its
+						// own: a knob moved because of a right hand is a
+						// different claim from one moved because of a word.
+						name: "what was done about how this person plays",
+						in: s.made(func(m *sdk.Made) {
+							m.Playing = sdk.Playing{
+								Term: "audible-pick-attack",
+								Said: "the rig was played with pick and you " +
+									"play with fingers",
+							}
+						}),
+						want: []string{"playing", "you play with fingers"},
+					},
+					{
 						name: "a word close to one that is defined",
 						in: s.made(func(m *sdk.Made) {
 							m.Unfamiliar = []sdk.Unfamiliar{
@@ -289,6 +304,9 @@ func (s *MadePublicTestSuite) TestMade() {
 					m.Added = []sdk.Added{{Name: "Minotaur", Reason: "drive", Share: 0.95}}
 					m.Moved = []sdk.Moved{{Term: "mid-forward", Param: "Mid", From: 0.5, To: 0.6}}
 					m.Unfamiliar = []sdk.Unfamiliar{{Term: "wet paper bag"}}
+					m.Playing = sdk.Playing{
+						Term: "soft-attack", Said: "you play with a pick",
+					}
 				})
 
 				// How many writes a whole report takes, found by letting one through.

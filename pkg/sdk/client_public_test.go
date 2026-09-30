@@ -360,6 +360,21 @@ func (s *ClientPublicTestSuite) TestWithStats() {
 	s.Require().Error(err, "the Client read the statistics it was given")
 }
 
+// TestWithSetup covers naming what the person has, so a build fits them.
+//
+// A client option rather than a call's argument, for the reason the Setup is a
+// separate document: it changes on a different clock from a request. What this
+// asserts is that the Client read the file it was given, which a path nothing
+// is at says loudly enough.
+func (s *ClientPublicTestSuite) TestWithSetup() {
+	_, err := sdk.New(sdk.WithSetup("no-such-setup.yaml")).
+		Make(context.Background(), "mike-dirnt",
+			filepath.Join(s.T().TempDir(), "o.hlx"), sdk.ReplaceExisting)
+
+	s.Require().ErrorContains(err, "no-such-setup.yaml",
+		"the Client read the Setup it was given")
+}
+
 // TestWithRigs covers naming a directory of rigs.
 func (s *ClientPublicTestSuite) TestWithRigs() {
 	got, err := sdk.New(sdk.WithRigs("no-such-directory")).

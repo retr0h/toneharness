@@ -585,6 +585,15 @@ type Setup struct {
 	// What it is not is a tone correction. Nothing here has measured an amplifier in anybody's room, and an equalisation applied for one would be a number nobody took. Every figure this project ships was measured through a cabinet block into a computer, which is one of these four, and a reading is worth less to somebody on another.
 	PlaysInto *PlaysInto  `json:"plays_into,omitempty"`
 	Schema    SetupSchema `json:"schema"`
+
+	// Technique How the instrument is played, where it changes the sound. Not modelled by any device, and it still decides what the rig has to do.
+	//
+	// Three things rather than a sentence, because three things are being said and a sentence has to be parsed to get at them.
+	//
+	// Two places, and they are different claims. On a subject this is how the player being emulated played. On a Setup it is how the person holding the instrument plays.
+	//
+	// The distinction is not pedantry. A pick puts high-frequency attack into every note that fingers do not, so a rig tuned from a picked recording sounds duller played fingered, and the fix is in the amp and the compressor rather than in the player. Stating both sides lets the difference be compensated rather than discovered, and that comparison needs both to be the same kind of value: two `attack` values can be held against each other, and two sentences cannot.
+	Technique *Technique `json:"technique,omitempty"`
 }
 
 // SetupSchema defines model for Setup.Schema.
@@ -617,7 +626,9 @@ type Subject struct {
 //
 // Three things rather than a sentence, because three things are being said and a sentence has to be parsed to get at them.
 //
-// Under `target` this says how the person using the rig plays, where that differs from the rig's own. The distinction is not pedantry. A pick puts high-frequency attack into every note that fingers do not, so a rig tuned from a picked recording sounds duller played fingered, and the fix is in the amp and the compressor rather than in the player. Recording both lets the difference be compensated rather than discovered, and that comparison needs both sides to be the same kind of value: two `attack` values can be held against each other, and two sentences cannot.
+// Two places, and they are different claims. On a subject this is how the player being emulated played. On a Setup it is how the person holding the instrument plays.
+//
+// The distinction is not pedantry. A pick puts high-frequency attack into every note that fingers do not, so a rig tuned from a picked recording sounds duller played fingered, and the fix is in the amp and the compressor rather than in the player. Stating both sides lets the difference be compensated rather than discovered, and that comparison needs both to be the same kind of value: two `attack` values can be held against each other, and two sentences cannot.
 type Technique struct {
 	// Attack What sets the string moving. Required, because there is no playing without one.
 	Attack TechniqueAttack `json:"attack"`
@@ -716,7 +727,9 @@ type ToneSpec struct {
 	//
 	// Three things rather than a sentence, because three things are being said and a sentence has to be parsed to get at them.
 	//
-	// Under `target` this says how the person using the rig plays, where that differs from the rig's own. The distinction is not pedantry. A pick puts high-frequency attack into every note that fingers do not, so a rig tuned from a picked recording sounds duller played fingered, and the fix is in the amp and the compressor rather than in the player. Recording both lets the difference be compensated rather than discovered, and that comparison needs both sides to be the same kind of value: two `attack` values can be held against each other, and two sentences cannot.
+	// Two places, and they are different claims. On a subject this is how the player being emulated played. On a Setup it is how the person holding the instrument plays.
+	//
+	// The distinction is not pedantry. A pick puts high-frequency attack into every note that fingers do not, so a rig tuned from a picked recording sounds duller played fingered, and the fix is in the amp and the compressor rather than in the player. Stating both sides lets the difference be compensated rather than discovered, and that comparison needs both to be the same kind of value: two `attack` values can be held against each other, and two sentences cannot.
 	Technique *Technique `json:"technique,omitempty"`
 
 	// Words How it should sound, in the words a person would use.

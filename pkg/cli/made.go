@@ -73,7 +73,30 @@ func made(
 		return err
 	}
 
+	if err := playing(w, m.Playing); err != nil {
+		return err
+	}
+
 	_, err := fmt.Fprintf(w, "\n%s%s\n\n", paint.Indent, paint.Success(w, "wrote "+m.Path))
+
+	return err
+}
+
+// playing says what was done about how this person plays.
+//
+// Last of the four, because it is the only one that comes off the Setup rather
+// than off the ask, and reading it after the words makes it clear which of them
+// it put there.
+func playing(
+	w io.Writer,
+	held sdk.Playing,
+) error {
+	if held.Said == "" {
+		return nil
+	}
+
+	_, err := fmt.Fprintf(w, "\n%s%s %s\n",
+		paint.Indent, paint.Mute(w, "playing"), held.Said)
 
 	return err
 }
