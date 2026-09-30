@@ -24,7 +24,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
@@ -87,7 +86,7 @@ func Make(
 	// requirement, but somebody who named a file asked for those ones.
 	// Building without them would hand back a more generic preset than the
 	// one asked for, and say nothing about it.
-	stats, err := openStats(opts.StatsPath)
+	stats, err := corpus.Open(opts.StatsPath)
 	if err != nil {
 		return result.Made{}, err
 	}
@@ -150,26 +149,6 @@ func Make(
 		Unfamiliar: unfamiliar(intent),
 		Path:       opts.OutputPath,
 	}, nil
-}
-
-// openStats reads measured statistics, falling back to the ones in this
-// binary.
-func openStats(
-	path string,
-) (*corpus.Stats, error) {
-	if path == "" {
-		return corpus.BuiltIn()
-	}
-
-	f, err := os.Open(path) //nolint:gosec // the path is the user's own file
-	if err != nil {
-		return nil, fmt.Errorf("opening %s: %w", path, err)
-	}
-
-	// Opened read-only, so Close has nothing to report the read did not.
-	defer func() { _ = f.Close() }()
-
-	return corpus.Load(f)
 }
 
 // build puts a chain into a preset the device would recognise.

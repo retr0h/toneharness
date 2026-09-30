@@ -25,7 +25,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
@@ -65,7 +64,7 @@ func Model(
 	opts Options,
 	model string,
 ) (result.Measured, error) {
-	stats, err := open(opts.StatsPath)
+	stats, err := corpus.Open(opts.StatsPath)
 	if err != nil {
 		return result.Measured{}, err
 	}
@@ -95,29 +94,10 @@ func Chains(
 	opts Options,
 	instrument string,
 ) (result.Measured, error) {
-	stats, err := open(opts.StatsPath)
+	stats, err := corpus.Open(opts.StatsPath)
 	if err != nil {
 		return result.Measured{}, err
 	}
 
 	return result.Measured{Stats: stats, Instrument: instrument}, nil
-}
-
-// open reads statistics, falling back to the ones in this binary.
-func open(
-	path string,
-) (*corpus.Stats, error) {
-	if path == "" {
-		return corpus.BuiltIn()
-	}
-
-	f, err := os.Open(path) //nolint:gosec // the path is the user's own file
-	if err != nil {
-		return nil, fmt.Errorf("opening %s: %w", path, err)
-	}
-
-	// Opened read-only, so Close has nothing to report the read did not.
-	defer func() { _ = f.Close() }()
-
-	return corpus.Load(f)
 }
