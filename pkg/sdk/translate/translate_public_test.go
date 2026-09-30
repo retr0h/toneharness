@@ -138,12 +138,16 @@ func (s *TranslatePublicTestSuite) TestAGearNameFittingSeveralExactlyAnswersTheS
 	s.Require().Len(said, 1, "one ask, one answer: %v", said)
 
 	for got := range said {
-		s.Require().Contains(got, "resolved to HD2_Cab1x15TucknGo")
+		// The mic'd cabinet, chosen by family rather than by the alphabet. The
+		// same speaker ships three times under one name and this is the one
+		// carrying Mic, Angle and Position, at 2.5 DSP against 7.2.
+		s.Require().Contains(got, "resolved to HD2_CabMicIr_1x15AmpegB15")
 
 		// And the other two named, because "resolved to X" on its own reads as
 		// the only answer when it was one of three.
 		s.Require().Contains(got, "that name fits 3 exactly")
-		s.Require().Contains(got, "HD2_CabMicIr_1x15AmpegB15")
+		s.Require().Contains(got, "HD2_Cab1x15TucknGo",
+			"the legacy one is named as an alternative rather than chosen")
 	}
 }
 
@@ -881,4 +885,85 @@ func TestTranslatePublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(TranslatePublicTestSuite))
+}
+
+// TestAnAmplifierIsPreferredToAPreampOfTheSameName covers the other collision.
+//
+// 108 names on this device are both a full amplifier and a preamp, and they
+// share a category, so a rig naming "Ampeg SVT" could reach either. It means
+// the amplifier. Until the family decided it the answer was whichever sorted
+// first, which happened to be right because HD2_Amp precedes HD2_Preamp, and
+// right by the alphabet is not right by decision.
+func (s *TranslatePublicTestSuite) TestAnAmplifierIsPreferredToAPreampOfTheSameName() {
+	_, notes, err := translate.Translate(
+		s.ask("gear:\n  - gear: A30 Fawn Nrm\n    role: amp\n"),
+		s.setup(""), s.deps)
+
+	s.Require().NoError(err)
+
+	var said string
+
+	for _, note := range notes {
+		if note.About == "A30 Fawn Nrm" {
+			said = note.Said
+		}
+	}
+
+	s.Require().Contains(said, "HD2_AmpA30FawnNrm")
+	s.Require().NotContains(said, "resolved to HD2_PreampA30FawnNrm")
+}
+
+// TestALegacyModelIsReachableByTheNameLine6GivesIt covers the other side of
+// the family preference.
+//
+// The same cabinet ships three times under one display name, so the preference
+// has to pick one and it picks the mic'd model. That would strand the legacy
+// one if nothing else reached it. Line 6's own guide calls it `Legacy 1x15"
+// Ampeg B-15` and the catalog records that as what it is based on, so a rig
+// naming it gets it.
+//
+// It only works because the guide's two entries are now read separately. The
+// Pilot's Guide prints its "Based On" header once per table and the cabinets
+// run over four pages, so the extractor read the page with the header and
+// dropped the three before it: the current models' rows were on those, the
+// Legacy section's header was on the page after, and 58 mic'd cabinets ended up
+// carrying their legacy twin's entry. All three then claimed to be Legacy and
+// this name reached whichever the preference chose.
+func (s *TranslatePublicTestSuite) TestALegacyModelIsReachableByTheNameLine6GivesIt() {
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	legacy, ok := cat.Blocks["HD2_Cab1x15TucknGo"]
+	s.Require().True(ok)
+	s.Require().Equal(`Legacy 1x15" Ampeg B-15`, legacy.BasedOn)
+
+	for _, id := range []string{
+		"HD2_CabMicIr_1x15AmpegB15", "HD2_CabMicIr_1x15AmpegB15WithPan",
+	} {
+		got, ok := cat.Blocks[catalog.ModelID(id)]
+		s.Require().True(ok)
+		s.Require().Equal(`1x15" Ampeg B-15`, got.BasedOn,
+			"%s is that cabinet mic'd, not the legacy model", id)
+	}
+}
+
+// TestNoMicdCabinetClaimsToBeALegacyModel holds the whole set, not one example.
+func (s *TranslatePublicTestSuite) TestNoMicdCabinetClaimsToBeALegacyModel() {
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	var mics int
+
+	for id, block := range cat.Blocks {
+		if block.Family != "cabmicirs" && block.Family != "cabmicirswithpan" {
+			continue
+		}
+
+		mics++
+
+		s.Require().NotContains(block.BasedOn, "Legacy",
+			"%s is a current model", id)
+	}
+
+	s.Require().Positive(mics, "the catalog carries mic'd cabinets at all")
 }

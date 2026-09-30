@@ -187,6 +187,35 @@ do not lie on a line, and the fourth does not sit between the third and the
 fifth in any sense a slope describes. Those are compared rather than solved, and
 the next section is how.
 
+## Which model a gear name means
+
+The same gear ships more than once under one name, and the name has to mean one
+of them. 355 of this device's 661 models share a name with another of their own
+category, so this is the ordinary case rather than a corner.
+
+**The family decides, not the alphabet.** An amplifier before a preamp, because
+a rig naming "Ampeg SVT" means the amplifier and 108 names here are both. A
+mic'd cabinet before a legacy one, because the same speaker ships as
+`HD2_Cab1x15TucknGo` at 7.2 DSP carrying only floats and as
+`HD2_CabMicIr_1x15AmpegB15` at 2.5 carrying Mic, Angle and Position: a third of
+the cost for three more controls, one of them the twelve-microphone list the
+section above exists for.
+
+**The other one is still reachable, by the name Line 6 give it.** They call the
+older model `Legacy 1x15" Ampeg B-15` and the catalog records that, so:
+
+```yaml
+chain:
+  - gear: 1x15 Ampeg B-15          # the mic'd one, 2.5 DSP, twelve microphones
+  - gear: Legacy 1x15" Ampeg B-15  # the older one, 7.2 DSP, floats only
+```
+
+**A rig cannot name a model and is not meant to.** It names gear a person
+recognises, which is what makes it portable, and the above is how that resolves.
+A plan names the model outright, which is what `presets compile --plan` takes and
+what `tone tune --out` writes, so anything that has to have one exact model says
+so there.
+
 ## A list is compared, not solved
 
 Twelve microphones is twelve readings. That is cheaper than the sweep of a

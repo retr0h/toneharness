@@ -38,6 +38,15 @@ warnings.filterwarnings("ignore")
 RESOURCES = "/Applications/Line6/HX Edit.app/Contents/Resources"
 # Beside this script, so it does not matter which directory you run it from.
 OUT = pathlib.Path(__file__).with_name("gear-map.json")
+
+# The model lists Line 6 keep from an older release, which the guide gives a
+# separate section and a "Legacy" prefix.
+#
+# Only the cabinets, measured: of the 661 models every family's entries are
+# current except cab's 36, which are all legacy. The same speaker also ships as
+# cabmicirs and cabmicirswithpan, which are the current ones, so a name in this
+# section belongs to those and its Legacy twin belongs here.
+LEGACY_FAMILIES = {"cab"}
 # Column two of the manual's table. It is a phrase, not a word — "Mono,
 # Stereo" and "Single, Dual" both occur — so it is consumed as a whole or the
 # tail of it leaks into the gear name ("Stereo Klon Centaur").
@@ -72,11 +81,19 @@ def based_on(resources: str, by_name) -> dict[str, dict]:
     guide = os.path.join(resources, "HX Edit Pilot's Guide.pdf")
     reader = pypdf.PdfReader(guide)
 
+    # Every page, not only the ones carrying the "Based On" header. A table runs
+    # over several pages and the header is printed once, so filtering on it read
+    # the first page of each table and dropped the rest. The cabinets lost three
+    # pages that way: the current models' rows live there, the Legacy section's
+    # header is on the page after them, and the 58 mic'd cabinets ended up with
+    # their Legacy twin's entry because it was the only line anything saw.
+    #
+    # Safe to widen because a row has to be recognised anyway: it starts with a
+    # model's own display name and is followed by a subcategory phrase from a
+    # closed list. Prose does not do that.
     found: dict[str, dict] = {}
     for page in reader.pages:
         text = page.extract_text() or ""
-        if "Based On" not in text:
-            continue
         for line in text.split("\n"):
             line = line.strip()
             if not line or "Based On" in line:
@@ -89,13 +106,23 @@ def based_on(resources: str, by_name) -> dict[str, dict]:
             rest = SUBCATEGORY.match(line[len(name):].strip())
             if not rest:
                 continue
+            based = rest.group(2).strip()
             for symbolic_id, family in by_name[name]:
+                # A name can appear twice in the guide, once in the current
+                # section and once under Legacy, and the same cabinet ships in
+                # three families under one name. Pairing them by whether the
+                # entry says Legacy keeps each model naming the gear it
+                # emulates; taking whichever line came last gave all three the
+                # Legacy one, because the legacy section is further into the
+                # book. 58 models claimed to be legacy models and were not.
+                if based.startswith("Legacy ") != (family in LEGACY_FAMILIES):
+                    continue
                 found[symbolic_id] = {
                     "symbolic_id": symbolic_id,
                     "name": name,
                     "family": family,
                     "subcategory": rest.group(1).rstrip(","),
-                    "based_on": rest.group(2).strip(),
+                    "based_on": based,
                 }
     return found
 

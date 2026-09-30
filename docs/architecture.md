@@ -35,7 +35,7 @@ come out generic.
 | Problem                   | Source                                       | State                                       |
 | ------------------------- | -------------------------------------------- | ------------------------------------------- |
 | Who plays what            | `pkg/sdk/shipped/`, a hand-written pair each | thin, grows by correction                   |
-| Gear to model ID          | `resources/schemas/gear-map.json`            | 547 models                                  |
+| Gear to model ID          | `resources/schemas/gear-map.json`            | 575 models                                  |
 | What order blocks go in   | statistics over `resources/schemas/corpus/`  | added blocks placed; a rig's own order kept |
 | Which way a knob moves    | swept on the device, in `resources/sweeps/`  | eleven blocks measured and shipped          |
 | What values to set        | catalog defaults, corpus medians, intent     | six axes of ten                             |
