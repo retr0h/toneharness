@@ -17,7 +17,9 @@ documents them once, under *Common Amp Settings*:
 | `Bias X`        | *a tighter feel*                                  | *more tube compression*                 |
 
 Most of what remains is not a tone knob at all but a switch or a placement:
-`TempoSync`, `Mic`, `Position`, `Angle`, `Pan`. Those have no direction to find.
+`TempoSync`, `Mic`, `Position`, `Angle`, `Pan`. Those have no direction to find,
+which is not the same as nothing to measure: a sweep reads every setting of one
+and the loop ranks them, so what is missing is a slope rather than an answer.
 
 ## Prose is not a direction, and a sweep is
 

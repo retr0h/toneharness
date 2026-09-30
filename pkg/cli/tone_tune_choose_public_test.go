@@ -127,6 +127,61 @@ func (s *ChoosePublicTestSuite) TestListsOfFindsTheListsAndLeavesTheDialsAlone()
 	}
 }
 
+// TestListsOfFindsASwitchAsAChoiceOfTwo covers the kind that used to be skipped.
+//
+// A switch is a choice of two and is compared on the same machinery: the
+// ranking does not care how many settings there are. It carries Flip, because
+// the device does not coerce and setting one takes the other wire call.
+//
+// An SVT 4 Pro is the case worth having. It carries four switches beside its
+// dials, and one of them is a Bright that moves a bass chain further than
+// several of the knobs the solver was already spending readings on.
+func (s *ChoosePublicTestSuite) TestListsOfFindsASwitchAsAChoiceOfTwo() {
+	made := plan.Plan{Blocks: []plan.Block{{
+		Model: catalog.ModelID("HD2_PreampSVT4Pro"), Pos: 0, Enabled: true,
+		Params: plan.Params{"Bright": catalog.Bool(true)},
+	}}}
+
+	lists := listsOf(made, s.catalog())
+
+	var bright solve.Choice
+
+	for _, c := range lists {
+		if c.Setting == "Bright" {
+			bright = c
+		}
+	}
+
+	s.Require().Equal("Bright", bright.Setting, "a switch is compared")
+	s.Require().True(bright.Flip)
+	s.Require().Equal([]int{0, 1}, bright.Options,
+		"off and on, because false and true is not a range to step through")
+	s.Require().Equal(1, bright.At, "where the compiler left it")
+
+	for _, k := range knobsOf(made, s.catalog()) {
+		s.Require().NotEqual("Bright", k.Setting,
+			"a switch has no slope, so the solver may not be handed one")
+	}
+}
+
+// TestASwitchIsSetWithTheOtherCall is why Flip is carried at all.
+//
+// The device does not coerce. A switch sent the index 1 is refused with the
+// same error it gives for a block that is not there, which reads as the address
+// being wrong rather than the value, so the two cases cannot share a call.
+func (s *ChoosePublicTestSuite) TestASwitchIsSetWithTheOtherCall() {
+	ctrl := gomock.NewController(s.T())
+	pedal := mocks.NewMockTuner(ctrl)
+
+	pedal.EXPECT().
+		Switch(gomock.Any(), sdk.Control(0, 3), true).
+		Return(nil)
+
+	s.Require().NoError(choose(context.Background(),
+		TuneOptions{Client: pedal},
+		solve.Choice{Block: 0, Param: 3, Flip: true, Options: []int{0, 1}}, 1))
+}
+
 // TestListsOfOnABlockTheCatalogDoesNotCarry covers a chain built elsewhere.
 func (s *ChoosePublicTestSuite) TestListsOfOnABlockTheCatalogDoesNotCarry() {
 	s.Require().Empty(listsOf(plan.Plan{Blocks: []plan.Block{{

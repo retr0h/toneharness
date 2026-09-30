@@ -43,12 +43,19 @@ import (
 // differently. The committed sweeps say which controls are lists worth
 // comparing, and the chain in hand says what each setting does.
 
-// listsOf is every control in the chain that is a list rather than a dial.
+// listsOf is every control in the chain that is compared rather than turned.
 //
-// Only the integer kinds. A bool is a switch, which is a choice of two and
-// would be a fair thing to compare, but nothing measures one today and a pair
-// of readings spent on Bright is a pair of readings not spent on the eleven
-// microphones that move a cabinet further than any of its dials.
+// Lists and switches. A switch was left out while nothing could measure one:
+// `measure controls` swept floats and ints only, so there was no committed
+// evidence that any switch moved a figure, and a pair of readings spent on
+// Bright was a pair not spent on the eleven microphones that move a cabinet
+// further than any of its dials.
+//
+// It is in now because the cost turned out to be two readings and the wire
+// call already existed. A switch is a choice of two and `solve.Nearest` does
+// not care how many settings there are. Across the 661 blocks of an HX Stomp
+// there are 315 switches over 197 blocks, a median of one on a block that has
+// any, so a chain of five or six adds a handful of readings rather than a pass.
 func listsOf(
 	made plan.Plan,
 	cat *catalog.Catalog,
@@ -63,19 +70,40 @@ func listsOf(
 
 		for index, name := range wireOrder(cat, string(b.Model)) {
 			spec, known := block.Params[name]
-			if !known || spec.Type != catalog.ParamInt {
+			if !known {
 				continue
 			}
 
-			at, _ := b.Params[name].Int()
+			var (
+				at   int
+				flip bool
+			)
+
+			switch spec.Type {
+			case catalog.ParamInt:
+				got, _ := b.Params[name].Int()
+				at = int(got)
+			case catalog.ParamBool:
+				// Off and on, numbered, because the comparison works in
+				// settings. The catalog's bounds for a switch are false and
+				// true, which is not a range to enumerate.
+				flip = true
+
+				if on, _ := b.Params[name].Bool(); on {
+					at = 1
+				}
+			default:
+				continue
+			}
 
 			out = append(out, solve.Choice{
 				Block:   b.Pos,
 				Param:   index,
 				Control: fmt.Sprintf("%s %s", b.Model, name),
 				Setting: name,
-				At:      int(at),
-				Options: settings(spec),
+				At:      at,
+				Options: options(spec),
+				Flip:    flip,
 			})
 		}
 	}
@@ -93,9 +121,13 @@ func listsOf(
 // them. A cabinet's Mic is an integer from 0 to 11 and Line 6 ship no symbol
 // list saying which microphone each one is, so the report can only say which
 // setting won and not what it is called.
-func settings(
+func options(
 	spec catalog.Param,
 ) []int {
+	if spec.Type == catalog.ParamBool {
+		return []int{0, 1}
+	}
+
 	var out []int
 
 	for at := int(spec.Min); at <= int(spec.Max); at++ {
@@ -235,7 +267,16 @@ func choose(
 	c solve.Choice,
 	to int,
 ) error {
-	return opts.Client.Choose(ctx, sdk.Control(c.Block, c.Param), to)
+	at := sdk.Control(c.Block, c.Param)
+
+	// A switch takes the other call. The device does not coerce, so sending
+	// the index 1 to one is refused with the error it gives for a block that
+	// is not there, which reads as the address being wrong.
+	if c.Flip {
+		return opts.Client.Switch(ctx, at, to == 1)
+	}
+
+	return opts.Client.Choose(ctx, at, to)
 }
 
 // attempt is the two halves interleaved: choose the lists, solve the dials, and

@@ -170,6 +170,44 @@ func (mr *MockChoosesMockRecorder) Choose(ctx, at, value any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Choose", reflect.TypeOf((*MockChooses)(nil).Choose), ctx, at, value)
 }
 
+// MockSwitches is a mock of Switches interface.
+type MockSwitches struct {
+	ctrl     *gomock.Controller
+	recorder *MockSwitchesMockRecorder
+	isgomock struct{}
+}
+
+// MockSwitchesMockRecorder is the mock recorder for MockSwitches.
+type MockSwitchesMockRecorder struct {
+	mock *MockSwitches
+}
+
+// NewMockSwitches creates a new mock instance.
+func NewMockSwitches(ctrl *gomock.Controller) *MockSwitches {
+	mock := &MockSwitches{ctrl: ctrl}
+	mock.recorder = &MockSwitchesMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSwitches) EXPECT() *MockSwitchesMockRecorder {
+	return m.recorder
+}
+
+// Switch mocks base method.
+func (m *MockSwitches) Switch(ctx context.Context, at sdk.Address, on bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Switch", ctx, at, on)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Switch indicates an expected call of Switch.
+func (mr *MockSwitchesMockRecorder) Switch(ctx, at, on any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Switch", reflect.TypeOf((*MockSwitches)(nil).Switch), ctx, at, on)
+}
+
 // MockReadsFiles is a mock of ReadsFiles interface.
 type MockReadsFiles struct {
 	ctrl     *gomock.Controller
@@ -508,6 +546,20 @@ func (m *MockPedal) PresetFile(ctx context.Context, path string) (sdk.Reading, e
 func (mr *MockPedalMockRecorder) PresetFile(ctx, path any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresetFile", reflect.TypeOf((*MockPedal)(nil).PresetFile), ctx, path)
+}
+
+// Switch mocks base method.
+func (m *MockPedal) Switch(ctx context.Context, at sdk.Address, on bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Switch", ctx, at, on)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Switch indicates an expected call of Switch.
+func (mr *MockPedalMockRecorder) Switch(ctx, at, on any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Switch", reflect.TypeOf((*MockPedal)(nil).Switch), ctx, at, on)
 }
 
 // Turn mocks base method.

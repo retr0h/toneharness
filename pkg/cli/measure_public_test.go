@@ -234,12 +234,12 @@ func (s *MeasureTestSuite) TestResumeOnNothingToResumeFrom() {
 	}
 }
 
-// TestSweepableTakesDialsAndListsAndNotSwitches covers control selection.
+// TestSweepableTakesDialsAndLists covers control selection.
 //
-// Two positions is not a curve, so a switch is left out. A list is not, even
-// though it has no slope, because which of twelve microphones sits in front
-// of a speaker changes a cabinet more than any of its knobs.
-func (s *MeasureTestSuite) TestSweepableTakesDialsAndListsAndNotSwitches() {
+// A list is taken even though it has no slope, because which of twelve
+// microphones sits in front of a speaker changes a cabinet more than any of its
+// knobs.
+func (s *MeasureTestSuite) TestSweepableTakesDialsAndLists() {
 	block := s.cat.Blocks["HD2_CabMicIr_2x15Brute"]
 	got := Sweepable(block, WireOrder(s.cat, "HD2_CabMicIr_2x15Brute"))
 
@@ -250,7 +250,39 @@ func (s *MeasureTestSuite) TestSweepableTakesDialsAndListsAndNotSwitches() {
 
 	s.Require().Contains(kinds, "int", "the microphone is a list")
 	s.Require().Contains(kinds, "float")
-	s.Require().NotContains(kinds, "bool")
+}
+
+// TestSweepableNumbersASwitchBecauseTheCatalogDoesNot is why a switch needs a
+// range invented for it.
+//
+// Line 6 record a switch's bounds as 0 and 0, not as false and true, so there
+// is nothing to step through: swept on the catalog's own numbers a switch would
+// be read once, at off, and reported as a control that does nothing. Off and on
+// are numbered 0 and 1 here instead.
+//
+// A switch used to be left out entirely, on the grounds that two positions is
+// not a curve. Two positions is a comparison, which is what a list already gets.
+func (s *MeasureTestSuite) TestSweepableNumbersASwitchBecauseTheCatalogDoesNot() {
+	const model = "HD2_PreampSVT4Pro"
+
+	block := s.cat.Blocks[model]
+
+	s.Require().InDelta(0, block.Params["Bright"].Min, 0.001)
+	s.Require().InDelta(0, block.Params["Bright"].Max, 0.001,
+		"the catalog carries no range for a switch")
+
+	var bright control
+
+	for _, c := range Sweepable(block, WireOrder(s.cat, model)) {
+		if c.name == "Bright" {
+			bright = c
+		}
+	}
+
+	s.Require().Equal("Bright", bright.name, "a switch is swept")
+	s.Require().Equal("bool", bright.kind)
+	s.Require().InDelta(0, bright.low, 0.001)
+	s.Require().InDelta(1, bright.high, 0.001, "off and on")
 }
 
 // TestSweepableTakesTheCatalogsRange is why a range is not assumed.
@@ -261,6 +293,9 @@ func (s *MeasureTestSuite) TestSweepableTakesDialsAndListsAndNotSwitches() {
 func (s *MeasureTestSuite) TestSweepableTakesTheCatalogsRange() {
 	block := s.cat.Blocks["HD2_CabMicIr_2x15Brute"]
 
+	// This cabinet carries no switch, which is what makes it the block to ask:
+	// a switch is the one kind whose range this does not take, because the
+	// catalog does not carry one.
 	for _, c := range Sweepable(block, WireOrder(s.cat, "HD2_CabMicIr_2x15Brute")) {
 		spec := block.Params[c.name]
 

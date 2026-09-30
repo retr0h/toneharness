@@ -69,6 +69,15 @@ type (
 		Choose(ctx context.Context, at sdk.Address, value int) error
 	}
 
+	// Switches moves one that is a switch.
+	//
+	// Apart from both again, and for the same reason: the device does not
+	// coerce, so a switch declines 1.0 where it wants true with the error it
+	// gives for a block that is not there.
+	Switches interface {
+		Switch(ctx context.Context, at sdk.Address, on bool) error
+	}
+
 	// ReadsFiles says what a preset file holds, without a device.
 	ReadsFiles interface {
 		PresetFile(ctx context.Context, path string) (sdk.Reading, error)
@@ -99,4 +108,5 @@ type Prober interface {
 type Pedal interface {
 	Prober
 	Chooses
+	Switches
 }

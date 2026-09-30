@@ -169,6 +169,20 @@ func (mr *MockTunerMockRecorder) PresetFile(ctx, path any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresetFile", reflect.TypeOf((*MockTuner)(nil).PresetFile), ctx, path)
 }
 
+// Switch mocks base method.
+func (m *MockTuner) Switch(ctx context.Context, at sdk.Address, on bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Switch", ctx, at, on)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Switch indicates an expected call of Switch.
+func (mr *MockTunerMockRecorder) Switch(ctx, at, on any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Switch", reflect.TypeOf((*MockTuner)(nil).Switch), ctx, at, on)
+}
+
 // Turn mocks base method.
 func (m *MockTuner) Turn(ctx context.Context, at sdk.Address, value float32) error {
 	m.ctrl.T.Helper()

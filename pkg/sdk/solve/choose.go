@@ -67,6 +67,14 @@ type Choice struct {
 	// Options is every setting the control has, in the device's own order.
 	// That order is not a scale: it is the order Line 6 listed them in.
 	Options []int
+	// Flip says this control is a switch rather than a list, so its two
+	// settings are false and true.
+	//
+	// Carried because the device does not coerce: a switch declines the index
+	// 1 with the same error it gives for a block that is not there, so the
+	// caller applying a choice has to know which call to make. Nothing about
+	// the ranking changes, which is the point of comparing them the same way.
+	Flip bool
 }
 
 // Where is this control's identity, the same one a Knob has.

@@ -241,7 +241,7 @@ A plan names the model outright, which is what `presets compile --plan` takes an
 what `tone tune --out` writes, so anything that has to have one exact model says
 so there.
 
-## A list is compared, not solved
+## A list is compared, not solved, and so is a switch
 
 Twelve microphones is twelve readings. That is cheaper than the sweep of a
 single dial in a long chain, and the comparison is exact rather than modelled:
@@ -278,6 +278,24 @@ Settings are numbers rather than names because Line 6 ship no symbol list for
 them. The catalog says a cabinet's Mic runs 0 to 11 and nothing says which
 microphone each one is, so a report can say which setting won and not what it is
 called.
+
+**A switch goes through the same machinery**, as two settings numbered 0 and 1.
+It has no slope, so it cannot be solved, and the ranking does not care that
+there are two rather than twelve. It was skipped while nothing could measure
+one, on the grounds that a pair of readings spent on an amplifier's Bright was a
+pair not spent on the microphones. It is in now because the cost turned out to
+be exactly that pair: there are 315 switches across an HX Stomp's 661 blocks, a
+median of one on a block carrying any, so a chain of five or six adds a handful
+of readings rather than a pass.
+
+Off and on are numbered here rather than taken from the catalog, because the
+catalog carries a switch's bounds as 0 and 0. Swept on its own numbers a switch
+would be read once, at off, and reported as a control that does nothing.
+
+The device does not coerce, which is the one place a switch is not like a list:
+sent the index 1 it refuses with the error it gives for a block that is not
+there, so it reads as the address being wrong rather than the value. `device
+turn --switch` is the call, and the loop picks it by the parameter's kind.
 
 ## Choosing and solving interleave
 

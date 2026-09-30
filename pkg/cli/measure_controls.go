@@ -212,9 +212,15 @@ type control struct {
 
 // sweepable is the controls of a block that a sweep can move.
 //
-// Dials and lists. A switch is left out because two positions is not a curve,
-// and a parameter the catalog cannot place is left out because it would be
-// swept over a guessed range and filed under a guessed name.
+// Dials, lists and switches. A parameter the catalog cannot place is left out
+// because it would be swept over a guessed range and filed under a guessed
+// name.
+//
+// A switch used to be left out, on the grounds that two positions is not a
+// curve. Two positions is not a curve and is a comparison, which is what a list
+// gets: the machinery that ranks a cabinet's twelve microphones does not care
+// that there are twelve. Line 6 record a switch's bounds as false and true,
+// which carries no range, so the range is the two settings themselves.
 func sweepable(
 	block catalog.Block,
 	order []string,
@@ -223,13 +229,26 @@ func sweepable(
 
 	for i, name := range order {
 		spec, ok := block.Params[name]
-		if !ok || (spec.Type != "float" && spec.Type != "int") {
+		if !ok {
+			continue
+		}
+
+		low, high := spec.Min, spec.Max
+
+		switch spec.Type {
+		case "float", "int":
+		case "bool":
+			// Off and on, numbered, because a sweep works in positions and a
+			// switch's own bounds say nothing: the catalog carries false and
+			// true, which is not a range to step through.
+			low, high = 0, 1
+		default:
 			continue
 		}
 
 		out = append(out, control{
 			index: i, name: name, kind: string(spec.Type),
-			low: spec.Min, high: spec.Max,
+			low: low, high: high,
 		})
 	}
 
@@ -263,7 +282,7 @@ func sweep(
 	// microphones, so asking for nine evenly spaced positions across twelve
 	// would measure some twice and miss others.
 	points := opts.Points
-	if c.kind == "int" {
+	if c.kind == "int" || c.kind == "bool" {
 		points = int(c.high-c.low) + 1
 	}
 
@@ -363,7 +382,7 @@ func report(
 		floor := curve.Noise[f]
 
 		var moved float64
-		if curve.Kind == "int" {
+		if curve.Kind == "int" || curve.Kind == "bool" {
 			moved = curve.Spread[f]
 		} else {
 			moved, _ = measured.Apart(curve.Points, f)
@@ -394,8 +413,11 @@ func turn(
 ) error {
 	address := sdk.Address{Block: alone, Param: c.index, Direct: true}
 
-	if c.kind == "int" {
+	switch c.kind {
+	case "int":
 		return client.Choose(ctx, address, int(math.Round(at)))
+	case "bool":
+		return client.Switch(ctx, address, at >= 0.5)
 	}
 
 	return client.Turn(ctx, address, float32(at))

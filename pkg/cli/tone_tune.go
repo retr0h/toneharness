@@ -58,6 +58,7 @@ type Tuner interface {
 	Plays
 	Turns
 	Chooses
+	Switches
 	Reads
 }
 
