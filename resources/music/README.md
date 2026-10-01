@@ -69,7 +69,7 @@ wants to separate it again with different settings, and then it is gone.
 To see what the manifest names but the disk does not hold:
 
 ```bash
-toneharness measure recordings --dir resources/music/bass/flea/stems/htdemucs \
+mise exec -- go run main.go measure recordings --dir resources/music/bass/flea/stems/htdemucs \
   --manifest resources/music/bass/flea/corpus.yaml
 ```
 
@@ -79,7 +79,7 @@ It reports `named in the manifest but not measured` for each one.
 
 ```bash
 just stems resources/music/bass/flea resources/music/bass/flea/stems bass
-toneharness measure recordings --dir resources/music/bass/flea/stems/htdemucs \
+mise exec -- go run main.go measure recordings --dir resources/music/bass/flea/stems/htdemucs \
   --manifest resources/music/bass/flea/corpus.yaml
 ```
 

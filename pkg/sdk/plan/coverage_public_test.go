@@ -77,7 +77,8 @@ func (s *CoveragePublicTestSuite) TestEveryFieldAppearsInAPlan() {
 	}
 
 	s.Require().Empty(missing,
-		"no plan under examples/plan writes these. Add one to a plan, or add "+
+		"no plan under resources/reference/plan writes these. Add one to a "+
+			"plan, or add "+
 			"it to exempt with a reason: %v", missing)
 }
 
@@ -142,9 +143,9 @@ func (s *CoveragePublicTestSuite) declared() []string {
 // rest, so nothing would have caught them.
 func (s *CoveragePublicTestSuite) written() map[string]bool {
 	found, err := filepath.Glob(
-		filepath.Join("..", "..", "..", "examples", "plan", "*.yaml"))
+		filepath.Join("..", "..", "..", "resources", "reference", "plan", "*.yaml"))
 	s.Require().NoError(err)
-	s.Require().NotEmpty(found, "no plans under examples/plan")
+	s.Require().NotEmpty(found, "no plans under resources/reference/plan")
 
 	fixture, err := filepath.Glob(filepath.Join("testdata", "*.yaml"))
 	s.Require().NoError(err)

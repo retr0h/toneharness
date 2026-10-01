@@ -125,7 +125,7 @@ func (s *ShippedPublicTestSuite) TestEveryShippedAskAnswersEachAxisOnce() {
 // TestEveryExampleUsesTheVocabulary covers the asks the docs point at.
 func (s *ShippedPublicTestSuite) TestEveryExampleUsesTheVocabulary() {
 	paths, err := filepath.Glob(
-		filepath.Join("..", "..", "..", "..", "examples", "tonespec", "*.yaml"))
+		filepath.Join("..", "..", "..", "..", "resources", "reference", "tonespec", "*.yaml"))
 	s.Require().NoError(err)
 	s.Require().NotEmpty(paths, "no examples found to check")
 

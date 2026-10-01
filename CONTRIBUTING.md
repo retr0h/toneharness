@@ -165,6 +165,7 @@ pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
   wire/              the framing a device speaks. Pure Go, no hardware needed.
 resources/
   schemas/           the generated catalog, the gear map, the preset corpus
+  reference/         one of each document with every field filled in, what tests read
 .claude/skills/      how to do each job. Five skills, each self-contained
 marketplace/         rigs people use and send
   core/artists/      the cited ones, copied into pkg/sdk/shipped by a generator

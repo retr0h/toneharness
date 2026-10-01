@@ -77,9 +77,10 @@ again:
 Every claim in a rig carries its source, which is what makes one worth sending.
 [marketplace/](marketplace/) is where they live: a cited core that ships in the
 binary, and a community tier you load with `--rigs`. Its README says what the
-two tiers are and how to submit one. [examples/rigspec/](examples/rigspec/) has
-one with every optional field filled in, which is the reference rather than a
-rig anybody uses.
+two tiers are and how to submit one.
+[resources/reference/](resources/reference/) holds one of each document with
+every optional field filled in. Those are what the tests pin and what to read
+when you want to see a field used, rather than rigs anybody plays.
 
 ## What ships in the binary
 
@@ -190,29 +191,39 @@ None of them writes down a list the tool can print. A list in a skill is right
 the day it is written and wrong after the next change, with nothing marking the
 moment.
 
-## Install
+## Running it
+
+A checkout, which is how the Quickstart above works: an agent reads the skills
+out of `.claude/skills/` and runs the tree.
+
+```bash
+git clone https://github.com/retr0h/toneharness
+cd toneharness
+mise exec -- go run main.go --help
+```
+
+`mise` supplies the Go version `.mise.toml` declares. `go run main.go` compiles
+the tree every time, so what answers is the source rather than a binary that may
+be older than the branch, and `--help` is the command reference: no page here
+duplicates it.
+
+There are no releases yet, so there is nothing to install. When there are, the
+installer and `go install` are the other two ways in:
+
+<details>
+<summary>Once a release exists</summary>
 
 ```bash
 curl -fsSL https://github.com/retr0h/toneharness/raw/main/install.sh | bash
-```
-
-`toneharness <command> --help` is the command reference, and no page here
-duplicates it. From a checkout it is `go run main.go --help`, which compiles the
-tree and answers from the source rather than from a description of it.
-
-Installs to `~/.local/bin` or `/usr/local/bin`, verifying SHA256 checksums.
-Override with `TONEHARNESS_INSTALL_DIR=/some/path`, or pin a version with
-`TONEHARNESS_VERSION=1.1.1`.
-
-<details>
-<summary>Other ways</summary>
-
-```bash
 go install github.com/retr0h/toneharness@latest
 ```
 
-Released binaries reach a Helix over USB on macOS. On Linux they build, validate
-and write presets, and the device commands say they are not supported yet.
+The installer writes to `~/.local/bin` or `/usr/local/bin` and verifies SHA256
+checksums. `TONEHARNESS_INSTALL_DIR` moves it, `TONEHARNESS_VERSION` pins one.
+
+A released binary reaches a Helix over USB on macOS. On Linux it builds,
+validates and writes presets, and the device commands say they are not supported
+yet.
 
 </details>
 
