@@ -42,125 +42,106 @@ Point an agent at a checkout and tell it what you want to sound like.
 
 ## Quickstart
 
-Start your agent in a checkout and say what you want:
+Start your agent in a checkout and talk to it. Everything below is something to
+type.
 
-- _"Make my bass sound like Dookie"_
-- _"Like Mike Dirnt, but punchier"_
-- _"What did Geddy Lee actually play on Hemispheres?"_
-- _"I want a punk sound, find me an empty slot and let's work there"_
+> _"Make my bass sound like Dookie."_
+>
+> _"I want a punk sound."_
+>
+> _"What did Geddy Lee actually play on Hemispheres?"_
 
-Ask it to put that on the pedal and it does. With one plugged in over USB the
-chain starts making that sound at once, nothing stored and nothing overwritten,
-or goes into a slot you name. HX Edit is not in the path and does not have to be
-running.
+### Put it on the pedal
 
-You also get the `.hlx` file, which is what HX Edit and the plugin read if you
-want it there. Building one needs no pedal at all.
+> _"Put that on the pedal."_
+>
+> _"Find me an empty slot and put it there."_
+>
+> _"What is the pedal playing right now?"_
 
-**Then you play it**, because nothing here can hear. Say what is wrong in your
-own words and it turns the dials, rebuilds, and records what worked so the next
-session starts from there. With the pedal attached it can measure what comes
-back, which is the only thing that tells you whether a change did what it meant
-to.
+HX Edit does not have to be running. You get the `.hlx` file too, if you want it
+there instead.
 
-### Words, and what happens to one nothing defines
+### Fix what you just heard
 
-Nothing is refused over a word. Ask for "chunky" and the preset still gets
-built. Twenty-five words are defined, though, and only those move a control: ask
-for one that is not and you are told so with the nearest ones that are, and no
-knob turns for it.
+Nothing here can hear, so this is the loop: you play it, you say what is wrong.
 
-> _"What words can I actually use, and what does each one do?"_
+> _"Too woolly. Tighten the bottom up."_
+>
+> _"Closer, but I want the pick to cut more."_
+>
+> _"Turn it down a bit and measure it again."_
+
+### Find out which words do something
+
+> _"What words can I use, and what does each one do?"_
 >
 > _"I asked for chunky and nothing moved. What should I have said?"_
 
-`punchy` is a bottom that stops with the note and a front you hear first.
-`mid-forward` puts the part in front of the mix. The list is
-[words.json](pkg/sdk/internal/compile/data/words.json), which is the vocabulary
-itself rather than a page about it.
+Nothing is refused over a word. Twenty-five are defined and only those move a
+control; the rest come back named, with the nearest ones that are.
 
-### Somebody nobody has researched yet
+### Ask for somebody who does not ship
 
-Fifteen rigs ship, each with a citation behind every piece of gear.
-
-> _"Do you have a rig for Tim Commerford, or do you need to research it?"_
+> _"Do you have a rig for Tim Commerford, or do you have to research it?"_
 >
 > _"Research Justin Chancellor's Lateralus rig and write it up with sources."_
+>
+> _"Why is this rig only medium confidence?"_
 
-Naming somebody who does not ship is research rather than a build, and slower.
-If the evidence will not hold up, the answer you get is that it could not be
-established rather than a plausible rig.
+Fifteen rigs ship with a citation behind every piece of gear. Anybody else is
+research, and if the evidence will not hold up you are told that rather than
+handed a plausible rig.
 
-### Adding a genre, start to finish
+### Ask which genres are ready
 
-Three genres are measured. One needs **eight records from three players** before
-anything may aim at it, or it is a single band's sound wearing a genre's name.
+> _"Which genres can I aim at, and which are short of the threshold?"_
 
-> _"What genres are ready to aim at, and which are short of the threshold?"_
+Eight records from three players, or it is one band's sound wearing a genre's
+name.
 
-Five steps, and your agent can drive all of them.
-
-**1. Name the records before fetching them**, so what gets measured is the
-recording the evidence names. One file per player, at
-`resources/music/<instrument>/<player-slug>/corpus.yaml`:
-
-```yaml
-artist: Justin Chancellor
-tracks:
-  - track: schism
-    url: https://open.spotify.com/track/1dMFQX2BqPkR5zjC2DxFUM
-    year: 2001
-    band: Tool
-    genres: [prog-metal]
-    genres_by: llm
-```
+### Add records to a genre
 
 > _"Add Justin Chancellor to the bass corpus with four Lateralus tracks."_
+>
+> _"Fetch the records you just named."_
+>
+> _"Cut the bass out of them."_
+>
+> _"Measure the corpus and tell me what prog-metal earns now."_
+>
+> _"Regenerate what ships and open the PR."_
 
-**2. Fetch each record** by its link rather than a search, so what lands is the
-recording the manifest names:
+The records and the stems stay on your disk. A pull request carries the manifest
+and the measurements, never the audio.
+
+<details>
+<summary>What your agent runs for that last one</summary>
 
 ```bash
+# 1. the manifest first, so the record measured is the one the evidence names
+#    resources/music/bass/justin-chancellor/corpus.yaml
+
+# 2. fetch by the link, never a search
 mise exec -- just record resources/music/bass/justin-chancellor schism \
   https://open.spotify.com/track/1dMFQX2BqPkR5zjC2DxFUM
-```
 
-**3. Cut the bass out of the mix.** A mix measures the band, so no figure
-describes the player until the instrument is separated:
-
-```bash
+# 3. a mix measures the band, so the bass has to come out of it
 mise exec -- just stems resources/music/bass/justin-chancellor \
   resources/music/bass/justin-chancellor/stems bass
-```
 
-**4. Measure.** A word is earned by sitting clear of the other players, so this
-compares the whole tree rather than profiling one person:
-
-```bash
+# 4. a word is earned against the other players, so measure the tree
 mise exec -- go run main.go measure players --corpus resources/music/bass
 mise exec -- go run main.go measure genres  --corpus resources/music/bass
-```
 
-**5. Regenerate what ships**, which rolls the measurements into the file the
-binary embeds:
-
-```bash
+# 5. roll it into the file the binary embeds
 mise exec -- just generate     # writes pkg/sdk/audio/data/genres.json
 ```
 
 Re-measure only when the records or the stems change. The numbers are committed,
-so nobody else re-runs any of this.
+so nobody else runs any of this.
 
-**What a pull request carries, and what it must not.** The manifest and the
-regenerated `genres.json`. **Not the audio and not the stems**: those are
-somebody else's records, `.gitignore` refuses them, and
-[resources/README.md](resources/README.md) says neither may be redistributed.
-The measurements travel, the recordings stay on your disk.
-
-> _"I've added the records and run the measurements. Open the PR."_
-
-Adding a player to a genre that already exists is the same five steps. A genre
-crosses the threshold on its own once enough players sit behind it.
+</details>
 
 ## Skills
 
