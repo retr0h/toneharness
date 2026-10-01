@@ -377,9 +377,6 @@ type Correction struct {
 
 // Device The hardware, which decides what a chain may cost and what it may hold.
 type Device struct {
-	// Firmware What it is running, where that matters. A block's parameters can change between releases, and a measurement taken on one is not a measurement of the other.
-	Firmware *string `json:"firmware,omitempty"`
-
 	// Model As Line 6 name it: "HX Stomp", "Helix Floor".
 	Model string `json:"model"`
 }
@@ -459,9 +456,6 @@ type Instrument struct {
 
 	// Gear As a person would say it: "Fender Jazz Bass", "Rickenbacker 4003".
 	Gear string `json:"gear"`
-
-	// Pickups Where they are and what they are, when it is not what the instrument shipped with.
-	Pickups *string `json:"pickups,omitempty"`
 
 	// Strings What is on it.
 	//

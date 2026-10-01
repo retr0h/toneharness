@@ -58,6 +58,27 @@ func Rigs(
 	}.Render(w))
 }
 
+// opening is a caveat's first sentence, which is its point.
+//
+// By the full stop followed by a space, so "6x10." inside one does not end it
+// and neither does a paragraph break. A caveat with no full stop is short
+// enough to print whole.
+func opening(
+	caveat string,
+) string {
+	for i := 0; i+1 < len(caveat); i++ {
+		if caveat[i] != '.' {
+			continue
+		}
+
+		if next := caveat[i+1]; next == ' ' || next == '\n' {
+			return caveat[:i+1]
+		}
+	}
+
+	return caveat
+}
+
 // Rig prints one rig in full.
 func Rig(
 	w io.Writer,
@@ -77,6 +98,20 @@ func Rig(
 		Value: fmt.Sprintf("%s, %s confidence",
 			rig.Sourced(spec), confidence(r.Ask)),
 	})
+
+	// After the source, because a caveat is about the source: what it does not
+	// show.
+	//
+	// The first sentence of each, which is where these are written to carry the
+	// point: "the producer's answer, not the player's", "this is not the
+	// contradiction it looks like". Printing them whole put five paragraphs in a
+	// nine-line summary and nobody would have read any of them, which is the
+	// argument the measuring shortlist already makes about a list too long to
+	// work through. The whole of one is in the rig file, which this names.
+	for _, caveat := range rig.Caveats(spec) {
+		d.Fields = append(d.Fields,
+			paint.Field{Label: "caveat", Value: opening(caveat)})
+	}
 
 	switch {
 	case !rig.Trusted(spec):
