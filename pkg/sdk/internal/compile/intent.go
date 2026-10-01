@@ -78,4 +78,13 @@ type Word struct {
 	// figure and what that figure was compared against, how far it moves
 	// anything. Empty is a word somebody asserted.
 	Evidence []tone.Evidence
+	// Derived says the word was earned by measuring a population rather than
+	// written on the ask.
+	//
+	// Not inferable from the evidence. A genre's word carries audio evidence
+	// and so does a word somebody measured off a record themselves, and the
+	// two mean different things here: on an axis a person already spoke for,
+	// a derived word stands aside rather than cancelling what they said.
+	// Which is why this is stated rather than guessed at.
+	Derived bool
 }

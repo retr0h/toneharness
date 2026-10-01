@@ -40,7 +40,7 @@ import (
 
 // Builds turns a curated rig into a preset a device will load.
 type Builds interface {
-	Make(ctx context.Context, rigID string, out string, existing sdk.Existing) (sdk.Made, error)
+	Make(ctx context.Context, in sdk.Build) (sdk.Made, error)
 }
 
 // Tuner is what solving for knob positions needs: build a chain, put it in
@@ -494,7 +494,7 @@ func built(
 ) (sdk.Made, string, string, error) {
 	out := filepath.Join(os.TempDir(), opts.ID+".tune.hlx")
 
-	made, err := opts.Client.Make(ctx, opts.ID, out, sdk.ReplaceExisting)
+	made, err := opts.Client.Make(ctx, sdk.Build{RigID: opts.ID, Out: out})
 	if err != nil {
 		return sdk.Made{}, "", "", err
 	}

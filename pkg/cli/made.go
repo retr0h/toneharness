@@ -162,6 +162,10 @@ func says(
 			line = fmt.Sprintf(
 				"%s — another term already answered for %s, so neither moved",
 				m.Term, m.Against)
+		case m.Yielded():
+			line = fmt.Sprintf(
+				"%s — a genre measured this, and you said %s, so yours stands",
+				m.Term, m.YieldedTo)
 		case m.Holds():
 			line = fmt.Sprintf("%s — %s", m.Term, m.Already)
 		case m.Acted():

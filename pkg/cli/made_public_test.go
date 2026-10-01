@@ -263,6 +263,22 @@ func (s *MadePublicTestSuite) TestMade() {
 						},
 					},
 					{
+						// The other outcome on a shared axis, and it reads
+						// differently on purpose: one word stood, and whose it
+						// was is the useful half.
+						name: "a measured word standing aside for one somebody wrote",
+						in: s.made(func(m *sdk.Made) {
+							m.Moved = []sdk.Moved{
+								{Term: "grit-on-attack", Param: "Drive", From: 0.6, To: 0.72},
+								{Term: "clean", YieldedTo: "grit-on-attack"},
+							}
+						}),
+						want: []string{
+							"grit-on-attack — Drive 0.60 to 0.72",
+							"clean — a genre measured this, and you said grit-on-attack, so yours stands",
+						},
+					},
+					{
 						// A word nothing defines is said and not refused.
 						name: "a rig describing itself in its own words",
 						in: s.made(func(m *sdk.Made) {

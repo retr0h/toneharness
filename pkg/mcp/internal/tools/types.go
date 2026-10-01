@@ -45,7 +45,7 @@ type Client interface {
 	Backing(ctx context.Context, corpus string) ([]sdk.Backing, error)
 	Scaffold(ctx context.Context, in sdk.NewRig) (sdk.Scaffolded, error)
 	Tone(ctx context.Context, in sdk.Ask) (sdk.Resolved, error)
-	Make(ctx context.Context, rigID, out string, existing sdk.Existing) (sdk.Made, error)
+	Make(ctx context.Context, in sdk.Build) (sdk.Made, error)
 	Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error)
 	// The music corpus, read as files rather than measured: a listing costs
 	// nothing where measuring costs minutes per record.
@@ -142,9 +142,13 @@ type Asked struct {
 }
 
 // Outcome is what presets_make answers: exactly one side is set.
+//
+// One type on both sides, because both resolve. Which side says where the rig
+// came from, not how much of it was honoured: a rig named by identifier and a
+// rig file handed over are both built against the ask beside them.
 type Outcome struct {
-	FromShipped *sdk.Made  `json:"from_shipped,omitempty"`
-	FromRig     *sdk.Built `json:"from_rig,omitempty"`
+	FromShipped *sdk.Made `json:"from_shipped,omitempty"`
+	FromRig     *sdk.Made `json:"from_rig,omitempty"`
 }
 
 // Model is one model as corpus_presets_show answers it: the block, and how players

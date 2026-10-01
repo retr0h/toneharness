@@ -89,7 +89,7 @@ func (s *ReachTestSuite) opts() ReachOptions {
 // built makes the pedal answer everything one pass asks of it.
 func (s *ReachTestSuite) built() {
 	s.pedal.EXPECT().
-		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Make(gomock.Any(), gomock.Any()).
 		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 			Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true,
 		}}}}, nil)
@@ -150,7 +150,7 @@ func (s *ReachTestSuite) TestReach() {
 				s.genre.EXPECT().
 					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 						Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true,
 					}}}}, nil)
@@ -272,7 +272,7 @@ func (s *ReachTestSuite) TestReach() {
 				s.genre.EXPECT().
 					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{}, wanted)
 
 				s.Require().ErrorIs(
@@ -286,7 +286,7 @@ func (s *ReachTestSuite) TestReach() {
 				s.genre.EXPECT().
 					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 						Model: catalog.ModelID("HD2_NotAModel"), Pos: 0,
 					}}}}, nil)
@@ -415,7 +415,7 @@ func (s *ReachTestSuite) TestReach() {
 				s.genre.EXPECT().
 					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.wide(), nil)
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 						Model: catalog.ModelID("HD2_AmpSVBeastBrt"),
 						Pos:   0, Enabled: true,

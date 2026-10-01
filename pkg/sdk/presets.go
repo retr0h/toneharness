@@ -248,6 +248,33 @@ func (c *Client) PresetFile(
 	return c.fileOperations().ShowFile(ctx, path)
 }
 
+// Build says which rig to resolve, with which ask, and where the preset goes.
+//
+// A struct rather than four arguments, for the reason Compile is one: paths of
+// one type are too easy to pass in the wrong order, and a fifth document added
+// later is a field rather than a broken signature.
+type Build struct {
+	// RigID names a rig in a directory of them. Name this or Rig, not both.
+	RigID string
+	// Rig is a rig file to resolve instead, for one somebody has in hand from
+	// `tone build` or from somebody who sent it. Name this or RigID.
+	Rig string
+	// Ask is the ToneSpec to resolve it against: the words, the genre and how
+	// it was played.
+	//
+	// Optional, and empty is not the same as no ask. A rig named by RigID is
+	// found with the ask beside it, and a rig named by Rig takes the
+	// `<stem>.tone.yaml` next to it where one is there. Name this only to use
+	// an ask that does not sit beside the rig.
+	Ask string
+	// Out is where the preset is written.
+	Out string
+	// Existing is what happens to a file already at Out. The zero value,
+	// ReplaceExisting, puts the preset in its place; KeepExisting refuses it
+	// with an error matching fs.ErrExist.
+	Existing Existing
+}
+
 // Compile says what rig to build, what to build it into, and where the preset
 // goes.
 //

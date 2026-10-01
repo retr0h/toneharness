@@ -72,9 +72,24 @@ func (s *MakePublicTestSuite) opts(
 // TestMake builds a preset out of a rig.
 func (s *MakePublicTestSuite) TestMake() {
 	tests := []struct {
-		name    string
-		ctx     context.Context
-		id      string
+		name string
+		ctx  context.Context
+		id   string
+		// rigPath names the rig by file instead of by identifier, relative to
+		// the rigs this suite's testdata holds. askPath does the same for the
+		// ask, for the one case that names an ask not beside its rig.
+		rigPath string
+		askPath string
+		// bothSources names a rig twice and noSource names it not at all,
+		// which are the two ways to ask for a rig nobody identified.
+		bothSources bool
+		noSource    bool
+		// alone copies the named rig into a directory of its own, so there is
+		// no ask beside it to be found.
+		alone string
+		// badAsk is written to a file and named as the ask, for a document
+		// that is there and is not a ToneSpec.
+		badAsk  string
 		stats   string
 		catalog string
 		// setup is what the person has. The row writes it to a file, so a
@@ -92,6 +107,8 @@ func (s *MakePublicTestSuite) TestMake() {
 		blocks   int
 		out      string
 		contains []string
+		// absent is what the answer must not say.
+		absent   []string
 		loadable bool
 		written  []string
 		err      error
@@ -102,6 +119,69 @@ func (s *MakePublicTestSuite) TestMake() {
 			id:       "test-player",
 			loadable: true,
 			contains: []string{"Test Player"},
+		},
+		{
+			// The same rig by path rather than by identifier, and the words on
+			// the ask beside it still reach a control. The point of the whole
+			// flag: a rig that `tone build` wrote has no identifier to look up,
+			// and compiling it instead dropped every word with nothing said.
+			name:     "a rig file, with the ask beside it",
+			rigPath:  "own-words.yaml",
+			loadable: true,
+			contains: []string{"sounds like a wet paper bag"},
+		},
+		{
+			// An ask somewhere else, because the rig a request produced and the
+			// request that produced it do not land beside each other.
+			name:     "a rig file and an ask named apart from it",
+			rigPath:  "test-player.yaml",
+			askPath:  "own-words.tone.yaml",
+			loadable: true,
+			contains: []string{"sounds like a wet paper bag"},
+		},
+		{
+			// A rig with no ask is legal and ordinary. Somebody's own directory
+			// holds rigs they wrote, and nothing obliges them to write down the
+			// request that produced one.
+			name:  "a rig file with no ask beside it",
+			alone: "own-words.yaml",
+			// The rig's own identifier, because the name comes off the ask's
+			// subject and there is no subject without one.
+			named:    "own-words",
+			loadable: true,
+			// The words were on the ask, and there is no ask, so the one thing
+			// this rig said about itself is gone with it.
+			absent: []string{"sounds like a wet paper bag"},
+		},
+		{
+			// A path somebody typed is not a shrug. They said to read that file,
+			// so a document that is there and is not a ToneSpec fails rather
+			// than being skipped the way a missing neighbour is.
+			name:    "an ask that is there and will not parse",
+			rigPath: "test-player.yaml",
+			badAsk:  "schema: NotAToneSpec\n",
+			errText: "broken.tone.yaml",
+		},
+		{
+			name:        "a rig named twice",
+			bothSources: true,
+			err:         presets.ErrOneRig,
+		},
+		{
+			name:     "a rig named no way at all",
+			noSource: true,
+			err:      presets.ErrOneRig,
+		},
+		{
+			name:    "a rig file that is not there",
+			rigPath: "no-such-rig.yaml",
+			errText: "no-such-rig.yaml",
+		},
+		{
+			name:    "an ask that is not there",
+			rigPath: "test-player.yaml",
+			askPath: "no-such-ask.tone.yaml",
+			errText: "no-such-ask.tone.yaml",
 		},
 		{
 			// A word nothing defines is said and not refused. Nothing
@@ -233,6 +313,44 @@ func (s *MakePublicTestSuite) TestMake() {
 			}
 
 			o := s.opts(tt.id, out)
+
+			if tt.rigPath != "" {
+				o.RigID = ""
+				o.RigPath = filepath.Join("testdata", "rigs", "artists", tt.rigPath)
+			}
+
+			if tt.askPath != "" {
+				o.AskPath = filepath.Join("testdata", "rigs", "artists", tt.askPath)
+			}
+
+			if tt.alone != "" {
+				at := filepath.Join(dir, tt.alone)
+				from, readErr := os.ReadFile(
+					filepath.Join("testdata", "rigs", "artists", tt.alone))
+				s.Require().NoError(readErr)
+				s.Require().NoError(os.WriteFile(at, from, 0o600))
+
+				o.RigID = ""
+				o.RigPath = at
+			}
+
+			if tt.badAsk != "" {
+				at := filepath.Join(dir, "broken.tone.yaml")
+				s.Require().NoError(os.WriteFile(at, []byte(tt.badAsk), 0o600))
+
+				o.AskPath = at
+			}
+
+			if tt.bothSources {
+				o.RigID = "test-player"
+				o.RigPath = filepath.Join("testdata", "rigs", "artists", "test-player.yaml")
+			}
+
+			if tt.noSource {
+				o.RigID = ""
+				o.RigPath = ""
+			}
+
 			if tt.stats != "" {
 				o.StatsPath = tt.stats
 			}
@@ -279,6 +397,10 @@ func (s *MakePublicTestSuite) TestMake() {
 
 			for _, want := range tt.contains {
 				s.Require().Contains(got, want)
+			}
+
+			for _, not := range tt.absent {
+				s.Require().NotContains(got, not)
 			}
 
 			if tt.playing == "" {

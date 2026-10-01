@@ -139,26 +139,25 @@ func (h *handlers) presetsMake(
 		return nil, Outcome{}, err
 	}
 
-	switch {
-	case in.RigID != "":
-		made, err := h.client.Make(ctx, in.RigID, in.Out, h.existing())
-		if err != nil {
-			return nil, Outcome{}, h.refused(in.Out, err)
-		}
-
-		return said("wrote %s from rig %s", in.Out, in.RigID), Outcome{FromShipped: &made}, nil
-	default:
-		built, err := h.client.Compile(ctx, sdk.Compile{
-			Rig:      in.RigPath,
-			Out:      in.Out,
-			Existing: h.existing(),
-		})
-		if err != nil {
-			return nil, Outcome{}, h.refused(in.Out, err)
-		}
-
-		return said("wrote %s from %s", in.Out, in.RigPath), Outcome{FromRig: &built}, nil
+	// Both sides resolve, which is the point of naming the rig rather than the
+	// file: a rig has an ask beside it, and the words on that ask are what turn
+	// a chain into somebody's sound. Compiling a rig path instead would write
+	// the gear and drop the words, with nothing saying so.
+	made, err := h.client.Make(ctx, sdk.Build{
+		RigID:    in.RigID,
+		Rig:      in.RigPath,
+		Out:      in.Out,
+		Existing: h.existing(),
+	})
+	if err != nil {
+		return nil, Outcome{}, h.refused(in.Out, err)
 	}
+
+	if in.RigID != "" {
+		return said("wrote %s from rig %s", in.Out, in.RigID), Outcome{FromShipped: &made}, nil
+	}
+
+	return said("wrote %s from %s", in.Out, in.RigPath), Outcome{FromRig: &made}, nil
 }
 
 func (h *handlers) corpusMusicPlayers(

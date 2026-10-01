@@ -22,6 +22,7 @@ package compile
 
 import (
 	"math"
+	"slices"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
@@ -41,6 +42,9 @@ type Moved struct {
 	// Against names the axis another term in the same rig also spoke for.
 	// Empty unless two words answered one question.
 	Against string
+	// YieldedTo names the word somebody wrote that this one stood aside for.
+	// Empty unless a genre's word met an ask's word on one axis.
+	YieldedTo string
 	// Because says why the chain could not answer this word, when the chain
 	// is the reason. Empty when nothing acts on the word at all, which is a
 	// different answer: one says this rig cannot hear it, the other says
@@ -61,6 +65,9 @@ func (m Moved) Acted() bool { return m.Param != "" }
 
 // Contested says whether another term spoke for the same axis.
 func (m Moved) Contested() bool { return m.Against != "" }
+
+// Yielded says whether this word stood aside for one somebody wrote.
+func (m Moved) Yielded() bool { return m.YieldedTo != "" }
 
 // Unanswered says whether the chain, rather than this project, is why the
 // word moved nothing.
@@ -229,6 +236,15 @@ func move(
 		// reads as though the rig said nothing.
 		if axis, against := contestedAxis(term, contested); against {
 			out = append(out, Moved{Term: term, Against: axis})
+
+			continue
+		}
+
+		// Outranked rather than contradicted. A word a genre earned moves
+		// nothing on an axis somebody already spoke for, and says whose word
+		// took it, because "neither moved" would be a lie about both.
+		if to, aside := yields(h, terms); aside {
+			out = append(out, Moved{Term: term, YieldedTo: to})
 
 			continue
 		}
@@ -406,7 +422,11 @@ func termsOf(
 
 	out := make([]heard, 0, len(words))
 	for _, word := range words {
-		out = append(out, heard{term: word.Term, weight: weightOf(word)})
+		out = append(out, heard{
+			term:    word.Term,
+			weight:  weightOf(word),
+			derived: word.Derived,
+		})
 	}
 
 	return out
@@ -420,6 +440,9 @@ type heard struct {
 	// the whole step. A word nobody measured is worth the whole step,
 	// because there is nothing to say it should be worth less.
 	weight float64
+	// derived says a population earned the word rather than somebody writing
+	// it, which decides who yields when two words answer one axis.
+	derived bool
 }
 
 // measures names the figure each axis is earned from, for the axes a
@@ -599,10 +622,21 @@ func moveOne(
 }
 
 // contested finds the axes an ask spoke for more than once.
+//
+// Only words of the same standing contest each other. Two words somebody wrote
+// about the low end is a contradiction and neither moves, because this cannot
+// know which half they meant. A word they wrote against one a genre earned is
+// not a contradiction: they said it and a population did not, so theirs answers
+// the axis and the derived one yields, which [yields] reports.
+//
+// Counting both together made the person lose their own word to a measurement
+// of fifteen records nobody asked about, and said "neither moved" as though
+// they had contradicted themselves.
 func contested(
 	terms []heard,
 ) map[string]bool {
-	seen := map[string]int{}
+	written := map[string]int{}
+	derived := map[string]int{}
 
 	for _, h := range terms {
 		axes, ok := axesOf(h.term)
@@ -613,16 +647,66 @@ func contested(
 		// One count per axis the word answers. A compound word speaks for both
 		// of its axes, so it contests either of them on its own.
 		for _, axis := range axes {
-			seen[axis]++
+			if h.derived {
+				derived[axis]++
+
+				continue
+			}
+
+			written[axis]++
 		}
 	}
 
 	out := map[string]bool{}
-	for axis, n := range seen {
+
+	for axis, n := range written {
 		if n > 1 {
 			out[axis] = true
 		}
 	}
 
+	// Derived words contest each other only where nothing written answered the
+	// axis. Two genres disagreeing is still a contradiction, and still nothing
+	// this can resolve.
+	for axis, n := range derived {
+		if n > 1 && written[axis] == 0 {
+			out[axis] = true
+		}
+	}
+
 	return out
+}
+
+// yields says whether a derived word stands aside for one somebody wrote.
+//
+// Separate from [contested] because it is a different answer and deserves to be
+// reported as one. A contested word is a contradiction nobody can resolve; a
+// word that yields was simply outranked, and the build is doing what the person
+// asked rather than refusing to choose.
+func yields(
+	h heard,
+	terms []heard,
+) (string, bool) {
+	if !h.derived {
+		return "", false
+	}
+
+	axes, ok := axesOf(h.term)
+	if !ok {
+		return "", false
+	}
+
+	for _, axis := range axes {
+		for _, other := range terms {
+			if other.derived {
+				continue
+			}
+
+			if also, found := axesOf(other.term); found && slices.Contains(also, axis) {
+				return other.term, true
+			}
+		}
+	}
+
+	return "", false
 }

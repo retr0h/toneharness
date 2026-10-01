@@ -23,8 +23,11 @@ package presets
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
@@ -48,6 +51,19 @@ type MakeOptions struct {
 	// Source is where rigs are read from. The zero value is the rigs that
 	// ship.
 	Source rigs.Source
+	// RigPath is a rig file to build from instead of a RigID, and AskPath the
+	// ask beside it.
+	//
+	// Exactly one of RigID and RigPath. A rig in a directory is found by
+	// identifier and its ask is found with it; a rig somebody has in hand,
+	// from `tone build` or from somebody who sent it, has a path and no
+	// identifier to look up.
+	//
+	// AskPath is optional even here, and empty does not mean no ask: the
+	// `<stem>.tone.yaml` beside RigPath is read where one is there, which is
+	// the pairing the rest of this project already uses.
+	RigPath string
+	AskPath string
 	// StatsPath is measured corpus statistics. Empty means the ones built
 	// into this binary.
 	StatsPath string
@@ -74,7 +90,7 @@ func Make(
 		return result.Made{}, err
 	}
 
-	known, err := opts.rigs().Find(opts.Source, opts.RigID)
+	known, err := opts.known()
 	if err != nil {
 		return result.Made{}, err
 	}
@@ -323,6 +339,9 @@ func genreWords(
 	for _, t := range got.Terms {
 		out = append(out, compile.Word{
 			Term: t.Term,
+			// Earned rather than asked for, which is what lets a word somebody
+			// wrote outrank it on an axis they both answer.
+			Derived: true,
 			Evidence: []tone.Evidence{{
 				Kind:     tone.EvidenceAudio,
 				Measured: &map[string]float64{string(t.Key): t.Mine},
@@ -381,14 +400,15 @@ func movedFrom(
 	out := make([]result.Moved, 0, len(moved))
 	for _, m := range moved {
 		out = append(out, result.Moved{
-			Term:    m.Term,
-			Param:   m.Param,
-			From:    m.From,
-			To:      m.To,
-			Against: m.Against,
-			Because: m.Because,
-			Already: m.Already,
-			Weight:  m.Weight,
+			Term:      m.Term,
+			Param:     m.Param,
+			From:      m.From,
+			To:        m.To,
+			Against:   m.Against,
+			YieldedTo: m.YieldedTo,
+			Because:   m.Because,
+			Already:   m.Already,
+			Weight:    m.Weight,
 		})
 	}
 
@@ -401,6 +421,85 @@ func movedFrom(
 // the record, and that is still the answer for somebody who has not written
 // one: the compensation is an improvement on building blind rather than a
 // requirement for building at all.
+// known is the rig to build and the ask beside it, from wherever it was named.
+//
+// The two sources answer with the same pair because everything downstream wants
+// the same pair. Which one was named is this function's whole business, and Make
+// does not ask again.
+func (o MakeOptions) known() (result.Known, error) {
+	byID := o.RigID != ""
+	byPath := o.RigPath != ""
+
+	if byID == byPath {
+		return result.Known{}, ErrOneRig
+	}
+
+	if byID {
+		return o.rigs().Find(o.Source, o.RigID)
+	}
+
+	spec, err := readRig(context.Background(), o.RigPath)
+	if err != nil {
+		return result.Known{}, err
+	}
+
+	ask, err := askFor(o.RigPath, o.AskPath)
+	if err != nil {
+		return result.Known{}, err
+	}
+
+	return result.Known{Rig: spec, Ask: ask}, nil
+}
+
+// ErrOneRig reports neither a rig named nor both.
+var ErrOneRig = errors.New("name one of a rig identifier or a rig file")
+
+// askFor is the ask to build with: the one named, or the one beside the rig.
+//
+// A rig with no ask is legal and ordinary, so a missing neighbour is nil rather
+// than an error. A path somebody typed is different: they said to read that
+// file, so it not being there is a failure and not a shrug.
+func askFor(
+	rigPath, askPath string,
+) (*tone.Spec, error) {
+	if askPath != "" {
+		return readAsk(askPath)
+	}
+
+	beside := strings.TrimSuffix(rigPath, filepath.Ext(rigPath)) + askSuffix
+	if _, err := os.Stat(beside); err != nil {
+		return nil, nil //nolint:nilnil // no ask beside a rig is the ordinary case
+	}
+
+	return readAsk(beside)
+}
+
+// askSuffix is what an ask is called beside the rig it answers.
+//
+// Stated here as well as in the rigs package because this reads a path somebody
+// typed rather than a directory that package owns, and importing a constant for
+// a filename would couple the two for nothing.
+const askSuffix = ".tone.yaml"
+
+// readAsk loads a ToneSpec from disk.
+func readAsk(
+	at string,
+) (*tone.Spec, error) {
+	f, err := os.Open(at) //nolint:gosec // the path is the caller's own file
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", at, err)
+	}
+
+	defer func() { _ = f.Close() }()
+
+	spec, err := tone.Load(f)
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", at, err)
+	}
+
+	return &spec, nil
+}
+
 func setupAt(
 	at string,
 ) (*tone.Setup, error) {

@@ -87,7 +87,7 @@ func (s *SlopesTestSuite) opts() SlopesOptions {
 // readings.
 func (s *SlopesTestSuite) built() {
 	s.pedal.EXPECT().
-		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Make(gomock.Any(), gomock.Any()).
 		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 			Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true,
 		}}}}, nil)
@@ -215,7 +215,7 @@ func (s *SlopesTestSuite) TestSlopes() {
 			name: "a chain with no dial",
 			then: func() {
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 						Model: catalog.ModelID("HD2_NotAModel"), Pos: 0,
 					}}}}, nil)
@@ -231,7 +231,7 @@ func (s *SlopesTestSuite) TestSlopes() {
 				wanted := errors.New("no such rig")
 
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{}, wanted)
 
 				s.Require().ErrorIs(
@@ -243,7 +243,7 @@ func (s *SlopesTestSuite) TestSlopes() {
 			name: "a reference that is not there",
 			then: func() {
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 						Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0,
 					}}}}, nil)
