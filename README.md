@@ -42,35 +42,49 @@ Point an agent at a checkout and tell it what you want to sound like.
 
 ## Quickstart
 
-Start your agent in a checkout and say what you want. Just ask:
+Start your agent in a checkout and say what you want:
 
 - _"Make my bass sound like Dookie"_
-- _"Like Mike Dirnt, but chunkier"_
+- _"Like Mike Dirnt, but punchier"_
 - _"What did Geddy Lee actually play on Hemispheres?"_
-- _"Put that on my pedal in slot 42C"_
+- _"I want a punk sound, find me an empty slot and let's work there"_
 
-The agent researches the gear and cites it, writes the ask, resolves it to a
-rig, builds the preset and pushes it over USB. The skills below are what it
-reads to do that, and each one's README says how to use it.
+You get back a `.hlx` preset you can load in HX Edit, and if the pedal is
+plugged in, the chain on the pedal. Nothing has to be installed first and no
+pedal has to be attached to build one.
 
-Nothing here can hear. You listen, say what is wrong, and it corrects the ask so
-the next session starts from what worked.
+**Then you play it**, because nothing here can hear. Say what is wrong in your
+own words and it turns the dials, rebuilds, and records what worked so the next
+session starts from there. With the pedal attached it can measure what comes
+back, which is the only thing that tells you whether a change did what it meant
+to.
 
-Everything needed ships in the binary: the device catalog, the corpus
-statistics, the curated rigs. Building a preset needs no HX Edit and no pedal.
+### Say what you mean, in the words it has
 
-**`toneharness <command> --help` is the command reference**, and there is no
-page duplicating it. From a checkout that is `go run main.go --help`, which
-compiles the tree and answers from the source rather than from a description of
-it. Ask for something no skill covers and an agent finds it there in two calls,
-which is why nothing here writes the commands down.
+Twenty-five words describe a sound here, and "chunky" is not one of them. Ask
+for it and you are told so, with the nearest words it does have. `punchy` is a
+bottom that stops with the note and a front you hear first; `mid-forward` puts
+the part in front of the mix. Ask your agent what the words are and it will read
+them out of [words.json](pkg/sdk/internal/compile/data/words.json), which is the
+vocabulary itself rather than a page about it.
 
-Or work over MCP. `.mcp.json` starts the server with `go run`, so it compiles
-the working tree every launch and cannot serve a stale binary, and every command
-has a tool named after it: `device select` is `device_select`. Both surfaces
-call the same SDK, and a test walks the command tree against the registered
-tools in both directions, so neither can quietly gain a capability the other
-lacks.
+A genre works the same way. Three are measured, and one needs eight records from
+three players before anything may aim at it, so ask which are ready rather than
+guessing.
+
+### Asking for somebody nobody has researched yet
+
+Fifteen rigs ship, each with a citation behind every piece of gear. Name
+somebody who is not one of them and the agent researches it and writes the rig
+with its sources, which is a different and slower thing than building from one
+that exists. If the evidence will not hold up, the honest answer is that it
+could not be established, not a plausible rig.
+
+### Over MCP
+
+`.mcp.json` starts a server, and every command has a tool named after it:
+`device select` is `device_select`. Use whichever your agent prefers; both do
+the same work.
 
 ## Skills
 
@@ -97,6 +111,10 @@ moment.
 ```bash
 curl -fsSL https://github.com/retr0h/toneharness/raw/main/install.sh | bash
 ```
+
+`toneharness <command> --help` is the command reference, and no page here
+duplicates it. From a checkout it is `go run main.go --help`, which compiles the
+tree and answers from the source rather than from a description of it.
 
 Installs to `~/.local/bin` or `/usr/local/bin`, verifying SHA256 checksums.
 Override with `TONEHARNESS_INSTALL_DIR=/some/path`, or pin a version with
