@@ -76,59 +76,49 @@ control; the rest come back named, with the nearest ones that are.
 
 ### Ask for somebody who does not ship
 
-> - _"Do you have a rig for Tim Commerford, or do you have to research it?"_
-> - _"Research Justin Chancellor's Lateralus rig and write it up with sources."_
+> - _"Build me a rig for Justin Chancellor's Lateralus sound."_
+> - _"Do you have Tim Commerford, or do you have to research him?"_
 > - _"Why is this rig only medium confidence?"_
 
-Fifteen rigs ship with a citation behind every piece of gear. Anybody else is
-research, and if the evidence will not hold up you are told that rather than
-handed a plausible rig.
+Fifteen rigs ship with a citation behind every piece of gear. Anybody else gets
+researched, written up with sources, built to check it resolves, and opened as a
+pull request. If the evidence will not hold up you are told that instead, with
+what was searched, because a plausible rig looks like knowledge and is not.
 
-### Ask which genres are ready
+### Add a genre, or records to one
 
-> _"Which genres can I aim at, and which are short of the threshold?"_
+> - _"Add Justin Chancellor to the bass corpus and measure what prog-metal
+>   earns."_
+> - _"Which genres can I aim at, and which are short of the threshold?"_
 
-Eight records from three players, or it is one band's sound wearing a genre's
-name.
+It fetches the records, cuts the bass out, measures, and opens the pull request.
 
-### Add records to a genre
+Two things it will tell you rather than let you find out: a genre needs eight
+records from three players before anything may aim at it, and a player whose
+records are measured but who has no rig contributes figures nothing can act on.
 
-> - _"Add Justin Chancellor to the bass corpus with four Lateralus tracks."_
-> - _"Fetch the records you just named."_
-> - _"Cut the bass out of them."_
-> - _"Measure the corpus and tell me what prog-metal earns now."_
-> - _"Regenerate what ships and open the PR."_
+Your copies of the records stay on your disk.
 
-The records and the stems stay on your disk. A pull request carries the manifest
-and the measurements, never the audio.
+### What needs the pedal, and what does not
 
-<details>
-<summary>What your agent runs for that last one</summary>
+Most of this needs no hardware. A corpus is audio files on disk, so adding
+records, measuring players, earning words and measuring a genre all run on a
+laptop with nothing plugged in. So does researching a rig, building one, and
+writing the preset.
 
-```bash
-# 1. the manifest first, so the record measured is the one the evidence names
-#    resources/music/bass/justin-chancellor/corpus.yaml
+Two things need the pedal, and one of those needs a lead from its output back to
+an input:
 
-# 2. fetch by the link, never a search
-mise exec -- just record resources/music/bass/justin-chancellor schism \
-  https://open.spotify.com/track/1dMFQX2BqPkR5zjC2DxFUM
+|                                                        | needs                             |
+| ------------------------------------------------------ | --------------------------------- |
+| `tone tune`, `tone reach`, `device play`               | the pedal on USB                  |
+| `measure blocks`, `measure controls`, `measure slopes` | the pedal, and the measuring loop |
 
-# 3. a mix measures the band, so the bass has to come out of it
-mise exec -- just stems resources/music/bass/justin-chancellor \
-  resources/music/bass/justin-chancellor/stems bass
-
-# 4. a word is earned against the other players, so measure the tree
-mise exec -- go run main.go measure players --corpus resources/music/bass
-mise exec -- go run main.go measure genres  --corpus resources/music/bass
-
-# 5. roll it into the file the binary embeds
-mise exec -- just generate     # writes pkg/sdk/audio/data/genres.json
-```
-
-Re-measure only when the records or the stems change. The numbers are committed,
-so nobody else runs any of this.
-
-</details>
+The second row is how the 19 swept amplifiers in
+[resources/sweeps/](resources/sweeps/) were measured, and they are committed, so
+nobody re-runs them. Without a loop you lose tuning a chain by measurement,
+which is the part that says whether a change did what it meant to. Everything
+else works.
 
 ## Skills
 
