@@ -1,10 +1,15 @@
 # Examples
 
-One of each document, with the fields filled in and commented. These are
-teaching documents rather than rigs anybody plays, so they sit beside
-[../artists/](../artists/) rather than in it: the loader reads `artists/` and
-nothing else, so nothing here is listed by `rigs list` or packed into the
-binary.
+One of each document, with the fields filled in and commented.
+
+The suffix says which kind each one is, so a pair sits together:
+`mike-dirnt.tone.yaml` is the ask and `mike-dirnt.rig.yaml` is the gear that
+answered it, and `dir-angl-meteor` has both a rig and the plan it compiled to.
+There are no `tonespec/` and `rigspec/` directories any more, because a filename
+that says what it holds does the same job in less. These are teaching documents
+rather than rigs anybody plays, so they sit beside [../artists/](../artists/)
+rather than in it: the loader reads `artists/` and nothing else, so nothing here
+is listed by `rigs list` or packed into the binary.
 
 The tests read these. A field added to either contract without an example here
 fails the build, which is what keeps them from going stale.
@@ -24,25 +29,25 @@ and because `presets compile --plan` takes one back.
 
 ## The files
 
-| file                                                             | shows                                                                              |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [tonespec/chunky-punk.yaml](tonespec/chunky-punk.yaml)           | an ask in nothing but words: a genre, a technique, and what it should sound like   |
-| [tonespec/like-a-player.yaml](tonespec/like-a-player.yaml)       | naming somebody, which resolves to the cited rig researched for them               |
-| [tonespec/like-a-record.yaml](tonespec/like-a-record.yaml)       | pointing at a recording, which is the kind that resolves fully                     |
-| [tonespec/corrected-by-ear.yaml](tonespec/corrected-by-ear.yaml) | an ask that was built, heard, and asked again                                      |
-| [tonespec/mike-dirnt.yaml](tonespec/mike-dirnt.yaml)             | every part of the ask on one subject. Most asks are a tenth of this                |
-| [tonespec/my-setup.yaml](tonespec/my-setup.yaml)                 | a Setup: what somebody has, which changes on a different clock from what they want |
-| [rigspec/mike-dirnt.yaml](rigspec/mike-dirnt.yaml)               | the rig that answers the ask beside it, with a source per claim                    |
-| [rigspec/dir-angl-meteor.yaml](rigspec/dir-angl-meteor.yaml)     | a rig read back off a device rather than researched                                |
-| [plan/dir-angl-meteor.yaml](plan/dir-angl-meteor.yaml)           | the device half of that same preset, committed exactly as the HX Stomp wrote it    |
+| file                                                     | shows                                                                              |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [chunky-punk.tone.yaml](chunky-punk.tone.yaml)           | an ask in nothing but words: a genre, a technique, and what it should sound like   |
+| [like-a-player.tone.yaml](like-a-player.tone.yaml)       | naming somebody, which resolves to the cited rig researched for them               |
+| [like-a-record.tone.yaml](like-a-record.tone.yaml)       | pointing at a recording, which is the kind that resolves fully                     |
+| [corrected-by-ear.tone.yaml](corrected-by-ear.tone.yaml) | an ask that was built, heard, and asked again                                      |
+| [mike-dirnt.tone.yaml](mike-dirnt.tone.yaml)             | every part of the ask on one subject. Most asks are a tenth of this                |
+| [mike-dirnt.rig.yaml](mike-dirnt.rig.yaml)               | the rig that answers the ask beside it, with a source per claim                    |
+| [mine.setup.yaml](mine.setup.yaml)                       | a Setup: what somebody has, which changes on a different clock from what they want |
+| [dir-angl-meteor.rig.yaml](dir-angl-meteor.rig.yaml)     | a rig read back off a device rather than researched                                |
+| [dir-angl-meteor.plan.yaml](dir-angl-meteor.plan.yaml)   | the device half of that same preset, committed exactly as the HX Stomp wrote it    |
 
 ## Running one
 
 ```bash
 mise exec -- go run main.go tone build \
-  --ask marketplace/core/examples/tonespec/chunky-punk.yaml --out rig.yaml
+  --ask marketplace/core/examples/chunky-punk.tone.yaml --out rig.yaml
 mise exec -- go run main.go presets make --rig rig.yaml \
-  --ask marketplace/core/examples/tonespec/chunky-punk.yaml --out punk.hlx
+  --ask marketplace/core/examples/chunky-punk.tone.yaml --out punk.hlx
 ```
 
 `--setup` is optional; without one the rig is for a bass on an HX Stomp.

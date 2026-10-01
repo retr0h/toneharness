@@ -78,7 +78,7 @@ const corrections = `corrections:
 // meteor is a rig read off a device: a chain of gear and nothing a person
 // decided, since a device records no subject and no reason.
 var meteor = filepath.Join(
-	"..", "..", "..", "..", "marketplace", "core", "examples", "rigspec", "dir-angl-meteor.yaml")
+	"..", "..", "..", "..", "marketplace", "core", "examples", "dir-angl-meteor.rig.yaml")
 
 // meteorAsk is an ask for the meteor rig, which the examples tree does not
 // carry because a rig read off a device answered nobody's written request.
@@ -762,7 +762,7 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 
 			// A copy is a pair, so both halves are read and each row says
 			// which of them it is making a claim about.
-			body := s.read(dir, "copy.yaml")
+			body := s.read(dir, "copy.rig.yaml")
 			ask := s.read(dir, "copy.tone.yaml")
 
 			for _, want := range tt.want {
@@ -790,7 +790,7 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 
 				// The name is not in the rig at all, so renaming a copy has
 				// to leave that file byte for byte as the parent wrote it.
-				s.Require().Equal(s.read(other, "copy.yaml"), body,
+				s.Require().Equal(s.read(other, "copy.rig.yaml"), body,
 					"the rig does not hold the name")
 				s.requireOnlyNameDiffers(s.read(other, "copy.tone.yaml"), ask)
 			}

@@ -63,7 +63,7 @@ func (s *ShippedPublicTestSuite) TestEveryAskThatShipsLoads() {
 			name: "every example loads",
 			then: func() {
 				paths, err := filepath.Glob(
-					filepath.Join("..", "..", "..", "marketplace", "core", "examples", "tonespec", "*.yaml"))
+					filepath.Join("..", "..", "..", "marketplace", "core", "examples", "*.tone.yaml"))
 				s.Require().NoError(err)
 				s.Require().NotEmpty(paths, "no examples found to check")
 
@@ -111,9 +111,22 @@ func (s *ShippedPublicTestSuite) TestEveryAskThatShipsLoads() {
 
 						// An ask is reached through the rig it sits beside, so one with no
 						// rig is unreachable. It loads cleanly and nothing can ever ask it.
-						beside := strings.TrimSuffix(path, ".tone.yaml") + ".yaml"
-						_, err = fs.Stat(shipped.FS, beside)
-						s.Require().NoError(err, "%s has no rig beside it", path)
+						//
+						// Either suffix counts. `.rig.yaml` is what anything writes now
+						// and a bare `.yaml` is what a rig read off a device still is, and
+						// an ask is paired by the stem rather than by the spelling.
+						stem := strings.TrimSuffix(path, ".tone.yaml")
+
+						var found bool
+						for _, suffix := range []string{".rig.yaml", ".yaml"} {
+							if _, err := fs.Stat(shipped.FS, stem+suffix); err == nil {
+								found = true
+
+								break
+							}
+						}
+
+						s.Require().True(found, "%s has no rig beside it", path)
 					})
 				}
 			},

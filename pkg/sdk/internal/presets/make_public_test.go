@@ -85,8 +85,12 @@ func (s *MakePublicTestSuite) TestMake() {
 		bothSources bool
 		noSource    bool
 		// alone copies the named rig into a directory of its own, so there is
-		// no ask beside it to be found.
-		alone string
+		// no ask beside it to be found. aloneAs renames it on the way, for a
+		// row about which spelling the pairing works on, and withAsk copies an
+		// ask in beside it.
+		alone   string
+		aloneAs string
+		withAsk string
 		// badAsk is written to a file and named as the ask, for a document
 		// that is there and is not a ToneSpec.
 		badAsk  string
@@ -126,15 +130,39 @@ func (s *MakePublicTestSuite) TestMake() {
 			// flag: a rig that `tone build` wrote has no identifier to look up,
 			// and compiling it instead dropped every word with nothing said.
 			name:     "a rig file, with the ask beside it",
-			rigPath:  "own-words.yaml",
+			rigPath:  "own-words.rig.yaml",
 			loadable: true,
 			contains: []string{"sounds like a wet paper bag"},
+		},
+		{
+			// The same pairing on the suffix nothing writes any more. A rig read
+			// off a device is `<slug>.yaml`, and finding its ask by trimming one
+			// extension off `<slug>.rig.yaml` would look for `<slug>.rig.tone.yaml`
+			// instead, which is a file nothing writes and no error names.
+			name:     "a rig file named the old way, with the ask beside it",
+			alone:    "own-words.rig.yaml",
+			aloneAs:  "own-words.yaml",
+			withAsk:  "own-words.tone.yaml",
+			named:    "Test Player",
+			loadable: true,
+			contains: []string{"sounds like a wet paper bag"},
+		},
+		{
+			// A path with no extension at all, which nothing writes and a person
+			// may still type. The ask is looked for beside it under the name it
+			// has rather than a stem trimmed off nothing.
+			name:     "a rig file with no extension",
+			alone:    "own-words.rig.yaml",
+			aloneAs:  "own-words",
+			withAsk:  "own-words.tone.yaml",
+			named:    "Test Player",
+			loadable: true,
 		},
 		{
 			// An ask somewhere else, because the rig a request produced and the
 			// request that produced it do not land beside each other.
 			name:     "a rig file and an ask named apart from it",
-			rigPath:  "test-player.yaml",
+			rigPath:  "test-player.rig.yaml",
 			askPath:  "own-words.tone.yaml",
 			loadable: true,
 			contains: []string{"sounds like a wet paper bag"},
@@ -144,7 +172,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// holds rigs they wrote, and nothing obliges them to write down the
 			// request that produced one.
 			name:  "a rig file with no ask beside it",
-			alone: "own-words.yaml",
+			alone: "own-words.rig.yaml",
 			// The rig's own identifier, because the name comes off the ask's
 			// subject and there is no subject without one.
 			named:    "own-words",
@@ -158,7 +186,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// so a document that is there and is not a ToneSpec fails rather
 			// than being skipped the way a missing neighbour is.
 			name:    "an ask that is there and will not parse",
-			rigPath: "test-player.yaml",
+			rigPath: "test-player.rig.yaml",
 			badAsk:  "schema: NotAToneSpec\n",
 			errText: "broken.tone.yaml",
 		},
@@ -179,7 +207,7 @@ func (s *MakePublicTestSuite) TestMake() {
 		},
 		{
 			name:    "an ask that is not there",
-			rigPath: "test-player.yaml",
+			rigPath: "test-player.rig.yaml",
 			askPath: "no-such-ask.tone.yaml",
 			errText: "no-such-ask.tone.yaml",
 		},
@@ -324,7 +352,12 @@ func (s *MakePublicTestSuite) TestMake() {
 			}
 
 			if tt.alone != "" {
-				at := filepath.Join(dir, tt.alone)
+				as := tt.alone
+				if tt.aloneAs != "" {
+					as = tt.aloneAs
+				}
+
+				at := filepath.Join(dir, as)
 				from, readErr := os.ReadFile(
 					filepath.Join("testdata", "rigs", "artists", tt.alone))
 				s.Require().NoError(readErr)
@@ -332,6 +365,14 @@ func (s *MakePublicTestSuite) TestMake() {
 
 				o.RigID = ""
 				o.RigPath = at
+			}
+
+			if tt.withAsk != "" {
+				from, readErr := os.ReadFile(
+					filepath.Join("testdata", "rigs", "artists", tt.withAsk))
+				s.Require().NoError(readErr)
+				s.Require().NoError(os.WriteFile(
+					filepath.Join(dir, tt.withAsk), from, 0o600))
 			}
 
 			if tt.badAsk != "" {
@@ -343,7 +384,7 @@ func (s *MakePublicTestSuite) TestMake() {
 
 			if tt.bothSources {
 				o.RigID = "test-player"
-				o.RigPath = filepath.Join("testdata", "rigs", "artists", "test-player.yaml")
+				o.RigPath = filepath.Join("testdata", "rigs", "artists", "test-player.rig.yaml")
 			}
 
 			if tt.noSource {

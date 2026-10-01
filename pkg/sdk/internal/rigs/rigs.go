@@ -123,8 +123,28 @@ func readFS(
 	// this returns and an ask has to be in hand by the time its rig is built.
 	asks, broken := readAsks(fsys, paths, broken)
 
+	// Which stems a rig has already been read for, because two files may claim
+	// one. `mike-dirnt.rig.yaml` and `mike-dirnt.yaml` are both rigs by name and
+	// only one can be the rig called `mike-dirnt`.
+	taken := map[string]string{}
+
 	for _, p := range paths {
 		if isAsk(p) {
+			continue
+		}
+
+		// Glob answers in order and `.rig.yaml` sorts before `.yaml`, so the
+		// file that says what it is arrives first and keeps the name. The other
+		// is reported rather than dropped: a rig that silently does not load is
+		// the failure this whole list exists to prevent.
+		if first, already := taken[stem(p)]; already {
+			broken = append(broken, brokenFile{
+				names: claimed(p, nil),
+				err: fmt.Errorf("%s and %s are both the rig %q, and %s is the "+
+					"one that was read. Rename or remove the other",
+					path.Base(first), path.Base(p), stem(p), path.Base(first)),
+			})
+
 			continue
 		}
 
@@ -149,6 +169,8 @@ func readFS(
 		if beside, ok := asks[stem(p)]; ok {
 			held.ask, held.askRaw = beside.spec, beside.raw
 		}
+
+		taken[stem(p)] = p
 
 		out = append(out, held)
 	}
@@ -215,6 +237,19 @@ func readAsks(
 // a parallel tree they have to keep in step by hand.
 const askSuffix = ".tone.yaml"
 
+// rigSuffix is what names the rig, where it says so.
+//
+// `.yaml` on the end of both, so one glob finds a pair and `go:embed` takes the
+// directory whole. A bare `.rig` would need the loader, the embed, the editor's
+// schema association and every `*.yaml` recipe in the justfile taught about it,
+// to say the same thing.
+//
+// Not required. A rig read off a device and one somebody wrote before this
+// existed are both `<slug>.yaml`, and refusing those to make the naming tidy
+// would be refusing the format's whole point. So this is what gets written, and
+// either is read.
+const rigSuffix = ".rig.yaml"
+
 // isAsk reports whether a path names the ask rather than the rig.
 func isAsk(
 	p string,
@@ -233,6 +268,13 @@ func stem(
 	base := path.Base(p)
 	if isAsk(p) {
 		return strings.TrimSuffix(base, askSuffix)
+	}
+
+	// Longest first. `.yaml` is a suffix of `.rig.yaml`, so stripping the short
+	// one from `mike-dirnt.rig.yaml` leaves `mike-dirnt.rig`, which is a stem
+	// nothing pairs with.
+	if strings.HasSuffix(base, rigSuffix) {
+		return strings.TrimSuffix(base, rigSuffix)
 	}
 
 	return strings.TrimSuffix(base, ".yaml")

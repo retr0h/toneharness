@@ -36,10 +36,16 @@ Or ask your agent, which is the shorter version of the same thing:
 
 ## What is in a pair
 
-Each subject is two files. `<slug>.yaml` is the RigSpec, the gear.
+Each subject is two files. `<slug>.rig.yaml` is the RigSpec, the gear.
 `<slug>.tone.yaml` is the ToneSpec beside it, what somebody wanted of that gear.
 One describes an answer and the other describes the question, which is why they
 are not one file.
+
+Both say which they are, which they did not always: the rig was a bare
+`<slug>.yaml` and only the ask was marked. A bare one still loads, because that
+is what a rig read off a device is, so nothing you already have breaks. Nothing
+writes one, and two files claiming the same name are reported rather than one of
+them quietly winning.
 
 The instrument is a field on the rig rather than a directory, so a bass rig and
 a guitar rig sit side by side and `rigs list` has an instrument column. Do not

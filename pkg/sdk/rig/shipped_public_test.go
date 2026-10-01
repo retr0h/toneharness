@@ -75,7 +75,14 @@ func (s *ShippedPublicTestSuite) TestEveryRigThatShipsLoads() {
 						spec, err := rig.Load(f)
 						s.Require().NoError(err)
 
-						s.Require().Equal(spec.ID+".yaml", filepath.Base(path),
+						// Either suffix, because both load: `.rig.yaml` is what
+						// anything writes now and a bare `.yaml` is what a rig
+						// read off a device still is. The invariant is the stem,
+						// which is what makes a rig findable by name without
+						// opening it, and what pairs it with its ask.
+						s.Require().Contains(
+							[]string{spec.ID + ".rig.yaml", spec.ID + ".yaml"},
+							filepath.Base(path),
 							"a rig must be findable by name without opening it")
 					})
 				}
@@ -88,7 +95,7 @@ func (s *ShippedPublicTestSuite) TestEveryRigThatShipsLoads() {
 			// is the first thing somebody copies.
 			name: "every example loads",
 			then: func() {
-				paths, err := filepath.Glob(filepath.Join("..", "..", "..", "marketplace", "core", "examples", "rigspec", "*.yaml"))
+				paths, err := filepath.Glob(filepath.Join("..", "..", "..", "marketplace", "core", "examples", "*.rig.yaml"))
 				s.Require().NoError(err)
 				s.Require().NotEmpty(paths, "no examples found to check")
 

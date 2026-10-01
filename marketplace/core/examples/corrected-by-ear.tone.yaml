@@ -9,8 +9,8 @@
 # asking. The rig holds the settings it arrived at and says nothing about why
 # they are what they are.
 #
-#     toneharness tone build --ask marketplace/core/examples/tonespec/corrected-by-ear.yaml \
-#       --setup marketplace/core/examples/tonespec/my-setup.yaml --out rig.yaml
+#     toneharness tone build --ask marketplace/core/examples/corrected-by-ear.tone.yaml \
+#       --setup marketplace/core/examples/mine.setup.yaml --out rig.yaml
 #
 # Rebuilding does not replay them: a correction's paths point into the plan it
 # was made against, and a rebuild makes a new one. `tone build` reads them out

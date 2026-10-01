@@ -466,7 +466,7 @@ func askFor(
 		return readAsk(askPath)
 	}
 
-	beside := strings.TrimSuffix(rigPath, filepath.Ext(rigPath)) + askSuffix
+	beside := besideRig(rigPath)
 	if _, err := os.Stat(beside); err != nil {
 		return nil, nil //nolint:nilnil // no ask beside a rig is the ordinary case
 	}
@@ -474,12 +474,34 @@ func askFor(
 	return readAsk(beside)
 }
 
-// askSuffix is what an ask is called beside the rig it answers.
+// besideRig is where the ask for a rig at this path would be.
+//
+// Both suffixes, longest first, because `.yaml` is a suffix of `.rig.yaml`:
+// trimming one extension off `mike-dirnt.rig.yaml` leaves `mike-dirnt.rig`, and
+// the ask it then looks for is `mike-dirnt.rig.tone.yaml`, which nothing writes
+// and no error names.
+func besideRig(
+	rigPath string,
+) string {
+	for _, suffix := range []string{rigSuffix, filepath.Ext(rigPath)} {
+		if suffix != "" && strings.HasSuffix(rigPath, suffix) {
+			return strings.TrimSuffix(rigPath, suffix) + askSuffix
+		}
+	}
+
+	return rigPath + askSuffix
+}
+
+// askSuffix is what an ask is called beside the rig it answers, and rigSuffix
+// what the rig is called where it says so.
 //
 // Stated here as well as in the rigs package because this reads a path somebody
 // typed rather than a directory that package owns, and importing a constant for
 // a filename would couple the two for nothing.
-const askSuffix = ".tone.yaml"
+const (
+	askSuffix = ".tone.yaml"
+	rigSuffix = ".rig.yaml"
+)
 
 // readAsk loads a ToneSpec from disk.
 func readAsk(

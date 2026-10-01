@@ -139,7 +139,7 @@ func (s *LoadPublicTestSuite) TestLoad() {
 			// of them holding raw JSON.
 			name: "load reads a lifted preset",
 			then: func() {
-				at := filepath.Join("..", "..", "..", "marketplace", "core", "examples", "plan", "dir-angl-meteor.yaml")
+				at := filepath.Join("..", "..", "..", "marketplace", "core", "examples", "dir-angl-meteor.plan.yaml")
 
 				f, err := os.Open(at) //nolint:gosec // a path this test chose
 				s.Require().NoError(err)

@@ -34,10 +34,16 @@ folding them would leave a rig nobody can read without the ask above it.
 
 ## How a pair is stored
 
-Paired by filename stem in one directory. `mike-dirnt.yaml` is the gear,
+Paired by filename stem in one directory. `mike-dirnt.rig.yaml` is the gear,
 `mike-dirnt.tone.yaml` is the ask. **Neither file points at the other**, so
 neither can end up pointing at the wrong one, and somebody editing the words has
 the gear in the next tab rather than in a parallel tree kept in step by hand.
+
+The stem is what pairs them, not the suffix. A bare `mike-dirnt.yaml` is still a
+rig and still pairs with the same ask: that is what a rig read off a device is,
+and what every rig written before the suffix existed is. `rigs new` writes
+`.rig.yaml`, and a stem claimed by both spellings is reported rather than one of
+them quietly winning.
 
 `rigs new` writes a pair of yours under `$XDG_DATA_HOME/toneharness/rigs/`, and
 the rigs that ship are read beside it. A pair of yours takes the place of a
@@ -83,5 +89,5 @@ The build reports every block it chose, what real gear each emulates, what it
 costs, and anything it added the rig did not ask for. A wrong amplifier should
 be visible before anybody plugs in rather than after.
 
-Worked pairs: `marketplace/core/examples/tonespec/mike-dirnt.yaml` with
-`marketplace/core/examples/rigspec/mike-dirnt.yaml` beside it.
+Worked pairs: `marketplace/core/examples/mike-dirnt.tone.yaml` with
+`marketplace/core/examples/mike-dirnt.rig.yaml` beside it.

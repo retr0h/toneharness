@@ -370,8 +370,7 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 		"marketplace",
 		"core",
 		"examples",
-		"rigspec",
-		"mike-dirnt.yaml",
+		"mike-dirnt.rig.yaml",
 	)
 
 	s.run("presets_make", []row{

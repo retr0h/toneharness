@@ -4,7 +4,7 @@
 # resolves through the gear map, so this file stays readable, stays correct
 # when Line 6 rename something, and works for any Helix device.
 #
-# See the write-a-spec skill, and marketplace/core/examples/rigspec/mike-dirnt.yaml for one with
+# See the write-a-spec skill, and marketplace/core/examples/mike-dirnt.rig.yaml for one with
 # every field filled in.
 #
 # The ask this rig answers is in mike-dirnt.tone.yaml beside it.
