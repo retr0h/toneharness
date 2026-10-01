@@ -83,5 +83,5 @@ The build reports every block it chose, what real gear each emulates, what it
 costs, and anything it added the rig did not ask for. A wrong amplifier should
 be visible before anybody plugs in rather than after.
 
-Worked pairs: `resources/reference/tonespec/mike-dirnt.yaml` with
-`resources/reference/rigspec/mike-dirnt.yaml` beside it.
+Worked pairs: `marketplace/core/examples/tonespec/mike-dirnt.yaml` with
+`marketplace/core/examples/rigspec/mike-dirnt.yaml` beside it.

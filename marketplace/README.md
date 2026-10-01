@@ -11,6 +11,11 @@ Two tiers, and the difference is what somebody had to prove.
 | [core/](core/artists/)           | 30 files, 15 subjects | every claim has a source somebody opened                 | yes                 |
 | [community/](community/artists/) | submissions           | it parses, it builds, and it says how well sourced it is | no                  |
 
+[core/examples/](core/examples/README.md) sits beside the rigs rather than in
+them: one of each document, commented, for somebody learning the formats. The
+loader reads `artists/` and nothing else, so nothing there is listed as a rig or
+packed into the binary.
+
 ## Using them
 
 Core needs nothing beyond the checkout: it is compiled into the binary, so

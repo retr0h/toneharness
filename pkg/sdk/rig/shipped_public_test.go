@@ -88,7 +88,7 @@ func (s *ShippedPublicTestSuite) TestEveryRigThatShipsLoads() {
 			// is the first thing somebody copies.
 			name: "every example loads",
 			then: func() {
-				paths, err := filepath.Glob(filepath.Join("..", "..", "..", "resources", "reference", "rigspec", "*.yaml"))
+				paths, err := filepath.Glob(filepath.Join("..", "..", "..", "marketplace", "core", "examples", "rigspec", "*.yaml"))
 				s.Require().NoError(err)
 				s.Require().NotEmpty(paths, "no examples found to check")
 

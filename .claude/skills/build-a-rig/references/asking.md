@@ -55,4 +55,4 @@ could not honour. A run reported without its notes is a run that hid half of
 what happened.
 
 Worked examples:
-[resources/reference/tonespec/](../../../../resources/reference/tonespec/).
+[marketplace/core/examples/tonespec/](../../../../marketplace/core/examples/tonespec/).

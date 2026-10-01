@@ -59,7 +59,17 @@ func (s *AskingPublicTestSuite) SetupSuite() {
 func (s *AskingPublicTestSuite) at(
 	name string,
 ) string {
-	return filepath.Join("..", "..", "..", "..", "resources", "reference", "tonespec", name)
+	return filepath.Join(
+		"..",
+		"..",
+		"..",
+		"..",
+		"marketplace",
+		"core",
+		"examples",
+		"tonespec",
+		name,
+	)
 }
 
 // file writes a document and returns where it went.

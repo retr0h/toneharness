@@ -367,8 +367,9 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 		"..",
 		"..",
 		"..",
-		"resources",
-		"reference",
+		"marketplace",
+		"core",
+		"examples",
 		"rigspec",
 		"mike-dirnt.yaml",
 	)
