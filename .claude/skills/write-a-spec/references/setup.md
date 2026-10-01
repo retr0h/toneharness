@@ -68,18 +68,28 @@ why:
 
 ```text
 playing the rig was played with pick and you play with fingers, so
-        audible-pick-attack compensates for the front of the note
+        audible-pick-attack compensates for the front of the note, and
+        mid-forward compensates for the mids
 ```
 
 Three things about it are worth knowing before relying on it.
 
-It compensates on one axis. The other half of the difference is brightness, and
-the size of that is not compensated because nobody has measured it. The
-direction is not in doubt; the number would be invented.
+It compensates on two axes, and only one of them was a guess anybody could have
+made. The front of the note is ranked: what is touching the string, flesh through
+to a plectrum. The second is measured, from 468 notes played both ways on the
+same instrument at the same pickup setting, and the surprise is which control it
+reaches. A pick adds no treble at all. It moves 0.17 of the energy out of the low
+band and into the mid, so the axis is `mids` and the word is `mid-forward` or
+`scooped`. `pkg/sdk/audio/data/hands.json` is the figure and
+`resources/dry/README.md` says where the notes came from.
 
-A word the ask already uses for the attack axis wins, and the report says this
-stood down. Two terms on one axis cancel by design, so a second word would have
-taken the ask's own out with it.
+A pair of hands nobody has measured compensates on the attack axis alone, which
+is every pair but that one. The ranking is cheap and the measurement is not.
+
+A word the ask already uses for either axis wins, and the report says which stood
+down. Two terms on one axis cancel by design, so a second word would have taken
+the ask's own out with it, and the two axes stand down independently: an ask
+naming `audible-pick-attack` leaves the mids still compensated.
 
 A thumb ranks with fingers rather than between fingers and a pick, because the
 rank is about what is touching the string rather than about the tone.

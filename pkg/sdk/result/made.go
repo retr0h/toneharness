@@ -62,8 +62,9 @@ type Made struct {
 
 // Playing is the compensation made for how somebody plays.
 type Playing struct {
-	// Term is the word that was added on their behalf. Empty when none was.
-	Term string `json:"term,omitempty"`
+	// Terms are the words added on their behalf, one per axis compensated.
+	// Empty when none were.
+	Terms []string `json:"terms,omitempty"`
 	// Said is the whole of it in a sentence, ready to print.
 	Said string `json:"said,omitempty"`
 }
