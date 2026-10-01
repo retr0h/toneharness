@@ -89,6 +89,9 @@ type options struct {
 	device string
 	// stats is measured corpus statistics. Empty means the built-in ones.
 	stats string
+	// setup is what the person has, which is what makes an answer fit them
+	// rather than the record. Empty builds for the record.
+	setup string
 	// rigs is a directory of rigs. Empty means the ones that ship.
 	rigs string
 	// userRigs is somebody's own directory of rigs, layered over rigs.
@@ -135,6 +138,22 @@ func WithStats(
 	path string,
 ) Option {
 	return func(o *options) { o.stats = path }
+}
+
+// WithSetup reads what the person has, so a build can fit them.
+//
+// A client option rather than a call's argument, for the reason the Setup is a
+// separate document at all: it changes on a different clock. Somebody's bass,
+// their pedal and their right hand are the same at the twelfth build as at the
+// first, and passing them per call is how the twelfth comes to contradict.
+//
+// What it changes today is the playing. An ask says how the subject played and
+// a Setup says how this person does, and the difference between the two right
+// hands is a knob position rather than a surprise at the first rehearsal.
+func WithSetup(
+	path string,
+) Option {
+	return func(o *options) { o.setup = path }
 }
 
 // WithRigs reads rigs from a directory instead of the ones that ship.
@@ -595,6 +614,7 @@ func (c *Client) Make(
 		RigID:      rigID,
 		Source:     c.source(),
 		StatsPath:  c.opts.stats,
+		SetupPath:  c.opts.setup,
 		OutputPath: out,
 		Existing:   existing,
 	})

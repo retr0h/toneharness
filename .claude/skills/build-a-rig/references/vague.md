@@ -36,7 +36,32 @@ energy below 250Hz is not "scooped": every isolated bass stem is mostly low.
 Words are useful for correcting a rig you have heard, not for building one from
 nothing.
 
-## One more, and it is not about the sound
+## One more, and it is about their hands
+
+**How they play.** Ask it, and ask it once. It belongs in the Setup as
+`technique`, and like everything else there it changes on a different clock from
+a request: a right hand is the same next week.
+
+> "Pick, fingers, slap or thumb?"
+
+It is the one field in the Setup that changes what a build does for the person
+rather than for the record. Every figure this project ships was measured off
+somebody else's playing, so a rig tuned from a picked recording is duller played
+fingered. State both sides and the build adds a word on the attack axis and says
+it did. State neither and somebody gets a preset tuned for whoever made the
+record.
+
+Two honest limits to pass on rather than hide. It compensates the front of the
+note, not the brightness, because nobody has measured how much brightness a
+plectrum adds and a number nobody took is not one this project writes. And a
+word already in the ask for that axis wins, because two terms on one axis
+cancel.
+
+Ask it even when the four above are already answered. It costs one question and
+it is the difference between a preset built for the record and one built for
+them.
+
+## One more that is not about the sound at all
 
 **Where they are plugging in.** Not a way of narrowing the ask, so it does not
 belong in the four above. It belongs in the Setup, as `plays_into`, and it

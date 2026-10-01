@@ -87,7 +87,7 @@ func (s *WordsMovePublicTestSuite) TestWordsReachTheAmplifier() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						plain, _, _, err := compile.Resolve(
+						plain, _, _, _, err := compile.Resolve(
 							bassRig("Ampeg SVT", ""),
 							compile.Intent{},
 							s.cat,
@@ -95,7 +95,7 @@ func (s *WordsMovePublicTestSuite) TestWordsReachTheAmplifier() {
 						)
 						s.Require().NoError(err)
 
-						got, _, moved, err := compile.Resolve(
+						got, _, moved, _, err := compile.Resolve(
 							bassRig("Ampeg SVT", ""), described(tt.term), s.cat, nil)
 						s.Require().NoError(err)
 
@@ -133,7 +133,7 @@ func (s *WordsMovePublicTestSuite) TestWordsReachTheAmplifier() {
 					},
 				}
 
-				_, _, moved, err := compile.Resolve(spec, described("mid-forward"), s.cat, nil)
+				_, _, moved, _, err := compile.Resolve(spec, described("mid-forward"), s.cat, nil)
 
 				s.Require().NoError(err)
 				s.Require().Len(moved, 1)
@@ -178,7 +178,7 @@ func (s *WordsMovePublicTestSuite) paramOf(
 // carries settings somebody already applied, so there is nothing for a word to
 // decide.
 func (s *WordsMovePublicTestSuite) TestAnAskThatSaysNothingMovesNothing() {
-	_, _, moved, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+	_, _, moved, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 
 	s.Require().NoError(err)
 	s.Require().Empty(moved)
@@ -187,10 +187,10 @@ func (s *WordsMovePublicTestSuite) TestAnAskThatSaysNothingMovesNothing() {
 // TestTwoWordsForOneAxisMoveNothing covers an ask answering one question
 // twice.
 func (s *WordsMovePublicTestSuite) TestTwoWordsForOneAxisMoveNothing() {
-	plain, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+	plain, _, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
-	got, _, moved, err := compile.Resolve(
+	got, _, moved, _, err := compile.Resolve(
 		bassRig("Ampeg SVT", ""),
 		described("minimal-drive", "grit-on-attack"), s.cat, nil)
 	s.Require().NoError(err)

@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
@@ -50,6 +51,9 @@ type MakeOptions struct {
 	// StatsPath is measured corpus statistics. Empty means the ones built
 	// into this binary.
 	StatsPath string
+	// SetupPath is what the person has. Empty builds for the record rather
+	// than for them.
+	SetupPath string
 	// OutputPath is where the preset is written.
 	OutputPath string
 	// Existing is what happens to a file already at OutputPath. The zero
@@ -75,7 +79,16 @@ func Make(
 		return result.Made{}, err
 	}
 
-	rec, intent := known.Rig, intentOf(known.Ask)
+	// What the person has, which is what makes the answer fit them rather
+	// than the record. A path nobody gave is not an error: building for the
+	// record is what this did before a Setup could be named, and still the
+	// right answer for somebody who did not write one.
+	held, err := setupAt(opts.SetupPath)
+	if err != nil {
+		return result.Made{}, err
+	}
+
+	rec, intent := known.Rig, intentOf(known.Ask, held)
 
 	cat, err := opts.catalog(ctx)
 	if err != nil {
@@ -91,7 +104,8 @@ func Make(
 		return result.Made{}, err
 	}
 
-	spec, added, moved, err := opts.compiler().Resolve(rec, intent, cat, stats)
+	spec, added, moved, playing, err := opts.compiler().Resolve(
+		rec, intent, cat, stats)
 	if err != nil {
 		return result.Made{}, err
 	}
@@ -147,6 +161,7 @@ func Make(
 		Added:      addedFrom(added),
 		Moved:      movedFrom(moved),
 		Unfamiliar: unfamiliar(intent),
+		Playing:    result.Playing{Term: playing.Term, Said: playing.Said},
 		Path:       opts.OutputPath,
 	}, nil
 }
@@ -202,12 +217,21 @@ func write(
 // is taken only where the ask actually said it.
 func intentOf(
 	ask *tone.Spec,
+	held *tone.Setup,
 ) compile.Intent {
-	if ask == nil {
-		return compile.Intent{}
+	out := compile.Intent{}
+
+	// How this person plays, which is the one thing here that comes off the
+	// Setup rather than the ask. It stands on its own: a rig with no ask
+	// beside it still gets compensated for a right hand, because the rig says
+	// how it was played and the Setup says how this person does.
+	if held != nil && held.Technique != nil {
+		out.Playing = compile.Playing{Attack: string(held.Technique.Attack)}
 	}
 
-	out := compile.Intent{}
+	if ask == nil {
+		return out
+	}
 
 	if ask.Words != nil {
 		out.Words = make([]compile.Word, 0, len(*ask.Words))
@@ -369,4 +393,32 @@ func movedFrom(
 	}
 
 	return out
+}
+
+// setupAt reads what the person has, where they named a file.
+//
+// Nothing is not an error. Every build before a Setup could be named built for
+// the record, and that is still the answer for somebody who has not written
+// one: the compensation is an improvement on building blind rather than a
+// requirement for building at all.
+func setupAt(
+	at string,
+) (*tone.Setup, error) {
+	if at == "" {
+		return nil, nil
+	}
+
+	f, err := os.Open(at) //nolint:gosec // the path is the caller's own file
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", at, err)
+	}
+
+	defer func() { _ = f.Close() }()
+
+	held, err := tone.LoadSetup(f)
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", at, err)
+	}
+
+	return &held, nil
 }

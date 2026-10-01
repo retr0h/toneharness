@@ -48,8 +48,24 @@ type Made struct {
 	// is still something the rig said, and reporting only the ones that
 	// worked would read as if the rest had.
 	Moved []Moved `json:"moved"`
+	// Playing is what was done about how this person plays, and why.
+	//
+	// Only ever set when a Setup said. It is the one decision here taken from
+	// what somebody has rather than from what they asked for, so it is
+	// reported on its own rather than folded into the words: a knob moved
+	// because of a right hand is a different claim from one moved because of a
+	// word.
+	Playing Playing `json:"playing"`
 	// Path is the file that was written.
 	Path string `json:"path"`
+}
+
+// Playing is the compensation made for how somebody plays.
+type Playing struct {
+	// Term is the word that was added on their behalf. Empty when none was.
+	Term string `json:"term,omitempty"`
+	// Said is the whole of it in a sentence, ready to print.
+	Said string `json:"said,omitempty"`
 }
 
 // Moved is what a word did to a parameter.

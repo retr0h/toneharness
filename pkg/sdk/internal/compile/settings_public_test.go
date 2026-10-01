@@ -63,7 +63,7 @@ func (s *SettingsPublicTestSuite) value(
 	stats *corpus.Stats,
 	key string,
 ) catalog.ParamValue {
-	spec, _, _, err := compile.Resolve(
+	spec, _, _, _, err := compile.Resolve(
 		bassRig("Ampeg SVT (normal", ""),
 		compile.Intent{},
 		s.cat,

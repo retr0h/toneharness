@@ -65,6 +65,8 @@ type (
 	Unfamiliar = result.Unfamiliar
 	// Moved is what a word did to a parameter.
 	Moved = result.Moved
+	// Playing is the compensation made for how somebody plays.
+	Playing = result.Playing
 
 	// Rigs is every rig under one directory.
 	Rigs = result.Rigs

@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
 	presetmocks "github.com/retr0h/toneharness/pkg/sdk/internal/presets/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
@@ -94,7 +95,7 @@ func (s *TypesPublicTestSuite) TestCompiler() {
 	comp := presetmocks.NewMockCompiler(s.ctrl)
 	comp.EXPECT().Resolve(
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-	).Return(plan.Plan{}, nil, nil, want)
+	).Return(plan.Plan{}, nil, nil, compile.Compensated{}, want)
 
 	_, err := presets.Make(context.Background(), s.options(presets.Deps{Compiler: comp}))
 

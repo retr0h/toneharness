@@ -33,6 +33,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // stops writing after ok writes, so a report written in parts can be failed
@@ -82,6 +83,25 @@ func (s *MadePublicTestSuite) made(
 	}
 
 	return m
+}
+
+// evidenceKinds is every kind the contract defines, as a reader sees them.
+//
+// From the enum rather than a list here, so a kind added later is covered
+// without anybody remembering to come back.
+func evidenceKinds() []string {
+	all := []rig.EvidenceKind{
+		rig.EvidenceAudio, rig.EvidenceCited, rig.EvidenceCorpus,
+		rig.EvidenceHeard, rig.EvidenceLLM, rig.EvidenceStore,
+		rig.EvidenceUser, rig.EvidenceVideo,
+	}
+
+	out := make([]string, 0, len(all))
+	for _, kind := range all {
+		out = append(out, string(kind))
+	}
+
+	return out
 }
 
 // TestMade covers Made, which says what was built and what it chose.
@@ -147,7 +167,14 @@ func (s *MadePublicTestSuite) TestMade() {
 								{Term: "mid-forward", Param: "Mid", From: 0.52, To: 0.60},
 							}
 						}),
-						want: []string{"heard", "mid-forward", "Mid 0.52 to 0.60"},
+						want: []string{"says", "mid-forward", "Mid 0.52 to 0.60"},
+						// `heard` is a defined evidence kind: a person who
+						// played the rig and judged it, which the contract
+						// ranks above everything because nothing here can
+						// hear. It labelled every moved word until
+						// 2026-09-30, claiming a human verdict for words
+						// nothing had listened to.
+						absent: []string{"heard"},
 					},
 					{
 						// A word sized by a measurement moves a different distance from
@@ -247,6 +274,42 @@ func (s *MadePublicTestSuite) TestMade() {
 						absent: []string{"did you mean"},
 					},
 					{
+						// The one decision on the page that comes off the
+						// Setup rather than the ask, so it is reported on its
+						// own: a knob moved because of a right hand is a
+						// different claim from one moved because of a word.
+						name: "what was done about how this person plays",
+						in: s.made(func(m *sdk.Made) {
+							m.Playing = sdk.Playing{
+								Term: "audible-pick-attack",
+								Said: "the rig was played with pick and you " +
+									"play with fingers",
+							}
+						}),
+						want: []string{"playing", "you play with fingers"},
+					},
+					{
+						// No label may borrow one of the contract's evidence
+						// kinds, whatever else this report grows. A reader
+						// cannot tell a heading from a claim about where a
+						// word came from, which is how `heard` labelled every
+						// moved word for two months.
+						name: "no label borrows an evidence kind",
+						in: s.made(func(m *sdk.Made) {
+							m.Added = []sdk.Added{
+								{Name: "Minotaur", Reason: "drive", Share: 0.95},
+							}
+							m.Moved = []sdk.Moved{
+								{Term: "mid-forward", Param: "Mid", From: 0.5, To: 0.6},
+							}
+							m.Unfamiliar = []sdk.Unfamiliar{{Term: "wet paper bag"}}
+							m.Playing = sdk.Playing{
+								Term: "soft-attack", Said: "you play with a pick",
+							}
+						}),
+						absent: evidenceKinds(),
+					},
+					{
 						name: "a word close to one that is defined",
 						in: s.made(func(m *sdk.Made) {
 							m.Unfamiliar = []sdk.Unfamiliar{
@@ -289,6 +352,9 @@ func (s *MadePublicTestSuite) TestMade() {
 					m.Added = []sdk.Added{{Name: "Minotaur", Reason: "drive", Share: 0.95}}
 					m.Moved = []sdk.Moved{{Term: "mid-forward", Param: "Mid", From: 0.5, To: 0.6}}
 					m.Unfamiliar = []sdk.Unfamiliar{{Term: "wet paper bag"}}
+					m.Playing = sdk.Playing{
+						Term: "soft-attack", Said: "you play with a pick",
+					}
 				})
 
 				// How many writes a whole report takes, found by letting one through.

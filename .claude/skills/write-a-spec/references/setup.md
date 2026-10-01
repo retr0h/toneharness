@@ -44,6 +44,50 @@ project ships was measured through a cabinet block into a computer, which is
 one of these four, and a reading is worth less to somebody on another. That is
 what recording it is for.
 
+## How this person plays
+
+`technique`, optional, and the same schema a subject uses. `attack` is
+required within it, one of `pick`, `fingers`, `slap`, `thumb`, `hybrid`.
+`position` and `muting` are optional.
+
+```yaml
+schema: Setup
+technique:
+  attack: fingers
+```
+
+Here as well as on a subject because they are different claims. On a subject it
+is how the player being emulated played. Here it is how the person holding the
+instrument plays, and stating both is what lets the difference be compensated.
+
+A pick puts high-frequency attack into every note that fingers do not, so a rig
+tuned from a picked recording is duller played fingered. With both sides stated
+the build adds a word on the attack axis, `audible-pick-attack` when this person
+plays softer than the subject and `soft-attack` when harder, and says which and
+why:
+
+```text
+playing the rig was played with pick and you play with fingers, so
+        audible-pick-attack compensates for the front of the note
+```
+
+Three things about it are worth knowing before relying on it.
+
+It compensates on one axis. The other half of the difference is brightness, and
+the size of that is not compensated because nobody has measured it. The
+direction is not in doubt; the number would be invented.
+
+A word the ask already uses for the attack axis wins, and the report says this
+stood down. Two terms on one axis cancel by design, so a second word would have
+taken the ask's own out with it.
+
+A thumb ranks with fingers rather than between fingers and a pick, because the
+rank is about what is touching the string rather than about the tone.
+
+Ask for it when writing a Setup. It is the one field here that changes what a
+build does for the person rather than for the record, and somebody who does not
+state it gets a preset tuned for whoever made the recording.
+
 ## Why a rig may not name what a device lacks
 
 A rig used to carry a `requires` list naming impulse responses and bought models.
