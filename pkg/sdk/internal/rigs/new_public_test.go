@@ -111,7 +111,9 @@ func (s *NewPublicTestSuite) TestNewCases() {
 					name string
 					id   string
 					// an identifier nobody gave.
-					noID   bool
+					noID bool
+					// a name nobody gave.
+					noName bool
 					amp    string
 					cab    string
 					band   string
@@ -144,6 +146,15 @@ func (s *NewPublicTestSuite) TestNewCases() {
 						name:    "a rig naming an amplifier",
 						wantAmp: "Ampeg SVT",
 						says:    []string{"Test Player"},
+					},
+					{
+						// `--name` is optional and the contract's is not, so the
+						// identifier has to answer for it. Written blank the document
+						// does not load, which is what this asserts: Load is called
+						// below and refuses a null subject name.
+						name:   "a name nobody gave",
+						noName: true,
+						says:   []string{"Test Player"},
 					},
 					{
 						name:   "everything somebody named",
@@ -279,6 +290,10 @@ func (s *NewPublicTestSuite) TestNewCases() {
 
 						if tt.noID {
 							o.ID = ""
+						}
+
+						if tt.noName {
+							o.Name = ""
 						}
 
 						if tt.amp != "" {

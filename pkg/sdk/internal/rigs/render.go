@@ -111,7 +111,7 @@ func renderAsk(
 	b.WriteString("genre: [" + strings.Join(opts.Genre, ", ") + "]\n\n")
 
 	b.WriteString("subject:\n  kind: artist\n")
-	fmt.Fprintf(&b, "  name: %s\n", opts.Name)
+	fmt.Fprintf(&b, "  name: %s\n", subjectName(opts))
 
 	if opts.Band != "" {
 		fmt.Fprintf(&b, "  band: %s\n", opts.Band)
@@ -154,10 +154,38 @@ func title(
 	opts NewOptions,
 ) string {
 	if opts.Band == "" {
+		return subjectName(opts)
+	}
+
+	return subjectName(opts) + " — " + opts.Band
+}
+
+// subjectName is who the ask is for.
+//
+// The contract requires it, so it cannot be left out the way the instrument is.
+// Without a name the identifier is the only thing that says who this is for, and
+// an identifier is a name with the spaces taken out, so it is put back:
+// `justin-chancellor` reads as `Justin Chancellor`. Somebody correcting the
+// capitals is a smaller job than a scaffold that wrote the field blank, which
+// writes a document the loader refuses with nothing saying why.
+func subjectName(
+	opts NewOptions,
+) string {
+	if opts.Name != "" {
 		return opts.Name
 	}
 
-	return opts.Name + " — " + opts.Band
+	words := strings.Split(opts.ID, "-")
+	for i, w := range words {
+		if w == "" {
+			continue
+		}
+
+		r := []rune(w)
+		words[i] = strings.ToUpper(string(r[0])) + string(r[1:])
+	}
+
+	return strings.Join(words, " ")
 }
 
 // renderPedals writes the pedals, ahead of the amp.

@@ -481,7 +481,8 @@ func (c *Client) Backing(
 type NewRig struct {
 	// ID is the identifier, and the filename stem.
 	ID string
-	// Name is the player or style, as a person would write it.
+	// Name is the player or style, as a person would write it. Empty takes it
+	// from ID.
 	Name string
 	// Band is the group, where there is one.
 	Band string
