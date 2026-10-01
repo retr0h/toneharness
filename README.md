@@ -75,7 +75,11 @@ again:
 > - _"Build this rig somebody sent me and put it on my pedal."_
 
 Every claim in a rig carries its source, which is what makes one worth sending.
-[examples/rigspec/](examples/rigspec/) has one with every field filled in.
+[marketplace/](marketplace/) is where they live: a cited core that ships in the
+binary, and a community tier you load with `--rigs`. Its README says what the
+two tiers are and how to submit one. [examples/rigspec/](examples/rigspec/) has
+one with every optional field filled in, which is the reference rather than a
+rig anybody uses.
 
 ## What ships in the binary
 
