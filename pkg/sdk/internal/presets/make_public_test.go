@@ -72,11 +72,20 @@ func (s *MakePublicTestSuite) opts(
 // TestMake builds a preset out of a rig.
 func (s *MakePublicTestSuite) TestMake() {
 	tests := []struct {
-		name    string
-		ctx     context.Context
-		id      string
-		stats   string
-		catalog string
+		name string
+		ctx  context.Context
+		id   string
+		// rigPath names the rig by file instead of by identifier, relative to
+		// the rigs this suite's testdata holds. askPath does the same for the
+		// ask, for the one case that names an ask not beside its rig.
+		rigPath string
+		askPath string
+		// bothSources names a rig twice and noSource names it not at all,
+		// which are the two ways to ask for a rig nobody identified.
+		bothSources bool
+		noSource    bool
+		stats       string
+		catalog     string
 		// setup is what the person has. The row writes it to a file, so a
 		// path that is not there is spelt as a path rather than a document.
 		setup   string
@@ -102,6 +111,46 @@ func (s *MakePublicTestSuite) TestMake() {
 			id:       "test-player",
 			loadable: true,
 			contains: []string{"Test Player"},
+		},
+		{
+			// The same rig by path rather than by identifier, and the words on
+			// the ask beside it still reach a control. The point of the whole
+			// flag: a rig that `tone build` wrote has no identifier to look up,
+			// and compiling it instead dropped every word with nothing said.
+			name:     "a rig file, with the ask beside it",
+			rigPath:  "own-words.yaml",
+			loadable: true,
+			contains: []string{"sounds like a wet paper bag"},
+		},
+		{
+			// An ask somewhere else, because the rig a request produced and the
+			// request that produced it do not land beside each other.
+			name:     "a rig file and an ask named apart from it",
+			rigPath:  "test-player.yaml",
+			askPath:  "own-words.tone.yaml",
+			loadable: true,
+			contains: []string{"sounds like a wet paper bag"},
+		},
+		{
+			name:        "a rig named twice",
+			bothSources: true,
+			err:         presets.ErrOneRig,
+		},
+		{
+			name:     "a rig named no way at all",
+			noSource: true,
+			err:      presets.ErrOneRig,
+		},
+		{
+			name:    "a rig file that is not there",
+			rigPath: "no-such-rig.yaml",
+			errText: "no-such-rig.yaml",
+		},
+		{
+			name:    "an ask that is not there",
+			rigPath: "test-player.yaml",
+			askPath: "no-such-ask.tone.yaml",
+			errText: "no-such-ask.tone.yaml",
 		},
 		{
 			// A word nothing defines is said and not refused. Nothing
@@ -233,6 +282,26 @@ func (s *MakePublicTestSuite) TestMake() {
 			}
 
 			o := s.opts(tt.id, out)
+
+			if tt.rigPath != "" {
+				o.RigID = ""
+				o.RigPath = filepath.Join("testdata", "rigs", "artists", tt.rigPath)
+			}
+
+			if tt.askPath != "" {
+				o.AskPath = filepath.Join("testdata", "rigs", "artists", tt.askPath)
+			}
+
+			if tt.bothSources {
+				o.RigID = "test-player"
+				o.RigPath = filepath.Join("testdata", "rigs", "artists", "test-player.yaml")
+			}
+
+			if tt.noSource {
+				o.RigID = ""
+				o.RigPath = ""
+			}
+
 			if tt.stats != "" {
 				o.StatsPath = tt.stats
 			}

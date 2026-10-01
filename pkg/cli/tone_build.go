@@ -104,7 +104,7 @@ func ToneBuild(
 		return err
 	}
 
-	return put(w, got.Rig, opts.Out)
+	return put(w, got.Rig, opts.Out, opts.Ask)
 }
 
 // say reports what the translation did and could not do.
@@ -139,10 +139,14 @@ func sayNotes(
 }
 
 // put writes the rig, to a file or to whatever is reading.
+//
+// ask is carried this far only to name it in the next command. A rig written
+// here sits wherever somebody pointed --out, with no ask beside it, so the step
+// that resolves the words cannot find one by convention.
 func put(
 	w io.Writer,
 	spec rig.Spec,
-	at string,
+	at, ask string,
 ) error {
 	var buf bytes.Buffer
 
@@ -160,9 +164,15 @@ func put(
 		return fmt.Errorf("writing %s: %w", at, err)
 	}
 
+	// `presets make` rather than `presets compile`, because the ask is not spent
+	// yet. Compile lowers the gear and nothing else, so a request's words and
+	// the words its genre earned would reach no control and nothing would say
+	// so. Make resolves the pair, and --ask is named because the rig this just
+	// wrote has no .tone.yaml beside it to be found.
 	_, err := fmt.Fprintf(w,
-		"\n  [ok] wrote %s\n\n  compile it with:\n"+
-			"    toneharness presets compile --rig %s --out a.hlx\n\n", at, at)
+		"\n  [ok] wrote %s\n\n  build the preset with:\n"+
+			"    toneharness presets make --rig %s --ask %s --out a.hlx\n\n",
+		at, at, ask)
 
 	return err
 }

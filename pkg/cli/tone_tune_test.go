@@ -112,7 +112,7 @@ func (s *TuneTestSuite) aimedHigh() []audio.Genre {
 // ready makes the pedal answer everything the loop asks of it.
 func (s *TuneTestSuite) ready() {
 	s.pedal.EXPECT().
-		Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Make(gomock.Any(), gomock.Any()).
 		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 			Model:   catalog.ModelID("HD2_AmpSVBeastBrt"),
 			Pos:     0,
@@ -213,7 +213,7 @@ func (s *TuneTestSuite) TestTune() {
 				s.genre.EXPECT().
 					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{}, errors.New("over the DSP budget"))
 
 				err := Tune(context.Background(), buffer(), s.opts())
@@ -232,7 +232,7 @@ func (s *TuneTestSuite) TestTune() {
 				s.genre.EXPECT().
 					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 						Model: catalog.ModelID("HD2_NoSuchBlock"),
 					}}}}, nil)
@@ -249,7 +249,7 @@ func (s *TuneTestSuite) TestTune() {
 				s.genre.EXPECT().
 					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 						Model: catalog.ModelID("HD2_AmpSVBeastBrt"),
 					}}}}, nil)
@@ -378,7 +378,7 @@ func (s *TuneTestSuite) TestTune() {
 				s.genre.EXPECT().
 					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.aimedHigh(), nil)
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 						Model: catalog.ModelID("HD2_AmpSVBeastBrt"),
 					}}}}, nil)
@@ -430,7 +430,7 @@ func (s *TuneTestSuite) TestTune() {
 				s.genre.EXPECT().
 					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.aimedHigh(), nil)
 				s.pedal.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
 						Model: catalog.ModelID("HD2_AmpSVBeastBrt"),
 					}}}}, nil)

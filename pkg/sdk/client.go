@@ -601,23 +601,23 @@ func (c *Client) Extend(
 // preset is a set of decisions, and a wrong amp should be visible before
 // anybody plugs in rather than after.
 //
-// existing says what happens to a file already at out: ReplaceExisting puts
-// the preset in its place, and KeepExisting refuses it with an error matching
-// fs.ErrExist.
+// in.Existing says what happens to a file already at in.Out: ReplaceExisting
+// puts the preset in its place, and KeepExisting refuses it with an error
+// matching fs.ErrExist.
 func (c *Client) Make(
 	ctx context.Context,
-	rigID string,
-	out string,
-	existing Existing,
+	in Build,
 ) (Made, error) {
 	return presets.Make(ctx, presets.MakeOptions{
 		Deps:       presets.Deps{Catalogs: c},
-		RigID:      rigID,
+		RigID:      in.RigID,
+		RigPath:    in.Rig,
+		AskPath:    in.Ask,
 		Source:     c.source(),
 		StatsPath:  c.opts.stats,
 		SetupPath:  c.opts.setup,
-		OutputPath: out,
-		Existing:   existing,
+		OutputPath: in.Out,
+		Existing:   in.Existing,
 	})
 }
 

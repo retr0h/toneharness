@@ -44,18 +44,18 @@ func (m *MockBuilds) EXPECT() *MockBuildsMockRecorder {
 }
 
 // Make mocks base method.
-func (m *MockBuilds) Make(ctx context.Context, rigID, out string, existing sdk.Existing) (sdk.Made, error) {
+func (m *MockBuilds) Make(ctx context.Context, in sdk.Build) (sdk.Made, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Make", ctx, rigID, out, existing)
+	ret := m.ctrl.Call(m, "Make", ctx, in)
 	ret0, _ := ret[0].(sdk.Made)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Make indicates an expected call of Make.
-func (mr *MockBuildsMockRecorder) Make(ctx, rigID, out, existing any) *gomock.Call {
+func (mr *MockBuildsMockRecorder) Make(ctx, in any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Make", reflect.TypeOf((*MockBuilds)(nil).Make), ctx, rigID, out, existing)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Make", reflect.TypeOf((*MockBuilds)(nil).Make), ctx, in)
 }
 
 // MockTuner is a mock of Tuner interface.
@@ -142,18 +142,18 @@ func (mr *MockTunerMockRecorder) Current(ctx, as any) *gomock.Call {
 }
 
 // Make mocks base method.
-func (m *MockTuner) Make(ctx context.Context, rigID, out string, existing sdk.Existing) (sdk.Made, error) {
+func (m *MockTuner) Make(ctx context.Context, in sdk.Build) (sdk.Made, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Make", ctx, rigID, out, existing)
+	ret := m.ctrl.Call(m, "Make", ctx, in)
 	ret0, _ := ret[0].(sdk.Made)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Make indicates an expected call of Make.
-func (mr *MockTunerMockRecorder) Make(ctx, rigID, out, existing any) *gomock.Call {
+func (mr *MockTunerMockRecorder) Make(ctx, in any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Make", reflect.TypeOf((*MockTuner)(nil).Make), ctx, rigID, out, existing)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Make", reflect.TypeOf((*MockTuner)(nil).Make), ctx, in)
 }
 
 // Play mocks base method.

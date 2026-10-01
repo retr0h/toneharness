@@ -379,7 +379,8 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 			name: "a path nothing is at",
 			args: tools.Make{RigID: "mike-dirnt", Out: fresh},
 			setup: func(c *mocks.MockClient) {
-				c.EXPECT().Make(gomock.Any(), "mike-dirnt", fresh, sdk.KeepExisting).
+				c.EXPECT().
+					Make(gomock.Any(), sdk.Build{RigID: "mike-dirnt", Out: fresh, Existing: sdk.KeepExisting}).
 					Return(sdk.Made{}, nil)
 			},
 			want: "wrote " + fresh,
@@ -395,7 +396,8 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 			name: "a path a file is at, with writes on",
 			args: tools.Make{RigID: "mike-dirnt", Out: held},
 			setup: func(c *mocks.MockClient) {
-				c.EXPECT().Make(gomock.Any(), "mike-dirnt", held, sdk.ReplaceExisting).
+				c.EXPECT().
+					Make(gomock.Any(), sdk.Build{RigID: "mike-dirnt", Out: held, Existing: sdk.ReplaceExisting}).
 					Return(sdk.Made{}, nil)
 			},
 			want:        "wrote " + held,
@@ -409,15 +411,16 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 			name: "a file that appears between the decision and the write, with writes off",
 			args: tools.Make{RigID: "mike-dirnt", Out: racy},
 			setup: func(c *mocks.MockClient) {
-				c.EXPECT().Make(gomock.Any(), "mike-dirnt", racy, sdk.KeepExisting).
+				c.EXPECT().
+					Make(gomock.Any(), sdk.Build{RigID: "mike-dirnt", Out: racy, Existing: sdk.KeepExisting}).
 					DoAndReturn(func(
-						ctx context.Context, id, out string, existing sdk.Existing,
+						ctx context.Context, in sdk.Build,
 					) (sdk.Made, error) {
-						if err := os.WriteFile(out, []byte("somebody's preset"), 0o600); err != nil {
+						if err := os.WriteFile(in.Out, []byte("somebody's preset"), 0o600); err != nil {
 							return sdk.Made{}, err
 						}
 
-						return sdk.New().Make(ctx, id, out, existing)
+						return sdk.New().Make(ctx, in)
 					})
 			},
 			want: tools.ErrWouldOverwrite.Error() + ": " + racy,
@@ -429,21 +432,21 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 			},
 		},
 		{
-			// The same race on the other source: a rig file compiled for
-			// real, through Compile's own write.
+			// The same race on the other source: a rig file resolved for
+			// real, through Make's own write.
 			name: "a file that appears between the decision and the write, from a rig file, with writes off",
 			args: tools.Make{RigPath: rigFile, Out: racyRig},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
-					Compile(gomock.Any(), sdk.Compile{
+					Make(gomock.Any(), sdk.Build{
 						Rig: rigFile, Out: racyRig, Existing: sdk.KeepExisting,
 					}).
-					DoAndReturn(func(ctx context.Context, in sdk.Compile) (sdk.Built, error) {
+					DoAndReturn(func(ctx context.Context, in sdk.Build) (sdk.Made, error) {
 						if err := os.WriteFile(in.Out, []byte("somebody's preset"), 0o600); err != nil {
-							return sdk.Built{}, err
+							return sdk.Made{}, err
 						}
 
-						return sdk.New().Compile(ctx, in)
+						return sdk.New().Make(ctx, in)
 					})
 			},
 			want: tools.ErrWouldOverwrite.Error() + ": " + racyRig,
@@ -459,7 +462,7 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 			args: tools.Make{RigID: "mike-dirnt", Out: "mike.hlx"},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
-					Make(gomock.Any(), "mike-dirnt", "mike.hlx", sdk.KeepExisting).
+					Make(gomock.Any(), sdk.Build{RigID: "mike-dirnt", Out: "mike.hlx", Existing: sdk.KeepExisting}).
 					Return(sdk.Made{}, nil)
 			},
 			want: "wrote mike.hlx from rig mike-dirnt",
@@ -471,14 +474,17 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 			},
 		},
 		{
+			// Resolved, not compiled. A rig file has an ask beside it as often
+			// as a rig in a directory does, and the words on it are the
+			// difference between the gear and the sound.
 			name: "from a rig file",
 			args: tools.Make{RigPath: "mine.yaml", Out: "mine.hlx"},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
-					Compile(gomock.Any(), sdk.Compile{
+					Make(gomock.Any(), sdk.Build{
 						Rig: "mine.yaml", Out: "mine.hlx", Existing: sdk.KeepExisting,
 					}).
-					Return(sdk.Built{}, nil)
+					Return(sdk.Made{}, nil)
 			},
 			want: "wrote mine.hlx from mine.yaml",
 			check: func(s *OfflinePublicTestSuite, res *gomcp.CallToolResult) {
@@ -492,7 +498,7 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 			args: tools.Make{RigID: "mike-dirnt", Out: "mike.hlx"},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{}, errors.New("over budget"))
 			},
 			want: "over budget",
@@ -503,7 +509,7 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 			args: tools.Make{RigID: "nobody", Out: "nobody.hlx"},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
-					Make(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Make(gomock.Any(), gomock.Any()).
 					Return(sdk.Made{}, fmt.Errorf("%w %q", sdk.ErrNoSuchRig, "nobody"))
 			},
 			want: "call rigs_list",
@@ -514,8 +520,8 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 			args: tools.Make{RigPath: "mine.yaml", Out: "mine.hlx"},
 			setup: func(c *mocks.MockClient) {
 				c.EXPECT().
-					Compile(gomock.Any(), gomock.Any()).
-					Return(sdk.Built{}, errors.New("unknown block"))
+					Make(gomock.Any(), gomock.Any()).
+					Return(sdk.Made{}, errors.New("unknown block"))
 			},
 			want: "unknown block",
 			err:  true,

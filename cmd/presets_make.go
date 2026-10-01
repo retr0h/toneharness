@@ -30,6 +30,8 @@ import (
 
 var (
 	presetsMakeID     string
+	presetsMakeRig    string
+	presetsMakeAsk    string
 	presetsMakeOut    string
 	presetsMakeClient clientFlags
 	presetsMakeRigs   string
@@ -45,6 +47,11 @@ The rig names real-world gear; the catalog says what this device has. Every
 parameter is set to what Line 6 states as its default. The words in the ask
 beside the rig then move the controls they name.
 
+Name the rig by --id to build one from a directory of them, or by --rig to build
+a file somebody has in hand, such as what "tone build" wrote. Either way the ask
+is resolved: --rig reads the .tone.yaml beside it unless --ask names another.
+"presets compile" is the one that writes a document without resolving anything.
+
 Name a setup and the build fits the person as well as the record: an ask says
 how the subject played, a setup says how you do, and the difference between two
 right hands is a knob position rather than a surprise at the first rehearsal.`,
@@ -52,7 +59,12 @@ right hands is a knob position rather than a surprise at the first rehearsal.`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		client := presetsMakeClient.client(ownRigs(presetsMakeRigs))
 
-		made, err := client.Make(cmd.Context(), presetsMakeID, presetsMakeOut, sdk.ReplaceExisting)
+		made, err := client.Make(cmd.Context(), sdk.Build{
+			RigID: presetsMakeID,
+			Rig:   presetsMakeRig,
+			Ask:   presetsMakeAsk,
+			Out:   presetsMakeOut,
+		})
 		if err != nil {
 			return err
 		}
@@ -74,7 +86,11 @@ func init() {
 	presetsCmd.AddCommand(presetsMakeCmd)
 
 	f := presetsMakeCmd.Flags()
-	f.StringVar(&presetsMakeID, "id", "", "rig to build from")
+	f.StringVar(&presetsMakeID, "id", "", "rig to build from, by identifier")
+	f.StringVar(&presetsMakeRig, "rig", "",
+		"a rig file to build from instead, such as one tone build wrote")
+	f.StringVar(&presetsMakeAsk, "ask", "",
+		"the ToneSpec to resolve it against; without one the .tone.yaml beside --rig is read")
 	f.StringVar(
 		&presetsMakeRigs,
 		"rigs",
@@ -89,6 +105,7 @@ func init() {
 	f.StringVar(&presetsMakeClient.setup, "setup", "", setupUsage)
 	f.StringVar(&presetsMakeOut, "out", "", "where to write the preset")
 	// Fails only for a flag that does not exist, and these are defined above.
-	_ = presetsMakeCmd.MarkFlagRequired("id")
+	presetsMakeCmd.MarkFlagsOneRequired("id", "rig")
+	presetsMakeCmd.MarkFlagsMutuallyExclusive("id", "rig")
 	_ = presetsMakeCmd.MarkFlagRequired("out")
 }

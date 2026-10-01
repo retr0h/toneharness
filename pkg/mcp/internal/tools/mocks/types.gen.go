@@ -136,18 +136,18 @@ func (mr *MockClientMockRecorder) Devices(ctx any) *gomock.Call {
 }
 
 // Make mocks base method.
-func (m *MockClient) Make(ctx context.Context, rigID, out string, existing sdk.Existing) (sdk.Made, error) {
+func (m *MockClient) Make(ctx context.Context, in sdk.Build) (sdk.Made, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Make", ctx, rigID, out, existing)
+	ret := m.ctrl.Call(m, "Make", ctx, in)
 	ret0, _ := ret[0].(sdk.Made)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Make indicates an expected call of Make.
-func (mr *MockClientMockRecorder) Make(ctx, rigID, out, existing any) *gomock.Call {
+func (mr *MockClientMockRecorder) Make(ctx, in any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Make", reflect.TypeOf((*MockClient)(nil).Make), ctx, rigID, out, existing)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Make", reflect.TypeOf((*MockClient)(nil).Make), ctx, in)
 }
 
 // MeasuredGenres mocks base method.

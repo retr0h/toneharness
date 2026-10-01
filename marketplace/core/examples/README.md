@@ -40,10 +40,16 @@ and because `presets compile --plan` takes one back.
 ```bash
 mise exec -- go run main.go tone build \
   --ask marketplace/core/examples/tonespec/chunky-punk.yaml --out rig.yaml
-mise exec -- go run main.go presets compile --rig rig.yaml --out punk.hlx
+mise exec -- go run main.go presets make --rig rig.yaml \
+  --ask marketplace/core/examples/tonespec/chunky-punk.yaml --out punk.hlx
 ```
 
 `--setup` is optional; without one the rig is for a bass on an HX Stomp.
+
+`presets make` rather than `presets compile`, because the words are still
+unspent after `tone build`: a rig carries the gear and the ask carries the
+sound. Compile is for a document that has already made those decisions, such as
+a rig lifted off a device.
 
 **Words cannot start a chain.** An ask carrying only a genre and adjectives is
 refused: there is nothing to pick an amplifier from. Name gear, or name a

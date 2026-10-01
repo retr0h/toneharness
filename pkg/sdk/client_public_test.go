@@ -368,8 +368,10 @@ func (s *ClientPublicTestSuite) TestWithStats() {
 // is at says loudly enough.
 func (s *ClientPublicTestSuite) TestWithSetup() {
 	_, err := sdk.New(sdk.WithSetup("no-such-setup.yaml")).
-		Make(context.Background(), "mike-dirnt",
-			filepath.Join(s.T().TempDir(), "o.hlx"), sdk.ReplaceExisting)
+		Make(context.Background(), sdk.Build{
+			RigID: "mike-dirnt",
+			Out:   filepath.Join(s.T().TempDir(), "o.hlx"),
+		})
 
 	s.Require().ErrorContains(err, "no-such-setup.yaml",
 		"the Client read the Setup it was given")
@@ -535,7 +537,7 @@ func (s *ClientPublicTestSuite) TestWithUserRigs() {
 						listed, listErr := client.Rigs(ctx)
 						shown, showErr := client.Rig(ctx, tt.id)
 						out := filepath.Join(s.T().TempDir(), "out.hlx")
-						_, buildErr := client.Make(ctx, tt.id, out, sdk.ReplaceExisting)
+						_, buildErr := client.Make(ctx, sdk.Build{RigID: tt.id, Out: out})
 
 						if tt.listErr != "" {
 							s.Require().ErrorContains(listErr, tt.listErr)
@@ -1553,7 +1555,8 @@ func (s *ClientPublicTestSuite) TestBuild() {
 				s.Require().NoError(os.WriteFile(out, []byte("somebody's preset"), 0o600))
 			}
 
-			got, err := sdk.New().Make(ctx, tt.id, out, tt.existing)
+			got, err := sdk.New().
+				Make(ctx, sdk.Build{RigID: tt.id, Out: out, Existing: tt.existing})
 
 			if tt.is != nil {
 				s.Require().ErrorIs(err, tt.is)
