@@ -53,6 +53,31 @@ func (s *RigsPublicTestSuite) TestLoad() {
 	// cleanup, which was registered first; a failure shows up there.
 	s.T().Cleanup(func() { _ = os.Chmod(unreadable, 0o750) })
 
+	// A directory holding one rig under each spelling, which is the one thing
+	// two suffixes make possible and nothing else would catch.
+	both := s.T().TempDir()
+	s.Require().NoError(os.MkdirAll(filepath.Join(both, "artists"), 0o750))
+
+	for _, name := range []string{"twice.rig.yaml", "twice.yaml"} {
+		s.Require().NoError(os.WriteFile(
+			filepath.Join(both, "artists", name),
+			[]byte("schema: RigSpec\nversion: 2\nid: twice\ninstrument: bass\n"+
+				"chain:\n  - role: amp\n    gear: Ampeg SVT\n"), 0o600))
+	}
+
+	// One rig under the old spelling with its ask beside it, so the pairing is
+	// asserted on the suffix nothing writes any more.
+	bare := s.T().TempDir()
+	s.Require().NoError(os.MkdirAll(filepath.Join(bare, "artists"), 0o750))
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(bare, "artists", "plain.yaml"),
+		[]byte("schema: RigSpec\nversion: 2\nid: plain\ninstrument: bass\n"+
+			"chain:\n  - role: amp\n    gear: Ampeg SVT\n"), 0o600))
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(bare, "artists", "plain.tone.yaml"),
+		[]byte("schema: ToneSpec\ngenre: [punk]\nsubject:\n  kind: artist\n"+
+			"  name: Plain\n"), 0o600))
+
 	tests := []struct {
 		name  string
 		dir   string
@@ -104,6 +129,23 @@ func (s *RigsPublicTestSuite) TestLoad() {
 			name: "no directory falls back to the built-in rigs",
 			dir:  "",
 		},
+		{
+			// A bare `.yaml` rig still loads, and still pairs with its ask by
+			// the stem. That is what a rig read off a device is, and what every
+			// rig written before the suffix existed is, so refusing one to make
+			// the naming tidy would be refusing the format's whole point.
+			name: "a rig that does not say what it is",
+			dir:  bare,
+			ids:  []string{"plain"},
+		},
+		{
+			// Two files claiming one name. Reported rather than dropped: a rig
+			// that silently does not load is the failure the broken list exists
+			// to prevent, and which of the two was read is the useful half.
+			name: "one name claimed by both spellings",
+			dir:  both,
+			err:  "are both the rig",
+		},
 	}
 
 	for _, tt := range tests {
@@ -142,18 +184,44 @@ func (s *RigsPublicTestSuite) TestLoad() {
 
 // TestFind looks one rig up.
 func (s *RigsPublicTestSuite) TestFind() {
+	// A rig under the old spelling with its ask beside it, so the pairing is
+	// asserted on the suffix nothing writes any more.
+	bare := s.T().TempDir()
+	s.Require().NoError(os.MkdirAll(filepath.Join(bare, "artists"), 0o750))
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(bare, "artists", "plain.yaml"),
+		[]byte("schema: RigSpec\nversion: 2\nid: plain\ninstrument: bass\n"+
+			"chain:\n  - role: amp\n    gear: Ampeg SVT\n"), 0o600))
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(bare, "artists", "plain.tone.yaml"),
+		[]byte("schema: ToneSpec\ngenre: [punk]\nsubject:\n  kind: artist\n"+
+			"  name: Plain\n"), 0o600))
+
 	tests := []struct {
 		name string
 		dir  string
 		id   string
 		want string
-		errs []string
+		// paired says the answer must carry the ask beside the rig.
+		paired bool
+		errs   []string
 	}{
 		{
-			name: "by identifier",
-			dir:  s.good(),
-			id:   "mike-dirnt",
-			want: "mike-dirnt",
+			name:   "by identifier",
+			dir:    s.good(),
+			id:     "mike-dirnt",
+			want:   "mike-dirnt",
+			paired: true,
+		},
+		{
+			// A rig named the old way pairs with its ask by the stem. Nothing
+			// writes `<slug>.yaml` any more and a rig read off a device is still
+			// one, so the pairing cannot depend on the spelling.
+			name:   "a rig that does not say what it is, and its ask",
+			dir:    bare,
+			id:     "plain",
+			want:   "plain",
+			paired: true,
 		},
 		{
 			name: "whatever case somebody typed",
@@ -197,6 +265,11 @@ func (s *RigsPublicTestSuite) TestFind() {
 
 			s.Require().NoError(err)
 			s.Require().Equal(tt.want, got.Rig.ID)
+
+			if tt.paired {
+				s.Require().NotNil(got.Ask,
+					"a rig pairs with its ask by the stem, whichever suffix it has")
+			}
 		})
 	}
 }

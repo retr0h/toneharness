@@ -176,7 +176,10 @@ func New(
 		return result.Scaffolded{}, err
 	}
 
-	path := filepath.Join(opts.Dir, "artists", opts.ID+".yaml")
+	// `.rig.yaml`, so the file says which of the two documents it is. A bare
+	// `<slug>.yaml` still loads, for a rig read off a device or written before
+	// this, but nothing writes one any more.
+	path := filepath.Join(opts.Dir, "artists", opts.ID+rigSuffix)
 
 	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		return result.Scaffolded{}, fmt.Errorf("making room for %s: %w", path, err)

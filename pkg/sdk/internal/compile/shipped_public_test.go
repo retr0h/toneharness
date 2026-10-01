@@ -133,8 +133,7 @@ func (s *ShippedPublicTestSuite) TestEveryExampleUsesTheVocabulary() {
 			"marketplace",
 			"core",
 			"examples",
-			"tonespec",
-			"*.yaml",
+			"*.tone.yaml",
 		),
 	)
 	s.Require().NoError(err)

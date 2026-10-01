@@ -3,10 +3,10 @@
 # The shortest ask that produces a real chain. No gear, no recording, no era:
 # one name, and the cited gear comes back with every source attached.
 #
-#     toneharness tone build --ask marketplace/core/examples/tonespec/like-a-player.yaml \
+#     toneharness tone build --ask marketplace/core/examples/like-a-player.tone.yaml \
 #       --out rig.yaml
 #     toneharness presets make --rig rig.yaml \
-#       --ask marketplace/core/examples/tonespec/like-a-player.yaml --out dirnt.hlx
+#       --ask marketplace/core/examples/like-a-player.tone.yaml --out dirnt.hlx
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 

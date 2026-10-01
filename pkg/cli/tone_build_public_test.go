@@ -63,7 +63,7 @@ func (s *ToneBuildPublicTestSuite) file(
 func (s *ToneBuildPublicTestSuite) examples(
 	name string,
 ) string {
-	return filepath.Join("marketplace", "core", "examples", "tonespec", name)
+	return filepath.Join("marketplace", "core", "examples", name)
 }
 
 // TestToneBuild covers ToneBuild, which reads a request and a setup and
@@ -88,8 +88,8 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 				var buf bytes.Buffer
 
 				s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
-					Ask:   s.examples("like-a-record.yaml"),
-					Setup: s.examples("my-setup.yaml"),
+					Ask:   s.examples("like-a-record.tone.yaml"),
+					Setup: s.examples("mine.setup.yaml"),
 					Out:   out,
 				}))
 
@@ -119,7 +119,7 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 				var buf bytes.Buffer
 
 				s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
-					Ask: s.examples("like-a-record.yaml"),
+					Ask: s.examples("like-a-record.tone.yaml"),
 				}))
 
 				s.Require().Contains(buf.String(), "the setup names none")
@@ -215,7 +215,7 @@ gear:
 					{
 						name: "a setup that is not there",
 						opts: cli.ToneBuildOptions{
-							Ask:   s.examples("like-a-record.yaml"),
+							Ask:   s.examples("like-a-record.tone.yaml"),
 							Setup: "nowhere.yaml",
 						},
 						want: "nowhere.yaml",
@@ -238,7 +238,7 @@ gear:
 				var buf bytes.Buffer
 
 				err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
-					Ask: s.examples("like-a-record.yaml"),
+					Ask: s.examples("like-a-record.tone.yaml"),
 					Out: filepath.Join(s.T().TempDir(), "no", "such", "rig.yaml"),
 				})
 

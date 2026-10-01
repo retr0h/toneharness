@@ -507,10 +507,10 @@ func (s *ClientPublicTestSuite) TestWithUserRigs() {
 					},
 					{
 						name:    "a file of theirs that is not a rig, named for the one asked for",
-						files:   map[string]string{"mike-dirnt.yaml": "schema: RigSpec\n"},
+						files:   map[string]string{"mike-dirnt.tone.yaml": "schema: RigSpec\n"},
 						id:      "mike-dirnt",
-						listErr: "mike-dirnt.yaml",
-						findErr: "mike-dirnt.yaml",
+						listErr: "mike-dirnt.tone.yaml",
+						findErr: "mike-dirnt.tone.yaml",
 					},
 				}
 
@@ -1107,7 +1107,7 @@ func (s *ClientPublicTestSuite) TestRig() {
 // than a command.
 func (s *ClientPublicTestSuite) TestTone() {
 	examples := func(name string) string {
-		return filepath.Join("..", "..", "marketplace", "core", "examples", "tonespec", name)
+		return filepath.Join("..", "..", "marketplace", "core", "examples", name)
 	}
 
 	tests := []struct {
@@ -1121,15 +1121,18 @@ func (s *ClientPublicTestSuite) TestTone() {
 		notes bool
 	}{
 		{
-			name:  "a request and what somebody owns",
-			in:    sdk.Ask{Spec: examples("like-a-record.yaml"), Setup: examples("my-setup.yaml")},
+			name: "a request and what somebody owns",
+			in: sdk.Ask{
+				Spec:  examples("like-a-record.tone.yaml"),
+				Setup: examples("mine.setup.yaml"),
+			},
 			notes: true,
 		},
 		{
 			// A setup is optional: somebody asking what a record sounds like
 			// has not necessarily said what is in the room.
 			name:  "a request on its own",
-			in:    sdk.Ask{Spec: examples("like-a-record.yaml")},
+			in:    sdk.Ask{Spec: examples("like-a-record.tone.yaml")},
 			notes: true,
 		},
 		{
@@ -1142,7 +1145,7 @@ func (s *ClientPublicTestSuite) TestTone() {
 			// which is the lookup the Client hands to translate. The shipped
 			// rigs rather than a double, because that is what it hands over.
 			name:  "a request naming a player",
-			in:    sdk.Ask{Spec: examples("like-a-player.yaml")},
+			in:    sdk.Ask{Spec: examples("like-a-player.tone.yaml")},
 			gear:  "Ampeg SVT",
 			notes: true,
 		},
@@ -1160,7 +1163,7 @@ like:
 		{
 			name: "a caller who stopped waiting",
 			ctx:  cancelled(),
-			in:   sdk.Ask{Spec: examples("like-a-record.yaml")},
+			in:   sdk.Ask{Spec: examples("like-a-record.tone.yaml")},
 			is:   context.Canceled,
 		},
 	}
@@ -1396,7 +1399,11 @@ type scaffolded struct {
 func (s *ClientPublicTestSuite) asked(
 	at string,
 ) string {
-	raw, err := os.ReadFile(strings.TrimSuffix(at, ".yaml") + ".tone.yaml")
+	// The whole suffix, longest first. `.yaml` is a suffix of `.rig.yaml`, so
+	// trimming the short one leaves a stem ending `.rig` and looks for an ask
+	// nothing writes.
+	raw, err := os.ReadFile(
+		strings.TrimSuffix(strings.TrimSuffix(at, ".rig.yaml"), ".yaml") + ".tone.yaml")
 	s.Require().NoError(err)
 
 	return string(raw)
@@ -1475,7 +1482,7 @@ func (s *ClientPublicTestSuite) TestExtend() {
 			in:   sdk.ExtendRig{From: "mike-dirnt", ID: "another-copy"},
 			check: func(got extended) {
 				s.Require().Equal("another-copy", got.got.ID)
-				s.Require().Equal("another-copy.yaml", filepath.Base(got.got.Path))
+				s.Require().Equal("another-copy.rig.yaml", filepath.Base(got.got.Path))
 				s.Require().Contains(got.body, "id: another-copy")
 				s.Require().NotContains(base.body, "id: another-copy")
 			},

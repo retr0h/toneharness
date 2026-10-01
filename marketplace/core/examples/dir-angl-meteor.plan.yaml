@@ -1,6 +1,6 @@
 # The device half of a preset an HX Stomp wrote, committed as it came out.
 #
-# The gear is in marketplace/core/examples/rigspec/dir-angl-meteor.yaml. Everything here is one
+# The gear is in marketplace/core/examples/dir-angl-meteor.rig.yaml. Everything here is one
 # manufacturer's vocabulary: the model each piece of gear resolved to, where it
 # sat, and the routing, footswitches and snapshots a device wraps a chain in.
 #

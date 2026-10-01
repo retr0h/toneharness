@@ -28,6 +28,14 @@ import (
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+// Remedy names the tool to call next, for the errors that have one.
+//
+// Exported because its branches are its contract. Registration covers the
+// device half by having registered a tool, and that is the right test for
+// "every tool that opens the pedal says what to do" — it cannot reach the
+// errors no tool was mocked to return, and those are branches too.
+var Remedy = remedy
+
 // Pedal holds a Session across calls, exported so a test can run a call on it
 // without a server: a handler that panics takes the server's process with it.
 type Pedal = pedal

@@ -240,7 +240,7 @@ func (s *NewPublicTestSuite) TestNewCases() {
 						name:    "a rig already written",
 						twice:   true,
 						err:     rigs.ErrExists,
-						errText: "test-player.yaml",
+						errText: "test-player.rig.yaml",
 					},
 					{
 						name:    "a directory it cannot write into",

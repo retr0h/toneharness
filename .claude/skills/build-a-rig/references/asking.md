@@ -55,4 +55,5 @@ could not honour. A run reported without its notes is a run that hid half of
 what happened.
 
 Worked examples:
-[marketplace/core/examples/tonespec/](../../../../marketplace/core/examples/tonespec/).
+[marketplace/core/examples/](../../../../marketplace/core/examples/), the
+`*.tone.yaml` ones.
