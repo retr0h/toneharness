@@ -166,6 +166,7 @@ pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
 resources/
   schemas/           the generated catalog, the gear map, the preset corpus
 .claude/skills/      how to do each job. Five skills, each self-contained
+asset/               the logos the README shows
 docs/                what is built and what is not, and the design records
 .github/workflows/   CI
 ```

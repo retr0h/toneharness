@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source srcset="docs/assets/logo-dark.svg" media="(prefers-color-scheme: dark)">
-    <source srcset="docs/assets/logo-light.svg" media="(prefers-color-scheme: light)">
-    <img src="docs/assets/logo-dark.svg" alt="toneharness" width="610">
+    <source srcset="asset/logo-dark.svg" media="(prefers-color-scheme: dark)">
+    <source srcset="asset/logo-light.svg" media="(prefers-color-scheme: light)">
+    <img src="asset/logo-dark.svg" alt="toneharness" width="610">
   </picture>
 </p>
 
