@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
@@ -39,16 +40,94 @@ type PlayingTestSuite struct {
 
 // TestCompensate covers compensate, which turns the gap between how the
 // subject played and how this person plays into a word.
+// attackTermIn and midsTermIn are the compensating word on each axis, so a case
+// says which axis it expects rather than relying on the order they were added.
+func attackTermIn(
+	words []Word,
+) string {
+	return termOn(words, attackAxis)
+}
+
+func midsTermIn(
+	words []Word,
+) string {
+	return termOn(words, midsAxis)
+}
+
+func termOn(
+	words []Word,
+	axis string,
+) string {
+	for _, w := range words {
+		axes, ok := axesOf(w.Term)
+		if !ok {
+			continue
+		}
+
+		for _, a := range axes {
+			if a == axis {
+				return w.Term
+			}
+		}
+	}
+
+	return ""
+}
+
+// TestMidsWord covers which way a measured difference points, and a difference
+// that is not one.
+//
+// Read on its own because the real figure cannot produce every case: a pick
+// moves the mids in all 468 pairs, so nothing in the committed file measures
+// zero, and a branch no data reaches is still a branch.
+func (s *PlayingTestSuite) TestMidsWord() {
+	for _, tt := range []struct {
+		name string
+		mean float64
+		want string
+	}{
+		{
+			// My hand puts less in the mids than the rig was voiced for, so
+			// they go up. Fingers against a rig built from a plectrum.
+			name: "a hand of mine with less mid asks for more",
+			mean: -0.17,
+			want: "mid-forward",
+		},
+		{
+			name: "a hand of mine with more mid asks for less",
+			mean: 0.17,
+			want: "scooped",
+		},
+		{
+			// A figure nobody measured and a figure that measured zero are the
+			// same answer: there is nothing to compensate either way.
+			name: "no difference compensates nothing",
+		},
+	} {
+		s.Run(tt.name, func() {
+			got, ok := midsWord(audio.Moved{Mean: tt.mean})
+
+			s.Require().Equal(tt.want != "", ok)
+			s.Require().Equal(tt.want, got)
+		})
+	}
+}
+
 func (s *PlayingTestSuite) TestCompensate() {
 	for _, tt := range []struct {
 		name string
 		// subject is how the rig was played, and playing how this person does.
 		subject string
 		playing string
-		// spoken is a word the ask already uses for the attack axis.
-		spoken string
-		// term is the word expected, empty for none.
+		// spoken is a word the ask already uses for the attack axis, and
+		// spokenMids one it uses for the mids. Separate, because each axis
+		// stands down on its own.
+		spoken     string
+		spokenMids string
+		// term is the word expected for the front of the note, and mids the one
+		// for the mids. Empty for none.
 		term string
+		mids string
 		// says is a fragment the sentence has to carry. Empty asks for no
 		// sentence at all.
 		says string
@@ -60,13 +139,19 @@ func (s *PlayingTestSuite) TestCompensate() {
 			name:    "a picked rig played with fingers asks for more attack",
 			subject: "pick", playing: "fingers",
 			term: nearer,
+			// And the mids, which is the measured half. Fingers put 0.17 less
+			// of the energy there than the pick the rig was voiced for.
+			mids: "mid-forward",
 			says: "compensates for the front of the note",
 		},
 		{
 			name:    "a fingered rig played with a pick asks for less",
 			subject: "fingers", playing: "pick",
 			term: softer,
-			says: "so soft-attack",
+			// The other way round, so the other word. A pick puts more in the
+			// mids than the fingers the rig was voiced for.
+			mids: "scooped",
+			says: "soft-attack",
 		},
 		{
 			// Two ranks rather than one, and still one word. Reaching for
@@ -75,6 +160,9 @@ func (s *PlayingTestSuite) TestCompensate() {
 			name:    "a slapped rig played with fingers asks for one word, not a louder one",
 			subject: "slap", playing: "fingers",
 			term: nearer,
+			// Nothing for the mids. Nobody has measured slap against fingers,
+			// and the attack axis is ranked rather than measured, so one axis
+			// answers and the other says nothing.
 		},
 		{
 			name:    "the same right hand both sides compensates nothing",
@@ -97,7 +185,18 @@ func (s *PlayingTestSuite) TestCompensate() {
 			name:    "a word the ask already uses for the axis stands, and this stands down",
 			subject: "pick", playing: "fingers",
 			spoken: "audible-pick-attack",
-			says:   "so that stands rather than a second word on the same axis",
+			mids:   "mid-forward",
+			says:   "a second word on that axis would cancel it",
+		},
+		{
+			// The same, on the measured axis. The ask owns the mids and this
+			// leaves them alone, while the front of the note is still
+			// compensated: the two axes stand down independently.
+			name:    "a word the ask uses for the mids stands, and the attack is still compensated",
+			subject: "pick", playing: "fingers",
+			spokenMids: "scooped",
+			term:       nearer,
+			says:       "the mids are left to scooped",
 		},
 		{
 			name:    "a subject that did not say compensates nothing",
@@ -115,11 +214,15 @@ func (s *PlayingTestSuite) TestCompensate() {
 		},
 	} {
 		s.Run(tt.name, func() {
-			got := compensate(tt.subject, Playing{Attack: tt.playing}, tt.spoken)
+			got := compensate(
+				tt.subject, Playing{Attack: tt.playing}, tt.spoken, tt.spokenMids)
 
-			s.Require().Equal(tt.term, got.Word.Term)
+			s.Require().Equal(tt.term, attackTermIn(got.Words),
+				"the word for the front of the note")
+			s.Require().Equal(tt.mids, midsTermIn(got.Words),
+				"the word for the mids")
 
-			if tt.says == "" && tt.term == "" {
+			if tt.says == "" && tt.term == "" && tt.mids == "" {
 				s.Require().Empty(got.Said,
 					"nothing was compensated, so there is nothing to say")
 
@@ -214,7 +317,7 @@ func (s *PlayingTestSuite) TestResolveTakesTheCompensationThroughABuild() {
 	}, cat, nil)
 
 	s.Require().NoError(err)
-	s.Require().Equal(nearer, held.Term)
+	s.Require().Equal([]string{nearer, "mid-forward"}, held.Terms)
 	s.Require().Contains(held.Said, "you play with fingers")
 
 	terms := make([]string, 0, len(moved))

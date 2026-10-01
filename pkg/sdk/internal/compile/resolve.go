@@ -136,10 +136,9 @@ func Resolve(
 	// that has none because this word wants one, and the corpus decides how
 	// far the term travels.
 	held := compensate(
-		intent.Attack, intent.Playing, spokenFor(intent.Words, attackAxis))
-	if held.Word.Term != "" {
-		intent.Words = append(intent.Words, held.Word)
-	}
+		intent.Attack, intent.Playing,
+		spokenFor(intent.Words, attackAxis), spokenFor(intent.Words, midsAxis))
+	intent.Words = append(intent.Words, held.Words...)
 
 	blocks, said, added := fill(blocks, said, cat, stats, instrument)
 
@@ -167,7 +166,7 @@ func Resolve(
 	// controllers, and this builds none of them: a rig has nowhere to state
 	// one. Lower checks, which is where a plan arrives from a file.
 	return built, append(sub, added...), moved,
-		Compensated{Term: held.Word.Term, Said: held.Said}, nil
+		Compensated{Terms: termsIn(held.Words), Said: held.Said}, nil
 }
 
 // worded moves whatever in the chain answers for the words the ask used.

@@ -21,7 +21,9 @@ package compile
 
 import (
 	"sort"
+	"strings"
 
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
@@ -35,12 +37,24 @@ import (
 // already say how the subject played and the Setup can now say how the person
 // holding the instrument does, so the gap between them is a knob position.
 //
-// It compensates on one axis and says so. `attack` is what the vocabulary has
-// for the front of a note, and a compressor's Attack is the control that
-// decides how much of it gets past. The other half of the difference is
-// brightness, and the size of that is not compensated here, because nobody has
-// measured it: the direction is not in doubt and a number nobody took is the
-// guessing this project exists to remove.
+// It compensates on two axes. `attack` is what the vocabulary has for the front
+// of a note, and a compressor's Attack is the control that decides how much of
+// it gets past. The second is where the middle of the range sits, and it took a
+// measurement to earn: IDMT-SMT-Bass holds 468 notes played both ways on the
+// same instrument at the same pickup setting, and a plectrum reads brighter in
+// all 468. The figure is `pkg/sdk/audio/data/hands.json` and
+// `resources/dry/README.md` says where the notes came from.
+//
+// What it moves is not what anybody expected. A pick does not add treble: the
+// high band shifts 0.00 of the energy. It trades the bottom for the middle, 0.17
+// of the energy out of the low band and 0.17 into the mid, which is why the axis
+// this compensates on is `mids` and not a brightness control the vocabulary does
+// not have.
+//
+// The spread is as wide as the mean, 0.14 against 0.17, so the direction is
+// certain and the magnitude is not. That is an argument for one step sized by
+// the corpus like every other term, and against an offset in hertz this file
+// would have had to invent.
 
 // hands ranks what sets the string moving by how much front of a note it makes.
 //
@@ -60,8 +74,66 @@ var hands = map[tone.Attack]int{
 	tone.AttackSlap:    3,
 }
 
-// attackAxis is the one axis this compensates on.
-const attackAxis = "attack"
+// attackAxis and midsAxis are the axes this compensates on.
+//
+// Two, and each is checked against the ask on its own: a request that already
+// says `audible-pick-attack` has spoken for the first and said nothing about the
+// second, so standing both down together would throw away a compensation
+// nothing contested.
+const (
+	attackAxis = "attack"
+	midsAxis   = "mids"
+)
+
+// midsFrom is the word that answers a hand moving the mids, and the measurement
+// that says it does.
+//
+// Taken from the committed figure rather than written here, so the direction
+// cannot drift from what was measured. Absent is not a failure: a build on a
+// checkout whose `hands.json` holds nothing compensates on attack alone, which
+// is what every build did before the notes were measured.
+func midsFrom(
+	subject, mine string,
+) (string, bool) {
+	got, ok := audio.HandsBetween(subject, mine)
+	if !ok {
+		return "", false
+	}
+
+	return midsWord(got.Figures[audio.KeyMid])
+}
+
+// midsWord is which way a measured difference in the mids points.
+//
+// Split from the lookup so the decision can be read on its own. A figure nobody
+// measured and a figure that measured zero are the same answer here, and the
+// zero value of Moved collapses them into one check rather than two: there is
+// nothing to compensate either way.
+func midsWord(
+	moved audio.Moved,
+) (string, bool) {
+	if moved.Mean == 0 {
+		return "", false
+	}
+
+	// The sign is the whole of it, and it inverts once on the way through.
+	//
+	// HandsBetween(subject, mine) is what mine reads minus what theirs reads. The
+	// preset's knobs were set to reproduce records made with their hand, so a
+	// negative mean is my hand putting less energy in the mids than the preset
+	// was built around: the answer is to push the mids up, not to scoop them.
+	//
+	// Worked: a rig for a player who used a plectrum, played by somebody using
+	// fingers, reads -0.17. Fingers put less in the mids than the pick the rig
+	// was voiced for, so `mid-forward` puts it back. The same relation the attack
+	// axis already uses, where a rig played with a pick and a person playing with
+	// fingers gets `audible-pick-attack` rather than `soft-attack`.
+	if moved.Mean < 0 {
+		return "mid-forward", true
+	}
+
+	return "scooped", true
+}
 
 // nearer and softer are the terms that close a gap on that axis.
 //
@@ -93,18 +165,41 @@ type Playing struct {
 // has to be visible before they plug in, and this is the only decision here
 // that comes off the Setup rather than off the ask.
 type Compensated struct {
-	// Term is the word that was added. Empty when none was, which is either
-	// nothing to compensate or an ask that already spoke for the axis.
-	Term string `json:"term,omitempty"`
+	// Terms are the words that were added, one per axis compensated. Empty
+	// when none were, which is either nothing to compensate or an ask that
+	// already spoke for every axis this would have.
+	//
+	// A list since 2026-10-01, when the mids axis was measured and a hand
+	// started answering for two. It was one word, and a second axis arriving
+	// would have been reported as the first one silently.
+	Terms []string `json:"terms,omitempty"`
 	// Said is the whole of it in a sentence. Empty when the two right hands
 	// were the same, or when either side did not say.
 	Said string `json:"said,omitempty"`
 }
 
-// compensated is Compensated plus the word, which stays inside.
+// termsIn is the words a compensation added, as the names it leaves the package
+// under.
+func termsIn(
+	words []Word,
+) []string {
+	if len(words) == 0 {
+		return nil
+	}
+
+	out := make([]string, 0, len(words))
+	for _, w := range words {
+		out = append(out, w.Term)
+	}
+
+	return out
+}
+
+// compensated is Compensated plus the words, which stay inside.
 type compensated struct {
-	Word Word
-	Said string
+	// Words is one per axis compensated, which is none, one or two.
+	Words []Word
+	Said  string
 }
 
 // compensate turns the gap between how the subject played and how this person
@@ -123,7 +218,7 @@ type compensated struct {
 func compensate(
 	subject string,
 	playing Playing,
-	spoken string,
+	spoken, spokenMids string,
 ) compensated {
 	theirs, ok := hands[tone.Attack(subject)]
 	if !ok {
@@ -139,31 +234,46 @@ func compensate(
 		return compensated{}
 	}
 
-	// A word somebody wrote for this axis wins, and this says it stood down.
-	// Two terms on one axis cancel by design, so appending here would have
-	// taken the ask's own word out with it: asking for fingers on a rig whose
-	// ask already says audible-pick-attack moved the compressor nowhere.
-	if spoken != "" {
-		return compensated{
-			Said: "you play with " + playing.Attack + " where the rig was " +
-				"played with " + subject + ", and the ask already says " +
-				spoken + ", so that stands rather than a second word on the " +
-				"same axis, which would cancel it",
-		}
-	}
+	out := compensated{}
+
+	// Per axis, because an ask speaks for one at a time. A word somebody wrote
+	// wins and this says it stood down: two terms on one axis cancel by design,
+	// so appending anyway would take the ask's own word out with it, and asking
+	// for fingers on a rig whose ask already says audible-pick-attack moved the
+	// compressor nowhere.
+	said := make([]string, 0, 2)
 
 	term := nearer
 	if theirs < mine {
 		term = softer
 	}
 
-	return compensated{
-		Word: Word{Term: term},
-		Said: "the rig was played with " + subject + " and you play with " +
-			playing.Attack + ", so " + term + " compensates for the front of " +
-			"the note. The brightness the two also differ by is not " +
-			"compensated, because nothing here has measured how much",
+	if spoken != "" {
+		said = append(said, "the front of the note is left to "+spoken+", which "+
+			"the ask already says: a second word on that axis would cancel it")
+	} else {
+		out.Words = append(out.Words, Word{Term: term})
+		said = append(said, term+" compensates for the front of the note")
 	}
+
+	// The second axis, and it is measured rather than asserted. Absent where
+	// nobody has measured these two hands against each other, which is the
+	// ordinary answer for every pair but one.
+	if mids, ok := midsFrom(subject, playing.Attack); ok {
+		if spokenMids != "" {
+			said = append(said, "the mids are left to "+spokenMids+", which the "+
+				"ask already says")
+		} else {
+			out.Words = append(out.Words, Word{Term: mids})
+			said = append(said, mids+" compensates for the mids, which is where a "+
+				"measured hand moves the energy rather than into the treble")
+		}
+	}
+
+	out.Said = "the rig was played with " + subject + " and you play with " +
+		playing.Attack + ", so " + strings.Join(said, ", and ")
+
+	return out
 }
 
 // spokenFor is the word an ask already uses for an axis, if any.

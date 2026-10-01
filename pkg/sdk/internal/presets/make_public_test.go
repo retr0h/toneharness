@@ -449,7 +449,7 @@ func (s *MakePublicTestSuite) TestMake() {
 					"nothing was compensated, so there is nothing to say")
 			} else {
 				s.Require().Contains(made.Playing.Said, tt.playing)
-				s.Require().NotEmpty(made.Playing.Term,
+				s.Require().NotEmpty(made.Playing.Terms,
 					"a word was added, and the report names which")
 			}
 

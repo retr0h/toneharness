@@ -51,11 +51,11 @@ fingered. State both sides and the build adds a word on the attack axis and says
 it did. State neither and somebody gets a preset tuned for whoever made the
 record.
 
-Two honest limits to pass on rather than hide. It compensates the front of the
-note, not the brightness, because nobody has measured how much brightness a
-plectrum adds and a number nobody took is not one this project writes. And a
-word already in the ask for that axis wins, because two terms on one axis
-cancel.
+Two honest limits to pass on rather than hide. It compensates fingers against a
+plectrum on two axes, the front of the note and the mids, and every other pair of
+hands on the front of the note alone: that one pair is the only one anybody has
+measured. And a word already in the ask for an axis wins, because two terms on one
+axis cancel.
 
 Ask it even when the four above are already answered. It costs one question and
 it is the difference between a preset built for the record and one built for

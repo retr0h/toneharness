@@ -28,3 +28,4 @@ package audio
 // what it measured differs from what is committed.
 //
 //go:generate go run ./internal/genrepack ../../../resources/music data/genres.json
+//go:generate go run ./internal/handspack ../../../resources/dry data/hands.json

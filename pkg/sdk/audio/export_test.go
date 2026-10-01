@@ -42,7 +42,10 @@ var (
 	// The genre rule, which is not Derive and is the reason genre.go exists.
 	Displaced    = displaced
 	UnpackGenres = unpackGenres
-	Frames       = frames
+	// UnpackHands is the same for the measured hands: a file somebody edited by
+	// hand is the case where the message has to name the file.
+	UnpackHands = unpackHands
+	Frames      = frames
 )
 
 // Quietest is how far under the loudest moment a frame may sit and still

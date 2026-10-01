@@ -177,7 +177,7 @@ func Make(
 		Added:      addedFrom(added),
 		Moved:      movedFrom(moved),
 		Unfamiliar: unfamiliar(intent),
-		Playing:    result.Playing{Term: playing.Term, Said: playing.Said},
+		Playing:    result.Playing{Terms: playing.Terms, Said: playing.Said},
 		Path:       opts.OutputPath,
 	}, nil
 }

@@ -1,0 +1,55 @@
+[
+  {
+    "from": "fingers",
+    "to": "pick",
+    "pairs": 468,
+    "agreed": 468,
+    "figures": {
+      "centroid": {
+        "mean": 75,
+        "median": 57,
+        "spread": 57
+      },
+      "decay": {
+        "mean": -0.22,
+        "median": -0.13,
+        "spread": 0.67
+      },
+      "dynamics": {
+        "mean": 0.09,
+        "median": 0.2,
+        "spread": 2.21
+      },
+      "harmonics": {
+        "mean": -0.05,
+        "median": 0,
+        "spread": 0.22
+      },
+      "high": {
+        "mean": 0,
+        "median": 0,
+        "spread": 0
+      },
+      "lean": {
+        "mean": -0.02,
+        "median": 0,
+        "spread": 0.6
+      },
+      "low": {
+        "mean": -0.17,
+        "median": -0.14,
+        "spread": 0.15
+      },
+      "mid": {
+        "mean": 0.17,
+        "median": 0.14,
+        "spread": 0.14
+      },
+      "transient": {
+        "mean": 0,
+        "median": 0.01,
+        "spread": 0.11
+      }
+    }
+  }
+]

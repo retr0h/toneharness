@@ -297,7 +297,7 @@ func (s *MadePublicTestSuite) TestMade() {
 						name: "what was done about how this person plays",
 						in: s.made(func(m *sdk.Made) {
 							m.Playing = sdk.Playing{
-								Term: "audible-pick-attack",
+								Terms: []string{"audible-pick-attack", "mid-forward"},
 								Said: "the rig was played with pick and you " +
 									"play with fingers",
 							}
@@ -320,7 +320,8 @@ func (s *MadePublicTestSuite) TestMade() {
 							}
 							m.Unfamiliar = []sdk.Unfamiliar{{Term: "wet paper bag"}}
 							m.Playing = sdk.Playing{
-								Term: "soft-attack", Said: "you play with a pick",
+								Terms: []string{"soft-attack", "scooped"},
+								Said:  "you play with a pick",
 							}
 						}),
 						absent: evidenceKinds(),
@@ -369,7 +370,8 @@ func (s *MadePublicTestSuite) TestMade() {
 					m.Moved = []sdk.Moved{{Term: "mid-forward", Param: "Mid", From: 0.5, To: 0.6}}
 					m.Unfamiliar = []sdk.Unfamiliar{{Term: "wet paper bag"}}
 					m.Playing = sdk.Playing{
-						Term: "soft-attack", Said: "you play with a pick",
+						Terms: []string{"soft-attack", "scooped"},
+						Said:  "you play with a pick",
 					}
 				})
 
