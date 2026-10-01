@@ -30,7 +30,10 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/asking"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // AskingPublicTestSuite covers turning a request into the rig it describes.
@@ -72,6 +75,22 @@ func (s *AskingPublicTestSuite) at(
 	)
 }
 
+// rigNamed is the shipped rigs, which is what the Client hands over.
+//
+// The real lookup rather than a double, because these cases are about an ask
+// resolving end to end and the rigs ship in the binary: a stub would be
+// asserting against itself.
+func (s *AskingPublicTestSuite) rigNamed(
+	name string,
+) (rig.Spec, bool) {
+	found, err := rigs.Find(rigs.Source{}, slug.Of(name))
+	if err != nil {
+		return rig.Spec{}, false
+	}
+
+	return found.Rig, true
+}
+
 // file writes a document and returns where it went.
 func (s *AskingPublicTestSuite) file(
 	name, body string,
@@ -102,7 +121,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
 					Spec:  s.at("like-a-record.yaml"),
 					Setup: s.at("my-setup.yaml"),
-				}, s.cat, s.lib)
+				}, s.cat, s.lib, s.rigNamed)
 
 				s.Require().NoError(err)
 				s.Require().NotEmpty(got.Rig.Chain)
@@ -119,7 +138,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			then: func() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
 					Spec: s.at("like-a-record.yaml"),
-				}, s.cat, s.lib)
+				}, s.cat, s.lib, s.rigNamed)
 
 				s.Require().NoError(err)
 				s.Require().NotEmpty(got.Rig.Chain)
@@ -144,7 +163,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib)
+						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib, s.rigNamed)
 
 						s.Require().Error(err)
 						s.Require().ErrorContains(err, absent,
@@ -176,7 +195,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib)
+						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib, s.rigNamed)
 
 						s.Require().Error(err)
 					})
@@ -199,7 +218,7 @@ gear:
     role: amp
     insist: true
 `),
-				}, s.cat, s.lib)
+				}, s.cat, s.lib, s.rigNamed)
 
 				s.Require().Error(err, "a request that insisted on gear the device has not")
 				s.Require().NotEmpty(got.Notes, "and the notes say which gear, and why")
@@ -214,7 +233,7 @@ gear:
 
 				_, err := asking.Resolve(ctx, asking.Ask{
 					Spec: s.at("like-a-record.yaml"),
-				}, s.cat, s.lib)
+				}, s.cat, s.lib, s.rigNamed)
 
 				s.Require().ErrorIs(err, context.Canceled)
 			},

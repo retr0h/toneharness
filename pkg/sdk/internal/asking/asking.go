@@ -40,6 +40,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
@@ -62,6 +63,7 @@ func Resolve(
 	in Ask,
 	cat *catalog.Catalog,
 	lib measured.Library,
+	rigNamed func(name string) (rig.Spec, bool),
 ) (result.Resolved, error) {
 	if err := ctx.Err(); err != nil {
 		return result.Resolved{}, err
@@ -89,6 +91,10 @@ func Resolve(
 		// before compile and must not import it, and compile owns the
 		// vocabulary.
 		UnknownWords: unknownWords,
+		// Handed in for the same reason, from the other direction: a rig store
+		// reads a directory and the shipped knowledge, and translate is what
+		// produces a rig rather than what reads one.
+		RigNamed: rigNamed,
 	})
 
 	return result.Resolved{Rig: built, Notes: notes}, err
