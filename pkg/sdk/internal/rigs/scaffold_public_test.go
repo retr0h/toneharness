@@ -78,7 +78,7 @@ const corrections = `corrections:
 // meteor is a rig read off a device: a chain of gear and nothing a person
 // decided, since a device records no subject and no reason.
 var meteor = filepath.Join(
-	"..", "..", "..", "..", "resources", "reference", "rigspec", "dir-angl-meteor.yaml")
+	"..", "..", "..", "..", "marketplace", "core", "examples", "rigspec", "dir-angl-meteor.yaml")
 
 // meteorAsk is an ask for the meteor rig, which the examples tree does not
 // carry because a rig read off a device answered nobody's written request.

@@ -83,7 +83,7 @@ func (s *CoveragePublicTestSuite) TestEveryFieldAppearsInARig() {
 	}
 
 	s.Require().Empty(missing,
-		"no rig under resources/reference/rigspec or marketplace/core "+
+		"no rig under marketplace/core/examples/rigspec or marketplace/core "+
 			"writes these. "+
 			"Add one to a rig, or add it to exempt with a reason: %v", missing)
 }
@@ -151,7 +151,7 @@ func (s *CoveragePublicTestSuite) written() map[string]bool {
 	}
 
 	for _, pattern := range [][]string{
-		{"..", "..", "..", "resources", "reference", "rigspec", "*.yaml"},
+		{"..", "..", "..", "marketplace", "core", "examples", "rigspec", "*.yaml"},
 	} {
 		paths, err := filepath.Glob(filepath.Join(pattern...))
 		s.Require().NoError(err)

@@ -2,13 +2,12 @@
 
 The data this project reads and ships, as opposed to the Go that reads it.
 
-| Path         |                                                                           |
-| ------------ | ------------------------------------------------------------------------- |
-| `schemas/`   | the generated catalog and gear map, and the corpus they come from         |
-| `music/`     | records measured to describe how somebody plays, one directory per artist |
-| `dry/`       | bass straight to the converter, the signal a device is measured with      |
-| `sweeps/`    | what each control does, measured through that signal                      |
-| `reference/` | one of each document with every optional field filled in                  |
+| Path       |                                                                           |
+| ---------- | ------------------------------------------------------------------------- |
+| `schemas/` | the generated catalog and gear map, and the corpus they come from         |
+| `music/`   | records measured to describe how somebody plays, one directory per artist |
+| `dry/`     | bass straight to the converter, the signal a device is measured with      |
+| `sweeps/`  | what each control does, measured through that signal                      |
 
 Nothing here is embedded in the binary. What ships lives beside the package that
 reads it: `pkg/sdk/catalog/data/`, `pkg/sdk/corpus/data/`,
@@ -20,11 +19,6 @@ This tree is the working material those files are built from. The RigSpec
 contract, the one format anybody hand-authors, is
 `pkg/sdk/rig/data/rigspec.openapi.yaml`. The rigs people use and send are in
 [../marketplace/](../marketplace/README.md).
-
-`reference/` is the exception to all of that: a ToneSpec, a RigSpec and a Plan
-with every optional field written out, so there is one place to see a field in
-use. The tests read these rather than the marketplace, because a rig somebody
-submits or retracts must not change what a test asserts.
 
 ## What may be redistributed
 

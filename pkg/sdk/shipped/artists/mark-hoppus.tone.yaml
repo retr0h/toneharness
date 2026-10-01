@@ -26,11 +26,8 @@ instrument: bass
 # measures a target from. A list because a record belongs to more than one.
 genre: [pop-punk, punk]
 
-# No genre, on purpose. The corpus tags his records [pop-punk, punk] and this
-# field takes one word, so naming either would drop the other. It stays empty
-# until a ToneSpec may carry a list.
-#
-# No words either. Nothing anybody has read describes how these records sound in
-# terms this vocabulary carries.
+# No words. Nothing anybody has read describes how these records sound in terms
+# this vocabulary carries, and `measure genres` earns pop-punk and punk only
+# `clean`, which is a fact about the genre rather than about him.
 
 confidence: low

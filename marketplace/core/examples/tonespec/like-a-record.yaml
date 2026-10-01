@@ -4,8 +4,8 @@
 # and no citation: it is evidence of itself. What comes back is the nearest of
 # the device's 224 amplifiers to what that file actually measures.
 #
-#     toneharness tone build --ask resources/reference/tonespec/like-a-record.yaml \
-#       --setup resources/reference/tonespec/my-setup.yaml --out rig.yaml
+#     toneharness tone build --ask marketplace/core/examples/tonespec/like-a-record.yaml \
+#       --setup marketplace/core/examples/tonespec/my-setup.yaml --out rig.yaml
 #     toneharness presets compile --rig rig.yaml --out a.hlx
 
 schema: ToneSpec
