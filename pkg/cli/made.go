@@ -65,7 +65,7 @@ func made(
 		return err
 	}
 
-	if err := heard(w, m.Moved); err != nil {
+	if err := says(w, m.Moved); err != nil {
 		return err
 	}
 
@@ -131,11 +131,18 @@ func added(
 	return nil
 }
 
-// heard names the knobs a word turned, and the words that turned none.
+// says names the knobs a word turned, and the words that turned none.
 //
 // Both halves, because a term that moved nothing is still something the rig
 // said. Reporting only the ones that worked would read as if the rest had.
-func heard(
+//
+// Labelled `says` rather than `heard`, which is what it printed until
+// 2026-09-30. `heard` is a defined evidence kind and the contract is explicit
+// about it: a person who played the rig and judged it, which outranks
+// everything else because nothing in this system can hear. Printing it over
+// every word claimed a human verdict for words nothing had listened to, in a
+// tool whose whole argument is that it does not hear anything.
+func says(
 	w io.Writer,
 	all []sdk.Moved,
 ) error {
@@ -171,7 +178,7 @@ func heard(
 		}
 
 		if _, err := fmt.Fprintf(w, "%s%s %s\n",
-			paint.Indent, paint.Mute(w, "heard"), line); err != nil {
+			paint.Indent, paint.Mute(w, "says"), line); err != nil {
 			return err
 		}
 	}
