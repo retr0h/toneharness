@@ -1,5 +1,10 @@
 # helix-sdk design
 
+**Status: superseded**, by
+[the SDK is the library](2026-09-10-the-sdk-is-the-library-design.md). The
+module names below are what they were on the day; this repository is
+`github.com/retr0h/toneharness` now.
+
 > **Superseded in part, 2026-09-06.** This proposes `helix-sdk` as a separate Go
 > module to keep cgo out of everything else. That reasoning was wrong: cgo is
 > determined by the import graph, not the module boundary, so a `pkg/sdk`
@@ -13,9 +18,10 @@ test **Scope:** talk to an HX Stomp over USB from Go, without HX Edit
 Stages A, B and C ship: a device is found and identified, its presets are listed
 and read, and a preset is written to a slot with the target kept first. The
 round trip below is a test behind the `device` build tag (Go tags take no
-dashes), run with `just test-device`. Stage D, writing scribble strips and
-colours, is not built, nor is the MCP server this record calls the point of the
-exercise.
+dashes), run with `just test-device`. Stage D ships too: a footswitch colour is
+checked against what the device calls its own, and `@ledcolor` is written into a
+preset's snapshots. So does the MCP server this record calls the point of the
+exercise, in `pkg/mcp`.
 
 ## Why
 

@@ -298,7 +298,11 @@ The step from a word to a value is half built: a term says which way to move a
 control, and where it carries the figures that earned it the distance follows
 the gap. A word nobody measured still moves a fixed step.
 
-Nothing above the person listens, so whether half a step of drive is the right
-amount of drive is a question no measurement here answers. The method for
-closing that is designed and not built:
-[solving for knob positions](superpowers/specs/2026-09-27-solving-for-knob-positions-design.md).
+Nothing above the person listens on its own, so whether half a step of drive is
+the right amount is a question a build does not answer. Measuring answers it:
+`tone tune` puts the chain in front of the device, turns the dials and measures
+what comes back, and `tone reach` says whether the chain can get there before
+spending the run. The method is
+[solving for knob positions](superpowers/specs/2026-09-27-solving-for-knob-positions-design.md),
+and it needs the pedal, so a build on its own still hands back a chain nobody
+has heard.

@@ -2,6 +2,9 @@
 
 2026-09-18
 
+**Status: implemented.** `pkg/sdk/reamp` pushes a signal through the pedal and
+keeps what comes back, and the `measure` commands are what read it.
+
 This supersedes
 [everything in a rig reaches the pedal](2026-09-18-everything-in-a-rig-reaches-the-pedal-design.md),
 written this morning, whose second half should not be built.

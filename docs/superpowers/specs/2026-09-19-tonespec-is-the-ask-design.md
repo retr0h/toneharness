@@ -2,6 +2,9 @@
 
 2026-09-19
 
+**Status: implemented.** `pkg/sdk/tone` carries the contract, and `tone build`
+is what resolves an ask through it.
+
 ## The name
 
 **ToneSpec.**

@@ -1,8 +1,10 @@
 # golang-pro review fixes: implementation plan
 
+**Status:** complete, merged as 4399f6c (#109). Every step below is ticked.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers-extended-cc:subagent-driven-development to implement this plan
-> task by task. Steps use checkbox (`- [ ]`) syntax.
+> task by task. Steps use checkbox (`- [x]`) syntax.
 
 **Goal:** fix every bug, test gap and stale document the golang-pro review of
 tonestack found. The exception is the SDK redesign, which is Track B (task 49).
@@ -123,7 +125,7 @@ behave as the rulings say. Device tests get faster.
 
 **Acceptance Criteria:**
 
-- [ ] **`receive` returns `(bool, error)`.**
+- [x] **`receive` returns `(bool, error)`.**
   - It is quiet (`false, nil`) when the read returned nothing with no error, or
     `context.DeadlineExceeded` while the caller's ctx is still live.
   - It returns `ctx.Err()` when the caller's ctx ended.
@@ -131,35 +133,35 @@ behave as the rulings say. Device tests get faster.
     anything else.
   - Every caller handles the error: `awaitReply` and `stream` return it,
     `handshake` and `openService` return it, and `drain` stops on it.
-- [ ] **`TestCall` has a row for a device whose read fails with a non-timeout
+- [x] **`TestCall` has a row for a device whose read fails with a non-timeout
   error.**
   - The call returns that error, wrapped, within one read (well under
     `replyBudget`).
   - The message is not "no reply".
-- [ ] **`write` checks `ctx` before the first chunk.** A ctx already cancelled
+- [x] **`write` checks `ctx` before the first chunk.** A ctx already cancelled
   sends nothing and returns `context.Canceled`.
-- [ ] **`TestWritePreset` has a row where ctx is cancelled after the first chunk
+- [x] **`TestWritePreset` has a row where ctx is cancelled after the first chunk
   is written.** Every chunk is still sent, the reply is still awaited, and the
   write returns nil. The scripted writer cancels on its first Write.
-- [ ] **`Close` returns within `closeBudget` against a receiver that never goes
+- [x] **`Close` returns within `closeBudget` against a receiver that never goes
   quiet.** `TestClose` has a row for this, with `CloseBudget` shortened.
-- [ ] **`findDevice` matches vendor and product.**
+- [x] **`findDevice` matches vendor and product.**
   - `TestOpenOver` has a row for a device with a Helix product ID and a foreign
     vendor, which is not claimed.
   - The enumeration-error row now expects the error, and every returned handle
     is closed.
-- [ ] **Stale comments fixed:**
+- [x] **Stale comments fixed:**
   - `types.go`: "Package device talks to…".
   - `conversation.go:23` names `usb_darwin.go`.
   - `discover_bus.go` "usb.go" becomes `usb_darwin.go`.
   - The `firstSeq` comment reads "Two, not one".
-- [ ] **Test budgets shortened.**
+- [x] **Test budgets shortened.**
   - `drainBudget` becomes a var exported as `DrainBudget`.
   - A `TestMain` in the `device_test` package shortens `ReplyBudget`,
     `DrainBudget`, `CommitBudget`, `FlashBudget` and `CloseBudget` for the whole
     package, except where a test sets its own.
   - `go test -race ./pkg/sdk/internal/device/` runs in under 15s.
-- [ ] Device package coverage is at least its current 90.6%.
+- [x] Device package coverage is at least its current 90.6%.
 
 **Verify:** `mise exec -- go test -race -cover ./pkg/sdk/internal/device/` → ok,
 coverage ≥ 90.6%, under 15s
@@ -258,42 +260,42 @@ are reported, and user files are written atomically.
 
 **Acceptance Criteria:**
 
-- [ ] **`atomicfile.Write` and `atomicfile.WriteNew` exist as in ruling 5.**
+- [x] **`atomicfile.Write` and `atomicfile.WriteNew` exist as in ruling 5.**
   - Tests cover: a new file, overwriting (Write), refusing an existing file
     (WriteNew, `errors.Is(err, fs.ErrExist)`), an unwritable directory, and no
     temp file left behind on every path.
-- [ ] **`names()` lists `FromSetlist` and, when different, `ToSetlist`, and
+- [x] **`names()` lists `FromSetlist` and, when different, `ToSetlist`, and
   looks each slot up in its own setlist.**
   - `TestSwapWith` and `TestCopyWith` have a cross-setlist row (from 0/01A to
     1/01A).
   - Each asserts the names written by `WriteNamedPreset` and `Change.Replaced`.
-- [ ] **`at` carries `setlist` and `name`, and `keep` passes both into
+- [x] **`at` carries `setlist` and `name`, and `keep` passes both into
   `DeviceOptions`.**
   - Backup names follow ruling 3, and the preset's real name reaches the `.hlx`.
   - `replacing` takes the name; copy and import pass the destination's listed
     name.
-- [ ] **Two backups of the same slot and setlist, taken in the same second, are
+- [x] **Two backups of the same slot and setlist, taken in the same second, are
   two files.** `TestKeep` has a row for this.
-- [ ] **A non-empty body that translates to no blocks is kept as `.bin` raw
+- [x] **A non-empty body that translates to no blocks is kept as `.bin` raw
   bytes.** `TestBackup` has a row using the existing `emptied()` fixture.
-- [ ] **`write` in `transfer.go` checks the result.**
+- [x] **`write` in `transfer.go` checks the result.**
   - As hlx with `read.Doc == nil`, it returns `ErrEmptySlot`.
   - `preset.Write` and `rig.Write` errors are returned.
   - The file is written with `atomicfile.Write`.
   - `ExportWith` has a row for a slot with no blocks.
-- [ ] **`save` returns `setlist.Write`'s error and uses `atomicfile.Write`.**
+- [x] **`save` returns `setlist.Write`'s error and uses `atomicfile.Write`.**
   - `compile.go` and `presets/make.go` return `preset.Write`'s error and use
     `atomicfile.Write`.
   - Backups use `atomicfile.WriteNew`.
-- [ ] **`Make` with a non-empty `StatsPath` that cannot be opened returns the
+- [x] **`Make` with a non-empty `StatsPath` that cannot be opened returns the
   error.** The "no statistics to be had" row flips to expect an error containing
   the path.
-- [ ] **`recipes.New` checks its inputs and never overwrites.**
+- [x] **`recipes.New` checks its inputs and never overwrites.**
   - An empty `Dir` returns `ErrNoDir`.
   - The file is written with `atomicfile.WriteNew`.
   - An existing file returns `*ExistsError`, mapped from `fs.ErrExist`; the
     `os.Stat` pre-check is removed.
-- [ ] `atomicfile`, `slots`, `presets` and `recipes` all stay at 100% coverage.
+- [x] `atomicfile`, `slots`, `presets` and `recipes` all stay at 100% coverage.
 
 **Verify:**
 `mise exec -- go test -cover ./pkg/sdk/internal/atomicfile/ ./pkg/sdk/internal/slots/ ./pkg/sdk/internal/presets/ ./pkg/sdk/internal/recipes/ ./pkg/sdk/`
@@ -361,18 +363,18 @@ ______________________________________________________________________
 
 **Acceptance Criteria:**
 
-- [ ] **`SetSpec` removes block keys from every `dsp*` tone entry before placing
+- [x] **`SetSpec` removes block keys from every `dsp*` tone entry before placing
   the new chain.** `TestSetSpec` has a row: a document with blocks on `dsp0` and
   `dsp1` and a chain on `dsp0` only leaves `dsp1` with no block keys and its
   routing keys intact.
-- [ ] **`DecodeResponse` normalises every map key with `asUint`.**
+- [x] **`DecodeResponse` normalises every map key with `asUint`.**
   `TestDecodeResponse` has a row with the txn, status and result keys encoded as
   uint16.
-- [ ] **`Response.Err` returns `*UnexpectedStatusError` for any status not 0, 1
+- [x] **`Response.Err` returns `*UnexpectedStatusError` for any status not 0, 1
   or 255.** Rows cover 0, 1, 255 and 7.
-- [ ] **The key is named for what it holds:** `keyBypassed` is renamed
+- [x] **The key is named for what it holds:** `keyBypassed` is renamed
   `keyEnabled` everywhere.
-- [ ] **Dead code is gone.**
+- [x] **Dead code is gone.**
   - `splice`, `spliceRaw` and `open` are deleted, along with their export_test
     aliases and tests.
   - Anything else they leave unreachable is deleted too: run
@@ -380,22 +382,22 @@ ______________________________________________________________________
   - If `encodeString` is still reachable (through `place.go`'s `encodeLike`),
     its cases check the original's width first. A `str16` original of 32–255
     bytes stays `str16`, with a test row for it.
-- [ ] **MCP no longer overwrites existing files without `--allow-writes`.**
+- [x] **MCP no longer overwrites existing files without `--allow-writes`.**
   - `handlers` holds `allowWrites`.
   - `preset_build` and `preset_export` return `ErrWouldOverwrite` wrapped with
     the path when `out` exists and writes are not allowed.
   - Rows cover: new path (ok), existing path with writes off (IsError, client
     not called), existing path with writes on (ok).
-- [ ] **The MCP lock test uses a barrier, not a sleep.**
+- [x] **The MCP lock test uses a barrier, not a sleep.**
   - The first `Devices` call blocks on a channel after signalling it entered.
   - The second call is started, and the test asserts it has not entered within
     200ms.
   - The channel is then closed, and both complete.
-- [ ] **The stdio hang-up test is deterministic.**
+- [x] **The stdio hang-up test is deterministic.**
   - The reader returns the initialize line, then signals, then returns EOF.
   - The writer waits for that signal before writing.
   - It passes 20 runs with `-race -count=20`.
-- [ ] `preset`, `wire`, `pkg/mcp` and `pkg/mcp/internal/tools` stay at 100%
+- [x] `preset`, `wire`, `pkg/mcp` and `pkg/mcp/internal/tools` stay at 100%
   coverage.
 
 **Verify:**
@@ -426,21 +428,21 @@ and the stale documents say what the code does.
 
 **Acceptance Criteria:**
 
-- [ ] **No hand-written doubles remain.**
+- [x] **No hand-written doubles remain.**
   `grep -rn "^type \(scripted\|fakeBus\|fakeHandle\|fakeEnds\|bus\|lister\) struct" pkg/sdk --include='*_test.go'`
   prints nothing.
-- [ ] **`scripted` is replaced by a constructor over the generated mocks.** It
+- [x] **`scripted` is replaced by a constructor over the generated mocks.** It
   returns the sender and receiver mocks plus a pointer to the recorded writes;
   the reply queue lives in a closure. Call sites keep their shape as far as
   possible (`answers(frames...)`). When the queue is empty, the receiver returns
   `context.DeadlineExceeded`, as IOKit does after `readUntil`.
-- [ ] **`docs/protocol.md` matches the code.**
+- [x] **`docs/protocol.md` matches the code.**
   - Line 93 says `pkg/sdk/internal/wire`.
   - Lines 190–191 say that only `pkg/sdk/internal/device/usb_darwin.go` needs
     hardware, that it is counted against the 99% gate, and that
     `pkg/sdk/internal/wire` needs none.
   - The change goes through the unslop skill.
-- [ ] `sdk`, `attached` and `device` coverage is unchanged, or higher.
+- [x] `sdk`, `attached` and `device` coverage is unchanged, or higher.
 
 **Verify:**
 `mise exec -- go test -race -cover ./pkg/sdk/internal/device/ ./pkg/sdk/internal/attached/ ./pkg/sdk/`

@@ -1,5 +1,8 @@
 # Helix preset generator, phase 1 design
 
+**Status: implemented**, and the module names below are what they were on the
+day. This repository is `github.com/retr0h/toneharness` now.
+
 > **Superseded in part, 2026-09-06.** Written when the project was three modules
 > named `helix-core` / `helix-sdk` / `helixctl`. It is now one module,
 > `github.com/retr0h/tonestack`. The phase ordering, the RigSpec/catalog split
@@ -15,12 +18,12 @@ writes a `.hlx` HX Edit imports. Free text reaches it through an agent driving
 those commands rather than through the tool itself, which is what the README
 describes.
 
-Most of the half that decides values has followed. The corpus places the blocks
-a chain almost always holds, knobs start where players set them rather than at
-Line 6's defaults, and a rig's character words move six kinds of control. What
-is still unbuilt is which way an arbitrary knob moves:
-[architecture.md](../../architecture.md) marks that one problem not built, and
-it waits on the Pilot's Guide parameter tables.
+The half that decides values has followed. The corpus places the blocks a chain
+almost always holds, knobs start where players set them rather than at Line 6's
+defaults, and a rig's character words move six kinds of control. Which way an
+arbitrary knob moves was the last of it, and it did not come from the Pilot's
+Guide this record expected: the Guide says what a control is called, not which
+way it moves, so the answer came from sweeping the pedal.
 
 ## Problem
 

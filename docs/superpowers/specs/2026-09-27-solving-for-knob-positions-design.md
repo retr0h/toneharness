@@ -1,9 +1,15 @@
 # Solving for knob positions
 
-**Status: designed, not built.** The sweeps exist for one amplifier and the
-solver does not exist at all. Kept as a record of the method so the next session
-does not re-derive it, and so nobody mistakes it for something the tool does
-today.
+**Status: implemented.** `pkg/sdk/solve` is the solver, `tone tune` turns the
+dials and measures again, and `tone reach` answers whether a chain can get there
+before spending the run. 20 amplifiers are swept rather than the one this was
+written against.
+
+This said "designed, not built... the solver does not exist at all" until
+2026-10-01, which is the trap this file warns about two paragraphs down: a spec
+is a dated record and a reader takes its status for the present. Left wrong, it
+told anybody who opened it that the method here was unavailable while it was
+shipping.
 
 How a request like "make it punk" becomes knob positions, without trying every
 combination.
@@ -226,23 +232,24 @@ every check the repository could make said it was fine. Measuring the audio is
 what caught it, and measuring the audio is what closes every request from now
 on.
 
-## What is still missing
+## What it cost, and what measuring costs from here
 
-**Nothing, on the device side.** A live edit reaches every block, including
-amplifiers and cabinets, so a sweep is one message and a measurement rather than
-a preset write. That was open for an evening and was
+**Nothing is open on the device side.** A live edit reaches every block,
+including amplifiers and cabinets, so a sweep is one message and a measurement
+rather than a preset write. That looked open for an evening and was
 [a self-inflicted wound](../../../.claude/skills/measure-a-device/SKILL.md): the
 probing ran against presets a broken encoder had emptied, and an empty preset
 still answers on the four structural slots, which reads exactly like chain
 blocks being unreachable.
-
-**Curves for anything but one amplifier.** The method is settled and the
-measuring is the slow part: about eight seconds a reading, so a control at nine
-positions with a repeatability check is a couple of minutes and a twelve-control
-amplifier is most of an hour. Every block wanted in the library costs that once.
 
 **The corpus side is done.** Three genres are tagged and measured, and
 `measure genres` reports what each earns. It needed no hardware, and the result
 is on [architecture.md](../../architecture.md): punk has the most records of the
 three and earns nothing, so a threshold says a genre has enough behind it rather
 than that it sounds like anything in particular.
+
+**Curves are measured for 19 amplifiers**, against the one this was written for.
+Nothing is unbuilt there; the rest is time at the pedal. About eight seconds a
+reading, so a control at nine positions with a repeatability check is a couple
+of minutes and a twelve-control amplifier is most of an hour. Every block added
+to the library costs that once, which is a cost rather than a gap.

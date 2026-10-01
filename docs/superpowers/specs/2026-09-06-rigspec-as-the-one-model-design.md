@@ -232,18 +232,22 @@ otherwise.
 Naming these separately is what stops the system guessing where it could
 measure.
 
-| question                             | source                             | state          |
-| ------------------------------------ | ---------------------------------- | -------------- |
-| Which gear does this player use?     | cultural knowledge, an LLM         | the only guess |
-| What is that gear called on a Helix? | HX Edit `.models` ⋈ Pilot's Guide  | built          |
-| What else belongs in the chain?      | corpus statistics                  | not built      |
-| Which way does a knob move?          | the Pilot's Guide parameter tables | not built      |
-| Does it sound right?                 | a person                           | irreducible    |
+| question                             | source                            | state          |
+| ------------------------------------ | --------------------------------- | -------------- |
+| Which gear does this player use?     | cultural knowledge, an LLM        | the only guess |
+| What is that gear called on a Helix? | HX Edit `.models` ⋈ Pilot's Guide | built          |
+| What else belongs in the chain?      | corpus statistics                 | built          |
+| Which way does a knob move?          | measured sweeps, not a table      | built          |
+| Does it sound right?                 | a person                          | irreducible    |
 
 > **Since, 2026-09-13.** The corpus row is built: it places the blocks a chain
-> almost always holds and supplies the values knobs start from. The knob
-> direction row is not. [architecture.md](../../architecture.md) keeps the
-> current state; this table is the state when the record was written.
+> almost always holds and supplies the values knobs start from.
+>
+> **Since, 2026-10-01.** The knob row is built, and not from the source this
+> table names. The Pilot's Guide says what a control is called, not which way it
+> moves, so the answer came from measuring: 19 amplifiers swept through the
+> pedal, in [resources/sweeps/](../../../resources/sweeps/). The table above is
+> the state when the record was written.
 
 Measurements taken from the corpus while writing this, as evidence that rows
 three and four are real rather than aspirational:

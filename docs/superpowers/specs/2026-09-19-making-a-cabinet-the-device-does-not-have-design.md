@@ -2,6 +2,13 @@
 
 2026-09-19
 
+**Status: implemented.** `pkg/sdk/cab` captures a cabinet from a recording,
+matches one to a target, and writes an impulse response a device loads. "Selling
+one" below is reasoning about what may be sold rather than scope, and the one
+buildable line in it is built: `write.go` puts the provenance in the file's
+LIST/INFO chunk, naming what it was made from, by what method, through what, and
+on what date.
+
 ## The ask
 
 Build a cabinet or an amplifier Line 6 do not ship, and be able to sell it. And
