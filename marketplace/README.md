@@ -13,14 +13,15 @@ Two tiers, and the difference is what somebody had to prove.
 
 ## Using them
 
-Core needs nothing: it is in the binary, so `rigs list` and `presets make --id`
-find it on a fresh install.
+Core needs nothing beyond the checkout: it is compiled into the binary, so
+`rigs list` and `presets make --id` find it.
 
 Community is a directory, so point at it:
 
 ```bash
-toneharness rigs list --rigs marketplace/community
-toneharness presets make --id <slug> --rigs marketplace/community --out ~/out.hlx
+mise exec -- go run main.go rigs list --rigs marketplace/community
+mise exec -- go run main.go presets make --id <slug> \
+  --rigs marketplace/community --out ~/out.hlx
 ```
 
 Or ask your agent, which is the shorter version of the same thing:
@@ -51,13 +52,14 @@ Scaffold rather than copy a neighbour, because the scaffold knows which fields
 exist:
 
 ```bash
-toneharness rigs new --help
+mise exec -- go run main.go rigs new --help
 ```
 
 Then build it, because a rig that does not resolve is not a rig:
 
 ```bash
-toneharness presets make --id <slug> --rigs marketplace/community --out /tmp/check.hlx
+mise exec -- go run main.go presets make --id <slug> \
+  --rigs marketplace/community --out /tmp/check.hlx
 ```
 
 Read what it printed. Every block it added that you did not name, every word
