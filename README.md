@@ -31,6 +31,40 @@ where it came from, and where nothing has been measured the tool says so.
 Point an agent at a checkout and tell it what you want to sound like.
 </p>
 
+## Two text formats, and a preset falls out of them
+
+A **ToneSpec** is what you want. A **RigSpec** is the gear that answers it. Both
+are YAML somebody can read, write, diff and send to a friend, and they are the
+only hand-authored formats here: the Go types, both grammar pages and everything
+downstream are generated from the two contracts.
+
+```yaml
+schema: RigSpec
+id: mike-dirnt
+instrument: bass
+chain:
+  - role: amp
+    gear: Ampeg SVT
+    evidence:
+      - kind: cited
+        url: https://...
+```
+
+A rig names **real gear, never Line 6 model identifiers**. "Ampeg SVT" resolves
+through the gear map when it is built, so the file stays readable, stays correct
+when Line 6 rename a model, and compiles for whichever Helix you own rather than
+the one it was written on.
+
+It goes the other way too. Pull a preset off the pedal and it comes back as a
+rig, so somebody else's sound becomes a file you can read, change and build
+again:
+
+> - _"Export slot 12B as a rig so I can see what is in it."_
+> - _"Build this rig somebody sent me and put it on my pedal."_
+
+Every claim in a rig carries its source, which is what makes one worth sending.
+[examples/rigspec/](examples/rigspec/) has one with every field filled in.
+
 ## What ships in the binary
 
 | in the binary     | what it is                                                                                               |
