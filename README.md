@@ -34,9 +34,21 @@ Point an agent at a checkout and tell it what you want to sound like.
 ## Two text formats, and a preset falls out of them
 
 A **ToneSpec** is what you want. A **RigSpec** is the gear that answers it. Both
-are YAML somebody can read, write, diff and send to a friend, and they are the
-only hand-authored formats here: the Go types, both grammar pages and everything
-downstream are generated from the two contracts.
+are YAML somebody can read, write, diff and send to a friend.
+
+The specifications are OpenAPI, and every field carries its own description, so
+what a field may say and what gets refused is in the contract rather than in a
+page about it:
+
+- [tonespec.openapi.yaml](pkg/sdk/tone/data/tonespec.openapi.yaml), what
+  somebody may ask for
+- [rigspec.openapi.yaml](pkg/sdk/rig/data/rigspec.openapi.yaml), what that
+  resolves to
+
+They are the only hand-authored formats here. The Go types and everything
+downstream are generated from them, and
+[write-a-spec](.claude/skills/write-a-spec/SKILL.md) is what reads them back in
+prose, field by field.
 
 ```yaml
 schema: RigSpec
