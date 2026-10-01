@@ -1,0 +1,127 @@
+# Geddy Lee — Rush
+#
+# The ask: who he is, how he played, and what he played. The gear this
+# resolves to is in geddy-lee.yaml beside it.
+
+schema: ToneSpec
+aliases: [geddy, rush]
+
+subject:
+  kind: artist
+  name: Geddy Lee
+  band: Rush
+  era: Fly by Night through Hemispheres
+  years: { from: 1975, to: 1978 }
+
+instrument: bass
+
+# No record of theirs carries a genre tag, so this is general knowledge about a
+# well-known player rather than anything measured, recorded the same way the
+# manifests' own `genres_by: llm` tags are. `measure genres` earns words only
+# from tagged records, so this places the ask and earns it nothing.
+genre: [progressive rock]
+
+# No `character` block. Every word this rig carried has been removed on
+# evidence, and nothing has replaced them, so the preset is built from the
+# gear and the instrument alone.
+#
+# `bright` was here on a model's say-so until his records were measured. His
+# centroid sits at 177Hz, the middle of the eight players in the music
+# corpus, with Claypool at 264Hz, Jaco at 259Hz and Bootsy at 214Hz above
+# him. Audio outranks a model here, so the word is gone rather than argued
+# with. What his records do say is that he is the most saturated of the
+# eight, at 29% against a middle of 24%, which is not clear enough of the
+# rest to earn `saturated` either.
+# `mid-forward` was earned here and is not any more. He reads 14% of his
+# energy in the mid band, which cleared the line while Mike Dirnt's records
+# were Dookie at 8% and Paul McCartney's were Beatles takes at 0%. Both
+# players now carry records from the era their rigs describe, the middle
+# moved to 10%, and 14% is not clear of it. Nothing about his records
+# changed.
+# `percussive` was here on a thread nobody opened. Forty-two period articles
+# from 1974 to 1984 were read looking for it and none applies the word to
+# him; the only "percussive" in the set is Neil's tympani and bells. What
+# the era does give him is trebly and twangy, and those describe the treble
+# half of a stereo rig. This file is the low half, so a word borrowed from
+# the other side would name a signal path this chain does not contain.
+
+played:
+  - gear: Rickenbacker 4001
+    strings: round
+    evidence:
+      - kind: cited
+        url: http://www.2112.net/powerwindows/transcripts/20110400bassguitaruk.htm
+        note: >-
+          Bass Guitar UK, April 2011, Joel McIver: "When we signed our first
+          record deal in 1974, I got my share of our small advance and the
+          first thing I did was buy a Rickenbacker. I think I paid about $400
+          for it." He bought it for a sound he never got: "Much to my dismay,
+          when I plugged it in, it didn't sound like Chris Squire."
+        caveat: >-
+          told in 2011 about 1974. The period source is Guitar Player, June
+          1980, which settles the model and puts it on the record: "When we got
+          our first advance, the first thing I did was run out and buy a
+          Rickenbacker 400 I", the transcription's error for 4001, which its
+          own writer spells correctly as "his black Rickenbacker 4001 bass".
+          Asked what he used on Fly By Night: "I used the Rickenbacker on every
+          track." The scan settles the model outright where the transcription
+          garbled it: the magazine's own intro reads "his black Rickenbacker
+          4001 bass".
+      - kind: cited
+        url: http://www.2112.net/powerwindows/transcripts/20110400bassguitaruk.htm
+        note: >-
+          the same interview, on why this rig is one half of a pair: "it had a
+          great trebly sound, but I had a hard time getting the right amount of
+          bottom end out of it unless I used the Rick-O-Sound feature ... I
+          used to send the bass pickup to a bass amp and the treble pickup to
+          an amp that was set up for that twangy sound."
+        caveat: >-
+          which is the instrument's own explanation for the split chain. The
+          trebly half he describes is the one this file does not model. Two
+          things this field cannot hold: the By-Tor growl on Fly By Night is a
+          Fender through a fuzz into the board rather than this bass, and from
+          A Farewell to Kings he also plays a double-neck whose bass he says
+          "has a better low-end response than the standard 4001", which covers
+          two of the four records measured here.
+      - kind: cited
+        url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+        note: >-
+          Guitar Player, June 1980, asked what bass strings he uses: "Rotosound
+          Swing Bass, long-scale. I change them every four dates." He dates the
+          switch himself, talking about his pre-Rush Precision: "I was using
+          LaBella flat-wounds for a few years. Then around 1972 there was a big
+          turning point for my sound when I discovered Rotosound round-wounds."
+          He changed in 1972 and got the Rickenbacker in 1974, so there is no
+          window in which this instrument had anything else on it.
+        caveat: >-
+          a fan archive's transcription of a print article rather than a scan,
+          and the 1980 answer is his touring habit. Do not let Rotosound's own
+          history page unsettle this: its 1985 entry has him "starts using the
+          new Funkmaster strings", which dates a later endorsement on the Wal
+          and reads like a first-contact date. He is on record five years
+          earlier. No gauge, because the figure everybody repeats traces to one
+          forum post recalling a conversation.
+    # The instrument is why he reads 14% in the mid band where Tim Commerford
+    # reads 2% on the same amplifier. A Rickenbacker through an SVT and a
+    # Fender through an SVT are not the same instrument into the same amp.
+    # Neither figure earns a word now, and this is still the reason they differ.
+
+technique:
+  attack: fingers
+  position: bridge
+  evidence:
+    - kind: cited
+      url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+      note: >-
+        Guitar Player, June 1980, in his own words. On the attack: "I never
+        used a pick. In fact, I can't even play guitar very well with a pick."
+        On where: "I usually rest my hand towards the back, and place my
+        fingers between the bridge and the treble pickup."
+      caveat: >-
+        `fingers` understates it and this format has no better word. He also
+        plays with his nails: "I sometimes rest my hand on the E string and
+        pick with my nails. I use them a lot, in fact ... so if I want a
+        pick-like attack, I can get it with my nails, rather than having to
+        use a pick." A rig tuned for flesh will read duller than the records.
+
+confidence: low

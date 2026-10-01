@@ -54,7 +54,7 @@ like the gear that was in the room instead of the gear the rig names.
 
 Records and gear are two halves and the corpus only holds one of them. A player
 whose records are measured and who has no rig in
-`pkg/sdk/shipped/artists/` contributes figures that nothing can act on: the words
+`marketplace/core/artists/` contributes figures that nothing can act on: the words
 their records earn describe a sound with no amplifier behind it.
 
 It shows up worst one level up, at the genre. A genre needs three players before

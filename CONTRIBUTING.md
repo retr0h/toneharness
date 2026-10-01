@@ -129,7 +129,7 @@ pkg/sdk/translate/   a request and a setup become a rig
 pkg/sdk/rig/         RigSpec, its contract in data/, and its validation
 pkg/sdk/rig/internal/
   gen/               Go types generated from the contract
-pkg/sdk/shipped/     curated rigs: which gear a player uses
+pkg/sdk/shipped/     a generated copy of marketplace/core, so the binary has it
   artists/           one file per player, and the evidence for each claim
 pkg/sdk/plan/        a resolved chain: what compile produces and editor reads
 pkg/sdk/catalog/     what a device can do: blocks, parameters, DSP costs
@@ -166,6 +166,9 @@ pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
 resources/
   schemas/           the generated catalog, the gear map, the preset corpus
 .claude/skills/      how to do each job. Five skills, each self-contained
+marketplace/         rigs people use and send
+  core/artists/      the cited ones, copied into pkg/sdk/shipped by a generator
+  community/artists/ submissions, loaded with --rigs
 asset/               the logos the README shows
 docs/                what is built and what is not, and the design records
 .github/workflows/   CI

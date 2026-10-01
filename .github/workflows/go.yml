@@ -24,10 +24,13 @@ on:
       - ".mise.toml"
       - ".github/workflows/go.yml"
       # The tests read these: the reference recordings they measure through, the
-      # catalog and corpus they assert against, and the sweeps and corpora the
-      # measuring tests load.
+      # catalog and corpus they assert against, the sweeps and corpora the
+      # measuring tests load, and the marketplace's core tier, which
+      # TestTheEmbeddedRigsAreTheMarketplacesCore holds the embedded copy
+      # against.
       - "resources/**"
       - "pkg/sdk/**/data/**"
+      - "marketplace/**"
 
 jobs:
   build:
