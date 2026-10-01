@@ -49,6 +49,12 @@ technique:
 #
 # So `chunky` costs nothing and does nothing, which is why the translation
 # happens before the file is written rather than after.
+#
+# `grit-on-attack` answers the same axis as the `clean` that punk measures as,
+# and a word written here outranks a word a population earned, so the build says
+# which one stood aside:
+#
+#     says clean  a genre measured this, and you said grit-on-attack, so yours stands
 words:
   - term: mid-forward
   - term: grit-on-attack

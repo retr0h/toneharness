@@ -339,6 +339,9 @@ func genreWords(
 	for _, t := range got.Terms {
 		out = append(out, compile.Word{
 			Term: t.Term,
+			// Earned rather than asked for, which is what lets a word somebody
+			// wrote outrank it on an axis they both answer.
+			Derived: true,
 			Evidence: []tone.Evidence{{
 				Kind:     tone.EvidenceAudio,
 				Measured: &map[string]float64{string(t.Key): t.Mine},
@@ -397,14 +400,15 @@ func movedFrom(
 	out := make([]result.Moved, 0, len(moved))
 	for _, m := range moved {
 		out = append(out, result.Moved{
-			Term:    m.Term,
-			Param:   m.Param,
-			From:    m.From,
-			To:      m.To,
-			Against: m.Against,
-			Because: m.Because,
-			Already: m.Already,
-			Weight:  m.Weight,
+			Term:      m.Term,
+			Param:     m.Param,
+			From:      m.From,
+			To:        m.To,
+			Against:   m.Against,
+			YieldedTo: m.YieldedTo,
+			Because:   m.Because,
+			Already:   m.Already,
+			Weight:    m.Weight,
 		})
 	}
 

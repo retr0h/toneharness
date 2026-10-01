@@ -83,6 +83,13 @@ type Moved struct {
 	// applied: applying both lands back where it started and reads as though
 	// the rig said nothing.
 	Against string `json:"against"`
+	// YieldedTo names the word somebody wrote that this one stood aside for.
+	//
+	// A different answer from Against, and reported as one. Against is a
+	// contradiction nothing can resolve. This is a word a genre earned meeting
+	// a word a person wrote on the same axis, where the person's stands: they
+	// said it and a population did not.
+	YieldedTo string `json:"yielded_to"`
 	// Because says why the chain could not answer this word, when the chain
 	// is the reason. Empty when nothing acts on the word at all, which is a
 	// different answer: one says this rig cannot hear it, the other says
@@ -107,6 +114,9 @@ func (m Moved) Acted() bool { return m.Param != "" }
 
 // Contested says whether another term spoke for the same axis.
 func (m Moved) Contested() bool { return m.Against != "" }
+
+// Yielded says whether this word stood aside for one somebody wrote.
+func (m Moved) Yielded() bool { return m.YieldedTo != "" }
 
 // Unanswered says whether the chain, rather than this project, is why the
 // word moved nothing.

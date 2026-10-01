@@ -111,6 +111,12 @@ func demand(
 			continue
 		}
 
+		// Nor one that is about to stand aside for a word somebody wrote. The
+		// block it would seat is one nothing then touches.
+		if _, aside := yields(h, terms); aside {
+			continue
+		}
+
 		// One turn per axis the word answers, so a compound word can seat a
 		// block for each. "Punchy" wants something with a Sag and something
 		// with an Attack, and a chain holding neither needs both.

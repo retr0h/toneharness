@@ -206,6 +206,113 @@ func (s *WordsMovePublicTestSuite) TestTwoWordsForOneAxisMoveNothing() {
 		s.paramOf(plain, "Drive"), s.paramOf(got, "Drive"), 1e-9)
 }
 
+// TestWhoYieldsOnAnAxisTwoWordsAnswer covers which of two answers to one
+// question stands, by who said it.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *WordsMovePublicTestSuite) TestWhoYieldsOnAnAxisTwoWordsAnswer() {
+	for _, tt := range []struct {
+		name string
+		// written is what somebody put on the ask, derived what a genre earned
+		// by measuring. Both land in the same Words, which is the arrangement
+		// the precedence has to be read out of.
+		written []string
+		derived []string
+		// acted is every term that moved a control, and yielded every term
+		// that stood aside for one somebody wrote. Everything named in neither
+		// is contested, which is the third outcome.
+		acted     []string
+		yielded   map[string]string
+		contested []string
+	}{
+		{
+			// The case this method exists for. `clean` is what punk measures as
+			// and `grit-on-attack` is what the person asked for; both answer
+			// drive. Counting them together cancelled the person's own word
+			// against a measurement of records they never mentioned.
+			name:    "a word somebody wrote beats one a genre earned",
+			written: []string{"grit-on-attack"},
+			derived: []string{"clean"},
+			acted:   []string{"grit-on-attack"},
+			yielded: map[string]string{"clean": "grit-on-attack"},
+		},
+		{
+			// Unchanged, and the reason the rule is about standing rather than
+			// about order: this cannot know which half they meant.
+			name:      "two words somebody wrote still contradict",
+			written:   []string{"minimal-drive", "grit-on-attack"},
+			contested: []string{"minimal-drive", "grit-on-attack"},
+		},
+		{
+			// Two genres disagreeing is still a contradiction, and still
+			// nothing this can resolve, so nothing written means nothing wins.
+			name:      "two genres disagreeing still contradict",
+			derived:   []string{"clean", "saturated"},
+			contested: []string{"clean", "saturated"},
+		},
+		{
+			// A derived word on an axis nobody else answered is an ordinary
+			// word. Yielding is about being outranked, not about provenance.
+			name:    "a genre's word on an axis nobody contested",
+			derived: []string{"grit-on-attack"},
+			acted:   []string{"grit-on-attack"},
+		},
+		{
+			// A word outside the vocabulary answers no axis, so it outranks
+			// nothing. `chunky` must not silence what a genre measured: it
+			// reaches no control, and a measurement standing aside for it would
+			// leave the axis answered by neither.
+			name:    "a word nothing defines does not outrank a measurement",
+			written: []string{"chunky"},
+			derived: []string{"clean"},
+			acted:   []string{"clean"},
+		},
+		{
+			// The mirror of it. A derived term nothing defines answers no axis
+			// either, so it has nothing to stand aside from.
+			name:    "a measurement of a word nothing defines",
+			written: []string{"grit-on-attack"},
+			derived: []string{"chunky"},
+			acted:   []string{"grit-on-attack"},
+		},
+	} {
+		s.Run(tt.name, func() {
+			words := make([]compile.Word, 0, len(tt.written)+len(tt.derived))
+			for _, t := range tt.written {
+				words = append(words, compile.Word{Term: t})
+			}
+
+			for _, t := range tt.derived {
+				words = append(words, compile.Word{Term: t, Derived: true})
+			}
+
+			_, _, moved, _, err := compile.Resolve(
+				bassRig("Ampeg SVT", ""), compile.Intent{Words: words}, s.cat, nil)
+			s.Require().NoError(err)
+
+			by := map[string]compile.Moved{}
+			for _, m := range moved {
+				by[m.Term] = m
+			}
+
+			for _, term := range tt.acted {
+				s.Require().True(by[term].Acted(), "%s moved nothing", term)
+			}
+
+			for term, to := range tt.yielded {
+				s.Require().True(by[term].Yielded(), "%s did not yield", term)
+				s.Require().Equal(to, by[term].YieldedTo)
+			}
+
+			for _, term := range tt.contested {
+				s.Require().True(by[term].Contested(), "%s was not contested", term)
+				s.Require().False(by[term].Yielded(),
+					"a contradiction is not a word standing aside")
+			}
+		})
+	}
+}
+
 func TestWordsMovePublicTestSuite(
 	t *testing.T,
 ) {
