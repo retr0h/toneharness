@@ -2,6 +2,9 @@
 
 2026-09-18
 
+**Status: implemented.** `pkg/sdk/tone` is the ask, `pkg/sdk/rig` is what it
+resolves to, and `pkg/sdk/translate` is the compile between them.
+
 ## The problem
 
 One format is doing two jobs and neither well.

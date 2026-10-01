@@ -2,6 +2,10 @@
 
 Date: 2026-09-30
 
+**Status: implemented.** A Setup carries `technique`, and
+`pkg/sdk/internal/compile/playing.go` turns the gap between two right hands into
+a word. The brightness half named at the end is not built.
+
 ## The problem
 
 Every figure this project ships was measured off somebody else's playing. A rig

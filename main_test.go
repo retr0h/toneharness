@@ -1724,6 +1724,87 @@ func (s *MainTestSuite) TestEveryFunctionUnderTestHasOneSuiteMethod() {
 	s.Require().NoError(err)
 }
 
+// TestEverySpecSaysWhatBecameOfIt covers the one line in a design record a
+// reader takes for the present.
+//
+// A spec is a dated record and is never brought up to date, which is the rule
+// and is exactly why the status line matters: everything below it is history and
+// that line is a claim about now. "Solving for knob positions" said "designed,
+// not built... the solver does not exist at all" for the four days after
+// pkg/sdk/solve shipped, and docs/architecture.md said the same. Anybody opening
+// either was told the method was unavailable while it was in the binary.
+//
+// Two things, then. Every spec carries a status, so a reader never has to guess
+// from the date. And none of them says a package is unbuilt while the package is
+// in the tree.
+func (s *MainTestSuite) TestEverySpecSaysWhatBecameOfIt() {
+	const specs = "docs/superpowers/specs"
+
+	entries, err := os.ReadDir(filepath.FromSlash(specs))
+	s.Require().NoError(err)
+	s.Require().NotEmpty(entries, "there are specs to check")
+
+	// A spec naming a package it says is not built. The package path is what
+	// makes this checkable: a status saying "not built" beside `pkg/sdk/solve`
+	// is a claim this repository can settle.
+	unbuilt := regexp.MustCompile(`(?i)not built|does not exist|is not implemented`)
+	named := regexp.MustCompile(`pkg/(?:sdk|cli|mcp)(?:/[a-z]+)*`)
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+
+		at := filepath.Join(filepath.FromSlash(specs), entry.Name())
+
+		body, err := os.ReadFile(at)
+		s.Require().NoError(err)
+
+		text := string(body)
+
+		s.Require().Regexp(`(?m)^\*\*Status`, text,
+			"%s carries no status, so a reader has to guess from the date "+
+				"whether any of it describes the tool today", at)
+
+		// The status paragraph alone. Taking everything above the first heading
+		// swallowed a prologue retracting an old argument, and "the reasoning
+		// was wrong" about a module boundary is history rather than a claim
+		// that something is missing today.
+		status := statusOf(text)
+
+		if !unbuilt.MatchString(status) {
+			continue
+		}
+
+		for _, pkg := range named.FindAllString(status, -1) {
+			_, err := os.Stat(filepath.FromSlash(pkg))
+			s.Require().Error(err,
+				"%s says something is not built and names %s, which is in the "+
+					"tree. A status is the one line a reader takes for the "+
+					"present, so say what shipped", at, pkg)
+		}
+	}
+}
+
+// statusOf is a spec's status paragraph, which is the claim about now.
+//
+// From `**Status` to the blank line after it. Everything below is dated record.
+func statusOf(
+	text string,
+) string {
+	at := strings.Index(text, "**Status")
+	if at < 0 {
+		return ""
+	}
+
+	rest := text[at:]
+	if end := strings.Index(rest, "\n\n"); end > 0 {
+		return rest[:end]
+	}
+
+	return rest
+}
+
 func TestMainTestSuite(
 	t *testing.T,
 ) {

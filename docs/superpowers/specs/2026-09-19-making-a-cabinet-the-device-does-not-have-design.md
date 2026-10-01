@@ -2,6 +2,11 @@
 
 2026-09-19
 
+**Status: implemented in part.** `pkg/sdk/cab` captures a cabinet from a
+recording and matches one to a target, and writes an impulse response a device
+loads. The commercial half of the goal below, building a cabinet and selling it,
+is not a software question and nothing here answers it.
+
 ## The ask
 
 Build a cabinet or an amplifier Line 6 do not ship, and be able to sell it. And

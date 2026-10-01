@@ -1,5 +1,8 @@
 # Helix preset generator, phase 1 design
 
+**Status: implemented**, and the module names below are what they were on the
+day. This repository is `github.com/retr0h/toneharness` now.
+
 > **Superseded in part, 2026-09-06.** Written when the project was three modules
 > named `helix-core` / `helix-sdk` / `helixctl`. It is now one module,
 > `github.com/retr0h/tonestack`. The phase ordering, the RigSpec/catalog split

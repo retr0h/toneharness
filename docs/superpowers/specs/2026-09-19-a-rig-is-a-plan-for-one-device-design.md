@@ -2,6 +2,9 @@
 
 2026-09-19
 
+**Status: implemented.** `pkg/sdk/plan` is the resolved chain, and
+`plan.LimitsFor` answers what one device holds from the catalog.
+
 ## Two changes, one edit
 
 A RigSpec is doing two jobs it should not be doing, and both are moves of the

@@ -1,5 +1,8 @@
 # The measured sound profile
 
+**Status: implemented.** `pkg/sdk/audio` measures a recording and
+`pkg/sdk/measured` holds what the device did, block by block.
+
 A design record. Dated, and superseded rather than rewritten.
 
 ## The goal

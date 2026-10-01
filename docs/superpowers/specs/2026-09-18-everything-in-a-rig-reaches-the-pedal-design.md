@@ -2,6 +2,12 @@
 
 2026-09-18
 
+**Status: superseded**, by
+[nothing here has ever heard anything](2026-09-18-nothing-here-has-ever-heard-anything-design.md),
+which says so itself. What survived of it is in
+`pkg/sdk/internal/compile/demand.go`: a word with nowhere to land pulls a block
+into the chain and says which word asked.
+
 ## The problem
 
 A rig can say a thing that changes nothing, and nothing says so.

@@ -2,6 +2,9 @@
 
 2026-09-19
 
+**Status: implemented.** `audio.GenresMeasured` pools records into genres and
+`corpus music genres` is what prints them. Three genres are measured.
+
 ## The request
 
 "Make me a punk bass tone."

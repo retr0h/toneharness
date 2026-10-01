@@ -1,9 +1,15 @@
 # Solving for knob positions
 
-**Status: designed, not built.** The sweeps exist for one amplifier and the
-solver does not exist at all. Kept as a record of the method so the next session
-does not re-derive it, and so nobody mistakes it for something the tool does
-today.
+**Status: implemented.** `pkg/sdk/solve` is the solver, `tone tune` turns the
+dials and measures again, and `tone reach` answers whether a chain can get there
+before spending the run. 20 amplifiers are swept rather than the one this was
+written against.
+
+This said "designed, not built... the solver does not exist at all" until
+2026-10-01, which is the trap this file warns about two paragraphs down: a spec
+is a dated record and a reader takes its status for the present. Left wrong, it
+told anybody who opened it that the method here was unavailable while it was
+shipping.
 
 How a request like "make it punk" becomes knob positions, without trying every
 combination.

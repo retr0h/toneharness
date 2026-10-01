@@ -1,5 +1,10 @@
 # helix-sdk design
 
+**Status: superseded**, by
+[the SDK is the library](2026-09-10-the-sdk-is-the-library-design.md). The
+module names below are what they were on the day; this repository is
+`github.com/retr0h/toneharness` now.
+
 > **Superseded in part, 2026-09-06.** This proposes `helix-sdk` as a separate Go
 > module to keep cgo out of everything else. That reasoning was wrong: cgo is
 > determined by the import graph, not the module boundary, so a `pkg/sdk`
