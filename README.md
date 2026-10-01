@@ -63,32 +63,104 @@ session starts from there. With the pedal attached it can measure what comes
 back, which is the only thing that tells you whether a change did what it meant
 to.
 
-### Say what you mean, in the words it has
+### Words, and what happens to one nothing defines
 
-Twenty-five words describe a sound here, and "chunky" is not one of them. Ask
-for it and you are told so, with the nearest words it does have. `punchy` is a
-bottom that stops with the note and a front you hear first; `mid-forward` puts
-the part in front of the mix. Ask your agent what the words are and it will read
-them out of [words.json](pkg/sdk/internal/compile/data/words.json), which is the
-vocabulary itself rather than a page about it.
+Nothing is refused over a word. Ask for "chunky" and the preset still gets
+built. Twenty-five words are defined, though, and only those move a control: ask
+for one that is not and you are told so with the nearest ones that are, and no
+knob turns for it.
 
-A genre works the same way. Three are measured, and one needs eight records from
-three players before anything may aim at it, so ask which are ready rather than
-guessing.
+> _"What words can I actually use, and what does each one do?"_
+>
+> _"I asked for chunky and nothing moved. What should I have said?"_
 
-### Asking for somebody nobody has researched yet
+`punchy` is a bottom that stops with the note and a front you hear first.
+`mid-forward` puts the part in front of the mix. The list is
+[words.json](pkg/sdk/internal/compile/data/words.json), which is the vocabulary
+itself rather than a page about it.
 
-Fifteen rigs ship, each with a citation behind every piece of gear. Name
-somebody who is not one of them and the agent researches it and writes the rig
-with its sources, which is a different and slower thing than building from one
-that exists. If the evidence will not hold up, the honest answer is that it
-could not be established, not a plausible rig.
+### Somebody nobody has researched yet
 
-### Over MCP
+Fifteen rigs ship, each with a citation behind every piece of gear.
 
-`.mcp.json` starts a server, and every command has a tool named after it:
-`device select` is `device_select`. Use whichever your agent prefers; both do
-the same work.
+> _"Do you have a rig for Tim Commerford, or do you need to research it?"_
+>
+> _"Research Justin Chancellor's Lateralus rig and write it up with sources."_
+
+Naming somebody who does not ship is research rather than a build, and slower.
+If the evidence will not hold up, the answer you get is that it could not be
+established rather than a plausible rig.
+
+### Adding a genre, start to finish
+
+Three genres are measured. One needs **eight records from three players** before
+anything may aim at it, or it is a single band's sound wearing a genre's name.
+
+> _"What genres are ready to aim at, and which are short of the threshold?"_
+
+Five steps, and your agent can drive all of them.
+
+**1. Name the records before fetching them**, so what gets measured is the
+recording the evidence names. One file per player, at
+`resources/music/<instrument>/<player-slug>/corpus.yaml`:
+
+```yaml
+artist: Justin Chancellor
+tracks:
+  - track: schism
+    url: https://open.spotify.com/track/1dMFQX2BqPkR5zjC2DxFUM
+    year: 2001
+    band: Tool
+    genres: [prog-metal]
+    genres_by: llm
+```
+
+> _"Add Justin Chancellor to the bass corpus with four Lateralus tracks."_
+
+**2. Fetch each record** by its link rather than a search, so what lands is the
+recording the manifest names:
+
+```bash
+mise exec -- just record resources/music/bass/justin-chancellor schism \
+  https://open.spotify.com/track/1dMFQX2BqPkR5zjC2DxFUM
+```
+
+**3. Cut the bass out of the mix.** A mix measures the band, so no figure
+describes the player until the instrument is separated:
+
+```bash
+mise exec -- just stems resources/music/bass/justin-chancellor \
+  resources/music/bass/justin-chancellor/stems bass
+```
+
+**4. Measure.** A word is earned by sitting clear of the other players, so this
+compares the whole tree rather than profiling one person:
+
+```bash
+mise exec -- go run main.go measure players --corpus resources/music/bass
+mise exec -- go run main.go measure genres  --corpus resources/music/bass
+```
+
+**5. Regenerate what ships**, which rolls the measurements into the file the
+binary embeds:
+
+```bash
+mise exec -- just generate     # writes pkg/sdk/audio/data/genres.json
+```
+
+Re-measure only when the records or the stems change. The numbers are committed,
+so nobody else re-runs any of this.
+
+**What a pull request carries, and what it must not.** The manifest and the
+regenerated `genres.json`. **Not the audio and not the stems**: those are
+somebody else's records, `.gitignore` refuses them, and
+[resources/README.md](resources/README.md) says neither may be redistributed.
+The measurements travel, the recordings stay on your disk.
+
+> _"I've added the records and run the measurements. Open the PR."_
+
+Adding a player to a genre that already exists is the same five steps. A genre
+crosses the threshold on its own once enough players sit behind it.
 
 ## Skills
 
