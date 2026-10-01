@@ -86,10 +86,10 @@ says how the first two divide, both superseding
 request      "a Mike Dirnt sound"
    │
    ▼
-the ask      pkg/sdk/shipped/artists/mike-dirnt.tone.yaml     who it is for
+the ask      marketplace/core/artists/mike-dirnt.tone.yaml     who it is for
    │         words: scooped, clean. Or genre: grunge
    ▼
-the rig      pkg/sdk/shipped/artists/mike-dirnt.yaml          who plays what
+the rig      marketplace/core/artists/mike-dirnt.yaml          who plays what
    │         amp: Ampeg SVT
    ▼
 gear map     resources/schemas/gear-map.json                  gear to model

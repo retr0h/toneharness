@@ -1,0 +1,122 @@
+# Geddy Lee — Rush
+#
+# The Ampeg years. He used Ampeg from the first record to Hemispheres, and
+# everything after that is a Wal, a Trace Elliot or an Orange, none of which
+# this device models.
+#
+# The ask this rig answers is in geddy-lee.tone.yaml beside it.
+
+schema: RigSpec
+version: 2
+id: geddy-lee
+
+instrument: bass
+
+chain:
+  - role: amp
+    gear: Ampeg SVT
+    capture: direct
+    evidence:
+      - kind: cited
+        url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+        note: >-
+          Guitar Player, June 1980, in his own words, describing the rig he
+          built when he bought the Rickenbacker: "I decided to go stereo
+          onstage, so I bought an extra bass setup: 2 Ampeg V-4B bottoms, and
+          an SVT head. For my low end, I would run the bass pickup through
+          the Ampegs, and the treble went to the Sunn."
+        caveat: >-
+          checked against a scan of the issue itself, at
+          cygnus-x1.net/links/rush/images/scans/Guitar_Player_06.1980-Geddy_Lee.pdf,
+          so this is the magazine rather than somebody's retyping of it.
+          Dated from inside the interview rather than by its cover: the
+          passage sits directly after Neil Peart joining and the first
+          American tour, and the Rickenbacker was bought with that first
+          advance, which puts this setup at the front of this rig's years.
+          Two amplifiers split by frequency, and a rig is one path, so this
+          is the low half.
+      - kind: cited
+        url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+        note: >-
+          the same interview, on how the records were cut, dated by him to
+          Caress of Steel in 1975: "That's when I discovered that the best way
+          for me to record my bass was to approach it as if I were playing
+          onstage: Use the direct bass from the low-end pickup, and mike the
+          amp for the high-end pickup. I've just been refining that ever
+          since." So the studio split and the stage split are the same split,
+          by his own rule, across every record this rig covers.
+        caveat: >-
+          which means the half this rig models went to the desk rather than
+          through a microphone, on the records as well as live. The cabinet
+          below was only ever in the treble path. Kept because a preset with
+          no cab into a PA is not the sound either. Verified word for word
+          against the scan of the issue, since this one sentence is what puts
+          four of the nine rigs here on a direct signal.
+      - kind: user
+        url: https://www.talkbass.com/threads/geddy-lee-amps.847050/
+        note: >-
+          read with `just forum`, and one post of the ten carries anything:
+          "Geddy did use Ampeg on the first album up to about Hemispheres ...
+          If you look very closely at the beginning of the Fly By Night
+          video, you can see a bunch of Ampeg SVT amps." That is the era this
+          rig claims, from somebody who went and looked at the film.
+        caveat: >-
+          a recollection, and it has the Sunn arriving by Permanent Waves
+          when Geddy says above he had it from about 1972 and ran both at
+          once. It says SVT amps, heads, and this rig used to cite it for an
+          SVT-810 cabinet, which is not what it says and not what he played.
+      - kind: cited
+        url: http://www.2112.net/powerwindows/transcripts/19790600canadianmusician.htm
+        note: >-
+          the same sentence the cabinet below is taken from, read whole:
+          "The bass part of his system is run stereo through two BGW 750-B
+          amplifiers via two Ashley Audio pre-amplifiers ... The low end is
+          run through two Ampeg V4-B cabinets with four JBL 140 speakers."
+        caveat: >-
+          which says this head is the front of the era and not all of it. The
+          SVT is dated by his own account to when he bought the Rickenbacker
+          around 1975, and by the Hemispheres tour in June 1979 the same
+          publication has power amplifiers and preamps driving the same
+          cabinets. The name here stays because a BGW and an Ashly are not
+          modelled by anything and an SVT is, and because two of the four
+          records measured sit in the earlier half. It is a stand-in for the
+          later ones rather than a claim about them.
+    confidence: medium
+
+  - role: cab
+    gear: Ampeg V-4B
+    capture: direct
+    substitute:
+      gear: Mesa/Boogie 2x15
+      evidence:
+        - kind: llm
+          note: >-
+            the only 2x15 this device carries. Both cabinets were reloaded
+            with fifteens that were not the factory ones, JBL 140s here and
+            Electro-Voice in the model, which makes the size right and the
+            voicing a guess.
+      confidence: low
+    evidence:
+      - kind: cited
+        url: http://www.2112.net/powerwindows/transcripts/19790600canadianmusician.htm
+        note: >-
+          Canadian Musician, June 1979, on the Hemispheres tour: "The low end
+          is run through two Ampeg V4-B cabinets with four JBL 140 speakers."
+          Four speakers across two cabinets is two apiece, so the article
+          settles the configuration from inside itself.
+      - kind: cited
+        url: http://www.2112.net/powerwindows/transcripts/19811200canadianmusician.htm
+        note: >-
+          Canadian Musician, December 1981, in his own words: "The low-end
+          pickup goes through a similar amplification system, then to Ampeg
+          V4B cabinets with 15\" J8L speakers", the transcription's typo for
+          JBL.
+      - kind: cited
+        url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+        note: >-
+          Guitar Player, June 1980, current tense: "For the low end, I still
+          use two Ampeg V-4B speaker cabinets."
+        caveat: >-
+          an 8x10 stood here on a thread nobody opened, citing footage nobody
+          watched. Every period source found says V-4B and none says 8x10.
+    confidence: high

@@ -16,6 +16,11 @@ dependencies:
           - "go.mod"
           - "go.sum"
 
+marketplace:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "marketplace/**"
+
 source:
   - changed-files:
       - any-glob-to-any-file:
