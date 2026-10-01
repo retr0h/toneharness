@@ -60,8 +60,14 @@ func Hint(
 		// than an adjective because it is measured against every block the
 		// device has, where a word has to be earned against a population of
 		// players before it means anything.
-		return fmt.Errorf("%w. Name a record to sound like, a player, or the "+
-			"gear itself: `like: { recording: take.wav }` resolves fully, and "+
+		//
+		// "A player somebody has researched" rather than "a player". Naming one
+		// reaches their rig where there is one, and this is the answer when
+		// there is not, so offering it unqualified sent people back to do what
+		// they had already done.
+		return fmt.Errorf("%w. Name a record to sound like, a player somebody "+
+			"has researched, or the gear itself: `like: { recording: take.wav }` "+
+			"resolves fully, `toneharness rigs list` says which players do, and "+
 			"an adjective on its own does not", err)
 	case errors.Is(err, sdk.ErrEmptySlot):
 		return fmt.Errorf("%w, try 'toneharness slots list' to see which "+

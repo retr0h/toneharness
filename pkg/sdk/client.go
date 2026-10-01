@@ -40,7 +40,9 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/presetsview"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Client is what a wrapper holds.
@@ -458,7 +460,31 @@ func (c *Client) Tone(
 		return Resolved{}, err
 	}
 
-	return asking.Resolve(ctx, asking.Ask(in), cat, lib)
+	return asking.Resolve(ctx, asking.Ask(in), cat, lib, c.rigNamed)
+}
+
+// rigNamed is the curated rig for a player, band or sound somebody named.
+//
+// Two lookups rather than one. The slug finds the rig by its identifier, since
+// "Mike Dirnt" is written as `mike-dirnt` on disk. The raw name finds it by an
+// alias, which is a name a person uses rather than a filename: `primus` reaches
+// Les Claypool and no slug of it produces `les-claypool`.
+//
+// Not found is not an error here. An ask naming somebody nobody has researched
+// is an ordinary ask, and translate says so in its notes rather than refusing.
+func (c *Client) rigNamed(
+	name string,
+) (rig.Spec, bool) {
+	src := c.source()
+
+	for _, try := range []string{slug.Of(name), name} {
+		found, err := rigs.Find(src, try)
+		if err == nil {
+			return found.Rig, true
+		}
+	}
+
+	return rig.Spec{}, false
 }
 
 // Backing reads which records back each rig, and holds them to its era.

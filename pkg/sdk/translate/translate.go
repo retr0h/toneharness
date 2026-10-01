@@ -72,6 +72,14 @@ type Deps struct {
 	// downhill would invert it. Nil means nothing checks, which is what a
 	// caller that only wants a chain resolved gets.
 	UnknownWords func(words []string) []UnknownWord
+	// RigNamed is the curated rig for a player, band or sound somebody named,
+	// and whether there is one.
+	//
+	// Handed in for the reason UnknownWords is: a rig store reads a directory
+	// and the shipped knowledge, and translate sits upstream of both. Nil means
+	// nothing is looked up, so an ask naming a player resolves nothing, which is
+	// what a caller wanting only its own gear resolved gets.
+	RigNamed func(name string) (rig.Spec, bool)
 }
 
 // UnknownWord is a word somebody used that nothing defines, and the nearest
@@ -146,6 +154,20 @@ func Translate(
 	strung(spec, setup, &notes)
 
 	chain, err := chainFor(spec, setup, deps, &notes)
+
+	// Said rather than silently dropped, and said even when there is no chain.
+	// A request carrying a genre or a player this cannot resolve is a request
+	// half answered, and the half that was not is the part somebody needs to
+	// know about. Returning before this was why a refusal arrived with nothing
+	// but the refusal: every note explaining it was written after the early
+	// return.
+	//
+	// Told which names the chain already answered, because a player whose rig
+	// was found is resolved, and reporting both would say two contradictory
+	// things about one name in one table.
+	unresolved(spec, answeredBy(notes), &notes)
+	unknownWords(spec, deps, &notes)
+
 	if err != nil {
 		return rig.Spec{}, notes, err
 	}
@@ -154,12 +176,6 @@ func Translate(
 
 	// After the chain, because it is about what ended up in it.
 	speakers(setup, chain, &notes)
-
-	// Said rather than silently dropped. A request carrying a genre or a
-	// player this cannot resolve is a request half answered, and the half
-	// that was not is the part somebody needs to know about.
-	unresolved(spec, &notes)
-	unknownWords(spec, deps, &notes)
 
 	if err := rig.Validate(out); err != nil {
 		return rig.Spec{}, notes, err
@@ -401,9 +417,18 @@ func chainFor(
 		return nil, err
 	}
 
-	// An amplifier is the one block a chain cannot do without, so when
-	// nothing named one and there is something to aim at, the measurements
-	// pick the closest.
+	// An amplifier is the one block a chain cannot do without, and there are
+	// two ways to arrive at one. A player somebody named has a rig if anybody
+	// researched them, and that rig is what they actually played with a source
+	// on every piece of it: better evidence than any measurement, so it is
+	// tried first. Failing that, and given something to aim at, the
+	// measurements pick the closest.
+	if !holds(named, rig.RoleAmp) {
+		if from, ok := likeTheirRig(spec, deps, notes); ok {
+			named = append(from, named...)
+		}
+	}
+
 	if !holds(named, rig.RoleAmp) {
 		if amp, ok := nearestTo(spec, setup, deps, "amp", notes); ok {
 			named = append([]placed{{entry: amp}}, named...)
@@ -448,6 +473,82 @@ func placeOf(
 	}
 
 	return float64(order(at.entry.Role))
+}
+
+// likeTheirRig is the chain a named player already has researched, if anybody
+// has.
+//
+// `like: { artist: Mike Dirnt }` is a request to sound like him, and somebody
+// has read a magazine and written down what he played. Using that is not a
+// shortcut around measuring: it is the stronger claim, because every piece of it
+// carries a source and a measurement carries none.
+//
+// The name is slugged to find the rig, and handed over raw as well, because
+// `rigs.Find` matches an identifier and the aliases beside it: "claypool" and
+// "primus" both reach Les Claypool, and no slug of either produces the other.
+//
+// Only the roles that make a sound. A rig researched for somebody holds their
+// amplifier and cabinet, and the request's own gear is layered over this by the
+// caller, so what they named wins where the two overlap.
+func likeTheirRig(
+	spec tone.Spec,
+	deps Deps,
+	notes *Notes,
+) ([]placed, bool) {
+	if deps.RigNamed == nil || spec.Like == nil {
+		return nil, false
+	}
+
+	who, kind := namedSubject(*spec.Like)
+	if who == "" {
+		return nil, false
+	}
+
+	found, ok := deps.RigNamed(who)
+	if !ok {
+		*notes = append(*notes, Note{
+			About: who,
+			Said: "no rig has been researched for that " + kind +
+				", so nothing was taken from one",
+		})
+
+		return nil, false
+	}
+
+	out := make([]placed, 0, len(found.Chain))
+	for _, entry := range found.Chain {
+		out = append(out, placed{entry: entry})
+	}
+
+	*notes = append(*notes, Note{
+		About:    who,
+		Said:     fmt.Sprintf("%d blocks came from the rig researched for them", len(out)),
+		Honoured: true,
+	})
+
+	return out, len(out) > 0
+}
+
+// namedSubject is who a request says to sound like, and what kind of thing they
+// are.
+//
+// One of three, in the order a narrower claim beats a wider one: a song is one
+// recording, an artist is a body of work, and a band is several people's. A
+// request naming more than one is answered by the narrowest, because that is the
+// one it was most specific about.
+func namedSubject(
+	like tone.Like,
+) (string, string) {
+	switch {
+	case like.Song != nil && *like.Song != "":
+		return *like.Song, "song"
+	case like.Artist != nil && *like.Artist != "":
+		return *like.Artist, "player"
+	case like.Band != nil && *like.Band != "":
+		return *like.Band, "band"
+	}
+
+	return "", ""
 }
 
 // placed is one block and where in the chain it goes.
@@ -770,9 +871,30 @@ func termsOf(
 	return out
 }
 
+// answeredBy is every name the chain was built from, so nothing reports a name
+// as unanswered that a block came from.
+//
+// Read off the notes rather than tracked separately: a note that honoured a name
+// is exactly the record of that name having been answered, and a second list
+// would be a second thing to keep in step.
+func answeredBy(
+	notes Notes,
+) map[string]bool {
+	out := map[string]bool{}
+
+	for _, n := range notes {
+		if n.Honoured {
+			out[n.About] = true
+		}
+	}
+
+	return out
+}
+
 // unresolved says which parts of a request this cannot yet answer.
 func unresolved(
 	spec tone.Spec,
+	answered map[string]bool,
 	notes *Notes,
 ) {
 	// What the ask says it is for, which is what a genre's figures have to
@@ -811,6 +933,12 @@ func unresolved(
 				continue
 			}
 
+			// A rig researched for them answered it, so there is nothing
+			// unresolved about the name.
+			if answered[*named.who] {
+				continue
+			}
+
 			*notes = append(*notes, Note{
 				About: *named.who,
 				Said: fmt.Sprintf(
@@ -819,6 +947,23 @@ func unresolved(
 					*named.who, named.what),
 			})
 		}
+	}
+
+	// A subject names who the ask is for; `like` names what to aim at. The two
+	// are different claims and the contract keeps them apart, so a subject does
+	// not resolve gear and should not: a marketplace pair says who it is for on
+	// the ask and what answered on the rig beside it.
+	//
+	// Said out loud, because the resemblance is close enough that somebody
+	// writing `subject: { kind: artist, name: Mike Dirnt }` and getting a
+	// refusal has no way to see which field they wanted.
+	if spec.Subject != nil && spec.Subject.Name != "" && spec.Like == nil {
+		*notes = append(*notes, Note{
+			About: spec.Subject.Name,
+			Said: "is who the ask is for, which aims at nothing. `like: " +
+				"{ artist: " + spec.Subject.Name + " }` is the field that " +
+				"resolves their rig",
+		})
 	}
 
 	if spec.Nudges != nil && len(*spec.Nudges) > 0 {

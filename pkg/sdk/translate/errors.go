@@ -46,6 +46,13 @@ var ErrWrongDevice = errors.New("the measurements were taken on a different devi
 // an agent. "Make me a punk bass tone" lands here: it is a real request and
 // there is nothing in it to resolve, so the next move is to ask which records
 // rather than to guess at an amplifier.
+//
+// It names the three routes that work and nothing else. It used to say "name a
+// player" to a request that had named one, because naming a player reached
+// nothing at the time: the message sent people back to do what they had already
+// done. A player resolves now where somebody has researched them, so the
+// sentence says that condition rather than the bare suggestion, and the notes
+// beside this say which player was not found.
 var ErrNothingToBuildFrom = errors.New(
 	"nothing in the request names gear, and nothing in it can be measured " +
 		"against, so there is no chain to build")

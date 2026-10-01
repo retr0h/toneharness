@@ -29,6 +29,8 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -927,6 +929,149 @@ like:
 	} {
 		s.Run(tt.name, func() {
 			tt.then()
+		})
+	}
+}
+
+// TestAnAskMayNameAPlayer covers resolving a chain from the rig somebody
+// researched, which is what naming a player means.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *TranslatePublicTestSuite) TestAnAskMayNameAPlayer() {
+	// The shipped rigs, which is what the Client hands over. The real lookup
+	// rather than a double: these cases are about an ask reaching a researched
+	// rig, and the rigs ship in the binary, so a stub would assert against
+	// itself.
+	named := func(name string) (rig.Spec, bool) {
+		found, err := rigs.Find(rigs.Source{}, slug.Of(name))
+		if err != nil {
+			return rig.Spec{}, false
+		}
+
+		return found.Rig, true
+	}
+
+	for _, tt := range []struct {
+		name string
+		// ask is the body under the schema and the genre.
+		ask string
+		// noLookup leaves RigNamed nil, which is a caller that wants only its
+		// own gear resolved.
+		noLookup bool
+		// gear is what the resolved chain must name, and said what the notes
+		// must carry. absent is what they must not.
+		gear   []string
+		said   []string
+		absent []string
+		err    error
+	}{
+		{
+			// The case this exists for. His rig is cited, so what comes back is
+			// what he played rather than the nearest thing to a measurement.
+			name: "a player somebody has researched",
+			ask:  "like:\n  artist: Mike Dirnt\n",
+			gear: []string{"Ampeg SVT"},
+			said: []string{"came from the rig researched for them"},
+			// The note that used to say naming a player reaches nothing. It did,
+			// and it does not, so saying both about one name would be two
+			// contradictory answers in one table.
+			absent: []string{"aims at their records"},
+		},
+		{
+			// An alias is a name a person uses rather than a filename, and no
+			// slug of "primus" produces "les-claypool".
+			name: "a player by an alias their ask carries",
+			ask:  "like:\n  artist: primus\n",
+			said: []string{"came from the rig researched for them"},
+		},
+		{
+			// Records in the corpus and nobody has written his rig. Reported
+			// against his name, so it is clear which player was not found
+			// rather than that naming a player does nothing.
+			name: "a player nobody has researched",
+			ask:  "like:\n  artist: Cone McCaslin\n",
+			said: []string{"no rig has been researched for that player"},
+			err:  translate.ErrNothingToBuildFrom,
+		},
+		{
+			// A song is one recording and an artist is a body of work, so the
+			// narrower claim is the one the request was most specific about.
+			name: "a song named beside an artist wins",
+			ask:  "like:\n  artist: Mike Dirnt\n  song: Longview\n",
+			said: []string{"no rig has been researched for that song"},
+			err:  translate.ErrNothingToBuildFrom,
+		},
+		{
+			// A band is several people's work, so it is the widest of the three
+			// and the last to be tried. Rush is an alias on Geddy Lee's ask,
+			// which is how a band reaches the one player anybody researched.
+			name: "a band",
+			ask:  "like:\n  band: Rush\n",
+			said: []string{"came from the rig researched for them"},
+		},
+		{
+			// A recording names no subject at all, so this looks nothing up and
+			// the measurements answer instead, as they did before any of it.
+			name:   "a recording rather than a name",
+			ask:    "like:\n  recording: " + s.recording() + "\n",
+			absent: []string{"came from the rig researched for them"},
+		},
+		{
+			// A subject says who the ask is for, which aims at nothing. Close
+			// enough to `like` that a refusal with no note leaves somebody no
+			// way to see which field they wanted.
+			name: "a subject is not a target, and says so",
+			ask:  "subject:\n  kind: artist\n  name: Mike Dirnt\n",
+			said: []string{"is who the ask is for", "like: { artist: Mike Dirnt }"},
+			err:  translate.ErrNothingToBuildFrom,
+		},
+		{
+			// Nothing looks anything up, which is a caller resolving its own
+			// gear and wanting no knowledge beside it.
+			name:     "no lookup handed in",
+			ask:      "like:\n  artist: Mike Dirnt\n",
+			noLookup: true,
+			absent:   []string{"came from the rig researched for them"},
+			err:      translate.ErrNothingToBuildFrom,
+		},
+	} {
+		s.Run(tt.name, func() {
+			deps := s.deps
+			if !tt.noLookup {
+				deps.RigNamed = named
+			}
+
+			got, notes, err := translate.Translate(s.ask(tt.ask), s.setup(""), deps)
+
+			if tt.err != nil {
+				s.Require().ErrorIs(err, tt.err)
+			} else {
+				s.Require().NoError(err)
+			}
+
+			// Every note, because which one comes last is a fact about the
+			// reporting order rather than about what this is looking for.
+			var said string
+			for _, note := range notes {
+				said += note.About + " " + note.Said + "\n"
+			}
+
+			for _, want := range tt.said {
+				s.Require().Contains(said, want)
+			}
+
+			for _, not := range tt.absent {
+				s.Require().NotContains(said, not)
+			}
+
+			for _, want := range tt.gear {
+				var names string
+				for _, entry := range got.Chain {
+					names += entry.Gear + "\n"
+				}
+
+				s.Require().Contains(names, want)
+			}
 		})
 	}
 }

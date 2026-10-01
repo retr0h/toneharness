@@ -139,9 +139,13 @@ func remedy(
 		// The next move is a question, not a guess. A recording is measured
 		// against every block the device has; an adjective has to be earned
 		// against a population of players before it means anything.
-		return fmt.Errorf("%w. Name a record to sound like, a player, or the "+
-			"gear itself: `like: { recording: take.wav }` resolves fully, and "+
-			"an adjective on its own does not", err)
+		//
+		// Qualified, because naming a player reaches their rig where somebody
+		// has researched them, and this is the answer when nobody has.
+		return fmt.Errorf("%w. Name a record to sound like, a player somebody "+
+			"has researched, or the gear itself: `like: { recording: take.wav }` "+
+			"resolves fully, rigs_list says which players do, and an adjective "+
+			"on its own does not", err)
 	case errors.Is(err, sdk.ErrEmptySlot):
 		return fmt.Errorf("%w, call slots_list to see which slots hold "+
 			"anything", err)

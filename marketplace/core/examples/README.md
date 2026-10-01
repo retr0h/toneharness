@@ -27,6 +27,7 @@ and because `presets compile --plan` takes one back.
 | file                                                             | shows                                                                              |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | [tonespec/chunky-punk.yaml](tonespec/chunky-punk.yaml)           | an ask in nothing but words: a genre, a technique, and what it should sound like   |
+| [tonespec/like-a-player.yaml](tonespec/like-a-player.yaml)       | naming somebody, which resolves to the cited rig researched for them               |
 | [tonespec/like-a-record.yaml](tonespec/like-a-record.yaml)       | pointing at a recording, which is the kind that resolves fully                     |
 | [tonespec/corrected-by-ear.yaml](tonespec/corrected-by-ear.yaml) | an ask that was built, heard, and asked again                                      |
 | [tonespec/mike-dirnt.yaml](tonespec/mike-dirnt.yaml)             | every part of the ask on one subject. Most asks are a tenth of this                |
@@ -52,9 +53,16 @@ sound. Compile is for a document that has already made those decisions, such as
 a rig lifted off a device.
 
 **Words cannot start a chain.** An ask carrying only a genre and adjectives is
-refused: there is nothing to pick an amplifier from. Name gear, or name a
-recording with `like: { recording: take.wav }` and have it measured. The words
-adjust what that gives you rather than producing it.
+refused: there is nothing to pick an amplifier from. Three things start one:
+
+|                            |                                                          |
+| -------------------------- | -------------------------------------------------------- |
+| `gear:`                    | name it yourself, and the catalog resolves it            |
+| `like: { artist: ... }`    | the rig somebody researched for them, with its citations |
+| `like: { recording: ... }` | measured, and the nearest of 224 amplifiers chosen       |
+
+The words adjust what that gives you rather than producing it. `subject:` is not
+one of the three: it says who the ask is for, and `like:` says what to aim at.
 
 [write-a-spec](../../../.claude/skills/write-a-spec/SKILL.md) owns every field
 on both contracts and says which document a fact belongs in. The contracts

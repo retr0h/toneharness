@@ -26,6 +26,32 @@ A ToneSpec with `like: { recording: take.wav }` and no named amp gets the
 nearest of the device's 224 to what that file measures. No catalog entry and no
 citation needed: a recording is evidence of itself.
 
+## Or name the player, and get the rig somebody researched
+
+```yaml
+like:
+  artist: Mike Dirnt
+```
+
+That resolves to his cited chain rather than to a measurement, and the notes say
+so: `2 blocks came from the rig researched for them`. It is the stronger claim,
+because every piece of that chain carries a source and a measurement carries
+none.
+
+`artist`, `band` and `song` all work, and the narrowest wins where an ask names
+more than one: a song is one recording, an artist a body of work, a band several
+people's. An alias counts, so `primus` reaches Les Claypool where no slug of it
+would.
+
+It needs somebody to have done the research. A player with records in the corpus
+and no rig is refused with `no rig has been researched for that player`, naming
+them, and `rigs list` says who does. Measuring a named player's records is not
+built; a recording is the route when nobody has written their rig.
+
+**`subject:` resolves nothing, on purpose.** It says who the ask is for and
+`like:` says what to aim at. An ask carrying only a subject is told which field
+it wanted rather than refused in silence.
+
 ## What the figures are
 
 Ask, do not assume: `measured.Named()` is the list, and it has changed. The

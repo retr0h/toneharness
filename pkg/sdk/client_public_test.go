@@ -1111,10 +1111,13 @@ func (s *ClientPublicTestSuite) TestTone() {
 	}
 
 	tests := []struct {
-		name  string
-		ctx   context.Context
-		in    sdk.Ask
-		is    error
+		name string
+		ctx  context.Context
+		in   sdk.Ask
+		is   error
+		// gear is a piece the resolved chain must name, for the cases where
+		// which chain came back is the point.
+		gear  string
 		notes bool
 	}{
 		{
@@ -1133,6 +1136,26 @@ func (s *ClientPublicTestSuite) TestTone() {
 			name: "an ask that is not there",
 			in:   sdk.Ask{Spec: filepath.Join(s.T().TempDir(), "nowhere.yaml")},
 			is:   fs.ErrNotExist,
+		},
+		{
+			// Naming a player reaches the rig somebody researched for them,
+			// which is the lookup the Client hands to translate. The shipped
+			// rigs rather than a double, because that is what it hands over.
+			name:  "a request naming a player",
+			in:    sdk.Ask{Spec: examples("like-a-player.yaml")},
+			gear:  "Ampeg SVT",
+			notes: true,
+		},
+		{
+			// Nobody has researched him, so there is nothing to take a chain
+			// from and nothing else in the ask to build one.
+			name: "a request naming a player nobody has researched",
+			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
+genre: [punk]
+like:
+  artist: Cone McCaslin
+`)},
+			is: sdk.ErrNothingToBuildFrom,
 		},
 		{
 			name: "a caller who stopped waiting",
@@ -1160,12 +1183,32 @@ func (s *ClientPublicTestSuite) TestTone() {
 			s.Require().NoError(err)
 			s.Require().NotEmpty(got.Rig.Chain)
 
+			if tt.gear != "" {
+				var named string
+				for _, entry := range got.Rig.Chain {
+					named += entry.Gear + "\n"
+				}
+
+				s.Require().Contains(named, tt.gear)
+			}
+
 			if tt.notes {
 				s.Require().NotEmpty(got.Notes,
 					"a resolution says what it made of the request")
 			}
 		})
 	}
+}
+
+// spec writes an ask and returns where it went, for a case whose document is
+// shorter than a file of its own is worth.
+func (s *ClientPublicTestSuite) spec(
+	body string,
+) string {
+	at := filepath.Join(s.T().TempDir(), "ask.tone.yaml")
+	s.Require().NoError(os.WriteFile(at, []byte(body), 0o600))
+
+	return at
 }
 
 // TestScaffold covers writing a rig, gear checked first.
