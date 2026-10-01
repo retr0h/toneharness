@@ -129,6 +129,40 @@ func (s *MadePublicTestSuite) TestContested() {
 	}
 }
 
+// TestYielded covers a measured word standing aside for one somebody wrote.
+func (s *MadePublicTestSuite) TestYielded() {
+	tests := []struct {
+		name string
+		in   result.Moved
+		want bool
+	}{
+		{
+			// Not a contradiction. The person said it and a population did not,
+			// so theirs answers the axis and this one names whose it was.
+			name: "a genre's word outranked by one somebody wrote",
+			in:   result.Moved{Term: "clean", YieldedTo: "grit-on-attack"},
+			want: true,
+		},
+		{
+			// The other outcome on a shared axis, and the one that must not read
+			// as this: two words of the same standing cancel each other, and
+			// nobody's word stood.
+			name: "two words of the same standing contradicting",
+			in:   result.Moved{Term: "minimal-drive", Against: "drive"},
+		},
+		{
+			name: "the only word on its axis",
+			in:   result.Moved{Term: "mid-forward", Param: "Mid"},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, tt.in.Yielded())
+		})
+	}
+}
+
 // TestUnanswered covers telling the two silences apart.
 func (s *MadePublicTestSuite) TestUnanswered() {
 	tests := []struct {

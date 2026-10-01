@@ -115,10 +115,14 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 	tests := []struct {
 		name string
 
-		terms  []string
-		attack string
-		pedals []string
-		models []catalog.ModelID
+		terms []string
+		// derived is what a genre earned by measuring, as opposed to terms,
+		// which somebody wrote. A derived word yields on an axis a written one
+		// answers, and a word on its way out must not seat a block.
+		derived []string
+		attack  string
+		pedals  []string
+		models  []catalog.ModelID
 		// where the corpus puts each kind, for the cases that check which
 		// side of the amplifier a demanded block lands on.
 		cats map[catalog.Category]corpus.CategoryStats
@@ -250,6 +254,18 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 			terms:  []string{"mid-forward", "scooped"},
 			models: []catalog.ModelID{"HD2_EQTestParametric"},
 		},
+		{
+			// The same axis answered twice, by two words of different standing.
+			// The written one stands and seats its equaliser; the measured one
+			// yields, and like a cancelled word must seat nothing on the way
+			// out. One block, not two, and not none.
+			name:       "a measured word yielding to a written one",
+			terms:      []string{"mid-forward"},
+			derived:    []string{"scooped"},
+			models:     []catalog.ModelID{"HD2_EQTestParametric"},
+			wantIDs:    []catalog.ModelID{"HD2_EQTestParametric"},
+			wantReason: "the ask says mid-forward and nothing here had a MidGain",
+		},
 		{name: "no statistics at all", terms: []string{"mid-forward"}, none: true},
 		{
 			name:   "no chains measured for this instrument",
@@ -270,8 +286,13 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 				stats = s.quiet(tt.cats, tt.models...)
 			}
 
+			ask := asking(tt.terms, tt.attack)
+			for _, t := range tt.derived {
+				ask.Words = append(ask.Words, compile.Word{Term: t, Derived: true})
+			}
+
 			built, added, _, _, err := compile.Resolve(
-				svt(tt.pedals...), asking(tt.terms, tt.attack), s.cat, stats)
+				svt(tt.pedals...), ask, s.cat, stats)
 
 			s.Require().NoError(err)
 
