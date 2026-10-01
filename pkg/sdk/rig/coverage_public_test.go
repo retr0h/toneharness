@@ -83,7 +83,8 @@ func (s *CoveragePublicTestSuite) TestEveryFieldAppearsInARig() {
 	}
 
 	s.Require().Empty(missing,
-		"no rig under examples/rigspec or pkg/sdk/shipped writes these. "+
+		"no rig under resources/reference/rigspec or marketplace/core "+
+			"writes these. "+
 			"Add one to a rig, or add it to exempt with a reason: %v", missing)
 }
 
@@ -126,14 +127,15 @@ func (s *CoveragePublicTestSuite) declared() []string {
 
 // written returns every key any rig in this repository uses.
 //
-// Both the examples and the rigs that ship, because both are documents
-// somebody reads and copies, and a field exercised in a real rig is better
-// evidence than one exercised in a demonstration.
+// Both the reference documents and the rigs that ship, because both are
+// documents somebody reads and copies, and a field exercised in a real rig
+// is better evidence than one exercised in a demonstration.
 func (s *CoveragePublicTestSuite) written() map[string]bool {
 	out := map[string]bool{}
 
-	// The shipped rigs come through the embedded copy and the examples off
-	// disk, because only the first of those travels with this package.
+	// The shipped rigs come through the embedded copy and the reference
+	// documents off disk, because only the first of those travels with this
+	// package.
 	embedded, err := fs.Glob(shipped.FS, filepath.Join("*", "*.yaml"))
 	s.Require().NoError(err)
 	s.Require().NotEmpty(embedded)
@@ -149,7 +151,7 @@ func (s *CoveragePublicTestSuite) written() map[string]bool {
 	}
 
 	for _, pattern := range [][]string{
-		{"..", "..", "..", "examples", "rigspec", "*.yaml"},
+		{"..", "..", "..", "resources", "reference", "rigspec", "*.yaml"},
 	} {
 		paths, err := filepath.Glob(filepath.Join(pattern...))
 		s.Require().NoError(err)

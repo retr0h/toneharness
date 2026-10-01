@@ -1,21 +1,44 @@
 # Writing the rig down, and shipping it
 
 The research is the hard half and it is not the whole job. A rig nobody committed
-helps the person in front of you once; a rig in `pkg/sdk/shipped/artists/` is in
-the next release for everybody.
+helps the person in front of you once; a rig in the marketplace is there for
+everybody.
 
 Run this yourself. The person asked for a Justin Chancellor rig, not to be told
 which command scaffolds one.
+
+## Which tier it goes in
+
+[marketplace/](../../../../marketplace/README.md) has two, and the difference is
+what the research reached.
+
+`marketplace/community/artists/` unless every claim has a source somebody opened.
+That is the normal answer for a rig written today.
+
+`marketplace/core/artists/` when it does, because core ships in the binary and a
+wrong claim there reaches everybody who installs this. A rig that starts in
+community and gets sourced later moves across.
+
+**Never write a rig into `pkg/sdk/shipped/artists/`.** It is a generated copy of
+`marketplace/core/`, so a rig put there is deleted by the next `just generate` and
+the work is gone with no error. After changing anything in `core/`, run
+`mise exec -- just generate` and commit both, which is what packs it into the
+binary.
 
 ## Scaffold rather than write from scratch
 
 ```bash
 mise exec -- go run main.go rigs new --help
+mise exec -- go run main.go rigs new --dir marketplace/community \
+  --id justin-chancellor --amp "Mesa Boogie Dual Rectifier" \
+  --band Tool --genre prog-metal
 ```
 
-It writes the pair, the rig and the ask beside it, with the fields and the
-comments already there. Writing one by hand means rediscovering which fields
-exist, and the contract is the thing that knows.
+`--dir` is the tier, and it is the flag to get right: without it the scaffold
+lands wherever a rig of yours would go rather than in the marketplace. It writes
+the pair, the rig and the ask beside it, with the fields and the comments already
+there, and appends `artists/` itself. Writing one by hand means rediscovering
+which fields exist, and the contract is the thing that knows.
 
 The pair is two documents on purpose: the rig is the gear, the ask is what
 somebody wanted of it. [write-a-spec](../../write-a-spec/SKILL.md) owns every
@@ -27,7 +50,8 @@ from a neighbouring file.
 Build it. A rig that does not resolve is not a rig yet:
 
 ```bash
-mise exec -- go run main.go presets make --id <slug> --out /tmp/check.hlx
+mise exec -- go run main.go presets make --id <slug> \
+  --rigs marketplace/community --out /tmp/check.hlx
 ```
 
 Read what it printed. Every block it added that the rig did not name, every word

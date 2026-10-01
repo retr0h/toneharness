@@ -54,4 +54,5 @@ what it substituted, what it assumed when no setup was given, and what it
 could not honour. A run reported without its notes is a run that hid half of
 what happened.
 
-Worked examples: [examples/tonespec/](../../../../examples/tonespec/).
+Worked examples:
+[resources/reference/tonespec/](../../../../resources/reference/tonespec/).

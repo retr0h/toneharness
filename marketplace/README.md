@@ -19,7 +19,7 @@ Core needs nothing beyond the checkout: it is compiled into the binary, so
 Community is a directory, so point at it:
 
 ```bash
-mise exec -- go run main.go rigs list --rigs marketplace/community
+mise exec -- go run main.go rigs list --dir marketplace/community
 mise exec -- go run main.go presets make --id <slug> \
   --rigs marketplace/community --out ~/out.hlx
 ```

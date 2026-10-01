@@ -56,7 +56,7 @@ measurement nothing reads.
 Two things to read back rather than assume:
 
 `corpus music players` has a `rig` column. A player whose records are measured
-and who has no rig in `pkg/sdk/shipped/artists/` contributes figures nothing can
+and who has no rig in the marketplace contributes figures nothing can
 act on, which [growing.md](growing.md) is blunt about: adding records is half a
 job. Say which half you did.
 

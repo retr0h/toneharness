@@ -146,7 +146,8 @@ func (s *MCPPublicTestSuite) TestServe() {
 									"rig_path": filepath.Join(
 										"..",
 										"..",
-										"examples",
+										"resources",
+										"reference",
 										"rigspec",
 										"mike-dirnt.yaml",
 									),

@@ -77,9 +77,10 @@ again:
 Every claim in a rig carries its source, which is what makes one worth sending.
 [marketplace/](marketplace/) is where they live: a cited core that ships in the
 binary, and a community tier you load with `--rigs`. Its README says what the
-two tiers are and how to submit one. [examples/rigspec/](examples/rigspec/) has
-one with every optional field filled in, which is the reference rather than a
-rig anybody uses.
+two tiers are and how to submit one.
+[resources/reference/](resources/reference/) holds one of each document with
+every optional field filled in. Those are what the tests pin and what to read
+when you want to see a field used, rather than rigs anybody plays.
 
 ## What ships in the binary
 

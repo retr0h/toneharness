@@ -5,7 +5,7 @@
 #
 # The portable half, and only that: the gear in signal order, named the way a
 # musician names it. Which model each piece resolved to, where it sat and what
-# its knobs were set to are in examples/plan/dir-angl-meteor.yaml, and the two
+# its knobs were set to are in resources/reference/plan/dir-angl-meteor.yaml, and the two
 # together are the preset.
 
 chain:

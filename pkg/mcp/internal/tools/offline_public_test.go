@@ -362,7 +362,16 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 	racy := filepath.Join(dir, "racy.hlx")
 	racyRig := filepath.Join(dir, "racy-rig.hlx")
 	// A rig that builds, so a real compile has something to write.
-	rigFile := filepath.Join("..", "..", "..", "..", "examples", "rigspec", "mike-dirnt.yaml")
+	rigFile := filepath.Join(
+		"..",
+		"..",
+		"..",
+		"..",
+		"resources",
+		"reference",
+		"rigspec",
+		"mike-dirnt.yaml",
+	)
 
 	s.run("presets_make", []row{
 		{
