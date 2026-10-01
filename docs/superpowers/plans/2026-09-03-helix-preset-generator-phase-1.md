@@ -132,7 +132,7 @@ ______________________________________________________________________
   `helixerr.TopologyError{Reason string}`, each a struct with a pointer receiver
   `Error() string` and `Unwrap() error` returning its sentinel.
 
-- [ ] **Step 1: Add testify and remove the generated stub**
+- [x] **Step 1: Add testify and remove the generated stub**
 
 ```bash
 cd helix-core
@@ -142,7 +142,7 @@ mise exec -- go get github.com/stretchr/testify@latest
 mise exec -- go mod tidy
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `pkg/helixerr/errors_public_test.go`:
 
@@ -226,12 +226,12 @@ func TestErrorsPublicTestSuite(t *testing.T) {
 }
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [x] **Step 3: Run the test to verify it fails**
 
 Run: `cd helix-core && mise exec -- go test ./pkg/helixerr/... -v` Expected:
 FAIL: package `helixerr` does not exist.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 Create `pkg/helixerr/errors.go`:
 
@@ -324,17 +324,17 @@ func (e *TopologyError) Error() string {
 func (e *TopologyError) Unwrap() error { return ErrBadTopology }
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `cd helix-core && mise exec -- go test ./pkg/helixerr/... -v` Expected:
 PASS, six tests.
 
-- [ ] **Step 6: Run the full gate**
+- [x] **Step 6: Run the full gate**
 
 Run: `cd helix-core && mise exec -- just ready` Expected: format, lint and 100%
 coverage all clean.
 
-- [ ] **Step 7: Stage and report**
+- [x] **Step 7: Stage and report**
 
 ```bash
 cd helix-core
@@ -370,7 +370,7 @@ object. `map[string]any` round-trips and discards type information at exactly
 the boundary where it matters. A file that serialises a float where the device
 expects an enum looks correct and does not load.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `pkg/catalog/param_value_public_test.go`:
 
@@ -515,12 +515,12 @@ func TestParamValuePublicTestSuite(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd helix-core && mise exec -- go test ./pkg/catalog/... -v` Expected: FAIL
 Package `catalog` does not exist.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `pkg/catalog/param_value.go`:
 
@@ -653,17 +653,17 @@ func (v *ParamValue) unmarshalNumber(b []byte, lit string) error {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `cd helix-core && mise exec -- go test ./pkg/catalog/... -v` Expected:
 PASS.
 
-- [ ] **Step 5: Run the full gate**
+- [x] **Step 5: Run the full gate**
 
 Run: `cd helix-core && mise exec -- just ready` Expected: clean, coverage 100%
 for the file.
 
-- [ ] **Step 6: Stage and report**
+- [x] **Step 6: Stage and report**
 
 ```bash
 cd helix-core
@@ -696,7 +696,7 @@ ______________________________________________________________________
   `Block`, `Catalog`; `catalog.Load(io.Reader) (*Catalog, error)`; method
   `(*Catalog).Block(ModelID) (Block, bool)`.
 
-- [ ] **Step 1: Write the fixture**
+- [x] **Step 1: Write the fixture**
 
 Create `pkg/catalog/testdata/minimal.json`:
 
@@ -737,7 +737,7 @@ Create `pkg/catalog/testdata/minimal.json`:
 }
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `pkg/catalog/load_public_test.go`:
 
@@ -832,13 +832,13 @@ func TestLoadPublicTestSuite(t *testing.T) {
 }
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [x] **Step 3: Run the test to verify it fails**
 
 Run:
 `cd helix-core && mise exec -- go test ./pkg/catalog/... -run LoadPublic -v`
 Expected: FAIL: `catalog.Load` undefined.
 
-- [ ] **Step 4: Write the types**
+- [x] **Step 4: Write the types**
 
 Create `pkg/catalog/catalog.go`:
 
@@ -933,7 +933,7 @@ func (c *Catalog) Block(id ModelID) (Block, bool) {
 }
 ```
 
-- [ ] **Step 5: Write the loader**
+- [x] **Step 5: Write the loader**
 
 Create `pkg/catalog/load.go`:
 
@@ -959,16 +959,16 @@ func Load(r io.Reader) (*Catalog, error) {
 }
 ```
 
-- [ ] **Step 6: Run the test to verify it passes**
+- [x] **Step 6: Run the test to verify it passes**
 
 Run: `cd helix-core && mise exec -- go test ./pkg/catalog/... -v` Expected:
 PASS.
 
-- [ ] **Step 7: Run the full gate**
+- [x] **Step 7: Run the full gate**
 
 Run: `cd helix-core && mise exec -- just ready`
 
-- [ ] **Step 8: Stage and report**
+- [x] **Step 8: Stage and report**
 
 ```bash
 cd helix-core
@@ -1003,7 +1003,7 @@ references blocks that each carry their own Provenance. Merging them loses the
 ability to say "this DSP figure is a guess" and "this rig came from the model"
 independently.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `pkg/rig/rig_public_test.go`:
 
@@ -1072,12 +1072,12 @@ func TestRigPublicTestSuite(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd helix-core && mise exec -- go test ./pkg/rig/... -v` Expected: FAIL,
 package `rig` does not exist.
 
-- [ ] **Step 3: Write the types**
+- [x] **Step 3: Write the types**
 
 Create `pkg/rig/rig.go`:
 
@@ -1136,7 +1136,7 @@ type BlockLookup interface {
 }
 ```
 
-- [ ] **Step 4: Write the limits**
+- [x] **Step 4: Write the limits**
 
 Create `pkg/rig/limits.go`:
 
@@ -1170,11 +1170,11 @@ func HXStompLimits() Limits {
 }
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `cd helix-core && mise exec -- go test ./pkg/rig/... -v` Expected: PASS.
 
-- [ ] **Step 6: Run the full gate, then stage**
+- [x] **Step 6: Run the full gate, then stage**
 
 ```bash
 cd helix-core
@@ -1202,7 +1202,7 @@ ______________________________________________________________________
 
 - Produces: `rig.ValidateStructure(BlockLookup, Spec) error`.
 
-- [ ] **Step 1: Write the test fake**
+- [x] **Step 1: Write the test fake**
 
 A fake, not a mock. The contributing guide prefers a real implementation over a
 fake and a fake over a mock, and a mock asserting call order would test the
@@ -1258,7 +1258,7 @@ func newFake(blocks ...catalog.Block) *fakeLookup {
 }
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `pkg/rig/validate_structure_public_test.go`:
 
@@ -1309,13 +1309,13 @@ func TestValidateStructurePublicTestSuite(t *testing.T) {
 }
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [x] **Step 3: Run the test to verify it fails**
 
 Run:
 `cd helix-core && mise exec -- go test ./pkg/rig/... -run ValidateStructure -v`
 Expected: FAIL: `rig.ValidateStructure` undefined.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 Create `pkg/rig/validate_structure.go`:
 
@@ -1338,7 +1338,7 @@ func ValidateStructure(l BlockLookup, s Spec) error {
 }
 ```
 
-- [ ] **Step 5: Run the test, run the gate, stage**
+- [x] **Step 5: Run the test, run the gate, stage**
 
 ```bash
 cd helix-core
@@ -1369,7 +1369,7 @@ Parameters are iterated in sorted key order. Go's map iteration order is
 randomised, and a validator that reports a different one of several bad
 parameters on each run is untestable and miserable to debug.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `pkg/rig/validate_params_public_test.go`:
 
@@ -1504,13 +1504,13 @@ func TestValidateParamsPublicTestSuite(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run:
 `cd helix-core && mise exec -- go test ./pkg/rig/... -run ValidateParams -v`
 Expected: FAIL: `rig.ValidateParams` undefined.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `pkg/rig/validate_params.go`:
 
@@ -1598,7 +1598,7 @@ func checkRange(blk catalog.Block, key string, v float64, p catalog.Param) error
 }
 ```
 
-- [ ] **Step 4: Run the test, run the gate, stage**
+- [x] **Step 4: Run the test, run the gate, stage**
 
 ```bash
 cd helix-core
@@ -1636,7 +1636,7 @@ fail to load.
 DSP figures are the least reliable data in the system, and an over-budget preset
 that will not load is the most visible way this product fails.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `pkg/rig/validate_budget_public_test.go`:
 
@@ -1773,13 +1773,13 @@ func TestValidateBudgetPublicTestSuite(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run:
 `cd helix-core && mise exec -- go test ./pkg/rig/... -run ValidateBudget -v`
 Expected: FAIL: `rig.ValidateBudget` undefined.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `pkg/rig/validate_budget.go`:
 
@@ -1849,7 +1849,7 @@ func ValidateBudget(l BlockLookup, s Spec, lim Limits) error {
 }
 ```
 
-- [ ] **Step 4: Run the test, run the gate, stage**
+- [x] **Step 4: Run the test, run the gate, stage**
 
 ```bash
 cd helix-core
@@ -1880,7 +1880,7 @@ ______________________________________________________________________
   `rig.Validate(BlockLookup, Spec, Limits) error` running all four layers in
   order.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `pkg/rig/validate_topology_public_test.go`:
 
@@ -2070,12 +2070,12 @@ func TestValidatePublicTestSuite(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `cd helix-core && mise exec -- go test ./pkg/rig/... -v` Expected: FAIL,
 `rig.ValidateTopology` and `rig.Validate` undefined.
 
-- [ ] **Step 3: Write the topology implementation**
+- [x] **Step 3: Write the topology implementation**
 
 Create `pkg/rig/validate_topology.go`:
 
@@ -2164,7 +2164,7 @@ func validateSnapshots(s Spec) error {
 }
 ```
 
-- [ ] **Step 4: Write the composed check**
+- [x] **Step 4: Write the composed check**
 
 Create `pkg/rig/validate.go`:
 
@@ -2198,7 +2198,7 @@ func Validate(l BlockLookup, s Spec, lim Limits) error {
 }
 ```
 
-- [ ] **Step 5: Run the tests, run the gate, stage**
+- [x] **Step 5: Run the tests, run the gate, stage**
 
 ```bash
 cd helix-core
@@ -2235,7 +2235,7 @@ No concrete source is implemented here. The text source needs a catalog to
 constrain generation against, and no catalog exists until exports arrive. This
 task establishes the seam so that adding one later touches nothing else.
 
-- [ ] **Step 1: Write the failing test**
+- **Step 1: Write the failing test**
 
 Create `pkg/source/registry_public_test.go`:
 
@@ -2324,12 +2324,12 @@ func TestRegistryPublicTestSuite(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- **Step 2: Run the test to verify it fails**
 
 Run: `cd helix-core && mise exec -- go test ./pkg/source/... -v` Expected: FAIL
 Package `source` does not exist.
 
-- [ ] **Step 3: Write the interface**
+- **Step 3: Write the interface**
 
 Create `pkg/source/source.go`:
 
@@ -2364,7 +2364,7 @@ type Source interface {
 }
 ```
 
-- [ ] **Step 4: Write the registry**
+- **Step 4: Write the registry**
 
 Create `pkg/source/registry.go`:
 
@@ -2424,7 +2424,7 @@ func (r *Registry) Names() []string {
 }
 ```
 
-- [ ] **Step 5: Run the test, run the gate, stage**
+- **Step 5: Run the test, run the gate, stage**
 
 ```bash
 cd helix-core
@@ -2464,7 +2464,7 @@ and everything with behaviour goes in `internal/validate/` where it is tested to
 100%. This is the same split the boundary rules describe: the CLI holds no logic
 worth testing.
 
-- [ ] **Step 1: Wire the module dependency**
+- **Step 1: Wire the module dependency**
 
 ```bash
 cd helixctl
@@ -2478,7 +2478,7 @@ mise exec -- go mod tidy
 The `replace` directive is local scaffolding. It comes out when `helix-core` is
 published and must not survive extraction.
 
-- [ ] **Step 2: Write the fixtures**
+- **Step 2: Write the fixtures**
 
 Create `internal/validate/testdata/catalog.json`:
 
@@ -2531,7 +2531,7 @@ Create `internal/validate/testdata/rig_bad.json`:
 }
 ```
 
-- [ ] **Step 3: Write the failing test**
+- **Step 3: Write the failing test**
 
 Create `internal/validate/validate_public_test.go`:
 
@@ -2621,12 +2621,12 @@ func TestValidatePublicTestSuite(t *testing.T) {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it fails**
+- **Step 4: Run the test to verify it fails**
 
 Run: `cd helixctl && mise exec -- go test ./internal/... -v` Expected: FAIL,
 package `validate` does not exist.
 
-- [ ] **Step 5: Write the implementation**
+- **Step 5: Write the implementation**
 
 Create `internal/validate/validate.go`:
 
@@ -2698,7 +2698,7 @@ through its `Block` method, so `cat` passes directly.
 blocks", so the error arrives from validation rather than decoding. Both are
 errors; the test asserts only that one occurs.
 
-- [ ] **Step 6: Write the cobra wiring**
+- **Step 6: Write the cobra wiring**
 
 Create `cmd/root.go`:
 
@@ -2774,11 +2774,11 @@ func main() {
 }
 ```
 
-- [ ] **Step 7: Run the test to verify it passes**
+- **Step 7: Run the test to verify it passes**
 
 Run: `cd helixctl && mise exec -- go test ./internal/... -v` Expected: PASS.
 
-- [ ] **Step 8: Verify end to end by hand**
+- **Step 8: Verify end to end by hand**
 
 ```bash
 cd helixctl
@@ -2799,7 +2799,7 @@ echo "exit: $?"
 
 Expected: an error naming `HD2_DoesNotExist`, exit 1.
 
-- [ ] **Step 9: Run the full gate, stage**
+- **Step 9: Run the full gate, stage**
 
 ```bash
 cd helixctl

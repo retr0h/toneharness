@@ -1,9 +1,12 @@
 # An MCP server: implementation plan
 
+**Status:** complete. `pkg/mcp`, `pkg/mcp/internal/tools` and `cmd/mcp.go` ship,
+and every step below is ticked.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers-extended-cc:subagent-driven-development (recommended) or
 > superpowers-extended-cc:executing-plans to implement this plan task-by-task.
-> Steps use checkbox (`- [ ]`) syntax for tracking.
+> Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** `tonestack mcp` serves the catalog, the corpus, the shipped rigs,
 building, and the pedal to an agent as MCP tools over stdio.
@@ -128,17 +131,17 @@ line of text.
 
 **Acceptance Criteria:**
 
-- [ ] `ListTools` on a session over `Register(server, client, false)` returns
+- [x] `ListTools` on a session over `Register(server, client, false)` returns
   exactly the six offline tool names in this task (device tools arrive in Task
   2).
-- [ ] Every offline tool has `ReadOnlyHint: true` except `preset_build`, which
+- [x] Every offline tool has `ReadOnlyHint: true` except `preset_build`, which
   has `ReadOnlyHint: false`.
-- [ ] Each handler's success row asserts the text line and at least one
+- [x] Each handler's success row asserts the text line and at least one
   structured field; each error row asserts `IsError` and the client's error
   text.
-- [ ] `preset_build` with neither source returns `ErrNoSource`'s text; with both
+- [x] `preset_build` with neither source returns `ErrNoSource`'s text; with both
   returns `ErrTwoSources`'s text.
-- [ ] `go test ./pkg/mcp/...` passes, and coverage of `pkg/mcp/internal/tools`
+- [x] `go test ./pkg/mcp/...` passes, and coverage of `pkg/mcp/internal/tools`
   is 100%.
 
 **Verify:** `go test -cover ./pkg/mcp/internal/tools/` →
@@ -146,7 +149,7 @@ line of text.
 
 **Steps:**
 
-- [ ] **Step 1: Branch, and add the dependency**
+- [x] **Step 1: Branch, and add the dependency**
 
 ```bash
 git switch main && git pull && git switch -c feat/mcp-server
@@ -155,7 +158,7 @@ go get github.com/modelcontextprotocol/go-sdk@v1.7.0
 
 Every task in this plan commits on `feat/mcp-server`.
 
-- [ ] **Step 2: Write `types.go`** (licence header first, then:)
+- [x] **Step 2: Write `types.go`** (licence header first, then:)
 
 ```go
 package tools
@@ -262,7 +265,7 @@ type Move struct {
 }
 ```
 
-- [ ] **Step 3: Write `doc.go`, `errors.go` and `mocks/generate.go`**
+- [x] **Step 3: Write `doc.go`, `errors.go` and `mocks/generate.go`**
 
 ```go
 // doc.go
@@ -297,7 +300,7 @@ declares `MockClient`. Add the licence header to `types.gen.go` only if
 `just license-check` demands it of other `*.gen.go` files (check
 `pkg/sdk/internal/presets/mocks/types.gen.go` and match it).
 
-- [ ] **Step 4: Write the session helpers and the failing register test**
+- [x] **Step 4: Write the session helpers and the failing register test**
 
 `register_public_test.go`:
 
@@ -449,7 +452,7 @@ func TestRegisterPublicTestSuite(t *testing.T) {
 
 Run: `go test ./pkg/mcp/internal/tools/` → FAIL, `undefined: tools.Register`.
 
-- [ ] **Step 5: Write `register.go`**
+- [x] **Step 5: Write `register.go`**
 
 ```go
 package tools
@@ -531,7 +534,7 @@ func said(
 `allowWrites` is unused until Task 3. If the linter flags it, name it `_` for
 now and restore the name in Task 3.
 
-- [ ] **Step 6: Write `offline.go`**
+- [x] **Step 6: Write `offline.go`**
 
 ```go
 package tools
@@ -647,7 +650,7 @@ func (h *handlers) presetBuild(
 }
 ```
 
-- [ ] **Step 7: Write `offline_public_test.go`**
+- [x] **Step 7: Write `offline_public_test.go`**
 
 ```go
 package tools_test
@@ -929,14 +932,14 @@ lookup is built from an index instead, construct the catalog the way
 `pkg/sdk/catalog`'s own tests do. Likewise check `rig.Spec{}` and
 `sdk.Variant{}` are valid zero values to put in a slice.
 
-- [ ] **Step 8: Run the tests**
+- [x] **Step 8: Run the tests**
 
 Run: `go test -cover ./pkg/mcp/internal/tools/` Expected: `ok`, coverage 100.0%.
 If output validation rejects a nil slice or map in a zero result (the error text
 names the output schema), give the fixture a non-nil value in that row rather
 than changing the handler.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add go.mod go.sum pkg/mcp
@@ -961,24 +964,24 @@ device claim at a time that gives up when the call's context ends.
 
 **Acceptance Criteria:**
 
-- [ ] `ListTools` without writes returns the six offline names plus the five in
+- [x] `ListTools` without writes returns the six offline names plus the five in
   this task.
-- [ ] `preset_select` has `ReadOnlyHint: false`, `DestructiveHint: false`,
+- [x] `preset_select` has `ReadOnlyHint: false`, `DestructiveHint: false`,
   `IdempotentHint: true`; the other four have `ReadOnlyHint: true`.
-- [ ] A slot label that does not parse is an `IsError` result, and the client is
+- [x] A slot label that does not parse is an `IsError` result, and the client is
   never called (gomock fails on an unexpected call).
-- [ ] Two concurrent `devices_list` calls never run inside the client at the
+- [x] Two concurrent `devices_list` calls never run inside the client at the
   same time: the recorded peak is 1.
-- [ ] `claim` with the device held and a cancelled context returns an error
+- [x] `claim` with the device held and a cancelled context returns an error
   wrapping `context.Canceled`.
-- [ ] Coverage of `pkg/mcp/internal/tools` stays at 100%.
+- [x] Coverage of `pkg/mcp/internal/tools` stays at 100%.
 
 **Verify:** `go test -race -cover ./pkg/mcp/internal/tools/` →
 `ok ... coverage: 100.0%`
 
 **Steps:**
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `device_test.go` (internal, package `tools`):
 
@@ -1297,7 +1300,7 @@ if tool.Name == "preset_select" {
 
 Run: `go test ./pkg/mcp/internal/tools/` → FAIL, `h.claim undefined`.
 
-- [ ] **Step 2: Write `device.go`**
+- [x] **Step 2: Write `device.go`**
 
 ```go
 package tools
@@ -1459,7 +1462,7 @@ internal `device_test.go` that holds `h.device`, cancels the context, and calls
 the handler method directly, asserting `ErrorIs(err, context.Canceled)`. Name
 the method `TestHandlersGiveUp` and make it one table over the five handlers.
 
-- [ ] **Step 3: Register the five tools** (in `Register`, after `preset_build`)
+- [x] **Step 3: Register the five tools** (in `Register`, after `preset_build`)
 
 ```go
 gomcp.AddTool(s, &gomcp.Tool{
@@ -1492,12 +1495,12 @@ gomcp.AddTool(s, &gomcp.Tool{
 `preset_export` writes a local file but nothing on the pedal or in the setlist,
 which is why it is marked read-only here; the spec's table says the same.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `go test -race -cover ./pkg/mcp/internal/tools/` Expected: `ok`, coverage
 100.0%.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add pkg/mcp
@@ -1520,18 +1523,18 @@ when `allowWrites` is true, marked destructive, and share the device claim.
 
 **Acceptance Criteria:**
 
-- [ ] `ListTools` without writes has none of the three names; with writes it has
+- [x] `ListTools` without writes has none of the three names; with writes it has
   all 14 tools.
-- [ ] Each of the three has `DestructiveHint` set to `true`.
-- [ ] Bad `slot`, `from` or `to` labels are `IsError` with no client call.
-- [ ] Coverage of `pkg/mcp/internal/tools` stays at 100%.
+- [x] Each of the three has `DestructiveHint` set to `true`.
+- [x] Bad `slot`, `from` or `to` labels are `IsError` with no client call.
+- [x] Coverage of `pkg/mcp/internal/tools` stays at 100%.
 
 **Verify:** `go test -race -cover ./pkg/mcp/internal/tools/` →
 `ok ... coverage: 100.0%`
 
 **Steps:**
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add a row to `TestRegister`:
 
@@ -1682,7 +1685,7 @@ func TestWritesPublicTestSuite(t *testing.T) {
 
 Run: `go test ./pkg/mcp/internal/tools/` → FAIL, tools not found.
 
-- [ ] **Step 2: Write `writes.go`**
+- [x] **Step 2: Write `writes.go`**
 
 ```go
 package tools
@@ -1787,7 +1790,7 @@ func (h *handlers) presetsSwap(
 
 If Task 2 added `TestHandlersGiveUp`, add these three handlers to its table.
 
-- [ ] **Step 3: Register them** (end of `Register`)
+- [x] **Step 3: Register them** (end of `Register`)
 
 ```go
 if !allowWrites {
@@ -1818,12 +1821,12 @@ func destructive() *gomcp.ToolAnnotations {
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `go test -race -cover ./pkg/mcp/internal/tools/` Expected: `ok`, coverage
 100.0%.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add pkg/mcp
@@ -1846,16 +1849,16 @@ instructions, `Run` serves it over stdio until its context ends, and
 
 **Acceptance Criteria:**
 
-- [ ] A client session over `Serve` with a real `sdk.New()` calls
+- [x] A client session over `Serve` with a real `sdk.New()` calls
   `catalog_search` with `search: "SVT"` and gets at least one match from the
   built-in catalog.
-- [ ] The session's initialize result carries non-empty instructions naming
+- [x] The session's initialize result carries non-empty instructions naming
   `catalog_search`.
-- [ ] `Options{}` offers 11 tools; `Options{AllowWrites: true}` offers 14.
-- [ ] `Serve` returns an error wrapping `context.Canceled` after its context is
+- [x] `Options{}` offers 11 tools; `Options{AllowWrites: true}` offers 14.
+- [x] `Serve` returns an error wrapping `context.Canceled` after its context is
   cancelled.
-- [ ] `Run` with a cancelled context returns within two seconds.
-- [ ] `TestTheMCPStandsAlone` passes, and `TestTheCLIStandsAlone` passes with
+- [x] `Run` with a cancelled context returns within two seconds.
+- [x] `TestTheMCPStandsAlone` passes, and `TestTheCLIStandsAlone` passes with
   `cmd` allowed to reach `pkg/mcp`.
 
 **Verify:** `go test -cover ./pkg/mcp/ && go test -run 'TestMainTestSuite' .` →
@@ -1863,7 +1866,7 @@ both `ok`, `pkg/mcp` coverage 100.0%
 
 **Steps:**
 
-- [ ] **Step 1: Write the failing test** (`pkg/mcp/mcp_public_test.go`)
+- [x] **Step 1: Write the failing test** (`pkg/mcp/mcp_public_test.go`)
 
 ```go
 package mcp_test
@@ -1958,7 +1961,7 @@ does expose, found with `go doc -all .../mcp | grep -n Initialize`.
 
 Run: `go test ./pkg/mcp/` → FAIL, `undefined: mcp.New`.
 
-- [ ] **Step 2: Write `pkg/mcp/mcp.go`**
+- [x] **Step 2: Write `pkg/mcp/mcp.go`**
 
 ```go
 // Package mcp serves tonestack's operations to an agent over the Model Context
@@ -2038,7 +2041,7 @@ func (s *Server) Serve(
 }
 ```
 
-- [ ] **Step 3: Hold the package to `pkg/sdk`** (`main_test.go`)
+- [x] **Step 3: Hold the package to `pkg/sdk`** (`main_test.go`)
 
 Add after `TestTheCLIStandsAlone`:
 
@@ -2074,12 +2077,12 @@ case strings.HasPrefix(dep, mod+"pkg/mcp"):
 The CLI test's package list includes `./pkg/cli/...`, which never imports
 `pkg/mcp`. The new case only lets `cmd` through.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `go test -cover ./pkg/mcp/ && go test -run TestMainTestSuite .` Expected:
 both `ok`; `pkg/mcp` coverage 100.0%.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add pkg/mcp/mcp.go pkg/mcp/mcp_public_test.go main_test.go
@@ -2106,27 +2109,27 @@ the gate passed.
 
 **Acceptance Criteria:**
 
-- [ ] `go run . mcp --help` shows `--allow-writes`.
-- [ ] Piping an `initialize` request into `go run . mcp` prints a JSON-RPC
+- [x] `go run . mcp --help` shows `--allow-writes`.
+- [x] Piping an `initialize` request into `go run . mcp` prints a JSON-RPC
   response with `"name":"tonestack"` on stdout.
-- [ ] `docs/commands.md` has a `tonestack mcp` section, written by `just ready`.
-- [ ] README Features has an MCP row; CONTRIBUTING's project structure, import
+- [x] `docs/commands.md` has a `tonestack mcp` section, written by `just ready`.
+- [x] README Features has an MCP row; CONTRIBUTING's project structure, import
   table and "Where the SDK ends" name `pkg/mcp`; workflows.md has "Use it from
   an agent"; the spec's status reads `accepted, built`.
-- [ ] `mise exec -- just ready` and `mise exec -- just test` pass, total
+- [x] `mise exec -- just ready` and `mise exec -- just test` pass, total
   coverage at or above 99%.
-- [ ] A pull request is open against `main`.
+- [x] A pull request is open against `main`.
 
 **Verify:** `mise exec -- just test` → exit 0 with coverage ≥ 99%
 
 **Steps:**
 
-- [ ] **Step 1: Confirm the branch**
+- [x] **Step 1: Confirm the branch**
 
 Run: `git branch --show-current` → `feat/mcp-server`, holding the commits from
 Tasks 1-4.
 
-- [ ] **Step 2: Give the version a home** (`cmd/root.go`, below the imports)
+- [x] **Step 2: Give the version a home** (`cmd/root.go`, below the imports)
 
 ```go
 // version is set at release by goreleaser's -X cmd.version, and says "dev"
@@ -2134,7 +2137,7 @@ Tasks 1-4.
 var version = "dev"
 ```
 
-- [ ] **Step 3: Write `cmd/mcp.go`** (licence header first)
+- [x] **Step 3: Write `cmd/mcp.go`** (licence header first)
 
 ```go
 package cmd
@@ -2188,7 +2191,7 @@ func init() {
 }
 ```
 
-- [ ] **Step 4: Check it by hand**
+- [x] **Step 4: Check it by hand**
 
 ```bash
 go run . mcp --help
@@ -2199,7 +2202,7 @@ Expected: help lists `--allow-writes`; the second prints one JSON line with
 `"serverInfo":{"name":"tonestack","version":"dev"}` and exits when stdin closes,
 with status 0.
 
-- [ ] **Step 5: Docs**
+- [x] **Step 5: Docs**
 
 `docs/workflows.md`: add before `## For agents`:
 
@@ -2244,7 +2247,7 @@ Spec: change `**Status:** proposed\` to `**Status:** accepted, built\`.
 Put each changed markdown file through the `unslop` skill, then let `just ready`
 format them.
 
-- [ ] **Step 6: Gate**
+- [x] **Step 6: Gate**
 
 ```bash
 mise exec -- just ready
@@ -2256,7 +2259,7 @@ Expected: both exit 0. `just ready` regenerates `docs/commands.md` with a
 `go tool cover -func` on the profile `just test` writes and add test rows; do
 not touch coverage configuration.
 
-- [ ] **Step 7: Commit and open the pull request**
+- [x] **Step 7: Commit and open the pull request**
 
 ```bash
 git add -A
