@@ -74,7 +74,8 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 | to get it onto the pedal, or to read what the pedal holds         | [references/device.md](references/device.md)                |
 | to change a rig after hearing it, or what a target is             | [references/correcting.md](references/correcting.md)        |
 | anything touching claims, citations or evidence                   | [references/evidence.md](references/evidence.md)            |
-| all of it, in order                                               | All eight, in that order                                    |
+| to write the rig down, check it builds, and ship it | [references/shipping.md](references/shipping.md) |
+| all of it, in order                                               | All nine, in that order                                    |
 
 ## 3. Say which claim you have
 

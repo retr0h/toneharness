@@ -31,6 +31,56 @@ where it came from, and where nothing has been measured the tool says so.
 Point an agent at a checkout and tell it what you want to sound like.
 </p>
 
+## Two text formats, and a preset falls out of them
+
+A **ToneSpec** is what you want. A **RigSpec** is the gear that answers it. Both
+are YAML somebody can read, write, diff and send to a friend.
+
+The specifications are OpenAPI, and every field carries its own description, so
+what a field may say and what gets refused is in the contract rather than in a
+page about it:
+
+- [tonespec.openapi.yaml](pkg/sdk/tone/data/tonespec.openapi.yaml), what
+  somebody may ask for
+- [rigspec.openapi.yaml](pkg/sdk/rig/data/rigspec.openapi.yaml), what that
+  resolves to
+
+They are the only hand-authored formats here. The Go types and everything
+downstream are generated from them, and
+[write-a-spec](.claude/skills/write-a-spec/SKILL.md) is what reads them back in
+prose, field by field.
+
+```yaml
+schema: RigSpec
+id: mike-dirnt
+instrument: bass
+chain:
+  - role: amp
+    gear: Ampeg SVT
+    evidence:
+      - kind: cited
+        url: https://...
+```
+
+A rig names **real gear, never Line 6 model identifiers**. "Ampeg SVT" resolves
+through the gear map when it is built, so the file stays readable, stays correct
+when Line 6 rename a model, and compiles for whichever Helix you own rather than
+the one it was written on.
+
+It goes the other way too. Pull a preset off the pedal and it comes back as a
+rig, so somebody else's sound becomes a file you can read, change and build
+again:
+
+> - _"Export slot 12B as a rig so I can see what is in it."_
+> - _"Build this rig somebody sent me and put it on my pedal."_
+
+Every claim in a rig carries its source, which is what makes one worth sending.
+[marketplace/](marketplace/) is where they live: a cited core that ships in the
+binary, and a community tier you load with `--rigs`. Its README says what the
+two tiers are and how to submit one. [examples/rigspec/](examples/rigspec/) has
+one with every optional field filled in, which is the reference rather than a
+rig anybody uses.
+
 ## What ships in the binary
 
 | in the binary     | what it is                                                                                               |
@@ -42,35 +92,83 @@ Point an agent at a checkout and tell it what you want to sound like.
 
 ## Quickstart
 
-Start your agent in a checkout and say what you want. Just ask:
+Start your agent in a checkout and talk to it. Everything below is something to
+type.
 
-- _"Make my bass sound like Dookie"_
-- _"Like Mike Dirnt, but chunkier"_
-- _"What did Geddy Lee actually play on Hemispheres?"_
-- _"Put that on my pedal in slot 42C"_
+> - _"Make my bass sound like Dookie."_
+> - _"I want a punk sound."_
+> - _"What did Geddy Lee actually play on Hemispheres?"_
 
-The agent researches the gear and cites it, writes the ask, resolves it to a
-rig, builds the preset and pushes it over USB. The skills below are what it
-reads to do that, and each one's README says how to use it.
+### Put it on the pedal
 
-Nothing here can hear. You listen, say what is wrong, and it corrects the ask so
-the next session starts from what worked.
+> - _"Put that on the pedal."_
+> - _"Find me an empty slot and put it there."_
+> - _"What is the pedal playing right now?"_
 
-Everything needed ships in the binary: the device catalog, the corpus
-statistics, the curated rigs. Building a preset needs no HX Edit and no pedal.
+HX Edit does not have to be running. You get the `.hlx` file too, if you want it
+there instead.
 
-**`toneharness <command> --help` is the command reference**, and there is no
-page duplicating it. From a checkout that is `go run main.go --help`, which
-compiles the tree and answers from the source rather than from a description of
-it. Ask for something no skill covers and an agent finds it there in two calls,
-which is why nothing here writes the commands down.
+### Fix what you just heard
 
-Or work over MCP. `.mcp.json` starts the server with `go run`, so it compiles
-the working tree every launch and cannot serve a stale binary, and every command
-has a tool named after it: `device select` is `device_select`. Both surfaces
-call the same SDK, and a test walks the command tree against the registered
-tools in both directions, so neither can quietly gain a capability the other
-lacks.
+Nothing here can hear, so this is the loop: you play it, you say what is wrong.
+
+> - _"Too woolly. Tighten the bottom up."_
+> - _"Closer, but I want the pick to cut more."_
+> - _"Turn it down a bit and measure it again."_
+
+### Find out which words do something
+
+> - _"What words can I use, and what does each one do?"_
+> - _"I asked for chunky and nothing moved. What should I have said?"_
+
+Nothing is refused over a word. Twenty-five are defined and only those move a
+control; the rest come back named, with the nearest ones that are.
+
+### Ask for somebody who does not ship
+
+> - _"Build me a rig for Justin Chancellor's Lateralus sound."_
+> - _"Do you have Tim Commerford, or do you have to research him?"_
+> - _"Why is this rig only medium confidence?"_
+
+Fifteen rigs ship with a citation behind every piece of gear. Anybody else gets
+researched, written up with sources, built to check it resolves, and opened as a
+pull request. If the evidence will not hold up you are told that instead, with
+what was searched, because a plausible rig looks like knowledge and is not.
+
+### Add a genre, or records to one
+
+> - _"Add Justin Chancellor to the bass corpus and measure what prog-metal
+>   earns."_
+> - _"Which genres can I aim at, and which are short of the threshold?"_
+
+It fetches the records, cuts the bass out, measures, and opens the pull request.
+
+Two things it will tell you rather than let you find out: a genre needs eight
+records from three players before anything may aim at it, and a player whose
+records are measured but who has no rig contributes figures nothing can act on.
+
+Your copies of the records stay on your disk.
+
+### What needs the pedal, and what does not
+
+Most of this needs no hardware. A corpus is audio files on disk, so adding
+records, measuring players, earning words and measuring a genre all run on a
+laptop with nothing plugged in. So does researching a rig, building one, and
+writing the preset.
+
+Two things need the pedal, and one of those needs a lead from its output back to
+an input:
+
+|                                                        | needs                             |
+| ------------------------------------------------------ | --------------------------------- |
+| `tone tune`, `tone reach`, `device play`               | the pedal on USB                  |
+| `measure blocks`, `measure controls`, `measure slopes` | the pedal, and the measuring loop |
+
+The second row is how the 19 swept amplifiers in
+[resources/sweeps/](resources/sweeps/) were measured, and they are committed, so
+nobody re-runs them. Without a loop you lose tuning a chain by measurement,
+which is the part that says whether a change did what it meant to. Everything
+else works.
 
 ## Skills
 
@@ -97,6 +195,10 @@ moment.
 ```bash
 curl -fsSL https://github.com/retr0h/toneharness/raw/main/install.sh | bash
 ```
+
+`toneharness <command> --help` is the command reference, and no page here
+duplicates it. From a checkout it is `go run main.go --help`, which compiles the
+tree and answers from the source rather than from a description of it.
 
 Installs to `~/.local/bin` or `/usr/local/bin`, verifying SHA256 checksums.
 Override with `TONEHARNESS_INSTALL_DIR=/some/path`, or pin a version with

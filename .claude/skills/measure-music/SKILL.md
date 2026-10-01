@@ -71,7 +71,8 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 | which words a player earns, or why one was lost                | [references/words.md](references/words.md)       |
 | what a genre is, or whether it can be aimed at yet             | [references/genres.md](references/genres.md)     |
 | whether the records behind a rig are from the era it claims    | [references/era.md](references/era.md)           |
-| all of it, in order                                            | All six, in that order                   |
+| what to re-run after records change, and what a PR carries | [references/finishing.md](references/finishing.md) |
+| all of it, in order                                            | All seven, in that order                   |
 
 ## 3. Say which claim you have
 
