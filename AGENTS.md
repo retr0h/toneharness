@@ -48,14 +48,10 @@ Python only where there is nothing in Go to call: see
 [The language is Go](CONTRIBUTING.md#the-language-is-go), which lists the four
 jobs that qualify and what it cost the last time something was written twice.
 Run `just ready` before committing. Put every markdown change through the unslop
-skill first, and write in the plain engineering voice
-[Prose](CONTRIBUTING.md#prose) sets out: the test is whether a senior engineer
-would write it in an internal design doc, which rules out both the paper and the
-beginner's guide. That applies to a skill page and a design record as much as to
-a README. And when the change touches a rig, read
-[Sourcing a rig](CONTRIBUTING.md#sourcing-a-rig) before starting: it is the
-difference between research and typing, and it says what a pull request has to
-have finished before it is opened.
+skill first, see [Prose](CONTRIBUTING.md#prose). And when the change touches a
+rig, read [Sourcing a rig](CONTRIBUTING.md#sourcing-a-rig) before starting: it
+is the difference between research and typing, and it says what a pull request
+has to have finished before it is opened.
 
 ## Finding your way around the domain
 
