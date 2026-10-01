@@ -195,9 +195,9 @@ at its parent. So the fence is exactly as wide as the owner, and when `pkg/sdk`
 moves to a repository of its own, its private half goes with it and nothing is
 left behind.
 
-There is no top-level `internal/`, and `main_test.go` fails if one appears. At
-the root it would be the widest fence there is, readable by everything in the
-module and owned by no package, so no extraction would take it along.
+There is no top-level `internal/`. At the root it would be the widest fence
+there is, readable by everything in the module and owned by no package, so no
+extraction would take it along.
 
 Tests of a private package still live beside it as `*_public_test.go`: the
 suffix says how Go sees the surface, not who may import it.
@@ -261,9 +261,8 @@ implementation change without breaking a caller.
 
 `pkg/sdk/internal/device`, `pkg/sdk/internal/wire` and `pkg/sdk/slot` are one
 unit. Everything the device half needs from this module is those three, which
-`go list -deps ./pkg/sdk/internal/device` says and `main_test.go` asserts. If
-somebody ever asks for the device half on its own, those three move and nothing
-else does.
+`go list -deps ./pkg/sdk/internal/device` says. If somebody ever asks for the
+device half on its own, those three move and nothing else does.
 
 `wire` is private. It is the framing a device speaks, which is how reading and
 writing one is done rather than something a caller of the SDK names.
@@ -272,9 +271,9 @@ writing one is done rather than something a caller of the SDK names.
 `42C` is how the pedal labels them and how the protocol counts them, and a
 device library that could not say which slot it meant would be missing the noun.
 
-The compiler keeps each `internal/` private to its owner. `main_test.go` keeps
-the owners from leaning on each other: nothing under `pkg/sdk` reaches anything
-in the module outside it, the CLI reaches only `cmd`, `pkg/cli`, `pkg/mcp` and
+The compiler keeps each `internal/` private to its owner. The owners are also
+not to lean on each other: nothing under `pkg/sdk` reaches anything in the
+module outside it, the CLI reaches only `cmd`, `pkg/cli`, `pkg/mcp` and
 `pkg/sdk`, and the MCP server only `pkg/mcp` and `pkg/sdk`. Inside the library,
 `pkg/sdk/internal/backup` reaches neither `device` nor `wire`, so the policy for
 what a write keeps cannot come to depend on the transport.
@@ -487,8 +486,8 @@ kinds are exempt. A function literal is usually a one-line callback, and an
 interface method lists a shape rather than code anybody diffs. Generated files
 are exempt too, because nobody writes them.
 
-No linter checks the rule, because `lll` and `golines` only measure length.
-`TestEverySignatureTakesALinePerParameter` in `main_test.go` checks it instead.
+No linter checks the rule, because `lll` and `golines` only measure length. It
+is a review rule, so read a signature when you touch one.
 
 ### File naming
 
@@ -516,10 +515,8 @@ cover a concern no single file owns: a round trip through a reader and a writer,
 a walk over every rig that ships, a contract loaded and checked against the
 types generated from it. Those are named for the concern.
 
-`TestEveryTestFileIsNamedForWhatItCovers` in `main_test.go` holds the rule and
-carries the list of the second kind, so each one stays a decision somebody made
-rather than a file that drifted. A test file that is neither named for a
-production file nor on that list fails.
+Both kinds are a decision somebody made rather than a file that drifted, so name
+a test file for what it covers and say why when it is the second kind.
 
 ### Errors live with whoever produces them
 

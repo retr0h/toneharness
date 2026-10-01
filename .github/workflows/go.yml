@@ -6,6 +6,28 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+    paths:
+      # Only what can change the result. A docs-only pull request does not need
+      # the suite, and markdown-lint, just-lint and commit-lint still run on it.
+      # No status check here is required by branch protection, so a skipped run
+      # does not block a merge.
+      #
+      # push to main stays unfiltered on purpose: main is verified after every
+      # merge whatever it touched, and Codecov takes its baseline from that run.
+      - "**.go"
+      - "**/go.mod"
+      - "**/go.sum"
+      - ".golangci.yml"
+      - ".coverignore"
+      - "justfile"
+      - ".just/**"
+      - ".mise.toml"
+      - ".github/workflows/go.yml"
+      # The tests read these: the reference recordings they measure through, the
+      # catalog and corpus they assert against, and the sweeps and corpora the
+      # measuring tests load.
+      - "resources/**"
+      - "pkg/sdk/**/data/**"
 
 jobs:
   build:
