@@ -45,19 +45,15 @@ Point an agent at a checkout and tell it what you want to sound like.
 Start your agent in a checkout and talk to it. Everything below is something to
 type.
 
-> _"Make my bass sound like Dookie."_
->
-> _"I want a punk sound."_
->
-> _"What did Geddy Lee actually play on Hemispheres?"_
+> - _"Make my bass sound like Dookie."_
+> - _"I want a punk sound."_
+> - _"What did Geddy Lee actually play on Hemispheres?"_
 
 ### Put it on the pedal
 
-> _"Put that on the pedal."_
->
-> _"Find me an empty slot and put it there."_
->
-> _"What is the pedal playing right now?"_
+> - _"Put that on the pedal."_
+> - _"Find me an empty slot and put it there."_
+> - _"What is the pedal playing right now?"_
 
 HX Edit does not have to be running. You get the `.hlx` file too, if you want it
 there instead.
@@ -66,28 +62,23 @@ there instead.
 
 Nothing here can hear, so this is the loop: you play it, you say what is wrong.
 
-> _"Too woolly. Tighten the bottom up."_
->
-> _"Closer, but I want the pick to cut more."_
->
-> _"Turn it down a bit and measure it again."_
+> - _"Too woolly. Tighten the bottom up."_
+> - _"Closer, but I want the pick to cut more."_
+> - _"Turn it down a bit and measure it again."_
 
 ### Find out which words do something
 
-> _"What words can I use, and what does each one do?"_
->
-> _"I asked for chunky and nothing moved. What should I have said?"_
+> - _"What words can I use, and what does each one do?"_
+> - _"I asked for chunky and nothing moved. What should I have said?"_
 
 Nothing is refused over a word. Twenty-five are defined and only those move a
 control; the rest come back named, with the nearest ones that are.
 
 ### Ask for somebody who does not ship
 
-> _"Do you have a rig for Tim Commerford, or do you have to research it?"_
->
-> _"Research Justin Chancellor's Lateralus rig and write it up with sources."_
->
-> _"Why is this rig only medium confidence?"_
+> - _"Do you have a rig for Tim Commerford, or do you have to research it?"_
+> - _"Research Justin Chancellor's Lateralus rig and write it up with sources."_
+> - _"Why is this rig only medium confidence?"_
 
 Fifteen rigs ship with a citation behind every piece of gear. Anybody else is
 research, and if the evidence will not hold up you are told that rather than
@@ -102,15 +93,11 @@ name.
 
 ### Add records to a genre
 
-> _"Add Justin Chancellor to the bass corpus with four Lateralus tracks."_
->
-> _"Fetch the records you just named."_
->
-> _"Cut the bass out of them."_
->
-> _"Measure the corpus and tell me what prog-metal earns now."_
->
-> _"Regenerate what ships and open the PR."_
+> - _"Add Justin Chancellor to the bass corpus with four Lateralus tracks."_
+> - _"Fetch the records you just named."_
+> - _"Cut the bass out of them."_
+> - _"Measure the corpus and tell me what prog-metal earns now."_
+> - _"Regenerate what ships and open the PR."_
 
 The records and the stems stay on your disk. A pull request carries the manifest
 and the measurements, never the audio.
