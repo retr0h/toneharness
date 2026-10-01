@@ -17,6 +17,9 @@
     "secret_scanning": true,
     "secret_scanning_push_protection": true
   },
+  "subscription": {
+    "watching": true
+  },
   "branch_protection": {
     "branch": "main",
     "enforce_admins": true,
