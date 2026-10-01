@@ -2,10 +2,12 @@
 
 2026-09-19
 
-**Status: implemented in part.** `pkg/sdk/cab` captures a cabinet from a
-recording and matches one to a target, and writes an impulse response a device
-loads. The commercial half of the goal below, building a cabinet and selling it,
-is not a software question and nothing here answers it.
+**Status: implemented.** `pkg/sdk/cab` captures a cabinet from a recording,
+matches one to a target, and writes an impulse response a device loads. "Selling
+one" below is reasoning about what may be sold rather than scope, and the one
+buildable line in it is built: `write.go` puts the provenance in the file's
+LIST/INFO chunk, naming what it was made from, by what method, through what, and
+on what date.
 
 ## The ask
 

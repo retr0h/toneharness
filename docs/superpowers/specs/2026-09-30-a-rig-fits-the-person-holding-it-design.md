@@ -4,7 +4,7 @@ Date: 2026-09-30
 
 **Status: implemented.** A Setup carries `technique`, and
 `pkg/sdk/internal/compile/playing.go` turns the gap between two right hands into
-a word. The brightness half named at the end is not built.
+a word. Brightness is deliberately not compensated, for the reason at the end.
 
 ## The problem
 
@@ -92,15 +92,21 @@ generated double, and `presets.Make`. `Client` gained `WithSetup`, and
 `presets make` a `--setup` flag, so the Setup reaches a build that starts from a
 rig rather than from an ask.
 
-## What is still missing
+## What it does not compensate, by decision
 
-The brightness half, which needs a measurement rather than a decision.
+**Brightness.** A pick is brighter as well as sharper, and nothing here moves a
+tone control for it. Not an open item: the direction is not in doubt and the
+size is not measured, and this project does not write a number nobody took. The
+report says which half it left, so the person reading it knows.
 
-`position` and `muting` are read and act on nothing. `pkg/cli/rig.go` prints
-them as a sentence, so a reader sees them; no build changes because of them.
-They are on the schema because a technique is three things, and `attack` being
-the only one that reaches a control is recorded here rather than discovered
-later.
+Closing it is a reading rather than a decision. Record the same part fingered
+and picked, measure both, and the difference in transient, centroid and
+harmonics is the size, in the same figures the solver already aims at.
+
+**`position` and `muting` reach no control.** `pkg/cli/rig.go` prints them as a
+sentence, so a reader sees them; no build changes because of them. They are on
+the schema because a technique is three things, and `attack` being the only one
+that moves anything is recorded here rather than discovered later.
 
 An earlier version of this section said they were read by nothing, which was
 wrong. The test meant to establish that matched bare identifiers, so
