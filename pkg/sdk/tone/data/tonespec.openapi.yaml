@@ -557,12 +557,6 @@ components:
           minLength: 1
           description: >
             As Line 6 name it: "HX Stomp", "Helix Floor".
-        firmware:
-          type: string
-          description: >
-            What it is running, where that matters. A block's parameters can
-            change between releases, and a measurement taken on one is not a
-            measurement of the other.
 
     Instrument:
       type: object
@@ -578,11 +572,6 @@ components:
             As a person would say it: "Fender Jazz Bass", "Rickenbacker 4003".
         strings:
           $ref: "#/components/schemas/Strings"
-        pickups:
-          type: string
-          description: >
-            Where they are and what they are, when it is not what the
-            instrument shipped with.
         default:
           type: boolean
           default: false

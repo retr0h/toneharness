@@ -188,6 +188,38 @@ func (s *RigPublicTestSuite) TestRig() {
 		err    bool
 	}{
 		{
+			// A caveat is what the evidence does not show, and this project
+			// cares about that more than about the claim. Only the first
+			// sentence: printing them whole put five paragraphs in a nine-line
+			// summary and nobody would have read any of them.
+			name: "what the evidence does not show",
+			in: sdk.Rig{
+				Known: knownWith(func(spec *rig.Spec) {
+					long := "the producer's answer, not the player's. Dirnt " +
+						"names no amp for these sessions anywhere."
+					spec.Chain[0].Evidence = &[]rig.Evidence{
+						{Kind: rig.EvidenceCited, Caveat: &long},
+					}
+				}, nil),
+			},
+			want:   []string{"caveat", "the producer's answer, not the player's."},
+			absent: []string{"names no amp for these sessions"},
+		},
+		{
+			// A caveat with no full stop is short enough to print whole, so
+			// there is nothing to trim and nothing is.
+			name: "a caveat that is one clause",
+			in: sdk.Rig{
+				Known: knownWith(func(spec *rig.Spec) {
+					short := "his live rig rather than the sessions"
+					spec.Chain[0].Evidence = &[]rig.Evidence{
+						{Kind: rig.EvidenceCited, Caveat: &short},
+					}
+				}, nil),
+			},
+			want: []string{"caveat", "his live rig rather than the sessions"},
+		},
+		{
 			name: "everything a person wrote",
 			in: sdk.Rig{
 				Known: knownWith(nil, nil),

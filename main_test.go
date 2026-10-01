@@ -570,24 +570,21 @@ func (s *MainTestSuite) inCategory(
 //
 // Three were already here when this test was written, which is why it was
 // written.
-var toneFieldsNothingReads = map[string]string{
-	"firmware": "what the pedal is running. Reading it means having " +
-		"something to compare against, and the only version the tool holds " +
-		"is the HX Edit release a catalog was generated from, which is not " +
-		"the same number. Somebody has to decide what a mismatch means " +
-		"before anything can say one.",
-	"pickups": "where an instrument's pickups are and what they are. " +
-		"`strings` is the same shape and is read — it reaches translate's " +
-		"strung and produces a note when the record and the room disagree. " +
-		"Nothing has measured what a pickup position does to the figures, " +
-		"so there is no note to make yet and inventing one would be a " +
-		"number nobody took.",
-	"caveat": "what a piece of evidence does not show, such as a live " +
-		"recording carrying the room and the PA. It is written for a person " +
-		"reading the ask rather than for the tool, and nothing yet prints " +
-		"an ask's evidence back. Reading it means deciding where that " +
-		"sentence belongs in the output.",
-}
+// toneFieldsNothingReads is empty, and the point is that it stays that way.
+//
+// It held three. `firmware` and `pickups` are deleted, because neither had
+// anything to be read against: nothing can ask the pedal what it is running, and
+// a free-text pickup description has no counterpart on a request and no
+// vocabulary to compare with. `strings` looks like the same shape and is not: it
+// is an enum on both sides, which is why `strung` can hold one against the
+// other.
+//
+// `caveat` is read now. `rigs show` prints the first sentence of each, which is
+// where these are written to carry the point.
+//
+// A reason in here buys a field time, and three of them bought months. Prefer
+// deleting one.
+var toneFieldsNothingReads = map[string]string{}
 
 // TestEveryToneFieldIsReadBySomething is the guard write-a-spec promised.
 //
@@ -650,9 +647,35 @@ func (s *MainTestSuite) TestEveryToneFieldIsReadBySomething() {
 // Go name is also a type's, the alias alone would satisfy this and the field
 // could still be dead. Counting them cost the first version of this test its
 // only real case.
+// namesInSource is every field name this repository's own code reads off a
+// contract type.
+//
+// A selector in a package that can name a contract type, rather than any word
+// anywhere. Matching bare words counted `lipgloss.Position` in a renderer as
+// somebody reading a technique's position, so two dead fields read as live and
+// the rule that exists to catch them said nothing.
+//
+// Per package rather than per file, because Go only needs the import in the file
+// that names the type: pkg/sdk/internal/rigs imports the contract in one file
+// and reads `ask.Aliases` in another, which imports nothing. A contract package
+// counts as able to name its own fields, since pkg/sdk/rig reads its own
+// Evidence.Caveat and imports nothing to do it.
+//
+// Still a heuristic. Two types with a field of the same name are one answer
+// here, so a package reading `audio.Named.URL` gets credit for a contract
+// Evidence's url as well. Narrowing further means resolving types, which means a
+// dependency this does not have.
 func (s *MainTestSuite) namesInSource() map[string]bool {
-	out := map[string]bool{}
-	word := regexp.MustCompile(`[A-Za-z_]\w*`)
+	fset := token.NewFileSet()
+
+	// Parsed first, because whether a package can name a contract type is a
+	// fact about the package and a file is read before its siblings are known.
+	type held struct {
+		files []*ast.File
+		reads bool
+	}
+
+	byDir := map[string]*held{}
 
 	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
 		switch {
@@ -673,21 +696,74 @@ func (s *MainTestSuite) namesInSource() map[string]bool {
 			return nil
 		}
 
-		body, err := os.ReadFile(path) //nolint:gosec // a path this walk found
+		f, err := parser.ParseFile(fset, path, nil, 0)
 		if err != nil {
 			return err
 		}
 
-		for _, w := range word.FindAllString(string(body), -1) {
-			out[w] = true
+		dir := filepath.Dir(path)
+		if byDir[dir] == nil {
+			byDir[dir] = &held{}
 		}
+
+		byDir[dir].files = append(byDir[dir].files, f)
+		byDir[dir].reads = byDir[dir].reads || isAContract(dir) || importsAContract(f)
 
 		return nil
 	})
 
 	s.Require().NoError(err)
 
+	out := map[string]bool{}
+
+	for _, pkg := range byDir {
+		if !pkg.reads {
+			continue
+		}
+
+		for _, f := range pkg.files {
+			ast.Inspect(f, func(n ast.Node) bool {
+				if sel, ok := n.(*ast.SelectorExpr); ok {
+					out[sel.Sel.Name] = true
+				}
+
+				return true
+			})
+		}
+	}
+
 	return out
+}
+
+// isAContract says whether a directory is one of the contract packages, which
+// name their own fields without importing anything.
+func isAContract(
+	dir string,
+) bool {
+	switch dir {
+	case filepath.Join("pkg", "sdk"),
+		filepath.Join("pkg", "sdk", "tone"),
+		filepath.Join("pkg", "sdk", "rig"):
+		return true
+	}
+
+	return false
+}
+
+// importsAContract says whether a file names one of the contract packages.
+func importsAContract(
+	f *ast.File,
+) bool {
+	for _, imported := range f.Imports {
+		switch strings.Trim(imported.Path.Value, `"`) {
+		case "github.com/retr0h/toneharness/pkg/sdk/tone",
+			"github.com/retr0h/toneharness/pkg/sdk/rig",
+			"github.com/retr0h/toneharness/pkg/sdk":
+			return true
+		}
+	}
+
+	return false
 }
 
 // TestEveryPackageIsInTheStructureTree is the other direction.

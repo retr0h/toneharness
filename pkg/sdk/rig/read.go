@@ -157,3 +157,48 @@ func Sourced(
 
 	return best
 }
+
+// Caveats is what a rig's evidence says it does not show.
+//
+// Collected rather than summarised, because each one belongs to a claim and
+// shortening them is how "the producer's answer, not the player's" becomes a
+// rig somebody reads as settled. A caveat is written for a person, and this is
+// what hands it to one.
+//
+// The rig's own first, then each chain entry's in signal order, so the order is
+// the one a reader already has in front of them. Duplicates are dropped: the
+// same source cited for an amplifier and its cabinet carries the same caveat
+// twice, and saying it twice reads as two reservations rather than one.
+func Caveats(
+	spec Spec,
+) []string {
+	out := make([]string, 0, len(spec.Chain)+1)
+	seen := map[string]bool{}
+
+	add := func(all *[]Evidence) {
+		if all == nil {
+			return
+		}
+
+		for _, e := range *all {
+			if e.Caveat == nil || *e.Caveat == "" || seen[*e.Caveat] {
+				continue
+			}
+
+			seen[*e.Caveat] = true
+			out = append(out, *e.Caveat)
+		}
+	}
+
+	add(spec.Evidence)
+
+	for _, entry := range spec.Chain {
+		add(entry.Evidence)
+
+		if entry.Substitute != nil {
+			add(entry.Substitute.Evidence)
+		}
+	}
+
+	return out
+}

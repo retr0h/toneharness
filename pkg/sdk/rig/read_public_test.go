@@ -257,6 +257,85 @@ func (s *ReadPublicTestSuite) TestSourced() {
 	}
 }
 
+// TestCaveats covers Caveats, which is what a rig's evidence says it does not
+// show.
+func (s *ReadPublicTestSuite) TestCaveats() {
+	caveat := func(text string) *[]rig.Evidence {
+		return &[]rig.Evidence{{Kind: rig.EvidenceCited, Caveat: &text}}
+	}
+
+	for _, tt := range []struct {
+		name string
+		give rig.Spec
+		want []string
+	}{
+		{
+			// The rig's own first, then each entry's in signal order, because
+			// that is the order a reader already has in front of them.
+			name: "the rig's own, then the chain's, in signal order",
+			give: func() rig.Spec {
+				out := spec(
+					rig.ChainEntry{Role: rig.RoleAmp, Evidence: caveat("the amp")},
+					rig.ChainEntry{Role: rig.RoleCab, Evidence: caveat("the cab")},
+				)
+				out.Evidence = caveat("the rig")
+
+				return out
+			}(),
+			want: []string{"the rig", "the amp", "the cab"},
+		},
+		{
+			// A substitute is a claim of its own, and the reason one stands in
+			// is exactly the kind of thing a caveat carries.
+			name: "a substitute's own",
+			give: spec(rig.ChainEntry{
+				Role: rig.RoleCab,
+				Substitute: &rig.Substitute{
+					Gear: "Ampeg 8x10", Evidence: caveat("the nearest thing"),
+				},
+			}),
+			want: []string{"the nearest thing"},
+		},
+		{
+			// The same source cited for an amplifier and its cabinet carries
+			// the same caveat twice, and saying it twice reads as two
+			// reservations rather than one.
+			name: "the same caveat twice is one reservation",
+			give: spec(
+				rig.ChainEntry{Role: rig.RoleAmp, Evidence: caveat("one source")},
+				rig.ChainEntry{Role: rig.RoleCab, Evidence: caveat("one source")},
+			),
+			want: []string{"one source"},
+		},
+		{
+			name: "evidence carrying no caveat",
+			give: spec(rig.ChainEntry{
+				Role: rig.RoleAmp, Evidence: evidence(rig.EvidenceCited),
+			}),
+		},
+		{
+			name: "an empty caveat is not a caveat",
+			give: spec(rig.ChainEntry{Role: rig.RoleAmp, Evidence: caveat("")}),
+		},
+		{
+			name: "a rig with no evidence at all",
+			give: spec(),
+		},
+	} {
+		s.Run(tt.name, func() {
+			got := rig.Caveats(tt.give)
+
+			if len(tt.want) == 0 {
+				s.Require().Empty(got)
+
+				return
+			}
+
+			s.Require().Equal(tt.want, got)
+		})
+	}
+}
+
 func TestReadPublicTestSuite(
 	t *testing.T,
 ) {

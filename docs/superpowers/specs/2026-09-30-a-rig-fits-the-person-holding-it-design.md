@@ -92,7 +92,13 @@ rig rather than from an ask.
 
 The brightness half, which needs a measurement rather than a decision.
 
-`position` and `muting` are carried and read by nothing. They are on the schema
-because a technique is three things, and a test walks both contracts and fails
-on a field nothing names, so `attack` being the only one acted on is recorded
-here rather than discovered later.
+`position` and `muting` are read and act on nothing. `pkg/cli/rig.go` prints
+them as a sentence, so a reader sees them; no build changes because of them.
+They are on the schema because a technique is three things, and `attack` being
+the only one that reaches a control is recorded here rather than discovered
+later.
+
+An earlier version of this section said they were read by nothing, which was
+wrong. The test meant to establish that matched bare identifiers, so
+`lipgloss.Position` in a renderer counted as somebody reading a technique's
+position. It reads selectors in packages that can name a contract type now.
