@@ -49,9 +49,13 @@ Start your agent in a checkout and say what you want:
 - _"What did Geddy Lee actually play on Hemispheres?"_
 - _"I want a punk sound, find me an empty slot and let's work there"_
 
-You get back a `.hlx` preset you can load in HX Edit, and if the pedal is
-plugged in, the chain on the pedal. Nothing has to be installed first and no
-pedal has to be attached to build one.
+Ask it to put that on the pedal and it does. With one plugged in over USB the
+chain starts making that sound at once, nothing stored and nothing overwritten,
+or goes into a slot you name. HX Edit is not in the path and does not have to be
+running.
+
+You also get the `.hlx` file, which is what HX Edit and the plugin read if you
+want it there. Building one needs no pedal at all.
 
 **Then you play it**, because nothing here can hear. Say what is wrong in your
 own words and it turns the dials, rebuilds, and records what worked so the next
