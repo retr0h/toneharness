@@ -96,7 +96,12 @@ func init() {
 	f := rigsNewCmd.Flags()
 	f.StringVar(&rigsNewOptions.ID, "id", "",
 		"identifier, and the filename stem — lower case, hyphenated")
-	f.StringVar(&rigsNewOptions.Name, "name", "", "the player or style")
+	f.StringVar(
+		&rigsNewOptions.Name,
+		"name",
+		"",
+		"the player or style — read off --id when nothing says",
+	)
 	f.StringVar(&rigsNewOptions.Band, "band", "", "the group, where there is one")
 	f.StringVar(&rigsNewOptions.Instrument, "instrument", "guitar",
 		"guitar or bass — it decides which half of the catalog is eligible")

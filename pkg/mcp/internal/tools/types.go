@@ -192,7 +192,7 @@ type Recorded struct {
 // somewhere else too.
 type Scaffold struct {
 	ID         string   `json:"id"               jsonschema:"the identifier, and the filename stem"`
-	Name       string   `json:"name"             jsonschema:"the player or style, as a person would write it"`
+	Name       string   `json:"name"             jsonschema:"the player or style, as a person would write it; read off the id when absent"`
 	Band       string   `json:"band,omitempty"   jsonschema:"the group, where there is one"`
 	Instrument string   `json:"instrument"       jsonschema:"guitar or bass"`
 	Amp        string   `json:"amp"              jsonschema:"the real-world amplifier; the one thing nothing downstream recovers from getting wrong"`

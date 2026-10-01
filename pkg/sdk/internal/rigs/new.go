@@ -106,6 +106,10 @@ type NewOptions struct {
 	// ID is the identifier, and the filename stem.
 	ID string
 	// Name is the player or style, as a person would write it.
+	//
+	// Empty takes it from ID, because the contract requires one and an
+	// identifier is a name with the spaces taken out. A copy ignores this and
+	// keeps the name of the rig it came from.
 	Name string
 	// Band is the group, where there is one.
 	Band string
@@ -386,8 +390,12 @@ func scaffoldFor(
 	}
 
 	// Nothing to extend: this was scaffolded from gear rather than copied.
+	//
+	// The name is taken the same way the ask takes it, so what is reported is
+	// what was written. A copy is not: it keeps the name of the rig it came
+	// from, which is handled above.
 	return render(opts), renderAsk(opts, ""), result.Scaffolded{
-		Name:       opts.Name,
+		Name:       subjectName(opts),
 		Instrument: opts.Instrument,
 		Amp:        opts.Amp,
 		Cab:        opts.Cab,
