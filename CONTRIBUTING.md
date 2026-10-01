@@ -361,6 +361,34 @@ is the `Skill` tool with `unslop`. Reading `SKILL.md` and applying the rules by
 hand is the fallback for a session where that call fails, and a change made that
 way has to say so, because the diff looks the same either way.
 
+#### The voice
+
+Plain engineering writing. The test is whether a senior engineer would write it
+in an internal design doc. If it reads like a paper, like documentation for
+beginners, or like something trying to sound technical, rewrite it.
+
+What that means in practice:
+
+- The plain word over the fancy one, and a normal engineering term over a coined
+  one. No `leverage`, `robust`, `seamless`, `scalable`, `paradigm`,
+  `orchestration`, `utilize`, `facilitate` unless the word is carrying real
+  meaning that nothing simpler carries.
+- Depth stays. Simplifying the language is not simplifying the system: a reader
+  should still be able to see the real constraints and what was traded against
+  what. Assume an experienced engineer who has never seen this system.
+- Concrete over general. What it does, why it is here, how it works, what it
+  costs. A number or a name beats an adjective: "an Ampeg SVT reads 12.7% of its
+  energy in the mids on one rig and 4.0% on the other" says what "the rig
+  matters" cannot.
+- Say the decision and say the tradeoff. Where there is a choice, name the side
+  taken and why, rather than listing both and leaving the reader to guess which
+  this project made.
+- Prose by default. A numbered list is for an order that matters, a table for
+  facts that line up, and a short list for genuine alternatives. Turning every
+  idea into bullets is how a page stops explaining anything.
+- No padding. Every paragraph explains the system, justifies a decision, or
+  names a tradeoff. Obvious statements and generic best practice come out.
+
 The tells are invisible from the inside, which is why this is a rule and not a
 preference. The largest one here was the em dash. There were 242, and each stood
 in for a decision the sentence had not made about whether the clause was a new
