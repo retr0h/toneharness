@@ -36,8 +36,6 @@ type ValidatePublicTestSuite struct {
 // good returns the smallest rig the schema accepts.
 func (s *ValidatePublicTestSuite) good() rig.Spec {
 	return rig.Spec{
-		Schema:     rig.SchemaName,
-		ID:         "mike-dirnt",
 		Instrument: rig.InstrumentBass,
 		Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
 	}
@@ -77,21 +75,6 @@ func (s *ValidatePublicTestSuite) TestValidate() {
 			name:   "a knob holding a value that is not a number",
 			mutate: func(r *rig.Spec) { r.Chain[0].Settings = settings(math.NaN()) },
 			says:   "reading the rig",
-		},
-		{
-			name:   "a document that is not a rig",
-			mutate: func(r *rig.Spec) { r.Schema = "L6Preset" },
-			field:  "schema",
-		},
-		{
-			name:   "an identifier with spaces",
-			mutate: func(r *rig.Spec) { r.ID = "Mike Dirnt" },
-			field:  "id",
-		},
-		{
-			name:   "an identifier that is empty",
-			mutate: func(r *rig.Spec) { r.ID = "" },
-			field:  "id",
 		},
 		{
 			name:   "an instrument the catalog cannot be filtered by",

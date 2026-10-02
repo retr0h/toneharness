@@ -28,8 +28,8 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/atomicfile"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // Export writes one slot of a file out to a file of its own.
@@ -76,12 +76,12 @@ func (f *Flows) Export(
 			return result.Written{}, err
 		}
 
-		spec, _, err := f.compiler().Lift(held, cat)
+		id, spec, _, err := f.compiler().Lift(held, cat)
 		if err != nil {
 			return result.Written{}, err
 		}
 
-		read.Rig = spec
+		read.ID, read.Rig = id, spec
 	}
 
 	return Write(read, at.Slot, out, as, existing)
@@ -157,7 +157,9 @@ func render(
 	as result.Format,
 ) error {
 	if as != result.FormatPreset {
-		if err := rig.Write(buf, read.Rig); err != nil {
+		if err := tone.Write(buf, tone.Spec{
+			Schema: tone.SchemaName, Id: read.ID, Rig: read.Rig,
+		}); err != nil {
 			return fmt.Errorf("writing the rig: %w", err)
 		}
 

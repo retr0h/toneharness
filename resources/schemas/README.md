@@ -14,14 +14,14 @@ directory.
 | `extract_gear_map.py`   | hand-written  | Writes `gear-map.json`, and lives beside it        |
 | `corpus/`               | collected     | ~4,400 real presets                                |
 
-The RigSpec contract is not here. It is embedded in the package that reads it,
-at `pkg/sdk/rig/data/rigspec.openapi.yaml`, and \[the write-a-spec
+The ToneSpec contract is not here. It is embedded in the package that reads it,
+at `pkg/sdk/tone/data/tonespec.openapi.yaml`, and \[the write-a-spec
 skill\](../../the write-a-spec skill) says why.
 
 ## What the catalog and the gear map are for
 
 ```text
-RigSpec                   gear-map + catalog             .hlx
+a rig                     gear-map + catalog             .hlx
 "Ampeg SVT"          ──►  HD2_AmpSVBeastNrm        ──►   blocks, params, positions
 "mid-forward"             bass amps only, real ranges    what the device loads
 what a person means       what the device understands    what the file needs

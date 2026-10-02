@@ -66,14 +66,15 @@ func (s *CompilePublicTestSuite) TestLift() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			doc := tt.doc()
-			want, wantPlan, wantErr := compile.Lift(doc, s.cat)
-			got, made, err := compile.New().Lift(doc, s.cat)
+			wantID, want, wantPlan, wantErr := compile.Lift(doc, s.cat)
+			gotID, got, made, err := compile.New().Lift(doc, s.cat)
 
 			s.Require().Equal(wantErr == nil, err == nil)
+			s.Require().Equal(wantID, gotID)
 			s.Require().Equal(want, got)
-			// Both halves through the type, because a lift answers with two
-			// documents and a method that dropped one would pass a test for the
-			// other.
+			// Every part through the type, because a lift answers with the
+			// identifier, the gear and the plan, and a method that dropped one
+			// would pass a test for the others.
 			s.Require().Equal(wantPlan, made)
 		})
 	}
@@ -120,8 +121,8 @@ func (s *CompilePublicTestSuite) TestRealise() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			want, wantErr := compile.Realise(tt.spec, s.cat)
-			got, err := compile.New().Realise(tt.spec, s.cat)
+			want, wantErr := compile.Realise("a-rig", tt.spec, s.cat)
+			got, err := compile.New().Realise("a-rig", tt.spec, s.cat)
 
 			s.Require().Equal(wantErr == nil, err == nil)
 			s.Require().Equal(want, got)
@@ -279,8 +280,9 @@ func (s *CompilePublicTestSuite) TestResolve() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			want, wantAdded, _, _, wantErr := compile.Resolve(
-				tt.spec, compile.Intent{}, s.cat, nil)
-			got, gotAdded, _, _, err := compile.New().Resolve(tt.spec, compile.Intent{}, s.cat, nil)
+				"a-rig", tt.spec, compile.Intent{}, s.cat, nil)
+			got, gotAdded, _, _, err := compile.New().Resolve(
+				"a-rig", tt.spec, compile.Intent{}, s.cat, nil)
 
 			s.Require().Equal(wantErr == nil, err == nil)
 			s.Require().Equal(want, got)
@@ -291,7 +293,8 @@ func (s *CompilePublicTestSuite) TestResolve() {
 
 // TestFit covers dropping what a device has no room for, through the type.
 func (s *CompilePublicTestSuite) TestFit() {
-	built, _, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+	built, _, _, _, err := compile.Resolve(
+		"a-rig", bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 	s.Require().NoError(err)
 
 	tests := []struct {

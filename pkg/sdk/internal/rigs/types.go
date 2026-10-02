@@ -42,24 +42,33 @@ type Source struct {
 	User string
 }
 
-// stored is one rig as read, the ask beside it, and the text each was read
-// from. The text is kept because a copy keeps the comments and decoding drops
-// them.
+// stored is one document as read, and the text it was read from. The text is
+// kept because a copy keeps the comments and decoding drops them.
 //
-// Two documents rather than one. A rig says what the gear is and why each piece
-// of it is believed to be there; the ask says who it is for, how it should
-// sound, and how it is played. They are paired by filename stem, so
-// mike-dirnt.yaml and mike-dirnt.tone.yaml are one subject read two ways.
-//
-// The ask is a pointer because a rig without one is legal and ordinary:
-// somebody's own directory holds rigs they wrote, and nothing obliges them to
-// write down the ask that produced one.
+// One document holding both halves. The rig says what the gear is and why each
+// piece of it is believed to be there; the ask says who it is for, how it should
+// sound, and how it is played. The ask is a pointer because a rig without one is
+// legal and ordinary: somebody's own directory holds rigs they wrote, and nothing
+// obliges them to write down the ask that produced one.
 type stored struct {
-	spec   rig.Spec
-	raw    []byte
-	ask    *tone.Spec
-	askRaw []byte
+	// doc is the whole document and raw the text it was read from.
+	//
+	// One of each since version 2, where a rig and the ask beside it were two
+	// files paired by filename stem. The text is kept because copying a rig is
+	// copying its text: marshalling loses the comments and the comments are most
+	// of what a rig carries.
+	doc tone.Spec
+	raw []byte
 }
+
+// ask is the request half, or nil where nobody wrote one.
+func (s stored) askOf() *tone.Ask { return s.doc.Ask }
+
+// spec is the gear half, which every document has.
+func (s stored) specOf() rig.Spec { return s.doc.Rig }
+
+// id is what the document is called.
+func (s stored) idOf() string { return s.doc.Id }
 
 // brokenFile is a file in somebody's own directory that is not a rig.
 type brokenFile struct {

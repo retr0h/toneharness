@@ -1,0 +1,38 @@
+schema: ToneSpec
+id: mike-dirnt
+
+ask:
+  genre: [rock]
+
+  default: true
+  subject:
+    kind: artist
+    name: Mike Dirnt
+    band: Green Day
+    era: Dookie through American Idiot
+  words:
+    - term: mid-forward
+    - term: minimal-drive
+    - term: grit-on-attack
+    - term: tight-low-end
+    - term: short-decay
+    - term: audible-pick-attack
+  technique:
+    attack: pick
+    position: bridge
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      evidence:
+        - { kind: llm }
+      confidence: medium
+    - role: cab
+      gear: Ampeg 8x10
+      evidence:
+        - { kind: llm }
+      confidence: medium

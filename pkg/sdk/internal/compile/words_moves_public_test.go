@@ -88,7 +88,7 @@ func (s *WordsMovePublicTestSuite) TestWordsReachTheAmplifier() {
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
 						plain, _, _, _, err := compile.Resolve(
-							bassRig("Ampeg SVT", ""),
+							"a-rig", bassRig("Ampeg SVT", ""),
 							compile.Intent{},
 							s.cat,
 							nil,
@@ -96,7 +96,7 @@ func (s *WordsMovePublicTestSuite) TestWordsReachTheAmplifier() {
 						s.Require().NoError(err)
 
 						got, _, moved, _, err := compile.Resolve(
-							bassRig("Ampeg SVT", ""), described(tt.term), s.cat, nil)
+							"a-rig", bassRig("Ampeg SVT", ""), described(tt.term), s.cat, nil)
 						s.Require().NoError(err)
 
 						s.Require().Len(moved, 1)
@@ -125,15 +125,13 @@ func (s *WordsMovePublicTestSuite) TestWordsReachTheAmplifier() {
 			name: "words survive a chain with no amplifier",
 			then: func() {
 				spec := rig.Spec{
-					Schema:     rig.SchemaName,
-					ID:         "test",
 					Instrument: rig.InstrumentBass,
 					Chain: []rig.ChainEntry{
 						{Role: rig.RoleOther, Gear: "Klon Centaur"},
 					},
 				}
 
-				_, _, moved, _, err := compile.Resolve(spec, described("mid-forward"), s.cat, nil)
+				_, _, moved, _, err := compile.Resolve("a-rig", spec, described("mid-forward"), s.cat, nil)
 
 				s.Require().NoError(err)
 				s.Require().Len(moved, 1)
@@ -178,7 +176,13 @@ func (s *WordsMovePublicTestSuite) paramOf(
 // carries settings somebody already applied, so there is nothing for a word to
 // decide.
 func (s *WordsMovePublicTestSuite) TestAnAskThatSaysNothingMovesNothing() {
-	_, _, moved, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+	_, _, moved, _, err := compile.Resolve(
+		"a-rig",
+		bassRig("Ampeg SVT", ""),
+		compile.Intent{},
+		s.cat,
+		nil,
+	)
 
 	s.Require().NoError(err)
 	s.Require().Empty(moved)
@@ -187,11 +191,17 @@ func (s *WordsMovePublicTestSuite) TestAnAskThatSaysNothingMovesNothing() {
 // TestTwoWordsForOneAxisMoveNothing covers an ask answering one question
 // twice.
 func (s *WordsMovePublicTestSuite) TestTwoWordsForOneAxisMoveNothing() {
-	plain, _, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+	plain, _, _, _, err := compile.Resolve(
+		"a-rig",
+		bassRig("Ampeg SVT", ""),
+		compile.Intent{},
+		s.cat,
+		nil,
+	)
 	s.Require().NoError(err)
 
 	got, _, moved, _, err := compile.Resolve(
-		bassRig("Ampeg SVT", ""),
+		"a-rig", bassRig("Ampeg SVT", ""),
 		described("minimal-drive", "grit-on-attack"), s.cat, nil)
 	s.Require().NoError(err)
 
@@ -287,7 +297,7 @@ func (s *WordsMovePublicTestSuite) TestWhoYieldsOnAnAxisTwoWordsAnswer() {
 			}
 
 			_, _, moved, _, err := compile.Resolve(
-				bassRig("Ampeg SVT", ""), compile.Intent{Words: words}, s.cat, nil)
+				"a-rig", bassRig("Ampeg SVT", ""), compile.Intent{Words: words}, s.cat, nil)
 			s.Require().NoError(err)
 
 			by := map[string]compile.Moved{}

@@ -73,8 +73,6 @@ func bassRig(
 	pedals ...string,
 ) rig.Spec {
 	spec := rig.Spec{
-		Schema:     rig.SchemaName,
-		ID:         "test",
 		Instrument: rig.InstrumentBass,
 	}
 
@@ -103,7 +101,7 @@ func realised(
 	spec rig.Spec,
 	cat *catalog.Catalog,
 ) plan.Plan {
-	made, err := compile.Realise(spec, cat)
+	made, err := compile.Realise("a-rig", spec, cat)
 	s.Require().NoError(err)
 
 	return made
@@ -261,7 +259,7 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						got, _, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
+						got, _, _, _, err := compile.Resolve("test", tt.spec, compile.Intent{}, s.cat, nil)
 
 						if tt.err != "" {
 							s.Require().ErrorIs(err, compile.ErrNoSuchGear)
@@ -282,10 +280,9 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 			// Where the name on the screen comes from.
 			//
 			// The subject is the ask's, and it is what somebody wants to read
-			// on the device: "Mike Dirnt" rather than "mike-dirnt". A rig
-			// read off disk has no ask beside it and no subject to be named
-			// after, so its identifier stands in, which beats a blank
-			// heading.
+			// on the device: "Mike Dirnt" rather than "mike-dirnt". A document
+			// with no ask has no subject to be named after, so its identifier
+			// stands in, which beats a blank heading.
 			name: "the ask names the preset",
 			then: func() {
 				tests := []struct {
@@ -300,14 +297,14 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 					},
 					{
 						name: "no ask at all",
-						want: "test",
+						want: "a-rig",
 					},
 				}
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
 						got, _, _, _, err := compile.Resolve(
-							bassRig("Ampeg SVT", ""), tt.intent, s.cat, nil)
+							"a-rig", bassRig("Ampeg SVT", ""), tt.intent, s.cat, nil)
 
 						s.Require().NoError(err)
 						s.Require().Equal(tt.want, got.Name)
@@ -323,11 +320,11 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 			// regenerated or because a map iterated in a different order.
 			name: "resolve is deterministic",
 			then: func() {
-				first, _, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+				first, _, _, _, err := compile.Resolve("a-rig", bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 				s.Require().NoError(err)
 
 				for range 20 {
-					again, _, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+					again, _, _, _, err := compile.Resolve("a-rig", bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 
 					s.Require().NoError(err)
 					s.Require().Equal(models(first), models(again))
@@ -340,7 +337,7 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 			name: "resolve names what it chose for you",
 			then: func() {
 				_, added, _, _, err := compile.Resolve(
-					bassRig("Ampeg SVT", "Some Cabinet Nobody Models"),
+					"a-rig", bassRig("Ampeg SVT", "Some Cabinet Nobody Models"),
 					compile.Intent{}, s.cat, nil)
 
 				s.Require().NoError(err)
@@ -385,7 +382,7 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						got, _, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
+						got, _, _, _, err := compile.Resolve("test", tt.spec, compile.Intent{}, s.cat, nil)
 
 						s.Require().NoError(err)
 						s.Require().NotEmpty(got.Blocks)
@@ -522,7 +519,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						spec, _, _, _, err := compile.Resolve(tt.spec, compile.Intent{}, s.cat, nil)
+						spec, _, _, _, err := compile.Resolve("a-rig", tt.spec, compile.Intent{}, s.cat, nil)
 						s.Require().NoError(err)
 
 						fitted := compile.Fit(spec, s.cat, tt.limits)
@@ -556,7 +553,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 			name: "fit budgets each processor",
 			then: func() {
 				spec, _, _, _, err := compile.Resolve(
-					bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing", "Heavy Thing"),
+					"a-rig", bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing", "Heavy Thing"),
 					compile.Intent{}, s.cat, nil)
 				s.Require().NoError(err)
 
@@ -583,7 +580,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 			name: "fit numbers each processor from zero",
 			then: func() {
 				spec, _, _, _, err := compile.Resolve(
-					bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),
+					"a-rig", bassRig("Ampeg SVT", "", "Heavy Thing", "Heavy Thing"),
 					compile.Intent{}, s.cat, nil)
 				s.Require().NoError(err)
 
@@ -611,7 +608,7 @@ func (s *ResolvePublicTestSuite) TestFit() {
 			// the floor.
 			name: "fit ignores a block the catalog lacks",
 			then: func() {
-				spec, _, _, _, err := compile.Resolve(bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
+				spec, _, _, _, err := compile.Resolve("a-rig", bassRig("Ampeg SVT", ""), compile.Intent{}, s.cat, nil)
 				s.Require().NoError(err)
 
 				spec.Blocks[0].Model = "HD2_NotInThisCatalog"

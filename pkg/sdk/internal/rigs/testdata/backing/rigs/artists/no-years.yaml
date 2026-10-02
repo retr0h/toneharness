@@ -1,0 +1,17 @@
+schema: ToneSpec
+id: no-years
+
+ask:
+  genre: [rock]
+
+  subject: { kind: artist, name: No Years }
+  played:
+    - gear: A Bass
+  confidence: low
+
+rig:
+  instrument: bass
+  chain:
+    - { role: amp, gear: Ampeg SVT }
+  # An instrument with no `records`, which is the ordinary case: most rigs name
+  # what was played without knowing which take took which bass.

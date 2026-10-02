@@ -84,13 +84,14 @@ func (m *MockCompiler) EXPECT() *MockCompilerMockRecorder {
 }
 
 // Lift mocks base method.
-func (m *MockCompiler) Lift(doc *preset.Document, cat *catalog.Catalog) (rig.Spec, plan.Plan, error) {
+func (m *MockCompiler) Lift(doc *preset.Document, cat *catalog.Catalog) (string, rig.Spec, plan.Plan, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Lift", doc, cat)
-	ret0, _ := ret[0].(rig.Spec)
-	ret1, _ := ret[1].(plan.Plan)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(rig.Spec)
+	ret2, _ := ret[2].(plan.Plan)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
 }
 
 // Lift indicates an expected call of Lift.

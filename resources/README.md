@@ -11,13 +11,13 @@ The data this project reads and ships, as opposed to the Go that reads it.
 
 Nothing here is embedded in the binary. What ships lives beside the package that
 reads it: `pkg/sdk/catalog/data/`, `pkg/sdk/corpus/data/`,
-`pkg/sdk/preset/data/`, `pkg/sdk/rig/data/`, `pkg/sdk/internal/compile/data/`
+`pkg/sdk/preset/data/`, `pkg/sdk/tone/data/`, `pkg/sdk/internal/compile/data/`
 and `pkg/sdk/internal/wire/data/`. `go:embed` cannot reach a parent directory,
 and a package that needs a file from elsewhere is a package nobody can move.
 
-This tree is the working material those files are built from. The RigSpec
+This tree is the working material those files are built from. The ToneSpec
 contract, the one format anybody hand-authors, is
-`pkg/sdk/rig/data/rigspec.openapi.yaml`. The rigs people use and send are in
+`pkg/sdk/tone/data/tonespec.openapi.yaml`. The rigs people use and send are in
 [../marketplace/](../marketplace/README.md).
 
 ## What may be redistributed

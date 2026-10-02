@@ -30,9 +30,23 @@ import "github.com/retr0h/toneharness/pkg/sdk/tone/internal/gen"
 // to call them, and a caller pinned to that finds out at compile time when it
 // changes.
 type (
-	// Spec is a request for a sound: what to sound like, in whatever terms
-	// the person has. Every field is optional.
+	// Spec is one sound: the gear that makes it, and what somebody asked for.
+	//
+	// The whole document since version 2, where it was the ask alone and a
+	// RigSpec sat beside it in a second file. `Rig` is required and `Ask` is
+	// not, because a sound nobody can name the gear for is a sound nothing can
+	// model, which is what the solver always said.
 	Spec = gen.ToneSpec
+	// Ask is a request for a sound: what to sound like, in whatever terms the
+	// person has. Every field on it is optional.
+	Ask = gen.Ask
+	// Rig is the gear that answers an ask, in signal order, with a source for
+	// every claim. Real-world names rather than model identifiers, which is
+	// what lets one compile for any Helix.
+	Rig = gen.Rig
+	// Held is one instrument somebody owns. Named for what it is rather than
+	// `Instrument`, which is which half of a catalog a build may draw from.
+	Held = gen.Held
 	// Setup is what somebody has. Separate from the ask because an
 	// instrument is a fact about a person rather than about the sound they
 	// are chasing today.
@@ -94,6 +108,41 @@ type (
 	Muting = gen.TechniqueMuting
 	// Attack is what sets the string moving.
 	Attack = gen.TechniqueAttack
+	// The rig half's own types, exposed here because one contract defines them
+	// and `pkg/sdk/rig` is a view over this package rather than a second
+	// generated copy. Both contracts used to define ten of these separately,
+	// which produced two Go types of the same shape and different identities.
+	//
+	// ChainEntry is one piece of gear in a chain, by the name a person uses.
+	ChainEntry = gen.ChainEntry
+	// Settings is how the gear is set, in musical terms from 0 to 1.
+	Settings = gen.Settings
+	// Substitute is what the device offered for gear it has no model of.
+	Substitute = gen.Substitute
+	// Target is what a controller moves, and Controller is the pedal or switch
+	// that moves it. Move is one of its ends.
+	Target     = gen.Target
+	Controller = gen.Controller
+	Move       = gen.Move
+	// MoveBy and MoveSetting are which kind of thing a move changes.
+	MoveBy      = gen.MoveBy
+	MoveSetting = gen.MoveSetting
+	// Footswitch, Section and Snapshot are what a device wraps a chain in.
+	Footswitch = gen.Footswitch
+	Section    = gen.Section
+	Snapshot   = gen.Snapshot
+	// DeviceState is the rest of what a preset holds, kept so one survives a
+	// round trip through a format that does not claim to understand all of it.
+	DeviceState = gen.DeviceState
+	// Capture is whether a cabinet was taken direct or miked.
+	Capture = gen.Capture
+	// Kind is what a subject is: an artist, a band, a song, a genre, a sound.
+	Kind = gen.Kind
+	// AskInstrument is the generator's name for the one enum the contract still
+	// spells inline, on the ask's own instrument field.
+	AskInstrument = gen.AskInstrument
+	// Knob is one control, 0 to 1, whatever the device's own range is.
+	Knob = gen.Knob
 )
 
 // How far a claim should be trusted.
@@ -172,4 +221,29 @@ const (
 	Headphones = gen.Headphones
 	AmpFront   = gen.AmpFront
 	AmpReturn  = gen.AmpReturn
+	// The rig half's, for the same reason its types are here.
+	RoleAmp     = gen.RoleAmp
+	RoleCab     = gen.RoleCab
+	RoleDrive   = gen.RoleDrive
+	RoleComp    = gen.RoleComp
+	RoleGate    = gen.RoleGate
+	RoleEQ      = gen.RoleEQ
+	RoleMod     = gen.RoleMod
+	RoleDelay   = gen.RoleDelay
+	RoleReverb  = gen.RoleReverb
+	RoleWah     = gen.RoleWah
+	RolePitch   = gen.RolePitch
+	RoleFilter  = gen.RoleFilter
+	RoleUtility = gen.RoleUtility
+	RoleOther   = gen.RoleOther
+
+	CaptureDirect = gen.CaptureDirect
+	CaptureMiked  = gen.CaptureMiked
+	CaptureBoth   = gen.CaptureBoth
+
+	MoveByExpression = gen.MoveByExpression
+	MoveByFootswitch = gen.MoveByFootswitch
+
+	InstrumentGuitar = gen.InstrumentInstrumentGuitar
+	InstrumentBass   = gen.InstrumentInstrumentBass
 )

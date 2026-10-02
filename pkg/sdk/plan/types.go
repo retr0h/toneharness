@@ -21,10 +21,10 @@
 // Package plan is a rig realised for one device, and the checks that say
 // whether the device will load it.
 //
-// The third of three layers. A [ToneSpec] is what somebody meant, a [RigSpec] is
-// the gear that answers it named the way a musician names it, and a Plan is that
-// rig fitted to hardware: which model each piece of gear resolved to, where it
-// sits in the DSP, what the footswitches do.
+// The third of three layers. A [ToneSpec]'s ask is what somebody meant, its rig
+// is the gear that answers it named the way a musician names it, and a Plan is
+// that rig fitted to hardware: which model each piece of gear resolved to, where
+// it sits in the DSP, what the footswitches do.
 //
 // Deliberately device-bound, holding one manufacturer's model identifiers and
 // one manufacturer's parameter keys. Written out and read back, and strictly, so
@@ -33,7 +33,6 @@
 // by a driver.
 //
 // [ToneSpec]: https://github.com/retr0h/toneharness/blob/main/pkg/sdk/tone/data/tonespec.openapi.yaml
-// [RigSpec]: https://github.com/retr0h/toneharness/blob/main/pkg/sdk/rig/data/rigspec.openapi.yaml
 package plan
 
 import (
@@ -80,9 +79,9 @@ type Block struct {
 
 // Plan is a rig realised on one device.
 //
-// The third layer. A ToneSpec is what somebody meant, a RigSpec is the gear that
-// answers it named the way a musician names it, and this is that rig fitted to
-// hardware: which model each piece of gear resolved to, where it sits in the
+// The third layer. A document's ask is what somebody meant, its rig is the gear
+// that answers it named the way a musician names it, and this is that rig fitted
+// to hardware: which model each piece of gear resolved to, where it sits in the
 // DSP, and everything else that only means anything on a pedal.
 type Plan struct {
 	// Name is what the preset will be called.

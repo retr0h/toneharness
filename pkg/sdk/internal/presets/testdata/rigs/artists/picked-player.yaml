@@ -1,0 +1,26 @@
+schema: ToneSpec
+id: picked-player
+
+ask:
+  genre: [rock]
+
+  subject:
+    kind: artist
+    name: Picked Player
+
+  # A pick, so a Setup naming fingers has something to be compensated against.
+  technique:
+    attack: pick
+    evidence: [{ kind: llm }]
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      evidence: [{ kind: llm }]
+    - role: cab
+      gear: Ampeg SVT 410HLF
+      evidence: [{ kind: llm }]

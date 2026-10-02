@@ -118,7 +118,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			name: "the worked example resolves",
 			then: func() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
-					Spec:  s.at("like-a-record.tone.yaml"),
+					Spec:  s.at("like-a-record.yaml"),
 					Setup: s.at("mine.setup.yaml"),
 				}, s.cat, s.lib, s.rigNamed)
 
@@ -136,7 +136,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			name: "a setup is optional",
 			then: func() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
-					Spec: s.at("like-a-record.tone.yaml"),
+					Spec: s.at("like-a-record.yaml"),
 				}, s.cat, s.lib, s.rigNamed)
 
 				s.Require().NoError(err)
@@ -156,7 +156,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 					{name: "the ask", in: asking.Ask{Spec: absent}},
 					{
 						name: "the setup",
-						in:   asking.Ask{Spec: s.at("like-a-record.tone.yaml"), Setup: absent},
+						in:   asking.Ask{Spec: s.at("like-a-record.yaml"), Setup: absent},
 					},
 				}
 
@@ -186,7 +186,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 					{
 						name: "a setup that is not one",
 						in: asking.Ask{
-							Spec:  s.at("like-a-record.tone.yaml"),
+							Spec:  s.at("like-a-record.yaml"),
 							Setup: s.file("setup.yaml", "schema: Nonsense\n"),
 						},
 					},
@@ -211,11 +211,17 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			then: func() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
 					Spec: s.file("insisted.yaml", `schema: ToneSpec
-genre: [rock]
-gear:
-  - gear: Ampeg B-15
-    role: amp
-    insist: true
+id: insisted
+ask:
+  genre: [rock]
+  gear:
+    - gear: Ampeg B-15
+      role: amp
+      insist: true
+rig:
+  instrument: bass
+  chain:
+    - {role: amp, gear: Ampeg SVT}
 `),
 				}, s.cat, s.lib, s.rigNamed)
 
@@ -231,7 +237,7 @@ gear:
 				cancel()
 
 				_, err := asking.Resolve(ctx, asking.Ask{
-					Spec: s.at("like-a-record.tone.yaml"),
+					Spec: s.at("like-a-record.yaml"),
 				}, s.cat, s.lib, s.rigNamed)
 
 				s.Require().ErrorIs(err, context.Canceled)

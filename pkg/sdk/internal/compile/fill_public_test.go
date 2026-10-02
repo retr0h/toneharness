@@ -313,7 +313,7 @@ func (s *FillPublicTestSuite) TestResolveFill() {
 
 						for range 3 {
 							spec, added, _, _, err := compile.Resolve(
-								bassRig(gear, "", tt.extra...), compile.Intent{}, s.cat, stats)
+								"a-rig", bassRig(gear, "", tt.extra...), compile.Intent{}, s.cat, stats)
 
 							s.Require().NoError(err)
 							s.Require().Len(added, tt.want)
@@ -403,7 +403,7 @@ func (s *FillPublicTestSuite) TestResolveFill() {
 				drive := want
 				spec.Chain[0].Settings = &rig.Settings{Drive: &drive}
 
-				built, added, _, _, err := compile.Resolve(spec, compile.Intent{}, s.cat, stats)
+				built, added, _, _, err := compile.Resolve("a-rig", spec, compile.Intent{}, s.cat, stats)
 				s.Require().NoError(err)
 				s.Require().Len(added, 1, "the corpus fills one block in")
 

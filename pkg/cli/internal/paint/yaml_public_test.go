@@ -48,7 +48,7 @@ func (s *YAMLPublicTestSuite) TestYAML() {
 			name: "a document",
 			body: strings.Join([]string{
 				"# a rig",
-				"schema: RigSpec",
+				"schema: ToneSpec",
 				"chain:",
 				"- gear: Ampeg SVT",
 				"  role: amp",

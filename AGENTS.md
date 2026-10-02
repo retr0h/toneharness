@@ -130,16 +130,16 @@ And four questions answer themselves from the tool rather than from any page:
 | ----------------------------------------- | ---------------------------------------------------------------------------------------- |
 | Which commands and flags exist            | `go run main.go --help`, which compiles the tree. Never a list written down              |
 | Which tools an agent gets over MCP        | the running server advertises them. Start it and read what it offers                     |
-| What a field may say, and what is refused | the two contracts' `description:` fields                                                 |
+| What a field may say, and what is refused | the contract's `description:` fields                                                     |
 | Which words an ask may use                | [`words.json`](pkg/sdk/internal/compile/data/words.json), which is the vocabulary itself |
 | What a control actually does              | [resources/sweeps/](resources/sweeps/), the readings themselves                          |
 
-There are two contracts, each embedded in the package that reads it.
-[`pkg/sdk/tone/data/tonespec.openapi.yaml`](pkg/sdk/tone/data/tonespec.openapi.yaml)
-is what somebody may ask for, and
-[`pkg/sdk/rig/data/rigspec.openapi.yaml`](pkg/sdk/rig/data/rigspec.openapi.yaml)
-is what that resolves to. They are the only hand-authored formats; the Go types
-and everything downstream are compiled from them, and each field's
+There is one contract, embedded in the package that reads it:
+[`pkg/sdk/tone/data/tonespec.openapi.yaml`](pkg/sdk/tone/data/tonespec.openapi.yaml).
+A document's `ask:` is what somebody may ask for and its `rig:` is what that
+resolves to, with the rig required. There were two contracts until version 2,
+and ten schemas were defined in both. It is the only hand-authored format; the
+Go types and everything downstream are compiled from it, and each field's
 `description:` is the grammar for that field. There are no generated grammar
 pages: there were, they are gone, and the skill
 [write-a-spec](.claude/skills/write-a-spec/SKILL.md) is what reads the contracts

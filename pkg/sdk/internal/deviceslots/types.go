@@ -56,8 +56,8 @@ type Catalogs interface {
 // One of the four methods pkg/compile carries, because lifting what a device
 // answered is all this package does with it.
 type Compiler interface {
-	// Lift reads a preset into a rig.
-	Lift(doc *preset.Document, cat *catalog.Catalog) (rig.Spec, plan.Plan, error)
+	// Lift reads a preset into its identifier, a rig, and the plan that realises it.
+	Lift(doc *preset.Document, cat *catalog.Catalog) (string, rig.Spec, plan.Plan, error)
 }
 
 // Translator moves between what a device says and what a preset holds.

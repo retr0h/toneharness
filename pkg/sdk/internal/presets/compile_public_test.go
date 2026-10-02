@@ -39,8 +39,8 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 type CompilePublicTestSuite struct {
@@ -81,12 +81,12 @@ func (s *CompilePublicTestSuite) handWritten(
 ) string {
 	out := filepath.Join(dir, "typed.yaml")
 
-	s.Require().NoError(os.WriteFile(out, []byte(`schema: RigSpec
-version: 2
+	s.Require().NoError(os.WriteFile(out, []byte(`schema: ToneSpec
 id: typed
-instrument: bass
-chain:
-  - { role: amp, gear: Ampeg SVT }
+rig:
+  instrument: bass
+  chain:
+    - { role: amp, gear: Ampeg SVT }
 `), 0o600))
 
 	return out
@@ -132,8 +132,8 @@ func (s *CompilePublicTestSuite) unknownGear(
 ) string {
 	path := filepath.Join(dir, "unknown.yaml")
 	s.Require().NoError(os.WriteFile(path, []byte(
-		"schema: RigSpec\nid: unknown\n"+
-			"instrument: guitar\nchain:\n  - {role: amp, gear: Nonesuch 900}\n"),
+		"schema: ToneSpec\nid: unknown\nrig:\n"+
+			"  instrument: guitar\n  chain:\n    - {role: amp, gear: Nonesuch 900}\n"),
 		0o600))
 
 	return path
@@ -145,8 +145,8 @@ func (s *CompilePublicTestSuite) emptyChain(
 ) string {
 	path := filepath.Join(dir, "bad.yaml")
 	s.Require().NoError(os.WriteFile(path, []byte(
-		"schema: RigSpec\nid: x\n"+
-			"instrument: bass\nchain: []\n"), 0o600))
+		"schema: ToneSpec\nid: x\nrig:\n"+
+			"  instrument: bass\n  chain: []\n"), 0o600))
 
 	return path
 }
@@ -270,14 +270,14 @@ func (s *CompilePublicTestSuite) TestCompile() {
 			errText: context.Canceled.Error(),
 		},
 		{
-			name:    "a file that is not a rig",
+			name:    "a file that is not a document",
 			rig:     slotFixture("setlist.hls"),
-			errText: "not a valid rig",
+			errText: "not a valid ToneSpec",
 		},
 		{
 			name:    "a rig that does not meet its own contract",
 			rig:     "empty chain",
-			err:     rig.ErrInvalid,
+			err:     tone.ErrInvalid,
 			errText: "chain",
 		},
 		{
@@ -359,7 +359,7 @@ func (s *CompilePublicTestSuite) TestCompile() {
 
 			if tt.unencodable {
 				compiler := presetmocks.NewMockCompiler(gomock.NewController(s.T()))
-				compiler.EXPECT().Realise(gomock.Any(), gomock.Any()).
+				compiler.EXPECT().Realise(gomock.Any(), gomock.Any(), gomock.Any()).
 					DoAndReturn(compile.New().Realise)
 				compiler.EXPECT().
 					Moves(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).

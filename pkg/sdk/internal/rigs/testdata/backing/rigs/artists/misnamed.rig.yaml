@@ -1,6 +1,0 @@
-schema: RigSpec
-version: 2
-id: misnamed
-instrument: bass
-chain:
-  - { role: amp, gear: Ampeg SVT }

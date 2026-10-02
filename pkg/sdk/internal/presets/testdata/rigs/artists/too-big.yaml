@@ -1,0 +1,23 @@
+schema: ToneSpec
+id: too-big
+
+ask:
+  genre: [rock]
+
+  subject:
+    kind: artist
+    name: Too Big
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - { role: other, gear: Heavy Thing, evidence: [{ kind: llm }] }
+    - { role: other, gear: Heavy Thing, evidence: [{ kind: llm }] }
+    - { role: other, gear: Heavy Thing, evidence: [{ kind: llm }] }
+    - { role: other, gear: Heavy Thing, evidence: [{ kind: llm }] }
+    - { role: other, gear: Heavy Thing, evidence: [{ kind: llm }] }
+    - { role: other, gear: Heavy Thing, evidence: [{ kind: llm }] }
+    - { role: other, gear: Heavy Thing, evidence: [{ kind: llm }] }
+    - { role: amp, gear: Ampeg SVT, evidence: [{ kind: llm }] }

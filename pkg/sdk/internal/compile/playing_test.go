@@ -302,8 +302,6 @@ func (s *PlayingTestSuite) TestResolveTakesTheCompensationThroughABuild() {
 	s.Require().NoError(err)
 
 	spec := rig.Spec{
-		Schema:     rig.SchemaName,
-		ID:         "played-with-fingers",
 		Instrument: rig.InstrumentBass,
 		Chain: []rig.ChainEntry{
 			{Role: rig.RoleAmp, Gear: "Ampeg SVT"},
@@ -311,7 +309,7 @@ func (s *PlayingTestSuite) TestResolveTakesTheCompensationThroughABuild() {
 		},
 	}
 
-	_, _, moved, held, err := Resolve(spec, Intent{
+	_, _, moved, held, err := Resolve("a-rig", spec, Intent{
 		Attack:  "pick",
 		Playing: Playing{Attack: "fingers"},
 	}, cat, nil)

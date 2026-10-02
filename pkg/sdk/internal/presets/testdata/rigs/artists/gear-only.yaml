@@ -1,0 +1,17 @@
+# A document with no ask, which is legal and ordinary: somebody's own directory
+# holds rigs they wrote, and nothing obliges them to write down the request that
+# produced one. A rig read off a device is this shape too.
+
+schema: ToneSpec
+id: gear-only
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      evidence: [{ kind: llm }]
+    - role: cab
+      gear: Ampeg SVT 410HLF
+      evidence: [{ kind: llm }]

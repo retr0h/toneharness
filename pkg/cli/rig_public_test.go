@@ -41,21 +41,17 @@ type RigPublicTestSuite struct {
 // person can write down, so a test about rendering them is not also a test
 // about what either document must hold.
 //
-// Two documents rather than one, because that is what a reader of a rig now
-// gets: the gear is the rig's and the words, the subject, the technique and the
-// confidence are the ask's. A mutator for each, so a case can take either side
-// apart without disturbing the other.
+// Two halves of one document, because that is what a reader of a rig gets: the
+// gear is the rig's and the words, the subject, the technique and the confidence
+// are the ask's. A mutator for each, so a case can take either side apart
+// without disturbing the other.
 func knownWith(
 	mutate func(*rig.Spec),
-	asked func(*tone.Spec),
+	asked func(*tone.Ask),
 ) sdk.Known {
-	v := rig.SpecVersion(2)
 	cited := []rig.Evidence{{Kind: rig.EvidenceCited}}
 
 	spec := rig.Spec{
-		Schema:     "RigSpec",
-		Version:    &v,
-		ID:         "mike-dirnt",
 		Instrument: "bass",
 		// Confirmed by default, so a rig that says nobody checked it is a
 		// case a test has to ask for rather than get by accident.
@@ -71,8 +67,7 @@ func knownWith(
 	pos := tone.PositionBridge
 	mute := tone.MutingPalm
 
-	ask := tone.Spec{
-		Schema: tone.SchemaName,
+	ask := tone.Ask{
 		Subject: &tone.Subject{
 			Kind: "artist",
 			Name: "Mike Dirnt",
@@ -96,7 +91,7 @@ func knownWith(
 		asked(&ask)
 	}
 
-	return sdk.Known{Rig: spec, Ask: &ask}
+	return sdk.Known{ID: "mike-dirnt", Rig: spec, Ask: &ask}
 }
 
 // TestRigs covers listing every rig a directory holds.
@@ -239,7 +234,7 @@ func (s *RigPublicTestSuite) TestRig() {
 			// Nothing about what nobody wrote. An empty band line reads as a
 			// band with no name rather than as a player without one.
 			name: "an ask with only the required fields",
-			in: sdk.Rig{Known: knownWith(nil, func(a *tone.Spec) {
+			in: sdk.Rig{Known: knownWith(nil, func(a *tone.Ask) {
 				a.Subject.Band = nil
 				a.Subject.Era = nil
 				a.Words = nil
@@ -251,7 +246,7 @@ func (s *RigPublicTestSuite) TestRig() {
 			// An unstated confidence is the lowest one. A rig that says
 			// nothing about how far to trust it has not earned anything.
 			name: "an unstated confidence reads as low",
-			in: sdk.Rig{Known: knownWith(nil, func(a *tone.Spec) {
+			in: sdk.Rig{Known: knownWith(nil, func(a *tone.Ask) {
 				a.Confidence = nil
 			})},
 			want: []string{"low confidence"},
@@ -270,9 +265,9 @@ func (s *RigPublicTestSuite) TestRig() {
 			// Legal and ordinary, so the page says what is missing rather than
 			// rendering blanks: the identifier stands in for the name nobody
 			// wrote, and nothing records what the rig was built for.
-			name: "a rig with no ask beside it",
+			name: "a document with no ask in it",
 			in: sdk.Rig{
-				Known: sdk.Known{Rig: knownWith(nil, nil).Rig},
+				Known: sdk.Known{ID: "mike-dirnt", Rig: knownWith(nil, nil).Rig},
 			},
 			want: []string{
 				"mike-dirnt",

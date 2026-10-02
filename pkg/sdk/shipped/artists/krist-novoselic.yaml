@@ -1,0 +1,95 @@
+# Krist Novoselic — Nirvana
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: krist-novoselic
+
+ask:
+  subject:
+    kind: artist
+    name: Krist Novoselic
+    band: Nirvana
+    # Nevermind is what the gear beside this describes. The span reaches 1993
+    # because the corpus also holds one In Utero track, and a record outside a
+    # rig's stated years is a record measuring other gear: the rig's own evidence
+    # says he was on Hiwatts and a converted Marshall by then. Stated wide and
+    # caveated rather than narrowed, because the record is evidence somebody
+    # gathered and dropping it to make a range tidy would be the wrong half to
+    # give up.
+    era: Nevermind, with one In Utero record the corpus also holds
+    years: { from: 1991, to: 1993 }
+
+  instrument: bass
+
+  # The genre the corpus tags these records with. One word where the field takes
+  # one, and `corpus music genres` is what earns it words by measurement: this
+  # says which distribution the records belong to, not how they sound.
+  genre: [grunge]
+
+  # No words and no instrument. The gear beside this is sourced to somebody who
+  # read a magazine or studied photographs, and nobody read here describes how
+  # these records sound in terms this vocabulary carries. The genre the corpus
+  # tags them with earns its own words by measurement, which is a different claim
+  # from anything this file could assert.
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      capture: direct
+      evidence:
+        - kind: user
+          url: https://www.livenirvana.com/equipment/krist.php
+          note: >-
+            the band's own equipment chronology, built from an interview with
+            Nirvana's guitar technician Earnest Bailey, puts an Ampeg SVT 400T in
+            his hands from early 1991 and says of the sessions: "I'm pretty sure he
+            used this for recording Nevermind."
+
+            Bailey is the reason this counts at all. He worked on the band's gear,
+            so he is describing instruments he handled rather than photographs he
+            studied.
+          caveat: >-
+            the hedge is his and it is quoted rather than smoothed away. "Pretty
+            sure" is what the page says, no interview date is given, and the page
+            is a fan archive rather than a first-party source, so this is the best
+            available claim and not a settled one.
+
+            The head named is an SVT 400T, which the device does not carry. This
+            rig asks for the Ampeg SVT it does carry, an older and all-tube head of
+            the same name rather than the same amplifier.
+        - kind: llm
+          note: >-
+            worth knowing what this rig is not. The same page puts him on Hiwatt
+            DR103s and a converted Marshall plexi for In Utero, so a rig covering
+            1993 is a different rig from this one, and the device models the Hiwatt
+            as well.
+          caveat: >-
+            not sourced to anything anybody opened beyond the page above, and
+            recorded here only so the next person does not fold two eras into one
+            amplifier. The corpus reads two Nevermind tracks and one In Utero track
+            for him, so this rig is right for two of the three.
+      confidence: low
+
+    - role: cab
+      gear: Mesa/Boogie 2x15
+      capture: direct
+      evidence:
+        - kind: user
+          url: https://www.livenirvana.com/equipment/krist.php
+          note: >-
+            the same chronology gives the Nevermind-era speakers as "4 Marshall
+            4x12s, 2 Mesa/Boogie Road Ready 4x10s and 2 Mesa/Boogie Road Ready
+            2x15s". The device carries a Mesa/Boogie 2x15, which is the one box in
+            that list it models.
+          caveat: >-
+            a touring wall rather than a session cabinet, and eight boxes are not
+            one. Nothing read here says what the record was miked through, and the
+            page does not separate stage from studio for the speakers the way it
+            hedges about the head.
+      confidence: low

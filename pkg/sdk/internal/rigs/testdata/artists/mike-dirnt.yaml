@@ -4,23 +4,46 @@
 # HD2_AmpSVBeastNrm through the gear map, so this file stays readable, stays
 # correct when Line 6 rename something, and works for any Helix device.
 #
-# The other half of this pair is mike-dirnt.tone.yaml beside it: who it is
-# for, how it should sound and how it was played. This file is the gear alone.
+# One document: the ask says who it is for, how it should sound and how it was
+# played, and the rig below it says what the gear is.
 
-schema: RigSpec
-version: 2
+schema: ToneSpec
 id: mike-dirnt
 
-instrument: bass
+ask:
+  genre: [rock]
 
-chain:
-  - role: amp
-    gear: Ampeg SVT
-    evidence:
-      - { kind: llm }
-    confidence: medium
-  - role: cab
-    gear: Ampeg 8x10
-    evidence:
-      - { kind: llm }
-    confidence: medium
+  subject:
+    kind: artist
+    name: Mike Dirnt
+    band: Green Day
+
+  # How it should sound, in the words a person would use.
+  words:
+    - term: mid-forward
+    - term: minimal-drive
+    - term: grit-on-attack
+    - term: tight-low-end
+    - term: short-decay
+    - term: audible-pick-attack
+
+  technique:
+    attack: pick
+    position: bridge
+
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      evidence:
+        - { kind: llm }
+      confidence: medium
+    - role: cab
+      gear: Ampeg 8x10
+      evidence:
+        - { kind: llm }
+      confidence: medium

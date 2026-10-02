@@ -122,13 +122,13 @@ pkg/sdk/             the library. One directory, and the one that leaves.
 pkg/sdk/client.go    the Client every wrapper rallies around
 pkg/sdk/alias.go     the answer types, named here and declared in result
 pkg/sdk/result/      what every operation answers with
-pkg/sdk/tone/        ToneSpec and Setup: the request, and what somebody owns
+pkg/sdk/tone/        the contract in data/, and both documents it describes:
+                     a ToneSpec, which is an ask and the rig that answers it,
+                     and a Setup, which is what somebody owns
 pkg/sdk/tone/internal/
   gen/               Go types generated from the contract
 pkg/sdk/translate/   a request and a setup become a rig
-pkg/sdk/rig/         RigSpec, its contract in data/, and its validation
-pkg/sdk/rig/internal/
-  gen/               Go types generated from the contract
+pkg/sdk/rig/         the rig half, and its validation. The types alias tone's
 pkg/sdk/shipped/     a generated copy of marketplace/core, so the binary has it
   artists/           one file per player, and the evidence for each claim
 pkg/sdk/plan/        a resolved chain: what compile produces and editor reads
@@ -144,7 +144,6 @@ pkg/sdk/preset/      read and write a .hlx preset file
 pkg/sdk/slot/        addressing, 01A to 42C
 pkg/sdk/solve/       slopes into a matrix, and the moves that close a gap
 pkg/sdk/internal/    how the operations are done. Invisible outside pkg/sdk.
-  specdoc/           the shape both grammar pages share, so they read as a pair
   atomicfile/        writing a file so a crash leaves the old one, not half
   packed/            gzipping a generated file, and rewriting it only when it
                      changed
@@ -455,9 +454,8 @@ Changing a **gear or instrument** claim:
 3. Anything else in the file that leaned on the old source. A citation is often
    quoted twice, for the amplifier and for the instrument, and correcting one
    while leaving the other is how a file ends up arguing with itself.
-4. `just generate` if the contract changed. The generated Go types and the Go
-   types are compiled from `pkg/sdk/rig/data/rigspec.openapi.yaml` and are never
-   hand-edited.
+4. `just generate` if the contract changed. The Go types are compiled from
+   `pkg/sdk/tone/data/tonespec.openapi.yaml` and are never hand-edited.
 5. `go run main.go presets make --id <rig>` to confirm it still builds and the
    gear still resolves.
 

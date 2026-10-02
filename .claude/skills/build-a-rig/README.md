@@ -28,13 +28,13 @@ request down, resolves it and tells you which claim it has.
 
 ## How it works
 
-Three documents, and only the first two are written by a person.
+Two documents a person writes, and one of them holds two halves.
 
-A **ToneSpec** is the ask: a player, a genre, some words, gear you insist on.
-A **Setup** is what you own, which changes when you buy something rather than
-every request. A **RigSpec** is what those two resolve to: exact models, in
-order, deterministic, which is the layer worth sharing because two people
-compiling one get the same preset.
+A **ToneSpec**'s `ask:` is what you want: a player, a genre, some words, gear you
+insist on. A **Setup** is what you own, which changes when you buy something
+rather than every request. The ToneSpec's `rig:` is what those two resolve to:
+exact models, in order, deterministic, which is the half worth sharing because
+two people compiling one get the same preset.
 
 Nothing here guesses. An amplifier chosen by measuring is chosen by pushing a
 recording through every amplifier the instrument has and comparing the same nine

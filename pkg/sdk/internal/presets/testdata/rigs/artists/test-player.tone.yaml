@@ -1,7 +1,0 @@
-schema: ToneSpec
-genre: [rock]
-
-subject:
-  kind: artist
-  name: Test Player
-confidence: medium

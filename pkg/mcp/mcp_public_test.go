@@ -118,7 +118,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 								check: func(res *gomcp.CallToolResult) {
 									var got sdk.Rig
 									s.decode(res, &got)
-									s.Equal("mike-dirnt", got.Rig.ID)
+									s.Equal("mike-dirnt", got.ID)
 								},
 							},
 							{
@@ -149,7 +149,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 										"marketplace",
 										"core",
 										"examples",
-										"mike-dirnt.rig.yaml",
+										"mike-dirnt.yaml",
 									),
 									"out": fromRig,
 								},
@@ -185,35 +185,33 @@ func (s *MCPPublicTestSuite) TestServe() {
 			then: func() {
 				dir := s.T().TempDir()
 				s.Require().NoError(os.MkdirAll(filepath.Join(dir, "artists"), 0o750))
-				// Two documents, because a rig is two: the gear, and the ask it answers.
-				// What the rig extends is the ask's, since one ask departing from another is
-				// a fact about what was wanted rather than about the gear.
+				// One document with both halves. What it extends is the ask's, since one
+				// ask departing from another is a fact about what was wanted rather than
+				// about the gear that answered it.
 				s.Require().
-					NoError(os.WriteFile(filepath.Join(dir, "artists", "their-player.yaml"), []byte(`schema: RigSpec
-version: 2
+					NoError(os.WriteFile(filepath.Join(dir, "artists", "their-player.yaml"), []byte(`schema: ToneSpec
 id: their-player
 
-instrument: bass
+ask:
+  genre: [rock]
 
-chain:
-  - role: amp
-    gear: Aguilar DB51
-    evidence:
-      - { kind: cited, note: "a test says so" }
-    confidence: high
-`), 0o600))
-				s.Require().
-					NoError(os.WriteFile(
-						filepath.Join(dir, "artists", "their-player.tone.yaml"), []byte(`schema: ToneSpec
-genre: [rock]
+  extends: mike-dirnt
 
-extends: mike-dirnt
+  subject:
+    kind: artist
+    name: Their Player
 
-subject:
-  kind: artist
-  name: Their Player
+  confidence: high
 
-confidence: high
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Aguilar DB51
+      evidence:
+        - { kind: cited, note: "a test says so" }
+      confidence: high
 `), 0o600))
 
 				serverEnd, clientEnd := gomcp.NewInMemoryTransports()
@@ -247,7 +245,7 @@ confidence: high
 
 							listed := make([]string, 0, len(got.Rigs))
 							for _, r := range got.Rigs {
-								listed = append(listed, r.Rig.ID)
+								listed = append(listed, r.ID)
 							}
 
 							s.Contains(listed, "their-player")

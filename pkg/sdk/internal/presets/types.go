@@ -57,6 +57,7 @@ type Rigs interface {
 type Compiler interface {
 	// Resolve turns a rig, the ask beside it and a catalog into a chain.
 	Resolve(
+		id string,
 		spec rig.Spec,
 		intent compile.Intent,
 		cat *catalog.Catalog,
@@ -65,7 +66,7 @@ type Compiler interface {
 	// Fit drops what a device has no room for.
 	Fit(spec plan.Plan, cat *catalog.Catalog, lim plan.Limits) plan.Plan
 	// Realise turns a rig into the plan that answers it on this device.
-	Realise(spec rig.Spec, cat *catalog.Catalog) (plan.Plan, error)
+	Realise(id string, spec rig.Spec, cat *catalog.Catalog) (plan.Plan, error)
 	// Lower writes a plan into a preset.
 	Lower(doc *preset.Document, made plan.Plan, cat *catalog.Catalog) error
 	// Controllers writes what an expression pedal or footswitch moves.

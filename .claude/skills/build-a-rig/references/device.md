@@ -12,15 +12,15 @@ mise exec -- go run main.go device hardware --json
 `device play` replaces what is playing and writes nothing:
 
 ```bash
-mise exec -- go run main.go presets make --rig rig.yaml --ask ask.tone.yaml --out a.hlx
+mise exec -- go run main.go presets make --rig rig.yaml --out a.hlx
 mise exec -- go run main.go device play --preset a.hlx
 ```
 
 `presets make` rather than `presets compile`, and the difference is the ask.
-Compile lowers the gear and nothing else, so the words on a request and the words
-its genre earned reach no control. Make resolves them, and `--ask` is only needed
-where the ask does not sit beside the rig as `<stem>.tone.yaml`. Use `compile`
-for a rig with no ask behind it, such as one lifted off a device.
+Compile lowers the gear and nothing else, so the words in a document's ask and the
+words its genre earned reach no control. Make reads the ask out of the same file
+and resolves them. Use `compile` for a document with no ask in it, such as one
+lifted off a device.
 
 That is the right way to try something, and it lasts until the next preset is
 selected. Prefer it to a write every time, because a slot is flash.

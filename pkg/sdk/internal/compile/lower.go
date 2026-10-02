@@ -39,6 +39,7 @@ import (
 // model is decided here. A build that wants the corpus or a word to set one
 // goes through Resolve instead.
 func Realise(
+	id string,
 	spec rig.Spec,
 	cat *catalog.Catalog,
 ) (plan.Plan, error) {
@@ -74,9 +75,9 @@ func Realise(
 	}
 
 	// The identifier rather than a subject's name, because a subject is what
-	// somebody asked for and lives on the ask. A rig's identifier is the only
-	// name a rig has of its own, and it is the one its file is called after.
-	return plan.Plan{Name: spec.ID, Rig: spec.ID, Blocks: blocks}, nil
+	// somebody asked for and lives on the ask. It arrives as an argument since
+	// version 2: the document owns the name and a rig is a section of it.
+	return plan.Plan{Name: id, Rig: id, Blocks: blocks}, nil
 }
 
 // Lower writes a plan into a preset.

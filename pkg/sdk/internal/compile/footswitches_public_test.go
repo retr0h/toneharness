@@ -142,7 +142,7 @@ func (s *FootswitchesPublicTestSuite) TestLiftFootswitches() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			_, made, err := compile.Lift(s.presetWith(tt.body), s.cat)
+			_, _, made, err := compile.Lift(s.presetWith(tt.body), s.cat)
 			s.Require().NoError(err)
 
 			if tt.none {
@@ -239,7 +239,7 @@ func (s *FootswitchesPublicTestSuite) TestFootswitches() {
 				doc := s.presetWith(`{"dsp0": {"block1": {"@fs_index": 3, "@fs_customcolor": 3,
 					"@fs_ledcolor": 525824, "@fs_label": "Dhyana Drive"}}}`)
 
-				_, made, err := compile.Lift(doc, s.cat)
+				_, _, made, err := compile.Lift(doc, s.cat)
 				s.Require().NoError(err)
 				s.Require().NotEmpty(made.Footswitches)
 

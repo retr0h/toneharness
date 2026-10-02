@@ -43,122 +43,87 @@ var lineBreak = regexp.MustCompile(`\r\n|[\n\r\x{0085}\x{2028}\x{2029}]`)
 // errNoSubjectField reports a rig to copy whose subject has no such field.
 var errNoSubjectField = errors.New("the rig to copy has no such field to replace")
 
-// scaffold writes a copy of one rig as the start of another.
+// scaffold writes a copy of one document as the start of another.
 //
 // `extends` records that the two are related and nothing merges them: the
-// copy is a whole rig and reads as one. That is deliberate. Inheritance would
-// mean the file on disk is not the rig that compiles, and this format is
+// copy is a whole document and reads as one. That is deliberate. Inheritance
+// would mean the file on disk is not the rig that compiles, and this format is
 // meant to be read.
 //
-// The text is not a copy when the error is not nil.
+// Who it is for is replaced, the names the parent answered to are dropped, and
+// the link back to it is recorded in the ask, because what one ask departs from
+// is a fact about what was wanted rather than about the gear that answered it.
+//
+// A failure to replace is reported and the text still returned: a copy somebody
+// has to finish by hand is more use than no file.
+//
+// asked says the parent carries an ask, which is where the subject lives. A
+// document with no ask has no subject to rewrite, and the name a copy was given
+// lands in the ask scaffoldFor writes for it instead.
 func scaffold(
 	parent, from string,
 	opts NewOptions,
-) (string, error) {
-	// Nothing to replace inside the document any more. The subject, the
-	// aliases, the default and the link back all moved to the ask, so a rig is
-	// gear and an identifier, and copying one is copying the gear under a new
-	// name. scaffoldAsk does the part that needs parsing.
-	return header(from, opts) + asCopy(parent, opts), nil
-}
-
-// scaffoldAsk writes a copy of one ask as the start of another.
-//
-// The half of a copy that needs parsing. Who it is for is replaced, the names
-// the parent answered to are dropped, and the link back to it is recorded here
-// because what one ask departs from is a fact about what was wanted.
-//
-// A failure to replace is reported and the text still returned, the way the rig
-// side does it: a copy somebody has to finish by hand is more use than no file.
-func scaffoldAsk(
-	parent, from string,
-	opts NewOptions,
+	asked bool,
 ) (string, error) {
 	body := parent
 
 	var kindErr, nameErr error
 
-	// Both belong to the subject, and both are replaced first, while the
-	// text is still the ask that loaded: the lines removed below are only
+	// Both belong to the subject, and both are replaced first, while the text
+	// is still the document that loaded: the lines removed below are only
 	// removed whole where they are one line long.
-	if opts.Kind != "" {
+	if asked && opts.Kind != "" {
 		body, kindErr = replaceSubject(body, "kind", opts.Kind)
 	}
 
-	if opts.Name != "" {
+	if asked && opts.Name != "" {
 		body, nameErr = replaceSubject(body, "name", opts.Name)
 	}
 
-	return askHeader(from, opts) + asCopiedAsk(body, from), errors.Join(kindErr, nameErr)
+	return header(from, opts) + asCopy(body, from, opts),
+		errors.Join(kindErr, nameErr)
 }
 
 // asCopy writes the copy's own identity over the parent's.
 //
 // The parent is copied as text rather than parsed and re-marshalled, because
-// marshalling loses the comments and the comments are most of what a rig
+// marshalling loses the comments and the comments are most of what a document
 // carries. Every citation comes across with it, which is the point and also
 // the hazard: see the header the copy is given.
 //
-// What goes is what belongs to the parent alone: the identifier, replaced by
-// the copy's own and the link back to it, the aliases and the default, which
-// name the parent to a reader asking for it, and the header comments, which
-// describe the parent. Each is a whole line at the top level, so each is
-// matched as one. The subject's own fields are not, and are found by parsing.
-//
-// Not everything above `schema` is a header: a rig read off a device has its
-// keys in marshalled order, and `schema` comes late.
-func asCopy(
-	body string,
-	opts NewOptions,
-) string {
-	var out []string
-
-	header := true
-
-	for _, line := range breakLines(body) {
-		text, ends := lineText(line)
-
-		switch {
-		case strings.HasPrefix(text, "id: "):
-			header = false
-
-			out = append(out, "id: "+opts.ID+ends)
-		case header && (text == "" || strings.HasPrefix(text, "#")):
-		default:
-			header = false
-
-			out = append(out, line)
-		}
-	}
-
-	return strings.Join(out, "")
-}
-
-// asCopiedAsk writes the copy's own identity over the parent ask's.
-//
-// What goes is what belongs to the parent alone: the aliases and the default,
-// which name the parent to a reader asking for it, and the header comments,
-// which describe the parent. Each is a whole line at the top level, so each is
-// matched as one. The subject's own fields are not, and scaffoldAsk replaces
-// those by parsing.
+// What goes is what belongs to the parent alone: the identifier, replaced by the
+// copy's own, the aliases and the default, which name the parent to a reader
+// asking for it, and the header comments, which describe the parent. The link
+// back is written into the ask. The subject's own fields are not matched here and
+// are found by parsing.
 //
 // The corrections go too, and that is the one that would do real harm if it
 // stayed. A correction is a round of somebody listening to a particular rig, so
 // carrying it into a copy would attribute a verdict to gear nobody has heard.
-func asCopiedAsk(
+//
+// A parent with no `ask:` gets none here. scaffoldFor writes a fresh one, where
+// the parent's own gear is in hand to take an instrument from.
+//
+// Not everything above `schema` is a header: a document read off a device has
+// its keys in marshalled order, and `schema` comes late.
+func asCopy(
 	body, from string,
+	opts NewOptions,
 ) string {
 	var out []string
 
 	header, inCorrections := true, false
+	correctionsAt := ""
 
 	for _, line := range breakLines(body) {
 		text, ends := lineText(line)
+		field := strings.TrimLeft(text, " ")
 
 		// A correction is a block, not a line, so it ends at the next thing
-		// starting in the first column.
+		// starting no further in than the key that opened it.
 		if inCorrections {
-			if text == "" || strings.HasPrefix(line, " ") || strings.HasPrefix(line, "#") {
+			if field == "" || strings.HasPrefix(field, "#") ||
+				indentOf(text) > indentOf(correctionsAt) {
 				continue
 			}
 
@@ -166,14 +131,18 @@ func asCopiedAsk(
 		}
 
 		switch {
-		case strings.HasPrefix(text, "aliases:"), strings.HasPrefix(text, "default: "):
-		case strings.HasPrefix(text, "corrections:"):
-			inCorrections = true
-		case strings.HasPrefix(text, "schema: "):
+		case strings.HasPrefix(field, "aliases:"), strings.HasPrefix(field, "default: "):
+		case strings.HasPrefix(field, "corrections:"):
+			inCorrections, correctionsAt = true, text
+		case strings.HasPrefix(text, "id: "):
 			header = false
 
-			out = append(out, line, "extends: "+from+ends)
-		case header && (text == "" || strings.HasPrefix(text, "#")):
+			out = append(out, "id: "+opts.ID+ends)
+		case text == "ask:":
+			header = false
+
+			out = append(out, line, "  extends: "+from+ends)
+		case header && (field == "" || strings.HasPrefix(field, "#")):
 		default:
 			header = false
 
@@ -182,6 +151,13 @@ func asCopiedAsk(
 	}
 
 	return strings.Join(out, "")
+}
+
+// indentOf is how far in a line starts.
+func indentOf(
+	text string,
+) int {
+	return len(text) - len(strings.TrimLeft(text, " "))
 }
 
 // lineText splits a line into what it says and what ends it.
@@ -195,10 +171,10 @@ func lineText(
 	return line, ""
 }
 
-// replaceSubject sets one of a rig's subject fields in the rig's own text and
-// leaves every other byte as it was.
+// replaceSubject sets one of an ask's subject fields in the document's own text
+// and leaves every other byte as it was.
 //
-// A rig names `kind` and `name` in other places at the same indent, a
+// A document names `kind` and `name` in other places at the same indent, a
 // device's name and each snapshot's among them, so the field is found by
 // parsing rather than by matching a line. The value is then replaced where it
 // stands, encoded as YAML so a name like `a: b` stays a name, and the result
@@ -248,6 +224,9 @@ func replaceSubject(
 // subjectField finds the node holding one of the subject's fields, or an
 // empty node, and whether it sits inside a flow collection, where a comma or
 // a brace ends a bare value.
+//
+// Under `ask`, which is where the subject lives: the ask is the half saying who
+// a sound is for, and the rig beside it in the same document is gear.
 func subjectField(
 	doc *yaml.Node,
 	key string,
@@ -257,8 +236,9 @@ func subjectField(
 		top = doc.Content[0]
 	}
 
-	subject := valueOf(top, "subject")
-	flow := top.Style&yaml.FlowStyle != 0 || subject.Style&yaml.FlowStyle != 0
+	ask := valueOf(top, "ask")
+	subject := valueOf(ask, "subject")
+	flow := ask.Style&yaml.FlowStyle != 0 || subject.Style&yaml.FlowStyle != 0
 
 	return valueOf(subject, key), flow
 }
@@ -465,8 +445,9 @@ func loaderReads(
 // onlyFieldChanged reports whether after loads as before does with one of the
 // subject's fields set to value, and with nothing else about it changed.
 //
-// Read by the decoder a rig is loaded through, so that what is compared is
-// what a reader of the copy will get.
+// Read by the decoder a document is loaded through, so that what is compared is
+// what a reader of the copy will get. The subject is under the ask, which is
+// where who a sound is for lives.
 func onlyFieldChanged(
 	before, after, key, value string,
 ) bool {
@@ -475,7 +456,13 @@ func onlyFieldChanged(
 	errWas := loader.Unmarshal([]byte(before), &was)
 	errNow := loader.Unmarshal([]byte(after), &now)
 
-	subject, ok := was["subject"].(map[string]any)
+	ask, held := was["ask"].(map[string]any)
+
+	subject, ok := map[string]any(nil), false
+	if held {
+		subject, ok = ask["subject"].(map[string]any)
+	}
+
 	if ok {
 		subject[key] = value
 	}
@@ -483,7 +470,12 @@ func onlyFieldChanged(
 	return errWas == nil && errNow == nil && ok && reflect.DeepEqual(was, now)
 }
 
-// header says what a reader of the copy needs to know before believing it.
+// header warns a reader of a copy what it inherited.
+//
+// Two things, and the second is the one easiest to leave in place without
+// noticing: every citation came across with the gear, and what a person wrote
+// about somebody else came across with the ask, where it reads as description
+// rather than as a citation.
 func header(
 	from string,
 	opts NewOptions,
@@ -491,41 +483,19 @@ func header(
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "# %s\n#\n", opts.ID)
-	fmt.Fprintf(&b, "# Copied from %s, which is what `extends` above records. "+
+	fmt.Fprintf(&b, "# Copied from %s, which is what `extends` below records. "+
 		"Nothing\n", from)
-	b.WriteString("# merges the two: this is a whole rig and reads as one, " +
-		"and editing it\n# does not touch the rig it came from.\n#\n")
+	b.WriteString("# merges the two: this is a whole document and reads as " +
+		"one, and editing\n# it does not touch the one it came from.\n#\n")
 	b.WriteString("# Every citation below came across with the copy, " +
 		"including the ones for\n# gear and technique you are about to " +
 		"change. A claim about a different\n# rig is not evidence for this " +
 		"one. Re-check what you edit, and drop the\n# evidence you cannot " +
-		"stand behind.\n\n")
-
-	return b.String()
-}
-
-// askHeader warns a reader of a copied ask what it inherited.
-//
-// The same warning the rig gets, for the same reason, and one more: what a
-// person wrote about somebody else is the easiest kind of claim to leave in
-// place without noticing, because it reads as description rather than as a
-// citation.
-func askHeader(
-	from string,
-	opts NewOptions,
-) string {
-	var b strings.Builder
-
-	fmt.Fprintf(&b, "# What %s is asked for.\n#\n", opts.ID)
-	fmt.Fprintf(&b, "# Copied from %s, which is what `extends` below records. "+
-		"Nothing\n", from)
-	b.WriteString("# merges the two: this is a whole ask and reads as one, " +
-		"and editing it\n# does not touch the one it came from.\n#\n")
-	b.WriteString("# The words, the technique and the confidence all came " +
-		"across with the copy,\n# and they describe the subject they were " +
-		"written for. Re-check what you edit\n# and drop what you cannot " +
-		"stand behind. The corrections did not come across:\n# a verdict is " +
-		"somebody listening to one rig, and this is a different one.\n\n")
+		"stand behind.\n#\n")
+	b.WriteString("# The words, the technique and the confidence came across " +
+		"too, and they\n# describe the subject they were written for. The " +
+		"corrections did not: a\n# verdict is somebody listening to one rig, " +
+		"and this is a different one.\n\n")
 
 	return b.String()
 }

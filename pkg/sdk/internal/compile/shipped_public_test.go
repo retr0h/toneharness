@@ -21,10 +21,10 @@
 package compile_test
 
 import (
-	"bytes"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -61,14 +61,14 @@ func (s *ShippedPublicTestSuite) words(
 	spec, err := tone.Load(f)
 	s.Require().NoError(err)
 
-	if spec.Words == nil {
+	if spec.Ask == nil || spec.Ask.Words == nil {
 		return nil
 	}
 
 	// The terms alone. What the vocabulary can say about a word does not
 	// depend on why it is believed.
-	out := make([]string, 0, len(*spec.Words))
-	for _, w := range *spec.Words {
+	out := make([]string, 0, len(*spec.Ask.Words))
+	for _, w := range *spec.Ask.Words {
 		out = append(out, w.Term)
 	}
 
@@ -81,9 +81,9 @@ func (s *ShippedPublicTestSuite) words(
 // Read through the embedded copy rather than off disk, so this counts no
 // directories and travels wherever the package does.
 func (s *ShippedPublicTestSuite) TestEveryShippedAskUsesTheVocabulary() {
-	paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.tone.yaml"))
+	paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.yaml"))
 	s.Require().NoError(err)
-	s.Require().NotEmpty(paths, "no asks found to check")
+	s.Require().NotEmpty(paths, "no documents found to check")
 
 	for _, path := range paths {
 		s.Run(filepath.Base(path), func() {
@@ -105,9 +105,9 @@ func (s *ShippedPublicTestSuite) TestEveryShippedAskUsesTheVocabulary() {
 // run. mike-dirnt shipped claiming both minimal-drive and grit-on-attack, and
 // nothing caught it until the words started moving knobs.
 func (s *ShippedPublicTestSuite) TestEveryShippedAskAnswersEachAxisOnce() {
-	paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.tone.yaml"))
+	paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.yaml"))
 	s.Require().NoError(err)
-	s.Require().NotEmpty(paths, "no asks found to check")
+	s.Require().NotEmpty(paths, "no documents found to check")
 
 	for _, path := range paths {
 		s.Run(filepath.Base(path), func() {
@@ -133,20 +133,18 @@ func (s *ShippedPublicTestSuite) TestEveryExampleUsesTheVocabulary() {
 			"marketplace",
 			"core",
 			"examples",
-			"*.tone.yaml",
+			"*.yaml",
 		),
 	)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(paths, "no examples found to check")
 
 	for _, path := range paths {
-		// The directory holds a setup beside the asks, which says what
-		// somebody owns rather than how it should sound and has no words in
-		// it at all.
-		body, err := os.ReadFile(path) //nolint:gosec // a path this test globbed
-		s.Require().NoError(err)
-
-		if bytes.Contains(body, []byte("schema: "+tone.SetupSchema)) {
+		// The directory holds two other kinds beside the documents: a setup,
+		// which says what somebody owns, and a plan, which is the device half of
+		// a preset. Neither has a word in it.
+		if strings.HasSuffix(path, ".setup.yaml") ||
+			strings.HasSuffix(path, ".plan.yaml") {
 			continue
 		}
 

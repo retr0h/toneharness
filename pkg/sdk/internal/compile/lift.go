@@ -36,19 +36,19 @@ import (
 // keyed by device. The name alone cannot identify a model — 661 of them share
 // 468 names — so a rig that only carried the name would rebuild into a
 // different preset.
+// The identifier comes back beside the rig rather than on it. A rig is a section
+// of a document since version 2 and the document owns the name, so lifting one
+// off a preset answers with both and the caller assembles them.
 func Lift(
 	doc *preset.Document,
 	cat *catalog.Catalog,
-) (rig.Spec, plan.Plan, error) {
+) (string, rig.Spec, plan.Plan, error) {
 	c, err := doc.Spec()
 	if err != nil {
-		return rig.Spec{}, plan.Plan{}, fmt.Errorf("reading the chain: %w", err)
+		return "", rig.Spec{}, plan.Plan{}, fmt.Errorf("reading the chain: %w", err)
 	}
 
 	device := cat.Device
-	// The contract states one version and the generated types carry it as a
-	// kind of its own, so this is a conversion rather than a number.
-	version := rig.SpecVersion(rig.Version)
 
 	entries := make([]rig.ChainEntry, 0, len(c.Blocks))
 
@@ -60,10 +60,9 @@ func Lift(
 	switches := footswitchesOf(doc, cat)
 	movers := controllersOf(doc, cat)
 
+	id := slug.Of(doc.Data.Meta.Name)
+
 	out := rig.Spec{
-		Schema:     rig.SchemaName,
-		Version:    &version,
-		ID:         slug.Of(doc.Data.Meta.Name),
 		Chain:      entries,
 		Instrument: instrumentFieldFor(c, cat),
 	}
@@ -77,7 +76,7 @@ func Lift(
 	// other away and read the file again to get it back.
 	made := plan.Plan{
 		Name:         doc.Data.Meta.Name,
-		Rig:          out.ID,
+		Rig:          id,
 		Blocks:       c.Blocks,
 		Snapshots:    deref(snapshots),
 		Footswitches: deref(switches),
@@ -90,11 +89,11 @@ func Lift(
 	// something that does not meet its own contract is a bug here, not input
 	// worth passing on.
 	if err := rig.Validate(out); err != nil {
-		return rig.Spec{}, plan.Plan{}, fmt.Errorf(
+		return "", rig.Spec{}, plan.Plan{}, fmt.Errorf(
 			"lifting %q: %w", doc.Data.Meta.Name, err)
 	}
 
-	return out, made, nil
+	return id, out, made, nil
 }
 
 // deref reads an optional list as a list, since absent and empty are the same

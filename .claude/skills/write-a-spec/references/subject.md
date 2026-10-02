@@ -82,14 +82,14 @@ moves only the settings. **Getting the amplifier right and the drive wrong is a
 fixable near miss; getting the amplifier wrong is not.**
 
 So a player's rig changes by era and by song, and two that differ at the
-amplifier are siblings rather than variations. Each is a whole pair with its own `id`, and
+amplifier are siblings rather than variations. Each is a whole document with its own `id`, and
 one ask carries `default: true`, because asking for "a Mike Dirnt sound" with no
 qualifier has to land somewhere.
 
 ### `extends` records lineage, and nothing merges
 
-People expect this to work the other way, so it is worth saying plainly: **a pair
-that extends another still holds everything itself.** Nothing is inherited,
+People expect this to work the other way, so it is worth saying plainly: **a
+document that extends another still holds everything itself.** Nothing is inherited,
 nothing is looked up at build time, and deleting the parent leaves the child
 working. All `extends` does is record where the ask came from, which is what lets
 `rigs show` list a rig's variants underneath it.

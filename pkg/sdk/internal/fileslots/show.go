@@ -32,8 +32,8 @@ import (
 
 // Show reads the rig one slot of a file describes.
 //
-// A rig, not a rendering of one. RigSpec is what this project reads, writes and
-// exchanges, so it is what looking at a preset produces, and what comes out
+// A rig, not a rendering of one. The ToneSpec is what this project reads, writes
+// and exchanges, so it is what looking at a preset produces, and what comes out
 // here compiles back into the preset it came from, unchanged.
 func (f *Flows) Show(
 	ctx context.Context,
@@ -93,14 +93,14 @@ func (f *Flows) reading(
 		return result.Reading{Name: doc.Data.Meta.Name}, nil
 	}
 
-	spec, made, err := f.compiler().Lift(doc, cat)
+	id, spec, made, err := f.compiler().Lift(doc, cat)
 	if err != nil {
 		return result.Reading{}, fmt.Errorf(
 			"reading slot %s: %w", slotpkg.Label(slot), err)
 	}
 
 	return result.Reading{
-		Name: doc.Data.Meta.Name, Doc: doc, Rig: spec, Plan: made,
+		Name: doc.Data.Meta.Name, ID: id, Doc: doc, Rig: spec, Plan: made,
 	}, nil
 }
 

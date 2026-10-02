@@ -59,8 +59,6 @@ func (s *DevicePublicTestSuite) made(
 	state *rig.DeviceState,
 ) plan.Plan {
 	spec := rig.Spec{
-		Schema:     rig.SchemaName,
-		ID:         "test",
 		Instrument: rig.InstrumentBass,
 		Chain: []rig.ChainEntry{
 			{Role: rig.RoleAmp, Gear: "Ampeg SVT"},

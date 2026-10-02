@@ -36,8 +36,8 @@ import (
 // the prose stays out of the rig, and the resolution stays where the chain is.
 //
 // The zero value is an ask that was never written down, which is ordinary. A
-// RigSpec read off disk carries settings somebody already applied, so it is an
-// answer rather than a request and needs no words at all.
+// document read off disk carries settings somebody already applied, so its rig
+// is an answer rather than a request and needs no words at all.
 type Intent struct {
 	// Words are how it should sound, in the words a person would use.
 	Words []Word

@@ -121,8 +121,8 @@ func cabReading(
 	held plan.Params,
 ) sdk.Reading {
 	return sdk.Reading{
+		ID: "measured",
 		Rig: rig.Spec{
-			Schema: rig.SchemaName, ID: "measured",
 			Instrument: rig.InstrumentBass,
 			Chain:      []rig.ChainEntry{{Role: rig.RoleCab, Gear: "2x15 Brute"}},
 		},
@@ -140,8 +140,8 @@ func eqReading(
 	held plan.Params,
 ) sdk.Reading {
 	return sdk.Reading{
+		ID: "probed",
 		Rig: rig.Spec{
-			Schema: rig.SchemaName, ID: "probed",
 			Instrument: rig.InstrumentBass,
 			Chain:      []rig.ChainEntry{{Role: rig.RoleEQ, Gear: "Simple EQ"}},
 		},

@@ -1,6 +1,6 @@
 ---
 name: write-a-spec
-description: Write or correct the two documents this project's formats are made of, a ToneSpec and a RigSpec, by hand. Covers which of the three layers a fact belongs to, naming gear the way a musician does, signal order, the musical settings vocabulary and what decides a value, the words an ask may carry, a song written as sections, what an expression pedal moves, recording what somebody thought of the result, and what belongs to a Setup instead. Use when asked to write, read, correct or explain a ToneSpec, a RigSpec, a Plan or a Setup, when a field is refused, or when deciding which document a fact goes in.
+description: Write or correct a ToneSpec by hand, the one document this project's format is made of, holding an ask and the rig that answers it. Covers which half a fact belongs in, naming gear the way a musician does, signal order, the musical settings vocabulary and what decides a value, the words an ask may carry, a song written as sections, what an expression pedal moves, recording what somebody thought of the result, and what belongs to a Setup instead. Use when asked to write, read, correct or explain a ToneSpec, a Plan or a Setup, when a field is refused, or when deciding which half a fact goes in.
 compatibility: Requires a toneharness checkout with mise available. Every command runs through `mise exec -- go run main.go`, never a bare `toneharness`.
 license: MIT
 metadata:
@@ -12,16 +12,15 @@ metadata:
 
 ## 1. The contract is the grammar, not a page about it
 
-Two hand-authored contracts, each embedded in the package that reads it:
+One hand-authored contract, embedded in the package that reads it:
+`pkg/sdk/tone/data/tonespec.openapi.yaml`. A document's `ask:` is what somebody
+may ask for and its `rig:` is the gear that answers it, with the rig required.
 
-- `pkg/sdk/tone/data/tonespec.openapi.yaml` is what somebody may ask for
-- `pkg/sdk/rig/data/rigspec.openapi.yaml` is the gear that answers it
-
-**Read them.** Their `description:` fields are the grammar, they list every
-field and its allowed values, and the tool refuses a document that breaks them.
-Nothing renders them into prose, because there is nothing to add: the Go types,
-the validator and every client are generated from the same file, so a second
-copy of the rules would only drift.
+**Read it.** Its `description:` fields are the grammar, they list every field and
+its allowed values, and the tool refuses a document that breaks them. Nothing
+renders it into prose, because there is nothing to add: the Go types, the
+validator and every client are generated from the same file, so a second copy of
+the rules would only drift.
 
 Never work from a list of fields, kinds or words written into this skill. A list
 here is right the day it is written and wrong after the next change, with
@@ -34,16 +33,17 @@ mise exec -- go run main.go rigs show --id mike-dirnt --json
 mise exec -- go run main.go tone build --ask request.yaml --json
 ```
 
-## 2. Three layers, and only two are typed
+## 2. Three layers, two documents, one contract
 
-|              | holds                                        | written by                |
-| ------------ | -------------------------------------------- | ------------------------- |
-| **ToneSpec** | what somebody means, and why it is believed  | a person                  |
-| **RigSpec**  | gear in signal order, named as a person does | a person, or the tool     |
-| **Plan**     | that rig realised on one device              | the compiler, never a person |
+|            | holds                                        | written by                   |
+| ---------- | -------------------------------------------- | ---------------------------- |
+| **`ask:`** | what somebody means, and why it is believed  | a person                     |
+| **`rig:`** | gear in signal order, named as a person does | a person, or the tool        |
+| **Plan**   | that rig realised on one device              | the compiler, never a person |
 
-A Plan has no contract, and that is the rule behind the split: **becoming a file
-is not what earns a contract. Being typed by somebody is.**
+The first two are sections of one ToneSpec. A Plan is a document of its own and
+has no contract, which is the rule behind the split: **becoming a file is not
+what earns a contract. Being typed by somebody is.**
 
 ## Two surfaces, one SDK
 
@@ -68,7 +68,7 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 
 | The question                                                     | Read                                                      |
 | ---------------------------------------------------------------- | --------------------------------------------------------- |
-| which document a fact belongs in, and how a pair is stored        | [references/pair.md](references/pair.md)                  |
+| which half a fact belongs in, and how a document is stored        | [references/halves.md](references/halves.md)              |
 | naming gear, signal order, gear the device does not model         | [references/gear.md](references/gear.md)                   |
 | what a control is set to, and what decides it                     | [references/settings.md](references/settings.md)           |
 | the words an ask carries, and what each one does                  | [references/terms.md](references/terms.md)                 |

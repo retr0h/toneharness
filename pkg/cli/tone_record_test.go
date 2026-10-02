@@ -46,9 +46,20 @@ type RecordTestSuite struct {
 func (s *RecordTestSuite) SetupTest() {
 	s.ask = filepath.Join(s.T().TempDir(), "ask.yaml")
 
-	s.Require().NoError(os.WriteFile(s.ask, []byte(
-		"schema: ToneSpec\ngenre: [punk]\n"), 0o600))
+	s.Require().NoError(os.WriteFile(s.ask, []byte(document), 0o600))
 }
+
+// document is the file a round is appended to: one document, with the ask a
+// round lands in and the gear the contract requires.
+const document = `schema: ToneSpec
+id: a-round
+ask:
+  genre: [punk]
+rig:
+  instrument: bass
+  chain:
+    - {role: amp, gear: Ampeg SVT}
+`
 
 // read loads the ask back the way anything else would.
 func (s *RecordTestSuite) read() tone.Spec {
@@ -90,10 +101,10 @@ func (s *RecordTestSuite) TestRecord() {
 					map[audio.Figure]float64{audio.KeyCentroid: 0.4}, true))
 
 				got := s.read()
-				s.Require().NotNil(got.Corrections)
-				s.Require().Len(*got.Corrections, 1)
+				s.Require().NotNil(got.Ask.Corrections)
+				s.Require().Len(*got.Ask.Corrections, 1)
 
-				was := (*got.Corrections)[0]
+				was := (*got.Ask.Corrections)[0]
 				s.Require().Equal("punk", was.Ask, "in the words that were used")
 				s.Require().NotNil(was.At)
 				s.Require().Regexp(`^\d{4}-\d{2}-\d{2}$`, *was.At)
@@ -122,7 +133,7 @@ func (s *RecordTestSuite) TestRecord() {
 				s.Require().NoError(record(s.ask, "punk", s.moved(), nil, false))
 
 				got := s.read()
-				path := (*(*got.Corrections)[0].Changed)[0].Path
+				path := (*(*got.Ask.Corrections)[0].Changed)[0].Path
 
 				s.Require().NotContains(path, " ")
 				s.Require().NotContains(path, "HD2_")
@@ -139,7 +150,7 @@ func (s *RecordTestSuite) TestRecord() {
 				s.Require().NoError(record(s.ask, "punk", s.moved(), nil, true))
 				s.Require().NoError(record(s.ask, "darker", s.moved(), nil, false))
 
-				got := *s.read().Corrections
+				got := *s.read().Ask.Corrections
 				s.Require().Len(got, 2)
 				s.Require().Equal("punk", got[0].Ask)
 				s.Require().Equal("darker", got[1].Ask, "in the order they were asked")
@@ -156,7 +167,7 @@ func (s *RecordTestSuite) TestRecord() {
 				s.Require().NoError(record(s.ask, "punk", s.moved(),
 					map[audio.Figure]float64{audio.KeyCentroid: 7.2}, false))
 
-				was := (*s.read().Corrections)[0]
+				was := (*s.read().Ask.Corrections)[0]
 				s.Require().Contains(*was.Reason, "did not reach it")
 				s.Require().Contains(*was.Reason, "7.2")
 				s.Require().Contains(*was.Reason, string(audio.KeyCentroid))
@@ -175,7 +186,7 @@ func (s *RecordTestSuite) TestRecord() {
 			// A file that will not load.
 			name: "an ask that is not a tone spec",
 			then: func() {
-				s.Require().NoError(os.WriteFile(s.ask, []byte("schema: RigSpec\n"), 0o600))
+				s.Require().NoError(os.WriteFile(s.ask, []byte("schema: Setup\n"), 0o600))
 
 				s.Require().Error(record(s.ask, "punk", nil, nil, true))
 			},
@@ -187,8 +198,7 @@ func (s *RecordTestSuite) TestRecord() {
 				dir := s.T().TempDir()
 				at := filepath.Join(dir, "ask.yaml")
 
-				s.Require().NoError(os.WriteFile(at, []byte(
-					"schema: ToneSpec\ngenre: [punk]\n"), 0o600))
+				s.Require().NoError(os.WriteFile(at, []byte(document), 0o600))
 				s.Require().NoError(os.Chmod(dir, 0o500))
 
 				defer func() { s.Require().NoError(os.Chmod(dir, 0o700)) }()

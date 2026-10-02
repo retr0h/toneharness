@@ -1,0 +1,191 @@
+# Paul McCartney — Wings
+#
+# The ask: who he is, how he played, and what he played. The gear this
+# resolves to is in paul-mccartney.yaml beside it.
+
+schema: ToneSpec
+id: paul-mccartney
+
+ask:
+  aliases: [macca, mccartney]
+
+  subject:
+    kind: artist
+    name: Paul McCartney
+    band: Wings
+    era: mid to late seventies touring
+    years: { from: 1975, to: 1979 }
+
+  instrument: bass
+
+  # No record of theirs carries a genre tag, so this is general knowledge about a
+  # well-known player rather than anything measured, recorded the same way the
+  # manifests' own `genres_by: llm` tags are. `measure genres` earns words only
+  # from tagged records, so this places the ask and earns it nothing.
+  genre: [rock]
+
+  words:
+    - term: mid-forward
+      evidence:
+        - kind: user
+          url: https://www.rickresource.com/forum/viewtopic.php?t=411797
+          note: >-
+            "I've also been obsessed with that middley mid, cut through the mix
+            flatwound tone of the live Wings Rockshow/Wings Over America
+            album", and "that cut through the mix, but in a not bright way".
+          caveat: >-
+            an enthusiast in 2014 describing a record by ear, which is the
+            weakest thing this word rests on. It agrees with the measurement
+            below and that is the whole of its value.
+        - kind: audio
+          measured: { mid: 0.15 }
+          against: { mid: 0.05 }
+          note: >-
+            15% of his energy sits in the mid band across Silly Love Songs, With
+            a Little Luck and Goodnight Tonight, against a middle of 5% across
+            the sixteen players measured. Above the middle, not clear of it, so
+            the word is not earned and the records point the way the citations
+            do.
+          caveat: >-
+            the three records measured before these were Beatles takes from 1966
+            and 1969, a decade before the rig this describes, and they read 0%.
+            Measuring the era the rig claims is what moved this figure.
+    # `clean` was earned from Rain and Come Together, which are not this rig.
+    # Measured from the Wings records this rig describes he reads 18% of his
+    # energy above the fundamental against a middle of 22% across the corpus,
+    # which is not the clean end of the corpus and earns nothing.
+    # `dark` was here on a thread nobody opened. Its measurement never earned it
+    # either, 166Hz against a middle of 172Hz, and a witness to the tour
+    # contradicts it: "in every single pic from those shows you can clearly see
+    # that all knobs are up full. And there's a few times in the show 'Rock
+    # Show' film where when he takes the bass off to go play piano he turns
+    # down every knob 1 by 1."
+    # https://www.rickresource.com/forum/viewtopic.php?f=2&t=411797&start=15
+    #
+    # `quiet-strings` was here on the same kind of thread and nothing replaced
+    # it. Flatwounds being quieter is a fact about strings, not an observation
+    # about this player, and `played.strings` already carries it.
+    #
+    # `neck-forward` was here on a model's say-so and the tour contradicts it
+    # twice over. The selector is seen in the middle position in the footage,
+    # and the bass went out with an overwound BRIDGE coil built for it, which
+    # is the opposite end of the instrument from the word.
+
+  played:
+    - gear: Rickenbacker 4001S
+      strings: flat
+      evidence:
+        # Cite the person, not the thread: this one held the instrument, and the
+        # post directly above his is somebody guessing "Rotosound's are a
+        # possibility but I don't know".
+        - kind: user
+          url: https://www.rickresource.com/forum/viewtopic.php?t=13
+          note: >-
+            Mark Arnquist, 11 August 2000: "When I worked on his bass in the mid
+            1970's he did NOT have rotosound strings of any kind on it. They were
+            flats but not rickenbacker or roto's. I have no idea what they were."
+            First-hand, on this instrument, immediately before the tour that
+            produced the live album measured for this rig. The brand is nobody's
+            to name: the man who restrung it does not know it.
+          caveat: >-
+            the post is signed "Mark". The interview below is what makes him
+            Arnquist, on the zero fret and the nameplate holes he describes in
+            both.
+        - kind: cited
+          url: http://www.thecanteen.com/arnquist.html
+          note: >-
+            Mark Arnquist, Rickenbacker's lead man in finishing and repair "from
+            July 1972 to October 1976", to John F. Crowley: "The P.M. bass came
+            back to the factory prior to the 'Wings over America tour.'" The
+            horseshoe magnets were dead, so "we opted for a custom coil/pickup
+            for 'The Man.' The idea was to overwind a stock coil for a 4001."
+            It went back out "restrung with the strings that it came in with",
+            which is what makes his account of them first-hand.
+          caveat: >-
+            the resistance figures people quote with this, a 7k neck and a 9k
+            bridge, are not on this page. They come from a forum post relaying a
+            phone call. The page gives no numbers and makes no claim about tone.
+            This is also the touring instrument rather than the studio one.
+
+  technique:
+    attack: pick
+    evidence:
+      - kind: cited
+        url: https://www.guitarworld.com/artists/bassists/paul-mccartney-wings-silly-love-songs
+        note: >-
+          Chris Jisi, Guitar World, quoting Laurence Juber, who played guitar
+          in Wings from 1978: "Juber confirmed that Paul played his
+          flatwound-strung Rickenbacker 4001S with a heavy-gauge pick".
+          Juber on the difference the rig has to cover: "Paul plays with a very
+          hard touch onstage, but he has a real sensitivity to dynamics and
+          note duration in the studio."
+        caveat: >-
+          Juber joined in 1978, so he is first-hand for Goodnight Tonight and
+          not for the two earlier records here; Jisi extrapolates back to
+          Silly Love Songs. `position` is gone rather than guessed: the same
+          Wings-era discussion has him heard as bridge pickup soloed and seen
+          with the selector in the middle, which is about pickups and says
+          nothing about where his right hand sat.
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Acoustic 360
+      capture: direct
+      stage: true
+      substitute:
+        gear: Acoustic 360
+        evidence:
+          - kind: llm
+            note: >-
+              the tour rig was a power amplifier and a preamp into JBLs, and
+              this device models none of those parts. The Acoustic 360 is the
+              only Wings-era bass amplifier it carries, so it stands in for a
+              rig it is not.
+        confidence: low
+      evidence:
+        - kind: cited
+          url: https://guitar.com/features/interviews/paul-mccartney-beatles-wings/
+          note: >-
+            "But the '75/'76 world tour was another matter. He had a pretty
+            sizeable rig there, with two Crown 300A amps and an Audio Master
+            preamp, and these drove a set of JBL speakers, a Roy Clare 2x12
+            midrange bin and JBL horns." John Hammel, McCartney's assistant
+            since the Beatles split, to Mark Cunningham, published September
+            1993 and put online in 2019. The same passage puts the Acoustic 360
+            on the 1972 and 1973 tours rather than this one, and ends the era
+            this rig covers on something else again: "for the last UK tour in
+            1979, Paul switched to using 120-watt Fender Bassmans and three 4x12
+            cabinets with angled speakers."
+          caveat: >-
+            so the Acoustic 360 here is the wrong tour's amplifier, kept only
+            because nothing models a Crown, an Audio Master or a JBL. What the
+            preset sounds like is a 360, and what he played through was not.
+      confidence: low
+
+    - role: cab
+      gear: Acoustic 361
+      capture: direct
+      stage: true
+      substitute:
+        gear: Acoustic 360
+        evidence:
+          - kind: llm
+            note: >-
+              the device carries a 1x18 named for the 360 rather than the 361.
+        confidence: medium
+      evidence:
+        - kind: cited
+          url: https://guitar.com/features/interviews/paul-mccartney-beatles-wings/
+          note: >-
+            the same passage gives the 1975 and 1976 tour "a set of JBL
+            speakers, a Roy Clare 2x12 midrange bin and JBL horns", so the 361
+            belongs to the earlier tours along with the 360 head it was part of.
+          caveat: >-
+            nothing here models a JBL or a Roy Clare, so the cabinet is the
+            wrong tour's for the same reason the amplifier is.
+      confidence: low

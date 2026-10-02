@@ -56,12 +56,17 @@ func (s *TranslatePublicTestSuite) SetupSuite() {
 }
 
 // ask reads a request written the way a person writes one.
+//
+// Read through the whole document rather than on its own, because the contract
+// describes an ask as a section of one and a body checked outside it would be
+// checked against nothing. A row writes the ask's own fields at the left margin,
+// which is the shape they read in, and this nests them.
 func (s *TranslatePublicTestSuite) ask(
 	body string,
-) tone.Spec {
+) tone.Ask {
 	// A genre on every ask, because the contract requires one and most cases
-	// below are about the rest of the document. One that names its own keeps it.
-	head := "schema: ToneSpec\n"
+	// below are about the rest of it. One that names its own keeps it.
+	head := ""
 	if !strings.Contains(body, "genre:") {
 		// A genre the corpus has not measured, so it names no target and the
 		// cases below see only what they are about.
@@ -71,13 +76,33 @@ func (s *TranslatePublicTestSuite) ask(
 		// rows asserting the shape of the gear they named were failing on a
 		// block they had not asked for. A row that wants a target names punk
 		// itself.
-		head += "genre: [rock]\n"
+		head = "genre: [rock]\n"
 	}
 
-	spec, err := tone.Load(strings.NewReader(head + body))
+	// The gear is required, so the document carries the least that will do. What
+	// a row says about a chain is in its ask, and Translate builds the rig.
+	spec, err := tone.Load(strings.NewReader(
+		"schema: ToneSpec\nid: an-ask\nask:\n" + nest(head+body) +
+			"rig:\n  instrument: bass\n" +
+			"  chain:\n    - {role: amp, gear: Ampeg SVT}\n"))
 	s.Require().NoError(err)
+	s.Require().NotNil(spec.Ask)
 
-	return spec
+	return *spec.Ask
+}
+
+// nest moves an ask's own text under `ask:`. A blank line stays blank.
+func nest(
+	body string,
+) string {
+	lines := strings.Split(strings.TrimSuffix(body, "\n"), "\n")
+	for i, line := range lines {
+		if line != "" {
+			lines[i] = "  " + line
+		}
+	}
+
+	return strings.Join(lines, "\n") + "\n"
 }
 
 // setup reads what somebody has.
@@ -204,7 +229,7 @@ func (s *TranslatePublicTestSuite) TestTranslate() {
 			},
 		},
 		{
-			// What makes a RigSpec worth sharing.
+			// What makes the rig half worth sharing.
 			name: "the same ask twice is the same rig",
 			then: func() {
 				body := "words:\n  - term: punchy\nlike:\n  recording: " + s.recording() + "\n"
@@ -594,62 +619,6 @@ like:
 			},
 		},
 		{
-			// What a rig is named after.
-			//
-			// Who the rig is for is the ask's to say and no longer sits on
-			// the rig, so the identifier is what carries the attribution
-			// across: it is how a rig is found again, and a rig named after
-			// nobody could not be.
-			name: "the identifier follows the ask",
-			then: func() {
-				tests := []struct {
-					name string
-					give string
-					want string
-				}{
-					{
-						name: "a player",
-						give: "like:\n  artist: Mike Dirnt\n  band: Green Day\n",
-						want: "mike-dirnt-green-day",
-					},
-					{
-						name: "a band",
-						give: "like:\n  band: Green Day\n",
-						want: "green-day",
-					},
-					{
-						name: "a song",
-						give: "like:\n  song: Longview\n",
-						want: "longview",
-					},
-					{
-						// The genre is not in the name. Every ask carries one now, so it
-						// would prefix every identifier in the repository with a word and
-						// distinguish nothing.
-						name: "a genre and nobody else",
-						give: "genre: [punk]\n",
-						want: "a-sound",
-					},
-					{
-						name: "nobody in particular",
-						give: "",
-						want: "a-sound",
-					},
-				}
-
-				for _, tt := range tests {
-					s.Run(tt.name, func() {
-						got, _, err := translate.Translate(
-							s.ask(tt.give+"gear:\n  - gear: LA Studio Comp\n    role: comp\n"),
-							s.setup(""), s.deps)
-
-						s.Require().NoError(err)
-						s.Require().Equal(tt.want, got.ID)
-					})
-				}
-			},
-		},
-		{
 			// An entry that names none.
 			name: "gear with no role is looked for anywhere",
 			then: func() {
@@ -828,7 +797,7 @@ like:
 				}
 
 				_, notes, err := translate.Translate(
-					s.ask("schema: ToneSpec\ngenre: [punk]\n"+
+					s.ask("genre: [punk]\n"+
 						"gear:\n  - {gear: Ampeg SVT, role: amp}\n"+
 						"words:\n  - term: bright\n  - term: sparkly\n"+
 						"  - term: pick attack audible\n"),
@@ -859,7 +828,7 @@ like:
 			name: "nothing checking words says nothing",
 			then: func() {
 				_, notes, err := translate.Translate(
-					s.ask("schema: ToneSpec\ngenre: [punk]\n"+
+					s.ask("genre: [punk]\n"+
 						"gear:\n  - {gear: Ampeg SVT, role: amp}\n"+
 						"words:\n  - term: sparkly\n"),
 					s.setup(""), s.deps)
@@ -898,45 +867,6 @@ like:
 
 				s.Require().Contains(said, "HD2_AmpA30FawnNrm")
 				s.Require().NotContains(said, "resolved to HD2_PreampA30FawnNrm")
-			},
-		},
-		{
-			// A bug this had for as long as `identify` had a slug rule of its
-			// own.
-			//
-			// It mapped a space to a hyphen, deleted everything else and
-			// never collapsed the runs that left behind, so "Earth, Wind &
-			// Fire" became "earth-wind--fire". The contract's pattern for an
-			// id is `^[a-z0-9]+(-[a-z0-9]+)*$`, which forbids two hyphens
-			// together, so Translate resolved the entire chain, chose an
-			// amplifier by measurement, and then refused to write the rig it
-			// had just built. Any ampersand, comma or double space in a band,
-			// artist or song did it.
-			//
-			// The rule is `slug.Of` now, which every other identifier in the
-			// repository already used, including one 260 lines away in this
-			// same file.
-			name: "an ampersand in a name still validates",
-			then: func() {
-				for _, name := range []string{
-					"Earth, Wind & Fire",
-					"Sly & The Family Stone",
-					"AC/DC",
-					"Red  Hot  Chili Peppers",
-					"Motley_Crue",
-				} {
-					s.Run(name, func() {
-						out, _, err := translate.Translate(
-							s.ask("like:\n  band: "+name+"\n  recording: "+s.recording()+"\n"),
-							s.setup(""), s.deps)
-
-						s.Require().NoError(err, "%q makes a rig the contract refuses", name)
-						s.Require().NotContains(out.ID, "--",
-							"two hyphens together are what the pattern forbids")
-						s.Require().NoError(rig.Validate(out),
-							"the rig it built has to satisfy the contract it is validated against")
-					})
-				}
 			},
 		},
 	} {

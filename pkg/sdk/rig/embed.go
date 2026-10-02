@@ -20,17 +20,16 @@
 
 package rig
 
-import _ "embed"
+import "github.com/retr0h/toneharness/pkg/sdk/tone"
 
 // Schema is what a rig is checked against.
 //
-// Beside the code that checks it rather than in a directory of its own, for
-// the same reason the catalog and the corpus keep their data beside
-// themselves: a package that cannot be moved without remembering to bring a
-// file with it is a package nobody can move.
+// The one contract, which lives beside `pkg/sdk/tone` because that package owns
+// the document a rig is a section of. It was `data/rigspec.openapi.yaml` here
+// until version 2, when the two contracts merged: ten schemas were defined in
+// both and generating each twice produced two Go types of the same shape and
+// different identities.
 //
-// The same file the Go types are generated from, so a constraint stated once
-// is both a type and a check.
-//
-//go:embed data/rigspec.openapi.yaml
-var Schema []byte
+// The same file the Go types are generated from, so a constraint stated once is
+// both a type and a check.
+var Schema = tone.Schema

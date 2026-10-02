@@ -19,9 +19,3 @@
 // DEALINGS IN THE SOFTWARE.
 
 package rig
-
-// Version is the contract this package reads and writes.
-//
-// A rig states it, so a file says which version validated it rather than
-// leaving somebody to infer it from which fields are present.
-const Version = 2

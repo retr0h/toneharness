@@ -127,6 +127,8 @@ func (s *NewPublicTestSuite) TestNewCases() {
 					dir string
 					// write the rig once first, so the call under test finds it there.
 					twice bool
+					// a genre nobody gave.
+					noGenre bool
 
 					// the gear the written rig must name, by role and by position.
 					wantAmp   string
@@ -240,7 +242,7 @@ func (s *NewPublicTestSuite) TestNewCases() {
 						name:    "a rig already written",
 						twice:   true,
 						err:     rigs.ErrExists,
-						errText: "test-player.rig.yaml",
+						errText: "test-player.yaml",
 					},
 					{
 						name:    "a directory it cannot write into",
@@ -263,6 +265,14 @@ func (s *NewPublicTestSuite) TestNewCases() {
 						name: "no directory at all",
 						dir:  "none",
 						err:  rigs.ErrNoDir,
+					},
+					{
+						// Refused here rather than caught by the contract later. The ask
+						// requires a genre, and "genre minimum number of items is 1" from
+						// a validator does not say which flag was left out.
+						name:    "no genre at all",
+						noGenre: true,
+						err:     rigs.ErrNoGenre,
 					},
 				}
 
@@ -294,6 +304,10 @@ func (s *NewPublicTestSuite) TestNewCases() {
 
 						if tt.noName {
 							o.Name = ""
+						}
+
+						if tt.noGenre {
+							o.Genre = nil
 						}
 
 						if tt.amp != "" {
@@ -342,22 +356,21 @@ func (s *NewPublicTestSuite) TestNewCases() {
 						all, err := rigs.Load(dir)
 						s.Require().NoError(err)
 						s.Require().Len(all, 1)
-						s.Require().Equal("test-player", all[0].ID)
 
 						if tt.wantAmp != "" {
-							s.Require().Equal(tt.wantAmp, rig.GearName(all[0], rig.RoleAmp))
+							s.Require().Equal(tt.wantAmp, rig.GearName(all[0].Rig, rig.RoleAmp))
 						}
 
 						if tt.wantCab != "" {
-							s.Require().Equal(tt.wantCab, rig.GearName(all[0], rig.RoleCab))
+							s.Require().Equal(tt.wantCab, rig.GearName(all[0].Rig, rig.RoleCab))
 						}
 
 						if tt.wantFirst != "" {
-							s.Require().Equal(tt.wantFirst, all[0].Chain[0].Gear)
+							s.Require().Equal(tt.wantFirst, all[0].Rig.Chain[0].Gear)
 						}
 
 						for i, want := range tt.wantRoles {
-							s.Require().Equal(want, all[0].Chain[i].Role)
+							s.Require().Equal(want, all[0].Rig.Chain[i].Role)
 						}
 
 						// What was written, from the answer rather than from the
@@ -374,22 +387,21 @@ func (s *NewPublicTestSuite) TestNewCases() {
 			},
 		},
 		{
-			// The second write failing.
+			// The one write refusing.
 			//
-			// A rig with no ask beside it is a legal state, so the danger is
-			// not a broken pair. It is leaving a rig somebody did not ask
-			// for, under an identifier they will now be told is taken, when
-			// the call as a whole failed.
-			name: "a half written pair leaves nothing behind",
+			// There was a pair here until version 2, and the danger was leaving the
+			// first file behind when the second stopped: a rig nobody asked for,
+			// under an identifier they would then be told was taken. One document
+			// cannot be half written, and what is left to hold is that the file
+			// already there is not touched.
+			name: "a document already there is left alone",
 			then: func() {
 				dir := s.T().TempDir()
 				artists := filepath.Join(dir, "artists")
 				s.Require().NoError(os.MkdirAll(artists, 0o750))
 
-				// The ask already there and the rig not, which is the one arrangement that
-				// gets past the first write and fails the second.
-				ask := filepath.Join(artists, "taken.tone.yaml")
-				s.Require().NoError(os.WriteFile(ask, []byte("schema: ToneSpec\n"), 0o600))
+				at := filepath.Join(artists, "taken.yaml")
+				s.Require().NoError(os.WriteFile(at, []byte("# somebody's own\n"), 0o600))
 
 				_, err := rigs.New(context.Background(), rigs.NewOptions{
 					Dir: dir, ID: "taken", Name: "Somebody", Instrument: "bass",
@@ -398,10 +410,12 @@ func (s *NewPublicTestSuite) TestNewCases() {
 				})
 
 				s.Require().ErrorIs(err, rigs.ErrExists)
-				s.Require().Contains(err.Error(), "taken.tone.yaml")
-				s.Require().NoFileExists(filepath.Join(artists, "taken.yaml"),
-					"the rig this call wrote is taken back when the ask stops it")
-				s.Require().FileExists(ask, "the file that was already there is untouched")
+				s.Require().Contains(err.Error(), "taken.yaml")
+
+				body, err := os.ReadFile(at) //nolint:gosec // a path this test wrote
+				s.Require().NoError(err)
+				s.Require().Equal("# somebody's own\n", string(body),
+					"the file that was already there is untouched")
 			},
 		},
 	} {

@@ -34,6 +34,10 @@ import (
 // wrote, byte for byte. Producing both and letting the caller pick beats two
 // operations that read the same slot twice.
 type Reading struct {
+	// ID is what the rig this preset describes is called. A document owns the
+	// name since version 2, and a preset lifted off a device has no document
+	// until something writes one, so it comes back beside the rig.
+	ID string `json:"id"`
 	// Name is what the preset is called. A slot has one even when it holds
 	// nothing, because a device names every slot whether or not anybody has
 	// put anything in it.

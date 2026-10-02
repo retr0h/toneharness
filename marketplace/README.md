@@ -34,28 +34,30 @@ Or ask your agent, which is the shorter version of the same thing:
 > - _"What rigs are there for bass?"_
 > - _"Build the community rig for Justin Chancellor and put it on my pedal."_
 
-## What is in a pair
+## What is in a document
 
-Each subject is two files. `<slug>.rig.yaml` is the RigSpec, the gear.
-`<slug>.tone.yaml` is the ToneSpec beside it, what somebody wanted of that gear.
-One describes an answer and the other describes the question, which is why they
-are not one file.
+Each subject is one file, `<slug>.yaml`, holding both halves. `rig:` is the gear
+and is required; `ask:` is what somebody wanted of it. One describes an answer
+and the other the question, and they travel together because neither is much use
+without the other.
 
-Both say which they are, which they did not always: the rig was a bare
-`<slug>.yaml` and only the ask was marked. A bare one still loads, because that
-is what a rig read off a device is, so nothing you already have breaks. Nothing
-writes one, and two files claiming the same name are reported rather than one of
+They were two files until version 2 of the contract, `<slug>.rig.yaml` and
+`<slug>.tone.yaml`. The pair was one-to-one in every case that existed and an
+ask with no rig was already refused, so the second file was an annotation kept
+in step by hand.
+
+The identifier is `id:` inside the file and the filename stem is expected to
+match it. Two files claiming the same identifier are reported rather than one of
 them quietly winning.
 
 The instrument is a field on the rig rather than a directory, so a bass rig and
 a guitar rig sit side by side and `rigs list` has an instrument column. Do not
 add `bass/` and `guitar/` levels: the loader reads `artists/` and nothing else.
 
-[write-a-spec](../.claude/skills/write-a-spec/SKILL.md) owns every field on both
-and says which document a fact belongs in. The contracts are
-[rigspec.openapi.yaml](../pkg/sdk/rig/data/rigspec.openapi.yaml) and
+[write-a-spec](../.claude/skills/write-a-spec/SKILL.md) owns every field and
+says which half a fact belongs in. The contract is
 [tonespec.openapi.yaml](../pkg/sdk/tone/data/tonespec.openapi.yaml), and a
-document that violates either is refused at load rather than half-read.
+document that violates it is refused at load rather than half-read.
 
 ## Submitting one
 

@@ -41,6 +41,12 @@ type Rigs struct {
 // because every reader of one wants the other in the same breath: a listing
 // shows the subject's name from the ask beside the amplifier from the rig.
 type Known struct {
+	// ID is what the document is called, and the stem of its filename.
+	//
+	// Here rather than on the rig since version 2. One document holds both
+	// halves and owns the name, so neither half carries one that could disagree
+	// with the other.
+	ID string `json:"id"`
 	// Rig is the gear, in order.
 	Rig rig.Spec `json:"rig"`
 	// Ask is what somebody wanted, where it was written down.
@@ -48,7 +54,7 @@ type Known struct {
 	// Absent is ordinary rather than an error. Somebody's own directory holds
 	// rigs they wrote, and nothing obliges them to write down the ask that
 	// produced one.
-	Ask *tone.Spec `json:"ask"`
+	Ask *tone.Ask `json:"ask"`
 }
 
 // Rig is one rig, and what reading it needs that the rig does not carry.

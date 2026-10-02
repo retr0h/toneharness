@@ -41,7 +41,10 @@ func (s *FormatPublicTestSuite) TestSet() {
 		want result.Format
 		err  bool
 	}{
-		{name: "a rig", in: "rigspec", want: result.FormatRig},
+		{name: "a document", in: "tonespec", want: result.FormatRig},
+		// What it was called until the gear became a section of the ToneSpec.
+		// Still taken, because it is a value people have typed into scripts.
+		{name: "the name it had", in: "rigspec", want: result.FormatRig},
 		{name: "the device's own file", in: "hlx", want: result.FormatPreset},
 		{
 			// Refused when the flag is parsed, rather than quietly written
@@ -62,7 +65,7 @@ func (s *FormatPublicTestSuite) TestSet() {
 
 			if tt.err {
 				s.Require().ErrorIs(err, result.ErrUnknownFormat)
-				s.Require().ErrorContains(err, "use rigspec or hlx")
+				s.Require().ErrorContains(err, "use tonespec or hlx")
 			} else {
 				s.Require().NoError(err)
 			}
@@ -91,7 +94,7 @@ func (s *FormatPublicTestSuite) TestFlag() {
 			as := result.FormatRig
 
 			flags := pflag.NewFlagSet("export", pflag.ContinueOnError)
-			flags.Var(&as, "as", "rigspec for a rig, hlx for the device's own file")
+			flags.Var(&as, "as", "tonespec for a document, hlx for the device's own file")
 
 			err := flags.Parse(tt.args)
 
@@ -106,7 +109,7 @@ func (s *FormatPublicTestSuite) TestFlag() {
 			// Typed as a string with the default shown, which is exactly what
 			// the usage said when the flag was a plain string.
 			s.Require().Contains(flags.FlagUsages(), `--as string`)
-			s.Require().Contains(flags.FlagUsages(), `(default "rigspec")`)
+			s.Require().Contains(flags.FlagUsages(), `(default "tonespec")`)
 		})
 	}
 }

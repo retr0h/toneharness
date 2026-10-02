@@ -23,13 +23,13 @@ artifact honest.
 ## What is in it
 
 Curated knowledge about how a sound is built: which gear a player or style uses,
-and what somebody wanted of it. Each subject is a pair, a RigSpec for the gear
-and a ToneSpec beside it for the ask. The RigSpec is the same format a preset
-reads back as and the same one that compiles to a device.
+and what somebody wanted of it. Each subject is one ToneSpec, `rig:` for the
+gear and `ask:` for what was wanted of it. It is the same format a preset reads
+back as and the same one that compiles to a device.
 
 This is the only data in the repository that is ours. The device catalog and the
 gear map come from Line 6's files, so we cannot ship those.
 
 [write-a-spec](../../../.claude/skills/write-a-spec/SKILL.md) says how to write
-one. [../rig/data/rigspec.openapi.yaml](../rig/data/rigspec.openapi.yaml) is the
-contract, and `pkg/sdk/rig` refuses to load a rig that violates it.
+one. [../tone/data/tonespec.openapi.yaml](../tone/data/tonespec.openapi.yaml) is
+the contract, and `pkg/sdk/tone` refuses to load a document that violates it.

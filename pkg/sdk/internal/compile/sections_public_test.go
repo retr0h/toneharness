@@ -223,8 +223,6 @@ func (s *SectionsPublicTestSuite) TestSections() {
 				s.Require().NoError(err)
 
 				spec := rig.Spec{
-					Schema:     rig.SchemaName,
-					ID:         "sections",
 					Instrument: rig.InstrumentBass,
 					Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
 					Sections:   &[]rig.Section{{Name: "Chorus", Play: roles("drive")}},

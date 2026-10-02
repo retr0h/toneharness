@@ -60,33 +60,33 @@ func Backing(
 	claimed := map[string]bool{}
 
 	for _, e := range all.merged() {
-		spec := e.spec
-		claimed[spec.ID] = true
-		one := result.Backing{ID: spec.ID}
+		spec := e.specOf()
+		claimed[e.idOf()] = true
+		one := result.Backing{ID: e.idOf()}
 
 		// The era and the years are the ask's. Which records back a rig is a
 		// question about the subject and the window somebody claimed for them,
 		// and a rig with no ask claims no window: its records are listed and
 		// none of them can be outside a range nobody stated.
-		if e.ask != nil && e.ask.Subject != nil {
-			if e.ask.Subject.Era != nil {
-				one.Era = *e.ask.Subject.Era
+		if e.askOf() != nil && e.askOf().Subject != nil {
+			if e.askOf().Subject.Era != nil {
+				one.Era = *e.askOf().Subject.Era
 			}
 
-			if e.ask.Subject.Years != nil {
-				one.From, one.To = e.ask.Subject.Years.From, e.ask.Subject.Years.To
+			if e.askOf().Subject.Years != nil {
+				one.From, one.To = e.askOf().Subject.Years.From, e.askOf().Subject.Years.To
 			}
 		}
 
 		one.Direct, one.Both, one.Captured, one.Stage = rooms(spec.Chain)
 
-		records, err := recordsFor(corpus, spec.ID)
+		records, err := recordsFor(corpus, e.idOf())
 		if err != nil {
 			return nil, err
 		}
 
-		if e.ask != nil {
-			one.Misnamed = misnamed(e.ask.Played, records)
+		if e.askOf() != nil {
+			one.Misnamed = misnamed(e.askOf().Played, records)
 		}
 
 		for _, r := range records {

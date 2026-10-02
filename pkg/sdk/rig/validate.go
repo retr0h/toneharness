@@ -18,9 +18,9 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// Package rig validates a RigSpec against the contract it declares.
+// Package rig validates the gear half of a document against its contract.
 //
-// The types in gen/ are generated from data/rigspec.openapi.yaml, and
+// The types come from tone/data/tonespec.openapi.yaml, and
 // generation gives them shape but not rules: nothing stops a required field
 // being empty or an enumeration holding a word that is not in it.
 //
@@ -80,7 +80,9 @@ func Validate(
 }
 
 // schemaName is the contract a rig is checked against.
-const schemaName = "RigSpec"
+// Rig rather than RigSpec. The gear is a section of one document since version 2
+// and names no schema of its own; the document above it does.
+const schemaName = "Rig"
 
 // contract returns the schema, parsed once.
 //

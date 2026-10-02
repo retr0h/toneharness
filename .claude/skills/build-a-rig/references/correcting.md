@@ -535,7 +535,7 @@ not an addition.
 ## Where the edit goes
 
 Into the **rig**, not the request. A knob position is only meaningful against a
-chain. So "the mids are honky" becomes a change to the RigSpec's settings, and
+chain. So "the mids are honky" becomes a change to the rig's settings, and
 what the session taught about what was wanted goes back into the ToneSpec as a
 word, with the round itself recorded in `corrections`. Those three fields are the
 `write-a-spec` skill's, including what decides a value and how far a word moves

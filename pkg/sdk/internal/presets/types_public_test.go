@@ -94,7 +94,7 @@ func (s *TypesPublicTestSuite) TestCompiler() {
 
 	comp := presetmocks.NewMockCompiler(s.ctrl)
 	comp.EXPECT().Resolve(
-		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(plan.Plan{}, nil, nil, compile.Compensated{}, want)
 
 	_, err := presets.Make(context.Background(), s.options(presets.Deps{Compiler: comp}))

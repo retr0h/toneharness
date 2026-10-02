@@ -77,7 +77,7 @@ func (f *Flows) deviceReading(
 		return result.Reading{Name: name, Doc: doc}, nil
 	}
 
-	spec, made, err := f.compiler().Lift(doc, cat)
+	id, spec, made, err := f.compiler().Lift(doc, cat)
 	if err != nil {
 		return result.Reading{}, fmt.Errorf(
 			"reading slot %s: %w", slotpkg.Label(slot), err)
@@ -94,7 +94,7 @@ func (f *Flows) deviceReading(
 	made.Footswitches = deref(f.translator().Footswitches(got, cat))
 	made.Controllers = deref(f.translator().Controllers(got, cat))
 
-	return result.Reading{Name: name, Doc: doc, Rig: spec, Plan: made}, nil
+	return result.Reading{Name: name, ID: id, Doc: doc, Rig: spec, Plan: made}, nil
 }
 
 // deref reads an optional list as a list, since absent and empty are the same

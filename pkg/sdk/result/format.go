@@ -35,16 +35,22 @@ type Format string
 
 // The formats an export can take.
 const (
-	// FormatRig is a RigSpec: this project's own format, and the default.
+	// FormatRig is a ToneSpec: this project's own document, and the default.
 	// Gear a person recognises, portable to other devices, and the thing
 	// every other operation speaks.
-	FormatRig Format = "rigspec"
+	FormatRig Format = "tonespec"
 	// FormatPreset is the device's own file. A faithful copy, carrying the
 	// routing and snapshots a rig models but a person never chooses.
 	FormatPreset Format = "hlx"
 )
 
-// ErrUnknownFormat reports a format name that is neither rigspec nor hlx.
+// formatRigWas is what FormatRig was called until version 2 of the contract,
+// when the gear became a section of the ToneSpec rather than a document of its
+// own. Still taken, because it is a flag value people have typed into scripts
+// and nothing is gained by breaking one.
+const formatRigWas Format = "rigspec"
+
+// ErrUnknownFormat reports a format name that is neither tonespec nor hlx.
 var ErrUnknownFormat = errors.New("unknown format")
 
 // String is the format's name.
@@ -57,6 +63,10 @@ func (f *Format) Set(
 	switch Format(name) {
 	case FormatRig, FormatPreset:
 		*f = Format(name)
+
+		return nil
+	case formatRigWas:
+		*f = FormatRig
 
 		return nil
 	default:

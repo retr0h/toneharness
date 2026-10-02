@@ -170,10 +170,10 @@ func invalid(
 // `chain.0.role`. Somebody looking at their own YAML sees a list, so the steps
 // that are positions are written as ones: `chain[0].role`.
 //
-// The same rule `rig` applies to a RigSpec, deliberately. The two contracts are
-// read by the same person holding both files, and a ToneSpec error that spelled a
-// position differently from a RigSpec error would read as a different kind of
-// fault rather than the same one in the other document.
+// The same rule `rig` applies to the gear half, deliberately. One document is
+// checked by two packages, and an error from one that spelled a position
+// differently would read as a different kind of fault rather than the same one
+// further down the same file.
 func fieldOf(
 	err *openapi3.SchemaError,
 ) string {

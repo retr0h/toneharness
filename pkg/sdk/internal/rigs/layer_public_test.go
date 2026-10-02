@@ -36,34 +36,37 @@ type LayerPublicTestSuite struct {
 	suite.Suite
 }
 
-// userRig is a pair of somebody's own, about "Their Player": the rig under
-// <stem>.yaml and the ask beside it under <stem>.tone.yaml.
+// userRig is a document of somebody's own, about "Their Player", under
+// <stem>.yaml.
 //
-// Two files because the subject, the aliases and the link to what a rig departs
-// from are all things a person wrote, and those live on the ask. extra is a line
-// for the ask, such as aliases or extends, or empty.
+// One document. The subject, the aliases and the link to what a rig departs
+// from are all things a person wrote, so they are in the ask; the gear below it
+// is what answered. extra is a line for the ask, such as aliases or extends, or
+// empty.
 func userRig(
 	stem, id, extra string,
 ) map[string]string {
 	return map[string]string{
-		stem + ".yaml": "schema: RigSpec\nversion: 2\nid: " + id + `
+		stem + ".yaml": "schema: ToneSpec\nid: " + id + `
 
-instrument: bass
+ask:
+  genre: [rock]
+  ` + extra + `
+  subject:
+    kind: artist
+    name: Their Player
 
-chain:
-  - role: amp
-    gear: Aguilar DB51
-    evidence:
-      - { kind: cited, note: "a test says so" }
-    confidence: high
-`,
-		stem + ".tone.yaml": "schema: ToneSpec\ngenre: [rock]\n" + extra + `
+  confidence: high
 
-subject:
-  kind: artist
-  name: Their Player
+rig:
+  instrument: bass
 
-confidence: high
+  chain:
+    - role: amp
+      gear: Aguilar DB51
+      evidence:
+        - { kind: cited, note: "a test says so" }
+      confidence: high
 `,
 	}
 }
@@ -173,14 +176,14 @@ func (s *LayerPublicTestSuite) TestLayered() {
 						// One mistake in their directory does not stop every shipped rig
 						// building. The listing is where it is reported.
 						name:    "a file of theirs that is not a rig, beside a shipped one",
-						files:   map[string]string{"broken.yaml": "schema: RigSpec\nid: broken\n"},
+						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nid: broken\n"},
 						id:      "mike-dirnt",
 						want:    "Mike Dirnt",
 						listErr: "broken.yaml",
 					},
 					{
 						name:    "a file of theirs that is not a rig, asked for by its filename",
-						files:   map[string]string{"broken.yaml": "schema: RigSpec\nid: broken\n"},
+						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nid: broken\n"},
 						id:      "broken",
 						findErr: "broken.yaml",
 						listErr: "broken.yaml",
@@ -189,15 +192,16 @@ func (s *LayerPublicTestSuite) TestLayered() {
 						// Building the shipped rig instead would quietly pass over the
 						// one they wrote to replace it.
 						name:    "a file of theirs that is not a rig, named for a shipped one",
-						files:   map[string]string{"mike-dirnt.tone.yaml": "schema: RigSpec\n"},
+						files:   map[string]string{"mike-dirnt.yaml": "schema: ToneSpec\n"},
 						id:      "mike-dirnt",
-						findErr: "mike-dirnt.tone.yaml",
-						listErr: "mike-dirnt.tone.yaml",
+						findErr: "mike-dirnt.yaml",
+						listErr: "mike-dirnt.yaml",
 					},
 					{
 						name: "a file of theirs that is not a rig, stating a shipped rig's alias",
 						files: map[string]string{
-							"other.yaml": "schema: RigSpec\nid: other\naliases: [DIRNT, 7]\n",
+							"other.yaml": "schema: ToneSpec\nid: other\n" +
+								"ask:\n  aliases: [DIRNT, 7]\n",
 						},
 						id:      "mike-dirnt",
 						findErr: "other.yaml",
@@ -284,7 +288,7 @@ func (s *LayerPublicTestSuite) TestLayered() {
 								subjects := make([]string, 0, len(listed.Rigs))
 								for _, r := range listed.Rigs {
 									s.Require().NotNil(r.Ask,
-										"%s ships with no ask beside it", r.Rig.ID)
+										"%s ships with no ask", r.ID)
 									s.Require().NotNil(r.Ask.Subject)
 									subjects = append(subjects, r.Ask.Subject.Name)
 								}
@@ -311,12 +315,12 @@ func (s *LayerPublicTestSuite) TestLayered() {
 
 						s.Require().NoError(showErr)
 						s.Require().NoError(findErr)
-						// The subject is the ask's, and a lookup returns the rig, so this
-						// is also the check that the two are paired by filename stem.
+						// The subject is the ask's, and a lookup returns the gear, so
+						// this is also the check that one document carries both.
 						s.Require().NotNil(shown.Ask)
 						s.Require().NotNil(shown.Ask.Subject)
 						s.Require().Equal(tt.want, shown.Ask.Subject.Name)
-						s.Require().Equal(shown.Rig.ID, found.Rig.ID)
+						s.Require().Equal(shown.ID, found.ID)
 
 						got := make([]string, 0, len(shown.Variants))
 						for _, v := range shown.Variants {
@@ -327,7 +331,7 @@ func (s *LayerPublicTestSuite) TestLayered() {
 							s.Require().Contains(got, want)
 						}
 
-						s.Require().NotContains(got, found.Rig.ID, "a rig is not its own variant")
+						s.Require().NotContains(got, found.ID, "a rig is not its own variant")
 					})
 				}
 			},

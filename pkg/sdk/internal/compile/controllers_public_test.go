@@ -352,7 +352,7 @@ func (s *ControllersPublicTestSuite) TestLift() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						_, made, err := compile.Lift(s.controllerPreset(tt.body), s.cat)
+						_, _, made, err := compile.Lift(s.controllerPreset(tt.body), s.cat)
 						s.Require().NoError(err)
 						s.Equal(tt.want, made.Controllers)
 					})
@@ -370,7 +370,7 @@ func (s *ControllersPublicTestSuite) TestLift() {
 				doc.Data.Tone["dsp0"]["block0"] = json.RawMessage(
 					`{"@model": "HD2_AmpSVBeastNrm", "@position": 0, "@enabled": true}`)
 
-				_, made, err := compile.Lift(doc, s.cat)
+				_, _, made, err := compile.Lift(doc, s.cat)
 				s.Require().NoError(err)
 				s.Nil(made.Controllers)
 			},

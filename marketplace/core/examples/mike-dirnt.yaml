@@ -1,0 +1,257 @@
+# A worked ToneSpec, showing every part of the ask on one subject.
+#
+# The rig beside this file, mike-dirnt.yaml, is what answered it. This one says
+# who it is for, how it should sound and how it is played; that one says what
+# the gear is and why each piece of it is believed to be there.
+#
+# Most asks are a tenth of this. A hand-written one is a subject, an instrument
+# and a few words. This one is filled in to show what each part is for.
+#
+# Validate with:  toneharness rigs show --id mike-dirnt
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: mike-dirnt
+
+ask:
+  genre: [pop-punk, punk]
+
+  # Who this belongs to. `kind` also takes song, genre, band or sound, so a rig
+  # does not have to be attributed to a person.
+  subject:
+    kind: artist
+    name: Mike Dirnt
+    band: Green Day
+    # A player's rig changes. Saying when this one applies is more honest than
+    # implying it is timeless.
+    era: Dookie through American Idiot
+    # The same era as years, so `rigs records` can hold his records to it.
+    years: { from: 1994, to: 2004 }
+
+  # The one to assume when somebody names the subject and not the request. A
+  # player whose sound changed has several, and one of them is what "sounds
+  # like them" means.
+  default: true
+
+  instrument: bass
+
+  # How it should sound, in the words a person would use. Describe the result,
+  # not the control — "raise the mids" is an instruction, "mid-forward" is a
+  # description, and only the second survives being read on other hardware.
+  words:
+    # Each word carries why it is believed, the same way a piece of gear does.
+    # These are the claims least likely to be checkable from a preset, so the
+    # difference between "somebody asserted it" and "somebody listened" is the
+    # whole value of writing them down.
+    - term: mid-forward
+      evidence:
+        - { kind: llm }
+    # One term per axis. This rig used to claim minimal-drive as well, which is
+    # the same question answered twice: apply both and the knob lands where it
+    # started. grit-on-attack is the more specific of the two, and it says where
+    # the dirt lives rather than only how much there is.
+    - term: grit-on-attack
+      evidence:
+        - { kind: llm }
+    - term: tight-low-end
+      evidence:
+        - { kind: llm }
+    - term: short-decay
+      evidence:
+        - { kind: llm }
+    - term: audible-pick-attack
+      evidence:
+        # A timestamp says somebody went and listened. Do not write one you did
+        # not check: it is the most checkable claim in the file and the easiest
+        # to invent.
+        - kind: llm
+          caveat: nobody has listened for this
+
+  # What makes the sound, which no device models and every measured figure
+  # carries. It resolves to no block and changes no preset: it is here so that
+  # two rigs on the same amplifier read as different sounds, and so that a
+  # figure measured from a record is not read as the amplifier's doing.
+
+  # What makes the sound, which no device models and every measured figure
+  # carries. It resolves to no block and changes no preset: it is here so that
+  # two rigs on the same amplifier read as different sounds, and so that a
+  # figure measured from a record is not read as the amplifier's doing.
+  played:
+    - gear: Fender Mike Dirnt Signature Precision Bass
+      # `strings` takes round, flat, tape or unknown. Say `unknown` rather than
+      # leaving it out when nobody has established it: the two look the same in a
+      # file and mean different things. Bootsy Collins and Tim Commerford both
+      # carry `unknown` with a note saying where somebody already looked.
+      strings: round
+      evidence:
+        - kind: cited
+          url: https://www.notreble.com/buzz/2026/08/22/mike-dirnt-is-selling-american-idiot-tour-basses-and-a-fender-used-to-record-nimrod/
+          note: >-
+            "two American Idiot-era Fender Mike Dirnt Signature Precisions used on
+            tour", from coverage of him selling his own instruments
+          caveat: says toured, not recorded
+
+  technique:
+    # What sets the string moving. The one part that is always true.
+    attack: pick
+    # Where along the string, which decides fundamental against harmonics.
+    position: bridge
+    # Said rather than left out: the notes ringing on is half of what this
+    # bassline sounds like, and a reader should not have to guess whether
+    # nobody thought about it.
+    muting: none
+    # Why any of the above is believed. Nothing measures how somebody plays
+    # out of a preset, so a claim here was asserted or it was watched.
+    evidence:
+      - kind: llm
+        note: widely said to be a pick player
+        caveat: not sourced to anything anybody opened
+
+  # Device parameters under their own names, as distinct from the musical
+  # settings above. A rig written by hand has none of these; one lifted from a
+  # preset has all of them, and stating them means exactly those — no catalog
+  # defaults are added on top.
+  #
+  # They are here rather than dropped for portability because somebody dialling
+  # Sag by ear produces the one kind of knowledge nothing else can.
+  #
+  #   params:
+  #     Sag: 0.5
+  #     BiasX: 0.5
+
+  # Where these numbers were arrived at. Advisory, never a restriction — a
+  # Helix Floor owner can still use this, they just know the tuning was not done
+  # for them and should re-tune rather than trust.
+
+  # How far to trust the whole ask. Set by a person, not derived: a claim
+  # asserting high confidence with no evidence behind it is worth showing as
+  # unverified whatever it says about itself.
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  # The signal path, in order. Order is not decoration: a compressor ahead of
+  # the amp squeezes what the amp is fed, one after it levels what comes out.
+  chain:
+    - role: comp
+      gear: Teletronix LA-2A
+      settings:
+        level: 0.5
+      # Nobody has confirmed Dirnt uses this specific compressor. It is here
+      # because 88% of bass chains in the corpus have one, so the honest
+      # confidence is low and the evidence says so.
+      evidence:
+        - kind: corpus
+          note: 88% of 158 measured bass chains hold a compressor
+      confidence: low
+
+    - role: amp
+      # Written by hand this would just be "Ampeg SVT". The fuller name is what
+      # a rig lifted off a device carries, and it is here to show what that
+      # looks like. Which of the two channels it resolves to is the plan's
+      # answer, not this document's: 661 models share only 468 names, and a rig
+      # that pinned one would answer the same question twice.
+      gear: Ampeg SVT® (bright channel)
+      settings:
+        drive: 0.47
+        bass: 0.52
+        mid: 0.71
+        treble: 0.85
+      evidence:
+        # A citation is the strongest evidence: somebody asked him. Check that
+        # the link still reaches the article. This one used to point at
+        # bassplayer.com, which now redirects the whole site to a section index
+        # and answers 200 while saying nothing about anybody.
+        - kind: cited
+          url: https://equipboard.com/pros/mike-dirnt
+          note: >-
+            "for most of the record [American Idiot], Dirnt used an Ampeg SVT
+            bass amplifier"
+        # A video does not prove settings, but it does show the rig.
+        - kind: video
+          url: https://www.youtube.com/watch?v=EXAMPLE
+          at: "1:42"
+          note: SVT stack visible behind him
+          caveat: live footage — the room and the PA are in what you hear
+        # Audio evidence carries measurements rather than conclusions. These
+        # compare against the same measurement taken from a generated preset;
+        # they are not knob positions, because a record is not an amplifier.
+        #
+        # The keys are what `toneharness measure` writes, and that is the point of
+        # them: a figure can only be compared against the same figure taken
+        # somewhere else if both sides call it the same thing. Write this block
+        # with `toneharness measure --dir <stems> --evidence` rather than by hand,
+        # then add the url.
+        - kind: audio
+          url: https://www.youtube.com/watch?v=EXAMPLE2
+          at: "1:20-1:45"
+          note: longview, bass isolated from the mix before measuring
+          caveat: >-
+            measures the record rather than the player: the amp, the mic, the
+            desk and the master are all in these numbers
+          measured:
+            low: 0.91
+            mid: 0.09
+            high: 0
+            centroid: 175
+            transient: 0.74
+            decay: 0.82
+            dynamics: 7.8
+            harmonics: 0.35
+            lean: 0.73
+        # Where a number came from the corpus rather than from him.
+        - kind: corpus
+          note: >-
+            treble 0.85 is the median across 28 measured uses of this amp; Line
+            6 state 0.68 as the default, which is measurably not what players use
+      confidence: high
+
+    - role: cab
+      gear: Ampeg 8x10
+      evidence:
+        # An entry can be less well attested than the one above it, and saying
+        # so is the point. The shipped rig has the same split: the amplifier is
+        # cited to an interview and the cabinet is assumed from it.
+        - kind: llm
+          note: assumed from the amplifier, which Ampeg sold as a stack
+      confidence: low
+
+  # The parts of a song, as the gear that plays in each. Every section becomes a
+  # snapshot, in this order, and an HX Stomp has three.
+  #
+  # Named by role rather than by block, so "the compressor comes in for the
+  # chorus" is written the way it is said. A role turns on or bypasses every
+  # block in the chain with that role; one a section does not mention keeps the
+  # state the chain gives it. A role the chain has no block for is refused.
+  #
+  # Nobody has documented Dirnt switching anything mid-song. These show the
+  # shape of the field, not a habit of his.
+  sections:
+    - name: Verse
+      bypass: [comp]
+    - name: Chorus
+      play: [comp]
+
+  # What a foot reaches, said the way a section is: by role and by one of the
+  # words `settings` uses, so it means the same thing on any hardware.
+  #
+  # The build turns each into the assignment a device wants, resolving the role to
+  # whichever block ended up carrying it and the word to whichever parameter that
+  # model answers it with. A plan read off a device carries `controllers` instead,
+  # which is the same thing after a device has been chosen, and a rig may not say
+  # both.
+  #
+  # `min` and `max` are over the control's own range. Leaving them out gives the
+  # full sweep. Two moves claiming the same mover are refused, because one pedal
+  # cannot be on two knobs.
+  #
+  # As with the sections above: nobody has documented Dirnt using a pedal this
+  # way. It shows the shape of the field.
+  moves:
+    - by: expression
+      role: amp
+      setting: drive
+      min: 0.3
+      max: 0.85
+      no_snapshot: true

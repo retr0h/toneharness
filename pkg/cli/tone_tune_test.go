@@ -27,6 +27,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -567,7 +568,7 @@ func (s *TuneTestSuite) TestTune() {
 				s.genre.EXPECT().
 					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
 
-				at := filepath.Join(s.T().TempDir(), "ask.tone.yaml")
+				at := filepath.Join(s.T().TempDir(), "ask.yaml")
 				s.Require().NoError(os.WriteFile(at, []byte("schema: Setup\n"), 0o600))
 
 				opts := s.opts()
@@ -990,21 +991,47 @@ func TestTuneTestSuite(
 	suite.Run(t, new(TuneTestSuite))
 }
 
-// askWith writes a ToneSpec carrying a nudges block and returns where it went.
+// askWith writes a document carrying a nudges block and returns where it went.
+//
+// The nudges are the ask's, so they are indented with the rest of it.
 func (s *TuneTestSuite) askWith(
 	nudges string,
 ) string {
-	at := filepath.Join(s.T().TempDir(), "ask.tone.yaml")
+	at := filepath.Join(s.T().TempDir(), "ask.yaml")
 
 	s.Require().NoError(os.WriteFile(at, []byte(`schema: ToneSpec
-subject:
-  kind: artist
-  name: Matt Freeman
-instrument: bass
-genre: [punk]
-`+nudges), 0o600))
+id: matt-freeman
+ask:
+  subject:
+    kind: artist
+    name: Matt Freeman
+  instrument: bass
+  genre: [punk]
+`+nest(nudges)+`rig:
+  instrument: bass
+  chain:
+    - {role: amp, gear: Ampeg SVT}
+`), 0o600))
 
 	return at
+}
+
+// nest moves an ask's own text under `ask:`. A blank line stays blank.
+func nest(
+	body string,
+) string {
+	if body == "" {
+		return ""
+	}
+
+	lines := strings.Split(strings.TrimSuffix(body, "\n"), "\n")
+	for i, line := range lines {
+		if line != "" {
+			lines[i] = "  " + line
+		}
+	}
+
+	return strings.Join(lines, "\n") + "\n"
 }
 
 // TestKeepTuned covers every case keepTuned answers.
@@ -1029,7 +1056,7 @@ func (s *TuneTestSuite) TestKeepTuned() {
 			then: func() {
 				s.pedal.EXPECT().Current(gomock.Any(), sdk.FormatRig).Return(sdk.Reading{
 					Name: "matt-freeman",
-					Rig:  rig.Spec{ID: "matt-freeman"},
+					ID:   "matt-freeman",
 					Plan: plan.Plan{Blocks: []plan.Block{{
 						Model:   catalog.ModelID("HD2_AmpSVBeastBrt"),
 						Pos:     0,

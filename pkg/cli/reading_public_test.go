@@ -47,12 +47,7 @@ func (*brokenWriter) Write(
 // valid is the smallest rig the contract accepts, so a test about rendering
 // one is not also a test about what a rig must carry.
 func valid() rig.Spec {
-	v := rig.SpecVersion(2)
-
 	return rig.Spec{
-		Schema:     "RigSpec",
-		Version:    &v,
-		ID:         "lead",
 		Instrument: "bass",
 		Chain:      []rig.ChainEntry{{Gear: "Ampeg SVT", Role: "amp"}},
 	}
@@ -89,7 +84,7 @@ func (s *ReadingPublicTestSuite) TestReading() {
 		},
 		{
 			name: "a rig is written as the document it is",
-			read: sdk.Reading{Name: "Lead", Doc: &preset.Document{}, Rig: valid()},
+			read: sdk.Reading{Name: "Lead", ID: "lead", Doc: &preset.Document{}, Rig: valid()},
 			want: "gear: Ampeg SVT",
 		},
 		{
@@ -108,7 +103,7 @@ func (s *ReadingPublicTestSuite) TestReading() {
 			// is the one thing left that can go wrong here, so it is the one
 			// thing worth reporting.
 			name: "nowhere to write the rig",
-			read: sdk.Reading{Name: "Lead", Doc: &preset.Document{}, Rig: valid()},
+			read: sdk.Reading{Name: "Lead", ID: "lead", Doc: &preset.Document{}, Rig: valid()},
 			to:   &brokenWriter{},
 			err:  true,
 		},

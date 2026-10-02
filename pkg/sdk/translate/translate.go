@@ -21,21 +21,21 @@
 // Package translate turns what somebody asked for into what a device can be
 // told.
 //
-// The layer between the two documents a person writes and the one the tool
-// writes. A ToneSpec says what they want and a Setup says what they have,
-// both in words anybody would use; a RigSpec says exactly which models go
-// where, and is meant to be read by the compiler rather than by a person.
+// The layer between what a person writes and what the compiler reads. An ask
+// says what they want and a Setup says what they have, both in words anybody
+// would use; the rig says exactly which models go where, and is meant to be read
+// by the compiler rather than by a person.
 //
-//	ToneSpec + Setup   what we mean, and what we have
+//	ask + Setup        what we mean, and what we have
 //	      ↓            this package
-//	RigSpec            exact, resolved, deterministic, shareable
+//	rig                exact, resolved, deterministic, shareable
 //	      ↓            pkg/sdk/internal/compile
 //	.hlx               what the pedal eats
 //
-// The split earns itself at the second step. A RigSpec is the thing worth
-// sharing, because two people compiling the same one get the same preset, and
-// a ToneSpec is not: "punk, a bit darker" resolves against a corpus and a
-// library of measurements that both move.
+// The split earns itself at the second step. The rig is the half worth sharing,
+// because two people compiling the same one get the same preset, and the ask is
+// not: "punk, a bit darker" resolves against a corpus and a library of
+// measurements that both move. Both are written down, in one document.
 //
 // Nothing here guesses quietly. Every choice this makes, and every part of
 // the ask it could not honour, comes back in the notes.
@@ -68,7 +68,7 @@ type Deps struct {
 	//
 	// Handed in rather than called, because the vocabulary belongs to the
 	// compiler and the compiler runs after this: the pipeline at the top of
-	// this file is ToneSpec to translate to RigSpec to compile, and importing
+	// this file is ask to translate to rig to compile, and importing
 	// downhill would invert it. Nil means nothing checks, which is what a
 	// caller that only wants a chain resolved gets.
 	UnknownWords func(words []string) []UnknownWord
@@ -124,11 +124,11 @@ func (n Notes) Unmet() Notes {
 
 // Translate turns a request and a setup into a rig.
 //
-// Deterministic given the same catalog, the same measurements and the same
-// two documents. That is what makes a RigSpec worth sharing where a ToneSpec
-// is not: the ask resolves against things that move, and the answer does not.
+// Deterministic given the same catalog, the same measurements, the same ask and
+// the same Setup. That is what makes the rig worth sharing where the ask is not:
+// the ask resolves against things that move, and the answer does not.
 func Translate(
-	spec tone.Spec,
+	spec tone.Ask,
 	setup tone.Setup,
 	deps Deps,
 ) (rig.Spec, Notes, error) {
@@ -139,8 +139,6 @@ func Translate(
 	}
 
 	out := rig.Spec{
-		Schema:     rig.SchemaName,
-		ID:         identify(spec),
 		Instrument: instrumentFor(setup, &notes),
 	}
 
@@ -259,7 +257,7 @@ func speakers(
 // wrong aims the answer somewhere they cannot see. The gear resolver says
 // "that name fits 4 models" for the same reason.
 func unknownWords(
-	spec tone.Spec,
+	spec tone.Ask,
 	deps Deps,
 	notes *Notes,
 ) {
@@ -340,7 +338,7 @@ func agrees(
 // So the mismatch travels in the notes. Somebody reading that knows why the rig
 // may sit wrong, and knows it was noticed rather than missed.
 func strung(
-	spec tone.Spec,
+	spec tone.Ask,
 	setup tone.Setup,
 	notes *Notes,
 ) {
@@ -363,7 +361,7 @@ func strung(
 
 // stringsOf is what the request says the record was played on.
 func stringsOf(
-	spec tone.Spec,
+	spec tone.Ask,
 ) string {
 	if spec.Played == nil {
 		return ""
@@ -407,7 +405,7 @@ func heldStrings(
 
 // chainFor is the signal path a request asks for.
 func chainFor(
-	spec tone.Spec,
+	spec tone.Ask,
 	setup tone.Setup,
 	deps Deps,
 	notes *Notes,
@@ -491,7 +489,7 @@ func placeOf(
 // amplifier and cabinet, and the request's own gear is layered over this by the
 // caller, so what they named wins where the two overlap.
 func likeTheirRig(
-	spec tone.Spec,
+	spec tone.Ask,
 	deps Deps,
 	notes *Notes,
 ) ([]placed, bool) {
@@ -554,9 +552,9 @@ func namedSubject(
 // placed is one block and where in the chain it goes.
 //
 // The request's own wish rather than the role's ordinary place, for the entries
-// that asked. Kept beside the entry rather than on it, because a RigSpec's
-// chain is already in order by the time it is written and carrying the reason
-// would be carrying the question into the answer.
+// that asked. Kept beside the entry rather than on it, because a rig's chain is
+// already in order by the time it is written and carrying the reason would be
+// carrying the question into the answer.
 type placed struct {
 	entry rig.ChainEntry
 	// after is the role this was asked to sit behind, where one was named.
@@ -565,7 +563,7 @@ type placed struct {
 
 // namedGear is the blocks a request asked for by name.
 func namedGear(
-	spec tone.Spec,
+	spec tone.Ask,
 	deps Deps,
 	notes *Notes,
 ) ([]placed, error) {
@@ -660,7 +658,7 @@ func namedGear(
 // case that works today: it is measured through the same figures every block
 // was, so the comparison is between two of the same kind of thing.
 func nearestTo(
-	spec tone.Spec,
+	spec tone.Ask,
 	setup tone.Setup,
 	deps Deps,
 	category catalog.Category,
@@ -854,7 +852,7 @@ func splitsByInstrument(
 // target is what a request is aiming at, in the figures a block is measured
 // in, and what it came from.
 func target(
-	spec tone.Spec,
+	spec tone.Ask,
 	deps Deps,
 	notes *Notes,
 ) (measured.Figures, string, bool) {
@@ -922,7 +920,7 @@ func target(
 // centroid sits an octave below a guitar's and the nearest amplifier to the
 // wrong octave is not a weaker answer, it is a different question.
 func genreTarget(
-	spec tone.Spec,
+	spec tone.Ask,
 	deps Deps,
 	notes *Notes,
 ) (measured.Figures, string, bool) {
@@ -1131,7 +1129,7 @@ func answeredBy(
 
 // unresolved says which parts of a request this cannot yet answer.
 func unresolved(
-	spec tone.Spec,
+	spec tone.Ask,
 	answered map[string]bool,
 	notes *Notes,
 ) {
@@ -1227,7 +1225,7 @@ func unresolved(
 // not yet listened to, which is the state a person needs shown rather than
 // left to be rediscovered.
 func corrected(
-	spec tone.Spec,
+	spec tone.Ask,
 	notes *Notes,
 ) {
 	if spec.Corrections == nil {
@@ -1391,39 +1389,6 @@ func order(
 	return 10
 }
 
-// identify names the rig after the ask.
-func identify(
-	spec tone.Spec,
-) string {
-	parts := make([]string, 0, 3)
-
-	// Not the genre, though every ask now carries one. A name is for a person to
-	// recognise, and a field that is always present adds nothing to one: when
-	// genre was optional it distinguished the asks that named it, and now it
-	// would only prefix every identifier in the repository with a word.
-	//
-	if spec.Like != nil {
-		for _, who := range []*string{spec.Like.Artist, spec.Like.Band, spec.Like.Song} {
-			if who != nil && *who != "" {
-				parts = append(parts, *who)
-			}
-		}
-	}
-
-	if len(parts) == 0 {
-		parts = append(parts, "a sound")
-	}
-
-	// slug.Of rather than a rule of its own, and this used to have one. It
-	// mapped a space to a hyphen, deleted everything else and never collapsed
-	// the runs it left behind, so a band with an ampersand in it produced two
-	// hyphens together: "Earth, Wind & Fire" became "earth-wind--fire". The
-	// contract's pattern for an id is `^[a-z0-9]+(-[a-z0-9]+)*$`, which forbids
-	// that, so Translate resolved the whole chain and then refused to write the
-	// rig it had built. Any ampersand, comma or double space did it.
-	return slug.Of(strings.Join(parts, "-"))
-}
-
 // instrumentFor is what the rig is played on.
 //
 // From the setup rather than from the request, because what somebody owns
@@ -1468,7 +1433,7 @@ func instrumentFor(
 // instrument field may not be empty. Neither is named for the question they
 // share, because merging them would make one of the two answers wrong.
 func gearIsFor(
-	held tone.Instrument,
+	held tone.Held,
 	notes *Notes,
 ) rig.Instrument {
 	name := strings.ToLower(held.Gear)

@@ -45,6 +45,7 @@ import (
 // behind it. That is not a degraded build: a rig off disk carries settings
 // somebody already applied, so there is nothing left for a word to decide.
 func Resolve(
+	id string,
 	spec rig.Spec,
 	intent Intent,
 	cat *catalog.Catalog,
@@ -149,7 +150,7 @@ func Resolve(
 	blocks, said, asked := demand(blocks, said, cat, stats, intent, instrument)
 	added = append(added, asked...)
 
-	built := specFor(spec, intent, blocks, stats)
+	built := specFor(id, intent, blocks, stats)
 
 	// After the corpus has had its say, because a term is an opinion about
 	// where players land rather than a replacement for knowing.
@@ -366,7 +367,7 @@ func kindOf(
 
 // specFor lays blocks out as a chain the device can represent.
 func specFor(
-	spec rig.Spec,
+	id string,
 	intent Intent,
 	blocks []catalog.Block,
 	stats *corpus.Stats,
@@ -375,12 +376,12 @@ func specFor(
 	// what somebody wants to read there. That is the subject, which lives on
 	// the ask, so the ask is asked first.
 	//
-	// The rig's identifier where there is no ask. A rig read off disk has no
-	// subject to be named after, and its identifier is the one name it has of
-	// its own, which beats a blank heading.
+	// The document's identifier where there is no ask. A rig read off disk has
+	// no subject to be named after, and the name of the document it sits in
+	// beats a blank heading.
 	name := intent.Name
 	if name == "" {
-		name = spec.ID
+		name = id
 	}
 
 	out := plan.Plan{
