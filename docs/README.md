@@ -31,3 +31,9 @@ beside it, together superseding
 A ToneSpec is what somebody means, a RigSpec is the gear that answers it, and a
 Plan is that rig on one device. A person writes the first two; the compiler
 produces the third.
+
+A decision to collapse those three into one document, with the rig required and
+the Setup read from a config path, is recorded in
+[One document, and the rig is required](superpowers/specs/2026-10-01-one-document-rig-required-design.md).
+**It is designed and not built**, so the three above are still what the code
+does.
