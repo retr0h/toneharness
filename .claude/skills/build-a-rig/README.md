@@ -22,7 +22,7 @@ request down, resolves it and tells you which claim it has.
 | _"Like Dirnt but chunkier"_                        | the same, with the nudge carried as a word rather than as a number somebody invented       |
 | _"What did Jaco play through?"_                    | the research and the sources, and nothing written until you want it                        |
 | _"Punk, but on my Jazz bass"_                      | a genre and your own instrument, which are two different documents                          |
-| _"Measure this recording and pick me an amp"_      | the nearest of 224 amplifiers to what the file measures, with the figures                  |
+| _"Measure this recording and pick me an amp"_      | the nearest of the instrument's own amplifiers to what the file measures, with the figures |
 | _"Put it on the pedal"_                            | a preset in a scratch slot, and what it would have replaced                                |
 | _"The mids are honky"_                             | an edit to the rig, and what moved                                                         |
 
@@ -37,7 +37,8 @@ order, deterministic, which is the layer worth sharing because two people
 compiling one get the same preset.
 
 Nothing here guesses. An amplifier chosen by measuring is chosen by pushing a
-recording through all 224 of them and comparing the same nine figures, and
+recording through every amplifier the instrument has and comparing the same nine
+figures, and
 every claim about real gear carries a source somebody opened. Where the tool
 cannot answer, it says so in notes that travel with the answer rather than as
 prose above it.

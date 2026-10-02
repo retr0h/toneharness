@@ -172,6 +172,76 @@ func (s *GenrePublicTestSuite) TestAPlayerWithNoRecordsIsNotAVote() {
 	s.Require().Equal(6, got[0].Of)
 }
 
+// TestElsewhere covers where the players holding none of a genre sit.
+//
+// Every answer here is "not enough to compare with", and a corpus that reaches
+// them is one no test should have to build: a player measuring nothing, or a
+// genre everybody plays.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *GenrePublicTestSuite) TestElsewhere() {
+	with := func(mids ...float64) map[string]audio.Across {
+		out := map[string]audio.Across{}
+		for i, at := range mids {
+			out[fmt.Sprintf("player-%d", i)] = audio.Across{
+				Tracks:   1,
+				Centroid: audio.Spread{Mid: at},
+				Low:      audio.Spread{Mid: 0.9},
+			}
+		}
+
+		return out
+	}
+
+	for _, tt := range []struct {
+		name   string
+		others map[string]audio.Across
+		// want is the centroid expected, and found whether anything came back.
+		want  float64
+		found bool
+	}{
+		{
+			// The ordinary answer: the median of their medians, which is the
+			// number a genre is already held against to earn a word.
+			name:   "two players or more",
+			others: with(130, 140, 150),
+			want:   140,
+			found:  true,
+		},
+		{
+			// One player is not a population. A comparison against them says
+			// more about them than about the genre, which is the rule displaced
+			// already applies.
+			name:   "one player is nobody to compare with",
+			others: with(140),
+		},
+		{
+			name: "no players at all",
+		},
+		{
+			// A directory that held no recordings. middles skips a player who
+			// measured nothing, so two of these leave fewer than two figures and
+			// there is nothing to take a median of.
+			name: "players who measured nothing",
+			others: map[string]audio.Across{
+				"a": {}, "b": {}, "c": {},
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			got := audio.Elsewhere(tt.others)
+
+			if !tt.found {
+				s.Require().Nil(got)
+
+				return
+			}
+
+			s.Require().InDelta(tt.want, got[audio.KeyCentroid], 0.01)
+		})
+	}
+}
+
 func TestGenrePublicTestSuite(
 	t *testing.T,
 ) {

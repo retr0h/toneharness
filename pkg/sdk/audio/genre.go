@@ -55,6 +55,25 @@ type Genre struct {
 	Against int `json:"against"`
 	// Across is what its records measure as together.
 	Across Across `json:"across"`
+	// Elsewhere is what the players holding none of it measure as, per figure.
+	//
+	// Here so that a figure can be read as a displacement rather than as a
+	// position, which is the only way a genre and a device block can be
+	// compared. A genre is measured off finished records and a block off a dry
+	// signal pushed through it: punk reads 97.1% of its energy low, and the dry
+	// signal going into the pedal holds 90.8% before any block touches it, so
+	// asking which block reaches 97.1% asks for bottom that is not in the
+	// input. Every candidate is then out of range and the nearest is whichever
+	// is darkest, which is how a request for punk chose an Ampeg B-15NF.
+	//
+	// Against the records elsewhere, both sides become "how far from its own
+	// normal", and those subtract. The Terms below are already earned this way;
+	// this is the same comparison kept for every figure rather than only the
+	// ones that earned a word.
+	// A median of their medians rather than a spread, because what this answers
+	// is "where does everybody else sit", and a width around that would be a
+	// tolerance on a comparison rather than on a target.
+	Elsewhere map[Figure]float64 `json:"elsewhere,omitempty"`
 	// Terms are the words it earns against the players who do not play it.
 	// Empty is an ordinary answer and means the figures are mixed rather than
 	// that something went wrong.
@@ -124,14 +143,24 @@ func GenresMeasured(
 		enough := len(in.profiles) >= genreRecords &&
 			len(in.players) >= genrePlayers
 
+		// Where everybody else sits, which is what makes a figure here a
+		// displacement rather than a position.
+		rest := elsewhere(others)
+
 		out = append(out, Genre{
 			Name: in.name, Slug: key,
 			Records: len(in.profiles), Players: len(in.players),
 			Against:    len(others),
 			Across:     across,
+			Elsewhere:  rest,
 			Terms:      displaced(across, others),
 			Instrument: in.instrument,
-			Usable:     enough && in.instrument != "",
+			// Usable carries the comparison too, so one check guards it and
+			// nothing downstream has to repeat it. A genre nobody can be held
+			// against cannot be aimed at: its figures are measured off finished
+			// records and a block's off a dry signal, and without somewhere else
+			// to subtract there is no displacement to apply.
+			Usable: enough && in.instrument != "" && rest != nil,
 		})
 	}
 
@@ -270,6 +299,46 @@ func profilesByGenre(
 // The margin travels with it, because two words that read alike are not alike: a
 // median just past the quartile is a word the next player measured could take
 // away, and one far past it is not.
+// elsewhere is where the players holding none of a genre sit, per figure.
+//
+// The median of their medians, which is the same number [displaced] compares a
+// genre against to earn a word. Kept for every figure rather than only the ones
+// that earned one, so a genre can be read as a displacement on any axis.
+//
+// Nothing where fewer than two players are left. One player is not a population
+// and a comparison against it says more about them than about the genre, which
+// is the rule displaced already applies.
+func elsewhere(
+	others map[string]Across,
+) map[Figure]float64 {
+	if len(others) < 2 {
+		return nil
+	}
+
+	out := map[Figure]float64{}
+
+	for _, key := range MeasuredKeys() {
+		rest := middles(others, key)
+		if len(rest) < 2 {
+			continue
+		}
+
+		sort.Float64s(rest)
+
+		// Rounded to the same places the figures either side of the comparison
+		// are. The medians going in are rounded and interpolating between two of
+		// them is not, so a share held to two places could be subtracted from one
+		// held to seventeen and leave a shift where there is no difference.
+		out[key] = to(between(rest, 0.5), places(key))
+	}
+
+	if len(out) == 0 {
+		return nil
+	}
+
+	return out
+}
+
 func displaced(
 	mine Across,
 	others map[string]Across,

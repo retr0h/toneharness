@@ -57,17 +57,30 @@ unspent after `tone build`: a rig carries the gear and the ask carries the
 sound. Compile is for a document that has already made those decisions, such as
 a rig lifted off a device.
 
-**Words cannot start a chain.** An ask carrying only a genre and adjectives is
-refused: there is nothing to pick an amplifier from. Three things start one:
+**Words still do not choose gear.** Four things do, and a word adjusts what they
+give you rather than producing it:
 
-|                            |                                                          |
-| -------------------------- | -------------------------------------------------------- |
-| `gear:`                    | name it yourself, and the catalog resolves it            |
-| `like: { artist: ... }`    | the rig somebody researched for them, with its citations |
-| `like: { recording: ... }` | measured, and the nearest of 224 amplifiers chosen       |
+|                            |                                                           |
+| -------------------------- | --------------------------------------------------------- |
+| `gear:`                    | name it yourself, and the catalog resolves it             |
+| `like: { artist: ... }`    | the rig somebody researched for them, with its citations  |
+| `like: { recording: ... }` | measured, and the nearest of the instrument's amps chosen |
+| `genre:`                   | measured too, from the records the corpus tags with it    |
 
-The words adjust what that gives you rather than producing it. `subject:` is not
-one of the three: it says who the ask is for, and `like:` says what to aim at.
+The last one is why an ask of a genre and three adjectives builds. It used to be
+refused, and the reason it can work now is that a genre is read as a
+*displacement* from the records of players who hold none of it, rather than as a
+position: those two scales do not subtract, because a genre is measured off
+finished records and a block off a dry signal pushed through it.
+[build-a-rig's measuring.md](../../../.claude/skills/build-a-rig/references/measuring.md)
+owns the arithmetic and the two cases it refuses.
+
+A genre the corpus has not measured names nothing, so an ask of adjectives and
+`genre: [rock]` is still refused: `corpus music genres` says which have enough
+records to mean anything.
+
+`subject:` is not one of the four. It says who the ask is for, and `like:` says
+what to aim at.
 
 [write-a-spec](../../../.claude/skills/write-a-spec/SKILL.md) owns every field
 on both contracts and says which document a fact belongs in. The contracts

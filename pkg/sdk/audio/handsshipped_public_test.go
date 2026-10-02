@@ -57,15 +57,51 @@ func (s *HandsShippedPublicTestSuite) TestTheMeasuredHandsLoad() {
 	}
 }
 
-// TestAMeasurementThatWillNotParseSaysWhichFile covers a file somebody edited.
+// TestUnpackHands covers reading the measured hands, and a file somebody edited.
 //
-// The message names the measured hands rather than a line of JSON, because a
-// generated file that somebody has been into by hand is the case where knowing
-// which file matters.
-func (s *HandsShippedPublicTestSuite) TestAMeasurementThatWillNotParseSaysWhichFile() {
-	_, err := audio.UnpackHands([]byte("not json"))
+// One method and one table, so a case is a row rather than a file.
+func (s *HandsShippedPublicTestSuite) TestUnpackHands() {
+	for _, tt := range []struct {
+		name string
+		body string
+		// pairs is how many comparisons the body holds, where it parses.
+		pairs int
+		// err is a fragment the message must carry. It names the measured hands
+		// rather than a line of JSON, because a generated file somebody has been
+		// into by hand is the case where knowing which file matters.
+		err string
+	}{
+		{
+			name: "what the generator writes",
+			body: `[{"from":"fingers","to":"pick","pairs":468,` +
+				`"figures":{"mid":{"mean":0.17}}}]`,
+			pairs: 1,
+		},
+		{
+			// An empty list is a corpus holding no pair of hands anybody has
+			// measured, which is what a checkout with no audio generates.
+			name: "nothing measured yet",
+			body: "[]",
+		},
+		{
+			name: "a file somebody edited",
+			body: "not json",
+			err:  "reading the measured hands",
+		},
+	} {
+		s.Run(tt.name, func() {
+			got, err := audio.UnpackHands([]byte(tt.body))
 
-	s.Require().ErrorContains(err, "reading the measured hands")
+			if tt.err != "" {
+				s.Require().ErrorContains(err, tt.err)
+
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().Len(got, tt.pairs)
+		})
+	}
 }
 
 // TestHandsBetween covers the lookup, in both directions.
@@ -137,28 +173,21 @@ func (s *HandsShippedPublicTestSuite) TestHandsBetween() {
 
 			s.Require().Positive(mid.Spread,
 				"a spread is reported beside the mean, not folded into it")
+
+			// Reading it reversed must not change what it holds. The negation is
+			// a view over the measurement rather than an edit to it, so the pairs
+			// are the same pairs and a spread has no direction to reverse.
+			back, ok := audio.HandsBetween(tt.to, tt.from)
+			s.Require().True(ok)
+
+			again, ok := audio.HandsBetween(tt.from, tt.to)
+			s.Require().True(ok)
+
+			s.Require().Equal(got, again)
+			s.Require().Equal(got.Pairs, back.Pairs)
+			s.Require().Equal(mid.Spread, back.Figures[audio.KeyMid].Spread)
 		})
 	}
-}
-
-// TestReversingTwiceIsTheSameMeasurement covers the negation being a view
-// rather than an edit.
-func (s *HandsShippedPublicTestSuite) TestReversingTwiceIsTheSameMeasurement() {
-	first, ok := audio.HandsBetween("fingers", "pick")
-	s.Require().True(ok)
-
-	back, ok := audio.HandsBetween("pick", "fingers")
-	s.Require().True(ok)
-
-	again, ok := audio.HandsBetween("fingers", "pick")
-	s.Require().True(ok)
-
-	s.Require().Equal(first, again,
-		"reading it reversed must not change what it holds")
-	s.Require().Equal(first.Pairs, back.Pairs, "the pairs are the same pairs")
-	s.Require().Equal(
-		first.Figures[audio.KeyMid].Spread, back.Figures[audio.KeyMid].Spread,
-		"and a spread has no direction to reverse")
 }
 
 func TestHandsShippedPublicTestSuite(

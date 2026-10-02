@@ -1,15 +1,29 @@
 # When the ask is too vague to build
 
-"Make me a punk bass tone" names no gear, no player and no recording. Nothing
-in it can be resolved, and the tool says so:
+"Make me a punk bass tone" names no gear, no player and no recording. It builds
+anyway, because punk is a genre the corpus has measured and a measured genre names
+a target:
+
+```text
+did  amp  Cali 400 Ch1 is the closest of 27 measured to punk, 150 Hz against 165
+```
+
+**That is the floor, not the answer.** What came back is the middle of fifteen
+records by five players, which is a real measurement and says nothing about the
+person asking: their bass, their era, the record they actually have in their head.
+Two people asking for a punk bass tone get the same amplifier.
+
+A genre the corpus has not measured still resolves nothing, and then the tool
+refuses outright:
 
 ```
 nothing in the request names gear, and nothing in it can be measured against,
 so there is no chain to build
 ```
 
-**Do not guess.** Ask. The order below is the order that resolves the most for
-the fewest questions.
+**So still ask.** Not because the build fails, but because every question below
+replaces a population with something about them. The order is the order that
+resolves the most for the fewest questions.
 
 ## What to ask for, in order
 

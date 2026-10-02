@@ -45,7 +45,12 @@ var (
 	// UnpackHands is the same for the measured hands: a file somebody edited by
 	// hand is the case where the message has to name the file.
 	UnpackHands = unpackHands
-	Frames      = frames
+	// Elsewhere is where the players holding none of a genre sit. Exported
+	// because its answers are all "not enough to compare with", and a corpus
+	// that reaches them is one no test should have to build: a player measuring
+	// nothing, or a genre everybody plays.
+	Elsewhere = elsewhere
+	Frames    = frames
 )
 
 // Quietest is how far under the loudest moment a frame may sit and still

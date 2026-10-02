@@ -55,6 +55,17 @@
         "high": 0.9479772294587298
       }
     },
+    "elsewhere": {
+      "centroid": 164,
+      "decay": 0.27,
+      "dynamics": 8.1,
+      "harmonics": 0.24,
+      "high": 0,
+      "lean": 0.84,
+      "low": 0.94,
+      "mid": 0.06,
+      "transient": 0.74
+    },
     "terms": [
       {
         "term": "scooped",
@@ -143,6 +154,17 @@
         "high": 0.9358174846905697
       }
     },
+    "elsewhere": {
+      "centroid": 150,
+      "decay": 0.26,
+      "dynamics": 9.65,
+      "harmonics": 0.23,
+      "high": 0,
+      "lean": 0.86,
+      "low": 0.94,
+      "mid": 0.06,
+      "transient": 0.74
+    },
     "terms": [
       {
         "term": "clean",
@@ -212,6 +234,17 @@
         "mid": 0.875977030578637,
         "high": 0.9358174846905697
       }
+    },
+    "elsewhere": {
+      "centroid": 134,
+      "decay": 0.27,
+      "dynamics": 9.7,
+      "harmonics": 0.22,
+      "high": 0,
+      "lean": 0.85,
+      "low": 0.95,
+      "mid": 0.05,
+      "transient": 0.74
     },
     "terms": [
       {
