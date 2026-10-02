@@ -174,9 +174,8 @@ func (s *GearPublicTestSuite) TestDisplacedTo() {
 	for _, tt := range []struct {
 		name string
 		got  audio.Genre
-		// want is the target, where there is one.
-		want  measured.Figures
-		found bool
+		// want is the target this produces.
+		want measured.Figures
 	}{
 		{
 			// Shares convert and the centroid does not. A genre holds a share of
@@ -201,17 +200,17 @@ func (s *GearPublicTestSuite) TestDisplacedTo() {
 			},
 			// Two points of energy lower and ten hertz brighter than the records
 			// elsewhere, applied to the signal the blocks were measured with.
-			want:  measured.Figures{Low: 92, Mid: 7, High: 0.3, Centroid: 165},
-			found: true,
+			want: measured.Figures{Low: 92, Mid: 7, High: 0.3, Centroid: 165},
 		},
 		{
-			// Nobody to be measured against, which is a genre with fewer than two
-			// other players. How far it sits from other records is then not
-			// known, and no block can be aimed at it.
+			// Usable carries that check, so this is not reached through a build.
+			// What it does is leave the baseline alone: no displacement is
+			// known, so none is applied.
 			name: "a genre with nobody to compare against",
 			got: audio.Genre{
 				Across: audio.Across{Tracks: 1, Centroid: audio.Spread{Mid: 144}},
 			},
+			want: baseline,
 		},
 		{
 			// A figure one side holds and the other does not is skipped rather
@@ -225,18 +224,11 @@ func (s *GearPublicTestSuite) TestDisplacedTo() {
 				},
 				Elsewhere: map[audio.Figure]float64{audio.KeyCentroid: 134},
 			},
-			want:  measured.Figures{Low: 90, Mid: 9, High: 0.3, Centroid: 165},
-			found: true,
+			want: measured.Figures{Low: 90, Mid: 9, High: 0.3, Centroid: 165},
 		},
 	} {
 		s.Run(tt.name, func() {
-			got, ok := translate.DisplacedTo(tt.got, baseline)
-
-			s.Require().Equal(tt.found, ok)
-
-			if !tt.found {
-				return
-			}
+			got := translate.DisplacedTo(tt.got, baseline)
 
 			s.Require().InDelta(tt.want.Low, got.Low, 0.01)
 			s.Require().InDelta(tt.want.Mid, got.Mid, 0.01)

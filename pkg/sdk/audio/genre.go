@@ -143,15 +143,24 @@ func GenresMeasured(
 		enough := len(in.profiles) >= genreRecords &&
 			len(in.players) >= genrePlayers
 
+		// Where everybody else sits, which is what makes a figure here a
+		// displacement rather than a position.
+		rest := elsewhere(others)
+
 		out = append(out, Genre{
 			Name: in.name, Slug: key,
 			Records: len(in.profiles), Players: len(in.players),
 			Against:    len(others),
 			Across:     across,
-			Elsewhere:  elsewhere(others),
+			Elsewhere:  rest,
 			Terms:      displaced(across, others),
 			Instrument: in.instrument,
-			Usable:     enough && in.instrument != "",
+			// Usable carries the comparison too, so one check guards it and
+			// nothing downstream has to repeat it. A genre nobody can be held
+			// against cannot be aimed at: its figures are measured off finished
+			// records and a block's off a dry signal, and without somewhere else
+			// to subtract there is no displacement to apply.
+			Usable: enough && in.instrument != "" && rest != nil,
 		})
 	}
 

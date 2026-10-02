@@ -950,17 +950,10 @@ func genreTarget(
 			continue
 		}
 
-		// Nothing said about a genre with no comparison population, because the
-		// data cannot hold one: Usable needs eight records from three players
-		// and a displacement needs two other players, out of sixteen. If it ever
-		// happened the generic refusal is already accurate, and it says nothing
-		// in the request can be measured against.
-		shifted, ok := displacedTo(got, deps.Measured.Baseline)
-		if !ok {
-			continue
-		}
-
-		return shifted, named, true
+		// No second check on the comparison population. Usable carries it, so a
+		// genre that passed the test above has somewhere else to be measured
+		// against by construction.
+		return displacedTo(got, deps.Measured.Baseline), named, true
 	}
 
 	return measured.Figures{}, "", false
@@ -989,11 +982,7 @@ func genreTarget(
 func displacedTo(
 	got audio.Genre,
 	baseline measured.Figures,
-) (measured.Figures, bool) {
-	if got.Elsewhere == nil {
-		return measured.Figures{}, false
-	}
-
+) measured.Figures {
 	at := got.Across.Measured()
 
 	shift := func(key audio.Figure, scale float64) (float64, bool) {
@@ -1027,7 +1016,7 @@ func displacedTo(
 		*want.onto += by
 	}
 
-	return out, true
+	return out
 }
 
 // genreNote says what is known about a genre somebody asked for.
