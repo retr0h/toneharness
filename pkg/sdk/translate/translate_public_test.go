@@ -63,9 +63,15 @@ func (s *TranslatePublicTestSuite) ask(
 	// below are about the rest of the document. One that names its own keeps it.
 	head := "schema: ToneSpec\n"
 	if !strings.Contains(body, "genre:") {
-		// A genre the corpus has measured, so the ask resolves fully and the
-		// cases below see only the notes they are about.
-		head += "genre: [punk]\n"
+		// A genre the corpus has not measured, so it names no target and the
+		// cases below see only what they are about.
+		//
+		// This was `punk` until a measured genre could choose an amplifier.
+		// After that the default quietly added one to every chain, and three
+		// rows asserting the shape of the gear they named were failing on a
+		// block they had not asked for. A row that wants a target names punk
+		// itself.
+		head += "genre: [rock]\n"
 	}
 
 	spec, err := tone.Load(strings.NewReader(head + body))
@@ -193,7 +199,7 @@ func (s *TranslatePublicTestSuite) TestTranslate() {
 					}
 				}
 
-				s.Require().Contains(said, "closest of 224 measured",
+				s.Require().Contains(said, "closest of 27 measured",
 					"the note says what it chose from and why")
 			},
 		},
@@ -492,10 +498,13 @@ like:
 			// at. Which question to ask next depends on whether a person or
 			// an agent is asking, so the SDK names the problem and the caller
 			// names the next step.
+			// A genre nobody has measured, because a measured one is a target
+			// now: punk here would resolve an amplifier and there would be
+			// nothing to refuse.
 			name: "a request with nothing in it is refused",
 			then: func() {
 				_, notes, err := translate.Translate(
-					s.ask("genre: [punk]\ninstrument: bass\n"), s.setup(""), s.deps)
+					s.ask("genre: [rock]\ninstrument: bass\n"), s.setup(""), s.deps)
 
 				s.Require().ErrorIs(err, translate.ErrNothingToBuildFrom)
 				s.Require().NotEmpty(notes, "and it still says what it assumed on the way")
@@ -531,9 +540,13 @@ like:
 		},
 		{
 			// An empty ask.
+			// Adjectives and a genre with no records behind it. Words move
+			// controls and have never chosen gear; what changed is that a
+			// measured genre can, so this names one that is not.
 			name: "nothing to build from is refused",
 			then: func() {
-				_, _, err := translate.Translate(s.ask("words:\n  - term: dark\n"), s.setup(""), s.deps)
+				_, _, err := translate.Translate(
+					s.ask("genre: [rock]\nwords:\n  - term: dark\n"), s.setup(""), s.deps)
 
 				s.Require().ErrorContains(err, "no chain to build")
 			},
@@ -994,6 +1007,18 @@ func (s *TranslatePublicTestSuite) TestAnAskMayNameAPlayer() {
 			err:  translate.ErrNothingToBuildFrom,
 		},
 		{
+			// The same player, with a genre that has been measured. His rig is
+			// still not written down and the note still says so, and the build
+			// no longer fails: punk names a target, so an amplifier is chosen
+			// by measurement instead of nothing being chosen at all.
+			name: "a player nobody has researched, in a genre somebody has measured",
+			ask:  "genre: [punk]\ninstrument: bass\nlike:\n  artist: Cone McCaslin\n",
+			said: []string{
+				"no rig has been researched for that player",
+				"is the closest of",
+			},
+		},
+		{
 			// A song is one recording and an artist is a body of work, so the
 			// narrower claim is the one the request was most specific about.
 			name: "a song named beside an artist wins",
@@ -1071,6 +1096,113 @@ func (s *TranslatePublicTestSuite) TestAnAskMayNameAPlayer() {
 				}
 
 				s.Require().Contains(names, want)
+			}
+		})
+	}
+}
+
+// TestAGenreNamesATarget covers a request made of a genre and adjectives
+// resolving an amplifier, which it could not before.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *TranslatePublicTestSuite) TestAGenreNamesATarget() {
+	for _, tt := range []struct {
+		name string
+		// ask is the body under the schema.
+		ask string
+		// said is a fragment the notes must carry, absent what they must not,
+		// and gear a piece the chain must name.
+		said   []string
+		absent []string
+		gear   string
+		err    error
+	}{
+		{
+			// The case this exists for. No gear, no recording, no player: a
+			// genre and three words, which used to be refused outright.
+			name: "a genre and some adjectives build a chain",
+			ask: `genre: [punk]
+instrument: bass
+words:
+  - term: mid-forward
+  - term: tight-low-end
+`,
+			said: []string{"is the closest of", "to punk"},
+		},
+		{
+			// A genre nobody has tagged enough records with. Reported and never
+			// computed from: eight records from three players, or the figures
+			// are one band's sound wearing a genre's name.
+			name: "a genre nobody has measured names nothing",
+			ask:  "genre: [rock]\ninstrument: bass\n",
+			err:  translate.ErrNothingToBuildFrom,
+		},
+		{
+			// A recording is the stronger target and answers first. Punk is
+			// named too and does not displace it.
+			name: "a recording beats a genre",
+			ask: "genre: [punk]\ninstrument: bass\nlike:\n  recording: " +
+				s.recording() + "\n",
+			said:   []string{s.recording()},
+			absent: []string{"closest of 27 measured to punk"},
+		},
+		{
+			// Punk is measured on bass. Aiming a guitar build with it would rank
+			// guitar amplifiers against a bass centroid, which sits an octave
+			// below: not a weaker answer, a different question.
+			name:   "a bass genre does not aim a guitar build",
+			ask:    "genre: [punk]\ninstrument: guitar\n",
+			said:   []string{"is measured on bass and this is for guitar"},
+			absent: []string{"closest of"},
+			err:    translate.ErrNothingToBuildFrom,
+		},
+		{
+			// The first genre that can answer, in the order the ask names them,
+			// so the one it was named for first is the one aimed at. Averaging
+			// two populations would invent a third nobody measured.
+			name: "the first genre that can answer does",
+			ask:  "genre: [rock, punk]\ninstrument: bass\n",
+			said: []string{"to punk"},
+		},
+		{
+			// Only the 27 amplifiers Line 6 calls bass models, where the pool
+			// was all 224. A bass build used to rank 173 guitar amplifiers and
+			// pick whichever sat nearest by spectrum.
+			name: "the pool is the instrument's own amplifiers",
+			ask:  "genre: [punk]\ninstrument: bass\n",
+			said: []string{"closest of 27 measured"},
+		},
+	} {
+		s.Run(tt.name, func() {
+			got, notes, err := translate.Translate(
+				s.ask(tt.ask), s.setup(""), s.deps)
+
+			if tt.err != nil {
+				s.Require().ErrorIs(err, tt.err)
+			} else {
+				s.Require().NoError(err)
+			}
+
+			var said string
+			for _, note := range notes {
+				said += note.About + " " + note.Said + "\n"
+			}
+
+			for _, want := range tt.said {
+				s.Require().Contains(said, want)
+			}
+
+			for _, not := range tt.absent {
+				s.Require().NotContains(said, not)
+			}
+
+			if tt.gear != "" {
+				var names string
+				for _, entry := range got.Chain {
+					names += entry.Gear + "\n"
+				}
+
+				s.Require().Contains(names, tt.gear)
 			}
 		})
 	}

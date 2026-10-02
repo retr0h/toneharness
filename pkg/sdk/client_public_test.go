@@ -1150,15 +1150,31 @@ func (s *ClientPublicTestSuite) TestTone() {
 			notes: true,
 		},
 		{
-			// Nobody has researched him, so there is nothing to take a chain
-			// from and nothing else in the ask to build one.
+			// Nobody has researched him and nothing else in the ask names gear,
+			// so there is nothing to take a chain from. A genre nobody has
+			// measured either, because a measured one is a target: punk here
+			// would choose an amplifier and there would be nothing to refuse.
 			name: "a request naming a player nobody has researched",
 			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
-genre: [punk]
+genre: [rock]
 like:
   artist: Cone McCaslin
 `)},
 			is: sdk.ErrNothingToBuildFrom,
+		},
+		{
+			// The same player in a genre somebody has measured. His rig is still
+			// not written down, and punk's records name a target, so an
+			// amplifier is chosen by measurement rather than nothing being
+			// chosen at all.
+			name: "a player nobody has researched, in a measured genre",
+			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
+genre: [punk]
+instrument: bass
+like:
+  artist: Cone McCaslin
+`)},
+			notes: true,
 		},
 		{
 			name: "a caller who stopped waiting",

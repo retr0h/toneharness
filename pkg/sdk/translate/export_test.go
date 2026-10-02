@@ -24,3 +24,19 @@ package translate
 // decision with four answers and only three are reachable through whichever
 // records somebody has tagged, so the fourth is tested here directly.
 var GenreNote = genreNote
+
+// The same reason, for choosing gear. Three of these answer the cases where the
+// catalog and the measured library disagree, or where a genre has nobody to be
+// measured against, and neither state is reachable through the data that ships:
+// every amplifier it measures is in the catalog, and all three measured genres
+// have a population behind them. Reachable or not, they are the contract.
+var (
+	// Playable is whether a block is for the instrument in hand.
+	Playable = playable
+	// SplitsByInstrument is whether a category is grouped by what it is played
+	// with at all. Only amplifiers reach it today, and they always are, so the
+	// cabinet answer is read here rather than through a build.
+	SplitsByInstrument = splitsByInstrument
+	// DisplacedTo turns a genre into a target a block can be ranked against.
+	DisplacedTo = displacedTo
+)

@@ -666,13 +666,32 @@ func nearestTo(
 	category catalog.Category,
 	notes *Notes,
 ) (rig.ChainEntry, bool) {
-	want, from, ok := target(spec, notes)
+	want, from, ok := target(spec, deps, notes)
 	if !ok {
 		return rig.ChainEntry{}, false
 	}
 
+	// The instrument the chain is for. The ask where it says, and otherwise
+	// whatever instrumentFor settled on for the rig being written, so the
+	// ranking draws from the same half of the catalog the rig claims to be for
+	// rather than from a second answer that could disagree with it.
+	//
+	// Notes are discarded here because instrumentFor has already said whatever
+	// it has to say about the Setup, once, where the rig's own instrument was
+	// decided. Saying it twice in one report would read as two findings.
+	wants := ""
+	if spec.Instrument != nil {
+		wants = string(*spec.Instrument)
+	}
+
+	if wants == "" {
+		quiet := Notes{}
+		wants = string(instrumentFor(setup, &quiet))
+	}
+
 	ranked := reachable(
-		deps.Measured.Nearest(category, want, measured.Spectral()), setup)
+		deps.Measured.Nearest(category, want, measured.Spectral()),
+		setup, deps.Catalog, wants)
 	if len(ranked) == 0 {
 		*notes = append(*notes, Note{
 			About: string(category),
@@ -707,9 +726,34 @@ func nearestTo(
 // block that will be silent.
 //
 // A setup saying which impulse responses it holds unlocks them again.
+//
+// And blocks for the other instrument, which is the filter Subcategory's own
+// documentation has always claimed: "It decides which half of the catalog a
+// request is allowed to draw from." Nothing read it. A bass build ranked all 224
+// amplifiers, 173 of them guitar models, and picked whichever sat nearest by
+// spectrum: a request for punk on bass chose a Dr Z Interstate Zed, and one
+// aimed at a dry bass recording chose a Fender Super Reverb. Twenty-seven of the
+// amplifiers are bass models and the Ampeg SVT is among them.
+//
+// A positive match is required where the category splits by instrument at all,
+// and that qualification is the whole of it. Amplifiers are grouped "Guitar" and
+// "Bass"; cabinets are grouped "Single, Dual", by how many microphones they
+// offer. Requiring a match everywhere excluded every cabinet on this device,
+// because none of them claims to be for an instrument.
+//
+// Where a category does split, the match is strict. Twenty-three amplifiers carry
+// no subcategory at all and nothing else in Line 6's data places them: their
+// paired cabinets are grouped by microphone count too. Some are bass models and
+// some are not, so an unmarked one is a block nobody can place, and this is the
+// tool guessing rather than somebody choosing. It declines: the pool is the 27
+// amplifiers Line 6 calls bass models, and a GrammaticoLG Jump does not win a
+// bass build on missing metadata. Gear a request names by hand goes through
+// namedGear and is unaffected, because naming it is a decision and this is not.
 func reachable(
 	ranked []measured.Match,
 	setup tone.Setup,
+	cat *catalog.Catalog,
+	instrument string,
 ) []measured.Match {
 	loaded := map[string]bool{}
 
@@ -721,11 +765,24 @@ func reachable(
 		}
 	}
 
+	// Whether to filter by instrument at all, asked of the blocks rather than
+	// hardcoded: amps are grouped by it and cabs are not, and a device that
+	// groups something else tomorrow is answered by the same question.
+	//
+	// Decided once, outside the loop, so playable is only ever called where the
+	// answer can be no. A nil catalog and an unstated instrument both land here
+	// rather than in the test for each block.
+	split := instrument != "" && splitsByInstrument(cat, ranked)
+
 	out := make([]measured.Match, 0, len(ranked))
 
 	for _, match := range ranked {
 		if catalog.NeedsUserIR(catalog.ModelID(match.ID)) &&
 			!loaded[strings.ToLower(match.Name)] {
+			continue
+		}
+
+		if split && !playable(cat, match.ID, instrument) {
 			continue
 		}
 
@@ -735,14 +792,78 @@ func reachable(
 	return out
 }
 
+// playable reports whether a block is for the instrument in hand.
+//
+// False only where the catalog says the other one. A block the catalog does not
+// hold, or holds without a subcategory, is kept: this is a filter on what Line 6
+// grouped rather than a claim about what sounds right, and refusing a model
+// because a field is empty would be refusing it for no reason.
+//
+// Case-insensitive, because an instrument arrives from a document somebody wrote
+// and a subcategory from a file Line 6 wrote.
+// Called only where the category is grouped by instrument, so a nil catalog and
+// an unstated instrument are the caller's business rather than this one's.
+func playable(
+	cat *catalog.Catalog,
+	id string,
+	instrument string,
+) bool {
+	block, held := cat.Block(catalog.ModelID(id))
+	if !held {
+		// Measured and not in the catalog, which is the two drifting apart. Kept
+		// rather than dropped: refusing a block over that would hide the drift
+		// behind a chain that is merely shorter.
+		return true
+	}
+
+	return strings.EqualFold(block.Subcategory, instrument)
+}
+
+// splitsByInstrument reports whether these blocks are grouped by what they are
+// played with.
+//
+// Asked of the candidates rather than stated, because the answer differs by
+// category and a list written here would be a list to keep in step with a file
+// Line 6 writes. One block claiming an instrument is enough: a category where
+// any model says "Bass" is one where the grouping means that, and a model in it
+// saying nothing is a gap rather than a different kind of thing.
+func splitsByInstrument(
+	cat *catalog.Catalog,
+	ranked []measured.Match,
+) bool {
+	if cat == nil {
+		return false
+	}
+
+	for _, match := range ranked {
+		block, held := cat.Block(catalog.ModelID(match.ID))
+		if !held {
+			continue
+		}
+
+		for _, named := range []string{"guitar", "bass"} {
+			if strings.EqualFold(block.Subcategory, named) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 // target is what a request is aiming at, in the figures a block is measured
 // in, and what it came from.
 func target(
 	spec tone.Spec,
+	deps Deps,
 	notes *Notes,
 ) (measured.Figures, string, bool) {
 	if spec.Like == nil || spec.Like.Recording == nil {
-		return measured.Figures{}, "", false
+		// A genre is the weaker target and the one almost every ask carries, so
+		// it answers where a recording does not rather than instead of one. A
+		// record is one performance measured exactly; a genre is the middle of a
+		// population, which is less precise and still a measurement.
+		return genreTarget(spec, deps, notes)
 	}
 
 	at := *spec.Like.Recording
@@ -779,6 +900,134 @@ func target(
 		High:     100 * read.High,
 		Centroid: read.Centroid,
 	}, at, true
+}
+
+// genreTarget is the middle of a genre's records, for an ask that names no
+// recording.
+//
+// This is what lets a request made of nothing but a genre and some adjectives
+// resolve. It used to be refused with "nothing in it can be measured against",
+// which was true of the code and not of the data: the figures a genre is measured
+// to are the same four [measured.Nearest] ranks the device's amplifiers on, and
+// they already ship.
+//
+// The first genre that can answer, in the order the ask names them, so a sound
+// that is both punk and pop-punk aims at the one it was named for first. Taking
+// the mean of two populations would invent a third that nobody measured.
+//
+// Two guards, both the ones genreWords already applies. Under the threshold is
+// reported and never computed from: eight records from three players, or the
+// genre is one band's sound wearing a genre's name. And a genre measured on
+// another instrument is refused rather than used weakly, because a bass
+// centroid sits an octave below a guitar's and the nearest amplifier to the
+// wrong octave is not a weaker answer, it is a different question.
+func genreTarget(
+	spec tone.Spec,
+	deps Deps,
+	notes *Notes,
+) (measured.Figures, string, bool) {
+	wants := ""
+	if spec.Instrument != nil {
+		wants = string(*spec.Instrument)
+	}
+
+	// No guard against an empty name. The contract holds each genre to
+	// `minLength: 1` and `pattern: "\S"`, so a blank one does not load, and a
+	// branch no document can reach is a branch nothing can test.
+	for _, named := range spec.Genre {
+		got, ok := audio.ShippedGenre(slug.Of(named))
+		if !ok || !got.Usable {
+			continue
+		}
+
+		if wants != "" && got.Instrument != "" && wants != got.Instrument {
+			*notes = append(*notes, Note{
+				About: named,
+				Said: fmt.Sprintf("is measured on %s and this is for %s, so its "+
+					"figures aim at nothing here", got.Instrument, wants),
+			})
+
+			continue
+		}
+
+		// Nothing said about a genre with no comparison population, because the
+		// data cannot hold one: Usable needs eight records from three players
+		// and a displacement needs two other players, out of sixteen. If it ever
+		// happened the generic refusal is already accurate, and it says nothing
+		// in the request can be measured against.
+		shifted, ok := displacedTo(got, deps.Measured.Baseline)
+		if !ok {
+			continue
+		}
+
+		return shifted, named, true
+	}
+
+	return measured.Figures{}, "", false
+}
+
+// displacedTo is the genre as a target a block can be ranked against.
+//
+// Not the genre's own figures. Those are measured off finished records and a
+// block's are measured off a dry signal pushed through it, and the two do not
+// subtract: punk reads 97.1% of its energy low where the dry signal going into
+// the pedal holds 90.8% before any block touches it. Asking which block reaches
+// 97.1% asks for bottom that is not in the input, every candidate is out of
+// range, and the nearest becomes whichever is darkest. That is how a request for
+// punk chose an Ampeg B-15NF, a Motown flip-top.
+//
+// So the genre is read as a displacement and applied to the signal the blocks
+// were measured with. Punk sits 0.021 of the energy lower and 9.6Hz brighter
+// than the records of players who hold none of it, and the target is the
+// baseline shifted by exactly that: 92.9% low at 164.9Hz, which blocks can
+// reach. Both sides are then "how far from its own normal", which is the
+// comparison [audio.Genre.Terms] already earns a word from.
+//
+// Shares convert and the centroid does not. A genre holds a share of the energy
+// from zero to one; the measured library reports the same figure as a
+// percentage.
+func displacedTo(
+	got audio.Genre,
+	baseline measured.Figures,
+) (measured.Figures, bool) {
+	if got.Elsewhere == nil {
+		return measured.Figures{}, false
+	}
+
+	at := got.Across.Measured()
+
+	shift := func(key audio.Figure, scale float64) (float64, bool) {
+		mine, held := at[string(key)]
+		theirs, also := got.Elsewhere[key]
+
+		if !held || !also {
+			return 0, false
+		}
+
+		return scale * (mine - theirs), true
+	}
+
+	out := baseline
+
+	for _, want := range []struct {
+		key   audio.Figure
+		scale float64
+		onto  *float64
+	}{
+		{audio.KeyLow, 100, &out.Low},
+		{audio.KeyMid, 100, &out.Mid},
+		{audio.KeyHigh, 100, &out.High},
+		{audio.KeyCentroid, 1, &out.Centroid},
+	} {
+		by, ok := shift(want.key, want.scale)
+		if !ok {
+			continue
+		}
+
+		*want.onto += by
+	}
+
+	return out, true
 }
 
 // genreNote says what is known about a genre somebody asked for.

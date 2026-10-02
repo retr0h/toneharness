@@ -23,8 +23,57 @@ against, and how a corpus is grown, is the `measure-music` skill's.
 ## Let a recording choose the amplifier
 
 A ToneSpec with `like: { recording: take.wav }` and no named amp gets the
-nearest of the device's 224 to what that file measures. No catalog entry and no
-citation needed: a recording is evidence of itself.
+nearest of the device's bass or guitar amplifiers to what that file measures. No
+catalog entry and no citation needed: a recording is evidence of itself.
+
+**The instrument narrows the shortlist, and it did not used to.** The catalog
+groups amplifiers `Guitar` and `Bass`, 173 against 27 on an HX Stomp, and nothing
+read it: a bass build ranked all 224 and a request aimed at a dry bass recording
+chose a Fender Super Reverb. It now draws from the 27. Twenty-three amplifiers
+carry no grouping at all and are left out of a ranking, because this is the tool
+choosing rather than you naming, and a block nobody placed is one it declines to
+guess at. Name one by hand and it resolves as it always did.
+
+## Or let the genre choose it
+
+An ask with no gear, no recording and no player still builds, from the genre it
+already carries:
+
+```yaml
+genre: [punk]
+instrument: bass
+words:
+  - term: mid-forward
+  - term: tight-low-end
+```
+
+```text
+did  amp  Cali 400 Ch1 is the closest of 27 measured to punk, 150 Hz against 165
+```
+
+**It is a displacement, not a position, and that distinction is the whole of it.**
+A genre is measured off finished records and a block off a dry signal pushed
+through it. Punk reads 97.1% of its energy low where the dry signal holds 90.8%
+before any block touches it, so asking which block reaches 97.1% asks for bottom
+that is not in the input: every candidate is out of range and the nearest is
+whichever is darkest. That is how a request for punk once chose an Ampeg B-15NF,
+a Motown flip-top.
+
+So the genre is read as how far it sits from the records of players who hold none
+of it, and that shift is applied to the signal the blocks were measured with.
+Punk sits 0.021 of the energy lower and 9.6Hz brighter than those, so the target
+is 92.9% low at 164.9Hz, which a block can reach. Both sides become "how far from
+its own normal", which is the comparison a genre already earns its words from.
+
+Two refusals rather than a weak answer. A genre under the threshold is reported
+and never computed from, because eight records from three players is the bar and
+fewer is one band's sound wearing a genre's name. And a genre measured on another
+instrument is refused rather than used: a bass centroid sits an octave below a
+guitar's, and the nearest amplifier to the wrong octave is a different question
+rather than a worse answer.
+
+A recording still wins where both are named. One performance measured exactly
+beats the middle of a population.
 
 ## Or name the player, and get the rig somebody researched
 
