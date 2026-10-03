@@ -38,7 +38,7 @@ come out generic.
 | Gear to model ID          | `resources/schemas/gear-map.json`                  | 575 models                                     |
 | What order blocks go in   | statistics over `resources/schemas/corpus/`        | added blocks placed; a rig's own order kept    |
 | Which blocks are in it    | the gear a rig names, plus the grammar             | shortlisted by measurement when a solve stalls |
-| Which way a knob moves    | swept on the device, in `resources/sweeps/`        | eleven blocks measured and shipped, on bass    |
+| Which way a knob moves    | swept on the device, in `resources/sweeps/`        | 19 blocks measured and shipped, on bass        |
 | What values to set        | catalog defaults, corpus medians, intent           | six axes of ten                                |
 | What a genre sounds like  | displacement over `resources/music/`               | 3 tagged, 2 earning a word, all bass           |
 | What a player sounds like | measured over `resources/music/bass/`              | 16 players, 52 records, 6 earning a word       |

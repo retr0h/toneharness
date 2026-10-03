@@ -31,6 +31,19 @@ where it came from, and where nothing has been measured the tool says so.
 Point an agent at a checkout and tell it what you want to sound like.
 </p>
 
+## Features
+
+| Feature                                                                     | Description                                                                                                                                                                                                                                |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [ToneSpec](pkg/sdk/tone/data/tonespec.openapi.yaml)                         | One file describes a sound: `ask:` is what you want it to sound like and `rig:` names the gear that answers it, the way a player would. Every field follows an OpenAPI contract, and toneharness refuses a document that breaks it         |
+| Shareable rigs                                                              | A rig names "Ampeg SVT", not a Line 6 model ID. Export a slot as a document, send the file to someone, and `presets compile` builds the preset on their end                                                                                |
+| [Every claim sourced](.claude/skills/build-a-rig/references/evidence.md)    | Each piece of gear and each word records where it came from: an interview, a video timestamp, a forum thread, a measurement. A claim a model made says so                                                                                  |
+| [Your agent tunes it](.claude/skills/build-a-rig/references/correcting.md)  | Your agent builds a rig for the player you name. Play it, say what is wrong, and it rebuilds. The ask keeps each round: what you asked, what changed, why, and your verdict. The next session starts from what worked                      |
+| [Measured, not guessed](.claude/skills/measure-a-device/README.md)          | Every one of the 661 blocks was played through the device and recorded, 19 of them had each control swept, and 52 records across 16 players were measured. Where nothing has been measured the tool says so rather than aiming at a number |
+| [Talks to your Helix](.claude/skills/work-a-device/README.md)               | Read, write, copy, swap and select presets over USB, and a slot is saved to a file before anything overwrites it. Device access is one backend per operating system and only macOS has one so far; everything else here runs anywhere      |
+| MCP server                                                                  | `toneharness mcp start` gives an agent the catalog, the corpus, the rigs, building and the pedal as tools with typed results. It cannot write to a pedal unless you start it with `--allow-writes`                                         |
+| [Go SDK](CONTRIBUTING.md#what-to-import-if-you-are-using-this-as-a-library) | The CLI is flags over `pkg/sdk`. Import it to build presets, read and write a device, or look up what a device can do from your own Go program                                                                                             |
+
 ## One text format, and a preset falls out of it
 
 A **ToneSpec** holds both halves of a sound: `ask:` is what you want and `rig:`
@@ -163,7 +176,7 @@ an input:
 | `tone tune`, `tone reach`, `device play`               | the pedal on USB                  |
 | `measure blocks`, `measure controls`, `measure slopes` | the pedal, and the measuring loop |
 
-The second row is how the 19 swept amplifiers in
+The second row is how the 19 swept blocks in
 [resources/sweeps/](resources/sweeps/) were measured, and they are committed, so
 nobody re-runs them. Without a loop you lose tuning a chain by measurement,
 which is the part that says whether a change did what it meant to. Everything
