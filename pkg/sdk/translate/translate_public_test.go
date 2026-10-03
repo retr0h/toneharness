@@ -977,21 +977,25 @@ func (s *TranslatePublicTestSuite) TestAnAskMayNameAPlayer() {
 			said: []string{"came from the rig researched for them"},
 		},
 		{
-			// Records in the corpus and nobody has written his rig. Reported
-			// against his name, so it is clear which player was not found
-			// rather than that naming a player does nothing.
+			// Nobody has written her rig. Reported against her name, so it is
+			// clear which player was not found rather than that naming a player
+			// does nothing.
+			//
+			// Somebody outside the corpus entirely, which is the only kind left:
+			// this named Cone McCaslin until his rig was written, and every
+			// player the corpus holds has one now.
 			name: "a player nobody has researched",
-			ask:  "like:\n  artist: Cone McCaslin\n",
+			ask:  "like:\n  artist: Esperanza Spalding\n",
 			said: []string{"no rig has been researched for that player"},
 			err:  translate.ErrNothingToBuildFrom,
 		},
 		{
-			// The same player, with a genre that has been measured. His rig is
+			// The same player, with a genre that has been measured. Her rig is
 			// still not written down and the note still says so, and the build
-			// no longer fails: punk names a target, so an amplifier is chosen
-			// by measurement instead of nothing being chosen at all.
+			// no longer fails: pop-punk names a target, so an amplifier is
+			// chosen by measurement instead of nothing being chosen at all.
 			name: "a player nobody has researched, in a genre somebody has measured",
-			ask:  "genre: [pop-punk]\ninstrument: bass\nlike:\n  artist: Cone McCaslin\n",
+			ask:  "genre: [pop-punk]\ninstrument: bass\nlike:\n  artist: Esperanza Spalding\n",
 			said: []string{
 				"no rig has been researched for that player",
 				"is the closest of",
