@@ -30,9 +30,9 @@ reading one file would miss. Read `cmd/` only to change a command, never to find
 out what one does.
 
 What a document may say is the contract, not a page about it:
-`pkg/sdk/tone/data/tonespec.openapi.yaml` and
-`pkg/sdk/rig/data/rigspec.openapi.yaml`. Their `description:` fields are the
-grammar, and the tool refuses a document that breaks it.
+`pkg/sdk/tone/data/tonespec.openapi.yaml`, which describes both the `ask:` and the
+`rig:` half. Its `description:` fields are the grammar, and the tool refuses a
+document that breaks it.
 
 Never work from a list written into this skill. The device carries 661 blocks
 across four models and Line 6 rename things between releases, so a list here

@@ -43,8 +43,8 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // flows are the operations, naming gear against the catalog at path. An empty
@@ -88,7 +88,7 @@ func said(
 
 	var buf bytes.Buffer
 
-	require.NoError(t, rig.Write(&buf, r.Rig))
+	require.NoError(t, tone.Write(&buf, tone.Spec{Schema: tone.SchemaName, Id: r.ID, Rig: r.Rig}))
 	require.NoError(t, plan.Write(&buf, r.Plan))
 
 	return r.Name + "\n" + buf.String()
@@ -296,7 +296,7 @@ func (s *DevicePublicTestSuite) TestShow() {
 			at:     slotpkg.Address{Slot: 24},
 			answer: s.answer("switches.bin"),
 			contains: []string{
-				"schema: RigSpec",
+				"schema: ToneSpec",
 				// The name comes from the listing, and reaches the rig as its
 				// identifier. A rig carries no subject: who a sound is for is
 				// something a person writes on an ask, and a preset read off a
@@ -467,7 +467,7 @@ func (s *DevicePublicTestSuite) TestExport() {
 			slot:     24,
 			answer:   s.answer("switches.bin"),
 			out:      "rig.yaml",
-			contains: []string{"schema: RigSpec"},
+			contains: []string{"schema: ToneSpec"},
 		},
 		{
 			// The device path once ignored the format and wrote a rig

@@ -77,12 +77,10 @@ func (s *LiftPublicTestSuite) catalogOf(
 
 // rigOf returns a valid rig naming one piece of gear.
 func rigOf(
-	id, gear string,
+	gear string,
 	inst rig.Instrument,
 ) rig.Spec {
 	return rig.Spec{
-		Schema:     rig.SchemaName,
-		ID:         id,
 		Instrument: inst,
 		Chain: []rig.ChainEntry{
 			{Role: rig.RoleAmp, Gear: gear},
@@ -227,7 +225,7 @@ func (s *LiftPublicTestSuite) TestLift() {
 							doc = s.preset(tt.title, tt.model)
 						}
 
-						got, _, err := compile.Lift(doc, s.catalogOf(tt.blocks))
+						gotID, got, _, err := compile.Lift(doc, s.catalogOf(tt.blocks))
 
 						if tt.err != nil || tt.errText != "" {
 							s.Require().Error(err)
@@ -259,7 +257,7 @@ func (s *LiftPublicTestSuite) TestLift() {
 						}
 
 						if tt.wantID != "" {
-							s.Require().Equal(tt.wantID, got.ID)
+							s.Require().Equal(tt.wantID, gotID)
 						}
 					})
 				}
@@ -333,7 +331,7 @@ func (s *LiftPublicTestSuite) TestLift() {
 						if tt.from != "" {
 							var err error
 
-							_, made, err = compile.Lift(s.preset("Test", tt.from), s.cat)
+							_, _, made, err = compile.Lift(s.preset("Test", tt.from), s.cat)
 							s.Require().NoError(err)
 						}
 
@@ -418,7 +416,11 @@ func ampPlan(
 // TestRealise fits a rig to the device a catalog describes.
 func (s *LiftPublicTestSuite) TestRealise() {
 	tests := []struct {
-		name   string
+		name string
+		// id is what the plan is asked to name, which is the document's rather
+		// than the gear's: a rig is gear, and what it is called is said once at
+		// the top of the document that holds it.
+		id     string
 		spec   rig.Spec
 		blocks map[catalog.ModelID]catalog.Block
 
@@ -433,7 +435,7 @@ func (s *LiftPublicTestSuite) TestRealise() {
 		{name: "a rig that is not one", err: rig.ErrInvalid},
 		{
 			name:    "gear nothing on this device models",
-			spec:    rigOf("nope", "Nonesuch 900", rig.InstrumentGuitar),
+			spec:    rigOf("Nonesuch 900", rig.InstrumentGuitar),
 			errText: "emulates \"Nonesuch 900\"",
 		},
 		{
@@ -441,7 +443,7 @@ func (s *LiftPublicTestSuite) TestRealise() {
 			// should put there, so fitting it lands on the stand-in.
 			name: "gear nothing models, with a stand-in the rig names",
 			spec: substituted(
-				rigOf("stood-in", "Nonesuch 900", rig.InstrumentBass),
+				rigOf("Nonesuch 900", rig.InstrumentBass),
 				"Ampeg SVT (normal"),
 			wantModel: "HD2_AmpSVBeastNrm",
 			exact:     -1,
@@ -449,7 +451,7 @@ func (s *LiftPublicTestSuite) TestRealise() {
 		{
 			name: "a stand-in nothing models either",
 			spec: substituted(
-				rigOf("nope", "Nonesuch 900", rig.InstrumentBass),
+				rigOf("Nonesuch 900", rig.InstrumentBass),
 				"Also Nonesuch"),
 			errText: `"Also Nonesuch" stands in for "Nonesuch 900"`,
 		},
@@ -457,7 +459,7 @@ func (s *LiftPublicTestSuite) TestRealise() {
 			// A rig describes gear rather than a block, so every knob gets
 			// Line 6's own default, which is never invalid.
 			name:  "a rig naming gear and nothing else",
-			spec:  rigOf("plain", "Ampeg SVT (normal", rig.InstrumentBass),
+			spec:  rigOf("Ampeg SVT (normal", rig.InstrumentBass),
 			exact: -1,
 		},
 		{
@@ -465,7 +467,7 @@ func (s *LiftPublicTestSuite) TestRealise() {
 			// writing a value with no kind produces a preset the device
 			// rejects.
 			name: "a parameter with no stated default",
-			spec: rigOf("half", "Half A Thing", rig.InstrumentGuitar),
+			spec: rigOf("Half A Thing", rig.InstrumentGuitar),
 			blocks: map[catalog.ModelID]catalog.Block{
 				"HD2_Half": {
 					ID: "HD2_Half", Name: "Half", BasedOn: "Half A Thing",
@@ -483,7 +485,12 @@ func (s *LiftPublicTestSuite) TestRealise() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			made, err := compile.Realise(tt.spec, s.catalogOf(tt.blocks))
+			id := tt.id
+			if id == "" {
+				id = "a-rig"
+			}
+
+			made, err := compile.Realise(id, tt.spec, s.catalogOf(tt.blocks))
 
 			if tt.err != nil || tt.errText != "" {
 				s.Require().Error(err)
@@ -500,7 +507,7 @@ func (s *LiftPublicTestSuite) TestRealise() {
 			}
 
 			s.Require().NoError(err)
-			s.Require().Equal(tt.spec.ID, made.Rig, "a plan names the rig it realises")
+			s.Require().Equal(id, made.Rig, "a plan names the rig it realises")
 
 			if tt.wantModel != "" {
 				s.Require().Equal(tt.wantModel, made.Blocks[0].Model)
@@ -533,12 +540,12 @@ func (s *LiftPublicTestSuite) TestRealise() {
 // off a device was unaffected, because it carries the model identifier, which
 // is why nothing caught it.
 func (s *LiftPublicTestSuite) TestRealisePicksTheSameModelEveryTime() {
-	spec := rigOf("stable", "Ampeg SVT", rig.InstrumentBass)
+	spec := rigOf("Ampeg SVT", rig.InstrumentBass)
 
 	var first catalog.ModelID
 
 	for range 20 {
-		made, err := compile.Realise(spec, s.cat)
+		made, err := compile.Realise("a-rig", spec, s.cat)
 		s.Require().NoError(err)
 		s.Require().NotEmpty(made.Blocks)
 

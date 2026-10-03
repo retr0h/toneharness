@@ -36,7 +36,7 @@ var (
 var toneBuildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Turn a request and a setup into a rig",
-	Long: `Read a ToneSpec and a Setup and write the RigSpec they resolve to.
+	Long: `Read a document and a Setup and write the document the ask resolves to.
 
 Two halves, and they answer different kinds of ask.
 

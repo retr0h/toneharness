@@ -36,8 +36,8 @@ import (
 	slotmocks "github.com/retr0h/toneharness/pkg/sdk/internal/fileslots/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 type FileslotsPublicTestSuite struct {
@@ -119,7 +119,7 @@ func said(
 
 	var buf bytes.Buffer
 
-	require.NoError(t, rig.Write(&buf, r.Rig))
+	require.NoError(t, tone.Write(&buf, tone.Spec{Schema: tone.SchemaName, Id: r.ID, Rig: r.Rig}))
 	require.NoError(t, plan.Write(&buf, r.Plan))
 
 	return r.Name + "\n" + buf.String()
@@ -245,7 +245,7 @@ func (s *FileslotsPublicTestSuite) TestShow() {
 		{
 			name:     "a slot in a setlist",
 			path:     fixture("setlist.hls"),
-			contains: []string{"name: First", "gear: Ampeg SVT", "schema: RigSpec"},
+			contains: []string{"name: First", "gear: Ampeg SVT", "schema: ToneSpec"},
 		},
 		{
 			// The setlist half of the address is read too, not only the slot.
@@ -347,7 +347,7 @@ func (s *FileslotsPublicTestSuite) TestShowFile() {
 			// came from.
 			name:     "a preset in a file of its own",
 			file:     fixture("preset.hlx"),
-			contains: []string{"schema: RigSpec", "gear: Ampeg SVT"},
+			contains: []string{"schema: ToneSpec", "gear: Ampeg SVT"},
 		},
 		{name: "a preset that is not there", file: fixture("nope.hlx"), errText: "opening"},
 		{

@@ -28,8 +28,8 @@ import (
 	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 
 	"github.com/retr0h/toneharness/pkg/sdk"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // Reading prints the rig a preset describes.
@@ -57,7 +57,9 @@ func Reading(
 	// Reported rather than discarded. A rig that fails to validate here would
 	// otherwise print nothing at all and call it success, which reads as a
 	// preset holding nothing.
-	if err := rig.Write(&buf, r.Rig); err != nil {
+	if err := tone.Write(&buf, tone.Spec{
+		Schema: tone.SchemaName, Id: r.ID, Rig: r.Rig,
+	}); err != nil {
 		return err
 	}
 

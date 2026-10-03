@@ -32,16 +32,16 @@ The goal is a system that knows *how a chain is built*. That decomposes into six
 problems with six different sources, and conflating them is why generated tones
 come out generic.
 
-| Problem                   | Source                                       | State                                          |
-| ------------------------- | -------------------------------------------- | ---------------------------------------------- |
-| Who plays what            | `pkg/sdk/shipped/`, a hand-written pair each | thin, grows by correction                      |
-| Gear to model ID          | `resources/schemas/gear-map.json`            | 575 models                                     |
-| What order blocks go in   | statistics over `resources/schemas/corpus/`  | added blocks placed; a rig's own order kept    |
-| Which blocks are in it    | the gear a rig names, plus the grammar       | shortlisted by measurement when a solve stalls |
-| Which way a knob moves    | swept on the device, in `resources/sweeps/`  | eleven blocks measured and shipped, on bass    |
-| What values to set        | catalog defaults, corpus medians, intent     | six axes of ten                                |
-| What a genre sounds like  | displacement over `resources/music/`         | 3 tagged, 2 earning a word, all bass           |
-| What a player sounds like | measured over `resources/music/bass/`        | 16 players, 52 records, 6 earning a word       |
+| Problem                   | Source                                             | State                                          |
+| ------------------------- | -------------------------------------------------- | ---------------------------------------------- |
+| Who plays what            | `pkg/sdk/shipped/`, one hand-written document each | thin, grows by correction                      |
+| Gear to model ID          | `resources/schemas/gear-map.json`                  | 575 models                                     |
+| What order blocks go in   | statistics over `resources/schemas/corpus/`        | added blocks placed; a rig's own order kept    |
+| Which blocks are in it    | the gear a rig names, plus the grammar             | shortlisted by measurement when a solve stalls |
+| Which way a knob moves    | swept on the device, in `resources/sweeps/`        | eleven blocks measured and shipped, on bass    |
+| What values to set        | catalog defaults, corpus medians, intent           | six axes of ten                                |
+| What a genre sounds like  | displacement over `resources/music/`               | 3 tagged, 2 earning a word, all bass           |
+| What a player sounds like | measured over `resources/music/bass/`              | 16 players, 52 records, 6 earning a word       |
 
 **Every measurement here is of a bass, and that is a limit rather than a
 default.** The corpus tree holds `bass/` and nothing else, so each genre's
@@ -58,27 +58,28 @@ built or partly built updates the line in the same pull request and says so in
 its description. This table fell three features behind when nobody did, and it
 is how the next session learns what exists.
 
-## Three layers
+## Three layers, two documents
 
-|              | holds                                        | written by                   |
-| ------------ | -------------------------------------------- | ---------------------------- |
-| **ToneSpec** | what somebody means, and why it is believed  | a person                     |
-| **RigSpec**  | gear in signal order, named as a person does | a person, or `tone build`    |
-| **Plan**     | that rig realised on one device              | the compiler, never a person |
+|            | holds                                        | written by                   |
+| ---------- | -------------------------------------------- | ---------------------------- |
+| **`ask:`** | what somebody means, and why it is believed  | a person                     |
+| **`rig:`** | gear in signal order, named as a person does | a person, or `tone build`    |
+| **Plan**   | that rig realised on one device              | the compiler, never a person |
 
-All three exist. A rig is portable because there is no longer anywhere in it to
-put a Helix answer: the resolved model per block, the position, the snapshots
-and footswitches, and the device state a lifted preset arrived with all live on
-the Plan.
+The first two are sections of one ToneSpec, with the rig required. The Plan is a
+document of its own. A rig is portable because there is nowhere in it to put a
+Helix answer: the resolved model per block, the position, the snapshots and
+footswitches, and the device state a lifted preset arrived with all live on the
+Plan.
 
-Only the first two have contracts, and the rule is worth stating: **becoming a
+Only the ToneSpec has a contract, and the rule is worth stating: **becoming a
 file is not what earns a contract. Being typed by somebody is.**
 
+[One document, and the rig is required](superpowers/specs/2026-10-01-one-document-rig-required-design.md)
+is the record for the merge, superseding
+[ToneSpec is the ask](superpowers/specs/2026-09-19-tonespec-is-the-ask-design.md).
 [A rig is a plan, for one device](superpowers/specs/2026-09-19-a-rig-is-a-plan-for-one-device-design.md)
-is the record for that split, and
-[ToneSpec is the ask](superpowers/specs/2026-09-19-tonespec-is-the-ask-design.md)
-says how the first two divide, both superseding
-[the RigSpec design record](superpowers/specs/2026-09-06-rigspec-as-the-one-model-design.md).
+is the record for the Plan's split from the rig.
 
 ## The pipeline
 
@@ -86,10 +87,10 @@ says how the first two divide, both superseding
 request      "a Mike Dirnt sound"
    │
    ▼
-the ask      marketplace/core/artists/mike-dirnt.tone.yaml     who it is for
+the ask      marketplace/core/artists/mike-dirnt.yaml        who it is for
    │         words: scooped, clean. Or genre: grunge
    ▼
-the rig      marketplace/core/artists/mike-dirnt.yaml          who plays what
+the rig      the `rig:` section of that same file              who plays what
    │         amp: Ampeg SVT
    ▼
 gear map     resources/schemas/gear-map.json                  gear to model
@@ -107,13 +108,13 @@ genres       pkg/sdk/audio/data/genres.json                   what a genre is di
 values       corpus medians + the ask's words + the genre's   what to set
    │
    ▼
-RigSpec      validated against the catalog
+the rig      validated against the catalog
    │
    ▼
 .hlx         written, and put on a device over USB
    │
    ▼
-a person     listens, and corrects the pair                   nothing above can hear
+a person     listens, and corrects the document               nothing above can hear
 ```
 
 ## Ways in

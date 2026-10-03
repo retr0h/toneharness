@@ -110,7 +110,7 @@ type (
 
 // The formats an export can take.
 const (
-	// FormatRig is a RigSpec, the default: gear a person recognises, and
+	// FormatRig is a ToneSpec, the default: gear a person recognises, and
 	// portable to other hardware.
 	FormatRig = result.FormatRig
 	// FormatPreset is the device's own file, a faithful copy.

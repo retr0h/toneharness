@@ -75,25 +75,18 @@ func (s *MakePublicTestSuite) TestMake() {
 		name string
 		ctx  context.Context
 		id   string
-		// rigPath names the rig by file instead of by identifier, relative to
-		// the rigs this suite's testdata holds. askPath does the same for the
-		// ask, for the one case that names an ask not beside its rig.
+		// rigPath names the document by file instead of by identifier, relative
+		// to the rigs this suite's testdata holds.
 		rigPath string
-		askPath string
 		// bothSources names a rig twice and noSource names it not at all,
 		// which are the two ways to ask for a rig nobody identified.
 		bothSources bool
 		noSource    bool
-		// alone copies the named rig into a directory of its own, so there is
-		// no ask beside it to be found. aloneAs renames it on the way, for a
-		// row about which spelling the pairing works on, and withAsk copies an
-		// ask in beside it.
+		// alone copies the named document into a directory of its own, and
+		// aloneAs renames it on the way, for a row about what a path may be
+		// spelt as.
 		alone   string
 		aloneAs string
-		withAsk string
-		// badAsk is written to a file and named as the ask, for a document
-		// that is there and is not a ToneSpec.
-		badAsk  string
 		stats   string
 		catalog string
 		// setup is what the person has. The row writes it to a file, so a
@@ -125,70 +118,39 @@ func (s *MakePublicTestSuite) TestMake() {
 			contains: []string{"Test Player"},
 		},
 		{
-			// The same rig by path rather than by identifier, and the words on
-			// the ask beside it still reach a control. The point of the whole
-			// flag: a rig that `tone build` wrote has no identifier to look up,
-			// and compiling it instead dropped every word with nothing said.
-			name:     "a rig file, with the ask beside it",
-			rigPath:  "own-words.rig.yaml",
-			loadable: true,
-			contains: []string{"sounds like a wet paper bag"},
-		},
-		{
-			// The same pairing on the suffix nothing writes any more. A rig read
-			// off a device is `<slug>.yaml`, and finding its ask by trimming one
-			// extension off `<slug>.rig.yaml` would look for `<slug>.rig.tone.yaml`
-			// instead, which is a file nothing writes and no error names.
-			name:     "a rig file named the old way, with the ask beside it",
-			alone:    "own-words.rig.yaml",
-			aloneAs:  "own-words.yaml",
-			withAsk:  "own-words.tone.yaml",
-			named:    "Test Player",
+			// The same rig by path rather than by identifier, and the words in its
+			// ask still reach a control. The point of the whole flag: a document
+			// that `tone build` wrote has no identifier to look up, and compiling
+			// it instead dropped every word with nothing said.
+			name:     "a document by path",
+			rigPath:  "own-words.yaml",
 			loadable: true,
 			contains: []string{"sounds like a wet paper bag"},
 		},
 		{
 			// A path with no extension at all, which nothing writes and a person
-			// may still type. The ask is looked for beside it under the name it
-			// has rather than a stem trimmed off nothing.
-			name:     "a rig file with no extension",
-			alone:    "own-words.rig.yaml",
+			// may still type. One document, so nothing is looked for beside it
+			// and the spelling decides nothing.
+			name:     "a document whose path has no extension",
+			alone:    "own-words.yaml",
 			aloneAs:  "own-words",
-			withAsk:  "own-words.tone.yaml",
 			named:    "Test Player",
-			loadable: true,
-		},
-		{
-			// An ask somewhere else, because the rig a request produced and the
-			// request that produced it do not land beside each other.
-			name:     "a rig file and an ask named apart from it",
-			rigPath:  "test-player.rig.yaml",
-			askPath:  "own-words.tone.yaml",
 			loadable: true,
 			contains: []string{"sounds like a wet paper bag"},
 		},
 		{
-			// A rig with no ask is legal and ordinary. Somebody's own directory
-			// holds rigs they wrote, and nothing obliges them to write down the
-			// request that produced one.
-			name:  "a rig file with no ask beside it",
-			alone: "own-words.rig.yaml",
-			// The rig's own identifier, because the name comes off the ask's
+			// A document with no ask is legal and ordinary. Somebody's own
+			// directory holds rigs they wrote, and nothing obliges them to write
+			// down the request that produced one.
+			name:    "a document with no ask",
+			rigPath: "gear-only.yaml",
+			// The document's own identifier, because the name comes off the ask's
 			// subject and there is no subject without one.
-			named:    "own-words",
+			named:    "gear-only",
 			loadable: true,
-			// The words were on the ask, and there is no ask, so the one thing
-			// this rig said about itself is gone with it.
+			// The words were in the ask, and there is none, so nothing describes
+			// this chain in anybody's words.
 			absent: []string{"sounds like a wet paper bag"},
-		},
-		{
-			// A path somebody typed is not a shrug. They said to read that file,
-			// so a document that is there and is not a ToneSpec fails rather
-			// than being skipped the way a missing neighbour is.
-			name:    "an ask that is there and will not parse",
-			rigPath: "test-player.rig.yaml",
-			badAsk:  "schema: NotAToneSpec\n",
-			errText: "broken.tone.yaml",
 		},
 		{
 			name:        "a rig named twice",
@@ -204,12 +166,6 @@ func (s *MakePublicTestSuite) TestMake() {
 			name:    "a rig file that is not there",
 			rigPath: "no-such-rig.yaml",
 			errText: "no-such-rig.yaml",
-		},
-		{
-			name:    "an ask that is not there",
-			rigPath: "test-player.rig.yaml",
-			askPath: "no-such-ask.tone.yaml",
-			errText: "no-such-ask.tone.yaml",
 		},
 		{
 			// A word nothing defines is said and not refused. Nothing
@@ -347,10 +303,6 @@ func (s *MakePublicTestSuite) TestMake() {
 				o.RigPath = filepath.Join("testdata", "rigs", "artists", tt.rigPath)
 			}
 
-			if tt.askPath != "" {
-				o.AskPath = filepath.Join("testdata", "rigs", "artists", tt.askPath)
-			}
-
 			if tt.alone != "" {
 				as := tt.alone
 				if tt.aloneAs != "" {
@@ -367,24 +319,9 @@ func (s *MakePublicTestSuite) TestMake() {
 				o.RigPath = at
 			}
 
-			if tt.withAsk != "" {
-				from, readErr := os.ReadFile(
-					filepath.Join("testdata", "rigs", "artists", tt.withAsk))
-				s.Require().NoError(readErr)
-				s.Require().NoError(os.WriteFile(
-					filepath.Join(dir, tt.withAsk), from, 0o600))
-			}
-
-			if tt.badAsk != "" {
-				at := filepath.Join(dir, "broken.tone.yaml")
-				s.Require().NoError(os.WriteFile(at, []byte(tt.badAsk), 0o600))
-
-				o.AskPath = at
-			}
-
 			if tt.bothSources {
 				o.RigID = "test-player"
-				o.RigPath = filepath.Join("testdata", "rigs", "artists", "test-player.rig.yaml")
+				o.RigPath = filepath.Join("testdata", "rigs", "artists", "test-player.yaml")
 			}
 
 			if tt.noSource {
@@ -542,7 +479,7 @@ type IntentPublicTestSuite struct {
 // TestIntentOf covers every field an ask may leave out.
 //
 // Each one is a pointer, so the mapping is where a missing field becomes an
-// empty one rather than a nil dereference. A rig with no ask beside it is the
+// empty one rather than a nil dereference. A document with no ask is the
 // ordinary case, not an error, so the zero intent has to be a legal answer.
 func (s *IntentPublicTestSuite) TestIntentOf() {
 	words := []tone.Word{
@@ -554,29 +491,29 @@ func (s *IntentPublicTestSuite) TestIntentOf() {
 
 	tests := []struct {
 		name string
-		ask  *tone.Spec
+		ask  *tone.Ask
 		// what the intent must carry.
 		words  int
 		attack string
 		who    string
 	}{
 		{name: "no ask at all, which is legal and ordinary"},
-		{name: "an ask that says nothing", ask: &tone.Spec{}},
+		{name: "an ask that says nothing", ask: &tone.Ask{}},
 		{
 			name:  "words, one with evidence and one without",
-			ask:   &tone.Spec{Words: &words},
+			ask:   &tone.Ask{Words: &words},
 			words: 2,
 		},
 		{
 			name:   "how it is played",
-			ask:    &tone.Spec{Technique: &attack},
+			ask:    &tone.Ask{Technique: &attack},
 			attack: "pick",
 		},
 		{
 			// The preset takes its name from the subject, and the pedal shows
 			// that name on its screen.
 			name: "who it is for",
-			ask:  &tone.Spec{Subject: &subject},
+			ask:  &tone.Ask{Subject: &subject},
 			who:  "Somebody",
 		},
 	}
@@ -622,7 +559,7 @@ func (s *IntentPublicTestSuite) TestAGenreBringsItsMeasuredWords() {
 		s.T().Skip("no measured genre earns a word in this binary")
 	}
 
-	got := presets.IntentOf(&tone.Spec{Genre: []string{usable}}, nil)
+	got := presets.IntentOf(&tone.Ask{Genre: []string{usable}}, nil)
 	s.Require().NotEmpty(got.Words)
 
 	for _, w := range got.Words {
@@ -643,11 +580,11 @@ func (s *IntentPublicTestSuite) TestAGenreBringsItsMeasuredWords() {
 // would say it twice.
 func (s *IntentPublicTestSuite) TestAGenreThatBringsNothing() {
 	nothing := "sea-shanty"
-	s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{nothing}}, nil).Words,
+	s.Require().Empty(presets.IntentOf(&tone.Ask{Genre: []string{nothing}}, nil).Words,
 		"nothing measured")
 
 	empty := ""
-	s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{empty}}, nil).Words,
+	s.Require().Empty(presets.IntentOf(&tone.Ask{Genre: []string{empty}}, nil).Words,
 		"an empty genre is no genre")
 
 	// A genre that clears nothing. Punk is measured, clears the record
@@ -657,7 +594,7 @@ func (s *IntentPublicTestSuite) TestAGenreThatBringsNothing() {
 
 	for _, g := range all {
 		if g.Usable && len(g.Terms) == 0 {
-			s.Require().Empty(presets.IntentOf(&tone.Spec{Genre: []string{g.Slug}}, nil).Words,
+			s.Require().Empty(presets.IntentOf(&tone.Ask{Genre: []string{g.Slug}}, nil).Words,
 				"%s is measured and sets nothing apart", g.Slug)
 		}
 	}

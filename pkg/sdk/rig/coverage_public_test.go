@@ -113,7 +113,7 @@ func (s *CoveragePublicTestSuite) declared() []string {
 		walk(schema.Value.Items, depth+1)
 	}
 
-	walk(doc.Components.Schemas["RigSpec"], 0)
+	walk(doc.Components.Schemas["Rig"], 0)
 
 	names := make([]string, 0, len(out))
 	for name := range out {
@@ -151,7 +151,7 @@ func (s *CoveragePublicTestSuite) written() map[string]bool {
 	}
 
 	for _, pattern := range [][]string{
-		{"..", "..", "..", "marketplace", "core", "examples", "*.rig.yaml"},
+		{"..", "..", "..", "marketplace", "core", "examples", "*.yaml"},
 	} {
 		paths, err := filepath.Glob(filepath.Join(pattern...))
 		s.Require().NoError(err)

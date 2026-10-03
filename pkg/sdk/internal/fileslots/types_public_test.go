@@ -149,7 +149,7 @@ func (s *TypesPublicTestSuite) TestCompiler() {
 		s.Run(tt.name, func() {
 			comp := slotmocks.NewMockCompiler(s.ctrl)
 			comp.EXPECT().Lift(gomock.Any(), gomock.Any()).
-				Return(tt.lifted, tt.planned, tt.err)
+				Return("a-rig", tt.lifted, tt.planned, tt.err)
 
 			out := filepath.Join(s.T().TempDir(), "rig.yaml")
 

@@ -85,7 +85,14 @@ func Resolve(
 		}
 	}
 
-	built, notes, err := translate.Translate(spec, setup, translate.Deps{
+	// The ask half. Resolving reads a request and answers with the gear, and the
+	// document the request arrived in is this function's to put back together.
+	ask := tone.Ask{}
+	if spec.Ask != nil {
+		ask = *spec.Ask
+	}
+
+	built, notes, err := translate.Translate(ask, setup, translate.Deps{
 		Catalog: cat, Measured: lib,
 		// Wired here because this is the one place above both: translate runs
 		// before compile and must not import it, and compile owns the
@@ -97,7 +104,7 @@ func Resolve(
 		RigNamed: rigNamed,
 	})
 
-	return result.Resolved{Rig: built, Notes: notes}, err
+	return result.Resolved{ID: spec.Id, Ask: spec.Ask, Rig: built, Notes: notes}, err
 }
 
 // read loads one of the two documents a person writes.

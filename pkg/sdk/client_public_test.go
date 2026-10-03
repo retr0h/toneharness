@@ -28,7 +28,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -387,8 +386,8 @@ func (s *ClientPublicTestSuite) TestWithRigs() {
 	s.Require().Empty(got.Rigs)
 }
 
-// ownRig is a rig of somebody's own, about "Their Player". extra is a line
-// such as aliases or extends, or empty.
+// ownRig is a document of somebody's own, about "Their Player". extra is a line
+// for the ask, such as aliases or extends, or empty.
 func ownRig(
 	stem string,
 	id string,
@@ -396,32 +395,34 @@ func ownRig(
 	instrument string,
 ) map[string]string {
 	return map[string]string{
-		stem + ".yaml": "schema: RigSpec\nversion: 2\nid: " + id + `
+		stem + ".yaml": "schema: ToneSpec\nid: " + id + `
 
-instrument: ` + instrument + `
+ask:
+  genre: [rock]
+  ` + extra + `
+  subject:
+    kind: artist
+    name: Their Player
 
-chain:
-  - role: amp
-    gear: Aguilar DB51
-    evidence:
-      - { kind: cited, note: "a test says so" }
-    confidence: high
-`,
-		stem + ".tone.yaml": "schema: ToneSpec\ngenre: [rock]\n" + extra + `
+  confidence: high
 
-subject:
-  kind: artist
-  name: Their Player
+rig:
+  instrument: ` + instrument + `
 
-confidence: high
+  chain:
+    - role: amp
+      gear: Aguilar DB51
+      evidence:
+        - { kind: cited, note: "a test says so" }
+      confidence: high
 `,
 	}
 }
 
 // rigsDir writes files under artists/ in a new directory, and returns it.
 //
-// A rig and the ask beside it are two files under one stem, so a case hands
-// over whatever ownRig produced rather than naming them one at a time.
+// A case hands over whatever ownRig produced rather than naming its files one
+// at a time.
 func (s *ClientPublicTestSuite) rigsDir(
 	files map[string]string,
 ) string {
@@ -500,17 +501,17 @@ func (s *ClientPublicTestSuite) TestWithUserRigs() {
 					},
 					{
 						name:    "a file of theirs that is not a rig",
-						files:   map[string]string{"broken.yaml": "schema: RigSpec\nid: broken\n"},
+						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nid: broken\n"},
 						id:      "mike-dirnt",
 						want:    "Mike Dirnt",
 						listErr: "broken.yaml",
 					},
 					{
 						name:    "a file of theirs that is not a rig, named for the one asked for",
-						files:   map[string]string{"mike-dirnt.tone.yaml": "schema: RigSpec\n"},
+						files:   map[string]string{"mike-dirnt.yaml": "schema: Setup\n"},
 						id:      "mike-dirnt",
-						listErr: "mike-dirnt.tone.yaml",
-						findErr: "mike-dirnt.tone.yaml",
+						listErr: "mike-dirnt.yaml",
+						findErr: "mike-dirnt.yaml",
 					},
 				}
 
@@ -547,7 +548,7 @@ func (s *ClientPublicTestSuite) TestWithUserRigs() {
 
 							listedIDs := make([]string, 0, len(listed.Rigs))
 							for _, r := range listed.Rigs {
-								listedIDs = append(listedIDs, r.Rig.ID)
+								listedIDs = append(listedIDs, r.ID)
 							}
 
 							s.Require().Contains(listedIDs, "flea", "the shipped rigs are still listed")
@@ -1095,7 +1096,7 @@ func (s *ClientPublicTestSuite) TestRig() {
 			}
 
 			s.Require().NoError(err)
-			s.Require().Equal(tt.id, got.Rig.ID)
+			s.Require().Equal(tt.id, got.ID)
 		})
 	}
 }
@@ -1123,7 +1124,7 @@ func (s *ClientPublicTestSuite) TestTone() {
 		{
 			name: "a request and what somebody owns",
 			in: sdk.Ask{
-				Spec:  examples("like-a-record.tone.yaml"),
+				Spec:  examples("like-a-record.yaml"),
 				Setup: examples("mine.setup.yaml"),
 			},
 			notes: true,
@@ -1132,7 +1133,7 @@ func (s *ClientPublicTestSuite) TestTone() {
 			// A setup is optional: somebody asking what a record sounds like
 			// has not necessarily said what is in the room.
 			name:  "a request on its own",
-			in:    sdk.Ask{Spec: examples("like-a-record.tone.yaml")},
+			in:    sdk.Ask{Spec: examples("like-a-record.yaml")},
 			notes: true,
 		},
 		{
@@ -1145,7 +1146,7 @@ func (s *ClientPublicTestSuite) TestTone() {
 			// which is the lookup the Client hands to translate. The shipped
 			// rigs rather than a double, because that is what it hands over.
 			name:  "a request naming a player",
-			in:    sdk.Ask{Spec: examples("like-a-player.tone.yaml")},
+			in:    sdk.Ask{Spec: examples("like-a-player.yaml")},
 			gear:  "Ampeg SVT",
 			notes: true,
 		},
@@ -1156,9 +1157,15 @@ func (s *ClientPublicTestSuite) TestTone() {
 			// would choose an amplifier and there would be nothing to refuse.
 			name: "a request naming a player nobody has researched",
 			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
-genre: [rock]
-like:
-  artist: Cone McCaslin
+id: cone-mccaslin
+ask:
+  genre: [rock]
+  like:
+    artist: Cone McCaslin
+rig:
+  instrument: bass
+  chain:
+    - {role: amp, gear: Ampeg SVT}
 `)},
 			is: sdk.ErrNothingToBuildFrom,
 		},
@@ -1169,17 +1176,23 @@ like:
 			// chosen at all.
 			name: "a player nobody has researched, in a measured genre",
 			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
-genre: [punk]
-instrument: bass
-like:
-  artist: Cone McCaslin
+id: cone-mccaslin
+ask:
+  genre: [punk]
+  instrument: bass
+  like:
+    artist: Cone McCaslin
+rig:
+  instrument: bass
+  chain:
+    - {role: amp, gear: Ampeg SVT}
 `)},
 			notes: true,
 		},
 		{
 			name: "a caller who stopped waiting",
 			ctx:  cancelled(),
-			in:   sdk.Ask{Spec: examples("like-a-record.tone.yaml")},
+			in:   sdk.Ask{Spec: examples("like-a-record.yaml")},
 			is:   context.Canceled,
 		},
 	}
@@ -1219,12 +1232,16 @@ like:
 	}
 }
 
-// spec writes an ask and returns where it went, for a case whose document is
-// shorter than a file of its own is worth.
+// spec writes a document and returns where it went, for a case shorter than a
+// file of its own is worth.
+//
+// The `rig:` section is what the contract requires and not what a resolve reads:
+// the ask is the request and Translate builds the gear that answers it, so what
+// is already there is the previous answer and is replaced.
 func (s *ClientPublicTestSuite) spec(
 	body string,
 ) string {
-	at := filepath.Join(s.T().TempDir(), "ask.tone.yaml")
+	at := filepath.Join(s.T().TempDir(), "ask.yaml")
 	s.Require().NoError(os.WriteFile(at, []byte(body), 0o600))
 
 	return at
@@ -1242,7 +1259,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 		s.Require().NoError(err)
 
 		return scaffolded{
-			got: got, body: string(body), ask: s.asked(got.Path),
+			got: got, body: string(body),
 		}, nil
 	}
 
@@ -1290,16 +1307,16 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 			name: "Name decides who the rig is about",
 			in:   with(func(in *sdk.NewRig) { in.Name = "Other Player" }),
 			check: func(got scaffolded) {
-				s.Require().Contains(got.ask, "  name: Other Player")
-				s.Require().Contains(written.ask, "  name: Test Player")
+				s.Require().Contains(got.body, "    name: Other Player")
+				s.Require().Contains(written.body, "    name: Test Player")
 			},
 		},
 		{
 			name: "Band decides the group the rig names",
 			in:   with(func(in *sdk.NewRig) { in.Band = "The Test Band" }),
 			check: func(got scaffolded) {
-				s.Require().Contains(got.ask, "  band: The Test Band")
-				s.Require().NotContains(written.ask, "band:")
+				s.Require().Contains(got.body, "    band: The Test Band")
+				s.Require().NotContains(written.body, "band:")
 			},
 		},
 		{
@@ -1314,15 +1331,15 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 			name: "Amp decides the amplifier in the chain",
 			in:   with(func(in *sdk.NewRig) { in.Amp = "Acoustic 360" }),
 			check: func(got scaffolded) {
-				s.Require().Contains(got.body, "role: amp\n    gear: Acoustic 360")
-				s.Require().Contains(written.body, "role: amp\n    gear: Ampeg SVT")
+				s.Require().Contains(got.body, "role: amp\n      gear: Acoustic 360")
+				s.Require().Contains(written.body, "role: amp\n      gear: Ampeg SVT")
 			},
 		},
 		{
 			name: "Cab decides the cabinet in the chain",
 			in:   with(func(in *sdk.NewRig) { in.Cab = "Ampeg 8x10" }),
 			check: func(got scaffolded) {
-				s.Require().Contains(got.body, "role: cab\n    gear: Ampeg 8x10")
+				s.Require().Contains(got.body, "role: cab\n      gear: Ampeg 8x10")
 				s.Require().NotContains(written.body, "role: cab")
 			},
 		},
@@ -1330,7 +1347,7 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 			name: "Pedals decide what goes ahead of the amp",
 			in:   with(func(in *sdk.NewRig) { in.Pedals = []string{"Klon"} }),
 			check: func(got scaffolded) {
-				s.Require().Contains(got.body, "role: drive\n    gear: Klon")
+				s.Require().Contains(got.body, "role: drive\n      gear: Klon")
 				s.Require().NotContains(written.body, "role: drive")
 			},
 		},
@@ -1398,39 +1415,17 @@ func (s *ClientPublicTestSuite) TestScaffold() {
 
 // scaffolded is what a scaffold answered and the rig it wrote.
 type scaffolded struct {
-	got  sdk.Scaffolded
+	got sdk.Scaffolded
+	// body is the whole document: the ask saying who the rig is for and the
+	// gear that answers it. One file since version 2, so a claim about either
+	// half is a claim about this text.
 	body string
-	// ask is the text of the ToneSpec written beside the rig.
-	//
-	// Both, because a scaffold writes both and which of the two a claim lands
-	// in is the decision worth holding: who the rig is for is the ask's, and the
-	// gear is the rig's.
-	ask string
 }
 
-// asked is the ask written beside a rig, read by the rig's own path.
-//
-// The pair is matched by filename stem, so the ask needs no field pointing at
-// its rig and this needs nothing but the path the answer already gave back.
-func (s *ClientPublicTestSuite) asked(
-	at string,
-) string {
-	// The whole suffix, longest first. `.yaml` is a suffix of `.rig.yaml`, so
-	// trimming the short one leaves a stem ending `.rig` and looks for an ask
-	// nothing writes.
-	raw, err := os.ReadFile(
-		strings.TrimSuffix(strings.TrimSuffix(at, ".rig.yaml"), ".yaml") + ".tone.yaml")
-	s.Require().NoError(err)
-
-	return string(raw)
-}
-
-// extended is what an extend answered and the rig it wrote.
+// extended is what an extend answered and the document it wrote.
 type extended struct {
 	got  sdk.Scaffolded
 	body string
-	// ask is the text of the ToneSpec written beside the copy.
-	ask string
 }
 
 // TestExtend covers starting a rig as a copy of another.
@@ -1449,7 +1444,7 @@ func (s *ClientPublicTestSuite) TestExtend() {
 		s.Require().NoError(err)
 
 		return extended{
-			got: got, body: string(body), ask: s.asked(got.Path),
+			got: got, body: string(body),
 		}, nil
 	}
 
@@ -1478,8 +1473,8 @@ func (s *ClientPublicTestSuite) TestExtend() {
 			name: "From decides which rig is copied",
 			in:   sdk.ExtendRig{From: "flea", ID: "the-copy"},
 			check: func(got extended) {
-				s.Require().Contains(got.ask, "extends: flea")
-				s.Require().Contains(base.ask, "extends: mike-dirnt")
+				s.Require().Contains(got.body, "extends: flea")
+				s.Require().Contains(base.body, "extends: mike-dirnt")
 				s.Require().NotEqual(base.body, got.body)
 				// The report names what the copy holds, which is the rig
 				// it copied: its name and its amp.
@@ -1498,7 +1493,7 @@ func (s *ClientPublicTestSuite) TestExtend() {
 			in:   sdk.ExtendRig{From: "mike-dirnt", ID: "another-copy"},
 			check: func(got extended) {
 				s.Require().Equal("another-copy", got.got.ID)
-				s.Require().Equal("another-copy.rig.yaml", filepath.Base(got.got.Path))
+				s.Require().Equal("another-copy.yaml", filepath.Base(got.got.Path))
 				s.Require().Contains(got.body, "id: another-copy")
 				s.Require().NotContains(base.body, "id: another-copy")
 			},
@@ -1507,8 +1502,8 @@ func (s *ClientPublicTestSuite) TestExtend() {
 			name: "Name decides who the copy is about",
 			in:   sdk.ExtendRig{From: "mike-dirnt", ID: "the-copy", Name: "Somebody Else"},
 			check: func(got extended) {
-				s.Require().Contains(got.ask, "  name: Somebody Else")
-				s.Require().Contains(base.ask, "  name: Mike Dirnt")
+				s.Require().Contains(got.body, "    name: Somebody Else")
+				s.Require().Contains(base.body, "    name: Mike Dirnt")
 				s.Require().Equal("Somebody Else", got.got.Name)
 			},
 		},
@@ -1516,8 +1511,8 @@ func (s *ClientPublicTestSuite) TestExtend() {
 			name: "Kind decides what the copy is attributed to",
 			in:   sdk.ExtendRig{From: "mike-dirnt", ID: "the-copy", Kind: "song"},
 			check: func(got extended) {
-				s.Require().Contains(got.ask, "  kind: song")
-				s.Require().Contains(base.ask, "  kind: artist")
+				s.Require().Contains(got.body, "    kind: song")
+				s.Require().Contains(base.body, "    kind: artist")
 			},
 		},
 		{
@@ -1669,7 +1664,7 @@ func TestClientPublicTestSuite(
 // "no rig" is exactly the answer somebody is looking for.
 func (s *ClientPublicTestSuite) TestMusicNeedsTheRigsToAnswerWhoHasNone() {
 	c := sdk.New(sdk.WithRigs(s.rigsDir(
-		map[string]string{"broken.yaml": "schema: RigSpec\nid: broken\n"})))
+		map[string]string{"broken.yaml": "schema: ToneSpec\nid: broken\n"})))
 
 	corpus := s.T().TempDir()
 

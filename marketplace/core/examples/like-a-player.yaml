@@ -1,0 +1,72 @@
+# A request naming somebody, which resolves to the rig researched for them.
+#
+# The shortest ask that produces a real chain. No gear, no recording, no era:
+# one name, and the cited gear comes back with every source attached.
+#
+#     toneharness tone build --ask marketplace/core/examples/like-a-player.yaml \
+#       --out rig.yaml
+#     toneharness presets make --rig rig.yaml \
+#       --ask marketplace/core/examples/like-a-player.yaml --out dirnt.hlx
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: like-a-player
+
+ask:
+  genre: [punk]
+
+  instrument: bass
+
+  # What to sound like. `artist`, `band` and `song` all resolve, and where an ask
+  # names more than one the narrowest wins: a song is one recording, an artist a
+  # body of work, a band several people's.
+  #
+  # This reaches marketplace/core/artists/mike-dirnt.yaml, so what comes back is
+  # an Ampeg SVT cited to Guitar World's Bass Guitar and an Acoustic 6x10 the
+  # device substitutes for, rather than whichever amplifier measures closest to
+  # something. The notes say which happened:
+  #
+  #     did  Mike Dirnt  2 blocks came from the rig researched for them
+  #
+  # An alias counts too, so `primus` reaches Les Claypool where no slug of it
+  # would. And this needs somebody to have done the research: a player with
+  # records in the corpus and no rig is refused by name, and `rigs list` says who
+  # has one.
+  like:
+    artist: Mike Dirnt
+
+  # Said on top of the gear rather than instead of it. The rig decides which
+  # blocks; these move the controls on them, and they outrank what the genre
+  # measured on any axis they both answer.
+  words:
+    - term: audible-pick-attack
+
+  # How it is played, which no device models and every figure carries. Stated for
+  # the subject here, so a Setup saying this person plays with fingers lets the
+  # difference be compensated rather than discovered.
+  technique:
+    attack: pick
+    position: bridge
+
+  # Nothing here was read anywhere. Who played what is cited in the rig this
+  # resolves to; what somebody wants of it is their own.
+  confidence: low
+
+rig:
+  instrument: bass
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      evidence:
+        - kind: cited
+          url: https://web.archive.org/web/20060217083255im_/http://www.greendayauthority.com/TheBand/articles/bassmag/4.jpg
+          note: >-
+            taken from the rig researched for him, which is what naming a player
+            resolves to. `rigs show mike-dirnt` has the whole of it.
+    - role: cab
+      gear: Ampeg 8x10
+      evidence:
+        - kind: cited
+          url: https://web.archive.org/web/20040908171044/http://www.bassplayer.com/archive/0904/0904_Features1.htm
+          note: his own eight by ten, from the same research.

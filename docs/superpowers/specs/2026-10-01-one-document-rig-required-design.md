@@ -2,7 +2,11 @@
 
 2026-10-01
 
-**Status: designed, not built.** Nothing in this is implemented. It supersedes
+**Status: the merge is built, 2026-10-02. Three parts of it are not.** The ask
+and the rig are one document and the rig is required. The Setup still lives
+wherever `--setup` names rather than at a config path, the Plan is still a
+document of its own, and there is no `built:` section: a test refuses a contract
+field nothing writes, so it waits for `tone tune` to write one. It supersedes
 the three-document split in
 [ToneSpec is the ask](2026-09-19-tonespec-is-the-ask-design.md), which stands as
 the record of why there were three.

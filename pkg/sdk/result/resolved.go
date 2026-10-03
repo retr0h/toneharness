@@ -22,6 +22,7 @@ package result
 
 import (
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
@@ -33,7 +34,13 @@ import (
 // over MCP needs that as much as a person reading a terminal, which is why it
 // travels in the answer rather than being printed above it.
 type Resolved struct {
-	// Rig is the plan the request resolved to.
+	// ID is what the document the request came in is called, carried through so
+	// the answer can be written back into one.
+	ID string `json:"id"`
+	// Ask is the request this resolved, carried through so the answer can be
+	// written back into the document it came from.
+	Ask *tone.Ask `json:"ask,omitempty"`
+	// Rig is the gear the request resolved to.
 	Rig rig.Spec `json:"rig"`
 	// Notes are what the translation made of the request, honoured or not.
 	Notes translate.Notes `json:"notes"`

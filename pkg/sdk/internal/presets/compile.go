@@ -32,7 +32,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // CompileOptions says which rig to build, what to build it into, and where the
@@ -156,12 +156,14 @@ func readOne(
 		return made, made.Name, len(made.Blocks), nil
 	}
 
-	spec, err := readRig(ctx, opts.RigPath)
+	doc, err := readDoc(ctx, opts.RigPath)
 	if err != nil {
 		return plan.Plan{}, "", 0, err
 	}
 
-	made, err := opts.compiler().Realise(spec, cat)
+	id, spec := doc.Id, doc.Rig
+
+	made, err := opts.compiler().Realise(id, spec, cat)
 	if err != nil {
 		return plan.Plan{}, "", 0, err
 	}
@@ -173,7 +175,7 @@ func readOne(
 		return plan.Plan{}, "", 0, err
 	}
 
-	return made, spec.ID, len(spec.Chain), nil
+	return made, id, len(spec.Chain), nil
 }
 
 // readPlan loads a plan from disk.
@@ -196,24 +198,29 @@ func readPlan(
 	return plan.Load(f)
 }
 
-// readRig loads a rig from disk.
-func readRig(
+// readDoc loads one document from disk.
+//
+// The whole thing rather than its gear, because a file holds both halves since
+// version 2 and whichever caller reads one wants a different part of it. The
+// document owns the identifier, so a rig no longer carries one that could
+// disagree with it.
+func readDoc(
 	ctx context.Context,
 	path string,
-) (rig.Spec, error) {
+) (tone.Spec, error) {
 	if err := ctx.Err(); err != nil {
-		return rig.Spec{}, err
+		return tone.Spec{}, err
 	}
 
 	f, err := os.Open(path) //nolint:gosec // the path is the user's own file
 	if err != nil {
-		return rig.Spec{}, fmt.Errorf("opening %s: %w", path, err)
+		return tone.Spec{}, fmt.Errorf("opening %s: %w", path, err)
 	}
 
 	// Opened read-only, so Close has nothing to report the read did not.
 	defer func() { _ = f.Close() }()
 
-	return rig.Load(f)
+	return tone.Load(f)
 }
 
 // template returns the preset a chain is written into.

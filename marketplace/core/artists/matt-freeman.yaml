@@ -1,0 +1,126 @@
+# Matt Freeman — Rancid
+#
+# The ask: who he is and when. The gear this resolves to is in
+# matt-freeman.yaml beside it.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: matt-freeman
+
+ask:
+  aliases: [rancid, freeman]
+
+  subject:
+    kind: artist
+    name: Matt Freeman
+    band: Rancid
+    era: ...And Out Come the Wolves
+    years: { from: 1995, to: 1995 }
+
+  instrument: bass
+
+  # The genre the corpus tags these records with. One word where the field takes
+  # one, and `corpus music genres` is what earns it words by measurement: this
+  # says which distribution the records belong to, not how they sound.
+  genre: [punk]
+
+  # No `words` yet. Nothing anybody has read describes how this record sounds in
+  # terms this vocabulary carries, and the corpus measurement that could earn one
+  # has not been run against these three tracks since they were added. A word on
+  # a model's say-so is what got taken off three other asks here.
+  #
+  # No `played` either. The instrument is genuinely unsettled rather than
+  # unresearched: the interview behind the rig has him buying two Fender Jazz
+  # Basses after "a brief period of experimentation", and the poster transcribing
+  # it infers a Precision for this record and says so as an inference. Two other
+  # posters in the same thread argue from the recording that it is a Jazz. That
+  # is a disagreement among listeners, not evidence, so nothing is claimed.
+
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  # The signal path, in order.
+  chain:
+    - role: amp
+      gear: Ampeg SVT-II Pro
+      capture: direct
+      substitute:
+        gear: Ampeg SVT
+        evidence:
+          - kind: llm
+            note: >-
+              the device carries no SVT-II Pro. Of the two Ampeg heads it does
+              carry, the SVT is an all-tube head of the same family and the
+              SVT-4 Pro is a later one whose power section is not tube, so the
+              SVT is the nearer of the two.
+        confidence: low
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/does-anyone-know-matt-freemans-setup.39146/
+          note: >-
+            Freeman's own words about these sessions, in a Bass Player interview
+            the poster Eerik transcribes at length: "So when we began recording,
+            I didn't know what to get. Then I went next door where Jawbreaker was
+            recording and asked their producer, Rob Cavallo - the guy who did
+            Green Day - 'Dude, what did Mike Dirnt play on Dookie?' I really
+            liked that sound, and Rob told me it was an Ampeg SVT-II Pro. I went
+            right out and bought one!"
+
+            The same passage dates the change: it was bought to replace a rig
+            that had worn out, "When his roadworn Acoustic 320 head and 4x15
+            cabinet finally needed rest, Matt found himself on the market for a
+            new rig", and "when we began recording" ties the purchase to a
+            session rather than to a tour.
+          caveat: >-
+            first-hand from him and second-hand to us. This is a forum
+            transcription of a print magazine, not an archived copy: Bass
+            Player's own site is gone and no capture of this interview was
+            found. The poster dates it September 1996, while a back-issue
+            listing puts a Flea cover with a Rancid feature in February 1996,
+            so the month is unsettled. The year is not, and either way it is
+            within a year of the record.
+
+            Worth naming what this is not: the Premier Guitar rig rundown for
+            him is dated 16 October 2024 and puts him on two Fender Bassman 800
+            heads with matching 8x10 cabinets. That is his rig twenty-nine years
+            later and says nothing about this one.
+        - kind: cited
+          url: https://web.archive.org/web/20060217083255im_/http://www.greendayauthority.com/TheBand/articles/bassmag/4.jpg
+          note: >-
+            the other side of the same conversation, from Cavallo. Asked in
+            Guitar World's Bass Guitar what was used on a Green Day record, he
+            answers "Mike and I talked about Boogie, Fender and Ampeg amps, and
+            at the end we went with an Ampeg SVT - it's hard to beat that."
+          caveat: >-
+            corroborates that Cavallo was recommending Ampeg heads in this
+            period and nothing more. Cavallo is talking about American Idiot in
+            2004, not about Dookie, and Freeman's quote is what dates the advice
+            he was given. Two people describing the same habit from either side
+            is worth having; it is not a second source for this head.
+      confidence: medium
+
+    - role: cab
+      gear: Ampeg 8x10
+      capture: direct
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/does-anyone-know-matt-freemans-setup.39146/
+          note: >-
+            the sentence after the head, in the same transcribed interview: "The
+            big tube head powers a single Ampeg 8X10 cabinet, and Matt says
+            that's plenty." Freeman on why one is enough: "In places with good
+            PAs, you don't really need a ballbuster. This SVT pumps - plus I go
+            direct at clubs. I mean, how much amp do you want?"
+          caveat: >-
+            the same transcription as the head, so the two share a source and
+            stand or fall together. "A single" is the writer counting cabinets
+            rather than Freeman naming a model, so the size is established and
+            the particular box is not.
+
+            His own words also say the cabinet is not always in the path at
+            all: "I go direct at clubs" describes the stage. Nothing here says
+            whether the record was miked, taken direct, or both.
+      confidence: low

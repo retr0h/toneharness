@@ -36,14 +36,14 @@ mise exec -- go run main.go rigs new --dir marketplace/community \
 
 `--dir` is the tier, and it is the flag to get right: without it the scaffold
 lands wherever a rig of yours would go rather than in the marketplace. It writes
-the pair, the rig and the ask beside it, with the fields and the comments already
-there, and appends `artists/` itself. Writing one by hand means rediscovering
-which fields exist, and the contract is the thing that knows.
+one document, the ask and the rig that answers it, with the fields and the
+comments already there, and appends `artists/` itself. Writing one by hand means
+rediscovering which fields exist, and the contract is the thing that knows.
 
-The pair is two documents on purpose: the rig is the gear, the ask is what
+The two halves are separate on purpose: the rig is the gear, the ask is what
 somebody wanted of it. [write-a-spec](../../write-a-spec/SKILL.md) owns every
-field on both and which document a fact belongs in. Read it rather than guessing
-from a neighbouring file.
+field and which half a fact belongs in. Read it rather than guessing from a
+neighbouring file.
 
 ## Before you commit it
 

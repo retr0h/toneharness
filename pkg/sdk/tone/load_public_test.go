@@ -50,33 +50,47 @@ func (s *LoadPublicTestSuite) TestLoad() {
 			then: func() {
 				spec, err := tone.Load(strings.NewReader(`
 schema: ToneSpec
-genre: [pop-punk, punk]
-words:
-  - term: bright
-  - term: tight-low-end
-    evidence: [{ kind: llm }]
-like:
-  artist: Mike Dirnt
-  years: { from: 1994, to: 2004 }
-nudges:
-  - word: darker
-    steps: 2
+id: dirnt-ish
+ask:
+  genre: [pop-punk, punk]
+  words:
+    - term: bright
+    - term: tight-low-end
+      evidence: [{ kind: llm }]
+  like:
+    artist: Mike Dirnt
+    years: { from: 1994, to: 2004 }
+  nudges:
+    - word: darker
+      steps: 2
+rig:
+  instrument: bass
+  chain:
+    - role: amp
+      gear: Ampeg SVT
 `))
 
 				s.Require().NoError(err)
-				s.Require().Equal([]string{"pop-punk", "punk"}, spec.Genre,
+				// The gear is the half that is required, and the ask is why. Both read
+				// off one document, which is what version 2 of the contract merged.
+				s.Require().Equal("dirnt-ish", spec.Id)
+				s.Require().Equal(tone.InstrumentBass, spec.Rig.Instrument)
+				s.Require().Equal("Ampeg SVT", spec.Rig.Chain[0].Gear)
+
+				ask := spec.Ask
+				s.Require().Equal([]string{"pop-punk", "punk"}, ask.Genre,
 					"both, because the corpus tags these records with both")
-				s.Require().Len(*spec.Words, 2)
-				s.Require().Equal("bright", (*spec.Words)[0].Term)
+				s.Require().Len(*ask.Words, 2)
+				s.Require().Equal("bright", (*ask.Words)[0].Term)
 				// A word carries why it is believed, because that is what sizes how far it
 				// moves a control. The first here carries none, which is legal and is what
 				// a request somebody typed looks like.
-				s.Require().Nil((*spec.Words)[0].Evidence)
-				s.Require().Equal("tight-low-end", (*spec.Words)[1].Term)
-				s.Require().Len(*(*spec.Words)[1].Evidence, 1)
-				s.Require().Equal("Mike Dirnt", *spec.Like.Artist)
-				s.Require().Equal(1994, spec.Like.Years.From)
-				s.Require().Equal("darker", (*spec.Nudges)[0].Word)
+				s.Require().Nil((*ask.Words)[0].Evidence)
+				s.Require().Equal("tight-low-end", (*ask.Words)[1].Term)
+				s.Require().Len(*(*ask.Words)[1].Evidence, 1)
+				s.Require().Equal("Mike Dirnt", *ask.Like.Artist)
+				s.Require().Equal(1994, ask.Like.Years.From)
+				s.Require().Equal("darker", (*ask.Nudges)[0].Word)
 			},
 		},
 		{
@@ -91,6 +105,80 @@ nudges:
 
 				s.Require().ErrorIs(err, tone.ErrInvalid)
 				s.Require().Contains(err.Error(), "gnere")
+			},
+		},
+		{
+			// The rig half, which the schema checks the same way.
+			//
+			// These were pkg/sdk/rig's own loader's tests until version 2 merged the
+			// two contracts. There is one loader now, and the rig is a section of
+			// what it reads, so the section's own refusals are checked here.
+			name: "a rig the contract will not take is refused",
+			then: func() {
+				for _, tt := range []struct {
+					name string
+					rig  string
+					says string
+				}{
+					{
+						name: "a field nobody spelled right, inside the chain",
+						rig: "  instrument: bass\n  chain:\n" +
+							"    - {role: amp, gear: Ampeg SVT, gera: nonsense}\n",
+						says: `property "gera" is unsupported`,
+					},
+					{
+						// Every one of these is a thing a person writes, so each lives on
+						// the ask and the rig refuses it outright rather than checking its
+						// shape.
+						name: "what a person writes, which a rig does not carry",
+						rig: "  instrument: bass\n  technique: {attack: pick}\n" +
+							"  chain:\n    - {role: amp, gear: Ampeg SVT}\n",
+						says: `property "technique" is unsupported`,
+					},
+					{
+						name: "a link that is not one",
+						rig: "  instrument: bass\n" +
+							"  evidence:\n    - {kind: cited, url: mikes-website}\n" +
+							"  chain:\n    - {role: amp, gear: Ampeg SVT}\n",
+						says: "rig.evidence[0].url",
+					},
+					{
+						// Where in a recording, so it has to be a time.
+						name: "a place in a recording, given in words",
+						rig: "  instrument: bass\n  evidence:\n" +
+							"    - {kind: video, url: \"https://x.test/v\", at: the end}\n" +
+							"  chain:\n    - {role: amp, gear: Ampeg SVT}\n",
+						says: "rig.evidence[0].at",
+					},
+					{
+						name: "a rig holding no chain",
+						rig:  "  instrument: bass\n  chain: []\n",
+						says: "chain minimum number of items is 1",
+					},
+				} {
+					s.Run(tt.name, func() {
+						_, err := tone.Load(strings.NewReader(
+							"schema: ToneSpec\nid: x\nrig:\n" + tt.rig))
+
+						s.Require().ErrorIs(err, tone.ErrInvalid)
+						s.Require().Contains(err.Error(), tt.says)
+					})
+				}
+			},
+		},
+		{
+			// The gear is the half that is required.
+			//
+			// An ask naming no gear and nothing measurable is a sound nothing can
+			// model, which is what the solver has always said and what the schema
+			// used to allow anyway.
+			name: "a document naming no rig is refused",
+			then: func() {
+				_, err := tone.Load(strings.NewReader(
+					"schema: ToneSpec\nid: x\nask:\n  genre: [punk]\n"))
+
+				s.Require().ErrorIs(err, tone.ErrInvalid)
+				s.Require().Contains(err.Error(), "rig")
 			},
 		},
 		{
@@ -259,23 +347,34 @@ func (s *LoadPublicTestSuite) TestWrite() {
 				// Two genres, because one is the case that hid the defect: the corpus tags
 				// the same players punk and pop-punk, and a field holding one word dropped
 				// whichever was written second.
-				spec := tone.Spec{Schema: "ToneSpec", Genre: []string{"punk", "pop-punk"}}
+				spec := tone.Spec{
+					Schema: "ToneSpec",
+					Id:     "punky",
+					Ask:    &tone.Ask{Genre: []string{"punk", "pop-punk"}},
+					Rig:    minimalRig(),
+				}
 
 				var buf bytes.Buffer
 				s.Require().NoError(tone.Write(&buf, spec))
 
 				back, err := tone.Load(&buf)
 				s.Require().NoError(err)
-				s.Require().Equal([]string{"punk", "pop-punk"}, back.Genre,
+				s.Require().Equal([]string{"punk", "pop-punk"}, back.Ask.Genre,
 					"both of them, in the order they were written")
+				s.Require().Equal("Ampeg SVT", back.Rig.Chain[0].Gear,
+					"the gear travels with the ask now, in one document")
 			},
 		},
 		{
 			// The writer itself failing.
 			name: "a write failure is reported",
 			then: func() {
-				err := tone.Write(broken{},
-					tone.Spec{Schema: "ToneSpec", Genre: []string{"rock"}})
+				err := tone.Write(broken{}, tone.Spec{
+					Schema: "ToneSpec",
+					Id:     "rocky",
+					Ask:    &tone.Ask{Genre: []string{"rock"}},
+					Rig:    minimalRig(),
+				})
 
 				s.Require().ErrorContains(err, "writing the ToneSpec")
 			},
@@ -332,6 +431,17 @@ func (s *LoadPublicTestSuite) TestWriteSetup() {
 		s.Run(tt.name, func() {
 			tt.then()
 		})
+	}
+}
+
+// minimalRig is the least a document may say about gear, which the contract
+// requires: what it is played on, and one block.
+func minimalRig() tone.Rig {
+	return tone.Rig{
+		Instrument: tone.InstrumentBass,
+		Chain: []tone.ChainEntry{
+			{Role: tone.RoleAmp, Gear: "Ampeg SVT"},
+		},
 	}
 }
 

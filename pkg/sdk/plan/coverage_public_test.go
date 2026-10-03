@@ -40,7 +40,7 @@ import (
 // the Go type is the thing to walk: it is hand-written, and a field nobody has
 // ever written is a field whose shape nobody has checked.
 //
-// Five of these types moved off the RigSpec, where they were declared in the
+// Five of these types moved off the rig, where they were declared in the
 // schema and referenced by nothing in it. The rig's walk never reached them and
 // this is the walk that does.
 type CoveragePublicTestSuite struct {

@@ -1,0 +1,18 @@
+schema: ToneSpec
+id: unbuildable
+
+ask:
+  genre: [rock]
+
+  subject:
+    kind: artist
+    name: Unbuildable
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Orange Rockerverb
+      evidence: [{ kind: llm }]

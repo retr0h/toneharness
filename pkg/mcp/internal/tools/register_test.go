@@ -103,9 +103,7 @@ func (s *RegisterTestSuite) TestMustOutputSchema() {
 			value: sdk.Reading{
 				Name: "Longview",
 				Rig: rig.Spec{
-					ID:         "mike-dirnt",
 					Instrument: rig.InstrumentBass,
-					Schema:     rig.SchemaName,
 					Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
 				},
 				Plan: plan.Plan{

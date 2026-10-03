@@ -36,7 +36,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // catalogsAt hands over the catalog at path whenever it is asked, the built-in
@@ -155,7 +155,7 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 						slot:   79,
 						called: "BAS:SVT Nrm",
 						contains: []string{
-							"schema: RigSpec",
+							"schema: ToneSpec",
 							// The slot's name reaches the rig as its identifier. A rig
 							// carries no subject, so the name a person reads is the heading
 							// above the document rather than a field in it.
@@ -234,7 +234,7 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 					{
 						name:     "a chain with no snapshots and no switches",
 						answer:   "bare",
-						contains: []string{"schema: RigSpec"},
+						contains: []string{"schema: ToneSpec"},
 						absent:   []string{"snapshots:", "footswitches:"},
 					},
 					{name: "an answer that is not a preset", answer: "nonsense", slot: 3, errText: "slot 02A"},
@@ -312,7 +312,7 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 						// second.
 						var out bytes.Buffer
 
-						s.Require().NoError(rig.Write(&out, read.Rig))
+						s.Require().NoError(tone.Write(&out, tone.Spec{Schema: tone.SchemaName, Id: read.ID, Rig: read.Rig}))
 
 						got := read.Name + "\n" + out.String()
 
@@ -352,7 +352,7 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 
 				var buf bytes.Buffer
 
-				s.Require().NoError(rig.Write(&buf, read.Rig))
+				s.Require().NoError(tone.Write(&buf, tone.Spec{Schema: tone.SchemaName, Id: read.ID, Rig: read.Rig}))
 				s.Require().NoError(os.WriteFile(rigPath, buf.Bytes(), 0o600))
 
 				_, err = presets.Compile(context.Background(), presets.CompileOptions{

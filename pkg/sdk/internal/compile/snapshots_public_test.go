@@ -116,7 +116,7 @@ func (s *SnapshotsPublicTestSuite) TestLiftSnapshots() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			_, made, err := compile.Lift(s.presetWith(tt.entries), s.cat)
+			_, _, made, err := compile.Lift(s.presetWith(tt.entries), s.cat)
 			s.Require().NoError(err)
 
 			if tt.none {
@@ -157,7 +157,7 @@ func (s *SnapshotsPublicTestSuite) TestASnapshotKeepsWhatThisFormatDoesNotModel(
 			`"commands": [{"cc": 41}], "@somethingNew": "from a later release"}`,
 	})
 
-	_, made, err := compile.Lift(doc, s.cat)
+	_, _, made, err := compile.Lift(doc, s.cat)
 	s.Require().NoError(err)
 	s.Require().Len(made.Snapshots, 1)
 
@@ -222,7 +222,7 @@ func (s *SnapshotsPublicTestSuite) TestLowerSnapshots() {
 			if tt.typed != nil {
 				made = *tt.typed
 			} else {
-				_, lifted, err := compile.Lift(s.presetWith(map[string]string{
+				_, _, lifted, err := compile.Lift(s.presetWith(map[string]string{
 					"snapshot0": `{"@name": "` + tt.lifted + `"}`,
 				}), s.cat)
 				s.Require().NoError(err)

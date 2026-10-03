@@ -122,8 +122,8 @@ func probedReading(
 	held plan.Params,
 ) sdk.Reading {
 	return sdk.Reading{
+		ID: "probed",
 		Rig: rig.Spec{
-			Schema: rig.SchemaName, ID: "probed",
 			Instrument: rig.InstrumentBass,
 			Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "an amplifier"}},
 		},

@@ -1,0 +1,32 @@
+schema: ToneSpec
+id: mike-dirnt-longview
+
+ask:
+  genre: [rock]
+
+  extends: mike-dirnt
+  subject:
+    kind: song
+    name: Longview
+    band: Green Day
+  words:
+    - term: soft-attack
+    - term: neck-forward
+    - term: clean
+  technique:
+    attack: fingers
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      evidence:
+        - { kind: llm }
+      confidence: medium
+    - role: cab
+      gear: Ampeg 8x10
+      evidence:
+        - { kind: llm }
+      confidence: medium

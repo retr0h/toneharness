@@ -41,7 +41,7 @@ func Rigs(
 
 	for _, known := range r.Rigs {
 		rows = append(rows, []string{
-			paint.Accent(w, known.Rig.ID),
+			paint.Accent(w, known.ID),
 			named(known),
 			paint.Mute(w, string(known.Rig.Instrument)),
 			rig.GearName(known.Rig, rig.RoleAmp),
@@ -85,7 +85,7 @@ func Rig(
 	r sdk.Rig,
 ) error {
 	spec := r.Rig
-	d := paint.Detail{Title: named(r.Known), Subtitle: spec.ID}
+	d := paint.Detail{Title: named(r.Known), Subtitle: r.ID}
 
 	d.Fields = append(d.Fields, about(r.Ask)...)
 	d.Fields = append(d.Fields,
@@ -135,7 +135,7 @@ func named(
 	known sdk.Known,
 ) string {
 	if known.Ask == nil || known.Ask.Subject == nil {
-		return known.Rig.ID
+		return known.ID
 	}
 
 	return known.Ask.Subject.Name
@@ -143,7 +143,7 @@ func named(
 
 // about is who the ask is for, where it says.
 func about(
-	ask *tone.Spec,
+	ask *tone.Ask,
 ) []paint.Field {
 	if ask == nil || ask.Subject == nil {
 		return nil
@@ -169,7 +169,7 @@ func about(
 // it. Printed after the signal path so the page reads answer first, then what it
 // was answering.
 func asked(
-	ask *tone.Spec,
+	ask *tone.Ask,
 ) []paint.Field {
 	if ask == nil {
 		return nil
@@ -250,7 +250,7 @@ func signalPath(
 // unverified whatever it says about itself, and a rig nobody wrote an ask for
 // says nothing about itself at all.
 func confidence(
-	ask *tone.Spec,
+	ask *tone.Ask,
 ) tone.Confidence {
 	if ask == nil || ask.Confidence == nil {
 		return tone.ConfidenceLow
@@ -264,7 +264,7 @@ func confidence(
 // The label repeats as blank so the values line up in the same column as
 // every other field rather than starting a block of their own.
 func words(
-	ask *tone.Spec,
+	ask *tone.Ask,
 ) []paint.Field {
 	if ask == nil || ask.Words == nil || len(*ask.Words) == 0 {
 		return nil

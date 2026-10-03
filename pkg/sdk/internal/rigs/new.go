@@ -171,38 +171,23 @@ func New(
 		return result.Scaffolded{}, ErrNoGenre
 	}
 
-	body, ask, made, err := scaffoldFor(ctx, opts)
+	body, made, err := scaffoldFor(ctx, opts)
 	if err != nil {
 		return result.Scaffolded{}, err
 	}
 
-	// `.rig.yaml`, so the file says which of the two documents it is. A bare
-	// `<slug>.yaml` still loads, for a rig read off a device or written before
-	// this, but nothing writes one any more.
-	path := filepath.Join(opts.Dir, "artists", opts.ID+rigSuffix)
+	// One file per subject, named after the identifier it states.
+	path := filepath.Join(opts.Dir, "artists", opts.ID+".yaml")
 
 	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		return result.Scaffolded{}, fmt.Errorf("making room for %s: %w", path, err)
 	}
 
-	// The rig first, and the ask second. Which order matters only for what a
-	// refusal names, and the rig is the file somebody asked for: being told
-	// "test-player.yaml already exists" is the useful message, not the name of
-	// a second file they did not know was being written.
-	//
-	// Either write can be the one that stops, and neither leaves a mess. A rig
-	// with no ask beside it is a legal state, so the second failing is not a
-	// half-written pair; and if the second fails, the first goes with it anyway,
-	// because a file this call created is this call's to take back.
-	askPath := filepath.Join(opts.Dir, "artists", opts.ID+askSuffix)
-
+	// One write. The rig and the ask were two files until version 2, which meant
+	// a pair could be half written: the second failing left a rig nobody asked
+	// for under an identifier they would then be told was taken, so the first had
+	// to be taken back by hand.
 	if err := writeNew(path, body); err != nil {
-		return result.Scaffolded{}, err
-	}
-
-	if err := writeNew(askPath, ask); err != nil {
-		_ = os.Remove(path)
-
 		return result.Scaffolded{}, err
 	}
 
@@ -327,11 +312,11 @@ func near(
 func scaffoldFor(
 	ctx context.Context,
 	opts NewOptions,
-) (string, string, result.Scaffolded, error) {
+) (string, result.Scaffolded, error) {
 	if opts.From != "" {
 		parent, err := findFile(Source{Dir: opts.Base, User: opts.Dir}, opts.From)
 		if err != nil {
-			return "", "", result.Scaffolded{}, err
+			return "", result.Scaffolded{}, err
 		}
 
 		// The rig's own identifier, not whatever was typed. An alias belongs
@@ -342,7 +327,8 @@ func scaffoldFor(
 		// A rig that loaded carries the subject name scaffold rewrites, so
 		// only a rig that did not load fails here, and New has already
 		// refused that.
-		body, err := scaffold(string(parent.raw), parent.spec.ID, opts)
+		body, err := scaffold(
+			string(parent.raw), parent.idOf(), opts, parent.askOf() != nil)
 
 		// scaffold rewrites the subject's name only when one was asked for,
 		// and copies the chain as it stands.
@@ -351,45 +337,42 @@ func scaffoldFor(
 			name = opts.Name
 		}
 
-		// The ask is copied the same way, from the parent's own ask where it has
-		// one. A parent with no ask gives a scaffolded one instead of nothing:
-		// the copy is a new subject either way, and a blank ask beside it is the
-		// file somebody fills in rather than a file they have to know to create.
-		// Either way it records what it was copied from.
-		ask := renderAsk(forAsk(opts, parent.spec, name), parent.spec.ID)
+		// A parent with no ask has none to copy, so the copy gets a scaffolded
+		// one. It is a new subject either way, and a blank ask is the section
+		// somebody fills in rather than one they have to know to write. It records
+		// what it was copied from, so `rigs show` lists the copy as a variant.
+		if parent.askOf() == nil {
+			// No ask means no genre to hand down, and the one written here needs
+			// one. Said here rather than left to the contract, because "genre
+			// minimum number of items is 1" does not tell somebody which flag
+			// they left out.
+			if len(opts.Genre) == 0 {
+				err = errors.Join(err, ErrNoGenre)
+			}
 
-		if parent.askRaw != nil {
-			copied, askErr := scaffoldAsk(string(parent.askRaw), parent.spec.ID, opts)
-			ask = copied
-			err = errors.Join(err, askErr)
-		} else if len(opts.Genre) == 0 {
-			// A parent with no ask has no genre to hand down, and the fresh ask
-			// written beside the copy needs one. Said here rather than left to
-			// the contract, because "genre minimum number of items is 1" does
-			// not tell somebody which flag they left out.
-			err = errors.Join(err, ErrNoGenre)
+			body += "\n" + renderAsk(forAsk(opts, parent.specOf(), name), parent.idOf())
 		}
 
-		return body, ask, result.Scaffolded{
+		return body, result.Scaffolded{
 			Name:       name,
-			Instrument: string(parent.spec.Instrument),
-			Amp:        rig.GearName(parent.spec, rig.RoleAmp),
-			Cab:        rig.GearName(parent.spec, rig.RoleCab),
-			Pedals:     pedals(parent.spec),
+			Instrument: string(parent.specOf().Instrument),
+			Amp:        rig.GearName(parent.specOf(), rig.RoleAmp),
+			Cab:        rig.GearName(parent.specOf(), rig.RoleCab),
+			Pedals:     pedals(parent.specOf()),
 			// The rig this came from, so what reads the answer can tell a
 			// copy from a scaffold and say only what was checked. The same
 			// identifier `extends` records, for the same reason.
-			From: parent.spec.ID,
+			From: parent.idOf(),
 		}, err
 	}
 
 	cat, err := opts.Catalogs.Catalog(ctx)
 	if err != nil {
-		return "", "", result.Scaffolded{}, err
+		return "", result.Scaffolded{}, err
 	}
 
 	if err := checkGear(cat, opts); err != nil {
-		return "", "", result.Scaffolded{}, err
+		return "", result.Scaffolded{}, err
 	}
 
 	// Nothing to extend: this was scaffolded from gear rather than copied.
@@ -397,7 +380,7 @@ func scaffoldFor(
 	// The name is taken the same way the ask takes it, so what is reported is
 	// what was written. A copy is not: it keeps the name of the rig it came
 	// from, which is handled above.
-	return render(opts), renderAsk(opts, ""), result.Scaffolded{
+	return render(opts), result.Scaffolded{
 		Name:       subjectName(opts),
 		Instrument: opts.Instrument,
 		Amp:        opts.Amp,

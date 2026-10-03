@@ -37,8 +37,6 @@ func spec(
 	chain ...rig.ChainEntry,
 ) rig.Spec {
 	return rig.Spec{
-		Schema:     rig.SchemaName,
-		ID:         "test",
 		Instrument: rig.InstrumentBass,
 		Chain:      chain,
 	}

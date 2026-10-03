@@ -28,7 +28,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 type RigsPublicTestSuite struct {
@@ -53,30 +53,17 @@ func (s *RigsPublicTestSuite) TestLoad() {
 	// cleanup, which was registered first; a failure shows up there.
 	s.T().Cleanup(func() { _ = os.Chmod(unreadable, 0o750) })
 
-	// A directory holding one rig under each spelling, which is the one thing
-	// two suffixes make possible and nothing else would catch.
+	// Two files under different names, each stating the same identifier. The
+	// filename is not the identifier, so nothing stops it, and a rig that
+	// silently does not load is what the broken list exists to prevent.
 	both := s.T().TempDir()
 	s.Require().NoError(os.MkdirAll(filepath.Join(both, "artists"), 0o750))
 
-	for _, name := range []string{"twice.rig.yaml", "twice.yaml"} {
+	for _, name := range []string{"one.yaml", "two.yaml"} {
 		s.Require().NoError(os.WriteFile(
 			filepath.Join(both, "artists", name),
-			[]byte("schema: RigSpec\nversion: 2\nid: twice\ninstrument: bass\n"+
-				"chain:\n  - role: amp\n    gear: Ampeg SVT\n"), 0o600))
+			[]byte(document("twice")), 0o600))
 	}
-
-	// One rig under the old spelling with its ask beside it, so the pairing is
-	// asserted on the suffix nothing writes any more.
-	bare := s.T().TempDir()
-	s.Require().NoError(os.MkdirAll(filepath.Join(bare, "artists"), 0o750))
-	s.Require().NoError(os.WriteFile(
-		filepath.Join(bare, "artists", "plain.yaml"),
-		[]byte("schema: RigSpec\nversion: 2\nid: plain\ninstrument: bass\n"+
-			"chain:\n  - role: amp\n    gear: Ampeg SVT\n"), 0o600))
-	s.Require().NoError(os.WriteFile(
-		filepath.Join(bare, "artists", "plain.tone.yaml"),
-		[]byte("schema: ToneSpec\ngenre: [punk]\nsubject:\n  kind: artist\n"+
-			"  name: Plain\n"), 0o600))
 
 	tests := []struct {
 		name  string
@@ -130,21 +117,12 @@ func (s *RigsPublicTestSuite) TestLoad() {
 			dir:  "",
 		},
 		{
-			// A bare `.yaml` rig still loads, and still pairs with its ask by
-			// the stem. That is what a rig read off a device is, and what every
-			// rig written before the suffix existed is, so refusing one to make
-			// the naming tidy would be refusing the format's whole point.
-			name: "a rig that does not say what it is",
-			dir:  bare,
-			ids:  []string{"plain"},
-		},
-		{
 			// Two files claiming one name. Reported rather than dropped: a rig
 			// that silently does not load is the failure the broken list exists
 			// to prevent, and which of the two was read is the useful half.
-			name: "one name claimed by both spellings",
+			name: "one name claimed by two files",
 			dir:  both,
-			err:  "are both the rig",
+			err:  "both say they are",
 		},
 	}
 
@@ -184,25 +162,12 @@ func (s *RigsPublicTestSuite) TestLoad() {
 
 // TestFind looks one rig up.
 func (s *RigsPublicTestSuite) TestFind() {
-	// A rig under the old spelling with its ask beside it, so the pairing is
-	// asserted on the suffix nothing writes any more.
-	bare := s.T().TempDir()
-	s.Require().NoError(os.MkdirAll(filepath.Join(bare, "artists"), 0o750))
-	s.Require().NoError(os.WriteFile(
-		filepath.Join(bare, "artists", "plain.yaml"),
-		[]byte("schema: RigSpec\nversion: 2\nid: plain\ninstrument: bass\n"+
-			"chain:\n  - role: amp\n    gear: Ampeg SVT\n"), 0o600))
-	s.Require().NoError(os.WriteFile(
-		filepath.Join(bare, "artists", "plain.tone.yaml"),
-		[]byte("schema: ToneSpec\ngenre: [punk]\nsubject:\n  kind: artist\n"+
-			"  name: Plain\n"), 0o600))
-
 	tests := []struct {
 		name string
 		dir  string
 		id   string
 		want string
-		// paired says the answer must carry the ask beside the rig.
+		// paired says the answer must carry the ask the gear came with.
 		paired bool
 		errs   []string
 	}{
@@ -211,16 +176,6 @@ func (s *RigsPublicTestSuite) TestFind() {
 			dir:    s.good(),
 			id:     "mike-dirnt",
 			want:   "mike-dirnt",
-			paired: true,
-		},
-		{
-			// A rig named the old way pairs with its ask by the stem. Nothing
-			// writes `<slug>.yaml` any more and a rig read off a device is still
-			// one, so the pairing cannot depend on the spelling.
-			name:   "a rig that does not say what it is, and its ask",
-			dir:    bare,
-			id:     "plain",
-			want:   "plain",
 			paired: true,
 		},
 		{
@@ -264,11 +219,11 @@ func (s *RigsPublicTestSuite) TestFind() {
 			}
 
 			s.Require().NoError(err)
-			s.Require().Equal(tt.want, got.Rig.ID)
+			s.Require().Equal(tt.want, got.ID)
 
 			if tt.paired {
 				s.Require().NotNil(got.Ask,
-					"a rig pairs with its ask by the stem, whichever suffix it has")
+					"one read answers with the gear and the ask it came with")
 			}
 		})
 	}
@@ -338,13 +293,12 @@ func (s *RigsPublicTestSuite) TestList() {
 			},
 		},
 		{
-			// The half of a pair that is wrong.
+			// The ask half of a document that is wrong.
 			//
-			// Reported the same way a rig that will not parse is, rather than
-			// leaving the rig to load without it. A file somebody wrote and
-			// got wrong is the case where saying so matters, and a rig
-			// quietly missing the words it was built from is the same bug the
-			// split exists to remove.
+			// Reported the same way a chain that will not parse is, rather than
+			// loading the gear without it. A file somebody wrote and got wrong
+			// is the case where saying so matters, and a rig quietly missing the
+			// words it was built from is the bug the ask exists to remove.
 			name: "an ask that will not load is reported",
 			then: func() {
 				tests := []struct {
@@ -356,17 +310,17 @@ func (s *RigsPublicTestSuite) TestList() {
 				}{
 					{
 						name: "an ask claiming a field the contract refuses",
-						ask:  "schema: ToneSpec\nchian: []\n",
+						ask:  "ask:\n  chian: []\n",
 						err:  `"chian" is unsupported`,
 					},
 					{
-						name: "an ask that is not a ToneSpec at all",
-						ask:  "schema: RigSpec\nid: theirs\n",
-						err:  "ToneSpec",
+						name: "an ask holding no genre",
+						ask:  "ask:\n  confidence: low\n",
+						err:  "genre",
 					},
 					{
-						name:       "an ask nobody may open",
-						ask:        "schema: ToneSpec\n",
+						name:       "a document nobody may open",
+						ask:        "",
 						unreadable: true,
 						err:        "opening",
 					},
@@ -382,12 +336,9 @@ func (s *RigsPublicTestSuite) TestList() {
 						artists := filepath.Join(dir, "artists")
 						s.Require().NoError(os.MkdirAll(artists, 0o750))
 
-						s.Require().NoError(os.WriteFile(filepath.Join(artists, "theirs.yaml"),
-							[]byte("schema: RigSpec\nversion: 2\nid: theirs\ninstrument: bass\n"+
-								"chain:\n  - {role: amp, gear: Ampeg SVT}\n"), 0o600))
-
-						at := filepath.Join(artists, "theirs.tone.yaml")
-						s.Require().NoError(os.WriteFile(at, []byte(tt.ask), 0o600))
+						at := filepath.Join(artists, "theirs.yaml")
+						s.Require().NoError(os.WriteFile(
+							at, []byte(document("theirs")+tt.ask), 0o600))
 
 						if tt.unreadable {
 							s.Require().NoError(os.Chmod(at, 0o000))
@@ -396,8 +347,7 @@ func (s *RigsPublicTestSuite) TestList() {
 						_, err := rigs.List(rigs.Source{Dir: dir})
 						s.Require().Error(err)
 						s.Require().Contains(err.Error(), tt.err)
-						// Named by the subject it belongs to rather than by a name with a
-						// stray ".tone" on the end.
+						// Named by the file it is in, which is what somebody has to open.
 						s.Require().Contains(err.Error(), "theirs")
 					})
 				}
@@ -466,7 +416,7 @@ func (s *RigsPublicTestSuite) TestShow() {
 			}
 
 			s.Require().NoError(err)
-			s.Require().Equal(tt.id, one.Rig.ID)
+			s.Require().Equal(tt.id, one.ID)
 
 			got := make([]string, 0, len(one.Variants))
 			for _, v := range one.Variants {
@@ -478,6 +428,17 @@ func (s *RigsPublicTestSuite) TestShow() {
 	}
 }
 
+// document is the smallest document the contract takes, under the given
+// identifier: the gear, which is required, and no ask, which is optional.
+//
+// A row that needs a broken ask appends one.
+func document(
+	id string,
+) string {
+	return "schema: ToneSpec\nid: " + id + "\nrig:\n  instrument: bass\n" +
+		"  chain:\n    - {role: amp, gear: Ampeg SVT}\n"
+}
+
 // ids reads the identifiers out of a set of rigs, so a test can say which
 // were found without also saying what else each one holds.
 func ids(
@@ -485,20 +446,19 @@ func ids(
 ) []string {
 	out := make([]string, 0, len(all))
 	for _, r := range all {
-		out = append(out, r.Rig.ID)
+		out = append(out, r.ID)
 	}
 
 	return out
 }
 
-// specIDs is the same for the bare rigs Load answers with, which carries no
-// asks because nothing reading a whole directory of rigs has asked for them.
+// specIDs is the same for the documents Load answers with.
 func specIDs(
-	all []rig.Spec,
+	all []tone.Spec,
 ) []string {
 	out := make([]string, 0, len(all))
 	for _, r := range all {
-		out = append(out, r.ID)
+		out = append(out, r.Id)
 	}
 
 	return out

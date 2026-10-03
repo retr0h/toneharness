@@ -31,7 +31,6 @@ import (
 var (
 	presetsMakeID     string
 	presetsMakeRig    string
-	presetsMakeAsk    string
 	presetsMakeOut    string
 	presetsMakeClient clientFlags
 	presetsMakeRigs   string
@@ -48,8 +47,8 @@ parameter is set to what Line 6 states as its default. The words in the ask
 beside the rig then move the controls they name.
 
 Name the rig by --id to build one from a directory of them, or by --rig to build
-a file somebody has in hand, such as what "tone build" wrote. Either way the ask
-is resolved: --rig reads the .tone.yaml beside it unless --ask names another.
+a file somebody has in hand, such as what "tone build" wrote. Either way the ask comes
+with it: one document holds both halves.
 "presets compile" is the one that writes a document without resolving anything.
 
 Name a setup and the build fits the person as well as the record: an ask says
@@ -62,7 +61,6 @@ right hands is a knob position rather than a surprise at the first rehearsal.`,
 		made, err := client.Make(cmd.Context(), sdk.Build{
 			RigID: presetsMakeID,
 			Rig:   presetsMakeRig,
-			Ask:   presetsMakeAsk,
 			Out:   presetsMakeOut,
 		})
 		if err != nil {
@@ -89,8 +87,6 @@ func init() {
 	f.StringVar(&presetsMakeID, "id", "", "rig to build from, by identifier")
 	f.StringVar(&presetsMakeRig, "rig", "",
 		"a rig file to build from instead, such as one tone build wrote")
-	f.StringVar(&presetsMakeAsk, "ask", "",
-		"the ToneSpec to resolve it against; without one the .tone.yaml beside --rig is read")
 	f.StringVar(
 		&presetsMakeRigs,
 		"rigs",

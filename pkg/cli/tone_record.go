@@ -64,13 +64,20 @@ func record(
 		return fmt.Errorf("reading %s: %w", at, err)
 	}
 
+	// Onto the ask, which is where a round of asking belongs. The document holds
+	// it as a section since version 2, and a document without one is a rig
+	// somebody wrote and never said why.
+	if spec.Ask == nil {
+		spec.Ask = &tone.Ask{}
+	}
+
 	was := []tone.Correction(nil)
-	if spec.Corrections != nil {
-		was = *spec.Corrections
+	if spec.Ask.Corrections != nil {
+		was = *spec.Ask.Corrections
 	}
 
 	was = append(was, correction(asked, steps, residual, arrived))
-	spec.Corrections = &was
+	spec.Ask.Corrections = &was
 
 	out, err := os.Create(at) //nolint:gosec // the file just read
 	if err != nil {

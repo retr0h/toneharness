@@ -87,7 +87,7 @@ func init() {
 		"which slot — a label the pedal shows such as 31A, or a number from zero",
 	)
 	f.StringVar(&presetsExportOut, "out", "", "where to write it")
-	f.Var(&presetsExportAs, "as", "rigspec for a rig, hlx for the device's own file")
+	f.Var(&presetsExportAs, "as", "tonespec for a document, hlx for the device's own file")
 	f.StringVar(&presetsExportClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&presetsExportClient.device, "device", "", deviceUsage)

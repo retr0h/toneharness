@@ -1,0 +1,84 @@
+# A request that has been built, heard, and asked again.
+#
+# The corrections below are the only place in this whole system a human ear is
+# written down. Everything else is a measurement or an assertion, and nothing
+# here can hear, so a verdict is the one piece of information that cannot be
+# recovered later if it is not captured when it happens.
+#
+# They are on the ask rather than on the rig because a correction is a round of
+# asking. The rig holds the settings it arrived at and says nothing about why
+# they are what they are.
+#
+#     toneharness tone build --ask marketplace/core/examples/corrected-by-ear.yaml \
+#       --setup marketplace/core/examples/mine.setup.yaml --out rig.yaml
+#
+# Rebuilding does not replay them: a correction's paths point into the plan it
+# was made against, and a rebuild makes a new one. `tone build` reads them out
+# so that is visible rather than surprising.
+
+schema: ToneSpec
+id: corrected-by-ear
+
+ask:
+  genre: [rock]
+
+  subject:
+    kind: artist
+    name: Mike Dirnt
+    band: Green Day
+    era: Dookie through American Idiot
+
+  instrument: bass
+
+  # A word carries why it is believed, because how far it moves a control is
+  # sized from that. These three were asserted and nobody has listened, which is
+  # what `llm` says.
+  words:
+    - term: mid-forward
+      evidence:
+        - { kind: llm }
+    - term: grit-on-attack
+      evidence:
+        - { kind: llm }
+    - term: tight-low-end
+      evidence:
+        - { kind: llm }
+
+  # Append-only, and never replayed. An entry with no verdict has not been
+  # listened to yet, which is state rather than a gap.
+  corrections:
+    - at: "2026-09-06"
+      ask: make it clunkier
+      changed:
+        - path: chain[1].settings.drive
+          from: 0.47
+          to: 0.58
+      # Why the ask was read this way, cited. If the reading was wrong, this is
+      # the line that shows it, rather than only that the value was wrong.
+      reason: >-
+        Line 6 document Sag as "lower values offer tighter responsiveness…
+        higher values provide more touch dynamics & sustain", and Bias X as "set
+        low for a tighter feel". Read "clunky" as a looser power-amp feel rather
+        than more gain, so the drive moved and the feel followed it.
+      verdict: closer, but muddy now. keep the feel, put the drive back
+
+    - at: "2026-09-06"
+      ask: put the drive back
+      changed:
+        - path: chain[1].settings.drive
+          from: 0.58
+          to: 0.47
+      reason: reverting the previous round on the player's judgement
+      # No verdict yet. That is state, not a gap: nobody has heard it.
+
+rig:
+  instrument: bass
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      evidence:
+        - kind: heard
+          note: >-
+            what the corrections below were made against. A verdict is the one
+            input nothing here can recover later, so the chain it was given has to
+            travel with it.

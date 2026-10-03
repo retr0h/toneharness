@@ -538,12 +538,12 @@ func (s *PresetsPublicTestSuite) rigFile(
 ) string {
 	path := filepath.Join(dir, id+".yaml")
 
-	s.Require().NoError(os.WriteFile(path, []byte(`schema: RigSpec
-version: 2
+	s.Require().NoError(os.WriteFile(path, []byte(`schema: ToneSpec
 id: `+id+`
-instrument: bass
-chain:
-  - { role: amp, gear: Ampeg SVT }
+rig:
+  instrument: bass
+  chain:
+    - { role: amp, gear: Ampeg SVT }
 `), 0o600))
 
 	return path

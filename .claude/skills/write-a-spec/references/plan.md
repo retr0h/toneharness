@@ -5,9 +5,9 @@ held, which is what makes the pair safe to exchange: read out of a preset, the
 two rebuild that preset exactly with the original file gone.
 
 **Nobody writes a plan by hand**, which is why it has no contract. A build makes
-one and the preset writer reads it. Reading a preset gives two documents rather
-than one, because the questions are different: what gear is this, which is the
-rig's, and what is this pedal actually doing, which is the plan's.
+one and the preset writer reads it. Reading a preset gives two documents, because
+the questions are different: what gear is this, which the ToneSpec answers, and
+what is this pedal actually doing, which the plan answers.
 
 ```yaml
 rig: mike-dirnt

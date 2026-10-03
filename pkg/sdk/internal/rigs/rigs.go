@@ -20,8 +20,8 @@
 
 // Package rigs finds and reports the curated knowledge on disk.
 //
-// A rig is a RigSpec that ships with the project. There is no separate
-// rig format: what a person writes by hand, what a preset lifts to, and
+// A rig is the gear half of a ToneSpec that ships with the project. There is no
+// separate rig format: what a person writes by hand, what a preset lifts to, and
 // what compiles back down are all the same document.
 package rigs
 
@@ -34,10 +34,8 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/result"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/shipped"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
@@ -45,19 +43,22 @@ import (
 // DefaultDir is where rigs live.
 const DefaultDir = "pkg/sdk/shipped"
 
-// Load reads every rig under dir, in identifier order.
+// Load reads every document under dir, in identifier order.
 //
 // A file that does not satisfy the contract stops the walk: a half-read
 // knowledge base is worse than a clear complaint about the file to fix.
+//
+// Whole documents rather than the gear alone, because the identifier is the
+// document's and a rig handed over without one cannot be named.
 func Load(
 	dir string,
-) ([]rig.Spec, error) {
+) ([]tone.Spec, error) {
 	all, err := readBase(dir)
 	if err != nil {
 		return nil, err
 	}
 
-	return specs(all), nil
+	return docs(all), nil
 }
 
 // readBase reads the rigs a layer sits on, refusing any file that is not a
@@ -114,40 +115,23 @@ func readFS(
 	}
 
 	// The pattern is a constant, so it cannot be malformed.
-	paths, _ := fs.Glob(fsys, path.Join("*", "*.yaml"))
+	// `artists/` and nothing else, which is what every page describing this has
+	// always said. The glob was any directory, so `marketplace/core/examples/`
+	// was read as rigs: its documents are teaching material and one of them is a
+	// Plan, and listing the core tier reported each as a rig that would not load.
+	paths, _ := fs.Glob(fsys, path.Join("artists", "*.yaml"))
 
 	out := make([]stored, 0, len(paths))
 	broken := []brokenFile(nil)
 
-	// The asks first, keyed by the stem they belong to, because a rig is what
-	// this returns and an ask has to be in hand by the time its rig is built.
-	asks, broken := readAsks(fsys, paths, broken)
-
-	// Which stems a rig has already been read for, because two files may claim
-	// one. `mike-dirnt.rig.yaml` and `mike-dirnt.yaml` are both rigs by name and
-	// only one can be the rig called `mike-dirnt`.
+	// One document per file, and the identifier it states is its name.
+	//
+	// There is no pairing by filename stem any more. A rig and the ask beside it
+	// were two files until version 2, held together by sharing a stem, kept in
+	// step by hand, and guarded by a test asserting no ask was ever orphaned.
 	taken := map[string]string{}
 
 	for _, p := range paths {
-		if isAsk(p) {
-			continue
-		}
-
-		// Glob answers in order and `.rig.yaml` sorts before `.yaml`, so the
-		// file that says what it is arrives first and keeps the name. The other
-		// is reported rather than dropped: a rig that silently does not load is
-		// the failure this whole list exists to prevent.
-		if first, already := taken[stem(p)]; already {
-			broken = append(broken, brokenFile{
-				names: claimed(p, nil),
-				err: fmt.Errorf("%s and %s are both the rig %q, and %s is the "+
-					"one that was read. Rename or remove the other",
-					path.Base(first), path.Base(p), stem(p), path.Base(first)),
-			})
-
-			continue
-		}
-
 		raw, err := fs.ReadFile(fsys, p)
 		if err != nil {
 			broken = append(broken, brokenFile{
@@ -158,21 +142,30 @@ func readFS(
 			continue
 		}
 
-		spec, err := decode(raw, p)
+		doc, err := decode(raw, p)
 		if err != nil {
 			broken = append(broken, brokenFile{names: claimed(p, raw), err: err})
 
 			continue
 		}
 
-		held := stored{spec: spec, raw: raw}
-		if beside, ok := asks[stem(p)]; ok {
-			held.ask, held.askRaw = beside.spec, beside.raw
+		// Two files claiming one identifier. Reported rather than dropped: a rig
+		// that silently does not load is the failure this list exists for, and
+		// which of the two was read is the useful half.
+		if first, already := taken[doc.Id]; already {
+			broken = append(broken, brokenFile{
+				names: claimed(p, nil),
+				err: fmt.Errorf("%s and %s both say they are %q, and %s is the "+
+					"one that was read. Rename or remove the other",
+					path.Base(first), path.Base(p), doc.Id, path.Base(first)),
+			})
+
+			continue
 		}
 
-		taken[stem(p)] = p
+		taken[doc.Id] = p
 
-		out = append(out, held)
+		out = append(out, stored{doc: doc, raw: raw})
 	}
 
 	sortEntries(out)
@@ -180,118 +173,19 @@ func readFS(
 	return out, broken, nil
 }
 
-// asked is one ask as read, and the text it came from.
-type asked struct {
-	spec *tone.Spec
-	raw  []byte
-}
-
-// readAsks reads every ask a directory holds, by the stem it belongs to.
-//
-// An ask that will not parse is reported the same way a rig that will not parse
-// is, rather than leaving the rig to load without it: a file somebody wrote and
-// got wrong is the case where saying so matters, and a rig quietly missing the
-// words it was built from is the same bug this split exists to remove.
-func readAsks(
-	fsys fs.FS,
-	paths []string,
-	broken []brokenFile,
-) (map[string]asked, []brokenFile) {
-	out := map[string]asked{}
-
-	for _, p := range paths {
-		if !isAsk(p) {
-			continue
-		}
-
-		raw, err := fs.ReadFile(fsys, p)
-		if err != nil {
-			broken = append(broken, brokenFile{
-				names: claimed(p, nil),
-				err:   fmt.Errorf("opening %s: %w", path.Base(p), err),
-			})
-
-			continue
-		}
-
-		spec, err := tone.Load(bytes.NewReader(raw))
-		if err != nil {
-			broken = append(broken, brokenFile{
-				names: claimed(p, raw),
-				err:   fmt.Errorf("%s: %w", path.Base(p), err),
-			})
-
-			continue
-		}
-
-		out[stem(p)] = asked{spec: &spec, raw: raw}
-	}
-
-	return out, broken
-}
-
-// askSuffix is what names the ask beside a rig.
-//
-// Two files in one directory rather than two directories, because they are one
-// subject and a person editing the words wants the gear in the next tab, not in
-// a parallel tree they have to keep in step by hand.
-const askSuffix = ".tone.yaml"
-
-// rigSuffix is what names the rig, where it says so.
-//
-// `.yaml` on the end of both, so one glob finds a pair and `go:embed` takes the
-// directory whole. A bare `.rig` would need the loader, the embed, the editor's
-// schema association and every `*.yaml` recipe in the justfile taught about it,
-// to say the same thing.
-//
-// Not required. A rig read off a device and one somebody wrote before this
-// existed are both `<slug>.yaml`, and refusing those to make the naming tidy
-// would be refusing the format's whole point. So this is what gets written, and
-// either is read.
-const rigSuffix = ".rig.yaml"
-
-// isAsk reports whether a path names the ask rather than the rig.
-func isAsk(
-	p string,
-) bool {
-	return strings.HasSuffix(p, askSuffix)
-}
-
-// stem is the identifier two paired files share.
-//
-// The filename is the identifier, which is what the rigs already do: all nine
-// that ship state an `id` exactly equal to their own stem. So a pair needs no
-// field pointing at its other half, and cannot end up with one that disagrees.
-func stem(
-	p string,
-) string {
-	base := path.Base(p)
-	if isAsk(p) {
-		return strings.TrimSuffix(base, askSuffix)
-	}
-
-	// Longest first. `.yaml` is a suffix of `.rig.yaml`, so stripping the short
-	// one from `mike-dirnt.rig.yaml` leaves `mike-dirnt.rig`, which is a stem
-	// nothing pairs with.
-	if strings.HasSuffix(base, rigSuffix) {
-		return strings.TrimSuffix(base, rigSuffix)
-	}
-
-	return strings.TrimSuffix(base, ".yaml")
-}
-
-// decode parses one rig, naming the file it came from when it will not parse.
-// A rig is hand-written, so the name is the useful half of the message.
+// decode parses one document, naming the file it came from when it will not
+// parse. A document is hand-written, so the name is the useful half of the
+// message.
 func decode(
 	raw []byte,
 	name string,
-) (rig.Spec, error) {
-	spec, err := rig.Load(bytes.NewReader(raw))
+) (tone.Spec, error) {
+	doc, err := tone.Load(bytes.NewReader(raw))
 	if err != nil {
-		return rig.Spec{}, fmt.Errorf("%s: %w", filepath.Base(name), err)
+		return tone.Spec{}, fmt.Errorf("%s: %w", filepath.Base(name), err)
 	}
 
-	return spec, nil
+	return doc, nil
 }
 
 // read reads every rig a Source holds.
@@ -365,7 +259,7 @@ func Find(
 		return result.Known{}, err
 	}
 
-	return result.Known{Rig: found.spec, Ask: found.ask}, nil
+	return result.Known{ID: found.idOf(), Rig: found.specOf(), Ask: found.askOf()}, nil
 }
 
 // Show reads one rig, and what the rest of the set says about it.
@@ -384,7 +278,7 @@ func Show(
 	}
 
 	return result.Rig{
-		Known:    result.Known{Rig: found.spec, Ask: found.ask},
+		Known:    result.Known{ID: found.idOf(), Rig: found.specOf(), Ask: found.askOf()},
 		Variants: departures(all.merged(), found),
 	}, nil
 }
@@ -407,18 +301,18 @@ func departures(
 		// fact about what was wanted, not about the gear that answered it, and a
 		// rig with no ask beside it cannot depart from anything because nothing
 		// says what it was for.
-		if other.ask == nil || other.ask.Extends == nil {
+		if other.askOf() == nil || other.askOf().Extends == nil {
 			continue
 		}
 
 		// A rig of somebody's own copied from a shipped one under the same
 		// identifier extends a rig it has replaced. It is not its own variant.
-		if *other.ask.Extends != of.spec.ID || other.spec.ID == of.spec.ID {
+		if *other.askOf().Extends != of.idOf() || other.idOf() == of.idOf() {
 			continue
 		}
 
 		out = append(out, result.Variant{
-			ID:   other.spec.ID,
+			ID:   other.idOf(),
 			Name: subjectOf(other),
 		})
 	}
@@ -431,20 +325,20 @@ func departures(
 func subjectOf(
 	e stored,
 ) string {
-	if e.ask == nil || e.ask.Subject == nil {
-		return e.spec.ID
+	if e.askOf() == nil || e.askOf().Subject == nil {
+		return e.idOf()
 	}
 
-	return e.ask.Subject.Name
+	return e.askOf().Subject.Name
 }
 
-// specs are the rigs of a set of entries, in the same order.
-func specs(
+// docs are the documents of a set of entries, in the same order.
+func docs(
 	all []stored,
-) []rig.Spec {
-	out := make([]rig.Spec, 0, len(all))
+) []tone.Spec {
+	out := make([]tone.Spec, 0, len(all))
 	for _, e := range all {
-		out = append(out, e.spec)
+		out = append(out, e.doc)
 	}
 
 	return out
@@ -456,7 +350,7 @@ func known(
 ) []result.Known {
 	out := make([]result.Known, 0, len(all))
 	for _, e := range all {
-		out = append(out, result.Known{Rig: e.spec, Ask: e.ask})
+		out = append(out, result.Known{ID: e.idOf(), Rig: e.specOf(), Ask: e.askOf()})
 	}
 
 	return out
@@ -466,5 +360,5 @@ func known(
 func sortEntries(
 	all []stored,
 ) {
-	sort.SliceStable(all, func(i, j int) bool { return all[i].spec.ID < all[j].spec.ID })
+	sort.SliceStable(all, func(i, j int) bool { return all[i].idOf() < all[j].idOf() })
 }

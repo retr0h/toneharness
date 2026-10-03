@@ -29,7 +29,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 	"github.com/retr0h/toneharness/pkg/sdk"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
@@ -104,7 +104,7 @@ func ToneBuild(
 		return err
 	}
 
-	return put(w, got.Rig, opts.Out, opts.Ask)
+	return put(w, got, opts.Out)
 }
 
 // say reports what the translation did and could not do.
@@ -138,19 +138,24 @@ func sayNotes(
 	}.Render(w)
 }
 
-// put writes the rig, to a file or to whatever is reading.
+// put writes the document, to a file or to whatever is reading.
 //
-// ask is carried this far only to name it in the next command. A rig written
-// here sits wherever somebody pointed --out, with no ask beside it, so the step
-// that resolves the words cannot find one by convention.
+// The whole document rather than the rig it resolved, so what comes out is a file
+// the next command takes. There is no second file to name any more: the ask that
+// produced this travels in it.
 func put(
 	w io.Writer,
-	spec rig.Spec,
-	at, ask string,
+	got sdk.Resolved,
+	at string,
 ) error {
 	var buf bytes.Buffer
 
-	if err := rig.Write(&buf, spec); err != nil {
+	if err := tone.Write(&buf, tone.Spec{
+		Schema: tone.SchemaName,
+		Id:     got.ID,
+		Ask:    got.Ask,
+		Rig:    got.Rig,
+	}); err != nil {
 		return err
 	}
 
@@ -165,14 +170,13 @@ func put(
 	}
 
 	// `presets make` rather than `presets compile`, because the ask is not spent
-	// yet. Compile lowers the gear and nothing else, so a request's words and
-	// the words its genre earned would reach no control and nothing would say
-	// so. Make resolves the pair, and --ask is named because the rig this just
-	// wrote has no .tone.yaml beside it to be found.
+	// yet. Compile lowers the gear and nothing else, so a request's words and the
+	// words its genre earned would reach no control and nothing would say so.
+	// Make resolves the document, which is one file and carries both.
 	_, err := fmt.Fprintf(w,
 		"\n  [ok] wrote %s\n\n  build the preset with:\n"+
-			"    toneharness presets make --rig %s --ask %s --out a.hlx\n\n",
-		at, at, ask)
+			"    toneharness presets make --rig %s --out a.hlx\n\n",
+		at, at)
 
 	return err
 }

@@ -51,7 +51,7 @@ func (s *EmbedPublicTestSuite) TestLoadSchema() {
 		{
 			name:    "a document it cannot read",
 			doc:     []byte("not a schema"),
-			errText: "RigSpec schema",
+			errText: "Rig schema",
 		},
 		{
 			name: "a document describing no rig",
@@ -63,7 +63,7 @@ components:
   schemas:
     NotARig: { type: object }
 `),
-			errText: "describes no RigSpec",
+			errText: "describes no Rig",
 		},
 	}
 
@@ -112,7 +112,7 @@ func (s *EmbedPublicTestSuite) TestAgainst() {
 			// the contract.
 			name:     "a failure with nothing to point at",
 			doc:      "not a rig",
-			contains: "RigSpec",
+			contains: "Rig",
 		},
 		{
 			// A rig missing everything fails in more ways than a person can

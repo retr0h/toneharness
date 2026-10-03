@@ -38,7 +38,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/reamp"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // ControlsOptions is what sweeping one block's controls needs to know.
@@ -605,7 +605,9 @@ func current(
 	}
 
 	var buf bytes.Buffer
-	if err := rig.Write(&buf, read.Rig); err != nil {
+	if err := tone.Write(&buf, tone.Spec{
+		Schema: tone.SchemaName, Id: read.ID, Rig: read.Rig,
+	}); err != nil {
 		return "", err
 	}
 

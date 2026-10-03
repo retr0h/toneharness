@@ -21,6 +21,7 @@
 package rigs
 
 import (
+	"path"
 	"strings"
 
 	"sigs.k8s.io/yaml"
@@ -128,13 +129,13 @@ func replacement(
 func names(
 	e stored,
 ) []string {
-	out := []string{strings.ToLower(e.spec.ID)}
+	out := []string{strings.ToLower(e.idOf())}
 
-	if e.ask == nil || e.ask.Aliases == nil {
+	if e.askOf() == nil || e.askOf().Aliases == nil {
 		return out
 	}
 
-	for _, a := range *e.ask.Aliases {
+	for _, a := range *e.askOf().Aliases {
 		out = append(out, strings.ToLower(a))
 	}
 
@@ -159,15 +160,16 @@ func answers(
 
 // claimed are the names a file that is not a rig may have been meant to
 // answer to: its filename stem, which is the id rigs new writes it under,
-// and whatever id and aliases the text states where it parses that far.
+// and whatever id it states and aliases its ask states, where the text parses
+// that far.
 func claimed(
 	p string,
 	raw []byte,
 ) []string {
-	// The stem rather than the basename, so an ask that will not parse is
-	// reported under the subject it belongs to instead of under a name with a
-	// stray ".tone" on the end.
-	out := []string{strings.ToLower(stem(p))}
+	// The basename without its extension. One document per file since version 2,
+	// so there is no stem shared with a second file and nothing to strip but
+	// `.yaml`.
+	out := []string{strings.ToLower(strings.TrimSuffix(path.Base(p), ".yaml"))}
 
 	var doc map[string]any
 	if yaml.Unmarshal(raw, &doc) != nil {
@@ -178,7 +180,11 @@ func claimed(
 		out = append(out, strings.ToLower(id))
 	}
 
-	aliases, _ := doc["aliases"].([]any)
+	// Under the ask, which is where the names a sound answers to live: an alias
+	// is what somebody types to ask for it, not a fact about the gear.
+	ask, _ := doc["ask"].(map[string]any)
+
+	aliases, _ := ask["aliases"].([]any)
 	for _, a := range aliases {
 		if alias, ok := a.(string); ok {
 			out = append(out, strings.ToLower(alias))

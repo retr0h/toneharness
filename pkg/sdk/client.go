@@ -638,7 +638,6 @@ func (c *Client) Make(
 		Deps:       presets.Deps{Catalogs: c},
 		RigID:      in.RigID,
 		RigPath:    in.Rig,
-		AskPath:    in.Ask,
 		Source:     c.source(),
 		StatsPath:  c.opts.stats,
 		SetupPath:  c.opts.setup,
@@ -713,7 +712,7 @@ func (c *Client) geared() (map[string]bool, error) {
 
 	out := make(map[string]bool, len(held.Rigs))
 	for _, k := range held.Rigs {
-		out[string(k.Rig.ID)] = true
+		out[string(k.ID)] = true
 	}
 
 	return out, nil

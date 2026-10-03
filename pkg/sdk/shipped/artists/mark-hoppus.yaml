@@ -1,0 +1,78 @@
+# Mark Hoppus — blink-182
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: mark-hoppus
+
+ask:
+  subject:
+    kind: artist
+    name: Mark Hoppus
+    band: blink-182
+    # Six years wide, and it is the weakest thing here. The corpus measures three
+    # of his records and they are three albums: Dude Ranch in 1997, Enema of the
+    # State in 1999 and the self-titled in 2003. One rig cannot be right for all
+    # three, and the gear beside this was observed on a tour around 2001, which
+    # sits between the last two and four years after the first. The span covers
+    # the records rather than the gear, so it is stated wide and the rig says what
+    # its evidence actually dates to.
+    era: Dude Ranch to the self-titled
+    years: { from: 1997, to: 2003 }
+
+  instrument: bass
+
+  # The genres the corpus tags these records with, which is what `measure genres`
+  # measures a target from. A list because a record belongs to more than one.
+  genre: [pop-punk, punk]
+
+  # No words. Nothing anybody has read describes how these records sound in terms
+  # this vocabulary carries, and `measure genres` earns pop-punk and punk only
+  # `clean`, which is a fact about the genre rather than about him.
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT-4 Pro
+      capture: direct
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/mark-hoppus-tones.19318/
+          note: >-
+            a thread opened while the rig was current, about the bass sound on "The
+            Rock Show", by somebody who had been to that year's tour: "i remember
+            back to when i was the concert this year and it sounded pretty much the
+            same". He lists what he saw: "3 Ampeg SVT810e cabs -SVT4 pro", and
+            answers a competing suggestion later in the thread with "he actually
+            uses ampeg heads and ampeg cabs he uses the SVT-4pro".
+          caveat: >-
+            an audience's account of a stage, which is the weakest kind of
+            first-hand there is: a rack seen from the crowd says which boxes were
+            on it and nothing about what was recorded. No magazine, interview or
+            technician is behind this.
+
+            The thread also carries the competing claim, and it is worth keeping
+            because it is the one most repeated elsewhere: "Mark also uses a
+            Mesa/Boogie 400+, so that might be what he used in the studio." The
+            poster's own "might be" is the whole of its evidence, so it is recorded
+            here and not acted on. Both cannot be the head on these records and
+            nothing read here settles which.
+      confidence: low
+
+    - role: cab
+      gear: Ampeg 8x10
+      capture: direct
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/mark-hoppus-tones.19318/
+          note: >-
+            the same list gives the cabinets: "3 Ampeg SVT810e cabs".
+          caveat: >-
+            the same account and the same limits, and three eight-by-tens are a
+            stage wall rather than a session cabinet. A rig is one path, so this
+            takes one of them.
+      confidence: low

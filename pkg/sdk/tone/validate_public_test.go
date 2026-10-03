@@ -172,15 +172,20 @@ func (s *ValidatePublicTestSuite) TestAnUnreadableContractRefusesBothDocuments()
 // files, and a ToneSpec error spelling a position differently would read as a
 // different kind of fault rather than the same one in the other document.
 func (s *ValidatePublicTestSuite) TestAFailureInsideAListIsWrittenTheWayTheFileIs() {
-	err := tone.Validate(tone.Spec{Genre: []string{"punk", ""}})
+	err := tone.Validate(tone.Spec{
+		Schema: "ToneSpec",
+		Id:     "punky",
+		Ask:    &tone.Ask{Genre: []string{"punk", ""}},
+		Rig:    minimalRig(),
+	})
 
 	s.Require().ErrorIs(err, tone.ErrInvalid)
-	s.Require().ErrorContains(err, "genre[1]")
+	s.Require().ErrorContains(err, "ask.genre[1]")
 	s.Require().NotContains(err.Error(), "genre.1")
 
 	var fault *tone.InvalidError
 	s.Require().ErrorAs(err, &fault)
-	s.Require().Equal("genre[1]", fault.Field)
+	s.Require().Equal("ask.genre[1]", fault.Field)
 	s.Require().NotEmpty(fault.Reason, "and it says what was wrong with it")
 }
 

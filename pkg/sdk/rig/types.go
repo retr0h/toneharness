@@ -20,14 +20,14 @@
 
 package rig
 
-import "github.com/retr0h/toneharness/pkg/sdk/rig/internal/gen"
+import "github.com/retr0h/toneharness/pkg/sdk/tone"
 
 // What a rig is made of.
 //
 // Declared by oapi-codegen from the contract and named here, so that nobody
 // outside this package has to hold a generated type. A caller writing
 // Spec is writing against a name this project chose; a caller writing
-// gen.RigSpec was writing against whatever the generator happened to call it,
+// gen.Rig was writing against whatever the generator happened to call it,
 // and finding out at compile time when that changed.
 //
 // Aliases rather than wrappers. Spec and the generated type are the same
@@ -36,127 +36,124 @@ import "github.com/retr0h/toneharness/pkg/sdk/rig/internal/gen"
 type (
 	// Spec is a rig, complete. Sparse when hand-written; the same document
 	// carries settings and evidence once anything has been measured.
-	Spec = gen.RigSpec
-	// SpecVersion is the contract version a rig states. Version is the one
-	// this package reads and writes; this is the type a rig carries it in.
-	SpecVersion = gen.RigSpecVersion
+	Spec = tone.Rig
 	// Subject is who or what the rig is attributed to.
-	Subject = gen.Subject
+	Subject = tone.Subject
 	// Kind is what a rig is attributed to: an artist, a band, a song, a
 	// genre, or nothing in particular.
-	Kind = gen.Kind
+	Kind = tone.Kind
 	// ChainEntry is one piece of gear in the signal path.
-	ChainEntry = gen.ChainEntry
+	ChainEntry = tone.ChainEntry
 	// Role is what a piece of gear does: amp, cab, drive.
-	Role = gen.Role
+	Role = tone.Role
 	// Capture is how the signal reached the tape: direct, miked, or both.
-	Capture = gen.Capture
+	Capture = tone.Capture
 	// Evidence is where a claim came from.
-	Evidence = gen.Evidence
+	Evidence = tone.Evidence
 	// EvidenceKind is how far somebody has to go to disagree with one.
-	EvidenceKind = gen.EvidenceKind
+	EvidenceKind = tone.EvidenceKind
 	// Confidence is how far a claim should be trusted.
-	Confidence = gen.Confidence
+	Confidence = tone.Confidence
 	// Instrument is what the rig is played on.
-	Instrument = gen.Instrument
+	Instrument = tone.Instrument
 	// Settings are the values a piece of gear is set to, in musical words that
 	// mean roughly the same on any amplifier.
-	Settings = gen.Settings
+	Settings = tone.Settings
 	// Knob is one control, from 0 to 1, whatever the device's range is.
-	Knob = gen.Knob
+	Knob = tone.Knob
 	// Substitute stands in for gear no device models.
-	Substitute = gen.Substitute
+	Substitute = tone.Substitute
 	// Target is the hardware a plan was tuned on.
-	Target = gen.Target
+	Target = tone.Target
 	// Controller is a parameter an expression pedal or footswitch moves.
-	Controller = gen.Controller
+	Controller = tone.Controller
 	// Footswitch is what a switch does and how it is lit.
-	Footswitch = gen.Footswitch
+	Footswitch = tone.Footswitch
 	// Section is one part of a song, as the roles that play in it.
-	Section = gen.Section
+	Section = tone.Section
 	// Move is one control an expression pedal or a footswitch sweeps, said
 	// portably: a role and one of the settings vocabulary's words.
-	Move = gen.Move
+	Move = tone.Move
 	// MoveBy is what moves a control: an expression pedal, or a footswitch
 	// set to sweep rather than switch.
-	MoveBy = gen.MoveBy
+	MoveBy = tone.MoveBy
 	// MoveSetting is which control a move reaches, in the same words a rig
 	// sets gear with.
-	MoveSetting = gen.MoveSetting
+	MoveSetting = tone.MoveSetting
 	// Played is the instrument a rig is played on, which no device models.
-	Played = gen.Played
+	Played = tone.Played
 	// Snapshot is one set of values a preset can recall.
-	Snapshot = gen.Snapshot
+	Snapshot = tone.Snapshot
 	// DeviceState is everything a preset carries that this format does not
 	// model as musical intent, kept as the device wrote it.
-	DeviceState = gen.DeviceState
+	DeviceState = tone.DeviceState
 )
 
 // The values those types may hold.
 const (
 	// RoleAmp and RoleCab are the two a listing looks for by name.
-	RoleAmp = gen.RoleAmp
-	RoleCab = gen.RoleCab
+	RoleAmp = tone.RoleAmp
+	RoleCab = tone.RoleCab
 
 	// How the signal reached the tape. `direct` is the one worth counting:
 	// it says a cabinet in the chain was not in the recorded signal.
-	CaptureDirect = gen.CaptureDirect
-	CaptureMiked  = gen.CaptureMiked
-	CaptureBoth   = gen.CaptureBoth
+	CaptureDirect = tone.CaptureDirect
+	CaptureMiked  = tone.CaptureMiked
+	CaptureBoth   = tone.CaptureBoth
 
 	// How far a claim should be trusted. Unstated reads as the lowest,
 	// because a rig that says nothing about itself has earned nothing.
-	ConfidenceLow    = gen.ConfidenceLow
-	ConfidenceMedium = gen.ConfidenceMedium
-	ConfidenceHigh   = gen.ConfidenceHigh
+	ConfidenceLow    = tone.ConfidenceLow
+	ConfidenceMedium = tone.ConfidenceMedium
+	ConfidenceHigh   = tone.ConfidenceHigh
 
 	// Where a claim came from, strongest first. The contract says what each
 	// one is and why it ranks where it does.
-	EvidenceHeard  = gen.EvidenceHeard
-	EvidenceCited  = gen.EvidenceCited
-	EvidenceAudio  = gen.EvidenceAudio
-	EvidenceUser   = gen.EvidenceUser
-	EvidenceVideo  = gen.EvidenceVideo
-	EvidenceCorpus = gen.EvidenceCorpus
-	EvidenceLLM    = gen.EvidenceLLM
+	EvidenceHeard  = tone.EvidenceHeard
+	EvidenceCited  = tone.EvidenceCited
+	EvidenceAudio  = tone.EvidenceAudio
+	EvidenceUser   = tone.EvidenceUser
+	EvidenceVideo  = tone.EvidenceVideo
+	EvidenceCorpus = tone.EvidenceCorpus
+	EvidenceLLM    = tone.EvidenceLLM
 
 	// Not ranked, because it answers where to get something rather than why
 	// a claim is believed.
-	EvidenceStore = gen.EvidenceStore
+	EvidenceStore = tone.EvidenceStore
 
 	// What moves a control. Named rather than numbered, because the number
 	// is one device family's and a rig is meant to outlive it.
-	MoveByExpression = gen.MoveByExpression
-	MoveByFootswitch = gen.MoveByFootswitch
+	MoveByExpression = tone.MoveByExpression
+	MoveByFootswitch = tone.MoveByFootswitch
 
 	// What a rig is played on.
-	InstrumentBass   = gen.InstrumentBass
-	InstrumentGuitar = gen.InstrumentGuitar
+	InstrumentBass   = tone.InstrumentBass
+	InstrumentGuitar = tone.InstrumentGuitar
 
 	// What a rig is attributed to.
-	KindArtist = gen.KindArtist
-	KindBand   = gen.KindBand
-	KindGenre  = gen.KindGenre
-	KindSong   = gen.KindSong
-	KindSound  = gen.KindSound
+	KindArtist = tone.KindArtist
+	KindBand   = tone.KindBand
+	KindGenre  = tone.KindGenre
+	KindSong   = tone.KindSong
+	KindSound  = tone.KindSound
 
-	// SchemaName is the one value the contract accepts for its own schema
-	// field. Schema is the contract document itself.
-	SchemaName = gen.RigSpecSchemaRigSpec
+	// SchemaName is what the one document states. A rig is a section of it
+	// since version 2 and no longer names a schema of its own.
+	SchemaName = tone.SchemaName
 
 	// What a piece of gear does. Deliberately the same words the catalog
 	// groups by, so reading one against the other is a conversion rather
 	// than a translation.
-	RoleComp    = gen.RoleComp
-	RoleDrive   = gen.RoleDrive
-	RoleEQ      = gen.RoleEQ
-	RoleMod     = gen.RoleMod
-	RoleDelay   = gen.RoleDelay
-	RoleReverb  = gen.RoleReverb
-	RoleFilter  = gen.RoleFilter
-	RolePitch   = gen.RolePitch
-	RoleWah     = gen.RoleWah
-	RoleGate    = gen.RoleGate
-	RoleUtility = gen.RoleUtility
-	RoleOther   = gen.RoleOther
+	RoleComp    = tone.RoleComp
+	RoleDrive   = tone.RoleDrive
+	RoleEQ      = tone.RoleEQ
+	RoleMod     = tone.RoleMod
+	RoleDelay   = tone.RoleDelay
+	RoleReverb  = tone.RoleReverb
+	RoleFilter  = tone.RoleFilter
+	RolePitch   = tone.RolePitch
+	RoleWah     = tone.RoleWah
+	RoleGate    = tone.RoleGate
+	RoleUtility = tone.RoleUtility
+	RoleOther   = tone.RoleOther
 )

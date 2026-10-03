@@ -193,24 +193,24 @@ func (mr *MockCompilerMockRecorder) Moves(made, spec, blocks, cat any) *gomock.C
 }
 
 // Realise mocks base method.
-func (m *MockCompiler) Realise(spec rig.Spec, cat *catalog.Catalog) (plan.Plan, error) {
+func (m *MockCompiler) Realise(id string, spec rig.Spec, cat *catalog.Catalog) (plan.Plan, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Realise", spec, cat)
+	ret := m.ctrl.Call(m, "Realise", id, spec, cat)
 	ret0, _ := ret[0].(plan.Plan)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Realise indicates an expected call of Realise.
-func (mr *MockCompilerMockRecorder) Realise(spec, cat any) *gomock.Call {
+func (mr *MockCompilerMockRecorder) Realise(id, spec, cat any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Realise", reflect.TypeOf((*MockCompiler)(nil).Realise), spec, cat)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Realise", reflect.TypeOf((*MockCompiler)(nil).Realise), id, spec, cat)
 }
 
 // Resolve mocks base method.
-func (m *MockCompiler) Resolve(spec rig.Spec, intent compile.Intent, cat *catalog.Catalog, stats *corpus.Stats) (plan.Plan, []compile.Added, []compile.Moved, compile.Compensated, error) {
+func (m *MockCompiler) Resolve(id string, spec rig.Spec, intent compile.Intent, cat *catalog.Catalog, stats *corpus.Stats) (plan.Plan, []compile.Added, []compile.Moved, compile.Compensated, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Resolve", spec, intent, cat, stats)
+	ret := m.ctrl.Call(m, "Resolve", id, spec, intent, cat, stats)
 	ret0, _ := ret[0].(plan.Plan)
 	ret1, _ := ret[1].([]compile.Added)
 	ret2, _ := ret[2].([]compile.Moved)
@@ -220,9 +220,9 @@ func (m *MockCompiler) Resolve(spec rig.Spec, intent compile.Intent, cat *catalo
 }
 
 // Resolve indicates an expected call of Resolve.
-func (mr *MockCompilerMockRecorder) Resolve(spec, intent, cat, stats any) *gomock.Call {
+func (mr *MockCompilerMockRecorder) Resolve(id, spec, intent, cat, stats any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockCompiler)(nil).Resolve), spec, intent, cat, stats)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockCompiler)(nil).Resolve), id, spec, intent, cat, stats)
 }
 
 // Sections mocks base method.

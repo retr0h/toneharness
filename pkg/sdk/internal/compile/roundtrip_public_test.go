@@ -91,7 +91,7 @@ func (s *RoundTripPublicTestSuite) TestLift() {
 	doc, err := preset.Read(bytes.NewReader(s.read(s.fixtures()[0])))
 	s.Require().NoError(err)
 
-	spec, made, err := compile.Lift(doc, s.cat)
+	_, spec, made, err := compile.Lift(doc, s.cat)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(spec.Chain)
 	s.Require().Len(made.Blocks, len(spec.Chain))
@@ -205,14 +205,14 @@ func (s *RoundTripPublicTestSuite) backAgain(
 	from, err := preset.Read(bytes.NewReader(raw))
 	s.Require().NoError(err)
 
-	first, firstMade, err := compile.Lift(from, s.cat)
+	_, first, firstMade, err := compile.Lift(from, s.cat)
 	s.Require().NoError(err)
 
 	blank, err := preset.Blank()
 	s.Require().NoError(err)
 	s.Require().NoError(compile.Lower(blank, firstMade, s.cat))
 
-	second, secondMade, err := compile.Lift(blank, s.cat)
+	_, second, secondMade, err := compile.Lift(blank, s.cat)
 	s.Require().NoError(err)
 
 	return s.marshal(first, firstMade), s.marshal(second, secondMade)
@@ -242,7 +242,7 @@ func (s *RoundTripPublicTestSuite) through(
 	from, err := preset.Read(bytes.NewReader(raw))
 	s.Require().NoError(err)
 
-	_, made, err := compile.Lift(from, s.cat)
+	_, _, made, err := compile.Lift(from, s.cat)
 	s.Require().NoError(err)
 
 	s.Require().NoError(compile.Lower(doc, made, s.cat))

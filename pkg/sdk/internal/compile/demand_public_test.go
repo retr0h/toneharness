@@ -292,7 +292,7 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 			}
 
 			built, added, _, _, err := compile.Resolve(
-				svt(tt.pedals...), ask, s.cat, stats)
+				"a-rig", svt(tt.pedals...), ask, s.cat, stats)
 
 			s.Require().NoError(err)
 
@@ -335,7 +335,7 @@ func (s *DemandPublicTestSuite) TestResolveDemandIsDeterministic() {
 	var first []catalog.ModelID
 
 	for range 5 {
-		_, added, _, _, err := compile.Resolve(svt(), intent, s.cat, stats)
+		_, added, _, _, err := compile.Resolve("a-rig", svt(), intent, s.cat, stats)
 		s.Require().NoError(err)
 
 		got := make([]catalog.ModelID, 0, len(added))
@@ -360,7 +360,7 @@ func (s *DemandPublicTestSuite) TestResolveDemandIsDeterministic() {
 // rather than on what was added.
 func (s *DemandPublicTestSuite) TestResolveDemandLandsTheWord() {
 	_, _, moved, _, err := compile.Resolve(
-		svt(),
+		"a-rig", svt(),
 		asking([]string{"mid-forward"}, ""),
 		s.cat,
 		s.quiet(nil, "HD2_EQTestParametric"),
@@ -400,7 +400,7 @@ func (s *DemandPublicTestSuite) TestResolveDemandNamesTheBlock() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			_, _, moved, _, err := compile.Resolve(
-				svt(),
+				"a-rig", svt(),
 				asking([]string{"envelope-swept"}, ""),
 				s.cat,
 				s.quiet(nil, tt.models...),

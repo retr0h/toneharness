@@ -295,7 +295,7 @@ func (s *EditPublicTestSuite) TestExport() {
 			catalog: catalogPath(),
 			out:     "one.yaml",
 			wrote: []string{
-				"schema: RigSpec",
+				"schema: ToneSpec",
 				// Gear named the way a musician names it.
 				"gear: Ampeg SVT (normal channel)",
 			},

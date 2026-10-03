@@ -20,6 +20,7 @@
 package tone_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -72,7 +73,7 @@ func (s *EmbedPublicTestSuite) TestTheContractDescribesBothDocuments() {
 // instrument into the ask would mean restating it every time, and the twelfth
 // request contradicting the first.
 func (s *EmbedPublicTestSuite) TestAskAndSetupStayApart() {
-	ask := s.doc.Components.Schemas["ToneSpec"].Value.Properties
+	ask := s.doc.Components.Schemas["Ask"].Value.Properties
 	setup := s.doc.Components.Schemas["Setup"].Value.Properties
 
 	for _, field := range []string{"instruments", "device", "owns"} {
@@ -86,20 +87,64 @@ func (s *EmbedPublicTestSuite) TestAskAndSetupStayApart() {
 	}
 }
 
-// TestNoKnobPositions is the reason the split exists at all.
+// TestNoKnobPositions is the reason the ask and the rig are separate halves of
+// one document rather than one flat set of fields.
 //
-// A hand-written document may say what somebody wants and what they own. It
-// may not say where a knob goes: that is what the tool works out, and a number
-// typed into an authored file is how `dark` came to move Treble by a quarter
-// of its range because somebody decided a quarter.
+// An ask may say what somebody wants and a Setup may say what they own. Neither
+// may say where a knob goes: that is what the tool works out, and a number typed
+// into an authored file is how `dark` came to move Treble by a quarter of its
+// range because somebody decided a quarter. The rig half is the other case and
+// carries `settings` on purpose, because that is where a solved position lands.
 func (s *EmbedPublicTestSuite) TestNoKnobPositions() {
-	for name, ref := range s.doc.Components.Schemas {
-		for field := range ref.Value.Properties {
-			s.Require().NotContains(
-				[]string{"settings", "params", "knobs", "values"}, field,
-				"%s.%s would let somebody write a knob position by hand", name, field)
+	for _, root := range []string{"Ask", "Setup"} {
+		s.Run(root, func() {
+			for name, schema := range s.reachableFrom(root) {
+				for field := range schema.Properties {
+					s.Require().NotContains(
+						[]string{"settings", "params", "knobs", "values"}, field,
+						"%s.%s would let somebody write a knob position by hand",
+						name, field)
+				}
+			}
+		})
+	}
+}
+
+// reachableFrom is every schema a document's half can hold, by name.
+//
+// The contract is one document now, so walking every schema in it would find
+// the rig's own `settings` and report the field the rig exists to carry.
+func (s *EmbedPublicTestSuite) reachableFrom(
+	root string,
+) map[string]*openapi3.Schema {
+	out := map[string]*openapi3.Schema{}
+
+	var walk func(name string, ref *openapi3.SchemaRef)
+	walk = func(name string, ref *openapi3.SchemaRef) {
+		if ref == nil || ref.Value == nil {
+			return
+		}
+
+		if _, seen := out[name]; seen {
+			return
+		}
+
+		out[name] = ref.Value
+
+		for field, prop := range ref.Value.Properties {
+			walk(name+"."+field, prop)
+		}
+
+		walk(name+"[]", ref.Value.Items)
+
+		for i, of := range ref.Value.AllOf {
+			walk(fmt.Sprintf("%s/allOf/%d", name, i), of)
 		}
 	}
+
+	walk(root, s.doc.Components.Schemas[root])
+
+	return out
 }
 
 // TestEnumsMatchTheGoConstants covers the drift generation does not catch.
@@ -118,8 +163,11 @@ func (s *EmbedPublicTestSuite) TestEnumsMatchTheGoConstants() {
 		{
 			schema: "Role",
 			have: []string{
-				"amp", "cab", "drive", "comp", "eq", "mod",
-				"delay", "reverb", "filter", "pitch", "wah", "other",
+				string(tone.RoleAmp), string(tone.RoleCab), string(tone.RoleDrive),
+				string(tone.RoleComp), string(tone.RoleGate), string(tone.RoleEQ),
+				string(tone.RoleMod), string(tone.RoleDelay), string(tone.RoleReverb),
+				string(tone.RoleFilter), string(tone.RolePitch), string(tone.RoleWah),
+				string(tone.RoleUtility), string(tone.RoleOther),
 			},
 		},
 	}
@@ -146,7 +194,7 @@ func (s *EmbedPublicTestSuite) TestEnumsMatchTheGoConstants() {
 // artists is, because three records by one band is that band's sound wearing a
 // genre's name.
 func (s *EmbedPublicTestSuite) TestGenreIsNotAnEnum() {
-	genre := s.doc.Components.Schemas["ToneSpec"].Value.Properties["genre"]
+	genre := s.doc.Components.Schemas["Ask"].Value.Properties["genre"]
 
 	s.Require().NotNil(genre)
 	s.Require().Empty(genre.Value.Enum,

@@ -35,16 +35,16 @@ use, and neither carries a knob position.
 They are the top of three layers, and the split is what makes the middle one
 worth sharing:
 
-    ToneSpec + Setup   what we mean, and what we have
+    ask + Setup        what we mean, and what we have
           ↓            toneharness tone build
-    RigSpec            exact, resolved, deterministic, shareable
+    rig                exact, resolved, deterministic, shareable
           ↓            toneharness presets compile
     .hlx               what the pedal eats
 
-A RigSpec names the exact models, so two people compiling one get the same
-preset. A ToneSpec does not: "punk, a bit darker" resolves against a corpus
-and a library of measurements that both move, so the same ask next month is a
-different rig, and that is the point of keeping them apart.
+One document holds both halves. The rig names the exact gear, so two people
+compiling one get the same preset. The ask does not: "punk, a bit darker"
+resolves against a corpus and a library of measurements that both move, so the
+same ask next month is a different rig, and that is why both are written down.
 
 What a request cannot say is where a knob goes. That is what the tool works
 out, and a number typed into an authored file is how a word came to move

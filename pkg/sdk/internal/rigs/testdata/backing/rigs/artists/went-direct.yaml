@@ -1,0 +1,18 @@
+schema: ToneSpec
+id: went-direct
+
+ask:
+  genre: [rock]
+
+  subject:
+    kind: artist
+    name: Went Direct
+    era: a record that never met a microphone
+    years: { from: 1990, to: 1995 }
+  confidence: low
+
+rig:
+  instrument: bass
+  chain:
+    - { role: amp, gear: Ampeg SVT, capture: direct }
+    - { role: cab, gear: Ampeg 8x10, capture: direct, stage: true }

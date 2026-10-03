@@ -1,0 +1,21 @@
+schema: ToneSpec
+id: minimal
+
+ask:
+  genre: [rock]
+
+  aliases: [spare, bare]
+  subject:
+    kind: genre
+    name: Minimal
+  confidence: high
+
+rig:
+  instrument: guitar
+
+  chain:
+    - role: amp
+      gear: Fender Twin Reverb
+      evidence:
+        - { kind: cited, note: "Fender publish the model" }
+      confidence: high

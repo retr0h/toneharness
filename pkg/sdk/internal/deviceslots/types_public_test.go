@@ -86,7 +86,8 @@ func (s *TypesPublicTestSuite) TestCompiler() {
 	dev.EXPECT().ReadPreset(gomock.Any(), 0, 0).Return(s.answer(), nil)
 
 	comp := slotmocks.NewMockCompiler(s.ctrl)
-	comp.EXPECT().Lift(gomock.Any(), gomock.Any()).Return(rig.Spec{}, plan.Plan{}, want)
+	comp.EXPECT().Lift(gomock.Any(), gomock.Any()).
+		Return("", rig.Spec{}, plan.Plan{}, want)
 
 	_, err := (&deviceslots.Flows{Catalogs: s.builtIn(), Compiler: comp}).
 		Show(context.Background(), dev, slotpkg.Address{})

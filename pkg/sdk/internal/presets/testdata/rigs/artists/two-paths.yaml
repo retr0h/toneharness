@@ -1,0 +1,19 @@
+schema: ToneSpec
+id: two-paths
+
+ask:
+  genre: [rock]
+
+  subject:
+    kind: artist
+    name: Two Paths
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - { role: other, gear: Chunky Thing, evidence: [{ kind: llm }] }
+    - { role: other, gear: Chunky Thing, evidence: [{ kind: llm }] }
+    - { role: other, gear: Chunky Thing, evidence: [{ kind: llm }] }
+    - { role: other, gear: Chunky Thing, evidence: [{ kind: llm }] }

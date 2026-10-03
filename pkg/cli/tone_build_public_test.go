@@ -32,6 +32,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/cli/internal/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
@@ -88,7 +89,7 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 				var buf bytes.Buffer
 
 				s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
-					Ask:   s.examples("like-a-record.tone.yaml"),
+					Ask:   s.examples("like-a-record.yaml"),
 					Setup: s.examples("mine.setup.yaml"),
 					Out:   out,
 				}))
@@ -96,14 +97,17 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 				body, err := os.ReadFile(out)
 				s.Require().NoError(err)
 
-				spec, err := rig.Load(bytes.NewReader(body))
+				doc, err := tone.Load(bytes.NewReader(body))
 				s.Require().NoError(err)
-				s.Require().NoError(rig.Validate(spec))
-				s.Require().Equal(rig.InstrumentBass, spec.Instrument)
+				s.Require().Equal(rig.InstrumentBass, doc.Rig.Instrument)
+
+				// The ask comes back out with the gear it resolved to, which is what
+				// one document means: the request and the answer travel together.
+				s.Require().NotNil(doc.Ask)
 
 				// The comp it named, and an amplifier nobody named.
-				s.Require().Len(spec.Chain, 2)
-				s.Require().Equal(rig.RoleAmp, spec.Chain[1].Role)
+				s.Require().Len(doc.Rig.Chain, 2)
+				s.Require().Equal(rig.RoleAmp, doc.Rig.Chain[1].Role)
 
 				s.Require().Contains(buf.String(), "closest of 27 measured")
 			},
@@ -119,12 +123,12 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 				var buf bytes.Buffer
 
 				s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
-					Ask: s.examples("like-a-record.tone.yaml"),
+					Ask: s.examples("like-a-record.yaml"),
 				}))
 
 				s.Require().Contains(buf.String(), "the setup names none")
-				s.Require().Contains(buf.String(), "schema: RigSpec",
-					"the rig goes to whatever is reading when no file was named")
+				s.Require().Contains(buf.String(), "schema: ToneSpec",
+					"the document goes to whatever is reading when no file was named")
 			},
 		},
 		{
@@ -135,10 +139,16 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 
 				s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
 					Ask: s.file("ask.yaml", `schema: ToneSpec
-genre: [punk]
-gear:
-  - gear: LA Studio Comp
-    role: comp
+id: an-ask
+ask:
+  genre: [punk]
+  gear:
+    - gear: LA Studio Comp
+      role: comp
+rig:
+  instrument: bass
+  chain:
+    - {role: amp, gear: Ampeg SVT}
 `),
 				}))
 
@@ -162,8 +172,10 @@ gear:
 				var buf bytes.Buffer
 
 				err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
-					Ask: s.file("ask.yaml",
-						"schema: ToneSpec\ngenre: [rock]\nwords:\n  - term: dark\n"),
+					Ask: s.file("ask.yaml", "schema: ToneSpec\nid: an-ask\n"+
+						"ask:\n  genre: [rock]\n  words:\n    - term: dark\n"+
+						"rig:\n  instrument: bass\n"+
+						"  chain:\n    - {role: amp, gear: Ampeg SVT}\n"),
 				})
 
 				s.Require().ErrorContains(err, "no chain to build")
@@ -181,8 +193,10 @@ gear:
 				var buf bytes.Buffer
 
 				err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
-					Ask: s.file("ask.yaml",
-						"schema: ToneSpec\ngenre: [rock]\nwords:\n  - term: dark\n"),
+					Ask: s.file("ask.yaml", "schema: ToneSpec\nid: an-ask\n"+
+						"ask:\n  genre: [rock]\n  words:\n    - term: dark\n"+
+						"rig:\n  instrument: bass\n"+
+						"  chain:\n    - {role: amp, gear: Ampeg SVT}\n"),
 					AsData: true,
 				})
 
@@ -215,7 +229,7 @@ gear:
 					{
 						name: "a setup that is not there",
 						opts: cli.ToneBuildOptions{
-							Ask:   s.examples("like-a-record.tone.yaml"),
+							Ask:   s.examples("like-a-record.yaml"),
 							Setup: "nowhere.yaml",
 						},
 						want: "nowhere.yaml",
@@ -238,7 +252,7 @@ gear:
 				var buf bytes.Buffer
 
 				err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
-					Ask: s.examples("like-a-record.tone.yaml"),
+					Ask: s.examples("like-a-record.yaml"),
 					Out: filepath.Join(s.T().TempDir(), "no", "such", "rig.yaml"),
 				})
 
@@ -261,8 +275,8 @@ gear:
 				stub.EXPECT().
 					Tone(gomock.Any(), sdk.Ask{Spec: "ask.yaml", Setup: "mine.yaml"}).
 					Return(sdk.Resolved{
+						ID: "a-stand-in",
 						Rig: rig.Spec{
-							Schema: rig.SchemaName, ID: "stubbed",
 							Instrument: rig.InstrumentBass,
 							Chain:      []rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT"}},
 						},

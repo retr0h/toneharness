@@ -417,11 +417,13 @@ func nudgesOn(
 		return nil, fmt.Errorf("reading %s: %w", at, err)
 	}
 
-	if spec.Nudges == nil {
+	// A document with no ask has nothing to nudge from, which is the ordinary
+	// state of a rig somebody lifted off a device.
+	if spec.Ask == nil || spec.Ask.Nudges == nil {
 		return nil, nil
 	}
 
-	return *spec.Nudges, nil
+	return *spec.Ask.Nudges, nil
 }
 
 // targetFor is what the genre's records measure as, middle and spread.

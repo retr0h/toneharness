@@ -78,28 +78,28 @@ const corrections = `corrections:
 // meteor is a rig read off a device: a chain of gear and nothing a person
 // decided, since a device records no subject and no reason.
 var meteor = filepath.Join(
-	"..", "..", "..", "..", "marketplace", "core", "examples", "dir-angl-meteor.rig.yaml")
+	"..", "..", "..", "..", "marketplace", "core", "examples", "dir-angl-meteor.yaml")
 
-// meteorAsk is an ask for the meteor rig, which the examples tree does not
-// carry because a rig read off a device answered nobody's written request.
+// meteorAsk is the ask the meteor document is given here, which the example in
+// the tree carries none of because a rig read off a device answered nobody's
+// written request.
 //
 // Written here rather than left out, because renaming a copy is renaming its
-// subject, the subject is the ask's, and a parent with no ask beside it would
-// exercise none of that.
-const meteorAsk = `# What the meteor rig is taken to be for.
+// subject, the subject is the ask's, and a document with no ask would exercise
+// none of that.
+const meteorAsk = `
+ask:
+  genre: [rock]
 
-schema: ToneSpec
-genre: [rock]
+  subject:
+    kind: artist
+    name: DIR:ANGL Meteor
 
-subject:
-  kind: artist
-  name: DIR:ANGL Meteor
-
-confidence: low
+  confidence: low
 `
 
-// parentRig is the pair a copy is made from, in the shapes a rig and the ask
-// beside it come in.
+// parentRig is the document a copy is made from, in the shapes its halves come
+// in.
 type parentRig struct {
 	// subject replaces the parent ask's subject block.
 	subject string
@@ -111,52 +111,65 @@ type parentRig struct {
 	breaks string
 }
 
-// text writes the parent's rig out.
+// text writes the parent out: the ask saying who it is for and the names it
+// answers to, then the gear that answered it.
 //
-// The gear and the identifier, and nothing about who it is for. The contract
-// refuses `subject`, `aliases`, `default`, `extends` and `confidence` here, so
-// everything a copy has to rewrite is in the ask beside it.
+// One document. Everything a copy has to rewrite is in the ask, and the rig
+// below it is gear the copy carries across untouched.
 func (p parentRig) text() string {
-	return p.ended(`# A header describing the parent, which the copy does not inherit.
-#
-# More of it.
-
-schema: RigSpec
-version: 2
-id: parent
-
-instrument: bass
-
-chain:
-  - role: amp
-    gear: Ampeg SVT
-    evidence:
-      - kind: cited
-        url: https://example.test/a
-    confidence: high
-`)
-}
-
-// ask writes the parent's ask out: who the rig is for, the names it answers
-// to, and how far to trust the whole thing.
-func (p parentRig) ask() string {
 	subject := subjectBlock
 	if p.subject != "" {
 		subject = p.subject
 	}
 
-	return p.ended(`# A header describing the parent's ask, which the copy does not inherit.
+	return p.ended(`# A header describing the parent, which the copy does not inherit.
 #
 # More of it.
 
 schema: ToneSpec
-genre: [rock]
-aliases: [other-name]
-default: true
+id: parent
 
-` + p.lead + subject + `
-` + p.extra + `confidence: medium
+ask:
+  genre: [rock]
+  aliases: [other-name]
+  default: true
+
+` + indent(p.lead+subject) + `
+` + indent(p.extra) + `  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      evidence:
+        - kind: cited
+          url: https://example.test/a
+      confidence: high
 `)
+}
+
+// indent moves a block of an ask's own text under `ask:`.
+//
+// A row writes its subject, its lead and its extra the way a top-level document
+// used to carry them, which is the shape they read in. Only non-empty lines
+// move, so a blank line stays blank.
+func indent(
+	block string,
+) string {
+	if block == "" {
+		return ""
+	}
+
+	lines := strings.Split(strings.TrimSuffix(block, "\n"), "\n")
+	for i, line := range lines {
+		if line != "" {
+			lines[i] = "  " + line
+		}
+	}
+
+	return strings.Join(lines, "\n") + "\n"
 }
 
 // ended writes one document with the line endings a row asked for.
@@ -170,7 +183,7 @@ func (p parentRig) ended(
 	return strings.ReplaceAll(body, "\n", p.breaks)
 }
 
-// parent writes a rig for a copy to be made from, and the ask beside it.
+// parent writes a document for a copy to be made from.
 func (s *ScaffoldPublicTestSuite) parent(
 	dir string,
 	rig parentRig,
@@ -179,24 +192,37 @@ func (s *ScaffoldPublicTestSuite) parent(
 	s.Require().NoError(os.MkdirAll(artists, 0o750))
 	s.Require().NoError(os.WriteFile(
 		filepath.Join(artists, "parent.yaml"), []byte(rig.text()), 0o600))
-	s.Require().NoError(os.WriteFile(
-		filepath.Join(artists, "parent.tone.yaml"), []byte(rig.ask()), 0o600))
 }
 
-// example writes the meteor rig beside the parent, with an ask of its own.
+// example writes the meteor document beside the parent, with an ask added to
+// it: a rig read off a device carries none, and renaming a copy renames a
+// subject only an ask has.
 func (s *ScaffoldPublicTestSuite) example(
 	dir string,
 ) {
 	raw, err := os.ReadFile(meteor)
 	s.Require().NoError(err)
 	s.Require().NoError(os.WriteFile(
-		filepath.Join(dir, "artists", "dir-angl-meteor.yaml"), raw, 0o600))
-	s.Require().NoError(os.WriteFile(
-		filepath.Join(dir, "artists", "dir-angl-meteor.tone.yaml"),
-		[]byte(meteorAsk), 0o600))
+		filepath.Join(dir, "artists", "dir-angl-meteor.yaml"),
+		append(raw, []byte(meteorAsk)...), 0o600))
 }
 
-// read is one of the files a copy was written to.
+// askLess writes the meteor document as it comes, with no ask in it, and nothing
+// else. That is what `presets show` writes and what nobody has written an ask
+// for yet.
+func (s *ScaffoldPublicTestSuite) askLess(
+	dir string,
+) {
+	artists := filepath.Join(dir, "artists")
+	s.Require().NoError(os.MkdirAll(artists, 0o750))
+
+	raw, err := os.ReadFile(meteor)
+	s.Require().NoError(err)
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(artists, "dir-angl-meteor.yaml"), raw, 0o600))
+}
+
+// read is the file a copy was written to.
 func (s *ScaffoldPublicTestSuite) read(
 	dir, name string,
 ) string {
@@ -228,47 +254,6 @@ func (s *ScaffoldPublicTestSuite) copyOf(
 	return dir, err
 }
 
-// TestACopyOfAnAskLessParentStillRecordsWhatItCameFrom covers the one case
-// where the link back had nowhere to come from.
-//
-// A copy takes its ask from the parent's, and a parent with no ask gets a
-// scaffolded one instead. That scaffolded one wrote no `extends`, so copying a
-// rig read off a device, which is exactly the rig that has no ask, produced a
-// copy `rigs show` would never list as a variant of anything. The link is a
-// fact about the copy rather than about whether the parent happened to have an
-// ask, so it is written either way.
-func (s *ScaffoldPublicTestSuite) TestACopyOfAnAskLessParentStillRecordsWhatItCameFrom() {
-	dir := s.T().TempDir()
-	artists := filepath.Join(dir, "artists")
-	s.Require().NoError(os.MkdirAll(artists, 0o750))
-
-	// The rig alone, with no ask beside it, which is what `presets show` writes
-	// and what nobody has written an ask for yet.
-	raw, err := os.ReadFile(meteor)
-	s.Require().NoError(err)
-	s.Require().NoError(os.WriteFile(
-		filepath.Join(artists, "dir-angl-meteor.yaml"), raw, 0o600))
-
-	// A genre, because the parent has no ask to hand one down and the fresh ask
-	// written beside the copy requires one.
-	_, err = rigs.New(context.Background(), rigs.NewOptions{
-		Dir: dir, ID: "copy", From: "dir-angl-meteor", Name: "My Meteor",
-		Genre: []string{"rock"},
-	})
-	s.Require().NoError(err)
-
-	ask := s.read(dir, "copy.tone.yaml")
-	s.Require().Contains(ask, "extends: dir-angl-meteor")
-	s.Require().Contains(ask, "My Meteor")
-
-	// And the link resolves, which is the thing that was actually broken: the
-	// copy shows as a variant of what it came from.
-	shown, err := rigs.Show(rigs.Source{Dir: dir}, "dir-angl-meteor")
-	s.Require().NoError(err)
-	s.Require().Len(shown.Variants, 1)
-	s.Require().Equal("copy", shown.Variants[0].ID)
-}
-
 // TestNewFrom covers copying a rig as the start of another.
 func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 	tests := []struct {
@@ -278,13 +263,7 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 		who    string
 		want   []string
 		absent []string
-		// wantAsk and absentAsk are the same for the ask beside the copy.
-		// Which of the two a row states is which document the decision lives
-		// in: the gear is the rig's, and the subject, the names it answers to
-		// and the link back to what it was copied from are the ask's.
-		wantAsk   []string
-		absentAsk []string
-		broken    bool
+		broken bool
 		// unreadable puts a directory where the walk expects a file.
 		unreadable bool
 		errText    string
@@ -303,11 +282,21 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 		base string
 		// rig is the shape of the rig copied from.
 		rig parentRig
-		// withExample writes the meteor rig beside the parent.
+		// withExample writes the meteor document beside the parent.
 		withExample bool
+		// askLess writes the meteor document with no ask and writes no parent,
+		// which is the one arrangement where there is no ask to copy.
+		askLess bool
+		// genre is what the copy is given, for the rows where there is no ask to
+		// take one from.
+		genre []string
+		// is is the sentinel a refusal has to match.
+		is error
+		// variantOf is a rig the copy must show up as a variant of, which is the
+		// other end of the `extends` link.
+		variantOf string
 		// compare makes the same copy without the name as well, and requires
-		// the rigs to be the same file and the asks to differ in the
-		// subject's name alone.
+		// the two documents to differ in the subject's name alone.
 		compare bool
 		// loads and loadsKind are what the copy says it is once read back.
 		loads     string
@@ -330,30 +319,26 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 				"url: https://example.test/a",
 				"gear: Ampeg SVT",
 				"Every citation below came across with the copy",
+				"The corrections did not",
+				// `extends` goes in the ask, because what one ask departs
+				// from is a fact about what was wanted and not about the
+				// gear that answered it.
+				"ask:\n  extends: parent",
 			},
-			absent: []string{"# A header describing the parent"},
-			// `extends` is the ask's, because what one ask departs from is a
-			// fact about what was wanted and not about the gear, and it is
-			// written beside the key that says what the document is.
-			wantAsk: []string{
-				"schema: ToneSpec\nextends: parent",
-				"all came across with the copy",
-				"The corrections did not come across",
-			},
-			absentAsk: []string{
+			absent: []string{
+				"# A header describing the parent",
 				// The parent's identity, which is not the copy's.
 				"aliases:", "default: true",
-				"# A header describing the parent",
 			},
 		},
 		{
 			// A verdict is somebody listening to one rig, and a copy is a
 			// different one, so a copy has been heard by nobody.
-			name:      "a copy of an ask somebody corrected",
-			from:      "parent",
-			rig:       parentRig{extra: corrections},
-			wantAsk:   []string{"extends: parent", "confidence: medium"},
-			absentAsk: []string{"corrections:", "less clunky", "much better"},
+			name:   "a copy of an ask somebody corrected",
+			from:   "parent",
+			rig:    parentRig{extra: corrections},
+			want:   []string{"extends: parent", "confidence: medium"},
+			absent: []string{"corrections:", "less clunky", "much better"},
 		},
 		{
 			name:      "a copy that is one song rather than a player",
@@ -364,9 +349,9 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			amp:       "Ampeg SVT",
 			loads:     "One Song",
 			loadsKind: "song",
-			wantAsk:   []string{"kind: song", "name: One Song", "band: A Band"},
+			want:      []string{"kind: song", "name: One Song", "band: A Band"},
 			// The band survives, because the song is still by them.
-			absentAsk: []string{"kind: artist", "name: Parent Player"},
+			absent: []string{"kind: artist", "name: Parent Player"},
 		},
 		{
 			// `kind` is the subject's, and an ask says why it is believed in
@@ -376,7 +361,7 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			kind:      "song",
 			rig:       parentRig{extra: nestedKinds},
 			loadsKind: "song",
-			wantAsk:   []string{"kind: cited", "kind: heard", "  kind: song"},
+			want:      []string{"kind: cited", "kind: heard", "    kind: song"},
 		},
 		{
 			// Nothing matched a flow subject's kind, so asking for one was
@@ -394,20 +379,19 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			// for records. Update it rather than loosening it: what is being
 			// tested is that a copy carries the parent's chain through, and
 			// an assertion that accepts anything tests nothing.
-			name:    "a copy of a rig that ships in the binary",
-			from:    "mike-dirnt",
-			cab:     "Acoustic 6x10",
-			want:    []string{"gear: Ampeg SVT"},
-			wantAsk: []string{"extends: mike-dirnt"},
+			name: "a copy of a rig that ships in the binary",
+			from: "mike-dirnt",
+			cab:  "Acoustic 6x10",
+			want: []string{"gear: Ampeg SVT", "extends: mike-dirnt"},
 		},
 		{
 			// An alias belongs to the parent, and `extends` is matched
 			// against an id, so a copy made by alias has to record what the
 			// alias resolved to or the link never fires.
-			name:      "a copy made by one of the parent's aliases",
-			from:      "dirnt",
-			wantAsk:   []string{"extends: mike-dirnt"},
-			absentAsk: []string{"extends: dirnt"},
+			name:   "a copy made by one of the parent's aliases",
+			from:   "dirnt",
+			want:   []string{"extends: mike-dirnt"},
+			absent: []string{"extends: dirnt"},
 		},
 		{
 			// A device records no subject, so a rig read off one names
@@ -432,12 +416,11 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			},
 			// The chain comes across whole, down to the entry the signal
 			// meets last.
-			want: []string{"id: copy", "role: reverb"},
+			want: []string{"id: copy", "role: reverb", "ask:\n  extends: dir-angl-meteor"},
 			absent: []string{
 				"id: dir-angl-meteor",
-				"# A rig read off a device, not written by hand.",
+				"# A rig read off a device rather than written by hand.",
 			},
-			wantAsk: []string{"schema: ToneSpec\nextends: dir-angl-meteor"},
 		},
 		{
 			// Each of these is YAML syntax written bare after `name: `.
@@ -526,9 +509,9 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			rig: parentRig{
 				subject: "subject: { kind: artist, name: Parent Player, band: A Band }\n",
 			},
-			who:     "a, b}",
-			loads:   "a, b}",
-			wantAsk: []string{"band: A Band }"},
+			who:   "a, b}",
+			loads: "a, b}",
+			want:  []string{"band: A Band }"},
 		},
 		{
 			// The comment is the parent's, about the line and not the name.
@@ -537,17 +520,17 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			rig: parentRig{
 				subject: "subject:\n  kind: artist\n  name: Parent Player # who it is\n",
 			},
-			who:     "Someone Else",
-			loads:   "Someone Else",
-			wantAsk: []string{"# who it is"},
+			who:   "Someone Else",
+			loads: "Someone Else",
+			want:  []string{"# who it is"},
 		},
 		{
-			name:      "a name the parent quoted",
-			from:      "parent",
-			rig:       parentRig{subject: "subject:\n  kind: artist\n  name: 'Parent '' Player'\n"},
-			who:       `it's: "live"`,
-			loads:     `it's: "live"`,
-			absentAsk: []string{"Parent"},
+			name:   "a name the parent quoted",
+			from:   "parent",
+			rig:    parentRig{subject: "subject:\n  kind: artist\n  name: 'Parent '' Player'\n"},
+			who:    `it's: "live"`,
+			loads:  `it's: "live"`,
+			absent: []string{"Parent"},
 		},
 		{
 			name: "a name the parent double quoted",
@@ -555,9 +538,9 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			rig: parentRig{
 				subject: "subject:\n  kind: artist\n  name: \"Parent \\\" Player\"\n",
 			},
-			who:       "Two\nLines",
-			loads:     "Two\nLines",
-			absentAsk: []string{"Parent"},
+			who:    "Two\nLines",
+			loads:  "Two\nLines",
+			absent: []string{"Parent"},
 		},
 		{
 			// A name spread over lines cannot be replaced where it stands,
@@ -568,10 +551,10 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			rig: parentRig{
 				subject: "subject:\n  kind: artist\n  name: >-\n    Parent\n    Player\n",
 			},
-			who:       "a: b",
-			loads:     "a: b",
-			absentAsk: []string{"Parent"},
-			wantAsk:   []string{"confidence: medium"},
+			who:    "a: b",
+			loads:  "a: b",
+			absent: []string{"Parent"},
+			want:   []string{"confidence: medium"},
 		},
 		{
 			name: "a quoted name the parent closed on a later line",
@@ -579,19 +562,19 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			rig: parentRig{
 				subject: "subject:\n  kind: artist\n  name: \"Parent\n    Player\"\n",
 			},
-			who:       "a: b",
-			loads:     "a: b",
-			absentAsk: []string{"Parent"},
+			who:    "a: b",
+			loads:  "a: b",
+			absent: []string{"Parent"},
 		},
 		{
 			// Replaced where it starts, the rest of the old name would be
 			// left on the next line, so it is not replaced there.
-			name:      "a bare name the parent carried onto a second line",
-			from:      "parent",
-			rig:       parentRig{subject: "subject:\n  kind: artist\n  name: Parent\n    Player\n"},
-			who:       "a: b",
-			loads:     "a: b",
-			absentAsk: []string{"Parent"},
+			name:   "a bare name the parent carried onto a second line",
+			from:   "parent",
+			rig:    parentRig{subject: "subject:\n  kind: artist\n  name: Parent\n    Player\n"},
+			who:    "a: b",
+			loads:  "a: b",
+			absent: []string{"Parent"},
 		},
 		{
 			// The anchor is the name's, and the band is written as whatever
@@ -602,9 +585,9 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			rig: parentRig{
 				subject: "subject:\n  kind: artist\n  name: &who Parent Player\n  band: *who\n",
 			},
-			who:       "Someone Else",
-			loads:     "Someone Else",
-			absentAsk: []string{"Parent Player"},
+			who:    "Someone Else",
+			loads:  "Someone Else",
+			absent: []string{"Parent Player"},
 		},
 		{
 			// A parser ends a line at any of these, so a file written with
@@ -647,9 +630,9 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			rig:   parentRig{lead: "# a note" + lineSep + "# and more of it\n"},
 			who:   "Parent Player",
 			loads: "Parent Player",
-			wantAsk: []string{
+			want: []string{
 				"# a note" + lineSep + "# and more of it",
-				"  name: Parent Player",
+				"    name: Parent Player",
 			},
 		},
 		{
@@ -667,17 +650,16 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 		{
 			// A broken rig beside the parent is not the parent, so it does
 			// not stop the copy.
-			name:    "a rig that is not one, beside the parent",
-			from:    "parent",
-			broken:  true,
-			want:    []string{"id: copy"},
-			wantAsk: []string{"schema: ToneSpec\nextends: parent"},
+			name:   "a rig that is not one, beside the parent",
+			from:   "parent",
+			broken: true,
+			want:   []string{"id: copy", "ask:\n  extends: parent"},
 		},
 		{
 			name:    "a rig that is not one, asked for",
 			from:    "broken",
 			broken:  true,
-			errText: "not a valid rig",
+			errText: "not a valid ToneSpec",
 		},
 		{
 			// A directory named like a rig: the glob matches it and reading
@@ -691,14 +673,54 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			name:       "a directory wearing a rig's name, beside the parent",
 			from:       "parent",
 			unreadable: true,
-			wantAsk:    []string{"extends: parent"},
+			want:       []string{"extends: parent"},
+		},
+		{
+			// The one case where the link back had nowhere to come from.
+			//
+			// A copy takes its ask from the parent's, and a document with no ask
+			// gets a scaffolded one instead. That scaffolded one wrote no
+			// `extends`, so copying gear read off a device, which is exactly the
+			// document that has no ask, produced a copy `rigs show` would never
+			// list as a variant of anything. The link is a fact about the copy
+			// rather than about whether the parent happened to have an ask.
+			name:      "a copy of a document with no ask records what it came from",
+			from:      "dir-angl-meteor",
+			askLess:   true,
+			who:       "My Meteor",
+			genre:     []string{"rock"},
+			loads:     "My Meteor",
+			want:      []string{"extends: dir-angl-meteor", "My Meteor"},
+			variantOf: "dir-angl-meteor",
+		},
+		{
+			// The one flag a copy cannot inherit.
+			//
+			// A copy takes its genre from the ask it copies, the same way it takes
+			// its gear from the rig, so asking for one it already has would be
+			// asking twice. A document with no ask has none to hand down, and the
+			// ask written into the copy requires one. Said here rather than left to
+			// the contract, because "genre minimum number of items is 1" does not
+			// tell somebody which flag they left out.
+			name:    "a copy of a document with no ask needs a genre",
+			from:    "dir-angl-meteor",
+			askLess: true,
+			who:     "My Meteor",
+			is:      rigs.ErrNoGenre,
 		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			dir := s.T().TempDir()
-			s.parent(dir, tt.rig)
+
+			// The ask-less rows write the meteor document alone, because what they
+			// are about is a parent that carries no ask at all.
+			if tt.askLess {
+				s.askLess(dir)
+			} else {
+				s.parent(dir, tt.rig)
+			}
 
 			if tt.withExample {
 				s.example(dir)
@@ -707,7 +729,7 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			if tt.broken {
 				s.Require().NoError(os.WriteFile(
 					filepath.Join(dir, "artists", "broken.yaml"),
-					[]byte("schema: RigSpec\nid: broken\n"), 0o600))
+					[]byte("schema: ToneSpec\nid: broken\n"), 0o600))
 			}
 
 			if tt.unreadable {
@@ -716,10 +738,11 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			}
 
 			opts := rigs.NewOptions{
-				Base: tt.base,
-				From: tt.from,
-				Kind: tt.kind,
-				Name: tt.who,
+				Base:  tt.base,
+				From:  tt.from,
+				Kind:  tt.kind,
+				Name:  tt.who,
+				Genre: tt.genre,
 			}
 
 			o := opts
@@ -728,8 +751,16 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 
 			got, err := rigs.New(context.Background(), o)
 
-			if tt.errText != "" {
-				s.Require().ErrorContains(err, tt.errText)
+			if tt.errText != "" || tt.is != nil {
+				s.Require().Error(err)
+
+				if tt.errText != "" {
+					s.Require().ErrorContains(err, tt.errText)
+				}
+
+				if tt.is != nil {
+					s.Require().ErrorIs(err, tt.is)
+				}
 
 				return
 			}
@@ -760,10 +791,9 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 				s.Require().Empty(got.Pedals)
 			}
 
-			// A copy is a pair, so both halves are read and each row says
-			// which of them it is making a claim about.
-			body := s.read(dir, "copy.rig.yaml")
-			ask := s.read(dir, "copy.tone.yaml")
+			// One document, so one file holds both halves and every row makes
+			// its claim about it.
+			body := s.read(dir, "copy.yaml")
 
 			for _, want := range tt.want {
 				s.Require().Contains(body, want)
@@ -773,14 +803,6 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 				s.Require().NotContains(body, absent)
 			}
 
-			for _, want := range tt.wantAsk {
-				s.Require().Contains(ask, want)
-			}
-
-			for _, absent := range tt.absentAsk {
-				s.Require().NotContains(ask, absent)
-			}
-
 			if tt.compare {
 				unnamed := opts
 				unnamed.Name = ""
@@ -788,27 +810,23 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 				other, err := s.copyOf(tt.rig, tt.withExample, unnamed)
 				s.Require().NoError(err)
 
-				// The name is not in the rig at all, so renaming a copy has
-				// to leave that file byte for byte as the parent wrote it.
-				s.Require().Equal(s.read(other, "copy.rig.yaml"), body,
-					"the rig does not hold the name")
-				s.requireOnlyNameDiffers(s.read(other, "copy.tone.yaml"), ask)
+				s.requireOnlyNameDiffers(s.read(other, "copy.yaml"), body)
 			}
 
 			if tt.broken || tt.unreadable {
 				return
 			}
 
-			// A copy is a whole rig with a whole ask beside it, so the pair
-			// loads on its own. The subject is the ask's, so what a copy was
-			// renamed to is checked there rather than on the gear.
+			// A copy is a whole document, so it loads on its own. The subject
+			// is the ask's, so what a copy was renamed to is read from there
+			// rather than off the gear.
 			listed, err := rigs.List(rigs.Source{Dir: dir})
 			s.Require().NoError(err)
 
 			found := false
 
 			for _, known := range listed.Rigs {
-				if known.Rig.ID != "copy" {
+				if known.ID != "copy" {
 					continue
 				}
 
@@ -829,13 +847,22 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			}
 
 			s.Require().True(found, "the copy loads")
+
+			// The other end of the link, which is the thing that was actually
+			// broken: the copy shows as a variant of what it came from.
+			if tt.variantOf != "" {
+				shown, err := rigs.Show(rigs.Source{Dir: dir}, tt.variantOf)
+				s.Require().NoError(err)
+				s.Require().Len(shown.Variants, 1)
+				s.Require().Equal("copy", shown.Variants[0].ID)
+			}
 		})
 	}
 }
 
 // TestReplaceSubject covers replacing a subject's field in an ask's own text.
 //
-// New cannot reach these: it rewrites an ask that loaded, and a subject that
+// New cannot reach these: it rewrites a document that loaded, and a subject that
 // loaded carries both fields, because the contract requires them. This is its
 // own helper with its own contract, and what it does with a document that has
 // no such field is part of that contract.
@@ -851,39 +878,39 @@ func (s *ScaffoldPublicTestSuite) TestReplaceSubject() {
 	}{
 		{
 			name:  "an ask with a name to replace",
-			body:  "schema: ToneSpec\nsubject:\n  kind: artist\n  name: Parent Player\n",
+			body:  "schema: ToneSpec\nask:\n  subject:\n    kind: artist\n    name: Parent Player\n",
 			key:   "name",
 			value: "Someone Else",
-			want:  "  name: Someone Else\n",
+			want:  "    name: Someone Else\n",
 		},
 		{
 			name:  "an ask with a kind to replace",
-			body:  "schema: ToneSpec\nsubject:\n  kind: artist\n  name: Parent Player\n",
+			body:  "schema: ToneSpec\nask:\n  subject:\n    kind: artist\n    name: Parent Player\n",
 			key:   "kind",
 			value: "song",
-			want:  "  kind: song\n",
+			want:  "    kind: song\n",
 		},
 		{
 			name:    "a document that is not YAML",
-			body:    "subject: [\n  unclosed\n",
+			body:    "ask:\n  subject: [\n  unclosed\n",
 			key:     "name",
 			errText: "rewriting the copy's subject",
 		},
 		{
 			name:    "an ask with no subject",
-			body:    "schema: ToneSpec\nextends: parent\n",
+			body:    "schema: ToneSpec\nask:\n  extends: parent\n",
 			key:     "name",
 			errText: "no such field to replace",
 		},
 		{
 			name:    "a subject that holds no name",
-			body:    "schema: ToneSpec\nsubject:\n  kind: artist\n",
+			body:    "schema: ToneSpec\nask:\n  subject:\n    kind: artist\n",
 			key:     "name",
 			errText: "no such field to replace",
 		},
 		{
 			name:    "a subject that is not a mapping",
-			body:    "schema: ToneSpec\nsubject: Parent Player\n",
+			body:    "schema: ToneSpec\nask:\n  subject: Parent Player\n",
 			key:     "name",
 			errText: "no such field to replace",
 		},
@@ -906,12 +933,12 @@ func (s *ScaffoldPublicTestSuite) TestReplaceSubject() {
 	}
 }
 
-// requireOnlyNameDiffers requires two copied asks to be the same file but for
-// the subject's name.
+// requireOnlyNameDiffers requires two copies of one document to be the same
+// file but for the subject's name.
 //
-// The asks rather than the rigs, because the name is the subject's and the
-// subject is the ask's. What the rigs have to be is identical, which the caller
-// requires outright.
+// One line, and it is in the ask: the name is the subject's, the subject is the
+// ask's, and the gear below it does not hold a name at all. So renaming a copy
+// has to leave every other byte as the parent wrote it, the rig included.
 func (s *ScaffoldPublicTestSuite) requireOnlyNameDiffers(
 	plain, named string,
 ) {
@@ -928,8 +955,8 @@ func (s *ScaffoldPublicTestSuite) requireOnlyNameDiffers(
 	}
 
 	s.Require().Len(differ, 1, "only the subject's name changes")
-	s.Require().Equal("  name: DIR:ANGL Meteor", was[differ[0]])
-	s.Require().Equal("  name: My Meteor", now[differ[0]])
+	s.Require().Equal("    name: DIR:ANGL Meteor", was[differ[0]])
+	s.Require().Equal("    name: My Meteor", now[differ[0]])
 }
 
 func TestScaffoldPublicTestSuite(

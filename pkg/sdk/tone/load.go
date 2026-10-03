@@ -169,6 +169,17 @@ func write(
 		return err
 	}
 
+	// sigs.k8s.io/yaml, which marshals through JSON, so the `json:omitempty` the
+	// generated types carry is honoured and an absent field is absent rather than
+	// `null`.
+	//
+	// That sorts keys, and a document comes out ask, id, rig, schema. Field order
+	// was tried and is not available: go.yaml.in/yaml/v3 marshals in declaration
+	// order but reads `yaml:` tags, which these types do not have, so every
+	// optional field was written out as null. Giving them a second set of tags
+	// means teaching the generator to, which is a change to make on purpose
+	// rather than on the way past.
+	//
 	// Both documents hold only strings, numbers and booleans, so they always
 	// encode.
 	raw, _ := yaml.Marshal(of)

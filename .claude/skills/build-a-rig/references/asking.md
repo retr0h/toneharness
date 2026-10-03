@@ -1,20 +1,21 @@
 # Write the request
 
-Three documents. Two are written by a person.
+Two documents, and the ToneSpec holds two halves.
 
-| Document     | Holds                                | Changes                          |
-| ------------ | ------------------------------------ | -------------------------------- |
-| **Setup**    | what somebody owns                   | when they buy something          |
-| **ToneSpec** | what they want this time             | every request                    |
-| **RigSpec**  | the gear those two resolve to        | every request, or hand-authored  |
+|                  | Holds                              | Changes                         |
+| ---------------- | ---------------------------------- | ------------------------------- |
+| **Setup**        | what somebody owns                 | when they buy something         |
+| ToneSpec `ask:`  | what they want this time           | every request                   |
+| ToneSpec `rig:`  | the gear those two resolve to      | every request, or hand-authored |
 
-Folding the instrument into the ask would mean restating their bass in every
-request, and the twelfth one would contradict the first.
+The Setup stays a separate file because folding the instrument into the ask would
+mean restating their bass in every request, and the twelfth one would contradict
+the first. The ask and the rig travel together because neither is much use
+without the other, and the rig is required.
 
-A researcher writes a RigSpec by hand too, when the gear is the thing being
-established. What every field on either document may say, and which of the two it
-belongs on, is the `write-a-spec` skill's; this page is only how a request gets
-resolved.
+A researcher writes a rig by hand too, when the gear is the thing being
+established. What every field may say, and which half it belongs in, is the
+`write-a-spec` skill's; this page is only how a request gets resolved.
 
 ## What a ToneSpec may say
 
@@ -55,5 +56,5 @@ could not honour. A run reported without its notes is a run that hid half of
 what happened.
 
 Worked examples:
-[marketplace/core/examples/](../../../../marketplace/core/examples/), the
-`*.tone.yaml` ones.
+[marketplace/core/examples/](../../../../marketplace/core/examples/), every
+`.yaml` there but the Setup and the Plan.

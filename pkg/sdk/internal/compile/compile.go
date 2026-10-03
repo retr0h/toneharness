@@ -43,11 +43,12 @@ type Compiler struct{}
 // New returns a Compiler.
 func New() *Compiler { return &Compiler{} }
 
-// Lift reads a preset into the rig it describes and the plan that realises it.
+// Lift reads a preset into its identifier, the rig it describes, and the plan
+// that realises it.
 func (*Compiler) Lift(
 	doc *preset.Document,
 	cat *catalog.Catalog,
-) (rig.Spec, plan.Plan, error) {
+) (string, rig.Spec, plan.Plan, error) {
 	return Lift(doc, cat)
 }
 
@@ -62,10 +63,11 @@ func (*Compiler) Lower(
 
 // Realise turns a rig into the plan that answers it on one device.
 func (*Compiler) Realise(
+	id string,
 	spec rig.Spec,
 	cat *catalog.Catalog,
 ) (plan.Plan, error) {
-	return Realise(spec, cat)
+	return Realise(id, spec, cat)
 }
 
 // Sections writes a rig's song sections into a preset's snapshots.
@@ -110,12 +112,13 @@ func (*Compiler) Footswitches(
 
 // Resolve turns a rig, the ask beside it and a catalog into a chain.
 func (*Compiler) Resolve(
+	id string,
 	spec rig.Spec,
 	intent Intent,
 	cat *catalog.Catalog,
 	stats *corpus.Stats,
 ) (plan.Plan, []Added, []Moved, Compensated, error) {
-	return Resolve(spec, intent, cat, stats)
+	return Resolve(id, spec, intent, cat, stats)
 }
 
 // Fit drops what a device has no room for.
