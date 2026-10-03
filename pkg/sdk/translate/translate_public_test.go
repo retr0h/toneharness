@@ -151,6 +151,55 @@ func (s *TranslatePublicTestSuite) TestTranslate() {
 			},
 		},
 		{
+			// Gear named by what it is rather than by what Line 6 call it.
+			//
+			// The rule this format exists for, and the lookup had it backwards:
+			// it matched the model's name only, so every gear name that worked
+			// did so by Line 6 having chosen the gear's own name as theirs.
+			// Line 6 call this pedal "Teemah!", so the name a player would type
+			// found nothing while the catalog's own matcher accepted it.
+			//
+			// Checked with `insist` on, because that is what the bug cost rather
+			// than a wrong note: insisting refuses on this answer, so insisting
+			// on gear the device does model was refused.
+			name: "gear named by what it emulates resolves, and may be insisted on",
+			then: func() {
+				got, notes, err := translate.Translate(
+					s.ask("gear:\n  - gear: Paul Cochrane Timmy Overdrive\n"+
+						"    role: drive\n    insist: true\n"),
+					s.setup(""), s.deps)
+
+				s.Require().NoError(err, "the device models this, so insisting on it holds")
+				s.Require().NoError(rig.Validate(got))
+				s.Require().Equal("Paul Cochrane Timmy Overdrive", got.Chain[0].Gear,
+					"the rig keeps the name a person wrote, not the model")
+				s.Require().Contains(sayings(notes),
+					"Paul Cochrane Timmy Overdrive: resolved to HD2_DistTeemah")
+			},
+		},
+		{
+			// The tiers, and why they are tiers.
+			//
+			// "Ampeg SVT" names four of this device's models by Line 6's own
+			// name, and that ambiguity is the true answer. Reading the gear a
+			// block emulates in the same pass would add more models to it and
+			// change what every committed document resolves to, so the wider
+			// tier is only consulted where the narrower ones found nothing.
+			name: "a name Line 6 use is answered by their models alone",
+			then: func() {
+				_, notes, err := translate.Translate(
+					s.ask("gear:\n  - gear: Ampeg SVT\n    role: amp\n"),
+					s.setup(""), s.deps)
+
+				s.Require().NoError(err)
+				s.Require().Contains(sayings(notes),
+					"Ampeg SVT: that name fits 4 of the device's models: "+
+						"HD2_AmpSVBeastBrt, HD2_AmpSVBeastNrm, "+
+						"HD2_PreampSVBeastBrt, HD2_PreampSVBeastNrm, "+
+						"so the compiler will take the nearest it models")
+			},
+		},
+		{
 			// The bug this exists for, and it was invisible because it was a
 			// coin toss.
 			//

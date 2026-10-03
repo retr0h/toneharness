@@ -1251,12 +1251,31 @@ func corrected(
 // Loosely, because somebody writes "Ampeg SVT" where the catalog says
 // "Ampeg SVT® (normal channel)", and exactly enough that a name matching two
 // blocks in the same role answers with neither.
+//
+// Three tiers, each consulted only where the one above it found nothing. The
+// first two match Line 6's own name for the block and the third is
+// catalog.Block.Matches, which also reads the real-world gear the block
+// emulates, strips a manufacturer's ® and matches word by word.
+//
+// Tiered rather than merged, because the tiers answer different questions and a
+// wider one must not widen a narrower one's answer. "Ampeg SVT" names four
+// models by Line 6's name and that ambiguity is the true answer; letting
+// BasedOn in beside it would add more and change what every committed document
+// resolves to.
+//
+// The third tier is the one this format is for, and it was missing. A rig names
+// real-world gear and never a Line 6 model, and this matched the model name
+// only: "Paul Cochrane Timmy Overdrive" found nothing while the catalog's own
+// matcher accepted it, because Line 6 call that block "Teemah!". Every name
+// that worked did so by Line 6 having chosen the gear's name as their own, and
+// gear where they did not was unreachable. Worse than a bad note: `insist`
+// refuses on this answer, so insisting on gear the device models was refused.
 func lookup(
 	cat *catalog.Catalog,
 	want string,
 	role rig.Role,
 ) (catalog.Block, []catalog.Block) {
-	var exact, matched []catalog.Block
+	var exact, partial, emulated []catalog.Block
 
 	target := strings.ToLower(want)
 
@@ -1265,28 +1284,29 @@ func lookup(
 			continue
 		}
 
-		name := strings.ToLower(block.Name)
-		if name != target && !strings.Contains(name, target) {
-			continue
-		}
-
+		switch name := strings.ToLower(block.Name); {
 		// An exact name wins outright over a partial one, which is how "Ampeg
 		// SVT" reaches the one called that rather than the one called "Ampeg
 		// SVT Bright". Collected rather than returned on sight: a name is
 		// exactly right for more than one model far more often than it looks,
 		// and returning the first walked handed back whichever this map
 		// happened to yield.
-		if name == target {
+		case name == target:
 			exact = append(exact, block)
-
-			continue
+		case strings.Contains(name, target):
+			partial = append(partial, block)
+		case block.Matches(want):
+			emulated = append(emulated, block)
 		}
-
-		matched = append(matched, block)
 	}
 
-	if len(exact) > 0 {
+	matched := emulated
+
+	switch {
+	case len(exact) > 0:
 		matched = exact
+	case len(partial) > 0:
+		matched = partial
 	}
 
 	// Sorted before anything is chosen from it, so one request answers one way.
