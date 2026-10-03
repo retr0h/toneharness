@@ -1,0 +1,49 @@
+# Greg T. Walker — Blackfoot
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: greg-t-walker
+
+ask:
+  aliases: [walker, blackfoot]
+
+  subject:
+    kind: artist
+    name: Greg T. Walker
+    band: Blackfoot
+    era: Strikes
+    years: { from: 1979, to: 1979 }
+
+  instrument: bass
+
+  genre: [southern-rock]
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  # The signal path, in order.
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      capture: direct
+      evidence:
+        - kind: cited
+          url: https://www.notreble.com/buzz/2019/11/21/bass-transcription-greg-t-walkers-bass-line-on-highway-song-by-blackfoot/
+          note: >-
+            No Treble's transcription of Highway Song, from this record, says he
+            "has mainly used Dean, Fender, and Ibanez instruments, and has mainly
+            used Ampeg amplification."
+          caveat: >-
+            a career in one sentence, not a session. "Mainly" is the writer
+            summarising decades, no model is named, and nothing ties it to these
+            sessions beyond the article being about a song from them.
+
+            It is better than the alternatives here only because somebody
+            published it. Which Ampeg, and whether it was on this record, are
+            both open.
+      confidence: low

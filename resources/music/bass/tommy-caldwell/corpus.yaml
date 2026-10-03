@@ -1,0 +1,26 @@
+artist: Tommy Caldwell
+tracks:
+  - track: fire-on-the-mountain
+    url: https://open.spotify.com/track/5YUIDMCtzUflSrONeYMWac
+    year: 1975
+    band: The Marshall Tucker Band
+    genres: [southern-rock]
+    genres_by: person
+    note: >-
+      Searchin' for a Rainbow, 1975. 236 seconds as Spotify holds it
+  - track: searchin-for-a-rainbow
+    url: https://open.spotify.com/track/3QGT3GLyCV16E3vUPkFyD4
+    year: 1975
+    band: The Marshall Tucker Band
+    genres: [southern-rock]
+    genres_by: person
+    note: >-
+      Searchin' for a Rainbow, 1975. 231 seconds as Spotify holds it
+  - track: bob-away-my-blues
+    url: https://open.spotify.com/track/40sjtU6ksTqt2xslMynrz6
+    year: 1975
+    band: The Marshall Tucker Band
+    genres: [southern-rock]
+    genres_by: person
+    note: >-
+      Searchin' for a Rainbow, 1975. 166 seconds as Spotify holds it
