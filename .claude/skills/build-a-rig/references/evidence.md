@@ -30,14 +30,53 @@ list has changed and a copy gives no sign when it goes stale.
 citation, and say in `caveat` that it is not sourced to anything anybody
 opened.
 
+## A wall in the research is not a reason to drop the subject
+
+Some players have no citable gear. The search bottoms out at Wikipedia, or the
+threads are enthusiasts discussing the playing, or every sighting is from the
+audience and none is dated to the record. That is an ordinary outcome, not a
+failure, and the answer is **not** to leave the player out.
+
+Leaving them out loses the work. Nobody can see what was searched, nobody knows
+the gap exists, and the next person starts from nothing. Write the claim as
+`kind: llm` with `confidence: low`, name in `caveat` what was searched and where
+it ran out, and invite the correction:
+
+```yaml
+- role: amp
+  gear: Ampeg SVT
+  evidence:
+    - kind: llm
+      note: >-
+        asserted by a model and confirmed by nobody. The period rig is not
+        established here.
+      caveat: >-
+        searched the archived bass magazines, TalkBass and the published
+        interviews, and found only sightings from the audience, none dated to
+        this record. The "according to the man himself" quote repeated
+        everywhere is a forum post quoting Wikipedia, which cites nothing.
+        If you know what was actually used, please open a pull request.
+  confidence: low
+```
+
+`substitute` is the other half where the device models nothing close: it says
+what to put there instead, and keeps the real name as the claim.
+
+An unsourced entry labelled `llm` is checkable and correctable. An absent player
+is neither. The thing this project refuses is a guess **wearing a citation**, not
+a guess that says what it is.
+
 **When a page is dead, cite the archived copy and pin it.** Most of the richest
 sources here are `web.archive.org` snapshots of magazines that no longer exist.
 
 ## A rig is not a notebook
 
-It carries claims and their sources. What was searched for and not found
-belongs in a task. An absent field already says nobody established it, so it
-needs no paragraph explaining the absence.
+It carries claims and their sources. An absent field already says nobody
+established it, so it needs no paragraph explaining the absence.
+
+The exception is the one above: where a claim is written on a model's say-so,
+what was searched and where it ran out belongs in that claim's `caveat`, because
+it is what tells the next reader the gap is known rather than overlooked.
 
 Full standard: [Sourcing a rig](../../../../CONTRIBUTING.md#sourcing-a-rig).
 Field meanings: the `description:` fields in
