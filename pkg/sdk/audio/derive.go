@@ -154,6 +154,30 @@ type Derived struct {
 	// reported nothing for every word, which is what the arithmetic says it
 	// must do.
 	Margin float64 `json:"margin"`
+	// Spread is how wide the other players' middle half is, in the measure's
+	// own units, and it is what makes Margin readable.
+	//
+	// A margin is only ever large or small against something. One hertz clear
+	// of players spanning two hundred is noise that happened to round the
+	// right way; one hertz clear of players spanning three is the axis telling
+	// them apart. Nothing could say which of those a word was, because the
+	// word carried the distance and not the scale.
+	//
+	// Not a threshold. Nothing here refuses a word for sitting close, because
+	// the floor that does exist is the measure's own precision rather than a
+	// number somebody picked, and that decision stands. This is the figure a
+	// reader needs to discount a word themselves, and the figure a build needs
+	// to move a control less far for a word that barely earned it.
+	Spread float64 `json:"spread"`
+	// Against is the middle half the comparison was made against, low to high.
+	// With Of, it is the whole population a word was earned over.
+	//
+	// Carried because the population moves. A word is earned against whoever
+	// else is measured, so adding players rewrites verdicts nobody touched:
+	// pop-punk earned `scooped` until eighteen southern rock records joined the
+	// corpus and closed the margin. Stored this way a word says what it beat,
+	// so a stale one can be seen rather than inferred.
+	Against [2]float64 `json:"against"`
 }
 
 // Derive is what an artist's measurements say about them, against others
@@ -205,10 +229,10 @@ func Derive(
 		switch upper, lower := between(rest, 0.75), between(rest, 0.25); {
 		case span.Low > upper && ax.resolves(span.Low-upper):
 			out = append(out, made(
-				ax, ax.More, mine, rest, len(others)+1, span.Low-upper))
+				ax, ax.More, mine, rest, len(others)+1, span.Low-upper, lower, upper))
 		case span.High < lower && ax.resolves(lower-span.High):
 			out = append(out, made(
-				ax, ax.Less, mine, rest, len(others)+1, lower-span.High))
+				ax, ax.Less, mine, rest, len(others)+1, lower-span.High, lower, upper))
 		}
 	}
 
@@ -225,6 +249,7 @@ func made(
 	rest []float64,
 	of int,
 	margin float64,
+	lower, upper float64,
 ) Derived {
 	return Derived{
 		Term: term,
@@ -241,6 +266,10 @@ func made(
 		Others: to(between(rest, 0.5), ax.places),
 		Of:     of,
 		Margin: margin,
+		// Rounded like everything else here. A width is a difference between
+		// two interpolated quartiles and arrives with a float's tail on it.
+		Spread:  to(upper-lower, ax.places),
+		Against: [2]float64{to(lower, ax.places), to(upper, ax.places)},
 	}
 }
 

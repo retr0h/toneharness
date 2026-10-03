@@ -340,6 +340,10 @@ func genreWords(
 				Kind:     tone.EvidenceAudio,
 				Measured: &map[string]float64{string(t.Key): t.Mine},
 				Against:  &map[string]float64{string(t.Key): t.Others},
+				// The scale the distance is read against, so a word that barely
+				// cleared the others moves a control less far than one that
+				// cleared them outright.
+				Spread: &map[string]float64{string(t.Key): t.Spread},
 			}},
 		})
 	}

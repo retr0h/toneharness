@@ -100,10 +100,32 @@ func holdsOf(
 	out := make([]string, 0, len(p.Terms))
 
 	for _, t := range p.Terms {
-		out = append(out, fmt.Sprintf("%s: clear by %s", t.Term, figure(t.Key, t.Margin)))
+		out = append(out, fmt.Sprintf("%s: clear by %s%s",
+			t.Term, figure(t.Key, t.Margin), ofSpread(t)))
 	}
 
 	return strings.Join(out, "; ")
+}
+
+// ofSpread is the margin as a share of the other players' middle half, which is
+// what says whether a word is solid or about to go.
+//
+// "clear by 1 Hz" reads the same whether the others span three hertz or two
+// hundred, and those are opposite claims. The share is the one that travels: a
+// word clear by most of a spread is one nothing will overturn, and a word clear
+// by a twentieth of it is one the next player measured may take away.
+//
+// Empty where the spread is zero, which happens where every other player reads
+// the same figure. There is no scale to be a share of, and printing one would
+// invent precision.
+func ofSpread(
+	t audio.Derived,
+) string {
+	if t.Spread <= 0 {
+		return ""
+	}
+
+	return fmt.Sprintf(" (%.0f%% of their spread)", 100*t.Margin/t.Spread)
 }
 
 // againstOf is the figures behind each word: this player, then the middle of

@@ -539,7 +539,27 @@ func displaced(
 		mine, held := (*e.Measured)[key]
 		theirs, also := (*e.Against)[key]
 
-		if !held || !also || theirs == 0 {
+		if !held || !also {
+			continue
+		}
+
+		// Against the spread where the evidence carries one, because that is
+		// what a distance means. Half the width of everybody else's middle half
+		// is half a step; clearing the whole width is the whole step.
+		//
+		// The median is the fallback and was the only answer before a word
+		// carried its spread. It reads a distance as a fraction of where the
+		// others sit, which answers a different question: a player 10% above a
+		// median got a tenth of a step whether the others were packed into a
+		// hertz or spread over two hundred. Evidence written before the spread
+		// existed still takes that path rather than being refused.
+		if e.Spread != nil {
+			if width, wide := (*e.Spread)[key]; wide && width > 0 {
+				return math.Min(math.Abs(mine-theirs)/width, 1), true
+			}
+		}
+
+		if theirs == 0 {
 			continue
 		}
 
