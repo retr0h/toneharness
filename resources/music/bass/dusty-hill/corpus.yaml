@@ -1,0 +1,32 @@
+artist: Dusty Hill
+tracks:
+  - track: la-grange
+    url: https://open.spotify.com/track/0u6JFVn0KHHlidZxNL9gVE
+    year: 1973
+    band: ZZ Top
+    genres: [southern-rock, blues-rock]
+    genres_by: person
+    note: >-
+      Tres Hombres, 1973. 230 seconds as Spotify holds it.
+      Spotify serves the Expanded 2006 Remaster, which is a later master of the
+      1973 take
+  - track: master-of-sparks
+    url: https://open.spotify.com/track/5Xk45LfYIcQbzH5wqHEFi8
+    year: 1973
+    band: ZZ Top
+    genres: [southern-rock, blues-rock]
+    genres_by: person
+    note: >-
+      Tres Hombres, 1973. 209 seconds as Spotify holds it.
+      Two earlier picks would not resolve. Waitin' for the Bus segues into Jesus
+      Just Left Chicago on the record, and nothing carries a separate take;
+      Beer Drinkers & Hell Raisers has no match for the 2006 remaster Spotify
+      serves
+  - track: jesus-just-left-chicago
+    url: https://open.spotify.com/track/6SIm1p6alvQsWcDv1M2b72
+    year: 1973
+    band: ZZ Top
+    genres: [southern-rock, blues-rock]
+    genres_by: person
+    note: >-
+      Tres Hombres, 1973. 210 seconds as Spotify holds it

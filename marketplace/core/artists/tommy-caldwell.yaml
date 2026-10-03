@@ -1,0 +1,88 @@
+# Tommy Caldwell — The Marshall Tucker Band
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# The amplifier is a model's assertion. The instrument and the right hand are
+# not, and on this player the right hand is most of the sound.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: tommy-caldwell
+
+ask:
+  aliases: [caldwell, marshall-tucker, tucker]
+
+  subject:
+    kind: artist
+    name: Tommy Caldwell
+    band: The Marshall Tucker Band
+    era: Searchin' for a Rainbow
+    years: { from: 1975, to: 1975 }
+
+  instrument: bass
+
+  genre: [southern-rock]
+
+  played:
+    - gear: Fender Precision Bass
+      strings: round
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/the-late-great-tommy-caldwell.506127/
+          note: >-
+            a white Precision with Rotosound roundwounds, and DiMarzio pickups
+            fitted for a reason nobody would invent: he sweated enough to short
+            the stock ones, and waxed the underside of the pickguard against it.
+          caveat: >-
+            posters describing a career rather than a session, and none of it is
+            dated to this record. Roundwounds on a Precision is the part that
+            matters to a measurement and the part least likely to be wrong.
+
+  # The right hand, and the reason this player sounds like nobody else.
+  technique:
+    attack: thumb
+    evidence:
+      - kind: user
+        url: https://www.talkbass.com/threads/charlie-hayward.382533/
+        note: >-
+          the poster jerry, who saw them, on the 1975 Volunteer Jam footage: "It's
+          so cool on that DVD to see the two late great Caldwell brothers smokin'
+          on their instruments with their thumbs.* *not slap."
+
+          The asterisk is his, and it is the useful half: a thumb that is not
+          slap is a different attack again, and it is what the transcriptions
+          call his percussive style.
+        caveat: >-
+          somebody watching a film of a 1975 show, which is the right year for
+          this record and is still not these sessions.
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  # The signal path, in order.
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      capture: direct
+      evidence:
+        - kind: llm
+          note: >-
+            asserted by a model and confirmed by nobody. A big valve head is what
+            a southern rock band of this size carried in 1975, and the SVT is the
+            one this device models.
+          caveat: >-
+            what was searched, and where it ran out. Two TalkBass threads about
+            him, Vintage Guitar's Marshall Tucker Band feature and their
+            Fretprints piece on his brother Toy were all read, and every one of
+            them is about the basses, the strings and the thumb. Not one names an
+            amplifier.
+
+            So this is a guess from the era and the size of the band, which is
+            the weakest reason this project accepts for anything. The instrument
+            and the technique above are what the figures should be read against
+            until somebody fills this in. If you know what he played through,
+            please open a pull request.
+      confidence: low

@@ -45,90 +45,153 @@ func (s *PlayersPublicTestSuite) render(
 	return buf.String()
 }
 
-// TestAPlayerAndWhatEarnedTheirWord is the whole contract: the word, and the
-// figures on both sides of the comparison that produced it.
-func (s *PlayersPublicTestSuite) TestAPlayerAndWhatEarnedTheirWord() {
-	got := s.render([]audio.Player{
-		{
-			ID:      "pino-palladino",
-			Records: 3,
-			Terms: []audio.Derived{
-				{Term: "dark", Key: audio.KeyCentroid, Mine: 96, Others: 170, Of: 5},
-			},
-		},
-	})
-
-	s.Require().Contains(got, "pino-palladino")
-	s.Require().Contains(got, "dark")
-	s.Require().Contains(got, "96 Hz against 170 Hz",
-		"a centroid is hertz, and a share printed as hertz reads as nonsense")
-}
-
-// TestAShareIsPrintedAsAShare covers the other unit.
-func (s *PlayersPublicTestSuite) TestAShareIsPrintedAsAShare() {
-	got := s.render([]audio.Player{
-		{
-			ID:      "flea",
-			Records: 3,
-			Terms: []audio.Derived{
-				{Term: "clean", Key: audio.KeyHarmonics, Mine: 0.12, Others: 0.24, Of: 5},
-			},
-		},
-	})
-
-	s.Require().Contains(got, "12% against 24%")
-}
-
-// TestSeveralWordsAreAllShown covers a player clear on more than one axis.
-func (s *PlayersPublicTestSuite) TestSeveralWordsAreAllShown() {
-	got := s.render([]audio.Player{
-		{
-			ID:      "somebody",
-			Records: 2,
-			Terms: []audio.Derived{
-				{Term: "mid-forward", Key: audio.KeyMid, Mine: 0.09, Others: 0.02, Of: 3},
-				{Term: "bright", Key: audio.KeyCentroid, Mine: 400, Others: 150, Of: 3},
-			},
-		},
-	})
-
-	s.Require().Contains(got, "mid-forward, bright")
-	s.Require().Contains(got, "9% against 2%")
-	s.Require().Contains(got, "400 Hz against 150 Hz")
-}
-
-// TestAPlayerWhoEarnedNothingSaysSo covers the ordinary answer.
+// TestPlayers covers the table of what each player's records earn.
 //
-// Mixed evidence is not a failure, and a blank cell reads as one.
-func (s *PlayersPublicTestSuite) TestAPlayerWhoEarnedNothingSaysSo() {
-	got := s.render([]audio.Player{{ID: "les-claypool", Records: 3}})
+// One method and one table, so a case is a row rather than a file.
+func (s *PlayersPublicTestSuite) TestPlayers() {
+	for _, tt := range []struct {
+		name string
+		of   []audio.Player
+		want []string
+	}{
+		{
+			// The whole contract: the word, and the figures on both sides of
+			// the comparison that produced it.
+			name: "a player and what earned their word",
+			of: []audio.Player{{
+				ID:      "pino-palladino",
+				Records: 3,
+				Terms: []audio.Derived{
+					{Term: "dark", Key: audio.KeyCentroid, Mine: 96, Others: 170, Of: 5},
+				},
+			}},
+			want: []string{"pino-palladino", "dark", "96 Hz against 170 Hz"},
+		},
+		{
+			// The other unit. A share printed as hertz reads as nonsense.
+			name: "a share is printed as a share",
+			of: []audio.Player{{
+				ID:      "flea",
+				Records: 3,
+				Terms: []audio.Derived{
+					{Term: "clean", Key: audio.KeyHarmonics, Mine: 0.12, Others: 0.24, Of: 5},
+				},
+			}},
+			want: []string{"12% against 24%"},
+		},
+		{
+			name: "a player clear on more than one axis shows both",
+			of: []audio.Player{{
+				ID:      "somebody",
+				Records: 2,
+				Terms: []audio.Derived{
+					{Term: "mid-forward", Key: audio.KeyMid, Mine: 0.09, Others: 0.02, Of: 3},
+					{Term: "bright", Key: audio.KeyCentroid, Mine: 400, Others: 150, Of: 3},
+				},
+			}},
+			want: []string{"mid-forward, bright", "9% against 2%", "400 Hz against 150 Hz"},
+		},
+		{
+			// What a margin is worth, which the margin alone cannot say. Half
+			// the width of everybody else's middle half is half a step.
+			name: "a margin is shown against the spread it cleared",
+			of: []audio.Player{{
+				ID:      "jaco-pastorius",
+				Records: 4,
+				Terms: []audio.Derived{{
+					Term: "bright", Key: audio.KeyCentroid,
+					Mine: 259, Others: 138, Of: 28, Margin: 36, Spread: 45,
+				}},
+			}},
+			want: []string{"clear by 36 Hz (80% of their spread)"},
+		},
+		{
+			// A spread of nothing is every other player reading the same
+			// figure. There is no scale to be a share of, and printing one
+			// would invent precision.
+			name: "a word clear of players who all read alike shows no share",
+			of: []audio.Player{{
+				ID:      "alone",
+				Records: 3,
+				Terms: []audio.Derived{{
+					Term: "bright", Key: audio.KeyCentroid,
+					Mine: 400, Others: 150, Of: 3, Margin: 250,
+				}},
+			}},
+			want: []string{"clear by 250 Hz"},
+		},
+		{
+			// The second comparison, which answers a different question from
+			// the first: not whether they are dark, but whether they are dark
+			// for the music they play.
+			name: "a player placed inside their own genre says so",
+			of: []audio.Player{{
+				ID:      "mike-dirnt",
+				Records: 3,
+				Within: []audio.InGenre{{
+					Genre: "pop-punk",
+					Of:    4,
+					Terms: []audio.Derived{
+						{Term: "scooped", Key: audio.KeyMid, Mine: 0.01, Others: 0.04},
+					},
+				}},
+			}},
+			want: []string{"scooped in pop-punk of 4"},
+		},
+		{
+			// Several genres, and several words inside one of them.
+			name: "every genre a player is placed in is shown",
+			of: []audio.Player{{
+				ID:      "dusty-hill",
+				Records: 3,
+				Within: []audio.InGenre{
+					{Genre: "blues-rock", Of: 3, Terms: []audio.Derived{
+						{Term: "dark", Key: audio.KeyCentroid, Mine: 90, Others: 150},
+					}},
+					{Genre: "southern-rock", Of: 6, Terms: []audio.Derived{
+						{Term: "mid-forward", Key: audio.KeyMid, Mine: 0.2, Others: 0.04},
+						{Term: "bright", Key: audio.KeyCentroid, Mine: 300, Others: 150},
+					}},
+				},
+			}},
+			want: []string{
+				"dark in blues-rock of 3",
+				"mid-forward, bright in southern-rock of 6",
+			},
+		},
+		{
+			// Mixed evidence is not a failure, and a blank cell reads as one.
+			name: "a player who earned nothing says so",
+			of:   []audio.Player{{ID: "les-claypool", Records: 3}},
+			want: []string{"nothing"},
+		},
+		{
+			// The count reading as the reason nothing was earned.
+			name: "one player is nobody to compare against",
+			of:   []audio.Player{{ID: "mike-dirnt", Records: 3}},
+			want: []string{"1 player, which is nobody to compare against"},
+		},
+		{
+			name: "several players are counted",
+			of: []audio.Player{
+				{ID: "flea", Records: 3},
+				{ID: "mike-dirnt", Records: 3},
+			},
+			want: []string{"2 players"},
+		},
+		{
+			name: "no players at all says what to do about it",
+			want: []string{"no players to compare"},
+		},
+	} {
+		s.Run(tt.name, func() {
+			got := s.render(tt.of)
 
-	s.Require().Contains(got, "nothing")
-}
-
-// TestOnePlayerIsNobodyToCompareAgainst covers the count reading as the
-// reason nothing was earned.
-func (s *PlayersPublicTestSuite) TestOnePlayerIsNobodyToCompareAgainst() {
-	got := s.render([]audio.Player{{ID: "mike-dirnt", Records: 3}})
-
-	s.Require().Contains(got, "1 player, which is nobody to compare against")
-}
-
-// TestSeveralPlayersAreCounted covers the ordinary heading.
-func (s *PlayersPublicTestSuite) TestSeveralPlayersAreCounted() {
-	got := s.render([]audio.Player{
-		{ID: "flea", Records: 3},
-		{ID: "mike-dirnt", Records: 3},
-	})
-
-	s.Require().Contains(got, "2 players")
-}
-
-// TestNoPlayersAtAll covers the empty table saying what to do about it.
-func (s *PlayersPublicTestSuite) TestNoPlayersAtAll() {
-	got := s.render(nil)
-
-	s.Require().Contains(got, "no players to compare")
+			for _, want := range tt.want {
+				s.Require().Contains(got, want)
+			}
+		})
+	}
 }
 
 func TestPlayersPublicTestSuite(

@@ -362,9 +362,11 @@ func displaced(
 
 		switch {
 		case at > upper:
-			out = append(out, made(ax, ax.More, mine, rest, len(others)+1, at-upper))
+			out = append(out, made(
+				ax, ax.More, mine, rest, len(others)+1, at-upper, lower, upper))
 		case at < lower:
-			out = append(out, made(ax, ax.Less, mine, rest, len(others)+1, lower-at))
+			out = append(out, made(
+				ax, ax.Less, mine, rest, len(others)+1, lower-at, lower, upper))
 		}
 	}
 

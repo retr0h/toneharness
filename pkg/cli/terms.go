@@ -99,10 +99,16 @@ func termsFor(
 		theirs := &yaml.Node{Kind: yaml.MappingNode, Style: yaml.FlowStyle}
 		theirs.Content = append(theirs.Content, text(string(t.Key)), number(t.Others))
 
+		width := &yaml.Node{Kind: yaml.MappingNode, Style: yaml.FlowStyle}
+		width.Content = append(width.Content, text(string(t.Key)), number(t.Spread))
+
 		evidence := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{
 			text("kind"), text("audio"),
 			text("measured"), mine,
 			text("against"), theirs,
+			// The scale the other two are read against, so the word carries
+			// what it beat rather than only how far it got.
+			text("spread"), width,
 			text("note"), folded(noteForTerm(p, t)),
 			text("caveat"), folded(measuredCaveat),
 		}}
@@ -128,6 +134,7 @@ func noteForTerm(
 	t audio.Derived,
 ) string {
 	return fmt.Sprintf(
-		"%s across %s, against %d other players measured the same way, clear of them by %s",
-		t.Why, recordsRead(p.Records), t.Of-1, figure(t.Key, t.Margin))
+		"%s across %s, against %d other players measured the same way, clear of "+
+			"them by %s%s",
+		t.Why, recordsRead(p.Records), t.Of-1, figure(t.Key, t.Margin), ofSpread(t))
 }

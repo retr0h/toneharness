@@ -1,0 +1,70 @@
+# Charlie Hayward — The Charlie Daniels Band
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# The amplifier is a model's assertion. The instrument is on film.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: charlie-hayward
+
+ask:
+  aliases: [hayward, charlie-daniels, cdb]
+
+  subject:
+    kind: artist
+    name: Charlie Hayward
+    band: The Charlie Daniels Band
+    era: Million Mile Reflections
+    years: { from: 1979, to: 1979 }
+
+  instrument: bass
+
+  genre: [southern-rock]
+
+  played:
+    - gear: Fender Precision Bass
+      evidence:
+        - kind: video
+          url: https://www.talkbass.com/threads/charlie-hayward.382533/
+          note: >-
+            two posters describing the same footage, the Volunteer Jam 1975 DVD,
+            which is close in period to this record. The poster denton57: "lots
+            of closeups on Charlie with his '51ish P with a split coil pickup".
+            The poster SwitchGear, who also saw the band live several times in
+            the late seventies: "Interesting '51 style P he is playing equipped
+            with split coil pups. Sounds good and growly."
+          caveat: >-
+            a '51-style Precision with a split coil is a hybrid rather than
+            either stock model, and the device models no instrument, so this
+            says how to read the recording and sets nothing. Four years before
+            this record, and both accounts are people watching a film.
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  # The signal path, in order.
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      capture: direct
+      evidence:
+        - kind: llm
+          note: >-
+            asserted by a model and confirmed by nobody. A big valve head is what
+            a band of this size carried in 1979, and the SVT is the one this
+            device models.
+          caveat: >-
+            what was searched, and where it ran out. His rig is documented and it
+            is the wrong rig: an Avalon U5 into an Aguilar head and a Mesa
+            cabinet, which is what he plays now. Aguilar did not exist in 1979,
+            so that account cannot describe this record however often it is
+            repeated, and taking it would be worse than admitting the gap.
+
+            The TalkBass thread about him and Vintage Guitar's Charlie Daniels
+            feature were both read, and neither names a period amplifier. If you
+            know what he recorded this through, please open a pull request.
+      confidence: low

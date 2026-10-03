@@ -1242,7 +1242,7 @@ func (s *TranslatePublicTestSuite) TestUnmet() {
 			name: "what it cannot answer it says",
 			then: func() {
 				_, notes, err := translate.Translate(
-					s.ask(`genre: [pop-punk]
+					s.ask(`genre: [punk]
 like:
   artist: Mike Dirnt
   recording: `+s.recording()+"\n"),
@@ -1252,7 +1252,7 @@ like:
 
 				said := strings.Join(sayings(notes.Unmet()), " ")
 
-				// Pop-punk is measured and clears the threshold, so the note says what it
+				// Punk is measured and clears the threshold, so the note says what it
 				// measured as rather than that nobody has tagged anything, which is what it
 				// used to say of every genre.
 				//

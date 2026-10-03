@@ -1,0 +1,28 @@
+artist: Leon Wilkeson
+tracks:
+  - track: whats-your-name
+    url: https://open.spotify.com/track/0uZs7p6cbEUNwGMdfNj9Kk
+    year: 1977
+    band: Lynyrd Skynyrd
+    genres: [southern-rock]
+    genres_by: person
+    note: >-
+      Street Survivors, 1977. 213 seconds as Spotify holds it.
+      These sessions are the ones the rig is sourced to, which is why this record
+      rather than Second Helping
+  - track: that-smell
+    url: https://open.spotify.com/track/52DKGPMQ21DauCR19pQ0BK
+    year: 1977
+    band: Lynyrd Skynyrd
+    genres: [southern-rock]
+    genres_by: person
+    note: >-
+      Street Survivors, 1977. 348 seconds as Spotify holds it
+  - track: you-got-that-right
+    url: https://open.spotify.com/track/2lLWfAW32oxUCv0iYQQwSX
+    year: 1977
+    band: Lynyrd Skynyrd
+    genres: [southern-rock]
+    genres_by: person
+    note: >-
+      Street Survivors, 1977. 227 seconds as Spotify holds it
