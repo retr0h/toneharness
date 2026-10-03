@@ -13,14 +13,9 @@ schema: ToneSpec
 id: chunky-punk
 
 ask:
-  # Two, in the order to try them. The first that can answer does, so this aims
-  # at punk where punk has the records and falls to pop-punk until it does.
-  #
-  # It has to today. Punk held fifteen records until 2026-10-03, twelve of them
-  # pop-punk double-tagged, so every punk ask was aimed at pop-punk's figures
-  # under punk's name. Untagging left punk with three records from one player,
-  # five short of the eight from three it takes, and `corpus music genres` says
-  # so rather than aiming at a band.
+  # Several, in the order to try them: the first that can answer does. Punk is
+  # short of the eight records from three players it takes, so pop-punk answers
+  # until it is not. `corpus music genres` says which clear it.
   genre: [punk, pop-punk]
 
   instrument: bass
