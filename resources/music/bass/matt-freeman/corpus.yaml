@@ -5,7 +5,7 @@ tracks:
     year: 1995
     band: Rancid
     genres: [punk]
-    genres_by: llm
+    genres_by: person
     note: ...And Out Come the Wolves, 1995. Eighty five seconds, most of it a bass
       solo
   - track: roots-radicals
@@ -13,7 +13,7 @@ tracks:
     year: 1995
     band: Rancid
     genres: [punk]
-    genres_by: llm
+    genres_by: person
     note: ...And Out Come the Wolves, 1995. Spotify titles it "Roots Radical",
       singular
   - track: journey-to-the-end-of-the-east-bay
@@ -21,5 +21,5 @@ tracks:
     year: 1995
     band: Rancid
     genres: [punk]
-    genres_by: llm
+    genres_by: person
     note: ...And Out Come the Wolves, 1995
