@@ -89,4 +89,4 @@ costs, and anything it added the rig did not ask for. A wrong amplifier should b
 visible before anybody plugs in rather than after.
 
 A worked document with every field filled in:
-`marketplace/core/examples/mike-dirnt.yaml`.
+`marketplace/examples/mike-dirnt.yaml`.

@@ -147,7 +147,6 @@ func (s *MCPPublicTestSuite) TestServe() {
 										"..",
 										"..",
 										"marketplace",
-										"core",
 										"examples",
 										"mike-dirnt.yaml",
 									),

@@ -56,5 +56,5 @@ could not honour. A run reported without its notes is a run that hid half of
 what happened.
 
 Worked examples:
-[marketplace/core/examples/](../../../../marketplace/core/examples/), every
+[marketplace/examples/](../../../../marketplace/examples/), every
 `.yaml` there but the Setup and the Plan.

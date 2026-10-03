@@ -143,9 +143,9 @@ func (s *CoveragePublicTestSuite) declared() []string {
 // rest, so nothing would have caught them.
 func (s *CoveragePublicTestSuite) written() map[string]bool {
 	found, err := filepath.Glob(
-		filepath.Join("..", "..", "..", "marketplace", "core", "examples", "*.plan.yaml"))
+		filepath.Join("..", "..", "..", "marketplace", "examples", "*.plan.yaml"))
 	s.Require().NoError(err)
-	s.Require().NotEmpty(found, "no example plans under marketplace/core/examples")
+	s.Require().NotEmpty(found, "no example plans under marketplace/examples")
 
 	fixture, err := filepath.Glob(filepath.Join("testdata", "*.yaml"))
 	s.Require().NoError(err)

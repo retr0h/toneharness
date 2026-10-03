@@ -1108,7 +1108,7 @@ func (s *ClientPublicTestSuite) TestRig() {
 // than a command.
 func (s *ClientPublicTestSuite) TestTone() {
 	examples := func(name string) string {
-		return filepath.Join("..", "..", "marketplace", "core", "examples", name)
+		return filepath.Join("..", "..", "marketplace", "examples", name)
 	}
 
 	tests := []struct {

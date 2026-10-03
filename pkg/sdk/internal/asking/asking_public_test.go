@@ -68,7 +68,6 @@ func (s *AskingPublicTestSuite) at(
 		"..",
 		"..",
 		"marketplace",
-		"core",
 		"examples",
 		name,
 	)
