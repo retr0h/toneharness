@@ -1,0 +1,70 @@
+# Paul Simonon — The Clash
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: paul-simonon
+
+ask:
+  aliases: [clash, simonon]
+
+  subject:
+    kind: artist
+    name: Paul Simonon
+    band: The Clash
+    era: London Calling
+    years: { from: 1979, to: 1979 }
+
+  instrument: bass
+
+  genre: [punk]
+
+  # The instrument is the one thing about him a reader will already know, and it
+  # is sourced rather than assumed.
+  played:
+    - gear: Fender Precision Bass
+      evidence:
+        - kind: cited
+          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+          note: >-
+            Wallace Marx Jr., Premier Guitar, 18 May 2010, names the white Fender
+            Precision he played and the Palladium show in September 1979 where he
+            smashed it, which is the photograph on the cover of this record.
+          caveat: >-
+            the bass on the cover is not necessarily the bass on the tape. The
+            article ties the Precision to the stage in the month the sessions
+            were being mixed; nothing found says which instrument was used in
+            Wessex.
+
+  # No `words`. Nothing read describes this record in terms the vocabulary
+  # carries.
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  # The signal path, in order.
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      capture: direct
+      evidence:
+        - kind: cited
+          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+          note: >-
+            Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks",
+            Premier Guitar, 18 May 2010, which puts Simonon on "a white Fender
+            Precision and an Ampeg SVT" in 1979.
+          caveat: >-
+            the stage, and a 2010 article about a 1979 album. The sentence is
+            about the Palladium show rather than about Wessex Studios, and the
+            producer's choices for a record this heavily overdubbed are not in
+            it.
+
+            Nothing found names what Guy Stevens and Bill Price put him through
+            for these sessions, and no cabinet is claimed here for the same
+            reason.
+      confidence: low

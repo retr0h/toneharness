@@ -224,11 +224,22 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 						models: []catalog.ModelID{"HD2_AmpDanglingCab"},
 					},
 					{
-						// A bass request must not reach a guitar amp, however well the
-						// name matches.
-						name: "a request stays inside its instrument",
-						spec: bassRig("Marshall JCM-800", ""),
-						err:  "bass amps",
+						// The instrument narrows the search and does not decide it.
+						//
+						// A bass request prefers the half Line 6 tag Bass, and reaches
+						// the rest only where that half emulates nothing by the name.
+						// The tag says who a model is sold to rather than what it is:
+						// Line 6 tag the Fender Bassman a guitar amplifier, which is
+						// what it is used for now and not what Fender built it for, so
+						// refusing a named Bassman to a bassist answers a question
+						// nobody asked.
+						//
+						// The cost is that a bassist who names a guitar amplifier by
+						// mistake gets it rather than a refusal. A rig naming gear has
+						// made a claim, and this honours it.
+						name:   "a name the instrument's own half cannot answer reaches the rest",
+						spec:   bassRig("Marshall JCM-800", ""),
+						models: []catalog.ModelID{"HD2_AmpGuitarOnly"},
 					},
 					{
 						// A cabinet miss is only recoverable because the amplifier names

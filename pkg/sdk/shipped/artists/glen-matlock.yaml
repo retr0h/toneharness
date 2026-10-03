@@ -1,0 +1,91 @@
+# Glen Matlock — Sex Pistols
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# Matlock rather than Sid Vicious, and that is the research rather than a
+# preference: Vicious is the Pistols' bassist in everybody's memory and Matlock
+# is the one who played on the record this covers.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: glen-matlock
+
+ask:
+  aliases: [matlock, sex-pistols, pistols]
+
+  subject:
+    kind: artist
+    name: Glen Matlock
+    band: Sex Pistols
+    era: Never Mind the Bollocks
+    years: { from: 1977, to: 1977 }
+
+  instrument: bass
+
+  genre: [punk]
+
+  # No `played`. The Premier Guitar piece names both a Rickenbacker 4001 and a
+  # sunburst Fender Precision without saying which was on the record, and this
+  # device models no instrument anyway, so naming one would be a claim with
+  # nothing resting on it.
+
+  # No `words`. Nothing read describes this record in terms the vocabulary
+  # carries.
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  # The signal path, in order.
+  chain:
+    - role: amp
+      gear: Fender Bassman
+      capture: direct
+      evidence:
+        - kind: cited
+          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+          note: >-
+            Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks",
+            Premier Guitar, 18 May 2010: "Matlock played both a Rickenbacker 4001
+            and a sunburst Fender Precision… used Fender Bassmans with 4x12
+            Fender cabinets."
+          caveat: >-
+            the stage, and a 2010 article about a 1977 album. It is also the
+            thinnest of the three players this one piece covers: one clause, no
+            model year, and no session named.
+
+            Who played what on this record is itself contested — Matlock had left
+            before release and Sid Vicious is the credited bassist — so a rig
+            attributing the amplifier to Matlock is resting on the same histories
+            that attribute the playing to him.
+      confidence: low
+
+    - role: cab
+      gear: Fender Bassman 4x12
+      capture: direct
+      substitute:
+        gear: Fender Bassman P10R 4x10
+        evidence:
+          - kind: llm
+            note: >-
+              the device models no Fender 4x12. The Bassman cabinets it carries
+              are a 4x10 of P10R speakers and a 2x15 with JBL D130s, and the 4x10
+              is the one Fender built the Bassman around.
+            caveat: >-
+              asserted by a model and confirmed by nobody. Four twelves and four
+              tens are different cabinets, and the choice is a judgement about
+              which Fender box is nearer rather than a measurement. If you know
+              which 4x12 he used, please open a pull request.
+        confidence: low
+      evidence:
+        - kind: cited
+          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+          note: >-
+            the same clause as the head: "used Fender Bassmans with 4x12 Fender
+            cabinets."
+          caveat: >-
+            the same source as the head, so the two share it and stand or fall
+            together.
+      confidence: low

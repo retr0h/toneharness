@@ -1,0 +1,28 @@
+artist: Dee Dee Ramone
+tracks:
+  - track: rockaway-beach
+    url: https://open.spotify.com/track/2HZGsnMByx3V8KmNW6LqWF
+    year: 1977
+    band: Ramones
+    genres: [punk]
+    genres_by: person
+    note: >-
+      Rocket to Russia, 1977. 126 seconds as Spotify holds it.
+      Spotify serves the 40th Anniversary Deluxe Edition, which is a 2017 remaster
+      of the 1977 take
+  - track: sheena-is-a-punk-rocker
+    url: https://open.spotify.com/track/61MZN0yyMWSEwrLPUUGfgJ
+    year: 1977
+    band: Ramones
+    genres: [punk]
+    genres_by: person
+    note: >-
+      Rocket to Russia, 1977. 169 seconds as Spotify holds it
+  - track: teenage-lobotomy
+    url: https://open.spotify.com/track/6rtYb4BGOlLvcy76N8yFbw
+    year: 1977
+    band: Ramones
+    genres: [punk]
+    genres_by: person
+    note: >-
+      Rocket to Russia, 1977. 121 seconds as Spotify holds it

@@ -1,0 +1,80 @@
+# Karl Alvarez — Descendents
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# The amplifier here rests on people who watched him play rather than on anybody
+# who was in the room. See the caveat on the chain entry.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: karl-alvarez
+
+ask:
+  aliases: [alvarez, descendents, all]
+
+  subject:
+    kind: artist
+    name: Karl Alvarez
+    band: Descendents
+    era: ALL
+    years: { from: 1987, to: 1987 }
+
+  instrument: bass
+
+  genre: [punk]
+
+  # How it is played, and the one thing about him every listener names first: a
+  # fingerstyle player in a music almost entirely played with picks.
+  technique:
+    attack: fingers
+    evidence:
+      - kind: user
+        url: https://www.talkbass.com/threads/karl-alvarez-descendents-all.1314244/
+        note: >-
+          the thread's opening post calls him "one of the few finger style punk
+          bassists out there", and it is what every poster there returns to.
+        caveat: >-
+          listeners agreeing about what they hear, not a statement from him.
+          It is the kind of claim a recording settles and nothing here has
+          measured these tracks yet.
+
+  # No `words`. Nothing read describes this record in terms the vocabulary
+  # carries.
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  # The signal path, in order.
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      capture: direct
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/karl-alvarez-tone.754486/
+          note: >-
+            the poster Dave Siff, who says elsewhere in these threads that he has
+            flown to Los Angeles to see the band, on what he has watched across
+            several shows: "I've seen him play several different Fender basses as
+            well as a Music Man, always through an SVT, and it always sounds like
+            Karl."
+          caveat: >-
+            an audience account, and the weakest kind of gear evidence this
+            project takes. Nobody in it had access to the rig, nothing dates it
+            to 1987, and a stage seen from the floor says little about what was
+            in the room for a record made that year.
+
+            What was searched: the four TalkBass threads about him, which are
+            enthusiasts discussing his playing and carry no gear evidence at all;
+            notreble.com, which has a transcription and no rig; and the 2026
+            Punk Rock and UFOs interview by Mike Damante, read in full, in which
+            he says nothing about equipment or technique. The SVT-CL and SVT-810E
+            figures repeated online come from gear-aggregator pages of the kind
+            that scrape and do not cite.
+
+            If you know what he recorded this through, please open a pull
+            request.
+      confidence: low

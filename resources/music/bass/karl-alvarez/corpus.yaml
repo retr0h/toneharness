@@ -1,0 +1,26 @@
+artist: Karl Alvarez
+tracks:
+  - track: coolidge
+    url: https://open.spotify.com/track/1sYjTUX8Fc9bhPdH44gC3i
+    year: 1987
+    band: Descendents
+    genres: [punk]
+    genres_by: person
+    note: >-
+      ALL, 1987. 167 seconds as Spotify holds it
+  - track: van
+    url: https://open.spotify.com/track/2B0DG360FjKtHuFnLzaZnm
+    year: 1987
+    band: Descendents
+    genres: [punk]
+    genres_by: person
+    note: >-
+      ALL, 1987. 181 seconds as Spotify holds it
+  - track: cameage
+    url: https://open.spotify.com/track/6B9Tw4MFMLCDXEkRY3fcnb
+    year: 1987
+    band: Descendents
+    genres: [punk]
+    genres_by: person
+    note: >-
+      ALL, 1987. 185 seconds as Spotify holds it
