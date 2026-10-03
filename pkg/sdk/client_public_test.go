@@ -1151,17 +1151,22 @@ func (s *ClientPublicTestSuite) TestTone() {
 			notes: true,
 		},
 		{
-			// Nobody has researched him and nothing else in the ask names gear,
+			// Nobody has researched her and nothing else in the ask names gear,
 			// so there is nothing to take a chain from. A genre nobody has
 			// measured either, because a measured one is a target: punk here
 			// would choose an amplifier and there would be nothing to refuse.
+			//
+			// A player who is in no rig at all rather than one in the corpus
+			// without gear. Every player the corpus holds has a rig now, so the
+			// second kind no longer exists to name, and this read Cone McCaslin
+			// until his was written.
 			name: "a request naming a player nobody has researched",
 			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
-id: cone-mccaslin
+id: nobody-researched
 ask:
   genre: [rock]
   like:
-    artist: Cone McCaslin
+    artist: Esperanza Spalding
 rig:
   instrument: bass
   chain:
