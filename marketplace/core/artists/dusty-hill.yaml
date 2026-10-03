@@ -1,0 +1,73 @@
+# Dusty Hill — ZZ Top
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: dusty-hill
+
+ask:
+  aliases: [dusty, zz-top]
+
+  subject:
+    kind: artist
+    name: Dusty Hill
+    band: ZZ Top
+    era: Tres Hombres
+    years: { from: 1973, to: 1973 }
+
+  instrument: bass
+
+  genre: [southern-rock, blues-rock]
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  # The signal path, in order. A guitar amplifier, which is the whole point of
+  # this rig rather than a mistake in it.
+  chain:
+    - role: amp
+      gear: Marshall Super Lead 100
+      capture: direct
+      evidence:
+        - kind: llm
+          note: >-
+            asserted by a model and confirmed by nobody. The account that
+            circulates is that these sessions caught him without his '51
+            Telecaster bass, so he played a Danelectro Longhorn through a
+            100-watt Marshall, the same model of amplifier the guitars were
+            running, and that the band recorded the record largely live in the
+            studio on a newly bought touring rig.
+          caveat: >-
+            what was searched, and where it ran out. Premier Guitar's ZZ Top gear
+            gallery and their obituary for him were both opened and neither
+            carries this; the gallery has his tech on his tone and no models for
+            this period. No page was found that states it, so this is the claim
+            as it is repeated rather than as anybody printed it.
+
+            It is worth keeping rather than dropping because it is unusually
+            specific and it is checkable: a Danelectro through a Marshall guitar
+            stack is a strange enough rig that somebody with the period press
+            can confirm or kill it in one reading. If you have that, please open
+            a pull request.
+
+            Line 6 tag this model a guitar amplifier, which is what it is. A
+            rig naming it on purpose is the case the instrument filter was
+            taught not to refuse.
+      confidence: low
+
+    - role: cab
+      gear: Marshall 4x12
+      capture: direct
+      evidence:
+        - kind: llm
+          note: >-
+            the cabinet that goes with the head above, on the same account of
+            two identical stacks shared between guitar and bass.
+          caveat: >-
+            the same unsourced account as the head, so the two stand or fall
+            together, and which 4x12 is not established at all.
+      confidence: low

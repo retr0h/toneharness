@@ -1,0 +1,137 @@
+# Berry Oakley — The Allman Brothers Band
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: berry-oakley
+
+ask:
+  aliases: [oakley, allman-brothers, allmans]
+
+  subject:
+    kind: artist
+    name: Berry Oakley
+    band: The Allman Brothers Band
+    era: At Fillmore East
+    years: { from: 1971, to: 1971 }
+
+  instrument: bass
+
+  genre: [southern-rock]
+
+  # The instrument is the best-sourced claim here, and the source is his son.
+  played:
+    - gear: Fender Jazz Bass
+      strings: round
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/berry-oakleys-the-tractor.440045/
+          note: >-
+            the "Tractor", and the poster OakBass is Berry Oakley's son, who owns
+            it. He corrects the thread's standing claim about the pickup: "WOW!!!
+            alot of storys around this bass of my dads.. first off IT'S NOT A
+            HAGSTRUM PICKUP,, It's from his white Guild starfire bass.. The
+            starfire was cut up for parts by Joe Dan and BO for the TRACTOR'S…
+            the J pickup is BETWEEN the bridge and bridge pickup, part of what
+            gives it that special sound. Bridge pickup was not moved!"
+
+            The same post reproduces Fender's own write-up of cloning it, which
+            ties it to this record: "Berry Oakley's 'Tractor Bass' will forever
+            be immortalized… on classic recordings like the Allman Brothers'
+            Live at the Fillmore East."
+          caveat: >-
+            a named person with first-hand access, which is what makes a forum
+            post evidence here: the instrument was left to him. The Guild
+            Starfire pickup in the neck position is not a Jazz Bass sound and
+            this device models no instrument, so what it changes is how the
+            recording should be read rather than anything the build can set.
+
+  # How it is played. He came to bass from guitar and kept the pick.
+  technique:
+    attack: pick
+    evidence:
+      - kind: cited
+        url: https://www.notreble.com/buzz/2017/06/23/bass-players-to-know-berry-oakley/
+        note: >-
+          Ryan Madora, No Treble, 23 June 2017: "he frequently played with a pick
+          and used a Fender Jazz with a Guild pickup (affectionately known as the
+          'Tractor' bass)."
+        caveat: >-
+          "frequently" rather than always, and the article ties it to no
+          particular record.
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  # The signal path, in order.
+  chain:
+    - role: amp
+      gear: Fender 400 PS
+      capture: direct
+      substitute:
+        gear: Ampeg SVT
+        evidence:
+          - kind: llm
+            note: >-
+              era and class. The 400 PS is a 435-watt valve head of the early
+              seventies and the SVT is a 300-watt valve head of the same years,
+              which makes it the nearest thing this device models. The Fender
+              amplifiers it does carry are tweed-era guitar heads of a tenth the
+              power.
+            caveat: >-
+              asserted by a model and confirmed by nobody. Same decade, same
+              class and a different circuit. If you know a nearer match in this
+              catalog, please open a pull request.
+        confidence: low
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/berry-oakleys-rig.222796/
+          note: >-
+            two people who saw him play, in the same thread. The poster jerry: "I
+            saw Berry more than a few time before he died… I do remember he used
+            one of those early 70's big Fender bass amps, but the model number
+            escapes me. It had a big folded horn cab, sounded great!", then "It
+            might have been the Fender 400PS bass amp.....435 tube watts into a
+            couple folded horn cabs."
+
+            MrBEAR, who saw them three times, dates the changes: "FIrst time I
+            saw them he was using Marshalls, second time the Fender PS 300/400?,
+            and the last time it was a combination of Sunn and Kustom Kasinos."
+          caveat: >-
+            both hedge on the model and neither was in a studio. Two people
+            recalling a big Fender valve head with folded horns is worth more
+            than one, and it is still a memory of a stage rather than a document.
+
+            This record is live, so what it carries is the room and the PA as
+            well as the rig, which is the one case where a stage account and the
+            recording describe the same evening.
+      confidence: low
+
+    - role: cab
+      gear: Sunn folded horn
+      capture: direct
+      substitute:
+        gear: Sunn Coliseum 1x18
+        evidence:
+          - kind: llm
+            note: >-
+              the device models one folded-horn cabinet of this make, a 1x18
+              Sunn Coliseum, and folded horn is the shape both accounts name.
+            caveat: >-
+              asserted by a model. A single eighteen is not "a couple of folded
+              horn cabs", and which Sunn is not established.
+        confidence: low
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/berry-oakleys-rig.222796/
+          note: >-
+            the same two posts as the head, which name folded horns with the
+            Fender and Sunn cabinets later.
+          caveat: >-
+            the same source as the head, so the two share it and stand or fall
+            together.
+      confidence: low

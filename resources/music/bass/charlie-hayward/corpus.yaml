@@ -1,0 +1,29 @@
+artist: Charlie Hayward
+tracks:
+  - track: behind-your-eyes
+    url: https://open.spotify.com/track/33Ox6NnX1TQfnWpM4MESla
+    year: 1979
+    band: The Charlie Daniels Band
+    genres: [southern-rock]
+    genres_by: person
+    note: >-
+      Million Mile Reflections, 1979. 234 seconds as Spotify holds it.
+      The Devil Went Down to Georgia is the obvious track from this record and
+      is not here: every source that resolves for it runs seven seconds long
+      with no silence to explain it, so it is a different edit
+  - track: passing-lane
+    url: https://open.spotify.com/track/3oA1aix9K2N6jESkVZMOu6
+    year: 1979
+    band: The Charlie Daniels Band
+    genres: [southern-rock]
+    genres_by: person
+    note: >-
+      Million Mile Reflections, 1979. 195 seconds as Spotify holds it
+  - track: mississippi
+    url: https://open.spotify.com/track/6lLm1GktzH1dC5NLmEUtV0
+    year: 1979
+    band: The Charlie Daniels Band
+    genres: [southern-rock]
+    genres_by: person
+    note: >-
+      Million Mile Reflections, 1979. 189 seconds as Spotify holds it
