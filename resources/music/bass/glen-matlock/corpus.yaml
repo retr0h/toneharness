@@ -1,0 +1,29 @@
+artist: Glen Matlock
+tracks:
+  - track: anarchy-in-the-uk
+    url: https://open.spotify.com/track/3LoDeIbiR12sAznmpNEmKA
+    year: 1977
+    band: Sex Pistols
+    genres: [punk]
+    genres_by: person
+    note: >-
+      Never Mind the Bollocks, 1977. 211 seconds as Spotify holds it.
+      Matlock played bass on this one. Sid Vicious is the credited bassist for the
+      album and is generally held to have played on Bodies alone, which is why
+      that track is not here
+  - track: god-save-the-queen
+    url: https://open.spotify.com/track/6ui6l3ZNvlrGQZArwo8195
+    year: 1977
+    band: Sex Pistols
+    genres: [punk]
+    genres_by: person
+    note: >-
+      Never Mind the Bollocks, 1977. 200 seconds as Spotify holds it
+  - track: pretty-vacant
+    url: https://open.spotify.com/track/2mKj8Em0GLFu8I78yM1CfU
+    year: 1977
+    band: Sex Pistols
+    genres: [punk]
+    genres_by: person
+    note: >-
+      Never Mind the Bollocks, 1977. 198 seconds as Spotify holds it

@@ -13,10 +13,10 @@ schema: ToneSpec
 id: chunky-punk
 
 ask:
-  # Several, in the order to try them: the first that can answer does. Punk is
-  # short of the eight records from three players it takes, so pop-punk answers
-  # until it is not. `corpus music genres` says which clear it.
-  genre: [punk, pop-punk]
+  # A genre the corpus has measured, which is what makes it a target rather than
+  # a word. `corpus music genres` says which clear the eight records from three
+  # players it takes.
+  genre: [punk]
 
   instrument: bass
 

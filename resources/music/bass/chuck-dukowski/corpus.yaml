@@ -1,0 +1,26 @@
+artist: Chuck Dukowski
+tracks:
+  - track: rise-above
+    url: https://open.spotify.com/track/4kFfFe38CRVnTsakUTL4E4
+    year: 1981
+    band: Black Flag
+    genres: [punk]
+    genres_by: person
+    note: >-
+      Damaged, 1981. 146 seconds as Spotify holds it
+  - track: six-pack
+    url: https://open.spotify.com/track/5Og9VyCOfxmZCuv1UhIyxE
+    year: 1981
+    band: Black Flag
+    genres: [punk]
+    genres_by: person
+    note: >-
+      Damaged, 1981. 140 seconds as Spotify holds it
+  - track: tv-party
+    url: https://open.spotify.com/track/4DA95pyBe6QORPGvTEuMWQ
+    year: 1981
+    band: Black Flag
+    genres: [punk]
+    genres_by: person
+    note: >-
+      Damaged, 1981. 211 seconds as Spotify holds it

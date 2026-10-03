@@ -260,12 +260,45 @@ func gear(
 // only field naming gear a person recognises. An instrument narrows the search
 // to the half of the catalog Line 6 tags that way, which is what keeps a bass
 // request out of six hundred guitar models.
+//
+// Narrows rather than decides. A rig that names gear has made a claim, and the
+// instrument tag is Line 6 saying who a model is sold to rather than what it is:
+// they tag the Fender Bassman as a guitar amplifier, which is what it is used
+// for now and not what Fender built it for. Refusing a named Bassman to a
+// bassist is the filter answering a question nobody asked.
+//
+// So the tagged half is searched first and the rest only if that finds nothing.
+// Every name that resolved before resolves to the same model, and a name that
+// resolved to nothing can now reach the model that does emulate it.
 func findGear(
 	cat *catalog.Catalog,
 	gear string,
 	category catalog.Category,
 	instrument string,
 ) (catalog.Block, error) {
+	if b, found := nearest(cat, gear, category, instrument); found {
+		return b, nil
+	}
+
+	if instrument != "" {
+		if b, found := nearest(cat, gear, category, ""); found {
+			return b, nil
+		}
+	}
+
+	return catalog.Block{}, &NoSuchGearError{
+		Gear: gear, Kind: kindOf(category), Instrument: instrument,
+	}
+}
+
+// nearest is the closest block emulating the named gear, among those an
+// instrument leaves eligible. Empty takes the whole catalog.
+func nearest(
+	cat *catalog.Catalog,
+	gear string,
+	category catalog.Category,
+	instrument string,
+) (catalog.Block, bool) {
 	want := strings.ToLower(gear)
 
 	var best catalog.Block
@@ -282,13 +315,7 @@ func findGear(
 		}
 	}
 
-	if !found {
-		return catalog.Block{}, &NoSuchGearError{
-			Gear: gear, Kind: kindOf(category), Instrument: instrument,
-		}
-	}
-
-	return best, nil
+	return best, found
 }
 
 // closer reports whether a is the better answer than b for the same query.

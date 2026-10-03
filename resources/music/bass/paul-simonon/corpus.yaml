@@ -1,0 +1,30 @@
+artist: Paul Simonon
+tracks:
+  - track: london-calling
+    url: https://open.spotify.com/track/124Y9LPRCAz3q2OP0iCvcJ
+    year: 1979
+    band: The Clash
+    genres: [punk]
+    genres_by: person
+    note: >-
+      London Calling, 1979. 199 seconds as Spotify holds it.
+      Spotify serves the Expanded Edition, which reuses the 1979 take
+  - track: the-guns-of-brixton
+    url: https://open.spotify.com/track/1d0RJmZXAncCnTYHFlhaj4
+    year: 1979
+    band: The Clash
+    genres: [punk]
+    genres_by: person
+    note: >-
+      London Calling, 1979. 189 seconds as Spotify holds it
+  - track: rudie-cant-fail
+    url: https://open.spotify.com/track/4W9zZsQKsqikYbKM9vcN5Q
+    year: 1979
+    band: The Clash
+    genres: [punk]
+    genres_by: person
+    note: >-
+      London Calling, 1979. 208 seconds as Spotify holds it.
+      Clampdown was the third pick and was dropped: the only source that
+      resolves for it runs 3:55 against Spotify's 3:49, with no silence to
+      explain the difference, so it is a different edit
