@@ -102,8 +102,9 @@ state it gets a preset tuned for whoever made the recording.
 
 A rig used to carry a `requires` list naming impulse responses and bought models.
 It is gone, and nothing in this repository ever read it: it sat in the contract
-for months looking like a feature. A test now walks both contracts and fails on
-any field no code names, so the next one cannot last as long.
+for months looking like a feature. A test now walks the contract and the plan's
+types and fails on any field no document writes, so the next one cannot last as
+long.
 
 What it was reaching for belongs to the person rather than to the rig. **Which
 impulse responses are loaded is a fact about one pedal in one room**, and a rig is

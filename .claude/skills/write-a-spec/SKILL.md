@@ -84,8 +84,8 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 A field is worth writing when it makes a claim checkable later. A field nothing
 reads is worse than an absent one, because it looks like a feature: `drive: 0.47`
 sat in a shipped rig doing nothing until something finally read it, and a
-`requires` list sat in the contract for months. A test now walks both contracts
-and fails on any field no code names.
+`requires` list sat in the contract for months. A test now walks the contract and
+the plan's types and fails on any field no document writes.
 
 So an absent field already says nobody established it. It needs no paragraph
 explaining the absence, and what was searched for and not found belongs in a

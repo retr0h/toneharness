@@ -48,7 +48,7 @@ measured. `measure players --corpus <dir> --evidence` writes these blocks.
 
 ## Which control a word reaches depends on the rig
 
-Which is why the two documents have to be read together. `mids`, `highs`, `drive`
+Which is why both halves of the document are read together. `mids`, `highs`, `drive`
 and `low-end` move the first amplifier, `space` the first reverb, `attack` the
 first compressor. Where the amplifier has no such control, `mids` and `highs`
 look for an equaliser instead, which calls those bands `MidGain` and `HighGain`.

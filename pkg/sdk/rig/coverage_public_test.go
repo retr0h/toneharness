@@ -53,6 +53,11 @@ var exempt = map[string]string{
 		"here is a bassist's, and no bass amplifier in this device's " +
 		"catalog has one, so a rig writing it would be a rig that cannot " +
 		"build.",
+	"song": "names one recording to sound like, and is the narrowest of " +
+		"`like`'s three keys, so writing it beats the artist beside it. No " +
+		"document here is attributed to a song, so an example naming one " +
+		"would resolve to nothing and teach the opposite of what it meant. " +
+		"pkg/sdk/translate covers the lookup.",
 	"extends": "records that one rig departs from another. Every rig here " +
 		"is a sibling rather than a departure, and `rigs new --from` " +
 		"writes the field, so exercising it would mean inventing a rig to " +
@@ -83,9 +88,9 @@ func (s *CoveragePublicTestSuite) TestEveryFieldAppearsInARig() {
 	}
 
 	s.Require().Empty(missing,
-		"no rig under marketplace/core/examples or marketplace/core "+
+		"no document under marketplace/core/examples or marketplace/core "+
 			"writes these. "+
-			"Add one to a rig, or add it to exempt with a reason: %v", missing)
+			"Add one to a document, or add it to exempt with a reason: %v", missing)
 }
 
 // declared returns every property the contract names, however deep.
@@ -113,7 +118,13 @@ func (s *CoveragePublicTestSuite) declared() []string {
 		walk(schema.Value.Items, depth+1)
 	}
 
-	walk(doc.Components.Schemas["Rig"], 0)
+	// Both halves. The rig is what this package reads, and the ask beside it in
+	// the same document was walked by nothing: the merge left every ask field
+	// unchecked, which is the state the rig's own fields were in when this test
+	// was written.
+	for _, root := range []string{"Ask", "Rig"} {
+		walk(doc.Components.Schemas[root], 0)
+	}
 
 	names := make([]string, 0, len(out))
 	for name := range out {
