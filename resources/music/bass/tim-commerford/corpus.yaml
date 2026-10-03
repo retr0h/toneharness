@@ -6,6 +6,8 @@ tracks:
   - track: bombtrack
     url: https://open.spotify.com/track/2rBHnIxbhkMGLpqmsNX91M
     year: 1992
+    genres: [rap-metal, alternative-metal]
+    genres_by: person
     source: https://www.youtube.com/watch?v=hVck6DkOi38
     note: Rage Against the Machine, 1992. The file is tagged XX, the 20th
       anniversary reissue, so the recording is the 1992 one and the master is
@@ -14,12 +16,16 @@ tracks:
   - track: take-the-power-back
     url: https://open.spotify.com/track/25CbtOzU8Pn17SAaXFjIR3
     year: 1992
+    genres: [rap-metal, alternative-metal]
+    genres_by: person
     source: https://www.youtube.com/watch?v=qKSNABST4b0
     note: Rage Against the Machine, 1992. The bass carries the intro alone.
       Tagged XX as well, so the same reissue master
   - track: bullet-in-the-head
     url: https://open.spotify.com/track/1WWgMk8nD79p8VeKFGYrOw
     year: 1992
+    genres: [rap-metal, alternative-metal]
+    genres_by: person
     source: https://www.youtube.com/watch?v=__TDCSNnG5w
     note: Rage Against the Machine, 1992. Tagged XX, the same reissue master as
       the other two. It failed on its url alone the way the rest of them do

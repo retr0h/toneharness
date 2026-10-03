@@ -3,12 +3,18 @@ tracks:
   - track: dark-necessities
     url: https://open.spotify.com/track/2oaK4JLVnmRGIO9ytBE1bt
     year: 2016
+    genres: [funk-rock, alternative-rock]
+    genres_by: person
     note: The Getaway, 2016. The most bass-led thing he has recorded
   - track: look-around
     url: https://open.spotify.com/track/4RU7rnJBOXCzWmsLDqUaFC
     year: 2011
+    genres: [funk-rock, alternative-rock]
+    genres_by: person
     note: I'm With You, 2011
   - track: ethiopia
     url: https://open.spotify.com/track/33sXl7ETOUGrHp1mSfr9R1
     year: 2011
+    genres: [funk-rock, alternative-rock]
+    genres_by: person
     note: I'm With You, 2011

@@ -24,8 +24,11 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"slices"
 	"sort"
 	"strings"
+
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 )
 
 // Player is one artist in a music corpus: what their records measure as, and
@@ -41,7 +44,44 @@ type Player struct {
 	// Empty is the ordinary answer with few players, and it means the
 	// evidence is mixed rather than that something went wrong.
 	Terms []Derived `json:"terms"`
+	// Within is the same question asked inside each genre they play, which is
+	// a different question and usually a more useful one.
+	//
+	// Terms above compares a punk bassist against a jazz bassist, so it answers
+	// "is this player dark" and the population it answers against is whoever
+	// else happens to have been measured. Adding six southern rock players
+	// moved every verdict in the corpus without a single record changing.
+	//
+	// This answers "is this player dark for punk", where the others are the
+	// players who play it too. Nothing outside the genre can move it, so a word
+	// earned here only comes up for review when that genre gains a player, which
+	// is the moment it should.
+	//
+	// Both are kept because they are not the same claim. One finds a dark
+	// bassist, the other builds a dark punk record.
+	Within []InGenre `json:"within,omitempty"`
 }
+
+// InGenre is what a player's figures say against the others who play the same
+// genre.
+type InGenre struct {
+	// Genre is the slug, as the manifests tag it.
+	Genre string `json:"genre"`
+	// Of is how many players carry it, this one included.
+	Of int `json:"of"`
+	// Terms are the words earned against those players and nobody else.
+	Terms []Derived `json:"terms"`
+}
+
+// peersNeeded is how many players a genre needs before anybody is measured
+// inside it, this one included.
+//
+// Three, which is the count a genre already needs before anything may aim at
+// it: under that, a word says a player differs from one or two other people and
+// reads as though it said something about the genre. The record threshold is not
+// repeated here because this is a comparison between players rather than a
+// distribution over records.
+const peersNeeded = 3
 
 // Corpus measures every player under a tree and derives what each one's
 // figures say against the others.
@@ -68,6 +108,7 @@ func Corpus(
 
 	out := []Player(nil)
 	together := map[string]Across{}
+	plays := map[string][]string{}
 
 	for _, e := range entries {
 		if !e.IsDir() {
@@ -79,7 +120,7 @@ func Corpus(
 			return nil, err
 		}
 
-		got, err = named(fsys, path.Join(root, e.Name()), got)
+		got, tags, err := named(fsys, path.Join(root, e.Name()), got)
 		if err != nil {
 			return nil, err
 		}
@@ -90,12 +131,14 @@ func Corpus(
 
 		a := Together(profilesOf(got))
 		together[e.Name()] = a
+		plays[e.Name()] = tags
 
 		out = append(out, Player{ID: e.Name(), Records: len(got), Across: a})
 	}
 
 	for i := range out {
 		out[i].Terms = Derive(out[i].Across, without(together, out[i].ID))
+		out[i].Within = within(out[i].ID, together, plays)
 	}
 
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
@@ -122,14 +165,14 @@ func named(
 	fsys fs.FS,
 	dir string,
 	got []Named,
-) ([]Named, error) {
+) ([]Named, []string, error) {
 	f, err := fsys.Open(path.Join(dir, "corpus.yaml"))
 	if errors.Is(err, fs.ErrNotExist) {
-		return got, nil
+		return got, nil, nil
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("reading %s: %w", dir, err)
+		return nil, nil, fmt.Errorf("reading %s: %w", dir, err)
 	}
 
 	// Opened read-only, so Close has nothing to report the read did not.
@@ -137,12 +180,21 @@ func named(
 
 	m, err := ReadManifest(f)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	wanted := make(map[string]bool, len(m.Tracks))
+	tags := map[string]bool{}
+
 	for _, rec := range m.Tracks {
 		wanted[strings.ToLower(rec.Track)] = true
+
+		// The player's genres are their records', because that is where a genre
+		// is stated. One record of a kind makes them a player of it: the manifest
+		// says what they played, not how much of it.
+		for _, g := range rec.Genres {
+			tags[slug.Of(g)] = true
+		}
 	}
 
 	out := make([]Named, 0, len(got))
@@ -153,7 +205,54 @@ func named(
 		}
 	}
 
-	return out, nil
+	return out, sorted(tags), nil
+}
+
+// sorted is the keys of a set, in order, so a run answers the same way twice.
+func sorted(
+	of map[string]bool,
+) []string {
+	out := make([]string, 0, len(of))
+	for k := range of {
+		out = append(out, k)
+	}
+
+	sort.Strings(out)
+
+	return out
+}
+
+// within is what a player earns inside each genre they play.
+//
+// A genre with too few players is skipped rather than answered thinly: see
+// peersNeeded. A player whose genres are all short earns nothing here, which is
+// the ordinary answer for most of this corpus and is not a failure.
+func within(
+	id string,
+	together map[string]Across,
+	plays map[string][]string,
+) []InGenre {
+	out := []InGenre(nil)
+
+	for _, g := range plays[id] {
+		peers := map[string]Across{}
+
+		for other, tags := range plays {
+			if other != id && slices.Contains(tags, g) {
+				peers[other] = together[other]
+			}
+		}
+
+		if len(peers)+1 < peersNeeded {
+			continue
+		}
+
+		if terms := Derive(together[id], peers); len(terms) > 0 {
+			out = append(out, InGenre{Genre: g, Of: len(peers) + 1, Terms: terms})
+		}
+	}
+
+	return out
 }
 
 // profilesOf is what each of a player's records measured as.

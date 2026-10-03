@@ -705,7 +705,16 @@ type Evidence struct {
 	// Measured Figures taken from audio, keyed by feature. Measuring a record measures the record: the bass, the player, the amp, the mic, the desk and the master. So these compare against another measurement rather than name a knob position.
 	Measured *map[string]float64 `json:"measured,omitempty"`
 	Note     *string             `json:"note,omitempty"`
-	URL      *string             `json:"url,omitempty"`
+
+	// Spread How wide the middle half of those players is, keyed the same way, and the scale that makes `against` readable.
+	//
+	// A distance is large or small only against a spread. One hertz clear of players spanning two hundred is noise that rounded the right way; one hertz clear of players spanning three is the axis telling them apart. Both read as "clear by 1 Hz" and nothing said which was which.
+	//
+	// It is also what dates a word. A word is earned against whoever else was measured, so adding players rewrites verdicts nobody touched: one genre here held `scooped` until eighteen records from another joined the corpus and closed the gap. A word carrying the spread it beat says what it was true of, so a stale one can be seen instead of inferred.
+	//
+	// Not a threshold. Nothing refuses a word for sitting close, because the floor that exists is the measure's own precision rather than a number somebody chose. This is what lets a reader discount a word and a build move a control less far for one that barely earned it.
+	Spread *map[string]float64 `json:"spread,omitempty"`
+	URL    *string             `json:"url,omitempty"`
 }
 
 // EvidenceKind How something came to be believed. Open by design: a new way of learning is a new value here, not a new document.

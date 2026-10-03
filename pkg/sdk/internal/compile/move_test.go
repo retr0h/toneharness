@@ -628,6 +628,15 @@ func (s *MoveTestSuite) TestTermsOf() {
 		}}
 	}
 
+	// The same, carrying the width of the others' middle half, which is what a
+	// distance is read against where the evidence has one.
+	spread := func(mine, theirs, width float64, key string) []tone.Evidence {
+		out := figures(mine, theirs, key)
+		out[0].Spread = &map[string]float64{key: width}
+
+		return out
+	}
+
 	tests := []struct {
 		name string
 		in   []Word
@@ -651,6 +660,31 @@ func (s *MoveTestSuite) TestTermsOf() {
 			name: "a word with the gap that earned it",
 			in: []Word{
 				{Term: "clean", Evidence: figures(0.12, 0.24, "harmonics")},
+			},
+			want: []heard{{term: "clean", weight: 0.5}},
+		},
+		{
+			// The spread decides it where the evidence carries one, because
+			// that is what a distance means: half the width of everybody
+			// else's middle half is half a step.
+			//
+			// The same figures read 50% against the median and 25% against the
+			// spread, and the spread is the one that answers how far past the
+			// others this sits rather than how far from where they sit.
+			name: "a gap read against the spread rather than the middle",
+			in: []Word{
+				{Term: "clean", Evidence: spread(0.12, 0.24, 0.48, "harmonics")},
+			},
+			want: []heard{{term: "clean", weight: 0.25}},
+		},
+		{
+			// A spread of nothing is every other player reading alike, and
+			// dividing by it would be dividing by zero. The median is what
+			// answers instead, which is what answered before a word carried
+			// its spread at all.
+			name: "a spread of nothing falls back to the middle",
+			in: []Word{
+				{Term: "clean", Evidence: spread(0.12, 0.24, 0, "harmonics")},
 			},
 			want: []heard{{term: "clean", weight: 0.5}},
 		},

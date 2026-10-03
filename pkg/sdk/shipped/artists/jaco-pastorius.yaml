@@ -44,13 +44,15 @@ ask:
             earns the word is the measurement below.
         - kind: audio
           measured: { centroid: 259 }
-          against: { centroid: 134 }
+          against: { centroid: 138 }
+          spread: { centroid: 45 }
           note: >-
             his centroid across Continuum, Barbary Coast, Teen Town and Three
-            Views of a Secret, against a middle of 134Hz across the sixteen
-            players measured, clear by 36Hz. The widest centroid margin in the
-            corpus, and the only word here that has survived every correction to
-            it.
+            Views of a Secret, against a middle of 138Hz across the twenty-seven
+            other players measured, clear by 36Hz. That is 79% of the width of
+            their middle half, which is what makes it a word rather than a
+            rounding: it is the widest centroid margin in the corpus and the only
+            one here that has survived every correction to it.
           caveat: >-
             measures the record rather than the player, and a fretless played
             near the bridge is bright before any amplifier touches it.

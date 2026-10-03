@@ -1,5 +1,176 @@
 [
   {
+    "name": "alternative-metal",
+    "slug": "alternative-metal",
+    "records": 7,
+    "players": 2,
+    "against": 26,
+    "across": {
+      "tracks": 7,
+      "low": {
+        "low": 0.7834607609670596,
+        "mid": 0.94846409766474,
+        "high": 0.989139192177827
+      },
+      "mid": {
+        "low": 0.01080996456190777,
+        "mid": 0.0510196276530253,
+        "high": 0.1999703182922417
+      },
+      "high": {
+        "low": 0.000050843260265331626,
+        "mid": 0.0013694207070318973,
+        "high": 0.04381778710819929
+      },
+      "centroid": {
+        "low": 104.66515185538123,
+        "mid": 113.77622764310709,
+        "high": 275.1051522253005
+      },
+      "transient": {
+        "low": 0.5865203791439733,
+        "mid": 0.752943773592422,
+        "high": 0.9174073744532616,
+        "from": 7
+      },
+      "decay": {
+        "low": 0.03,
+        "mid": 0.17,
+        "high": 0.75,
+        "from": 7
+      },
+      "dynamic_range": {
+        "low": 7.2993224573237026,
+        "mid": 11.519535359454679,
+        "high": 34.72345302731615
+      },
+      "harmonics": {
+        "low": 0.15239942363840764,
+        "mid": 0.2360615910694294,
+        "high": 0.3485552916500729
+      },
+      "even_odd": {
+        "low": 0.29373948491104784,
+        "mid": 0.6760141331303474,
+        "high": 0.8951427573450557
+      }
+    },
+    "elsewhere": {
+      "centroid": 141,
+      "decay": 0.44,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.87,
+      "low": 0.96,
+      "mid": 0.04,
+      "transient": 0.73
+    },
+    "terms": [
+      {
+        "term": "dark",
+        "key": "centroid",
+        "why": "the spectrum's centre of gravity, in hertz",
+        "mine": 114,
+        "others": 141,
+        "of": 27,
+        "margin": 14,
+        "spread": 46,
+        "against": [
+          128,
+          174
+        ]
+      },
+      {
+        "term": "saturated",
+        "key": "harmonics",
+        "why": "share of energy above the fundamental",
+        "mine": 0.24,
+        "others": 0.18,
+        "of": 27,
+        "margin": 0.0050000000000000044,
+        "spread": 0.11,
+        "against": [
+          0.13,
+          0.24
+        ]
+      }
+    ],
+    "usable": false,
+    "instrument": "bass"
+  },
+  {
+    "name": "alternative-rock",
+    "slug": "alternative-rock",
+    "records": 3,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 3,
+      "low": {
+        "low": 0.9053823352217634,
+        "mid": 0.9349950363917349,
+        "high": 0.9654885232865285
+      },
+      "mid": {
+        "low": 0.034392197246162055,
+        "mid": 0.0647381106122149,
+        "high": 0.09176813911310473
+      },
+      "high": {
+        "low": 0.00011927946730952519,
+        "mid": 0.0002668529960502998,
+        "high": 0.0028495256651318466
+      },
+      "centroid": {
+        "low": 114.75779687374984,
+        "mid": 134.20471977788594,
+        "high": 149.96001925313618
+      },
+      "transient": {
+        "low": 0.7082458567890221,
+        "mid": 0.7274036611618804,
+        "high": 0.7482983493454084,
+        "from": 3
+      },
+      "decay": {
+        "low": 0.15,
+        "mid": 0.21,
+        "high": 0.23,
+        "from": 3
+      },
+      "dynamic_range": {
+        "low": 6.507846872715238,
+        "mid": 6.681021886847434,
+        "high": 11.276259903789503
+      },
+      "harmonics": {
+        "low": 0.1648099015542139,
+        "mid": 0.18210608710485174,
+        "high": 0.23959588295811254
+      },
+      "even_odd": {
+        "low": 0.7765880744236511,
+        "mid": 0.8828886978542463,
+        "high": 0.8831381151071231
+      }
+    },
+    "elsewhere": {
+      "centroid": 143,
+      "decay": 0.55,
+      "dynamics": 7.7,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.85,
+      "low": 0.96,
+      "mid": 0.04,
+      "transient": 0.74
+    },
+    "terms": null,
+    "usable": false,
+    "instrument": "bass"
+  },
+  {
     "name": "blues-rock",
     "slug": "blues-rock",
     "records": 3,
@@ -74,7 +245,12 @@
         "mine": 0.01,
         "others": 0.05,
         "of": 28,
-        "margin": 0.01
+        "margin": 0.01,
+        "spread": 0.13,
+        "against": [
+          0.02,
+          0.15
+        ]
       },
       {
         "term": "clean",
@@ -83,9 +259,271 @@
         "mine": 0.07,
         "others": 0.18,
         "of": 28,
-        "margin": 0.07999999999999999
+        "margin": 0.07999999999999999,
+        "spread": 0.09,
+        "against": [
+          0.15,
+          0.24
+        ]
       }
     ],
+    "usable": false,
+    "instrument": "bass"
+  },
+  {
+    "name": "funk",
+    "slug": "funk",
+    "records": 4,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 4,
+      "low": {
+        "low": 0.7521448055229449,
+        "mid": 0.7694327616746797,
+        "high": 0.8140450686347253
+      },
+      "mid": {
+        "low": 0.18470937628242043,
+        "mid": 0.2303696966660353,
+        "high": 0.24720364885040583
+      },
+      "high": {
+        "low": 0.00019754165928508624,
+        "mid": 0.0012455550828543369,
+        "high": 0.005047865059275426
+      },
+      "centroid": {
+        "low": 194.05050313197808,
+        "mid": 213.68606132896494,
+        "high": 235.2989417966604
+      },
+      "transient": {
+        "low": 0.6430503525426313,
+        "mid": 0.7886127674221307,
+        "high": 0.9046392062696359,
+        "from": 4
+      },
+      "decay": {
+        "low": 0.11,
+        "mid": 0.17,
+        "high": 0.25,
+        "from": 4
+      },
+      "dynamic_range": {
+        "low": 13.438441948376648,
+        "mid": 18.436743703874278,
+        "high": 19.64714165136993
+      },
+      "harmonics": {
+        "low": 0.09902875473532834,
+        "mid": 0.2173290635719513,
+        "high": 0.2565677219206036
+      },
+      "even_odd": {
+        "low": 0.6236011318809948,
+        "mid": 0.7850160903701491,
+        "high": 0.8263054023823984
+      }
+    },
+    "elsewhere": {
+      "centroid": 138,
+      "decay": 0.55,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.86,
+      "low": 0.96,
+      "mid": 0.04,
+      "transient": 0.73
+    },
+    "terms": [
+      {
+        "term": "mid-forward",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.23,
+        "others": 0.04,
+        "of": 28,
+        "margin": 0.13,
+        "spread": 0.09,
+        "against": [
+          0.02,
+          0.1
+        ]
+      },
+      {
+        "term": "bright",
+        "key": "centroid",
+        "why": "the spectrum's centre of gravity, in hertz",
+        "mine": 214,
+        "others": 138,
+        "of": 28,
+        "margin": 42.5,
+        "spread": 45,
+        "against": [
+          127,
+          172
+        ]
+      }
+    ],
+    "usable": false,
+    "instrument": "bass"
+  },
+  {
+    "name": "funk-metal",
+    "slug": "funk-metal",
+    "records": 4,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 4,
+      "low": {
+        "low": 0.7834607609670596,
+        "mid": 0.9628575751000235,
+        "high": 0.9720493818651784
+      },
+      "mid": {
+        "low": 0.027330748061282606,
+        "mid": 0.0510196276530253,
+        "high": 0.1999703182922417
+      },
+      "high": {
+        "low": 0.0006198700735390692,
+        "mid": 0.01656892074069855,
+        "high": 0.04381778710819929
+      },
+      "centroid": {
+        "low": 113.39334190619239,
+        "mid": 264.42006865917193,
+        "high": 275.1051522253005
+      },
+      "transient": {
+        "low": 0.5865203791439733,
+        "mid": 0.752943773592422,
+        "high": 0.8637238707611685,
+        "from": 4
+      },
+      "decay": {
+        "low": 0.03,
+        "mid": 0.16,
+        "high": 0.19,
+        "from": 4
+      },
+      "dynamic_range": {
+        "low": 11.466460036025616,
+        "mid": 19.05543490644789,
+        "high": 34.72345302731615
+      },
+      "harmonics": {
+        "low": 0.15239942363840764,
+        "mid": 0.2360615910694294,
+        "high": 0.33516301951046035
+      },
+      "even_odd": {
+        "low": 0.29373948491104784,
+        "mid": 0.6160935858780074,
+        "high": 0.7720494529516538
+      }
+    },
+    "elsewhere": {
+      "centroid": 138,
+      "decay": 0.55,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.86,
+      "low": 0.95,
+      "mid": 0.04,
+      "transient": 0.73
+    },
+    "terms": [
+      {
+        "term": "bright",
+        "key": "centroid",
+        "why": "the spectrum's centre of gravity, in hertz",
+        "mine": 264,
+        "others": 138,
+        "of": 28,
+        "margin": 92.5,
+        "spread": 45,
+        "against": [
+          127,
+          172
+        ]
+      }
+    ],
+    "usable": false,
+    "instrument": "bass"
+  },
+  {
+    "name": "funk-rock",
+    "slug": "funk-rock",
+    "records": 3,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 3,
+      "low": {
+        "low": 0.9053823352217634,
+        "mid": 0.9349950363917349,
+        "high": 0.9654885232865285
+      },
+      "mid": {
+        "low": 0.034392197246162055,
+        "mid": 0.0647381106122149,
+        "high": 0.09176813911310473
+      },
+      "high": {
+        "low": 0.00011927946730952519,
+        "mid": 0.0002668529960502998,
+        "high": 0.0028495256651318466
+      },
+      "centroid": {
+        "low": 114.75779687374984,
+        "mid": 134.20471977788594,
+        "high": 149.96001925313618
+      },
+      "transient": {
+        "low": 0.7082458567890221,
+        "mid": 0.7274036611618804,
+        "high": 0.7482983493454084,
+        "from": 3
+      },
+      "decay": {
+        "low": 0.15,
+        "mid": 0.21,
+        "high": 0.23,
+        "from": 3
+      },
+      "dynamic_range": {
+        "low": 6.507846872715238,
+        "mid": 6.681021886847434,
+        "high": 11.276259903789503
+      },
+      "harmonics": {
+        "low": 0.1648099015542139,
+        "mid": 0.18210608710485174,
+        "high": 0.23959588295811254
+      },
+      "even_odd": {
+        "low": 0.7765880744236511,
+        "mid": 0.8828886978542463,
+        "high": 0.8831381151071231
+      }
+    },
+    "elsewhere": {
+      "centroid": 143,
+      "decay": 0.55,
+      "dynamics": 7.7,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.85,
+      "low": 0.96,
+      "mid": 0.04,
+      "transient": 0.74
+    },
+    "terms": null,
     "usable": false,
     "instrument": "bass"
   },
@@ -164,7 +602,12 @@
         "mine": 0.01,
         "others": 0.05,
         "of": 26,
-        "margin": 0.01
+        "margin": 0.01,
+        "spread": 0.13,
+        "against": [
+          0.02,
+          0.15
+        ]
       },
       {
         "term": "dark",
@@ -173,7 +616,12 @@
         "mine": 124,
         "others": 144,
         "of": 26,
-        "margin": 6
+        "margin": 6,
+        "spread": 61,
+        "against": [
+          130,
+          191
+        ]
       },
       {
         "term": "clean",
@@ -182,10 +630,515 @@
         "mine": 0.13,
         "others": 0.18,
         "of": 26,
-        "margin": 0.01999999999999999
+        "margin": 0.01999999999999999,
+        "spread": 0.09,
+        "against": [
+          0.15,
+          0.24
+        ]
       }
     ],
     "usable": true,
+    "instrument": "bass"
+  },
+  {
+    "name": "hard-rock",
+    "slug": "hard-rock",
+    "records": 4,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 4,
+      "low": {
+        "low": 0.8453964328043813,
+        "mid": 0.8676785972958495,
+        "high": 0.8808140927427092
+      },
+      "mid": {
+        "low": 0.11849295908624242,
+        "mid": 0.1443075526699091,
+        "high": 0.15380478926399613
+      },
+      "high": {
+        "low": 0.00000874597701058059,
+        "mid": 0.0007987779316225457,
+        "high": 0.0095472893726202
+      },
+      "centroid": {
+        "low": 161.3898530000951,
+        "mid": 177.17131707675884,
+        "high": 188.1543054936161
+      },
+      "transient": {
+        "low": 0.558434631481644,
+        "mid": 0.7382560199925062,
+        "high": 0.8702595931452998,
+        "from": 4
+      },
+      "decay": {
+        "low": 0.42,
+        "mid": 0.55,
+        "high": 0.65,
+        "from": 4
+      },
+      "dynamic_range": {
+        "low": 5.093406078530361,
+        "mid": 8.079960673774021,
+        "high": 9.639768619653857
+      },
+      "harmonics": {
+        "low": 0.19239560075612194,
+        "mid": 0.29351135831931274,
+        "high": 0.30467591554978657
+      },
+      "even_odd": {
+        "low": 0.7344129449112553,
+        "mid": 0.8726201778951104,
+        "high": 0.9046625943026184
+      }
+    },
+    "elsewhere": {
+      "centroid": 138,
+      "decay": 0.33,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.85,
+      "low": 0.96,
+      "mid": 0.04,
+      "transient": 0.73
+    },
+    "terms": [
+      {
+        "term": "mid-forward",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.14,
+        "others": 0.04,
+        "of": 28,
+        "margin": 0.03500000000000002,
+        "spread": 0.09,
+        "against": [
+          0.02,
+          0.11
+        ]
+      },
+      {
+        "term": "saturated",
+        "key": "harmonics",
+        "why": "share of energy above the fundamental",
+        "mine": 0.29,
+        "others": 0.18,
+        "of": 28,
+        "margin": 0.04999999999999999,
+        "spread": 0.1,
+        "against": [
+          0.14,
+          0.24
+        ]
+      }
+    ],
+    "usable": false,
+    "instrument": "bass"
+  },
+  {
+    "name": "jazz-fusion",
+    "slug": "jazz-fusion",
+    "records": 4,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 4,
+      "low": {
+        "low": 0.33189794272322326,
+        "mid": 0.6568269230943541,
+        "high": 0.8218371565910795
+      },
+      "mid": {
+        "low": 0.1780138949121629,
+        "mid": 0.3891564760175804,
+        "high": 0.6667812629389523
+      },
+      "high": {
+        "low": 0.000030971150664454164,
+        "mid": 0.0001489484967576183,
+        "high": 0.0013207943378243587
+      },
+      "centroid": {
+        "low": 207.07580198507813,
+        "mid": 258.84620767649295,
+        "high": 382.93284462390886
+      },
+      "transient": {
+        "low": 0.5874020559211419,
+        "mid": 0.7362634792126665,
+        "high": 0.8382628443644125,
+        "from": 4
+      },
+      "decay": {
+        "low": 0.14,
+        "mid": 0.27,
+        "high": 0.67,
+        "from": 4
+      },
+      "dynamic_range": {
+        "low": 7.129443524757969,
+        "mid": 12.961231417812389,
+        "high": 16.462349232829332
+      },
+      "harmonics": {
+        "low": 0.10779599925498287,
+        "mid": 0.2559516160726109,
+        "high": 0.39472269771385876
+      },
+      "even_odd": {
+        "low": 0.5332215402572483,
+        "mid": 0.71293909304464,
+        "high": 0.8830933964994266
+      }
+    },
+    "elsewhere": {
+      "centroid": 138,
+      "decay": 0.55,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.86,
+      "low": 0.96,
+      "mid": 0.04,
+      "transient": 0.73
+    },
+    "terms": [
+      {
+        "term": "mid-forward",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.39,
+        "others": 0.04,
+        "of": 28,
+        "margin": 0.29000000000000004,
+        "spread": 0.09,
+        "against": [
+          0.02,
+          0.1
+        ]
+      },
+      {
+        "term": "bright",
+        "key": "centroid",
+        "why": "the spectrum's centre of gravity, in hertz",
+        "mine": 259,
+        "others": 138,
+        "of": 28,
+        "margin": 87.5,
+        "spread": 45,
+        "against": [
+          127,
+          172
+        ]
+      },
+      {
+        "term": "saturated",
+        "key": "harmonics",
+        "why": "share of energy above the fundamental",
+        "mine": 0.26,
+        "others": 0.18,
+        "of": 28,
+        "margin": 0.020000000000000018,
+        "spread": 0.1,
+        "against": [
+          0.14,
+          0.24
+        ]
+      }
+    ],
+    "usable": false,
+    "instrument": "bass"
+  },
+  {
+    "name": "neo-soul",
+    "slug": "neo-soul",
+    "records": 3,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 3,
+      "low": {
+        "low": 0.9509208229675652,
+        "mid": 0.9808521577731645,
+        "high": 0.9952735046809524
+      },
+      "mid": {
+        "low": 0.004725368233748295,
+        "mid": 0.019077652221373434,
+        "high": 0.04906000656692015
+      },
+      "high": {
+        "low": 0.0000011270852993066483,
+        "mid": 0.00001917046551462725,
+        "high": 0.00007019000546212246
+      },
+      "centroid": {
+        "low": 86.2468507506279,
+        "mid": 95.69107847747638,
+        "high": 128.8865764364263
+      },
+      "transient": {
+        "low": 0.6446266970814617,
+        "mid": 0.6666280805018905,
+        "high": 0.7848725990296361,
+        "from": 3
+      },
+      "decay": {
+        "low": 0.09,
+        "mid": 0.13,
+        "high": 0.33,
+        "from": 3
+      },
+      "dynamic_range": {
+        "low": 8.924369289770747,
+        "mid": 9.729921035018727,
+        "high": 11.908410396145063
+      },
+      "harmonics": {
+        "low": 0.14584305680022408,
+        "mid": 0.27867240996176934,
+        "high": 0.3010991201818109
+      },
+      "even_odd": {
+        "low": 0.7930400514878599,
+        "mid": 0.8479657440964815,
+        "high": 0.9350317542639148
+      }
+    },
+    "elsewhere": {
+      "centroid": 143,
+      "decay": 0.55,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.86,
+      "low": 0.95,
+      "mid": 0.05,
+      "transient": 0.74
+    },
+    "terms": [
+      {
+        "term": "dark",
+        "key": "centroid",
+        "why": "the spectrum's centre of gravity, in hertz",
+        "mine": 96,
+        "others": 143,
+        "of": 28,
+        "margin": 32,
+        "spread": 56,
+        "against": [
+          128,
+          184
+        ]
+      },
+      {
+        "term": "saturated",
+        "key": "harmonics",
+        "why": "share of energy above the fundamental",
+        "mine": 0.28,
+        "others": 0.18,
+        "of": 28,
+        "margin": 0.040000000000000036,
+        "spread": 0.1,
+        "against": [
+          0.14,
+          0.24
+        ]
+      }
+    ],
+    "usable": false,
+    "instrument": "bass"
+  },
+  {
+    "name": "p-funk",
+    "slug": "p-funk",
+    "records": 4,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 4,
+      "low": {
+        "low": 0.7521448055229449,
+        "mid": 0.7694327616746797,
+        "high": 0.8140450686347253
+      },
+      "mid": {
+        "low": 0.18470937628242043,
+        "mid": 0.2303696966660353,
+        "high": 0.24720364885040583
+      },
+      "high": {
+        "low": 0.00019754165928508624,
+        "mid": 0.0012455550828543369,
+        "high": 0.005047865059275426
+      },
+      "centroid": {
+        "low": 194.05050313197808,
+        "mid": 213.68606132896494,
+        "high": 235.2989417966604
+      },
+      "transient": {
+        "low": 0.6430503525426313,
+        "mid": 0.7886127674221307,
+        "high": 0.9046392062696359,
+        "from": 4
+      },
+      "decay": {
+        "low": 0.11,
+        "mid": 0.17,
+        "high": 0.25,
+        "from": 4
+      },
+      "dynamic_range": {
+        "low": 13.438441948376648,
+        "mid": 18.436743703874278,
+        "high": 19.64714165136993
+      },
+      "harmonics": {
+        "low": 0.09902875473532834,
+        "mid": 0.2173290635719513,
+        "high": 0.2565677219206036
+      },
+      "even_odd": {
+        "low": 0.6236011318809948,
+        "mid": 0.7850160903701491,
+        "high": 0.8263054023823984
+      }
+    },
+    "elsewhere": {
+      "centroid": 138,
+      "decay": 0.55,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.86,
+      "low": 0.96,
+      "mid": 0.04,
+      "transient": 0.73
+    },
+    "terms": [
+      {
+        "term": "mid-forward",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.23,
+        "others": 0.04,
+        "of": 28,
+        "margin": 0.13,
+        "spread": 0.09,
+        "against": [
+          0.02,
+          0.1
+        ]
+      },
+      {
+        "term": "bright",
+        "key": "centroid",
+        "why": "the spectrum's centre of gravity, in hertz",
+        "mine": 214,
+        "others": 138,
+        "of": 28,
+        "margin": 42.5,
+        "spread": 45,
+        "against": [
+          127,
+          172
+        ]
+      }
+    ],
+    "usable": false,
+    "instrument": "bass"
+  },
+  {
+    "name": "pop",
+    "slug": "pop",
+    "records": 3,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 3,
+      "low": {
+        "low": 0.6823547635422205,
+        "mid": 0.8466305998784809,
+        "high": 0.9654913627918413
+      },
+      "mid": {
+        "low": 0.03449966572837454,
+        "mid": 0.15335742624813783,
+        "high": 0.31762174917546626
+      },
+      "high": {
+        "low": 0.000008971479784074724,
+        "mid": 0.000011973873381232847,
+        "high": 0.000023487282313323927
+      },
+      "centroid": {
+        "low": 140.43826665622996,
+        "mid": 165.93961933568983,
+        "high": 215.14216445408235
+      },
+      "transient": {
+        "low": 0.7302759191437851,
+        "mid": 0.7361913455780849,
+        "high": 0.8058885836636915,
+        "from": 3
+      },
+      "decay": {
+        "low": 0.23,
+        "mid": 0.25,
+        "high": 0.46,
+        "from": 3
+      },
+      "dynamic_range": {
+        "low": 6.562909014328833,
+        "mid": 9.902945577096595,
+        "high": 10.34919968047589
+      },
+      "harmonics": {
+        "low": 0.08700957288827386,
+        "mid": 0.18115635403435187,
+        "high": 0.22604787880173244
+      },
+      "even_odd": {
+        "low": 0.8418118169240326,
+        "mid": 0.8709374589043585,
+        "high": 0.8870800559194838
+      }
+    },
+    "elsewhere": {
+      "centroid": 138,
+      "decay": 0.55,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.85,
+      "low": 0.96,
+      "mid": 0.04,
+      "transient": 0.73
+    },
+    "terms": [
+      {
+        "term": "mid-forward",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.15,
+        "others": 0.04,
+        "of": 28,
+        "margin": 0.04999999999999999,
+        "spread": 0.09,
+        "against": [
+          0.02,
+          0.1
+        ]
+      }
+    ],
+    "usable": false,
     "instrument": "bass"
   },
   {
@@ -257,6 +1210,106 @@
     },
     "terms": null,
     "usable": true,
+    "instrument": "bass"
+  },
+  {
+    "name": "prog-rock",
+    "slug": "prog-rock",
+    "records": 4,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 4,
+      "low": {
+        "low": 0.8453964328043813,
+        "mid": 0.8676785972958495,
+        "high": 0.8808140927427092
+      },
+      "mid": {
+        "low": 0.11849295908624242,
+        "mid": 0.1443075526699091,
+        "high": 0.15380478926399613
+      },
+      "high": {
+        "low": 0.00000874597701058059,
+        "mid": 0.0007987779316225457,
+        "high": 0.0095472893726202
+      },
+      "centroid": {
+        "low": 161.3898530000951,
+        "mid": 177.17131707675884,
+        "high": 188.1543054936161
+      },
+      "transient": {
+        "low": 0.558434631481644,
+        "mid": 0.7382560199925062,
+        "high": 0.8702595931452998,
+        "from": 4
+      },
+      "decay": {
+        "low": 0.42,
+        "mid": 0.55,
+        "high": 0.65,
+        "from": 4
+      },
+      "dynamic_range": {
+        "low": 5.093406078530361,
+        "mid": 8.079960673774021,
+        "high": 9.639768619653857
+      },
+      "harmonics": {
+        "low": 0.19239560075612194,
+        "mid": 0.29351135831931274,
+        "high": 0.30467591554978657
+      },
+      "even_odd": {
+        "low": 0.7344129449112553,
+        "mid": 0.8726201778951104,
+        "high": 0.9046625943026184
+      }
+    },
+    "elsewhere": {
+      "centroid": 138,
+      "decay": 0.33,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.85,
+      "low": 0.96,
+      "mid": 0.04,
+      "transient": 0.73
+    },
+    "terms": [
+      {
+        "term": "mid-forward",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.14,
+        "others": 0.04,
+        "of": 28,
+        "margin": 0.03500000000000002,
+        "spread": 0.09,
+        "against": [
+          0.02,
+          0.11
+        ]
+      },
+      {
+        "term": "saturated",
+        "key": "harmonics",
+        "why": "share of energy above the fundamental",
+        "mine": 0.29,
+        "others": 0.18,
+        "of": 28,
+        "margin": 0.04999999999999999,
+        "spread": 0.1,
+        "against": [
+          0.14,
+          0.24
+        ]
+      }
+    ],
+    "usable": false,
     "instrument": "bass"
   },
   {
@@ -334,7 +1387,12 @@
         "mine": 0.11,
         "others": 0.04,
         "of": 22,
-        "margin": 0.05
+        "margin": 0.05,
+        "spread": 0.05,
+        "against": [
+          0.01,
+          0.06
+        ]
       },
       {
         "term": "bright",
@@ -343,10 +1401,287 @@
         "mine": 174,
         "others": 134,
         "of": 22,
-        "margin": 10
+        "margin": 10,
+        "spread": 38,
+        "against": [
+          126,
+          164
+        ]
       }
     ],
     "usable": true,
+    "instrument": "bass"
+  },
+  {
+    "name": "r-and-b",
+    "slug": "r-and-b",
+    "records": 3,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 3,
+      "low": {
+        "low": 0.9509208229675652,
+        "mid": 0.9808521577731645,
+        "high": 0.9952735046809524
+      },
+      "mid": {
+        "low": 0.004725368233748295,
+        "mid": 0.019077652221373434,
+        "high": 0.04906000656692015
+      },
+      "high": {
+        "low": 0.0000011270852993066483,
+        "mid": 0.00001917046551462725,
+        "high": 0.00007019000546212246
+      },
+      "centroid": {
+        "low": 86.2468507506279,
+        "mid": 95.69107847747638,
+        "high": 128.8865764364263
+      },
+      "transient": {
+        "low": 0.6446266970814617,
+        "mid": 0.6666280805018905,
+        "high": 0.7848725990296361,
+        "from": 3
+      },
+      "decay": {
+        "low": 0.09,
+        "mid": 0.13,
+        "high": 0.33,
+        "from": 3
+      },
+      "dynamic_range": {
+        "low": 8.924369289770747,
+        "mid": 9.729921035018727,
+        "high": 11.908410396145063
+      },
+      "harmonics": {
+        "low": 0.14584305680022408,
+        "mid": 0.27867240996176934,
+        "high": 0.3010991201818109
+      },
+      "even_odd": {
+        "low": 0.7930400514878599,
+        "mid": 0.8479657440964815,
+        "high": 0.9350317542639148
+      }
+    },
+    "elsewhere": {
+      "centroid": 143,
+      "decay": 0.55,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.86,
+      "low": 0.95,
+      "mid": 0.05,
+      "transient": 0.74
+    },
+    "terms": [
+      {
+        "term": "dark",
+        "key": "centroid",
+        "why": "the spectrum's centre of gravity, in hertz",
+        "mine": 96,
+        "others": 143,
+        "of": 28,
+        "margin": 32,
+        "spread": 56,
+        "against": [
+          128,
+          184
+        ]
+      },
+      {
+        "term": "saturated",
+        "key": "harmonics",
+        "why": "share of energy above the fundamental",
+        "mine": 0.28,
+        "others": 0.18,
+        "of": 28,
+        "margin": 0.040000000000000036,
+        "spread": 0.1,
+        "against": [
+          0.14,
+          0.24
+        ]
+      }
+    ],
+    "usable": false,
+    "instrument": "bass"
+  },
+  {
+    "name": "rap-metal",
+    "slug": "rap-metal",
+    "records": 3,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 3,
+      "low": {
+        "low": 0.8442264144343254,
+        "mid": 0.94846409766474,
+        "high": 0.989139192177827
+      },
+      "mid": {
+        "low": 0.01080996456190777,
+        "mid": 0.05105421676433139,
+        "high": 0.1487875186007821
+      },
+      "high": {
+        "low": 0.000050843260265331626,
+        "mid": 0.0004816855709285216,
+        "high": 0.006986066964892478
+      },
+      "centroid": {
+        "low": 104.66515185538123,
+        "mid": 108.60358161804639,
+        "high": 198.28871803691368
+      },
+      "transient": {
+        "low": 0.6695959647609485,
+        "mid": 0.8279909996594915,
+        "high": 0.9174073744532616,
+        "from": 3
+      },
+      "decay": {
+        "low": 0.17,
+        "mid": 0.69,
+        "high": 0.75,
+        "from": 3
+      },
+      "dynamic_range": {
+        "low": 7.2993224573237026,
+        "mid": 9.60079910894985,
+        "high": 11.93512114540563
+      },
+      "harmonics": {
+        "low": 0.22606830551339024,
+        "mid": 0.24025733172964053,
+        "high": 0.3485552916500729
+      },
+      "even_odd": {
+        "low": 0.6760141331303474,
+        "mid": 0.8381488039026934,
+        "high": 0.8951427573450557
+      }
+    },
+    "elsewhere": {
+      "centroid": 143,
+      "decay": 0.33,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.86,
+      "low": 0.96,
+      "mid": 0.04,
+      "transient": 0.73
+    },
+    "terms": [
+      {
+        "term": "dark",
+        "key": "centroid",
+        "why": "the spectrum's centre of gravity, in hertz",
+        "mine": 109,
+        "others": 143,
+        "of": 28,
+        "margin": 19,
+        "spread": 56,
+        "against": [
+          128,
+          184
+        ]
+      }
+    ],
+    "usable": false,
+    "instrument": "bass"
+  },
+  {
+    "name": "rock",
+    "slug": "rock",
+    "records": 3,
+    "players": 1,
+    "against": 27,
+    "across": {
+      "tracks": 3,
+      "low": {
+        "low": 0.6823547635422205,
+        "mid": 0.8466305998784809,
+        "high": 0.9654913627918413
+      },
+      "mid": {
+        "low": 0.03449966572837454,
+        "mid": 0.15335742624813783,
+        "high": 0.31762174917546626
+      },
+      "high": {
+        "low": 0.000008971479784074724,
+        "mid": 0.000011973873381232847,
+        "high": 0.000023487282313323927
+      },
+      "centroid": {
+        "low": 140.43826665622996,
+        "mid": 165.93961933568983,
+        "high": 215.14216445408235
+      },
+      "transient": {
+        "low": 0.7302759191437851,
+        "mid": 0.7361913455780849,
+        "high": 0.8058885836636915,
+        "from": 3
+      },
+      "decay": {
+        "low": 0.23,
+        "mid": 0.25,
+        "high": 0.46,
+        "from": 3
+      },
+      "dynamic_range": {
+        "low": 6.562909014328833,
+        "mid": 9.902945577096595,
+        "high": 10.34919968047589
+      },
+      "harmonics": {
+        "low": 0.08700957288827386,
+        "mid": 0.18115635403435187,
+        "high": 0.22604787880173244
+      },
+      "even_odd": {
+        "low": 0.8418118169240326,
+        "mid": 0.8709374589043585,
+        "high": 0.8870800559194838
+      }
+    },
+    "elsewhere": {
+      "centroid": 138,
+      "decay": 0.55,
+      "dynamics": 6.8,
+      "harmonics": 0.18,
+      "high": 0,
+      "lean": 0.85,
+      "low": 0.96,
+      "mid": 0.04,
+      "transient": 0.73
+    },
+    "terms": [
+      {
+        "term": "mid-forward",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.15,
+        "others": 0.04,
+        "of": 28,
+        "margin": 0.04999999999999999,
+        "spread": 0.09,
+        "against": [
+          0.02,
+          0.1
+        ]
+      }
+    ],
+    "usable": false,
     "instrument": "bass"
   },
   {

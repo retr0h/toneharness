@@ -32,13 +32,16 @@ ask:
           note: '"keeping the volume turned all the way up and the tone all the way down"'
         - kind: audio
           measured: { centroid: 96 }
-          against: { centroid: 134 }
+          against: { centroid: 143 }
           note: >-
-            his centroid sits at 96Hz, the darkest of the sixteen players
-            measured, against a middle of 134Hz. It no longer earns the word:
-            against eight others he was clear by 3Hz, and six more players
-            between him and the middle closed that. The word is kept on the
+            his centroid sits at 96Hz against a middle of 143Hz across the
+            twenty-seven other players measured. It no longer earns the word:
+            against eight others he was clear by 3Hz, and every player added
+            since has sat between him and the middle. The word is kept on the
             citation above.
+
+            No `spread` here on purpose. That field is the scale a margin is
+            read against, and there is no margin left to read.
           caveat: >-
             measures the record rather than the player, and all three records
             are one album cut by one engineer. The margin has been 28Hz, then

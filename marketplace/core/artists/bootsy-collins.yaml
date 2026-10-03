@@ -37,7 +37,8 @@ ask:
       evidence:
         - kind: audio
           measured: { mid: 0.23 }
-          against: { mid: 0.05 }
+          against: { mid: 0.04 }
+          spread: { mid: 0.09 }
           note: >-
             23% of his energy sits in the mid band across the four records,
             against a middle of 5% across the sixteen players measured, clear
