@@ -195,6 +195,146 @@ func (s *CorpusPublicTestSuite) manifest(
 		filepath.Join(s.root, player, "corpus.yaml"), []byte(body), 0o600))
 }
 
+// tagged writes a manifest whose records all carry the same genres, which is
+// what puts a player in one.
+func (s *CorpusPublicTestSuite) tagged(
+	player string,
+	genres string,
+	tracks ...string,
+) {
+	body := "artist: " + player + "\ntracks:\n"
+	for _, t := range tracks {
+		body += "  - track: " + t +
+			"\n    url: https://open.spotify.com/track/abc\n    year: 1994\n" +
+			"    genres: [" + genres + "]\n    genres_by: person\n"
+	}
+
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(s.root, player, "corpus.yaml"), []byte(body), 0o600))
+}
+
+// TestAPlayerIsAlsoComparedInsideTheirGenre covers the second comparison, which
+// answers a different question from the first.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *CorpusPublicTestSuite) TestAPlayerIsAlsoComparedInsideTheirGenre() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The case the whole thing exists for.
+			//
+			// A player in the middle of the corpus can sit at the edge of their
+			// own genre, and that is the claim somebody building that sound
+			// wants. Three loud players make a genre whose middle is high, and
+			// the quiet one in it is dark for the genre while sitting in the
+			// middle of everybody.
+			name: "a player flat against the corpus is placed inside their genre",
+			then: func() {
+				for _, p := range []string{"loud-one", "loud-two", "loud-three"} {
+					for _, t := range []string{"one", "two", "three"} {
+						s.record(p, t, audio.Sine(800, 1, rate, 0.8))
+					}
+
+					s.tagged(p, "punk", "one", "two", "three")
+				}
+
+				for _, t := range []string{"one", "two", "three"} {
+					s.record("quiet", t, audio.Sine(300, 1, rate, 0.8))
+				}
+
+				s.tagged("quiet", "punk", "one", "two", "three")
+
+				// Two players of another genre, between the two groups, so the
+				// corpus-wide middle sits where nobody is clear of it.
+				for _, p := range []string{"other-one", "other-two"} {
+					for _, t := range []string{"one", "two", "three"} {
+						s.record(p, t, audio.Sine(500, 1, rate, 0.8))
+					}
+
+					s.tagged(p, "jazz", "one", "two", "three")
+				}
+
+				got := s.byID()
+
+				within := got["quiet"].Within
+				s.Require().Len(within, 1, "one genre, so one comparison")
+				s.Require().Equal("punk", within[0].Genre)
+				s.Require().Equal(4, within[0].Of, "the player and their three peers")
+				s.Require().NotEmpty(within[0].Terms,
+					"clear of the punk players, whatever the corpus says")
+			},
+		},
+		{
+			// A genre too small to compare inside.
+			//
+			// Two players is one other, and a word against one person says they
+			// differ rather than anything about the genre. The corpus-wide
+			// comparison still happens: this is an extra answer, never a
+			// replacement.
+			name: "a genre under the threshold is not compared inside",
+			then: func() {
+				for _, p := range []string{"one-of-two", "two-of-two"} {
+					for _, t := range []string{"one", "two", "three"} {
+						s.record(p, t, audio.Sine(800, 1, rate, 0.8))
+					}
+
+					s.tagged(p, "rare", "one", "two", "three")
+				}
+
+				for _, t := range []string{"one", "two", "three"} {
+					s.record("elsewhere", t, audio.Sine(80, 1, rate, 0.8))
+				}
+
+				s.tagged("elsewhere", "common", "one", "two", "three")
+
+				got := s.byID()
+				s.Require().Empty(got["one-of-two"].Within,
+					"two players is one other, which is not a genre")
+			},
+		},
+		{
+			// An untagged player.
+			//
+			// Nothing to compare inside, and the corpus-wide answer is
+			// untouched. A manifest is optional and so is a genre on it.
+			name: "a player with no genre has nothing to be compared inside",
+			then: func() {
+				for _, p := range []string{"low-one", "low-two", "low-three"} {
+					for _, t := range []string{"one", "two", "three"} {
+						s.record(p, t, audio.Sine(80, 1, rate, 0.8))
+					}
+				}
+
+				for _, t := range []string{"one", "two", "three"} {
+					s.record("high", t, audio.Sine(800, 1, rate, 0.8))
+				}
+
+				got := s.byID()
+				s.Require().Empty(got["high"].Within)
+				s.Require().NotEmpty(got["high"].Terms,
+					"the comparison against everybody is unaffected")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+			tt.then()
+		})
+	}
+}
+
+// byID is the corpus keyed by player, for a case asserting about one of them.
+func (s *CorpusPublicTestSuite) byID() map[string]audio.Player {
+	out := map[string]audio.Player{}
+	for _, p := range s.corpus() {
+		out[p.ID] = p
+	}
+
+	return out
+}
+
 // TestOnlyWhatTheManifestNamesIsMeasured covers the manifest deciding what a
 // player's figures are made of, rather than whatever is on disk.
 //

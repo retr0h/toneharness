@@ -46,22 +46,29 @@ func Players(
 			paint.Accent(w, p.ID),
 			fmt.Sprintf("%d", p.Records),
 			termsOf(w, p),
+			withinOf(p),
 			holdsOf(p),
 			paint.Mute(w, againstOf(p)),
 		})
 	}
 
 	return paint.Section{
-		Title:   "What the records say",
-		Detail:  playersRead(len(of)),
-		Headers: []string{"player", "records", "earns", "holds", "against the others"},
-		Rows:    rows,
+		Title:  "What the records say",
+		Detail: playersRead(len(of)),
+		Headers: []string{
+			"player", "records", "earns", "in their genre", "holds",
+			"against the others",
+		},
+		Rows: rows,
 		Align: []lipgloss.Position{
 			lipgloss.Left, lipgloss.Right, lipgloss.Left, lipgloss.Left, lipgloss.Left,
+			lipgloss.Left,
 		},
 		Empty: "no players to compare: one directory of recordings each",
-		Summary: "a word is earned by sitting clear of the other players, " +
-			"and the margin is how far the rest of them would have to move to take it",
+		Summary: "a word is earned by sitting clear of the other players, and the " +
+			"margin is how far the rest of them would have to move to take it. " +
+			"The genre column asks the same of the players who play it too, so " +
+			"nothing outside it can move that answer",
 	}.Render(w)
 }
 
@@ -102,6 +109,36 @@ func holdsOf(
 	for _, t := range p.Terms {
 		out = append(out, fmt.Sprintf("%s: clear by %s%s",
 			t.Term, figure(t.Key, t.Margin), ofSpread(t)))
+	}
+
+	return strings.Join(out, "; ")
+}
+
+// withinOf is the words a player earned against the others who play what they
+// play, which is a different question from the one `earns` answers.
+//
+// "Dark" there means darker than the corpus, whoever happens to be in it.
+// "Dark in punk" means darker than the punk players, and nothing outside punk
+// can take it away. Most of this corpus earns one and not the other: a player
+// who sits in the middle of everybody can still sit at the edge of their own
+// genre, which is the claim somebody building that sound wants.
+func withinOf(
+	p audio.Player,
+) string {
+	if len(p.Within) == 0 {
+		return ""
+	}
+
+	out := make([]string, 0, len(p.Within))
+
+	for _, g := range p.Within {
+		terms := make([]string, 0, len(g.Terms))
+		for _, t := range g.Terms {
+			terms = append(terms, t.Term)
+		}
+
+		out = append(out, fmt.Sprintf("%s in %s of %d",
+			strings.Join(terms, ", "), g.Genre, g.Of))
 	}
 
 	return strings.Join(out, "; ")
