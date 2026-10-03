@@ -44,6 +44,13 @@ ask:
       evidence:
         - { kind: llm }
 
+  # What to change next time, said in a word rather than in a number. A
+  # correction records a round that happened; a nudge is one asked for and not
+  # yet built, and `steps` is how far, in the same steps a word moves a control.
+  nudges:
+    - word: darker
+      steps: 1
+
   # Append-only, and never replayed. An entry with no verdict has not been
   # listened to yet, which is state rather than a gap.
   corrections:

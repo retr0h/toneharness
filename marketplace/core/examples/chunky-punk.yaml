@@ -69,6 +69,29 @@ ask:
     - gear: Ampeg SVT
       role: amp
 
+    # `after` names a role rather than a position, because a request does not
+    # know how many blocks the chain ends up with: "after the amp" survives the
+    # compiler adding a cabinet and "position 4" does not. A drive behind the
+    # amplifier is a known way to use one rather than a mistake, and gear is
+    # otherwise sorted into the ordinary signal path whatever order it was typed.
+    #
+    # Named the way a musician names it, so the Line 6 model stays out of the
+    # file: this is the pedal Line 6 call Teemah!.
+    - gear: Paul Cochrane Timmy Overdrive
+      role: drive
+      after: amp
+
+    # `insist` refuses rather than substitutes. Without it, gear this device has
+    # no model for is answered with the nearest thing and a note saying so, which
+    # is usually what somebody wants and sometimes exactly what they do not.
+    #
+    # It needs a name that resolves to one model, which is why it is here rather
+    # than on the amplifier above: "Ampeg SVT" fits four of this device's models,
+    # so insisting on it is refused for being ambiguous.
+    - gear: LA Studio Comp
+      role: comp
+      insist: true
+
   # Nothing here was read anywhere. It is one person's idea of a punk bass sound,
   # which is exactly what `low` is for.
   confidence: low
