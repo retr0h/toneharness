@@ -77,8 +77,11 @@ finished records and a block off a dry signal pushed through it.
 owns the arithmetic and the two cases it refuses.
 
 A genre the corpus has not measured names nothing, so an ask of adjectives and
-`genre: [rock]` is still refused: `corpus music genres` says which have enough
-records to mean anything.
+`genre: [rock]` is still refused. So is one the corpus has measured and has too
+little of: eight records from three players, or the figures are one band's sound
+wearing a genre's name. `corpus music genres` says which clear it, and an ask
+may name several in the order to try them, which is why `chunky-punk.yaml` asks
+for punk and falls to pop-punk.
 
 `subject:` is not one of the four. It says who the ask is for, and `like:` says
 what to aim at.

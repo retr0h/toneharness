@@ -13,7 +13,10 @@ schema: ToneSpec
 id: chunky-punk
 
 ask:
-  genre: [punk]
+  # Several, in the order to try them: the first that can answer does. Punk is
+  # short of the eight records from three players it takes, so pop-punk answers
+  # until it is not. `corpus music genres` says which clear it.
+  genre: [punk, pop-punk]
 
   instrument: bass
 
@@ -100,6 +103,7 @@ rig:
       evidence:
         - kind: user
           note: >-
-            named by hand rather than measured. Punk resolves an amplifier on its
-            own now, so this says what somebody wanted instead of what the figures
-            chose, and `tone build` would replace it with the nearest measured.
+            named by hand rather than measured. A measured genre resolves an
+            amplifier on its own, so this says what somebody wanted instead of
+            what the figures chose, and `tone build` would replace it with the
+            nearest measured.

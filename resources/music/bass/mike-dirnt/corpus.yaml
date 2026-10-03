@@ -4,15 +4,15 @@ tracks:
     url: https://open.spotify.com/track/6nTiIhLmQ3FWhvrGafw2zj
     year: 2004
     band: Green Day
-    genres: [punk, pop-punk]
-    genres_by: llm
+    genres: [pop-punk]
+    genres_by: person
     note: American Idiot, 2004
   - track: holiday
     url: https://open.spotify.com/track/0lvhEsN1zkMzfp2M1o17yy
     year: 2004
     band: Green Day
-    genres: [punk, pop-punk]
-    genres_by: llm
+    genres: [pop-punk]
+    genres_by: person
     note: American Idiot, 2004, from the twentieth anniversary edition of 2024.
       A different master of the 2004 recording, which reads on the dynamics
       figure before it reads anywhere else. The edition is what splits the
@@ -27,8 +27,8 @@ tracks:
     url: https://open.spotify.com/track/09hW1hlP52DBiU3aO8jkgz
     year: 2004
     band: Green Day
-    genres: [punk, pop-punk]
-    genres_by: llm
+    genres: [pop-punk]
+    genres_by: person
     note: American Idiot, 2004, from the twentieth anniversary edition of 2024.
       A different master of the 2004 recording, so the same dynamics caveat as
       holiday. The original album pairs it as "Are We the Waiting / St. Jimmy"
