@@ -1171,14 +1171,14 @@ rig:
 		},
 		{
 			// The same player in a genre somebody has measured. His rig is still
-			// not written down, and punk's records name a target, so an
+			// not written down, and pop-punk's records name a target, so an
 			// amplifier is chosen by measurement rather than nothing being
 			// chosen at all.
 			name: "a player nobody has researched, in a measured genre",
 			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
 id: cone-mccaslin
 ask:
-  genre: [punk]
+  genre: [pop-punk]
   instrument: bass
   like:
     artist: Cone McCaslin

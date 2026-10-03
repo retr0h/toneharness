@@ -991,7 +991,7 @@ func (s *TranslatePublicTestSuite) TestAnAskMayNameAPlayer() {
 			// no longer fails: punk names a target, so an amplifier is chosen
 			// by measurement instead of nothing being chosen at all.
 			name: "a player nobody has researched, in a genre somebody has measured",
-			ask:  "genre: [punk]\ninstrument: bass\nlike:\n  artist: Cone McCaslin\n",
+			ask:  "genre: [pop-punk]\ninstrument: bass\nlike:\n  artist: Cone McCaslin\n",
 			said: []string{
 				"no rig has been researched for that player",
 				"is the closest of",
@@ -1100,13 +1100,13 @@ func (s *TranslatePublicTestSuite) TestAGenreNamesATarget() {
 			// The case this exists for. No gear, no recording, no player: a
 			// genre and three words, which used to be refused outright.
 			name: "a genre and some adjectives build a chain",
-			ask: `genre: [punk]
+			ask: `genre: [pop-punk]
 instrument: bass
 words:
   - term: mid-forward
   - term: tight-low-end
 `,
-			said: []string{"is the closest of", "to punk"},
+			said: []string{"is the closest of", "to pop-punk"},
 		},
 		{
 			// A genre nobody has tagged enough records with. Reported and never
@@ -1120,7 +1120,7 @@ words:
 			// A recording is the stronger target and answers first. Punk is
 			// named too and does not displace it.
 			name: "a recording beats a genre",
-			ask: "genre: [punk]\ninstrument: bass\nlike:\n  recording: " +
+			ask: "genre: [pop-punk]\ninstrument: bass\nlike:\n  recording: " +
 				s.recording() + "\n",
 			said:   []string{s.recording()},
 			absent: []string{"closest of 27 measured to punk"},
@@ -1130,8 +1130,8 @@ words:
 			// guitar amplifiers against a bass centroid, which sits an octave
 			// below: not a weaker answer, a different question.
 			name:   "a bass genre does not aim a guitar build",
-			ask:    "genre: [punk]\ninstrument: guitar\n",
-			said:   []string{"is measured on bass and this is for guitar"},
+			ask:    "genre: [pop-punk]\ninstrument: guitar\n",
+			said:   []string{"is measured on bass and this asks for guitar"},
 			absent: []string{"closest of"},
 			err:    translate.ErrNothingToBuildFrom,
 		},
@@ -1140,15 +1140,15 @@ words:
 			// so the one it was named for first is the one aimed at. Averaging
 			// two populations would invent a third nobody measured.
 			name: "the first genre that can answer does",
-			ask:  "genre: [rock, punk]\ninstrument: bass\n",
-			said: []string{"to punk"},
+			ask:  "genre: [rock, pop-punk]\ninstrument: bass\n",
+			said: []string{"to pop-punk"},
 		},
 		{
 			// Only the 27 amplifiers Line 6 calls bass models, where the pool
 			// was all 224. A bass build used to rank 173 guitar amplifiers and
 			// pick whichever sat nearest by spectrum.
 			name: "the pool is the instrument's own amplifiers",
-			ask:  "genre: [punk]\ninstrument: bass\n",
+			ask:  "genre: [pop-punk]\ninstrument: bass\n",
 			said: []string{"closest of 27 measured"},
 		},
 	} {
@@ -1242,7 +1242,7 @@ func (s *TranslatePublicTestSuite) TestUnmet() {
 			name: "what it cannot answer it says",
 			then: func() {
 				_, notes, err := translate.Translate(
-					s.ask(`genre: [punk]
+					s.ask(`genre: [pop-punk]
 like:
   artist: Mike Dirnt
   recording: `+s.recording()+"\n"),
@@ -1252,7 +1252,7 @@ like:
 
 				said := strings.Join(sayings(notes.Unmet()), " ")
 
-				// Punk is measured and clears the threshold, so the note says what it
+				// Pop-punk is measured and clears the threshold, so the note says what it
 				// measured as rather than that nobody has tagged anything, which is what it
 				// used to say of every genre.
 				//
@@ -1275,7 +1275,7 @@ like:
 			name: "the ask names one instrument and the genre is measured on another",
 			then: func() {
 				_, notes, err := translate.Translate(
-					s.ask("instrument: guitar\ngenre: [punk]\nlike:\n  recording: "+
+					s.ask("instrument: guitar\ngenre: [pop-punk]\nlike:\n  recording: "+
 						s.recording()+"\n"),
 					s.setup(""), s.deps)
 

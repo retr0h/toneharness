@@ -37,7 +37,7 @@ type AimTestSuite struct {
 
 // punk reads the genre this project models first, from the measurements that
 // ship, rather than from numbers typed here.
-func (s *AimTestSuite) punk() audio.Across {
+func (s *AimTestSuite) popPunk() audio.Across {
 	body, err := os.ReadFile(
 		filepath.Join("..", "audio", "data", "genres.json"))
 	s.Require().NoError(err)
@@ -46,12 +46,12 @@ func (s *AimTestSuite) punk() audio.Across {
 	s.Require().NoError(json.Unmarshal(body, &genres))
 
 	for _, g := range genres {
-		if g.Slug == "punk" {
+		if g.Slug == "pop-punk" {
 			return g.Across
 		}
 	}
 
-	s.Require().Fail("punk is not in the shipped genres")
+	s.Require().Fail("pop-punk is not in the shipped genres")
 
 	return audio.Across{}
 }
@@ -66,22 +66,28 @@ func (s *AimTestSuite) TestAims() {
 		then func()
 	}{
 		{
-			// The genre modelled first.
+			// A position is not a word, and a genre needs only the first to be
+			// aimed at.
 			//
-			// Worth stating plainly because it reads as a contradiction.
-			// `measure genres` reports punk earning no term, which says it is
-			// not distinctive against the players who avoid it. It does not
-			// say punk has no position: fifteen records give a middle and a
-			// spread on every axis, and that is what a solver needs.
-			name: "punk is a target even though it earns no word",
+			// Worth stating plainly because it reads as a contradiction. What a
+			// genre earns says how distinctive it is against the players who
+			// avoid it, and pop-punk earns one term out of ten axes. That does
+			// not say it has no position: twelve records give a middle and a
+			// spread on every axis, and that is all a solver needs.
+			//
+			// This read punk until 2026-10-03, when punk turned out to be
+			// pop-punk under another name: twelve of its fifteen records were
+			// these, double-tagged, and the figure every punk ask aimed at was
+			// this one.
+			name: "a genre is a target whatever words it earns",
 			then: func() {
-				got := Aims(s.punk(), nil)
+				got := Aims(s.popPunk(), nil)
 
 				s.Require().NotEmpty(got)
 
 				centre, ok := got[audio.KeyCentroid]
-				s.Require().True(ok, "punk has a centre of gravity")
-				s.Require().InDelta(144, centre.Want, 1)
+				s.Require().True(ok, "a genre has a centre of gravity")
+				s.Require().InDelta(133, centre.Want, 1)
 				s.Require().Positive(centre.Tol, "and a spread to allow for")
 
 				// A fraction, not a percentage: the CLI prints "97.4% low" and the figure
@@ -186,7 +192,7 @@ func (s *AimTestSuite) TestOnly() {
 			// A partial target.
 			name: "only keeps the axes named",
 			then: func() {
-				all := Aims(s.punk(), nil)
+				all := Aims(s.popPunk(), nil)
 				s.Require().Greater(len(all), 2)
 
 				got := Only(all, []audio.Figure{audio.KeyCentroid, audio.KeyLow})

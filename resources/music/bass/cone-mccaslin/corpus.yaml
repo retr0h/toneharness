@@ -4,20 +4,20 @@ tracks:
     url: https://open.spotify.com/track/4KacUpvbA3Mfo05gttTjhN
     year: 2001
     band: Sum 41
-    genres: [punk, pop-punk]
-    genres_by: llm
+    genres: [pop-punk]
+    genres_by: person
     note: All Killer No Filler, 2001
   - track: in-too-deep
     url: https://open.spotify.com/track/1HNE2PX70ztbEl6MLxrpNL
     year: 2001
     band: Sum 41
-    genres: [punk, pop-punk]
-    genres_by: llm
+    genres: [pop-punk]
+    genres_by: person
     note: All Killer No Filler, 2001
   - track: motivation
     url: https://open.spotify.com/track/6joQ1zE0lhx0UazVTK05Xc
     year: 2001
     band: Sum 41
-    genres: [punk, pop-punk]
-    genres_by: llm
+    genres: [pop-punk]
+    genres_by: person
     note: All Killer No Filler, 2001

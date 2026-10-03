@@ -141,7 +141,7 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 					Ask: s.file("ask.yaml", `schema: ToneSpec
 id: an-ask
 ask:
-  genre: [punk]
+  genre: [pop-punk]
   gear:
     - gear: LA Studio Comp
       role: comp
