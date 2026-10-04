@@ -161,282 +161,300 @@ func (s *DiscoverBusPublicTestSuite) foreign() *handleDouble {
 	return s.handle(device.Descriptor{Vendor: 0x1234, Product: 0x5678}, nil)
 }
 
-// TestOpenOver finds a device on a bus, claims it and hands back a session.
-func (s *DiscoverBusPublicTestSuite) TestOpenOver() {
-	tests := []struct {
+// TestOpen covers finding the device on a bus.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *DiscoverBusPublicTestSuite) TestOpen() {
+	for _, tt := range []struct {
 		name string
-		bus  func() *busDouble
-		// how many times the interface must be claimed and given back, and
-		// which handles must be closed.
-		claims   int
-		released int
-		// every device it looked at and did not want must be given back: one
-		// held by a process that is not using it is a device nothing else can
-		// claim.
-		unusedClosed bool
-		busClosed    bool
-		// every handle the bus returned was given back, and the first was
-		// never claimed.
-		allClosed bool
-		unclaimed bool
-
-		err  bool
-		says string
-		is   error
+		then func()
 	}{
 		{
-			name: "a bus with one this package recognises",
-			bus: func() *busDouble {
-				return s.bus(nil, s.foreign(), s.helix(answers(s.ctrl)))
-			},
-		},
-		{
-			// Enumerating can fail partway and still have found something.
-			// A listing that failed is not one to claim hardware from, and
-			// nothing it returned is left held.
-			name: "one that complained and found something anyway",
-			bus: func() *busDouble {
-				return s.bus(errors.New("boom"),
-					s.helix(answers(s.ctrl)), s.helix(answers(s.ctrl)))
-			},
-			err:       true,
-			says:      "looking for a device",
-			busClosed: true,
-			allClosed: true,
-			unclaimed: true,
-		},
-		{
-			// A product identifier is only Line 6's under Line 6's vendor
-			// identifier. Somebody else's device that happens to share one is
-			// not a Helix, and claiming it talks this protocol at hardware
-			// that does not speak it.
-			name: "a Helix product identifier under somebody else's vendor",
-			bus: func() *busDouble {
-				return s.bus(nil, s.handle(
-					device.Descriptor{Vendor: 0x1234, Product: 0x4246}, answers(s.ctrl)))
-			},
-			err:       true,
-			is:        device.ErrNoDevice,
-			busClosed: true,
-			unclaimed: true,
-		},
-		{
-			name: "a device whose reads fail before the handshake starts",
-			bus: func() *busDouble {
-				return s.bus(nil, s.helix(readFails(s.ctrl, errors.New("boom"))))
-			},
-			err:  true,
-			says: "reading from the device",
-		},
-		{
-			// The drain reads a quiet device; the read that fails is the
-			// one waiting on an answer to the channel's opening frame.
-			name: "one whose reads fail after the opening frame",
-			bus: func() *busDouble {
-				return s.bus(nil, s.helix(readFailsAfter(s.ctrl, errors.New("boom"), 1)))
-			},
-			err:  true,
-			says: "reading from the device",
-		},
-		{
-			name: "one whose reads fail after a service is asked for",
-			bus: func() *busDouble {
-				return s.bus(nil, s.helix(readFailsAfter(s.ctrl, errors.New("boom"), 2)))
-			},
-			err:  true,
-			says: "reading from the device",
-		},
-		{
-			// The wait between closing a channel and reopening it: the
-			// opening, the service, its acknowledgement, then the close.
-			name: "one whose reads fail after a channel is closed",
-			bus: func() *busDouble {
-				return s.bus(nil, s.helix(readFailsAfter(s.ctrl, errors.New("boom"), 4)))
-			},
-			err:  true,
-			says: "reading from the device",
-		},
-		{
-			name: "a bus with nothing on it but somebody else's device",
-			bus: func() *busDouble {
-				return s.bus(nil, s.foreign())
-			},
-			busClosed: true,
-			err:       true,
-			is:        device.ErrNoDevice,
-		},
-		{
-			// The device carries channel state across connections, and the
-			// release between the two claims is what clears it. This is what
-			// HX Edit does, and what the device needs.
-			name: "a device claimed twice, as the device requires",
-			bus: func() *busDouble {
-				return s.bus(nil, s.helix(answers(s.ctrl,
-					device.FrameFor("control", wire.MsgHello, nil),
-					device.FrameFor("control", wire.MsgAck, nil),
-				)))
-			},
-			claims:   2,
-			released: 1,
-		},
-		{
-			name: "a bus carrying more than one of them",
-			bus: func() *busDouble {
-				return s.bus(nil, s.helix(answers(s.ctrl)), s.helix(answers(s.ctrl)))
-			},
-			unusedClosed: true,
-		},
-		{
-			name: "a device that stops listening partway through opening",
-			bus: func() *busDouble {
-				d := answers(s.ctrl)
-				d.writeErr = errors.New("boom")
+			name: "over",
+			then: func() {
+				tests := []struct {
+					name string
+					bus  func() *busDouble
+					// how many times the interface must be claimed and given back, and
+					// which handles must be closed.
+					claims   int
+					released int
+					// every device it looked at and did not want must be given back: one
+					// held by a process that is not using it is a device nothing else can
+					// claim.
+					unusedClosed bool
+					busClosed    bool
+					// every handle the bus returned was given back, and the first was
+					// never claimed.
+					allClosed bool
+					unclaimed bool
 
-				return s.bus(nil, s.helix(d))
-			},
-			// Twice: once between the two claims, and once when the session
-			// that could not finish gives back what it took.
-			released: 2,
-			err:      true,
-		},
-		{
-			name: "one that cannot be looked at at all",
-			bus:  func() *busDouble { return s.bus(errors.New("boom")) },
-			err:  true,
-			says: "looking for a device",
-		},
-		{
-			// Carrying the sentinel, because that is what decides whether
-			// waiting is worth it. The refusal then says how long it waited
-			// rather than guessing who holds it: a campaign running unattended
-			// has no HX Edit to quit, and five runs in a row said so.
-			name: "an interface something else is holding",
-			bus: func() *busDouble {
-				h := s.helix(answers(s.ctrl))
-				h.claimErr = fmt.Errorf("%w: exclusive access", device.ErrInterfaceBusy)
+					err  bool
+					says string
+					is   error
+				}{
+					{
+						name: "a bus with one this package recognises",
+						bus: func() *busDouble {
+							return s.bus(nil, s.foreign(), s.helix(answers(s.ctrl)))
+						},
+					},
+					{
+						// Enumerating can fail partway and still have found something.
+						// A listing that failed is not one to claim hardware from, and
+						// nothing it returned is left held.
+						name: "one that complained and found something anyway",
+						bus: func() *busDouble {
+							return s.bus(errors.New("boom"),
+								s.helix(answers(s.ctrl)), s.helix(answers(s.ctrl)))
+						},
+						err:       true,
+						says:      "looking for a device",
+						busClosed: true,
+						allClosed: true,
+						unclaimed: true,
+					},
+					{
+						// A product identifier is only Line 6's under Line 6's vendor
+						// identifier. Somebody else's device that happens to share one is
+						// not a Helix, and claiming it talks this protocol at hardware
+						// that does not speak it.
+						name: "a Helix product identifier under somebody else's vendor",
+						bus: func() *busDouble {
+							return s.bus(nil, s.handle(
+								device.Descriptor{Vendor: 0x1234, Product: 0x4246}, answers(s.ctrl)))
+						},
+						err:       true,
+						is:        device.ErrNoDevice,
+						busClosed: true,
+						unclaimed: true,
+					},
+					{
+						name: "a device whose reads fail before the handshake starts",
+						bus: func() *busDouble {
+							return s.bus(nil, s.helix(readFails(s.ctrl, errors.New("boom"))))
+						},
+						err:  true,
+						says: "reading from the device",
+					},
+					{
+						// The drain reads a quiet device; the read that fails is the
+						// one waiting on an answer to the channel's opening frame.
+						name: "one whose reads fail after the opening frame",
+						bus: func() *busDouble {
+							return s.bus(nil, s.helix(readFailsAfter(s.ctrl, errors.New("boom"), 1)))
+						},
+						err:  true,
+						says: "reading from the device",
+					},
+					{
+						name: "one whose reads fail after a service is asked for",
+						bus: func() *busDouble {
+							return s.bus(nil, s.helix(readFailsAfter(s.ctrl, errors.New("boom"), 2)))
+						},
+						err:  true,
+						says: "reading from the device",
+					},
+					{
+						// The wait between closing a channel and reopening it: the
+						// opening, the service, its acknowledgement, then the close.
+						name: "one whose reads fail after a channel is closed",
+						bus: func() *busDouble {
+							return s.bus(nil, s.helix(readFailsAfter(s.ctrl, errors.New("boom"), 4)))
+						},
+						err:  true,
+						says: "reading from the device",
+					},
+					{
+						name: "a bus with nothing on it but somebody else's device",
+						bus: func() *busDouble {
+							return s.bus(nil, s.foreign())
+						},
+						busClosed: true,
+						err:       true,
+						is:        device.ErrNoDevice,
+					},
+					{
+						// The device carries channel state across connections, and the
+						// release between the two claims is what clears it. This is what
+						// HX Edit does, and what the device needs.
+						name: "a device claimed twice, as the device requires",
+						bus: func() *busDouble {
+							return s.bus(nil, s.helix(answers(s.ctrl,
+								device.FrameFor("control", wire.MsgHello, nil),
+								device.FrameFor("control", wire.MsgAck, nil),
+							)))
+						},
+						claims:   2,
+						released: 1,
+					},
+					{
+						name: "a bus carrying more than one of them",
+						bus: func() *busDouble {
+							return s.bus(nil, s.helix(answers(s.ctrl)), s.helix(answers(s.ctrl)))
+						},
+						unusedClosed: true,
+					},
+					{
+						name: "a device that stops listening partway through opening",
+						bus: func() *busDouble {
+							d := answers(s.ctrl)
+							d.writeErr = errors.New("boom")
 
-				return s.bus(nil, h)
-			},
-			err:  true,
-			says: "still held after",
-		},
-		{
-			// The interface is claimed twice, and the second can fail where
-			// the first did not.
-			name: "one that comes free and then does not",
-			bus: func() *busDouble {
-				h := s.helix(answers(s.ctrl))
-				h.claimErr, h.failClaim = errors.New("busy"), 1
+							return s.bus(nil, s.helix(d))
+						},
+						// Twice: once between the two claims, and once when the session
+						// that could not finish gives back what it took.
+						released: 2,
+						err:      true,
+					},
+					{
+						name: "one that cannot be looked at at all",
+						bus:  func() *busDouble { return s.bus(errors.New("boom")) },
+						err:  true,
+						says: "looking for a device",
+					},
+					{
+						// Carrying the sentinel, because that is what decides whether
+						// waiting is worth it. The refusal then says how long it waited
+						// rather than guessing who holds it: a campaign running unattended
+						// has no HX Edit to quit, and five runs in a row said so.
+						name: "an interface something else is holding",
+						bus: func() *busDouble {
+							h := s.helix(answers(s.ctrl))
+							h.claimErr = fmt.Errorf("%w: exclusive access", device.ErrInterfaceBusy)
 
-				return s.bus(nil, h)
-			},
-			err: true,
-		},
-		{
-			name: "an outgoing endpoint that will not open",
-			bus: func() *busDouble {
-				h := s.helix(answers(s.ctrl))
-				h.outErr = errors.New("boom")
+							return s.bus(nil, h)
+						},
+						err:  true,
+						says: "still held after",
+					},
+					{
+						// The interface is claimed twice, and the second can fail where
+						// the first did not.
+						name: "one that comes free and then does not",
+						bus: func() *busDouble {
+							h := s.helix(answers(s.ctrl))
+							h.claimErr, h.failClaim = errors.New("busy"), 1
 
-				return s.bus(nil, h)
-			},
-			err:  true,
-			says: "outgoing",
-		},
-		{
-			name: "an incoming one",
-			bus: func() *busDouble {
-				h := s.helix(answers(s.ctrl))
-				h.inErr = errors.New("boom")
+							return s.bus(nil, h)
+						},
+						err: true,
+					},
+					{
+						name: "an outgoing endpoint that will not open",
+						bus: func() *busDouble {
+							h := s.helix(answers(s.ctrl))
+							h.outErr = errors.New("boom")
 
-				return s.bus(nil, h)
-			},
-			err:  true,
-			says: "incoming",
-		},
-	}
+							return s.bus(nil, h)
+						},
+						err:  true,
+						says: "outgoing",
+					},
+					{
+						name: "an incoming one",
+						bus: func() *busDouble {
+							h := s.helix(answers(s.ctrl))
+							h.inErr = errors.New("boom")
 
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			b := tt.bus()
-
-			got, err := device.OpenOver(context.Background(), b.mock)
-			if got != nil {
-				// After the assertions below, which count what the open
-				// itself gave back.
-				s.T().Cleanup(func() { _ = got.Close() })
-			}
-
-			if tt.err {
-				s.Require().Error(err)
-
-				if tt.is != nil {
-					s.Require().ErrorIs(err, tt.is)
+							return s.bus(nil, h)
+						},
+						err:  true,
+						says: "incoming",
+					},
 				}
 
-				if tt.says != "" {
-					s.Require().Contains(err.Error(), tt.says)
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						b := tt.bus()
+
+						got, err := device.OpenOver(context.Background(), b.mock)
+						if got != nil {
+							// After the assertions below, which count what the open
+							// itself gave back.
+							s.T().Cleanup(func() { _ = got.Close() })
+						}
+
+						if tt.err {
+							s.Require().Error(err)
+
+							if tt.is != nil {
+								s.Require().ErrorIs(err, tt.is)
+							}
+
+							if tt.says != "" {
+								s.Require().Contains(err.Error(), tt.says)
+							}
+						} else {
+							s.Require().NoError(err)
+							s.Require().Equal("HX Stomp", got.Model().Name)
+						}
+
+						var first *handleDouble
+						if len(b.handles) > 0 {
+							first = b.handles[0]
+						}
+
+						if tt.claims > 0 {
+							s.Require().Equal(tt.claims, first.claims)
+						}
+
+						if tt.released > 0 {
+							s.Require().Equal(tt.released, first.released,
+								"the interface is given back")
+						}
+
+						if tt.unusedClosed {
+							second := b.handles[1]
+
+							s.Require().False(first.closed)
+							s.Require().True(second.closed, "the one nobody used is given back")
+						}
+
+						if tt.busClosed {
+							s.Require().True(b.closed, "a bus nobody is using is given back")
+						}
+
+						if tt.unclaimed {
+							s.Require().Zero(first.claims, "nothing is claimed")
+						}
+
+						if tt.allClosed {
+							for i, h := range b.handles {
+								s.Require().True(h.closed, "handle %d is given back", i)
+							}
+						}
+					})
 				}
-			} else {
+			},
+		},
+		{
+			// The one line in this package that reaches
+			// hardware.
+			name: "finds its own bus",
+			then: func() {
+				source := device.NewMockbuses(s.ctrl)
+				source.EXPECT().Bus().Return(s.bus(nil, s.helix(answers(s.ctrl))).mock)
+
+				var trace bytes.Buffer
+
+				got, err := device.NewUSBOver(&trace, source).Open(context.Background())
+
 				s.Require().NoError(err)
-				s.Require().Equal("HX Stomp", got.Model().Name)
-			}
+				s.Require().NotNil(got)
+				s.Require().NoError(got.Close())
 
-			var first *handleDouble
-			if len(b.handles) > 0 {
-				first = b.handles[0]
-			}
-
-			if tt.claims > 0 {
-				s.Require().Equal(tt.claims, first.claims)
-			}
-
-			if tt.released > 0 {
-				s.Require().Equal(tt.released, first.released,
-					"the interface is given back")
-			}
-
-			if tt.unusedClosed {
-				second := b.handles[1]
-
-				s.Require().False(first.closed)
-				s.Require().True(second.closed, "the one nobody used is given back")
-			}
-
-			if tt.busClosed {
-				s.Require().True(b.closed, "a bus nobody is using is given back")
-			}
-
-			if tt.unclaimed {
-				s.Require().Zero(first.claims, "nothing is claimed")
-			}
-
-			if tt.allClosed {
-				for i, h := range b.handles {
-					s.Require().True(h.closed, "handle %d is given back", i)
-				}
-			}
+				// The trace the opener was given reaches the session it opens: the
+				// handshake goes out through it.
+				s.Require().Contains(trace.String(), "OUT ")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
 		})
 	}
-}
-
-// TestOpenFindsItsOwnBus covers the one line in this package that reaches
-// hardware.
-func (s *DiscoverBusPublicTestSuite) TestOpenFindsItsOwnBus() {
-	source := device.NewMockbuses(s.ctrl)
-	source.EXPECT().Bus().Return(s.bus(nil, s.helix(answers(s.ctrl))).mock)
-
-	var trace bytes.Buffer
-
-	got, err := device.NewUSBOver(&trace, source).Open(context.Background())
-
-	s.Require().NoError(err)
-	s.Require().NotNil(got)
-	s.Require().NoError(got.Close())
-
-	// The trace the opener was given reaches the session it opens: the
-	// handshake goes out through it.
-	s.Require().Contains(trace.String(), "OUT ")
 }
 
 // TestUSBBus covers where NewUSB gets its bus. Opening one reads nothing;

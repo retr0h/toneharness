@@ -64,42 +64,65 @@ func (s *TypesPublicTestSuite) options(
 	}
 }
 
-// TestRigs covers a build finding its rig through a double.
-func (s *TypesPublicTestSuite) TestRigs() {
-	want := errors.New("no such rig here")
+// TestMake covers the options a preset is made with.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *TypesPublicTestSuite) TestMake() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// A build finding its rig through a double.
+			name: "rigs",
+			then: func() {
+				want := errors.New("no such rig here")
 
-	rec := presetmocks.NewMockRigs(s.ctrl)
-	rec.EXPECT().Find(gomock.Any(), "mike-dirnt").Return(result.Known{}, want)
+				rec := presetmocks.NewMockRigs(s.ctrl)
+				rec.EXPECT().Find(gomock.Any(), "mike-dirnt").Return(result.Known{}, want)
 
-	_, err := presets.Make(context.Background(), s.options(presets.Deps{Rigs: rec}))
+				_, err := presets.Make(context.Background(), s.options(presets.Deps{Rigs: rec}))
 
-	s.Require().ErrorIs(err, want)
-}
+				s.Require().ErrorIs(err, want)
+			},
+		},
+		{
+			// A build opening its catalog through a double.
+			name: "catalogs",
+			then: func() {
+				want := errors.New("no catalog here")
 
-// TestCatalogs covers a build opening its catalog through a double.
-func (s *TypesPublicTestSuite) TestCatalogs() {
-	want := errors.New("no catalog here")
+				cat := presetmocks.NewMockCatalogs(s.ctrl)
+				cat.EXPECT().Catalog(gomock.Any()).Return(nil, want)
 
-	cat := presetmocks.NewMockCatalogs(s.ctrl)
-	cat.EXPECT().Catalog(gomock.Any()).Return(nil, want)
+				_, err := presets.Make(context.Background(), s.options(presets.Deps{Catalogs: cat}))
 
-	_, err := presets.Make(context.Background(), s.options(presets.Deps{Catalogs: cat}))
+				s.Require().ErrorIs(err, want)
+			},
+		},
+		{
+			// A build resolving its chain through a double.
+			name: "compiler",
+			then: func() {
+				want := errors.New("cannot resolve that")
 
-	s.Require().ErrorIs(err, want)
-}
+				comp := presetmocks.NewMockCompiler(s.ctrl)
+				comp.EXPECT().Resolve(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(plan.Plan{}, nil, nil, compile.Compensated{}, want)
 
-// TestCompiler covers a build resolving its chain through a double.
-func (s *TypesPublicTestSuite) TestCompiler() {
-	want := errors.New("cannot resolve that")
+				_, err := presets.Make(context.Background(), s.options(presets.Deps{Compiler: comp}))
 
-	comp := presetmocks.NewMockCompiler(s.ctrl)
-	comp.EXPECT().Resolve(
-		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-	).Return(plan.Plan{}, nil, nil, compile.Compensated{}, want)
+				s.Require().ErrorIs(err, want)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.SetupTest()
 
-	_, err := presets.Make(context.Background(), s.options(presets.Deps{Compiler: comp}))
-
-	s.Require().ErrorIs(err, want)
+			tt.then()
+		})
+	}
 }
 
 func TestTypesPublicTestSuite(

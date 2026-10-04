@@ -149,62 +149,228 @@ func (s *NamesTestSuite) run(
 	return buf.String(), err
 }
 
-// TestNamesAgreeWithTheCatalog covers hardware that matches the claim.
-func (s *NamesTestSuite) TestNamesAgreeWithTheCatalog() {
-	model := "HD2_AmpUSDripmanNorm"
-	s.device(WireOrder(s.cat, model))
-
-	said, err := s.run(model)
-
-	s.Require().NoError(err)
-	s.Require().Contains(said, "agree on every index")
-	s.Require().Contains(said, "Norm Drive")
-}
-
-// TestNamesSayWhenTheyDisagree is the whole reason this exists.
+// TestWireOrder covers the order the device writes a block's parameters in.
 //
-// Every curve is filed under a parameter's position, and counting down a
-// sorted printout instead of the wire order mislabels all of them while the
-// numbers stay entirely plausible.
-func (s *NamesTestSuite) TestNamesSayWhenTheyDisagree() {
-	model := "HD2_AmpUSDripmanNorm"
+// One method and one table, so a case is a row rather than a file.
+func (s *NamesTestSuite) TestWireOrder() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// Hardware that matches the claim.
+			name: "names agree with the catalog",
+			then: func() {
+				model := "HD2_AmpUSDripmanNorm"
+				s.device(WireOrder(s.cat, model))
 
-	// The order `catalog show` prints, which is sorted for a reader and is
-	// not what the device sends.
-	s.device([]string{
-		"Bass", "Bias", "BiasX", "Bright", "ChVol", "Hum",
-		"Master", "Mid", "Norm Drive", "Ripple", "Sag", "Treble",
-	})
+				said, err := s.run(model)
 
-	said, err := s.run(model)
+				s.Require().NoError(err)
+				s.Require().Contains(said, "agree on every index")
+				s.Require().Contains(said, "Norm Drive")
+			},
+		},
+		{
+			// The whole reason this exists.
+			//
+			// Every curve is filed under a parameter's position, and counting down a
+			// sorted printout instead of the wire order mislabels all of them while the
+			// numbers stay entirely plausible.
+			name: "names say when they disagree",
+			then: func() {
+				model := "HD2_AmpUSDripmanNorm"
 
-	s.Require().NoError(err)
-	s.Require().Contains(said, "they disagree")
-	s.Require().Contains(said, "filed under the wrong control")
-}
+				// The order `catalog show` prints, which is sorted for a reader and is
+				// not what the device sends.
+				s.device([]string{
+					"Bass", "Bias", "BiasX", "Bright", "ChVol", "Hum",
+					"Master", "Mid", "Norm Drive", "Ripple", "Sag", "Treble",
+				})
 
-// TestASwitchIsNotADisagreement is the regression this type exists for.
-//
-// A switch refuses a number on a dial, which says nothing about whether the
-// catalog has its name in the right place. Counted as a mismatch it reported
-// every curve for the US Dripman as filed under the wrong control, while all
-// eleven indexes that could actually be tested had matched. Somebody reading
-// that would have thrown away a correct catalog, or re-run an hour of sweeps
-// to fix nothing.
-func (s *NamesTestSuite) TestASwitchIsNotADisagreement() {
-	model := "HD2_AmpUSDripmanNorm"
-	order := WireOrder(s.cat, model)
+				said, err := s.run(model)
 
-	// Bright, which the device will not take a float for.
-	s.refuse(order, "Bright")
+				s.Require().NoError(err)
+				s.Require().Contains(said, "they disagree")
+				s.Require().Contains(said, "filed under the wrong control")
+			},
+		},
+		{
+			// The regression this type exists for.
+			//
+			// A switch refuses a number on a dial, which says nothing about whether the
+			// catalog has its name in the right place. Counted as a mismatch it reported
+			// every curve for the US Dripman as filed under the wrong control, while all
+			// eleven indexes that could actually be tested had matched. Somebody reading
+			// that would have thrown away a correct catalog, or re-run an hour of sweeps
+			// to fix nothing.
+			name: "a switch is not a disagreement",
+			then: func() {
+				model := "HD2_AmpUSDripmanNorm"
+				order := WireOrder(s.cat, model)
 
-	said, err := s.run(model)
+				// Bright, which the device will not take a float for.
+				s.refuse(order, "Bright")
 
-	s.Require().NoError(err)
-	s.Require().Contains(said, "refused a number on a dial")
-	s.Require().Contains(said, "claims and this could test")
-	s.Require().Contains(said, "0 unclaimed and 1 untestable")
-	s.Require().NotContains(said, "they disagree")
+				said, err := s.run(model)
+
+				s.Require().NoError(err)
+				s.Require().Contains(said, "refused a number on a dial")
+				s.Require().Contains(said, "claims and this could test")
+				s.Require().Contains(said, "0 unclaimed and 1 untestable")
+				s.Require().NotContains(said, "they disagree")
+			},
+		},
+		{
+			// The second regression of this
+			// shape, and the one that mattered for the equalisers.
+			//
+			// Line 6 ship no symbol list for an equaliser, so the catalog claims no order
+			// for one at all. Comparing an absent claim against the parameter that moved
+			// reported that they disagree and that every curve was misfiled, for a block
+			// the catalog had never made a claim about. The device is the only thing that
+			// knows the order, and discovering it is the whole point of running this.
+			name: "an unclaimed order is not a disagreement",
+			then: func() {
+				model := "HD2_EQSimple3Band"
+
+				// A device that answers, against a catalog carrying no symbols: what the
+				// device moved is the only record there is.
+				s.device([]string{"LowGain", "MidFreq", "MidGain", "HighGain", "Level"})
+
+				said, err := s.run(model)
+
+				s.Require().NoError(err)
+				s.Require().Contains(said, "claims no order for this block")
+				s.Require().Contains(said, "LowGain")
+				s.Require().NotContains(said, "they disagree")
+			},
+		},
+		{
+			// A parameter past the list.
+			name: "names report an index that reaches nothing",
+			then: func() {
+				model := "HD2_AmpUSDripmanNorm"
+				s.device([]string{"Norm Drive"})
+
+				said, err := s.run(model)
+
+				s.Require().NoError(err)
+				s.Require().Contains(said, "refused a number on a dial")
+			},
+		},
+		{
+			// A name that is not a block.
+			name: "names refuse a model nobody has",
+			then: func() {
+				_, err := s.run("nothing calls itself this")
+
+				s.Require().ErrorContains(err, "the catalog has no")
+			},
+		},
+		{
+			// The compiler failing.
+			name: "names report a preset it cannot build",
+			then: func() {
+				s.pedal.EXPECT().Compile(gomock.Any(), gomock.Any()).
+					Return(sdk.Built{}, errors.New("will not build")).AnyTimes()
+
+				_, err := s.run("HD2_AmpUSDripmanNorm")
+
+				s.Require().Error(err)
+			},
+		},
+		{
+			// A read failing.
+			name: "names report a device that will not answer",
+			then: func() {
+				s.pedal.EXPECT().
+					Compile(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
+						writeBlank(s.T(), in.Out)
+
+						return sdk.Built{}, nil
+					}).AnyTimes()
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+				s.pedal.EXPECT().Current(gomock.Any(), gomock.Any()).
+					Return(sdk.Reading{}, errors.New("usb: gone")).AnyTimes()
+
+				_, err := s.run("HD2_AmpUSDripmanNorm")
+
+				s.Require().ErrorContains(err, "usb: gone")
+			},
+		},
+		{
+			// A device playing an empty
+			// preset.
+			//
+			// It is the state a broken encoder left every written preset in for an
+			// evening, and the four structural slots still answer, so it reads as a
+			// device that is fine.
+			name: "names report a chain with nothing in it",
+			then: func() {
+				s.pedal.EXPECT().
+					Compile(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
+						writeBlank(s.T(), in.Out)
+
+						return sdk.Built{}, nil
+					}).AnyTimes()
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+				s.pedal.EXPECT().Current(gomock.Any(), gomock.Any()).
+					Return(sdk.Reading{Plan: plan.Plan{}}, nil).AnyTimes()
+
+				_, err := s.run("HD2_AmpUSDripmanNorm")
+
+				s.Require().ErrorContains(err, "is not one of them")
+			},
+		},
+		{
+			// Play failing.
+			name: "names report a pedal that will not load the preset",
+			then: func() {
+				s.pedal.EXPECT().
+					Compile(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
+						writeBlank(s.T(), in.Out)
+
+						return sdk.Built{}, nil
+					}).AnyTimes()
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+					Return(errors.New("the device said no")).AnyTimes()
+
+				_, err := s.run("HD2_AmpUSDripmanNorm")
+
+				s.Require().ErrorContains(err, "the device said no")
+			},
+		},
+		{
+			// --device naming a pedal this
+			// binary ships no catalog for.
+			//
+			// First, because the model a probe is asked about is looked up in it and a
+			// binary that cannot say which models exist has nothing to probe.
+			name: "names reports a catalog it cannot read",
+			then: func() {
+				ctrl := gomock.NewController(s.T())
+				pedal := mocks.NewMockPedal(ctrl)
+				pedal.EXPECT().Catalog(gomock.Any()).
+					Return(nil, errors.New("no catalog for that pedal")).AnyTimes()
+
+				err := MeasureNames(context.Background(), buffer(), NamesOptions{
+					Client: pedal, Model: "HD2_CabMicIr_2x15Brute",
+				})
+
+				s.Require().ErrorContains(err, "no catalog for that pedal")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+
+			tt.then()
+		})
+	}
 }
 
 // refuse is a device that takes every index but one, which is a switch.
@@ -250,133 +416,6 @@ func (s *NamesTestSuite) refuse(
 
 			return probedReading(now), nil
 		}).AnyTimes()
-}
-
-// TestAnUnclaimedOrderIsNotADisagreement is the second regression of this
-// shape, and the one that mattered for the equalisers.
-//
-// Line 6 ship no symbol list for an equaliser, so the catalog claims no order
-// for one at all. Comparing an absent claim against the parameter that moved
-// reported that they disagree and that every curve was misfiled, for a block
-// the catalog had never made a claim about. The device is the only thing that
-// knows the order, and discovering it is the whole point of running this.
-func (s *NamesTestSuite) TestAnUnclaimedOrderIsNotADisagreement() {
-	model := "HD2_EQSimple3Band"
-
-	// A device that answers, against a catalog carrying no symbols: what the
-	// device moved is the only record there is.
-	s.device([]string{"LowGain", "MidFreq", "MidGain", "HighGain", "Level"})
-
-	said, err := s.run(model)
-
-	s.Require().NoError(err)
-	s.Require().Contains(said, "claims no order for this block")
-	s.Require().Contains(said, "LowGain")
-	s.Require().NotContains(said, "they disagree")
-}
-
-// TestNamesReportAnIndexThatReachesNothing covers a parameter past the list.
-func (s *NamesTestSuite) TestNamesReportAnIndexThatReachesNothing() {
-	model := "HD2_AmpUSDripmanNorm"
-	s.device([]string{"Norm Drive"})
-
-	said, err := s.run(model)
-
-	s.Require().NoError(err)
-	s.Require().Contains(said, "refused a number on a dial")
-}
-
-// TestNamesRefuseAModelNobodyHas covers a name that is not a block.
-func (s *NamesTestSuite) TestNamesRefuseAModelNobodyHas() {
-	_, err := s.run("nothing calls itself this")
-
-	s.Require().ErrorContains(err, "the catalog has no")
-}
-
-// TestNamesReportAPresetItCannotBuild covers the compiler failing.
-func (s *NamesTestSuite) TestNamesReportAPresetItCannotBuild() {
-	s.pedal.EXPECT().Compile(gomock.Any(), gomock.Any()).
-		Return(sdk.Built{}, errors.New("will not build")).AnyTimes()
-
-	_, err := s.run("HD2_AmpUSDripmanNorm")
-
-	s.Require().Error(err)
-}
-
-// TestNamesReportADeviceThatWillNotAnswer covers a read failing.
-func (s *NamesTestSuite) TestNamesReportADeviceThatWillNotAnswer() {
-	s.pedal.EXPECT().
-		Compile(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			writeBlank(s.T(), in.Out)
-
-			return sdk.Built{}, nil
-		}).AnyTimes()
-	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	s.pedal.EXPECT().Current(gomock.Any(), gomock.Any()).
-		Return(sdk.Reading{}, errors.New("usb: gone")).AnyTimes()
-
-	_, err := s.run("HD2_AmpUSDripmanNorm")
-
-	s.Require().ErrorContains(err, "usb: gone")
-}
-
-// TestNamesReportAChainWithNothingInIt covers a device playing an empty
-// preset.
-//
-// It is the state a broken encoder left every written preset in for an
-// evening, and the four structural slots still answer, so it reads as a
-// device that is fine.
-func (s *NamesTestSuite) TestNamesReportAChainWithNothingInIt() {
-	s.pedal.EXPECT().
-		Compile(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			writeBlank(s.T(), in.Out)
-
-			return sdk.Built{}, nil
-		}).AnyTimes()
-	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	s.pedal.EXPECT().Current(gomock.Any(), gomock.Any()).
-		Return(sdk.Reading{Plan: plan.Plan{}}, nil).AnyTimes()
-
-	_, err := s.run("HD2_AmpUSDripmanNorm")
-
-	s.Require().ErrorContains(err, "is not one of them")
-}
-
-// TestNamesReportAPedalThatWillNotLoadThePreset covers Play failing.
-func (s *NamesTestSuite) TestNamesReportAPedalThatWillNotLoadThePreset() {
-	s.pedal.EXPECT().
-		Compile(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
-			writeBlank(s.T(), in.Out)
-
-			return sdk.Built{}, nil
-		}).AnyTimes()
-	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
-		Return(errors.New("the device said no")).AnyTimes()
-
-	_, err := s.run("HD2_AmpUSDripmanNorm")
-
-	s.Require().ErrorContains(err, "the device said no")
-}
-
-// TestNamesReportsACatalogItCannotRead covers --device naming a pedal this
-// binary ships no catalog for.
-//
-// First, because the model a probe is asked about is looked up in it and a
-// binary that cannot say which models exist has nothing to probe.
-func (s *NamesTestSuite) TestNamesReportsACatalogItCannotRead() {
-	ctrl := gomock.NewController(s.T())
-	pedal := mocks.NewMockPedal(ctrl)
-	pedal.EXPECT().Catalog(gomock.Any()).
-		Return(nil, errors.New("no catalog for that pedal")).AnyTimes()
-
-	err := MeasureNames(context.Background(), buffer(), NamesOptions{
-		Client: pedal, Model: "HD2_CabMicIr_2x15Brute",
-	})
-
-	s.Require().ErrorContains(err, "no catalog for that pedal")
 }
 
 func TestNamesTestSuite(

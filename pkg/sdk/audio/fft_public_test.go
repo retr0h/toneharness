@@ -197,31 +197,49 @@ func (s *FFTPublicTestSuite) TestAPluckedNoteDecays() {
 	s.Require().Greater(head, tail*5, "a plucked note dies away")
 }
 
-// TestTransformIsItsOwnCheck covers the arithmetic without a signal.
+// TestTransform covers the arithmetic itself.
 //
-// A transform of a single spike holds the same magnitude in every bin. It is
-// the one case whose answer can be written down without trusting anything
-// else in this file.
-func (s *FFTPublicTestSuite) TestTransformIsItsOwnCheck() {
-	re := make([]float64, 16)
-	im := make([]float64, 16)
-	re[0] = 1
+// One method and one table, so a case is a row rather than a file.
+func (s *FFTPublicTestSuite) TestTransform() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The arithmetic without a signal.
+			//
+			// A transform of a single spike holds the same magnitude in every bin. It is
+			// the one case whose answer can be written down without trusting anything
+			// else in this file.
+			name: "is its own check",
+			then: func() {
+				re := make([]float64, 16)
+				im := make([]float64, 16)
+				re[0] = 1
 
-	audio.Transform(re, im)
+				audio.Transform(re, im)
 
-	for i := range re {
-		s.Require().InDelta(1, math.Hypot(re[i], im[i]), 1e-9,
-			"bin %d", i)
+				for i := range re {
+					s.Require().InDelta(1, math.Hypot(re[i], im[i]), 1e-9,
+						"bin %d", i)
+				}
+			},
+		},
+		{
+			name: "of nothing",
+			then: func() {
+				re, im := []float64{}, []float64{}
+
+				audio.Transform(re, im)
+
+				s.Require().Empty(re)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
-}
-
-// TestTransformOfNothing returns without touching anything.
-func (s *FFTPublicTestSuite) TestTransformOfNothing() {
-	re, im := []float64{}, []float64{}
-
-	audio.Transform(re, im)
-
-	s.Require().Empty(re)
 }
 
 // TestATransformUndoesItself covers the round trip.

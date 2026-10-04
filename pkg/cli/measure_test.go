@@ -48,110 +48,154 @@ func (s *MeasureTestSuite) SetupSuite() {
 	s.cat = cat
 }
 
-// TestWantedSkipsWhatIsNotABlock covers the four catalog entries that are not.
+// TestWanted covers which blocks a campaign will attempt.
 //
-// `@dt`, `@global_params`, `@powercab` and `@variax` are where a preset keeps
-// settings about the device rather than anything in the signal path, and
-// carry no name because nobody puts one in a chain. Attempted, they land in
-// the output as failures and make the refusal list a mix of blocks that would
-// not load and things that were never blocks.
-func (s *MeasureTestSuite) TestWantedSkipsWhatIsNotABlock() {
-	got := Wanted(s.cat, "", nil)
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasureTestSuite) TestWanted() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The four catalog entries that are not.
+			//
+			// `@dt`, `@global_params`, `@powercab` and `@variax` are where a preset keeps
+			// settings about the device rather than anything in the signal path, and
+			// carry no name because nobody puts one in a chain. Attempted, they land in
+			// the output as failures and make the refusal list a mix of blocks that would
+			// not load and things that were never blocks.
+			name: "skips what is not a block",
+			then: func() {
+				got := Wanted(s.cat, "", nil)
 
-	for _, block := range got {
-		s.Require().NotEmpty(block.Name, "%s has no name", block.ID)
-		s.Require().NotContains(block.ID, "@")
+				for _, block := range got {
+					s.Require().NotEmpty(block.Name, "%s has no name", block.ID)
+					s.Require().NotContains(block.ID, "@")
+				}
+
+				// Every block, because the catalog no longer holds anything that is not
+				// one. The four device attributes are dropped where they are read rather
+				// than here, so this counts what the catalog has instead of subtracting
+				// them again.
+				s.Require().Len(got, len(s.cat.Blocks))
+			},
+		},
+		{
+			// --category.
+			name: "narrows to one kind",
+			then: func() {
+				got := Wanted(s.cat, "amp", nil)
+
+				s.Require().NotEmpty(got)
+
+				for _, block := range got {
+					s.Require().Equal(catalog.CategoryAmp, block.Category)
+				}
+			},
+		},
+		{
+			// Two runs agreeing on the order.
+			//
+			// A campaign that stops halfway and resumes has to pick up where it left off,
+			// which it cannot do if the list reshuffles between runs.
+			name: "is stable",
+			then: func() {
+				first := Wanted(s.cat, "", nil)
+
+				for range 5 {
+					s.Require().Equal(first, Wanted(s.cat, "", nil))
+				}
+			},
+		},
+		{
+			// Resuming.
+			name: "leaves out what is done",
+			then: func() {
+				all := Wanted(s.cat, "amp", nil)
+				done := map[string]measured.Block{all[0].ID: {ID: all[0].ID}}
+
+				got := Wanted(s.cat, "amp", done)
+
+				s.Require().Len(got, len(all)-1)
+				s.Require().NotEqual(all[0].ID, got[0].ID)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
-
-	// Every block, because the catalog no longer holds anything that is not
-	// one. The four device attributes are dropped where they are read rather
-	// than here, so this counts what the catalog has instead of subtracting
-	// them again.
-	s.Require().Len(got, len(s.cat.Blocks))
 }
 
-// TestWantedNarrowsToOneKind covers --category.
-func (s *MeasureTestSuite) TestWantedNarrowsToOneKind() {
-	got := Wanted(s.cat, "amp", nil)
+// TestPlanFor covers the one-block plan a reading is taken through.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasureTestSuite) TestPlanFor() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The bug this cost.
+			//
+			// A reverb called "'63 Spring" opens a YAML quote that nothing closes, and
+			// the document fails to parse at a line nowhere near the name. One block of
+			// six hundred and sixty one was lost to it, so the plan is built as the type
+			// and written by its own writer rather than as text.
+			name: "writes a document that parses",
+			then: func() {
+				spec := PlanFor(measured.Block{
+					ID: "HD2_Reverb63Spring", Name: "'63 Spring", Category: "reverb",
+				}, true)
 
-	s.Require().NotEmpty(got)
+				var buf bytes.Buffer
+				s.Require().NoError(plan.Write(&buf, spec))
 
-	for _, block := range got {
-		s.Require().Equal(catalog.CategoryAmp, block.Category)
+				back, err := plan.Load(&buf)
+				s.Require().NoError(err)
+				s.Require().Equal("measure-hd2-reverb63spring", back.Name)
+				s.Require().Equal(catalog.ModelID("HD2_Reverb63Spring"), back.Blocks[0].Model)
+			},
+		},
+		{
+			// Why a sweep writes a plan and not a rig.
+			//
+			// 661 models share 468 names, so "Ampeg SVT" matches both of its channels and
+			// a rig naming the gear would measure whichever the compiler picked.
+			name: "pins one model",
+			then: func() {
+				spec := PlanFor(measured.Block{
+					ID: "HD2_AmpSVBeastNrm", Name: "Ampeg SVT", Category: "amp",
+				}, true)
+
+				s.Require().Len(spec.Blocks, 1)
+				s.Require().Equal(catalog.ModelID("HD2_AmpSVBeastNrm"), spec.Blocks[0].Model)
+				s.Require().True(spec.Blocks[0].Enabled,
+					"switched on unless it is the baseline")
+				s.Require().NoError(plan.Validate(s.cat, spec, plan.HXStompLimits()))
+			},
+		},
+		{
+			// The baseline.
+			//
+			// One bypassed block rather than none, because a chain has a minimum of one
+			// item and a plan with nothing in it is not a plan. Bypassed is the same
+			// signal path either way.
+			name: "can be bypassed",
+			then: func() {
+				spec := PlanFor(measured.Block{
+					ID: "HD2_EQSimple3Band", Name: "Simple EQ", Category: "eq",
+				}, false)
+
+				s.Require().False(spec.Blocks[0].Enabled)
+				s.Require().NoError(plan.Validate(s.cat, spec, plan.HXStompLimits()))
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
-}
-
-// TestWantedIsStable covers two runs agreeing on the order.
-//
-// A campaign that stops halfway and resumes has to pick up where it left off,
-// which it cannot do if the list reshuffles between runs.
-func (s *MeasureTestSuite) TestWantedIsStable() {
-	first := Wanted(s.cat, "", nil)
-
-	for range 5 {
-		s.Require().Equal(first, Wanted(s.cat, "", nil))
-	}
-}
-
-// TestWantedLeavesOutWhatIsDone covers resuming.
-func (s *MeasureTestSuite) TestWantedLeavesOutWhatIsDone() {
-	all := Wanted(s.cat, "amp", nil)
-	done := map[string]measured.Block{all[0].ID: {ID: all[0].ID}}
-
-	got := Wanted(s.cat, "amp", done)
-
-	s.Require().Len(got, len(all)-1)
-	s.Require().NotEqual(all[0].ID, got[0].ID)
-}
-
-// TestPlanForWritesADocumentThatParses is the bug this cost.
-//
-// A reverb called "'63 Spring" opens a YAML quote that nothing closes, and
-// the document fails to parse at a line nowhere near the name. One block of
-// six hundred and sixty one was lost to it, so the plan is built as the type
-// and written by its own writer rather than as text.
-func (s *MeasureTestSuite) TestPlanForWritesADocumentThatParses() {
-	spec := PlanFor(measured.Block{
-		ID: "HD2_Reverb63Spring", Name: "'63 Spring", Category: "reverb",
-	}, true)
-
-	var buf bytes.Buffer
-	s.Require().NoError(plan.Write(&buf, spec))
-
-	back, err := plan.Load(&buf)
-	s.Require().NoError(err)
-	s.Require().Equal("measure-hd2-reverb63spring", back.Name)
-	s.Require().Equal(catalog.ModelID("HD2_Reverb63Spring"), back.Blocks[0].Model)
-}
-
-// TestPlanForPinsOneModel is why a sweep writes a plan and not a rig.
-//
-// 661 models share 468 names, so "Ampeg SVT" matches both of its channels and
-// a rig naming the gear would measure whichever the compiler picked.
-func (s *MeasureTestSuite) TestPlanForPinsOneModel() {
-	spec := PlanFor(measured.Block{
-		ID: "HD2_AmpSVBeastNrm", Name: "Ampeg SVT", Category: "amp",
-	}, true)
-
-	s.Require().Len(spec.Blocks, 1)
-	s.Require().Equal(catalog.ModelID("HD2_AmpSVBeastNrm"), spec.Blocks[0].Model)
-	s.Require().True(spec.Blocks[0].Enabled,
-		"switched on unless it is the baseline")
-	s.Require().NoError(plan.Validate(s.cat, spec, plan.HXStompLimits()))
-}
-
-// TestPlanForCanBeBypassed covers the baseline.
-//
-// One bypassed block rather than none, because a chain has a minimum of one
-// item and a plan with nothing in it is not a plan. Bypassed is the same
-// signal path either way.
-func (s *MeasureTestSuite) TestPlanForCanBeBypassed() {
-	spec := PlanFor(measured.Block{
-		ID: "HD2_EQSimple3Band", Name: "Simple EQ", Category: "eq",
-	}, false)
-
-	s.Require().False(spec.Blocks[0].Enabled)
-	s.Require().NoError(plan.Validate(s.cat, spec, plan.HXStompLimits()))
 }
 
 // TestEveryBlockCompilesIntoAPlanThatValidates is the check that would have
@@ -178,129 +222,171 @@ func (s *MeasureTestSuite) TestEveryBlockCompilesIntoAPlanThatValidates() {
 	}
 }
 
-// TestResumeKeepsWhatWasMeasured covers picking a run back up.
-func (s *MeasureTestSuite) TestResumeKeepsWhatWasMeasured() {
-	at := s.libraryFile(`{"device":"HX Stomp","isolated":true,
-	  "baseline":{"centroid":94.8},
-	  "blocks":{
-	    "A":{"id":"A","category":"amp","centroid":300},
-	    "B":{"id":"B","category":"amp","refused":"the device said no"}}}`)
-
-	lib := measured.Library{Blocks: map[string]measured.Block{}}
-	Resume(&lib, MeasureOptions{Out: at})
-
-	s.Require().Len(lib.Blocks, 2)
-	s.Require().InDelta(94.8, lib.Baseline.Centroid, 0.01,
-		"the baseline is resumed too, or every later block is a difference "+
-			"from nothing")
-}
-
-// TestResumeCanTryTheRefusalsAgain covers --retry.
+// TestResume covers picking a campaign up where it stopped.
 //
-// About one block in eighty comes back saying the device stopped taking the
-// message, which is the chunk pacing giving up rather than anything about
-// that block: the same one loads on the next pass.
-func (s *MeasureTestSuite) TestResumeCanTryTheRefusalsAgain() {
-	at := s.libraryFile(`{"device":"HX Stomp","isolated":true,
-	  "blocks":{
-	    "A":{"id":"A","category":"amp","centroid":300},
-	    "B":{"id":"B","category":"amp","refused":"the device said no"}}}`)
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasureTestSuite) TestResume() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// Picking a run back up.
+			name: "keeps what was measured",
+			then: func() {
+				at := s.libraryFile(`{"device":"HX Stomp","isolated":true,
+		  "baseline":{"centroid":94.8},
+		  "blocks":{
+		    "A":{"id":"A","category":"amp","centroid":300},
+		    "B":{"id":"B","category":"amp","refused":"the device said no"}}}`)
 
-	lib := measured.Library{Blocks: map[string]measured.Block{}}
-	Resume(&lib, MeasureOptions{Out: at, Retry: true})
+				lib := measured.Library{Blocks: map[string]measured.Block{}}
+				Resume(&lib, MeasureOptions{Out: at})
 
-	s.Require().Len(lib.Blocks, 1)
-	s.Require().Contains(lib.Blocks, "A")
-	s.Require().NotContains(lib.Blocks, "B", "the refusal is tried again")
-}
+				s.Require().Len(lib.Blocks, 2)
+				s.Require().InDelta(94.8, lib.Baseline.Centroid, 0.01,
+					"the baseline is resumed too, or every later block is a difference "+
+						"from nothing")
+			},
+		},
+		{
+			// --retry.
+			//
+			// About one block in eighty comes back saying the device stopped taking the
+			// message, which is the chunk pacing giving up rather than anything about
+			// that block: the same one loads on the next pass.
+			name: "can try the refusals again",
+			then: func() {
+				at := s.libraryFile(`{"device":"HX Stomp","isolated":true,
+		  "blocks":{
+		    "A":{"id":"A","category":"amp","centroid":300},
+		    "B":{"id":"B","category":"amp","refused":"the device said no"}}}`)
 
-// TestResumeOnNothingToResumeFrom covers the first run.
-func (s *MeasureTestSuite) TestResumeOnNothingToResumeFrom() {
-	for _, tt := range []struct{ name, body string }{
-		{name: "no file at all"},
-		{name: "a file that is not a library", body: "{"},
+				lib := measured.Library{Blocks: map[string]measured.Block{}}
+				Resume(&lib, MeasureOptions{Out: at, Retry: true})
+
+				s.Require().Len(lib.Blocks, 1)
+				s.Require().Contains(lib.Blocks, "A")
+				s.Require().NotContains(lib.Blocks, "B", "the refusal is tried again")
+			},
+		},
+		{
+			// The first run.
+			name: "on nothing to resume from",
+			then: func() {
+				for _, tt := range []struct{ name, body string }{
+					{name: "no file at all"},
+					{name: "a file that is not a library", body: "{"},
+				} {
+					s.Run(tt.name, func() {
+						at := filepath.Join(s.T().TempDir(), "none.json")
+						if tt.body != "" {
+							at = s.libraryFile(tt.body)
+						}
+
+						lib := measured.Library{Blocks: map[string]measured.Block{}}
+						Resume(&lib, MeasureOptions{Out: at})
+
+						s.Require().Empty(lib.Blocks)
+					})
+				}
+			},
+		},
 	} {
 		s.Run(tt.name, func() {
-			at := filepath.Join(s.T().TempDir(), "none.json")
-			if tt.body != "" {
-				at = s.libraryFile(tt.body)
-			}
-
-			lib := measured.Library{Blocks: map[string]measured.Block{}}
-			Resume(&lib, MeasureOptions{Out: at})
-
-			s.Require().Empty(lib.Blocks)
+			tt.then()
 		})
 	}
 }
 
-// TestSweepableTakesDialsAndLists covers control selection.
+// TestSweepable covers which controls can be swept, and over what range.
 //
-// A list is taken even though it has no slope, because which of twelve
-// microphones sits in front of a speaker changes a cabinet more than any of its
-// knobs.
-func (s *MeasureTestSuite) TestSweepableTakesDialsAndLists() {
-	block := s.cat.Blocks["HD2_CabMicIr_2x15Brute"]
-	got := Sweepable(block, WireOrder(s.cat, "HD2_CabMicIr_2x15Brute"))
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasureTestSuite) TestSweepable() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// Control selection.
+			//
+			// A list is taken even though it has no slope, because which of twelve
+			// microphones sits in front of a speaker changes a cabinet more than any of its
+			// knobs.
+			name: "takes dials and lists",
+			then: func() {
+				block := s.cat.Blocks["HD2_CabMicIr_2x15Brute"]
+				got := Sweepable(block, WireOrder(s.cat, "HD2_CabMicIr_2x15Brute"))
 
-	kinds := make([]string, 0, len(got))
-	for _, c := range got {
-		kinds = append(kinds, c.kind)
-	}
+				kinds := make([]string, 0, len(got))
+				for _, c := range got {
+					kinds = append(kinds, c.kind)
+				}
 
-	s.Require().Contains(kinds, "int", "the microphone is a list")
-	s.Require().Contains(kinds, "float")
-}
+				s.Require().Contains(kinds, "int", "the microphone is a list")
+				s.Require().Contains(kinds, "float")
+			},
+		},
+		{
+			// Why a switch needs a
+			// range invented for it.
+			//
+			// Line 6 record a switch's bounds as 0 and 0, not as false and true, so there
+			// is nothing to step through: swept on the catalog's own numbers a switch would
+			// be read once, at off, and reported as a control that does nothing. Off and on
+			// are numbered 0 and 1 here instead.
+			//
+			// A switch used to be left out entirely, on the grounds that two positions is
+			// not a curve. Two positions is a comparison, which is what a list already gets.
+			name: "numbers a switch because the catalog does not",
+			then: func() {
+				const model = "HD2_PreampSVT4Pro"
 
-// TestSweepableNumbersASwitchBecauseTheCatalogDoesNot is why a switch needs a
-// range invented for it.
-//
-// Line 6 record a switch's bounds as 0 and 0, not as false and true, so there
-// is nothing to step through: swept on the catalog's own numbers a switch would
-// be read once, at off, and reported as a control that does nothing. Off and on
-// are numbered 0 and 1 here instead.
-//
-// A switch used to be left out entirely, on the grounds that two positions is
-// not a curve. Two positions is a comparison, which is what a list already gets.
-func (s *MeasureTestSuite) TestSweepableNumbersASwitchBecauseTheCatalogDoesNot() {
-	const model = "HD2_PreampSVT4Pro"
+				block := s.cat.Blocks[model]
 
-	block := s.cat.Blocks[model]
+				s.Require().InDelta(0, block.Params["Bright"].Min, 0.001)
+				s.Require().InDelta(0, block.Params["Bright"].Max, 0.001,
+					"the catalog carries no range for a switch")
 
-	s.Require().InDelta(0, block.Params["Bright"].Min, 0.001)
-	s.Require().InDelta(0, block.Params["Bright"].Max, 0.001,
-		"the catalog carries no range for a switch")
+				var bright control
 
-	var bright control
+				for _, c := range Sweepable(block, WireOrder(s.cat, model)) {
+					if c.name == "Bright" {
+						bright = c
+					}
+				}
 
-	for _, c := range Sweepable(block, WireOrder(s.cat, model)) {
-		if c.name == "Bright" {
-			bright = c
-		}
-	}
+				s.Require().Equal("Bright", bright.name, "a switch is swept")
+				s.Require().Equal("bool", bright.kind)
+				s.Require().InDelta(0, bright.low, 0.001)
+				s.Require().InDelta(1, bright.high, 0.001, "off and on")
+			},
+		},
+		{
+			// Why a range is not assumed.
+			//
+			// 1,452 of the device's 4,835 float controls do not run zero to one. A Simple
+			// EQ's Mid Freq runs 125 to 4000 Hz, and swept 0..1 it never leaves its
+			// bottom stop and reports as a control that does nothing.
+			name: "takes the catalogs range",
+			then: func() {
+				block := s.cat.Blocks["HD2_CabMicIr_2x15Brute"]
 
-	s.Require().Equal("Bright", bright.name, "a switch is swept")
-	s.Require().Equal("bool", bright.kind)
-	s.Require().InDelta(0, bright.low, 0.001)
-	s.Require().InDelta(1, bright.high, 0.001, "off and on")
-}
+				// This cabinet carries no switch, which is what makes it the block to ask:
+				// a switch is the one kind whose range this does not take, because the
+				// catalog does not carry one.
+				for _, c := range Sweepable(block, WireOrder(s.cat, "HD2_CabMicIr_2x15Brute")) {
+					spec := block.Params[c.name]
 
-// TestSweepableTakesTheCatalogsRange is why a range is not assumed.
-//
-// 1,452 of the device's 4,835 float controls do not run zero to one. A Simple
-// EQ's Mid Freq runs 125 to 4000 Hz, and swept 0..1 it never leaves its
-// bottom stop and reports as a control that does nothing.
-func (s *MeasureTestSuite) TestSweepableTakesTheCatalogsRange() {
-	block := s.cat.Blocks["HD2_CabMicIr_2x15Brute"]
-
-	// This cabinet carries no switch, which is what makes it the block to ask:
-	// a switch is the one kind whose range this does not take, because the
-	// catalog does not carry one.
-	for _, c := range Sweepable(block, WireOrder(s.cat, "HD2_CabMicIr_2x15Brute")) {
-		spec := block.Params[c.name]
-
-		s.Require().InDelta(spec.Min, c.low, 0.001, c.name)
-		s.Require().InDelta(spec.Max, c.high, 0.001, c.name)
+					s.Require().InDelta(spec.Min, c.low, 0.001, c.name)
+					s.Require().InDelta(spec.Max, c.high, 0.001, c.name)
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
 }
 
@@ -351,47 +437,85 @@ func (s *MeasureTestSuite) TestFillGivesADialASlopeAndAListOrSwitchASpread() {
 	s.Require().InDelta(100, sw.Spread["centroid"], 0.001)
 }
 
-// TestResampleTakesTheAskedForLength covers the rate change.
-func (s *MeasureTestSuite) TestResampleTakesTheAskedForLength() {
-	samples := make([]float64, 44100*3)
-	for i := range samples {
-		samples[i] = 0.5
-	}
-
-	got := Resample(samples, 44100, 1)
-
-	s.Require().Len(got, 48000)
-	s.Require().InDelta(0.5, float64(got[100]), 0.001)
-}
-
-// TestResampleStopsAtTheEndOfWhatItHas covers asking for more than exists.
+// TestResample covers fitting a reading to the length asked for.
 //
-// The count, not a bound. `Less(len(got), 48000*10)` admitted anything under
-// 480,000 against a true answer of 108, so breaking the stop outright — reading
-// only an eighth of what is there — passed it. A short read means every figure
-// is taken against a truncated signal.
-func (s *MeasureTestSuite) TestResampleStopsAtTheEndOfWhatItHas() {
-	got := Resample(make([]float64, 100), 44100, 10)
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasureTestSuite) TestResample() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The rate change.
+			name: "takes the asked for length",
+			then: func() {
+				samples := make([]float64, 44100*3)
+				for i := range samples {
+					samples[i] = 0.5
+				}
 
-	s.Require().Len(got, 108, "100 samples at 44.1kHz is 108 at 48")
+				got := Resample(samples, 44100, 1)
+
+				s.Require().Len(got, 48000)
+				s.Require().InDelta(0.5, float64(got[100]), 0.001)
+			},
+		},
+		{
+			// Asking for more than exists.
+			//
+			// The count, not a bound. `Less(len(got), 48000*10)` admitted anything under
+			// 480,000 against a true answer of 108, so breaking the stop outright — reading
+			// only an eighth of what is there — passed it. A short read means every figure
+			// is taken against a truncated signal.
+			name: "stops at the end of what it has",
+			then: func() {
+				got := Resample(make([]float64, 100), 44100, 10)
+
+				s.Require().Len(got, 108, "100 samples at 44.1kHz is 108 at 48")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
-// TestReferenceAndHashReportAFileThatIsNotThere covers a missing signal.
-func (s *MeasureTestSuite) TestReferenceAndHashReportAFileThatIsNotThere() {
-	_, err := Reference(filepath.Join(s.T().TempDir(), "none.wav"), 4)
-	s.Require().ErrorContains(err, "reading")
+// TestReference covers reading the file a sweep plays.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasureTestSuite) TestReference() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// A missing signal.
+			name: "and hash report a file that is not there",
+			then: func() {
+				_, err := Reference(filepath.Join(s.T().TempDir(), "none.wav"), 4)
+				s.Require().ErrorContains(err, "reading")
 
-	_, err = Hash(filepath.Join(s.T().TempDir(), "none.wav"))
-	s.Require().ErrorContains(err, "reading")
-}
+				_, err = Hash(filepath.Join(s.T().TempDir(), "none.wav"))
+				s.Require().ErrorContains(err, "reading")
+			},
+		},
+		{
+			// A file that is not a WAV.
+			name: "refuses what is not audio",
+			then: func() {
+				at := filepath.Join(s.T().TempDir(), "not.wav")
+				s.Require().NoError(os.WriteFile(at, []byte("not audio"), 0o600))
 
-// TestReferenceRefusesWhatIsNotAudio covers a file that is not a WAV.
-func (s *MeasureTestSuite) TestReferenceRefusesWhatIsNotAudio() {
-	at := filepath.Join(s.T().TempDir(), "not.wav")
-	s.Require().NoError(os.WriteFile(at, []byte("not audio"), 0o600))
-
-	_, err := Reference(at, 4)
-	s.Require().Error(err)
+				_, err := Reference(at, 4)
+				s.Require().Error(err)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestChangedNamesWhatMoved covers reading a probe's answer.
