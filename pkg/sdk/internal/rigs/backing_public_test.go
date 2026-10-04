@@ -51,51 +51,6 @@ func (s *BackingPublicTestSuite) read() map[string]result.Backing {
 	return out
 }
 
-// TestRecordsInsideTheEra covers the case nobody has to act on.
-func (s *BackingPublicTestSuite) TestRecordsInsideTheEra() {
-	got := s.read()["in-era"]
-
-	s.Require().True(got.Stated())
-	s.Require().Len(got.Records, 2)
-	s.Require().Zero(got.Outside())
-
-	for _, r := range got.Records {
-		s.Require().False(r.Outside)
-	}
-}
-
-// TestARecordOutsideTheEra covers the finding this exists for.
-//
-// The rig describes 2004 and one record is from 1994, so the figures measured
-// from it describe gear the rig does not name.
-func (s *BackingPublicTestSuite) TestARecordOutsideTheEra() {
-	got := s.read()["out-of-era"]
-
-	s.Require().Equal(1, got.Outside())
-	s.Require().True(got.Records[0].Outside, "1994 against a 2004 rig")
-	s.Require().False(got.Records[1].Outside, "2004 against a 2004 rig")
-}
-
-// TestRecordsNoRigIsNamedFor covers the join failing quietly.
-//
-// A rig reaches its records by the directory carrying its identifier. A
-// directory called anything else reads exactly like a rig nobody has measured
-// yet, so the typo survives until something says which it is.
-func (s *BackingPublicTestSuite) TestRecordsNoRigIsNamedFor() {
-	got := s.read()["mccartney"]
-
-	s.Require().True(got.NoRig)
-	s.Require().NotEmpty(got.Records, "the records are there, and nobody claims them")
-	s.Require().Zero(got.Outside(), "there is no era to be outside of")
-}
-
-// TestARigIsNotItsOwnOrphan covers the ordinary directories staying ordinary.
-func (s *BackingPublicTestSuite) TestARigIsNotItsOwnOrphan() {
-	for _, id := range []string{"in-era", "out-of-era", "no-years"} {
-		s.Require().False(s.read()[id].NoRig, id)
-	}
-}
-
 // TestBacking covers Backing, which reads which records back each rig, and
 // holds them to its era.
 //
@@ -105,6 +60,165 @@ func (s *BackingPublicTestSuite) TestBacking() {
 		name string
 		then func()
 	}{
+		{
+			// The case nobody has to act on.
+			name: "records inside the era",
+			then: func() {
+				got := s.read()["in-era"]
+
+				s.Require().True(got.Stated())
+				s.Require().Len(got.Records, 2)
+				s.Require().Zero(got.Outside())
+
+				for _, r := range got.Records {
+					s.Require().False(r.Outside)
+				}
+			},
+		},
+		{
+			// The finding this exists for. The rig describes 2004 and one
+			// record is from 1994, so the figures measured from it describe
+			// gear the rig does not name.
+			name: "a record outside the era",
+			then: func() {
+				got := s.read()["out-of-era"]
+
+				s.Require().Equal(1, got.Outside())
+				s.Require().True(got.Records[0].Outside, "1994 against a 2004 rig")
+				s.Require().False(got.Records[1].Outside, "2004 against a 2004 rig")
+			},
+		},
+		{
+			// What cannot be checked, reported rather than passed over: a rig
+			// with no years is a rig nothing can hold its records to, which is
+			// worth seeing beside the ones that can.
+			name: "a rig that states no era",
+			then: func() {
+				got := s.read()["no-years"]
+
+				s.Require().False(got.Stated())
+				s.Require().Zero(got.Outside(), "nothing to be outside of")
+			},
+		},
+		{
+			// The ordinary case. Most players have gear evidence long before
+			// anybody owns their records, so a rig with no corpus is not a
+			// fault.
+			name: "a rig nobody has measured",
+			then: func() {
+				s.Require().Empty(s.read()["no-years"].Records)
+			},
+		},
+		{
+			// The join failing quietly. A rig reaches its records by the
+			// directory carrying its identifier. A directory called anything
+			// else reads exactly like a rig nobody has measured yet, so the
+			// typo survives until something says which it is.
+			name: "records no rig is named for",
+			then: func() {
+				got := s.read()["mccartney"]
+
+				s.Require().True(got.NoRig)
+				s.Require().NotEmpty(got.Records, "the records are there, and nobody claims them")
+				s.Require().Zero(got.Outside(), "there is no era to be outside of")
+			},
+		},
+		{
+			name: "a rig is not its own orphan",
+			then: func() {
+				for _, id := range []string{"in-era", "out-of-era", "no-years"} {
+					s.Require().False(s.read()[id].NoRig, id)
+				}
+			},
+		},
+		{
+			// The join a genre needs. A rig for a person reaches its records
+			// through the directory carrying its identifier. A genre has no
+			// directory and never will: its records are other people's,
+			// sitting under the players who made them, and the genre tag is
+			// what joins them to it.
+			//
+			// Without this a genre rig reads "nothing measured for it", which
+			// is the opposite of true, because measurement is its only
+			// evidence.
+			name: "a rig for a genre reaches its records by their tags",
+			then: func() {
+				got := s.read()["thrash"]
+
+				s.Require().False(got.NoRig)
+				s.Require().Len(got.Records, 2, "one record from each of two players")
+				s.Require().False(got.Stated(), "a genre claims no years")
+				s.Require().Zero(got.Outside())
+
+				// Nothing in the corpus is called thrash, so a directory join
+				// would have found none of these.
+				s.Require().NoDirExists(filepath.Join("testdata", "backing", "music", "thrash"))
+			},
+		},
+		{
+			// The second kind of wrong-era mistake. The era check asks whether
+			// the records were made when the gear was; this asks whether they
+			// were made through it. Five of the nine rigs that ship measure a
+			// signal that went to the desk, and every one of them ends in a
+			// cabinet, so a figure read off those records was not shaped by
+			// the box the preset builds.
+			name: "a signal that never met a microphone",
+			then: func() {
+				got := s.read()["went-direct"]
+
+				s.Require().Equal(2, got.Direct)
+				s.Require().Equal(2, got.Captured)
+				s.Require().Zero(got.Both)
+
+				s.Require().Equal(1, got.Stage,
+					"a rundown photographs a backline and the corpus measures records")
+			},
+		},
+		{
+			// The third answer. Jaco Pastorius took "a little bit of both, the
+			// highs and lows", which is neither of the other two and must not
+			// be counted as direct.
+			name: "a direct and a microphone at once",
+			then: func() {
+				got := s.read()["took-both"]
+
+				s.Require().Equal(1, got.Both)
+				s.Require().Zero(got.Direct)
+				s.Require().Equal(2, got.Captured,
+					"the miked entry is established too, and says so")
+			},
+		},
+		{
+			// Silence, which is not the same as miked. A rig nobody has asked
+			// the question of reads as miked unless the count of answers is
+			// kept separately, and that would turn an open question into a
+			// claim.
+			name: "nobody established the room",
+			then: func() {
+				got := s.read()["in-era"]
+
+				s.Require().Zero(got.Captured)
+				s.Require().Zero(got.Direct)
+				s.Require().Zero(got.Stage)
+			},
+		},
+		{
+			// The join `played.records` borrows, and the way it fails. An
+			// instrument claims the records it made by their track names, the
+			// same join the corpus directory makes. A name matching nothing
+			// attributes a figure to nothing, and it reads exactly like an
+			// instrument nobody has got to yet.
+			name: "an instrument naming a record nobody has",
+			then: func() {
+				s.Require().Equal([]string{"a-track-nobody-has"}, s.read()["misnamed"].Misnamed)
+			},
+		},
+		{
+			name: "an instrument naming records that exist",
+			then: func() {
+				s.Require().Empty(s.read()["in-era"].Misnamed)
+			},
+		},
 		{
 			// A directory somebody made and has not filled, which claims
 			// nothing and is nobody's problem.
@@ -184,6 +298,8 @@ func (s *BackingPublicTestSuite) TestBacking() {
 			//
 			// A directory nobody has is the same as a player nobody has
 			// measured, so it reports rather than fails: the rigs still read.
+			// The genre join answers the same way, and did not until it was
+			// made to.
 			name: "a corpus that is not there",
 			then: func() {
 				got, err := rigs.Backing(
@@ -269,91 +385,8 @@ func (s *BackingPublicTestSuite) TestBacking() {
 	}
 }
 
-// TestARigThatStatesNoEra covers what cannot be checked.
-//
-// Reported rather than passed over: a rig with no years is a rig nothing can
-// hold its records to, which is worth seeing beside the ones that can.
-func (s *BackingPublicTestSuite) TestARigThatStatesNoEra() {
-	got := s.read()["no-years"]
-
-	s.Require().False(got.Stated())
-	s.Require().Zero(got.Outside(), "nothing to be outside of")
-}
-
-// TestARigNobodyHasMeasured covers the ordinary case.
-//
-// Most players have gear evidence long before anybody owns their records, so
-// a rig with no corpus is not a fault.
-func (s *BackingPublicTestSuite) TestARigNobodyHasMeasured() {
-	got := s.read()["no-years"]
-
-	s.Require().Empty(got.Records)
-}
-
 func TestBackingPublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(BackingPublicTestSuite))
-}
-
-// TestASignalThatNeverMetAMicrophone covers the second kind of wrong-era
-// mistake.
-//
-// The era check asks whether the records were made when the gear was. This
-// asks whether they were made through it. Five of the nine rigs that ship
-// measure a signal that went to the desk, and every one of them ends in a
-// cabinet, so a figure read off those records was not shaped by the box the
-// preset builds.
-func (s *BackingPublicTestSuite) TestASignalThatNeverMetAMicrophone() {
-	got := s.read()["went-direct"]
-
-	s.Require().Equal(2, got.Direct)
-	s.Require().Equal(2, got.Captured)
-	s.Require().Zero(got.Both)
-
-	s.Require().Equal(1, got.Stage,
-		"a rundown photographs a backline and the corpus measures records")
-}
-
-// TestADirectAndAMicrophoneAtOnce covers the third answer.
-//
-// Jaco Pastorius took "a little bit of both, the highs and lows", which is
-// neither of the other two and must not be counted as direct.
-func (s *BackingPublicTestSuite) TestADirectAndAMicrophoneAtOnce() {
-	got := s.read()["took-both"]
-
-	s.Require().Equal(1, got.Both)
-	s.Require().Zero(got.Direct)
-	s.Require().Equal(2, got.Captured,
-		"the miked entry is established too, and says so")
-}
-
-// TestNobodyEstablishedTheRoom covers silence, which is not the same as miked.
-//
-// A rig nobody has asked the question of reads as miked unless the count of
-// answers is kept separately, and that would turn an open question into a
-// claim.
-func (s *BackingPublicTestSuite) TestNobodyEstablishedTheRoom() {
-	got := s.read()["in-era"]
-
-	s.Require().Zero(got.Captured)
-	s.Require().Zero(got.Direct)
-	s.Require().Zero(got.Stage)
-}
-
-// TestAnInstrumentNamingARecordNobodyHas covers the join `played.records`
-// borrows, and the way it fails.
-//
-// An instrument claims the records it made by their track names, the same
-// join the corpus directory makes. A name matching nothing attributes a figure
-// to nothing, and it reads exactly like an instrument nobody has got to yet.
-func (s *BackingPublicTestSuite) TestAnInstrumentNamingARecordNobodyHas() {
-	got := s.read()["misnamed"]
-
-	s.Require().Equal([]string{"a-track-nobody-has"}, got.Misnamed)
-}
-
-// TestAnInstrumentNamingRecordsThatExist covers the ordinary case.
-func (s *BackingPublicTestSuite) TestAnInstrumentNamingRecordsThatExist() {
-	s.Require().Empty(s.read()["in-era"].Misnamed)
 }

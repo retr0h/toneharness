@@ -1,0 +1,18 @@
+# A genre rig, which reaches its records by their tags rather than by a
+# directory. Nothing in the corpus is called "thrash".
+schema: ToneSpec
+id: thrash
+
+ask:
+  genre: [thrash]
+
+  subject:
+    kind: genre
+    name: Thrash
+
+  confidence: low
+
+rig:
+  instrument: bass
+  chain:
+    - { role: amp, gear: Ampeg SVT }

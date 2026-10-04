@@ -20,13 +20,16 @@
 package rigs
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -80,7 +83,7 @@ func Backing(
 
 		one.Direct, one.Both, one.Captured, one.Stage = rooms(spec.Chain)
 
-		records, err := recordsFor(corpus, e.idOf())
+		records, err := backing(corpus, e)
 		if err != nil {
 			return nil, err
 		}
@@ -164,6 +167,87 @@ func unclaimed(
 //
 // A rig with no corpus is the ordinary case rather than a fault: most players
 // have gear evidence long before anybody owns their records.
+// backing is the records behind one rig, which is a different join per subject.
+//
+// A rig for a person reaches its records through the directory carrying its
+// identifier. A rig for a genre has no directory and never will: its records
+// are other people's, sitting under the players who made them, and what joins
+// them to it is the genre each one is tagged with.
+//
+// Without this the four genre rigs read "nothing measured for it", which is the
+// opposite of true. Measurement is the only evidence a genre rig has.
+func backing(
+	corpus string,
+	e stored,
+) ([]audio.Record, error) {
+	ask := e.askOf()
+	if ask == nil || ask.Subject == nil || ask.Subject.Kind != tone.KindGenre {
+		return recordsFor(corpus, e.idOf())
+	}
+
+	return genreRecords(corpus, ask.Genre)
+}
+
+// genreRecords is every record in the corpus carrying one of the genres given.
+//
+// Every player's manifest rather than one, because a genre is what its records
+// have in common and they come from different people. Matched on the slug, so
+// "pop-punk" and "Pop-Punk" are one genre, which is what the tag counts do.
+//
+// A record tagged with two of the genres asked for is counted once. The order
+// is the walk's, which is the players in directory order.
+func genreRecords(
+	corpus string,
+	of []string,
+) ([]audio.Record, error) {
+	// No guard on an empty list. `genre` is required on an ask and carries
+	// minItems: 1, so a document that loads always names one, and a second check
+	// here is a branch nothing can reach: a fixture written to cover it is
+	// refused at load with "ask.genre property \"genre\" is missing".
+	want := map[string]bool{}
+	for _, g := range of {
+		want[slug.Of(g)] = true
+	}
+
+	// A corpus that is not there is no records rather than an error, which is
+	// what the directory join answers for a player nobody has measured. A
+	// command run outside a checkout reaches this.
+	held, err := audio.Manifests(os.DirFS(corpus), ".")
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	out := []audio.Record(nil)
+
+	for _, h := range held {
+		for _, r := range h.Tracks {
+			if carries(r, want) {
+				out = append(out, r)
+			}
+		}
+	}
+
+	return out, nil
+}
+
+// carries says whether a record is tagged with any of the genres wanted.
+func carries(
+	r audio.Record,
+	want map[string]bool,
+) bool {
+	for _, g := range r.Genres {
+		if want[slug.Of(g)] {
+			return true
+		}
+	}
+
+	return false
+}
+
 func recordsFor(
 	corpus, id string,
 ) ([]audio.Record, error) {
