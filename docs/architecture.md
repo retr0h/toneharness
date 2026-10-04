@@ -293,6 +293,13 @@ so the rule is that such a word goes when the comparison stops supporting it,
 while a word with a citation behind it stays and the measurement beside it is
 corrected to say what it now says.
 
+The comparison also assumes a player is one sound, and some are not. A career
+measured across three albums and five years averages to a sound nobody made, so
+the figures earn nothing and that silence reads exactly like a player who is
+unremarkable. `measure players` separates the two: it reports a player whose own
+records sit further apart than the whole corpus of players does as `scattered`,
+which says the records were the problem rather than the player.
+
 ## What is still missing
 
 The step from a word to a value is half built: a term says which way to move a

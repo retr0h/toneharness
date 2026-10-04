@@ -183,6 +183,43 @@ func (s *PlayersPublicTestSuite) TestPlayers() {
 			name: "no players at all says what to do about it",
 			want: []string{"no players to compare"},
 		},
+		{
+			// Two silences that call for different work. An unremarkable player
+			// is a fact about them; a scattered one is a fact about which
+			// records were chosen.
+			name: "a player whose own records disagree is not merely unremarkable",
+			of: []audio.Player{{
+				ID: "chuck-dukowski", Records: 3,
+				Scattered: []audio.Scattered{{
+					Key: audio.KeyCentroid, Own: 211, Between: 169, Times: 1.2,
+				}},
+			}},
+			want: []string{
+				"nothing: scattered",
+				"own centroid spans 211 Hz, 1.2x the others' spread",
+			},
+		},
+		{
+			// Beside the words rather than instead of them. A player can be
+			// clear on one axis and all over the place on another, and the
+			// second is why a word the first predicted never arrived.
+			name: "a scattered player who still earned a word shows both",
+			of: []audio.Player{{
+				ID: "jaco-pastorius", Records: 4,
+				Terms: []audio.Derived{{
+					Term: "bright", Key: audio.KeyCentroid,
+					Mine: 259, Others: 138, Of: 28, Margin: 36, Spread: 45,
+				}},
+				Scattered: []audio.Scattered{{
+					Key: audio.KeyMid, Own: 0.49, Between: 0.26, Times: 1.9,
+				}},
+			}},
+			want: []string{
+				"bright",
+				"clear by 36 Hz (80% of their spread)",
+				"own mid spans 49%, 1.9x the others' spread",
+			},
+		},
 	} {
 		s.Run(tt.name, func() {
 			got := s.render(tt.of)
