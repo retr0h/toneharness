@@ -188,25 +188,44 @@ func (s *KnobsPublicTestSuite) TestLowerSetsWhatTheRigSaid() {
 	s.Require().Equal(catalog.Float(0.47), built.Blocks[0].Params["Drive"])
 }
 
-// TestResolveSetsWhatTheRigSaid covers the build path, where the words are
-// the last thing to move a control.
-func (s *KnobsPublicTestSuite) TestResolveSetsWhatTheRigSaid() {
-	spec := bassRig("Ampeg SVT", "")
-	spec.Chain[0].Settings = &rig.Settings{Drive: knob(0.47)}
+// TestResolve covers the knob values a rig's words reach.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *KnobsPublicTestSuite) TestResolve() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The build path, where the words are
+			// the last thing to move a control.
+			name: "sets what the rig said",
+			then: func() {
+				spec := bassRig("Ampeg SVT", "")
+				spec.Chain[0].Settings = &rig.Settings{Drive: knob(0.47)}
 
-	built, _, _, _, err := compile.Resolve("a-rig", spec, compile.Intent{}, s.cat, nil)
-	s.Require().NoError(err)
-	s.Require().Equal(catalog.Float(0.47), built.Blocks[0].Params["Drive"])
-}
+				built, _, _, _, err := compile.Resolve("a-rig", spec, compile.Intent{}, s.cat, nil)
+				s.Require().NoError(err)
+				s.Require().Equal(catalog.Float(0.47), built.Blocks[0].Params["Drive"])
+			},
+		},
+		{
+			// The same refusal on
+			// the build path, where the block is one the catalog chose.
+			name: "refuses a word the gear has no control for",
+			then: func() {
+				spec := bassRig("Ampeg SVT", "")
+				spec.Chain[0].Settings = &rig.Settings{Presence: knob(0.4)}
 
-// TestResolveRefusesAWordTheGearHasNoControlFor covers the same refusal on
-// the build path, where the block is one the catalog chose.
-func (s *KnobsPublicTestSuite) TestResolveRefusesAWordTheGearHasNoControlFor() {
-	spec := bassRig("Ampeg SVT", "")
-	spec.Chain[0].Settings = &rig.Settings{Presence: knob(0.4)}
-
-	_, _, _, _, err := compile.Resolve("a-rig", spec, compile.Intent{}, s.cat, nil)
-	s.Require().ErrorIs(err, compile.ErrNoSuchValue)
+				_, _, _, _, err := compile.Resolve("a-rig", spec, compile.Intent{}, s.cat, nil)
+				s.Require().ErrorIs(err, compile.ErrNoSuchValue)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 func TestKnobsPublicTestSuite(

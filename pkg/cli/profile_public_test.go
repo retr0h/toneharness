@@ -67,135 +67,164 @@ func (s *ProfilePublicTestSuite) full() audio.Profile {
 	}
 }
 
-// TestEveryNumberReachesThePage is the whole contract.
-func (s *ProfilePublicTestSuite) TestEveryNumberReachesThePage() {
-	got := s.render(s.full())
-
-	s.Require().Contains(got, "12.5s")
-	s.Require().Contains(got, "44100 Hz")
-
-	s.Require().Contains(got, "62% low")
-	s.Require().Contains(got, "31% mid")
-	s.Require().Contains(got, "7% high")
-
-	s.Require().Contains(got, "410 Hz")
-	s.Require().Contains(got, "0.81")
-	s.Require().Contains(got, "0.42 s")
-	s.Require().Contains(got, "4.2 dB")
-	s.Require().Contains(got, "18%")
-	s.Require().Contains(got, "4–45%", "the middle window is not the whole answer")
-}
-
-// TestEveryMeasureIsNamed covers the rows being readable.
-func (s *ProfilePublicTestSuite) TestEveryMeasureIsNamed() {
-	got := s.render(s.full())
-
-	for _, name := range []string{
-		"energy", "centroid", "transient", "decay", "dynamics", "harmonics",
-		"spread",
-	} {
-		s.Require().Contains(got, name)
-	}
-}
-
-// TestItReachesNoVerdict is the line this renderer does not cross.
+// TestProfile covers the table of what a recording measures as.
 //
-// The words a rig uses are judgements somebody made. A measurement is not one,
-// and printing them beside each other would quietly turn one into the other.
-func (s *ProfilePublicTestSuite) TestItReachesNoVerdict() {
-	got := s.render(s.full())
-
-	for _, verdict := range []string{
-		"warm", "bright", "dark", "punchy", "percussive", "muddy", "harsh",
-	} {
-		s.Require().NotContains(got, verdict)
-	}
-}
-
-// TestHarmonicLean says which harmonics carry more, and only that.
-func (s *ProfilePublicTestSuite) TestHarmonicLean() {
-	tests := []struct {
+// One method and one table, so a case is a row rather than a file.
+func (s *ProfilePublicTestSuite) TestProfile() {
+	for _, tt := range []struct {
 		name string
-		lean float64
-		want string
+		then func()
 	}{
-		{name: "odd, as a fuzz is", lean: -0.6, want: "leaning odd"},
-		{name: "even, as a valve is", lean: 0.6, want: "leaning even"},
-		{name: "neither in particular", lean: 0.0, want: "above the fundamental"},
-	}
+		{
+			// The whole contract.
+			name: "every number reaches the page",
+			then: func() {
+				got := s.render(s.full())
 
-	for _, tt := range tests {
+				s.Require().Contains(got, "12.5s")
+				s.Require().Contains(got, "44100 Hz")
+
+				s.Require().Contains(got, "62% low")
+				s.Require().Contains(got, "31% mid")
+				s.Require().Contains(got, "7% high")
+
+				s.Require().Contains(got, "410 Hz")
+				s.Require().Contains(got, "0.81")
+				s.Require().Contains(got, "0.42 s")
+				s.Require().Contains(got, "4.2 dB")
+				s.Require().Contains(got, "18%")
+				s.Require().Contains(got, "4–45%", "the middle window is not the whole answer")
+			},
+		},
+		{
+			// The rows being readable.
+			name: "every measure is named",
+			then: func() {
+				got := s.render(s.full())
+
+				for _, name := range []string{
+					"energy", "centroid", "transient", "decay", "dynamics", "harmonics",
+					"spread",
+				} {
+					s.Require().Contains(got, name)
+				}
+			},
+		},
+		{
+			// The line this renderer does not cross.
+			//
+			// The words a rig uses are judgements somebody made. A measurement is not one,
+			// and printing them beside each other would quietly turn one into the other.
+			name: "it reaches no verdict",
+			then: func() {
+				got := s.render(s.full())
+
+				for _, verdict := range []string{
+					"warm", "bright", "dark", "punchy", "percussive", "muddy", "harsh",
+				} {
+					s.Require().NotContains(got, verdict)
+				}
+			},
+		},
+		{
+			name: "harmonic lean",
+			then: func() {
+				tests := []struct {
+					name string
+					lean float64
+					want string
+				}{
+					{name: "odd, as a fuzz is", lean: -0.6, want: "leaning odd"},
+					{name: "even, as a valve is", lean: 0.6, want: "leaning even"},
+					{name: "neither in particular", lean: 0.0, want: "above the fundamental"},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						p := s.full()
+						p.EvenOdd = audio.Spread{Mid: tt.lean}
+
+						s.Require().Contains(s.render(p), tt.want)
+					})
+				}
+			},
+		},
+		{
+			// What the transient number is said to count.
+			name: "attack reads",
+			then: func() {
+				tests := []struct {
+					name      string
+					transient float64
+					want      string
+				}{
+					{name: "struck", transient: 0.95, want: "arrives in one step"},
+					{name: "swelled", transient: 0.05, want: "climbs gradually"},
+					{name: "in between", transient: 0.5, want: "largest single step"},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						p := s.full()
+						p.Transient = audio.Reading{Value: tt.transient, Known: true}
+
+						s.Require().Contains(s.render(p), tt.want)
+					})
+				}
+			},
+		},
+		{
+			// The page saying so.
+			//
+			// A dash rather than a zero, and a line saying why. Printing 0.00 for a tone
+			// that never rose reads as a note swelled in over three seconds, which is the
+			// opposite of what happened.
+			name: "a measure nobody could take reads as a dash",
+			then: func() {
+				p := s.full()
+				p.Transient = audio.Reading{}
+				p.Decay = audio.Reading{}
+
+				got := s.render(p)
+
+				s.Require().Contains(got, "—")
+				s.Require().Contains(got, "nothing rose")
+				s.Require().Contains(got, "never fell to a quarter")
+
+				s.Require().NotContains(got, "0.00", "and no figure standing in for one")
+			},
+		},
+		{
+			// The dynamics row naming what it compares.
+			name: "compression reads",
+			then: func() {
+				squashed := s.full()
+				squashed.DynamicRange = 3
+
+				open := s.full()
+				open.DynamicRange = 18
+
+				s.Require().Contains(s.render(squashed), "little room between them")
+				s.Require().Contains(s.render(open), "loudest against typical")
+			},
+		},
+		{
+			//
+			// Measuring silence is a real answer, and a renderer that could not print it
+			// would turn a fact into an error.
+			name: "an empty profile",
+			then: func() {
+				got := s.render(audio.Profile{})
+
+				s.Require().Contains(got, "0 Hz")
+				s.Require().Contains(got, "0%")
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			p := s.full()
-			p.EvenOdd = audio.Spread{Mid: tt.lean}
-
-			s.Require().Contains(s.render(p), tt.want)
+			tt.then()
 		})
 	}
-}
-
-// TestAttackReads covers what the transient number is said to count.
-func (s *ProfilePublicTestSuite) TestAttackReads() {
-	tests := []struct {
-		name      string
-		transient float64
-		want      string
-	}{
-		{name: "struck", transient: 0.95, want: "arrives in one step"},
-		{name: "swelled", transient: 0.05, want: "climbs gradually"},
-		{name: "in between", transient: 0.5, want: "largest single step"},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			p := s.full()
-			p.Transient = audio.Reading{Value: tt.transient, Known: true}
-
-			s.Require().Contains(s.render(p), tt.want)
-		})
-	}
-}
-
-// TestAMeasureNobodyCouldTakeReadsAsADash covers the page saying so.
-//
-// A dash rather than a zero, and a line saying why. Printing 0.00 for a tone
-// that never rose reads as a note swelled in over three seconds, which is the
-// opposite of what happened.
-func (s *ProfilePublicTestSuite) TestAMeasureNobodyCouldTakeReadsAsADash() {
-	p := s.full()
-	p.Transient = audio.Reading{}
-	p.Decay = audio.Reading{}
-
-	got := s.render(p)
-
-	s.Require().Contains(got, "—")
-	s.Require().Contains(got, "nothing rose")
-	s.Require().Contains(got, "never fell to a quarter")
-
-	s.Require().NotContains(got, "0.00", "and no figure standing in for one")
-}
-
-// TestCompressionReads covers the dynamics row naming what it compares.
-func (s *ProfilePublicTestSuite) TestCompressionReads() {
-	squashed := s.full()
-	squashed.DynamicRange = 3
-
-	open := s.full()
-	open.DynamicRange = 18
-
-	s.Require().Contains(s.render(squashed), "little room between them")
-	s.Require().Contains(s.render(open), "loudest against typical")
-}
-
-// TestAnEmptyProfile draws rather than failing.
-//
-// Measuring silence is a real answer, and a renderer that could not print it
-// would turn a fact into an error.
-func (s *ProfilePublicTestSuite) TestAnEmptyProfile() {
-	got := s.render(audio.Profile{})
-
-	s.Require().Contains(got, "0 Hz")
-	s.Require().Contains(got, "0%")
 }
 
 func TestProfilePublicTestSuite(

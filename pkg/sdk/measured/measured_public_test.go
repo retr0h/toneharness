@@ -55,20 +55,7 @@ func (s *MeasuredPublicTestSuite) dark() measured.Figures {
 	return measured.Figures{Centroid: 300, Low: 80, Mid: 15, High: 5}
 }
 
-// TestLoadReadsALibrary covers the ordinary case, including the baseline.
-//
-// The baseline matters as much as the readings. Without it a figure says
-// nothing: 95 Hz is not what a block does to a bass, it is what the bass
-// already was.
-func (s *MeasuredPublicTestSuite) TestLoadReadsALibrary() {
-	s.Require().Equal("HX Stomp", s.lib.Device)
-	s.Require().True(s.lib.Isolated)
-	s.Require().InDelta(95.3, s.lib.Baseline.Centroid, 0.01)
-	s.Require().Equal("abc", s.lib.Reference.SHA256)
-	s.Require().Len(s.lib.Blocks, 7)
-}
-
-// TestLoad covers Load, which reads a library of measurements.
+// TestLoad covers reading a measured library.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *MeasuredPublicTestSuite) TestLoad() {
@@ -77,46 +64,80 @@ func (s *MeasuredPublicTestSuite) TestLoad() {
 		then func()
 	}{
 		{
-			// The three ways reading fails.
-			name: "load refuses what is not a library",
+			// The ordinary case, including the baseline.
+			//
+			// The baseline matters as much as the readings. Without it a figure says
+			// nothing: 95 Hz is not what a block does to a bass, it is what the bass
+			// already was.
+			name: "reads a library",
 			then: func() {
-				tests := []struct {
+				s.Require().Equal("HX Stomp", s.lib.Device)
+				s.Require().True(s.lib.Isolated)
+				s.Require().InDelta(95.3, s.lib.Baseline.Centroid, 0.01)
+				s.Require().Equal("abc", s.lib.Reference.SHA256)
+				s.Require().Len(s.lib.Blocks, 7)
+			},
+		},
+		{
+			// Load, which reads a library of measurements.
+			//
+			// One method and one table, so a case is a row rather than a file.
+			name: "load",
+			then: func() {
+				for _, tt := range []struct {
 					name string
-					give string
-					want string
+					then func()
 				}{
-					{name: "not JSON", give: "{", want: "decoding the measurements"},
 					{
-						// A document that parses and names nothing is worse than one
-						// that fails, because every lookup against it answers "no
-						// block is close" rather than "there is no library".
-						name: "no blocks at all",
-						give: `{"device":"HX Stomp"}`,
-						want: "name no blocks",
+						// The three ways reading fails.
+						name: "load refuses what is not a library",
+						then: func() {
+							tests := []struct {
+								name string
+								give string
+								want string
+							}{
+								{name: "not JSON", give: "{", want: "decoding the measurements"},
+								{
+									// A document that parses and names nothing is worse than one
+									// that fails, because every lookup against it answers "no
+									// block is close" rather than "there is no library".
+									name: "no blocks at all",
+									give: `{"device":"HX Stomp"}`,
+									want: "name no blocks",
+								},
+							}
+
+							for _, tt := range tests {
+								s.Run(tt.name, func() {
+									_, err := measured.Load(strings.NewReader(tt.give))
+
+									s.Require().ErrorContains(err, tt.want)
+								})
+							}
+						},
 					},
-				}
+					{
+						// The reader itself failing.
+						name: "load reports a read failure",
+						then: func() {
+							_, err := measured.Load(broken{})
 
-				for _, tt := range tests {
+							s.Require().ErrorContains(err, "reading the measurements")
+						},
+					},
+				} {
 					s.Run(tt.name, func() {
-						_, err := measured.Load(strings.NewReader(tt.give))
+						// A row gets the same fresh state a method used to get.
+						s.SetupTest()
 
-						s.Require().ErrorContains(err, tt.want)
+						tt.then()
 					})
 				}
 			},
 		},
-		{
-			// The reader itself failing.
-			name: "load reports a read failure",
-			then: func() {
-				_, err := measured.Load(broken{})
-
-				s.Require().ErrorContains(err, "reading the measurements")
-			},
-		},
 	} {
 		s.Run(tt.name, func() {
-			// A row gets the same fresh state a method used to get.
 			s.SetupTest()
 
 			tt.then()

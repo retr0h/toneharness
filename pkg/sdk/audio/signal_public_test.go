@@ -54,23 +54,51 @@ func (s *SignalPublicTestSuite) part(
 	return out
 }
 
-// TestSilenceIsNotPlaying is the whole point.
-func (s *SignalPublicTestSuite) TestSilenceIsNotPlaying() {
-	levels := audio.Frames(s.part(3, 0.5, 0.5), rate/50)
-	held := audio.Playing(levels)
+// TestPlaying covers which frames of a signal are sounding.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *SignalPublicTestSuite) TestPlaying() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The whole point.
+			name: "is not playing",
+			then: func() {
+				levels := audio.Frames(s.part(3, 0.5, 0.5), rate/50)
+				held := audio.Playing(levels)
 
-	var sounding, quiet int
+				var sounding, quiet int
 
-	for _, on := range held {
-		if on {
-			sounding++
-		} else {
-			quiet++
-		}
+				for _, on := range held {
+					if on {
+						sounding++
+					} else {
+						quiet++
+					}
+				}
+
+				s.Require().Positive(sounding, "the notes are playing")
+				s.Require().Positive(quiet, "the rests are not")
+			},
+		},
+		{
+			// A signal with nothing in it.
+			name: "is never playing",
+			then: func() {
+				levels := audio.Frames(audio.Silence(1.0, rate), rate/50)
+
+				for i, on := range audio.Playing(levels) {
+					s.Require().False(on, "frame %d", i)
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
 	}
-
-	s.Require().Positive(sounding, "the notes are playing")
-	s.Require().Positive(quiet, "the rests are not")
 }
 
 // TestAHeldToneIsAllPlaying has no gaps to find.
@@ -79,15 +107,6 @@ func (s *SignalPublicTestSuite) TestAHeldToneIsAllPlaying() {
 
 	for i, on := range audio.Playing(levels) {
 		s.Require().True(on, "frame %d", i)
-	}
-}
-
-// TestSilenceIsNeverPlaying covers a signal with nothing in it.
-func (s *SignalPublicTestSuite) TestSilenceIsNeverPlaying() {
-	levels := audio.Frames(audio.Silence(1.0, rate), rate/50)
-
-	for i, on := range audio.Playing(levels) {
-		s.Require().False(on, "frame %d", i)
 	}
 }
 

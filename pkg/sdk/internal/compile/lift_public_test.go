@@ -413,153 +413,171 @@ func ampPlan(
 	}
 }
 
-// TestRealise fits a rig to the device a catalog describes.
+// TestRealise covers a rig becoming a plan for one device.
+//
+// One method and one table, so a case is a row rather than a file.
 func (s *LiftPublicTestSuite) TestRealise() {
-	tests := []struct {
+	for _, tt := range []struct {
 		name string
-		// id is what the plan is asked to name, which is the document's rather
-		// than the gear's: a rig is gear, and what it is called is said once at
-		// the top of the document that holds it.
-		id     string
-		spec   rig.Spec
-		blocks map[catalog.ModelID]catalog.Block
-
-		wantModel  catalog.ModelID
-		wantParams []string
-		absent     []string
-		// -1 asserts every knob is set, a positive number asserts how many.
-		exact   int
-		err     error
-		errText string
+		then func()
 	}{
-		{name: "a rig that is not one", err: rig.ErrInvalid},
 		{
-			name:    "gear nothing on this device models",
-			spec:    rigOf("Nonesuch 900", rig.InstrumentGuitar),
-			errText: "emulates \"Nonesuch 900\"",
-		},
-		{
-			// The rig names what was really played and says what this device
-			// should put there, so fitting it lands on the stand-in.
-			name: "gear nothing models, with a stand-in the rig names",
-			spec: substituted(
-				rigOf("Nonesuch 900", rig.InstrumentBass),
-				"Ampeg SVT (normal"),
-			wantModel: "HD2_AmpSVBeastNrm",
-			exact:     -1,
-		},
-		{
-			name: "a stand-in nothing models either",
-			spec: substituted(
-				rigOf("Nonesuch 900", rig.InstrumentBass),
-				"Also Nonesuch"),
-			errText: `"Also Nonesuch" stands in for "Nonesuch 900"`,
-		},
-		{
-			// A rig describes gear rather than a block, so every knob gets
-			// Line 6's own default, which is never invalid.
-			name:  "a rig naming gear and nothing else",
-			spec:  rigOf("Ampeg SVT (normal", rig.InstrumentBass),
-			exact: -1,
-		},
-		{
-			// A parameter Line 6 state no default for has no kind, and
-			// writing a value with no kind produces a preset the device
-			// rejects.
-			name: "a parameter with no stated default",
-			spec: rigOf("Half A Thing", rig.InstrumentGuitar),
-			blocks: map[catalog.ModelID]catalog.Block{
-				"HD2_Half": {
-					ID: "HD2_Half", Name: "Half", BasedOn: "Half A Thing",
-					Category: catalog.CategoryAmp,
-					Params: map[string]catalog.Param{
-						"Drive":   {Type: catalog.ParamFloat, Default: catalog.Float(0.5)},
-						"Missing": {Type: catalog.ParamFloat},
+			name: "realise",
+			then: func() {
+				tests := []struct {
+					name string
+					// id is what the plan is asked to name, which is the document's rather
+					// than the gear's: a rig is gear, and what it is called is said once at
+					// the top of the document that holds it.
+					id     string
+					spec   rig.Spec
+					blocks map[catalog.ModelID]catalog.Block
+
+					wantModel  catalog.ModelID
+					wantParams []string
+					absent     []string
+					// -1 asserts every knob is set, a positive number asserts how many.
+					exact   int
+					err     error
+					errText string
+				}{
+					{name: "a rig that is not one", err: rig.ErrInvalid},
+					{
+						name:    "gear nothing on this device models",
+						spec:    rigOf("Nonesuch 900", rig.InstrumentGuitar),
+						errText: "emulates \"Nonesuch 900\"",
 					},
-				},
+					{
+						// The rig names what was really played and says what this device
+						// should put there, so fitting it lands on the stand-in.
+						name: "gear nothing models, with a stand-in the rig names",
+						spec: substituted(
+							rigOf("Nonesuch 900", rig.InstrumentBass),
+							"Ampeg SVT (normal"),
+						wantModel: "HD2_AmpSVBeastNrm",
+						exact:     -1,
+					},
+					{
+						name: "a stand-in nothing models either",
+						spec: substituted(
+							rigOf("Nonesuch 900", rig.InstrumentBass),
+							"Also Nonesuch"),
+						errText: `"Also Nonesuch" stands in for "Nonesuch 900"`,
+					},
+					{
+						// A rig describes gear rather than a block, so every knob gets
+						// Line 6's own default, which is never invalid.
+						name:  "a rig naming gear and nothing else",
+						spec:  rigOf("Ampeg SVT (normal", rig.InstrumentBass),
+						exact: -1,
+					},
+					{
+						// A parameter Line 6 state no default for has no kind, and
+						// writing a value with no kind produces a preset the device
+						// rejects.
+						name: "a parameter with no stated default",
+						spec: rigOf("Half A Thing", rig.InstrumentGuitar),
+						blocks: map[catalog.ModelID]catalog.Block{
+							"HD2_Half": {
+								ID: "HD2_Half", Name: "Half", BasedOn: "Half A Thing",
+								Category: catalog.CategoryAmp,
+								Params: map[string]catalog.Param{
+									"Drive":   {Type: catalog.ParamFloat, Default: catalog.Float(0.5)},
+									"Missing": {Type: catalog.ParamFloat},
+								},
+							},
+						},
+						wantParams: []string{"Drive"},
+						absent:     []string{"Missing"},
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						id := tt.id
+						if id == "" {
+							id = "a-rig"
+						}
+
+						made, err := compile.Realise(id, tt.spec, s.catalogOf(tt.blocks))
+
+						if tt.err != nil || tt.errText != "" {
+							s.Require().Error(err)
+
+							if tt.err != nil {
+								s.Require().ErrorIs(err, tt.err)
+							}
+
+							if tt.errText != "" {
+								s.Require().Contains(err.Error(), tt.errText)
+							}
+
+							return
+						}
+
+						s.Require().NoError(err)
+						s.Require().Equal(id, made.Rig, "a plan names the rig it realises")
+
+						if tt.wantModel != "" {
+							s.Require().Equal(tt.wantModel, made.Blocks[0].Model)
+						}
+
+						switch {
+						case tt.exact < 0:
+							s.Require().NotEmpty(made.Blocks[0].Params, "every knob is set")
+						case tt.exact > 0:
+							s.Require().Len(made.Blocks[0].Params, tt.exact)
+						}
+
+						for _, want := range tt.wantParams {
+							s.Require().Contains(made.Blocks[0].Params, want)
+						}
+
+						for _, unwanted := range tt.absent {
+							s.Require().NotContains(made.Blocks[0].Params, unwanted)
+						}
+					})
+				}
 			},
-			wantParams: []string{"Drive"},
-			absent:     []string{"Missing"},
 		},
-	}
+		{
+			// A property of the resolver rather
+			// than a case of the call.
+			//
+			// Fitting used to range a map and take the first name that matched, so one
+			// rig became a different preset each run: six compiles of this one named an
+			// amplifier, a preamp, the bright channel and twice a cabinet. A plan lifted
+			// off a device was unaffected, because it carries the model identifier, which
+			// is why nothing caught it.
+			name: "picks the same model every time",
+			then: func() {
+				spec := rigOf("Ampeg SVT", rig.InstrumentBass)
 
-	for _, tt := range tests {
+				var first catalog.ModelID
+
+				for range 20 {
+					made, err := compile.Realise("a-rig", spec, s.cat)
+					s.Require().NoError(err)
+					s.Require().NotEmpty(made.Blocks)
+
+					if first == "" {
+						first = made.Blocks[0].Model
+					}
+
+					s.Require().Equal(first, made.Blocks[0].Model, "the same rig, a different model")
+				}
+
+				// And an amplifier, because the role is half the question.
+				b, ok := s.cat.Block(first)
+				s.Require().True(ok)
+				s.Require().Equal(catalog.CategoryAmp, b.Category)
+			},
+		},
+	} {
 		s.Run(tt.name, func() {
-			id := tt.id
-			if id == "" {
-				id = "a-rig"
-			}
-
-			made, err := compile.Realise(id, tt.spec, s.catalogOf(tt.blocks))
-
-			if tt.err != nil || tt.errText != "" {
-				s.Require().Error(err)
-
-				if tt.err != nil {
-					s.Require().ErrorIs(err, tt.err)
-				}
-
-				if tt.errText != "" {
-					s.Require().Contains(err.Error(), tt.errText)
-				}
-
-				return
-			}
-
-			s.Require().NoError(err)
-			s.Require().Equal(id, made.Rig, "a plan names the rig it realises")
-
-			if tt.wantModel != "" {
-				s.Require().Equal(tt.wantModel, made.Blocks[0].Model)
-			}
-
-			switch {
-			case tt.exact < 0:
-				s.Require().NotEmpty(made.Blocks[0].Params, "every knob is set")
-			case tt.exact > 0:
-				s.Require().Len(made.Blocks[0].Params, tt.exact)
-			}
-
-			for _, want := range tt.wantParams {
-				s.Require().Contains(made.Blocks[0].Params, want)
-			}
-
-			for _, unwanted := range tt.absent {
-				s.Require().NotContains(made.Blocks[0].Params, unwanted)
-			}
+			tt.then()
 		})
 	}
-}
-
-// TestRealisePicksTheSameModelEveryTime is a property of the resolver rather
-// than a case of the call.
-//
-// Fitting used to range a map and take the first name that matched, so one
-// rig became a different preset each run: six compiles of this one named an
-// amplifier, a preamp, the bright channel and twice a cabinet. A plan lifted
-// off a device was unaffected, because it carries the model identifier, which
-// is why nothing caught it.
-func (s *LiftPublicTestSuite) TestRealisePicksTheSameModelEveryTime() {
-	spec := rigOf("Ampeg SVT", rig.InstrumentBass)
-
-	var first catalog.ModelID
-
-	for range 20 {
-		made, err := compile.Realise("a-rig", spec, s.cat)
-		s.Require().NoError(err)
-		s.Require().NotEmpty(made.Blocks)
-
-		if first == "" {
-			first = made.Blocks[0].Model
-		}
-
-		s.Require().Equal(first, made.Blocks[0].Model, "the same rig, a different model")
-	}
-
-	// And an amplifier, because the role is half the question.
-	b, ok := s.cat.Block(first)
-	s.Require().True(ok)
-	s.Require().Equal(catalog.CategoryAmp, b.Category)
 }
 
 func TestLiftPublicTestSuite(

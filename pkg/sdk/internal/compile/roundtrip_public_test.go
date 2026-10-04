@@ -55,110 +55,130 @@ func (s *RoundTripPublicTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-// TestLiftAndLower covers the three claims the format rests on, over every
-// preset committed with this test.
+// TestLiftAndLower covers a plan surviving the trip to a rig and back.
 //
-// A preset read into a rig and a plan and written back must say the same
-// thing. Both documents built into a preset and read back must be what went
-// in — anything they model but do not write is invisible to the first claim
-// and obvious in the second. And they must rebuild the preset with the
-// original gone, which is the path a shared rig takes: it reaches somebody
-// else without the preset it came from, so lowering into that preset proves
-// nothing about what it carries.
+// One method and one table, so a case is a row rather than a file.
 func (s *RoundTripPublicTestSuite) TestLiftAndLower() {
-	for _, path := range s.fixtures() {
-		s.Run(filepath.Base(path), func() {
-			raw := s.canonical(s.read(path))
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The three claims the format rests on, over every
+			// preset committed with this test.
+			//
+			// A preset read into a rig and a plan and written back must say the same
+			// thing. Both documents built into a preset and read back must be what went
+			// in — anything they model but do not write is invisible to the first claim
+			// and obvious in the second. And they must rebuild the preset with the
+			// original gone, which is the path a shared rig takes: it reaches somebody
+			// else without the preset it came from, so lowering into that preset proves
+			// nothing about what it carries.
+			name: "lift and lower",
+			then: func() {
+				for _, path := range s.fixtures() {
+					s.Run(filepath.Base(path), func() {
+						raw := s.canonical(s.read(path))
 
-			s.Require().Equal(raw, s.canonical(s.roundTrip(path)),
-				"a preset read into a rig and written back must say the same thing")
+						s.Require().Equal(raw, s.canonical(s.roundTrip(path)),
+							"a preset read into a rig and written back must say the same thing")
 
-			s.Require().Equal(raw, s.canonical(s.fromNothing(path)),
-				"a rig must rebuild its preset with the original gone")
+						s.Require().Equal(raw, s.canonical(s.fromNothing(path)),
+							"a rig must rebuild its preset with the original gone")
 
-			was, now := s.backAgain(s.read(path))
-			s.Require().Equal(was, now,
-				"every field a rig or a plan models must be written as well as read")
+						was, now := s.backAgain(s.read(path))
+						s.Require().Equal(was, now,
+							"every field a rig or a plan models must be written as well as read")
+					})
+				}
+			},
+		},
+		{
+			name: "lift",
+			then: func() {
+				// A gear name does not identify a model: 661 of them share 468 names, and
+				// "Ampeg SVT" matches both channels. Without the identifier a rig rebuilds
+				// into a different preset.
+				doc, err := preset.Read(bytes.NewReader(s.read(s.fixtures()[0])))
+				s.Require().NoError(err)
+
+				_, spec, made, err := compile.Lift(doc, s.cat)
+				s.Require().NoError(err)
+				s.Require().NotEmpty(spec.Chain)
+				s.Require().Len(made.Blocks, len(spec.Chain))
+				s.Require().Equal(s.cat.Device, *made.Target.Device,
+					"a plan says which device it was read off")
+
+				for i, entry := range spec.Chain {
+					s.Require().NotEmpty(made.Blocks[i].Model, "every block records what it was")
+					s.Require().NotEmpty(entry.Gear, "and what a person would call it")
+				}
+			},
+		},
+		{
+			name: "the whole corpus survives it",
+			then: func() {
+				// The directory itself is committed — the gitignore keeps a little
+				// metadata in it — so its presence says nothing. What matters is whether
+				// anybody has fetched the presets.
+				found := s.corpus()
+				if len(found) == 0 {
+					s.T().Skip("no corpus fetched; the committed fixtures cover the same ground")
+				}
+
+				var (
+					same, differ, skipped int
+					failed                []string
+				)
+
+				for _, path := range found {
+					raw := s.read(path)
+
+					doc, err := preset.Read(bytes.NewReader(raw))
+					if err != nil || doc.Data.Device != s.cat.DeviceID {
+						skipped++
+
+						continue
+					}
+
+					// An empty slot is not a rig: it names no gear, and the schema says a
+					// chain holds at least one thing.
+					if c, err := doc.Spec(); err != nil || len(c.Blocks) == 0 {
+						skipped++
+
+						continue
+					}
+
+					was, now := s.backAgain(raw)
+					if s.canonical(raw) == s.canonical(s.roundTrip(path)) &&
+						s.canonical(raw) == s.canonical(s.fromNothing(path)) &&
+						was == now {
+						same++
+
+						continue
+					}
+
+					differ++
+
+					if len(failed) < 3 {
+						failed = append(failed, path)
+					}
+				}
+
+				s.T().Logf("round-tripped %d presets for this device, skipped %d others",
+					same+differ, skipped)
+				s.Require().Zero(differ,
+					"every preset must survive becoming a rig and being written back — "+
+						"into itself, into nothing, and rig to preset to rig; "+
+						"first failures: %v", failed)
+				s.Require().Positive(same)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
 		})
 	}
-}
-
-// TestLift records what a block actually was.
-func (s *RoundTripPublicTestSuite) TestLift() {
-	// A gear name does not identify a model: 661 of them share 468 names, and
-	// "Ampeg SVT" matches both channels. Without the identifier a rig rebuilds
-	// into a different preset.
-	doc, err := preset.Read(bytes.NewReader(s.read(s.fixtures()[0])))
-	s.Require().NoError(err)
-
-	_, spec, made, err := compile.Lift(doc, s.cat)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(spec.Chain)
-	s.Require().Len(made.Blocks, len(spec.Chain))
-	s.Require().Equal(s.cat.Device, *made.Target.Device,
-		"a plan says which device it was read off")
-
-	for i, entry := range spec.Chain {
-		s.Require().NotEmpty(made.Blocks[i].Model, "every block records what it was")
-		s.Require().NotEmpty(entry.Gear, "and what a person would call it")
-	}
-}
-
-func (s *RoundTripPublicTestSuite) TestTheWholeCorpusSurvivesIt() {
-	// The directory itself is committed — the gitignore keeps a little
-	// metadata in it — so its presence says nothing. What matters is whether
-	// anybody has fetched the presets.
-	found := s.corpus()
-	if len(found) == 0 {
-		s.T().Skip("no corpus fetched; the committed fixtures cover the same ground")
-	}
-
-	var (
-		same, differ, skipped int
-		failed                []string
-	)
-
-	for _, path := range found {
-		raw := s.read(path)
-
-		doc, err := preset.Read(bytes.NewReader(raw))
-		if err != nil || doc.Data.Device != s.cat.DeviceID {
-			skipped++
-
-			continue
-		}
-
-		// An empty slot is not a rig: it names no gear, and the schema says a
-		// chain holds at least one thing.
-		if c, err := doc.Spec(); err != nil || len(c.Blocks) == 0 {
-			skipped++
-
-			continue
-		}
-
-		was, now := s.backAgain(raw)
-		if s.canonical(raw) == s.canonical(s.roundTrip(path)) &&
-			s.canonical(raw) == s.canonical(s.fromNothing(path)) &&
-			was == now {
-			same++
-
-			continue
-		}
-
-		differ++
-
-		if len(failed) < 3 {
-			failed = append(failed, path)
-		}
-	}
-
-	s.T().Logf("round-tripped %d presets for this device, skipped %d others",
-		same+differ, skipped)
-	s.Require().Zero(differ,
-		"every preset must survive becoming a rig and being written back — "+
-			"into itself, into nothing, and rig to preset to rig; "+
-			"first failures: %v", failed)
-	s.Require().Positive(same)
 }
 
 // roundTrip reads a preset, lifts it, lowers the plan into a fresh read of the

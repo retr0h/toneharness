@@ -104,6 +104,18 @@ func (s *DemandPublicTestSuite) quiet(
 	}
 }
 
+// seated is the blocks a resolve demanded, in the order it demanded them.
+func seated(
+	added []compile.Added,
+) []catalog.ModelID {
+	out := make([]catalog.ModelID, 0, len(added))
+	for _, a := range added {
+		out = append(out, a.Block.ID)
+	}
+
+	return out
+}
+
 // TestResolveDemand covers blocks that are in a chain because the rig asked
 // for them.
 //
@@ -132,6 +144,27 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 		silent bool
 
 		wantIDs []catalog.ModelID
+		// how many blocks were demanded, for the rows that do not pin which.
+		wantAdded int
+		// moveOnly is a row whose subject is the move rather than the seating,
+		// so what got added is not its question. Without it a nil wantIDs means
+		// "nothing was demanded", which these rows do not claim either way.
+		moveOnly bool
+		// repeat resolves five times and requires the same blocks in the same
+		// order. Two claims of equal weight must seat the same block every run,
+		// or the same rig yields a different preset for no reason anybody chose.
+		repeat bool
+		// what the word did, for the rows whose subject is the move rather than
+		// the seating: the term and the control it reached, whether the value
+		// rose, and what the move says about itself.
+		wantTerm    string
+		wantParam   string
+		wantRose    bool
+		wantAlready string
+		wantBecause string
+		// landed is a move that needs no excuse, which is a different claim
+		// from one whose `because` happens to be empty because nothing moved.
+		landed bool
 		// a fragment the reason for the first demanded block must carry.
 		wantReason string
 		// the category of the first block in the chain, and of the last.
@@ -272,6 +305,50 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 			terms:  []string{"mid-forward"},
 			silent: true,
 		},
+		{
+			// The order blocks arrive in.
+			name:   "two claims of equal weight seat the same way every run",
+			terms:  []string{"mid-forward", "envelope-swept"},
+			attack: "slap",
+			models: []catalog.ModelID{
+				"HD2_EQTestParametric",
+				"HD2_FilterTestMutant",
+				"HD2_CompTestDeluxe",
+			},
+			wantAdded: 3,
+			repeat:    true,
+		},
+		{
+			// The end the rest of this exists for. Seating an equaliser is not
+			// the point. The point is that a word which measured a record now
+			// reaches a control, so the check is on what moved rather than on
+			// what was added.
+			name:      "the word lands on a control",
+			terms:     []string{"mid-forward"},
+			models:    []catalog.ModelID{"HD2_EQTestParametric"},
+			moveOnly:  true,
+			wantTerm:  "mid-forward",
+			wantParam: "MidGain",
+			wantRose:  true,
+			landed:    true,
+		},
+		{
+			// What a word naming a block reports. "satisfied" invites nobody to
+			// check. Which filter got seated is the part somebody reading the
+			// preset can disagree with, so it is what gets said.
+			name:        "the block a word asked for is there, and is named",
+			terms:       []string{"envelope-swept"},
+			models:      []catalog.ModelID{"HD2_FilterTestMutant"},
+			moveOnly:    true,
+			wantAlready: "the Test Mutant Filter is what this asks for",
+		},
+		{
+			name:        "this device has nothing of the kind",
+			terms:       []string{"envelope-swept"},
+			models:      []catalog.ModelID{"HD2_EQTestParametric"},
+			moveOnly:    true,
+			wantBecause: "this device has no filter",
+		},
 	}
 
 	for _, tt := range tests {
@@ -291,20 +368,61 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 				ask.Words = append(ask.Words, compile.Word{Term: t, Derived: true})
 			}
 
-			built, added, _, _, err := compile.Resolve(
+			built, added, moved, _, err := compile.Resolve(
 				"a-rig", svt(tt.pedals...), ask, s.cat, stats)
 
 			s.Require().NoError(err)
 
-			got := make([]catalog.ModelID, 0, len(added))
-			for _, a := range added {
-				got = append(got, a.Block.ID)
-			}
+			got := seated(added)
 
-			s.Require().Len(got, len(tt.wantIDs))
+			if !tt.moveOnly {
+				want := len(tt.wantIDs)
+				if tt.wantAdded > 0 {
+					want = tt.wantAdded
+				}
+
+				s.Require().Len(got, want)
+			}
 
 			if tt.wantIDs != nil {
 				s.Require().Equal(tt.wantIDs, got)
+			}
+
+			if tt.repeat {
+				for range 4 {
+					_, again, _, _, err := compile.Resolve(
+						"a-rig", svt(tt.pedals...), ask, s.cat, stats)
+					s.Require().NoError(err)
+					s.Require().Equal(got, seated(again),
+						"the same ask must demand the same way")
+				}
+			}
+
+			if tt.wantTerm != "" {
+				s.Require().Len(moved, 1)
+				s.Require().Equal(tt.wantTerm, moved[0].Term)
+			}
+
+			if tt.wantParam != "" {
+				s.Require().Len(moved, 1)
+				s.Require().Equal(tt.wantParam, moved[0].Param)
+			}
+
+			if tt.wantRose {
+				s.Require().Len(moved, 1)
+				s.Require().Greater(moved[0].To, moved[0].From)
+			}
+
+			if tt.landed {
+				s.Require().Len(moved, 1)
+				s.Require().Empty(moved[0].Because,
+					"the word landed, so nothing excuses it")
+			}
+
+			if tt.wantAlready != "" || tt.wantBecause != "" {
+				s.Require().Len(moved, 1)
+				s.Require().Equal(tt.wantAlready, moved[0].Already)
+				s.Require().Equal(tt.wantBecause, moved[0].Because)
 			}
 
 			if tt.wantReason != "" {
@@ -319,97 +437,6 @@ func (s *DemandPublicTestSuite) TestResolveDemand() {
 				s.Require().Equal(
 					tt.last, s.categoryAt(built, len(built.Blocks)-1))
 			}
-		})
-	}
-}
-
-// TestResolveDemandIsDeterministic guards the order blocks arrive in.
-//
-// Two claims of equal weight must seat the same block every run, or the same
-// rig yields a different preset for no reason anybody chose.
-func (s *DemandPublicTestSuite) TestResolveDemandIsDeterministic() {
-	intent := asking([]string{"mid-forward", "envelope-swept"}, "slap")
-	stats := s.quiet(
-		nil, "HD2_EQTestParametric", "HD2_FilterTestMutant", "HD2_CompTestDeluxe")
-
-	var first []catalog.ModelID
-
-	for range 5 {
-		_, added, _, _, err := compile.Resolve("a-rig", svt(), intent, s.cat, stats)
-		s.Require().NoError(err)
-
-		got := make([]catalog.ModelID, 0, len(added))
-		for _, a := range added {
-			got = append(got, a.Block.ID)
-		}
-
-		if first == nil {
-			first = got
-		}
-
-		s.Require().Equal(first, got, "the same ask must demand the same way")
-	}
-
-	s.Require().Len(first, 3)
-}
-
-// TestResolveDemandLandsTheWord is the end the rest of this exists for.
-//
-// Seating an equaliser is not the point. The point is that a word which
-// measured a record now reaches a control, so the check is on what moved
-// rather than on what was added.
-func (s *DemandPublicTestSuite) TestResolveDemandLandsTheWord() {
-	_, _, moved, _, err := compile.Resolve(
-		"a-rig", svt(),
-		asking([]string{"mid-forward"}, ""),
-		s.cat,
-		s.quiet(nil, "HD2_EQTestParametric"),
-	)
-	s.Require().NoError(err)
-	s.Require().Len(moved, 1)
-
-	s.Require().Equal("mid-forward", moved[0].Term)
-	s.Require().Equal("MidGain", moved[0].Param)
-	s.Require().Greater(moved[0].To, moved[0].From)
-	s.Require().Empty(moved[0].Because, "the word landed, so nothing excuses it")
-}
-
-// TestResolveDemandNamesTheBlock covers what a word naming a block reports.
-//
-// "satisfied" invites nobody to check. Which filter got seated is the part
-// somebody reading the preset can disagree with, so it is what gets said.
-func (s *DemandPublicTestSuite) TestResolveDemandNamesTheBlock() {
-	tests := []struct {
-		name    string
-		models  []catalog.ModelID
-		already string
-		because string
-	}{
-		{
-			name:    "the block is there",
-			models:  []catalog.ModelID{"HD2_FilterTestMutant"},
-			already: "the Test Mutant Filter is what this asks for",
-		},
-		{
-			name:    "this device has nothing of the kind",
-			models:  []catalog.ModelID{"HD2_EQTestParametric"},
-			because: "this device has no filter",
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			_, _, moved, _, err := compile.Resolve(
-				"a-rig", svt(),
-				asking([]string{"envelope-swept"}, ""),
-				s.cat,
-				s.quiet(nil, tt.models...),
-			)
-			s.Require().NoError(err)
-			s.Require().Len(moved, 1)
-
-			s.Require().Equal(tt.already, moved[0].Already)
-			s.Require().Equal(tt.because, moved[0].Because)
 		})
 	}
 }
