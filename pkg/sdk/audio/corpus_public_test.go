@@ -478,6 +478,114 @@ func (s *CorpusPublicTestSuite) TestTheOrderIsFixed() {
 	s.Require().Equal("pino-palladino", got[2].ID)
 }
 
+// TestScattered covers a player whose own records disagree with each other.
+//
+// The case it exists for is an artist measured across three albums and five
+// years. Their figures are an average of several different sounds, so they earn
+// nothing, and that silence reads exactly like a player who is unremarkable.
+func (s *CorpusPublicTestSuite) TestScattered() {
+	tests := []struct {
+		name  string
+		setup func()
+		want  func(map[string]audio.Player)
+	}{
+		{
+			// Three players holding still at different pitches, so the corpus has
+			// a spread to be measured against and nobody is wider than it.
+			name: "records that agree are not scattered",
+			setup: func() {
+				for i, player := range []string{"one", "two", "three"} {
+					for _, track := range []string{"a", "b", "c"} {
+						s.record(player, track, audio.Sine(float64(200+200*i), 1, rate, 0.8))
+					}
+				}
+			},
+			want: func(by map[string]audio.Player) {
+				for _, p := range by {
+					s.Require().Empty(p.Scattered, p.ID)
+				}
+			},
+		},
+		{
+			// One player's three records at 100Hz, 1kHz and 3kHz: further apart
+			// than the whole corpus of players is.
+			name: "records that disagree are reported, with the ratio",
+			setup: func() {
+				for i, player := range []string{"one", "two", "three"} {
+					for _, track := range []string{"a", "b", "c"} {
+						s.record(player, track, audio.Sine(float64(200+100*i), 1, rate, 0.8))
+					}
+				}
+
+				for i, track := range []string{"a", "b", "c"} {
+					s.record("varied", track,
+						audio.Sine([]float64{100, 1000, 3000}[i], 1, rate, 0.8))
+				}
+			},
+			want: func(by map[string]audio.Player) {
+				got := by["varied"].Scattered
+				s.Require().NotEmpty(got)
+
+				keys := make([]audio.Figure, 0, len(got))
+				for _, d := range got {
+					keys = append(keys, d.Key)
+
+					s.Require().Greater(d.Own, d.Between, string(d.Key))
+					s.Require().Greater(d.Times, 1.0, string(d.Key))
+					s.Require().NotEmpty(d.Why, string(d.Key))
+				}
+
+				s.Require().Contains(keys, audio.KeyCentroid)
+
+				for _, player := range []string{"one", "two", "three"} {
+					s.Require().Empty(by[player].Scattered, player)
+				}
+			},
+		},
+		{
+			// One record cannot disagree with anything, so it is never scattered
+			// rather than always consistent.
+			name: "one record is never scattered",
+			setup: func() {
+				for _, player := range []string{"one", "two", "three"} {
+					for _, track := range []string{"a", "b", "c"} {
+						s.record(player, track, audio.Sine(300, 1, rate, 0.8))
+					}
+				}
+
+				s.record("alone", "only", audio.Sine(3000, 1, rate, 0.8))
+			},
+			want: func(by map[string]audio.Player) {
+				s.Require().Equal(1, by["alone"].Records)
+				s.Require().Empty(by["alone"].Scattered)
+			},
+		},
+		{
+			// Nobody to be measured against, so there is no spread to be wider
+			// than and the question cannot be asked.
+			name: "the only player in a corpus is not scattered",
+			setup: func() {
+				for i, track := range []string{"a", "b", "c"} {
+					s.record("alone", track,
+						audio.Sine([]float64{100, 1000, 3000}[i], 1, rate, 0.8))
+				}
+			},
+			want: func(by map[string]audio.Player) {
+				s.Require().Equal(3, by["alone"].Records)
+				s.Require().Empty(by["alone"].Scattered)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			tc.setup()
+			tc.want(s.byID())
+		})
+	}
+}
+
 func TestCorpusPublicTestSuite(
 	t *testing.T,
 ) {

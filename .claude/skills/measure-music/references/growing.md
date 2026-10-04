@@ -36,6 +36,14 @@ Three or four each, with the bass prominent enough to separate cleanly, and from
 master, so what those records have in common may be the studio rather than the
 player. Spreading them is what leaves the player as the thing they share.
 
+Spread them too far and there is nothing left to share. Three albums across five
+years is three sounds, and their average is a sound the player never made: the
+figures come out mid-range and earn nothing, or earn a word that describes none
+of the records behind it. `measure players` reports this as `scattered`, and
+[words.md](words.md) says how it is measured and what the three answers are.
+Records from one period of a career, cut by different people, is the shape that
+survives both tests.
+
 ## Check the player played the bass on that recording
 
 Before anything else, because no later step catches it. A song credited to a band
