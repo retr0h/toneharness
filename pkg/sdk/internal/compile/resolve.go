@@ -59,6 +59,9 @@ func Resolve(
 	// blocks on the way through: an implied cabinet, whatever the corpus
 	// fills. Those are nobody's words, so they take no settings.
 	said := make([]*rig.Settings, 0, len(spec.Chain)+1)
+	// The controls the rig states outright, kept beside the words. Applied after
+	// them, so a value somebody wrote is the value that reaches the device.
+	stated := make([]*map[string]catalog.Setting, 0, len(spec.Chain)+1)
 
 	// A cabinet is the one miss worth recovering from: Line 6 do not describe
 	// every cabinet in terms of real gear, and an amplifier already names the
@@ -111,6 +114,7 @@ func Resolve(
 
 		blocks = append(blocks, b)
 		said = append(said, entry.Settings)
+		stated = append(stated, entry.Controls)
 	}
 
 	// A rig naming an amplifier and no cabinet gets the one Line 6 voiced it
@@ -126,6 +130,7 @@ func Resolve(
 
 		blocks = append(blocks, *cab)
 		said = append(said, nil)
+		stated = append(stated, nil)
 	} else if missed != "" {
 		// Nothing to fall back to, so the rig named a cabinet that cannot be
 		// built and saying so is the only honest answer.
@@ -159,7 +164,21 @@ func Resolve(
 	// Last, over the corpus medians and over whatever a word
 	// moved: a number somebody wrote down is the most explicit thing in the
 	// rig, and the only one that says exactly what they meant.
+	// Padded to match, because fill and demand add blocks nobody stated controls
+	// for and the two lists are read by index.
+	for len(stated) < len(said) {
+		stated = append(stated, nil)
+	}
+
 	if err := saidKnobs(built.Blocks, blocks, said); err != nil {
+		return plan.Plan{}, nil, nil, Compensated{}, err
+	}
+
+	// After the words, so a value beats one. A word is a request and a value is
+	// an answer: `setKnobs` writes over whatever is there, so running the words
+	// second let `drive: 0.5` overwrite a `Drive` somebody had set by ear. The two
+	// naming one control is allowed and the value wins.
+	if err := statedControls(built.Blocks, blocks, stated); err != nil {
 		return plan.Plan{}, nil, nil, Compensated{}, err
 	}
 
@@ -489,6 +508,87 @@ func renumber(
 	}
 
 	return spec
+}
+
+// statedControls puts the values a rig states outright onto their blocks.
+//
+// After the words, never before. A word is a request and a value is an answer,
+// and `setKnobs` writes over whatever is already there, so the order is what
+// decides which survives. Running this first let `drive: 0.5` overwrite a
+// `Drive` somebody had set by ear, which is the one thing this section exists to
+// prevent.
+//
+// Checked against the catalog by name and by range. A control the model does not
+// have is refused and named, with the ones it does take listed, because the
+// alternative is a document that reads correctly and builds something else.
+func statedControls(
+	built []plan.Block,
+	blocks []catalog.Block,
+	stated []*map[string]catalog.Setting,
+) error {
+	out := []error(nil)
+
+	for i, held := range stated {
+		if held == nil || i >= len(built) {
+			continue
+		}
+
+		for name, v := range *held {
+			spec, ok := blocks[i].Params[name]
+			if !ok {
+				out = append(out, &NoSuchValueError{
+					Field: fmt.Sprintf("chain[%d].controls.%s", i, name),
+					Value: name,
+					Near:  takes(blocks[i]),
+					Whole: true,
+				})
+
+				continue
+			}
+
+			if err := within(spec, v.ParamValue, i, name); err != nil {
+				out = append(out, err)
+
+				continue
+			}
+
+			built[i].Params[name] = v.ParamValue
+		}
+	}
+
+	return errors.Join(out...)
+}
+
+// within refuses a value the control cannot take.
+//
+// The catalog carries a range for all 5,602 controls, so this is checkable
+// rather than hopeful. A device handed a value past the end of a control refuses
+// the whole preset, and finding that out from the pedal is worse than finding it
+// out from a message naming the control.
+func within(
+	spec catalog.Param,
+	v catalog.ParamValue,
+	at int,
+	name string,
+) error {
+	got, ok := v.Float()
+	if !ok {
+		return nil
+	}
+
+	if spec.Min == spec.Max {
+		return nil
+	}
+
+	if got >= spec.Min && got <= spec.Max {
+		return nil
+	}
+
+	return &catalog.BadParamError{
+		Model:  name,
+		Key:    fmt.Sprintf("chain[%d].controls.%s", at, name),
+		Reason: fmt.Sprintf("%v is outside %v..%v", got, spec.Min, spec.Max),
+	}
 }
 
 // saidKnobs puts each entry's settings onto the block it resolved to.

@@ -44,6 +44,8 @@ type Client interface {
 	Rig(ctx context.Context, id string) (sdk.Rig, error)
 	Backing(ctx context.Context, corpus string) ([]sdk.Backing, error)
 	Scaffold(ctx context.Context, in sdk.NewRig) (sdk.Scaffolded, error)
+	// Resolve writes a rig out with every control it resolves to.
+	Resolve(ctx context.Context, in sdk.Resolve) (sdk.Made, error)
 	Tone(ctx context.Context, in sdk.Ask) (sdk.Resolved, error)
 	Make(ctx context.Context, in sdk.Build) (sdk.Made, error)
 	Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error)
@@ -194,6 +196,12 @@ type Recorded struct {
 // rig naming gear no device models is otherwise only found out when somebody
 // tries to build from it, by which point the name has usually been copied
 // somewhere else too.
+// Resolve says which rig to write out with every control it resolves to.
+type Resolve struct {
+	ID  string `json:"id"            jsonschema:"which rig to resolve"`
+	Out string `json:"out,omitempty" jsonschema:"where to write it, instead of over the file it came from; required for a rig that ships in the binary"`
+}
+
 type Scaffold struct {
 	ID         string   `json:"id"               jsonschema:"the identifier, and the filename stem"`
 	Name       string   `json:"name"             jsonschema:"the player or style, as a person would write it; read off the id when absent"`

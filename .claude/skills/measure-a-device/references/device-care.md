@@ -26,9 +26,14 @@ slot held and says where.
 
 ## Never overwrite a slot nobody offered
 
-The owner's own work is in banks 01 to 10 and is not to be touched. Scratch
-writes go to slot 40 and above, and `TONEHARNESS_SCRATCH_SLOT` is the convention
-the device tests use.
+Read `slots list` and write only where something empty is, or where the person
+whose pedal it is has said to. Every slot holds somebody's work until shown
+otherwise, and there is no undo on the device.
+
+A high bank is the convention here, because low banks are where most people keep
+what they play: `TONEHARNESS_SCRATCH_SLOT` names the one the device tests use, and
+setting it is how somebody says which slot they are willing to lose. Ask rather
+than assume, on a pedal that is not yours.
 
 A misplaced write stalls the endpoint and the pedal needs a power cycle, which is
 a bad thing to discover while its owner is out.

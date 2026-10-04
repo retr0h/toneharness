@@ -76,10 +76,14 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 
 ## 3. Never write a slot nobody offered
 
-Banks 01 to 10 hold the owner's own work and are not to be touched. Scratch
-writes go to slot 40 and above. A device has no undo: whatever a slot held is
-read and kept before a write replaces it, and the answer says where that backup
-went.
+Read `slots list` first and write only to something empty, or where the person
+whose pedal it is has said to. Every slot holds somebody's work until shown
+otherwise, and a high bank is the convention here only because low banks are
+where most people keep what they play. `TONEHARNESS_SCRATCH_SLOT` is how somebody
+names the slot they are willing to lose.
+
+A device has no undo: whatever a slot held is read and kept before a write
+replaces it, and the answer says where that backup went.
 
 Then say which claim you have, because three get confused:
 

@@ -85,6 +85,19 @@ again:
 > - _"Export slot 12B as a rig so I can see what is in it."_
 > - _"Build this rig somebody sent me and put it on my pedal."_
 
+Or iterate on one with the pedal in front of you, which is the loop this exists
+for:
+
+> _"Resolve the punk rig so every control is written down, build it, and play it
+> on my pedal without storing it. Then let me tell you what to change by ear.
+> When I say keep it, write it to an empty slot and export that back over the
+> rig so the diff shows what moved."_
+
+A resolved rig holds every control at the value it is set to, so you can open it
+in an editor, change one, and build: what you wrote is what reaches the pedal,
+and a control the gear does not have or a value past the end of one is refused
+and named rather than quietly dropped.
+
 Every claim in a rig carries its source, which is what makes one worth sending.
 [marketplace/](marketplace/) is where they live: a cited core that ships in the
 binary, and a community tier you load with `--rigs`. Each tier splits into

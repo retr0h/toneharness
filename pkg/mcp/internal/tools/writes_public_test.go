@@ -30,6 +30,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/mcp/internal/tools"
 	"github.com/retr0h/toneharness/pkg/mcp/internal/tools/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
@@ -253,6 +254,38 @@ func (s *WritesPublicTestSuite) TestRigsNew() {
 
 		s.True(res.IsError)
 		s.Contains(text(s.T(), res), "no model for Marshall Nonesuch")
+	})
+}
+
+// TestRigsResolve covers writing a rig out with every control it resolves to.
+func (s *WritesPublicTestSuite) TestRigsResolve() {
+	s.Run("a rig written out with its controls", func() {
+		s.client.EXPECT().Resolve(gomock.Any(), sdk.Resolve{RigID: "punk"}).
+			Return(sdk.Made{
+				Path: "marketplace/core/genres/punk.yaml",
+				Plan: plan.Plan{Blocks: []plan.Block{
+					{Model: "HD2_AmpSVBeastBrt"},
+					{Model: "HD2_Cab8x10SVBeast"},
+				}},
+			}, nil)
+
+		res := call(s.T(), connect(s.T(), s.client, true), "rigs_resolve",
+			tools.Resolve{ID: "punk"})
+
+		s.False(res.IsError)
+		s.Contains(text(s.T(), res), "resolved punk into")
+		s.Contains(text(s.T(), res), "2 blocks with every control written down")
+	})
+
+	s.Run("a rig that ships has no file to write to", func() {
+		s.client.EXPECT().Resolve(gomock.Any(), gomock.Any()).
+			Return(sdk.Made{}, errors.New("that rig has no file to record a build in"))
+
+		res := call(s.T(), connect(s.T(), s.client, true), "rigs_resolve",
+			tools.Resolve{ID: "mike-dirnt"})
+
+		s.True(res.IsError)
+		s.Contains(text(s.T(), res), "no file")
 	})
 }
 

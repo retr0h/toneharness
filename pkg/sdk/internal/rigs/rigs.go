@@ -73,7 +73,10 @@ func readBase(
 		fsys, name = os.DirFS(dir), dir
 	}
 
-	all, broken, err := readFS(fsys, name)
+	// The base is empty for the rigs that ship, because they have no file: they
+	// are bytes in the binary, and a rig recorded into one would be lost on the
+	// next build.
+	all, broken, err := readFS(fsys, name, dir)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +96,7 @@ func readBase(
 func readFS(
 	fsys fs.FS,
 	name string,
+	base string,
 ) ([]stored, []brokenFile, error) {
 	// Glob drops a directory it cannot read, which would make one nobody may
 	// open look like one holding no rigs. A directory that is not there is
@@ -170,7 +174,12 @@ func readFS(
 
 		taken[doc.Id] = p
 
-		out = append(out, stored{doc: doc, raw: raw})
+		at := ""
+		if base != "" {
+			at = filepath.Join(base, p)
+		}
+
+		out = append(out, stored{doc: doc, raw: raw, at: at})
 	}
 
 	sortEntries(out)
@@ -206,7 +215,7 @@ func read(
 		return set{base: base}, nil
 	}
 
-	user, broken, err := readFS(os.DirFS(src.User), src.User)
+	user, broken, err := readFS(os.DirFS(src.User), src.User, src.User)
 	if err != nil {
 		return set{}, err
 	}
@@ -264,7 +273,12 @@ func Find(
 		return result.Known{}, err
 	}
 
-	return result.Known{ID: found.idOf(), Rig: found.specOf(), Ask: found.askOf()}, nil
+	return result.Known{
+		ID:   found.idOf(),
+		Rig:  found.specOf(),
+		Ask:  found.askOf(),
+		Path: found.pathOf(),
+	}, nil
 }
 
 // Show reads one rig, and what the rest of the set says about it.
@@ -283,7 +297,12 @@ func Show(
 	}
 
 	return result.Rig{
-		Known:    result.Known{ID: found.idOf(), Rig: found.specOf(), Ask: found.askOf()},
+		Known: result.Known{
+			ID:   found.idOf(),
+			Rig:  found.specOf(),
+			Ask:  found.askOf(),
+			Path: found.pathOf(),
+		},
 		Variants: departures(all.merged(), found),
 	}, nil
 }
@@ -355,7 +374,12 @@ func known(
 ) []result.Known {
 	out := make([]result.Known, 0, len(all))
 	for _, e := range all {
-		out = append(out, result.Known{ID: e.idOf(), Rig: e.specOf(), Ask: e.askOf()})
+		out = append(out, result.Known{
+			ID:   e.idOf(),
+			Rig:  e.specOf(),
+			Ask:  e.askOf(),
+			Path: e.pathOf(),
+		})
 	}
 
 	return out

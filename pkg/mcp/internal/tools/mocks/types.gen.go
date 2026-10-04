@@ -286,6 +286,21 @@ func (mr *MockClientMockRecorder) Open(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Open", reflect.TypeOf((*MockClient)(nil).Open), ctx)
 }
 
+// Resolve mocks base method.
+func (m *MockClient) Resolve(ctx context.Context, in sdk.Resolve) (sdk.Made, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Resolve", ctx, in)
+	ret0, _ := ret[0].(sdk.Made)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Resolve indicates an expected call of Resolve.
+func (mr *MockClientMockRecorder) Resolve(ctx, in any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockClient)(nil).Resolve), ctx, in)
+}
+
 // Rig mocks base method.
 func (m *MockClient) Rig(ctx context.Context, id string) (sdk.Rig, error) {
 	m.ctrl.T.Helper()

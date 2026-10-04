@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
@@ -33,6 +34,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/attached"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/backup"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/catalogview"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
@@ -42,7 +44,9 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // Client is what a wrapper holds.
@@ -644,6 +648,213 @@ func (c *Client) Make(
 		OutputPath: in.Out,
 		Existing:   in.Existing,
 	})
+}
+
+// Resolve builds a rig and writes the whole answer back as a document.
+//
+// The point of the project, and what makes a rigspec a specification rather than
+// a sketch. A rig names gear and says a sound in words; this writes the chain
+// that came out of it with every control at the value it was set to, so the
+// document says what the preset is rather than how to go looking for it.
+//
+// What that buys, in order of how much it matters:
+//
+// Somebody can open it in an editor, change one control, and build. The value is
+// used as it stands, so nothing re-derives it and there is nothing to teach the
+// compiler first.
+//
+// A change made on the pedal survives. Export a preset you tuned by ear and the
+// controls come back into the same fields, so the diff says which moved. Before
+// this they were dropped on the way out and the work was gone.
+//
+// Blocks the compiler added appear in the chain too. A rig that named an
+// amplifier and silently became five blocks could not be read as a description
+// of the preset it produced.
+//
+// The words stay in the ask, which is where they belong: they are what somebody
+// wanted, and the controls are what answered.
+func (c *Client) Resolve(
+	ctx context.Context,
+	in Resolve,
+) (Made, error) {
+	found, err := c.Rig(ctx, in.RigID)
+	if err != nil {
+		return Made{}, err
+	}
+
+	scratch, err := os.CreateTemp("", "toneharness-resolve-*.hlx")
+	if err != nil {
+		return Made{}, fmt.Errorf("resolving %s: %w", in.RigID, err)
+	}
+
+	at := scratch.Name()
+
+	_ = scratch.Close()
+	defer func() { _ = os.Remove(at) }()
+
+	made, err := c.Make(ctx, Build{
+		RigID:    in.RigID,
+		Out:      at,
+		Existing: ReplaceExisting,
+	})
+	if err != nil {
+		return Made{}, err
+	}
+
+	cat, err := c.Catalog(ctx)
+	if err != nil {
+		return Made{}, err
+	}
+
+	// Lifted off the preset that was written rather than taken from the plan.
+	// Sections, controllers and footswitches are applied to the preset document,
+	// so a chain read back from the plan is missing them.
+	raw, err := os.Open(filepath.Clean(at))
+	if err != nil {
+		return Made{}, fmt.Errorf("reading back %s: %w", in.RigID, err)
+	}
+
+	written, err := preset.Read(raw)
+
+	// Opened read-only, so Close has nothing to report the read did not.
+	_ = raw.Close()
+
+	if err != nil {
+		return Made{}, fmt.Errorf("reading back %s: %w", in.RigID, err)
+	}
+
+	_, lifted, _, err := compile.Lift(written, cat)
+	if err != nil {
+		return Made{}, fmt.Errorf("reading back %s: %w", in.RigID, err)
+	}
+
+	out := tone.Spec{
+		Schema: tone.SchemaToneSpec,
+		Id:     found.ID,
+		Ask:    found.Ask,
+		Rig:    carry(found.Rig, lifted, cat),
+	}
+
+	where := in.Out
+	if where == "" {
+		where = found.Path
+	}
+
+	if where == "" {
+		return Made{}, fmt.Errorf(
+			"%w: %s ships in the binary, so name --out", ErrNoRigFile, in.RigID)
+	}
+
+	if err := writeSpec(where, out); err != nil {
+		return Made{}, err
+	}
+
+	made.Path = where
+
+	return made, nil
+}
+
+// carry keeps what a person wrote about each block, on the chain that was built.
+//
+// The lifted chain is the authority on what the preset is: which blocks, in what
+// order, at what values. It knows nothing about why, and why is most of what a
+// rig is worth. So the evidence, the caveats, the capture and any substitute move
+// across.
+//
+// Matched by role in order, not by gear name. The catalog renames what it
+// resolves — a rig saying `Ampeg SVT` builds `Ampeg SVT (bright channel)`, and an
+// `Ampeg 8x10` comes back `8x10 Ampeg SVT-E` — so matching on the name silently
+// dropped every citation the first time this ran. Position alone is no better,
+// because the compiler puts blocks the rig never asked for in front of the ones
+// it did.
+//
+// A block that matches nothing is one the corpus added, and it says so rather
+// than arriving bare. Somebody reading the document has to be able to tell what
+// they asked for from what was chosen on their behalf.
+func carry(
+	was rig.Spec,
+	built rig.Spec,
+	cat *catalog.Catalog,
+) rig.Spec {
+	taken := make([]bool, len(was.Chain))
+
+	for i, e := range built.Chain {
+		at := -1
+
+		for j, had := range was.Chain {
+			if !taken[j] && had.Role == e.Role {
+				at = j
+
+				break
+			}
+		}
+
+		if at < 0 {
+			said := "added by the compiler rather than named in the rig: a " +
+				"chain of this kind almost always holds one, and the corpus " +
+				"statistics are what put it here."
+
+			built.Chain[i].Evidence = &[]tone.Evidence{{
+				Kind: tone.EvidenceCorpus,
+				Note: &said,
+			}}
+
+			continue
+		}
+
+		taken[at] = true
+		had := was.Chain[at]
+
+		built.Chain[i].Capture = had.Capture
+		built.Chain[i].Stage = had.Stage
+		built.Chain[i].Substitute = had.Substitute
+		built.Chain[i].Evidence = had.Evidence
+		built.Chain[i].Confidence = had.Confidence
+	}
+
+	built.Instrument = was.Instrument
+	built.Evidence = was.Evidence
+	built.Sections = was.Sections
+	built.Moves = was.Moves
+	built.Resolved = resolvedOn(cat)
+
+	return built
+}
+
+// resolvedOn records which pedal and catalog produced the controls.
+//
+// Advisory, never a restriction. The gear names above are portable and resolve on
+// any Helix; the control names under them belong to the models this device's
+// catalog chose, so somebody on other hardware reads this to know whose numbers
+// they have rather than being refused for having the wrong pedal.
+//
+// Without it a resolved rig is silently geared to one machine: a control name
+// another catalog does not carry is refused with nothing saying why.
+func resolvedOn(
+	cat *catalog.Catalog,
+) *rig.Target {
+	device, source := cat.Device, cat.Source
+
+	return &rig.Target{Device: &device, Catalog: &source}
+}
+
+// writeSpec puts a document on disk.
+func writeSpec(
+	at string,
+	of tone.Spec,
+) error {
+	f, err := os.Create(filepath.Clean(at))
+	if err != nil {
+		return fmt.Errorf("writing %s: %w", at, err)
+	}
+
+	if err := tone.Write(f, of); err != nil {
+		_ = f.Close()
+
+		return fmt.Errorf("writing %s: %w", at, err)
+	}
+
+	return f.Close()
 }
 
 // MusicPlayers is every player the music corpus names, from the manifests.

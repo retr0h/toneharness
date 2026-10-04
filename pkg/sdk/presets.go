@@ -267,6 +267,15 @@ type Build struct {
 	Existing Existing
 }
 
+// Resolve says which rig to build out into a full specification.
+type Resolve struct {
+	// RigID names the rig to resolve.
+	RigID string
+	// Out is where the document is written. Empty writes back over the file the
+	// rig was read from, which a rig that ships in the binary does not have.
+	Out string
+}
+
 // Compile says what rig to build, what to build it into, and where the preset
 // goes.
 //

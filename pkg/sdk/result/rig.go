@@ -55,6 +55,12 @@ type Known struct {
 	// rigs they wrote, and nothing obliges them to write down the ask that
 	// produced one.
 	Ask *tone.Ask `json:"ask"`
+	// Path is the file this was read from, or empty for a rig that ships in the
+	// binary.
+	//
+	// What it is for is writing back: recording what a rig built as needs the
+	// file it came from, and a rig that has none cannot be recorded into.
+	Path string `json:"path,omitempty"`
 }
 
 // Rig is one rig, and what reading it needs that the rig does not carry.

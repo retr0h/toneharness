@@ -38,6 +38,8 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
+
+	tonespec "github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 type ClientPublicTestSuite struct {
@@ -435,6 +437,118 @@ func (s *ClientPublicTestSuite) rigsDir(
 	}
 
 	return dir
+}
+
+// TestResolve covers Resolve, which writes a rig back with every control it
+// resolved to.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ClientPublicTestSuite) TestResolve() {
+	for _, tt := range []struct {
+		name string
+		// own writes the rig into a directory of somebody's own, which is the
+		// only kind there is a file to write back to.
+		own bool
+		// out names somewhere else to write it, as a rig that ships must, and
+		// nowhere a directory that is not there.
+		out     bool
+		nowhere bool
+		id      string
+		// want is what the document has to hold afterwards, and err that it was
+		// refused instead.
+		want []string
+		err  error
+	}{
+		{
+			// The whole point: a rig naming gear and no values comes back with
+			// every control the gear has, at the value it was given.
+			name: "every control is written down",
+			own:  true,
+			id:   "their-player",
+			want: []string{
+				"controls:", "resolved:", "device: HX Stomp",
+				"catalog: HX Edit 3.82",
+			},
+		},
+		{
+			// Blocks the compiler added appear too, and say who put them there.
+			// A rig that named an amplifier and quietly became several blocks
+			// could not be read as a description of its own preset.
+			name: "a block the corpus added says so",
+			own:  true,
+			id:   "their-player",
+			want: []string{"kind: corpus", "added by the compiler"},
+		},
+		{
+			// A rig in the binary is bytes rather than a file, so there is
+			// nowhere to write back to and saying so beats writing somewhere
+			// that looks like it worked.
+			name: "a rig that ships has no file to write to",
+			id:   "mike-dirnt",
+			err:  sdk.ErrNoRigFile,
+		},
+		{
+			name: "a rig nobody has",
+			own:  true,
+			id:   "nobody-at-all",
+			err:  sdk.ErrNoSuchRig,
+		},
+		{
+			// Somewhere it cannot write, which is a mistyped --out rather than
+			// anything exotic.
+			name:    "a path it cannot write",
+			own:     true,
+			id:      "their-player",
+			nowhere: true,
+			err:     os.ErrNotExist,
+		},
+	} {
+		s.Run(tt.name, func() {
+			opts := []sdk.Option(nil)
+			at := ""
+
+			if tt.own {
+				dir := s.rigsDir(ownRig("their-player", "their-player", "", "bass"))
+				opts = append(opts, sdk.WithUserRigs(dir))
+				at = filepath.Join(dir, "artists", "their-player.yaml")
+			}
+
+			out := ""
+			if tt.nowhere {
+				out = filepath.Join(s.T().TempDir(), "no", "such", "dir", "o.yaml")
+			}
+
+			if tt.out {
+				out = filepath.Join(s.T().TempDir(), "out.yaml")
+				at = out
+			}
+
+			made, err := sdk.New(opts...).Resolve(
+				context.Background(), sdk.Resolve{RigID: tt.id, Out: out})
+
+			if tt.err != nil {
+				s.Require().ErrorIs(err, tt.err)
+
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotEmpty(made.Plan.Blocks)
+
+			raw, err := os.ReadFile(at)
+			s.Require().NoError(err)
+
+			for _, want := range tt.want {
+				s.Require().Contains(string(raw), want)
+			}
+
+			// What it wrote has to load, or the next build refuses a document
+			// this tool produced.
+			held, err := tonespec.Load(bytes.NewReader(raw))
+			s.Require().NoError(err)
+			s.Require().NotEmpty(held.Rig.Chain)
+		})
+	}
 }
 
 // TestWithUserRigs covers WithUserRigs, which layers somebody's own directory

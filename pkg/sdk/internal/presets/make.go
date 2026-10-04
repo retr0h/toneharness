@@ -106,9 +106,9 @@ func Make(
 	}
 
 	// Statistics are an improvement on the catalog's defaults, not a
-	// requirement, but somebody who named a file asked for those ones.
-	// Building without them would hand back a more generic preset than the
-	// one asked for, and say nothing about it.
+	// requirement, but somebody who named a file asked for those ones. Building
+	// without them would hand back a more generic preset than the one asked
+	// for, and say nothing about it.
 	stats, err := corpus.Open(opts.StatsPath)
 	if err != nil {
 		return result.Made{}, err
