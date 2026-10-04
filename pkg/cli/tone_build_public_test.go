@@ -64,7 +64,7 @@ func (s *ToneBuildPublicTestSuite) file(
 func (s *ToneBuildPublicTestSuite) examples(
 	name string,
 ) string {
-	return filepath.Join("marketplace", "core", "examples", name)
+	return filepath.Join("marketplace", "examples", name)
 }
 
 // TestToneBuild covers ToneBuild, which reads a request and a setup and

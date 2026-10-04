@@ -64,7 +64,7 @@ func (s *ShippedPublicTestSuite) TestEveryDocumentThatShipsLoads() {
 			name: "every example loads",
 			then: func() {
 				paths, err := filepath.Glob(filepath.Join(
-					"..", "..", "..", "marketplace", "core", "examples", "*.yaml"))
+					"..", "..", "..", "marketplace", "examples", "*.yaml"))
 				s.Require().NoError(err)
 				s.Require().NotEmpty(paths, "no examples found to check")
 
@@ -96,7 +96,7 @@ func (s *ShippedPublicTestSuite) TestEveryDocumentThatShipsLoads() {
 			// The gap this closes was invisible from either side. pkg/sdk/rig
 			// checked every shipped rig and skipped the ask beside it, saying
 			// "pkg/sdk/tone checks those", and pkg/sdk/tone checked
-			// marketplace/core/examples/ and never the shipped documents. Each
+			// marketplace/examples/ and never the shipped documents. Each
 			// test was right about itself and the sentence joining them was not,
 			// so the documents this project ships as its own knowledge were the
 			// only ones nothing validated.

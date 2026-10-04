@@ -20,3 +20,4 @@
 package shipped
 
 //go:generate go run ./internal/rigpack ../../../marketplace/core/artists artists
+//go:generate go run ./internal/rigpack ../../../marketplace/core/genres genres

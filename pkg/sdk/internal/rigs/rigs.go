@@ -102,8 +102,8 @@ func readFS(
 		return nil, nil, fmt.Errorf("reading %s: %w", name, err)
 	}
 
-	// The same holds one level down, where the glob looks for rigs: an
-	// artists/ nobody may open would otherwise hide every rig in it.
+	// The same holds one level down, where the glob looks for rigs: a directory
+	// nobody may open would otherwise hide every rig in it.
 	for _, e := range top {
 		if !e.IsDir() {
 			continue
@@ -115,11 +115,16 @@ func readFS(
 	}
 
 	// The pattern is a constant, so it cannot be malformed.
-	// `artists/` and nothing else, which is what every page describing this has
-	// always said. The glob was any directory, so `marketplace/core/examples/`
-	// was read as rigs: its documents are teaching material and one of them is a
-	// Plan, and listing the core tier reported each as a rig that would not load.
-	paths, _ := fs.Glob(fsys, path.Join("artists", "*.yaml"))
+	//
+	// One level down rather than flat: a tier holds `artists/`, which is people,
+	// beside `genres/`, which is the sound of a genre rather than anybody who
+	// plays it. A person is never filed under a genre, because a person plays
+	// several and the ask already names them.
+	//
+	// Any directory, which is why the teaching documents moved out of the tier
+	// to `marketplace/examples/`. A glob this wide read each of them as a rig
+	// that would not load.
+	paths, _ := fs.Glob(fsys, path.Join("*", "*.yaml"))
 
 	out := make([]stored, 0, len(paths))
 	broken := []brokenFile(nil)

@@ -1,6 +1,6 @@
 # A plan naming every field this format models.
 #
-# Not a real preset. marketplace/core/examples/dir-angl-meteor.plan.yaml is that, and it is the
+# Not a real preset. marketplace/examples/dir-angl-meteor.plan.yaml is that, and it is the
 # one to read; this exists so a field whose shape nobody has checked fails a
 # test rather than waiting for a device to disagree with it.
 #

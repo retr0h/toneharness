@@ -87,9 +87,10 @@ again:
 
 Every claim in a rig carries its source, which is what makes one worth sending.
 [marketplace/](marketplace/) is where they live: a cited core that ships in the
-binary, and a community tier you load with `--rigs`. Its README says what the
-two tiers are and how to submit one.
-[marketplace/core/examples/](marketplace/core/examples/) holds one of each
+binary, and a community tier you load with `--rigs`. Each tier splits into
+`artists/`, which is people, and `genres/`, which is the sound of a genre rather
+than anybody who plays it. Its README says what the two tiers are and how to
+submit one. [marketplace/examples/](marketplace/examples/) holds one of each
 document with every optional field filled in. Those are what the tests pin and
 what to read when you want to see a field used, rather than rigs anybody plays.
 

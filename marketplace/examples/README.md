@@ -47,7 +47,7 @@ and because `presets compile --plan` takes one back.
 
 ```bash
 mise exec -- go run main.go tone build \
-  --ask marketplace/core/examples/chunky-punk.yaml --out rig.yaml
+  --ask marketplace/examples/chunky-punk.yaml --out rig.yaml
 mise exec -- go run main.go presets make --rig rig.yaml --out punk.hlx
 ```
 

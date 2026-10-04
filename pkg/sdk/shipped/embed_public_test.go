@@ -36,7 +36,12 @@ type EmbedPublicTestSuite struct {
 }
 
 // core is the marketplace tier this package is a copy of.
-var core = filepath.Join("..", "..", "..", "marketplace", "core", "artists")
+//
+// The tier rather than one directory inside it, because a tier holds a
+// directory per kind of subject: `artists/` for people and `genres/` for a
+// sound nobody owns. Naming one of them would let the other drift unwatched,
+// which is the whole failure this test exists for.
+var core = filepath.Join("..", "..", "..", "marketplace", "core")
 
 // TestTheEmbeddedRigsAreTheMarketplacesCore covers the copy this package holds.
 //
@@ -50,22 +55,27 @@ var core = filepath.Join("..", "..", "..", "marketplace", "core", "artists")
 // Byte for byte, both directions. A rig added to the marketplace and not packed
 // fails, and so does one deleted there and left in the binary.
 func (s *EmbedPublicTestSuite) TestTheEmbeddedRigsAreTheMarketplacesCore() {
-	entries, err := os.ReadDir(core)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(entries, "the marketplace has a core tier to copy")
-
 	want := map[string][]byte{}
 
-	for _, entry := range entries {
-		if entry.IsDir() || filepath.Ext(entry.Name()) != ".yaml" {
-			continue
+	err := filepath.WalkDir(core, func(at string, d fs.DirEntry, err error) error {
+		switch {
+		case err != nil:
+			return err
+		case d.IsDir(), filepath.Ext(at) != ".yaml":
+			return nil
 		}
 
-		body, err := os.ReadFile(filepath.Join(core, entry.Name()))
-		s.Require().NoError(err)
+		body, err := os.ReadFile(at) //nolint:gosec // a path this walk found
+		if err != nil {
+			return err
+		}
 
-		want[entry.Name()] = body
-	}
+		want[filepath.Base(at)] = body
+
+		return nil
+	})
+	s.Require().NoError(err)
+	s.Require().NotEmpty(want, "the marketplace has a core tier to copy")
 
 	got := map[string][]byte{}
 

@@ -7,7 +7,7 @@
 # somebody arrived at and nothing about why. The portable half, and only that:
 # the gear in signal order, named the way a musician names it. Which model each
 # piece resolved to, where it sat and what its knobs were set to are in
-# marketplace/core/examples/dir-angl-meteor.plan.yaml, and the two together are
+# marketplace/examples/dir-angl-meteor.plan.yaml, and the two together are
 # the preset.
 
 id: dir-angl-meteor
