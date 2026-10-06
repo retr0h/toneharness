@@ -50,6 +50,7 @@ import (
 	"time"
 
 	"github.com/retr0h/toneharness/pkg/sdk/internal/atomicfile"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
@@ -143,8 +144,13 @@ func (k *Keeper) one(
 	// Rule 5. The slot, its setlist and the moment to the nanosecond, so a
 	// second backup of the same slot does not land on the first. Should two
 	// ever share a name, the second fails rather than replacing the first.
-	path := filepath.Join(dir, fmt.Sprintf("%s-s%d-%s%s",
-		slot.Label(h.At.Slot), h.At.Setlist,
+	//
+	// The preset's own name sits in the middle, because a backup nobody can
+	// identify is a backup nobody restores: `01C-s0-20261004-044539` says when
+	// something was replaced and not what it was, and the moment somebody wants
+	// it back is the moment they have forgotten.
+	path := filepath.Join(dir, fmt.Sprintf("%s-s%d-%s%s%s",
+		slot.Label(h.At.Slot), h.At.Setlist, called(h.Name),
 		k.now().UTC().Format("20060102-150405.000000000"), ext))
 
 	if err := atomicfile.WriteNew(path, data, 0o600); err != nil {
@@ -152,6 +158,22 @@ func (k *Keeper) one(
 	}
 
 	return path, nil
+}
+
+// called is the preset's name as a filename carries it, with a trailing dash.
+//
+// Empty for a slot the device names and nobody filled, which is every unused
+// one: there is no name to say, and a dash with nothing before it would read as
+// a name that failed to come through.
+func called(
+	name string,
+) string {
+	out := slug.Of(name)
+	if out == "" || out == "untitled" {
+		return ""
+	}
+
+	return out + "-"
 }
 
 // contents decides what a backup holds, and the extension that says which.

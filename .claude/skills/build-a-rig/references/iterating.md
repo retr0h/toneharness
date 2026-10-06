@@ -26,11 +26,18 @@ accepting writes after about a dozen racing commits. Saying which of 661 blocks
 belongs in a chain through slots would be 661 flash writes for readings nobody
 wanted. So write a slot when you have an answer, not while looking for one.
 
-Never write to a slot holding something you did not put there. `slots list`
-first, pick an empty one, and prefer a high bank well away from whatever the
-owner of the pedal plays. `slots import` overwrites without asking and the device
-has no undo, so what was there is read and kept in the backup directory first —
-which is a recovery, not a reason to be careless.
+Write to the slot called `SCRATCH` and to no other. That name is how somebody
+says which slot they are willing to lose, and anything may be measured there as
+often as a run needs.
+
+**A name is not permission.** A slot called "Mike Dirnt" is somebody's preset even
+when it is exactly the rig you were about to build — assuming otherwise is how
+this rule gets broken. `slots list` says what each slot is called. If nothing is
+called `SCRATCH`, ask for one.
+
+`slots import` overwrites without asking and the device has no undo, so whatever
+the slot held is read and kept in the backup directory first, named after the
+preset that was there. That is a recovery, not a reason to be careless.
 
 ## The loop
 

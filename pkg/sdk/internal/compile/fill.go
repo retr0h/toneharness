@@ -26,7 +26,6 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // nearUniversal is how common a kind of block must be before one is added to a
@@ -56,11 +55,11 @@ type Added struct {
 // defensible choice when nobody named one.
 func fill(
 	blocks []catalog.Block,
-	said []*rig.Settings,
+	said []*wanted,
 	cat *catalog.Catalog,
 	stats *corpus.Stats,
 	instrument string,
-) ([]catalog.Block, []*rig.Settings, []Added) {
+) ([]catalog.Block, []*wanted, []Added) {
 	if stats == nil {
 		return blocks, said, nil
 	}
@@ -109,10 +108,10 @@ func fill(
 // index is found rather than guarded against.
 func insert(
 	blocks []catalog.Block,
-	said []*rig.Settings,
+	said []*wanted,
 	b catalog.Block,
 	beforeAmp bool,
-) ([]catalog.Block, []*rig.Settings) {
+) ([]catalog.Block, []*wanted) {
 	if !beforeAmp {
 		return append(blocks, b), append(said, nil)
 	}
@@ -161,14 +160,14 @@ func insert(
 // A gap past the end is appended, because `said` is never longer than `blocks`
 // and a shorter one means the caller added blocks of its own.
 func spliced(
-	said []*rig.Settings,
+	said []*wanted,
 	at int,
-) []*rig.Settings {
+) []*wanted {
 	if at >= len(said) {
 		return append(said, nil)
 	}
 
-	out := make([]*rig.Settings, 0, len(said)+1)
+	out := make([]*wanted, 0, len(said)+1)
 	out = append(out, said[:at]...)
 	out = append(out, nil)
 

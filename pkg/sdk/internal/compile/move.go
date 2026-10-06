@@ -185,14 +185,34 @@ var turns = map[string][]turn{
 	// A compressor's attack decides how much of the front of a note gets
 	// past it. Slow, and the pick is a sound of its own; fast, and notes
 	// arrive rather than start. A scale, like drive.
+	//
+	// Only `soft-attack` may seat one, and the asymmetry is the whole point.
+	// Compression is the only thing in a chain that removes the front of a note,
+	// so a chain with no compressor already has every bit of its pick attack:
+	// absence answers the other two outright, and the one that needs a block is
+	// the one asking for the front of the note to be taken away.
+	//
+	// Seating one for `audible-pick-attack` was circular. A compressor was added
+	// so that its attack could be turned up, so that the compressor just added
+	// would not remove the thing it was added to preserve — and the chain was
+	// worse for it than doing nothing, with two compressors in series where
+	// nobody asked for one.
 	"soft-attack": {
 		{axis: "attack", category: catalog.CategoryComp, param: "Attack", steps: -1},
 	},
 	"audible-pick-attack": {
-		{axis: "attack", category: catalog.CategoryComp, param: "Attack", steps: 0.5},
+		{
+			axis: "attack", category: catalog.CategoryComp, param: "Attack",
+			steps:        0.5,
+			absenceMeans: "this chain has no compressor, so the pick attack is already all there",
+		},
 	},
 	"percussive": {
-		{axis: "attack", category: catalog.CategoryComp, param: "Attack", steps: 1},
+		{
+			axis: "attack", category: catalog.CategoryComp, param: "Attack",
+			steps:        1,
+			absenceMeans: "this chain has no compressor, so nothing is taking the front off a note",
+		},
 	},
 }
 

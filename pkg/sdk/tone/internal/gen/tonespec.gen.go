@@ -584,6 +584,8 @@ type ChainEntry struct {
 
 	// Settings How the gear is set, in musical terms, from 0 to 1.
 	//
+	// Superseded by `controls` on a chain entry, and kept because documents use it and it is still the shortest way to say a sound by hand. These are seven words and a model has its own controls, so a rig carrying only these is a rig whose other six hundred values nothing wrote down. Where both name one control the value in `controls` wins.
+	//
 	// Deliberately small and deliberately lossy. These words mean roughly the same thing on any amplifier, and each one is put on whichever control the model has for it: `drive` reaches a Drive or a Gain, `level` reaches a Level, a Ch Vol or a Master. A word the model has no control for is refused, with the words it does take.
 	//
 	// `Sag`, `Bias X` and `Ripple` are one manufacturer's controls and belong to the compiler, which sets them from catalog defaults, corpus medians and the manual's own directional guidance. A rig that carried device parameters would not survive being read on different hardware, which is the whole point of the format.
@@ -1057,6 +1059,8 @@ type Section struct {
 }
 
 // Settings How the gear is set, in musical terms, from 0 to 1.
+//
+// Superseded by `controls` on a chain entry, and kept because documents use it and it is still the shortest way to say a sound by hand. These are seven words and a model has its own controls, so a rig carrying only these is a rig whose other six hundred values nothing wrote down. Where both name one control the value in `controls` wins.
 //
 // Deliberately small and deliberately lossy. These words mean roughly the same thing on any amplifier, and each one is put on whichever control the model has for it: `drive` reaches a Drive or a Gain, `level` reaches a Level, a Ch Vol or a Master. A word the model has no control for is refused, with the words it does take.
 //

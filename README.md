@@ -31,6 +31,33 @@ where it came from, and where nothing has been measured the tool says so.
 Point an agent at a checkout and tell it what you want to sound like.
 </p>
 
+## Use it at your own risk
+
+This talks to a guitar pedal over a reverse-engineered USB protocol. Line 6
+document none of it, so everything here was worked out by watching the wire and
+is right only as far as it has been tested.
+
+What that means in practice:
+
+**A slot write is a flash write.** Flash wears out, and writes here commit for
+about 750ms each. A burst of them has already taken a setlist past what a power
+cycle could clear, and a device stops accepting writes after roughly a dozen
+racing commits. Audition with `device play`, which stores nothing, and write a
+slot when you have an answer rather than while looking for one.
+
+**A device has no undo.** Whatever a slot held is read and kept to a file before
+anything replaces it, and the answer says where. That is a recovery, not a
+safety net: point a write at the wrong slot and the preset you played last night
+is a file you have to go and find.
+
+**Measuring makes the pedal feed itself.** The measuring rig is a lead from the
+pedal's output back into its own input, and an amplifier built to distort will
+oscillate through it. `--headroom` is the only thing between a reading and a
+squeal, and a squeal is loud.
+
+Nobody has lost hardware to this, and that is not a guarantee. If the pedal
+matters to you, back it up with HX Edit first.
+
 ## Features
 
 | Feature                                                                     | Description                                                                                                                                                                                                                                 |

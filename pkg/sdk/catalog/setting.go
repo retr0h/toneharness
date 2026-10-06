@@ -21,6 +21,7 @@ package catalog
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 )
 
@@ -76,6 +77,13 @@ func (s *Setting) UnmarshalJSON(
 		return s.ParamValue.UnmarshalJSON(b)
 	}
 
+	// An empty string is nothing set, and it is refused rather than read as a
+	// named position called "". A control with no value is a control the device
+	// has no reading for, and writing one would put it in a preset.
+	if text == "" {
+		return fmt.Errorf("%w: a control with no value", ErrBadParam)
+	}
+
 	return s.ParamValue.UnmarshalJSON(literal(text))
 }
 
@@ -100,13 +108,12 @@ func literal(
 
 // numeric says whether a string is a JSON number, which decides whether it is a
 // reading or a name.
+//
+// No guard on an empty string: the caller refuses one before it gets here, so a
+// check for it is a branch nothing can reach.
 func numeric(
 	text string,
 ) bool {
-	if text == "" {
-		return false
-	}
-
 	var held json.Number
 
 	return json.Unmarshal([]byte(text), &held) == nil

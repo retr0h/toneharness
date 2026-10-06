@@ -71,6 +71,10 @@ func init() {
 	rigsResolveCmd.Flags().StringVar(
 		&rigsResolveOptions.Out, "out", "",
 		"where to write it, instead of over the file it came from")
+	rigsResolveCmd.Flags().StringVar(
+		&rigsResolveOptions.From, "from", "",
+		"a plan to take the controls from, such as what tone tune wrote, "+
+			"instead of building the rig again")
 
 	_ = rigsResolveCmd.MarkFlagRequired("id")
 }

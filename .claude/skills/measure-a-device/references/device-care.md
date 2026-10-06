@@ -24,6 +24,25 @@ is power cycled, at which point the slot's own version comes back.
 that carries the input and output the loop needs. It keeps a copy of whatever the
 slot held and says where.
 
+## The slot called SCRATCH
+
+**A slot named `SCRATCH` is the working slot.** Anything may be written there,
+played there and measured there, as many times as a run needs. It is how
+somebody says which slot they are willing to lose.
+
+**Every other slot holds somebody's work until they say otherwise.** A name is
+not permission: a slot called "Mike Dirnt" is somebody's preset even when it is
+exactly what you were about to build, and that is the reasoning this rule exists
+to stop. `slots list` says what each one is called; if nothing is called
+`SCRATCH`, ask for one rather than choosing.
+
+`TONEHARNESS_SCRATCH_SLOT` names it for the device tests. Naming the preset in it
+`SCRATCH` is what makes the same answer visible on the pedal, where a person
+reading the screen can see that the slot they are on is the disposable one.
+
+Rename it back to `SCRATCH` when a run is finished, whatever was being worked on.
+A slot left called "SCRATCH dirnt" is one the next session has to think about.
+
 ## Never overwrite a slot nobody offered
 
 Read `slots list` and write only where something empty is, or where the person

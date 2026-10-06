@@ -90,6 +90,10 @@ Never report one as another, and never describe work as verified on evidence
 you did not gather. If you did not run it, say you did not run it. This is the
 failure this project cares about most, and machine-readable output makes it
 easier to commit rather than harder.
+Beyond the ladder, [AGENTS.md's what to report](../../../AGENTS.md#what-to-report-every-time)
+is the shape every skill answers in: where anything landed by path, what was
+decided on somebody's behalf, which rung you reached, and what it cost the device.
+
 
 Report in this order, because it is the order that avoids rework:
 

@@ -40,6 +40,8 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
 
 	tonespec "github.com/retr0h/toneharness/pkg/sdk/tone"
+
+	sdkplan "github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 type ClientPublicTestSuite struct {
@@ -439,6 +441,19 @@ func (s *ClientPublicTestSuite) rigsDir(
 	return dir
 }
 
+// tunedPlan is what `tone tune --out` writes: a chain with its dials where the
+// solve left them.
+const tunedPlan = `blocks:
+- model: HD2_AmpSVBeastBrt
+  params:
+    Drive: 0.22
+    Bass: 0.49
+  dsp: 0
+  pos: 0
+  enabled: true
+name: Their Player
+`
+
 // TestResolve covers Resolve, which writes a rig back with every control it
 // resolved to.
 //
@@ -453,7 +468,12 @@ func (s *ClientPublicTestSuite) TestResolve() {
 		// nowhere a directory that is not there.
 		out     bool
 		nowhere bool
-		id      string
+		// from takes the controls out of a plan instead of building the rig,
+		// and gone names one that is not there.
+		from bool
+		gone bool
+		junk bool
+		id   string
 		// want is what the document has to hold afterwards, and err that it was
 		// refused instead.
 		want []string
@@ -494,6 +514,35 @@ func (s *ClientPublicTestSuite) TestResolve() {
 			err:  sdk.ErrNoSuchRig,
 		},
 		{
+			// What `tone tune` wrote, which is the case that matters: a chain
+			// solved against measured figures with the pedal in the loop. That
+			// answer cannot be rebuilt from the rig, so building again here
+			// would throw it away and hand back corpus medians.
+			name: "controls taken from a plan rather than built again",
+			own:  true,
+			id:   "their-player",
+			from: true,
+			want: []string{"controls:", "Drive:"},
+		},
+		{
+			name: "a plan that is not there",
+			own:  true,
+			id:   "their-player",
+			from: true,
+			gone: true,
+			err:  os.ErrNotExist,
+		},
+		{
+			// A file somebody passed that is not a plan, which is the ordinary
+			// mistake: `--from` next to a rig instead of what a tune wrote.
+			name: "a file that is not a plan",
+			own:  true,
+			id:   "their-player",
+			from: true,
+			junk: true,
+			err:  sdkplan.ErrNotAPlan,
+		},
+		{
 			// Somewhere it cannot write, which is a mistyped --out rather than
 			// anything exotic.
 			name:    "a path it cannot write",
@@ -523,8 +572,23 @@ func (s *ClientPublicTestSuite) TestResolve() {
 				at = out
 			}
 
+			from := ""
+
+			if tt.from {
+				from = filepath.Join(s.T().TempDir(), "tuned.plan.yaml")
+
+				switch {
+				case tt.gone:
+				case tt.junk:
+					s.Require().NoError(os.WriteFile(from, []byte("not: a plan\n"), 0o600))
+				default:
+					s.Require().NoError(os.WriteFile(from, []byte(tunedPlan), 0o600))
+				}
+			}
+
 			made, err := sdk.New(opts...).Resolve(
-				context.Background(), sdk.Resolve{RigID: tt.id, Out: out})
+				context.Background(),
+				sdk.Resolve{RigID: tt.id, Out: out, From: from})
 
 			if tt.err != nil {
 				s.Require().ErrorIs(err, tt.err)

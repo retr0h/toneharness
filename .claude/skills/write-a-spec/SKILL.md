@@ -90,3 +90,21 @@ the plan's types and fails on any field no document writes.
 So an absent field already says nobody established it. It needs no paragraph
 explaining the absence, and what was searched for and not found belongs in a
 task rather than in the document.
+
+## Say which claim you have, and where it went
+
+Three claims, and the first is the only one a document can make on its own:
+
+1. the document satisfies the contract
+2. the gear it names exists in the catalog
+3. it builds into a preset
+
+The first is `tone` loading it. The second needs the catalog, which is why a rig
+naming an amplifier nothing models passes a schema check and fails a build. The
+third is `presets make`.
+
+Name the file written, and keep the contract's own wording for a refusal: the
+field path it names is what somebody greps for, and a reworded error is one they
+cannot search.
+[AGENTS.md's what to report](../../../AGENTS.md#what-to-report-every-time) is the
+shape, and it is the same for every skill here.

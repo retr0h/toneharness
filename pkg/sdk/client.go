@@ -21,6 +21,7 @@
 package sdk
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -44,6 +45,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -682,6 +684,10 @@ func (c *Client) Resolve(
 		return Made{}, err
 	}
 
+	if in.From != "" {
+		return c.resolveFrom(ctx, in, found)
+	}
+
 	scratch, err := os.CreateTemp("", "toneharness-resolve-*.hlx")
 	if err != nil {
 		return Made{}, fmt.Errorf("resolving %s: %w", in.RigID, err)
@@ -754,6 +760,74 @@ func (c *Client) Resolve(
 	return made, nil
 }
 
+// resolveFrom writes a document from a plan somebody already has.
+//
+// The plan a tune wrote, which is the case that matters: `tone tune` solves a
+// chain against measured figures with the pedal in the loop, and that answer
+// cannot be rebuilt from the rig because it came from a room. Building again
+// here would throw it away and hand back corpus medians.
+func (c *Client) resolveFrom(
+	ctx context.Context,
+	in Resolve,
+	found Rig,
+) (Made, error) {
+	f, err := os.Open(filepath.Clean(in.From))
+	if err != nil {
+		return Made{}, fmt.Errorf("reading %s: %w", in.From, err)
+	}
+
+	held, err := plan.Load(f)
+
+	// Opened read-only, so Close has nothing to report the read did not.
+	_ = f.Close()
+
+	if err != nil {
+		return Made{}, fmt.Errorf("reading %s: %w", in.From, err)
+	}
+
+	cat, err := c.Catalog(ctx)
+	if err != nil {
+		return Made{}, err
+	}
+
+	// Through a preset and back, so the chain is read the same way a build's is
+	// and the two cannot describe the same plan differently.
+	doc, _ := preset.Blank()
+	doc.Data.Device = cat.DeviceID
+
+	if err := doc.SetSpec(held); err != nil {
+		return Made{}, fmt.Errorf("reading %s: %w", in.From, err)
+	}
+
+	_, lifted, _, err := compile.Lift(doc, cat)
+	if err != nil {
+		return Made{}, fmt.Errorf("reading %s: %w", in.From, err)
+	}
+
+	out := tone.Spec{
+		Schema: tone.SchemaToneSpec,
+		Id:     found.ID,
+		Ask:    found.Ask,
+		Rig:    carry(found.Rig, lifted, cat),
+	}
+
+	where := in.Out
+	if where == "" {
+		where = found.Path
+	}
+
+	if where == "" {
+		return Made{}, fmt.Errorf(
+			"%w: %s ships in the binary, so name --out", ErrNoRigFile, in.RigID)
+	}
+
+	if err := writeSpec(where, out); err != nil {
+		return Made{}, err
+	}
+
+	return Made{Plan: held, Path: where}, nil
+}
+
 // carry keeps what a person wrote about each block, on the chain that was built.
 //
 // The lifted chain is the authority on what the preset is: which blocks, in what
@@ -805,6 +879,14 @@ func carry(
 		taken[at] = true
 		had := was.Chain[at]
 
+		// The name a person wrote, not the one the catalog resolved it to. A rig
+		// says "Ampeg SVT" and the catalog answers "Ampeg SVT (bright channel)";
+		// writing that back welds the document to one catalog's spelling, which
+		// is the whole thing a rig naming real gear exists to avoid. It also
+		// stops the rig being readable: the model's channel is the compiler's
+		// business.
+		built.Chain[i].Gear = had.Gear
+
 		built.Chain[i].Capture = had.Capture
 		built.Chain[i].Stage = had.Stage
 		built.Chain[i].Substitute = had.Substitute
@@ -839,22 +921,28 @@ func resolvedOn(
 }
 
 // writeSpec puts a document on disk.
+//
+// Rendered whole and written once, rather than streamed into an open file. The
+// contract's own note is that both documents hold only strings, numbers and
+// booleans, so the marshalling cannot fail; streaming it added a Close to get
+// wrong and three error paths nothing could reach.
 func writeSpec(
 	at string,
 	of tone.Spec,
 ) error {
-	f, err := os.Create(filepath.Clean(at))
-	if err != nil {
+	var out bytes.Buffer
+
+	// Cannot fail for a Spec, per the above, and checked rather than ignored
+	// because that is an argument about the type and not about this call.
+	if err := tone.Write(&out, of); err != nil {
 		return fmt.Errorf("writing %s: %w", at, err)
 	}
 
-	if err := tone.Write(f, of); err != nil {
-		_ = f.Close()
-
+	if err := os.WriteFile(filepath.Clean(at), out.Bytes(), 0o600); err != nil {
 		return fmt.Errorf("writing %s: %w", at, err)
 	}
 
-	return f.Close()
+	return nil
 }
 
 // MusicPlayers is every player the music corpus names, from the manifests.

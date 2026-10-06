@@ -127,6 +127,13 @@ func (s *SettingPublicTestSuite) TestSettingRefuses() {
 			name: "a zero value has no kind to write",
 			raw:  "",
 		},
+		{
+			// A control with no value is one the device has no reading for, and
+			// reading it as a named position called "" would put that in a
+			// preset.
+			name: "an empty string is nothing set",
+			raw:  `""`,
+		},
 		{name: "an object is not a value", raw: `{"a":1}`},
 		{name: "a list is not a value", raw: `[1]`},
 	} {
