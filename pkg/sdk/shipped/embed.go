@@ -37,7 +37,8 @@ package shipped
 
 import "embed"
 
-// FS holds every rig, laid out as rigs are on disk.
+// FS holds every rig, laid out as rigs are on disk: one directory per kind of
+// subject, which is `artists/` for people and `genres/` for a sound nobody owns.
 //
-//go:embed all:artists
+//go:embed all:artists all:genres
 var FS embed.FS

@@ -131,6 +131,7 @@ pkg/sdk/translate/   a request and a setup become a rig
 pkg/sdk/rig/         the rig half, and its validation. The types alias tone's
 pkg/sdk/shipped/     a generated copy of marketplace/core, so the binary has it
   artists/           one file per player, and the evidence for each claim
+  genres/            one file per genre the corpus can aim at
 pkg/sdk/plan/        a resolved chain: what compile produces and editor reads
 pkg/sdk/catalog/     what a device can do: blocks, parameters, DSP costs
 pkg/sdk/corpus/      what real presets say about a device, measured
@@ -166,9 +167,10 @@ resources/
   schemas/           the generated catalog, the gear map, the preset corpus
 .claude/skills/      how to do each job. Five skills, each self-contained
 marketplace/         rigs people use and send
-  core/artists/      the cited ones, copied into pkg/sdk/shipped by a generator
-  core/examples/     one of each document, commented. What the tests read
-  community/artists/ submissions, loaded with --rigs
+  core/artists/      cited people, copied into pkg/sdk/shipped by a generator
+  core/genres/       the sound of a genre, built by measurement rather than cited
+  community/         submissions, loaded with --rigs. Same two directories
+  examples/          one of each document, commented. What the tests read
 asset/               the logos the README shows
 docs/                what is built and what is not, and the design records
 .github/workflows/   CI

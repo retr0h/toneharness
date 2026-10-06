@@ -36,30 +36,49 @@ type ReampPublicTestSuite struct {
 	suite.Suite
 }
 
-// TestPadPutsSilenceEitherSide covers the shape of what is played.
+// TestPad covers the silence put either side of a reference.
 //
-// The front is because latency is not known in advance. The back is because a
-// reverb goes on ringing after the input stops, and cutting at the end of the
-// signal would report every reverb as a short one.
-func (s *ReampPublicTestSuite) TestPadPutsSilenceEitherSide() {
-	signal := []float32{1, 1, 1}
+// One method and one table, so a case is a row rather than a file.
+func (s *ReampPublicTestSuite) TestPad() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The shape of what is played.
+			//
+			// The front is because latency is not known in advance. The back is because a
+			// reverb goes on ringing after the input stops, and cutting at the end of the
+			// signal would report every reverb as a short one.
+			name: "puts silence either side",
+			then: func() {
+				signal := []float32{1, 1, 1}
 
-	got := reamp.Pad(signal)
+				got := reamp.Pad(signal)
 
-	lead := int(reamp.Lead.Seconds() * reamp.Rate)
-	tail := int(reamp.Tail.Seconds() * reamp.Rate)
+				lead := int(reamp.Lead.Seconds() * reamp.Rate)
+				tail := int(reamp.Tail.Seconds() * reamp.Rate)
 
-	s.Require().Len(got, lead+len(signal)+tail)
-	s.Require().Zero(got[lead-1], "silence right up to the signal")
-	s.Require().Equal(float32(1), got[lead], "and the signal where it was put")
-	s.Require().Zero(got[lead+len(signal)], "silence again after it")
-}
+				s.Require().Len(got, lead+len(signal)+tail)
+				s.Require().Zero(got[lead-1], "silence right up to the signal")
+				s.Require().Equal(float32(1), got[lead], "and the signal where it was put")
+				s.Require().Zero(got[lead+len(signal)], "silence again after it")
+			},
+		},
+		{
+			// A signal with no samples in it.
+			name: "on nothing",
+			then: func() {
+				got := reamp.Pad(nil)
 
-// TestPadOnNothing covers a signal with no samples in it.
-func (s *ReampPublicTestSuite) TestPadOnNothing() {
-	got := reamp.Pad(nil)
-
-	s.Require().Len(got, int((reamp.Lead+reamp.Tail).Seconds()*reamp.Rate))
+				s.Require().Len(got, int((reamp.Lead+reamp.Tail).Seconds()*reamp.Rate))
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestSamplesRoundTripThroughAFrameBuffer covers reading and writing.
@@ -206,16 +225,43 @@ func (s *ReampPublicTestSuite) TestALoopTheBackendIsResamplingIsRefused() {
 	}
 }
 
-// TestOpenSaysWhatWasAttachedInstead covers hardware that is not there.
+// TestOpen covers opening the hardware, and what it says when it cannot.
 //
-// The one test here that touches the audio system. It asks for a device
-// nothing is ever called, so it reaches the failure rather than the hardware
-// and says what a person would need to know.
-func (s *ReampPublicTestSuite) TestOpenSaysWhatWasAttachedInstead() {
-	_, err := reamp.Open("no such interface anybody owns")
+// One method and one table, so a case is a row rather than a file.
+func (s *ReampPublicTestSuite) TestOpen() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// Hardware that is not there.
+			//
+			// The one test here that touches the audio system. It asks for a device
+			// nothing is ever called, so it reaches the failure rather than the hardware
+			// and says what a person would need to know.
+			name: "says what was attached instead",
+			then: func() {
+				_, err := reamp.Open("no such interface anybody owns")
 
-	s.Require().ErrorIs(err, reamp.ErrNoDevice)
-	s.Require().ErrorContains(err, "Attached:")
+				s.Require().ErrorIs(err, reamp.ErrNoDevice)
+				s.Require().ErrorContains(err, "Attached:")
+			},
+		},
+		{
+			// A name nothing answers to.
+			name: "refuses hardware that is not there",
+			then: func() {
+				_, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend},
+					"no such interface anybody owns")
+
+				s.Require().ErrorIs(err, reamp.ErrNoDevice)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestCloseIsSafeTwice covers letting hardware go more than once.
@@ -413,14 +459,6 @@ func (s *ReampPublicTestSuite) TestThrough() {
 			tt.then()
 		})
 	}
-}
-
-// TestOpenRefusesHardwareThatIsNotThere covers a name nothing answers to.
-func (s *ReampPublicTestSuite) TestOpenRefusesHardwareThatIsNotThere() {
-	_, err := reamp.OpenWith([]malgo.Backend{reamp.NullBackend},
-		"no such interface anybody owns")
-
-	s.Require().ErrorIs(err, reamp.ErrNoDevice)
 }
 
 // TestAPassStridesByTheDevicesOwnChannelCount covers an eight-channel device.

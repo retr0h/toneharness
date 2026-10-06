@@ -5,3 +5,13 @@ generate:
   models: true
 output-options:
   skip-prune: true
+# A parameter's value keeps its own kind. An integer and a whole-numbered float
+# are different readings to a device, and the distinction rides on the JSON
+# literal: 7 is an integer, 7.0 a float. Generated as `interface{}` both would
+# decode to float64 and a float of 1.0 would come back as an integer, so a
+# preset would stop surviving its own round trip.
+#
+# `attrs` and `rest` stay raw for the same reason, one step further: they are
+# what this format does not model, so nothing here may reinterpret them.
+import-mapping:
+  catalog: github.com/retr0h/toneharness/pkg/sdk/catalog

@@ -59,6 +59,12 @@ type stored struct {
 	// of what a rig carries.
 	doc tone.Spec
 	raw []byte
+	// at is the file it was read from, or empty for the rigs that ship.
+	//
+	// Empty is not an oversight. Those are bytes in the binary, so a build
+	// recorded into one would be thrown away by the next compile, and saying so
+	// is better than writing somewhere that looks like it worked.
+	at string
 }
 
 // ask is the request half, or nil where nobody wrote one.
@@ -66,6 +72,9 @@ func (s stored) askOf() *tone.Ask { return s.doc.Ask }
 
 // spec is the gear half, which every document has.
 func (s stored) specOf() rig.Spec { return s.doc.Rig }
+
+// pathOf is the file this was read from, or empty for a rig that ships.
+func (s stored) pathOf() string { return s.at }
 
 // id is what the document is called.
 func (s stored) idOf() string { return s.doc.Id }

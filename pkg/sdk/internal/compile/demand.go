@@ -24,7 +24,6 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
-	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // needs is what a claim cannot mean anything without.
@@ -63,12 +62,12 @@ var needs = map[string]catalog.Category{
 // already earned has somewhere to land, and says which word asked for it.
 func demand(
 	blocks []catalog.Block,
-	said []*rig.Settings,
+	said []*wanted,
 	cat *catalog.Catalog,
 	stats *corpus.Stats,
 	intent Intent,
 	instrument string,
-) ([]catalog.Block, []*rig.Settings, []Added) {
+) ([]catalog.Block, []*wanted, []Added) {
 	if stats == nil {
 		return blocks, said, nil
 	}

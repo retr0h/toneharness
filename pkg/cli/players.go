@@ -68,7 +68,10 @@ func Players(
 		Summary: "a word is earned by sitting clear of the other players, and the " +
 			"margin is how far the rest of them would have to move to take it. " +
 			"The genre column asks the same of the players who play it too, so " +
-			"nothing outside it can move that answer",
+			"nothing outside it can move that answer. `scattered` is a player " +
+			"whose own records sit further apart than the others' middle half: " +
+			"their average describes none of their records, and the fix is " +
+			"fewer records or a rig per era rather than a word",
 	}.Render(w)
 }
 
@@ -79,6 +82,14 @@ func termsOf(
 	p audio.Player,
 ) string {
 	if len(p.Terms) == 0 {
+		// Two different silences, and they call for different work. An
+		// unremarkable player is a fact about them; a scattered one is a fact
+		// about which records were chosen, and splitting them by era or taking one
+		// album rather than three may well earn a word the average cannot.
+		if len(p.Scattered) > 0 {
+			return paint.Mute(w, "nothing: scattered")
+		}
+
 		return paint.Mute(w, "nothing")
 	}
 
@@ -100,15 +111,20 @@ func termsOf(
 func holdsOf(
 	p audio.Player,
 ) string {
-	if len(p.Terms) == 0 {
-		return ""
-	}
-
-	out := make([]string, 0, len(p.Terms))
+	out := make([]string, 0, len(p.Terms)+len(p.Scattered))
 
 	for _, t := range p.Terms {
 		out = append(out, fmt.Sprintf("%s: clear by %s%s",
 			t.Term, figure(t.Key, t.Margin), ofSpread(t)))
+	}
+
+	// Beside the words rather than instead of them, because the two are about
+	// different axes. A player can be clear on the bands and all over the place
+	// on the centroid, and the second is the reason a word the first predicted
+	// never arrived.
+	for _, d := range p.Scattered {
+		out = append(out, fmt.Sprintf("own %s spans %s, %.1fx the others' spread",
+			d.Key, figure(d.Key, d.Own), d.Times))
 	}
 
 	return strings.Join(out, "; ")

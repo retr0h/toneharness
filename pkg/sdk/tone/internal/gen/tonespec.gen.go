@@ -5,6 +5,8 @@ package gen
 
 import (
 	"encoding/json"
+
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
 // Defines values for AskInstrument.
@@ -516,6 +518,12 @@ type Capture string
 //
 // Order is the signal path. It is not decoration: drive ahead of an amp overdrives its input, drive after it does something else entirely.
 type ChainEntry struct {
+	// BypassVolume How loud the block is when bypassed, which is what keeps a bypass from being a volume drop.
+	BypassVolume *float64 `json:"bypass_volume,omitempty"`
+
+	// Cab The second cabinet this one is paired with, for a dual-cabinet block, named the way the device names it.
+	Cab *string `json:"cab,omitempty"`
+
 	// Capture How this reached the tape: down a cable, through a microphone, or both blended.
 	//
 	// A cabinet models the air in front of a speaker, and on most bass records there was none. Five of the nine rigs here measure a signal that went to the desk: Geddy Lee set the rule on Caress of Steel in 1975 and kept it, "Use the direct bass from the low-end pickup, and mike the amp for the high-end pickup"; Les Claypool put a microphone up and never used it; Mike Dirnt ran an Evil Twin direct box from Dookie on. Pino Palladino is the one who was only ever miked, and the engineer says so: "no di's whatsoever on the album". Jaco Pastorius took both at once, "a little bit of both, the highs and lows".
@@ -525,10 +533,49 @@ type ChainEntry struct {
 
 	// Confidence How far a claim should be trusted. Set by a person, not derived. A claim asserting high confidence with no evidence behind it is worth showing as unverified whatever it says about itself.
 	Confidence *Confidence `json:"confidence,omitempty"`
-	Evidence   *[]Evidence `json:"evidence,omitempty"`
+
+	// Controls Every control this gear has, at the value it is set to, by the name the catalog gives it: `Drive`, `LowCut`, `Distance`, `BiasX`.
+	//
+	// This is the specification of the block, and the reason the rest of this document exists. `settings` says a sound in seven musical words and the compiler turns those into values; this says the values. A build uses them as they stand, so a control somebody changed by hand is what reaches the device, with nothing re-derived and nothing to teach the compiler first.
+	//
+	// Written as strings so the kind survives. A document is read through a route that turns a float of 6.0 into the integer 6, and a device reads those as different settings, so `"6.0"` is a float and `"6"` an integer. Checked against the catalog, which knows all 5,602 controls and every range: a name that model does not have, or a value outside its range, is refused and named.
+	//
+	// Absent means nothing was specified, and the compiler answers from corpus medians the way it always has. Present and partial is partial on purpose: say the two controls you care about and let the rest be answered.
+	Controls *map[string]catalog.Setting `json:"controls,omitempty"`
+
+	// Distance How far from the speaker the microphone sits, in inches, where the cabinet models one.
+	Distance *float64 `json:"distance,omitempty"`
+
+	// Dsp Which processor the block runs on. Omitted means the first, which is all an HX Stomp has.
+	Dsp *int `json:"dsp,omitempty"`
+
+	// Enabled Whether the block is on.
+	//
+	// Absent means on, which is the ordinary case. A block deliberately switched off is part of a preset somebody built and is kept, because dropping it would quietly change what the footswitches above it act on.
+	Enabled  *bool       `json:"enabled,omitempty"`
+	Evidence *[]Evidence `json:"evidence,omitempty"`
 
 	// Gear Real-world gear, as a person would say it — "Ampeg SVT", "Klon Centaur". Never a device model identifier: those are one manufacturer's internal names, they change, and they do not survive being read on other hardware.
 	Gear string `json:"gear"`
+
+	// Ir The impulse response this block loads, by the identifier the device finds the file with.
+	Ir *string `json:"ir,omitempty"`
+
+	// KeepOnSnapshot Whether a snapshot may not bypass this block. The device stores it as `@no_snapshot_bypass`; this name says what being true means rather than negating a negative.
+	KeepOnSnapshot *bool `json:"keep_on_snapshot,omitempty"`
+
+	// Mic Which microphone a cabinet is heard through, as the device numbers them.
+	//
+	// Here rather than in `controls` because the device stores it as an attribute rather than a parameter, so the catalog carries no range for it and no word can reach it. It is also the clearest case for this whole section: moving a microphone is a thing somebody does by ear in seconds, and before this there was nowhere to keep the answer.
+	Mic *int `json:"mic,omitempty"`
+
+	// Path Which of the two paths it sits on, for a chain that splits. Both count from zero, so a position alone does not say where a block is on a device with two.
+	Path *int `json:"path,omitempty"`
+
+	// Position Where the device lays the block out, where that differs from its place in this list.
+	//
+	// Normally absent: the order of `chain` is the signal order, and that is the point of a list. Set it only for a chain read off a device that numbered its blocks with gaps, where renumbering them would move somebody's preset around.
+	Position *int `json:"position,omitempty"`
 
 	// Role What a piece of gear does in a chain. The same vocabulary the catalog groups blocks by, so a role resolves without translation.
 	//
@@ -536,6 +583,8 @@ type ChainEntry struct {
 	Role Role `json:"role"`
 
 	// Settings How the gear is set, in musical terms, from 0 to 1.
+	//
+	// Superseded by `controls` on a chain entry, and kept because documents use it and it is still the shortest way to say a sound by hand. These are seven words and a model has its own controls, so a rig carrying only these is a rig whose other six hundred values nothing wrote down. Where both name one control the value in `controls` wins.
 	//
 	// Deliberately small and deliberately lossy. These words mean roughly the same thing on any amplifier, and each one is put on whichever control the model has for it: `drive` reaches a Drive or a Gain, `level` reaches a Level, a Ch Vol or a Master. A word the model has no control for is refused, with the words it does take.
 	//
@@ -549,12 +598,18 @@ type ChainEntry struct {
 	// Set it where the only evidence is a tour, so a reader knows the figures and the gear were never in the same room.
 	Stage *bool `json:"stage,omitempty"`
 
+	// Stereo Whether the block runs in stereo.
+	Stereo *bool `json:"stereo,omitempty"`
+
 	// Substitute What to use when the device cannot do what the rig names.
 	//
 	// The rig goes on naming the real gear, because a rig outlives any one device: the day Line 6 model the amplifier, this block is deleted and nothing else moves. Naming the stand-in in `gear` instead would make the rig assert something false about the player, and would make `gear` mean two different things depending on whether anybody substituted.
 	//
 	// A substitution is a claim like any other and carries why it is believed. Somebody on a forum saying two amplifiers share a power section is `user`; an A/B somebody recorded is `video`; a model asserting it is `llm`. Where the stand-in is content that did not ship with the device, `store` says where to get it, and without that the rig names something the reader cannot obtain.
 	Substitute *Substitute `json:"substitute,omitempty"`
+
+	// Trails Whether a delay or a reverb keeps ringing after it is switched off. Audible, and nothing else in a rig says it.
+	Trails *bool `json:"trails,omitempty"`
 }
 
 // Change One field a correction moved.
@@ -967,6 +1022,13 @@ type Rig struct {
 	// A rig may say both, because they answer different questions: a section is which blocks play, a move is which knob a foot reaches.
 	Moves *[]Move `json:"moves,omitempty"`
 
+	// Resolved Where the numbers in a plan were arrived at.
+	//
+	// A plan's, not a rig's, and it stays in this contract because the plan package reads the type from here.
+	//
+	// Advisory, never a restriction. A plan pinned to one device could not be read on another, which would cost the portability the rig above it exists for. This says "these numbers were tuned here", so somebody on other hardware knows to re-tune rather than trust.
+	Resolved *Target `json:"resolved,omitempty"`
+
 	// Sections The parts of a song this rig plays, each one a snapshot.
 	//
 	// The way to write snapshots by hand, and the one part of the arrangement that stays here: a section is what somebody plays rather than anything the device holds.
@@ -997,6 +1059,8 @@ type Section struct {
 }
 
 // Settings How the gear is set, in musical terms, from 0 to 1.
+//
+// Superseded by `controls` on a chain entry, and kept because documents use it and it is still the shortest way to say a sound by hand. These are seven words and a model has its own controls, so a rig carrying only these is a rig whose other six hundred values nothing wrote down. Where both name one control the value in `controls` wins.
 //
 // Deliberately small and deliberately lossy. These words mean roughly the same thing on any amplifier, and each one is put on whichever control the model has for it: `drive` reaches a Drive or a Gain, `level` reaches a Level, a Ch Vol or a Master. A word the model has no control for is refused, with the words it does take.
 //

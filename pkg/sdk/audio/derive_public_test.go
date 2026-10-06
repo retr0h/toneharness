@@ -81,8 +81,7 @@ func wide(
 	}
 }
 
-// TestDerive covers Derive, which is what an artist's measurements say about
-// them, against others measured the same way.
+// TestDerive covers which words a set of figures earns.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *DerivePublicTestSuite) TestDerive() {
@@ -91,217 +90,239 @@ func (s *DerivePublicTestSuite) TestDerive() {
 		then func()
 	}{
 		{
-			// The whole mechanism.
-			name: "an artist clear of the rest earns the term",
+			// Derive, which is what an artist's measurements say about
+			// them, against others measured the same way.
+			//
+			// One method and one table, so a case is a row rather than a file.
+			name: "derive",
 			then: func() {
-				got := audio.Derive(
-					at(300, 0.30, 0.50),
-					map[string]audio.Across{
-						"a": at(100, 0.05, 0.10),
-						"b": at(120, 0.06, 0.12),
+				for _, tt := range []struct {
+					name string
+					then func()
+				}{
+					{
+						// The whole mechanism.
+						name: "an artist clear of the rest earns the term",
+						then: func() {
+							got := audio.Derive(
+								at(300, 0.30, 0.50),
+								map[string]audio.Across{
+									"a": at(100, 0.05, 0.10),
+									"b": at(120, 0.06, 0.12),
+								},
+							)
+
+							s.Require().ElementsMatch(
+								[]string{"bright", "mid-forward", "saturated"}, s.terms(got))
+						},
 					},
-				)
+					{
+						// The other direction.
+						name: "an artist below the rest earns the other word",
+						then: func() {
+							got := audio.Derive(
+								at(100, 0.02, 0.05),
+								map[string]audio.Across{
+									"a": at(300, 0.30, 0.50),
+									"b": at(320, 0.32, 0.55),
+								},
+							)
 
-				s.Require().ElementsMatch(
-					[]string{"bright", "mid-forward", "saturated"}, s.terms(got))
-			},
-		},
-		{
-			// The other direction.
-			name: "an artist below the rest earns the other word",
-			then: func() {
-				got := audio.Derive(
-					at(100, 0.02, 0.05),
-					map[string]audio.Across{
-						"a": at(300, 0.30, 0.50),
-						"b": at(320, 0.32, 0.55),
+							s.Require().ElementsMatch(
+								[]string{"dark", "scooped", "clean"}, s.terms(got))
+						},
 					},
-				)
+					{
+						// The rule that stops a median lying.
+						//
+						// Measured on real records, one of the three artists reads 0% mid
+						// on two and 15% on a third. His median is 0%, a figure he never
+						// plays, and it sits below another artist's 9%. Deriving
+						// `scooped` from that median would assert something his own
+						// records contradict a third of the time, so a term needs the
+						// whole range clear rather than the middle.
+						name: "a mixed artist earns nothing",
+						then: func() {
+							mixed := audio.Across{
+								Tracks: 3,
+								Mid:    audio.Spread{Low: 0.00, Mid: 0.00, High: 0.15},
+							}
 
-				s.Require().ElementsMatch(
-					[]string{"dark", "scooped", "clean"}, s.terms(got))
-			},
-		},
-		{
-			// The rule that stops a median lying.
-			//
-			// Measured on real records, one of the three artists reads 0% mid
-			// on two and 15% on a third. His median is 0%, a figure he never
-			// plays, and it sits below another artist's 9%. Deriving
-			// `scooped` from that median would assert something his own
-			// records contradict a third of the time, so a term needs the
-			// whole range clear rather than the middle.
-			name: "a mixed artist earns nothing",
-			then: func() {
-				mixed := audio.Across{
-					Tracks: 3,
-					Mid:    audio.Spread{Low: 0.00, Mid: 0.00, High: 0.15},
-				}
+							got := audio.Derive(mixed, map[string]audio.Across{
+								"dirnt": {Tracks: 3, Mid: audio.Spread{Low: 0.04, Mid: 0.09, High: 0.15}},
+								"flea":  {Tracks: 3, Mid: audio.Spread{Low: 0.02, Mid: 0.03, High: 0.06}},
+							})
 
-				got := audio.Derive(mixed, map[string]audio.Across{
-					"dirnt": {Tracks: 3, Mid: audio.Spread{Low: 0.04, Mid: 0.09, High: 0.15}},
-					"flea":  {Tracks: 3, Mid: audio.Spread{Low: 0.02, Mid: 0.03, High: 0.06}},
-				})
-
-				s.Require().Empty(s.terms(got), "the range straddles the others")
-			},
-		},
-		{
-			// Ranges that merely touch.
-			name: "overlap earns nothing",
-			then: func() {
-				got := audio.Derive(
-					wide(200, 0.10, 0.20),
-					map[string]audio.Across{
-						"a": wide(180, 0.09, 0.18),
-						"b": wide(220, 0.11, 0.22),
+							s.Require().Empty(s.terms(got), "the range straddles the others")
+						},
 					},
-				)
+					{
+						// Ranges that merely touch.
+						name: "overlap earns nothing",
+						then: func() {
+							got := audio.Derive(
+								wide(200, 0.10, 0.20),
+								map[string]audio.Across{
+									"a": wide(180, 0.09, 0.18),
+									"b": wide(220, 0.11, 0.22),
+								},
+							)
 
-				s.Require().Empty(s.terms(got))
+							s.Require().Empty(s.terms(got))
+						},
+					},
+					{
+						// A term carrying its own reason.
+						//
+						// A rig records where every other claim came from, and a word
+						// derived from a number is no different.
+						name: "it says what earned it",
+						then: func() {
+							got := audio.Derive(
+								at(300, 0.30, 0.50),
+								map[string]audio.Across{"a": at(100, 0.05, 0.10)},
+							)
+
+							s.Require().NotEmpty(got)
+
+							for _, d := range got {
+								s.Require().NotEmpty(d.Key, "which figure")
+								s.Require().NotEmpty(d.Why, "and what that figure is")
+								s.Require().Equal(2, d.Of, "against how many artists")
+
+								// A term only exists because the two differ, so a report that
+								// printed them as the same figure would be reporting nothing.
+								s.Require().NotEqual(d.Mine, d.Others)
+							}
+						},
+					},
+					{
+						// A population of one.
+						name: "nobody to compare against derives nothing",
+						then: func() {
+							s.Require().Empty(audio.Derive(at(300, 0.3, 0.5), nil))
+							s.Require().Empty(audio.Derive(audio.Across{}, map[string]audio.Across{
+								"a": at(100, 0.05, 0.10),
+							}))
+						},
+					},
+					{
+						// An artist with no recordings in the population.
+						name: "an empty other is not a vote",
+						then: func() {
+							got := audio.Derive(at(300, 0.30, 0.50), map[string]audio.Across{
+								"a":     at(100, 0.05, 0.10),
+								"empty": {},
+							})
+
+							s.Require().NotEmpty(got)
+
+							for _, d := range got {
+								s.Require().Equal(3, d.Of)
+							}
+						},
+					},
+					{
+						// The property the rule was changed for.
+						//
+						// Clear of every other artist, one more extreme artist was enough
+						// to take a term away from somebody who had plainly earned it.
+						// Measured, one player earned three terms against two artists and
+						// none against four. Outside the middle half of the others, the
+						// extreme artist moves the upper quartile a little and takes
+						// nothing away.
+						name: "an extreme artist does not take a term away",
+						then: func() {
+							mine := at(200, 0.10, 0.20)
+
+							three := map[string]audio.Across{
+								"a": at(100, 0.10, 0.20),
+								"b": at(110, 0.10, 0.20),
+								"c": at(120, 0.10, 0.20),
+							}
+							s.Require().Equal([]string{"bright"}, s.terms(audio.Derive(mine, three)))
+
+							four := map[string]audio.Across{
+								"a": at(100, 0.10, 0.20),
+								"b": at(110, 0.10, 0.20),
+								"c": at(120, 0.10, 0.20),
+								"d": at(400, 0.10, 0.20),
+							}
+							s.Require().Equal([]string{"bright"}, s.terms(audio.Derive(mine, four)),
+								"brighter than most is still bright when somebody brighter arrives")
+						},
+					},
+					{
+						// A population that is there and has nothing in it.
+						//
+						// Different from no population at all: the map has artists, and
+						// not one of them has a recording. Nobody to sit clear of, so
+						// nothing is earned.
+						name: "every other artist empty derives nothing",
+						then: func() {
+							got := audio.Derive(at(300, 0.30, 0.50), map[string]audio.Across{
+								"a": {},
+								"b": {},
+							})
+
+							s.Require().Empty(s.terms(got))
+						},
+					},
+				} {
+					s.Run(tt.name, func() {
+						tt.then()
+					})
+				}
 			},
 		},
 		{
-			// A term carrying its own reason.
+			// A deliberate absence.
 			//
-			// A rig records where every other claim came from, and a word
-			// derived from a number is no different.
-			name: "it says what earned it",
+			// Sag and reverb Mix have no measurement at all, and the compressor's Attack
+			// has one that is not trusted: the artist whose rig says `percussive` measured
+			// the lowest transient of three. Nothing derives from any of them.
+			name: "no axis derives from a measure nobody trusts",
 			then: func() {
-				got := audio.Derive(
-					at(300, 0.30, 0.50),
-					map[string]audio.Across{"a": at(100, 0.05, 0.10)},
-				)
+				for _, ax := range audio.Axes {
+					s.Require().NotEqual(audio.KeyTransient, ax.Key)
+					s.Require().NotEqual(audio.KeyDecay, ax.Key)
+				}
 
-				s.Require().NotEmpty(got)
-
-				for _, d := range got {
-					s.Require().NotEmpty(d.Key, "which figure")
-					s.Require().NotEmpty(d.Why, "and what that figure is")
-					s.Require().Equal(2, d.Of, "against how many artists")
-
-					// A term only exists because the two differ, so a report that
-					// printed them as the same figure would be reporting nothing.
-					s.Require().NotEqual(d.Mine, d.Others)
+				for _, term := range []string{
+					"percussive", "soft-attack", "audible-pick-attack",
+					"tight-low-end", "loose-low-end", "dry", "roomy",
+				} {
+					for _, ax := range audio.Axes {
+						s.Require().NotEqual(term, ax.More)
+						s.Require().NotEqual(term, ax.Less)
+					}
 				}
 			},
 		},
 		{
-			// A population of one.
-			name: "nobody to compare against derives nothing",
-			then: func() {
-				s.Require().Empty(audio.Derive(at(300, 0.3, 0.5), nil))
-				s.Require().Empty(audio.Derive(audio.Across{}, map[string]audio.Across{
-					"a": at(100, 0.05, 0.10),
-				}))
-			},
-		},
-		{
-			// An artist with no recordings in the population.
-			name: "an empty other is not a vote",
-			then: func() {
-				got := audio.Derive(at(300, 0.30, 0.50), map[string]audio.Across{
-					"a":     at(100, 0.05, 0.10),
-					"empty": {},
-				})
-
-				s.Require().NotEmpty(got)
-
-				for _, d := range got {
-					s.Require().Equal(3, d.Of)
-				}
-			},
-		},
-		{
-			// The property the rule was changed for.
+			// The words being spellable.
 			//
-			// Clear of every other artist, one more extreme artist was enough
-			// to take a term away from somebody who had plainly earned it.
-			// Measured, one player earned three terms against two artists and
-			// none against four. Outside the middle half of the others, the
-			// extreme artist moves the upper quartile a little and takes
-			// nothing away.
-			name: "an extreme artist does not take a term away",
+			// A term the compiler's table does not hold moves nothing, and would arrive as
+			// a word that silently does nothing rather than as an error.
+			name: "every derived term is one the compiler knows",
 			then: func() {
-				mine := at(200, 0.10, 0.20)
-
-				three := map[string]audio.Across{
-					"a": at(100, 0.10, 0.20),
-					"b": at(110, 0.10, 0.20),
-					"c": at(120, 0.10, 0.20),
+				known := map[string]bool{
+					"mid-forward": true, "scooped": true,
+					"dark": true, "bright": true, "glassy": true,
+					"clean": true, "minimal-drive": true,
+					"grit-on-attack": true, "saturated": true,
 				}
-				s.Require().Equal([]string{"bright"}, s.terms(audio.Derive(mine, three)))
 
-				four := map[string]audio.Across{
-					"a": at(100, 0.10, 0.20),
-					"b": at(110, 0.10, 0.20),
-					"c": at(120, 0.10, 0.20),
-					"d": at(400, 0.10, 0.20),
+				for _, ax := range audio.Axes {
+					s.Require().True(known[ax.More], "%s is not a term move.go holds", ax.More)
+					s.Require().True(known[ax.Less], "%s is not a term move.go holds", ax.Less)
 				}
-				s.Require().Equal([]string{"bright"}, s.terms(audio.Derive(mine, four)),
-					"brighter than most is still bright when somebody brighter arrives")
-			},
-		},
-		{
-			// A population that is there and has nothing in it.
-			//
-			// Different from no population at all: the map has artists, and
-			// not one of them has a recording. Nobody to sit clear of, so
-			// nothing is earned.
-			name: "every other artist empty derives nothing",
-			then: func() {
-				got := audio.Derive(at(300, 0.30, 0.50), map[string]audio.Across{
-					"a": {},
-					"b": {},
-				})
-
-				s.Require().Empty(s.terms(got))
 			},
 		},
 	} {
 		s.Run(tt.name, func() {
 			tt.then()
 		})
-	}
-}
-
-// TestNoAxisDerivesFromAMeasureNobodyTrusts is a deliberate absence.
-//
-// Sag and reverb Mix have no measurement at all, and the compressor's Attack
-// has one that is not trusted: the artist whose rig says `percussive` measured
-// the lowest transient of three. Nothing derives from any of them.
-func (s *DerivePublicTestSuite) TestNoAxisDerivesFromAMeasureNobodyTrusts() {
-	for _, ax := range audio.Axes {
-		s.Require().NotEqual(audio.KeyTransient, ax.Key)
-		s.Require().NotEqual(audio.KeyDecay, ax.Key)
-	}
-
-	for _, term := range []string{
-		"percussive", "soft-attack", "audible-pick-attack",
-		"tight-low-end", "loose-low-end", "dry", "roomy",
-	} {
-		for _, ax := range audio.Axes {
-			s.Require().NotEqual(term, ax.More)
-			s.Require().NotEqual(term, ax.Less)
-		}
-	}
-}
-
-// TestEveryDerivedTermIsOneTheCompilerKnows covers the words being spellable.
-//
-// A term the compiler's table does not hold moves nothing, and would arrive as
-// a word that silently does nothing rather than as an error.
-func (s *DerivePublicTestSuite) TestEveryDerivedTermIsOneTheCompilerKnows() {
-	known := map[string]bool{
-		"mid-forward": true, "scooped": true,
-		"dark": true, "bright": true, "glassy": true,
-		"clean": true, "minimal-drive": true,
-		"grit-on-attack": true, "saturated": true,
-	}
-
-	for _, ax := range audio.Axes {
-		s.Require().True(known[ax.More], "%s is not a term move.go holds", ax.More)
-		s.Require().True(known[ax.Less], "%s is not a term move.go holds", ax.Less)
 	}
 }
 

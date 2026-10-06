@@ -3,47 +3,79 @@
 # One document: the ask says who it is for, the rig below says what the gear is.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: greg-t-walker
-
 ask:
-  aliases: [walker, blackfoot]
-
+  aliases:
+  - walker
+  - blackfoot
+  confidence: low
+  genre:
+  - southern-rock
+  instrument: bass
   subject:
-    kind: artist
-    name: Greg T. Walker
     band: Blackfoot
     era: Strikes
-    years: { from: 1979, to: 1979 }
-
-  instrument: bass
-
-  genre: [southern-rock]
-
-  confidence: low
-
+    kind: artist
+    name: Greg T. Walker
+    years:
+      from: 1979
+      to: 1979
+id: greg-t-walker
 rig:
-  instrument: bass
-
-  # The signal path, in order.
   chain:
-    - role: amp
-      gear: Ampeg SVT
-      capture: direct
-      evidence:
-        - kind: cited
-          url: https://www.notreble.com/buzz/2019/11/21/bass-transcription-greg-t-walkers-bass-line-on-highway-song-by-blackfoot/
-          note: >-
-            No Treble's transcription of Highway Song, from this record, says he
-            "has mainly used Dean, Fender, and Ibanez instruments, and has mainly
-            used Ampeg amplification."
-          caveat: >-
-            a career in one sentence, not a session. "Mainly" is the writer
-            summarising decades, no model is named, and nothing ties it to these
-            sessions beyond the article being about a song from them.
-
-            It is better than the alternatives here only because somebody
-            published it. Which Ampeg, and whether it was on this record, are
-            both open.
-      confidence: low
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: direct
+    confidence: low
+    controls:
+      Bass: "0.41"
+      Bias: "0.74"
+      BiasX: "0.5"
+      ChVol: "0.8"
+      Drive: "0.6"
+      Hum: "0.5"
+      Master: "1.0"
+      Mid: "0.79"
+      MidFreq: "2"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.85"
+    evidence:
+    - caveat: |-
+        a career in one sentence, not a session. "Mainly" is the writer summarising decades, no model is named, and nothing ties it to these sessions beyond the article being about a song from them.
+        It is better than the alternatives here only because somebody published it. Which Ampeg, and whether it was on this record, are both open.
+      kind: cited
+      note: No Treble's transcription of Highway Song, from this record, says he "has
+        mainly used Dean, Fender, and Ibanez instruments, and has mainly used Ampeg
+        amplification."
+      url: https://www.notreble.com/buzz/2019/11/21/bass-transcription-greg-t-walkers-bass-line-on-highway-song-by-blackfoot/
+    gear: Ampeg SVT
+    role: amp
+  - controls:
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      High Cut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: 8x10 Ampeg SVT-E
+    role: cab
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

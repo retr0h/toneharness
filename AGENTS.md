@@ -148,16 +148,49 @@ back in prose. The generated catalog, the gear map and the corpus are in
 [resources/README.md](resources/README.md) says what else is in that tree and
 which of it may be redistributed.
 
-## Say which claim you have
+## What to report, every time
 
-"The rig validates against the catalog", "HX Edit imported the file" and "the
-hardware loaded it" are three different claims. The first needs no device. The
-third needs one attached and `device current` read back afterwards, because a
-chain that is stored is not a chain that rendered: for a fortnight every one
+The commands here are careful about saying what they did and where it went. An
+agent that runs one and summarises it as "done" throws that away, and the person
+reading has no way to get it back. So a skill's answer carries the same four
+things the CLI's does.
+
+**Where anything landed, by path.** Every file written, and every file read or
+replaced on the way. This matters most where something was overwritten: a slot
+write keeps what the slot held and prints where, and a reply that does not
+repeat that path has quietly turned a recoverable change into a lost one. The
+same goes for a document written, a preset built, a backup kept, a plan
+exported.
+
+**What was decided on somebody's behalf.** Every block the corpus added, every
+substitution made for gear the device has no model of, every word that moved
+nothing, every note the tool returned about what it could not honour. These are
+printed because they are decisions a person may disagree with, and a summary
+that keeps only the result is a summary that hides them.
+
+**Which claim you have.** Each skill carries the ladder for its own domain, and
+the rule is the same everywhere: say the rung you reached, never the one above
+it. "The rig validates against the catalog", "HX Edit imported the file" and
+"the hardware loaded it" are three different claims. The first needs no device.
+The third needs one attached and `device current` read back afterwards, because
+a chain that is stored is not a chain that rendered: for a fortnight every one
 this tool wrote read back byte for byte and drew nothing on the pedal.
 
 Do not report one as another, and do not describe work as verified on evidence
-you did not gather. If you did not run it, say you did not run it.
+you did not gather. If you did not run it, say you did not run it. A fix that
+compiles and passes tests is not a fix that worked on hardware, and saying so
+costs one clause.
+
+**What it cost the device, where it touched one.** A slot write is a flash
+write. Say which slots were written and that they were, because the person
+deciding whether to do it again is the one holding the pedal.
+
+### The shape
+
+Lead with what happened, then the paths, then what was chosen for them, then the
+claim. Keep the tool's own wording for a refusal or a figure rather than
+paraphrasing it: the numbers and the field names are what somebody greps for,
+and a reworded error is one they cannot search.
 
 ## Task tracking
 

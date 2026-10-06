@@ -114,6 +114,11 @@ func asCopy(
 
 	header, inCorrections := true, false
 	correctionsAt := ""
+	// The same, for a key whose value is a block rather than a line. `aliases`
+	// was written inline until a document went through `rigs resolve`, which
+	// writes it as a list, and dropping only the key left its items behind with
+	// nothing to belong to: `extends: mike-dirnt` followed by two bare `-` items.
+	dropping := ""
 
 	for _, line := range breakLines(body) {
 		text, ends := lineText(line)
@@ -130,8 +135,30 @@ func asCopy(
 			inCorrections = false
 		}
 
+		// A dropped key takes its own block with it: anything indented further,
+		// and the `- ` items a list writes at the same indent.
+		if dropping != "" {
+			// Only what genuinely hangs off the key: lines indented further, and
+			// the `- ` items a list writes at the key's own indent. A comment is
+			// not swallowed, because the comment after a dropped key usually
+			// belongs to the next one and explains it.
+			nested := indentOf(text) > indentOf(dropping) && field != ""
+			item := indentOf(text) == indentOf(dropping) &&
+				strings.HasPrefix(field, "- ")
+
+			if nested || item {
+				continue
+			}
+
+			dropping = ""
+		}
+
 		switch {
 		case strings.HasPrefix(field, "aliases:"), strings.HasPrefix(field, "default: "):
+			// Dropped with whatever hangs off it. An alias names the parent, so a
+			// copy claiming it would answer to a name somebody means for the
+			// original.
+			dropping = text
 		case strings.HasPrefix(field, "corrections:"):
 			inCorrections, correctionsAt = true, text
 		case strings.HasPrefix(text, "id: "):

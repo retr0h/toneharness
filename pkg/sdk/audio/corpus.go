@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"math"
 	"path"
 	"slices"
 	"sort"
@@ -44,6 +45,21 @@ type Player struct {
 	// Empty is the ordinary answer with few players, and it means the
 	// evidence is mixed rather than that something went wrong.
 	Terms []Derived `json:"terms"`
+	// Scattered is the axes where this player's own records disagree with each
+	// other more than players disagree with each other.
+	//
+	// A player's figures are their records together, so a player whose records
+	// are several different sounds has figures describing none of them. The
+	// derivation already refuses to call that a word, because it tests the whole
+	// range rather than the middle and a range that straddles clears nothing. So
+	// the answer comes out as `nothing`, which reads exactly like a player who is
+	// genuinely unremarkable.
+	//
+	// This tells the two apart. Nothing is wrong with a scattered player, and
+	// what to do about it is a judgement: records from one album rather than
+	// three, or the career split into a rig per era, which is what `extends` and
+	// a subject of kind song are for.
+	Scattered []Scattered `json:"scattered,omitempty"`
 	// Within is the same question asked inside each genre they play, which is
 	// a different question and usually a more useful one.
 	//
@@ -60,6 +76,21 @@ type Player struct {
 	// Both are kept because they are not the same claim. One finds a dark
 	// bassist, the other builds a dark punk record.
 	Within []InGenre `json:"within,omitempty"`
+}
+
+// Scattered is one axis a player's own records disagree on.
+type Scattered struct {
+	// Key is the measure, and Why describes it.
+	Key Figure `json:"key"`
+	Why string `json:"why"`
+	// Own is how far this player's own records sit apart, Between how far the
+	// other players sit apart end to end. Both the whole span, in the measure's
+	// own units, so the ratio compares like with like.
+	Own     float64 `json:"own"`
+	Between float64 `json:"between"`
+	// Times is Own over Between, which is the figure worth reading: above one,
+	// this player is less consistent than the corpus is varied.
+	Times float64 `json:"times"`
 }
 
 // InGenre is what a player's figures say against the others who play the same
@@ -108,6 +139,7 @@ func Corpus(
 
 	out := []Player(nil)
 	together := map[string]Across{}
+	each := map[string][]Profile{}
 	plays := map[string][]string{}
 
 	for _, e := range entries {
@@ -129,7 +161,9 @@ func Corpus(
 			continue
 		}
 
-		a := Together(profilesOf(got))
+		each[e.Name()] = profilesOf(got)
+
+		a := Together(each[e.Name()])
 		together[e.Name()] = a
 		plays[e.Name()] = tags
 
@@ -139,6 +173,7 @@ func Corpus(
 	for i := range out {
 		out[i].Terms = Derive(out[i].Across, without(together, out[i].ID))
 		out[i].Within = within(out[i].ID, together, plays)
+		out[i].Scattered = scattered(each[out[i].ID], without(together, out[i].ID))
 	}
 
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
@@ -220,6 +255,86 @@ func sorted(
 	sort.Strings(out)
 
 	return out
+}
+
+// scattered is where a player's own records disagree more than players do.
+//
+// Record against record rather than window against window. A player's `Across`
+// already carries a range, but it is the range of three-second windows and a
+// bass line moves across every one of them, so it is wide for everybody and
+// says nothing about whether the records agree. One figure per record, and the
+// question is how far those sit apart.
+//
+// Span against span, which is what makes the ratio mean anything. The first
+// version read a player's whole range against the other players' middle half
+// and flagged seventeen of twenty-eight, because a full range is wider than an
+// interquartile band for almost everybody and the comparison was not
+// like-for-like. The others' range end to end is the honest denominator.
+//
+// One against one is then the line, and it is derived rather than chosen: a
+// player whose three records sit as far apart as the entire corpus of players
+// sits apart is a player whose average is an average of different sounds. Under
+// that, the corpus is more varied than they are and the average stands for
+// something.
+//
+// Needs two records to say anything, and one record is never scattered rather
+// than always consistent. There is nothing to disagree with.
+func scattered(
+	mine []Profile,
+	others map[string]Across,
+) []Scattered {
+	if len(mine) < 2 {
+		return nil
+	}
+
+	out := []Scattered(nil)
+
+	for _, ax := range Axes {
+		rest := middles(others, ax.Key)
+		if len(rest) == 0 {
+			continue
+		}
+
+		band := slices.Max(rest) - slices.Min(rest)
+		if band <= 0 {
+			continue
+		}
+
+		own := apart(mine, ax.Key)
+		if own <= band {
+			continue
+		}
+
+		out = append(out, Scattered{
+			Key:     ax.Key,
+			Why:     ax.Why,
+			Own:     to(own, ax.places),
+			Between: to(band, ax.places),
+			Times:   to(own/band, 1),
+		})
+	}
+
+	return out
+}
+
+// apart is how far a player's own records sit from each other on one measure.
+//
+// The whole span rather than a middle half, because there are three or four
+// records and a quartile of four records is a quarter of nothing. One record
+// from another album is the case this is looking for, and a middle half is
+// exactly what would hide it.
+func apart(
+	of []Profile,
+	key Figure,
+) float64 {
+	low, high := math.Inf(1), math.Inf(-1)
+
+	for _, p := range of {
+		got := p.Measured()[string(key)]
+		low, high = math.Min(low, got), math.Max(high, got)
+	}
+
+	return high - low
 }
 
 // within is what a player earns inside each genre they play.

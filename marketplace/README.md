@@ -6,15 +6,30 @@ it travels in a way a `.hlx` does not.
 
 Two tiers, and the difference is what somebody had to prove.
 
-|                                  | what is in it         | the bar                                                  | ships in the binary |
-| -------------------------------- | --------------------- | -------------------------------------------------------- | ------------------- |
-| [core/](core/artists/)           | 30 files, 15 subjects | every claim has a source somebody opened                 | yes                 |
-| [community/](community/artists/) | submissions           | it parses, it builds, and it says how well sourced it is | no                  |
+|                          | what is in it        | the bar                                                  | ships in the binary |
+| ------------------------ | -------------------- | -------------------------------------------------------- | ------------------- |
+| [core/](core/)           | 27 artists, 4 genres | every claim has a source somebody opened                 | yes                 |
+| [community/](community/) | submissions          | it parses, it builds, and it says how well sourced it is | no                  |
 
-[core/examples/](core/examples/README.md) sits beside the rigs rather than in
-them: one of each document, commented, for somebody learning the formats. The
-loader reads `artists/` and nothing else, so nothing there is listed as a rig or
-packed into the binary.
+Each tier holds two directories, and the split is what the subject is:
+
+| directory  | what is in it                                                        |
+| ---------- | -------------------------------------------------------------------- |
+| `artists/` | people. A player, a band, an era: `kind: artist` or `kind: band`     |
+| `genres/`  | the sound of a genre rather than anybody who plays it: `kind: genre` |
+
+A person is never filed under a genre. Most play several, the ask already names
+which, and a directory would have to pick one and be wrong about the rest.
+
+A genre rig is built rather than researched, because there is nobody to cite.
+`tone build` ranks the device's amplifiers against what the genre's records
+measure as and takes the nearest, which is reproducible and is also why one is
+worth rebuilding as the corpus grows rather than trusting indefinitely.
+
+[examples/](examples/README.md) is outside both tiers: one of each document,
+commented, for somebody learning the formats. The loader reads one level inside
+a tier, so a teaching document left in there would be read as a rig that will
+not load.
 
 ## Using them
 
@@ -52,7 +67,8 @@ them quietly winning.
 
 The instrument is a field on the rig rather than a directory, so a bass rig and
 a guitar rig sit side by side and `rigs list` has an instrument column. Do not
-add `bass/` and `guitar/` levels: the loader reads `artists/` and nothing else.
+add `bass/` and `guitar/` levels: the loader reads one level inside a tier and
+`artists/bass/mike-dirnt.yaml` is two.
 
 [write-a-spec](../.claude/skills/write-a-spec/SKILL.md) owns every field and
 says which half a fact belongs in. The contract is
@@ -102,8 +118,8 @@ opening the YAML.
 
 ## The copy under pkg/sdk
 
-`core/` is the source of truth and `pkg/sdk/shipped/artists/` is a generated
-copy of it, because `go:embed` cannot name a path above its own package
-directory and the binary has to carry these. Edit the rig here, run
-`mise exec -- just generate`, and commit both. A test fails when the two
-disagree, in either direction.
+`core/` is the source of truth and `pkg/sdk/shipped/artists/` and
+`pkg/sdk/shipped/genres/` are a generated copy of it, because `go:embed` cannot
+name a path above its own package directory and the binary has to carry these.
+Edit the rig here, run `mise exec -- just generate`, and commit both. A test
+fails when the two disagree, in either direction.

@@ -19,6 +19,48 @@ unit, which is what tells one word from another. A word with a wide margin
 survives the next player being measured; one at a tenth of a percent is the next
 thing to move.
 
+## `scattered` is the other reason nothing was earned
+
+Two players earn nothing for opposite reasons, and the table tells them apart.
+One sits where everybody else sits, which is a fact about them. The other's own
+records disagree with each other, which is a fact about which records were
+chosen: their figures are an average of several different sounds, so the average
+describes none of them.
+
+`earns` reads `nothing: scattered` for the second, and `holds` says on which
+measure and by how much:
+
+```
+chuck-dukowski  3  nothing: scattered  own centroid spans 211 Hz, 1.2x the others' spread
+```
+
+One figure per record, and the span is how far those sit from each other,
+against how far the other players sit from each other end to end. Span against
+span, so the ratio compares like with like. Above one is the line, and it is
+derived rather than chosen: a player whose three records sit as far apart as the
+entire corpus of players does is a player whose average is an average of
+different sounds. Under it the corpus is more varied than they are, and the
+average stands for something.
+
+It appears beside a word as well as instead of one, because the axes are
+separate. A player can be clear on the bands and all over the place on the
+centroid, and the second is why a word the first predicted never arrived. Jaco
+Pastorius earns `mid-forward` and `bright` with his own mid spanning 1.9x the
+others' spread, so both words rest on four records across three albums and five
+years.
+
+Nothing is wrong with a scattered player, and what to do is a judgement with
+three answers:
+
+| what it is                                    | what to do                                                  |
+| --------------------------------------------- | ----------------------------------------------------------- |
+| one record is from another era                | drop it. [era.md](era.md) is the check that catches this    |
+| the career genuinely holds two sounds         | a rig per era, each with its own records. `extends` chains them |
+| the records are right and the player is varied | leave it. Say `scattered` in the caveat of any word they earn |
+
+The third is the common one and it is not a defect to fix. What it forbids is
+quoting the average as though it described a sound.
+
 ## A lost word is not a regression
 
 Every player added changes what all the others earn, and nothing about those
@@ -29,7 +71,8 @@ rather than a wobble in it.
 So do not chase a word that moved when a record was added. Read which side of the
 comparison moved and say that. Dropping one of a player's own records cannot take
 a word away at all, because the test reads their range as a tenth and a ninetieth
-percentile.
+percentile. It can change whether they read as `scattered`, which counts records
+rather than windows and is the one figure a single record moves.
 
 ## Attribute the figure to what caused it
 

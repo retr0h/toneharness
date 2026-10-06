@@ -131,7 +131,6 @@ func (s *ShippedPublicTestSuite) TestEveryExampleUsesTheVocabulary() {
 			"..",
 			"..",
 			"marketplace",
-			"core",
 			"examples",
 			"*.yaml",
 		),

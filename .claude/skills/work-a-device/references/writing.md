@@ -23,8 +23,11 @@ mise exec -- go run main.go slots import --preset a.hlx --slot 42C --json
 mise exec -- go run main.go presets show --slot 42C --json
 ```
 
-**Banks 01 to 10 hold the owner's own work. Scratch writes go to slot 40 and
-above.** A device has no undo, so whatever the slot held is read and saved first
+**Write only to a slot that is empty or that its owner named.** `slots list`
+says which, `TONEHARNESS_SCRATCH_SLOT` is how one is named, and a high bank is
+the convention only because low banks are where most people keep what they play.
+
+A device has no undo, so whatever the slot held is read and saved first
 and the answer says where. Put it back with `slots import --preset` and that
 file. `--backup-dir` moves where they go; a backup never replaces a file already
 there, and one that cannot be written in full leaves no file behind and nothing

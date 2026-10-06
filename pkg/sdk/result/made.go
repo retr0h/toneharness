@@ -20,7 +20,10 @@
 
 package result
 
-import "github.com/retr0h/toneharness/pkg/sdk/plan"
+import (
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
+)
 
 // Made is a preset built from a rig.
 //
@@ -58,6 +61,17 @@ type Made struct {
 	Playing Playing `json:"playing"`
 	// Path is the file that was written.
 	Path string `json:"path"`
+	// Preset is the document that was written, as it stood when it was written.
+	//
+	// Here because the plan beside it is not the whole preset: sections,
+	// controllers and footswitches are applied to the document rather than to
+	// the chain, so a caller that rebuilds a document from the plan gets a
+	// preset missing every one of them. `rigs resolve` wants all of it, and
+	// before this it got there by writing the file and reading it straight back.
+	//
+	// Not serialised. A preset is 4,400 lines of device JSON and no reader of
+	// this answer has a use for it; a caller that wants the file reads Path.
+	Preset *preset.Document `json:"-"`
 }
 
 // Playing is the compensation made for how somebody plays.

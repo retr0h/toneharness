@@ -31,6 +31,33 @@ where it came from, and where nothing has been measured the tool says so.
 Point an agent at a checkout and tell it what you want to sound like.
 </p>
 
+## Use it at your own risk
+
+This talks to a guitar pedal over a reverse-engineered USB protocol. Line 6
+document none of it, so everything here was worked out by watching the wire and
+is right only as far as it has been tested.
+
+What that means in practice:
+
+**A slot write is a flash write.** Flash wears out, and writes here commit for
+about 750ms each. A burst of them has already taken a setlist past what a power
+cycle could clear, and a device stops accepting writes after roughly a dozen
+racing commits. Audition with `device play`, which stores nothing, and write a
+slot when you have an answer rather than while looking for one.
+
+**A device has no undo.** Whatever a slot held is read and kept to a file before
+anything replaces it, and the answer says where. That is a recovery, not a
+safety net: point a write at the wrong slot and the preset you played last night
+is a file you have to go and find.
+
+**Measuring makes the pedal feed itself.** The measuring rig is a lead from the
+pedal's output back into its own input, and an amplifier built to distort will
+oscillate through it. `--headroom` is the only thing between a reading and a
+squeal, and a squeal is loud.
+
+Nobody has lost hardware to this, and that is not a guarantee. If the pedal
+matters to you, back it up with HX Edit first.
+
 ## Features
 
 | Feature                                                                     | Description                                                                                                                                                                                                                                 |
@@ -85,11 +112,25 @@ again:
 > - _"Export slot 12B as a rig so I can see what is in it."_
 > - _"Build this rig somebody sent me and put it on my pedal."_
 
+Or iterate on one with the pedal in front of you, which is the loop this exists
+for:
+
+> _"Resolve the punk rig so every control is written down, build it, and play it
+> on my pedal without storing it. Then let me tell you what to change by ear.
+> When I say keep it, write it to an empty slot and export that back over the
+> rig so the diff shows what moved."_
+
+A resolved rig holds every control at the value it is set to, so you can open it
+in an editor, change one, and build: what you wrote is what reaches the pedal,
+and a control the gear does not have or a value past the end of one is refused
+and named rather than quietly dropped.
+
 Every claim in a rig carries its source, which is what makes one worth sending.
 [marketplace/](marketplace/) is where they live: a cited core that ships in the
-binary, and a community tier you load with `--rigs`. Its README says what the
-two tiers are and how to submit one.
-[marketplace/core/examples/](marketplace/core/examples/) holds one of each
+binary, and a community tier you load with `--rigs`. Each tier splits into
+`artists/`, which is people, and `genres/`, which is the sound of a genre rather
+than anybody who plays it. Its README says what the two tiers are and how to
+submit one. [marketplace/examples/](marketplace/examples/) holds one of each
 document with every optional field filled in. Those are what the tests pin and
 what to read when you want to see a field used, rather than rigs anybody plays.
 

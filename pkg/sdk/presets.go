@@ -267,6 +267,21 @@ type Build struct {
 	Existing Existing
 }
 
+// Resolve says which rig to build out into a full specification.
+type Resolve struct {
+	// RigID names the rig to resolve.
+	RigID string
+	// Out is where the document is written. Empty writes back over the file the
+	// rig was read from, which a rig that ships in the binary does not have.
+	Out string
+	// From is a plan to take the controls from instead of building the rig.
+	//
+	// What `tone tune --out` wrote, which is a chain solved against a measured
+	// target on real hardware. Nothing re-derives it: a tune is the one answer
+	// here that cannot be rebuilt, because it came from a pedal in a room.
+	From string
+}
+
 // Compile says what rig to build, what to build it into, and where the preset
 // goes.
 //

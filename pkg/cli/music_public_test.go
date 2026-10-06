@@ -36,6 +36,30 @@ type MusicPublicTestSuite struct {
 	suite.Suite
 }
 
+// wanted is one string a table expects, and why it matters when it is missing.
+//
+// Carried rather than asserted bare, because the reason is what a failure has
+// to say: "does not contain none named" is a diff, and "a player in no band
+// says so" is the rule that broke.
+type wanted struct {
+	text string
+	why  string
+}
+
+// holds checks what a table drew, and what it must not say.
+func (s *MusicPublicTestSuite) holds(
+	got string,
+	want, not []wanted,
+) {
+	for _, w := range want {
+		s.Require().Contains(got, w.text, w.why)
+	}
+
+	for _, w := range not {
+		s.Require().NotContains(got, w.text, w.why)
+	}
+}
+
 // players draws a set of players and hands back what was written.
 func (s *MusicPublicTestSuite) players(
 	of []sdk.MusicPlayer,
@@ -71,203 +95,6 @@ func (s *MusicPublicTestSuite) records(
 	return buf.String()
 }
 
-// TestPlayersNamesWhatIsMissing is what somebody growing a corpus reads.
-func (s *MusicPublicTestSuite) TestPlayersNamesWhatIsMissing() {
-	got := s.players([]sdk.MusicPlayer{
-		{
-			Instrument: "bass", ID: "mike-dirnt", Artist: "Mike Dirnt", Records: 3,
-			Bands: []string{"Green Day"}, Genres: []string{"pop-punk", "punk"},
-		},
-		// No band and no genre, which is every record written before those
-		// fields existed.
-		{Instrument: "bass", ID: "flea", Artist: "Flea", Records: 3, Untagged: 3},
-	})
-
-	s.Require().Contains(got, "mike-dirnt")
-	s.Require().Contains(got, "Green Day")
-	s.Require().Contains(got, "pop-punk, punk")
-
-	s.Require().Contains(got, "none named", "a player in no band says so")
-	s.Require().Contains(got, "none tagged")
-	s.Require().Contains(got, "3 untagged", "and how many records that is")
-
-	// One of the two has every record tagged, so the detail line says so
-	// rather than claiming the corpus is finished.
-	s.Require().Contains(got, "1 with every record tagged")
-}
-
-// TestPlayersMarkWhoHasNoRig covers the column and the count beside it.
-//
-// The absence is the point, so that is what is marked and what the detail line
-// counts. It is the number somebody wants when a genre will not build.
-func (s *MusicPublicTestSuite) TestPlayersMarkWhoHasNoRig() {
-	got := s.players([]sdk.MusicPlayer{
-		{ID: "mike-dirnt", Records: 3, Genres: []string{"punk"}, Rig: true},
-		{ID: "cone-mccaslin", Records: 3, Genres: []string{"punk"}},
-	})
-
-	s.Require().Contains(got, "none", "the player with no rig is marked")
-	s.Require().Contains(got, "1 with no rig")
-}
-
-// TestEveryPlayerHasGear covers the other half of that line.
-func (s *MusicPublicTestSuite) TestEveryPlayerHasGear() {
-	got := s.players([]sdk.MusicPlayer{
-		{ID: "a", Records: 1, Genres: []string{"punk"}, Rig: true},
-	})
-
-	s.Require().Contains(got, "all with gear")
-}
-
-// TestGenresSayWhenGearIsMissing covers a genre that earns words and then
-// cannot be built.
-//
-// Grunge did exactly this: nine records from three players, the threshold met,
-// and gear for none of them.
-func (s *MusicPublicTestSuite) TestGenresSayWhenGearIsMissing() {
-	got := s.groups([]sdk.MusicGroup{
-		{Name: "grunge", Slug: "grunge", Records: 9, Artists: 3, Usable: true},
-		{
-			Name: "punk", Slug: "punk", Records: 12, Artists: 4,
-			Usable: true, Geared: 3,
-		},
-	}, "genre", true)
-
-	s.Require().Contains(got, "GEARED")
-	s.Require().Contains(got, "0 of 3", "grunge has gear for nobody")
-	s.Require().Contains(got, "3 of 4")
-	s.Require().Contains(got, "1 with gear for nobody")
-}
-
-// TestEveryPlayerTagged covers the other detail line.
-func (s *MusicPublicTestSuite) TestEveryPlayerTagged() {
-	got := s.players([]sdk.MusicPlayer{
-		{ID: "a", Records: 1, Genres: []string{"punk"}},
-	})
-
-	s.Require().Contains(got, "every record carrying a genre")
-}
-
-// TestNoPlayers covers an empty corpus reaching the table.
-func (s *MusicPublicTestSuite) TestNoPlayers() {
-	s.Require().Contains(s.players(nil), "no players in this corpus")
-}
-
-// TestAGenreShortOfTheThresholdSaysByHowMuch is the number somebody acts on.
-func (s *MusicPublicTestSuite) TestAGenreShortOfTheThresholdSaysByHowMuch() {
-	got := s.groups([]sdk.MusicGroup{{
-		Name: "punk", Slug: "punk", Records: 6, Artists: 2,
-		Who:       []string{"Matt Freeman", "Mike Dirnt"},
-		Unsighted: 6, ShortRecords: 2, ShortArtists: 1,
-	}}, "genre", true)
-
-	s.Require().Contains(got, "2 records short")
-	s.Require().Contains(got, "1 player short")
-	s.Require().Contains(got, "none", "nobody checked any of the six")
-	s.Require().Contains(got, "Matt Freeman, Mike Dirnt", "named, not counted")
-	s.Require().Contains(got, "0 worth aiming at")
-}
-
-// TestAUsableGenreReadsAsOne covers the threshold being met.
-func (s *MusicPublicTestSuite) TestAUsableGenreReadsAsOne() {
-	got := s.groups([]sdk.MusicGroup{{
-		Name: "grunge", Slug: "grunge", Records: 9, Artists: 3,
-		Who:    []string{"Ben Shepherd", "Jeff Ament", "Krist Novoselic"},
-		Usable: true,
-	}}, "genre", true)
-
-	s.Require().Contains(got, "a genre")
-	s.Require().Contains(got, "1 worth aiming at")
-	s.Require().Contains(got, "all", "every record checked")
-}
-
-// TestAPartlyCheckedGenre covers the middle case.
-//
-// The one that matters most: enough records, and only some of them looked at.
-func (s *MusicPublicTestSuite) TestAPartlyCheckedGenre() {
-	got := s.groups([]sdk.MusicGroup{{
-		Name: "punk", Slug: "punk", Records: 12, Artists: 4,
-		Who: []string{"A", "B", "C", "D"}, Unsighted: 5, Usable: true,
-	}}, "genre", true)
-
-	s.Require().Contains(got, "7 of 12")
-}
-
-// TestBandsCarryNoThreshold covers the table without the genre columns.
-func (s *MusicPublicTestSuite) TestBandsCarryNoThreshold() {
-	got := s.groups([]sdk.MusicGroup{{
-		Name: "Green Day", Slug: "green-day", Records: 3, Artists: 1,
-		Who: []string{"Mike Dirnt"},
-	}}, "band", false)
-
-	s.Require().Contains(got, "Green Day")
-	s.Require().Contains(got, "Mike Dirnt")
-	s.Require().Contains(got, "two spellings of one band count once")
-
-	s.Require().NotContains(got, "worth aiming at",
-		"a band is not something to aim at")
-	s.Require().NotContains(got, "CHECKED", "and nobody labels one")
-}
-
-// TestAGroupNobodyMade covers a name with no players behind it.
-func (s *MusicPublicTestSuite) TestAGroupNobodyMade() {
-	got := s.groups([]sdk.MusicGroup{{Name: "punk", Slug: "punk"}}, "genre", true)
-	s.Require().Contains(got, "nobody")
-}
-
-// TestNoGroups covers the empty table, which names the kind asked for.
-func (s *MusicPublicTestSuite) TestNoGroups() {
-	s.Require().Contains(s.groups(nil, "genre", true), "no genres named")
-	s.Require().Contains(s.groups(nil, "band", false), "no bands named")
-}
-
-// TestRecordsSaysWhichHaveNoStems is what the manifest cannot say.
-func (s *MusicPublicTestSuite) TestRecordsSaysWhichHaveNoStems() {
-	got := s.records([]sdk.MusicRecord{
-		{
-			Player: "mike-dirnt", Track: "longview", Year: 1994,
-			Band: "Green Day", Genres: []string{"punk"},
-			DecidedBy: "person", Separated: true,
-		},
-		{
-			Player: "mike-dirnt", Track: "holiday", Year: 2004,
-			Band: "Green Day", Genres: []string{"punk"},
-			DecidedBy: "llm", Separated: false,
-		},
-		// Written before the fields existed: no band, no genre, nobody
-		// deciding.
-		{Player: "flea", Track: "aeroplane", Year: 1995},
-	})
-
-	s.Require().Contains(got, "longview")
-	s.Require().Contains(got, "a person")
-	s.Require().Contains(got, "a model")
-	s.Require().Contains(got, "1 separated")
-	s.Require().Contains(got, "3 records")
-	s.Require().Contains(got, "separate it with")
-}
-
-// TestNoRecords covers the empty table.
-func (s *MusicPublicTestSuite) TestNoRecords() {
-	s.Require().Contains(s.records(nil), "no records in this corpus")
-}
-
-// TestOneOfSomethingReadsAsOne covers the count that does not take an s.
-func (s *MusicPublicTestSuite) TestOneOfSomethingReadsAsOne() {
-	got := s.players([]sdk.MusicPlayer{
-		{ID: "a", Records: 1, Genres: []string{"punk"}},
-	})
-
-	s.Require().Contains(got, "1 player")
-	s.Require().NotContains(got, "1 players")
-}
-
-func TestMusicPublicTestSuite(
-	t *testing.T,
-) {
-	suite.Run(t, new(MusicPublicTestSuite))
-}
-
 // measured draws a set of measured genres.
 func (s *MusicPublicTestSuite) measured(
 	of []sdk.MeasuredGenre,
@@ -279,40 +106,293 @@ func (s *MusicPublicTestSuite) measured(
 	return buf.String()
 }
 
-// TestMeasuredGenresSaysWhichSetSomethingApart covers the three states.
-//
-// The middle one is the finding: a genre can clear the record threshold and
-// still sit inside the middle half on every axis, which is punk on this corpus.
-func (s *MusicPublicTestSuite) TestMeasuredGenresSaysWhichSetSomethingApart() {
-	got := s.measured([]sdk.MeasuredGenre{
+// TestMusicPlayers covers the table somebody growing a corpus reads.
+func (s *MusicPublicTestSuite) TestMusicPlayers() {
+	for _, tt := range []struct {
+		name string
+		of   []sdk.MusicPlayer
+		want []wanted
+		not  []wanted
+	}{
 		{
-			Name: "grunge", Slug: "grunge", Records: 9, Players: 3,
-			Against: 12, Usable: true,
-			Terms: []audio.Derived{
-				{Term: "scooped", Key: audio.KeyMid, Mine: 0.01, Others: 0.06},
-				{Term: "clean", Key: audio.KeyHarmonics, Mine: 0.13, Others: 0.24},
+			name: "what is missing is named",
+			of: []sdk.MusicPlayer{
+				{
+					Instrument: "bass", ID: "mike-dirnt", Artist: "Mike Dirnt", Records: 3,
+					Bands: []string{"Green Day"}, Genres: []string{"pop-punk", "punk"},
+				},
+				// No band and no genre, which is every record written before
+				// those fields existed.
+				{Instrument: "bass", ID: "flea", Artist: "Flea", Records: 3, Untagged: 3},
+			},
+			want: []wanted{
+				{text: "mike-dirnt"},
+				{text: "Green Day"},
+				{text: "pop-punk, punk"},
+				{text: "none named", why: "a player in no band says so"},
+				{text: "none tagged"},
+				{text: "3 untagged", why: "and how many records that is"},
+				// One of the two has every record tagged, so the detail line
+				// says so rather than claiming the corpus is finished.
+				{text: "1 with every record tagged"},
 			},
 		},
 		{
-			Name: "punk", Slug: "punk", Records: 12, Players: 4,
-			Against: 11, Usable: true,
+			// The absence is the point, so that is what is marked and what the
+			// detail line counts. It is the number somebody wants when a genre
+			// will not build.
+			name: "who has no rig is marked, and counted",
+			of: []sdk.MusicPlayer{
+				{ID: "mike-dirnt", Records: 3, Genres: []string{"punk"}, Rig: true},
+				{ID: "cone-mccaslin", Records: 3, Genres: []string{"punk"}},
+			},
+			want: []wanted{
+				{text: "none", why: "the player with no rig is marked"},
+				{text: "1 with no rig"},
+			},
 		},
 		{
-			Name: "emo", Slug: "emo", Records: 3, Players: 1, Against: 14,
+			name: "every player has gear",
+			of: []sdk.MusicPlayer{
+				{ID: "a", Records: 1, Genres: []string{"punk"}, Rig: true},
+			},
+			want: []wanted{{text: "all with gear"}},
 		},
-	})
-
-	s.Require().Contains(got, "a genre")
-	s.Require().Contains(got, "scooped")
-	s.Require().Contains(got, "(0.01 v 0.06)", "the figures behind the word")
-
-	s.Require().Contains(got, "sets nothing apart", "measured, and nothing to aim at")
-	s.Require().Contains(got, "not a genre yet", "and one that lacks the records")
-
-	s.Require().Contains(got, "3 genres measured, 1 earning a word")
+		{
+			name: "every player tagged",
+			of: []sdk.MusicPlayer{
+				{ID: "a", Records: 1, Genres: []string{"punk"}},
+			},
+			want: []wanted{{text: "every record carrying a genre"}},
+		},
+		{
+			name: "one of something reads as one",
+			of: []sdk.MusicPlayer{
+				{ID: "a", Records: 1, Genres: []string{"punk"}},
+			},
+			want: []wanted{{text: "1 player"}},
+			not:  []wanted{{text: "1 players"}},
+		},
+		{
+			name: "an empty corpus reaching the table",
+			want: []wanted{{text: "no players in this corpus"}},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.holds(s.players(tt.of), tt.want, tt.not)
+		})
+	}
 }
 
-// TestNoGenreMeasured covers a corpus nobody has tagged.
-func (s *MusicPublicTestSuite) TestNoGenreMeasured() {
-	s.Require().Contains(s.measured(nil), "no records carry a genre")
+// TestMusicGroups covers the genre and band tables, which are one table asked
+// two ways.
+func (s *MusicPublicTestSuite) TestMusicGroups() {
+	for _, tt := range []struct {
+		name      string
+		of        []sdk.MusicGroup
+		kind      string
+		threshold bool
+		want      []wanted
+		not       []wanted
+	}{
+		{
+			// A genre that earns words and then cannot be built. Grunge did
+			// exactly this: nine records from three players, the threshold
+			// met, and gear for none of them.
+			name: "a genre says when gear is missing",
+			of: []sdk.MusicGroup{
+				{Name: "grunge", Slug: "grunge", Records: 9, Artists: 3, Usable: true},
+				{
+					Name: "punk", Slug: "punk", Records: 12, Artists: 4,
+					Usable: true, Geared: 3,
+				},
+			},
+			kind: "genre", threshold: true,
+			want: []wanted{
+				{text: "GEARED"},
+				{text: "0 of 3", why: "grunge has gear for nobody"},
+				{text: "3 of 4"},
+				{text: "1 with gear for nobody"},
+			},
+		},
+		{
+			name: "a genre short of the threshold says by how much",
+			of: []sdk.MusicGroup{{
+				Name: "punk", Slug: "punk", Records: 6, Artists: 2,
+				Who:       []string{"Matt Freeman", "Mike Dirnt"},
+				Unsighted: 6, ShortRecords: 2, ShortArtists: 1,
+			}},
+			kind: "genre", threshold: true,
+			want: []wanted{
+				{text: "2 records short"},
+				{text: "1 player short"},
+				{text: "none", why: "nobody checked any of the six"},
+				{text: "Matt Freeman, Mike Dirnt", why: "named, not counted"},
+				{text: "0 worth aiming at"},
+			},
+		},
+		{
+			name: "a usable genre reads as one",
+			of: []sdk.MusicGroup{{
+				Name: "grunge", Slug: "grunge", Records: 9, Artists: 3,
+				Who:    []string{"Ben Shepherd", "Jeff Ament", "Krist Novoselic"},
+				Usable: true,
+			}},
+			kind: "genre", threshold: true,
+			want: []wanted{
+				{text: "a genre"},
+				{text: "1 worth aiming at"},
+				{text: "all", why: "every record checked"},
+			},
+		},
+		{
+			// The one that matters most: enough records, and only some of them
+			// looked at.
+			name: "a partly checked genre",
+			of: []sdk.MusicGroup{{
+				Name: "punk", Slug: "punk", Records: 12, Artists: 4,
+				Who: []string{"A", "B", "C", "D"}, Unsighted: 5, Usable: true,
+			}},
+			kind: "genre", threshold: true,
+			want: []wanted{{text: "7 of 12"}},
+		},
+		{
+			name: "a band carries no threshold",
+			of: []sdk.MusicGroup{{
+				Name: "Green Day", Slug: "green-day", Records: 3, Artists: 1,
+				Who: []string{"Mike Dirnt"},
+			}},
+			kind: "band", threshold: false,
+			want: []wanted{
+				{text: "Green Day"},
+				{text: "Mike Dirnt"},
+				{text: "two spellings of one band count once"},
+			},
+			not: []wanted{
+				{text: "worth aiming at", why: "a band is not something to aim at"},
+				{text: "CHECKED", why: "and nobody labels one"},
+			},
+		},
+		{
+			name: "a group nobody made",
+			of:   []sdk.MusicGroup{{Name: "punk", Slug: "punk"}},
+			kind: "genre", threshold: true,
+			want: []wanted{{text: "nobody"}},
+		},
+		{
+			name: "no genres named",
+			kind: "genre", threshold: true,
+			want: []wanted{{text: "no genres named"}},
+		},
+		{
+			name: "no bands named",
+			kind: "band", threshold: false,
+			want: []wanted{{text: "no bands named"}},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.holds(s.groups(tt.of, tt.kind, tt.threshold), tt.want, tt.not)
+		})
+	}
+}
+
+// TestMusicRecords covers the table that says what the manifest cannot.
+func (s *MusicPublicTestSuite) TestMusicRecords() {
+	for _, tt := range []struct {
+		name string
+		of   []sdk.MusicRecord
+		want []wanted
+		not  []wanted
+	}{
+		{
+			name: "which records have no stems",
+			of: []sdk.MusicRecord{
+				{
+					Player: "mike-dirnt", Track: "longview", Year: 1994,
+					Band: "Green Day", Genres: []string{"punk"},
+					DecidedBy: "person", Separated: true,
+				},
+				{
+					Player: "mike-dirnt", Track: "holiday", Year: 2004,
+					Band: "Green Day", Genres: []string{"punk"},
+					DecidedBy: "llm", Separated: false,
+				},
+				// Written before the fields existed: no band, no genre, nobody
+				// deciding.
+				{Player: "flea", Track: "aeroplane", Year: 1995},
+			},
+			want: []wanted{
+				{text: "longview"},
+				{text: "a person"},
+				{text: "a model"},
+				{text: "1 separated"},
+				{text: "3 records"},
+				{text: "separate it with"},
+			},
+		},
+		{
+			name: "an empty table",
+			want: []wanted{{text: "no records in this corpus"}},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.holds(s.records(tt.of), tt.want, tt.not)
+		})
+	}
+}
+
+// TestMeasuredGenres covers the three states a measured genre can be in.
+func (s *MusicPublicTestSuite) TestMeasuredGenres() {
+	for _, tt := range []struct {
+		name string
+		of   []sdk.MeasuredGenre
+		want []wanted
+		not  []wanted
+	}{
+		{
+			// The middle state is the finding: a genre can clear the record
+			// threshold and still sit inside the middle half on every axis,
+			// which is punk on this corpus.
+			name: "which genres set something apart",
+			of: []sdk.MeasuredGenre{
+				{
+					Name: "grunge", Slug: "grunge", Records: 9, Players: 3,
+					Against: 12, Usable: true,
+					Terms: []audio.Derived{
+						{Term: "scooped", Key: audio.KeyMid, Mine: 0.01, Others: 0.06},
+						{Term: "clean", Key: audio.KeyHarmonics, Mine: 0.13, Others: 0.24},
+					},
+				},
+				{
+					Name: "punk", Slug: "punk", Records: 12, Players: 4,
+					Against: 11, Usable: true,
+				},
+				{
+					Name: "emo", Slug: "emo", Records: 3, Players: 1, Against: 14,
+				},
+			},
+			want: []wanted{
+				{text: "a genre"},
+				{text: "scooped"},
+				{text: "(0.01 v 0.06)", why: "the figures behind the word"},
+				{text: "sets nothing apart", why: "measured, and nothing to aim at"},
+				{text: "not a genre yet", why: "and one that lacks the records"},
+				{text: "3 genres measured, 1 earning a word"},
+			},
+		},
+		{
+			name: "a corpus nobody has tagged",
+			want: []wanted{{text: "no records carry a genre"}},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.holds(s.measured(tt.of), tt.want, tt.not)
+		})
+	}
+}
+
+func TestMusicPublicTestSuite(
+	t *testing.T,
+) {
+	suite.Run(t, new(MusicPublicTestSuite))
 }

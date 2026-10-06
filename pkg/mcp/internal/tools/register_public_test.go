@@ -245,6 +245,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 			want: append(
 				slices.Clone(reads),
 				"rigs_new",
+				"rigs_resolve",
 				"presets_compile",
 				"slots_import",
 				"slots_copy",
@@ -252,6 +253,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 			),
 			readOnly: map[string]bool{
 				"rigs_new":        false,
+				"rigs_resolve":    false,
 				"presets_compile": false,
 				"slots_import":    false,
 				"slots_copy":      false,

@@ -73,7 +73,10 @@ func readBase(
 		fsys, name = os.DirFS(dir), dir
 	}
 
-	all, broken, err := readFS(fsys, name)
+	// The base is empty for the rigs that ship, because they have no file: they
+	// are bytes in the binary, and a rig recorded into one would be lost on the
+	// next build.
+	all, broken, err := readFS(fsys, name, dir)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +96,7 @@ func readBase(
 func readFS(
 	fsys fs.FS,
 	name string,
+	base string,
 ) ([]stored, []brokenFile, error) {
 	// Glob drops a directory it cannot read, which would make one nobody may
 	// open look like one holding no rigs. A directory that is not there is
@@ -102,8 +106,8 @@ func readFS(
 		return nil, nil, fmt.Errorf("reading %s: %w", name, err)
 	}
 
-	// The same holds one level down, where the glob looks for rigs: an
-	// artists/ nobody may open would otherwise hide every rig in it.
+	// The same holds one level down, where the glob looks for rigs: a directory
+	// nobody may open would otherwise hide every rig in it.
 	for _, e := range top {
 		if !e.IsDir() {
 			continue
@@ -115,11 +119,16 @@ func readFS(
 	}
 
 	// The pattern is a constant, so it cannot be malformed.
-	// `artists/` and nothing else, which is what every page describing this has
-	// always said. The glob was any directory, so `marketplace/core/examples/`
-	// was read as rigs: its documents are teaching material and one of them is a
-	// Plan, and listing the core tier reported each as a rig that would not load.
-	paths, _ := fs.Glob(fsys, path.Join("artists", "*.yaml"))
+	//
+	// One level down rather than flat: a tier holds `artists/`, which is people,
+	// beside `genres/`, which is the sound of a genre rather than anybody who
+	// plays it. A person is never filed under a genre, because a person plays
+	// several and the ask already names them.
+	//
+	// Any directory, which is why the teaching documents moved out of the tier
+	// to `marketplace/examples/`. A glob this wide read each of them as a rig
+	// that would not load.
+	paths, _ := fs.Glob(fsys, path.Join("*", "*.yaml"))
 
 	out := make([]stored, 0, len(paths))
 	broken := []brokenFile(nil)
@@ -165,7 +174,12 @@ func readFS(
 
 		taken[doc.Id] = p
 
-		out = append(out, stored{doc: doc, raw: raw})
+		at := ""
+		if base != "" {
+			at = filepath.Join(base, p)
+		}
+
+		out = append(out, stored{doc: doc, raw: raw, at: at})
 	}
 
 	sortEntries(out)
@@ -201,7 +215,7 @@ func read(
 		return set{base: base}, nil
 	}
 
-	user, broken, err := readFS(os.DirFS(src.User), src.User)
+	user, broken, err := readFS(os.DirFS(src.User), src.User, src.User)
 	if err != nil {
 		return set{}, err
 	}
@@ -259,7 +273,12 @@ func Find(
 		return result.Known{}, err
 	}
 
-	return result.Known{ID: found.idOf(), Rig: found.specOf(), Ask: found.askOf()}, nil
+	return result.Known{
+		ID:   found.idOf(),
+		Rig:  found.specOf(),
+		Ask:  found.askOf(),
+		Path: found.pathOf(),
+	}, nil
 }
 
 // Show reads one rig, and what the rest of the set says about it.
@@ -278,7 +297,12 @@ func Show(
 	}
 
 	return result.Rig{
-		Known:    result.Known{ID: found.idOf(), Rig: found.specOf(), Ask: found.askOf()},
+		Known: result.Known{
+			ID:   found.idOf(),
+			Rig:  found.specOf(),
+			Ask:  found.askOf(),
+			Path: found.pathOf(),
+		},
 		Variants: departures(all.merged(), found),
 	}, nil
 }
@@ -350,7 +374,12 @@ func known(
 ) []result.Known {
 	out := make([]result.Known, 0, len(all))
 	for _, e := range all {
-		out = append(out, result.Known{ID: e.idOf(), Rig: e.specOf(), Ask: e.askOf()})
+		out = append(out, result.Known{
+			ID:   e.idOf(),
+			Rig:  e.specOf(),
+			Ask:  e.askOf(),
+			Path: e.pathOf(),
+		})
 	}
 
 	return out

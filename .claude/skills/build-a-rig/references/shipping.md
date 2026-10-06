@@ -7,19 +7,37 @@ everybody.
 Run this yourself. The person asked for a Justin Chancellor rig, not to be told
 which command scaffolds one.
 
-## Which tier it goes in
+## Which tier it goes in, and which directory
 
-[marketplace/](../../../../marketplace/README.md) has two, and the difference is
-what the research reached.
+[marketplace/](../../../../marketplace/README.md) has two tiers, and the
+difference is what the research reached.
 
-`marketplace/community/artists/` unless every claim has a source somebody opened.
-That is the normal answer for a rig written today.
+`community/` unless every claim has a source somebody opened. That is the normal
+answer for a rig written today.
 
-`marketplace/core/artists/` when it does, because core ships in the binary and a
-wrong claim there reaches everybody who installs this. A rig that starts in
-community and gets sourced later moves across.
+`core/` when it does, because core ships in the binary and a wrong claim there
+reaches everybody who installs this. A rig that starts in community and gets
+sourced later moves across.
 
-**Never write a rig into `pkg/sdk/shipped/artists/`.** It is a generated copy of
+Inside either tier, the directory is what the subject is:
+
+| the subject                                      | directory  |
+| ------------------------------------------------ | ---------- |
+| a player, a band, an era                         | `artists/` |
+| a genre, with nobody named                       | `genres/`  |
+
+**A person is never filed under a genre.** Most play several, the ask's `genre:`
+already names which, and a directory would have to pick one and be wrong about
+the rest. The reverse holds too: a genre rig names no player, so it does not
+belong beside people who can be cited.
+
+A genre rig is built rather than researched, because there is nobody to ask. Let
+`tone build` rank the device's amplifiers against what the genre measures as and
+take the nearest, then record it as `kind: audio` evidence naming how many
+records and players it rests on. It also moves as the corpus grows, so say so in
+the caveat rather than presenting it as settled.
+
+**Never write a rig into `pkg/sdk/shipped/`.** It is a generated copy of
 `marketplace/core/`, so a rig put there is deleted by the next `just generate` and
 the work is gone with no error. After changing anything in `core/`, run
 `mise exec -- just generate` and commit both, which is what packs it into the

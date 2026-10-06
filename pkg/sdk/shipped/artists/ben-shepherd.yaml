@@ -1,89 +1,94 @@
 # Ben Shepherd — Soundgarden
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: ben-shepherd
-
 ask:
+  confidence: low
+  genre:
+  - grunge
+  instrument: bass
   subject:
-    kind: artist
-    name: Ben Shepherd
     band: Soundgarden
     era: Badmotorfinger to Superunknown
-    years: { from: 1991, to: 1994 }
-
-  instrument: bass
-
-  # The genre the corpus tags these records with. One word where the field takes
-  # one, and `corpus music genres` is what earns it words by measurement: this
-  # says which distribution the records belong to, not how they sound.
-  genre: [grunge]
-
-  # No words and no instrument. The gear beside this is sourced to somebody who
-  # read a magazine or studied photographs, and nobody read here describes how
-  # these records sound in terms this vocabulary carries. The genre the corpus
-  # tags them with earns its own words by measurement, which is a different claim
-  # from anything this file could assert.
-
-  confidence: low
-
+    kind: artist
+    name: Ben Shepherd
+    years:
+      from: 1991
+      to: 1994
+id: ben-shepherd
 rig:
-  instrument: bass
-
   chain:
-    - role: amp
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: direct
+    confidence: low
+    controls:
+      Bass: "0.5"
+      Bias: "0.55"
+      BiasX: "0.9"
+      ChVol: "0.74"
+      Drive: "0.48111111111111116"
+      HighMid: "0.5"
+      Hum: "0.5"
+      Master: "0.6"
+      Mid: "0.5476923076923078"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.4672131147540984"
+    evidence:
+    - caveat: |-
+        a tour rig, and the poster says so: "That was for the Lollapalooza tour. The article didn't say what Ben played in the studio." His guess that it was "some smaller version of the touring rig, for sure" is a guess and is not carried here.
+        The date is the other limit. March 1993 falls between the two records this rig is measured against, about eighteen months after Badmotorfinger and a year before Superunknown, so it is the closest dated evidence anybody has read rather than evidence about either session. The head on stage between two albums is what this claims.
+      kind: user
+      note: |-
+        the poster Michael Vee, answering what was played on Badmotorfinger, reads it out of a dated issue: "According to Bass Player Magazine's March 1993 issue, 'Maxxed Out!', Ben was playing a '72 Jazz Bass through a Mesa Boogie 400B head, with two M/B Strategy 500 amps and one Peavey CS 1200 amp, driving four M/B 4x10s and four 2x15s."
+        He had the issue in hand rather than the headline: he names its author, the three other bassists profiled in the same piece, and the editorial decision to put it on the cover over a Ray Brown article. That is the kind of detail nobody reproduces from a search result.
+      url: https://www.talkbass.com/threads/ben-shepherd-soundgarden-what-bass-rig-did-he-play-on-badmotorfinger-album.298516/
+    gear: MESA/Boogie Bass 400+
+    role: amp
+    substitute:
+      confidence: low
+      evidence:
+      - kind: llm
+        note: the source names a Mesa/Boogie 400B and the device carries the Bass
+          400+, which is the later head of that line. Same make and same family, not
+          the same amplifier.
       gear: MESA/Boogie Bass 400+
-      capture: direct
-      substitute:
-        gear: MESA/Boogie Bass 400+
-        evidence:
-          - kind: llm
-            note: >-
-              the source names a Mesa/Boogie 400B and the device carries the Bass
-              400+, which is the later head of that line. Same make and same
-              family, not the same amplifier.
-        confidence: low
-      evidence:
-        - kind: user
-          url: https://www.talkbass.com/threads/ben-shepherd-soundgarden-what-bass-rig-did-he-play-on-badmotorfinger-album.298516/
-          note: >-
-            the poster Michael Vee, answering what was played on Badmotorfinger,
-            reads it out of a dated issue: "According to Bass Player Magazine's
-            March 1993 issue, 'Maxxed Out!', Ben was playing a '72 Jazz Bass
-            through a Mesa Boogie 400B head, with two M/B Strategy 500 amps and
-            one Peavey CS 1200 amp, driving four M/B 4x10s and four 2x15s."
-
-            He had the issue in hand rather than the headline: he names its author,
-            the three other bassists profiled in the same piece, and the editorial
-            decision to put it on the cover over a Ray Brown article. That is the
-            kind of detail nobody reproduces from a search result.
-          caveat: >-
-            a tour rig, and the poster says so: "That was for the Lollapalooza
-            tour. The article didn't say what Ben played in the studio." His guess
-            that it was "some smaller version of the touring rig, for sure" is a
-            guess and is not carried here.
-
-            The date is the other limit. March 1993 falls between the two records
-            this rig is measured against, about eighteen months after
-            Badmotorfinger and a year before Superunknown, so it is the closest
-            dated evidence anybody has read rather than evidence about either
-            session. The head on stage between two albums is what this claims.
-      confidence: low
-
-    - role: cab
-      gear: Mesa/Boogie 2x15
-      capture: direct
-      evidence:
-        - kind: user
-          url: https://www.talkbass.com/threads/ben-shepherd-soundgarden-what-bass-rig-did-he-play-on-badmotorfinger-album.298516/
-          note: >-
-            the same sentence gives the cabinets: "driving four M/B 4x10s and four
-            2x15s". The device carries the Mesa/Boogie 2x15, so that half of the
-            stack resolves exactly and the four-by-tens do not.
-          caveat: >-
-            the same tour rig, dated the same March 1993, and a wall of eight
-            cabinets is not one box. This names the make and the size of the half
-            the device models, and a rig is one path, so it takes the 2x15 and
-            leaves the 4x10s out rather than pretending to sum them.
-      confidence: low
+  - capture: direct
+    confidence: low
+    controls:
+      Angle: "45.0"
+      Distance: "4.25"
+      HighCut: "11500.0"
+      Level: "0.0"
+      LowCut: "25.0"
+      Mic: "6"
+      Position: "0.09"
+    evidence:
+    - caveat: the same tour rig, dated the same March 1993, and a wall of eight cabinets
+        is not one box. This names the make and the size of the half the device models,
+        and a rig is one path, so it takes the 2x15 and leaves the 4x10s out rather
+        than pretending to sum them.
+      kind: user
+      note: 'the same sentence gives the cabinets: "driving four M/B 4x10s and four
+        2x15s". The device carries the Mesa/Boogie 2x15, so that half of the stack
+        resolves exactly and the four-by-tens do not.'
+      url: https://www.talkbass.com/threads/ben-shepherd-soundgarden-what-bass-rig-did-he-play-on-badmotorfinger-album.298516/
+    gear: Mesa/Boogie 2x15
+    role: cab
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

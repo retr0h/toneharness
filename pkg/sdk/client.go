@@ -21,10 +21,12 @@
 package sdk
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
@@ -33,6 +35,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/attached"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/backup"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/catalogview"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/deviceslots"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
@@ -42,7 +45,10 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // Client is what a wrapper holds.
@@ -634,7 +640,20 @@ func (c *Client) Make(
 	ctx context.Context,
 	in Build,
 ) (Made, error) {
-	return presets.Make(ctx, presets.MakeOptions{
+	// An empty path means "build it and write nothing" one layer down, which is
+	// what a resolve wants and what nobody calling this does.
+	if in.Out == "" {
+		return Made{}, ErrNoPresetFile
+	}
+
+	return presets.Make(ctx, c.makeOpts(in))
+}
+
+// makeOpts is one Build as the compiler wants it.
+func (c *Client) makeOpts(
+	in Build,
+) presets.MakeOptions {
+	return presets.MakeOptions{
 		Deps:       presets.Deps{Catalogs: c},
 		RigID:      in.RigID,
 		RigPath:    in.Rig,
@@ -643,7 +662,279 @@ func (c *Client) Make(
 		SetupPath:  c.opts.setup,
 		OutputPath: in.Out,
 		Existing:   in.Existing,
-	})
+	}
+}
+
+// Resolve builds a rig and writes the whole answer back as a document.
+//
+// The point of the project, and what makes a rigspec a specification rather than
+// a sketch. A rig names gear and says a sound in words; this writes the chain
+// that came out of it with every control at the value it was set to, so the
+// document says what the preset is rather than how to go looking for it.
+//
+// What that buys, in order of how much it matters:
+//
+// Somebody can open it in an editor, change one control, and build. The value is
+// used as it stands, so nothing re-derives it and there is nothing to teach the
+// compiler first.
+//
+// A change made on the pedal survives. Export a preset you tuned by ear and the
+// controls come back into the same fields, so the diff says which moved. Before
+// this they were dropped on the way out and the work was gone.
+//
+// Blocks the compiler added appear in the chain too. A rig that named an
+// amplifier and silently became five blocks could not be read as a description
+// of the preset it produced.
+//
+// The words stay in the ask, which is where they belong: they are what somebody
+// wanted, and the controls are what answered.
+func (c *Client) Resolve(
+	ctx context.Context,
+	in Resolve,
+) (Made, error) {
+	found, err := c.Rig(ctx, in.RigID)
+	if err != nil {
+		return Made{}, err
+	}
+
+	if in.From != "" {
+		return c.resolveFrom(ctx, in, found)
+	}
+
+	// Before the build rather than after it. The build asks for one too and the
+	// client holds on to the answer, so asking afterwards could never fail and
+	// the failure would be reported from the wrong place.
+	cat, err := c.Catalog(ctx)
+	if err != nil {
+		return Made{}, err
+	}
+
+	// Built and not written. What a resolve wants off a build is the controls the
+	// chain came out at, and the preset is already wherever the last build put
+	// it; writing one here would mean naming a scratch file and removing it
+	// again.
+	made, err := presets.Make(ctx, c.makeOpts(Build{RigID: in.RigID}))
+	if err != nil {
+		return Made{}, err
+	}
+
+	// The document rather than the plan beside it. Sections, controllers and
+	// footswitches are applied to the preset, so a chain read back from the plan
+	// is missing every one of them.
+	where, err := c.wroteSpec(in, found, made.Preset, cat)
+	if err != nil {
+		return Made{}, err
+	}
+
+	made.Path = where
+
+	return made, nil
+}
+
+// wroteSpec reads the chain back off a preset and writes the document it means.
+//
+// One place rather than two. Both resolves end the same way: lift the chain out
+// of the preset, keep what the rig said about each block, and write it over the
+// file the rig came from unless somebody named another. A rig that ships has no
+// file, so saying so beats writing somewhere that looks like it worked.
+func (c *Client) wroteSpec(
+	in Resolve,
+	found Rig,
+	doc *preset.Document,
+	cat *catalog.Catalog,
+) (string, error) {
+	_, lifted, _, err := compile.Lift(doc, cat)
+	if err != nil {
+		return "", fmt.Errorf("reading back %s: %w", in.RigID, err)
+	}
+
+	where := in.Out
+	if where == "" {
+		where = found.Path
+	}
+
+	if where == "" {
+		return "", fmt.Errorf(
+			"%w: %s ships in the binary, so name --out", ErrNoRigFile, in.RigID)
+	}
+
+	out := tone.Spec{
+		Schema: tone.SchemaToneSpec,
+		Id:     found.ID,
+		Ask:    found.Ask,
+		Rig:    carry(found.Rig, lifted, cat),
+	}
+
+	if err := writeSpec(where, out); err != nil {
+		return "", err
+	}
+
+	return where, nil
+}
+
+// resolveFrom writes a document from a plan somebody already has.
+//
+// The plan a tune wrote, which is the case that matters: `tone tune` solves a
+// chain against measured figures with the pedal in the loop, and that answer
+// cannot be rebuilt from the rig because it came from a room. Building again
+// here would throw it away and hand back corpus medians.
+func (c *Client) resolveFrom(
+	ctx context.Context,
+	in Resolve,
+	found Rig,
+) (Made, error) {
+	f, err := os.Open(filepath.Clean(in.From))
+	if err != nil {
+		return Made{}, fmt.Errorf("reading %s: %w", in.From, err)
+	}
+
+	held, err := plan.Load(f)
+
+	// Opened read-only, so Close has nothing to report the read did not.
+	_ = f.Close()
+
+	if err != nil {
+		return Made{}, fmt.Errorf("reading %s: %w", in.From, err)
+	}
+
+	cat, err := c.Catalog(ctx)
+	if err != nil {
+		return Made{}, err
+	}
+
+	// Through a preset and back, so the chain is read the same way a build's is
+	// and the two cannot describe the same plan differently.
+	doc, _ := preset.Blank()
+	doc.Data.Device = cat.DeviceID
+
+	if err := doc.SetSpec(held); err != nil {
+		return Made{}, fmt.Errorf("reading %s: %w", in.From, err)
+	}
+
+	where, err := c.wroteSpec(in, found, doc, cat)
+	if err != nil {
+		return Made{}, err
+	}
+
+	return Made{Plan: held, Path: where}, nil
+}
+
+// carry keeps what a person wrote about each block, on the chain that was built.
+//
+// The lifted chain is the authority on what the preset is: which blocks, in what
+// order, at what values. It knows nothing about why, and why is most of what a
+// rig is worth. So the evidence, the caveats, the capture and any substitute move
+// across.
+//
+// Matched by role in order, not by gear name. The catalog renames what it
+// resolves — a rig saying `Ampeg SVT` builds `Ampeg SVT (bright channel)`, and an
+// `Ampeg 8x10` comes back `8x10 Ampeg SVT-E` — so matching on the name silently
+// dropped every citation the first time this ran. Position alone is no better,
+// because the compiler puts blocks the rig never asked for in front of the ones
+// it did.
+//
+// A block that matches nothing is one the corpus added, and it says so rather
+// than arriving bare. Somebody reading the document has to be able to tell what
+// they asked for from what was chosen on their behalf.
+func carry(
+	was rig.Spec,
+	built rig.Spec,
+	cat *catalog.Catalog,
+) rig.Spec {
+	taken := make([]bool, len(was.Chain))
+
+	for i, e := range built.Chain {
+		at := -1
+
+		for j, had := range was.Chain {
+			if !taken[j] && had.Role == e.Role {
+				at = j
+
+				break
+			}
+		}
+
+		if at < 0 {
+			said := "added by the compiler rather than named in the rig: a " +
+				"chain of this kind almost always holds one, and the corpus " +
+				"statistics are what put it here."
+
+			built.Chain[i].Evidence = &[]tone.Evidence{{
+				Kind: tone.EvidenceCorpus,
+				Note: &said,
+			}}
+
+			continue
+		}
+
+		taken[at] = true
+		had := was.Chain[at]
+
+		// The name a person wrote, not the one the catalog resolved it to. A rig
+		// says "Ampeg SVT" and the catalog answers "Ampeg SVT (bright channel)";
+		// writing that back welds the document to one catalog's spelling, which
+		// is the whole thing a rig naming real gear exists to avoid. It also
+		// stops the rig being readable: the model's channel is the compiler's
+		// business.
+		built.Chain[i].Gear = had.Gear
+
+		built.Chain[i].Capture = had.Capture
+		built.Chain[i].Stage = had.Stage
+		built.Chain[i].Substitute = had.Substitute
+		built.Chain[i].Evidence = had.Evidence
+		built.Chain[i].Confidence = had.Confidence
+	}
+
+	built.Instrument = was.Instrument
+	built.Evidence = was.Evidence
+	built.Sections = was.Sections
+	built.Moves = was.Moves
+	built.Resolved = resolvedOn(cat)
+
+	return built
+}
+
+// resolvedOn records which pedal and catalog produced the controls.
+//
+// Advisory, never a restriction. The gear names above are portable and resolve on
+// any Helix; the control names under them belong to the models this device's
+// catalog chose, so somebody on other hardware reads this to know whose numbers
+// they have rather than being refused for having the wrong pedal.
+//
+// Without it a resolved rig is silently geared to one machine: a control name
+// another catalog does not carry is refused with nothing saying why.
+func resolvedOn(
+	cat *catalog.Catalog,
+) *rig.Target {
+	device, source := cat.Device, cat.Source
+
+	return &rig.Target{Device: &device, Catalog: &source}
+}
+
+// writeSpec puts a document on disk.
+//
+// Rendered whole and written once, rather than streamed into an open file. The
+// contract's own note is that both documents hold only strings, numbers and
+// booleans, so the marshalling cannot fail; streaming it added a Close to get
+// wrong and three error paths nothing could reach.
+func writeSpec(
+	at string,
+	of tone.Spec,
+) error {
+	var out bytes.Buffer
+
+	// Ignored rather than wrapped, because nothing can reach it. A Spec holds
+	// strings, numbers, booleans and Settings, and the only one of those that
+	// refuses to marshal is a Setting carrying no kind. Nothing produces one: a
+	// value only ever arrives through ParamValue, which refuses every literal
+	// that would leave a Setting kindless.
+	_ = tone.Write(&out, of)
+
+	if err := os.WriteFile(filepath.Clean(at), out.Bytes(), 0o600); err != nil {
+		return fmt.Errorf("writing %s: %w", at, err)
+	}
+
+	return nil
 }
 
 // MusicPlayers is every player the music corpus names, from the manifests.

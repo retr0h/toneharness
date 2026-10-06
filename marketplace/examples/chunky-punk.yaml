@@ -3,7 +3,7 @@
 # No player, no record, no era. A genre, how it is played, how it should sound,
 # and one piece of gear. Build it with:
 #
-#     toneharness tone build --ask marketplace/core/examples/chunky-punk.yaml \
+#     toneharness tone build --ask marketplace/examples/chunky-punk.yaml \
 #       --out rig.yaml
 #     toneharness presets compile --rig rig.yaml --out punk.hlx
 #

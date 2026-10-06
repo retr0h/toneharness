@@ -397,6 +397,29 @@ func (s *SolveTestSuite) TestToward() {
 				s.Require().True(got.Arrived)
 			},
 		},
+		{
+			// A control with nothing to travel, which a chain really carries: a
+			// catalog gives a few blocks a parameter whose range is one value.
+			// Dropped rather than divided by, because its authority over every
+			// axis is zero and a solve weighted on zero has nothing to weight.
+			name: "a control with no travel",
+			then: func() {
+				stuck := Knob{
+					Block: 1, Param: 2, Control: "Type", At: 1, Low: 1, High: 1,
+					Slope: map[audio.Figure]float64{centroid: 900},
+				}
+
+				got, err := Toward(
+					[]Knob{s.treble(), stuck},
+					map[audio.Figure]Aim{centroid: {Want: 900, Tol: 5}},
+					map[audio.Figure]float64{centroid: 500},
+				)
+
+				s.Require().NoError(err)
+				s.Require().Len(got.Steps, 1)
+				s.Require().Equal("Treble", got.Steps[0].Control)
+			},
+		},
 	} {
 		s.Run(tt.name, func() {
 			tt.then()

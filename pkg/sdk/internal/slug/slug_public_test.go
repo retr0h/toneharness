@@ -71,20 +71,16 @@ func (s *SlugPublicTestSuite) TestOf() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			s.Require().Equal(tt.want, slug.Of(tt.in))
-		})
-	}
-}
+			got := slug.Of(tt.in)
+			s.Require().Equal(tt.want, got)
 
-// TestOfIsStable covers slugging a slug.
-//
-// The corpus groups on the slug, and a name that came back from one round has
-// to survive another: a directory read off disk is already slugged, and slugging
-// it again must not move it.
-func (s *SlugPublicTestSuite) TestOfIsStable() {
-	for _, in := range []string{"Mike Dirnt", "Guns N' Roses", "blink-182", "!!!"} {
-		once := slug.Of(in)
-		s.Require().Equal(once, slug.Of(once), "%q does not survive a second pass", in)
+			// Slugging a slug, asked of every row rather than of a chosen few.
+			// The corpus groups on the slug, and a name that came back from one
+			// round has to survive another: a directory read off disk is already
+			// slugged, and slugging it again must not move it.
+			s.Require().Equal(got, slug.Of(got),
+				"%q does not survive a second pass", tt.in)
+		})
 	}
 }
 

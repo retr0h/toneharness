@@ -90,6 +90,14 @@ func (s *CheckPublicTestSuite) TestCheck() {
 		params []string
 		// a chain naming a model this catalog does not carry.
 		unknownModel bool
+		// wrong four ways at once: two footswitches with bad colours and two
+		// controllers, one naming a parameter and one a block that is not
+		// there. Check used to report the first mistake and stop, so a plan with
+		// four in it took four runs to fix and each run hid the next.
+		manyBad bool
+		// every fragment the failure has to carry, for the row that asks for
+		// more than one.
+		fields []string
 		// what the failure must not say.
 		absent string
 
@@ -98,6 +106,17 @@ func (s *CheckPublicTestSuite) TestCheck() {
 		suggest string
 	}{
 		{name: "a plan claiming nothing"},
+		{
+			name:    "every bad value at once",
+			manyBad: true,
+			err:     compile.ErrNoSuchValue,
+			fields: []string{
+				"footswitches[0].led",
+				"footswitches[1].led",
+				"controllers[0].parameter",
+				"controllers[1].block",
+			},
+		},
 		{
 			// A plan read off a device numbers its blocks the way the device
 			// lays them out, so the position a controller names is not where
@@ -234,6 +253,16 @@ func (s *CheckPublicTestSuite) TestCheck() {
 				}}
 			}
 
+			if tt.manyBad {
+				first, second := "nonsense", "alsonot"
+
+				made.Footswitches = []rig.Footswitch{{Led: &first}, {Led: &second}}
+				made.Controllers = []rig.Controller{
+					{Controller: 2, Block: 0, Parameter: "NotAParameter"},
+					{Controller: 3, Block: 99, Parameter: "Drive"},
+				}
+			}
+
 			cat := s.cat
 			if tt.params != nil {
 				cat = s.catalogWith(tt.params...)
@@ -271,52 +300,32 @@ func (s *CheckPublicTestSuite) TestCheck() {
 			if tt.absent != "" {
 				s.Require().NotContains(err.Error(), tt.absent)
 			}
+
+			for _, want := range tt.fields {
+				s.Require().Contains(err.Error(), want,
+					"every complaint arrives at once, not one run at a time")
+			}
+
+			if !tt.manyBad {
+				return
+			}
+
+			// Joined rather than run together, so each complaint starts a line.
+			s.Require().Greater(strings.Count(err.Error(), "\n"), 2)
+
+			// A join is still matchable, so nothing that caught these before
+			// stops catching them.
+			s.Require().ErrorIs(err, compile.ErrNoSuchValue)
+			s.Require().ErrorIs(err, compile.ErrNoSuchBlock)
+
+			// And reachable, so a caller can still read the detail off the
+			// first.
+			var detail *compile.NoSuchValueError
+
+			s.Require().ErrorAs(err, &detail)
+			s.Require().Equal("nonsense", detail.Value)
 		})
 	}
-}
-
-// TestCheckReportsEveryBadValue covers a plan that is wrong four ways.
-//
-// It used to report the first mistake and stop, so a plan with four in it took
-// four runs to fix and each run hid the next. What is held here is that they
-// arrive together, and that matching on the sentinel still reaches through
-// the join.
-func (s *CheckPublicTestSuite) TestCheckReportsEveryBadValue() {
-	first, second := "nonsense", "alsonot"
-
-	made := plan.Plan{Name: "test"}
-	made.Footswitches = []rig.Footswitch{{Led: &first}, {Led: &second}}
-	made.Controllers = []rig.Controller{
-		{Controller: 2, Block: 0, Parameter: "NotAParameter"},
-		{Controller: 3, Block: 99, Parameter: "Drive"},
-	}
-
-	err := compile.Check(made, s.blocks(), s.cat)
-	s.Require().Error(err)
-
-	for _, want := range []string{
-		"footswitches[0].led",
-		"footswitches[1].led",
-		"controllers[0].parameter",
-		"controllers[1].block",
-	} {
-		s.Require().Contains(err.Error(), want,
-			"every complaint arrives at once, not one run at a time")
-	}
-
-	// Joined rather than run together, so each complaint starts a line.
-	s.Require().Greater(strings.Count(err.Error(), "\n"), 2)
-
-	// A join is still matchable, so nothing that caught these before stops
-	// catching them.
-	s.Require().ErrorIs(err, compile.ErrNoSuchValue)
-	s.Require().ErrorIs(err, compile.ErrNoSuchBlock)
-
-	// And reachable, so a caller can still read the detail off the first.
-	var detail *compile.NoSuchValueError
-
-	s.Require().ErrorAs(err, &detail)
-	s.Require().Equal("nonsense", detail.Value)
 }
 
 func TestCheckPublicTestSuite(

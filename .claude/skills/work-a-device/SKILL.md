@@ -74,12 +74,35 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 | which device this is for, and which catalog answers                   | [references/identity.md](references/identity.md)           |
 | anything else                                                        | All seven, in that order                                   |
 
+## The slot called SCRATCH
+
+**A slot named `SCRATCH` is the working slot.** Anything may be written there,
+played there and measured there, as many times as a run needs. It is how
+somebody says which slot they are willing to lose.
+
+**Every other slot holds somebody's work until they say otherwise.** A name is
+not permission: a slot called "Mike Dirnt" is somebody's preset even when it is
+exactly what you were about to build, and that is the reasoning this rule exists
+to stop. `slots list` says what each one is called; if nothing is called
+`SCRATCH`, ask for one rather than choosing.
+
+`TONEHARNESS_SCRATCH_SLOT` names it for the device tests. Naming the preset in it
+`SCRATCH` is what makes the same answer visible on the pedal, where a person
+reading the screen can see that the slot they are on is the disposable one.
+
+Rename it back to `SCRATCH` when a run is finished, whatever was being worked on.
+A slot left called "SCRATCH dirnt" is one the next session has to think about.
+
 ## 3. Never write a slot nobody offered
 
-Banks 01 to 10 hold the owner's own work and are not to be touched. Scratch
-writes go to slot 40 and above. A device has no undo: whatever a slot held is
-read and kept before a write replaces it, and the answer says where that backup
-went.
+Read `slots list` first and write only to something empty, or where the person
+whose pedal it is has said to. Every slot holds somebody's work until shown
+otherwise, and a high bank is the convention here only because low banks are
+where most people keep what they play. `TONEHARNESS_SCRATCH_SLOT` is how somebody
+names the slot they are willing to lose.
+
+A device has no undo: whatever a slot held is read and kept before a write
+replaces it, and the answer says where that backup went.
 
 Then say which claim you have, because three get confused:
 
@@ -94,3 +117,25 @@ the asymmetry that hid them is permanent. See
 [references/formats.md](references/formats.md). Report what you ran and what
 it answered, including every note it returned, and if you did not run it, say you
 did not run it.
+
+## Say which claim you have, and where it went
+
+Four claims, and the gap between the second and the fourth is what this skill
+exists to keep honest:
+
+1. a file was written
+2. the device accepted the write
+3. the slot reads back byte for byte
+4. the pedal is playing it
+
+The third has passed while the fourth failed: for a fortnight every preset this
+tool wrote read back identically and drew nothing on the screen. So a write is
+not a load, and `device current` is what tells them apart.
+
+**Name every path.** A slot write keeps whatever the slot held and prints where it
+went; repeat that path in the answer, because a reply that drops it has turned a
+recoverable change into a lost one. Say which slots were written, too — each is a
+flash write, and the person deciding whether to do it again is holding the pedal.
+
+[AGENTS.md's what to report](../../../AGENTS.md#what-to-report-every-time) is the
+shape, and it is the same for every skill here.

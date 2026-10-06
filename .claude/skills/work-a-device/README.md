@@ -39,7 +39,7 @@ past what a power cycle clears, and a preset can be stored perfectly, read back
 byte for byte, and still render as nothing. Each of those looks like a bug in the
 tool the first time, and none of them is.
 
-Banks 01 to 10 are never written. Scratch goes to slot 40 and above.
+A slot is written only when it is empty or its owner named it.
 
 It follows the [Agent Skills] format: a slim `SKILL.md` that routes, with the
 detail in reference files read only when the question calls for them.

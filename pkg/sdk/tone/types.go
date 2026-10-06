@@ -37,6 +37,9 @@ type (
 	// not, because a sound nobody can name the gear for is a sound nothing can
 	// model, which is what the solver always said.
 	Spec = gen.ToneSpec
+	// SpecSchema is what a document says it is, so a writer states it rather
+	// than spelling the string.
+	SpecSchema = gen.ToneSpecSchema
 	// Ask is a request for a sound: what to sound like, in whatever terms the
 	// person has. Every field on it is optional.
 	Ask = gen.Ask
@@ -247,3 +250,6 @@ const (
 	InstrumentGuitar = gen.InstrumentInstrumentGuitar
 	InstrumentBass   = gen.InstrumentInstrumentBass
 )
+
+// SchemaToneSpec is the value a ToneSpec's `schema` field carries.
+const SchemaToneSpec = gen.ToneSpecSchemaToneSpec
