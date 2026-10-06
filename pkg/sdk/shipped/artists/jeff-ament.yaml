@@ -1,92 +1,93 @@
 # Jeff Ament — Pearl Jam
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: jeff-ament
-
 ask:
+  confidence: low
+  genre:
+  - grunge
+  instrument: bass
   subject:
-    kind: artist
-    name: Jeff Ament
     band: Pearl Jam
     era: Ten
-    years: { from: 1991, to: 1993 }
-
-  instrument: bass
-
-  # The genre the corpus tags these records with. One word where the field takes
-  # one, and `corpus music genres` is what earns it words by measurement: this
-  # says which distribution the records belong to, not how they sound.
-  genre: [grunge]
-
-  # No words and no instrument. The gear beside this is sourced to somebody who
-  # read a magazine or studied photographs, and nobody read here describes how
-  # these records sound in terms this vocabulary carries. The genre the corpus
-  # tags them with earns its own words by measurement, which is a different claim
-  # from anything this file could assert.
-
-  confidence: low
-
+    kind: artist
+    name: Jeff Ament
+    years:
+      from: 1991
+      to: 1993
+id: jeff-ament
 rig:
-  instrument: bass
-
   chain:
-    - role: amp
-      gear: MESA/Boogie Bass 400+
-      capture: direct
-      evidence:
-        - kind: user
-          url: https://www.talkbass.com/threads/jeff-aments-rig-late-1990-through-1991.1636698/
-          note: >-
-            the poster orangepeelneil, opening a thread to identify a rack unit in
-            photographs of the band's first rehearsals, states the rest of the rig
-            as settled: "I know at the time Jeff was using a Mesa Boogie Bass 400+
-            (often in a rack case) and Energy 4x10\"s (as seen in the Home and Away
-            exhibition) and an Energy 1x15\", sometimes doubled up live for larger
-            gigs."
-
-            The window is the thread's own subject and it brackets this record:
-            "from when PJ began (as Mookie Blaylock late 1990) until late 1991 when
-            Jeff seems to have changed his rig to mostly SWR gear". Ten was
-            recorded in the spring of 1991, inside it.
-          caveat: >-
-            not first-hand. This is somebody who studied photographs and saw the
-            gear in the Home and Away exhibition, which is documentary rather than
-            testimony, and it describes what was on stage rather than what was in
-            the room for the sessions. Nobody in any thread read here says what was
-            recorded through.
-
-            A second thread asks this question directly and answers it with
-            guesses: "I believe Jeff Ament used to play an original SWR Redhead",
-            "I'm not sure what he used in the beginning", "no idea about
-            recording". Those name SWR rather than Mesa, and none of them is
-            evidence. The disagreement is recorded here rather than resolved,
-            because the dated half of it puts SWR after this record.
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: direct
+    confidence: low
+    controls:
+      Bass: "0.5"
+      Bias: "0.55"
+      BiasX: "0.9"
+      ChVol: "0.74"
+      Drive: "0.48111111111111116"
+      HighMid: "0.5"
+      Hum: "0.5"
+      Master: "0.6"
+      Mid: "0.5476923076923078"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.4672131147540984"
+    evidence:
+    - caveat: |-
+        not first-hand. This is somebody who studied photographs and saw the gear in the Home and Away exhibition, which is documentary rather than testimony, and it describes what was on stage rather than what was in the room for the sessions. Nobody in any thread read here says what was recorded through.
+        A second thread asks this question directly and answers it with guesses: "I believe Jeff Ament used to play an original SWR Redhead", "I'm not sure what he used in the beginning", "no idea about recording". Those name SWR rather than Mesa, and none of them is evidence. The disagreement is recorded here rather than resolved, because the dated half of it puts SWR after this record.
+      kind: user
+      note: |-
+        the poster orangepeelneil, opening a thread to identify a rack unit in photographs of the band's first rehearsals, states the rest of the rig as settled: "I know at the time Jeff was using a Mesa Boogie Bass 400+ (often in a rack case) and Energy 4x10\"s (as seen in the Home and Away exhibition) and an Energy 1x15\", sometimes doubled up live for larger gigs."
+        The window is the thread's own subject and it brackets this record: "from when PJ began (as Mookie Blaylock late 1990) until late 1991 when Jeff seems to have changed his rig to mostly SWR gear". Ten was recorded in the spring of 1991, inside it.
+      url: https://www.talkbass.com/threads/jeff-aments-rig-late-1990-through-1991.1636698/
+    gear: MESA/Boogie Bass 400+
+    role: amp
+  - capture: direct
+    confidence: low
+    controls:
+      Angle: "45.0"
+      Distance: "4.25"
+      HighCut: "11500.0"
+      Level: "0.0"
+      LowCut: "25.0"
+      Mic: "6"
+      Position: "0.09"
+    evidence:
+    - caveat: the same source and the same limits, and the make is one the device
+        does not model at all, so what this rig actually asks for is a substitute
+        rather than the box he used. Two tens and a fifteen carry a different low
+        end from one two-by-fifteen, and nothing here measured either.
+      kind: user
+      note: 'the same sentence as the head names the cabinets: Energy 4x10"s and an
+        Energy 1x15", "sometimes doubled up live for larger gigs".'
+      url: https://www.talkbass.com/threads/jeff-aments-rig-late-1990-through-1991.1636698/
+    gear: Mesa/Boogie 2x15
+    role: cab
+    substitute:
       confidence: low
-
-    - role: cab
+      evidence:
+      - kind: llm
+        note: the device carries no Energy cabinet of any size, and no 4x10 or 1x15
+          of that make. Its nearest Mesa/Boogie bass cabinet is the 2x15, which is
+          a bigger box than either of the ones named.
       gear: Mesa/Boogie 2x15
-      capture: direct
-      substitute:
-        gear: Mesa/Boogie 2x15
-        evidence:
-          - kind: llm
-            note: >-
-              the device carries no Energy cabinet of any size, and no 4x10 or
-              1x15 of that make. Its nearest Mesa/Boogie bass cabinet is the
-              2x15, which is a bigger box than either of the ones named.
-        confidence: low
-      evidence:
-        - kind: user
-          url: https://www.talkbass.com/threads/jeff-aments-rig-late-1990-through-1991.1636698/
-          note: >-
-            the same sentence as the head names the cabinets: Energy 4x10"s and an
-            Energy 1x15", "sometimes doubled up live for larger gigs".
-          caveat: >-
-            the same source and the same limits, and the make is one the device
-            does not model at all, so what this rig actually asks for is a
-            substitute rather than the box he used. Two tens and a fifteen carry a
-            different low end from one two-by-fifteen, and nothing here measured
-            either.
-      confidence: low
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

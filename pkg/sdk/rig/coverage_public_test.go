@@ -58,6 +58,18 @@ var exempt = map[string]string{
 		"document here is attributed to a song, so an example naming one " +
 		"would resolve to nothing and teach the opposite of what it meant. " +
 		"pkg/sdk/translate covers the lookup.",
+	"mix": "sets how much of an effect is heard against the dry signal, and " +
+		"no block in any chain here has one. A bassist's chain is a " +
+		"compressor, an amplifier and a cabinet: the two models that answer " +
+		"`Teletronix LA-2A` are a legacy Tube Comp carrying a level and a " +
+		"threshold, and an LA Studio Comp, and the one a rig naming the gear " +
+		"resolves to is the first. So a document writing this is a document " +
+		"that cannot build, which the example proved by refusing with " +
+		"`chain[0].settings.mix: this device has no \"mix\"`.\n\n" +
+		"It also matters less than it did. Every rig under core/ is resolved " +
+		"now and states its controls by the device's own names, so `settings` " +
+		"is the shorter way to say a sound by hand rather than the only way, " +
+		"and a word of it going unexercised costs a reader nothing.",
 	"extends": "records that one rig departs from another. Every rig here " +
 		"is a sibling rather than a departure, and `rigs new --from` " +
 		"writes the field, so exercising it would mean inventing a rig to " +

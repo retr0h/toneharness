@@ -62,12 +62,26 @@ type Tuner interface {
 }
 
 // ErrNoTarget is a request that names nothing to aim at.
-var ErrNoTarget = errors.New("name a genre to aim at")
+var (
+	// ErrNoTarget refuses a run with nothing to solve toward.
+	ErrNoTarget = errors.New("name a genre or a player to aim at")
+	// ErrOneTarget refuses a run naming both, which is a question with two
+	// answers.
+	ErrOneTarget = errors.New(
+		"aim at a genre or at a player, not both: they are different targets " +
+			"and preferring one quietly would build for something nobody asked for")
+	// ErrPlayerNeedsCorpus refuses a player with nowhere to measure them from.
+	ErrPlayerNeedsCorpus = errors.New(
+		"aiming at a player needs --corpus: a genre's figures ship in this " +
+			"binary and a player's cannot, because the recordings are not in " +
+			"this repository")
+)
 
 // TuneOptions is what solving for one rig needs to know.
 type TuneOptions struct {
 	Client   Tuner
 	Genres   Genres
+	Players  Recorded
 	Bench    sdk.Bench
 	Hardware string
 	Dry      string
@@ -76,7 +90,14 @@ type TuneOptions struct {
 	// ID is the curated rig to tune, and Genre what to aim it at.
 	ID    string
 	Genre string
-	// Corpus is the tree the genre's figures are measured from.
+	// Player aims at one artist's own records instead of a genre's.
+	//
+	// The stronger target and the one the project is for: a genre is the middle
+	// of a population and a player is the person being emulated. Needs Corpus,
+	// because per-player figures are not shipped — the recordings are not in
+	// this repository, so nothing can be measured from a binary alone.
+	Player string
+	// Corpus is the tree the figures are measured from.
 	Corpus string
 	// Passes is how many times to solve before giving up on converging.
 	Passes int
@@ -124,6 +145,14 @@ type Genres interface {
 	MeasuredGenres(ctx context.Context, corpus string) ([]audio.Genre, error)
 }
 
+// Recorded is what one artist's own records measure as.
+//
+// Named for the records rather than for the players, because `Players` and
+// `Measured` are both already tables in this package.
+type Recorded interface {
+	MeasuredPlayers(ctx context.Context, corpus string) ([]audio.Player, error)
+}
+
 // Tune solves a chain's controls for a target and says how close it got.
 //
 // The loop the whole project is pointed at: measure what the chain does now,
@@ -145,8 +174,20 @@ func Tune(
 	levelled(w, opts.Volume, reamp.Held)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 
-	if opts.Genre == "" {
+	if opts.Genre == "" && opts.Player == "" {
 		return ErrNoTarget
+	}
+
+	// Both named is a question with two answers, and quietly preferring one
+	// would hand back a chain aimed at something the caller did not ask for.
+	if opts.Genre != "" && opts.Player != "" {
+		return ErrOneTarget
+	}
+
+	// A player's figures are measured from recordings, and the recordings are
+	// not in this repository. A genre's are shipped; a player's cannot be.
+	if opts.Player != "" && opts.Corpus == "" {
+		return ErrPlayerNeedsCorpus
 	}
 
 	target, err := targetFor(ctx, opts)
@@ -156,7 +197,7 @@ func Tune(
 
 	aims := solve.Aims(target, nil)
 	if len(aims) == 0 {
-		return fmt.Errorf("%w: %q measures as nothing", ErrNoTarget, opts.Genre)
+		return fmt.Errorf("%w: %q measures as nothing", ErrNoTarget, solvingFor(opts))
 	}
 
 	made, preset, asBuilt, err := built(ctx, opts)
@@ -193,7 +234,7 @@ func Tune(
 	defer release()
 
 	_, _ = fmt.Fprintf(w, "\n  %s aimed at %s, %d dials and %d lists through %s\n",
-		opts.ID, opts.Genre, len(knobs), len(lists), bench.Name())
+		opts.ID, solvingFor(opts), len(knobs), len(lists), bench.Name())
 
 	// The loop's own wander, which is the floor under every tolerance. Without
 	// it an axis the records happen to agree closely about gets a tolerance of
@@ -206,6 +247,20 @@ func Tune(
 	}
 
 	aims = solve.Aims(target, inCorpusScale(floor))
+
+	// Level is a guard rather than a goal, and `drift` is already wide enough to
+	// be one: six decibels, against a loop that wanders a fraction of one. A run
+	// that came back quiet was not spending controls to settle level — it
+	// reported level inside tolerance with nothing left to do.
+	//
+	// What made it quiet was the tone target. On this amplifier `ChVol` has the
+	// largest authority over the centroid of any control, +13,133Hz across its
+	// travel against Treble's +12,763, and it carries +27.6dB of level with it.
+	// So a solve reaching for a dark centroid pulls `ChVol` down and the chain
+	// gets quiet as a consequence of the tone it was asked for.
+	//
+	// Which means the fix is not here. It is the target: an absolute figure taken
+	// off a mastered record, aimed at from a dry signal.
 	aims[audio.KeyLevel] = solve.Aim{Want: settled, Tol: drift}
 
 	// After the floor, because a nudge is measured in tolerances and a
@@ -427,10 +482,46 @@ func nudgesOn(
 }
 
 // targetFor is what the genre's records measure as, middle and spread.
+// solvingFor is what this run is aiming at, for a reader.
+func solvingFor(
+	opts TuneOptions,
+) string {
+	if opts.Player != "" {
+		return opts.Player + "'s own records"
+	}
+
+	return opts.Genre
+}
+
 func targetFor(
 	ctx context.Context,
 	opts TuneOptions,
 ) (audio.Across, error) {
+	// One artist's own records, which is the stronger target: a genre is the
+	// middle of a population and this is the person being emulated. Always from
+	// the tree, because these figures are not shipped.
+	if opts.Player != "" {
+		found, err := opts.Players.MeasuredPlayers(ctx, opts.Corpus)
+		if err != nil {
+			return audio.Across{}, fmt.Errorf("reading %s: %w", opts.Corpus, err)
+		}
+
+		for _, p := range found {
+			if p.ID == opts.Player {
+				if p.Across.Tracks == 0 {
+					return audio.Across{}, fmt.Errorf(
+						"%w: %q has no measured records to aim at",
+						ErrNoTarget, opts.Player)
+				}
+
+				return p.Across, nil
+			}
+		}
+
+		return audio.Across{}, fmt.Errorf(
+			"%w: %s holds no player called %q", ErrNoTarget, opts.Corpus, opts.Player)
+	}
+
 	// The figures shipped with this binary when nobody named a tree. `just
 	// generate` writes them from the same corpus, and measuring it again reads
 	// fifteen bass stems and takes most of a minute against milliseconds for
@@ -623,6 +714,18 @@ func converge(
 		did.residual, did.arrived = step.Residual, step.Arrived
 		did.steps = append(did.steps, step.Steps...)
 
+		// Landed before returning, including when the solve arrived. A solve
+		// that arrives has decided where every dial goes and nothing had moved
+		// them there yet: `land` is what turns them, and returning first left
+		// the chain at the values the pass started from.
+		//
+		// So a tune that worked threw its answer away and a tune that struggled
+		// kept its moves, which is the wrong way round. `--out` wrote the
+		// starting chain and called it tuned.
+		if err := land(ctx, w, opts, bench, signal, knobs, step.Steps, settled); err != nil {
+			return did, err
+		}
+
 		if step.Arrived {
 			return did, nil
 		}
@@ -636,10 +739,6 @@ func converge(
 		}
 
 		best = worst
-
-		if err := land(ctx, w, opts, bench, signal, knobs, step.Steps, settled); err != nil {
-			return did, err
-		}
 
 		// The chain is not reloaded between passes on purpose: the next pass
 		// reads its slopes from where this one landed, which is the whole

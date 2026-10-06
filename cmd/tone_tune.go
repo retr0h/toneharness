@@ -28,6 +28,7 @@ import (
 var (
 	toneTuneID       string
 	toneTuneGenre    string
+	toneTunePlayer   string
 	toneTuneCorpus   string
 	toneTuneDry      string
 	toneTuneSeconds  float64
@@ -96,8 +97,10 @@ wrong for the sound is a real answer to somebody who owns that gear.`,
 		return cli.Tune(cmd.Context(), cmd.OutOrStdout(), cli.TuneOptions{
 			Client:       client,
 			Genres:       client,
+			Players:      client,
 			ID:           toneTuneID,
 			Genre:        toneTuneGenre,
+			Player:       toneTunePlayer,
 			Corpus:       toneTuneCorpus,
 			Dry:          toneTuneDry,
 			Seconds:      toneTuneSeconds,
@@ -122,6 +125,10 @@ func init() {
 	f.StringVar(&toneTuneID, "id", "", "the curated rig to tune")
 	f.StringVar(&toneTuneGenre, "genre", "",
 		"what to aim it at, by the name the corpus tags records with")
+	f.StringVar(&toneTunePlayer, "player", "",
+		"one artist's own records to aim at instead of a genre, by the "+
+			"directory their recordings sit in; needs --corpus, because a "+
+			"player's figures are measured rather than shipped")
 	f.StringVar(&toneTuneCorpus, "corpus",
 		"resources/music/bass", "the recordings the target is measured from")
 	f.StringVar(&toneTuneDry, "dry", "resources/dry/bass-di.wav",
@@ -163,5 +170,4 @@ func init() {
 	f.StringVar(&toneTuneClient.device, "device", "", deviceUsage)
 
 	_ = toneTuneCmd.MarkFlagRequired("id")
-	_ = toneTuneCmd.MarkFlagRequired("genre")
 }

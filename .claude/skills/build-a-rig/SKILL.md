@@ -73,9 +73,10 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 | to measure a recording, or to choose gear by measuring            | [references/measuring.md](references/measuring.md)          |
 | to get it onto the pedal, or to read what the pedal holds         | [references/device.md](references/device.md)                |
 | to change a rig after hearing it, or what a target is             | [references/correcting.md](references/correcting.md)        |
+| to iterate with the pedal in front of you, and keep what you hear | [references/iterating.md](references/iterating.md)          |
 | anything touching claims, citations or evidence                   | [references/evidence.md](references/evidence.md)            |
 | to write the rig down, check it builds, and ship it | [references/shipping.md](references/shipping.md) |
-| all of it, in order                                               | All nine, in that order                                    |
+| all of it, in order                                               | All ten, in that order                                     |
 
 ## 3. Say which claim you have
 
@@ -89,6 +90,10 @@ Never report one as another, and never describe work as verified on evidence
 you did not gather. If you did not run it, say you did not run it. This is the
 failure this project cares about most, and machine-readable output makes it
 easier to commit rather than harder.
+Beyond the ladder, [AGENTS.md's what to report](../../../AGENTS.md#what-to-report-every-time)
+is the shape every skill answers in: where anything landed by path, what was
+decided on somebody's behalf, which rung you reached, and what it cost the device.
+
 
 Report in this order, because it is the order that avoids rework:
 

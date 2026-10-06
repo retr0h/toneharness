@@ -251,3 +251,42 @@ func (mr *MockGenresMockRecorder) MeasuredGenres(ctx, corpus any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MeasuredGenres", reflect.TypeOf((*MockGenres)(nil).MeasuredGenres), ctx, corpus)
 }
+
+// MockRecorded is a mock of Recorded interface.
+type MockRecorded struct {
+	ctrl     *gomock.Controller
+	recorder *MockRecordedMockRecorder
+	isgomock struct{}
+}
+
+// MockRecordedMockRecorder is the mock recorder for MockRecorded.
+type MockRecordedMockRecorder struct {
+	mock *MockRecorded
+}
+
+// NewMockRecorded creates a new mock instance.
+func NewMockRecorded(ctrl *gomock.Controller) *MockRecorded {
+	mock := &MockRecorded{ctrl: ctrl}
+	mock.recorder = &MockRecordedMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockRecorded) EXPECT() *MockRecordedMockRecorder {
+	return m.recorder
+}
+
+// MeasuredPlayers mocks base method.
+func (m *MockRecorded) MeasuredPlayers(ctx context.Context, corpus string) ([]audio.Player, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MeasuredPlayers", ctx, corpus)
+	ret0, _ := ret[0].([]audio.Player)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MeasuredPlayers indicates an expected call of MeasuredPlayers.
+func (mr *MockRecordedMockRecorder) MeasuredPlayers(ctx, corpus any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MeasuredPlayers", reflect.TypeOf((*MockRecorded)(nil).MeasuredPlayers), ctx, corpus)
+}

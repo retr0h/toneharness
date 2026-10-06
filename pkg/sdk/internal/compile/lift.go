@@ -119,10 +119,34 @@ func entryFor(
 ) rig.ChainEntry {
 	blk, known := cat.Block(b.Model)
 
-	return rig.ChainEntry{
+	out := rig.ChainEntry{
 		Gear: gearName(blk, b.Model, known),
 		Role: roleFor(blk.Category, known),
 	}
+
+	// Every control the block is set to, which is what makes a lifted rig the
+	// specification of the preset rather than a sketch of it. Before this a
+	// lifted rig named the gear and dropped every value, so a mic moved on the
+	// pedal came back as nothing at all.
+	if len(b.Params) > 0 {
+		held := make(map[string]catalog.Setting, len(b.Params))
+		for name, v := range b.Params {
+			held[name] = catalog.Set(v)
+		}
+
+		out.Controls = &held
+	}
+
+	if b.DSP > 0 {
+		out.Dsp = &b.DSP
+	}
+
+	if !b.Enabled {
+		off := b.Enabled
+		out.Enabled = &off
+	}
+
+	return out
 }
 
 // gearName describes a block the way a person would.

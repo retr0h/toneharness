@@ -1,99 +1,106 @@
 # Dan Andriano — Alkaline Trio
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: dan-andriano
-
 ask:
+  confidence: medium
+  genre:
+  - pop-punk
+  - punk
+  instrument: bass
+  played:
+  - evidence:
+    - caveat: |-
+        the same gear box names four other instruments, a GPC signature bass and Fender Jazz reissues among them, and he does not say which is on which song. This takes the one he accounts for in his own words and dates to five years before these records.
+        Strings are left out rather than guessed. The box says "Ernie Ball" and that brand makes both, so nothing read here says round or flat.
+      kind: cited
+      note: 'he says how he came to them, and that they are what he plays now: "When
+        we worked with producer Jerry Finn on Crimson [Vagrant, 2005], I played his
+        ''62 Fender P-Bass, which was the nicest bass I''ve ever played... As soon
+        as we finished making that record, I bought two Fender ''62 Reissue Precision
+        Basses and sanded the finish off the necks to give them a wornin feel. Now
+        I do that to all my basses."'
+      url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
+    gear: Fender '62 Reissue Precision Bass
   subject:
+    band: Alkaline Trio
+    era: This Addiction
     kind: artist
     name: Dan Andriano
-    band: Alkaline Trio
-    # One album, which is as narrow as an era here gets. All three records the
-    # corpus measures are from This Addiction, and the interview behind the rig
-    # was published two months after it.
-    era: This Addiction
-    years: { from: 2010, to: 2010 }
-
-  instrument: bass
-
-  # The genres the corpus tags these records with, which is what `measure genres`
-  # measures a target from.
-  genre: [pop-punk, punk]
-
-  played:
-    - gear: Fender '62 Reissue Precision Bass
-      evidence:
-        - kind: cited
-          url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
-          note: >-
-            he says how he came to them, and that they are what he plays now:
-            "When we worked with producer Jerry Finn on Crimson [Vagrant, 2005],
-            I played his '62 Fender P-Bass, which was the nicest bass I've ever
-            played... As soon as we finished making that record, I bought two
-            Fender '62 Reissue Precision Basses and sanded the finish off the
-            necks to give them a wornin feel. Now I do that to all my basses."
-          caveat: >-
-            the same gear box names four other instruments, a GPC signature bass
-            and Fender Jazz reissues among them, and he does not say which is on
-            which song. This takes the one he accounts for in his own words and
-            dates to five years before these records.
-
-            Strings are left out rather than guessed. The box says "Ernie Ball"
-            and that brand makes both, so nothing read here says round or flat.
-
-  # No words. Nothing read describes how these records sound in the terms this
-  # vocabulary carries, and the interview is about production rather than tone.
-
-  confidence: medium
-
+    years:
+      from: 2010
+      to: 2010
+id: dan-andriano
 rig:
-  instrument: bass
-
   chain:
-    - role: amp
-      gear: Marshall Major
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - confidence: medium
+    controls:
+      Bass: "0.41"
+      Bias: "0.74"
+      BiasX: "0.5"
+      ChVol: "0.8"
+      Drive: "0.6"
+      Hum: "0.5"
+      Master: "1.0"
+      Mid: "0.89"
+      MidFreq: "2"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.88"
+    evidence:
+    - caveat: |-
+        he names it as what he records with rather than as what is on this record. The interview is dated 30 April 2010 and This Addiction came out that February, so the statement is present tense either side of it, and the article's own gear box lists the Major among his rig. That is as close as anything read here gets, and it is not the same as him saying he used it on these three songs.
+        The Orange AD-200B in the same box is the live rig by his own sentence, so it is not here.
+      kind: cited
+      note: 'asked what he had learned about getting the most from his gear, he separates
+        the stage from the tape himself: "Live, I play though an Orange rig, but the
+        amp I like to record with is a 1971 Marshall Major head. It''s the best sounding
+        amp I''ve ever played through." He says what it does: "It''s a 200-watt head...
+        with bass it sounds perfect. It gets pretty gnarly, but it stays smooth. It''s
+        almost like naturally compressed sound."'
+      url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
+    gear: Marshall Major
+    role: amp
+    substitute:
+      confidence: low
       evidence:
-        - kind: cited
-          url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
-          note: >-
-            asked what he had learned about getting the most from his gear, he
-            separates the stage from the tape himself: "Live, I play though an
-            Orange rig, but the amp I like to record with is a 1971 Marshall
-            Major head. It's the best sounding amp I've ever played through." He
-            says what it does: "It's a 200-watt head... with bass it sounds
-            perfect. It gets pretty gnarly, but it stays smooth. It's almost like
-            naturally compressed sound."
-          caveat: >-
-            he names it as what he records with rather than as what is on this
-            record. The interview is dated 30 April 2010 and This Addiction came
-            out that February, so the statement is present tense either side of
-            it, and the article's own gear box lists the Major among his rig. That
-            is as close as anything read here gets, and it is not the same as him
-            saying he used it on these three songs.
-
-            The Orange AD-200B in the same box is the live rig by his own
-            sentence, so it is not here.
-      substitute:
-        gear: Ampeg SVT
-        evidence:
-          - kind: cited
-            url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
-            note: >-
-              the same article's gear box lists his rig as "Orange AD-200B with
-              Orange 4x10 cabs; Ampeg SVT; '71 Marshal Major", so the SVT is an
-              amplifier he is documented as owning alongside the Major rather
-              than one picked for sounding like it.
-            caveat: >-
-              this is a device limit, not a claim that the two amplifiers sound
-              alike. Line 6 model no Marshall Major, and the ones they do model
-              are all guitar amps, which this tool will not put in a bass chain.
-              Of the bass amplifiers it has, the SVT is the only one he is known
-              to have owned.
-
-              He says the Major is what he records with and does not say that of
-              the SVT, so this stands in for the recorded sound with something
-              from the right rig rather than the right room.
-        confidence: low
-      confidence: medium
+      - caveat: |-
+          this is a device limit, not a claim that the two amplifiers sound alike. Line 6 model no Marshall Major, and the ones they do model are all guitar amps, which this tool will not put in a bass chain. Of the bass amplifiers it has, the SVT is the only one he is known to have owned.
+          He says the Major is what he records with and does not say that of the SVT, so this stands in for the recorded sound with something from the right rig rather than the right room.
+        kind: cited
+        note: the same article's gear box lists his rig as "Orange AD-200B with Orange
+          4x10 cabs; Ampeg SVT; '71 Marshal Major", so the SVT is an amplifier he
+          is documented as owning alongside the Major rather than one picked for sounding
+          like it.
+        url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
+      gear: Ampeg SVT
+  - controls:
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      High Cut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: 8x10 Ampeg SVT-E
+    role: cab
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

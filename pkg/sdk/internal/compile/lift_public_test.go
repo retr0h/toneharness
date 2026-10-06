@@ -117,6 +117,7 @@ func (s *LiftPublicTestSuite) TestLift() {
 					wantRole       rig.Role
 					wantInstrument rig.Instrument
 					wantID         string
+					wantDSP        int
 					err            error
 					errText        string
 				}{
@@ -197,6 +198,18 @@ func (s *LiftPublicTestSuite) TestLift() {
 						model:  "HD2_AmpSVBeastNrm",
 						wantID: "untitled",
 					},
+					{
+						// A block on the second processor, which a Helix Floor has and
+						// a Stomp does not. Said rather than dropped: a chain rebuilt
+						// without it puts every block on dsp0, which is a different
+						// preset and on some hardware not a loadable one.
+						name: "a block on the second processor says which",
+						raw: `{"schema":"L6Preset","version":6,"data":{"device":2162694,` +
+							`"meta":{"name":"Second"},"tone":{"dsp1":{"block0":` +
+							`{"@model":"HD2_AmpSVBeastNrm","@enabled":true,"@position":0}}}}}`,
+						wantGear: "Ampeg SVT® (normal channel)",
+						wantDSP:  1,
+					},
 					{name: "a preset holding no blocks", bare: true, err: rig.ErrInvalid},
 					{
 						name: "a document it cannot read",
@@ -258,6 +271,11 @@ func (s *LiftPublicTestSuite) TestLift() {
 
 						if tt.wantID != "" {
 							s.Require().Equal(tt.wantID, gotID)
+						}
+
+						if tt.wantDSP != 0 {
+							s.Require().NotNil(got.Chain[0].Dsp)
+							s.Require().Equal(tt.wantDSP, *got.Chain[0].Dsp)
 						}
 					})
 				}

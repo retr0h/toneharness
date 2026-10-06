@@ -86,6 +86,10 @@ The first two have passed while the fourth failed, on presets that rendered as
 an empty chain. Reporting success because a file was written is the failure this
 whole project exists to avoid, so a reading is worth nothing until the path it
 came down is established. [references/claims.md](references/claims.md) says how.
+Beyond the ladder, [AGENTS.md's what to report](../../../AGENTS.md#what-to-report-every-time)
+is the shape every skill answers in: where anything landed by path, what was
+decided on somebody's behalf, which rung you reached, and what it cost the device.
+
 
 If you did not run it, say you did not run it. Report in this order:
 

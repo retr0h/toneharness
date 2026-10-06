@@ -9,65 +9,77 @@
 # it again on the same corpus and it answers the same way.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: southern-rock
-
 ask:
-  aliases: [southern-rock-sound]
-
+  aliases:
+  - southern-rock-sound
+  confidence: low
+  genre:
+  - southern-rock
+  instrument: bass
   subject:
     kind: genre
     name: Southern rock
-
-  instrument: bass
-
-  genre: [southern-rock]
-
-  # Nothing here was read about a person, because there is no person. The
-  # confidence is in the measurement and the measurement is of other people's
-  # records.
-  confidence: low
-
+id: southern-rock
 rig:
-  instrument: bass
-
-  # The signal path, in order.
   chain:
-    - role: amp
-      gear: MESA/Boogie Bass 400+
-      capture: direct
-      evidence:
-        - kind: audio
-          note: >-
-            chosen by measurement rather than by anybody's say-so. Across 18
-            records from 6 players, southern-rock measures a centroid the device's
-            nearest bass amplifier sits at 150 Hz against 135, which is the closest of the
-            twenty-seven it models for this instrument.
-
-            Its records earn no word: the genre has a position and nothing that
-            sets it apart from the players who play none of it.
-          caveat: >-
-            a genre measured off finished records, so the figures carry the
-            amplifier, the microphone, the desk and the master of every one of
-            them. The amplifier below is what sits nearest those figures, not one
-            anybody is known to have used.
-
-            It also moves. A genre is measured against the players who play none
-            of it, so this answer changes when the corpus gains players, and it
-            is worth rebuilding rather than trusting indefinitely.
-      confidence: low
-
-    - role: cab
-      gear: Ampeg 8x10
-      capture: direct
-      evidence:
-        - kind: corpus
-          note: >-
-            what presets for this instrument almost always hold, rather than
-            anything about this genre. An eight-by-ten behind a big valve head is
-            the ordinary pairing in the preset corpus.
-          caveat: >-
-            a habit rather than a measurement of these records. Nothing here says
-            this genre was recorded through one.
-      confidence: low
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: direct
+    confidence: low
+    controls:
+      Bass: "0.5"
+      Bias: "0.55"
+      BiasX: "0.9"
+      ChVol: "0.74"
+      Drive: "0.62"
+      HighMid: "0.5"
+      Hum: "0.5"
+      Master: "0.6"
+      Mid: "0.56"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.5"
+    evidence:
+    - caveat: |-
+        a genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. The amplifier below is what sits nearest those figures, not one anybody is known to have used.
+        It also moves. A genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.
+      kind: audio
+      note: |-
+        chosen by measurement rather than by anybody's say-so. Across 18 records from 6 players, southern-rock measures a centroid the device's nearest bass amplifier sits at 150 Hz against 135, which is the closest of the twenty-seven it models for this instrument.
+        Its records earn no word: the genre has a position and nothing that sets it apart from the players who play none of it.
+    gear: MESA/Boogie Bass 400+
+    role: amp
+  - capture: direct
+    confidence: low
+    controls:
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      High Cut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - caveat: a habit rather than a measurement of these records. Nothing here says
+        this genre was recorded through one.
+      kind: corpus
+      note: what presets for this instrument almost always hold, rather than anything
+        about this genre. An eight-by-ten behind a big valve head is the ordinary
+        pairing in the preset corpus.
+    gear: Ampeg 8x10
+    role: cab
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

@@ -188,42 +188,93 @@ func (s *KnobsPublicTestSuite) TestLowerSetsWhatTheRigSaid() {
 	s.Require().Equal(catalog.Float(0.47), built.Blocks[0].Params["Drive"])
 }
 
-// TestResolve covers the knob values a rig's words reach.
+// TestResolve covers what a rig's own values and words do to a built chain.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *KnobsPublicTestSuite) TestResolve() {
 	for _, tt := range []struct {
 		name string
-		then func()
+		// set is the seven-word vocabulary, controls the gear's real controls.
+		set      *rig.Settings
+		controls map[string]catalog.Setting
+		// want is the value one control has to end up at.
+		at   string
+		want catalog.ParamValue
+		err  error
 	}{
 		{
-			// The build path, where the words are
-			// the last thing to move a control.
-			name: "sets what the rig said",
-			then: func() {
-				spec := bassRig("Ampeg SVT", "")
-				spec.Chain[0].Settings = &rig.Settings{Drive: knob(0.47)}
-
-				built, _, _, _, err := compile.Resolve("a-rig", spec, compile.Intent{}, s.cat, nil)
-				s.Require().NoError(err)
-				s.Require().Equal(catalog.Float(0.47), built.Blocks[0].Params["Drive"])
-			},
+			name: "a word the gear has a control for",
+			set:  &rig.Settings{Drive: knob(0.47)},
+			at:   "Drive",
+			want: catalog.Float(0.47),
 		},
 		{
-			// The same refusal on
-			// the build path, where the block is one the catalog chose.
-			name: "refuses a word the gear has no control for",
-			then: func() {
-				spec := bassRig("Ampeg SVT", "")
-				spec.Chain[0].Settings = &rig.Settings{Presence: knob(0.4)}
-
-				_, _, _, _, err := compile.Resolve("a-rig", spec, compile.Intent{}, s.cat, nil)
-				s.Require().ErrorIs(err, compile.ErrNoSuchValue)
-			},
+			// The same refusal on the build path, where the block is one the
+			// catalog chose rather than one somebody named.
+			name: "a word the gear has no control for",
+			set:  &rig.Settings{Presence: knob(0.4)},
+			err:  compile.ErrNoSuchValue,
+		},
+		{
+			// The point of stating controls: the value is used as it stands,
+			// with nothing re-derived.
+			name:     "a control stated outright",
+			controls: map[string]catalog.Setting{"Drive": catalog.Set(catalog.Float(0.8))},
+			at:       "Drive",
+			want:     catalog.Float(0.8),
+		},
+		{
+			// A value beats a word, because a word is a request and a value is
+			// an answer. Both naming the same control is possible and the
+			// value wins.
+			name:     "a control and a word for the same thing",
+			set:      &rig.Settings{Drive: knob(0.47)},
+			controls: map[string]catalog.Setting{"Drive": catalog.Set(catalog.Float(0.9))},
+			at:       "Drive",
+			want:     catalog.Float(0.9),
+		},
+		{
+			name:     "a control the model does not have",
+			controls: map[string]catalog.Setting{"NotAKnob": catalog.Set(catalog.Float(1))},
+			err:      compile.ErrNoSuchValue,
+		},
+		{
+			// Checked against the catalog's range, because the device refuses a
+			// whole preset over one value and a message naming the control is a
+			// better way to learn that.
+			name:     "a control past the end of its range",
+			controls: map[string]catalog.Setting{"Drive": catalog.Set(catalog.Float(99999))},
+			err:      catalog.ErrBadParam,
+		},
+		{
+			// A switch has no range to be outside of, so nothing invents one and
+			// nothing refuses it for being unlike a number.
+			name:     "a control whose value is not a number",
+			controls: map[string]catalog.Setting{"Drive": catalog.Set(catalog.Bool(true))},
+			at:       "Drive",
+			want:     catalog.Bool(true),
 		},
 	} {
 		s.Run(tt.name, func() {
-			tt.then()
+			spec := bassRig("Ampeg SVT", "")
+			spec.Chain[0].Settings = tt.set
+
+			if tt.controls != nil {
+				held := tt.controls
+				spec.Chain[0].Controls = &held
+			}
+
+			built, _, _, _, err := compile.Resolve(
+				"a-rig", spec, compile.Intent{}, s.cat, nil)
+
+			if tt.err != nil {
+				s.Require().ErrorIs(err, tt.err)
+
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().Equal(tt.want, built.Blocks[0].Params[tt.at])
 		})
 	}
 }

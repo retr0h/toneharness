@@ -113,6 +113,20 @@ func (h *handlers) slotsSwap(
 	return said("swapped %s and %s", in.From, in.To), change, nil
 }
 
+func (h *handlers) rigsResolve(
+	ctx context.Context,
+	_ *gomcp.CallToolRequest,
+	in Resolve,
+) (*gomcp.CallToolResult, sdk.Made, error) {
+	made, err := h.client.Resolve(ctx, sdk.Resolve{RigID: in.ID, Out: in.Out})
+	if err != nil {
+		return nil, sdk.Made{}, err
+	}
+
+	return said("resolved %s into %s, %d blocks with every control written down",
+		in.ID, made.Path, len(made.Plan.Blocks)), made, nil
+}
+
 func (h *handlers) rigsNew(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,

@@ -136,6 +136,13 @@ rig:
   chain:
     - role: comp
       gear: Teletronix LA-2A
+      # The device attributes a block carries, which are not controls and are not
+      # reachable by any word. A compressor set to stay on through every snapshot,
+      # running in stereo, and matching its bypassed level so switching it off is
+      # not also a volume drop.
+      keep_on_snapshot: true
+      stereo: false
+      bypass_volume: 1.0
       settings:
         level: 0.5
       # Nobody has confirmed Dirnt uses this specific compressor. It is here
@@ -209,6 +216,23 @@ rig:
 
     - role: cab
       gear: Ampeg 8x10
+      # What a cabinet is heard through, and the clearest case for this whole
+      # section: moving a microphone is something somebody does by ear in
+      # seconds, no word can express it, and before these fields existed there
+      # was nowhere to keep the answer.
+      #
+      # `mic` is an index rather than a name, because the catalog carries the
+      # numbers and Line 6 do not publish which microphone each one is.
+      mic: 5
+      distance: 2.5
+      # A second cabinet this one is paired with, and an impulse response loaded
+      # in place of a modelled box. Both name something the device holds rather
+      # than anything measured.
+      cab: cab0
+      ir: 02cd584ccf3aecf2d04f9939d04783d0
+      # Whether a tail keeps ringing after the block is switched off. Audible,
+      # and nothing else in a rig says it.
+      trails: false
       evidence:
         # An entry can be less well attested than the one above it, and saying
         # so is the point. The shipped rig has the same split: the amplifier is

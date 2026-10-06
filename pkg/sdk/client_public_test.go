@@ -28,6 +28,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -38,6 +39,10 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
+
+	tonespec "github.com/retr0h/toneharness/pkg/sdk/tone"
+
+	sdkplan "github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 type ClientPublicTestSuite struct {
@@ -435,6 +440,345 @@ func (s *ClientPublicTestSuite) rigsDir(
 	}
 
 	return dir
+}
+
+// tunedPlan is what `tone tune --out` writes: a chain with its dials where the
+// solve left them.
+const tunedPlan = `blocks:
+- model: HD2_AmpSVBeastBrt
+  params:
+    Drive: 0.22
+    Bass: 0.49
+  dsp: 0
+  pos: 0
+  enabled: true
+name: Their Player
+`
+
+// strangePlan holds a position that is not a number, which a preset accepts on
+// the way in and refuses on the way back out, so the chain cannot be read off
+// the document this plan produced.
+const strangePlan = `blocks:
+- model: HD2_AmpSVBeastBrt
+  dsp: 0
+  pos: 0
+  enabled: true
+  attrs:
+    "@position": "nowhere"
+name: Their Player
+`
+
+// collidingPlan names a control after an attribute the preset format already
+// owns, so there is no block to write it into.
+const collidingPlan = `blocks:
+- model: HD2_AmpSVBeastBrt
+  dsp: 0
+  pos: 0
+  enabled: true
+  params:
+    "@model": 1
+name: Their Player
+`
+
+// TestMake covers Make, which turns a rig into a preset on disk.
+//
+// What the rig becomes is the compiler's own suite. This covers what this layer
+// decides, which is where the file goes.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ClientPublicTestSuite) TestMake() {
+	for _, tt := range []struct {
+		name string
+		out  bool
+		err  error
+	}{
+		{
+			name: "a preset written where it was asked for",
+			out:  true,
+		},
+		{
+			// Nowhere to put it. One layer down an empty path means "build it
+			// and write nothing", which is what a resolve wants and what nobody
+			// calling this does, so answering with a plan and no preset would
+			// read as a build that worked.
+			name: "nowhere to write it",
+			err:  sdk.ErrNoPresetFile,
+		},
+	} {
+		s.Run(tt.name, func() {
+			out := ""
+			if tt.out {
+				out = filepath.Join(s.T().TempDir(), "out.hlx")
+			}
+
+			made, err := sdk.New().Make(
+				context.Background(), sdk.Build{RigID: "mike-dirnt", Out: out})
+
+			if tt.err != nil {
+				s.Require().ErrorIs(err, tt.err)
+
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().Equal(out, made.Path)
+			s.Require().FileExists(out)
+		})
+	}
+}
+
+// TestResolve covers Resolve, which writes a rig back with every control it
+// resolved to.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ClientPublicTestSuite) TestResolve() {
+	for _, tt := range []struct {
+		name string
+		// own writes the rig into a directory of somebody's own, which is the
+		// only kind there is a file to write back to.
+		own bool
+		// out names somewhere else to write it, as a rig that ships must, and
+		// nowhere a directory that is not there.
+		out     bool
+		nowhere bool
+		// from takes the controls out of a plan instead of building the rig,
+		// and gone names one that is not there.
+		from      bool
+		gone      bool
+		junk      bool
+		strange   bool
+		colliding bool
+		// broken names gear nothing carries, so the rig reads and will not build.
+		broken bool
+		// catalog points the client at a file that is not one, which is the only
+		// way asking for the catalog fails.
+		catalog bool
+		id      string
+		// want is what the document has to hold afterwards, and err that it was
+		// refused instead. errText is for a refusal with no sentinel of its own.
+		want    []string
+		err     error
+		errText string
+	}{
+		{
+			// The whole point: a rig naming gear and no values comes back with
+			// every control the gear has, at the value it was given.
+			name: "every control is written down",
+			own:  true,
+			id:   "their-player",
+			want: []string{
+				"controls:", "resolved:", "device: HX Stomp",
+				"catalog: HX Edit 3.82",
+			},
+		},
+		{
+			// Blocks the compiler added appear too, and say who put them there.
+			// A rig that named an amplifier and quietly became several blocks
+			// could not be read as a description of its own preset.
+			name: "a block the corpus added says so",
+			own:  true,
+			id:   "their-player",
+			want: []string{"kind: corpus", "added by the compiler"},
+		},
+		{
+			// A rig in the binary is bytes rather than a file, so there is
+			// nowhere to write back to and saying so beats writing somewhere
+			// that looks like it worked.
+			name: "a rig that ships has no file to write to",
+			id:   "mike-dirnt",
+			err:  sdk.ErrNoRigFile,
+		},
+		{
+			name: "a rig nobody has",
+			own:  true,
+			id:   "nobody-at-all",
+			err:  sdk.ErrNoSuchRig,
+		},
+		{
+			// What `tone tune` wrote, which is the case that matters: a chain
+			// solved against measured figures with the pedal in the loop. That
+			// answer cannot be rebuilt from the rig, so building again here
+			// would throw it away and hand back corpus medians.
+			name: "controls taken from a plan rather than built again",
+			own:  true,
+			id:   "their-player",
+			from: true,
+			want: []string{"controls:", "Drive:"},
+		},
+		{
+			name: "a plan that is not there",
+			own:  true,
+			id:   "their-player",
+			from: true,
+			gone: true,
+			err:  os.ErrNotExist,
+		},
+		{
+			// A file somebody passed that is not a plan, which is the ordinary
+			// mistake: `--from` next to a rig instead of what a tune wrote.
+			name: "a file that is not a plan",
+			own:  true,
+			id:   "their-player",
+			from: true,
+			junk: true,
+			err:  sdkplan.ErrNotAPlan,
+		},
+		{
+			// Somewhere it cannot write, which is a mistyped --out rather than
+			// anything exotic.
+			name:    "a path it cannot write",
+			own:     true,
+			id:      "their-player",
+			nowhere: true,
+			err:     os.ErrNotExist,
+		},
+		{
+			// The same two refusals down the --from path, which writes the
+			// document the same way and so has the same two ways to fail.
+			name: "a plan and a rig that ships",
+			from: true,
+			id:   "mike-dirnt",
+			err:  sdk.ErrNoRigFile,
+		},
+		{
+			name:    "a plan and a path it cannot write",
+			own:     true,
+			id:      "their-player",
+			from:    true,
+			nowhere: true,
+			err:     os.ErrNotExist,
+		},
+		{
+			// A plan a preset will take and not give back. Refused rather than
+			// written half resolved: a document whose chain nothing can read is
+			// not a specification of anything.
+			name:    "a plan the chain cannot be read back off",
+			own:     true,
+			id:      "their-player",
+			from:    true,
+			strange: true,
+			errText: "reading the chain",
+		},
+		{
+			// A control named after something the preset format already owns, so
+			// there is nowhere in the block to put it.
+			name:      "a plan whose control collides with an attribute",
+			own:       true,
+			id:        "their-player",
+			from:      true,
+			colliding: true,
+			errText:   "collides with an attribute",
+		},
+		{
+			// A rig that reads and will not build, which is the ordinary one:
+			// gear nothing on this device answers to.
+			name:    "a rig the catalog cannot realise",
+			own:     true,
+			broken:  true,
+			id:      "their-player",
+			errText: "emulates \"Nothing Like That\"",
+		},
+		{
+			// No catalog, so there is nothing to resolve gear against. Both
+			// resolves ask for one, and the --from path asks before it has
+			// looked at the plan.
+			name:    "a catalog that will not open",
+			own:     true,
+			id:      "their-player",
+			catalog: true,
+			err:     os.ErrNotExist,
+		},
+		{
+			name:    "a plan and a catalog that will not open",
+			own:     true,
+			id:      "their-player",
+			from:    true,
+			catalog: true,
+			err:     os.ErrNotExist,
+		},
+	} {
+		s.Run(tt.name, func() {
+			opts := []sdk.Option(nil)
+			at := ""
+
+			if tt.own {
+				files := ownRig("their-player", "their-player", "", "bass")
+				if tt.broken {
+					files["their-player.yaml"] = strings.Replace(
+						files["their-player.yaml"], "Aguilar DB51", "Nothing Like That", 1)
+				}
+
+				dir := s.rigsDir(files)
+				opts = append(opts, sdk.WithUserRigs(dir))
+				at = filepath.Join(dir, "artists", "their-player.yaml")
+			}
+
+			out := ""
+			if tt.nowhere {
+				out = filepath.Join(s.T().TempDir(), "no", "such", "dir", "o.yaml")
+			}
+
+			if tt.out {
+				out = filepath.Join(s.T().TempDir(), "out.yaml")
+				at = out
+			}
+
+			if tt.catalog {
+				opts = append(opts, sdk.WithCatalog(
+					filepath.Join(s.T().TempDir(), "no", "catalog.json")))
+			}
+
+			from := ""
+
+			if tt.from {
+				from = filepath.Join(s.T().TempDir(), "tuned.plan.yaml")
+
+				switch {
+				case tt.gone:
+				case tt.junk:
+					s.Require().NoError(os.WriteFile(from, []byte("not: a plan\n"), 0o600))
+				case tt.strange:
+					s.Require().NoError(os.WriteFile(from, []byte(strangePlan), 0o600))
+				case tt.colliding:
+					s.Require().NoError(os.WriteFile(from, []byte(collidingPlan), 0o600))
+				default:
+					s.Require().NoError(os.WriteFile(from, []byte(tunedPlan), 0o600))
+				}
+			}
+
+			made, err := sdk.New(opts...).Resolve(
+				context.Background(),
+				sdk.Resolve{RigID: tt.id, Out: out, From: from})
+
+			if tt.errText != "" {
+				s.Require().ErrorContains(err, tt.errText)
+
+				return
+			}
+
+			if tt.err != nil {
+				s.Require().ErrorIs(err, tt.err)
+
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().NotEmpty(made.Plan.Blocks)
+
+			raw, err := os.ReadFile(at)
+			s.Require().NoError(err)
+
+			for _, want := range tt.want {
+				s.Require().Contains(string(raw), want)
+			}
+
+			// What it wrote has to load, or the next build refuses a document
+			// this tool produced.
+			held, err := tonespec.Load(bytes.NewReader(raw))
+			s.Require().NoError(err)
+			s.Require().NotEmpty(held.Rig.Chain)
+		})
+	}
 }
 
 // TestWithUserRigs covers WithUserRigs, which layers somebody's own directory

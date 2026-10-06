@@ -252,6 +252,18 @@ func register(
 	}
 
 	addTool(s, &gomcp.Tool{
+		Name: "rigs_resolve",
+		Description: "Build a rig and write the whole answer back as a document: " +
+			"every block in the order the device holds it, with every control at " +
+			"the value it was given. What it is for is editing — a control written " +
+			"here is used as it stands, with nothing re-derived — and keeping a " +
+			"change made on the pedal, because the controls come back into the " +
+			"fields they went out of. Writes over the file the rig came from unless " +
+			"out names somewhere else.",
+		Annotations:  destructive(),
+		OutputSchema: mustOutputSchema[sdk.Made](),
+	}, h.rigsResolve)
+	addTool(s, &gomcp.Tool{
 		Name:         "rigs_new",
 		Description:  "Write a rig and the ask beside it from the gear it names, after checking the catalog carries that gear. Refuses a file already there unless the server was started with --allow-writes.",
 		Annotations:  destructive(),
@@ -314,6 +326,16 @@ func outputTypeSchemas() map[reflect.Type]*jsonschema.Schema {
 		// a kind it keeps in unexported fields, so reflection sees an empty
 		// struct and would demand an object.
 		reflect.TypeFor[catalog.ParamValue](): {},
+		// A Setting is the same value as a document writes it down, which is
+		// always a string: the kind has to survive a trip through `interface{}`
+		// and as a number it does not. Reflection sees the ParamValue embedded
+		// in it and would demand an object.
+		reflect.TypeFor[catalog.Setting](): {Types: []string{"string"}},
+		// Nil wherever a block set no parameter, so the map marshals to null.
+		reflect.TypeFor[map[string]catalog.Setting](): {
+			Types:                []string{"null", "object"},
+			AdditionalProperties: &jsonschema.Schema{Types: []string{"string"}},
+		},
 		// A RawMessage is a []byte to reflection, an array of small integers,
 		// but it marshals as the JSON it holds. rig.Spec carries these for
 		// device state it keeps without modelling.

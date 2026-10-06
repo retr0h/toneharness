@@ -87,6 +87,10 @@ Neither the audio nor the measurements are in this repository, so a figure in an
 ask is a claim about a recording nobody else here can replay. The url is the only
 thing that makes it checkable, and a claim without one is an assertion with
 decimal places. If you did not run it, say you did not run it.
+Beyond the ladder, [AGENTS.md's what to report](../../../AGENTS.md#what-to-report-every-time)
+is the shape every skill answers in: where anything landed by path, what was
+decided on somebody's behalf, which rung you reached, and what it cost the device.
+
 
 Report in this order, because it is the order that avoids rework:
 

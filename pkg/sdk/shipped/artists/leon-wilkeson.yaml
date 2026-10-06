@@ -8,92 +8,106 @@
 # same thing.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: leon-wilkeson
-
 ask:
-  aliases: [wilkeson, skynyrd, lynyrd-skynyrd]
-
+  aliases:
+  - wilkeson
+  - skynyrd
+  - lynyrd-skynyrd
+  confidence: low
+  genre:
+  - southern-rock
+  instrument: bass
   subject:
-    kind: artist
-    name: Leon Wilkeson
     band: Lynyrd Skynyrd
     era: Street Survivors
-    years: { from: 1977, to: 1977 }
-
-  instrument: bass
-
-  genre: [southern-rock]
-
-  confidence: low
-
+    kind: artist
+    name: Leon Wilkeson
+    years:
+      from: 1977
+      to: 1977
+id: leon-wilkeson
 rig:
-  instrument: bass
-
-  # The signal path, in order.
   chain:
-    - role: amp
-      gear: Peavey F-800B
-      capture: both
-      substitute:
-        gear: Sunn Coliseum 300
-        evidence:
-          - kind: llm
-            note: >-
-              class and era. The F-800B is a solid-state head of the middle
-              seventies and the Coliseum 300 is the only solid-state head of
-              those years this device models. Line 6 model two Peavey amplifiers
-              and both are later guitar heads.
-            caveat: >-
-              asserted by a model and confirmed by nobody. Different
-              manufacturers, and nothing has measured one against the other.
-              If you know a nearer match in this catalog, please open a pull
-              request.
-        confidence: low
-      evidence:
-        - kind: cited
-          url: https://www.guitarworld.com/features/lynyrd-skynyrd-icon-ed-king-on-bassist-leon-wilkeson
-          note: >-
-            the session rig, reported from the January 1978 issue of Modern
-            Recording: a Peavey F-800B head into an 8x10 Altec cabinet, miked
-            with an Electro-Voice RE-20, and taken direct as well.
-          caveat: >-
-            the page would not open in full. Guitar World serves this behind a
-            membership prompt, so the sentence was not read in place and what is
-            quoted above is the claim as it is reported rather than as it is
-            printed. The underlying source is a print magazine from two months
-            after the record, which is the right distance; somebody with the
-            issue should confirm the wording.
-
-            `capture: both` is from the same account: miked and direct together
-            is what it describes, and it is the one claim here that says how the
-            bass reached the tape rather than what it came out of.
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: both
+    confidence: low
+    controls:
+      2kHz: "-1.7"
+      62p5Hz: "5.7"
+      125Hz: "4.7"
+      1kHz: "3.7"
+      4kHz: "3.8"
+      250Hz: "1.3"
+      500Hz: "-2.0"
+      Bright: "true"
+      ChVol: "0.8"
+      Contour: "true"
+      Gain: "0.82"
+      Master: "0.75"
+    evidence:
+    - caveat: |-
+        the page would not open in full. Guitar World serves this behind a membership prompt, so the sentence was not read in place and what is quoted above is the claim as it is reported rather than as it is printed. The underlying source is a print magazine from two months after the record, which is the right distance; somebody with the issue should confirm the wording.
+        `capture: both` is from the same account: miked and direct together is what it describes, and it is the one claim here that says how the bass reached the tape rather than what it came out of.
+      kind: cited
+      note: 'the session rig, reported from the January 1978 issue of Modern Recording:
+        a Peavey F-800B head into an 8x10 Altec cabinet, miked with an Electro-Voice
+        RE-20, and taken direct as well.'
+      url: https://www.guitarworld.com/features/lynyrd-skynyrd-icon-ed-king-on-bassist-leon-wilkeson
+    gear: Peavey F-800B
+    role: amp
+    substitute:
       confidence: low
-
-    - role: cab
-      gear: Altec 8x10
-      capture: both
-      substitute:
-        gear: Ampeg 8x10
-        evidence:
-          - kind: llm
-            note: >-
-              the device models no Altec cabinet. Of the eight-by-tens it does
-              carry, the Ampeg is the same complement of speakers in the same
-              size of box.
-            caveat: >-
-              asserted by a model. Altec built the drivers that made that
-              cabinet what it was, and an Ampeg eight-by-ten is a different
-              speaker in a different cabinet.
-        confidence: low
       evidence:
-        - kind: cited
-          url: https://www.guitarworld.com/features/lynyrd-skynyrd-icon-ed-king-on-bassist-leon-wilkeson
-          note: >-
-            the same account as the head, which names the 8x10 Altec and the
-            Electro-Voice RE-20 in front of it.
-          caveat: >-
-            the same source as the head and the same unopened page, so the two
-            share it and stand or fall together.
+      - caveat: asserted by a model and confirmed by nobody. Different manufacturers,
+          and nothing has measured one against the other. If you know a nearer match
+          in this catalog, please open a pull request.
+        kind: llm
+        note: class and era. The F-800B is a solid-state head of the middle seventies
+          and the Coliseum 300 is the only solid-state head of those years this device
+          models. Line 6 model two Peavey amplifiers and both are later guitar heads.
+      gear: Sunn Coliseum 300
+  - capture: both
+    confidence: low
+    controls:
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      High Cut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - caveat: the same source as the head and the same unopened page, so the two share
+        it and stand or fall together.
+      kind: cited
+      note: the same account as the head, which names the 8x10 Altec and the Electro-Voice
+        RE-20 in front of it.
+      url: https://www.guitarworld.com/features/lynyrd-skynyrd-icon-ed-king-on-bassist-leon-wilkeson
+    gear: Altec 8x10
+    role: cab
+    substitute:
       confidence: low
+      evidence:
+      - caveat: asserted by a model. Altec built the drivers that made that cabinet
+          what it was, and an Ampeg eight-by-ten is a different speaker in a different
+          cabinet.
+        kind: llm
+        note: the device models no Altec cabinet. Of the eight-by-tens it does carry,
+          the Ampeg is the same complement of speakers in the same size of box.
+      gear: Ampeg 8x10
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

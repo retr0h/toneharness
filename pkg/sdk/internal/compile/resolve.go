@@ -58,7 +58,7 @@ func Resolve(
 	// What the rig said about each block, kept beside it. A chain gains
 	// blocks on the way through: an implied cabinet, whatever the corpus
 	// fills. Those are nobody's words, so they take no settings.
-	said := make([]*rig.Settings, 0, len(spec.Chain)+1)
+	wants := make([]*wanted, 0, len(spec.Chain)+1)
 
 	// A cabinet is the one miss worth recovering from: Line 6 do not describe
 	// every cabinet in terms of real gear, and an amplifier already names the
@@ -110,7 +110,7 @@ func Resolve(
 		}
 
 		blocks = append(blocks, b)
-		said = append(said, entry.Settings)
+		wants = append(wants, &wanted{words: entry.Settings, stated: entry.Controls})
 	}
 
 	// A rig naming an amplifier and no cabinet gets the one Line 6 voiced it
@@ -125,7 +125,7 @@ func Resolve(
 		}
 
 		blocks = append(blocks, *cab)
-		said = append(said, nil)
+		wants = append(wants, nil)
 	} else if missed != "" {
 		// Nothing to fall back to, so the rig named a cabinet that cannot be
 		// built and saying so is the only honest answer.
@@ -141,13 +141,13 @@ func Resolve(
 		spokenFor(intent.Words, attackAxis), spokenFor(intent.Words, midsAxis))
 	intent.Words = append(intent.Words, held.Words...)
 
-	blocks, said, added := fill(blocks, said, cat, stats, instrument)
+	blocks, wants, added := fill(blocks, wants, cat, stats, instrument)
 
 	// After fill, because what a chain of this kind usually has is the wider
 	// claim and should not be displaced by one word. Before specFor, because
 	// a block arriving later would miss the corpus medians and start on
 	// catalog defaults.
-	blocks, said, asked := demand(blocks, said, cat, stats, intent, instrument)
+	blocks, wants, asked := demand(blocks, wants, cat, stats, intent, instrument)
 	added = append(added, asked...)
 
 	built := specFor(id, intent, blocks, stats)
@@ -159,7 +159,15 @@ func Resolve(
 	// Last, over the corpus medians and over whatever a word
 	// moved: a number somebody wrote down is the most explicit thing in the
 	// rig, and the only one that says exactly what they meant.
-	if err := saidKnobs(built.Blocks, blocks, said); err != nil {
+	if err := saidKnobs(built.Blocks, blocks, wants); err != nil {
+		return plan.Plan{}, nil, nil, Compensated{}, err
+	}
+
+	// After the words, so a value beats one. A word is a request and a value is
+	// an answer: `setKnobs` writes over whatever is there, so running the words
+	// second let `drive: 0.5` overwrite a `Drive` somebody had set by ear. The two
+	// naming one control is allowed and the value wins.
+	if err := statedControls(built.Blocks, blocks, wants); err != nil {
 		return plan.Plan{}, nil, nil, Compensated{}, err
 	}
 
@@ -491,6 +499,110 @@ func renumber(
 	return spec
 }
 
+// wanted is what one chain entry asked for, kept beside the block it resolved to.
+//
+// One slice rather than two, because `fill` and `demand` insert blocks into the
+// middle of a chain and keep this aligned as they go. A second parallel slice
+// did not go through them: every control landed on the block next door the first
+// time a chain changed shape, and the amplifier's Drive was checked against a
+// compressor.
+type wanted struct {
+	// words is the seven-term vocabulary, which the compiler turns into values.
+	words *rig.Settings
+	// stated is the controls the rig gives outright, applied after the words so
+	// a value beats a word.
+	stated *map[string]catalog.Setting
+}
+
+// statedControls puts the values a rig states outright onto their blocks.
+//
+// After the words, never before. A word is a request and a value is an answer,
+// and `setKnobs` writes over whatever is already there, so the order is what
+// decides which survives. Running this first let `drive: 0.5` overwrite a
+// `Drive` somebody had set by ear, which is the one thing this section exists to
+// prevent.
+//
+// Checked against the catalog by name and by range. A control the model does not
+// have is refused and named, with the ones it does take listed, because the
+// alternative is a document that reads correctly and builds something else.
+func statedControls(
+	built []plan.Block,
+	blocks []catalog.Block,
+	asked []*wanted,
+) error {
+	out := []error(nil)
+
+	for i, entry := range asked {
+		if entry == nil || entry.stated == nil || i >= len(built) {
+			continue
+		}
+
+		for name, v := range *entry.stated {
+			spec, ok := blocks[i].Params[name]
+			if !ok {
+				out = append(out, &NoSuchValueError{
+					Field: fmt.Sprintf("chain[%d].controls.%s", i, name),
+					Value: name,
+					Near:  takes(blocks[i]),
+					Whole: true,
+				})
+
+				continue
+			}
+
+			if err := within(spec, v.ParamValue, i, name); err != nil {
+				out = append(out, err)
+
+				continue
+			}
+
+			built[i].Params[name] = v.ParamValue
+		}
+	}
+
+	return errors.Join(out...)
+}
+
+// within refuses a value the control cannot take.
+//
+// The catalog carries a range for all 5,602 controls, so this is checkable
+// rather than hopeful. A device handed a value past the end of a control refuses
+// the whole preset, and finding that out from the pedal is worse than finding it
+// out from a message naming the control.
+func within(
+	spec catalog.Param,
+	v catalog.ParamValue,
+	at int,
+	name string,
+) error {
+	got, ok := v.Float()
+	if !ok {
+		return nil
+	}
+
+	// Two ways to pass, in one condition because the first is a guard rather
+	// than a case worth its own branch: a control the catalog gives no range for
+	// has nothing to be outside of, and comparing against 0..0 would refuse
+	// every value it could hold.
+	//
+	// Compared at the precision the device works in. A parameter is a float32 on
+	// the wire, so a value read back off hardware is a widened float32 and lands
+	// a hair either side of a bound the catalog states as a float64: a cabinet's
+	// low cut came back 19.899999618530273 against a minimum of 19.9 and was
+	// refused for being 0.0000004 under it. Widening the bounds the same way
+	// compares like with like, and costs nothing a device can hear.
+	if spec.Min == spec.Max ||
+		(float32(got) >= float32(spec.Min) && float32(got) <= float32(spec.Max)) {
+		return nil
+	}
+
+	return &catalog.BadParamError{
+		Model:  name,
+		Key:    fmt.Sprintf("chain[%d].controls.%s", at, name),
+		Reason: fmt.Sprintf("%v is outside %v..%v", got, spec.Min, spec.Max),
+	}
+}
+
 // saidKnobs puts each entry's settings onto the block it resolved to.
 //
 // Blocks the rig did not ask for are at the end of the chain and have no
@@ -498,17 +610,18 @@ func renumber(
 func saidKnobs(
 	built []plan.Block,
 	blocks []catalog.Block,
-	said []*rig.Settings,
+	asked []*wanted,
 ) error {
 	out := []error(nil)
 
-	for i, set := range said {
-		if set == nil || i >= len(built) {
+	for i, held := range asked {
+		if held == nil || held.words == nil || i >= len(built) {
 			continue
 		}
 
 		out = append(out, setKnobs(
-			built[i].Params, blocks[i], set, fmt.Sprintf("chain[%d].settings", i)))
+			built[i].Params, blocks[i], held.words,
+			fmt.Sprintf("chain[%d].settings", i)))
 	}
 
 	return errors.Join(out...)

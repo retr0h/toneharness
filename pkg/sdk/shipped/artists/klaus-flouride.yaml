@@ -6,98 +6,118 @@
 # caveat on the chain entry for what was searched and where it ran out.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: klaus-flouride
-
 ask:
-  aliases: [flouride, dead-kennedys, dks]
-
+  aliases:
+  - flouride
+  - dead-kennedys
+  - dks
+  confidence: low
+  genre:
+  - punk
+  instrument: bass
+  played:
+  - evidence:
+    - caveat: he is talking in 2015 about the instrument he had played since the early
+        days, and does not date it to these sessions. It establishes the Jazz Bass
+        as his instrument, not that it was the one on this record.
+      kind: cited
+      note: 'Flouride''s own words to Jay Stone, Dying Scene, 2015, about the Jazz
+        Bass he played for decades and lost in transit: "Yeah, it''s somewhere in
+        Brazil still, I''m guessing. And very probably in this Quonset hut storage
+        space with TAM Airlines." He describes the replica built from photographs:
+        "he''s got the chips on it, he''s done it mostly from photos. He wound the
+        pickups himself. The thing actually sounds and plays better than the original
+        one did."'
+      url: https://dyingscene.com/archive/ds-exclusive-klaus-flouride-on-2015-era-dead-kennedys-losing-his-iconic-j-bass-and-taylor-swift/
+    gear: Fender Jazz Bass
   subject:
-    kind: artist
-    name: Klaus Flouride
     band: Dead Kennedys
     era: Fresh Fruit for Rotting Vegetables
-    years: { from: 1980, to: 1980 }
-
-  instrument: bass
-
-  genre: [punk]
-
-  # The instrument is the one claim here with a source behind it.
-  played:
-    - gear: Fender Jazz Bass
-      evidence:
-        - kind: cited
-          url: https://dyingscene.com/archive/ds-exclusive-klaus-flouride-on-2015-era-dead-kennedys-losing-his-iconic-j-bass-and-taylor-swift/
-          note: >-
-            Flouride's own words to Jay Stone, Dying Scene, 2015, about the Jazz
-            Bass he played for decades and lost in transit: "Yeah, it's somewhere
-            in Brazil still, I'm guessing. And very probably in this Quonset hut
-            storage space with TAM Airlines." He describes the replica built from
-            photographs: "he's got the chips on it, he's done it mostly from
-            photos. He wound the pickups himself. The thing actually sounds and
-            plays better than the original one did."
-          caveat: >-
-            he is talking in 2015 about the instrument he had played since the
-            early days, and does not date it to these sessions. It establishes
-            the Jazz Bass as his instrument, not that it was the one on this
-            record.
-
-  # No `words`. Nothing read describes this record in terms the vocabulary
-  # carries.
-
-  confidence: low
-
+    kind: artist
+    name: Klaus Flouride
+    years:
+      from: 1980
+      to: 1980
+id: klaus-flouride
 rig:
-  instrument: bass
-
-  # The signal path, in order.
   chain:
-    - role: amp
-      gear: Acoustic 150B
-      capture: direct
-      substitute:
-        gear: Acoustic 360
-        evidence:
-          - kind: llm
-            note: >-
-              the same manufacturer, and the only one of theirs this device
-              models. The Acoustic 360 is their folded-horn preamp and the 150B a
-              later head, so this keeps the brand where it cannot keep the model.
-            caveat: >-
-              a substitute for a claim that is itself unconfirmed, so it is a
-              guess resting on a guess. Both halves want correcting together.
-        confidence: low
-      evidence:
-        - kind: llm
-          note: >-
-            asserted by a model and confirmed by nobody. The figure repeated
-            everywhere is an "Acoustic 150B head and Acoustic 402 cabinet, stock
-            speakers", said to run at least through In God We Trust, Inc.
-          caveat: >-
-            what was searched, and where it ran out. The sentence everybody
-            quotes — "according to the man himself, Klaus used an acoustic
-            amplifier with stock speakers on Fresh Fruit for Rotting Vegetables"
-            — is not an interview. It appears in the TalkBass thread at
-            https://www.talkbass.com/threads/dead-kennedys-tone.287737/ in post 8,
-            where the poster pjmuck is quoting Wikipedia and says so, then
-            immediately doubts his own reading of it: "Now I assume they mean the
-            Acoustic (caps) brand name of bass amps… But maybe he did play
-            through an acoustic guitar amp???" Wikipedia cites nothing beneath it.
-
-            Nobody in that thread was there. One poster who saw them five or six
-            times says "Not sure what amps- likely something borrowed/stole";
-            another offers "i read something years ago that said it was a traynor
-            monoblock II", which is a different amplifier entirely.
-
-            Two long published interviews were read in full and neither mentions
-            an amplifier: Mark Prindle's at
-            http://www.markprindle.com/flouride-i.htm, and Jay Stone's for Dying
-            Scene cited above. The Vinyl Guide podcast episode 23 is specifically
-            about the making of this record and is audio nobody has transcribed
-            here.
-
-            If you know what he actually played through, please open a pull
-            request.
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: direct
+    confidence: low
+    controls:
+      Bass: "0.684"
+      Bright: "false"
+      ChVol: "0.7"
+      Drive: "0.45"
+      Effect: "0.332"
+      Hum: "0.274"
+      Master: "1.0"
+      TFCoarse: "0.472"
+      TFFine: "0.308"
+      Treble: "0.741"
+      TuningFork: "0.0"
+      Variamp: "2"
+    evidence:
+    - caveat: |-
+        what was searched, and where it ran out. The sentence everybody quotes — "according to the man himself, Klaus used an acoustic amplifier with stock speakers on Fresh Fruit for Rotting Vegetables" — is not an interview. It appears in the TalkBass thread at https://www.talkbass.com/threads/dead-kennedys-tone.287737/ in post 8, where the poster pjmuck is quoting Wikipedia and says so, then immediately doubts his own reading of it: "Now I assume they mean the Acoustic (caps) brand name of bass amps… But maybe he did play through an acoustic guitar amp???" Wikipedia cites nothing beneath it.
+        Nobody in that thread was there. One poster who saw them five or six times says "Not sure what amps- likely something borrowed/stole"; another offers "i read something years ago that said it was a traynor monoblock II", which is a different amplifier entirely.
+        Two long published interviews were read in full and neither mentions an amplifier: Mark Prindle's at http://www.markprindle.com/flouride-i.htm, and Jay Stone's for Dying Scene cited above. The Vinyl Guide podcast episode 23 is specifically about the making of this record and is audio nobody has transcribed here.
+        If you know what he actually played through, please open a pull request.
+      kind: llm
+      note: asserted by a model and confirmed by nobody. The figure repeated everywhere
+        is an "Acoustic 150B head and Acoustic 402 cabinet, stock speakers", said
+        to run at least through In God We Trust, Inc.
+    gear: Acoustic 150B
+    role: amp
+    substitute:
       confidence: low
+      evidence:
+      - caveat: a substitute for a claim that is itself unconfirmed, so it is a guess
+          resting on a guess. Both halves want correcting together.
+        kind: llm
+        note: the same manufacturer, and the only one of theirs this device models.
+          The Acoustic 360 is their folded-horn preamp and the 150B a later head,
+          so this keeps the brand where it cannot keep the model.
+      gear: Acoustic 360
+  - controls:
+      Distance: "1.5"
+      EarlyReflections: "0.0"
+      HighCut: "8000.0"
+      Level: "0.0"
+      LowCut: "20.0"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Legacy 1x18" Acoustic® 360
+    role: cab
+  - controls:
+      HighGain: "0.0"
+      Level: "0.0"
+      LowGain: "0.0"
+      MidFreq: "600.0"
+      MidGain: "1.6"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Simple EQ
+    role: eq
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

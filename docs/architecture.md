@@ -300,6 +300,42 @@ unremarkable. `measure players` separates the two: it reports a player whose own
 records sit further apart than the whole corpus of players does as `scattered`,
 which says the records were the problem rather than the player.
 
+## A rig is the specification of a preset
+
+The purpose, stated plainly because it was implicit for too long and the code
+drifted from it. A rig is not a portable summary of a sound with the real answer
+somewhere else. It is the whole answer, in a file a person can read and edit,
+and the `.hlx` is what it compiles to.
+
+So a chain entry carries `controls`: every control that gear has, at the value
+it is set to, by the name the catalog gives it. Checked against the catalog,
+which describes 5,602 controls with their ranges, and used as it stands. Beside
+them are the device attributes no word can reach, `mic` and `trails` and
+`bypass_volume` among them.
+
+Three things follow, and the third is the point.
+
+A value beats a word. `settings` is seven musical terms and the compiler turns
+those into values; `controls` says the values. Both may name one control, and
+the value wins, which is only true because the words are applied first and the
+values over them.
+
+An ask runs once. The contract has always said so — "once `rig` holds the answer
+they are provenance, and nothing re-reads them to overwrite a chain somebody
+edited by hand" — and `controls` is what makes that worth something. "Punk,
+punchy, like Dirnt" cannot come back and undo a microphone.
+
+**A change survives the trip to the pedal and back.** Compile a rig, move a
+control by ear, export the slot, and the value returns to the field it left.
+That is what redistribution means here: a diff that says which controls moved,
+so the next person gets the change and the reason for it. Before this the export
+dropped every value, and the work was gone with nothing saying so.
+
+`rigs resolve` writes a rig out in that form, and records which pedal and
+catalog produced the numbers. Advisory, never a restriction: gear names resolve
+on any Helix, and somebody on other hardware reads it to know whose numbers they
+have.
+
 ## What is still missing
 
 The step from a word to a value is half built: a term says which way to move a
@@ -314,3 +350,18 @@ spending the run. The method is
 [solving for knob positions](superpowers/specs/2026-09-27-solving-for-knob-positions-design.md),
 and it needs the pedal, so a build on its own still hands back a chain nobody
 has heard.
+
+**The preset-wide sections are not in the contract.** A chain is, and so is
+every control on it, but the global settings, the snapshots a preset stores, the
+footswitch labels, the expression pedal assignments, the DT and Powercab blocks,
+the MIDI commands and the impulse response table are not. Measured against the
+4,426-preset corpus that is 18 member kinds and 335 fields.
+
+What it costs: building and iterating on a rig works, and importing somebody
+else's preset still loses most of what is not its chain.
+`slots export --as tonespec` returns a rig without them and says nothing about
+it, which is the same class of silent loss `controls` was added to fix.
+
+**Only one rig is resolved.** The punk genre rig carries its controls; the
+twenty-eight artists and the three other genres do not, so a tweak to any of
+them has nowhere to go until `rigs resolve` has been run over them.

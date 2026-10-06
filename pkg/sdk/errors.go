@@ -60,6 +60,19 @@ var (
 
 	// ErrClosed reports a Session method called after Close.
 	ErrClosed = errors.New("the session is closed")
+
+	// ErrNoPresetFile is a build with nowhere to put the preset.
+	//
+	// Refused rather than built and dropped. Make's whole job is the file, so a
+	// caller that named no path asked for nothing, and answering with a plan and
+	// no preset would read as a build that worked.
+	ErrNoPresetFile = errors.New("name where to write the preset")
+	// ErrNoRigFile is a rig there is nowhere to record a build into.
+	//
+	// The rigs that ship are bytes in the binary rather than files, so there is
+	// nothing to write to: a build recorded into one would be thrown away by the
+	// next compile. Copy it into your own directory first.
+	ErrNoRigFile = errors.New("that rig has no file to record a build in")
 	// ErrBus reports a Session the bus ended: a read or a write the bus
 	// refused, or the Session's read loop stopping on its own. That Session
 	// is finished and nothing reconnects it; a caller who wants the pedal
