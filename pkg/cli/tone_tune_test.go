@@ -51,10 +51,11 @@ import (
 type TuneTestSuite struct {
 	suite.Suite
 
-	ctrl  *gomock.Controller
-	pedal *mocks.MockTuner
-	genre *mocks.MockGenres
-	dry   string
+	ctrl    *gomock.Controller
+	pedal   *mocks.MockTuner
+	genre   *mocks.MockGenres
+	players *mocks.MockRecorded
+	dry     string
 }
 
 func (s *TuneTestSuite) SetupTest() {
@@ -68,6 +69,7 @@ func (s *TuneTestSuite) SetupTest() {
 			return catalog.BuiltIn()
 		}).AnyTimes()
 	s.genre = mocks.NewMockGenres(s.ctrl)
+	s.players = mocks.NewMockRecorded(s.ctrl)
 	s.dry = "../../resources/dry/bass-di-short.wav"
 
 	// The preset read back and rebuilt: every command here takes its chain off
@@ -93,6 +95,20 @@ func (s *TuneTestSuite) punk() []audio.Genre {
 		Name: "punk", Slug: "punk",
 		Across: audio.Across{
 			Tracks: 12,
+			Low:    wide, Mid: wide, High: wide, Centroid: wide,
+		},
+	}}
+}
+
+// matt is one player's own records, as wide as punk is, so what is under test
+// is which target the run read rather than how far the solve got.
+func (s *TuneTestSuite) matt() []audio.Player {
+	wide := audio.Spread{Low: -1000, Mid: 0, High: 1000}
+
+	return []audio.Player{{
+		ID: "matt-freeman", Records: 3,
+		Across: audio.Across{
+			Tracks: 3,
 			Low:    wide, Mid: wide, High: wide, Centroid: wide,
 		},
 	}}
@@ -133,7 +149,7 @@ func (s *TuneTestSuite) ready() {
 // opts is a run with the hardware faked out.
 func (s *TuneTestSuite) opts() TuneOptions {
 	return TuneOptions{
-		Client: s.pedal, Genres: s.genre, Bench: bench{},
+		Client: s.pedal, Genres: s.genre, Players: s.players, Bench: bench{},
 		ID: "matt-freeman", Genre: "punk", Corpus: "resources/music/bass",
 		Dry: s.dry, Seconds: 0.1, Takes: 2, Passes: 2, Nudge: 0.1,
 	}
@@ -183,6 +199,100 @@ func (s *TuneTestSuite) TestTune() {
 				opts.Genre = ""
 
 				s.Require().ErrorIs(Tune(context.Background(), buffer(), opts), ErrNoTarget)
+			},
+		},
+		{
+			// One artist's own records rather than the middle of a population,
+			// which is the stronger target when the request names a person.
+			name: "a player's own records",
+			then: func() {
+				s.ready()
+				s.players.EXPECT().
+					MeasuredPlayers(gomock.Any(), "resources/music/bass").
+					Return(s.matt(), nil)
+
+				opts := s.opts()
+				opts.Genre = ""
+				opts.Player = "matt-freeman"
+
+				var buf bytes.Buffer
+				s.Require().NoError(Tune(context.Background(), &buf, opts))
+				s.Require().Contains(buf.String(), "matt-freeman's own records")
+			},
+		},
+		{
+			// Two targets.
+			//
+			// A genre is the middle of a population and a player is the person
+			// being emulated, so they are different figures. Preferring one
+			// quietly would solve for something nobody asked for.
+			name: "a genre and a player at once",
+			then: func() {
+				opts := s.opts()
+				opts.Player = "matt-freeman"
+
+				s.Require().ErrorIs(Tune(context.Background(), buffer(), opts), ErrOneTarget)
+			},
+		},
+		{
+			// A player with nowhere to measure them from. A genre's figures
+			// ship in the binary and a player's cannot, because the recordings
+			// are not in this repository.
+			name: "a player and no corpus",
+			then: func() {
+				opts := s.opts()
+				opts.Genre = ""
+				opts.Player = "matt-freeman"
+				opts.Corpus = ""
+
+				s.Require().
+					ErrorIs(Tune(context.Background(), buffer(), opts), ErrPlayerNeedsCorpus)
+			},
+		},
+		{
+			// A player the tree holds nothing for.
+			name: "a player the corpus does not have",
+			then: func() {
+				s.players.EXPECT().
+					MeasuredPlayers(gomock.Any(), gomock.Any()).Return(s.matt(), nil)
+
+				opts := s.opts()
+				opts.Genre = ""
+				opts.Player = "somebody-else"
+
+				s.Require().ErrorIs(Tune(context.Background(), buffer(), opts), ErrNoTarget)
+			},
+		},
+		{
+			// A player whose directory is there and whose records are not.
+			// Refused rather than aimed at zero, which every axis would read as
+			// a gap the whole way.
+			name: "a player with no measured records",
+			then: func() {
+				s.players.EXPECT().
+					MeasuredPlayers(gomock.Any(), gomock.Any()).
+					Return([]audio.Player{{ID: "matt-freeman"}}, nil)
+
+				opts := s.opts()
+				opts.Genre = ""
+				opts.Player = "matt-freeman"
+
+				s.Require().ErrorIs(Tune(context.Background(), buffer(), opts), ErrNoTarget)
+			},
+		},
+		{
+			// A tree that will not read, asked for a player.
+			name: "the corpus will not read for a player",
+			then: func() {
+				s.players.EXPECT().MeasuredPlayers(gomock.Any(), gomock.Any()).
+					Return(nil, errors.New("no recordings under that tree"))
+
+				opts := s.opts()
+				opts.Genre = ""
+				opts.Player = "matt-freeman"
+
+				err := Tune(context.Background(), buffer(), opts)
+				s.Require().ErrorContains(err, "no recordings under that tree")
 			},
 		},
 		{

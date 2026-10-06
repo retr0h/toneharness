@@ -173,6 +173,7 @@ func Make(
 		Unfamiliar: unfamiliar(intent),
 		Playing:    result.Playing{Terms: playing.Terms, Said: playing.Said},
 		Path:       opts.OutputPath,
+		Preset:     doc,
 	}, nil
 }
 
@@ -202,11 +203,19 @@ func build(
 // once, so a document that will not encode or a write that stops partway
 // leaves no half a preset behind. existing says what happens to a file already
 // at path.
+//
+// No path writes nothing. `rigs resolve` builds a chain to read its controls
+// back off and has no use for the preset, and the alternative is a caller
+// naming a scratch file it then has to remove.
 func write(
 	path string,
 	doc *preset.Document,
 	existing result.Existing,
 ) error {
+	if path == "" {
+		return nil
+	}
+
 	var buf bytes.Buffer
 
 	if err := preset.Write(&buf, doc); err != nil {

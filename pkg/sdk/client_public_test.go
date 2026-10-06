@@ -28,6 +28,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -454,6 +455,78 @@ const tunedPlan = `blocks:
 name: Their Player
 `
 
+// strangePlan holds a position that is not a number, which a preset accepts on
+// the way in and refuses on the way back out, so the chain cannot be read off
+// the document this plan produced.
+const strangePlan = `blocks:
+- model: HD2_AmpSVBeastBrt
+  dsp: 0
+  pos: 0
+  enabled: true
+  attrs:
+    "@position": "nowhere"
+name: Their Player
+`
+
+// collidingPlan names a control after an attribute the preset format already
+// owns, so there is no block to write it into.
+const collidingPlan = `blocks:
+- model: HD2_AmpSVBeastBrt
+  dsp: 0
+  pos: 0
+  enabled: true
+  params:
+    "@model": 1
+name: Their Player
+`
+
+// TestMake covers Make, which turns a rig into a preset on disk.
+//
+// What the rig becomes is the compiler's own suite. This covers what this layer
+// decides, which is where the file goes.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ClientPublicTestSuite) TestMake() {
+	for _, tt := range []struct {
+		name string
+		out  bool
+		err  error
+	}{
+		{
+			name: "a preset written where it was asked for",
+			out:  true,
+		},
+		{
+			// Nowhere to put it. One layer down an empty path means "build it
+			// and write nothing", which is what a resolve wants and what nobody
+			// calling this does, so answering with a plan and no preset would
+			// read as a build that worked.
+			name: "nowhere to write it",
+			err:  sdk.ErrNoPresetFile,
+		},
+	} {
+		s.Run(tt.name, func() {
+			out := ""
+			if tt.out {
+				out = filepath.Join(s.T().TempDir(), "out.hlx")
+			}
+
+			made, err := sdk.New().Make(
+				context.Background(), sdk.Build{RigID: "mike-dirnt", Out: out})
+
+			if tt.err != nil {
+				s.Require().ErrorIs(err, tt.err)
+
+				return
+			}
+
+			s.Require().NoError(err)
+			s.Require().Equal(out, made.Path)
+			s.Require().FileExists(out)
+		})
+	}
+}
+
 // TestResolve covers Resolve, which writes a rig back with every control it
 // resolved to.
 //
@@ -470,14 +543,22 @@ func (s *ClientPublicTestSuite) TestResolve() {
 		nowhere bool
 		// from takes the controls out of a plan instead of building the rig,
 		// and gone names one that is not there.
-		from bool
-		gone bool
-		junk bool
-		id   string
+		from      bool
+		gone      bool
+		junk      bool
+		strange   bool
+		colliding bool
+		// broken names gear nothing carries, so the rig reads and will not build.
+		broken bool
+		// catalog points the client at a file that is not one, which is the only
+		// way asking for the catalog fails.
+		catalog bool
+		id      string
 		// want is what the document has to hold afterwards, and err that it was
-		// refused instead.
-		want []string
-		err  error
+		// refused instead. errText is for a refusal with no sentinel of its own.
+		want    []string
+		err     error
+		errText string
 	}{
 		{
 			// The whole point: a rig naming gear and no values comes back with
@@ -551,13 +632,83 @@ func (s *ClientPublicTestSuite) TestResolve() {
 			nowhere: true,
 			err:     os.ErrNotExist,
 		},
+		{
+			// The same two refusals down the --from path, which writes the
+			// document the same way and so has the same two ways to fail.
+			name: "a plan and a rig that ships",
+			from: true,
+			id:   "mike-dirnt",
+			err:  sdk.ErrNoRigFile,
+		},
+		{
+			name:    "a plan and a path it cannot write",
+			own:     true,
+			id:      "their-player",
+			from:    true,
+			nowhere: true,
+			err:     os.ErrNotExist,
+		},
+		{
+			// A plan a preset will take and not give back. Refused rather than
+			// written half resolved: a document whose chain nothing can read is
+			// not a specification of anything.
+			name:    "a plan the chain cannot be read back off",
+			own:     true,
+			id:      "their-player",
+			from:    true,
+			strange: true,
+			errText: "reading the chain",
+		},
+		{
+			// A control named after something the preset format already owns, so
+			// there is nowhere in the block to put it.
+			name:      "a plan whose control collides with an attribute",
+			own:       true,
+			id:        "their-player",
+			from:      true,
+			colliding: true,
+			errText:   "collides with an attribute",
+		},
+		{
+			// A rig that reads and will not build, which is the ordinary one:
+			// gear nothing on this device answers to.
+			name:    "a rig the catalog cannot realise",
+			own:     true,
+			broken:  true,
+			id:      "their-player",
+			errText: "emulates \"Nothing Like That\"",
+		},
+		{
+			// No catalog, so there is nothing to resolve gear against. Both
+			// resolves ask for one, and the --from path asks before it has
+			// looked at the plan.
+			name:    "a catalog that will not open",
+			own:     true,
+			id:      "their-player",
+			catalog: true,
+			err:     os.ErrNotExist,
+		},
+		{
+			name:    "a plan and a catalog that will not open",
+			own:     true,
+			id:      "their-player",
+			from:    true,
+			catalog: true,
+			err:     os.ErrNotExist,
+		},
 	} {
 		s.Run(tt.name, func() {
 			opts := []sdk.Option(nil)
 			at := ""
 
 			if tt.own {
-				dir := s.rigsDir(ownRig("their-player", "their-player", "", "bass"))
+				files := ownRig("their-player", "their-player", "", "bass")
+				if tt.broken {
+					files["their-player.yaml"] = strings.Replace(
+						files["their-player.yaml"], "Aguilar DB51", "Nothing Like That", 1)
+				}
+
+				dir := s.rigsDir(files)
 				opts = append(opts, sdk.WithUserRigs(dir))
 				at = filepath.Join(dir, "artists", "their-player.yaml")
 			}
@@ -572,6 +723,11 @@ func (s *ClientPublicTestSuite) TestResolve() {
 				at = out
 			}
 
+			if tt.catalog {
+				opts = append(opts, sdk.WithCatalog(
+					filepath.Join(s.T().TempDir(), "no", "catalog.json")))
+			}
+
 			from := ""
 
 			if tt.from {
@@ -581,6 +737,10 @@ func (s *ClientPublicTestSuite) TestResolve() {
 				case tt.gone:
 				case tt.junk:
 					s.Require().NoError(os.WriteFile(from, []byte("not: a plan\n"), 0o600))
+				case tt.strange:
+					s.Require().NoError(os.WriteFile(from, []byte(strangePlan), 0o600))
+				case tt.colliding:
+					s.Require().NoError(os.WriteFile(from, []byte(collidingPlan), 0o600))
 				default:
 					s.Require().NoError(os.WriteFile(from, []byte(tunedPlan), 0o600))
 				}
@@ -589,6 +749,12 @@ func (s *ClientPublicTestSuite) TestResolve() {
 			made, err := sdk.New(opts...).Resolve(
 				context.Background(),
 				sdk.Resolve{RigID: tt.id, Out: out, From: from})
+
+			if tt.errText != "" {
+				s.Require().ErrorContains(err, tt.errText)
+
+				return
+			}
 
 			if tt.err != nil {
 				s.Require().ErrorIs(err, tt.err)

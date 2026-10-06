@@ -640,7 +640,20 @@ func (c *Client) Make(
 	ctx context.Context,
 	in Build,
 ) (Made, error) {
-	return presets.Make(ctx, presets.MakeOptions{
+	// An empty path means "build it and write nothing" one layer down, which is
+	// what a resolve wants and what nobody calling this does.
+	if in.Out == "" {
+		return Made{}, ErrNoPresetFile
+	}
+
+	return presets.Make(ctx, c.makeOpts(in))
+}
+
+// makeOpts is one Build as the compiler wants it.
+func (c *Client) makeOpts(
+	in Build,
+) presets.MakeOptions {
+	return presets.MakeOptions{
 		Deps:       presets.Deps{Catalogs: c},
 		RigID:      in.RigID,
 		RigPath:    in.Rig,
@@ -649,7 +662,7 @@ func (c *Client) Make(
 		SetupPath:  c.opts.setup,
 		OutputPath: in.Out,
 		Existing:   in.Existing,
-	})
+	}
 }
 
 // Resolve builds a rig and writes the whole answer back as a document.
@@ -688,50 +701,61 @@ func (c *Client) Resolve(
 		return c.resolveFrom(ctx, in, found)
 	}
 
-	scratch, err := os.CreateTemp("", "toneharness-resolve-*.hlx")
-	if err != nil {
-		return Made{}, fmt.Errorf("resolving %s: %w", in.RigID, err)
-	}
-
-	at := scratch.Name()
-
-	_ = scratch.Close()
-	defer func() { _ = os.Remove(at) }()
-
-	made, err := c.Make(ctx, Build{
-		RigID:    in.RigID,
-		Out:      at,
-		Existing: ReplaceExisting,
-	})
-	if err != nil {
-		return Made{}, err
-	}
-
+	// Before the build rather than after it. The build asks for one too and the
+	// client holds on to the answer, so asking afterwards could never fail and
+	// the failure would be reported from the wrong place.
 	cat, err := c.Catalog(ctx)
 	if err != nil {
 		return Made{}, err
 	}
 
-	// Lifted off the preset that was written rather than taken from the plan.
-	// Sections, controllers and footswitches are applied to the preset document,
-	// so a chain read back from the plan is missing them.
-	raw, err := os.Open(filepath.Clean(at))
+	// Built and not written. What a resolve wants off a build is the controls the
+	// chain came out at, and the preset is already wherever the last build put
+	// it; writing one here would mean naming a scratch file and removing it
+	// again.
+	made, err := presets.Make(ctx, c.makeOpts(Build{RigID: in.RigID}))
 	if err != nil {
-		return Made{}, fmt.Errorf("reading back %s: %w", in.RigID, err)
+		return Made{}, err
 	}
 
-	written, err := preset.Read(raw)
-
-	// Opened read-only, so Close has nothing to report the read did not.
-	_ = raw.Close()
-
+	// The document rather than the plan beside it. Sections, controllers and
+	// footswitches are applied to the preset, so a chain read back from the plan
+	// is missing every one of them.
+	where, err := c.wroteSpec(in, found, made.Preset, cat)
 	if err != nil {
-		return Made{}, fmt.Errorf("reading back %s: %w", in.RigID, err)
+		return Made{}, err
 	}
 
-	_, lifted, _, err := compile.Lift(written, cat)
+	made.Path = where
+
+	return made, nil
+}
+
+// wroteSpec reads the chain back off a preset and writes the document it means.
+//
+// One place rather than two. Both resolves end the same way: lift the chain out
+// of the preset, keep what the rig said about each block, and write it over the
+// file the rig came from unless somebody named another. A rig that ships has no
+// file, so saying so beats writing somewhere that looks like it worked.
+func (c *Client) wroteSpec(
+	in Resolve,
+	found Rig,
+	doc *preset.Document,
+	cat *catalog.Catalog,
+) (string, error) {
+	_, lifted, _, err := compile.Lift(doc, cat)
 	if err != nil {
-		return Made{}, fmt.Errorf("reading back %s: %w", in.RigID, err)
+		return "", fmt.Errorf("reading back %s: %w", in.RigID, err)
+	}
+
+	where := in.Out
+	if where == "" {
+		where = found.Path
+	}
+
+	if where == "" {
+		return "", fmt.Errorf(
+			"%w: %s ships in the binary, so name --out", ErrNoRigFile, in.RigID)
 	}
 
 	out := tone.Spec{
@@ -741,23 +765,11 @@ func (c *Client) Resolve(
 		Rig:    carry(found.Rig, lifted, cat),
 	}
 
-	where := in.Out
-	if where == "" {
-		where = found.Path
-	}
-
-	if where == "" {
-		return Made{}, fmt.Errorf(
-			"%w: %s ships in the binary, so name --out", ErrNoRigFile, in.RigID)
-	}
-
 	if err := writeSpec(where, out); err != nil {
-		return Made{}, err
+		return "", err
 	}
 
-	made.Path = where
-
-	return made, nil
+	return where, nil
 }
 
 // resolveFrom writes a document from a plan somebody already has.
@@ -799,29 +811,8 @@ func (c *Client) resolveFrom(
 		return Made{}, fmt.Errorf("reading %s: %w", in.From, err)
 	}
 
-	_, lifted, _, err := compile.Lift(doc, cat)
+	where, err := c.wroteSpec(in, found, doc, cat)
 	if err != nil {
-		return Made{}, fmt.Errorf("reading %s: %w", in.From, err)
-	}
-
-	out := tone.Spec{
-		Schema: tone.SchemaToneSpec,
-		Id:     found.ID,
-		Ask:    found.Ask,
-		Rig:    carry(found.Rig, lifted, cat),
-	}
-
-	where := in.Out
-	if where == "" {
-		where = found.Path
-	}
-
-	if where == "" {
-		return Made{}, fmt.Errorf(
-			"%w: %s ships in the binary, so name --out", ErrNoRigFile, in.RigID)
-	}
-
-	if err := writeSpec(where, out); err != nil {
 		return Made{}, err
 	}
 
@@ -932,11 +923,12 @@ func writeSpec(
 ) error {
 	var out bytes.Buffer
 
-	// Cannot fail for a Spec, per the above, and checked rather than ignored
-	// because that is an argument about the type and not about this call.
-	if err := tone.Write(&out, of); err != nil {
-		return fmt.Errorf("writing %s: %w", at, err)
-	}
+	// Ignored rather than wrapped, because nothing can reach it. A Spec holds
+	// strings, numbers, booleans and Settings, and the only one of those that
+	// refuses to marshal is a Setting carrying no kind. Nothing produces one: a
+	// value only ever arrives through ParamValue, which refuses every literal
+	// that would leave a Setting kindless.
+	_ = tone.Write(&out, of)
 
 	if err := os.WriteFile(filepath.Clean(at), out.Bytes(), 0o600); err != nil {
 		return fmt.Errorf("writing %s: %w", at, err)
