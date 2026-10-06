@@ -247,6 +247,20 @@ func Tune(
 	}
 
 	aims = solve.Aims(target, inCorpusScale(floor))
+
+	// Level is a guard rather than a goal, and `drift` is already wide enough to
+	// be one: six decibels, against a loop that wanders a fraction of one. A run
+	// that came back quiet was not spending controls to settle level — it
+	// reported level inside tolerance with nothing left to do.
+	//
+	// What made it quiet was the tone target. On this amplifier `ChVol` has the
+	// largest authority over the centroid of any control, +13,133Hz across its
+	// travel against Treble's +12,763, and it carries +27.6dB of level with it.
+	// So a solve reaching for a dark centroid pulls `ChVol` down and the chain
+	// gets quiet as a consequence of the tone it was asked for.
+	//
+	// Which means the fix is not here. It is the target: an absolute figure taken
+	// off a mastered record, aimed at from a dry signal.
 	aims[audio.KeyLevel] = solve.Aim{Want: settled, Tol: drift}
 
 	// After the floor, because a nudge is measured in tolerances and a

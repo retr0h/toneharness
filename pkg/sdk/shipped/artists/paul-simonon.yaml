@@ -3,68 +3,90 @@
 # One document: the ask says who it is for, the rig below says what the gear is.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: paul-simonon
-
 ask:
-  aliases: [clash, simonon]
-
+  aliases:
+  - clash
+  - simonon
+  confidence: low
+  genre:
+  - punk
+  instrument: bass
+  played:
+  - evidence:
+    - caveat: the bass on the cover is not necessarily the bass on the tape. The article
+        ties the Precision to the stage in the month the sessions were being mixed;
+        nothing found says which instrument was used in Wessex.
+      kind: cited
+      note: Wallace Marx Jr., Premier Guitar, 18 May 2010, names the white Fender
+        Precision he played and the Palladium show in September 1979 where he smashed
+        it, which is the photograph on the cover of this record.
+      url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+    gear: Fender Precision Bass
   subject:
-    kind: artist
-    name: Paul Simonon
     band: The Clash
     era: London Calling
-    years: { from: 1979, to: 1979 }
-
-  instrument: bass
-
-  genre: [punk]
-
-  # The instrument is the one thing about him a reader will already know, and it
-  # is sourced rather than assumed.
-  played:
-    - gear: Fender Precision Bass
-      evidence:
-        - kind: cited
-          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
-          note: >-
-            Wallace Marx Jr., Premier Guitar, 18 May 2010, names the white Fender
-            Precision he played and the Palladium show in September 1979 where he
-            smashed it, which is the photograph on the cover of this record.
-          caveat: >-
-            the bass on the cover is not necessarily the bass on the tape. The
-            article ties the Precision to the stage in the month the sessions
-            were being mixed; nothing found says which instrument was used in
-            Wessex.
-
-  # No `words`. Nothing read describes this record in terms the vocabulary
-  # carries.
-
-  confidence: low
-
+    kind: artist
+    name: Paul Simonon
+    years:
+      from: 1979
+      to: 1979
+id: paul-simonon
 rig:
-  instrument: bass
-
-  # The signal path, in order.
   chain:
-    - role: amp
-      gear: Ampeg SVT
-      capture: direct
-      evidence:
-        - kind: cited
-          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
-          note: >-
-            Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks",
-            Premier Guitar, 18 May 2010, which puts Simonon on "a white Fender
-            Precision and an Ampeg SVT" in 1979.
-          caveat: >-
-            the stage, and a 2010 article about a 1979 album. The sentence is
-            about the Palladium show rather than about Wessex Studios, and the
-            producer's choices for a record this heavily overdubbed are not in
-            it.
-
-            Nothing found names what Guy Stevens and Bill Price put him through
-            for these sessions, and no cabinet is claimed here for the same
-            reason.
-      confidence: low
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: direct
+    confidence: low
+    controls:
+      Bass: "0.41"
+      Bias: "0.74"
+      BiasX: "0.5"
+      ChVol: "0.8"
+      Drive: "0.6"
+      Hum: "0.5"
+      Master: "1.0"
+      Mid: "0.89"
+      MidFreq: "2"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.88"
+    evidence:
+    - caveat: |-
+        the stage, and a 2010 article about a 1979 album. The sentence is about the Palladium show rather than about Wessex Studios, and the producer's choices for a record this heavily overdubbed are not in it.
+        Nothing found names what Guy Stevens and Bill Price put him through for these sessions, and no cabinet is claimed here for the same reason.
+      kind: cited
+      note: 'Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks", Premier
+        Guitar, 18 May 2010, which puts Simonon on "a white Fender Precision and an
+        Ampeg SVT" in 1979.'
+      url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+    gear: Ampeg SVT
+    role: amp
+  - controls:
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      High Cut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: 8x10 Ampeg SVT-E
+    role: cab
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

@@ -6,75 +6,92 @@
 # who was in the room. See the caveat on the chain entry.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: karl-alvarez
-
 ask:
-  aliases: [alvarez, descendents, all]
-
+  aliases:
+  - alvarez
+  - descendents
+  - all
+  confidence: low
+  genre:
+  - punk
+  instrument: bass
   subject:
-    kind: artist
-    name: Karl Alvarez
     band: Descendents
     era: ALL
-    years: { from: 1987, to: 1987 }
-
-  instrument: bass
-
-  genre: [punk]
-
-  # How it is played, and the one thing about him every listener names first: a
-  # fingerstyle player in a music almost entirely played with picks.
+    kind: artist
+    name: Karl Alvarez
+    years:
+      from: 1987
+      to: 1987
   technique:
     attack: fingers
     evidence:
-      - kind: user
-        url: https://www.talkbass.com/threads/karl-alvarez-descendents-all.1314244/
-        note: >-
-          the thread's opening post calls him "one of the few finger style punk
-          bassists out there", and it is what every poster there returns to.
-        caveat: >-
-          listeners agreeing about what they hear, not a statement from him.
-          It is the kind of claim a recording settles and nothing here has
-          measured these tracks yet.
-
-  # No `words`. Nothing read describes this record in terms the vocabulary
-  # carries.
-
-  confidence: low
-
+    - caveat: listeners agreeing about what they hear, not a statement from him. It
+        is the kind of claim a recording settles and nothing here has measured these
+        tracks yet.
+      kind: user
+      note: the thread's opening post calls him "one of the few finger style punk
+        bassists out there", and it is what every poster there returns to.
+      url: https://www.talkbass.com/threads/karl-alvarez-descendents-all.1314244/
+id: karl-alvarez
 rig:
-  instrument: bass
-
-  # The signal path, in order.
   chain:
-    - role: amp
-      gear: Ampeg SVT
-      capture: direct
-      evidence:
-        - kind: user
-          url: https://www.talkbass.com/threads/karl-alvarez-tone.754486/
-          note: >-
-            the poster Dave Siff, who says elsewhere in these threads that he has
-            flown to Los Angeles to see the band, on what he has watched across
-            several shows: "I've seen him play several different Fender basses as
-            well as a Music Man, always through an SVT, and it always sounds like
-            Karl."
-          caveat: >-
-            an audience account, and the weakest kind of gear evidence this
-            project takes. Nobody in it had access to the rig, nothing dates it
-            to 1987, and a stage seen from the floor says little about what was
-            in the room for a record made that year.
-
-            What was searched: the four TalkBass threads about him, which are
-            enthusiasts discussing his playing and carry no gear evidence at all;
-            notreble.com, which has a transcription and no rig; and the 2026
-            Punk Rock and UFOs interview by Mike Damante, read in full, in which
-            he says nothing about equipment or technique. The SVT-CL and SVT-810E
-            figures repeated online come from gear-aggregator pages of the kind
-            that scrape and do not cite.
-
-            If you know what he recorded this through, please open a pull
-            request.
-      confidence: low
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: direct
+    confidence: low
+    controls:
+      Bass: "0.41"
+      Bias: "0.74"
+      BiasX: "0.5"
+      ChVol: "0.8"
+      Drive: "0.6"
+      Hum: "0.5"
+      Master: "1.0"
+      Mid: "0.89"
+      MidFreq: "2"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.88"
+    evidence:
+    - caveat: |-
+        an audience account, and the weakest kind of gear evidence this project takes. Nobody in it had access to the rig, nothing dates it to 1987, and a stage seen from the floor says little about what was in the room for a record made that year.
+        What was searched: the four TalkBass threads about him, which are enthusiasts discussing his playing and carry no gear evidence at all; notreble.com, which has a transcription and no rig; and the 2026 Punk Rock and UFOs interview by Mike Damante, read in full, in which he says nothing about equipment or technique. The SVT-CL and SVT-810E figures repeated online come from gear-aggregator pages of the kind that scrape and do not cite.
+        If you know what he recorded this through, please open a pull request.
+      kind: user
+      note: 'the poster Dave Siff, who says elsewhere in these threads that he has
+        flown to Los Angeles to see the band, on what he has watched across several
+        shows: "I''ve seen him play several different Fender basses as well as a Music
+        Man, always through an SVT, and it always sounds like Karl."'
+      url: https://www.talkbass.com/threads/karl-alvarez-tone.754486/
+    gear: Ampeg SVT
+    role: amp
+  - controls:
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      High Cut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: 8x10 Ampeg SVT-E
+    role: cab
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

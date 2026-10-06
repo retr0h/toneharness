@@ -3,123 +3,123 @@
 # One document: the ask says who it is for, the rig below says what the gear is.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: chuck-dukowski
-
 ask:
-  aliases: [dukowski, black-flag]
-
+  aliases:
+  - dukowski
+  - black-flag
+  confidence: medium
+  genre:
+  - punk
+  instrument: bass
   subject:
-    kind: artist
-    name: Chuck Dukowski
     band: Black Flag
     era: Damaged
-    years: { from: 1981, to: 1981 }
-
-  instrument: bass
-
-  genre: [punk]
-
-  # No `words`. Nothing read here describes this record in terms the vocabulary
-  # carries, and the corpus measurement that could earn one has not been run
-  # against these tracks. A word on a model's say-so is what came off three other
-  # asks in this tree.
-
-  # No `played`. He is on record as using "mostly late 70's Fender P basses", but
-  # that is the poster summarising a career rather than naming the instrument on
-  # this record, and the same post puts a Jazz on an earlier release. The
-  # instrument for these sessions is unsettled rather than unresearched.
-
-  confidence: medium
-
+    kind: artist
+    name: Chuck Dukowski
+    years:
+      from: 1981
+      to: 1981
+id: chuck-dukowski
 rig:
-  instrument: bass
-
-  # The signal path, in order.
   chain:
-    - role: amp
-      gear: GMT 150B
-      capture: direct
-      substitute:
-        gear: Gallien-Krueger GK 800RB
-        evidence:
-          - kind: user
-            url: https://www.talkbass.com/threads/chuck-dukowski.670228/
-            note: >-
-              lineage rather than resemblance. The poster Effectsiation
-              establishes the company in post 13: "GMT, as far as I've been able
-              to research, stood for Gallien Martin Taylor… Later, Robert Gallien
-              teamed up with a former co-worker at Hewlett-Packard, Rich Krueger,
-              and the GMT amps started saying 'Gallien-Krueger' under GMT on the
-              amps. Eventually they dropped the GMT and the company became just
-              Gallien-Krueger."
-
-              So the GK 800RB this device models is the same company's later
-              work, and it is the only amplifier here with any connection to the
-              one he named.
-            caveat: >-
-              a successor, not the same amplifier. The GK 800RB is a 1980s
-              biamped head and the GMT 150B is a 1970s one of a third the power,
-              so the lineage says who built it and not what it sounds like.
-              Nobody has measured either against the other.
-        confidence: low
-      evidence:
-        - kind: user
-          url: https://www.talkbass.com/threads/chuck-dukowski.670228/
-          note: >-
-            Dukowski's own words, album by album, pasted into post 7 by the
-            poster DoomandHeavy, who says "I actually just interviewed Chuck the
-            other day, and he gave me a list of all the gear he's used". The list
-            is in Dukowski's first person throughout and names this record
-            outright: "On Damaged I played the GMT 150B into an acoustic 6x12
-            cab. This is the setup I was happiest with in BF."
-
-            The same list dates the changes either side of it, which is what
-            makes it credible as a record rather than a recollection: a GMT 250
-            into a 4x15 on Nervous Breakdown, an SVT into an Ampeg 2x15 folded
-            horn on Jealous Again, a GMT 150B into the folded horn and an AE
-            2x15 on Six Pack.
-          caveat: >-
-            first-hand from him and second-hand to us, and the interview behind
-            it was never published. Post 11 asks "is the interview going to be
-            online somewhere? I'd love to read it" and goes unanswered, so this
-            forum post is the only copy of a primary source nobody else can
-            check.
-
-            It also does not say whether the record was miked, taken direct, or
-            both. "Played into" describes the rig he stood in front of.
-      confidence: medium
-
-    - role: cab
-      gear: Acoustic 6x12
-      capture: direct
-      substitute:
-        gear: Ampeg SVT 410HLF
-        evidence:
-          - kind: llm
-            note: >-
-              the device models no 6x12 of any make, and the Acoustic cabinet it
-              does carry is a 1x18 folded horn, which is a different box doing a
-              different job. A sealed multi-ten is the nearest thing here to six
-              twelves in one cabinet.
-            caveat: >-
-              asserted by a model and confirmed by nobody. Six twelve-inch
-              speakers and four tens do not move the same air, and the choice is
-              a judgement about size rather than a measurement. If you know a
-              nearer match in this catalog, please open a pull request.
-        confidence: low
-      evidence:
-        - kind: user
-          url: https://www.talkbass.com/threads/chuck-dukowski.670228/
-          note: >-
-            the second half of the same sentence in post 7: "On Damaged I played
-            the GMT 150B into an acoustic 6x12 cab."
-          caveat: >-
-            the same post as the head, so the two share a source and stand or
-            fall together. Lower case "acoustic" in his list is ambiguous: the
-            brand Acoustic made a 6x12 guitar cabinet, and post 2 independently
-            recalls him with "an Acoustic 6-10\" guitar cab (which would of had
-            to have other speakers than stock, IMO)". Whether he meant the brand
-            or the word is not settled here, and the size is what this claims.
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: direct
+    confidence: medium
+    controls:
+      Bass: "0.5"
+      Boost: "0.5"
+      ChVol: "0.8"
+      Contour: "true"
+      Drive: "0.26"
+      HighMid: "0.78"
+      LowMid: "0.4"
+      Master: "1.0"
+      Treble: "0.91"
+    evidence:
+    - caveat: |-
+        first-hand from him and second-hand to us, and the interview behind it was never published. Post 11 asks "is the interview going to be online somewhere? I'd love to read it" and goes unanswered, so this forum post is the only copy of a primary source nobody else can check.
+        It also does not say whether the record was miked, taken direct, or both. "Played into" describes the rig he stood in front of.
+      kind: user
+      note: |-
+        Dukowski's own words, album by album, pasted into post 7 by the poster DoomandHeavy, who says "I actually just interviewed Chuck the other day, and he gave me a list of all the gear he's used". The list is in Dukowski's first person throughout and names this record outright: "On Damaged I played the GMT 150B into an acoustic 6x12 cab. This is the setup I was happiest with in BF."
+        The same list dates the changes either side of it, which is what makes it credible as a record rather than a recollection: a GMT 250 into a 4x15 on Nervous Breakdown, an SVT into an Ampeg 2x15 folded horn on Jealous Again, a GMT 150B into the folded horn and an AE 2x15 on Six Pack.
+      url: https://www.talkbass.com/threads/chuck-dukowski.670228/
+    gear: GMT 150B
+    role: amp
+    substitute:
       confidence: low
+      evidence:
+      - caveat: a successor, not the same amplifier. The GK 800RB is a 1980s biamped
+          head and the GMT 150B is a 1970s one of a third the power, so the lineage
+          says who built it and not what it sounds like. Nobody has measured either
+          against the other.
+        kind: user
+        note: |-
+          lineage rather than resemblance. The poster Effectsiation establishes the company in post 13: "GMT, as far as I've been able to research, stood for Gallien Martin Taylor… Later, Robert Gallien teamed up with a former co-worker at Hewlett-Packard, Rich Krueger, and the GMT amps started saying 'Gallien-Krueger' under GMT on the amps. Eventually they dropped the GMT and the company became just Gallien-Krueger."
+          So the GK 800RB this device models is the same company's later work, and it is the only amplifier here with any connection to the one he named.
+        url: https://www.talkbass.com/threads/chuck-dukowski.670228/
+      gear: Gallien-Krueger GK 800RB
+  - capture: direct
+    confidence: low
+    controls:
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      HighCut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - caveat: 'the same post as the head, so the two share a source and stand or fall
+        together. Lower case "acoustic" in his list is ambiguous: the brand Acoustic
+        made a 6x12 guitar cabinet, and post 2 independently recalls him with "an
+        Acoustic 6-10\" guitar cab (which would of had to have other speakers than
+        stock, IMO)". Whether he meant the brand or the word is not settled here,
+        and the size is what this claims.'
+      kind: user
+      note: 'the second half of the same sentence in post 7: "On Damaged I played
+        the GMT 150B into an acoustic 6x12 cab."'
+      url: https://www.talkbass.com/threads/chuck-dukowski.670228/
+    gear: Acoustic 6x12
+    role: cab
+    substitute:
+      confidence: low
+      evidence:
+      - caveat: asserted by a model and confirmed by nobody. Six twelve-inch speakers
+          and four tens do not move the same air, and the choice is a judgement about
+          size rather than a measurement. If you know a nearer match in this catalog,
+          please open a pull request.
+        kind: llm
+        note: the device models no 6x12 of any make, and the Acoustic cabinet it does
+          carry is a 1x18 folded horn, which is a different box doing a different
+          job. A sealed multi-ten is the nearest thing here to six twelves in one
+          cabinet.
+      gear: Ampeg SVT 410HLF
+  - controls:
+      HighGain: "0.0"
+      Level: "0.0"
+      LowGain: "0.0"
+      MidFreq: "600.0"
+      MidGain: "1.6"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Simple EQ
+    role: eq
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

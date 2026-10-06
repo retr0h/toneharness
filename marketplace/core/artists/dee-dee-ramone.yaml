@@ -3,74 +3,89 @@
 # One document: the ask says who it is for, the rig below says what the gear is.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: dee-dee-ramone
-
 ask:
-  aliases: [ramones, dee-dee]
-
+  aliases:
+  - ramones
+  - dee-dee
+  confidence: low
+  genre:
+  - punk
+  instrument: bass
   subject:
-    kind: artist
-    name: Dee Dee Ramone
     band: Ramones
     era: Rocket to Russia
-    years: { from: 1977, to: 1977 }
-
-  instrument: bass
-
-  genre: [punk]
-
-  # How it is played. Downstrokes with a pick are the whole point of this band's
-  # right hand, and it is the one thing about Dee Dee nobody disputes.
+    kind: artist
+    name: Dee Dee Ramone
+    years:
+      from: 1977
+      to: 1977
   technique:
     attack: pick
-
-  # No `words` and no `played`. Nothing read here names the bass on this record,
-  # and nothing describes the sound in terms this vocabulary carries.
-
-  confidence: low
-
+id: dee-dee-ramone
 rig:
-  instrument: bass
-
-  # The signal path, in order.
   chain:
-    - role: amp
-      gear: Ampeg SVT
-      capture: direct
-      evidence:
-        - kind: cited
-          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
-          note: >-
-            Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks",
-            Premier Guitar, 18 May 2010. It puts him on three Ampeg SVT 300-watt
-            heads with three matching 8x10 cabinets, bought once there was money
-            for them, and quotes him from a 1976 documentary on why: "We play so
-            loud that the amps couldn't take it… But now we got these amps that
-            they… work."
-          caveat: >-
-            the touring rig, and the quote is about amplifiers failing rather
-            than about a record. The article is a 2010 retrospective on a 1977
-            album, so it is a writer assembling a period rig thirty years later
-            and not somebody who was in the room.
-
-            Nothing found says what was in Mediasound for these sessions. A band
-            that owned three SVTs very likely recorded through one, and "very
-            likely" is not evidence.
-      confidence: low
-
-    - role: cab
-      gear: Ampeg 8x10
-      capture: direct
-      evidence:
-        - kind: cited
-          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
-          note: >-
-            the same sentence as the head, which names "three matching 8x10
-            cabinets" alongside the three SVT heads.
-          caveat: >-
-            the same source as the head, so the two share it and stand or fall
-            together, and the same thirty years separate it from the record. The
-            size is what is claimed; which Ampeg eight by ten is not.
-      confidence: low
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: direct
+    confidence: low
+    controls:
+      Bass: "0.41"
+      Bias: "0.74"
+      BiasX: "0.5"
+      ChVol: "0.8"
+      Drive: "0.6"
+      Hum: "0.5"
+      Master: "1.0"
+      Mid: "0.89"
+      MidFreq: "2"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.88"
+    evidence:
+    - caveat: |-
+        the touring rig, and the quote is about amplifiers failing rather than about a record. The article is a 2010 retrospective on a 1977 album, so it is a writer assembling a period rig thirty years later and not somebody who was in the room.
+        Nothing found says what was in Mediasound for these sessions. A band that owned three SVTs very likely recorded through one, and "very likely" is not evidence.
+      kind: cited
+      note: 'Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks", Premier
+        Guitar, 18 May 2010. It puts him on three Ampeg SVT 300-watt heads with three
+        matching 8x10 cabinets, bought once there was money for them, and quotes him
+        from a 1976 documentary on why: "We play so loud that the amps couldn''t take
+        it… But now we got these amps that they… work."'
+      url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+    gear: Ampeg SVT
+    role: amp
+  - capture: direct
+    confidence: low
+    controls:
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      High Cut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - caveat: the same source as the head, so the two share it and stand or fall together,
+        and the same thirty years separate it from the record. The size is what is
+        claimed; which Ampeg eight by ten is not.
+      kind: cited
+      note: the same sentence as the head, which names "three matching 8x10 cabinets"
+        alongside the three SVT heads.
+      url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+    gear: Ampeg 8x10
+    role: cab
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

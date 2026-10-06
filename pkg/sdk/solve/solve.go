@@ -146,6 +146,55 @@ const Least = 1e-3
 // axis already inside its tolerance is left out rather than defended: a target
 // that pins three figures and shrugs at six is the ordinary case for a genre,
 // and the freedom goes into satisfying the three.
+// authoritative drops the controls that cannot reach any axis being solved.
+//
+// Least squares gives a control with a small slope a large move, because a large
+// move is the only way such a control contributes anything. So a dial that barely
+// touches the sound gets swung from end to end to buy a fraction of a tolerance,
+// and the chain pays for it in character.
+//
+// Measured on an Ampeg SVT: `Hum` moves the centroid 316Hz and `Ripple` 150Hz
+// across their whole travel, against Treble's 12,763Hz. A solve that arrived
+// inside tolerance had still taken both to zero, which is the valve character of
+// the amplifier, for an effect too small to hear.
+//
+// The line is the tolerance, which is derived rather than chosen: a control whose
+// full travel moves a figure less than the figure's own tolerance cannot settle
+// that axis however far it is turned. One that cannot reach any axis under
+// solution has nothing to contribute and is left where the rig put it.
+func authoritative(
+	knobs []Knob,
+	aims map[audio.Figure]Aim,
+	rows []audio.Figure,
+) []Knob {
+	out := make([]Knob, 0, len(knobs))
+
+	for _, k := range knobs {
+		travel := k.High - k.Low
+		if travel <= 0 {
+			continue
+		}
+
+		for _, r := range rows {
+			if math.Abs(k.Slope[r])*travel >= aims[r].Tol {
+				out = append(out, k)
+
+				break
+			}
+		}
+	}
+
+	// A filter, never a gate. Where no control clears the line the whole chain is
+	// handed back unchanged, because "nothing here can reach that" is a
+	// conclusion for the caller to report rather than an error to raise: it is
+	// what `tone reach` exists to say, and the residuals are the answer.
+	if len(out) == 0 {
+		return knobs
+	}
+
+	return out
+}
+
 func Toward(
 	knobs []Knob,
 	aims map[audio.Figure]Aim,
@@ -156,6 +205,8 @@ func Toward(
 	if len(rows) == 0 {
 		return out, nil
 	}
+
+	knobs = authoritative(knobs, aims, rows)
 
 	// Rows are scaled by their own tolerance, so every residual below is in
 	// the same unit and the solve does not spend the whole chain on hertz.

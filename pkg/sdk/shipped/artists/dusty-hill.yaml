@@ -3,71 +3,89 @@
 # One document: the ask says who it is for, the rig below says what the gear is.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: dusty-hill
-
 ask:
-  aliases: [dusty, zz-top]
-
+  aliases:
+  - dusty
+  - zz-top
+  confidence: low
+  genre:
+  - southern-rock
+  - blues-rock
+  instrument: bass
   subject:
-    kind: artist
-    name: Dusty Hill
     band: ZZ Top
     era: Tres Hombres
-    years: { from: 1973, to: 1973 }
-
-  instrument: bass
-
-  genre: [southern-rock, blues-rock]
-
-  confidence: low
-
+    kind: artist
+    name: Dusty Hill
+    years:
+      from: 1973
+      to: 1973
+id: dusty-hill
 rig:
-  instrument: bass
-
-  # The signal path, in order. A guitar amplifier, which is the whole point of
-  # this rig rather than a mistake in it.
   chain:
-    - role: amp
-      gear: Marshall Super Lead 100
-      capture: direct
-      evidence:
-        - kind: llm
-          note: >-
-            asserted by a model and confirmed by nobody. The account that
-            circulates is that these sessions caught him without his '51
-            Telecaster bass, so he played a Danelectro Longhorn through a
-            100-watt Marshall, the same model of amplifier the guitars were
-            running, and that the band recorded the record largely live in the
-            studio on a newly bought touring rig.
-          caveat: >-
-            what was searched, and where it ran out. Premier Guitar's ZZ Top gear
-            gallery and their obituary for him were both opened and neither
-            carries this; the gallery has his tech on his tone and no models for
-            this period. No page was found that states it, so this is the claim
-            as it is repeated rather than as anybody printed it.
-
-            It is worth keeping rather than dropping because it is unusually
-            specific and it is checkable: a Danelectro through a Marshall guitar
-            stack is a strange enough rig that somebody with the period press
-            can confirm or kill it in one reading. If you have that, please open
-            a pull request.
-
-            Line 6 tag this model a guitar amplifier, which is what it is. A
-            rig naming it on purpose is the case the instrument filter was
-            taught not to refuse.
-      confidence: low
-
-    - role: cab
-      gear: Marshall 4x12
-      capture: direct
-      evidence:
-        - kind: llm
-          note: >-
-            the cabinet that goes with the head above, on the same account of
-            two identical stacks shared between guitar and bass.
-          caveat: >-
-            the same unsourced account as the head, so the two stand or fall
-            together, and which 4x12 is not established at all.
-      confidence: low
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: direct
+    confidence: low
+    controls:
+      Bass: "0.9"
+      Bias: "0.65"
+      BiasX: "0.5"
+      BrtDrive: "0.76"
+      ChVol: "0.63"
+      Hum: "0.5"
+      Master: "1.0"
+      Mid: "0.81"
+      NrmDrive: "0.72"
+      Presence: "0.7"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.73"
+    evidence:
+    - caveat: |-
+        what was searched, and where it ran out. Premier Guitar's ZZ Top gear gallery and their obituary for him were both opened and neither carries this; the gallery has his tech on his tone and no models for this period. No page was found that states it, so this is the claim as it is repeated rather than as anybody printed it.
+        It is worth keeping rather than dropping because it is unusually specific and it is checkable: a Danelectro through a Marshall guitar stack is a strange enough rig that somebody with the period press can confirm or kill it in one reading. If you have that, please open a pull request.
+        Line 6 tag this model a guitar amplifier, which is what it is. A rig naming it on purpose is the case the instrument filter was taught not to refuse.
+      kind: llm
+      note: asserted by a model and confirmed by nobody. The account that circulates
+        is that these sessions caught him without his '51 Telecaster bass, so he played
+        a Danelectro Longhorn through a 100-watt Marshall, the same model of amplifier
+        the guitars were running, and that the band recorded the record largely live
+        in the studio on a newly bought touring rig.
+    gear: Marshall Super Lead 100
+    role: amp
+  - capture: direct
+    confidence: low
+    controls:
+      Angle: "45.0"
+      Distance: "1.0"
+      HighCut: "12000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+      Mic: "2"
+      Position: "0.15"
+    evidence:
+    - caveat: the same unsourced account as the head, so the two stand or fall together,
+        and which 4x12 is not established at all.
+      kind: llm
+      note: the cabinet that goes with the head above, on the same account of two
+        identical stacks shared between guitar and bass.
+    gear: Marshall 4x12
+    role: cab
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec

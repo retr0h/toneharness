@@ -5,73 +5,82 @@
 # The amplifier is a model's assertion. See the caveat for what was searched.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: cone-mccaslin
-
 ask:
-  aliases: [cone, sum-41, mccaslin]
-
+  aliases:
+  - cone
+  - sum-41
+  - mccaslin
+  confidence: low
+  genre:
+  - pop-punk
+  instrument: bass
   subject:
-    kind: artist
-    name: Jason "Cone" McCaslin
     band: Sum 41
     era: All Killer No Filler
-    years: { from: 2001, to: 2001 }
-
-  instrument: bass
-
-  genre: [pop-punk]
-
-  # No `played`. Every account that names an instrument names two, a 1959
-  # reissue Precision live and a 1962 reissue in the studio, and all of them are
-  # aggregator pages rather than anybody who was there. The studio one is the
-  # claim that would matter here and it is the one least supported.
-
-  confidence: low
-
+    kind: artist
+    name: Jason "Cone" McCaslin
+    years:
+      from: 2001
+      to: 2001
+id: cone-mccaslin
 rig:
-  instrument: bass
-
-  # The signal path, in order.
   chain:
-    - role: amp
-      gear: Ampeg SVT
-      capture: direct
-      evidence:
-        - kind: llm
-          note: >-
-            asserted by a model and confirmed by nobody. The figure repeated
-            across gear pages is an Ampeg SVT into an Ampeg 8x10, held to since
-            he joined the band, with a SansAmp used in the studio and Evil Twin
-            tube direct boxes live.
-          caveat: >-
-            what was searched, and where it ran out. The pages carrying this are
-            uberproaudio and whatgear, which are the kind that scrape and do not
-            cite, and the project treats those as not sources. The one TalkBass
-            thread about him is three posts arguing about whether he is any good
-            and names no equipment at all. Guitar World's Sum 41 feature is
-            behind a membership prompt and could not be read.
-
-            An SVT into an eight-by-ten is also the answer this corpus gives for
-            almost every rock bassist in it, which is a reason to trust it less
-            rather than more: it is what a guess looks like when it happens to be
-            plausible.
-
-            Worth naming what would settle it. These sessions were produced by
-            Jerry Finn, and a Finn interview or a Mix piece on the record would
-            be first-hand about what went to tape. If you have one, please open a
-            pull request.
-      confidence: low
-
-    - role: cab
-      gear: Ampeg 8x10
-      capture: direct
-      evidence:
-        - kind: llm
-          note: >-
-            the cabinet named alongside the head in the same pages.
-          caveat: >-
-            the same unsourced account as the head, so the two stand or fall
-            together.
-      confidence: low
+  - controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    role: comp
+  - capture: direct
+    confidence: low
+    controls:
+      Bass: "0.41"
+      Bias: "0.74"
+      BiasX: "0.5"
+      ChVol: "0.8"
+      Drive: "0.6"
+      Hum: "0.5"
+      Master: "1.0"
+      Mid: "0.79"
+      MidFreq: "2"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.85"
+    evidence:
+    - caveat: |-
+        what was searched, and where it ran out. The pages carrying this are uberproaudio and whatgear, which are the kind that scrape and do not cite, and the project treats those as not sources. The one TalkBass thread about him is three posts arguing about whether he is any good and names no equipment at all. Guitar World's Sum 41 feature is behind a membership prompt and could not be read.
+        An SVT into an eight-by-ten is also the answer this corpus gives for almost every rock bassist in it, which is a reason to trust it less rather than more: it is what a guess looks like when it happens to be plausible.
+        Worth naming what would settle it. These sessions were produced by Jerry Finn, and a Finn interview or a Mix piece on the record would be first-hand about what went to tape. If you have one, please open a pull request.
+      kind: llm
+      note: asserted by a model and confirmed by nobody. The figure repeated across
+        gear pages is an Ampeg SVT into an Ampeg 8x10, held to since he joined the
+        band, with a SansAmp used in the studio and Evil Twin tube direct boxes live.
+    gear: Ampeg SVT
+    role: amp
+  - capture: direct
+    confidence: low
+    controls:
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      High Cut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - caveat: the same unsourced account as the head, so the two stand or fall together.
+      kind: llm
+      note: the cabinet named alongside the head in the same pages.
+    gear: Ampeg 8x10
+    role: cab
+  instrument: bass
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec
