@@ -515,6 +515,81 @@ func (s *MembersPublicTestSuite) TestCorpusRoundTrip() {
 	s.Require().Zero(differ)
 }
 
+// TestARoundedValueIsStillInRange covers how far outside a control's range a
+// value may sit before the build refuses it.
+//
+// A preset's own file does not spell a value to the precision the catalog states a
+// bound in. 188 values in the preset corpus read `0.00999999` against a minimum of
+// `0.01`, six significant figures and ten float32 steps under it, and refusing
+// those made the presets holding them impossible to rebuild.
+//
+// The threshold was not a fine judgement. The 64 values in the same corpus that are
+// genuinely out of range miss by 3.5 to 99 times the control's travel, against 1e-6
+// for the rounding, so the two are seven orders of magnitude apart.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MembersPublicTestSuite) TestARoundedValueIsStillInRange() {
+	for _, tt := range []struct {
+		name string
+		// of is the value stated for the amplifier's Drive, whose range is 0 to 1.
+		of string
+		// refused says the build would not take it.
+		refused bool
+	}{
+		{name: "a value in the middle", of: "0.5"},
+		{name: "the bottom of the range", of: "0.0"},
+		{name: "the top of the range", of: "1.0"},
+		{
+			// The case this exists for, at the scale a file rounds by.
+			name: "a millionth of the travel under the bottom",
+			of:   "-0.0000001",
+		},
+		{
+			name: "a millionth of the travel over the top",
+			of:   "1.0000001",
+		},
+		{
+			// A thousandth of the travel out is not rounding. Nothing in the corpus
+			// misses by that little and a device would resolve it, so it is a value
+			// somebody set wrongly.
+			name:    "a thousandth of the travel under the bottom",
+			of:      "-0.001",
+			refused: true,
+		},
+		{
+			// What the far population looks like: a Drive of 8.0 against 0 to 1,
+			// which is five presets in the corpus and a different firmware's idea
+			// of the control.
+			name:    "well outside the range",
+			of:      "8.0",
+			refused: true,
+		},
+	} {
+		s.Run(tt.name, func() {
+			var one catalog.Setting
+			s.Require().NoError(json.Unmarshal([]byte(`"`+tt.of+`"`), &one))
+
+			held := map[string]catalog.Setting{"Drive": one}
+
+			_, _, _, _, err := compile.Resolve("x", rig.Spec{
+				Instrument: rig.InstrumentBass,
+				Chain: []rig.ChainEntry{{
+					Role: rig.RoleAmp, Gear: "Ampeg SVT", Controls: &held,
+				}},
+			}, compile.Intent{}, s.cat, nil)
+
+			if tt.refused {
+				s.Require().Error(err)
+				s.Require().ErrorContains(err, "Drive")
+
+				return
+			}
+
+			s.Require().NoError(err)
+		})
+	}
+}
+
 // TestControlsPickTheModel covers which of several models a gear name means
 // being decided by the controls the document states.
 //
