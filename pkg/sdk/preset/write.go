@@ -69,7 +69,7 @@ func (d *Document) SetSpec(
 		}
 
 		for k := range tone {
-			if isBlockKey(k) {
+			if IsBlockKey(k) {
 				delete(tone, k)
 			}
 		}
@@ -107,9 +107,24 @@ func (d *Document) SetSpec(
 // dsp0 and dsp1 on a device that has two.
 const processorPrefix = "dsp"
 
-// isBlockKey reports whether a tone entry is a chain block rather than
+// IsProcessorKey reports whether a tone entry is a processor.
+//
+// Which decides whether its blocks belong to the chain. A processor's `block3` is
+// a chain entry; a footswitch's `block3` and a snapshot's `block3` are what that
+// switch or snapshot does about it, and those are not gear.
+func IsProcessorKey(
+	k string,
+) bool {
+	return strings.HasPrefix(k, processorPrefix)
+}
+
+// IsBlockKey reports whether a tone entry is a chain block rather than
 // routing.
-func isBlockKey(
+//
+// Exported because a lift needs the same question answered. A chain already says
+// every block, so a rig's record of everything else a preset holds has to leave
+// these out or two parts of one document would set one control.
+func IsBlockKey(
 	k string,
 ) bool {
 	if len(k) <= len("block") || k[:len("block")] != "block" {

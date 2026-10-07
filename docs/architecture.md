@@ -351,17 +351,18 @@ spending the run. The method is
 and it needs the pedal, so a build on its own still hands back a chain nobody
 has heard.
 
-**The preset-wide sections are not in the contract.** A chain is, and so is
-every control on it, but the global settings, the snapshots a preset stores, the
-footswitch labels, the expression pedal assignments, the DT and Powercab blocks,
-the MIDI commands and the impulse response table are not. Measured against the
-4,426-preset corpus that is 18 member kinds and 335 fields.
+**No shipped rig says what the preset holds beside its chain.** The contract
+carries it now, under `rig.preset`, and a lift fills it: the global settings,
+the snapshots, the footswitch and expression pedal assignments, each processor's
+routing, the cabinets a dual block points at, the DT and Powercab members, the
+MIDI commands and the impulse response table. That is 18 member kinds and 335
+field names across the preset corpus, and a round-trip test holds 4,324 of those
+presets to coming back with nothing changed.
 
-What it costs: building and iterating on a rig works, and importing somebody
-else's preset still loses most of what is not its chain.
-`slots export --as tonespec` returns a rig without them and says nothing about
-it, which is the same class of silent loss `controls` was added to fix.
+What is left is that the 32 rigs in the marketplace were resolved before the
+field existed, so they carry every control and no preset members. Resolving them
+again fills it in, and doing that today deletes the header comment each one
+carries, which is its own bug and its own task.
 
-**Only one rig is resolved.** The punk genre rig carries its controls; the
-twenty-eight artists and the three other genres do not, so a tweak to any of
-them has nowhere to go until `rigs resolve` has been run over them.
+The worked example under `marketplace/examples` states four members by hand, so
+the shape is documented whatever the shipped rigs say.

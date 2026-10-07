@@ -1,6 +1,6 @@
 ---
 name: write-a-spec
-description: Write or correct a ToneSpec by hand, the one document this project's format is made of, holding an ask and the rig that answers it. Covers which half a fact belongs in, naming gear the way a musician does, signal order, the musical settings vocabulary and what decides a value, the words an ask may carry, a song written as sections, what an expression pedal moves, recording what somebody thought of the result, and what belongs to a Setup instead. Use when asked to write, read, correct or explain a ToneSpec, a Plan or a Setup, when a field is refused, or when deciding which half a fact goes in.
+description: Write or correct a ToneSpec by hand, the one document this project's format is made of, holding an ask and the rig that answers it. Covers which half a fact belongs in, naming gear the way a musician does, signal order, the musical settings vocabulary and what decides a value, the words an ask may carry, a song written as sections, what an expression pedal moves, everything a preset holds beside its chain, recording what somebody thought of the result, and what belongs to a Setup instead. Use when asked to write, read, correct or explain a ToneSpec, a Plan or a Setup, when a field is refused, or when deciding which half a fact goes in.
 compatibility: Requires a toneharness checkout with mise available. Every command runs through `mise exec -- go run main.go`, never a bare `toneharness`.
 license: MIT
 metadata:
@@ -74,10 +74,11 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 | the words an ask carries, and what each one does                  | [references/terms.md](references/terms.md)                 |
 | who the rig is for, when it applied, what it was played on        | [references/subject.md](references/subject.md)             |
 | a song as sections, and what moves while you play                 | [references/song.md](references/song.md)                   |
+| everything a preset holds that is not its chain                   | [references/preset.md](references/preset.md)               |
 | what a Plan holds that no rig does, and why                       | [references/plan.md](references/plan.md)                   |
 | recording what a person thought of the result                     | [references/corrections.md](references/corrections.md)     |
 | impulse responses, bought models, what one person owns            | [references/setup.md](references/setup.md)                 |
-| all of it, in order                                               | All nine, in that order                                   |
+| all of it, in order                                               | All ten, in that order                                   |
 
 ## 4. Every field earns its place
 

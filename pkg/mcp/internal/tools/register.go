@@ -34,6 +34,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // addTool registers one tool, with every failure carrying its remedy.
@@ -335,6 +336,30 @@ func outputTypeSchemas() map[reflect.Type]*jsonschema.Schema {
 		reflect.TypeFor[map[string]catalog.Setting](): {
 			Types:                []string{"null", "object"},
 			AdditionalProperties: &jsonschema.Schema{Types: []string{"string"}},
+		},
+		// A Held is a value a preset holds as a document writes it down, which is
+		// a string or the empty string. Reflection sees the ParamValue inside it
+		// and would demand an object. Nil for the device's own null, so the map
+		// admits one.
+		reflect.TypeFor[catalog.Held](): {Types: []string{"string"}},
+		reflect.TypeFor[map[string]*catalog.Held](): {
+			Types:                []string{"null", "object"},
+			AdditionalProperties: &jsonschema.Schema{Types: []string{"null", "string"}},
+		},
+		// A PresetMember holds members of its own, so its schema refers to
+		// itself and reflection cannot express the cycle: a preset nests five
+		// deep, `snapshot0.controllers.dsp0.block1.Tone` being the deepest in
+		// 4,426 of them, and a fixed type per level would be the same four
+		// fields written five times.
+		//
+		// Stated as an object rather than unrolled. An agent asking what gear a
+		// rig names reads the chain; this is the device's own record of
+		// everything beside it, which is what `slots_export` is for. The same
+		// argument keeps a .hlx document out of what `presets_show` answers.
+		reflect.TypeFor[rig.PresetMember](): {Types: []string{"object"}},
+		reflect.TypeFor[map[string]rig.PresetMember](): {
+			Types:                []string{"null", "object"},
+			AdditionalProperties: &jsonschema.Schema{Types: []string{"object"}},
 		},
 		// A RawMessage is a []byte to reflection, an array of small integers,
 		// but it marshals as the JSON it holds. rig.Spec carries these for

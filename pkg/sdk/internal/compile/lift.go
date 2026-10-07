@@ -65,6 +65,10 @@ func Lift(
 	out := rig.Spec{
 		Chain:      entries,
 		Instrument: instrumentFieldFor(c, cat),
+		// Everything the preset holds that the chain does not. Without it a lift
+		// keeps the gear and drops the snapshots, the routing, the footswitches
+		// and the cabinets, which is most of what somebody built.
+		Preset: membersOf(doc),
 	}
 
 	// The same preset read twice, into the two documents it is. The rig is the

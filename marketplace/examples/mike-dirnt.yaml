@@ -257,6 +257,66 @@ rig:
     - name: Chorus
       play: [comp]
 
+  # Everything the preset holds that is not a block in the chain, by the name
+  # the device files it under. A chain is the signal path; a preset holds
+  # eighteen other kinds of member beside it, and this is where they live.
+  #
+  # Written by `rigs resolve`, which fills in every member the device had.
+  # Shown here by hand and cut to four, because the resolved form of this rig
+  # runs to a hundred lines and the point is the shape rather than the size.
+  #
+  # A member names a model, carries the device's own attributes under the names
+  # it spells them with, carries controls by name, and holds members under it.
+  # Most use two of the four.
+  #
+  # What this buys that nothing else did: the noise gate below, the output's
+  # destination, the split's balance and a snapshot's name were read off the
+  # pedal and dropped. Importing somebody's preset kept their gear and lost
+  # what they had built with it.
+  preset:
+    dsp0:
+      # A processor's own blocks are not repeated here. They are the chain
+      # above, and two places setting one control is what this avoids. What is
+      # left is the routing either side of it.
+      members:
+        # `@output` is the destination, and it is the number that decides
+        # whether anything is heard: 1 is the main output, and a figure
+        # measured through one is not a figure measured through another.
+        outputA:
+          model: HelixStomp_AppDSPFlowOutputMain
+          attrs:
+            "@output": "1"
+          controls:
+            gain: "0"
+            pan: "0.5"
+        # The noise gate lives on the input rather than in the chain, so no
+        # word reaches it and there was nowhere to write it down.
+        inputA:
+          model: HelixStomp_AppDSPFlowInput
+          attrs:
+            "@input": "1"
+          controls:
+            noiseGate: "false"
+            decay: "0.5"
+            threshold: "-48"
+    # No snapshots here, deliberately. `sections:` below says what plays in each
+    # part of the song, the build turns those into the device's snapshots, and a
+    # rig stating both would be answering one question twice. Stating one
+    # snapshot by hand is worse than that: a preset's snapshots are replaced
+    # rather than merged, so a rig naming `snapshot0` alone leaves the device
+    # with one, and the two sections below then do not fit. `rigs resolve`
+    # writes all of them, which is consistent; a hand-written rig says
+    # `sections:` and lets the build do it. Refused rather than left to
+    # discover, see `rig.Validate`.
+    # The amplifier's remote, which this rig does not use and a preset carries
+    # anyway. Here to show that a member can be nothing but attributes.
+    dt0:
+      model: "@dt"
+      attrs:
+        "@dt_channel": "0"
+        "@dt_poweramp": "0"
+        "@dt_reverb": "false"
+
   # What a foot reaches, said the way a section is: by role and by one of the
   # words `settings` uses, so it means the same thing on any hardware.
   #

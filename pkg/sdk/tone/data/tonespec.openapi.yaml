@@ -277,6 +277,35 @@ components:
             both would have to pick one without saying so. A device has a fixed
             number of snapshots, three on an HX Stomp, and more sections than
             that will not build.
+        preset:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/PresetMember" }
+          description: >
+            Everything the preset holds that is not a block in the chain, by the
+            name the device files it under: `global`, `snapshot0`, `footswitch`,
+            `controller`, `dt0`, `powercab0`, `irUuidTable`, `variax`,
+            `commandFS1`, `automation`.
+
+
+            The chain says the signal path and nothing else. A preset holds
+            eighteen other kinds of member beside it, and before this they had
+            nowhere to go: a snapshot, a footswitch assignment, an input's noise
+            gate, a cabinet's microphone distance and the output's pan were read
+            off the device and dropped. Importing somebody's preset kept the gear
+            and lost the rest of what they built.
+
+
+            Keyed by the device's own member name rather than by anything
+            friendlier, because the name is what the member is. `dsp0` and `dsp1`
+            are two processors, `snapshot0` through `snapshot7` are eight
+            snapshots in order, and a name this tool renamed would not survive
+            the trip back.
+
+
+            A member the chain already states is not repeated here. A block in
+            `dsp0` is a chain entry, so `preset.dsp0` carries that processor's
+            inputs, outputs, split, join and cabinets and no blocks at all. Two
+            places setting one control is the thing this avoids.
         resolved:
           $ref: "#/components/schemas/Target"
         moves:
@@ -295,6 +324,155 @@ components:
 
             A rig may say both, because they answer different questions: a
             section is which blocks play, a move is which knob a foot reaches.
+    PresetMember:
+      type: object
+      additionalProperties: false
+      description: >
+        One thing a preset holds beside its chain: a snapshot, a processor's
+        routing, a footswitch, an amplifier's remote control, a cabinet.
+
+
+        Three shapes in one, because the device uses one shape for all of them. A
+        member names a model, carries attributes the device spells with a leading
+        `@`, carries controls by name, and holds further members under it. Any of
+        the four may be absent and most members use two.
+
+
+        Deliberately not eighteen hand-written types. The corpus holds 335
+        distinct field names across those eighteen kinds, and every type inferred
+        from reading a sample of them has been wrong at least once: `@tempo` is
+        fractional in 3,155 snapshots, `@topology1` is a string in 506 presets and
+        a number elsewhere, `@dt_reverb` is a boolean in some and a number in
+        others, and a cabinet spells one control `HighCut` in 1,994 presets and
+        `High Cut` in 113. A schema enumerating them refuses real presets, and
+        generating one from the corpus would describe what has been seen rather
+        than what is allowed: it would refuse the first field Line 6 add, and it
+        would publish a packed-RGB footswitch colour of 462,860 as the bottom of a
+        range.
+
+
+        So the shape is stated and the values are kept as they were written. What
+        validates a control is the catalog, which already knows all 5,602 of them.
+      properties:
+        model:
+          type: string
+          minLength: 1
+          description: >
+            The model identifier this member runs, as the device spells it:
+            `HD2_AppDSPFlowSplitY`, `@global_params`, `@dt`, `@powercab`.
+
+
+            An identifier rather than a name a person would use, which is the
+            opposite of how the chain names gear. A chain entry says `Ampeg SVT`
+            because an amplifier has a name somebody would recognise and 661
+            models resolve from 468 of them. These do not: `HD2_AppDSPFlowJoin` is
+            the join, there is nothing else it could be, and Line 6 publish no
+            friendlier name for it.
+
+
+            Absent where the member is a container rather than a thing, such as a
+            snapshot's `blocks` or a footswitch's `dsp0`.
+        attrs:
+          type: object
+          additionalProperties:
+            type: string
+            nullable: true
+            x-go-type: catalog.Held
+            x-go-type-import:
+              name: catalog
+              path: github.com/retr0h/toneharness/pkg/sdk/catalog
+          description: >
+            The device's own attributes, under the names it spells them with,
+            the leading `@` included: `@enabled`, `@position`, `@mic`, `@tempo`,
+            `@input`, `@ledcolor`.
+
+
+            Kept apart from `controls` because the device does. An attribute says
+            where a member sits, whether it is on, or which of several things it
+            is, and none of them is a knob: no word reaches one and the catalog
+            carries no range for one. A control is a knob, and the catalog
+            describes every one.
+
+
+            Written as strings so the kind survives, for the same reason a
+            control is. `@position` is an integer and `@tempo` is a float, a
+            device reads the two differently, and a route that turned 120.0 into
+            120 would change what the preset says.
+
+
+            Three spellings, because a preset is in all three states. A quoted
+            literal is a reading. `""` is the device's own empty string, which is
+            what an unassigned impulse response slot holds and what 128 of them
+            hold in every preset carrying a table. `null` is the device having no
+            value at all, which `@cursor_path` and `@cursor_position` are in three
+            presets in the corpus. Empty and absent are different things to a
+            device, so they are different things here.
+        controls:
+          type: object
+          additionalProperties:
+            type: string
+            nullable: true
+            x-go-type: catalog.Held
+            x-go-type-import:
+              name: catalog
+              path: github.com/retr0h/toneharness/pkg/sdk/catalog
+          description: >
+            The member's knobs, at the values they are set to, under the names the
+            catalog gives them: `Distance`, `LowCut`, `A Level`, `BalanceA`,
+            `threshold`.
+
+
+            Which names a member has depends on the model it is running, and a
+            split is the clearest case: a Y split carries `BalanceA` and
+            `BalanceB`, a crossover carries `Frequency`, a dynamic split carries
+            `Threshold`, `Attack` and `Decay`, and an A/B split carries `RouteTo`.
+            One schema listing all of them would accept a crossover with a
+            threshold, which the device will not load.
+        members:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/PresetMember" }
+          description: >
+            The members under this one, by the name the device files them under.
+
+
+            A preset nests three deep in places and the shape repeats the whole
+            way: `snapshot3` holds `blocks`, which holds `dsp0`, which holds
+            `block1`. `footswitch` holds `dsp0`, which holds `block2`. A separate
+            type per level would be the same four fields written four times.
+
+
+            Present and empty means the device holds an empty member there, which
+            `footswitch.dsp0` is in five presets. A member with nothing at all,
+            this field included, is the device's `null`. The two are told apart
+            because the corpus holds both and they are not the same preset.
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/PresetMember"
+            nullable: true
+          description: >
+            The members under this one where the device keeps them in order rather
+            than by name: a footswitch's assignments, an expression pedal's, an
+            automation lane's.
+
+
+            Separate from `members` because the order is the meaning. An
+            expression pedal with three assignments sweeps three controls, and
+            they are told apart by position and nothing else: there is no name to
+            file them under, and sorting them would change which control the pedal
+            reaches first.
+
+
+            An entry may be empty, which is not the same as there being no entry.
+            `automation` holds twenty slots and names a handful, so the empty ones
+            are the lane's shape rather than nothing: writing a list of the named
+            ones would move every assignment after the first gap.
+
+
+            An empty entry is written back as the device's own `null`, and that is
+            unambiguous rather than a guess: of 3,234 list entries in the preset
+            corpus, 2,136 are `null`, 1,098 say something, and not one is an empty
+            object. So there is no third state for the rule to get wrong.
     Capture:
       type: string
       description: >

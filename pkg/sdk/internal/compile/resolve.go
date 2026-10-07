@@ -171,9 +171,15 @@ func Resolve(
 		return plan.Plan{}, nil, nil, Compensated{}, err
 	}
 
+	// The members a rig states beside its chain are not folded into the plan.
+	// They reach the file through ApplyMembers, which merges them over what the
+	// preset underneath holds, and a plan's own `device:` is what a lift fills.
+	// Both writing them would be two places setting one control.
+	//
 	// Not checked here. check reads a plan's target, footswitches and
-	// controllers, and this builds none of them: a rig has nowhere to state
-	// one. Lower checks, which is where a plan arrives from a file.
+	// controllers, and this builds none of them from musical intent: `sections`
+	// and `moves` are turned into them later, by Sections and Moves. Lower is
+	// where a plan arriving from a file is checked.
 	return built, append(sub, added...), moved,
 		Compensated{Terms: termsIn(held.Words), Said: held.Said}, nil
 }
