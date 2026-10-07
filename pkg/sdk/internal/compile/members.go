@@ -22,7 +22,6 @@ package compile
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
@@ -272,8 +271,8 @@ func spelled(
 func ApplyMembers(
 	doc *preset.Document,
 	members *map[string]rig.PresetMember,
-) error {
-	return applyMembers(doc, members)
+) {
+	applyMembers(doc, members)
 }
 
 // applyMembers writes a rig's record of the preset back into a document.
@@ -285,9 +284,9 @@ func ApplyMembers(
 func applyMembers(
 	doc *preset.Document,
 	members *map[string]rig.PresetMember,
-) error {
+) {
 	if members == nil {
-		return nil
+		return
 	}
 
 	if doc.Data.Tone == nil {
@@ -295,10 +294,7 @@ func applyMembers(
 	}
 
 	for _, key := range sorted(*members) {
-		fields, err := deviceFields((*members)[key])
-		if err != nil {
-			return fmt.Errorf("writing %s: %w", key, err)
-		}
+		fields := deviceFields((*members)[key])
 
 		tone := doc.Data.Tone[key]
 		if tone == nil {
@@ -311,8 +307,6 @@ func applyMembers(
 
 		doc.Data.Tone[key] = tone
 	}
-
-	return nil
 }
 
 // deviceFields renders one member as the device's own JSON, field by field.
@@ -321,7 +315,7 @@ func applyMembers(
 // blocks too and replacing it would take them out.
 func deviceFields(
 	of rig.PresetMember,
-) (map[string]json.RawMessage, error) {
+) map[string]json.RawMessage {
 	out := map[string]json.RawMessage{}
 
 	if of.Model != nil {
@@ -337,40 +331,40 @@ func deviceFields(
 		}
 
 		for name, v := range *held {
-			raw, err := deviceValue(v)
-			if err != nil {
-				return nil, fmt.Errorf("%s: %w", name, err)
+			if raw, ok := deviceValue(v); ok {
+				out[name] = raw
 			}
-
-			out[name] = raw
 		}
 	}
 
 	if of.Members == nil {
-		return out, nil
+		return out
 	}
 
 	for name, under := range *of.Members {
-		raw, err := deviceMember(under)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", name, err)
-		}
-
-		out[name] = raw
+		out[name] = deviceMember(under)
 	}
 
-	return out, nil
+	return out
 }
 
-// deviceValue is one value as the device writes it, null included.
+// deviceValue is one value as the device writes it, null included, and whether
+// there was one to write.
+//
+// A value with no kind is left out rather than refusing the whole document, which
+// is the same answer attrsFrom gives a chain entry's attributes. Nothing a document
+// can say produces one: reading a value either gives it a kind or refuses the
+// literal outright, so this is a guard against a caller building one in Go.
 func deviceValue(
 	of *catalog.Held,
-) (json.RawMessage, error) {
+) (json.RawMessage, bool) {
 	if of == nil {
-		return json.RawMessage("null"), nil
+		return json.RawMessage("null"), true
 	}
 
-	return of.Device()
+	raw, err := of.Device()
+
+	return raw, err == nil
 }
 
 // deviceMember renders a member nested under another, whole.
@@ -379,28 +373,24 @@ func deviceValue(
 // shape the device wrote and the shape it expects back.
 func deviceMember(
 	of rig.PresetMember,
-) (json.RawMessage, error) {
+) json.RawMessage {
+	// A value that came out of JSON goes back into it, so neither marshal here
+	// can fail.
 	if of.Entries != nil {
 		out := make([]json.RawMessage, 0, len(*of.Entries))
 
-		for i, entry := range *of.Entries {
-			raw, err := deviceEntry(entry)
-			if err != nil {
-				return nil, fmt.Errorf("entry %d: %w", i, err)
-			}
-
-			out = append(out, raw)
+		for _, entry := range *of.Entries {
+			out = append(out, deviceEntry(entry))
 		}
 
-		return json.Marshal(out)
+		raw, _ := json.Marshal(out)
+
+		return raw
 	}
 
-	fields, err := deviceFields(of)
-	if err != nil {
-		return nil, err
-	}
+	raw, _ := json.Marshal(deviceFields(of))
 
-	return json.Marshal(fields)
+	return raw
 }
 
 // deviceEntry renders one entry of an ordered list.
@@ -410,9 +400,9 @@ func deviceMember(
 // and not one is an empty object, so there is no third state to get wrong.
 func deviceEntry(
 	of rig.PresetMember,
-) (json.RawMessage, error) {
+) json.RawMessage {
 	if empty(of) {
-		return json.RawMessage("null"), nil
+		return json.RawMessage("null")
 	}
 
 	return deviceMember(of)

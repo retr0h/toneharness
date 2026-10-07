@@ -151,9 +151,7 @@ func Make(
 	// nothing, so an output's destination changed by hand would not reach the
 	// pedal. Sections, controllers and footswitches come after, because those are
 	// what somebody asked for rather than what a device happened to hold.
-	if err := compile.ApplyMembers(doc, rec.Preset); err != nil {
-		return result.Made{}, err
-	}
+	compile.ApplyMembers(doc, rec.Preset)
 
 	// Against the chain as built rather than as the rig wrote it: filling
 	// and fitting add and drop blocks, and a section can only turn on what

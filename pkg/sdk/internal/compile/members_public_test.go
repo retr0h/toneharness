@@ -307,7 +307,7 @@ func (s *MembersPublicTestSuite) TestApplyMembers() {
 			// Into a fresh document, so what arrives is what the rig said rather
 			// than what the one it was lifted from already held.
 			into := s.read(tt.tone)
-			s.Require().NoError(compile.ApplyMembers(into, spec.Preset))
+			compile.ApplyMembers(into, spec.Preset)
 			tt.then(into.Data.Tone)
 		})
 	}
@@ -341,7 +341,7 @@ func (s *MembersPublicTestSuite) TestApplyMembersSaysNothing() {
 				doc.Data.Tone = nil
 			}
 
-			s.Require().NoError(compile.ApplyMembers(doc, tt.of))
+			compile.ApplyMembers(doc, tt.of)
 
 			if tt.of == nil {
 				s.Require().Contains(doc.Data.Tone, "dsp0",
@@ -362,8 +362,13 @@ func strptr(
 	return &of
 }
 
-// TestMembersRefuse covers a document stating something no preset can hold.
-func (s *MembersPublicTestSuite) TestMembersRefuse() {
+// TestMembersLeaveOutWhatCannotBeWritten covers a value with no kind, which is
+// left out rather than refusing the document.
+//
+// The same answer a chain entry's attributes get, so one policy covers both.
+// Nothing a document can say produces one: reading a value either gives it a kind
+// or refuses the literal outright, so these guard a caller building one in Go.
+func (s *MembersPublicTestSuite) TestMembersLeaveOutWhatCannotBeWritten() {
 	for _, tt := range []struct {
 		name string
 		// of is a member written by hand, as a document somebody edited would
@@ -407,7 +412,11 @@ func (s *MembersPublicTestSuite) TestMembersRefuse() {
 			doc := s.read(`{"dsp0":{}}`)
 			held := map[string]rig.PresetMember{"dsp0": tt.of}
 
-			s.Require().Error(compile.ApplyMembers(doc, &held))
+			compile.ApplyMembers(doc, &held)
+
+			// Written, and without the value nothing could spell.
+			s.Require().Contains(doc.Data.Tone, "dsp0")
+			s.Require().NotContains(string(doc.Data.Tone["dsp0"]["split"]), "BalanceA")
 		})
 	}
 }
@@ -472,7 +481,7 @@ func (s *MembersPublicTestSuite) TestCorpusRoundTrip() {
 		s.Require().NotNil(spec.Preset, p)
 
 		into := &preset.Document{Data: preset.Data{Tone: map[string]preset.Tone{}}}
-		s.Require().NoError(compile.ApplyMembers(into, spec.Preset), p)
+		compile.ApplyMembers(into, spec.Preset)
 
 		for key, fields := range was {
 			for name, want := range fields {
