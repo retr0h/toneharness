@@ -169,6 +169,20 @@ Nothing here can hear, so this is the loop: you play it, you say what is wrong.
 > - _"Closer, but I want the pick to cut more."_
 > - _"Turn it down a bit and measure it again."_
 
+### Take somebody else's preset, or hand yours over
+
+A document travels, not a file. The `.hlx` is one pedal's answer; the document
+is what somebody can read and change one line of.
+
+> - _"Here's a backup a mate sent me. Read slot 3 into something I can edit."_
+> - _"Write my punk rig out so I can send it to somebody."_
+> - _"What did that import lose?"_
+
+Reading somebody's preset needs no pedal: point it at the `.hls` or `.hlb` HX
+Edit wrote. A resolved document builds the same preset on any Helix, and what a
+handoff cannot carry is the impulse responses, which are files on their device,
+and whether it sounded right in their room.
+
 ### Find out which words do something
 
 > - _"What words can I use, and what does each one do?"_

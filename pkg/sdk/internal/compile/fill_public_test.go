@@ -424,6 +424,37 @@ func (s *FillPublicTestSuite) TestResolveFill() {
 					"and must not reach the block the corpus filled in front of it")
 			},
 		},
+		{
+			// An empty chain is a statement rather than an omission, and the
+			// corpus has nothing to say about it. 102 presets in the corpus hold
+			// no block: the MIDI remotes that drive Spotify or Pro Tools from the
+			// footswitches, and the blank templates people build from.
+			//
+			// Filling one turned a Spotify remote into a reverb, a delay and an
+			// overdrive the first time an empty chain was allowed through.
+			name: "an empty chain is left empty",
+			then: func() {
+				stats := s.grammar(
+					map[catalog.Category]corpus.CategoryStats{
+						catalog.CategoryDrive: {Chains: 95, Before: 95},
+					},
+					map[catalog.ModelID]corpus.ModelStats{"HD2_DistMinotaur": {Uses: 40}},
+					map[catalog.ModelID]int{"HD2_DistMinotaur": 40},
+				)
+
+				built, added, _, _, err := compile.Resolve(
+					"x",
+					rig.Spec{Instrument: rig.InstrumentBass, Chain: []rig.ChainEntry{}},
+					compile.Intent{},
+					s.cat,
+					stats,
+				)
+
+				s.Require().NoError(err)
+				s.Require().Empty(built.Blocks, "nothing is added to a chain that says none")
+				s.Require().Empty(added)
+			},
+		},
 	} {
 		s.Run(tt.name, func() {
 			tt.then()

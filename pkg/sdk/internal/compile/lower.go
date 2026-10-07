@@ -69,8 +69,9 @@ func Realise(
 			// that asked for one.
 			Params:  settings(blk, nil),
 			DSP:     0,
-			Pos:     i,
-			Enabled: true,
+			Pos:     at(entry.Position, i),
+			Enabled: playing(entry),
+			Attrs:   attrsFrom(entry),
 		})
 	}
 
@@ -130,6 +131,9 @@ func Lower(
 }
 
 // at reads an optional integer, falling back when a plan does not state one.
+// A position a document states wins over the chain's own order, because a preset
+// keeps a block's position apart from the key it is filed under and renumbering one
+// read off a device would move it.
 func at(
 	v *int,
 	fallback int,
@@ -139,6 +143,21 @@ func at(
 	}
 
 	return *v
+}
+
+// playing says whether a block is switched on.
+//
+// A document saying it is bypassed is the answer. This was hardcoded to true, so a
+// preset exported with three blocks bypassed came back with all three switched on:
+// audible, and the opposite of what the file said.
+func playing(
+	entry rig.ChainEntry,
+) bool {
+	if entry.Enabled != nil {
+		return *entry.Enabled
+	}
+
+	return true
 }
 
 // modelFor decides which model an entry means.
@@ -151,13 +170,18 @@ func modelFor(
 	cat *catalog.Catalog,
 	instrument string,
 ) (catalog.ModelID, error) {
-	b, err := gear(cat, entry.Gear, entry.Role, instrument)
+	// The controls decide which of several models of one name is meant, so they go
+	// in here as well as on the resolving path. Two resolvers cannot both be right
+	// about which `1x12 US Deluxe` a document means.
+	holds := stated(entry)
+
+	b, err := gear(cat, entry.Gear, entry.Role, instrument, holds)
 
 	// The rig named gear this device cannot do and said what to put there
 	// instead. Resolving does the same, so a rig built either way lands on
 	// the same model.
 	if err != nil && entry.Substitute != nil && errors.Is(err, ErrNoSuchGear) {
-		b, err = gear(cat, entry.Substitute.Gear, entry.Role, instrument)
+		b, err = gear(cat, entry.Substitute.Gear, entry.Role, instrument, holds)
 		if err != nil {
 			return "", fmt.Errorf(
 				"%q stands in for %q, and nothing emulates it either: %w",

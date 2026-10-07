@@ -267,13 +267,17 @@ func putRaw[T any](
 	fields[key] = body
 }
 
-// sorted returns a tone entry's keys in order, so output does not depend on
-// map iteration.
-func sorted(
-	entry preset.Tone,
+// sorted returns a map's keys in order, so output does not depend on map
+// iteration.
+//
+// Generic over the value because two kinds of map here want the same answer: a
+// tone entry's fields and a rig's record of the members beside the chain. A
+// document this writes twice has to be the same document twice.
+func sorted[V any](
+	of map[string]V,
 ) []string {
-	out := make([]string, 0, len(entry))
-	for k := range entry {
+	out := make([]string, 0, len(of))
+	for k := range of {
 		out = append(out, k)
 	}
 

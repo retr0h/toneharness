@@ -65,6 +65,9 @@ type (
 	Substitute = tone.Substitute
 	// Target is the hardware a plan was tuned on.
 	Target = tone.Target
+	// PresetMember is one thing a preset holds beside its chain: a snapshot, a
+	// processor's routing, a footswitch, a cabinet, an amplifier's remote.
+	PresetMember = tone.PresetMember
 	// Controller is a parameter an expression pedal or footswitch moves.
 	Controller = tone.Controller
 	// Footswitch is what a switch does and how it is lit.

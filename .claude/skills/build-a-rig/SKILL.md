@@ -1,6 +1,6 @@
 ---
 name: build-a-rig
-description: Turn what somebody says they want to sound like into a Line 6 Helix preset, with evidence at every step. Covers researching a player's real gear and citing it, writing a ToneSpec, resolving it to a rig, measuring a recording to choose an amplifier, putting a preset on the pedal, tuning live and exporting what worked. Use when asked to make something sound like an artist, a band, a record or a genre, to build or correct a rig or preset, to find out what gear somebody used, to measure a recording, or to get a tone onto a Helix.
+description: Turn what somebody says they want to sound like into a Line 6 Helix preset, with evidence at every step. Covers researching a player's real gear and citing it, writing a ToneSpec, resolving it to a rig, measuring a recording to choose an amplifier, putting a preset on the pedal, tuning live, exporting what worked, and reading somebody else's preset into a document you can edit. Use when asked to make something sound like an artist, a band, a record or a genre, to build or correct a rig or preset, to find out what gear somebody used, to measure a recording, to import somebody else's preset or hand one over, or to get a tone onto a Helix.
 compatibility: Requires a toneharness checkout with mise available. Every command runs through `mise exec -- go run main.go`, never a bare `toneharness`.
 license: MIT
 metadata:
@@ -74,9 +74,10 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 | to get it onto the pedal, or to read what the pedal holds         | [references/device.md](references/device.md)                |
 | to change a rig after hearing it, or what a target is             | [references/correcting.md](references/correcting.md)        |
 | to iterate with the pedal in front of you, and keep what you hear | [references/iterating.md](references/iterating.md)          |
+| to import somebody's preset, or hand yours to somebody else        | [references/sharing.md](references/sharing.md)              |
 | anything touching claims, citations or evidence                   | [references/evidence.md](references/evidence.md)            |
 | to write the rig down, check it builds, and ship it | [references/shipping.md](references/shipping.md) |
-| all of it, in order                                               | All ten, in that order                                     |
+| all of it, in order                                               | All eleven, in that order                                     |
 
 ## 3. Say which claim you have
 

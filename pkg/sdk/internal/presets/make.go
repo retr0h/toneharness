@@ -144,6 +144,15 @@ func Make(
 
 	doc := build(cat.DeviceID, spec)
 
+	// What the rig said the preset holds beside its chain, put back before
+	// anything musical is written over it. A rig's `preset:` compiles into the
+	// plan's record of the device, and this is where that record reaches the
+	// file: without it the field would be written by a resolve and read by
+	// nothing, so an output's destination changed by hand would not reach the
+	// pedal. Sections, controllers and footswitches come after, because those are
+	// what somebody asked for rather than what a device happened to hold.
+	compile.ApplyMembers(doc, rec.Preset)
+
 	// Against the chain as built rather than as the rig wrote it: filling
 	// and fitting add and drop blocks, and a section can only turn on what
 	// made it into the preset.

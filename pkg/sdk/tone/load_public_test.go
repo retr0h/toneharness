@@ -151,9 +151,13 @@ rig:
 						says: "rig.evidence[0].at",
 					},
 					{
-						name: "a rig holding no chain",
-						rig:  "  instrument: bass\n  chain: []\n",
-						says: "chain minimum number of items is 1",
+						// A chain key with nothing in it is accepted: a preset that
+						// makes no sound is one somebody meant, and 102 in the corpus
+						// are MIDI remotes or blank templates. What is still refused
+						// is a rig saying nothing about its signal path at all.
+						name: "a rig that does not mention a chain",
+						rig:  "  instrument: bass\n",
+						says: `property "chain" is missing`,
 					},
 				} {
 					s.Run(tt.name, func() {

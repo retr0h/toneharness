@@ -117,24 +117,16 @@ rig:
       PeakReduction: "0.78"
       Type: "false"
     evidence:
-    - kind: user
-      note: >-
-        chosen by ear against the compressor the corpus picked. An LA-2A with most
-        of its peak reduction in and 0.62 of makeup gain is audibly richer and
+    - caveat: |-
+        part of that difference is simply level: 0.62 of makeup gain against none makes this louder, and louder is hard to hear past in a comparison. The rest is the compressor being optical and slow, so a pick attack passes before it bites.
+
+        Named `LA Studio Comp` rather than `Teletronix LA-2A`, because two models claim that gear and the other is a legacy Tube Comp carrying only a level.
+
+        Nobody has confirmed which compressor Dirnt used, and this does not claim to be it.
+      kind: user
+      note: chosen by ear against the compressor the corpus picked. An LA-2A with
+        most of its peak reduction in and 0.62 of makeup gain is audibly richer and
         louder than a Deluxe Comp with no makeup at all.
-      caveat: >-
-        part of that difference is simply level: 0.62 of makeup gain against none
-        makes this louder, and louder is hard to hear past in a comparison. The
-        rest is the compressor being optical and slow, so a pick attack passes
-        before it bites.
-
-
-        Named `LA Studio Comp` rather than `Teletronix LA-2A`, because two models
-        claim that gear and the other is a legacy Tube Comp carrying only a level.
-
-
-        Nobody has confirmed which compressor Dirnt used, and this does not claim
-        to be it.
     gear: LA Studio Comp
     role: comp
   - capture: direct
@@ -233,6 +225,127 @@ rig:
           which is the 8x10 this rig used to name outright.
       gear: Ampeg 8x10
   instrument: bass
+  preset:
+    dsp0:
+      members:
+        inputA:
+          attrs:
+            '@input': "1"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        inputB:
+          attrs:
+            '@input': "0"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        join:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
+          controls:
+            A Level: "0"
+            A Pan: "0.5"
+            B Level: "0"
+            B Pan: "0.5"
+            B Polarity: "false"
+            Level: "0"
+          model: HD2_AppDSPFlowJoin
+        outputA:
+          attrs:
+            '@output': "1"
+          controls:
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputMain
+        outputB:
+          attrs:
+            '@output': "0"
+          controls:
+            Type: "true"
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputSend
+        split:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
+          controls:
+            BalanceA: "0.5"
+            BalanceB: "0.5"
+            bypass: "false"
+          model: HD2_AppDSPFlowSplitY
+    dsp1:
+      members: {}
+    global:
+      attrs:
+        '@DtSelect': "2"
+        '@PowercabMode': "0"
+        '@PowercabSelect': "2"
+        '@PowercabVoicing': "0"
+        '@current_snapshot': "0"
+        '@cursor_dsp': "0"
+        '@cursor_group': ""
+        '@cursor_path': "0"
+        '@cursor_position': "0"
+        '@guitarinputZ': "0"
+        '@guitarpad': "0"
+        '@pedalstate': "2"
+        '@tempo': "120"
+        '@topology0': A
+        '@topology1': "0"
+      model: '@global_params'
+    snapshot0:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 1
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot1:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 2
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot2:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 3
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    variax:
+      attrs:
+        '@variax_customtuning': "true"
+        '@variax_lockctrls': "0"
+        '@variax_magmode': "false"
+        '@variax_model': "0"
+        '@variax_str1level': "1"
+        '@variax_str1tuning': "0"
+        '@variax_str2level': "1"
+        '@variax_str2tuning': "0"
+        '@variax_str3level': "1"
+        '@variax_str3tuning': "0"
+        '@variax_str4level': "1"
+        '@variax_str4tuning': "0"
+        '@variax_str5level': "1"
+        '@variax_str5tuning': "0"
+        '@variax_str6level': "1"
+        '@variax_str6tuning': "0"
+        '@variax_toneknob': "-0.10000002384185791"
+        '@variax_volumeknob': "-0.10000002384185791"
   resolved:
     catalog: HX Edit 3.82
     device: HX Stomp

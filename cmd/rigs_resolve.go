@@ -54,7 +54,7 @@ Writes over the file the rig came from unless --out names somewhere else. A rig
 that ships in the binary has no file, so that one needs --out.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		made, err := newClient().Resolve(cmd.Context(), rigsResolveOptions)
+		made, err := newClient(ownRigs(rigsDir)).Resolve(cmd.Context(), rigsResolveOptions)
 		if err != nil {
 			return err
 		}

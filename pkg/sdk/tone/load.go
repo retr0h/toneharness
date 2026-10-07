@@ -104,6 +104,13 @@ func read(
 		return fmt.Errorf("decoding the %s: %w", name, err)
 	}
 
+	// After the decode, because this one compares two fields against each other
+	// and the schema can only speak about one at a time. A document read and
+	// never checked for it would build something nobody asked for.
+	if spec, ok := into.(*Spec); ok {
+		return OneSetOfSnapshots(spec.Rig)
+	}
+
 	return nil
 }
 

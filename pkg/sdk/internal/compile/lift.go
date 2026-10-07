@@ -65,6 +65,10 @@ func Lift(
 	out := rig.Spec{
 		Chain:      entries,
 		Instrument: instrumentFieldFor(c, cat),
+		// Everything the preset holds that the chain does not. Without it a lift
+		// keeps the gear and drops the snapshots, the routing, the footswitches
+		// and the cabinets, which is most of what somebody built.
+		Preset: membersOf(doc),
 	}
 
 	// The same preset read twice, into the two documents it is. The rig is the
@@ -145,6 +149,31 @@ func entryFor(
 		off := b.Enabled
 		out.Enabled = &off
 	}
+
+	// Which `blockN` key the device filed it under, which is not the slot it sits
+	// in. A preset keeps both and they are different numbers: the keys are a dense
+	// run and `@position` is a slot in a grid the split and the join sit in too, so
+	// the slots leave gaps. 4,437 processors in the corpus have a set of keys that
+	// is not the set of positions. The slot travels in `attrs` beside the rest of
+	// what the device said.
+	//
+	// Carried because the writer files a block under this number, and a rebuild
+	// that renumbered it would move every block in the preset to a different key.
+	//
+	// A negative one is not a key. The wire reader counts a block's grid column as
+	// its index less the grid's offset, so a block addressed below the grid comes
+	// out under zero.
+	if b.Pos >= 0 {
+		pos := b.Pos
+		out.Position = &pos
+	}
+
+	// Everything else the device says about the block: the parallel path it is on,
+	// whether it runs in stereo, whether a tail keeps ringing when it is switched
+	// off, which cabinet a dual block points at, which impulse response it plays.
+	// Dropped until this existed, so a preset read out and built again came back
+	// with its parallel path gone and its reverb tails cut.
+	attrsOnto(b, &out)
 
 	return out
 }

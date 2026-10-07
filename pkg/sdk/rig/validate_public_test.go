@@ -26,12 +26,16 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 type ValidatePublicTestSuite struct {
 	suite.Suite
 }
+
+// dt is a model identifier a preset member can point at.
+var dt = "@dt"
 
 // good returns the smallest rig the schema accepts.
 func (s *ValidatePublicTestSuite) good() rig.Spec {
@@ -75,6 +79,47 @@ func (s *ValidatePublicTestSuite) TestValidate() {
 			name:   "a knob holding a value that is not a number",
 			mutate: func(r *rig.Spec) { r.Chain[0].Settings = settings(math.NaN()) },
 			says:   "reading the rig",
+		},
+		{
+			// Everything a preset holds beside the chain, which is ordinary and
+			// accepted: a resolved rig states all of it.
+			name: "the preset's own members",
+			mutate: func(r *rig.Spec) {
+				r.Preset = &map[string]rig.PresetMember{
+					"snapshot0": {Attrs: &map[string]*catalog.Held{}},
+					"dt0":       {Model: &dt},
+				}
+			},
+		},
+		{
+			// One question with two answers. `sections:` is what somebody wants
+			// and a snapshot is what a device stored, and the schema cannot say
+			// so because the two live in different fields.
+			//
+			// Guessing would not produce a worse preset but a confusing one: a
+			// preset's snapshots are replaced rather than merged, so a rig naming
+			// one leaves the device holding one, and the sections then fail to
+			// fit with a message about the device's limits that points nowhere
+			// near the cause.
+			name: "sections and the snapshots a device stored",
+			mutate: func(r *rig.Spec) {
+				r.Sections = &[]rig.Section{{Name: "Verse"}}
+				r.Preset = &map[string]rig.PresetMember{
+					"snapshot0": {Attrs: &map[string]*catalog.Held{}},
+				}
+			},
+			says: "never both",
+		},
+		{
+			// A member that is not a snapshot is no conflict at all, which is
+			// what keeps the rule from refusing a rig stating its routing.
+			name: "sections beside a member that is not a snapshot",
+			mutate: func(r *rig.Spec) {
+				r.Sections = &[]rig.Section{{Name: "Verse"}}
+				r.Preset = &map[string]rig.PresetMember{
+					"dsp0": {Members: &map[string]rig.PresetMember{}},
+				}
+			},
 		},
 		{
 			name:   "an instrument the catalog cannot be filtered by",

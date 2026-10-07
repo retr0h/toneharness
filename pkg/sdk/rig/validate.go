@@ -39,6 +39,8 @@ import (
 	"sync"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // ErrInvalid reports a rig that does not meet its own contract.
@@ -76,7 +78,13 @@ func Validate(
 	var document any
 	_ = json.Unmarshal(body, &document)
 
-	return against(document)
+	if err := against(document); err != nil {
+		return err
+	}
+
+	// One definition, in the package that owns the types. A rig on its own and
+	// the document around one get the same answer.
+	return tone.OneSetOfSnapshots(s)
 }
 
 // schemaName is the contract a rig is checked against.

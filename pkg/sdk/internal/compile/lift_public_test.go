@@ -210,7 +210,17 @@ func (s *LiftPublicTestSuite) TestLift() {
 						wantGear: "Ampeg SVT® (normal channel)",
 						wantDSP:  1,
 					},
-					{name: "a preset holding no blocks", bare: true, err: rig.ErrInvalid},
+					{
+						// A preset that makes no sound, which is a preset somebody
+						// meant: the MIDI remotes that drive Spotify or Pro Tools
+						// from the footswitches hold no block at all, and so do the
+						// blank templates people build from. 102 in the corpus, and
+						// every one of them was refused until a rig could say what a
+						// preset holds beside its chain.
+						name:           "a preset holding no blocks",
+						bare:           true,
+						wantInstrument: rig.InstrumentGuitar,
+					},
 					{
 						name: "a document it cannot read",
 						raw: `{"schema":"L6Preset","version":6,"data":{"device":2162694,` +

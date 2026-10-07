@@ -72,7 +72,8 @@ func Resolve(
 	sub := []Added(nil)
 
 	for _, entry := range spec.Chain {
-		b, err := findGear(cat, entry.Gear, categoryFor(entry.Role), instrument)
+		b, err := findGear(
+			cat, entry.Gear, categoryFor(entry.Role), instrument, stated(entry))
 
 		// The rig named gear this device cannot do and said what to put
 		// there instead. It goes on naming the real thing, so the day the
@@ -81,8 +82,11 @@ func Resolve(
 		if err != nil && entry.Substitute != nil && errors.Is(err, ErrNoSuchGear) {
 			var stand catalog.Block
 
+			// The controls too: a substitute stands in for the gear and the
+			// document's values are still the values it has to take.
 			stand, err = findGear(
-				cat, entry.Substitute.Gear, categoryFor(entry.Role), instrument)
+				cat, entry.Substitute.Gear, categoryFor(entry.Role), instrument,
+				stated(entry))
 			if err != nil {
 				return plan.Plan{}, nil, nil, Compensated{}, fmt.Errorf(
 					"%q stands in for %q, and nothing emulates it either: %w",
@@ -110,7 +114,9 @@ func Resolve(
 		}
 
 		blocks = append(blocks, b)
-		wants = append(wants, &wanted{words: entry.Settings, stated: entry.Controls})
+		wants = append(wants, &wanted{
+			words: entry.Settings, stated: entry.Controls, entry: &entry,
+		})
 	}
 
 	// A rig naming an amplifier and no cabinet gets the one Line 6 voiced it
@@ -150,7 +156,7 @@ func Resolve(
 	blocks, wants, asked := demand(blocks, wants, cat, stats, intent, instrument)
 	added = append(added, asked...)
 
-	built := specFor(id, intent, blocks, stats)
+	built := specFor(id, intent, blocks, wants, stats)
 
 	// After the corpus has had its say, because a term is an opinion about
 	// where players land rather than a replacement for knowing.
@@ -171,9 +177,15 @@ func Resolve(
 		return plan.Plan{}, nil, nil, Compensated{}, err
 	}
 
+	// The members a rig states beside its chain are not folded into the plan.
+	// They reach the file through ApplyMembers, which merges them over what the
+	// preset underneath holds, and a plan's own `device:` is what a lift fills.
+	// Both writing them would be two places setting one control.
+	//
 	// Not checked here. check reads a plan's target, footswitches and
-	// controllers, and this builds none of them: a rig has nowhere to state
-	// one. Lower checks, which is where a plan arrives from a file.
+	// controllers, and this builds none of them from musical intent: `sections`
+	// and `moves` are turned into them later, by Sections and Moves. Lower is
+	// where a plan arriving from a file is checked.
 	return built, append(sub, added...), moved,
 		Compensated{Terms: termsIn(held.Words), Said: held.Said}, nil
 }
@@ -253,13 +265,16 @@ func impliedCab(
 // answered a different model each run and would answer with a cabinet for an
 // amplifier. Two resolvers cannot both be right about which Ampeg SVT is
 // meant.
+// holds names the controls the document states for it, which is what decides
+// between models sharing a name.
 func gear(
 	cat *catalog.Catalog,
 	gear string,
 	role rig.Role,
 	instrument string,
+	holds []string,
 ) (catalog.Block, error) {
-	return findGear(cat, gear, categoryFor(role), instrument)
+	return findGear(cat, gear, categoryFor(role), instrument, holds)
 }
 
 // findGear returns the block emulating the named gear.
@@ -283,15 +298,29 @@ func findGear(
 	gear string,
 	category catalog.Category,
 	instrument string,
+	holds []string,
 ) (catalog.Block, error) {
-	if b, found := nearest(cat, gear, category, instrument); found {
-		return b, nil
-	}
-
-	if instrument != "" {
-		if b, found := nearest(cat, gear, category, ""); found {
+	// The controls first, where the document states any. 661 models answer to
+	// only 468 names, so a name is often several models and the shortest one wins
+	// by default. That is right for a rig somebody typed, where the name is all
+	// there is, and wrong for one read off a preset: three models are called
+	// `1x12 US Deluxe` and only one carries a `Pan` and a `Delay`, so the default
+	// chose a model the preset's own values do not fit and the build refused them.
+	//
+	// 60% of the preset corpus failed to rebuild that way, which is the single
+	// biggest reason a document could not be handed to somebody else.
+	// The controls first, where the document states any.
+	if len(holds) > 0 {
+		if b, found := anyInstrument(cat, gear, category, instrument, holds); found {
 			return b, nil
 		}
+	}
+
+	// Then the name alone, which is the answer for a rig nobody lifted and the
+	// fallback when no model carries everything the document says. Falling back
+	// rather than failing keeps the error about the gear a person named.
+	if b, found := anyInstrument(cat, gear, category, instrument, nil); found {
+		return b, nil
 	}
 
 	return catalog.Block{}, &NoSuchGearError{
@@ -299,13 +328,55 @@ func findGear(
 	}
 }
 
+// anyInstrument looks for the gear among an instrument's blocks, then among all
+// of them.
+//
+// Line 6 tag amps and cabinets Guitar or Bass and leave everything else untagged,
+// so a bass rig naming a pedal finds it on the second pass.
+func anyInstrument(
+	cat *catalog.Catalog,
+	gear string,
+	category catalog.Category,
+	instrument string,
+	holds []string,
+) (catalog.Block, bool) {
+	if b, found := nearest(cat, gear, category, instrument, holds); found {
+		return b, true
+	}
+
+	// No guard for an empty instrument. The contract requires one on every rig, so
+	// the second pass is never the same search twice, and a guard against it would
+	// be a branch nothing can reach.
+	return nearest(cat, gear, category, "", holds)
+}
+
+// stated names the controls a chain entry writes down.
+//
+// Which model a name means is a question the values answer, where there are any.
+func stated(
+	entry rig.ChainEntry,
+) []string {
+	if entry.Controls == nil {
+		return nil
+	}
+
+	out := make([]string, 0, len(*entry.Controls))
+	for name := range *entry.Controls {
+		out = append(out, name)
+	}
+
+	return out
+}
+
 // nearest is the closest block emulating the named gear, among those an
 // instrument leaves eligible. Empty takes the whole catalog.
+// holds, where it is not empty, names controls the block must carry all of.
 func nearest(
 	cat *catalog.Catalog,
 	gear string,
 	category catalog.Category,
 	instrument string,
+	holds []string,
 ) (catalog.Block, bool) {
 	want := strings.ToLower(gear)
 
@@ -318,12 +389,33 @@ func nearest(
 			continue
 		}
 
+		if !hasEvery(b, holds) {
+			continue
+		}
+
 		if !found || closer(b, best) {
 			best, found = b, true
 		}
 	}
 
 	return best, found
+}
+
+// hasEvery reports whether a block has every control named.
+//
+// All of them, not some: a model missing one is a model the document's own values
+// will be refused against, which is the failure this exists to avoid.
+func hasEvery(
+	b catalog.Block,
+	holds []string,
+) bool {
+	for _, name := range holds {
+		if _, has := b.Params[name]; !has {
+			return false
+		}
+	}
+
+	return true
 }
 
 // closer reports whether a is the better answer than b for the same query.
@@ -354,16 +446,23 @@ func closer(
 }
 
 // eligible reports whether a block could be the gear being looked for.
+//
+// A block that plays an impulse response is eligible here, which is the
+// difference between resolving a name and choosing one. Choosing an IR block for
+// a chain nobody asked for would put a block in a preset that plays nothing until
+// somebody loads a file, so `commonest` refuses to pick one. Resolving `IR 1024`
+// is a document saying which block it means, and refusing that made 31.4% of the
+// preset corpus impossible to rebuild after being read: 90% of those failures were
+// an impulse response the preset named and this would not give back.
+//
+// What the IR itself is stays in the preset, where the device keeps it: the block
+// names the slot and `irUuidTable` names the file in it.
 func eligible(
 	b catalog.Block,
 	want string,
 	category catalog.Category,
 	instrument string,
 ) bool {
-	if catalog.NeedsUserIR(b.ID) {
-		return false
-	}
-
 	if !b.Matches(want) {
 		return false
 	}
@@ -405,6 +504,7 @@ func specFor(
 	id string,
 	intent Intent,
 	blocks []catalog.Block,
+	said []*wanted,
 	stats *corpus.Stats,
 ) plan.Plan {
 	// The name is what the device prints on its screen, and "Mike Dirnt" is
@@ -425,12 +525,22 @@ func specFor(
 	}
 
 	for i, b := range blocks {
+		// What the document said about this block, where it said anything. A
+		// block the corpus added has no entry and takes the chain's own order and
+		// the device's defaults, which is what every block did before a lift
+		// could state these.
+		var entry rig.ChainEntry
+		if i < len(said) && said[i] != nil && said[i].entry != nil {
+			entry = *said[i].entry
+		}
+
 		out.Blocks = append(out.Blocks, plan.Block{
 			Model:   b.ID,
 			Params:  settings(b, stats),
 			DSP:     0,
-			Pos:     i,
-			Enabled: true,
+			Pos:     at(entry.Position, i),
+			Enabled: playing(entry),
+			Attrs:   attrsFrom(entry),
 		})
 	}
 
@@ -484,19 +594,74 @@ func Fit(
 	return renumber(spec)
 }
 
-// renumber gives each processor a contiguous run of positions.
+// renumber gives each processor a contiguous run of keys to file its blocks under.
+//
+// Only where they collide. A key is what the preset writer names the entry with,
+// and a chain built from gear has none to start with, so this hands out 0, 1, 2 in
+// order. A chain lifted off a preset arrived with the keys the device used, and
+// renumbering those moves every block in the file to a different entry: a preset
+// exported and built again had its amplifier filed where its drive had been.
+//
+// Collisions are what has to go. Two blocks cannot share a key, and `fill` and the
+// fit both add blocks that have none, so this fills the gaps rather than
+// flattening what is there.
 func renumber(
 	spec plan.Plan,
 ) plan.Plan {
-	next := map[int]int{}
+	var (
+		taken = map[int]map[int]bool{}
+		kept  = make([]bool, len(spec.Blocks))
+	)
 
+	// The keys a lift gave, first, so a block the document placed keeps its own.
+	// Where two ask for one key the first keeps it and the other moves, because two
+	// blocks cannot be the same entry.
+	for i, b := range spec.Blocks {
+		if b.Pos < 0 || claim(taken, b.DSP, b.Pos) {
+			continue
+		}
+
+		kept[i] = true
+	}
+
+	// Then everything else, into the lowest key nothing has claimed: a block the
+	// corpus filled in, one the fit moved, and every block of a chain built from
+	// gear rather than lifted.
 	for i := range spec.Blocks {
+		if kept[i] {
+			continue
+		}
+
 		dsp := spec.Blocks[i].DSP
-		spec.Blocks[i].Pos = next[dsp]
-		next[dsp]++
+
+		at := 0
+		for claim(taken, dsp, at) {
+			at++
+		}
+
+		spec.Blocks[i].Pos = at
 	}
 
 	return spec
+}
+
+// claim takes a key on a processor, and says whether somebody already had it.
+func claim(
+	taken map[int]map[int]bool,
+	dsp int,
+	at int,
+) bool {
+	if taken[dsp] == nil {
+		taken[dsp] = map[int]bool{}
+	}
+
+	if taken[dsp][at] {
+		return true
+	}
+
+	taken[dsp][at] = true
+
+	return false
 }
 
 // wanted is what one chain entry asked for, kept beside the block it resolved to.
@@ -512,6 +677,10 @@ type wanted struct {
 	// stated is the controls the rig gives outright, applied after the words so
 	// a value beats a word.
 	stated *map[string]catalog.Setting
+	// entry is what the document said about the block, which is where its
+	// position, its parallel path and the rest of the device's own attributes
+	// come from. A block the corpus added has none and takes the defaults.
+	entry *rig.ChainEntry
 }
 
 // statedControls puts the values a rig states outright onto their blocks.
@@ -591,6 +760,12 @@ func within(
 	// low cut came back 19.899999618530273 against a minimum of 19.9 and was
 	// refused for being 0.0000004 under it. Widening the bounds the same way
 	// compares like with like, and costs nothing a device can hear.
+	//
+	// Not wide enough for what a preset file does to that number, which is a
+	// separate question with its own task: a device writes float32(0.01) and some
+	// files spell it `0.00999999`, six significant figures, which is below the
+	// minimum by more than ten float32 steps. Widening to cover that is a
+	// tolerance somebody has to choose rather than one the format implies.
 	if spec.Min == spec.Max ||
 		(float32(got) >= float32(spec.Min) && float32(got) <= float32(spec.Max)) {
 		return nil
