@@ -754,20 +754,27 @@ func within(
 	// has nothing to be outside of, and comparing against 0..0 would refuse
 	// every value it could hold.
 	//
-	// Compared at the precision the device works in. A parameter is a float32 on
-	// the wire, so a value read back off hardware is a widened float32 and lands
-	// a hair either side of a bound the catalog states as a float64: a cabinet's
-	// low cut came back 19.899999618530273 against a minimum of 19.9 and was
-	// refused for being 0.0000004 under it. Widening the bounds the same way
-	// compares like with like, and costs nothing a device can hear.
+	// A millionth of the control's own travel either side of the bound, because a
+	// preset's own file does not spell a value to the precision the catalog states
+	// a bound in.
 	//
-	// Not wide enough for what a preset file does to that number, which is a
-	// separate question with its own task: a device writes float32(0.01) and some
-	// files spell it `0.00999999`, six significant figures, which is below the
-	// minimum by more than ten float32 steps. Widening to cover that is a
-	// tolerance somebody has to choose rather than one the format implies.
+	// A parameter is a float32 on the wire, so a reading off hardware is a widened
+	// float32 and lands a hair outside: a cabinet's low cut came back
+	// 19.899999618530273 against a minimum of 19.9. Worse, 188 values in the preset
+	// corpus are spelled `0.00999999` against a minimum of `0.01`, which is six
+	// significant figures and ten float32 steps under it. Comparing at float32
+	// covers the first and not the second.
+	//
+	// The number is not a judgement anybody had to make finely. The two populations
+	// are seven orders of magnitude apart: the rounding sits at 1e-6 of the travel
+	// and the 64 values that are genuinely out of range miss by 3.5 to 99 times it,
+	// a `Drive` of 8.0 against 0..1 and a `Predelay` of 20.0 against 0..0.2. Any
+	// threshold between those separates them, and a millionth of the travel is far
+	// below what a float32 can even represent across most ranges.
+	slack := (spec.Max - spec.Min) * rounding
+
 	if spec.Min == spec.Max ||
-		(float32(got) >= float32(spec.Min) && float32(got) <= float32(spec.Max)) {
+		(got >= spec.Min-slack && got <= spec.Max+slack) {
 		return nil
 	}
 
@@ -777,6 +784,10 @@ func within(
 		Reason: fmt.Sprintf("%v is outside %v..%v", got, spec.Min, spec.Max),
 	}
 }
+
+// rounding is how much of a control's travel a preset's own file may round a value
+// by, as a fraction.
+const rounding = 1e-6
 
 // saidKnobs puts each entry's settings onto the block it resolved to.
 //
