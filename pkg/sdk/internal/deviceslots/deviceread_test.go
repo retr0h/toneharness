@@ -245,13 +245,21 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 					},
 					{name: "a model the catalog cannot name", answer: "unknown", err: true},
 					{
-						// A catalog whose model table names an empty model produces a
-						// chain with no gear in it, which is not a rig. Saying so beats
-						// writing a document that claims to be one.
-						name:    "a chain that is not a rig",
-						answer:  "bare",
-						catalog: filepath.Join("testdata", "unnamed.catalog.json"),
-						errText: "slot 01A",
+						// A catalog whose model table names an empty model drops the
+						// block, because there is no identifier left to call it by, and
+						// what comes back is a preset with no chain. Read rather than
+						// refused: a preset that makes no sound is one somebody meant,
+						// and 102 in the corpus are exactly that.
+						//
+						// This case used to expect an error, and got one for a reason
+						// its own comment had wrong: it was the empty chain being
+						// refused rather than gear with no name. Gear with no name
+						// cannot happen, because the name falls back to the model
+						// identifier and a block with no identifier is dropped here.
+						name:     "a catalog that names no model leaves no chain",
+						answer:   "bare",
+						catalog:  filepath.Join("testdata", "unnamed.catalog.json"),
+						contains: []string{"schema: ToneSpec"},
 					},
 				}
 

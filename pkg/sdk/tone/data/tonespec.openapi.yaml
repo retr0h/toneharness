@@ -239,9 +239,23 @@ components:
           $ref: "#/components/schemas/Instrument"
         chain:
           type: array
-          minItems: 1
           items: { $ref: "#/components/schemas/ChainEntry" }
-          description: The signal path, in order.
+          description: >
+            The signal path, in order.
+
+
+            May be empty, which is a preset that makes no sound rather than an
+            unfinished one. 102 presets in the corpus hold no block: the MIDI
+            remotes that drive Spotify, Cubase and Pro Tools from the footswitches
+            and nothing else, and the blank templates people build from. Those are
+            presets somebody made, and before `preset:` existed there was nothing
+            in a rig for them to be, so the contract required a block and a lift
+            refused all 102.
+
+
+            Required even when empty. A rig with no `chain:` key at all has not
+            said anything about its signal path; one with an empty list has said
+            there is none, and a build adds nothing to it.
         evidence:
           type: array
           items: { $ref: "#/components/schemas/Evidence" }

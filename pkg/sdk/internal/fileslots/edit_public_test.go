@@ -348,11 +348,19 @@ func (s *EditPublicTestSuite) TestExport() {
 			errText: "catalog",
 		},
 		{
-			name:    "a slot holding nothing, which is not a rig",
+			// A slot whose preset holds no block, which is a preset somebody
+			// meant: the MIDI remotes that drive Spotify or Pro Tools from the
+			// footswitches hold none, and 102 presets in the corpus are that.
+			// Exported rather than refused, and what comes back carries
+			// everything the preset holds beside the chain it does not have.
+			//
+			// This case expected an error until a rig could say what a preset
+			// holds beside its chain. The contract required a block, and that
+			// requirement was the only thing refusing it.
+			name:    "a slot whose preset holds no block",
 			at:      slotpkg.Address{Slot: 2},
 			catalog: catalogPath(),
 			out:     "x.yaml",
-			errText: "chain minimum number of items is 1",
 		},
 		{
 			name:    "a caller who stopped waiting",

@@ -64,6 +64,18 @@ func fill(
 		return blocks, said, nil
 	}
 
+	// An empty chain is a statement rather than an omission. 102 presets in the
+	// corpus hold no block, and they are the MIDI remotes that drive Spotify or
+	// Pro Tools from the footswitches and the blank templates people build from.
+	// Filling one turns a remote into a reverb, a delay and an overdrive nobody
+	// asked for, which is what this did the first time an empty chain was allowed.
+	//
+	// A chain naming one block is a different thing: somebody said an amplifier
+	// and the convention around one is what the corpus is for.
+	if len(blocks) == 0 {
+		return blocks, said, nil
+	}
+
 	g, ok := stats.Grammar[instrument]
 	if !ok {
 		return blocks, said, nil
@@ -104,8 +116,9 @@ func fill(
 // Position is not decoration: drive ahead of an amp overdrives its input,
 // drive after it does something else entirely.
 //
-// A resolved chain always holds an amp — a rig cannot omit one — so the
-// index is found rather than guarded against.
+// Index zero where the chain holds no amplifier, which is what a chain of
+// effects is. Never an empty chain: filling one is refused above, so the only way
+// here is a chain somebody put something in.
 func insert(
 	blocks []catalog.Block,
 	said []*wanted,

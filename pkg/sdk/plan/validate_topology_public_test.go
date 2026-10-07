@@ -59,9 +59,14 @@ func (s *ValidateTopologyPublicTestSuite) TestValidateTopology() {
 			ok: true,
 		},
 		{
+			// A preset that makes no sound, which the device represents perfectly
+			// well: every rule here is about where blocks sit, so a chain with
+			// none has nothing to check. The MIDI remotes that drive Spotify or
+			// Pro Tools from the footswitches are exactly this, and 102 presets in
+			// the corpus hold no block at all.
 			name: "a rig with nothing in it",
 			spec: plan.Plan{},
-			says: "no blocks",
+			ok:   true,
 		},
 		{
 			name: "more blocks than the device takes",

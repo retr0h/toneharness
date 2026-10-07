@@ -30,13 +30,20 @@ import (
 // too many blocks, a processor that does not exist, or positions on one
 // processor that are not the contiguous run 0..n-1.
 //
+// A rig with no blocks passes. It makes no sound, which is a preset somebody
+// meant rather than one they left unfinished.
+//
 // It needs no catalog — every question it answers is about the rig alone.
 func ValidateTopology(
 	s Plan,
 	lim Limits,
 ) error {
+	// No blocks is a shape the device represents perfectly well: 102 presets in
+	// the corpus hold none, and they are the MIDI remotes that drive Spotify or
+	// Pro Tools from the footswitches and the blank templates people build from.
+	// Every rule below is about where blocks sit, so there is nothing to check.
 	if len(s.Blocks) == 0 {
-		return &TopologyError{Reason: "rig has no blocks"}
+		return nil
 	}
 
 	if len(s.Blocks) > lim.MaxBlocks {

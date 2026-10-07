@@ -81,8 +81,24 @@ itself wrote, which is the right answer for one that was never lifted from
 anything.
 
 Changing a value here is what reaches the pedal. That is the whole point of the
-section, and it is checked: 4,324 presets in the corpus are lifted into this form
-and written back with nothing changed.
+section, and it is checked: all 4,426 presets in the corpus are lifted into this
+form and written back with nothing changed.
+
+## A preset with no chain
+
+`chain:` may be empty. A preset that makes no sound is one somebody meant rather
+than one they left unfinished: the MIDI remotes that drive Spotify, Cubase and
+Pro Tools from the footswitches hold no block at all, and so do the blank
+templates people build from. 102 presets in the corpus are that, and every one
+was refused until this section existed, because there was nothing in a rig for
+them to be.
+
+An empty chain is a statement, so the corpus adds nothing to it. A chain naming
+one block is a different thing, and the convention around one is what the corpus
+is for.
+
+The key is still required. A rig with no `chain:` at all has said nothing about
+its signal path; one with an empty list has said there is none.
 
 ## Before you resolve a shipped rig
 

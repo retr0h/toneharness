@@ -1049,6 +1049,10 @@ type PresetMember struct {
 // Real-world names rather than model identifiers, which is what lets one rig compile for any Helix. The identifier and the schema moved up to the document; everything else is as it was.
 type Rig struct {
 	// Chain The signal path, in order.
+	//
+	// May be empty, which is a preset that makes no sound rather than an unfinished one. 102 presets in the corpus hold no block: the MIDI remotes that drive Spotify, Cubase and Pro Tools from the footswitches and nothing else, and the blank templates people build from. Those are presets somebody made, and before `preset:` existed there was nothing in a rig for them to be, so the contract required a block and a lift refused all 102.
+	//
+	// Required even when empty. A rig with no `chain:` key at all has not said anything about its signal path; one with an empty list has said there is none, and a build adds nothing to it.
 	Chain []ChainEntry `json:"chain"`
 
 	// Evidence Why the gear as a whole is believed, for a citation that covers the chain rather than one entry of it.

@@ -356,8 +356,8 @@ carries it now, under `rig.preset`, and a lift fills it: the global settings,
 the snapshots, the footswitch and expression pedal assignments, each processor's
 routing, the cabinets a dual block points at, the DT and Powercab members, the
 MIDI commands and the impulse response table. That is 18 member kinds and 335
-field names across the preset corpus, and a round-trip test holds 4,324 of those
-presets to coming back with nothing changed.
+field names across the preset corpus, and a round-trip test holds all 4,426 of
+those presets to coming back with nothing changed.
 
 What is left is that the 32 rigs in the marketplace were resolved before the
 field existed, so they carry every control and no preset members. Resolving them
