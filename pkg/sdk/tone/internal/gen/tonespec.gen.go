@@ -1086,6 +1086,10 @@ type Rig struct {
 	// Keyed by the device's own member name rather than by anything friendlier, because the name is what the member is. `dsp0` and `dsp1` are two processors, `snapshot0` through `snapshot7` are eight snapshots in order, and a name this tool renamed would not survive the trip back.
 	//
 	// A member the chain already states is not repeated here. A block in `dsp0` is a chain entry, so `preset.dsp0` carries that processor's inputs, outputs, split, join and cabinets and no blocks at all. Two places setting one control is the thing this avoids.
+	//
+	// Merged over the preset underneath rather than replacing it, down to the field: a member this does not name keeps what it had, and so does a field inside a member it does name. That is what lets a rig state three attributes of a member without stating all of them.
+	//
+	// So a preset lifted off a device and built again gains the few fields the blank template carries and the original did not. Five, on a real preset from the corpus: where the editing cursor sat, and whether three snapshots had been renamed. Nothing audible, and the alternative was making a rig state all 28 fields of `global` to change one.
 	Preset *map[string]PresetMember `json:"preset,omitempty"`
 
 	// Resolved Where the numbers in a plan were arrived at.

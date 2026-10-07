@@ -69,9 +69,19 @@ writes all of them, which is consistent.
 is what an unassigned impulse response slot holds. A null value is the device
 having no value at all. Both are real in the corpus and neither means the other.
 
-**What a rig does not name is left alone.** A member the document does not
-mention keeps whatever the preset underneath had, so a rig may state four members
-and ignore the rest.
+**What a rig does not name is left alone, and so is a field it does not name.** A
+member the document does not mention keeps whatever the preset underneath had, and
+so does a field inside a member it does state. That is what lets a rig say three
+attributes of `dt0` without stating all of them.
+
+The cost, decided deliberately rather than overlooked: a preset lifted off
+somebody's pedal and built again comes back with the handful of fields the blank
+template carries and the original did not. On a real preset from the corpus that
+is five, `@cursor_path` and `@cursor_position` under `global` and `@custom_name`
+on three snapshots. All of it is where the editing cursor sat and whether a
+snapshot was renamed, so none of it is audible, and the alternatives were a flag
+saying which way to read the document or making a rig state all 28 fields of
+`global` to change one.
 
 ## Where it comes from
 

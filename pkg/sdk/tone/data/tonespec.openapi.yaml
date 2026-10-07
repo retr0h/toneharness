@@ -320,6 +320,19 @@ components:
             `dsp0` is a chain entry, so `preset.dsp0` carries that processor's
             inputs, outputs, split, join and cabinets and no blocks at all. Two
             places setting one control is the thing this avoids.
+
+
+            Merged over the preset underneath rather than replacing it, down to the
+            field: a member this does not name keeps what it had, and so does a
+            field inside a member it does name. That is what lets a rig state three
+            attributes of a member without stating all of them.
+
+
+            So a preset lifted off a device and built again gains the few fields the
+            blank template carries and the original did not. Five, on a real preset
+            from the corpus: where the editing cursor sat, and whether three
+            snapshots had been renamed. Nothing audible, and the alternative was
+            making a rig state all 28 fields of `global` to change one.
         resolved:
           $ref: "#/components/schemas/Target"
         moves:
