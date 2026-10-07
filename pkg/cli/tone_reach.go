@@ -134,7 +134,7 @@ func Reach(
 	levelled(w, opts.Volume, reamp.Held)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 
-	target, err := targetFor(ctx, TuneOptions{
+	target, elsewhere, err := targetFor(ctx, TuneOptions{
 		Genres: opts.Genres, Genre: opts.Genre, Corpus: opts.Corpus,
 	})
 	if err != nil {
@@ -177,17 +177,21 @@ func Reach(
 	_, _ = fmt.Fprintf(w, "\n  %s against %s, %d dials through %s\n",
 		opts.ID, opts.Genre, len(knobs), bench.Name())
 
-	floor, settled, err := steady(ctx, bench, signal, opts.Takes)
+	floor, at, err := steady(ctx, bench, signal, opts.Takes)
 	if err != nil {
 		return err
 	}
 
-	aims := solve.Aims(target, inCorpusScale(floor))
+	// Displaced for the same reason the tune is, and it has to be the same target
+	// or this answers a question the tune is not asking: whether the chain can
+	// reach a record's own figures, which it cannot and need not.
+	aims := solve.Aims(solve.Displaced(target, elsewhere, figuresOf(at)),
+		inCorpusScale(floor))
 	if len(aims) == 0 {
 		return fmt.Errorf("%w: %q measures as nothing", ErrNoTarget, opts.Genre)
 	}
 
-	aims[audio.KeyLevel] = solve.Aim{Want: settled, Tol: drift}
+	aims[audio.KeyLevel] = solve.Aim{Want: at.Level, Tol: drift}
 
 	now, err := sdk.Fingerprint(ctx, bench, signal)
 	if err != nil {

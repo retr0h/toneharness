@@ -24,6 +24,25 @@ in nine dimensions may be unreachable with the controls a device has; a target
 pinning three axes and shrugging at six usually is not, and the freedom goes into
 satisfying the three.
 
+**None of those three is aimed at where it sits. All three are aimed at how far
+they sit from everybody else.** A record is mixed, mastered and limited; a chain is
+one dry signal through one amplifier into one computer. The two do not subtract.
+Mike Dirnt's records centre at 126Hz and a bass chain through a cabinet reads
+1807Hz, so asking for 126Hz asks for a darkness the signal does not hold: every
+control goes to its darkest, and the control with the most authority over the
+centroid on that amplifier carries +27.6dB of level with it. That is how a tuned
+preset came back thin.
+
+What both sides can answer is "how far from its own normal". Dirnt sits 17Hz darker
+than the other bass players and 0.035 of the energy lower; Matt Freeman sits 56Hz
+brighter and holds more of it in the mids. Those distances are applied to where the
+chain already reads, so the target moves with the chain and the spread stays as the
+records set it.
+
+With one player measured there is nobody to be displaced from, and the target falls
+back to its own figures. That is worth knowing before reading a run against a thin
+corpus.
+
 ## Ask before you run
 
 ```bash

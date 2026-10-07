@@ -71,7 +71,7 @@ func Chain(
 
 	defer release()
 
-	floor, settled, err := steady(ctx, bench, signal, opts.Takes)
+	floor, at, err := steady(ctx, bench, signal, opts.Takes)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func Chain(
 		"\n    %.1f%% below 250Hz, %.1f%% to 2kHz, %.1f%% above, centroid %.0fHz "+
 			"at %.1fdB\n",
 		now[audio.KeyLow]*perCent, now[audio.KeyMid]*perCent,
-		now[audio.KeyHigh]*perCent, now[audio.KeyCentroid], settled)
+		now[audio.KeyHigh]*perCent, now[audio.KeyCentroid], at.Level)
 
 	if say, bad := Squealing(
 		now, figuresOfDry(signal), inCorpusScale(floor), opts.EndsInACab); bad {

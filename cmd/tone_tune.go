@@ -69,10 +69,21 @@ The model is local. A slope is true near where it was read and drifts away from
 it, so one solve overshoots and the answer is another pass from wherever the
 last one landed rather than a better model. Three to five passes is usual.
 
-The target is a point with tolerances rather than a point. A genre's records
-give a middle and a spread on every figure, so an axis its records agree about
-has to be hit and one they disagree about need not be precise. That is what
-makes a genre an easier target than it sounds.
+The target is a distance, not a position, and it carries tolerances. A record is
+mixed and mastered and a chain is one dry signal through one amplifier, so the two
+do not subtract: Mike Dirnt's records centre at 126Hz and a bass chain through a
+cabinet reads 1807Hz. Aiming at the record's own number asks for a darkness the
+signal does not hold, every control goes to its darkest, and on this amplifier the
+control with the most authority over the centroid carries +27.6dB of level with it.
+A tuned preset came back thin that way.
+
+So the records say how far their player sits from every other player, and that
+distance is applied to where the chain already is. Dirnt is 17Hz darker than the
+other bass players; Matt Freeman is 56Hz brighter. Both are reachable.
+
+The spread comes from the same records and is left alone: an axis a player's
+records agree about has to be hit, and one they disagree about need not be precise.
+That is what makes a player an easier target than it sounds.
 
 A choice is revisited. The nearest setting is the nearest before any dial has
 moved, which is not the same question as which setting a solve can finish from,
