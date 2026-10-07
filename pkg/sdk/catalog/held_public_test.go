@@ -176,6 +176,15 @@ func (s *HeldPublicTestSuite) TestHoldRaw() {
 		},
 		{name: "an object is not a value", raw: `{"a":1}`, err: true},
 		{name: "a list is not a value", raw: `[1]`, err: true},
+		{
+			// A null is the device having no value, which is not the same as the
+			// empty string. Refused rather than read as a blank: a caller that
+			// cannot tell them apart writes `""` where the device wrote nothing,
+			// and an attribute with no value came back set to the empty string.
+			name: "a null is not a value either",
+			raw:  `null`,
+			err:  true,
+		},
 	} {
 		s.Run(tt.name, func() {
 			got, err := catalog.HoldRaw([]byte(tt.raw))

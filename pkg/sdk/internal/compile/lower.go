@@ -69,8 +69,9 @@ func Realise(
 			// that asked for one.
 			Params:  settings(blk, nil),
 			DSP:     0,
-			Pos:     i,
-			Enabled: true,
+			Pos:     at(entry.Position, i),
+			Enabled: playing(entry),
+			Attrs:   attrsFrom(entry),
 		})
 	}
 
@@ -130,6 +131,9 @@ func Lower(
 }
 
 // at reads an optional integer, falling back when a plan does not state one.
+// A position a document states wins over the chain's own order, because a preset
+// keeps a block's position apart from the key it is filed under and renumbering one
+// read off a device would move it.
 func at(
 	v *int,
 	fallback int,
@@ -139,6 +143,21 @@ func at(
 	}
 
 	return *v
+}
+
+// playing says whether a block is switched on.
+//
+// A document saying it is bypassed is the answer. This was hardcoded to true, so a
+// preset exported with three blocks bypassed came back with all three switched on:
+// audible, and the opposite of what the file said.
+func playing(
+	entry rig.ChainEntry,
+) bool {
+	if entry.Enabled != nil {
+		return *entry.Enabled
+	}
+
+	return true
 }
 
 // modelFor decides which model an entry means.

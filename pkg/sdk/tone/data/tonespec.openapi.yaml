@@ -1304,6 +1304,31 @@ components:
           $ref: "#/components/schemas/Substitute"
         settings:
           $ref: "#/components/schemas/Settings"
+        attrs:
+          type: object
+          additionalProperties:
+            type: string
+            nullable: true
+            x-go-type: catalog.Held
+            x-go-type-import:
+              name: catalog
+              path: github.com/retr0h/toneharness/pkg/sdk/catalog
+          description: >
+            The device's own attributes for this block that no field above claims,
+            under the names it spells them with: `@type`, `@favorite`.
+
+
+            The named fields are the ones worth editing by hand and worth reading
+            on other hardware, so `stereo` and `trails` and `mic` are fields rather
+            than entries here. This is the remainder, and it exists so the
+            remainder is not dropped: a preset carries 15 distinct block attributes
+            and there are fields for eight of them. `@type` is on 99.8% of the
+            38,473 chain blocks in the corpus and means nothing anybody here has
+            established, so it travels as it arrived rather than being modelled on
+            a guess.
+
+
+            Written by a lift. A rig somebody typed has none of these.
         controls:
           type: object
           additionalProperties:

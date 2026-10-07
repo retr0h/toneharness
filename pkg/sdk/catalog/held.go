@@ -21,7 +21,9 @@
 package catalog
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 )
 
 // Held is one value a preset holds, written down the way a document can keep it.
@@ -126,11 +128,19 @@ func (h Held) Device() ([]byte, error) {
 // document's quoted spelling, so `6.0` stays a float rather than becoming the
 // named position "6.0".
 //
-// A device's `null` is not read here, because a nil pointer is what carries it
-// and a caller holding a value has already decided there is one.
+// A device's `null` is refused, because a nil pointer is what carries one and a
+// caller holding a Held has already decided there is a value.
 func HoldRaw(
 	raw []byte,
 ) (Held, error) {
+	// A null is not a value and is not the empty string either. Refused rather
+	// than read as a blank, because a caller that cannot tell them apart writes
+	// `""` where the device wrote nothing: an attribute with no value came back as
+	// an attribute set to the empty string.
+	if string(bytes.TrimSpace(raw)) == "null" {
+		return Held{}, fmt.Errorf("%w: a null is not a value", ErrBadParam)
+	}
+
 	var text string
 	if err := json.Unmarshal(raw, &text); err == nil && text == "" {
 		return Blank(), nil

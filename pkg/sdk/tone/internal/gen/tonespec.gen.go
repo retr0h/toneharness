@@ -518,6 +518,13 @@ type Capture string
 //
 // Order is the signal path. It is not decoration: drive ahead of an amp overdrives its input, drive after it does something else entirely.
 type ChainEntry struct {
+	// Attrs The device's own attributes for this block that no field above claims, under the names it spells them with: `@type`, `@favorite`.
+	//
+	// The named fields are the ones worth editing by hand and worth reading on other hardware, so `stereo` and `trails` and `mic` are fields rather than entries here. This is the remainder, and it exists so the remainder is not dropped: a preset carries 15 distinct block attributes and there are fields for eight of them. `@type` is on 99.8% of the 38,473 chain blocks in the corpus and means nothing anybody here has established, so it travels as it arrived rather than being modelled on a guess.
+	//
+	// Written by a lift. A rig somebody typed has none of these.
+	Attrs *map[string]*catalog.Held `json:"attrs,omitempty"`
+
 	// BypassVolume How loud the block is when bypassed, which is what keeps a bypass from being a volume drop.
 	BypassVolume *float64 `json:"bypass_volume,omitempty"`
 

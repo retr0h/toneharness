@@ -150,6 +150,21 @@ func entryFor(
 		out.Enabled = &off
 	}
 
+	// No `position`. A preset's `@position` is a sparse ordinal within one
+	// processor and one path, and this project's topology check requires the
+	// contiguous run 0..n-1 per processor, which real presets do not have: of 8,970
+	// processor-and-path groups in the corpus, 6,689 have gaps. Carrying the stated
+	// position therefore makes a lifted preset fail its own validation. The chain's
+	// order is what says the signal order, and it is right; reconciling the two is
+	// its own change.
+
+	// Everything else the device says about the block: the parallel path it is on,
+	// whether it runs in stereo, whether a tail keeps ringing when it is switched
+	// off, which cabinet a dual block points at, which impulse response it plays.
+	// Dropped until this existed, so a preset read out and built again came back
+	// with its parallel path gone and its reverb tails cut.
+	attrsOnto(b, &out)
+
 	return out
 }
 

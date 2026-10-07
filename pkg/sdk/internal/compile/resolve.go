@@ -114,7 +114,9 @@ func Resolve(
 		}
 
 		blocks = append(blocks, b)
-		wants = append(wants, &wanted{words: entry.Settings, stated: entry.Controls})
+		wants = append(wants, &wanted{
+			words: entry.Settings, stated: entry.Controls, entry: &entry,
+		})
 	}
 
 	// A rig naming an amplifier and no cabinet gets the one Line 6 voiced it
@@ -154,7 +156,7 @@ func Resolve(
 	blocks, wants, asked := demand(blocks, wants, cat, stats, intent, instrument)
 	added = append(added, asked...)
 
-	built := specFor(id, intent, blocks, stats)
+	built := specFor(id, intent, blocks, wants, stats)
 
 	// After the corpus has had its say, because a term is an opinion about
 	// where players land rather than a replacement for knowing.
@@ -502,6 +504,7 @@ func specFor(
 	id string,
 	intent Intent,
 	blocks []catalog.Block,
+	said []*wanted,
 	stats *corpus.Stats,
 ) plan.Plan {
 	// The name is what the device prints on its screen, and "Mike Dirnt" is
@@ -522,12 +525,22 @@ func specFor(
 	}
 
 	for i, b := range blocks {
+		// What the document said about this block, where it said anything. A
+		// block the corpus added has no entry and takes the chain's own order and
+		// the device's defaults, which is what every block did before a lift
+		// could state these.
+		var entry rig.ChainEntry
+		if i < len(said) && said[i] != nil && said[i].entry != nil {
+			entry = *said[i].entry
+		}
+
 		out.Blocks = append(out.Blocks, plan.Block{
 			Model:   b.ID,
 			Params:  settings(b, stats),
 			DSP:     0,
-			Pos:     i,
-			Enabled: true,
+			Pos:     at(entry.Position, i),
+			Enabled: playing(entry),
+			Attrs:   attrsFrom(entry),
 		})
 	}
 
@@ -609,6 +622,10 @@ type wanted struct {
 	// stated is the controls the rig gives outright, applied after the words so
 	// a value beats a word.
 	stated *map[string]catalog.Setting
+	// entry is what the document said about the block, which is where its
+	// position, its parallel path and the rest of the device's own attributes
+	// come from. A block the corpus added has none and takes the defaults.
+	entry *rig.ChainEntry
 }
 
 // statedControls puts the values a rig states outright onto their blocks.
