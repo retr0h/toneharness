@@ -100,9 +100,13 @@ is for.
 The key is still required. A rig with no `chain:` at all has said nothing about
 its signal path; one with an empty list has said there is none.
 
-## Before you resolve a shipped rig
+## What a resolve keeps
 
-`rigs resolve` with no `--out` writes over the file it read, and every comment in
-that file is gone. The 32 rigs in the marketplace each carry a header saying what
-is cited and what is a judgement. Resolve to `--out` and merge by hand, or
-restore the header afterwards.
+The prose at the top of the file. A resolve renders the document from Go types,
+so it kept nothing until the header was put back deliberately: resolving the 32
+shipped rigs once deleted all 210 lines of what people had written about them.
+
+A comment below the header is refused rather than dropped, naming the file and
+the line. Only the top block can be put back, because a comment beside a field
+would have to move with that field and the renderer has no idea where anything
+was. Move it into the header, or keep it somewhere a rewrite does not touch.

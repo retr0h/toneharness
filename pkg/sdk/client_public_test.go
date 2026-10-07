@@ -550,6 +550,13 @@ func (s *ClientPublicTestSuite) TestResolve() {
 		colliding bool
 		// broken names gear nothing carries, so the rig reads and will not build.
 		broken bool
+		// header puts a comment block at the top of the file, as every shipped
+		// rig has, and stranded puts one below it.
+		header   bool
+		stranded bool
+		// locked makes the file unreadable, which is the one way reading the
+		// prose back fails.
+		locked bool
 		// catalog points the client at a file that is not one, which is the only
 		// way asking for the catalog fails.
 		catalog bool
@@ -670,6 +677,40 @@ func (s *ClientPublicTestSuite) TestResolve() {
 			errText:   "collides with an attribute",
 		},
 		{
+			// What a person wrote about the document, which a rewrite renders from
+			// Go types and would otherwise delete. Resolving the 32 shipped rigs
+			// removed all 210 lines of it once, and each of those headers is what
+			// says which gear is cited and which is a judgement.
+			name:   "the prose at the top of the file is kept",
+			own:    true,
+			header: true,
+			id:     "their-player",
+			want:   []string{"# what somebody wrote", "controls:"},
+		},
+		{
+			// Refused rather than dropped. Only the top block survives, because
+			// that is the one a rewrite can put back without knowing where it
+			// belongs; a comment beside a field would have to move with that
+			// field. The loud version costs somebody one move, and the quiet
+			// version costs them prose they will not notice is gone.
+			name:     "prose below the header is refused rather than dropped",
+			own:      true,
+			stranded: true,
+			id:       "their-player",
+			err:      sdk.ErrStrandedProse,
+		},
+		{
+			// An --out naming a file that is there and cannot be read. Not the
+			// rig's own file: that one was read to load the rig, so by the time
+			// its prose is wanted it is known to be readable.
+			name:    "an out file whose prose cannot be read",
+			own:     true,
+			out:     true,
+			locked:  true,
+			id:      "their-player",
+			errText: "reading",
+		},
+		{
 			// A rig that reads and will not build, which is the ordinary one:
 			// gear nothing on this device answers to.
 			name:    "a rig the catalog cannot realise",
@@ -708,9 +749,22 @@ func (s *ClientPublicTestSuite) TestResolve() {
 						files["their-player.yaml"], "Aguilar DB51", "Nothing Like That", 1)
 				}
 
+				if tt.header {
+					// A blank line inside the block, because a person writing a
+					// header leaves one and it is part of what they wrote.
+					files["their-player.yaml"] = "# what somebody wrote\n\n" +
+						"# and the rest of it\n" + files["their-player.yaml"]
+				}
+
+				if tt.stranded {
+					files["their-player.yaml"] = "# a header\n" +
+						files["their-player.yaml"] + "\n# and one stranded below it\n"
+				}
+
 				dir := s.rigsDir(files)
 				opts = append(opts, sdk.WithUserRigs(dir))
 				at = filepath.Join(dir, "artists", "their-player.yaml")
+
 			}
 
 			out := ""
@@ -721,6 +775,16 @@ func (s *ClientPublicTestSuite) TestResolve() {
 			if tt.out {
 				out = filepath.Join(s.T().TempDir(), "out.yaml")
 				at = out
+
+				if tt.locked {
+					if os.Geteuid() == 0 {
+						s.T().Skip("root reads a file whatever its mode")
+					}
+
+					s.Require().NoError(os.WriteFile(out, []byte("# taken\n"), 0o600))
+					s.Require().NoError(os.Chmod(out, 0o000))
+					s.T().Cleanup(func() { _ = os.Chmod(out, 0o600) })
+				}
 			}
 
 			if tt.catalog {

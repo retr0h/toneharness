@@ -23,10 +23,13 @@ package sdk
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
@@ -921,7 +924,16 @@ func writeSpec(
 	at string,
 	of tone.Spec,
 ) error {
+	head, err := prose(at)
+	if err != nil {
+		return err
+	}
+
 	var out bytes.Buffer
+
+	// The prose first, so what a person wrote about the document survives being
+	// rewritten by a tool.
+	_, _ = out.Write(head)
 
 	// Ignored rather than wrapped, because nothing can reach it. A Spec holds
 	// strings, numbers, booleans and Settings, and the only one of those that
@@ -935,6 +947,73 @@ func writeSpec(
 	}
 
 	return nil
+}
+
+// ErrStrandedProse is a comment a rewrite cannot keep.
+//
+// Only the block at the top of a file survives, because that is the one a
+// rewrite can put back without understanding where it belongs. A comment beside a
+// field would have to move with that field, and the document is rendered from
+// Go types that carry no comments at all.
+var ErrStrandedProse = errors.New(
+	"a comment below the header cannot be kept through a rewrite")
+
+// prose is the comment block at the top of the file being written over.
+//
+// A rewrite renders the document from Go types, so every comment in the file is
+// gone unless something puts it back. That is most of what makes a shipped rig
+// worth reading: each one carries a header saying what is cited, what is a
+// judgement and why the compressor is not claimed to be the player's. Resolving
+// one deleted all 210 lines of it across the 32 rigs, which is how this was found.
+//
+// The top block only, and a comment below it is refused rather than dropped. The
+// loud version of this costs somebody one move; the quiet version costs them
+// prose they will not notice is gone until they look for it. All 210 comment
+// lines in the shipped rigs are in a header, so nothing that exists is refused.
+//
+// No file is no prose, which is the ordinary case for `--out`.
+func prose(
+	at string,
+) ([]byte, error) {
+	raw, err := os.ReadFile(filepath.Clean(at))
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("reading %s: %w", at, err)
+	}
+
+	var (
+		head  bytes.Buffer
+		lines = strings.Split(string(raw), "\n")
+		past  = false
+	)
+
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+
+		switch {
+		case strings.HasPrefix(trimmed, "#"):
+			if past {
+				return nil, fmt.Errorf("%w: %s line %d: %s",
+					ErrStrandedProse, at, i+1, trimmed)
+			}
+
+			head.WriteString(line)
+			head.WriteString("\n")
+		case trimmed == "":
+			// A blank line inside the header is part of it; one after the
+			// document has started is just spacing.
+			if !past {
+				head.WriteString("\n")
+			}
+		default:
+			past = true
+		}
+	}
+
+	return head.Bytes(), nil
 }
 
 // MusicPlayers is every player the music corpus names, from the manifests.

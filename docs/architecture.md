@@ -336,6 +336,22 @@ catalog produced the numbers. Advisory, never a restriction: gear names resolve
 on any Helix, and somebody on other hardware reads it to know whose numbers they
 have.
 
+**A rig says the whole preset, not only its chain.** `rig.preset` carries every
+member beside it: the global settings, the snapshots, the footswitch and
+expression pedal assignments, each processor's routing, the cabinets a dual
+block points at, the DT and Powercab members, the MIDI commands and the impulse
+response table. 18 member kinds and 335 field names across the preset corpus,
+and a round-trip test holds all 4,426 of those presets to coming back with
+nothing changed.
+
+A chain may be empty, because a preset that makes no sound is one somebody
+meant: the MIDI remotes that drive Spotify or Pro Tools from the footswitches
+hold no block, and 102 presets in the corpus are that.
+
+All 32 rigs in the marketplace carry it, and each still carries the header
+somebody wrote about it: a resolve keeps the prose at the top of the file and
+refuses a comment below it rather than deleting one.
+
 ## What is still missing
 
 The step from a word to a value is half built: a term says which way to move a
@@ -350,19 +366,3 @@ spending the run. The method is
 [solving for knob positions](superpowers/specs/2026-09-27-solving-for-knob-positions-design.md),
 and it needs the pedal, so a build on its own still hands back a chain nobody
 has heard.
-
-**No shipped rig says what the preset holds beside its chain.** The contract
-carries it now, under `rig.preset`, and a lift fills it: the global settings,
-the snapshots, the footswitch and expression pedal assignments, each processor's
-routing, the cabinets a dual block points at, the DT and Powercab members, the
-MIDI commands and the impulse response table. That is 18 member kinds and 335
-field names across the preset corpus, and a round-trip test holds all 4,426 of
-those presets to coming back with nothing changed.
-
-What is left is that the 32 rigs in the marketplace were resolved before the
-field existed, so they carry every control and no preset members. Resolving them
-again fills it in, and doing that today deletes the header comment each one
-carries, which is its own bug and its own task.
-
-The worked example under `marketplace/examples` states four members by hand, so
-the shape is documented whatever the shipped rigs say.
