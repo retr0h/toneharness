@@ -190,7 +190,7 @@ func Tune(
 		return ErrPlayerNeedsCorpus
 	}
 
-	target, err := targetFor(ctx, opts)
+	target, elsewhere, err := targetFor(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -241,12 +241,19 @@ func Tune(
 	// nearly nothing and swamps the solve: punk's records agree on the high
 	// band to four decimal places, and the first run read that axis as 116
 	// tolerances out and spent every control on it.
-	floor, settled, err := steady(ctx, bench, signal, opts.Takes)
+	floor, at, err := steady(ctx, bench, signal, opts.Takes)
 	if err != nil {
 		return err
 	}
 
-	aims = solve.Aims(target, inCorpusScale(floor))
+	// The target as a distance from where the chain already is, not as the
+	// record's own numbers. A record is mixed and mastered and a chain is one dry
+	// signal through one amplifier, so the two do not subtract: aiming at a
+	// centroid of 126Hz asks for a darkness the signal does not hold, and the
+	// control with the most authority over the centroid on this amplifier carries
+	// +27.6dB of level with it. That is why a tuned preset came back thin.
+	aims = solve.Aims(solve.Displaced(target, elsewhere, figuresOf(at)),
+		inCorpusScale(floor))
 
 	// Level is a guard rather than a goal, and `drift` is already wide enough to
 	// be one: six decibels, against a loop that wanders a fraction of one. A run
@@ -259,9 +266,10 @@ func Tune(
 	// So a solve reaching for a dark centroid pulls `ChVol` down and the chain
 	// gets quiet as a consequence of the tone it was asked for.
 	//
-	// Which means the fix is not here. It is the target: an absolute figure taken
-	// off a mastered record, aimed at from a dry signal.
-	aims[audio.KeyLevel] = solve.Aim{Want: settled, Tol: drift}
+	// Which means the fix was not here. It was the target, and `Displaced` above is
+	// it: a record's own figures replaced by how far its player sits from everybody
+	// else, applied to where the chain already is.
+	aims[audio.KeyLevel] = solve.Aim{Want: at.Level, Tol: drift}
 
 	// After the floor, because a nudge is measured in tolerances and a
 	// tolerance is not known until the loop's own wander is.
@@ -286,7 +294,8 @@ func Tune(
 		return fmt.Errorf("%w: %s", ErrSquealing, say)
 	}
 
-	did, err := attempt(ctx, w, opts, bench, signal, preset, knobs, lists, aims, settled)
+	did, err := attempt(
+		ctx, w, opts, bench, signal, preset, knobs, lists, aims, at.Level)
 	if err != nil {
 		return err
 	}
@@ -493,32 +502,36 @@ func solvingFor(
 	return opts.Genre
 }
 
+// The second answer is what the subject is measured against: the other players, or
+// the players who hold none of this genre. That is what makes the target a
+// displacement rather than a position, and it comes from here because this is where
+// the record is read.
 func targetFor(
 	ctx context.Context,
 	opts TuneOptions,
-) (audio.Across, error) {
+) (audio.Across, map[audio.Figure]float64, error) {
 	// One artist's own records, which is the stronger target: a genre is the
 	// middle of a population and this is the person being emulated. Always from
 	// the tree, because these figures are not shipped.
 	if opts.Player != "" {
 		found, err := opts.Players.MeasuredPlayers(ctx, opts.Corpus)
 		if err != nil {
-			return audio.Across{}, fmt.Errorf("reading %s: %w", opts.Corpus, err)
+			return audio.Across{}, nil, fmt.Errorf("reading %s: %w", opts.Corpus, err)
 		}
 
 		for _, p := range found {
 			if p.ID == opts.Player {
 				if p.Across.Tracks == 0 {
-					return audio.Across{}, fmt.Errorf(
+					return audio.Across{}, nil, fmt.Errorf(
 						"%w: %q has no measured records to aim at",
 						ErrNoTarget, opts.Player)
 				}
 
-				return p.Across, nil
+				return p.Across, p.Elsewhere, nil
 			}
 		}
 
-		return audio.Across{}, fmt.Errorf(
+		return audio.Across{}, nil, fmt.Errorf(
 			"%w: %s holds no player called %q", ErrNoTarget, opts.Corpus, opts.Player)
 	}
 
@@ -532,26 +545,26 @@ func targetFor(
 	if opts.Corpus == "" {
 		got, ok := audio.ShippedGenre(opts.Genre)
 		if !ok {
-			return audio.Across{}, fmt.Errorf(
+			return audio.Across{}, nil, fmt.Errorf(
 				"%w: nothing shipped with this binary measures %q",
 				ErrNoTarget, opts.Genre)
 		}
 
-		return got.Across, nil
+		return got.Across, got.Elsewhere, nil
 	}
 
 	found, err := opts.Genres.MeasuredGenres(ctx, opts.Corpus)
 	if err != nil {
-		return audio.Across{}, fmt.Errorf("reading %s: %w", opts.Corpus, err)
+		return audio.Across{}, nil, fmt.Errorf("reading %s: %w", opts.Corpus, err)
 	}
 
 	for _, g := range found {
 		if g.Slug == opts.Genre || g.Name == opts.Genre {
-			return g.Across, nil
+			return g.Across, g.Elsewhere, nil
 		}
 	}
 
-	return audio.Across{}, fmt.Errorf("%w: no records are tagged %q under %s",
+	return audio.Across{}, nil, fmt.Errorf("%w: no records are tagged %q under %s",
 		ErrNoTarget, opts.Genre, opts.Corpus)
 }
 

@@ -372,6 +372,24 @@ func (s *TuneTestSuite) TestTune() {
 			},
 		},
 		{
+			// The bench giving up inside the takes rather than on the reading
+			// before them. `steady` throws its first away, so a bench that fails
+			// every call fails on that discard and never reaches the loop behind
+			// it, which is where a run spends its time.
+			name: "the bench stops answering part way through the takes",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				opts := s.opts()
+				opts.Bench = &quits{after: 1}
+
+				err := Tune(context.Background(), buffer(), opts)
+				s.Require().ErrorContains(err, "the bench gave up mid take")
+			},
+		},
+		{
 			// A missing signal.
 			name: "a reference that is not there",
 			then: func() {

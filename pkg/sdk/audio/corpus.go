@@ -60,6 +60,17 @@ type Player struct {
 	// three, or the career split into a rig per era, which is what `extends` and
 	// a subject of kind song are for.
 	Scattered []Scattered `json:"scattered,omitempty"`
+	// Elsewhere is what the other players measure as, per figure, which is what
+	// makes a figure here a displacement rather than a position.
+	//
+	// The same field a genre carries and for the same reason. A player's own
+	// figures are measured off finished records and a chain's are measured off a
+	// dry signal pushed through it, so the two do not subtract: punk's records read
+	// 97.1% of their energy low where the dry signal holds 90.8% before any block
+	// touches it. Aiming a chain at the record's number asks for bottom that is not
+	// in the input. Aiming it at the chain's own reading shifted by how far this
+	// player sits from the others asks something a chain can answer.
+	Elsewhere map[Figure]float64 `json:"elsewhere,omitempty"`
 	// Within is the same question asked inside each genre they play, which is
 	// a different question and usually a more useful one.
 	//
@@ -174,6 +185,7 @@ func Corpus(
 		out[i].Terms = Derive(out[i].Across, without(together, out[i].ID))
 		out[i].Within = within(out[i].ID, together, plays)
 		out[i].Scattered = scattered(each[out[i].ID], without(together, out[i].ID))
+		out[i].Elsewhere = elsewhere(without(together, out[i].ID))
 	}
 
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
