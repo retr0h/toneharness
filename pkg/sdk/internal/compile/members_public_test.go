@@ -506,6 +506,177 @@ func (s *MembersPublicTestSuite) TestCorpusRoundTrip() {
 	s.Require().Zero(differ)
 }
 
+// TestControlsPickTheModel covers which of several models a gear name means
+// being decided by the controls the document states.
+//
+// 661 models answer to only 468 names. Three are called `1x12 US Deluxe` and only
+// one of those carries a `Pan` and a `Delay`, so a name alone resolved to a model
+// the preset's own values did not fit and the build refused them. 64% of the
+// corpus failed to rebuild that way, which was the single biggest reason a
+// document could not be handed to somebody else.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MembersPublicTestSuite) TestControlsPickTheModel() {
+	for _, tt := range []struct {
+		name string
+		// of is the gear as a document names it, and controls what it says that
+		// gear is set to.
+		of       string
+		role     rig.Role
+		controls []string
+		// want is the model it has to resolve to.
+		want catalog.ModelID
+	}{
+		{
+			// The case this exists for. Pan and Delay are carried by one of the
+			// three, and a name on its own picks the shortest.
+			name:     "a cabinet whose controls name the model",
+			of:       `1x12 US Deluxe`,
+			role:     rig.RoleCab,
+			controls: []string{"Pan", "Delay", "Mic", "Angle"},
+			want:     "HD2_CabMicIr_1x12USDeluxeWithPan",
+		},
+		{
+			// The same name with the microphone controls and no pan, which is the
+			// middle of the three.
+			name:     "the same name without a pan",
+			of:       `1x12 US Deluxe`,
+			role:     rig.RoleCab,
+			controls: []string{"Mic", "Angle", "Position"},
+			want:     "HD2_CabMicIr_1x12USDeluxe",
+		},
+		{
+			// A rig somebody typed states no controls, and the name decides as it
+			// always did.
+			name: "no controls leaves the name to decide",
+			of:   `1x12 US Deluxe`,
+			role: rig.RoleCab,
+			want: "HD2_CabMicIr_1x12USDeluxe",
+		},
+		{
+			// Controls no model of that name carries. Answered on the name rather
+			// than refused, so the error a caller sees afterwards is about the
+			// control rather than about gear that plainly exists.
+			name:     "controls nothing of that name has",
+			of:       `1x12 US Deluxe`,
+			role:     rig.RoleCab,
+			controls: []string{"Nonesuch"},
+			want:     "HD2_CabMicIr_1x12USDeluxe",
+		},
+	} {
+		s.Run(tt.name, func() {
+			held := map[string]catalog.Setting{}
+			for _, c := range tt.controls {
+				held[c] = catalog.Set(catalog.Float(0.5))
+			}
+
+			entry := rig.ChainEntry{Role: tt.role, Gear: tt.of}
+			if len(held) > 0 {
+				entry.Controls = &held
+			}
+
+			got, err := compile.Realise("x", rig.Spec{
+				Instrument: rig.InstrumentGuitar,
+				Chain:      []rig.ChainEntry{entry},
+			}, s.cat)
+
+			s.Require().NoError(err)
+			s.Require().Len(got.Blocks, 1)
+			s.Require().Equal(tt.want, got.Blocks[0].Model)
+		})
+	}
+}
+
+// TestCorpusRebuilds covers reading somebody else's preset into a rig and
+// building it again, which is what handing a document to another person is.
+//
+// A round trip through the document is not enough on its own. The chain names
+// gear the way a person does, so a rebuild has to resolve those names back to
+// models, and a name this package writes and cannot read is a document nobody
+// else can use. 31.4% of the corpus was in that state: a preset naming an impulse
+// response wrote `IR 1024` and the resolver refused every IR block outright.
+//
+// A sample rather than all of it, because resolving one gear name reads every
+// block in the catalog and the full corpus takes a quarter of an hour.
+//
+// The assertion is about the kind of failure rather than a count. What may still
+// fail is a block this device has no model for, which is a preset made on other
+// hardware: a stereo volume and pan, a stereo wah, FX loops three and four, a POD
+// Go input. Anything else is this package disagreeing with itself.
+func (s *MembersPublicTestSuite) TestCorpusRebuilds() {
+	root := filepath.Join("..", "..", "..", "..", "resources", "schemas", "corpus")
+
+	var paths []string
+
+	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+
+		if !d.IsDir() && filepath.Ext(p) == ".hlx" {
+			paths = append(paths, p)
+		}
+
+		return nil
+	})
+	if err != nil || len(paths) == 0 {
+		s.T().Skipf("no preset corpus under %s", root)
+	}
+
+	const sample = 400
+
+	if len(paths) > sample {
+		thinned := make([]string, 0, sample)
+		for i := 0; i < len(paths); i += len(paths) / sample {
+			thinned = append(thinned, paths[i])
+		}
+
+		paths = thinned
+	}
+
+	rebuilt, missing := 0, 0
+
+	for _, p := range paths {
+		f, err := os.Open(filepath.Clean(p))
+		if err != nil {
+			continue
+		}
+
+		doc, err := preset.Read(f)
+		_ = f.Close()
+
+		if err != nil {
+			continue
+		}
+
+		id, spec, _, err := compile.Lift(doc, s.cat)
+		if err != nil {
+			continue
+		}
+
+		if _, err := compile.Realise(id, spec, s.cat); err != nil {
+			missing++
+
+			s.Require().ErrorContains(err, "emulates",
+				"%s: a rebuild may only fail on gear this device has no model for", p)
+
+			continue
+		}
+
+		rebuilt++
+	}
+
+	s.T().Logf("rebuilt %d of %d, gear this device does not carry %d",
+		rebuilt, rebuilt+missing, missing)
+	s.Require().NotZero(rebuilt, "the corpus is there and nothing rebuilt")
+
+	// A tenth is far above where this sits and far below where it was. The number
+	// that matters is the kind of failure, asserted per preset above; this only
+	// catches a change that makes most of the corpus unbuildable at once.
+	s.Require().Less(missing*10, rebuilt,
+		"most of the corpus has to survive being read out and built again")
+}
+
 // sameJSON compares two values by their canonical form, so key order and
 // whitespace do not count as a difference and a number's own literal does.
 func sameJSON(

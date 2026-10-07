@@ -422,8 +422,11 @@ func (s *ResolvePublicTestSuite) TestGear() {
 		gear       string
 		role       rig.Role
 		instrument string
-		want       catalog.ModelID
-		err        error
+		// holds names controls the document states, which decide between models
+		// sharing a name.
+		holds []string
+		want  catalog.ModelID
+		err   error
 	}{
 		{
 			name:       "an amplifier by name",
@@ -463,7 +466,8 @@ func (s *ResolvePublicTestSuite) TestGear() {
 			// Twice, because the answer used to depend on which way a map
 			// ranged.
 			for range 2 {
-				got, err := compile.Gear(s.cat, tt.gear, tt.role, tt.instrument)
+				got, err := compile.Gear(
+					s.cat, tt.gear, tt.role, tt.instrument, tt.holds)
 
 				if tt.err != nil {
 					s.Require().ErrorIs(err, tt.err)

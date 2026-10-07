@@ -151,13 +151,18 @@ func modelFor(
 	cat *catalog.Catalog,
 	instrument string,
 ) (catalog.ModelID, error) {
-	b, err := gear(cat, entry.Gear, entry.Role, instrument)
+	// The controls decide which of several models of one name is meant, so they go
+	// in here as well as on the resolving path. Two resolvers cannot both be right
+	// about which `1x12 US Deluxe` a document means.
+	holds := stated(entry)
+
+	b, err := gear(cat, entry.Gear, entry.Role, instrument, holds)
 
 	// The rig named gear this device cannot do and said what to put there
 	// instead. Resolving does the same, so a rig built either way lands on
 	// the same model.
 	if err != nil && entry.Substitute != nil && errors.Is(err, ErrNoSuchGear) {
-		b, err = gear(cat, entry.Substitute.Gear, entry.Role, instrument)
+		b, err = gear(cat, entry.Substitute.Gear, entry.Role, instrument, holds)
 		if err != nil {
 			return "", fmt.Errorf(
 				"%q stands in for %q, and nothing emulates it either: %w",

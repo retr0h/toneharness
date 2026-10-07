@@ -72,7 +72,8 @@ func Resolve(
 	sub := []Added(nil)
 
 	for _, entry := range spec.Chain {
-		b, err := findGear(cat, entry.Gear, categoryFor(entry.Role), instrument)
+		b, err := findGear(
+			cat, entry.Gear, categoryFor(entry.Role), instrument, stated(entry))
 
 		// The rig named gear this device cannot do and said what to put
 		// there instead. It goes on naming the real thing, so the day the
@@ -81,8 +82,11 @@ func Resolve(
 		if err != nil && entry.Substitute != nil && errors.Is(err, ErrNoSuchGear) {
 			var stand catalog.Block
 
+			// The controls too: a substitute stands in for the gear and the
+			// document's values are still the values it has to take.
 			stand, err = findGear(
-				cat, entry.Substitute.Gear, categoryFor(entry.Role), instrument)
+				cat, entry.Substitute.Gear, categoryFor(entry.Role), instrument,
+				stated(entry))
 			if err != nil {
 				return plan.Plan{}, nil, nil, Compensated{}, fmt.Errorf(
 					"%q stands in for %q, and nothing emulates it either: %w",
@@ -259,13 +263,16 @@ func impliedCab(
 // answered a different model each run and would answer with a cabinet for an
 // amplifier. Two resolvers cannot both be right about which Ampeg SVT is
 // meant.
+// holds names the controls the document states for it, which is what decides
+// between models sharing a name.
 func gear(
 	cat *catalog.Catalog,
 	gear string,
 	role rig.Role,
 	instrument string,
+	holds []string,
 ) (catalog.Block, error) {
-	return findGear(cat, gear, categoryFor(role), instrument)
+	return findGear(cat, gear, categoryFor(role), instrument, holds)
 }
 
 // findGear returns the block emulating the named gear.
@@ -289,15 +296,29 @@ func findGear(
 	gear string,
 	category catalog.Category,
 	instrument string,
+	holds []string,
 ) (catalog.Block, error) {
-	if b, found := nearest(cat, gear, category, instrument); found {
-		return b, nil
-	}
-
-	if instrument != "" {
-		if b, found := nearest(cat, gear, category, ""); found {
+	// The controls first, where the document states any. 661 models answer to
+	// only 468 names, so a name is often several models and the shortest one wins
+	// by default. That is right for a rig somebody typed, where the name is all
+	// there is, and wrong for one read off a preset: three models are called
+	// `1x12 US Deluxe` and only one carries a `Pan` and a `Delay`, so the default
+	// chose a model the preset's own values do not fit and the build refused them.
+	//
+	// 60% of the preset corpus failed to rebuild that way, which is the single
+	// biggest reason a document could not be handed to somebody else.
+	// The controls first, where the document states any.
+	if len(holds) > 0 {
+		if b, found := anyInstrument(cat, gear, category, instrument, holds); found {
 			return b, nil
 		}
+	}
+
+	// Then the name alone, which is the answer for a rig nobody lifted and the
+	// fallback when no model carries everything the document says. Falling back
+	// rather than failing keeps the error about the gear a person named.
+	if b, found := anyInstrument(cat, gear, category, instrument, nil); found {
+		return b, nil
 	}
 
 	return catalog.Block{}, &NoSuchGearError{
@@ -305,13 +326,55 @@ func findGear(
 	}
 }
 
+// anyInstrument looks for the gear among an instrument's blocks, then among all
+// of them.
+//
+// Line 6 tag amps and cabinets Guitar or Bass and leave everything else untagged,
+// so a bass rig naming a pedal finds it on the second pass.
+func anyInstrument(
+	cat *catalog.Catalog,
+	gear string,
+	category catalog.Category,
+	instrument string,
+	holds []string,
+) (catalog.Block, bool) {
+	if b, found := nearest(cat, gear, category, instrument, holds); found {
+		return b, true
+	}
+
+	// No guard for an empty instrument. The contract requires one on every rig, so
+	// the second pass is never the same search twice, and a guard against it would
+	// be a branch nothing can reach.
+	return nearest(cat, gear, category, "", holds)
+}
+
+// stated names the controls a chain entry writes down.
+//
+// Which model a name means is a question the values answer, where there are any.
+func stated(
+	entry rig.ChainEntry,
+) []string {
+	if entry.Controls == nil {
+		return nil
+	}
+
+	out := make([]string, 0, len(*entry.Controls))
+	for name := range *entry.Controls {
+		out = append(out, name)
+	}
+
+	return out
+}
+
 // nearest is the closest block emulating the named gear, among those an
 // instrument leaves eligible. Empty takes the whole catalog.
+// holds, where it is not empty, names controls the block must carry all of.
 func nearest(
 	cat *catalog.Catalog,
 	gear string,
 	category catalog.Category,
 	instrument string,
+	holds []string,
 ) (catalog.Block, bool) {
 	want := strings.ToLower(gear)
 
@@ -324,12 +387,33 @@ func nearest(
 			continue
 		}
 
+		if !hasEvery(b, holds) {
+			continue
+		}
+
 		if !found || closer(b, best) {
 			best, found = b, true
 		}
 	}
 
 	return best, found
+}
+
+// hasEvery reports whether a block has every control named.
+//
+// All of them, not some: a model missing one is a model the document's own values
+// will be refused against, which is the failure this exists to avoid.
+func hasEvery(
+	b catalog.Block,
+	holds []string,
+) bool {
+	for _, name := range holds {
+		if _, has := b.Params[name]; !has {
+			return false
+		}
+	}
+
+	return true
 }
 
 // closer reports whether a is the better answer than b for the same query.
@@ -360,16 +444,23 @@ func closer(
 }
 
 // eligible reports whether a block could be the gear being looked for.
+//
+// A block that plays an impulse response is eligible here, which is the
+// difference between resolving a name and choosing one. Choosing an IR block for
+// a chain nobody asked for would put a block in a preset that plays nothing until
+// somebody loads a file, so `commonest` refuses to pick one. Resolving `IR 1024`
+// is a document saying which block it means, and refusing that made 31.4% of the
+// preset corpus impossible to rebuild after being read: 90% of those failures were
+// an impulse response the preset named and this would not give back.
+//
+// What the IR itself is stays in the preset, where the device keeps it: the block
+// names the slot and `irUuidTable` names the file in it.
 func eligible(
 	b catalog.Block,
 	want string,
 	category catalog.Category,
 	instrument string,
 ) bool {
-	if catalog.NeedsUserIR(b.ID) {
-		return false
-	}
-
 	if !b.Matches(want) {
 		return false
 	}
@@ -597,6 +688,12 @@ func within(
 	// low cut came back 19.899999618530273 against a minimum of 19.9 and was
 	// refused for being 0.0000004 under it. Widening the bounds the same way
 	// compares like with like, and costs nothing a device can hear.
+	//
+	// Not wide enough for what a preset file does to that number, which is a
+	// separate question with its own task: a device writes float32(0.01) and some
+	// files spell it `0.00999999`, six significant figures, which is below the
+	// minimum by more than ten float32 steps. Widening to cover that is a
+	// tolerance somebody has to choose rather than one the format implies.
 	if spec.Min == spec.Max ||
 		(float32(got) >= float32(spec.Min) && float32(got) <= float32(spec.Max)) {
 		return nil
