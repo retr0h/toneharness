@@ -140,13 +140,18 @@ func (s *CompilePublicTestSuite) unknownGear(
 }
 
 // emptyChain writes a rig with no chain, which the contract refuses.
-func (s *CompilePublicTestSuite) emptyChain(
+// nameless writes a rig whose chain entry names no gear.
+//
+// An empty chain used to be the handiest invalid rig and is a valid one now: a
+// preset that makes no sound is one somebody meant. A chain entry with nothing in
+// its gear field is still nothing anybody can build.
+func (s *CompilePublicTestSuite) nameless(
 	dir string,
 ) string {
 	path := filepath.Join(dir, "bad.yaml")
 	s.Require().NoError(os.WriteFile(path, []byte(
 		"schema: ToneSpec\nid: x\nrig:\n"+
-			"  instrument: bass\n  chain: []\n"), 0o600))
+			"  instrument: bass\n  chain:\n    - role: amp\n      gear: \"\"\n"), 0o600))
 
 	return path
 }
@@ -276,9 +281,9 @@ func (s *CompilePublicTestSuite) TestCompile() {
 		},
 		{
 			name:    "a rig that does not meet its own contract",
-			rig:     "empty chain",
+			rig:     "nameless gear",
 			err:     tone.ErrInvalid,
-			errText: "chain",
+			errText: "gear",
 		},
 		{
 			name:    "a rig naming gear this device does not model",
@@ -344,8 +349,8 @@ func (s *CompilePublicTestSuite) TestCompile() {
 				rigPath = s.handWritten(dir)
 			case tt.rig == "unknown gear":
 				rigPath = s.unknownGear(dir)
-			case tt.rig == "empty chain":
-				rigPath = s.emptyChain(dir)
+			case tt.rig == "nameless gear":
+				rigPath = s.nameless(dir)
 			default:
 				rigPath = tt.rig
 			}

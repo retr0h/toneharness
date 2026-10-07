@@ -518,6 +518,13 @@ type Capture string
 //
 // Order is the signal path. It is not decoration: drive ahead of an amp overdrives its input, drive after it does something else entirely.
 type ChainEntry struct {
+	// Attrs The device's own attributes for this block that no field above claims, under the names it spells them with: `@type`, `@favorite`.
+	//
+	// The named fields are the ones worth editing by hand and worth reading on other hardware, so `stereo` and `trails` and `mic` are fields rather than entries here. This is the remainder, and it exists so the remainder is not dropped: a preset carries 15 distinct block attributes and there are fields for eight of them. `@type` is on 99.8% of the 38,473 chain blocks in the corpus and means nothing anybody here has established, so it travels as it arrived rather than being modelled on a guess.
+	//
+	// Written by a lift. A rig somebody typed has none of these.
+	Attrs *map[string]*catalog.Held `json:"attrs,omitempty"`
+
 	// BypassVolume How loud the block is when bypassed, which is what keeps a bypass from being a volume drop.
 	BypassVolume *float64 `json:"bypass_volume,omitempty"`
 
@@ -998,11 +1005,61 @@ type Played struct {
 // What it is not is a tone correction. Nothing here has measured an amplifier in anybody's room, and an equalisation applied for one would be a number nobody took. Every figure this project ships was measured through a cabinet block into a computer, which is one of these four, and a reading is worth less to somebody on another.
 type PlaysInto string
 
+// PresetMember One thing a preset holds beside its chain: a snapshot, a processor's routing, a footswitch, an amplifier's remote control, a cabinet.
+//
+// Three shapes in one, because the device uses one shape for all of them. A member names a model, carries attributes the device spells with a leading `@`, carries controls by name, and holds further members under it. Any of the four may be absent and most members use two.
+//
+// Deliberately not eighteen hand-written types. The corpus holds 335 distinct field names across those eighteen kinds, and every type inferred from reading a sample of them has been wrong at least once: `@tempo` is fractional in 3,155 snapshots, `@topology1` is a string in 506 presets and a number elsewhere, `@dt_reverb` is a boolean in some and a number in others, and a cabinet spells one control `HighCut` in 1,994 presets and `High Cut` in 113. A schema enumerating them refuses real presets, and generating one from the corpus would describe what has been seen rather than what is allowed: it would refuse the first field Line 6 add, and it would publish a packed-RGB footswitch colour of 462,860 as the bottom of a range.
+//
+// So the shape is stated and the values are kept as they were written. What validates a control is the catalog, which already knows all 5,602 of them.
+type PresetMember struct {
+	// Attrs The device's own attributes, under the names it spells them with, the leading `@` included: `@enabled`, `@position`, `@mic`, `@tempo`, `@input`, `@ledcolor`.
+	//
+	// Kept apart from `controls` because the device does. An attribute says where a member sits, whether it is on, or which of several things it is, and none of them is a knob: no word reaches one and the catalog carries no range for one. A control is a knob, and the catalog describes every one.
+	//
+	// Written as strings so the kind survives, for the same reason a control is. `@position` is an integer and `@tempo` is a float, a device reads the two differently, and a route that turned 120.0 into 120 would change what the preset says.
+	//
+	// Three spellings, because a preset is in all three states. A quoted literal is a reading. `""` is the device's own empty string, which is what an unassigned impulse response slot holds and what 128 of them hold in every preset carrying a table. `null` is the device having no value at all, which `@cursor_path` and `@cursor_position` are in three presets in the corpus. Empty and absent are different things to a device, so they are different things here.
+	Attrs *map[string]*catalog.Held `json:"attrs,omitempty"`
+
+	// Controls The member's knobs, at the values they are set to, under the names the catalog gives them: `Distance`, `LowCut`, `A Level`, `BalanceA`, `threshold`.
+	//
+	// Which names a member has depends on the model it is running, and a split is the clearest case: a Y split carries `BalanceA` and `BalanceB`, a crossover carries `Frequency`, a dynamic split carries `Threshold`, `Attack` and `Decay`, and an A/B split carries `RouteTo`. One schema listing all of them would accept a crossover with a threshold, which the device will not load.
+	Controls *map[string]*catalog.Held `json:"controls,omitempty"`
+
+	// Entries The members under this one where the device keeps them in order rather than by name: a footswitch's assignments, an expression pedal's, an automation lane's.
+	//
+	// Separate from `members` because the order is the meaning. An expression pedal with three assignments sweeps three controls, and they are told apart by position and nothing else: there is no name to file them under, and sorting them would change which control the pedal reaches first.
+	//
+	// An entry may be empty, which is not the same as there being no entry. `automation` holds twenty slots and names a handful, so the empty ones are the lane's shape rather than nothing: writing a list of the named ones would move every assignment after the first gap.
+	//
+	// An empty entry is written back as the device's own `null`, and that is unambiguous rather than a guess: of 3,234 list entries in the preset corpus, 2,136 are `null`, 1,098 say something, and not one is an empty object. So there is no third state for the rule to get wrong.
+	Entries *[]PresetMember `json:"entries,omitempty"`
+
+	// Members The members under this one, by the name the device files them under.
+	//
+	// A preset nests three deep in places and the shape repeats the whole way: `snapshot3` holds `blocks`, which holds `dsp0`, which holds `block1`. `footswitch` holds `dsp0`, which holds `block2`. A separate type per level would be the same four fields written four times.
+	//
+	// Present and empty means the device holds an empty member there, which `footswitch.dsp0` is in five presets. A member with nothing at all, this field included, is the device's `null`. The two are told apart because the corpus holds both and they are not the same preset.
+	Members *map[string]PresetMember `json:"members,omitempty"`
+
+	// Model The model identifier this member runs, as the device spells it: `HD2_AppDSPFlowSplitY`, `@global_params`, `@dt`, `@powercab`.
+	//
+	// An identifier rather than a name a person would use, which is the opposite of how the chain names gear. A chain entry says `Ampeg SVT` because an amplifier has a name somebody would recognise and 661 models resolve from 468 of them. These do not: `HD2_AppDSPFlowJoin` is the join, there is nothing else it could be, and Line 6 publish no friendlier name for it.
+	//
+	// Absent where the member is a container rather than a thing, such as a snapshot's `blocks` or a footswitch's `dsp0`.
+	Model *string `json:"model,omitempty"`
+}
+
 // Rig The gear that answers an ask, in signal order, with a source for every claim.
 //
 // Real-world names rather than model identifiers, which is what lets one rig compile for any Helix. The identifier and the schema moved up to the document; everything else is as it was.
 type Rig struct {
 	// Chain The signal path, in order.
+	//
+	// May be empty, which is a preset that makes no sound rather than an unfinished one. 102 presets in the corpus hold no block: the MIDI remotes that drive Spotify, Cubase and Pro Tools from the footswitches and nothing else, and the blank templates people build from. Those are presets somebody made, and before `preset:` existed there was nothing in a rig for them to be, so the contract required a block and a lift refused all 102.
+	//
+	// Required even when empty. A rig with no `chain:` key at all has not said anything about its signal path; one with an empty list has said there is none, and a build adds nothing to it.
 	Chain []ChainEntry `json:"chain"`
 
 	// Evidence Why the gear as a whole is believed, for a citation that covers the chain rather than one entry of it.
@@ -1021,6 +1078,19 @@ type Rig struct {
 	//
 	// A rig may say both, because they answer different questions: a section is which blocks play, a move is which knob a foot reaches.
 	Moves *[]Move `json:"moves,omitempty"`
+
+	// Preset Everything the preset holds that is not a block in the chain, by the name the device files it under: `global`, `snapshot0`, `footswitch`, `controller`, `dt0`, `powercab0`, `irUuidTable`, `variax`, `commandFS1`, `automation`.
+	//
+	// The chain says the signal path and nothing else. A preset holds eighteen other kinds of member beside it, and before this they had nowhere to go: a snapshot, a footswitch assignment, an input's noise gate, a cabinet's microphone distance and the output's pan were read off the device and dropped. Importing somebody's preset kept the gear and lost the rest of what they built.
+	//
+	// Keyed by the device's own member name rather than by anything friendlier, because the name is what the member is. `dsp0` and `dsp1` are two processors, `snapshot0` through `snapshot7` are eight snapshots in order, and a name this tool renamed would not survive the trip back.
+	//
+	// A member the chain already states is not repeated here. A block in `dsp0` is a chain entry, so `preset.dsp0` carries that processor's inputs, outputs, split, join and cabinets and no blocks at all. Two places setting one control is the thing this avoids.
+	//
+	// Merged over the preset underneath rather than replacing it, down to the field: a member this does not name keeps what it had, and so does a field inside a member it does name. That is what lets a rig state three attributes of a member without stating all of them.
+	//
+	// So a preset lifted off a device and built again gains the few fields the blank template carries and the original did not. Five, on a real preset from the corpus: where the editing cursor sat, and whether three snapshots had been renamed. Nothing audible, and the alternative was making a rig state all 28 fields of `global` to change one.
+	Preset *map[string]PresetMember `json:"preset,omitempty"`
 
 	// Resolved Where the numbers in a plan were arrived at.
 	//

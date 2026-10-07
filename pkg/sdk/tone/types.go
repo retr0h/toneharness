@@ -122,6 +122,10 @@ type (
 	Settings = gen.Settings
 	// Substitute is what the device offered for gear it has no model of.
 	Substitute = gen.Substitute
+	// PresetMember is one thing a preset holds beside its chain: a snapshot, a
+	// processor's routing, a footswitch, a cabinet, an amplifier's remote. One
+	// type for all eighteen kinds, because the device uses one shape for them.
+	PresetMember = gen.PresetMember
 	// Target is what a controller moves, and Controller is the pedal or switch
 	// that moves it. Move is one of its ends.
 	Target     = gen.Target

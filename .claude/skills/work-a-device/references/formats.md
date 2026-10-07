@@ -19,20 +19,37 @@ mise exec -- go run main.go slots export --file device.hlb --slot 3 --out slot3.
 mise exec -- go run main.go presets compile --rig slot3.yaml --out slot3.hlx
 ```
 
-A preset read into a rig and compiled again is the preset it came from, asserted
-over every HX Stomp preset in the corpus, so it is a measurement rather than a
-claim. Two things make that work, and both matter if the rig is hand-edited.
+A preset read into a rig and built again is the preset it came from, give or take
+a handful of fields named below. That is a measurement over the preset corpus
+rather than a claim: on a real preset from it, 12 of 494 values differ, and nine of
+those are because the preset was written by a different Helix.
 
-A lifted rig records `models:`, the exact model each piece of gear resolved to.
-**661 models share only 468 names**, and one name can match two channels of the
-same amplifier, so a rig carrying the name alone would rebuild into a different
-preset. Deleting that line makes compiling fall back to resolving the name, which
-is right for a rig somebody wrote and wrong for one lifted off hardware.
+Three things make it work, and all three matter if the rig is hand-edited.
 
-Compiling writes the chain into an untouched preset the device itself wrote, so
-the result carries the inputs, outputs, split and join a device expects.
-`--template` uses a particular preset as that base instead, which is what makes a
-rig read off a device rebuild exactly.
+**The controls decide which model a name means.** 661 models answer to only 468
+names: three are called `1x12 US Deluxe` and only one carries a `Pan` and a
+`Delay`. A name alone picks the shortest match, so a rig stating controls gets the
+model that has all of them, and one stating none still resolves on the name. Delete
+the controls from a lifted rig and it rebuilds into a different model.
+
+**Each block keeps the key it was filed under.** `position` on a chain entry is the
+`blockN` key the device used, which is not the slot the block sits in: 4,437
+processors in the corpus have a set of keys that is not the set of slots. The slot
+is `@position` in the entry's `attrs`. Renumbering either moves blocks around the
+file.
+
+**The rest of the preset is in `rig.preset`.** Everything beside the chain: the
+snapshots, each processor's routing, the footswitch and expression assignments, the
+DT and Powercab members, the impulse response table. Written by a lift and merged
+over an untouched preset the device wrote, so the result carries the inputs,
+outputs, split and join a device expects. `--template` uses a particular preset as
+that base instead.
+
+What still does not come back: the file's own metadata outside the preset payload,
+and the few fields the untouched preset carries that the original lacked, which are
+where the editing cursor sat and whether a snapshot had been renamed. None of it is
+audible. The device identifier and the schema version come from the catalog in use,
+so building somebody's Helix Floor preset for an HX Stomp changes those on purpose.
 
 `slots export --as hlx` writes the device's own file instead of a rig: a faithful
 copy rather than a reading, carrying the routing and snapshots a rig models but
