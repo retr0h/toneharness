@@ -66,8 +66,59 @@ func (*InvalidError) Unwrap() error { return ErrInvalid }
 func Validate(
 	s Spec,
 ) error {
-	return check(s, SchemaName)
+	if err := check(s, SchemaName); err != nil {
+		return err
+	}
+
+	return OneSetOfSnapshots(s.Rig)
 }
+
+// OneSetOfSnapshots refuses a rig that says its snapshots twice.
+//
+// `sections:` is what somebody wants, by role: the build turns each one into a
+// snapshot. A `snapshotN` under `preset:` is what a device stored. A rig carrying
+// both is one question with two answers, and the schema cannot say so because the
+// two live in different fields.
+//
+// An error rather than a precedence rule, because guessing does not produce a
+// worse preset but a confusing one. A preset's snapshots are replaced rather than
+// merged, so a rig naming `snapshot0` alone leaves the device holding one, and the
+// sections then fail to fit with a message about the device's limits that points
+// nowhere near the cause.
+//
+// A resolved rig names every snapshot the device had and no sections, which is
+// consistent and the ordinary case.
+//
+// Exported because two packages ask it of the same rig and one definition is the
+// point: `pkg/sdk/rig` validates a rig on its own, and this validates the document
+// around one.
+func OneSetOfSnapshots(
+	r Rig,
+) error {
+	if r.Sections == nil || len(*r.Sections) == 0 || r.Preset == nil {
+		return nil
+	}
+
+	for name := range *r.Preset {
+		if !strings.HasPrefix(name, snapshotPrefix) {
+			continue
+		}
+
+		return &InvalidError{
+			Document: SchemaName,
+			Field:    "rig.preset." + name,
+			Reason: "is a snapshot, and this rig also has sections: say what " +
+				"plays in each part of the song, or say the snapshots the device " +
+				"stored, never both",
+		}
+	}
+
+	return nil
+}
+
+// snapshotPrefix is what a device names every snapshot member with, snapshot0
+// through snapshot7 on hardware that holds eight.
+const snapshotPrefix = "snapshot"
 
 // ValidateSetup reports whether a setup meets the contract.
 func ValidateSetup(

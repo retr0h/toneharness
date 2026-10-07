@@ -189,6 +189,77 @@ func (s *ValidatePublicTestSuite) TestAFailureInsideAListIsWrittenTheWayTheFileI
 	s.Require().NotEmpty(fault.Reason, "and it says what was wrong with it")
 }
 
+// TestOneSetOfSnapshots covers the one rule that compares two fields against each
+// other, which the schema cannot: a rig says what plays in each part of the song,
+// or it says the snapshots a device stored, never both.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ValidatePublicTestSuite) TestOneSetOfSnapshots() {
+	for _, tt := range []struct {
+		name string
+		// of is the rig, and refused that this one is one question with two
+		// answers.
+		of      tone.Rig
+		refused bool
+	}{
+		{
+			// A resolved rig: every snapshot the device had, and no sections.
+			name: "the snapshots a device stored",
+			of: tone.Rig{
+				Preset: &map[string]tone.PresetMember{"snapshot0": {}, "snapshot1": {}},
+			},
+		},
+		{
+			// A hand-written rig: what plays in each part, and no snapshots.
+			name: "sections on their own",
+			of:   tone.Rig{Sections: &[]tone.Section{{Name: "Verse"}}},
+		},
+		{
+			name: "neither",
+			of:   tone.Rig{},
+		},
+		{
+			// A member that is not a snapshot, which is most of them: a rig
+			// stating its routing beside its sections is no conflict.
+			name: "sections beside the routing",
+			of: tone.Rig{
+				Sections: &[]tone.Section{{Name: "Verse"}},
+				Preset:   &map[string]tone.PresetMember{"dsp0": {}, "global": {}},
+			},
+		},
+		{
+			// An empty list is nothing said, so it conflicts with nothing.
+			name: "no sections at all beside a snapshot",
+			of: tone.Rig{
+				Sections: &[]tone.Section{},
+				Preset:   &map[string]tone.PresetMember{"snapshot0": {}},
+			},
+		},
+		{
+			name: "both",
+			of: tone.Rig{
+				Sections: &[]tone.Section{{Name: "Verse"}},
+				Preset:   &map[string]tone.PresetMember{"snapshot0": {}},
+			},
+			refused: true,
+		},
+	} {
+		s.Run(tt.name, func() {
+			err := tone.OneSetOfSnapshots(tt.of)
+
+			if !tt.refused {
+				s.Require().NoError(err)
+
+				return
+			}
+
+			s.Require().ErrorIs(err, tone.ErrInvalid)
+			s.Require().ErrorContains(err, "rig.preset.snapshot0")
+			s.Require().ErrorContains(err, "never both")
+		})
+	}
+}
+
 func TestValidatePublicTestSuite(
 	t *testing.T,
 ) {

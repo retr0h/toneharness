@@ -299,15 +299,18 @@ rig:
             noiseGate: "false"
             decay: "0.5"
             threshold: "-48"
-    # No snapshots here, deliberately. `sections:` below says what plays in each
-    # part of the song, the build turns those into the device's snapshots, and a
-    # rig stating both would be answering one question twice. Stating one
-    # snapshot by hand is worse than that: a preset's snapshots are replaced
-    # rather than merged, so a rig naming `snapshot0` alone leaves the device
-    # with one, and the two sections below then do not fit. `rigs resolve`
-    # writes all of them, which is consistent; a hand-written rig says
-    # `sections:` and lets the build do it. Refused rather than left to
-    # discover, see `rig.Validate`.
+    # No snapshots here, and a snapshot beside the `sections:` below is refused
+    # rather than left to discover: `tone.OneSetOfSnapshots` is the rule, and the
+    # message names the member. `sections:` says what plays in each part of the
+    # song and the build turns those into the device's snapshots, so a rig
+    # stating both is answering one question twice.
+    #
+    # Stating one snapshot by hand would be worse than ambiguous. A preset's
+    # snapshots are replaced rather than merged, so a rig naming `snapshot0`
+    # alone leaves the device holding one, and the two sections below then fail
+    # to fit with a message about the device's limits that points nowhere near
+    # the cause. `rigs resolve` writes all eight, which is consistent; a
+    # hand-written rig says `sections:` and lets the build do it.
     # The amplifier's remote, which this rig does not use and a preset carries
     # anyway. Here to show that a member can be nothing but attributes.
     dt0:
