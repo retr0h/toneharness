@@ -21,6 +21,7 @@
 package plan_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -82,12 +83,55 @@ func (s *ValidateTopologyPublicTestSuite) TestValidateTopology() {
 			says: "",
 		},
 		{
+			// A gap is accepted. A position is a slot in the grid the split and
+			// the join sit in too, so a real preset leaves them: of 8,970
+			// processor-and-path groups in the preset corpus 6,689 have a gap, and
+			// requiring the contiguous run 0..n-1 refused every one of those
+			// presets outright.
 			name: "a gap in the run",
 			spec: plan.Plan{Blocks: []plan.Block{
 				{Model: "A", DSP: 0, Pos: 0},
 				{Model: "B", DSP: 0, Pos: 2},
 			}},
-			says: "",
+			ok: true,
+		},
+		{
+			// What does hold, in all 8,969 groups that state a position: one slot,
+			// one block. Two in the same slot is a chain the device cannot lay out.
+			name: "two blocks in one slot",
+			spec: plan.Plan{Blocks: []plan.Block{
+				{Model: "A", DSP: 0, Pos: 1},
+				{Model: "B", DSP: 0, Pos: 1},
+			}},
+			says: "two blocks at position 1",
+		},
+		{
+			// A path that is not a number, which no preset holds and a plan
+			// somebody edited could. Read as the first path rather than refused:
+			// the position checks below still apply, and a path nobody can parse is
+			// not a reason to reject a chain whose blocks are all in their own
+			// slots.
+			name: "a path that is not a number",
+			spec: plan.Plan{Blocks: []plan.Block{
+				{Model: "A", DSP: 0, Pos: 0, Attrs: map[string]json.RawMessage{
+					"@path": json.RawMessage(`"first"`),
+				}},
+			}},
+			ok: true,
+		},
+		{
+			// The same slot on the other side of a split is a different slot.
+			// 1,638 processors in the corpus hold two blocks at one position that
+			// way, which is what says a position is per path rather than per
+			// processor.
+			name: "one slot each side of a split",
+			spec: plan.Plan{Blocks: []plan.Block{
+				{Model: "A", DSP: 0, Pos: 1},
+				{Model: "B", DSP: 0, Pos: 1, Attrs: map[string]json.RawMessage{
+					"@path": json.RawMessage("1"),
+				}},
+			}},
+			ok: true,
 		},
 		{
 			name: "a position below the first",

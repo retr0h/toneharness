@@ -594,19 +594,74 @@ func Fit(
 	return renumber(spec)
 }
 
-// renumber gives each processor a contiguous run of positions.
+// renumber gives each processor a contiguous run of keys to file its blocks under.
+//
+// Only where they collide. A key is what the preset writer names the entry with,
+// and a chain built from gear has none to start with, so this hands out 0, 1, 2 in
+// order. A chain lifted off a preset arrived with the keys the device used, and
+// renumbering those moves every block in the file to a different entry: a preset
+// exported and built again had its amplifier filed where its drive had been.
+//
+// Collisions are what has to go. Two blocks cannot share a key, and `fill` and the
+// fit both add blocks that have none, so this fills the gaps rather than
+// flattening what is there.
 func renumber(
 	spec plan.Plan,
 ) plan.Plan {
-	next := map[int]int{}
+	var (
+		taken = map[int]map[int]bool{}
+		kept  = make([]bool, len(spec.Blocks))
+	)
 
+	// The keys a lift gave, first, so a block the document placed keeps its own.
+	// Where two ask for one key the first keeps it and the other moves, because two
+	// blocks cannot be the same entry.
+	for i, b := range spec.Blocks {
+		if b.Pos < 0 || claim(taken, b.DSP, b.Pos) {
+			continue
+		}
+
+		kept[i] = true
+	}
+
+	// Then everything else, into the lowest key nothing has claimed: a block the
+	// corpus filled in, one the fit moved, and every block of a chain built from
+	// gear rather than lifted.
 	for i := range spec.Blocks {
+		if kept[i] {
+			continue
+		}
+
 		dsp := spec.Blocks[i].DSP
-		spec.Blocks[i].Pos = next[dsp]
-		next[dsp]++
+
+		at := 0
+		for claim(taken, dsp, at) {
+			at++
+		}
+
+		spec.Blocks[i].Pos = at
 	}
 
 	return spec
+}
+
+// claim takes a key on a processor, and says whether somebody already had it.
+func claim(
+	taken map[int]map[int]bool,
+	dsp int,
+	at int,
+) bool {
+	if taken[dsp] == nil {
+		taken[dsp] = map[int]bool{}
+	}
+
+	if taken[dsp][at] {
+		return true
+	}
+
+	taken[dsp][at] = true
+
+	return false
 }
 
 // wanted is what one chain entry asked for, kept beside the block it resolved to.

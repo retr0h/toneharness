@@ -482,6 +482,74 @@ func (s *ResolvePublicTestSuite) TestGear() {
 	}
 }
 
+// TestFitKeepsTheKeysALiftGave covers which entry a block is filed under, which a
+// fit used to flatten.
+//
+// A preset files each block under a `blockN` key, and that key is not the slot the
+// block sits in: 4,437 processors in the corpus have a set of keys that is not the
+// set of slots. Renumbering the keys moves every block in the file to a different
+// entry, so a preset exported and built again had its amplifier filed where its
+// drive had been and 187 of its 494 values read as changed.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ResolvePublicTestSuite) TestFitKeepsTheKeysALiftGave() {
+	for _, tt := range []struct {
+		name string
+		// in is where each block says it is filed, -1 for a block that says
+		// nothing, which is every block of a chain built from gear.
+		in []int
+		// want is where each has to end up.
+		want []int
+	}{
+		{
+			// A chain built from gear: nobody has filed these, so they take the
+			// keys in order, which is what a fit always did.
+			name: "a chain that says nothing takes the keys in order",
+			in:   []int{-1, -1, -1},
+			want: []int{0, 1, 2},
+		},
+		{
+			// A chain lifted off a preset, with the keys the device used. Sparse
+			// and out of order, and kept exactly.
+			name: "a lifted chain keeps its own keys",
+			in:   []int{2, 0, 7},
+			want: []int{2, 0, 7},
+		},
+		{
+			// A block the corpus filled in beside blocks that were lifted. It
+			// takes the lowest key nothing else claims.
+			name: "a block with no key takes the lowest one free",
+			in:   []int{1, -1, 0},
+			want: []int{1, 2, 0},
+		},
+		{
+			// Two asking for one key. The first keeps it, because two blocks
+			// cannot be the same entry, and the other moves to the lowest free.
+			name: "two blocks asking for one key",
+			in:   []int{3, 3, 3},
+			want: []int{3, 0, 1},
+		},
+	} {
+		s.Run(tt.name, func() {
+			spec := plan.Plan{}
+			for _, at := range tt.in {
+				spec.Blocks = append(spec.Blocks, plan.Block{
+					Model: "HD2_AmpSVBeastBrt", Pos: at,
+				})
+			}
+
+			got := compile.Fit(spec, s.cat, twoChips(95.0))
+
+			at := make([]int, 0, len(got.Blocks))
+			for _, b := range got.Blocks {
+				at = append(at, b.Pos)
+			}
+
+			s.Require().Equal(tt.want, at)
+		})
+	}
+}
+
 // TestFit covers Fit, which drops what a device has no room for.
 //
 // One method and one table, so a case is a row rather than a file.

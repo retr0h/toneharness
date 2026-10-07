@@ -39,7 +39,7 @@ const (
 	attrMic          = "@mic"
 	attrCab          = "@cab"
 	attrIR           = "@uuid"
-	// The two the preset writer puts back from the block itself.
+	// The one the preset writer puts back from the block itself.
 	attrPosition = "@position"
 	attrEnabled  = "@enabled"
 )
@@ -150,9 +150,15 @@ func attrsOnto(
 	rest := map[string]*catalog.Held{}
 
 	for name, raw := range b.Attrs {
-		// A position is the plan's own field and the chain's order, and the
-		// writer puts `@enabled` back from the block rather than from here.
-		if named[name] || name == attrPosition || name == attrEnabled {
+		// `@enabled` is the one the writer puts back from the block itself.
+		//
+		// `@position` is not excluded, and that is the whole of what went wrong
+		// the first time: it is the slot the device keeps the block in, which is a
+		// different number from the key the block is filed under. A lift reads the
+		// key into `position` and the slot into here, and dropping the slot made
+		// the writer fall back to the chain's own order, which renumbered every
+		// block in the preset.
+		if named[name] || name == attrEnabled {
 			continue
 		}
 

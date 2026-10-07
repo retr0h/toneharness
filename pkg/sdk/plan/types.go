@@ -77,6 +77,30 @@ type Block struct {
 	Attrs map[string]json.RawMessage `json:"attrs,omitempty"`
 }
 
+// Path is which side of a parallel split the block sits on, zero where it says
+// nothing.
+//
+// Read out of the attributes rather than modelled as a field, because that is
+// where a preset keeps it and where a lift puts it back. Two blocks may hold one
+// position on one processor as long as they are on different sides, so this is
+// half of what says where a block is.
+func (b Block) Path() int {
+	raw, ok := b.Attrs[attrPath]
+	if !ok {
+		return 0
+	}
+
+	var got int
+	if err := json.Unmarshal(raw, &got); err != nil {
+		return 0
+	}
+
+	return got
+}
+
+// attrPath is the device's name for which side of a split a block is on.
+const attrPath = "@path"
+
 // Plan is a rig realised on one device.
 //
 // The third layer. A document's ask is what somebody meant, its rig is the gear

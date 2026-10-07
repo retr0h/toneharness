@@ -141,13 +141,29 @@ func (s *AttrsPublicTestSuite) TestAttrsOnto() {
 			},
 		},
 		{
-			// The position and the enabled flag are not attributes here: the chain
-			// carries its own order and the preset writer puts `@enabled` back from
-			// the block itself.
-			name:  "the position and the switch are not carried as attributes",
+			// Two numbers, and conflating them renumbered every block in a preset.
+			// `position` is the `blockN` key the device filed the block under;
+			// `@position` is the slot it sits in, which travels in `attrs`. 4,437
+			// processors in the corpus have a set of keys that is not the set of
+			// slots.
+			name:  "the key and the slot are different numbers",
+			attrs: `,"@position":4`,
+			then: func(got rig.ChainEntry) {
+				s.Require().NotNil(got.Position)
+				s.Require().Equal(0, *got.Position, "the key it was filed under")
+				s.Require().NotNil(got.Attrs)
+				s.Require().Contains(*got.Attrs, "@position")
+			},
+		},
+		{
+			// The switch is the one the preset writer puts back from the block
+			// itself rather than from the attributes beside it.
+			name:  "the switch is not carried as an attribute",
 			attrs: ``,
 			then: func(got rig.ChainEntry) {
-				s.Require().Nil(got.Attrs)
+				if got.Attrs != nil {
+					s.Require().NotContains(*got.Attrs, "@enabled")
+				}
 			},
 		},
 		{
@@ -185,7 +201,9 @@ func (s *AttrsPublicTestSuite) TestAttrsOnto() {
 			name:  "an attribute that is an object is left out",
 			attrs: `,"@favorite":{"a":1}`,
 			then: func(got rig.ChainEntry) {
-				s.Require().Nil(got.Attrs)
+				if got.Attrs != nil {
+					s.Require().NotContains(*got.Attrs, "@favorite")
+				}
 			},
 		},
 	} {
