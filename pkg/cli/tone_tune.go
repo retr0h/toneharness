@@ -269,7 +269,7 @@ func Tune(
 	// Which means the fix was not here. It was the target, and `Displaced` above is
 	// it: a record's own figures replaced by how far its player sits from everybody
 	// else, applied to where the chain already is.
-	aims[audio.KeyLevel] = solve.Aim{Want: at.Level, Tol: drift}
+	aims[audio.KeyLevel] = solve.Aim{Want: at.Level, Tol: drift, Hold: true}
 
 	// After the floor, because a nudge is measured in tolerances and a
 	// tolerance is not known until the loop's own wander is.
@@ -280,6 +280,11 @@ func Tune(
 
 	_, _ = fmt.Fprintf(w, "  the loop wanders %.4f of a band and %.1fHz\n",
 		inCorpusScale(floor)[audio.KeyLow], floor[audio.KeyCentroid])
+
+	// The level aim in full, because it is the one aim the target does not state
+	// and the one a reader cannot work out from the figures printed beside it.
+	_, _ = fmt.Fprintf(w, "  level is held at %.1fdB, give or take %.1f\n",
+		aims[audio.KeyLevel].Want, aims[audio.KeyLevel].Tol)
 
 	first, err := sdk.Fingerprint(ctx, bench, signal)
 	if err != nil {
@@ -735,8 +740,22 @@ func converge(
 		// So a tune that worked threw its answer away and a tune that struggled
 		// kept its moves, which is the wrong way round. `--out` wrote the
 		// starting chain and called it tuned.
-		if err := land(ctx, w, opts, bench, signal, knobs, step.Steps, settled); err != nil {
+		landed, err := land(ctx, w, opts, bench, signal, knobs, step.Steps, settled)
+		if err != nil {
 			return did, err
+		}
+
+		if !landed {
+			_, _ = fmt.Fprintf(w,
+				"\n  stopped at %.1f tolerances out. Closing this target costs the "+
+					"level, which is not an axis the target may spend.\n", worst)
+
+			// The moves are dropped with them, because the chain is back where
+			// the pass found it and a correction that lists them would be a
+			// record of settings nothing holds.
+			did.steps = did.steps[:len(did.steps)-len(step.Steps)]
+
+			return did, nil
 		}
 
 		if step.Arrived {
@@ -824,6 +843,12 @@ func aimed(
 // Halved rather than refused, because the direction was right and only the
 // distance was wrong, which is an ordinary line search and the same reason the
 // loop takes several passes at all.
+//
+// The threshold is `drift`, the same tolerance the level aim is held to, not
+// the noise floor's. A pass that leaves the level outside the tolerance the
+// solve was given has not landed, whether or not the reading is still above
+// hiss: every figure of the pass after it is measured on a signal the target
+// did not ask for.
 func land(
 	ctx context.Context,
 	w io.Writer,
@@ -833,32 +858,48 @@ func land(
 	knobs []solve.Knob,
 	steps []solve.Step,
 	settled float64,
-) error {
+) (bool, error) {
 	scale := 1.0
 
 	for range backoffs {
 		if err := apply(ctx, opts, knobs, scaled(steps, scale)); err != nil {
-			return err
+			return false, err
 		}
 
 		got, err := sdk.Fingerprint(ctx, bench, signal)
 		if err != nil {
-			return err
+			return false, err
 		}
 
-		if got.Level >= settled-silent {
-			return nil
+		if got.Level >= settled-drift {
+			return true, nil
 		}
 
 		scale /= 2
 
 		_, _ = fmt.Fprintf(w,
-			"       that muted the chain at %.1fdB against %.1f settled, "+
+			"       that spent the level, %.1fdB against %.1f settled, "+
 				"so half of it instead\n", got.Level, settled)
 	}
 
-	return fmt.Errorf("%w: every move that closes this target mutes the chain",
-		ErrNoTarget)
+	// Put back rather than left at a sixteenth, and reported rather than
+	// refused. A sixteenth of a move that costs the level at full length still
+	// costs some of it, so the chain the next pass reads is already degraded and
+	// the pass is measuring its own damage. Scale zero is every control where
+	// this pass found it.
+	//
+	// Refusing the run instead loses the passes that did land. The caller stops
+	// here with the chain it had, which is the same thing it does when a pass
+	// stops improving.
+	if err := apply(ctx, opts, knobs, scaled(steps, 0)); err != nil {
+		return false, err
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"       every length of that move costs more than %.0fdB of level, "+
+			"so the dials go back where this pass found them\n", drift)
+
+	return false, nil
 }
 
 // backoffs is how many times a pass may halve its moves before giving up.

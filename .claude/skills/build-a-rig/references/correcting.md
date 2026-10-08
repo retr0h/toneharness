@@ -493,6 +493,36 @@ No corpus states a level, because a record's loudness is a mastering decision
 rather than a fact about the sound, so the anchor is the chain's own settled
 reading and the tolerance is the one chosen number in the loop.
 
+**Pricing it in the matrix is not enough to keep it**, and this is the part that
+cost a library of thin presets. A slope is read by nudging a control a fraction
+of its range, which makes it a straight line, and level against a gain or a
+master volume is not one: a nudge near the top of an amplifier's Master reads
+almost no change, and the same control taken to zero costs twenty-three
+decibels. So the solve can ask for a move it has correctly priced as free and be
+wrong by twenty decibels.
+
+**The measurement after each pass is what enforces it.** A pass applies its
+moves, reads the chain back, and if the level has left its tolerance the whole
+pass is halved and applied again from where the controls started, up to four
+times. The direction was right and only the distance was wrong, which is an
+ordinary line search.
+
+If no length of the move fits inside the tolerance, **the dials go back where
+that pass found them and the loop stops**:
+
+```
+       every length of that move costs more than 6dB of level, so the dials
+       go back where this pass found them
+
+  stopped at 4.3 tolerances out. Closing this target costs the level, which
+  is not an axis the target may spend.
+```
+
+Put back rather than left at a sixteenth, because a sixteenth of a move that
+spends the level at full length still spends some of it, and the pass after it
+would be measuring its own damage. The run keeps every pass that did land, so
+this reads like any other stop: a residual, and which axes are still out.
+
 ## When it cannot get there
 
 A bass cabinet cannot produce what a target asks above 5 kHz, because the speaker
