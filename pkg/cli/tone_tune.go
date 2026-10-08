@@ -860,17 +860,15 @@ func keeping(
 	at, _ := solve.Reached(aims, now)
 	ends := solve.Worst(at.Residual)
 
-	if ends <= best.worst {
+	back := backTo(knobs, best.at)
+
+	// Nothing to put back covers two cases and they end the same way: the chain
+	// already reads as well as anything this run saw, or it reads a hair worse on
+	// dials that are the best ones anyway, which is the loop's own wander.
+	if ends <= best.worst || len(back) == 0 {
 		_, _ = fmt.Fprintf(w,
 			"  the chain reads %.1f tolerances out, which is this run's best\n", ends)
 
-		did.residual, did.read = at.Residual, now
-
-		return did, nil
-	}
-
-	back := backTo(knobs, best.at)
-	if len(back) == 0 {
 		did.residual, did.read = at.Residual, now
 
 		return did, nil
