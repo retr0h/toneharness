@@ -523,6 +523,42 @@ spends the level at full length still spends some of it, and the pass after it
 would be measuring its own damage. The run keeps every pass that did land, so
 this reads like any other stop: a residual, and which axes are still out.
 
+**A list setting is held to the same tolerance**, and it is a separate guard
+because a microphone has no half-position to back off to. Every setting of a list
+is read anyway to rank it, so a setting costing more than `drift` is dropped
+there, before anything can choose it:
+
+```
+  MidFreq 2   costs 7.8dB of level, past the 6 a target may spend
+```
+
+Dropped rather than ranked low, so the `--tries` ladder cannot back up onto one
+later. That exact setting cost 7.8dB on hardware with nothing watching, the pass
+after it put its own dials back, and the chain was left at the list change's
+reading.
+
+## The answer is the best chain, not the last one
+
+A pass's residual is measured **before** its own moves. So a pass reporting worse
+than the one before it is reporting what the last pass's moves did, and the dials
+that produced the better reading are the ones the loop still knows.
+
+So a run that stops puts them back, and says so:
+
+```
+  stopped improving at 12.6 tolerances out. The chain will not reach this target.
+  the dials go back to this run's best reading, 1.9 tolerances out
+```
+
+Both numbers are printed because both are true: 12.6 is what the last pass
+measured and 1.9 is what the chain now holds. Without it a run that found a good
+chain and then overshot wrote out the overshoot, which is what `--out` did when
+pass 1 read 1.9 and pass 2 read 12.6.
+
+The same rule already applied one level up, across a list's settings: a later
+attempt that is worse is kept rather than used. Passes inside one convergence now
+get it too.
+
 ## When it cannot get there
 
 A bass cabinet cannot produce what a target asks above 5 kHz, because the speaker

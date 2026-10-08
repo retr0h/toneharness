@@ -169,8 +169,8 @@ func compared(
 
 		if len(read) == 0 {
 			_, _ = fmt.Fprintf(w,
-				"    no setting of %s carried a signal worth reading, so it is "+
-					"left where the compiler put it\n", c.Setting)
+				"    no setting of %s could be used, so it is left where the "+
+					"compiler put it\n", c.Setting)
 
 			continue
 		}
@@ -222,6 +222,23 @@ func readings(
 
 		if verdict, why := judge(got.Level, silentBelow(settled)); verdict != believable {
 			_, _ = fmt.Fprintf(w, "    %s %-3d %s\n", c.Setting, at, why)
+
+			continue
+		}
+
+		// Affordable as well as believable, and they are different questions. A
+		// setting loud enough to read is not a setting the target may pay for: a
+		// microphone 8dB down is a quieter chain rather than a darker one, and
+		// `drift` is where the loop stops calling that a tone.
+		//
+		// Left out here rather than checked after the choice, because this is the
+		// one place every setting is read. Filtered at the choice instead, the
+		// `--tries` ladder could still back up onto one, and `MidFreq` going from
+		// 0 to 2 cost 7.8dB that nothing reported and nothing undid.
+		if spent := settled - got.Level; spent > drift {
+			_, _ = fmt.Fprintf(w,
+				"    %s %-3d costs %.1fdB of level, past the %.0f a target may "+
+					"spend\n", c.Setting, at, spent, drift)
 
 			continue
 		}

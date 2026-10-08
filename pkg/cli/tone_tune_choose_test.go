@@ -428,6 +428,30 @@ func (s *ChooseTestSuite) TestReadings() {
 			},
 		},
 		{
+			// Affordable is a different question from believable.
+			//
+			// A setting loud enough to read is not a setting the target may pay
+			// for. `MidFreq` going from 0 to 2 cost 7.8dB on hardware, which
+			// nothing reported and nothing undid, and the pass after it put its
+			// own dials back and left the chain at that reading.
+			name: "readings throws away a setting that costs the level",
+			then: func() {
+				s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
+
+				w := buffer()
+
+				// Settled at nothing, against a bench reading well under it: loud
+				// enough to be believed and far past what may be spent.
+				got, err := readings(context.Background(), w, s.opts(), bench{},
+					make([]float32, 64), s.mic(), 0)
+
+				s.Require().NoError(err)
+				s.Require().Empty(got, "every setting cost more than it may")
+				s.Require().Contains(w.String(), "of level, past the 6 a target may spend")
+			},
+		},
+		{
 			// A refusal.
 			//
 			// Reported and skipped rather than fatal. A device refusing one

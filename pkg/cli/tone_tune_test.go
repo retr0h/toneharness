@@ -949,6 +949,56 @@ func (s *TuneTestSuite) TestConverge() {
 
 				s.Require().Contains(buf.String(), "stopped improving")
 				s.Require().Contains(buf.String(), "will not reach this target")
+
+				// And the dials go back to the pass that read best, because a
+				// pass's residual is measured before its own moves: the pass
+				// reporting worse is reporting what the last pass's moves did,
+				// and `land` has already turned those dials.
+				s.Require().Contains(buf.String(), "go back to this run's best reading")
+			},
+		},
+		{
+			// A convergence that read nothing has no best chain to go back to.
+			//
+			// No passes at all, which is a run somebody asked for zero of. It
+			// reaches the same ending every other run does, so the ending has to
+			// cope with there being nothing to restore.
+			name: "converge with no passes keeps nothing",
+			then: func() {
+				opts := s.opts()
+				opts.Passes = 0
+
+				var buf bytes.Buffer
+
+				did, err := converge(context.Background(), &buf, opts, bench{},
+					make([]float32, 64), "preset.hlx", nil,
+					map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 10, Tol: 1}}, -200)
+
+				s.Require().NoError(err)
+				s.Require().Empty(did.steps)
+				s.Require().NotContains(buf.String(), "go back to this run's best")
+			},
+		},
+		{
+			// The device refusing while the dials are put back.
+			//
+			// Reported rather than swallowed, because the caller is about to
+			// write out the chain it believes the device holds, and a restore
+			// that half happened is a plan describing settings nothing has.
+			name: "keeping reports a device that refuses to put the dials back",
+			then: func() {
+				gone := errors.New("device refused the request")
+
+				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(gone)
+
+				knob := solve.Knob{Block: 0, Param: 1, Control: "Bass", At: 0.9, Low: 0, High: 1}
+
+				_, err := keeping(context.Background(), buffer(), s.opts(),
+					[]solve.Knob{knob}, round{},
+					kept{worst: 1.5, at: []float64{0.4}})
+
+				s.Require().ErrorIs(err, gone)
 			},
 		},
 		{

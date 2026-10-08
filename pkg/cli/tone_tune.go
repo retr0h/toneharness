@@ -687,7 +687,13 @@ func converge(
 	aims map[audio.Figure]solve.Aim,
 	settled float64,
 ) (round, error) {
-	var best float64
+	// prev is the pass before's residual, which is what "stopped improving"
+	// compares against, and best the lowest any pass read, which is what the
+	// chain is left at. They are not the same number: a run can improve, get
+	// worse, and the answer is the chain from before it got worse.
+	var prev float64
+
+	var best kept
 
 	var did round
 
@@ -699,6 +705,12 @@ func converge(
 
 		now := figuresOf(got)
 		did.read = now
+
+		// The dials as this reading found them, before the pass moves them. A
+		// pass's residual is measured before its own moves, so it describes what
+		// the pass before it produced, and this is the pair that makes "the best
+		// chain this run measured" a thing the loop can go back to.
+		here := kept{at: valuesOf(knobs), read: now, steps: len(did.steps)}
 
 		// Level beside the pass, because it is the one figure no target
 		// constrains and the one a solve can spend without being told not to.
@@ -729,6 +741,11 @@ func converge(
 		worst := solve.Worst(step.Residual)
 		aimed(w, pass, step, worst)
 
+		here.worst, here.residual = worst, step.Residual
+		if best.at == nil || worst < best.worst {
+			best = here
+		}
+
 		did.residual, did.arrived = step.Residual, step.Arrived
 		did.steps = append(did.steps, step.Steps...)
 
@@ -755,22 +772,22 @@ func converge(
 			// record of settings nothing holds.
 			did.steps = did.steps[:len(did.steps)-len(step.Steps)]
 
-			return did, nil
+			return keeping(ctx, w, opts, knobs, did, best)
 		}
 
 		if step.Arrived {
 			return did, nil
 		}
 
-		if pass > 1 && worst >= best {
+		if pass > 1 && worst >= prev {
 			_, _ = fmt.Fprintf(w,
 				"\n  stopped improving at %.1f tolerances out. The chain will not "+
 					"reach this target.\n", worst)
 
-			return did, nil
+			return keeping(ctx, w, opts, knobs, did, best)
 		}
 
-		best = worst
+		prev = worst
 
 		// The chain is not reloaded between passes on purpose: the next pass
 		// reads its slopes from where this one landed, which is the whole
@@ -779,9 +796,95 @@ func converge(
 	}
 
 	_, _ = fmt.Fprintf(w, "\n  %d passes and still %.1f tolerances out.\n",
-		opts.Passes, best)
+		opts.Passes, prev)
+
+	return keeping(ctx, w, opts, knobs, did, best)
+}
+
+// kept is one reading a convergence took, and the dials that produced it.
+type kept struct {
+	worst    float64
+	at       []float64
+	residual map[audio.Figure]float64
+	read     map[audio.Figure]float64
+	// steps is how many of the round's moves had been made when this was read,
+	// so a correction describing this chain stops where this chain began.
+	steps int
+}
+
+// keeping leaves the chain at the best reading the convergence took.
+//
+// A pass's residual is measured before its own moves, so a pass reporting worse
+// than the one before it is reporting what the last pass's moves did, and the
+// dials that produced the better reading are still known. The rule is the one
+// `backedUp` already follows across a list's settings: the answer to a target is
+// the best chain the run demonstrated and not the last one it tried.
+//
+// It mattered by 2.1 tolerances on the first run that measured it. Pass 1 read
+// 1.9 out, pass 2 read 12.6, and 12.6 was what the run reported and what `--out`
+// wrote, because `land` had already turned the dials that produced it.
+func keeping(
+	ctx context.Context,
+	w io.Writer,
+	opts TuneOptions,
+	knobs []solve.Knob,
+	did round,
+	best kept,
+) (round, error) {
+	if best.at == nil {
+		return did, nil
+	}
+
+	back := backTo(knobs, best.at)
+	if len(back) == 0 {
+		return did, nil
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"  the dials go back to this run's best reading, %.1f tolerances out\n",
+		best.worst)
+
+	if err := apply(ctx, opts, knobs, back); err != nil {
+		return did, err
+	}
+
+	did.steps = did.steps[:best.steps]
+	did.residual, did.read = best.residual, best.read
 
 	return did, nil
+}
+
+// valuesOf is where every dial sits, in the order the knobs are held.
+func valuesOf(
+	knobs []solve.Knob,
+) []float64 {
+	out := make([]float64, len(knobs))
+	for i := range knobs {
+		out[i] = knobs[i].At
+	}
+
+	return out
+}
+
+// backTo is the moves that put every dial back where it was, leaving out the
+// ones that never moved.
+func backTo(
+	knobs []solve.Knob,
+	to []float64,
+) []solve.Step {
+	out := make([]solve.Step, 0, len(knobs))
+
+	for i := range knobs {
+		if i >= len(to) || knobs[i].At == to[i] {
+			continue
+		}
+
+		out = append(out, solve.Step{
+			Knob: knobs[i], By: to[i] - knobs[i].At, To: to[i],
+		})
+	}
+
+	return out
 }
 
 // round is what one run of the loop did, for the correction it becomes.
