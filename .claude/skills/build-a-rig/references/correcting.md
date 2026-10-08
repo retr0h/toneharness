@@ -537,23 +537,47 @@ later. That exact setting cost 7.8dB on hardware with nothing watching, the pass
 after it put its own dials back, and the chain was left at the list change's
 reading.
 
+## A pass's figures are a prediction, not a reading
+
+**The residual list under `pass N` is what the model expects after the moves
+printed below it.** It is not the chain's current state. The level line beside it
+is a measurement. So the two legitimately disagree, and reading the figure list as
+"where the chain is now" is a mistake the output used to invite:
+
+```
+  level -26.7dB against -28.9 settled    <- measured
+  pass 1, 1.9 tolerances out             <- predicted, after the moves below
+       level          0.91               <- predicted too
+```
+
+A tolerance measured and a tolerance predicted are different claims, and the
+difference is the whole reason the loop takes more than one pass: the model is
+local, so the prediction is right near where the slopes were read and drifts away
+from it.
+
 ## The answer is the best chain, not the last one
 
-A pass's residual is measured **before** its own moves. So a pass reporting worse
-than the one before it is reporting what the last pass's moves did, and the dials
-that produced the better reading are the ones the loop still knows.
+Which means the loop cannot trust a prediction to decide what to keep. Every
+candidate chain is read: each pass's starting chain, and the chain the last pass
+left behind, which no pass would otherwise have measured.
 
-So a run that stops puts them back, and says so:
+The best of those readings is what the run ends on, and it says which:
 
 ```
   stopped improving at 12.6 tolerances out. The chain will not reach this target.
-  the dials go back to this run's best reading, 1.9 tolerances out
+  the chain reads 7.4 tolerances out, so the dials go back to this run's best
+  reading, 1.9
 ```
 
-Both numbers are printed because both are true: 12.6 is what the last pass
-measured and 1.9 is what the chain now holds. Without it a run that found a good
-chain and then overshot wrote out the overshoot, which is what `--out` did when
-pass 1 read 1.9 and pass 2 read 12.6.
+or, where the last pass's moves did help:
+
+```
+  the chain reads 1.4 tolerances out, which is this run's best
+```
+
+Every number there is measured. Without it a run that found a good chain and then
+overshot wrote out the overshoot: pass 1 read 1.9 tolerances out, pass 2 read
+12.6, and 12.6 is what `--out` wrote, because the dials had already been turned.
 
 The same rule already applied one level up, across a list's settings: a later
 attempt that is worse is kept rather than used. Passes inside one convergence now

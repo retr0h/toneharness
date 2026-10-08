@@ -980,6 +980,43 @@ func (s *TuneTestSuite) TestConverge() {
 			},
 		},
 		{
+			// Nothing to put back, because the best reading is the chain's own
+			// dials. A reading can come back worse without a dial having moved,
+			// so the restore has to cope with having no move to make.
+			name: "keeping has nothing to put back",
+			then: func() {
+				knob := solve.Knob{Block: 0, Param: 1, Control: "Bass", At: 0.4, Low: 0, High: 1}
+
+				did, err := keeping(context.Background(), buffer(), s.opts(),
+					bench{}, make([]float32, 64), []solve.Knob{knob},
+					map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 9000, Tol: 1}},
+					round{}, kept{worst: 0, at: []float64{0.4}})
+
+				s.Require().NoError(err)
+				s.Require().NotNil(did.read, "and it reports what it just read")
+			},
+		},
+		{
+			// The bench failing on that last reading.
+			//
+			// Reported rather than carried on from, because the whole point of
+			// the reading is to decide between two chains, and a run that cannot
+			// take it does not know which one it is holding.
+			name: "keeping reports a bench that fails on the last reading",
+			then: func() {
+				gone := errors.New("the device stopped answering")
+
+				knob := solve.Knob{Block: 0, Param: 1, Control: "Bass", At: 0.4, Low: 0, High: 1}
+
+				_, err := keeping(context.Background(), buffer(), s.opts(),
+					bench{err: gone}, make([]float32, 64), []solve.Knob{knob},
+					map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 9000, Tol: 1}},
+					round{}, kept{worst: 1.5, at: []float64{0.9}})
+
+				s.Require().ErrorIs(err, gone)
+			},
+		},
+		{
 			// The device refusing while the dials are put back.
 			//
 			// Reported rather than swallowed, because the caller is about to
@@ -994,9 +1031,12 @@ func (s *TuneTestSuite) TestConverge() {
 
 				knob := solve.Knob{Block: 0, Param: 1, Control: "Bass", At: 0.9, Low: 0, High: 1}
 
+				// A bench reading worse than the best, so the dials are put back
+				// and the refusal is reached.
 				_, err := keeping(context.Background(), buffer(), s.opts(),
-					[]solve.Knob{knob}, round{},
-					kept{worst: 1.5, at: []float64{0.4}})
+					bench{}, make([]float32, 64), []solve.Knob{knob},
+					map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 9000, Tol: 1}},
+					round{}, kept{worst: 1.5, at: []float64{0.4}})
 
 				s.Require().ErrorIs(err, gone)
 			},

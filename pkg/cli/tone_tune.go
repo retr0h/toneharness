@@ -706,23 +706,36 @@ func converge(
 		now := figuresOf(got)
 		did.read = now
 
-		// The dials as this reading found them, before the pass moves them. A
-		// pass's residual is measured before its own moves, so it describes what
-		// the pass before it produced, and this is the pair that makes "the best
-		// chain this run measured" a thing the loop can go back to.
-		here := kept{at: valuesOf(knobs), read: now, steps: len(did.steps)}
+		// Before reading any slope, because arriving needs no slopes and reading
+		// them costs a reading per control. A chain of a dozen dials would spend
+		// a minute and a half measuring what to do about a target it is already
+		// inside.
+		at, arrived := solve.Reached(aims, now)
+
+		// The dials as this reading found them, paired with what this reading
+		// measures. `Reached` rather than `Toward`, and that is the whole of why
+		// this is correct: `Toward` answers with its model's prediction for after
+		// the moves it proposes, so pairing these dials with that number would
+		// claim a residual for a chain the moves had not been applied to.
+		here := kept{
+			worst:    solve.Worst(at.Residual),
+			at:       valuesOf(knobs),
+			residual: at.Residual,
+			read:     now,
+			steps:    len(did.steps),
+		}
+
+		if best.at == nil || here.worst < best.worst {
+			best = here
+		}
 
 		// Level beside the pass, because it is the one figure no target
 		// constrains and the one a solve can spend without being told not to.
 		_, _ = fmt.Fprintf(w, "  level %.1fdB against %.1f settled\n",
 			got.Level, settled)
 
-		// Before reading any slope, because arriving needs no slopes and reading
-		// them costs a reading per control. A chain of a dozen dials would spend
-		// a minute and a half measuring what to do about a target it is already
-		// inside.
-		if at, arrived := solve.Reached(aims, now); arrived {
-			aimed(w, pass, at, solve.Worst(at.Residual))
+		if arrived {
+			aimed(w, pass, at, here.worst)
 
 			did.residual, did.arrived = at.Residual, true
 
@@ -740,11 +753,6 @@ func converge(
 
 		worst := solve.Worst(step.Residual)
 		aimed(w, pass, step, worst)
-
-		here.worst, here.residual = worst, step.Residual
-		if best.at == nil || worst < best.worst {
-			best = here
-		}
 
 		did.residual, did.arrived = step.Residual, step.Arrived
 		did.steps = append(did.steps, step.Steps...)
@@ -772,7 +780,7 @@ func converge(
 			// record of settings nothing holds.
 			did.steps = did.steps[:len(did.steps)-len(step.Steps)]
 
-			return keeping(ctx, w, opts, knobs, did, best)
+			return keeping(ctx, w, opts, bench, signal, knobs, aims, did, best)
 		}
 
 		if step.Arrived {
@@ -784,7 +792,7 @@ func converge(
 				"\n  stopped improving at %.1f tolerances out. The chain will not "+
 					"reach this target.\n", worst)
 
-			return keeping(ctx, w, opts, knobs, did, best)
+			return keeping(ctx, w, opts, bench, signal, knobs, aims, did, best)
 		}
 
 		prev = worst
@@ -798,7 +806,7 @@ func converge(
 	_, _ = fmt.Fprintf(w, "\n  %d passes and still %.1f tolerances out.\n",
 		opts.Passes, prev)
 
-	return keeping(ctx, w, opts, knobs, did, best)
+	return keeping(ctx, w, opts, bench, signal, knobs, aims, did, best)
 }
 
 // kept is one reading a convergence took, and the dials that produced it.
@@ -827,7 +835,10 @@ func keeping(
 	ctx context.Context,
 	w io.Writer,
 	opts TuneOptions,
+	bench sdk.Bench,
+	signal []float32,
 	knobs []solve.Knob,
+	aims map[audio.Figure]solve.Aim,
 	did round,
 	best kept,
 ) (round, error) {
@@ -835,14 +846,39 @@ func keeping(
 		return did, nil
 	}
 
+	// The chain as it stands, which no pass has read: `land` turned the dials
+	// after the last reading was taken. Measured rather than assumed either way,
+	// because the moves were predicted to improve and throwing them away unread
+	// would discard the one thing the pass was for, while keeping them unread
+	// would report a residual nothing measured.
+	got, err := sdk.Fingerprint(ctx, bench, signal)
+	if err != nil {
+		return did, err
+	}
+
+	now := figuresOf(got)
+	at, _ := solve.Reached(aims, now)
+	ends := solve.Worst(at.Residual)
+
+	if ends <= best.worst {
+		_, _ = fmt.Fprintf(w,
+			"  the chain reads %.1f tolerances out, which is this run's best\n", ends)
+
+		did.residual, did.read = at.Residual, now
+
+		return did, nil
+	}
+
 	back := backTo(knobs, best.at)
 	if len(back) == 0 {
+		did.residual, did.read = at.Residual, now
+
 		return did, nil
 	}
 
 	_, _ = fmt.Fprintf(w,
-		"  the dials go back to this run's best reading, %.1f tolerances out\n",
-		best.worst)
+		"  the chain reads %.1f tolerances out, so the dials go back to this "+
+			"run's best reading, %.1f\n", ends, best.worst)
 
 	if err := apply(ctx, opts, knobs, back); err != nil {
 		return did, err
@@ -874,8 +910,11 @@ func backTo(
 ) []solve.Step {
 	out := make([]solve.Step, 0, len(knobs))
 
+	// No guard on the lengths. `to` came from `valuesOf` over this same slice,
+	// which the loop mutates in place and never resizes, so the two agree by
+	// construction and a check would be a branch nothing can reach.
 	for i := range knobs {
-		if i >= len(to) || knobs[i].At == to[i] {
+		if knobs[i].At == to[i] {
 			continue
 		}
 
