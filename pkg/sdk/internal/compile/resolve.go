@@ -311,15 +311,27 @@ func findGear(
 	// biggest reason a document could not be handed to somebody else.
 	// The controls first, where the document states any.
 	if len(holds) > 0 {
-		if b, found := anyInstrument(cat, gear, category, instrument, holds); found {
+		if b, found := anyInstrument(cat, gear, category, instrument, holds, true); found {
 			return b, nil
 		}
 	}
 
-	// Then the name alone, which is the answer for a rig nobody lifted and the
-	// fallback when no model carries everything the document says. Falling back
-	// rather than failing keeps the error about the gear a person named.
-	if b, found := anyInstrument(cat, gear, category, instrument, nil); found {
+	// Then the closest, which ranks by how many of those controls a model carries
+	// before it falls back to the name. One rung rather than two, and that is the
+	// bug it fixes: dropping straight from "every control" to "no controls at all"
+	// threw away every control that did match.
+	//
+	// A document naming `Teletronix LA-2A` with the LA Studio Comp's six controls
+	// and one more besides matched six of seven on the LA Studio Comp and one of
+	// seven on a legacy Tube Comp carrying only a level. Nothing carried all
+	// seven, so the controls were ignored and the shorter name won: the Tube
+	// Comp, which cannot hold the document's own values.
+	//
+	// Falling back rather than failing is still right. The error belongs to the
+	// gear a person named, not to a control name they got slightly wrong, and a
+	// rig nobody lifted off a preset states no controls and reaches this rung
+	// with nothing to rank by.
+	if b, found := anyInstrument(cat, gear, category, instrument, holds, false); found {
 		return b, nil
 	}
 
@@ -339,15 +351,16 @@ func anyInstrument(
 	category catalog.Category,
 	instrument string,
 	holds []string,
+	every bool,
 ) (catalog.Block, bool) {
-	if b, found := nearest(cat, gear, category, instrument, holds); found {
+	if b, found := nearest(cat, gear, category, instrument, holds, every); found {
 		return b, true
 	}
 
 	// No guard for an empty instrument. The contract requires one on every rig, so
 	// the second pass is never the same search twice, and a guard against it would
 	// be a branch nothing can reach.
-	return nearest(cat, gear, category, "", holds)
+	return nearest(cat, gear, category, "", holds, every)
 }
 
 // stated names the controls a chain entry writes down.
@@ -370,18 +383,28 @@ func stated(
 
 // nearest is the closest block emulating the named gear, among those an
 // instrument leaves eligible. Empty takes the whole catalog.
-// holds, where it is not empty, names controls the block must carry all of.
+//
+// holds, where it is not empty, names the controls the document states. every
+// requires a block to carry all of them; without it they rank, and a block
+// carrying more of them beats a closer name.
+//
+// Ranked rather than filtered on the second pass, so one control nothing carries
+// does not discard the evidence of the ones that do. Where holds is empty every
+// block scores nothing and the name decides, which is the whole of what a rig
+// nobody lifted off a preset asks for.
 func nearest(
 	cat *catalog.Catalog,
 	gear string,
 	category catalog.Category,
 	instrument string,
 	holds []string,
+	every bool,
 ) (catalog.Block, bool) {
 	want := strings.ToLower(gear)
 
 	var best catalog.Block
 
+	bestHas := 0
 	found := false
 
 	for _, b := range cat.Blocks {
@@ -389,33 +412,39 @@ func nearest(
 			continue
 		}
 
-		if !hasEvery(b, holds) {
+		has := countOf(b, holds)
+		if every && has < len(holds) {
 			continue
 		}
 
-		if !found || closer(b, best) {
-			best, found = b, true
+		if !found || has > bestHas || (has == bestHas && closer(b, best)) {
+			best, bestHas, found = b, has, true
 		}
 	}
 
 	return best, found
 }
 
-// hasEvery reports whether a block has every control named.
+// countOf is how many of the named controls a block carries.
 //
-// All of them, not some: a model missing one is a model the document's own values
-// will be refused against, which is the failure this exists to avoid.
-func hasEvery(
+// A count rather than a yes or no, because the two questions asked of it are
+// different: whether a model fits the document exactly, and which model fits it
+// best when none fits exactly. A model missing one control is a model the
+// document's own values will be refused against, so an exact fit is still
+// preferred over every near one.
+func countOf(
 	b catalog.Block,
 	holds []string,
-) bool {
+) int {
+	out := 0
+
 	for _, name := range holds {
-		if _, has := b.Params[name]; !has {
-			return false
+		if _, has := b.Params[name]; has {
+			out++
 		}
 	}
 
-	return true
+	return out
 }
 
 // closer reports whether a is the better answer than b for the same query.

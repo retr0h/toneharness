@@ -446,6 +446,45 @@ func (s *ResolvePublicTestSuite) TestGear() {
 			want:       "HD2_Cab8x10SVBeast",
 		},
 		{
+			// Two models answer to this name and only one carries these
+			// controls, so the controls decide. Without that, three models
+			// called `1x12 US Deluxe` meant the shortest name won and the
+			// build refused the document's own values against it.
+			name:       "the controls decide between models sharing a name",
+			gear:       "Ampeg SVT",
+			role:       rig.RoleAmp,
+			instrument: "bass",
+			holds:      []string{"Bass", "Treble", "Drive"},
+			want:       "HD2_AmpSVBeastNrm",
+		},
+		{
+			// One control nothing carries must not discard the ones that do.
+			//
+			// `Typo` is on neither model, so no model carries every control and
+			// the exact pass finds nothing. Ranking by how many each carries
+			// still answers: three of four against one of four. Dropping
+			// straight to the name instead picked the bright channel, which
+			// holds a Drive and neither a Bass nor a Treble, and the document's
+			// own values were then refused against it.
+			name:       "one control nothing carries",
+			gear:       "Ampeg SVT",
+			role:       rig.RoleAmp,
+			instrument: "bass",
+			holds:      []string{"Bass", "Treble", "Drive", "Typo"},
+			want:       "HD2_AmpSVBeastNrm",
+		},
+		{
+			// And where no control matches at all, the name is the only
+			// evidence there is, which is a rig somebody typed rather than one
+			// lifted off a preset.
+			name:       "no control matches anything",
+			gear:       "Ampeg SVT",
+			role:       rig.RoleAmp,
+			instrument: "bass",
+			holds:      []string{"Typo"},
+			want:       "HD2_AmpSVBeastBrt",
+		},
+		{
 			name:       "gear for the other instrument",
 			gear:       "Guitar Only",
 			role:       rig.RoleAmp,
