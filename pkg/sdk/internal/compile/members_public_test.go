@@ -523,9 +523,10 @@ func (s *MembersPublicTestSuite) TestCorpusRoundTrip() {
 // `0.01`, six significant figures and ten float32 steps under it, and refusing
 // those made the presets holding them impossible to rebuild.
 //
-// The threshold was not a fine judgement. The 64 values in the same corpus that are
-// genuinely out of range miss by 3.5 to 99 times the control's travel, against 1e-6
-// for the rounding, so the two are seven orders of magnitude apart.
+// The threshold was not a fine judgement. Measured over all 503 out-of-range values
+// in the corpus, rounding reaches 4.0e-4 of a control's travel and the values that
+// are genuinely out of range start at 0.6 of it, so the two populations have three
+// orders of magnitude between them and anything inside that separates them.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *MembersPublicTestSuite) TestARoundedValueIsStillInRange() {
@@ -549,11 +550,19 @@ func (s *MembersPublicTestSuite) TestARoundedValueIsStillInRange() {
 			of:   "1.0000001",
 		},
 		{
-			// A thousandth of the travel out is not rounding. Nothing in the corpus
-			// misses by that little and a device would resolve it, so it is a value
-			// somebody set wrongly.
-			name:    "a thousandth of the travel under the bottom",
-			of:      "-0.001",
+			// A thousandth of the travel out is still rounding, which is a
+			// correction: the corpus does miss by that little. One preset's `Delay`
+			// reads -2.00272e-05 against 0..0.05, four ten-thousandths of its own
+			// travel under the bottom, and it came off a device.
+			name: "a thousandth of the travel under the bottom",
+			of:   "-0.001",
+		},
+		{
+			// And a tenth of the travel is not. Nothing in the corpus misses by
+			// between a hundredth and six tenths, so this sits in the empty space
+			// between a file rounding and somebody setting a control wrongly.
+			name:    "a tenth of the travel under the bottom",
+			of:      "-0.1",
 			refused: true,
 		},
 		{

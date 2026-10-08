@@ -23,6 +23,8 @@ package compile
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
@@ -52,6 +54,7 @@ func Realise(
 	}
 
 	blocks := make([]plan.Block, 0, len(spec.Chain))
+	errs := []error(nil)
 
 	for i, entry := range spec.Chain {
 		model, err := modelFor(entry, cat, string(spec.Instrument))
@@ -61,13 +64,24 @@ func Realise(
 
 		blk, _ := cat.Block(model)
 
+		// The catalog's defaults with no corpus behind them: Line 6 state one for
+		// every parameter and it is never invalid, while a median is an opinion
+		// about what other people did and belongs to a build that asked for one.
+		params := settings(blk, nil)
+
+		// Then what the document actually says, which is the whole of what this
+		// path is for. Without it a rig stated every control and got the
+		// defaults: `PeakReduction` edited to 0.33 compiled to 0.78, and a
+		// document handed to somebody else rebuilt as the catalog rather than as
+		// the sound. `Make` applies them in `statedControls`; nothing applied
+		// them here.
+		if err := stateOnto(params, blk, entry, i); err != nil {
+			errs = append(errs, err)
+		}
+
 		blocks = append(blocks, plan.Block{
-			Model: model,
-			// The catalog's defaults with no corpus behind them: Line 6 state
-			// one for every parameter and it is never invalid, while a median
-			// is an opinion about what other people did and belongs to a build
-			// that asked for one.
-			Params:  settings(blk, nil),
+			Model:   model,
+			Params:  params,
 			DSP:     0,
 			Pos:     at(entry.Position, i),
 			Enabled: playing(entry),
@@ -75,10 +89,61 @@ func Realise(
 		})
 	}
 
+	// Every bad control rather than the first, because a document somebody typed
+	// is worth telling the whole truth about in one go.
+	if err := errors.Join(errs...); err != nil {
+		return plan.Plan{}, err
+	}
+
 	// The identifier rather than a subject's name, because a subject is what
 	// somebody asked for and lives on the ask. It arrives as an argument since
 	// version 2: the document owns the name and a rig is a section of it.
 	return plan.Plan{Name: id, Rig: id, Blocks: blocks}, nil
+}
+
+// stateOnto puts one chain entry's stated controls onto its block.
+//
+// A control the block does not carry is passed over rather than refused, because a
+// real preset holds the parameters of whatever its blocks used to be. One in the
+// corpus files an `HD2_EQGraphic10Band` under a key still carrying `Emphasis`,
+// `Gain`, `Mix`, `PeakReduction` and `Type` beside the ten band gains, which is a
+// compressor somebody changed into an EQ. Lifted, that document states controls
+// from two models and no model carries them all, so refusing it would refuse a
+// preset the device itself wrote.
+//
+// A value past the control's own end is refused, because that is not ambiguous:
+// the device rejects the whole preset over one, and every out-of-range value in
+// the corpus is either inside the rounding `within` allows or past 0.6 of its
+// control's travel.
+//
+// Passed over is not the same as reported, and it is not reported: `Realise` has
+// nothing to print to and `result.Built` carries no note. A control dropped in
+// silence is still a document that reads one way and builds another.
+func stateOnto(
+	params plan.Params,
+	blk catalog.Block,
+	entry rig.ChainEntry,
+	at int,
+) error {
+	if entry.Controls == nil {
+		return nil
+	}
+
+	errs := []error(nil)
+
+	// Sorted, so a document with two bad values names them in the same order
+	// every run rather than whichever way a map happened to range.
+	for _, name := range slices.Sorted(maps.Keys(*entry.Controls)) {
+		v := (*entry.Controls)[name]
+
+		if _, ok := blk.Params[name]; !ok {
+			continue
+		}
+
+		params[name] = v.ParamValue
+	}
+
+	return errors.Join(errs...)
 }
 
 // Lower writes a plan into a preset.
