@@ -1,6 +1,6 @@
 module github.com/retr0h/toneharness
 
-go 1.27.0
+go 1.27.1
 
 tool (
 	github.com/boumenot/gocover-cobertura
@@ -17,7 +17,7 @@ require (
 	github.com/getkin/kin-openapi v0.149.0
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.1.0
-	github.com/go-macos/iokit v0.13.1
+	github.com/go-macos/iokit v0.14.0
 	github.com/google/jsonschema-go v0.4.3
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/spf13/cobra v1.10.2
