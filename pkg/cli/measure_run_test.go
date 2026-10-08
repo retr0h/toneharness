@@ -126,6 +126,9 @@ type quits struct {
 	// seen is how many it has answered, which is why this takes a pointer receiver
 	// where bench does not.
 	seen int
+	// err is what it gives up with, for a caller that matches on the error rather
+	// than on there being one. Empty gives up with its own.
+	err error
 }
 
 func (q *quits) Through(
@@ -135,6 +138,10 @@ func (q *quits) Through(
 	q.seen++
 
 	if q.seen > q.after {
+		if q.err != nil {
+			return nil, q.err
+		}
+
 		return nil, errors.New("the bench gave up mid take")
 	}
 

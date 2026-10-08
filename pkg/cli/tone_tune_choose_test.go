@@ -641,7 +641,7 @@ func (s *ChooseTestSuite) TestBackedUp() {
 
 				got, err := backedUp(context.Background(), w, s.opts(), &sloping{},
 					make([]float32, 64), "preset.hlx", []solve.Knob{knob},
-					[]solve.Choice{mic}, s.aims(0), -200, runners, first)
+					[]solve.Choice{mic}, s.aims(0), -200, nil, runners, first)
 
 				s.Require().NoError(err)
 				s.Require().Equal([]int{9}, chosen, "the runner-up was actually applied")
@@ -685,7 +685,7 @@ func (s *ChooseTestSuite) TestBackedUp() {
 
 				_, err := backedUp(context.Background(), buffer(), opts, &sloping{},
 					make([]float32, 64), "preset.hlx", []solve.Knob{knob},
-					[]solve.Choice{mic}, s.aims(0), -200, runners,
+					[]solve.Choice{mic}, s.aims(0), -200, nil, runners,
 					round{residual: map[audio.Figure]float64{audio.KeyCentroid: 400}})
 
 				s.Require().NoError(err)
@@ -704,6 +704,7 @@ func (s *ChooseTestSuite) TestBackedUp() {
 				got, err := backedUp(context.Background(), buffer(), s.opts(), &sloping{},
 					make([]float32, 64), "preset.hlx", []solve.Knob{knob}, nil,
 					s.aims(0), -200,
+					nil,
 					[]solve.Runner{{Where: solve.Where{Block: 9, Param: 9}}}, first)
 
 				s.Require().NoError(err)
@@ -749,7 +750,7 @@ func (s *ChooseTestSuite) TestBackedUp() {
 
 				got, err := backedUp(context.Background(), buffer(), opts, bench{},
 					make([]float32, 64), "preset.hlx", []solve.Knob{knob},
-					[]solve.Choice{mic}, arrives, -200, runners,
+					[]solve.Choice{mic}, arrives, -200, nil, runners,
 					round{residual: map[audio.Figure]float64{audio.KeyCentroid: 400}})
 
 				s.Require().NoError(err)
@@ -771,6 +772,99 @@ func (s *ChooseTestSuite) TestBackedUp() {
 				_, err := backedUp(context.Background(), buffer(), s.opts(), &sloping{},
 					make([]float32, 64), "preset.hlx", nil, []solve.Choice{mic},
 					s.aims(0), -200,
+					nil,
+					[]solve.Runner{{Where: mic.Where(), Option: solve.Option{Value: 9}}},
+					round{residual: map[audio.Figure]float64{audio.KeyCentroid: 4}})
+
+				s.Require().ErrorIs(err, wanted)
+			},
+		},
+		{
+			// A setting that was affordable when it was read and is not any more.
+			//
+			// The comparison priced every setting against the chain it ran on, and
+			// the dials have moved since. `MidFreq` going to 2 was inside the
+			// tolerance when it was read and cost 6dB by the time a run backed up
+			// onto it, which nothing noticed and nothing undid.
+			name: "backed up puts a setting back when it now costs the level",
+			then: func() {
+				var chosen []int
+
+				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
+				s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ sdk.Address, at int) error {
+						chosen = append(chosen, at)
+
+						return nil
+					}).AnyTimes()
+
+				mic := s.mic()
+				w := buffer()
+
+				// Settled at nothing, against a bench reading well under it, so
+				// whatever is chosen costs more than may be spent.
+				_, err := backedUp(context.Background(), w, s.opts(), bench{},
+					make([]float32, 64), "preset.hlx", nil,
+					[]solve.Choice{mic}, s.aims(0), 0,
+					map[solve.Where][]solve.Option{mic.Where(): {{Value: 3}}},
+					[]solve.Runner{{Where: mic.Where(), Option: solve.Option{Value: 9}}},
+					round{residual: map[audio.Figure]float64{audio.KeyCentroid: 4}})
+
+				s.Require().NoError(err)
+				s.Require().Contains(w.String(), "of level from here")
+				s.Require().Equal([]int{9, 3}, chosen,
+					"it tried the setting, then put the list back where it was")
+			},
+		},
+		{
+			// The convergence failing, one reading later.
+			//
+			// Its own row because backing up reads the chain before it solves, to
+			// price the setting it just chose, so a bench that fails at once is
+			// caught there rather than in the solve.
+			name: "backed up reports a solve that cannot measure after the price",
+			then: func() {
+				s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
+				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
+
+				wanted := errors.New("the interface went away")
+				mic := s.mic()
+
+				_, err := backedUp(context.Background(), buffer(), s.opts(),
+					&quits{after: 1, err: wanted}, make([]float32, 64), "preset.hlx",
+					nil, []solve.Choice{mic}, s.aims(0), -200, nil,
+					[]solve.Runner{{Where: mic.Where(), Option: solve.Option{Value: 9}}},
+					round{residual: map[audio.Figure]float64{audio.KeyCentroid: 4}})
+
+				s.Require().ErrorIs(err, wanted)
+			},
+		},
+		{
+			// The device refusing to put a setting back.
+			//
+			// Reported rather than swallowed, because the run would otherwise go on
+			// believing the list is where it left it while the device holds the
+			// setting that was just rejected for costing too much.
+			name: "backed up reports a device that will not put a setting back",
+			then: func() {
+				wanted := errors.New("that index is not one")
+
+				gomock.InOrder(
+					s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), 9).
+						Return(nil),
+					s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), 3).
+						Return(wanted),
+				)
+
+				mic := s.mic()
+
+				_, err := backedUp(context.Background(), buffer(), s.opts(), bench{},
+					make([]float32, 64), "preset.hlx", nil,
+					[]solve.Choice{mic}, s.aims(0), 0,
+					map[solve.Where][]solve.Option{mic.Where(): {{Value: 3}}},
 					[]solve.Runner{{Where: mic.Where(), Option: solve.Option{Value: 9}}},
 					round{residual: map[audio.Figure]float64{audio.KeyCentroid: 4}})
 
@@ -790,6 +884,7 @@ func (s *ChooseTestSuite) TestBackedUp() {
 				_, err := backedUp(context.Background(), buffer(), s.opts(),
 					bench{err: wanted}, make([]float32, 64), "preset.hlx", nil,
 					[]solve.Choice{mic}, s.aims(0), -200,
+					nil,
 					[]solve.Runner{{Where: mic.Where(), Option: solve.Option{Value: 9}}},
 					round{residual: map[audio.Figure]float64{audio.KeyCentroid: 4}})
 

@@ -537,6 +537,16 @@ later. That exact setting cost 7.8dB on hardware with nothing watching, the pass
 after it put its own dials back, and the chain was left at the list change's
 reading.
 
+**And it is priced again when the ladder backs up onto it**, because the dials
+have moved since the comparison and nothing stored knows what a setting costs
+from where the chain is now. The same `MidFreq` was inside the tolerance when it
+was read and cost 6dB by the time a run backed up to it:
+
+```
+  MidFreq 2 costs 8.8dB of level from here, past the 6 a target may spend,
+  so it goes back to 0
+```
+
 ## A pass's figures are a prediction, not a reading
 
 **The residual list under `pass N` is what the model expects after the moves
