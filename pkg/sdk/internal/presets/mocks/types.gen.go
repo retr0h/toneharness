@@ -193,12 +193,13 @@ func (mr *MockCompilerMockRecorder) Moves(made, spec, blocks, cat any) *gomock.C
 }
 
 // Realise mocks base method.
-func (m *MockCompiler) Realise(id string, spec rig.Spec, cat *catalog.Catalog) (plan.Plan, error) {
+func (m *MockCompiler) Realise(id string, spec rig.Spec, cat *catalog.Catalog) (plan.Plan, []result.Dropped, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Realise", id, spec, cat)
 	ret0, _ := ret[0].(plan.Plan)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].([]result.Dropped)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // Realise indicates an expected call of Realise.

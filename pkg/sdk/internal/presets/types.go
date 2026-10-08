@@ -65,8 +65,11 @@ type Compiler interface {
 	) (plan.Plan, []compile.Added, []compile.Moved, compile.Compensated, error)
 	// Fit drops what a device has no room for.
 	Fit(spec plan.Plan, cat *catalog.Catalog, lim plan.Limits) plan.Plan
-	// Realise turns a rig into the plan that answers it on this device.
-	Realise(id string, spec rig.Spec, cat *catalog.Catalog) (plan.Plan, error)
+	// Realise turns a rig into the plan that answers it on this device, and says
+	// which of the document's controls its blocks do not carry.
+	Realise(
+		id string, spec rig.Spec, cat *catalog.Catalog,
+	) (plan.Plan, []result.Dropped, error)
 	// Lower writes a plan into a preset.
 	Lower(doc *preset.Document, made plan.Plan, cat *catalog.Catalog) error
 	// Controllers writes what an expression pedal or footswitch moves.

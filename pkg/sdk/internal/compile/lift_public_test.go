@@ -527,7 +527,7 @@ func (s *LiftPublicTestSuite) TestRealise() {
 							id = "a-rig"
 						}
 
-						made, err := compile.Realise(id, tt.spec, s.catalogOf(tt.blocks))
+						made, _, err := compile.Realise(id, tt.spec, s.catalogOf(tt.blocks))
 
 						if tt.err != nil || tt.errText != "" {
 							s.Require().Error(err)
@@ -584,7 +584,7 @@ func (s *LiftPublicTestSuite) TestRealise() {
 				var first catalog.ModelID
 
 				for range 20 {
-					made, err := compile.Realise("a-rig", spec, s.cat)
+					made, _, err := compile.Realise("a-rig", spec, s.cat)
 					s.Require().NoError(err)
 					s.Require().NotEmpty(made.Blocks)
 

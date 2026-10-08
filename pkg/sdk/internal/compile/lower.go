@@ -29,6 +29,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
@@ -44,22 +45,22 @@ func Realise(
 	id string,
 	spec rig.Spec,
 	cat *catalog.Catalog,
-) (plan.Plan, error) {
+) (plan.Plan, []result.Dropped, error) {
 	// Checked on the way in as well as on the way out. A rig can arrive from
 	// anywhere — a file somebody wrote, a model that generated one — and
 	// building a plan out of one that does not meet its own contract turns a
 	// legible error into a device refusing a file.
 	if err := rig.Validate(spec); err != nil {
-		return plan.Plan{}, err
+		return plan.Plan{}, nil, err
 	}
 
 	blocks := make([]plan.Block, 0, len(spec.Chain))
-	errs := []error(nil)
+	dropped := []result.Dropped(nil)
 
 	for i, entry := range spec.Chain {
 		model, err := modelFor(entry, cat, string(spec.Instrument))
 		if err != nil {
-			return plan.Plan{}, fmt.Errorf("chain entry %d: %w", i, err)
+			return plan.Plan{}, nil, fmt.Errorf("chain entry %d: %w", i, err)
 		}
 
 		blk, _ := cat.Block(model)
@@ -75,9 +76,7 @@ func Realise(
 		// document handed to somebody else rebuilt as the catalog rather than as
 		// the sound. `Make` applies them in `statedControls`; nothing applied
 		// them here.
-		if err := stateOnto(params, blk, entry, i); err != nil {
-			errs = append(errs, err)
-		}
+		dropped = append(dropped, stateOnto(params, blk, entry, i)...)
 
 		blocks = append(blocks, plan.Block{
 			Model:   model,
@@ -89,16 +88,10 @@ func Realise(
 		})
 	}
 
-	// Every bad control rather than the first, because a document somebody typed
-	// is worth telling the whole truth about in one go.
-	if err := errors.Join(errs...); err != nil {
-		return plan.Plan{}, err
-	}
-
 	// The identifier rather than a subject's name, because a subject is what
 	// somebody asked for and lives on the ask. It arrives as an argument since
 	// version 2: the document owns the name and a rig is a section of it.
-	return plan.Plan{Name: id, Rig: id, Blocks: blocks}, nil
+	return plan.Plan{Name: id, Rig: id, Blocks: blocks}, dropped, nil
 }
 
 // stateOnto puts one chain entry's stated controls onto its block.
@@ -111,10 +104,9 @@ func Realise(
 // from two models and no model carries them all, so refusing it would refuse a
 // preset the device itself wrote.
 //
-// A value past the control's own end is refused, because that is not ambiguous:
-// the device rejects the whole preset over one, and every out-of-range value in
-// the corpus is either inside the rounding `within` allows or past 0.6 of its
-// control's travel.
+// A value past the control's own end is left to `plan.Validate`, which refuses it
+// before anything is written and words it better than a second check here would.
+// So nothing in here can fail, which is why it answers with no error.
 //
 // Passed over is not the same as reported, and it is not reported: `Realise` has
 // nothing to print to and `result.Built` carries no note. A control dropped in
@@ -124,12 +116,12 @@ func stateOnto(
 	blk catalog.Block,
 	entry rig.ChainEntry,
 	at int,
-) error {
+) []result.Dropped {
 	if entry.Controls == nil {
 		return nil
 	}
 
-	errs := []error(nil)
+	dropped := []result.Dropped(nil)
 
 	// Sorted, so a document with two bad values names them in the same order
 	// every run rather than whichever way a map happened to range.
@@ -137,13 +129,20 @@ func stateOnto(
 		v := (*entry.Controls)[name]
 
 		if _, ok := blk.Params[name]; !ok {
+			dropped = append(dropped, result.Dropped{
+				Block:   at,
+				Control: name,
+				Value:   v.String(),
+				Near:    takes(blk),
+			})
+
 			continue
 		}
 
 		params[name] = v.ParamValue
 	}
 
-	return errors.Join(errs...)
+	return dropped
 }
 
 // Lower writes a plan into a preset.
