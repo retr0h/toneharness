@@ -45,9 +45,6 @@ var (
 	// Matches reports a device the caller meant, named or not.
 	Matches = matches
 
-	// Sides splits a hardware name into the device to play through and the
-	// device to record from.
-	Sides = sides
 	// ChannelsIn works out a frame's stride from the buffer the callback was
 	// handed, because how many channels a device presents varies with the
 	// model: a Stomp is 8 in and 8 out and nothing here may assume it.

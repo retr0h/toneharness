@@ -102,6 +102,14 @@ type Bench struct {
 	ctx  *malgo.AllocatedContext
 	play malgo.DeviceID
 	rec  malgo.DeviceID
+	// pinReaches is whether the device the reference plays through is the one
+	// the platform's output level belongs to.
+	//
+	// False means the pinned level is a number about some other device. It is
+	// not an error, because a rig where the pedal plays does not use the
+	// computer's output at all, and a caller that reports a volume has to be
+	// able to say which it was.
+	pinReaches bool
 	// claiming is how long the device is given to hand itself over. Zero is
 	// Claiming, and a test names a shorter one.
 	claiming time.Duration
@@ -150,7 +158,7 @@ func Open(
 // One name is both. Two are taken in the order the signal travels, out of the
 // first and back into the second, which is the order somebody describes a rig
 // in. Surrounding spaces go, so "speakers, stomp" works.
-func sides(
+func Sides(
 	want string,
 ) (string, string) {
 	play, rec, split := strings.Cut(want, ",")
@@ -164,7 +172,7 @@ func sides(
 // TwoSided reports a name that asks for one device to play through and another
 // to record from.
 //
-// Off sides, so the syntax has one home. pkg/cli decides whether to apply the
+// Off Sides, so the syntax has one home. pkg/cli decides whether to apply the
 // headroom trim from this, and it had answered by looking for a comma itself:
 // two readings of one rule, and the one that only sniffed for the character
 // would have disagreed the moment this took a second separator or refused an
@@ -176,7 +184,7 @@ func sides(
 func TwoSided(
 	want string,
 ) bool {
-	play, rec := sides(want)
+	play, rec := Sides(want)
 
 	return play != rec
 }
@@ -198,14 +206,16 @@ func open(
 
 	b := &Bench{ctx: ctx}
 
-	wantPlay, wantRec := sides(want)
+	wantPlay, wantRec := Sides(want)
 
-	play, playing, err := find(ctx, malgo.Playback, wantPlay)
+	play, playing, isDefault, err := findWithDefault(ctx, malgo.Playback, wantPlay)
 	if err != nil {
 		b.Close()
 
 		return nil, err
 	}
+
+	b.pinReaches = isDefault
 
 	rec, recording, err := find(ctx, malgo.Capture, wantRec)
 	if err != nil {
@@ -234,6 +244,18 @@ func open(
 // Name is what the hardware calls itself.
 func (b *Bench) Name() string { return b.name }
 
+// PinReaches says whether pinning the computer's output level reaches the device
+// the reference is played through.
+//
+// The level is a tone control, because an amplifier's distortion depends on how
+// hard it is driven, and it is pinned on the platform's default output. Name a
+// different device with `--hardware` and the pin lands somewhere else: every
+// figure then moves with a level nothing recorded and nobody set.
+//
+// Not an error. A rig where the pedal plays the reference does not use the
+// computer's output at all, so the answer there is false and nothing is wrong.
+func (b *Bench) PinReaches() bool { return b.pinReaches }
+
 // rated refuses a loop the backend is resampling.
 //
 // Both directions, because they are negotiated separately and a reading is only
@@ -258,9 +280,28 @@ func find(
 	kind malgo.DeviceType,
 	want string,
 ) (malgo.DeviceID, string, error) {
+	id, name, _, err := findWithDefault(ctx, kind, want)
+
+	return id, name, err
+}
+
+// findWithDefault is find, and says whether what it found is the one the
+// platform sends everything else to.
+//
+// Needed because the output level is pinned on the platform's default and the
+// reference is played through whichever device was named. When those differ the
+// pin reaches a device that is not in the signal path: `--volume 38` set a pair
+// of headphones nobody was measuring through while the jack feeding the pedal
+// sat wherever it was left, which read as 66dB of loss and a dead loop.
+func findWithDefault(
+	ctx *malgo.AllocatedContext,
+	kind malgo.DeviceType,
+	want string,
+) (malgo.DeviceID, string, bool, error) {
 	found, err := ctx.Devices(kind)
 	if err != nil {
-		return malgo.DeviceID{}, "", fmt.Errorf("listing audio devices: %w", err)
+		return malgo.DeviceID{}, "", false, fmt.Errorf(
+			"listing audio devices: %w", err)
 	}
 
 	had := make([]string, 0, len(found))
@@ -270,11 +311,11 @@ func find(
 		had = append(had, name)
 
 		if matches(name, want) {
-			return d.ID, name, nil
+			return d.ID, name, d.IsDefault != 0, nil
 		}
 	}
 
-	return malgo.DeviceID{}, "", &NoDeviceError{
+	return malgo.DeviceID{}, "", false, &NoDeviceError{
 		Want: want, Direction: direction(kind), Had: had,
 	}
 }

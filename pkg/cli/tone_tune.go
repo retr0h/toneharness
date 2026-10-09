@@ -181,6 +181,10 @@ func Tune(
 	// Pinned first, and it matters more here than anywhere: the loop reads a
 	// slope, moves a dial and reads again, so a level that drifts mid-run is a
 	// slope the solver will spend dials chasing.
+	// Before the level, because the level is pinned on whichever device the
+	// platform plays through and that is the thing being set here.
+	playsThrough(w, opts, reamp.PlaysThrough)
+
 	levelled(w, opts.Volume, reamp.Held)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 
@@ -240,6 +244,10 @@ func Tune(
 	if err != nil {
 		return err
 	}
+
+	// After the bench, because which device the reference plays through is not
+	// known until one is open, and the level was pinned before that.
+	pinLands(w, opts, bench)
 
 	defer release()
 

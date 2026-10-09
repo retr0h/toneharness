@@ -306,6 +306,41 @@ audio, because a tone on USB 1/2 comes out of the Main outs and was heard, and
 the pedal can send the computer audio, because the chain reaches USB 1/2. Only
 that one link is missing.
 
+## The computer's output device is part of the rig, and the tool sets it
+
+The output level is pinned because an amplifier's distortion depends on how hard
+it is driven, so a campaign at a different setting measures every amplifier as a
+different amplifier. **The level belongs to a device**, and that is the half that
+was missing: pin it while the platform's default output is some other device and
+the number is about a device that is not in the signal path.
+
+So a run that plays the reference out of the computer sets the device first and
+pins the level on it second, and says both:
+
+```
+  the computer plays through External Headphones, which the level below belongs to
+  the computer's output level moved to 38, for a consistent rig
+```
+
+CoreAudio rather than AppleScript, which owns the slider and has nothing to say
+about which device the slider belongs to. `reamp.PlaysThrough` matches the name
+the way `--hardware` does, so the same string means the same device in both
+places, and it reads the device back afterwards rather than trusting the change.
+
+**What it cost to not have this.** A Mac with its default on a pair of Bluetooth
+headphones pinned those to 38 while the jack feeding the pedal sat wherever it
+was left. The loop read 66dB of loss, the run reported a dead return, and an hour
+went on the cabling, which was correct the whole time. Switching the output by
+hand mid-run then did it again from the other side: the device changed, macOS
+restored that device's own remembered volume of **0**, and the pin from the start
+of the run was a number about a device nobody was listening to.
+
+Both of those are the same mistake twice. A figure that moves with something
+nobody is watching is the thing this whole page exists for.
+
+On the one-device rig the pedal plays the reference and the computer's output is
+not in the path, so nothing is set and nothing is said.
+
 ## Keep the audio when the figures do not add up
 
 `tone tune --keep <dir>` writes what went in and what came back as WAVs, plus the
