@@ -67,20 +67,41 @@ is needed from those sockets back into the input jack.
 One reading, before any block, and it costs seconds:
 
 ```bash
-go run main.go measure blocks --category pitch --out /tmp/baseline.json
+mise exec -- go run main.go measure blocks --category pitch \
+  --hardware "External Headphones,HX Stomp" --volume 38 --out /tmp/baseline.json
 ```
+
+Both flags, because the rig is part of the reading: one name plays and records on
+one device, which is the loop this page exists to warn about, and the volume is
+what the committed figures were taken at.
 
 It prints the empty loop before the first block. That line decides whether
 anything after it means anything:
 
-| The baseline says                      | What to do                              |
-| -------------------------------------- | --------------------------------------- |
-| centroid ~95 Hz, level ~-21 dB         | the loop is good, carry on              |
-| centroid ~12,000 Hz, level ~-46 dB     | **stop.** The loop is not carrying audio |
+| The baseline says    | What to do                               |
+| -------------------- | ---------------------------------------- |
+| centroid under ~400Hz | the loop is good, carry on              |
+| centroid ~12,000 Hz   | **stop.** The loop is not carrying audio |
 
-The committed baseline is 94.76 Hz at -21.12 dB, in
-`resources/sweeps/hx-stomp/fingerprints.json`. A bass through a cable measures
-low, because a bass is low.
+**Read the centroid, not the level.** A bass through a cable measures low, because
+a bass is low, and a dead loop measures its own hiss, which is nothing but high.
+Those two are two orders of magnitude apart and no rig moves one into the other.
+
+The level is not a gate, because it is a fact about which rig is in use. The
+committed baseline in `resources/sweeps/hx-stomp/fingerprints.json` is **155.27Hz
+at -58.55dB**, taken at volume 38 on the two-device rig this page recommends. A
+reading of 168.8Hz at -61.22dB on 7 October 2026 matched it and was a good loop.
+
+That -58dB would read as a failure against an older version of this table, which
+said a good loop was ~-21dB and a bad one ~-46dB. Those were the one-device rig,
+where the pedal played its own output into itself and the signal was forty
+decibels hotter. The table went unchanged when the rig did, so it described a good
+two-device loop as worse than a dead one-device loop, and it would have stopped a
+run that was working.
+
+That broken loop is also why the level cannot be the gate: it read **-46.65dB**,
+twelve decibels **louder** than a good two-device loop. Hiss is not quiet, it is
+just high.
 
 The failure this prevents ran on 27 September 2026. A baseline of 11,990.0 Hz at
 -46.65 dB went unread, eight sweeps were queued behind it, and the first one

@@ -169,8 +169,8 @@ func compared(
 
 		if len(read) == 0 {
 			_, _ = fmt.Fprintf(w,
-				"    no setting of %s carried a signal worth reading, so it is "+
-					"left where the compiler put it\n", c.Setting)
+				"    no setting of %s could be used, so it is left where the "+
+					"compiler put it\n", c.Setting)
 
 			continue
 		}
@@ -222,6 +222,23 @@ func readings(
 
 		if verdict, why := judge(got.Level, silentBelow(settled)); verdict != believable {
 			_, _ = fmt.Fprintf(w, "    %s %-3d %s\n", c.Setting, at, why)
+
+			continue
+		}
+
+		// Affordable as well as believable, and they are different questions. A
+		// setting loud enough to read is not a setting the target may pay for: a
+		// microphone 8dB down is a quieter chain rather than a darker one, and
+		// `drift` is where the loop stops calling that a tone.
+		//
+		// Left out here rather than checked after the choice, because this is the
+		// one place every setting is read. Filtered at the choice instead, the
+		// `--tries` ladder could still back up onto one, and `MidFreq` going from
+		// 0 to 2 cost 7.8dB that nothing reported and nothing undid.
+		if spent := settled - got.Level; spent > drift {
+			_, _ = fmt.Fprintf(w,
+				"    %s %-3d costs %.1fdB of level, past the %.0f a target may "+
+					"spend\n", c.Setting, at, spent, drift)
 
 			continue
 		}
@@ -326,7 +343,7 @@ func attempt(
 	}
 
 	return backedUp(ctx, w, opts, bench, signal, preset, knobs, lists,
-		aims, settled, solve.Runners(ranked, named), did)
+		aims, settled, ranked, solve.Runners(ranked, named), did)
 }
 
 // backedUp tries the next-nearest settings, solving the dials from each.
@@ -346,10 +363,18 @@ func backedUp(
 	lists []solve.Choice,
 	aims map[audio.Figure]solve.Aim,
 	settled float64,
+	ranked map[solve.Where][]solve.Option,
 	runners []solve.Runner,
 	best round,
 ) (round, error) {
 	at := solve.Worst(best.residual)
+
+	// What each list is set to, so a setting that turns out to cost too much can
+	// be put back where it was. The nearest is where the comparison left it.
+	on := make(map[solve.Where]int, len(ranked))
+	for where, order := range ranked {
+		on[where] = order[0].Value
+	}
 
 	for i, r := range runners {
 		// One fewer than Tries, because the first attempt was already spent
@@ -373,6 +398,31 @@ func backedUp(
 		if err := choose(ctx, opts, c, r.Option.Value); err != nil {
 			return best, err
 		}
+
+		// Read again rather than trusted. Every setting was priced against the
+		// chain the comparison ran on and the dials have moved since, so what one
+		// costs now is not something a stored reading knows: `MidFreq` going to 2
+		// was affordable when it was read and cost 6dB by the time a run backed
+		// up onto it.
+		got, err := sdk.Fingerprint(ctx, bench, signal)
+		if err != nil {
+			return best, err
+		}
+
+		if spent := settled - got.Level; spent > drift {
+			_, _ = fmt.Fprintf(w,
+				"  %s %d costs %.1fdB of level from here, past the %.0f a target may "+
+					"spend, so it goes back to %d\n",
+				c.Setting, r.Option.Value, spent, drift, on[r.Where])
+
+			if err := choose(ctx, opts, c, on[r.Where]); err != nil {
+				return best, err
+			}
+
+			continue
+		}
+
+		on[r.Where] = r.Option.Value
 
 		did, err := converge(ctx, w, opts, bench, signal, preset, knobs, aims, settled)
 		if err != nil {

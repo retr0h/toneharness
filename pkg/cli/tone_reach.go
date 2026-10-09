@@ -191,7 +191,7 @@ func Reach(
 		return fmt.Errorf("%w: %q measures as nothing", ErrNoTarget, opts.Genre)
 	}
 
-	aims[audio.KeyLevel] = solve.Aim{Want: at.Level, Tol: drift}
+	aims[audio.KeyLevel] = solve.Aim{Want: at.Level, Tol: drift, Hold: true}
 
 	now, err := sdk.Fingerprint(ctx, bench, signal)
 	if err != nil {

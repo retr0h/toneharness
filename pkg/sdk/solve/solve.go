@@ -64,6 +64,22 @@ type Aim struct {
 	// they disagree about is one the answer need not be precise on. For a
 	// single recording it is the loop's own noise floor.
 	Tol float64
+	// Hold keeps the figure in the solve even while it is inside tolerance, so
+	// the answer preserves it rather than discovering it has broken it.
+	//
+	// The difference between a goal and a constraint. A tone axis already inside
+	// tolerance has nothing to ask for and is left out, which is why `wanted`
+	// gates on being outside one. Level is not like that: it starts where the
+	// chain settled, nobody is asking to change it, and the solve will spend it
+	// freely unless something says not to.
+	//
+	// Measured on an SVT: `Master` moves 16,732Hz of centroid for 23.2dB of
+	// level, and `Treble` moves 11,697Hz for 1.7dB. Nearly the same tone for a
+	// fourteenth of the loudness, and least squares has no reason to prefer the
+	// cheap one unless the cost is in the matrix. Left out, a run against Mike
+	// Dirnt's records drove Master to zero and swung 39dB across eight passes,
+	// ending 28dB under where the chain started.
+	Hold bool
 }
 
 // Knob is one control the solver may turn, and what turning it does.
@@ -284,7 +300,10 @@ func wanted(
 		off := math.Abs(aim.Want-got[r]) / aim.Tol
 		out.Residual[r] = off
 
-		if off > 1 {
+		// Outside tolerance is something to fix. Held is something to keep, and
+		// it has to be in the matrix while it is still fine, because the matrix
+		// is the only thing that tells the solve what a move costs.
+		if off > 1 || aim.Hold {
 			rows = append(rows, r)
 		}
 	}

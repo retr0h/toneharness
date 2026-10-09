@@ -269,7 +269,7 @@ func Tune(
 	// Which means the fix was not here. It was the target, and `Displaced` above is
 	// it: a record's own figures replaced by how far its player sits from everybody
 	// else, applied to where the chain already is.
-	aims[audio.KeyLevel] = solve.Aim{Want: at.Level, Tol: drift}
+	aims[audio.KeyLevel] = solve.Aim{Want: at.Level, Tol: drift, Hold: true}
 
 	// After the floor, because a nudge is measured in tolerances and a
 	// tolerance is not known until the loop's own wander is.
@@ -280,6 +280,11 @@ func Tune(
 
 	_, _ = fmt.Fprintf(w, "  the loop wanders %.4f of a band and %.1fHz\n",
 		inCorpusScale(floor)[audio.KeyLow], floor[audio.KeyCentroid])
+
+	// The level aim in full, because it is the one aim the target does not state
+	// and the one a reader cannot work out from the figures printed beside it.
+	_, _ = fmt.Fprintf(w, "  level is held at %.1fdB, give or take %.1f\n",
+		aims[audio.KeyLevel].Want, aims[audio.KeyLevel].Tol)
 
 	first, err := sdk.Fingerprint(ctx, bench, signal)
 	if err != nil {
@@ -682,7 +687,13 @@ func converge(
 	aims map[audio.Figure]solve.Aim,
 	settled float64,
 ) (round, error) {
-	var best float64
+	// prev is the pass before's residual, which is what "stopped improving"
+	// compares against, and best the lowest any pass read, which is what the
+	// chain is left at. They are not the same number: a run can improve, get
+	// worse, and the answer is the chain from before it got worse.
+	var prev float64
+
+	var best kept
 
 	var did round
 
@@ -695,17 +706,36 @@ func converge(
 		now := figuresOf(got)
 		did.read = now
 
+		// Before reading any slope, because arriving needs no slopes and reading
+		// them costs a reading per control. A chain of a dozen dials would spend
+		// a minute and a half measuring what to do about a target it is already
+		// inside.
+		at, arrived := solve.Reached(aims, now)
+
+		// The dials as this reading found them, paired with what this reading
+		// measures. `Reached` rather than `Toward`, and that is the whole of why
+		// this is correct: `Toward` answers with its model's prediction for after
+		// the moves it proposes, so pairing these dials with that number would
+		// claim a residual for a chain the moves had not been applied to.
+		here := kept{
+			worst:    solve.Worst(at.Residual),
+			at:       valuesOf(knobs),
+			residual: at.Residual,
+			read:     now,
+			steps:    len(did.steps),
+		}
+
+		if best.at == nil || here.worst < best.worst {
+			best = here
+		}
+
 		// Level beside the pass, because it is the one figure no target
 		// constrains and the one a solve can spend without being told not to.
 		_, _ = fmt.Fprintf(w, "  level %.1fdB against %.1f settled\n",
 			got.Level, settled)
 
-		// Before reading any slope, because arriving needs no slopes and reading
-		// them costs a reading per control. A chain of a dozen dials would spend
-		// a minute and a half measuring what to do about a target it is already
-		// inside.
-		if at, arrived := solve.Reached(aims, now); arrived {
-			aimed(w, pass, at, solve.Worst(at.Residual))
+		if arrived {
+			aimed(w, pass, at, here.worst)
 
 			did.residual, did.arrived = at.Residual, true
 
@@ -735,23 +765,37 @@ func converge(
 		// So a tune that worked threw its answer away and a tune that struggled
 		// kept its moves, which is the wrong way round. `--out` wrote the
 		// starting chain and called it tuned.
-		if err := land(ctx, w, opts, bench, signal, knobs, step.Steps, settled); err != nil {
+		landed, err := land(ctx, w, opts, bench, signal, knobs, step.Steps, settled)
+		if err != nil {
 			return did, err
+		}
+
+		if !landed {
+			_, _ = fmt.Fprintf(w,
+				"\n  stopped at %.1f tolerances out. Closing this target costs the "+
+					"level, which is not an axis the target may spend.\n", worst)
+
+			// The moves are dropped with them, because the chain is back where
+			// the pass found it and a correction that lists them would be a
+			// record of settings nothing holds.
+			did.steps = did.steps[:len(did.steps)-len(step.Steps)]
+
+			return keeping(ctx, w, opts, bench, signal, knobs, aims, did, best)
 		}
 
 		if step.Arrived {
 			return did, nil
 		}
 
-		if pass > 1 && worst >= best {
+		if pass > 1 && worst >= prev {
 			_, _ = fmt.Fprintf(w,
 				"\n  stopped improving at %.1f tolerances out. The chain will not "+
 					"reach this target.\n", worst)
 
-			return did, nil
+			return keeping(ctx, w, opts, bench, signal, knobs, aims, did, best)
 		}
 
-		best = worst
+		prev = worst
 
 		// The chain is not reloaded between passes on purpose: the next pass
 		// reads its slopes from where this one landed, which is the whole
@@ -760,9 +804,124 @@ func converge(
 	}
 
 	_, _ = fmt.Fprintf(w, "\n  %d passes and still %.1f tolerances out.\n",
-		opts.Passes, best)
+		opts.Passes, prev)
+
+	return keeping(ctx, w, opts, bench, signal, knobs, aims, did, best)
+}
+
+// kept is one reading a convergence took, and the dials that produced it.
+type kept struct {
+	worst    float64
+	at       []float64
+	residual map[audio.Figure]float64
+	read     map[audio.Figure]float64
+	// steps is how many of the round's moves had been made when this was read,
+	// so a correction describing this chain stops where this chain began.
+	steps int
+}
+
+// keeping leaves the chain at the best reading the convergence took.
+//
+// A pass's residual is measured before its own moves, so a pass reporting worse
+// than the one before it is reporting what the last pass's moves did, and the
+// dials that produced the better reading are still known. The rule is the one
+// `backedUp` already follows across a list's settings: the answer to a target is
+// the best chain the run demonstrated and not the last one it tried.
+//
+// It mattered by 2.1 tolerances on the first run that measured it. Pass 1 read
+// 1.9 out, pass 2 read 12.6, and 12.6 was what the run reported and what `--out`
+// wrote, because `land` had already turned the dials that produced it.
+func keeping(
+	ctx context.Context,
+	w io.Writer,
+	opts TuneOptions,
+	bench sdk.Bench,
+	signal []float32,
+	knobs []solve.Knob,
+	aims map[audio.Figure]solve.Aim,
+	did round,
+	best kept,
+) (round, error) {
+	if best.at == nil {
+		return did, nil
+	}
+
+	// The chain as it stands, which no pass has read: `land` turned the dials
+	// after the last reading was taken. Measured rather than assumed either way,
+	// because the moves were predicted to improve and throwing them away unread
+	// would discard the one thing the pass was for, while keeping them unread
+	// would report a residual nothing measured.
+	got, err := sdk.Fingerprint(ctx, bench, signal)
+	if err != nil {
+		return did, err
+	}
+
+	now := figuresOf(got)
+	at, _ := solve.Reached(aims, now)
+	ends := solve.Worst(at.Residual)
+
+	back := backTo(knobs, best.at)
+
+	// Nothing to put back covers two cases and they end the same way: the chain
+	// already reads as well as anything this run saw, or it reads a hair worse on
+	// dials that are the best ones anyway, which is the loop's own wander.
+	if ends <= best.worst || len(back) == 0 {
+		_, _ = fmt.Fprintf(w,
+			"  the chain reads %.1f tolerances out, which is this run's best\n", ends)
+
+		did.residual, did.read = at.Residual, now
+
+		return did, nil
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"  the chain reads %.1f tolerances out, so the dials go back to this "+
+			"run's best reading, %.1f\n", ends, best.worst)
+
+	if err := apply(ctx, opts, knobs, back); err != nil {
+		return did, err
+	}
+
+	did.steps = did.steps[:best.steps]
+	did.residual, did.read = best.residual, best.read
 
 	return did, nil
+}
+
+// valuesOf is where every dial sits, in the order the knobs are held.
+func valuesOf(
+	knobs []solve.Knob,
+) []float64 {
+	out := make([]float64, len(knobs))
+	for i := range knobs {
+		out[i] = knobs[i].At
+	}
+
+	return out
+}
+
+// backTo is the moves that put every dial back where it was, leaving out the
+// ones that never moved.
+func backTo(
+	knobs []solve.Knob,
+	to []float64,
+) []solve.Step {
+	out := make([]solve.Step, 0, len(knobs))
+
+	// No guard on the lengths. `to` came from `valuesOf` over this same slice,
+	// which the loop mutates in place and never resizes, so the two agree by
+	// construction and a check would be a branch nothing can reach.
+	for i := range knobs {
+		if knobs[i].At == to[i] {
+			continue
+		}
+
+		out = append(out, solve.Step{
+			Knob: knobs[i], By: to[i] - knobs[i].At, To: to[i],
+		})
+	}
+
+	return out
 }
 
 // round is what one run of the loop did, for the correction it becomes.
@@ -824,6 +983,12 @@ func aimed(
 // Halved rather than refused, because the direction was right and only the
 // distance was wrong, which is an ordinary line search and the same reason the
 // loop takes several passes at all.
+//
+// The threshold is `drift`, the same tolerance the level aim is held to, not
+// the noise floor's. A pass that leaves the level outside the tolerance the
+// solve was given has not landed, whether or not the reading is still above
+// hiss: every figure of the pass after it is measured on a signal the target
+// did not ask for.
 func land(
 	ctx context.Context,
 	w io.Writer,
@@ -833,32 +998,48 @@ func land(
 	knobs []solve.Knob,
 	steps []solve.Step,
 	settled float64,
-) error {
+) (bool, error) {
 	scale := 1.0
 
 	for range backoffs {
 		if err := apply(ctx, opts, knobs, scaled(steps, scale)); err != nil {
-			return err
+			return false, err
 		}
 
 		got, err := sdk.Fingerprint(ctx, bench, signal)
 		if err != nil {
-			return err
+			return false, err
 		}
 
-		if got.Level >= settled-silent {
-			return nil
+		if got.Level >= settled-drift {
+			return true, nil
 		}
 
 		scale /= 2
 
 		_, _ = fmt.Fprintf(w,
-			"       that muted the chain at %.1fdB against %.1f settled, "+
+			"       that spent the level, %.1fdB against %.1f settled, "+
 				"so half of it instead\n", got.Level, settled)
 	}
 
-	return fmt.Errorf("%w: every move that closes this target mutes the chain",
-		ErrNoTarget)
+	// Put back rather than left at a sixteenth, and reported rather than
+	// refused. A sixteenth of a move that costs the level at full length still
+	// costs some of it, so the chain the next pass reads is already degraded and
+	// the pass is measuring its own damage. Scale zero is every control where
+	// this pass found it.
+	//
+	// Refusing the run instead loses the passes that did land. The caller stops
+	// here with the chain it had, which is the same thing it does when a pass
+	// stops improving.
+	if err := apply(ctx, opts, knobs, scaled(steps, 0)); err != nil {
+		return false, err
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"       every length of that move costs more than %.0fdB of level, "+
+			"so the dials go back where this pass found them\n", drift)
+
+	return false, nil
 }
 
 // backoffs is how many times a pass may halve its moves before giving up.

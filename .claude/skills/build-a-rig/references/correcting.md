@@ -493,6 +493,106 @@ No corpus states a level, because a record's loudness is a mastering decision
 rather than a fact about the sound, so the anchor is the chain's own settled
 reading and the tolerance is the one chosen number in the loop.
 
+**Pricing it in the matrix is not enough to keep it**, and this is the part that
+cost a library of thin presets. A slope is read by nudging a control a fraction
+of its range, which makes it a straight line, and level against a gain or a
+master volume is not one: a nudge near the top of an amplifier's Master reads
+almost no change, and the same control taken to zero costs twenty-three
+decibels. So the solve can ask for a move it has correctly priced as free and be
+wrong by twenty decibels.
+
+**The measurement after each pass is what enforces it.** A pass applies its
+moves, reads the chain back, and if the level has left its tolerance the whole
+pass is halved and applied again from where the controls started, up to four
+times. The direction was right and only the distance was wrong, which is an
+ordinary line search.
+
+If no length of the move fits inside the tolerance, **the dials go back where
+that pass found them and the loop stops**:
+
+```
+       every length of that move costs more than 6dB of level, so the dials
+       go back where this pass found them
+
+  stopped at 4.3 tolerances out. Closing this target costs the level, which
+  is not an axis the target may spend.
+```
+
+Put back rather than left at a sixteenth, because a sixteenth of a move that
+spends the level at full length still spends some of it, and the pass after it
+would be measuring its own damage. The run keeps every pass that did land, so
+this reads like any other stop: a residual, and which axes are still out.
+
+**A list setting is held to the same tolerance**, and it is a separate guard
+because a microphone has no half-position to back off to. Every setting of a list
+is read anyway to rank it, so a setting costing more than `drift` is dropped
+there, before anything can choose it:
+
+```
+  MidFreq 2   costs 7.8dB of level, past the 6 a target may spend
+```
+
+Dropped rather than ranked low, so the `--tries` ladder cannot back up onto one
+later. That exact setting cost 7.8dB on hardware with nothing watching, the pass
+after it put its own dials back, and the chain was left at the list change's
+reading.
+
+**And it is priced again when the ladder backs up onto it**, because the dials
+have moved since the comparison and nothing stored knows what a setting costs
+from where the chain is now. The same `MidFreq` was inside the tolerance when it
+was read and cost 6dB by the time a run backed up to it:
+
+```
+  MidFreq 2 costs 8.8dB of level from here, past the 6 a target may spend,
+  so it goes back to 0
+```
+
+## A pass's figures are a prediction, not a reading
+
+**The residual list under `pass N` is what the model expects after the moves
+printed below it.** It is not the chain's current state. The level line beside it
+is a measurement. So the two legitimately disagree, and reading the figure list as
+"where the chain is now" is a mistake the output used to invite:
+
+```
+  level -26.7dB against -28.9 settled    <- measured
+  pass 1, 1.9 tolerances out             <- predicted, after the moves below
+       level          0.91               <- predicted too
+```
+
+A tolerance measured and a tolerance predicted are different claims, and the
+difference is the whole reason the loop takes more than one pass: the model is
+local, so the prediction is right near where the slopes were read and drifts away
+from it.
+
+## The answer is the best chain, not the last one
+
+Which means the loop cannot trust a prediction to decide what to keep. Every
+candidate chain is read: each pass's starting chain, and the chain the last pass
+left behind, which no pass would otherwise have measured.
+
+The best of those readings is what the run ends on, and it says which:
+
+```
+  stopped improving at 12.6 tolerances out. The chain will not reach this target.
+  the chain reads 7.4 tolerances out, so the dials go back to this run's best
+  reading, 1.9
+```
+
+or, where the last pass's moves did help:
+
+```
+  the chain reads 1.4 tolerances out, which is this run's best
+```
+
+Every number there is measured. Without it a run that found a good chain and then
+overshot wrote out the overshoot: pass 1 read 1.9 tolerances out, pass 2 read
+12.6, and 12.6 is what `--out` wrote, because the dials had already been turned.
+
+The same rule already applied one level up, across a list's settings: a later
+attempt that is worse is kept rather than used. Passes inside one convergence now
+get it too.
+
 ## When it cannot get there
 
 A bass cabinet cannot produce what a target asks above 5 kHz, because the speaker

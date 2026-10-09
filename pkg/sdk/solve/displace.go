@@ -51,6 +51,7 @@ import (
 //
 // The same treatment `translate` has given block choosing since it picked a Motown
 // flip-top for punk, for the same reason and with the same arithmetic.
+//
 // here is the chain's own reading, already in the units a corpus figure is stated
 // in. The caller converts, because it is the one holding the device reading and
 // `figuresOf` is the single place that conversion lives.
@@ -66,6 +67,15 @@ func Displaced(
 	mine := target.Measured()
 	out := target
 
+	// Every figure, not the four bands. Displacing only those left the other five
+	// aimed at a record's own numbers, and the solve spent itself on them: a run
+	// against Mike Dirnt's records had low, mid, high and the centroid all within a
+	// tolerance and a half while `lean` sat 7.7 out, so it drove the amplifier's
+	// Drive to its limit chasing an even-to-odd ratio no chain reaches, and 28.6dB
+	// of level went with it.
+	//
+	// Transient and Decay carry their spread in an embedded Spread, so all nine are
+	// reachable the same way.
 	for _, want := range []struct {
 		key  audio.Figure
 		onto *audio.Spread
@@ -74,6 +84,11 @@ func Displaced(
 		{audio.KeyMid, &out.Mid},
 		{audio.KeyHigh, &out.High},
 		{audio.KeyCentroid, &out.Centroid},
+		{audio.KeyTransient, &out.Transient.Spread},
+		{audio.KeyDecay, &out.Decay.Spread},
+		{audio.KeyDynamics, &out.DynamicRange},
+		{audio.KeyHarmonics, &out.Harmonics},
+		{audio.KeyLean, &out.EvenOdd},
 	} {
 		theirs, held := elsewhere[want.key]
 		if !held {
@@ -86,7 +101,7 @@ func Displaced(
 		}
 
 		// No guard on the subject's own figure. Across.Measured answers for all
-		// four of these whether or not a recording had one, so there is nothing
+		// nine of these whether or not a recording had one, so there is nothing
 		// here a check could catch.
 		want.onto.Mid = at + (mine[string(want.key)] - theirs)
 	}
