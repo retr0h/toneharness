@@ -194,6 +194,17 @@ func (s *OutputTestSuite) TestOutputErrorsSayWhichHalfFailed() {
 	}
 }
 
+// TestPinReachesIsFalseUntilABenchIsOpened covers the accessor a caller warns
+// from.
+//
+// False on a bench nothing opened, which is the honest answer: nothing has been
+// asked of the platform yet, so nothing is known about which device the level
+// belongs to.
+func (s *OutputTestSuite) TestPinReachesIsFalseUntilABenchIsOpened() {
+	s.Require().False((&Bench{}).PinReaches())
+	s.Require().True((&Bench{pinReaches: true}).PinReaches())
+}
+
 func TestOutputTestSuite(
 	t *testing.T,
 ) {

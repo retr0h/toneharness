@@ -146,6 +146,26 @@ func (s *TuneTestSuite) ready() {
 		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 }
 
+// readyEndingInACab is ready with a cabinet after the amplifier.
+//
+// Needed because the squeal guard only applies to a chain that ends in one: a
+// loudspeaker is a low pass and cannot add treble, which is the invariant. A
+// drive legitimately gives back more than it was handed, so the guard would be
+// wrong about it.
+func (s *TuneTestSuite) readyEndingInACab() {
+	s.pedal.EXPECT().
+		Make(gomock.Any(), gomock.Any()).
+		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{
+			{Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true},
+			{Model: catalog.ModelID("HD2_Cab8x10SVBeast"), Pos: 1, Enabled: true},
+		}}}, nil).AnyTimes()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	s.pedal.EXPECT().
+		Turn(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	s.pedal.EXPECT().
+		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+}
+
 // opts is a run with the hardware faked out.
 func (s *TuneTestSuite) opts() TuneOptions {
 	return TuneOptions{
@@ -154,6 +174,29 @@ func (s *TuneTestSuite) opts() TuneOptions {
 		Dry: s.dry, Seconds: 0.1, Takes: 2, Passes: 2, Nudge: 0.1,
 	}
 }
+
+// squeals is a bench that gives back more treble than it was handed, at a level
+// a chain could plausibly return.
+//
+// Which is the invariant the squeal guard rests on: a chain ending in a cabinet
+// cannot add energy above 2kHz, because a loudspeaker is a low pass. Loud enough
+// to pass the check that anything came back at all, so the two faults are told
+// apart rather than one standing in for the other.
+type squeals struct{}
+
+func (squeals) Through(
+	_ context.Context,
+	signal []float32,
+) ([]float32, error) {
+	out := make([]float32, len(signal))
+	for i := range out {
+		out[i] = float32(0.2 * math.Sin(2*math.Pi*9000*float64(i)/sdk.Rate))
+	}
+
+	return out, nil
+}
+
+func (squeals) Name() string { return "a bench that squeals" }
 
 // TestTune covers Tune, which solves a chain's controls for a target and says
 // how close it got.
@@ -175,6 +218,115 @@ func (s *TuneTestSuite) TestTune() {
 				var buf bytes.Buffer
 				s.Require().NoError(Tune(context.Background(), &buf, s.opts()))
 				s.Require().Contains(buf.String(), "aimed at punk")
+			},
+		},
+		{
+			// A loop that gives nothing back, which is a signal path rather than
+			// a chain and reads as a squeal if nobody checks the level first.
+			name: "a loop that returns nothing",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				opts := s.opts()
+				opts.Bench = bench{quiet: true}
+				opts.Keep = filepath.Join(s.T().TempDir(), "listen")
+
+				err := Tune(context.Background(), buffer(), opts)
+
+				s.Require().ErrorIs(err, ErrNoReturn)
+				s.Require().ErrorContains(err, "of loss and not a chain")
+
+				// And the audio is on disk, because a refusal is when somebody
+				// most wants to listen.
+				_, statErr := os.Stat(filepath.Join(opts.Keep, "punk-chain.wav"))
+				s.Require().NoError(statErr)
+			},
+		},
+		{
+			// The same refusal with nowhere to keep the audio, which is reported
+			// instead of the refusal: a caller told the loop is dead and not told
+			// the recording was lost has been told half.
+			name: "a dead loop with nowhere to keep what it heard",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				flat := filepath.Join(s.T().TempDir(), "file")
+				s.Require().NoError(os.WriteFile(flat, []byte("x"), 0o600))
+
+				opts := s.opts()
+				opts.Bench = bench{quiet: true}
+				opts.Keep = filepath.Join(flat, "under-a-file")
+
+				err := Tune(context.Background(), buffer(), opts)
+
+				s.Require().Error(err)
+				s.Require().NotErrorIs(err, ErrNoReturn)
+			},
+		},
+		{
+			// The chain feeding itself, which keeps its audio before refusing for
+			// the same reason.
+			name: "a loop that is oscillating keeps what it heard",
+			then: func() {
+				s.readyEndingInACab()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				opts := s.opts()
+				opts.Bench = squeals{}
+				opts.Keep = filepath.Join(s.T().TempDir(), "listen")
+
+				err := Tune(context.Background(), buffer(), opts)
+
+				s.Require().ErrorIs(err, ErrSquealing)
+
+				_, statErr := os.Stat(filepath.Join(opts.Keep, "punk-chain.wav"))
+				s.Require().NoError(statErr, "the squeal is on disk to listen to")
+			},
+		},
+		{
+			// An oscillating loop with nowhere to keep the recording, which is
+			// reported instead of the squeal for the same reason the dead loop
+			// is: half an answer is not one.
+			name: "an oscillating loop with nowhere to keep what it heard",
+			then: func() {
+				s.readyEndingInACab()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				flat := filepath.Join(s.T().TempDir(), "file")
+				s.Require().NoError(os.WriteFile(flat, []byte("x"), 0o600))
+
+				opts := s.opts()
+				opts.Bench = squeals{}
+				opts.Keep = filepath.Join(flat, "under-a-file")
+
+				err := Tune(context.Background(), buffer(), opts)
+
+				s.Require().Error(err)
+				s.Require().NotErrorIs(err, ErrSquealing)
+			},
+		},
+		{
+			// A run that finishes and cannot keep its audio says so, rather than
+			// reporting a tuned chain and failing after.
+			name: "a finished run with nowhere to keep what it played",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				flat := filepath.Join(s.T().TempDir(), "file")
+				s.Require().NoError(os.WriteFile(flat, []byte("x"), 0o600))
+
+				opts := s.opts()
+				opts.Keep = filepath.Join(flat, "under-a-file")
+
+				s.Require().Error(Tune(context.Background(), buffer(), opts))
 			},
 		},
 		{

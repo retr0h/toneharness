@@ -51,22 +51,53 @@ func Write(
 	samples []float32,
 	rate int,
 ) error {
-	f, err := os.Create(at) //nolint:gosec // a path the caller chose
+	f, err := creates(at)
 	if err != nil {
 		return fmt.Errorf("creating %s: %w", at, err)
 	}
 
 	if err := WriteTo(f, samples, rate); err != nil {
-		_ = f.Close()
+		_ = closes(f)
 
 		return fmt.Errorf("writing %s: %w", at, err)
 	}
 
-	if err := f.Close(); err != nil {
+	if err := closes(f); err != nil {
 		return fmt.Errorf("closing %s: %w", at, err)
 	}
 
 	return nil
+}
+
+// creates opens the file a kept reading goes into, so a test stands its own
+// function here.
+//
+// A variable because it is the only thing in this file that touches a
+// filesystem, and the three branches around it — a path that will not open, a
+// file that will not take the samples, a file that will not close — are branches
+// a real *os.File on a temp directory cannot be made to reach.
+var creates = func(
+	at string,
+) (io.WriteSeeker, error) {
+	f, err := os.Create(at) //nolint:gosec // a path the caller chose
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
+// closes shuts the file, separate from creates because the close is its own
+// failure and its own branch.
+var closes = func(
+	w io.WriteSeeker,
+) error {
+	f, ok := w.(io.Closer)
+	if !ok {
+		return nil
+	}
+
+	return f.Close()
 }
 
 // WriteTo writes samples as a WAV into w.

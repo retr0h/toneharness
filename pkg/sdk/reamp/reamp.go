@@ -208,14 +208,14 @@ func open(
 
 	wantPlay, wantRec := Sides(want)
 
-	play, playing, isDefault, err := findWithDefault(ctx, malgo.Playback, wantPlay)
+	play, playing, err := find(ctx, malgo.Playback, wantPlay)
 	if err != nil {
 		b.Close()
 
 		return nil, err
 	}
 
-	b.pinReaches = isDefault
+	b.pinReaches = defaultsTo(ctx, malgo.Playback, wantPlay)
 
 	rec, recording, err := find(ctx, malgo.Capture, wantRec)
 	if err != nil {
@@ -280,28 +280,9 @@ func find(
 	kind malgo.DeviceType,
 	want string,
 ) (malgo.DeviceID, string, error) {
-	id, name, _, err := findWithDefault(ctx, kind, want)
-
-	return id, name, err
-}
-
-// findWithDefault is find, and says whether what it found is the one the
-// platform sends everything else to.
-//
-// Needed because the output level is pinned on the platform's default and the
-// reference is played through whichever device was named. When those differ the
-// pin reaches a device that is not in the signal path: `--volume 38` set a pair
-// of headphones nobody was measuring through while the jack feeding the pedal
-// sat wherever it was left, which read as 66dB of loss and a dead loop.
-func findWithDefault(
-	ctx *malgo.AllocatedContext,
-	kind malgo.DeviceType,
-	want string,
-) (malgo.DeviceID, string, bool, error) {
 	found, err := ctx.Devices(kind)
 	if err != nil {
-		return malgo.DeviceID{}, "", false, fmt.Errorf(
-			"listing audio devices: %w", err)
+		return malgo.DeviceID{}, "", fmt.Errorf("listing audio devices: %w", err)
 	}
 
 	had := make([]string, 0, len(found))
@@ -311,13 +292,42 @@ func findWithDefault(
 		had = append(had, name)
 
 		if matches(name, want) {
-			return d.ID, name, d.IsDefault != 0, nil
+			return d.ID, name, nil
 		}
 	}
 
-	return malgo.DeviceID{}, "", false, &NoDeviceError{
+	return malgo.DeviceID{}, "", &NoDeviceError{
 		Want: want, Direction: direction(kind), Had: had,
 	}
+}
+
+// defaultsTo reports whether the named device is the one the platform sends
+// everything else to.
+//
+// Asked because the output level is pinned on the platform's default and the
+// reference plays through whichever device was named. When those differ the pin
+// reaches a device that is not in the signal path: a level of 38 set a pair of
+// headphones nobody was measuring through while the jack feeding the pedal sat
+// wherever it was left, which read as 66dB of loss and a dead loop.
+//
+// Not knowing counts as yes, and the error is dropped on purpose. The answer
+// only ever drives a warning, and a warning raised because the platform would
+// not answer is one nobody can act on: it would fire on every rig that cannot be
+// asked rather than on the rig that is actually wrong.
+func defaultsTo(
+	ctx *malgo.AllocatedContext,
+	kind malgo.DeviceType,
+	want string,
+) bool {
+	found, _ := ctx.Devices(kind)
+
+	for _, d := range found {
+		if matches(d.Name(), want) {
+			return d.IsDefault != 0
+		}
+	}
+
+	return true
 }
 
 // matches reports a device the caller meant.
