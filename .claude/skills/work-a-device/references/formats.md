@@ -32,6 +32,15 @@ names: three are called `1x12 US Deluxe` and only one carries a `Pan` and a
 model that has all of them, and one stating none still resolves on the name. Delete
 the controls from a lifted rig and it rebuilds into a different model.
 
+A control no candidate carries does not throw away the ones that do. Where no
+model has every control stated, the model carrying the most of them wins, and the
+name decides only when none of them match. This matters to a hand-edited rig
+rather than a lifted one: a lifted rig's control names came off the device and
+are all real. Write one by hand with a control name slightly wrong and the model
+is still chosen by the rest. `Teletronix LA-2A` with the LA Studio Comp's six
+controls and one more besides matched six of seven there and one of seven on a
+legacy Tube Comp carrying only a level, and the Tube Comp used to win.
+
 **Each block keeps the key it was filed under.** `position` on a chain entry is the
 `blockN` key the device used, which is not the slot the block sits in: 4,437
 processors in the corpus have a set of keys that is not the set of slots. The slot
