@@ -21,6 +21,7 @@ package device
 
 import (
 	"context"
+	"time"
 
 	"github.com/retr0h/toneharness/pkg/sdk/internal/wire"
 )
@@ -136,18 +137,42 @@ func (s *session) SetSwitch(
 }
 
 // edit is the message all three are, differing only in the value's tag.
+//
+// The one call here that asks again when the device says nothing, because it is
+// the one that is idempotent: setting a parameter to the value it is already
+// being set to leaves the same state, so a reply that went missing costs a
+// duplicate message and nothing else.
+//
+// What it is for is a long session's worth of these. A tune holds one session
+// open and moves every control on every pass, and the device answers all of them
+// until it does not: four runs died mid-pass on a parameter and a value it then
+// took without complaint when asked again on its own. The write is the same
+// write either way, so this is the difference between a run that finishes and a
+// run that reports a chain it never finished turning.
 func (s *session) edit(
 	ctx context.Context,
 	at Address,
 	value wire.Arg,
 ) error {
-	_, err := s.Call(ctx, channelData, opSetParam, []wire.Arg{
+	_, err := s.call(ctx, channelData, opSetParam, []wire.Arg{
 		wire.Number(editBlock, uint64(at.Block)), //nolint:gosec // an address
 		wire.Flag(editDirect, at.Direct),
 		wire.Number(editModel, uint64(at.Model)), //nolint:gosec // 0 or 1
 		wire.Number(editParam, uint64(at.Param)), //nolint:gosec // a list index
 		value,
-	})
+	}, editTries, editRetry)
 
 	return err
 }
+
+// editTries is how many times one control is asked to move before the silence
+// is reported, and editRetry how long between them.
+//
+// Two, because the evidence is a lost reply rather than a device that has
+// stopped listening: every address that went silent took the same value when it
+// was asked again. A longer ladder would turn a device that really has gone away
+// into a wait per control, times a chain's worth of dials, and call it working.
+const (
+	editTries = 2
+	editRetry = 100 * time.Millisecond
+)
