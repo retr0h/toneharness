@@ -783,7 +783,7 @@ func within(
 	// has nothing to be outside of, and comparing against 0..0 would refuse
 	// every value it could hold.
 	//
-	// A millionth of the control's own travel either side of the bound, because a
+	// A fraction of the control's own travel either side of the bound, because a
 	// preset's own file does not spell a value to the precision the catalog states
 	// a bound in.
 	//
@@ -794,12 +794,14 @@ func within(
 	// significant figures and ten float32 steps under it. Comparing at float32
 	// covers the first and not the second.
 	//
-	// The number is not a judgement anybody had to make finely. The two populations
-	// are seven orders of magnitude apart: the rounding sits at 1e-6 of the travel
-	// and the 64 values that are genuinely out of range miss by 3.5 to 99 times it,
-	// a `Drive` of 8.0 against 0..1 and a `Predelay` of 20.0 against 0..0.2. Any
-	// threshold between those separates them, and a millionth of the travel is far
-	// below what a float32 can even represent across most ranges.
+	// The number is not a judgement anybody had to make finely, because the two
+	// populations do not overlap. Measured over all 503 out-of-range values in the
+	// preset corpus: rounding runs from 2.2e-11 of the travel up to 4.0e-4, a
+	// `Delay` of -2.00272e-05 against 0..0.05, and the values that are genuinely
+	// out of range start at 0.6 of the travel and run to 99 of it, a `Mix` of 22
+	// against 0..1 and a `Predelay` of 20.0 against 0..0.2. Three orders of
+	// magnitude of daylight between the two, and any threshold inside it
+	// separates them.
 	slack := (spec.Max - spec.Min) * rounding
 
 	if spec.Min == spec.Max ||
@@ -816,7 +818,16 @@ func within(
 
 // rounding is how much of a control's travel a preset's own file may round a value
 // by, as a fraction.
-const rounding = 1e-6
+//
+// A hundredth, which is about where the gap's middle sits on a log scale: 25
+// times the largest rounding the corpus holds and 60 times below the smallest
+// value that is genuinely out of range.
+//
+// It was a millionth, which sits underneath the rounding population rather than
+// above it, so the values it existed to accept were refused the moment anything
+// actually checked them. One real preset's `Delay` of -2.00272e-05 against
+// 0..0.05 is 400 times a millionth of its own travel.
+const rounding = 1e-2
 
 // saidKnobs puts each entry's settings onto the block it resolved to.
 //

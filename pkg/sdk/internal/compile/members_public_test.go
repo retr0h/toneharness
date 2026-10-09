@@ -523,9 +523,10 @@ func (s *MembersPublicTestSuite) TestCorpusRoundTrip() {
 // `0.01`, six significant figures and ten float32 steps under it, and refusing
 // those made the presets holding them impossible to rebuild.
 //
-// The threshold was not a fine judgement. The 64 values in the same corpus that are
-// genuinely out of range miss by 3.5 to 99 times the control's travel, against 1e-6
-// for the rounding, so the two are seven orders of magnitude apart.
+// The threshold was not a fine judgement. Measured over all 503 out-of-range values
+// in the corpus, rounding reaches 4.0e-4 of a control's travel and the values that
+// are genuinely out of range start at 0.6 of it, so the two populations have three
+// orders of magnitude between them and anything inside that separates them.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *MembersPublicTestSuite) TestARoundedValueIsStillInRange() {
@@ -549,11 +550,19 @@ func (s *MembersPublicTestSuite) TestARoundedValueIsStillInRange() {
 			of:   "1.0000001",
 		},
 		{
-			// A thousandth of the travel out is not rounding. Nothing in the corpus
-			// misses by that little and a device would resolve it, so it is a value
-			// somebody set wrongly.
-			name:    "a thousandth of the travel under the bottom",
-			of:      "-0.001",
+			// A thousandth of the travel out is still rounding, which is a
+			// correction: the corpus does miss by that little. One preset's `Delay`
+			// reads -2.00272e-05 against 0..0.05, four ten-thousandths of its own
+			// travel under the bottom, and it came off a device.
+			name: "a thousandth of the travel under the bottom",
+			of:   "-0.001",
+		},
+		{
+			// And a tenth of the travel is not. Nothing in the corpus misses by
+			// between a hundredth and six tenths, so this sits in the empty space
+			// between a file rounding and somebody setting a control wrongly.
+			name:    "a tenth of the travel under the bottom",
+			of:      "-0.1",
 			refused: true,
 		},
 		{
@@ -659,7 +668,7 @@ func (s *MembersPublicTestSuite) TestControlsPickTheModel() {
 				entry.Controls = &held
 			}
 
-			got, err := compile.Realise("x", rig.Spec{
+			got, _, err := compile.Realise("x", rig.Spec{
 				Instrument: rig.InstrumentGuitar,
 				Chain:      []rig.ChainEntry{entry},
 			}, s.cat)
@@ -667,6 +676,82 @@ func (s *MembersPublicTestSuite) TestControlsPickTheModel() {
 			s.Require().NoError(err)
 			s.Require().Len(got.Blocks, 1)
 			s.Require().Equal(tt.want, got.Blocks[0].Model)
+		})
+	}
+}
+
+// TestRealiseUsesTheControlsStated covers the values a document states reaching
+// the plan, and the ones its block cannot hold being named.
+//
+// The whole of what `presets compile` is for, and it did neither: every block came
+// back at the catalog's defaults, so a resolved rig handed to somebody rebuilt as
+// the catalog rather than as the sound.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MembersPublicTestSuite) TestRealiseUsesTheControlsStated() {
+	for _, tt := range []struct {
+		name string
+		// held is what the document says about the amplifier.
+		held map[string]string
+		// want is the value the plan should carry for Drive, if any.
+		want string
+		// over is the control that should be reported as not carried.
+		over string
+	}{
+		{
+			name: "a value the block carries",
+			held: map[string]string{"Drive": "0.33"},
+			want: "0.33",
+		},
+		{
+			// The default is what it was before anything applied the document, so
+			// a row asserting the stated value is the one that fails without it.
+			name: "a value that is not the default",
+			held: map[string]string{"Drive": "0.9"},
+			want: "0.9",
+		},
+		{
+			// Named rather than refused, because a preset keeps the parameters of
+			// whatever its blocks used to be and a lifted document states controls
+			// from two models.
+			name: "a control the block does not carry",
+			held: map[string]string{"Drive": "0.4", "Nonesuch": "0.5"},
+			want: "0.4",
+			over: "Nonesuch",
+		},
+	} {
+		s.Run(tt.name, func() {
+			held := map[string]catalog.Setting{}
+
+			for name, v := range tt.held {
+				var one catalog.Setting
+				s.Require().NoError(json.Unmarshal([]byte(`"`+v+`"`), &one))
+
+				held[name] = one
+			}
+
+			made, over, err := compile.Realise("x", rig.Spec{
+				Instrument: rig.InstrumentBass,
+				Chain: []rig.ChainEntry{{
+					Role: rig.RoleAmp, Gear: "Ampeg SVT", Controls: &held,
+				}},
+			}, s.cat)
+
+			s.Require().NoError(err)
+			s.Require().Len(made.Blocks, 1)
+			s.Require().Equal(tt.want, made.Blocks[0].Params["Drive"].String(),
+				"the document's own value, not the catalog's default")
+
+			if tt.over == "" {
+				s.Require().Empty(over)
+
+				return
+			}
+
+			s.Require().Len(over, 1)
+			s.Require().Equal(tt.over, over[0].Control)
+			s.Require().Equal("0.5", over[0].Value, "and the value that was lost")
+			s.Require().NotEmpty(over[0].Near, "with what the block does take")
 		})
 	}
 }
@@ -738,7 +823,7 @@ func (s *MembersPublicTestSuite) TestCorpusRebuilds() {
 			continue
 		}
 
-		if _, err := compile.Realise(id, spec, s.cat); err != nil {
+		if _, _, err := compile.Realise(id, spec, s.cat); err != nil {
 			missing++
 
 			s.Require().ErrorContains(err, "emulates",

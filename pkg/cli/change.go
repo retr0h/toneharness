@@ -23,6 +23,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
 
@@ -144,10 +145,53 @@ func Built(
 	w io.Writer,
 	b sdk.Built,
 ) error {
-	_, err := fmt.Fprintf(w, "\n%s%s  %s\n\n%s%s\n\n",
+	if _, err := fmt.Fprintf(w, "\n%s%s  %s\n",
 		paint.Indent, paint.Title(w, b.Name),
-		paint.Mute(w, fmt.Sprintf("%s in the chain", Plural(b.Blocks, "block"))),
+		paint.Mute(w, fmt.Sprintf("%s in the chain", Plural(b.Blocks, "block")))); err != nil {
+		return err
+	}
+
+	if err := dropped(w, b.Dropped); err != nil {
+		return err
+	}
+
+	_, err := fmt.Fprintf(w, "\n%s%s\n\n",
 		paint.Indent, paint.Success(w, "wrote "+b.Path))
 
 	return err
+}
+
+// dropped names the controls a document states that its blocks do not carry.
+//
+// Printed because the value is lost and nothing else would say so. A preset holds
+// the parameters of whatever its blocks used to be, so a document lifted off one
+// names controls from two models and refusing it would refuse a file the device
+// wrote; passing them over without a word is the other way to be wrong, where the
+// document reads one way and builds another.
+func dropped(
+	w io.Writer,
+	all []sdk.Dropped,
+) error {
+	if len(all) == 0 {
+		return nil
+	}
+
+	if _, err := fmt.Fprintln(w); err != nil {
+		return err
+	}
+
+	for _, d := range all {
+		line := fmt.Sprintf("chain[%d] has no %q, so %s was not set",
+			d.Block, d.Control, d.Value)
+		if len(d.Near) > 0 {
+			line += " — it takes " + strings.Join(d.Near, ", ")
+		}
+
+		if _, err := fmt.Fprintf(w, "%s%s %s\n",
+			paint.Indent, paint.Mute(w, "note"), line); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

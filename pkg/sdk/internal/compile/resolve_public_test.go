@@ -101,7 +101,7 @@ func realised(
 	spec rig.Spec,
 	cat *catalog.Catalog,
 ) plan.Plan {
-	made, err := compile.Realise("a-rig", spec, cat)
+	made, _, err := compile.Realise("a-rig", spec, cat)
 	s.Require().NoError(err)
 
 	return made

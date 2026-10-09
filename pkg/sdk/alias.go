@@ -56,6 +56,8 @@ type (
 	At = result.At
 	// Built is a preset compiled from a rig.
 	Built = result.Built
+	// Dropped is a control a document states that its block does not carry.
+	Dropped = result.Dropped
 
 	// Made is a preset built from a rig.
 	Made = result.Made
