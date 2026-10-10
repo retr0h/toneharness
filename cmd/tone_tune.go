@@ -37,6 +37,7 @@ var (
 	toneTuneTakes    int
 	toneTuneNudge    float64
 	toneTuneOut      string
+	toneTuneKeep     string
 	toneTuneAsk      string
 	toneTuneHardware string
 	toneTuneHeadroom float64
@@ -123,6 +124,7 @@ wrong for the sound is a real answer to somebody who owns that gear.`,
 			Volume:       toneTuneVolume,
 			Nudge:        toneTuneNudge,
 			Out:          toneTuneOut,
+			Keep:         toneTuneKeep,
 			Ask:          toneTuneAsk,
 			Hardware:     toneTuneHardware,
 		})
@@ -160,6 +162,12 @@ func init() {
 			"without it nothing records what was asked for")
 	f.StringVar(&toneTuneOut, "out", "",
 		"where the tuned chain goes, as a plan; without it nothing is kept")
+	f.StringVar(
+		&toneTuneKeep,
+		"keep",
+		"",
+		"a directory to write what the chain played into, as WAVs you can listen to: the dry reference that went in and the take that came back. The loop answers in ten figures and every one of them can sit inside tolerance while the sound is plainly wrong, so this is the reading an ear can check. Costs one more reading at the end of the run",
+	)
 	f.StringVar(
 		&toneTuneHardware,
 		"hardware",

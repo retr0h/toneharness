@@ -65,6 +65,10 @@ type Tuner interface {
 var (
 	// ErrNoTarget refuses a run with nothing to solve toward.
 	ErrNoTarget = errors.New("name a genre or a player to aim at")
+	// ErrNoReturn is a loop that gave nothing back, which is a signal path
+	// rather than a chain and has to be told apart from one that squealed: the
+	// figures of noise look like a squeal and the fix is the opposite.
+	ErrNoReturn = errors.New("nothing came back through the loop")
 	// ErrOneTarget refuses a run naming both, which is a question with two
 	// answers.
 	ErrOneTarget = errors.New(
@@ -138,6 +142,12 @@ type TuneOptions struct {
 	// Ask is a ToneSpec to append this round to, as a correction. Empty
 	// records nothing, which loses the only account of what was asked for.
 	Ask string
+	// Keep is a directory to write what the chain played into, as WAVs somebody
+	// can listen to. Empty keeps none of it, which is the default.
+	//
+	// Off unless asked for, because a pass is seconds of bass and a campaign is
+	// hundreds of them. On, it costs one more reading at the end of the run.
+	Keep string
 }
 
 // Genres is what a genre measures as across its records.
@@ -171,6 +181,10 @@ func Tune(
 	// Pinned first, and it matters more here than anywhere: the loop reads a
 	// slope, moves a dial and reads again, so a level that drifts mid-run is a
 	// slope the solver will spend dials chasing.
+	// Before the level, because the level is pinned on whichever device the
+	// platform plays through and that is the thing being set here.
+	playsThrough(w, opts, reamp.PlaysThrough)
+
 	levelled(w, opts.Volume, reamp.Held)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 
@@ -231,6 +245,10 @@ func Tune(
 		return err
 	}
 
+	// After the bench, because which device the reference plays through is not
+	// known until one is open, and the level was pinned before that.
+	pinLands(w, opts, bench)
+
 	defer release()
 
 	_, _ = fmt.Fprintf(w, "\n  %s aimed at %s, %d dials and %d lists through %s\n",
@@ -286,9 +304,20 @@ func Tune(
 	_, _ = fmt.Fprintf(w, "  level is held at %.1fdB, give or take %.1f\n",
 		aims[audio.KeyLevel].Want, aims[audio.KeyLevel].Tol)
 
-	first, err := sdk.Fingerprint(ctx, bench, signal)
+	// Hear rather than Fingerprint, because this reading is the one most worth
+	// keeping: it is the chain before anything moved, and it is what the guard
+	// below refuses on.
+	read, back, err := sdk.Hear(ctx, bench, signal)
 	if err != nil {
 		return err
+	}
+
+	first := sdk.Figures(read, sdk.Level(back))
+
+	// Whether anything came back at all, before any figure is read as a fact
+	// about the chain.
+	if say, dead := Returned(sdk.Level(signal), sdk.Level(back)); dead {
+		return deadLoop(w, opts, signal, back, say)
 	}
 
 	// Before a single control is moved. This loop applies what it solves for,
@@ -296,6 +325,14 @@ func Tune(
 	// wrong answer, it produces a chain turned to match one.
 	if say, bad := Squealing(figuresOf(first), figuresOfDry(signal),
 		inCorpusScale(floor), chainEndsInACab(made.Plan, cat)); bad {
+		// Kept before the refusal, because a refusal is when somebody most wants
+		// to listen. The figures name an oscillation and the recording is the
+		// only thing that says what it sounds like, which is how a cable, a
+		// routing and a preset on the wrong output are told apart.
+		if err := keepTakes(w, opts, signal, back); err != nil {
+			return err
+		}
+
 		return fmt.Errorf("%w: %s", ErrSquealing, say)
 	}
 
@@ -310,6 +347,12 @@ func Tune(
 	// conclusion about the run and one pass cannot reach it.
 	if !did.arrived {
 		missing(w, made.Plan, aims, did.read)
+	}
+
+	// Before the plan is written, so a run that cannot keep the audio says so
+	// rather than reporting a tuned chain and failing afterwards.
+	if err := keepPlayed(ctx, w, opts, bench, signal); err != nil {
+		return err
 	}
 
 	if err := keepTuned(ctx, w, opts, asBuilt); err != nil {
@@ -922,6 +965,148 @@ func backTo(
 	}
 
 	return out
+}
+
+// deadLoop keeps the pair and reports a loop that gave nothing back.
+//
+// Kept before the refusal, because a refusal is when somebody most wants to
+// listen. The figures of a dead return read as an oscillation and the recording
+// is the only thing that says otherwise, which is how a lead, a routing and a
+// preset on the wrong output are told apart.
+func deadLoop(
+	w io.Writer,
+	opts TuneOptions,
+	signal, back []float32,
+	say string,
+) error {
+	if err := keepTakes(w, opts, signal, back); err != nil {
+		return err
+	}
+
+	return fmt.Errorf("%w: %s", ErrNoReturn, say)
+}
+
+// keepPlayed writes what went into the chain and what came back, as WAVs.
+//
+// The figures are the loop's answer and they are not the whole of what happened:
+// ten numbers can every one sit inside tolerance while the sound is plainly
+// wrong. `Squealing` is the proof, caught only because somebody thought to look
+// for it; a reading somebody can play is the backstop for the one nobody has
+// thought of.
+//
+// Both halves, because one on its own says little. The dry file is what every
+// chain is measured with and the take is what this chain did to it, so the pair
+// is the comparison an ear can make and the arithmetic cannot.
+//
+// One reading, after the run, rather than a file per pass. A campaign is hundreds
+// of readings and keeping them all would be gigabytes of bass to answer a
+// question about the chain that was kept.
+func keepPlayed(
+	ctx context.Context,
+	w io.Writer,
+	opts TuneOptions,
+	bench sdk.Bench,
+	signal []float32,
+) error {
+	if opts.Keep == "" {
+		return nil
+	}
+
+	_, back, err := sdk.Hear(ctx, bench, signal)
+	if err != nil {
+		return err
+	}
+
+	return keepTakes(w, opts, signal, back)
+}
+
+// runNamed names a run for a filename.
+//
+// The identifier rather than `solvingFor`, which answers in prose: a player reads
+// as "mike-dirnt's own records" there, and an apostrophe and three spaces in a
+// filename is a path somebody has to quote. Both of these are corpus directory
+// names already, so they are safe as they stand.
+func runNamed(
+	opts TuneOptions,
+) string {
+	if opts.Player != "" {
+		return opts.Player
+	}
+
+	return opts.Genre
+}
+
+// keepTakes writes one pair of readings, the dry signal and what came back.
+func keepTakes(
+	w io.Writer,
+	opts TuneOptions,
+	signal []float32,
+	back []float32,
+) error {
+	if opts.Keep == "" {
+		return nil
+	}
+
+	if err := os.MkdirAll(opts.Keep, 0o750); err != nil {
+		return fmt.Errorf("making %s: %w", opts.Keep, err)
+	}
+
+	for _, one := range []struct {
+		name    string
+		samples []float32
+		says    string
+	}{
+		{"dry", signal, "what went in"},
+		{"chain", back, "what came back"},
+	} {
+		at := filepath.Join(opts.Keep,
+			fmt.Sprintf("%s-%s.wav", runNamed(opts), one.name))
+
+		if err := audio.Write(at, one.samples, sdk.Rate); err != nil {
+			return err
+		}
+
+		_, _ = fmt.Fprintf(w, "  [ok] wrote %s, %s\n", at, one.says)
+	}
+
+	heard(w, opts)
+
+	return nil
+}
+
+// heard names the bass the target was measured from, so the pair above has
+// something to be compared against.
+//
+// Named rather than copied. They are somebody's records, they are not this
+// project's to move around, and a path is all an ear needs.
+//
+// A player only. A genre's figures are the spread across every player who plays
+// it, so there is no one recording a genre target can be held up against, and
+// pointing at an arbitrary member of it would be inviting the wrong comparison.
+//
+// What the comparison is good for and what it is not: a record is mixed,
+// mastered and limited and a chain is one dry note, so these do not match and
+// are not meant to. It is for the faults no figure has a name for.
+func heard(
+	w io.Writer,
+	opts TuneOptions,
+) {
+	if opts.Player == "" || opts.Corpus == "" {
+		return
+	}
+
+	stems, err := filepath.Glob(filepath.Join(
+		opts.Corpus, opts.Player, "stems", "*", "*", "bass.wav"))
+	if err != nil || len(stems) == 0 {
+		return
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"\n  the bass %s was measured from, to hold those against:\n", opts.Player)
+
+	for _, at := range stems {
+		_, _ = fmt.Fprintf(w, "       %s\n", at)
+	}
 }
 
 // round is what one run of the loop did, for the correction it becomes.

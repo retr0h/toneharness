@@ -230,3 +230,35 @@ func referenceIsFor(
 
 	return ""
 }
+
+// Returned says whether anything came back through the loop.
+//
+// Asked before any figure is read as a fact about the chain, because a reading
+// of the converter's own floor is a reading of noise and noise answers every
+// other question wrongly. Band shares are the trap: noise is broadband, so a
+// dead return reads more of its energy above 2kHz than a bass reference does and
+// trips `Squealing`, which then tells somebody to turn an amplifier down over a
+// lead that is not carrying. The two faults have opposite fixes.
+//
+// Measured against what went in rather than against the settled reading, because
+// a dead path settles on its own noise: `steady` measured the same silence and
+// every figure relative to it agrees with every other.
+//
+// The populations are nowhere near each other. A working loop here loses 16dB,
+// -13dB of bass going in and -28.9dB coming back; the dead one lost 66. The
+// threshold is `silent`, which is already this project's answer to "that reading
+// is the noise floor" and sits twice above the working case and half below the
+// dead one.
+func Returned(
+	sent, got float64,
+) (string, bool) {
+	if sent-got <= silent {
+		return "", false
+	}
+
+	return fmt.Sprintf(
+		"%.1fdB went in and %.1fdB came back, which is %.0fdB of loss and not a "+
+			"chain\n      Nothing is returning: check the lead into the "+
+			"interface's input, and that the preset's output is the one it is "+
+			"plugged into", sent, got, sent-got), true
+}

@@ -306,6 +306,97 @@ audio, because a tone on USB 1/2 comes out of the Main outs and was heard, and
 the pedal can send the computer audio, because the chain reaches USB 1/2. Only
 that one link is missing.
 
+## The computer's output device is part of the rig, and the tool sets it
+
+The output level is pinned because an amplifier's distortion depends on how hard
+it is driven, so a campaign at a different setting measures every amplifier as a
+different amplifier. **The level belongs to a device**, and that is the half that
+was missing: pin it while the platform's default output is some other device and
+the number is about a device that is not in the signal path.
+
+So a run that plays the reference out of the computer sets the device first and
+pins the level on it second, and says both:
+
+```
+  the computer plays through External Headphones, which the level below belongs to
+  the computer's output level moved to 38, for a consistent rig
+```
+
+CoreAudio rather than AppleScript, which owns the slider and has nothing to say
+about which device the slider belongs to. `reamp.PlaysThrough` matches the name
+the way `--hardware` does, so the same string means the same device in both
+places, and it reads the device back afterwards rather than trusting the change.
+
+**What it cost to not have this.** A Mac with its default on a pair of Bluetooth
+headphones pinned those to 38 while the jack feeding the pedal sat wherever it
+was left. The loop read 66dB of loss, the run reported a dead return, and an hour
+went on the cabling, which was correct the whole time. Switching the output by
+hand mid-run then did it again from the other side: the device changed, macOS
+restored that device's own remembered volume of **0**, and the pin from the start
+of the run was a number about a device nobody was listening to.
+
+Both of those are the same mistake twice. A figure that moves with something
+nobody is watching is the thing this whole page exists for.
+
+On the one-device rig the pedal plays the reference and the computer's output is
+not in the path, so nothing is set and nothing is said.
+
+## Keep the audio when the figures do not add up
+
+`tone tune --keep <dir>` writes what went in and what came back as WAVs, plus the
+paths of the bass stems the target was measured from. Off by default, because a
+pass is seconds of bass and a campaign is hundreds of them; on, it costs one more
+reading at the end of a run.
+
+It is for the fault the figures have no name for. The loop answers in ten numbers
+and every one of them can sit inside tolerance while the sound is plainly wrong:
+the first run that kept its audio is the section below, where the figures said the
+loop was oscillating and the recording was a flat noise floor.
+
+**Kept before a refusal as well as after a run**, because a refusal is when
+somebody most wants to listen. A run that writes nothing on the way out is a run
+that keeps the audio only when nothing was wrong with it.
+
+What the pair is and is not good for. A record is mixed, mastered and limited and
+a chain is one dry note through one amplifier, so the take and the stem do not
+match and are not meant to, which is why the solver aims at a displacement rather
+than at a record's own figures. The comparison is for an ear catching what no
+figure is watching for.
+
+## A dead loop reads as a squeal, and the fix is the opposite
+
+**Check the level before believing any band share.** The squeal guard compares how
+much of the returned energy sits above 2kHz against the reference's share. Noise
+is broadband, so a return that is nothing but the converter's own floor reads
+*brighter* than a bass reference and trips it. The run then says the loop is
+oscillating and tells somebody to turn the amplifier's output down, over a lead
+that is not carrying.
+
+That happened on this rig, and the figures alone could not tell the two apart:
+
+| | the dry reference in | what came back |
+| --------------- | -------------------: | -------------: |
+| level | -16.1dB | -81.9dB |
+| peak sample | 0.562 | 0.0004 |
+| above 2kHz | 0.00% | 7.1% |
+| level over 5.8s | -21 to -13dB | -82dB, every window |
+
+**Flat is the tell.** An oscillation builds or rings; a noise floor sits at one
+number for the whole take. The 7.1% was the share of nothing.
+
+`Returned` is the guard now, and it runs first, comparing what came back against
+what went in rather than against the settled reading. A dead path settles on its
+own noise, so every figure measured relative to it agrees with every other one.
+The two populations are nowhere near each other: **a working loop here loses 16dB
+and the dead one lost 66.**
+
+```
+nothing came back through the loop: -16.1dB went in and -81.9dB came back,
+which is 66dB of loss and not a chain
+      Nothing is returning: check the lead into the interface's input, and
+      that the preset's output is the one it is plugged into
+```
+
 ## A high-gain amplifier oscillates on its own, and the guard is right about it
 
 Twenty of the 661 blocks refused #189's campaign, every one an amplifier built to
