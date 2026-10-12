@@ -147,6 +147,43 @@ func (s *ChooseTestSuite) TestListsOf() {
 			},
 		},
 		{
+			// The controls a solve may not turn.
+			//
+			// Modelled valve behaviour rather than tone: Sag is the supply
+			// drooping, Bias and BiasX how hard the valves are run, Hum and
+			// Ripple the mains in the signal. A band share closed by rebiasing
+			// the output valves closes as well as one closed with the tone
+			// stack, and only one of them is what anybody meant: a run took Sag
+			// to 1.000 and Hum to 0.775 and the chain sounded worse than the rig
+			// it started from.
+			//
+			// Left where the rig put them rather than dropped. A rig stating a
+			// Sag still gets it; what cannot happen is the loop deciding one.
+			name: "knobs of leaves the amplifier's valves alone",
+			then: func() {
+				amp := catalog.ModelID("HD2_AmpSVBeastBrt")
+				made := plan.Plan{Blocks: []plan.Block{{
+					Model: amp, Pos: 0, Enabled: true,
+				}}}
+
+				got := map[string]bool{}
+				for _, k := range knobsOf(made, s.catalog()) {
+					got[k.Setting] = true
+				}
+
+				for _, name := range []string{"Sag", "Bias", "BiasX", "Hum", "Ripple"} {
+					s.Require().False(got[name],
+						"%s is the amplifier's own behaviour, not a dial for a target", name)
+				}
+
+				// And the tone stack is still every bit of it, because taking
+				// the wrong five away would leave a solve nothing to turn.
+				for _, name := range []string{"Bass", "Mid", "Treble", "Drive", "ChVol", "Master"} {
+					s.Require().True(got[name], "%s is a tone control and stays", name)
+				}
+			},
+		},
+		{
 			// The kind that used to be skipped.
 			//
 			// A switch is a choice of two and is compared on the same
