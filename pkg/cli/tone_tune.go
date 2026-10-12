@@ -43,6 +43,15 @@ type Builds interface {
 	Make(ctx context.Context, in sdk.Build) (sdk.Made, error)
 }
 
+// ShowsRigs reads one rig document back.
+//
+// Its own seam because a run only needs it where the dials ran out: amending a
+// chain means having the document that describes it, and every other thing the
+// loop does works from the plan the document resolved to.
+type ShowsRigs interface {
+	Rig(ctx context.Context, id string) (sdk.Rig, error)
+}
+
 // Tuner is what solving for knob positions needs: build a chain, put it in
 // front of the device, move one control and read back what the chain is.
 //
@@ -51,6 +60,7 @@ type Builds interface {
 // lists it compares one setting at a time.
 type Tuner interface {
 	Builds
+	ShowsRigs
 	Compiles
 	ReadsFiles
 	Plays
@@ -142,6 +152,12 @@ type TuneOptions struct {
 	// Ask is a ToneSpec to append this round to, as a correction. Empty
 	// records nothing, which loses the only account of what was asked for.
 	Ask string
+	// Extend is where to write the rig with the block the measurement asked for
+	// added to its chain. Empty writes nothing, which is the default.
+	//
+	// Only ever reached where the dials ran out, because a chain that met its
+	// target has nothing missing.
+	Extend string
 	// Keep is a directory to write what the chain played into, as WAVs somebody
 	// can listen to. Empty keeps none of it, which is the default.
 	//
@@ -347,6 +363,10 @@ func Tune(
 	// conclusion about the run and one pass cannot reach it.
 	if !did.arrived {
 		missing(w, made.Plan, aims, did.read)
+
+		if err := extend(ctx, w, opts, made.Plan, aims, did.read, cat); err != nil {
+			return err
+		}
 	}
 
 	// Before the plan is written, so a run that cannot keep the audio says so
