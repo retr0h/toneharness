@@ -58,6 +58,45 @@ func (mr *MockBuildsMockRecorder) Make(ctx, in any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Make", reflect.TypeOf((*MockBuilds)(nil).Make), ctx, in)
 }
 
+// MockShowsRigs is a mock of ShowsRigs interface.
+type MockShowsRigs struct {
+	ctrl     *gomock.Controller
+	recorder *MockShowsRigsMockRecorder
+	isgomock struct{}
+}
+
+// MockShowsRigsMockRecorder is the mock recorder for MockShowsRigs.
+type MockShowsRigsMockRecorder struct {
+	mock *MockShowsRigs
+}
+
+// NewMockShowsRigs creates a new mock instance.
+func NewMockShowsRigs(ctrl *gomock.Controller) *MockShowsRigs {
+	mock := &MockShowsRigs{ctrl: ctrl}
+	mock.recorder = &MockShowsRigsMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockShowsRigs) EXPECT() *MockShowsRigsMockRecorder {
+	return m.recorder
+}
+
+// Rig mocks base method.
+func (m *MockShowsRigs) Rig(ctx context.Context, id string) (sdk.Rig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Rig", ctx, id)
+	ret0, _ := ret[0].(sdk.Rig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Rig indicates an expected call of Rig.
+func (mr *MockShowsRigsMockRecorder) Rig(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rig", reflect.TypeOf((*MockShowsRigs)(nil).Rig), ctx, id)
+}
+
 // MockTuner is a mock of Tuner interface.
 type MockTuner struct {
 	ctrl     *gomock.Controller
@@ -183,6 +222,21 @@ func (m *MockTuner) PresetFile(ctx context.Context, path string) (sdk.Reading, e
 func (mr *MockTunerMockRecorder) PresetFile(ctx, path any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresetFile", reflect.TypeOf((*MockTuner)(nil).PresetFile), ctx, path)
+}
+
+// Rig mocks base method.
+func (m *MockTuner) Rig(ctx context.Context, id string) (sdk.Rig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Rig", ctx, id)
+	ret0, _ := ret[0].(sdk.Rig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Rig indicates an expected call of Rig.
+func (mr *MockTunerMockRecorder) Rig(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rig", reflect.TypeOf((*MockTuner)(nil).Rig), ctx, id)
 }
 
 // Switch mocks base method.
