@@ -220,6 +220,7 @@ func (m *measurer) grammarOf(
 
 	seen := map[catalog.Category]bool{}
 	held := map[catalog.ModelID]bool{}
+	runs := map[run]map[catalog.Category]int{}
 
 	for i, b := range spec.Blocks {
 		blk, known := m.cat.Block(b.Model)
@@ -254,6 +255,30 @@ func (m *measurer) grammarOf(
 		} else {
 			c.after++
 		}
+
+		at := run{dsp: b.DSP, path: b.Path()}
+		if runs[at] == nil {
+			runs[at] = map[catalog.Category]int{}
+		}
+
+		runs[at][blk.Category]++
+	}
+
+	// Once per chain per category, however many runs repeat it: the figure
+	// is the share of chains that do, so a chain holding two drives on each
+	// of two paths is still one chain that doubled its drive.
+	repeated := map[catalog.Category]bool{}
+
+	for _, counts := range runs {
+		for category, n := range counts {
+			if n >= 2 {
+				repeated[category] = true
+			}
+		}
+	}
+
+	for category := range repeated {
+		m.grammar[instrument][category].twice++
 	}
 }
 
@@ -332,6 +357,7 @@ func (m *measurer) reduce(
 		for category, c := range cats {
 			g.Categories[category] = corpus.CategoryStats{
 				Chains: c.chains, Before: c.before, After: c.after,
+				Twice: c.twice,
 			}
 		}
 

@@ -101,6 +101,22 @@ type CategoryStats struct {
 	// drive after it does something else entirely.
 	Before int `json:"before"`
 	After  int `json:"after"`
+	// Twice is how many of those chains hold two or more in one series run.
+	//
+	// Within one run, because that is the only arrangement a rig's chain can
+	// express: two amplifiers on opposite sides of a parallel split is a
+	// dual-amp rig people really build, and it is not what appending to a
+	// flat chain produces. Counting the split as a repeat would read the
+	// evidence for a chain nothing here can write.
+	//
+	// Every block the player placed, bypassed or not. A bypassed drive is a
+	// drive the player put in the chain to switch in, so it is evidence about
+	// the shape they built; counting only what was enabled answers the
+	// different question of what happened to be on at save time, and it moves
+	// bass drive from 19.6% of chains to 2.0%.
+	//
+	// Empty in statistics measured before it was counted.
+	Twice int `json:"twice,omitempty"`
 }
 
 // Frequency is the share of chains holding at least one of these.
@@ -112,6 +128,26 @@ func (c CategoryStats) Frequency(
 	}
 
 	return float64(c.Chains) / float64(chains)
+}
+
+// Repeats is the share of chains holding one of these that hold two.
+//
+// What it is for: deciding whether a chain may be given a second of a kind it
+// already holds. Across the corpus every category people place twice sits
+// above 4% of the chains that hold one, and the amplifier sits at 1.2% for
+// bass and 7.3% for guitar once a parallel split is discounted. So the figure
+// separates the kinds a chain may repeat from the one it may not, and it does
+// it from the evidence rather than from anybody's assertion.
+//
+// Zero where nothing counted it, which reads as "do not repeat this". That is
+// the safe direction: a chain that stays as it is beats one given a block on
+// no evidence.
+func (c CategoryStats) Repeats() float64 {
+	if c.Chains == 0 {
+		return 0
+	}
+
+	return float64(c.Twice) / float64(c.Chains)
 }
 
 // BeforeAmp is the share of instances that sit ahead of the amp.

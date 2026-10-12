@@ -78,7 +78,14 @@ func extend(
 		return nil
 	}
 
-	pick, ok := ranked(made, aims, now, cat)
+	// The chain's own instrument, not the document's declared one, because
+	// both lookups below land in the corpus grammar and the corpus keys it by
+	// what the chain's amplifier is for. A rig that asks for bass and resolved
+	// to a guitar amplifier is described by the guitar statistics whatever its
+	// `instrument:` says.
+	instrument := plan.InstrumentFor(made, cat)
+
+	pick, ok := ranked(made, aims, now, cat, instrument)
 	if !ok {
 		_, _ = fmt.Fprintf(w,
 			"  nothing measured moves what is missing, so there is no block to add\n")
@@ -90,8 +97,6 @@ func extend(
 	if err != nil {
 		return err
 	}
-
-	instrument := string(doc.Rig.Instrument)
 
 	amended, err := amend(doc, pick, cat, opts, instrument)
 	if err != nil {
@@ -127,19 +132,42 @@ func extend(
 //
 // The same call `missing` prints from, asked for one rather than five, so the
 // table somebody reads and the block that gets written can never disagree.
-// A kind the chain already holds is passed over, which is the rule `fill`
-// follows for the blocks the corpus expects and the one this got wrong first.
+// How many of a kind the chain may hold comes from the corpus, because the
+// first rule here was that it may hold one.
+//
 // An amplifier's reading moves the centroid further than almost anything
 // measured, so amplifiers win the ranking outright, and acting on that put a
 // second amp after the cabinet: `EVH 5150III` appended to a chain that already
-// had an Ampeg SVT. Two amplifiers in series is not a chain anybody would build,
-// and the shortlist cannot know that because it ranks one block's reading rather
-// than a chain.
+// had an Ampeg SVT. Refusing every kind the chain already held stopped that,
+// and it also stopped the shape `05C Ultimate Amp` is built on, a drive on each
+// side of the amplifier. One rule cannot be right for both, because a second
+// drive is a chain people build and a second amplifier in series is not.
+//
+// So the corpus answers it. `Repeats` is the share of chains holding one of a
+// kind that hold two of it in one series run, and the kinds separate cleanly:
+//
+//	bass     comp 26.7%  drive 19.6%  mod 14.8%  delay 12.0%  eq 7.7%
+//	         reverb 4.3%  pitch 4.3%  cab 0.0%   amp 1.2%
+//	guitar   eq 32.1%  mod 20.1%  drive 19.9%  delay 17.9%  reverb 9.1%
+//	         comp 7.4%  amp 7.3%  pitch 3.6%  cab 0.3%
+//
+// A series run, counted that way on purpose: two cabinets either side of a Y
+// split is a blend people build and reads as a repeat if the split is ignored,
+// which is how a first measurement of this put bass cab at 16.3% instead of
+// zero. A chain here is flat, so the evidence has to be about flat chains.
+//
+// The amplifier needs no threshold to be refused. `tonal` keeps it out of the
+// grammar altogether, because the amp is the thing every other block is
+// positioned around rather than a neighbour of itself, so `Repeats` reads zero
+// for it and zero means do not repeat. The threshold below only has to separate
+// the cabinet from the kinds above it, and the gap it sits in is wide: nothing
+// measured falls between 0.3% and 3.6%.
 func ranked(
 	made plan.Plan,
 	aims map[audio.Figure]solve.Aim,
 	now map[audio.Figure]float64,
 	cat *catalog.Catalog,
+	instrument string,
 ) (measured.Suggestion, bool) {
 	lib, err := measured.BuiltIn()
 	if err != nil {
@@ -155,22 +183,109 @@ func ranked(
 	// one would leave nothing to fall back to.
 	got := measured.Shortlist(lib, want, inTheChain(made), shortlisted)
 
-	held := map[catalog.Category]bool{}
-	for _, b := range made.Blocks {
-		if one, known := cat.Block(b.Model); known {
-			held[one.Category] = true
-		}
-	}
+	runs := inSeries(made, cat)
 
 	for _, one := range got {
-		if held[one.Block.Category] {
-			continue
+		if room(runs, one.Block.Category, instrument) {
+			return one, true
 		}
-
-		return one, true
 	}
 
 	return measured.Suggestion{}, false
+}
+
+// repeatable is how often a kind has to be doubled in the corpus before this
+// will double it.
+//
+// One chain in fifty, which is a low bar on purpose. The ranking already
+// decides whether a block helps; this only has to refuse the shapes nobody
+// builds, and those sit at 0.3% and below while everything attested sits at
+// 3.6% and above. A number anywhere in that gap behaves identically, so the
+// midpoint is the one that will still be right if either side moves.
+const repeatable = 0.02
+
+// holdsTwo is the most of one kind a chain may be given.
+//
+// Two, because `Repeats` counts chains holding two or more without separating
+// two from three. Reading evidence for "at least two" as licence for a third
+// would be claiming something nobody counted.
+const holdsTwo = 2
+
+// inSeries counts how many of each kind the chain already holds, per run.
+//
+// Keyed the same way the corpus counts, so what is measured and what is checked
+// against it are the same question.
+func inSeries(
+	made plan.Plan,
+	cat *catalog.Catalog,
+) map[catalog.Category]int {
+	most := map[catalog.Category]int{}
+
+	for _, counts := range byRun(made, cat) {
+		for c, n := range counts {
+			if n > most[c] {
+				most[c] = n
+			}
+		}
+	}
+
+	return most
+}
+
+// byRun groups a chain's blocks by processor and side of a split.
+func byRun(
+	made plan.Plan,
+	cat *catalog.Catalog,
+) map[[2]int]map[catalog.Category]int {
+	out := map[[2]int]map[catalog.Category]int{}
+
+	for _, b := range made.Blocks {
+		one, known := cat.Block(b.Model)
+		if !known {
+			continue
+		}
+
+		at := [2]int{b.DSP, b.Path()}
+		if out[at] == nil {
+			out[at] = map[catalog.Category]int{}
+		}
+
+		out[at][one.Category]++
+	}
+
+	return out
+}
+
+// room reports whether the chain may take another of a kind.
+//
+// An instrument the corpus never measured refuses every repeat, which is the
+// same direction `side` takes for a kind it never counted: a chain left as it
+// is beats one given a block on no evidence.
+func room(
+	runs map[catalog.Category]int,
+	c catalog.Category,
+	instrument string,
+) bool {
+	has := runs[c]
+	if has == 0 {
+		return true
+	}
+
+	if has >= holdsTwo {
+		return false
+	}
+
+	stats, err := corpus.BuiltIn()
+	if err != nil {
+		return false
+	}
+
+	g, seen := stats.Grammar[instrument]
+	if !seen {
+		return false
+	}
+
+	return g.Categories[c].Repeats() >= repeatable
 }
 
 // amend puts the block into the document's chain, on the side the corpus puts

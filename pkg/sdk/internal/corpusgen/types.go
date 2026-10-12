@@ -52,4 +52,15 @@ type counter struct {
 	chains int
 	before int
 	after  int
+	twice  int
+}
+
+// run identifies one series run: a processor and a side of a parallel split.
+//
+// Blocks sharing a run are in series with each other and nothing else is.
+// Position within the run does not matter here, because what is being counted
+// is how many of a kind the run holds rather than their order.
+type run struct {
+	dsp  int
+	path int
 }

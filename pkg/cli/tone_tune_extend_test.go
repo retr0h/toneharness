@@ -308,3 +308,161 @@ func TestExtendTestSuite(
 ) {
 	suite.Run(t, new(ExtendTestSuite))
 }
+
+// TestRoom covers how many of a kind a chain may be given.
+//
+// The figures in the cases are the corpus's own, printed by `ranked`'s comment
+// and measured within one series run. They move when records are added, so a
+// case that starts failing is a signal to re-read them rather than to change
+// the expectation.
+func (s *ExtendTestSuite) TestRoom() {
+	for _, tt := range []struct {
+		name       string
+		runs       map[catalog.Category]int
+		of         catalog.Category
+		instrument string
+		want       bool
+	}{
+		{
+			// Nothing of that kind in the chain, so nothing to decide.
+			name:       "a kind the chain does not hold",
+			runs:       map[catalog.Category]int{},
+			of:         catalog.CategoryDrive,
+			instrument: "bass",
+			want:       true,
+		},
+		{
+			// 19.6% of bass chains holding a drive hold two, which is the
+			// shape 05C is built on and the one the first rule here refused.
+			name:       "a second drive on a bass chain",
+			runs:       map[catalog.Category]int{catalog.CategoryDrive: 1},
+			of:         catalog.CategoryDrive,
+			instrument: "bass",
+			want:       true,
+		},
+		{
+			// 26.7%, the most repeated kind on a bass chain.
+			name:       "a second compressor on a bass chain",
+			runs:       map[catalog.Category]int{catalog.CategoryComp: 1},
+			of:         catalog.CategoryComp,
+			instrument: "bass",
+			want:       true,
+		},
+		{
+			// `tonal` keeps the amplifier out of the grammar, so Repeats reads
+			// zero for it. This is the EVH 5150III appended after an SVT.
+			name:       "a second amplifier",
+			runs:       map[catalog.Category]int{catalog.CategoryAmp: 1},
+			of:         catalog.CategoryAmp,
+			instrument: "bass",
+			want:       false,
+		},
+		{
+			// 0.0% for bass. Two cabinets in series is not the blend people
+			// build; that one is either side of a split.
+			name:       "a second cabinet",
+			runs:       map[catalog.Category]int{catalog.CategoryCab: 1},
+			of:         catalog.CategoryCab,
+			instrument: "bass",
+			want:       false,
+		},
+		{
+			// Two is the most the evidence supports, because Repeats counts
+			// chains holding two or more without separating two from three.
+			name:       "a third drive",
+			runs:       map[catalog.Category]int{catalog.CategoryDrive: 2},
+			of:         catalog.CategoryDrive,
+			instrument: "bass",
+			want:       false,
+		},
+		{
+			// No grammar, no evidence, no repeat.
+			name:       "an instrument nothing measured",
+			runs:       map[catalog.Category]int{catalog.CategoryDrive: 1},
+			of:         catalog.CategoryDrive,
+			instrument: "theremin",
+			want:       false,
+		},
+		{
+			// A kind the corpus never counted answers the same way.
+			name:       "a kind nothing has counted",
+			runs:       map[catalog.Category]int{catalog.Category("nonesuch"): 1},
+			of:         catalog.Category("nonesuch"),
+			instrument: "bass",
+			want:       false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, room(tt.runs, tt.of, tt.instrument))
+		})
+	}
+}
+
+// TestInSeries covers counting what the chain already holds.
+//
+// Per run, because that is how the corpus counts: two of a kind either side of
+// a parallel split is not two in series, and reading it as such put bass cab at
+// 16.3% where the real figure is zero.
+func (s *ExtendTestSuite) TestInSeries() {
+	drive := catalog.ModelID("HD2_DistObsidian7000")
+	amp := catalog.ModelID("HD2_AmpSVBeastBrt")
+
+	for _, tt := range []struct {
+		name   string
+		blocks []plan.Block
+		of     catalog.Category
+		want   int
+	}{
+		{
+			name:   "an empty chain",
+			blocks: nil,
+			of:     catalog.CategoryDrive,
+			want:   0,
+		},
+		{
+			name: "two drives in one run",
+			blocks: []plan.Block{
+				{Model: drive, Pos: 0, Enabled: true},
+				{Model: amp, Pos: 1, Enabled: true},
+				{Model: drive, Pos: 2, Enabled: true},
+			},
+			of:   catalog.CategoryDrive,
+			want: 2,
+		},
+		{
+			name: "two drives on different processors",
+			blocks: []plan.Block{
+				{Model: drive, DSP: 0, Pos: 0, Enabled: true},
+				{Model: drive, DSP: 1, Pos: 0, Enabled: true},
+			},
+			of:   catalog.CategoryDrive,
+			want: 1,
+		},
+		{
+			// A bypassed block still occupies its position, and a chain that
+			// is given a second one still ends up holding two.
+			name: "a bypassed drive still counts",
+			blocks: []plan.Block{
+				{Model: drive, Pos: 0, Enabled: false},
+				{Model: drive, Pos: 1, Enabled: true},
+			},
+			of:   catalog.CategoryDrive,
+			want: 2,
+		},
+		{
+			// A model the catalog does not carry cannot be categorised, so it
+			// cannot be counted.
+			name: "a model the catalog lacks",
+			blocks: []plan.Block{
+				{Model: catalog.ModelID("HD2_Nonesuch"), Pos: 0, Enabled: true},
+			},
+			of:   catalog.CategoryDrive,
+			want: 0,
+		},
+	} {
+		s.Run(tt.name, func() {
+			got := inSeries(plan.Plan{Blocks: tt.blocks}, s.cat())
+			s.Require().Equal(tt.want, got[tt.of])
+		})
+	}
+}

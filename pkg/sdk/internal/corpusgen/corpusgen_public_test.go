@@ -372,3 +372,54 @@ func TestCorpusgenPublicTestSuite(
 ) {
 	suite.Run(t, new(CorpusgenPublicTestSuite))
 }
+
+// TestTwice counts the chains that hold two of a kind in one series run.
+//
+// Per run on purpose, and the split case is the one worth having: two drives
+// either side of a parallel split is not two in series, and counting it as one
+// read bass cab at 16.3% where the real figure is zero. The fixture corpus
+// holds `twodrives.hlx`, which is 05C's shape, and `splitdrives.hlx`, which is
+// the same two blocks arranged so they are not in series with each other.
+func (s *CorpusgenPublicTestSuite) TestTwice() {
+	tests := []struct {
+		name  string
+		of    catalog.Category
+		twice int
+	}{
+		{
+			// Two fixtures, one repeat. `twodrives.hlx` holds its two drives
+			// in one run and `splitdrives.hlx` holds the same two blocks
+			// either side of a parallel split, so they are not in series with
+			// each other and do not count. That second fixture is the whole
+			// point of the case: counting it would be reading evidence for a
+			// chain nothing here can write, which is how a first measurement
+			// of this put bass cab at 16.3% where the real figure is zero.
+			name:  "a kind one chain doubles in series",
+			of:    catalog.CategoryDrive,
+			twice: 1,
+		},
+		{
+			// No fixture holds two cabinets in one run.
+			name:  "a kind no chain doubles",
+			of:    catalog.CategoryCab,
+			twice: 0,
+		},
+	}
+
+	cat, err := catalog.Open(filepath.Join("testdata", "catalog.json"))
+	s.Require().NoError(err)
+
+	// Its own corpus, not the suite's: these two presets exist to be counted
+	// a particular way, and dropping them into the shared fixture moved the
+	// sample sizes a neighbouring case reasons about block by block.
+	got, err := corpusgen.Measure(corpusgen.Options{
+		CorpusDir: filepath.Join("testdata", "repeats"),
+	}, cat)
+	s.Require().NoError(err)
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.twice, got.Grammar["bass"].Categories[tt.of].Twice)
+		})
+	}
+}
