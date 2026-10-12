@@ -23,10 +23,13 @@ package compile
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
@@ -42,32 +45,42 @@ func Realise(
 	id string,
 	spec rig.Spec,
 	cat *catalog.Catalog,
-) (plan.Plan, error) {
+) (plan.Plan, []result.Dropped, error) {
 	// Checked on the way in as well as on the way out. A rig can arrive from
 	// anywhere — a file somebody wrote, a model that generated one — and
 	// building a plan out of one that does not meet its own contract turns a
 	// legible error into a device refusing a file.
 	if err := rig.Validate(spec); err != nil {
-		return plan.Plan{}, err
+		return plan.Plan{}, nil, err
 	}
 
 	blocks := make([]plan.Block, 0, len(spec.Chain))
+	dropped := []result.Dropped(nil)
 
 	for i, entry := range spec.Chain {
 		model, err := modelFor(entry, cat, string(spec.Instrument))
 		if err != nil {
-			return plan.Plan{}, fmt.Errorf("chain entry %d: %w", i, err)
+			return plan.Plan{}, nil, fmt.Errorf("chain entry %d: %w", i, err)
 		}
 
 		blk, _ := cat.Block(model)
 
+		// The catalog's defaults with no corpus behind them: Line 6 state one for
+		// every parameter and it is never invalid, while a median is an opinion
+		// about what other people did and belongs to a build that asked for one.
+		params := settings(blk, nil)
+
+		// Then what the document actually says, which is the whole of what this
+		// path is for. Without it a rig stated every control and got the
+		// defaults: `PeakReduction` edited to 0.33 compiled to 0.78, and a
+		// document handed to somebody else rebuilt as the catalog rather than as
+		// the sound. `Make` applies them in `statedControls`; nothing applied
+		// them here.
+		dropped = append(dropped, stateOnto(params, blk, entry, i)...)
+
 		blocks = append(blocks, plan.Block{
-			Model: model,
-			// The catalog's defaults with no corpus behind them: Line 6 state
-			// one for every parameter and it is never invalid, while a median
-			// is an opinion about what other people did and belongs to a build
-			// that asked for one.
-			Params:  settings(blk, nil),
+			Model:   model,
+			Params:  params,
 			DSP:     0,
 			Pos:     at(entry.Position, i),
 			Enabled: playing(entry),
@@ -78,7 +91,58 @@ func Realise(
 	// The identifier rather than a subject's name, because a subject is what
 	// somebody asked for and lives on the ask. It arrives as an argument since
 	// version 2: the document owns the name and a rig is a section of it.
-	return plan.Plan{Name: id, Rig: id, Blocks: blocks}, nil
+	return plan.Plan{Name: id, Rig: id, Blocks: blocks}, dropped, nil
+}
+
+// stateOnto puts one chain entry's stated controls onto its block.
+//
+// A control the block does not carry is passed over rather than refused, because a
+// real preset holds the parameters of whatever its blocks used to be. One in the
+// corpus files an `HD2_EQGraphic10Band` under a key still carrying `Emphasis`,
+// `Gain`, `Mix`, `PeakReduction` and `Type` beside the ten band gains, which is a
+// compressor somebody changed into an EQ. Lifted, that document states controls
+// from two models and no model carries them all, so refusing it would refuse a
+// preset the device itself wrote.
+//
+// A value past the control's own end is left to `plan.Validate`, which refuses it
+// before anything is written and words it better than a second check here would.
+// So nothing in here can fail, which is why it answers with no error.
+//
+// Passed over is not the same as reported, and it is not reported: `Realise` has
+// nothing to print to and `result.Built` carries no note. A control dropped in
+// silence is still a document that reads one way and builds another.
+func stateOnto(
+	params plan.Params,
+	blk catalog.Block,
+	entry rig.ChainEntry,
+	at int,
+) []result.Dropped {
+	if entry.Controls == nil {
+		return nil
+	}
+
+	dropped := []result.Dropped(nil)
+
+	// Sorted, so a document with two bad values names them in the same order
+	// every run rather than whichever way a map happened to range.
+	for _, name := range slices.Sorted(maps.Keys(*entry.Controls)) {
+		v := (*entry.Controls)[name]
+
+		if _, ok := blk.Params[name]; !ok {
+			dropped = append(dropped, result.Dropped{
+				Block:   at,
+				Control: name,
+				Value:   v.String(),
+				Near:    takes(blk),
+			})
+
+			continue
+		}
+
+		params[name] = v.ParamValue
+	}
+
+	return dropped
 }
 
 // Lower writes a plan into a preset.

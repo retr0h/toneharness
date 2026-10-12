@@ -311,15 +311,27 @@ func findGear(
 	// biggest reason a document could not be handed to somebody else.
 	// The controls first, where the document states any.
 	if len(holds) > 0 {
-		if b, found := anyInstrument(cat, gear, category, instrument, holds); found {
+		if b, found := anyInstrument(cat, gear, category, instrument, holds, true); found {
 			return b, nil
 		}
 	}
 
-	// Then the name alone, which is the answer for a rig nobody lifted and the
-	// fallback when no model carries everything the document says. Falling back
-	// rather than failing keeps the error about the gear a person named.
-	if b, found := anyInstrument(cat, gear, category, instrument, nil); found {
+	// Then the closest, which ranks by how many of those controls a model carries
+	// before it falls back to the name. One rung rather than two, and that is the
+	// bug it fixes: dropping straight from "every control" to "no controls at all"
+	// threw away every control that did match.
+	//
+	// A document naming `Teletronix LA-2A` with the LA Studio Comp's six controls
+	// and one more besides matched six of seven on the LA Studio Comp and one of
+	// seven on a legacy Tube Comp carrying only a level. Nothing carried all
+	// seven, so the controls were ignored and the shorter name won: the Tube
+	// Comp, which cannot hold the document's own values.
+	//
+	// Falling back rather than failing is still right. The error belongs to the
+	// gear a person named, not to a control name they got slightly wrong, and a
+	// rig nobody lifted off a preset states no controls and reaches this rung
+	// with nothing to rank by.
+	if b, found := anyInstrument(cat, gear, category, instrument, holds, false); found {
 		return b, nil
 	}
 
@@ -339,15 +351,16 @@ func anyInstrument(
 	category catalog.Category,
 	instrument string,
 	holds []string,
+	every bool,
 ) (catalog.Block, bool) {
-	if b, found := nearest(cat, gear, category, instrument, holds); found {
+	if b, found := nearest(cat, gear, category, instrument, holds, every); found {
 		return b, true
 	}
 
 	// No guard for an empty instrument. The contract requires one on every rig, so
 	// the second pass is never the same search twice, and a guard against it would
 	// be a branch nothing can reach.
-	return nearest(cat, gear, category, "", holds)
+	return nearest(cat, gear, category, "", holds, every)
 }
 
 // stated names the controls a chain entry writes down.
@@ -370,18 +383,28 @@ func stated(
 
 // nearest is the closest block emulating the named gear, among those an
 // instrument leaves eligible. Empty takes the whole catalog.
-// holds, where it is not empty, names controls the block must carry all of.
+//
+// holds, where it is not empty, names the controls the document states. every
+// requires a block to carry all of them; without it they rank, and a block
+// carrying more of them beats a closer name.
+//
+// Ranked rather than filtered on the second pass, so one control nothing carries
+// does not discard the evidence of the ones that do. Where holds is empty every
+// block scores nothing and the name decides, which is the whole of what a rig
+// nobody lifted off a preset asks for.
 func nearest(
 	cat *catalog.Catalog,
 	gear string,
 	category catalog.Category,
 	instrument string,
 	holds []string,
+	every bool,
 ) (catalog.Block, bool) {
 	want := strings.ToLower(gear)
 
 	var best catalog.Block
 
+	bestHas := 0
 	found := false
 
 	for _, b := range cat.Blocks {
@@ -389,33 +412,39 @@ func nearest(
 			continue
 		}
 
-		if !hasEvery(b, holds) {
+		has := countOf(b, holds)
+		if every && has < len(holds) {
 			continue
 		}
 
-		if !found || closer(b, best) {
-			best, found = b, true
+		if !found || has > bestHas || (has == bestHas && closer(b, best)) {
+			best, bestHas, found = b, has, true
 		}
 	}
 
 	return best, found
 }
 
-// hasEvery reports whether a block has every control named.
+// countOf is how many of the named controls a block carries.
 //
-// All of them, not some: a model missing one is a model the document's own values
-// will be refused against, which is the failure this exists to avoid.
-func hasEvery(
+// A count rather than a yes or no, because the two questions asked of it are
+// different: whether a model fits the document exactly, and which model fits it
+// best when none fits exactly. A model missing one control is a model the
+// document's own values will be refused against, so an exact fit is still
+// preferred over every near one.
+func countOf(
 	b catalog.Block,
 	holds []string,
-) bool {
+) int {
+	out := 0
+
 	for _, name := range holds {
-		if _, has := b.Params[name]; !has {
-			return false
+		if _, has := b.Params[name]; has {
+			out++
 		}
 	}
 
-	return true
+	return out
 }
 
 // closer reports whether a is the better answer than b for the same query.
@@ -754,20 +783,29 @@ func within(
 	// has nothing to be outside of, and comparing against 0..0 would refuse
 	// every value it could hold.
 	//
-	// Compared at the precision the device works in. A parameter is a float32 on
-	// the wire, so a value read back off hardware is a widened float32 and lands
-	// a hair either side of a bound the catalog states as a float64: a cabinet's
-	// low cut came back 19.899999618530273 against a minimum of 19.9 and was
-	// refused for being 0.0000004 under it. Widening the bounds the same way
-	// compares like with like, and costs nothing a device can hear.
+	// A fraction of the control's own travel either side of the bound, because a
+	// preset's own file does not spell a value to the precision the catalog states
+	// a bound in.
 	//
-	// Not wide enough for what a preset file does to that number, which is a
-	// separate question with its own task: a device writes float32(0.01) and some
-	// files spell it `0.00999999`, six significant figures, which is below the
-	// minimum by more than ten float32 steps. Widening to cover that is a
-	// tolerance somebody has to choose rather than one the format implies.
+	// A parameter is a float32 on the wire, so a reading off hardware is a widened
+	// float32 and lands a hair outside: a cabinet's low cut came back
+	// 19.899999618530273 against a minimum of 19.9. Worse, 188 values in the preset
+	// corpus are spelled `0.00999999` against a minimum of `0.01`, which is six
+	// significant figures and ten float32 steps under it. Comparing at float32
+	// covers the first and not the second.
+	//
+	// The number is not a judgement anybody had to make finely, because the two
+	// populations do not overlap. Measured over all 503 out-of-range values in the
+	// preset corpus: rounding runs from 2.2e-11 of the travel up to 4.0e-4, a
+	// `Delay` of -2.00272e-05 against 0..0.05, and the values that are genuinely
+	// out of range start at 0.6 of the travel and run to 99 of it, a `Mix` of 22
+	// against 0..1 and a `Predelay` of 20.0 against 0..0.2. Three orders of
+	// magnitude of daylight between the two, and any threshold inside it
+	// separates them.
+	slack := (spec.Max - spec.Min) * rounding
+
 	if spec.Min == spec.Max ||
-		(float32(got) >= float32(spec.Min) && float32(got) <= float32(spec.Max)) {
+		(got >= spec.Min-slack && got <= spec.Max+slack) {
 		return nil
 	}
 
@@ -777,6 +815,19 @@ func within(
 		Reason: fmt.Sprintf("%v is outside %v..%v", got, spec.Min, spec.Max),
 	}
 }
+
+// rounding is how much of a control's travel a preset's own file may round a value
+// by, as a fraction.
+//
+// A hundredth, which is about where the gap's middle sits on a log scale: 25
+// times the largest rounding the corpus holds and 60 times below the smallest
+// value that is genuinely out of range.
+//
+// It was a millionth, which sits underneath the rounding population rather than
+// above it, so the values it existed to accept were refused the moment anything
+// actually checked them. One real preset's `Delay` of -2.00272e-05 against
+// 0..0.05 is 400 times a millionth of its own travel.
+const rounding = 1e-2
 
 // saidKnobs puts each entry's settings onto the block it resolved to.
 //

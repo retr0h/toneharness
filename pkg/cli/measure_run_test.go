@@ -112,6 +112,42 @@ func (b bench) Through(
 
 func (bench) Name() string { return "a bench" }
 
+// quits is a bench that answers a few times and then stops.
+//
+// The failure the plain one cannot produce. `steady` throws its first reading away,
+// because the first after a bench opens is the audio stream settling rather than
+// the chain, so a bench that fails every call fails on that discard and never
+// reaches the takes behind it. This one gets there.
+type quits struct {
+	bench
+
+	// after is how many readings it answers before giving up.
+	after int
+	// seen is how many it has answered, which is why this takes a pointer receiver
+	// where bench does not.
+	seen int
+	// err is what it gives up with, for a caller that matches on the error rather
+	// than on there being one. Empty gives up with its own.
+	err error
+}
+
+func (q *quits) Through(
+	ctx context.Context,
+	signal []float32,
+) ([]float32, error) {
+	q.seen++
+
+	if q.seen > q.after {
+		if q.err != nil {
+			return nil, q.err
+		}
+
+		return nil, errors.New("the bench gave up mid take")
+	}
+
+	return q.bench.Through(ctx, signal)
+}
+
 // squealing is a loop oscillating: it answers with the same high tone whatever
 // is put in, silence included.
 //

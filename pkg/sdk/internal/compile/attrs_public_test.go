@@ -260,7 +260,7 @@ func (s *AttrsPublicTestSuite) TestAttrsFrom() {
 				entry.Enabled = &off
 			}
 
-			made, err := compile.Realise("x", rig.Spec{
+			made, _, err := compile.Realise("x", rig.Spec{
 				Instrument: rig.InstrumentBass,
 				Chain:      []rig.ChainEntry{entry},
 			}, s.cat)

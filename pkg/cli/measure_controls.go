@@ -294,7 +294,7 @@ func sweep(
 		return nil, err
 	}
 
-	noise, settled, err := steady(ctx, bench, signal, opts.Takes)
+	noise, at, err := steady(ctx, bench, signal, opts.Takes)
 	if err != nil {
 		return nil, err
 	}
@@ -311,8 +311,8 @@ func sweep(
 		Index: c.index, Kind: c.kind, Control: c.name,
 		Span:        measured.Span{Low: c.low, High: c.high, FromCatalog: true},
 		Noise:       noise,
-		Settled:     settled,
-		SilentBelow: silentBelow(settled),
+		Settled:     at.Level,
+		SilentBelow: silentBelow(at.Level),
 	}
 
 	_, _ = fmt.Fprintf(w, "  %s (index %d, %s), %d positions from %g to %g\n",
@@ -459,7 +459,7 @@ func steady(
 	bench sdk.Bench,
 	signal []float32,
 	takes int,
-) (map[audio.Figure]float64, float64, error) {
+) (map[audio.Figure]float64, measured.Figures, error) {
 	// One reading thrown away before any is kept, because the first one after
 	// a bench opens is the audio stream still settling rather than the chain.
 	//
@@ -476,7 +476,7 @@ func steady(
 	// 2.4, which is the loop saying a chain had converged as it walked away
 	// from the target.
 	if _, err := sdk.Fingerprint(ctx, bench, signal); err != nil {
-		return nil, 0, err
+		return nil, measured.Figures{}, err
 	}
 
 	rows := make([]measured.Figures, 0, takes)
@@ -484,18 +484,16 @@ func steady(
 	for range takes {
 		got, err := sdk.Fingerprint(ctx, bench, signal)
 		if err != nil {
-			return nil, 0, err
+			return nil, measured.Figures{}, err
 		}
 
 		rows = append(rows, got)
 	}
 
 	points := make([]measured.Point, 0, len(rows))
-	levels := make([]float64, 0, len(rows))
 
 	for _, r := range rows {
 		points = append(points, measured.Point{Figures: r})
-		levels = append(levels, r.Level)
 	}
 
 	out := map[audio.Figure]float64{}
@@ -517,9 +515,13 @@ func steady(
 		out[f] = math.Max(apart, floors[f])
 	}
 
-	sort.Float64s(levels)
+	// The middle take, whole, rather than its level alone. Every caller wanted the
+	// level and one wants the figures beside it: a target stated as a distance from
+	// where the chain already is has to know where that is, and the readings to say
+	// so were taken here and thrown away.
+	sort.Slice(rows, func(i, j int) bool { return rows[i].Level < rows[j].Level })
 
-	return out, levels[len(levels)/2], nil
+	return out, rows[len(rows)/2], nil
 }
 
 // discover asks the device which index is which.

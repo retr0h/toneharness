@@ -146,6 +146,26 @@ func (s *TuneTestSuite) ready() {
 		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 }
 
+// readyEndingInACab is ready with a cabinet after the amplifier.
+//
+// Needed because the squeal guard only applies to a chain that ends in one: a
+// loudspeaker is a low pass and cannot add treble, which is the invariant. A
+// drive legitimately gives back more than it was handed, so the guard would be
+// wrong about it.
+func (s *TuneTestSuite) readyEndingInACab() {
+	s.pedal.EXPECT().
+		Make(gomock.Any(), gomock.Any()).
+		Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{
+			{Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true},
+			{Model: catalog.ModelID("HD2_Cab8x10SVBeast"), Pos: 1, Enabled: true},
+		}}}, nil).AnyTimes()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	s.pedal.EXPECT().
+		Turn(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	s.pedal.EXPECT().
+		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+}
+
 // opts is a run with the hardware faked out.
 func (s *TuneTestSuite) opts() TuneOptions {
 	return TuneOptions{
@@ -154,6 +174,29 @@ func (s *TuneTestSuite) opts() TuneOptions {
 		Dry: s.dry, Seconds: 0.1, Takes: 2, Passes: 2, Nudge: 0.1,
 	}
 }
+
+// squeals is a bench that gives back more treble than it was handed, at a level
+// a chain could plausibly return.
+//
+// Which is the invariant the squeal guard rests on: a chain ending in a cabinet
+// cannot add energy above 2kHz, because a loudspeaker is a low pass. Loud enough
+// to pass the check that anything came back at all, so the two faults are told
+// apart rather than one standing in for the other.
+type squeals struct{}
+
+func (squeals) Through(
+	_ context.Context,
+	signal []float32,
+) ([]float32, error) {
+	out := make([]float32, len(signal))
+	for i := range out {
+		out[i] = float32(0.2 * math.Sin(2*math.Pi*9000*float64(i)/sdk.Rate))
+	}
+
+	return out, nil
+}
+
+func (squeals) Name() string { return "a bench that squeals" }
 
 // TestTune covers Tune, which solves a chain's controls for a target and says
 // how close it got.
@@ -175,6 +218,115 @@ func (s *TuneTestSuite) TestTune() {
 				var buf bytes.Buffer
 				s.Require().NoError(Tune(context.Background(), &buf, s.opts()))
 				s.Require().Contains(buf.String(), "aimed at punk")
+			},
+		},
+		{
+			// A loop that gives nothing back, which is a signal path rather than
+			// a chain and reads as a squeal if nobody checks the level first.
+			name: "a loop that returns nothing",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				opts := s.opts()
+				opts.Bench = bench{quiet: true}
+				opts.Keep = filepath.Join(s.T().TempDir(), "listen")
+
+				err := Tune(context.Background(), buffer(), opts)
+
+				s.Require().ErrorIs(err, ErrNoReturn)
+				s.Require().ErrorContains(err, "of loss and not a chain")
+
+				// And the audio is on disk, because a refusal is when somebody
+				// most wants to listen.
+				_, statErr := os.Stat(filepath.Join(opts.Keep, "punk-chain.wav"))
+				s.Require().NoError(statErr)
+			},
+		},
+		{
+			// The same refusal with nowhere to keep the audio, which is reported
+			// instead of the refusal: a caller told the loop is dead and not told
+			// the recording was lost has been told half.
+			name: "a dead loop with nowhere to keep what it heard",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				flat := filepath.Join(s.T().TempDir(), "file")
+				s.Require().NoError(os.WriteFile(flat, []byte("x"), 0o600))
+
+				opts := s.opts()
+				opts.Bench = bench{quiet: true}
+				opts.Keep = filepath.Join(flat, "under-a-file")
+
+				err := Tune(context.Background(), buffer(), opts)
+
+				s.Require().Error(err)
+				s.Require().NotErrorIs(err, ErrNoReturn)
+			},
+		},
+		{
+			// The chain feeding itself, which keeps its audio before refusing for
+			// the same reason.
+			name: "a loop that is oscillating keeps what it heard",
+			then: func() {
+				s.readyEndingInACab()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				opts := s.opts()
+				opts.Bench = squeals{}
+				opts.Keep = filepath.Join(s.T().TempDir(), "listen")
+
+				err := Tune(context.Background(), buffer(), opts)
+
+				s.Require().ErrorIs(err, ErrSquealing)
+
+				_, statErr := os.Stat(filepath.Join(opts.Keep, "punk-chain.wav"))
+				s.Require().NoError(statErr, "the squeal is on disk to listen to")
+			},
+		},
+		{
+			// An oscillating loop with nowhere to keep the recording, which is
+			// reported instead of the squeal for the same reason the dead loop
+			// is: half an answer is not one.
+			name: "an oscillating loop with nowhere to keep what it heard",
+			then: func() {
+				s.readyEndingInACab()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				flat := filepath.Join(s.T().TempDir(), "file")
+				s.Require().NoError(os.WriteFile(flat, []byte("x"), 0o600))
+
+				opts := s.opts()
+				opts.Bench = squeals{}
+				opts.Keep = filepath.Join(flat, "under-a-file")
+
+				err := Tune(context.Background(), buffer(), opts)
+
+				s.Require().Error(err)
+				s.Require().NotErrorIs(err, ErrSquealing)
+			},
+		},
+		{
+			// A run that finishes and cannot keep its audio says so, rather than
+			// reporting a tuned chain and failing after.
+			name: "a finished run with nowhere to keep what it played",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				flat := filepath.Join(s.T().TempDir(), "file")
+				s.Require().NoError(os.WriteFile(flat, []byte("x"), 0o600))
+
+				opts := s.opts()
+				opts.Keep = filepath.Join(flat, "under-a-file")
+
+				s.Require().Error(Tune(context.Background(), buffer(), opts))
 			},
 		},
 		{
@@ -369,6 +521,24 @@ func (s *TuneTestSuite) TestTune() {
 
 				err := Tune(context.Background(), buffer(), s.opts())
 				s.Require().ErrorContains(err, "no reply to opcode 21")
+			},
+		},
+		{
+			// The bench giving up inside the takes rather than on the reading
+			// before them. `steady` throws its first away, so a bench that fails
+			// every call fails on that discard and never reaches the loop behind
+			// it, which is where a run spends its time.
+			name: "the bench stops answering part way through the takes",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				opts := s.opts()
+				opts.Bench = &quits{after: 1}
+
+				err := Tune(context.Background(), buffer(), opts)
+				s.Require().ErrorContains(err, "the bench gave up mid take")
 			},
 		},
 		{
@@ -705,6 +875,11 @@ func buffer() *bytes.Buffer { return &bytes.Buffer{} }
 // Which is what makes a slope non-zero and so what makes the solver produce a
 // move at all. The fake that answers identically is enough to test the
 // arithmetic of arriving; nothing reaches the applying half without this.
+// sloping is a bench whose answer changes every time it is asked.
+//
+// Which is what makes a slope non-zero, and so what makes the solver produce a
+// move at all. A bench answering identically reads every slope as zero, which
+// is enough for the paths that never solve and for nothing past them.
 type sloping struct {
 	calls int
 	// quietAfter is when it starts answering near-silence, which is what a
@@ -757,7 +932,7 @@ func (s *TuneTestSuite) TestLand() {
 			// is not an axis any corpus states, so nothing in the target
 			// defends it, and two takes of silence agree to the last digit so
 			// the noise floor cannot catch it either.
-			name: "land backs off when the moves mute the chain",
+			name: "land backs off when the moves spend the level",
 			then: func() {
 				tried := []float32{}
 				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -772,16 +947,21 @@ func (s *TuneTestSuite) TestLand() {
 
 				var buf bytes.Buffer
 
-				err := land(context.Background(), &buf, s.opts(), bench{quiet: true},
+				landed, err := land(context.Background(), &buf, s.opts(), bench{quiet: true},
 					make([]float32, 64), []solve.Knob{knob}, steps, 0)
 
-				s.Require().ErrorIs(err, ErrNoTarget)
-				s.Require().Contains(buf.String(), "muted the chain")
+				s.Require().NoError(err, "a move that cannot land is not a failed run")
+				s.Require().False(landed)
+				s.Require().Contains(buf.String(), "spent the level")
+				s.Require().Contains(buf.String(), "back where this pass found them")
 
-				s.Require().Len(tried, backoffs, "it halved its move and tried again")
+				s.Require().Len(tried, backoffs+1,
+					"it halved its move, tried again, and put the dial back")
 				s.Require().InDelta(0.04, tried[0], 0.001, "the whole move first")
 				s.Require().InDelta(0.52, tried[1], 0.001, "then half of it")
 				s.Require().Greater(tried[2], tried[1], "and half again, from where it began")
+				s.Require().InDelta(1, tried[backoffs], 0.001,
+					"and last where the pass found it")
 			},
 		},
 		{
@@ -797,11 +977,41 @@ func (s *TuneTestSuite) TestLand() {
 
 				var buf bytes.Buffer
 
-				s.Require().NoError(land(context.Background(), &buf, s.opts(), bench{},
-					make([]float32, 64), knobs, steps, -200))
+				landed, err := land(context.Background(), &buf, s.opts(), bench{},
+					make([]float32, 64), knobs, steps, -200)
+
+				s.Require().NoError(err)
+				s.Require().True(landed)
 
 				s.Require().InDelta(0.6, knobs[0].At, 0.001,
 					"and the knob remembers where it landed")
+			},
+		},
+		{
+			// The revert itself failing.
+			//
+			// Reported rather than swallowed, because the whole point of putting
+			// the dials back is that the chain is where the pass found it, and a
+			// caller told that happened when it did not goes on to read the next
+			// pass off a chain nobody knows the state of.
+			name: "land reports a device that refuses to put the dials back",
+			then: func() {
+				gone := errors.New("device refused the request")
+
+				gomock.InOrder(
+					s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil).Times(backoffs),
+					s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(gone),
+				)
+
+				knob := solve.Knob{Block: 0, Param: 6, Control: "Master", At: 1, Low: 0, High: 1}
+
+				_, err := land(context.Background(), buffer(), s.opts(),
+					bench{quiet: true}, make([]float32, 64), []solve.Knob{knob},
+					[]solve.Step{{Knob: knob, By: -0.96, To: 0.04}}, 0)
+
+				s.Require().ErrorIs(err, gone)
 			},
 		},
 		{
@@ -815,7 +1025,7 @@ func (s *TuneTestSuite) TestLand() {
 
 				var buf bytes.Buffer
 
-				err := land(context.Background(), &buf, s.opts(), bench{},
+				_, err := land(context.Background(), &buf, s.opts(), bench{},
 					make([]float32, 64), []solve.Knob{knob},
 					[]solve.Step{{Knob: knob, By: 0.2, To: 0.6}}, -200)
 
@@ -831,11 +1041,6 @@ func (s *TuneTestSuite) TestLand() {
 		})
 	}
 }
-
-// sloping is a bench whose answer changes every time it is asked.
-//
-// Which is what makes a slope non-zero and so what makes the solver produce a
-// move at all. The fake that answers identically is enough to test the
 
 // TestConverge covers converge, which runs the loop until the target is met
 // or it stops improving.
@@ -896,6 +1101,166 @@ func (s *TuneTestSuite) TestConverge() {
 
 				s.Require().Contains(buf.String(), "stopped improving")
 				s.Require().Contains(buf.String(), "will not reach this target")
+
+				// And the dials go back to the pass that read best, because a
+				// pass's residual is measured before its own moves: the pass
+				// reporting worse is reporting what the last pass's moves did,
+				// and `land` has already turned those dials.
+				s.Require().Contains(buf.String(), "go back to this run's best reading")
+			},
+		},
+		{
+			// A convergence that read nothing has no best chain to go back to.
+			//
+			// No passes at all, which is a run somebody asked for zero of. It
+			// reaches the same ending every other run does, so the ending has to
+			// cope with there being nothing to restore.
+			name: "converge with no passes keeps nothing",
+			then: func() {
+				opts := s.opts()
+				opts.Passes = 0
+
+				var buf bytes.Buffer
+
+				did, err := converge(context.Background(), &buf, opts, bench{},
+					make([]float32, 64), "preset.hlx", nil,
+					map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 10, Tol: 1}}, -200)
+
+				s.Require().NoError(err)
+				s.Require().Empty(did.steps)
+				s.Require().NotContains(buf.String(), "go back to this run's best")
+			},
+		},
+		{
+			// Nothing to put back, because the best reading is the chain's own
+			// dials. A reading can come back worse without a dial having moved,
+			// so the restore has to cope with having no move to make.
+			name: "keeping has nothing to put back",
+			then: func() {
+				knob := solve.Knob{Block: 0, Param: 1, Control: "Bass", At: 0.4, Low: 0, High: 1}
+
+				did, err := keeping(context.Background(), buffer(), s.opts(),
+					bench{}, make([]float32, 64), []solve.Knob{knob},
+					map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 9000, Tol: 1}},
+					round{}, kept{worst: 0, at: []float64{0.4}})
+
+				s.Require().NoError(err)
+				s.Require().NotNil(did.read, "and it reports what it just read")
+			},
+		},
+		{
+			// The bench failing on that last reading.
+			//
+			// Reported rather than carried on from, because the whole point of
+			// the reading is to decide between two chains, and a run that cannot
+			// take it does not know which one it is holding.
+			name: "keeping reports a bench that fails on the last reading",
+			then: func() {
+				gone := errors.New("the device stopped answering")
+
+				knob := solve.Knob{Block: 0, Param: 1, Control: "Bass", At: 0.4, Low: 0, High: 1}
+
+				_, err := keeping(context.Background(), buffer(), s.opts(),
+					bench{err: gone}, make([]float32, 64), []solve.Knob{knob},
+					map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 9000, Tol: 1}},
+					round{}, kept{worst: 1.5, at: []float64{0.9}})
+
+				s.Require().ErrorIs(err, gone)
+			},
+		},
+		{
+			// The device refusing while the dials are put back.
+			//
+			// Reported rather than swallowed, because the caller is about to
+			// write out the chain it believes the device holds, and a restore
+			// that half happened is a plan describing settings nothing has.
+			name: "keeping reports a device that refuses to put the dials back",
+			then: func() {
+				gone := errors.New("device refused the request")
+
+				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(gone)
+
+				knob := solve.Knob{Block: 0, Param: 1, Control: "Bass", At: 0.9, Low: 0, High: 1}
+
+				// A bench reading worse than the best, so the dials are put back
+				// and the refusal is reached.
+				_, err := keeping(context.Background(), buffer(), s.opts(),
+					bench{}, make([]float32, 64), []solve.Knob{knob},
+					map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 9000, Tol: 1}},
+					round{}, kept{worst: 1.5, at: []float64{0.4}})
+
+				s.Require().ErrorIs(err, gone)
+			},
+		},
+		{
+			// The device refusing while the pass is being landed.
+			//
+			// Its own case rather than folded into the bench's failures, because
+			// landing is the only place the loop writes to the device after the
+			// slopes are read, and a refusal there leaves the chain half moved.
+			name: "converge reports a device that refuses while landing",
+			then: func() {
+				gone := errors.New("device refused the request")
+
+				// Two for the slope, read away from the knob and back, then the
+				// first move of the pass itself.
+				gomock.InOrder(
+					s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil).Times(2),
+					s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(gone),
+				)
+
+				knob := solve.Knob{Block: 0, Param: 1, Control: "Bass", At: 0.4, Low: 0, High: 1}
+
+				aims := map[audio.Figure]solve.Aim{
+					audio.KeyCentroid: {Want: 10, Tol: 1},
+				}
+
+				s.Require().ErrorIs(second(converge(context.Background(), buffer(),
+					s.opts(), &sloping{}, make([]float32, 64), "preset.hlx",
+					[]solve.Knob{knob}, aims, -200)), gone)
+			},
+		},
+		{
+			// The third way it gives up, and the one that keeps the chain.
+			//
+			// A pass whose moves cannot be made without spending the level is
+			// not a pass. The dials go back where it found them and the loop
+			// stops there, rather than running on over a chain quieter than the
+			// target asked for: once the level is down, every figure the next
+			// pass reads is measured on the damage.
+			name: "converge stops when closing the target costs the level",
+			then: func() {
+				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
+
+				knob := solve.Knob{Block: 0, Param: 1, Control: "Bass", At: 0.4, Low: 0, High: 1}
+
+				opts := s.opts()
+				opts.Passes = 4
+
+				var buf bytes.Buffer
+
+				aims := map[audio.Figure]solve.Aim{
+					audio.KeyCentroid: {Want: 10, Tol: 1},
+				}
+
+				// Loud enough to read a slope from, silent from the moment the
+				// pass applies its moves. Settled at zero, which no reading of
+				// this bench comes within `drift` of.
+				did, err := converge(context.Background(), &buf, opts,
+					&sloping{quietAfter: 2}, make([]float32, 64), "preset.hlx",
+					[]solve.Knob{knob}, aims, 0)
+
+				s.Require().NoError(err, "a chain that cannot be turned is a result")
+				s.Require().Contains(buf.String(), "back where this pass found them")
+				s.Require().Contains(buf.String(), "costs the level")
+				s.Require().NotContains(buf.String(), "pass 2",
+					"it stopped rather than reading the next pass off a quiet chain")
+				s.Require().Empty(did.steps,
+					"and kept no moves, because nothing holds them")
 			},
 		},
 		{
@@ -966,9 +1331,11 @@ func (s *TuneTestSuite) TestConverge() {
 					s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
 						Return(nil).AnyTimes()
 
-					s.Require().ErrorIs(land(context.Background(), buffer(), s.opts(),
+					_, err := land(context.Background(), buffer(), s.opts(),
 						bench{err: gone}, make([]float32, 64), []solve.Knob{knob},
-						[]solve.Step{{Knob: knob, By: 0.2, To: 0.6}}, -200), gone)
+						[]solve.Step{{Knob: knob, By: 0.2, To: 0.6}}, -200)
+
+					s.Require().ErrorIs(err, gone)
 				})
 			},
 		},

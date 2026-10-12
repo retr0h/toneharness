@@ -75,7 +75,7 @@ func Compile(
 		return result.Built{}, err
 	}
 
-	made, name, blocks, err := readOne(ctx, opts, cat)
+	made, name, blocks, dropped, err := readOne(ctx, opts, cat)
 	if err != nil {
 		return result.Built{}, err
 	}
@@ -119,9 +119,10 @@ func Compile(
 	}
 
 	return result.Built{
-		Name:   name,
-		Blocks: blocks,
-		Path:   opts.OutputPath,
+		Name:    name,
+		Blocks:  blocks,
+		Path:    opts.OutputPath,
+		Dropped: dropped,
 	}, nil
 }
 
@@ -139,43 +140,45 @@ func readOne(
 	ctx context.Context,
 	opts CompileOptions,
 	cat *catalog.Catalog,
-) (plan.Plan, string, int, error) {
+) (plan.Plan, string, int, []result.Dropped, error) {
 	named := opts.RigPath != ""
 	alsoNamed := opts.PlanPath != ""
 
 	if named == alsoNamed {
-		return plan.Plan{}, "", 0, ErrOnePath
+		return plan.Plan{}, "", 0, nil, ErrOnePath
 	}
 
+	// A plan has already chosen its models and carries its own values, so there
+	// is nothing here for it to have stated and dropped.
 	if alsoNamed {
 		made, err := readPlan(ctx, opts.PlanPath)
 		if err != nil {
-			return plan.Plan{}, "", 0, err
+			return plan.Plan{}, "", 0, nil, err
 		}
 
-		return made, made.Name, len(made.Blocks), nil
+		return made, made.Name, len(made.Blocks), nil, nil
 	}
 
 	doc, err := readDoc(ctx, opts.RigPath)
 	if err != nil {
-		return plan.Plan{}, "", 0, err
+		return plan.Plan{}, "", 0, nil, err
 	}
 
 	id, spec := doc.Id, doc.Rig
 
-	made, err := opts.compiler().Realise(id, spec, cat)
+	made, dropped, err := opts.compiler().Realise(id, spec, cat)
 	if err != nil {
-		return plan.Plan{}, "", 0, err
+		return plan.Plan{}, "", 0, nil, err
 	}
 
 	// After realising, because a move names a role and a role has no position
 	// until the chain is laid out. Nothing fits on this path, so the position
 	// Realise gave each block is the one the preset gets.
 	if err := opts.compiler().Moves(&made, spec, made.Blocks, cat); err != nil {
-		return plan.Plan{}, "", 0, err
+		return plan.Plan{}, "", 0, nil, err
 	}
 
-	return made, id, len(spec.Chain), nil
+	return made, id, len(spec.Chain), dropped, nil
 }
 
 // readPlan loads a plan from disk.

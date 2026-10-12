@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/vmihailenco/msgpack/v5"
@@ -88,6 +89,9 @@ func (s *EditPublicTestSuite) TestSetParam() {
 		at   device.Address
 		// what the device answers with.
 		refuse bool
+		// lateBy holds the answer back this long, so the first attempt's reply
+		// budget runs out before it arrives.
+		lateBy time.Duration
 		says   string
 	}{
 		{
@@ -107,6 +111,18 @@ func (s *EditPublicTestSuite) TestSetParam() {
 			at:   device.Address{Block: 2, Param: 0, Direct: false},
 		},
 		{
+			// An answer that arrives too late for the attempt waiting on it.
+			//
+			// Asked again under the same transaction number, so the reply that
+			// was already on its way still matches. A fresh number would strand
+			// it and the move would be reported as a device that went quiet,
+			// which is how four tune runs died on a value the device took
+			// without complaint when it was asked again.
+			name:   "an answer that comes too late for the first attempt",
+			at:     device.Address{Block: 2, Param: 5, Direct: true},
+			lateBy: 80 * time.Millisecond,
+		},
+		{
 			// A device declines rather than complains: nothing is applied,
 			// no error frame follows, and the next read is byte-identical.
 			// Returning nil here would leave a sweep recording the same
@@ -122,7 +138,12 @@ func (s *EditPublicTestSuite) TestSetParam() {
 		s.Run(tt.name, func() {
 			ctx := context.Background()
 
+			// Held back only where the row asks for it, so every other row still
+			// proves one call is one message.
 			d := answers(s.ctrl, s.moved(device.FirstTxn, tt.refuse))
+			if tt.lateBy > 0 {
+				d = late(s.ctrl, tt.lateBy, s.moved(device.FirstTxn, tt.refuse))
+			}
 
 			session := device.NewTestSessionWith(s.T(), d.out, d.in,
 				device.ShortBudgets())

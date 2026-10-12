@@ -99,4 +99,26 @@ type Built struct {
 	Blocks int `json:"blocks"`
 	// Path is the file that was written.
 	Path string `json:"path"`
+	// Dropped are the controls the document states that its own block does not
+	// carry. Said rather than refused, and rather than silently ignored: a
+	// preset holds the parameters of whatever its blocks used to be, so a
+	// document lifted off one legitimately names controls from two models, and
+	// refusing those would refuse a file the device itself wrote. Ignoring them
+	// in silence is the other failure, where a document reads one way and builds
+	// another.
+	Dropped []Dropped `json:"dropped"`
+}
+
+// Dropped is one control a document states that the block it resolved to does
+// not have.
+type Dropped struct {
+	// Block is which chain entry stated it, counted from the front.
+	Block int `json:"block"`
+	// Control is the name the document used.
+	Control string `json:"control"`
+	// Value is what it was set to, which is the part that is lost.
+	Value string `json:"value"`
+	// Near are the words this block does take, so the name can be corrected
+	// without going to the catalog.
+	Near []string `json:"near"`
 }

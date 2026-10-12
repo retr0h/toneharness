@@ -43,6 +43,15 @@ type Builds interface {
 	Make(ctx context.Context, in sdk.Build) (sdk.Made, error)
 }
 
+// ShowsRigs reads one rig document back.
+//
+// Its own seam because a run only needs it where the dials ran out: amending a
+// chain means having the document that describes it, and every other thing the
+// loop does works from the plan the document resolved to.
+type ShowsRigs interface {
+	Rig(ctx context.Context, id string) (sdk.Rig, error)
+}
+
 // Tuner is what solving for knob positions needs: build a chain, put it in
 // front of the device, move one control and read back what the chain is.
 //
@@ -51,6 +60,7 @@ type Builds interface {
 // lists it compares one setting at a time.
 type Tuner interface {
 	Builds
+	ShowsRigs
 	Compiles
 	ReadsFiles
 	Plays
@@ -65,6 +75,10 @@ type Tuner interface {
 var (
 	// ErrNoTarget refuses a run with nothing to solve toward.
 	ErrNoTarget = errors.New("name a genre or a player to aim at")
+	// ErrNoReturn is a loop that gave nothing back, which is a signal path
+	// rather than a chain and has to be told apart from one that squealed: the
+	// figures of noise look like a squeal and the fix is the opposite.
+	ErrNoReturn = errors.New("nothing came back through the loop")
 	// ErrOneTarget refuses a run naming both, which is a question with two
 	// answers.
 	ErrOneTarget = errors.New(
@@ -138,6 +152,18 @@ type TuneOptions struct {
 	// Ask is a ToneSpec to append this round to, as a correction. Empty
 	// records nothing, which loses the only account of what was asked for.
 	Ask string
+	// Extend is where to write the rig with the block the measurement asked for
+	// added to its chain. Empty writes nothing, which is the default.
+	//
+	// Only ever reached where the dials ran out, because a chain that met its
+	// target has nothing missing.
+	Extend string
+	// Keep is a directory to write what the chain played into, as WAVs somebody
+	// can listen to. Empty keeps none of it, which is the default.
+	//
+	// Off unless asked for, because a pass is seconds of bass and a campaign is
+	// hundreds of them. On, it costs one more reading at the end of the run.
+	Keep string
 }
 
 // Genres is what a genre measures as across its records.
@@ -171,6 +197,10 @@ func Tune(
 	// Pinned first, and it matters more here than anywhere: the loop reads a
 	// slope, moves a dial and reads again, so a level that drifts mid-run is a
 	// slope the solver will spend dials chasing.
+	// Before the level, because the level is pinned on whichever device the
+	// platform plays through and that is the thing being set here.
+	playsThrough(w, opts, reamp.PlaysThrough)
+
 	levelled(w, opts.Volume, reamp.Held)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 
@@ -190,7 +220,7 @@ func Tune(
 		return ErrPlayerNeedsCorpus
 	}
 
-	target, err := targetFor(ctx, opts)
+	target, elsewhere, err := targetFor(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -231,6 +261,10 @@ func Tune(
 		return err
 	}
 
+	// After the bench, because which device the reference plays through is not
+	// known until one is open, and the level was pinned before that.
+	pinLands(w, opts, bench)
+
 	defer release()
 
 	_, _ = fmt.Fprintf(w, "\n  %s aimed at %s, %d dials and %d lists through %s\n",
@@ -241,12 +275,19 @@ func Tune(
 	// nearly nothing and swamps the solve: punk's records agree on the high
 	// band to four decimal places, and the first run read that axis as 116
 	// tolerances out and spent every control on it.
-	floor, settled, err := steady(ctx, bench, signal, opts.Takes)
+	floor, at, err := steady(ctx, bench, signal, opts.Takes)
 	if err != nil {
 		return err
 	}
 
-	aims = solve.Aims(target, inCorpusScale(floor))
+	// The target as a distance from where the chain already is, not as the
+	// record's own numbers. A record is mixed and mastered and a chain is one dry
+	// signal through one amplifier, so the two do not subtract: aiming at a
+	// centroid of 126Hz asks for a darkness the signal does not hold, and the
+	// control with the most authority over the centroid on this amplifier carries
+	// +27.6dB of level with it. That is why a tuned preset came back thin.
+	aims = solve.Aims(solve.Displaced(target, elsewhere, figuresOf(at)),
+		inCorpusScale(floor))
 
 	// Level is a guard rather than a goal, and `drift` is already wide enough to
 	// be one: six decibels, against a loop that wanders a fraction of one. A run
@@ -259,9 +300,10 @@ func Tune(
 	// So a solve reaching for a dark centroid pulls `ChVol` down and the chain
 	// gets quiet as a consequence of the tone it was asked for.
 	//
-	// Which means the fix is not here. It is the target: an absolute figure taken
-	// off a mastered record, aimed at from a dry signal.
-	aims[audio.KeyLevel] = solve.Aim{Want: settled, Tol: drift}
+	// Which means the fix was not here. It was the target, and `Displaced` above is
+	// it: a record's own figures replaced by how far its player sits from everybody
+	// else, applied to where the chain already is.
+	aims[audio.KeyLevel] = solve.Aim{Want: at.Level, Tol: drift, Hold: true}
 
 	// After the floor, because a nudge is measured in tolerances and a
 	// tolerance is not known until the loop's own wander is.
@@ -273,9 +315,25 @@ func Tune(
 	_, _ = fmt.Fprintf(w, "  the loop wanders %.4f of a band and %.1fHz\n",
 		inCorpusScale(floor)[audio.KeyLow], floor[audio.KeyCentroid])
 
-	first, err := sdk.Fingerprint(ctx, bench, signal)
+	// The level aim in full, because it is the one aim the target does not state
+	// and the one a reader cannot work out from the figures printed beside it.
+	_, _ = fmt.Fprintf(w, "  level is held at %.1fdB, give or take %.1f\n",
+		aims[audio.KeyLevel].Want, aims[audio.KeyLevel].Tol)
+
+	// Hear rather than Fingerprint, because this reading is the one most worth
+	// keeping: it is the chain before anything moved, and it is what the guard
+	// below refuses on.
+	read, back, err := sdk.Hear(ctx, bench, signal)
 	if err != nil {
 		return err
+	}
+
+	first := sdk.Figures(read, sdk.Level(back))
+
+	// Whether anything came back at all, before any figure is read as a fact
+	// about the chain.
+	if say, dead := Returned(sdk.Level(signal), sdk.Level(back)); dead {
+		return deadLoop(w, opts, signal, back, say)
 	}
 
 	// Before a single control is moved. This loop applies what it solves for,
@@ -283,10 +341,19 @@ func Tune(
 	// wrong answer, it produces a chain turned to match one.
 	if say, bad := Squealing(figuresOf(first), figuresOfDry(signal),
 		inCorpusScale(floor), chainEndsInACab(made.Plan, cat)); bad {
+		// Kept before the refusal, because a refusal is when somebody most wants
+		// to listen. The figures name an oscillation and the recording is the
+		// only thing that says what it sounds like, which is how a cable, a
+		// routing and a preset on the wrong output are told apart.
+		if err := keepTakes(w, opts, signal, back); err != nil {
+			return err
+		}
+
 		return fmt.Errorf("%w: %s", ErrSquealing, say)
 	}
 
-	did, err := attempt(ctx, w, opts, bench, signal, preset, knobs, lists, aims, settled)
+	did, err := attempt(
+		ctx, w, opts, bench, signal, preset, knobs, lists, aims, at.Level)
 	if err != nil {
 		return err
 	}
@@ -296,6 +363,16 @@ func Tune(
 	// conclusion about the run and one pass cannot reach it.
 	if !did.arrived {
 		missing(w, made.Plan, aims, did.read)
+
+		if err := extend(ctx, w, opts, made.Plan, aims, did.read, cat); err != nil {
+			return err
+		}
+	}
+
+	// Before the plan is written, so a run that cannot keep the audio says so
+	// rather than reporting a tuned chain and failing afterwards.
+	if err := keepPlayed(ctx, w, opts, bench, signal); err != nil {
+		return err
 	}
 
 	if err := keepTuned(ctx, w, opts, asBuilt); err != nil {
@@ -493,32 +570,36 @@ func solvingFor(
 	return opts.Genre
 }
 
+// The second answer is what the subject is measured against: the other players, or
+// the players who hold none of this genre. That is what makes the target a
+// displacement rather than a position, and it comes from here because this is where
+// the record is read.
 func targetFor(
 	ctx context.Context,
 	opts TuneOptions,
-) (audio.Across, error) {
+) (audio.Across, map[audio.Figure]float64, error) {
 	// One artist's own records, which is the stronger target: a genre is the
 	// middle of a population and this is the person being emulated. Always from
 	// the tree, because these figures are not shipped.
 	if opts.Player != "" {
 		found, err := opts.Players.MeasuredPlayers(ctx, opts.Corpus)
 		if err != nil {
-			return audio.Across{}, fmt.Errorf("reading %s: %w", opts.Corpus, err)
+			return audio.Across{}, nil, fmt.Errorf("reading %s: %w", opts.Corpus, err)
 		}
 
 		for _, p := range found {
 			if p.ID == opts.Player {
 				if p.Across.Tracks == 0 {
-					return audio.Across{}, fmt.Errorf(
+					return audio.Across{}, nil, fmt.Errorf(
 						"%w: %q has no measured records to aim at",
 						ErrNoTarget, opts.Player)
 				}
 
-				return p.Across, nil
+				return p.Across, p.Elsewhere, nil
 			}
 		}
 
-		return audio.Across{}, fmt.Errorf(
+		return audio.Across{}, nil, fmt.Errorf(
 			"%w: %s holds no player called %q", ErrNoTarget, opts.Corpus, opts.Player)
 	}
 
@@ -532,26 +613,26 @@ func targetFor(
 	if opts.Corpus == "" {
 		got, ok := audio.ShippedGenre(opts.Genre)
 		if !ok {
-			return audio.Across{}, fmt.Errorf(
+			return audio.Across{}, nil, fmt.Errorf(
 				"%w: nothing shipped with this binary measures %q",
 				ErrNoTarget, opts.Genre)
 		}
 
-		return got.Across, nil
+		return got.Across, got.Elsewhere, nil
 	}
 
 	found, err := opts.Genres.MeasuredGenres(ctx, opts.Corpus)
 	if err != nil {
-		return audio.Across{}, fmt.Errorf("reading %s: %w", opts.Corpus, err)
+		return audio.Across{}, nil, fmt.Errorf("reading %s: %w", opts.Corpus, err)
 	}
 
 	for _, g := range found {
 		if g.Slug == opts.Genre || g.Name == opts.Genre {
-			return g.Across, nil
+			return g.Across, g.Elsewhere, nil
 		}
 	}
 
-	return audio.Across{}, fmt.Errorf("%w: no records are tagged %q under %s",
+	return audio.Across{}, nil, fmt.Errorf("%w: no records are tagged %q under %s",
 		ErrNoTarget, opts.Genre, opts.Corpus)
 }
 
@@ -635,6 +716,10 @@ func knobsOf(
 				continue
 			}
 
+			if valveGuts[name] {
+				continue
+			}
+
 			at, _ := b.Params[name].Float()
 
 			out = append(out, solve.Knob{
@@ -650,6 +735,37 @@ func knobsOf(
 	}
 
 	return out
+}
+
+// valveGuts are the controls a solve may not turn.
+//
+// Modelled valve behaviour rather than tone controls. Sag is the power supply
+// drooping under load, Bias and BiasX how hard the output valves are run, Hum
+// and Ripple the mains leaking into the signal. Somebody sets them once for the
+// feel of an amplifier and then leaves them, which is not how a dial that
+// answers a target behaves.
+//
+// A named set because the catalog cannot tell them apart. On an SV Beast all
+// twelve of its controls read `generic_knob` from 0 to 1, so Sag is
+// indistinguishable from Treble by anything the device says, and this is a
+// judgement about amplifiers that has to be written down somewhere.
+//
+// Named because of what the solve did without it. Asked for Mike Dirnt, one run
+// took Sag from 0.500 to 1.000 and Hum to 0.775 closing band shares, and the
+// chain it produced sounded worse to the person holding the pedal than the rig
+// it started from. A hand-built preset he prefers has Sag and Hum at zero, set
+// deliberately. The arithmetic had nothing to say about any of that: a band
+// share closed by rebiasing the output valves closes just as well as one closed
+// with the tone stack, and only one of them is what anybody meant.
+//
+// It takes them out of the solve and leaves them where the rig put them. A rig
+// that states a Sag still gets it; what cannot happen is the loop deciding one.
+var valveGuts = map[string]bool{
+	"Sag":    true,
+	"Bias":   true,
+	"BiasX":  true,
+	"Hum":    true,
+	"Ripple": true,
 }
 
 // converge runs the loop until the target is met or it stops improving.
@@ -669,7 +785,13 @@ func converge(
 	aims map[audio.Figure]solve.Aim,
 	settled float64,
 ) (round, error) {
-	var best float64
+	// prev is the pass before's residual, which is what "stopped improving"
+	// compares against, and best the lowest any pass read, which is what the
+	// chain is left at. They are not the same number: a run can improve, get
+	// worse, and the answer is the chain from before it got worse.
+	var prev float64
+
+	var best kept
 
 	var did round
 
@@ -682,17 +804,36 @@ func converge(
 		now := figuresOf(got)
 		did.read = now
 
+		// Before reading any slope, because arriving needs no slopes and reading
+		// them costs a reading per control. A chain of a dozen dials would spend
+		// a minute and a half measuring what to do about a target it is already
+		// inside.
+		at, arrived := solve.Reached(aims, now)
+
+		// The dials as this reading found them, paired with what this reading
+		// measures. `Reached` rather than `Toward`, and that is the whole of why
+		// this is correct: `Toward` answers with its model's prediction for after
+		// the moves it proposes, so pairing these dials with that number would
+		// claim a residual for a chain the moves had not been applied to.
+		here := kept{
+			worst:    solve.Worst(at.Residual),
+			at:       valuesOf(knobs),
+			residual: at.Residual,
+			read:     now,
+			steps:    len(did.steps),
+		}
+
+		if best.at == nil || here.worst < best.worst {
+			best = here
+		}
+
 		// Level beside the pass, because it is the one figure no target
 		// constrains and the one a solve can spend without being told not to.
 		_, _ = fmt.Fprintf(w, "  level %.1fdB against %.1f settled\n",
 			got.Level, settled)
 
-		// Before reading any slope, because arriving needs no slopes and reading
-		// them costs a reading per control. A chain of a dozen dials would spend
-		// a minute and a half measuring what to do about a target it is already
-		// inside.
-		if at, arrived := solve.Reached(aims, now); arrived {
-			aimed(w, pass, at, solve.Worst(at.Residual))
+		if arrived {
+			aimed(w, pass, at, here.worst)
 
 			did.residual, did.arrived = at.Residual, true
 
@@ -722,23 +863,37 @@ func converge(
 		// So a tune that worked threw its answer away and a tune that struggled
 		// kept its moves, which is the wrong way round. `--out` wrote the
 		// starting chain and called it tuned.
-		if err := land(ctx, w, opts, bench, signal, knobs, step.Steps, settled); err != nil {
+		landed, err := land(ctx, w, opts, bench, signal, knobs, step.Steps, settled)
+		if err != nil {
 			return did, err
+		}
+
+		if !landed {
+			_, _ = fmt.Fprintf(w,
+				"\n  stopped at %.1f tolerances out. Closing this target costs the "+
+					"level, which is not an axis the target may spend.\n", worst)
+
+			// The moves are dropped with them, because the chain is back where
+			// the pass found it and a correction that lists them would be a
+			// record of settings nothing holds.
+			did.steps = did.steps[:len(did.steps)-len(step.Steps)]
+
+			return keeping(ctx, w, opts, bench, signal, knobs, aims, did, best)
 		}
 
 		if step.Arrived {
 			return did, nil
 		}
 
-		if pass > 1 && worst >= best {
+		if pass > 1 && worst >= prev {
 			_, _ = fmt.Fprintf(w,
 				"\n  stopped improving at %.1f tolerances out. The chain will not "+
 					"reach this target.\n", worst)
 
-			return did, nil
+			return keeping(ctx, w, opts, bench, signal, knobs, aims, did, best)
 		}
 
-		best = worst
+		prev = worst
 
 		// The chain is not reloaded between passes on purpose: the next pass
 		// reads its slopes from where this one landed, which is the whole
@@ -747,9 +902,266 @@ func converge(
 	}
 
 	_, _ = fmt.Fprintf(w, "\n  %d passes and still %.1f tolerances out.\n",
-		opts.Passes, best)
+		opts.Passes, prev)
+
+	return keeping(ctx, w, opts, bench, signal, knobs, aims, did, best)
+}
+
+// kept is one reading a convergence took, and the dials that produced it.
+type kept struct {
+	worst    float64
+	at       []float64
+	residual map[audio.Figure]float64
+	read     map[audio.Figure]float64
+	// steps is how many of the round's moves had been made when this was read,
+	// so a correction describing this chain stops where this chain began.
+	steps int
+}
+
+// keeping leaves the chain at the best reading the convergence took.
+//
+// A pass's residual is measured before its own moves, so a pass reporting worse
+// than the one before it is reporting what the last pass's moves did, and the
+// dials that produced the better reading are still known. The rule is the one
+// `backedUp` already follows across a list's settings: the answer to a target is
+// the best chain the run demonstrated and not the last one it tried.
+//
+// It mattered by 2.1 tolerances on the first run that measured it. Pass 1 read
+// 1.9 out, pass 2 read 12.6, and 12.6 was what the run reported and what `--out`
+// wrote, because `land` had already turned the dials that produced it.
+func keeping(
+	ctx context.Context,
+	w io.Writer,
+	opts TuneOptions,
+	bench sdk.Bench,
+	signal []float32,
+	knobs []solve.Knob,
+	aims map[audio.Figure]solve.Aim,
+	did round,
+	best kept,
+) (round, error) {
+	if best.at == nil {
+		return did, nil
+	}
+
+	// The chain as it stands, which no pass has read: `land` turned the dials
+	// after the last reading was taken. Measured rather than assumed either way,
+	// because the moves were predicted to improve and throwing them away unread
+	// would discard the one thing the pass was for, while keeping them unread
+	// would report a residual nothing measured.
+	got, err := sdk.Fingerprint(ctx, bench, signal)
+	if err != nil {
+		return did, err
+	}
+
+	now := figuresOf(got)
+	at, _ := solve.Reached(aims, now)
+	ends := solve.Worst(at.Residual)
+
+	back := backTo(knobs, best.at)
+
+	// Nothing to put back covers two cases and they end the same way: the chain
+	// already reads as well as anything this run saw, or it reads a hair worse on
+	// dials that are the best ones anyway, which is the loop's own wander.
+	if ends <= best.worst || len(back) == 0 {
+		_, _ = fmt.Fprintf(w,
+			"  the chain reads %.1f tolerances out, which is this run's best\n", ends)
+
+		did.residual, did.read = at.Residual, now
+
+		return did, nil
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"  the chain reads %.1f tolerances out, so the dials go back to this "+
+			"run's best reading, %.1f\n", ends, best.worst)
+
+	if err := apply(ctx, opts, knobs, back); err != nil {
+		return did, err
+	}
+
+	did.steps = did.steps[:best.steps]
+	did.residual, did.read = best.residual, best.read
 
 	return did, nil
+}
+
+// valuesOf is where every dial sits, in the order the knobs are held.
+func valuesOf(
+	knobs []solve.Knob,
+) []float64 {
+	out := make([]float64, len(knobs))
+	for i := range knobs {
+		out[i] = knobs[i].At
+	}
+
+	return out
+}
+
+// backTo is the moves that put every dial back where it was, leaving out the
+// ones that never moved.
+func backTo(
+	knobs []solve.Knob,
+	to []float64,
+) []solve.Step {
+	out := make([]solve.Step, 0, len(knobs))
+
+	// No guard on the lengths. `to` came from `valuesOf` over this same slice,
+	// which the loop mutates in place and never resizes, so the two agree by
+	// construction and a check would be a branch nothing can reach.
+	for i := range knobs {
+		if knobs[i].At == to[i] {
+			continue
+		}
+
+		out = append(out, solve.Step{
+			Knob: knobs[i], By: to[i] - knobs[i].At, To: to[i],
+		})
+	}
+
+	return out
+}
+
+// deadLoop keeps the pair and reports a loop that gave nothing back.
+//
+// Kept before the refusal, because a refusal is when somebody most wants to
+// listen. The figures of a dead return read as an oscillation and the recording
+// is the only thing that says otherwise, which is how a lead, a routing and a
+// preset on the wrong output are told apart.
+func deadLoop(
+	w io.Writer,
+	opts TuneOptions,
+	signal, back []float32,
+	say string,
+) error {
+	if err := keepTakes(w, opts, signal, back); err != nil {
+		return err
+	}
+
+	return fmt.Errorf("%w: %s", ErrNoReturn, say)
+}
+
+// keepPlayed writes what went into the chain and what came back, as WAVs.
+//
+// The figures are the loop's answer and they are not the whole of what happened:
+// ten numbers can every one sit inside tolerance while the sound is plainly
+// wrong. `Squealing` is the proof, caught only because somebody thought to look
+// for it; a reading somebody can play is the backstop for the one nobody has
+// thought of.
+//
+// Both halves, because one on its own says little. The dry file is what every
+// chain is measured with and the take is what this chain did to it, so the pair
+// is the comparison an ear can make and the arithmetic cannot.
+//
+// One reading, after the run, rather than a file per pass. A campaign is hundreds
+// of readings and keeping them all would be gigabytes of bass to answer a
+// question about the chain that was kept.
+func keepPlayed(
+	ctx context.Context,
+	w io.Writer,
+	opts TuneOptions,
+	bench sdk.Bench,
+	signal []float32,
+) error {
+	if opts.Keep == "" {
+		return nil
+	}
+
+	_, back, err := sdk.Hear(ctx, bench, signal)
+	if err != nil {
+		return err
+	}
+
+	return keepTakes(w, opts, signal, back)
+}
+
+// runNamed names a run for a filename.
+//
+// The identifier rather than `solvingFor`, which answers in prose: a player reads
+// as "mike-dirnt's own records" there, and an apostrophe and three spaces in a
+// filename is a path somebody has to quote. Both of these are corpus directory
+// names already, so they are safe as they stand.
+func runNamed(
+	opts TuneOptions,
+) string {
+	if opts.Player != "" {
+		return opts.Player
+	}
+
+	return opts.Genre
+}
+
+// keepTakes writes one pair of readings, the dry signal and what came back.
+func keepTakes(
+	w io.Writer,
+	opts TuneOptions,
+	signal []float32,
+	back []float32,
+) error {
+	if opts.Keep == "" {
+		return nil
+	}
+
+	if err := os.MkdirAll(opts.Keep, 0o750); err != nil {
+		return fmt.Errorf("making %s: %w", opts.Keep, err)
+	}
+
+	for _, one := range []struct {
+		name    string
+		samples []float32
+		says    string
+	}{
+		{"dry", signal, "what went in"},
+		{"chain", back, "what came back"},
+	} {
+		at := filepath.Join(opts.Keep,
+			fmt.Sprintf("%s-%s.wav", runNamed(opts), one.name))
+
+		if err := audio.Write(at, one.samples, sdk.Rate); err != nil {
+			return err
+		}
+
+		_, _ = fmt.Fprintf(w, "  [ok] wrote %s, %s\n", at, one.says)
+	}
+
+	heard(w, opts)
+
+	return nil
+}
+
+// heard names the bass the target was measured from, so the pair above has
+// something to be compared against.
+//
+// Named rather than copied. They are somebody's records, they are not this
+// project's to move around, and a path is all an ear needs.
+//
+// A player only. A genre's figures are the spread across every player who plays
+// it, so there is no one recording a genre target can be held up against, and
+// pointing at an arbitrary member of it would be inviting the wrong comparison.
+//
+// What the comparison is good for and what it is not: a record is mixed,
+// mastered and limited and a chain is one dry note, so these do not match and
+// are not meant to. It is for the faults no figure has a name for.
+func heard(
+	w io.Writer,
+	opts TuneOptions,
+) {
+	if opts.Player == "" || opts.Corpus == "" {
+		return
+	}
+
+	stems, err := filepath.Glob(filepath.Join(
+		opts.Corpus, opts.Player, "stems", "*", "*", "bass.wav"))
+	if err != nil || len(stems) == 0 {
+		return
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"\n  the bass %s was measured from, to hold those against:\n", opts.Player)
+
+	for _, at := range stems {
+		_, _ = fmt.Fprintf(w, "       %s\n", at)
+	}
 }
 
 // round is what one run of the loop did, for the correction it becomes.
@@ -811,6 +1223,12 @@ func aimed(
 // Halved rather than refused, because the direction was right and only the
 // distance was wrong, which is an ordinary line search and the same reason the
 // loop takes several passes at all.
+//
+// The threshold is `drift`, the same tolerance the level aim is held to, not
+// the noise floor's. A pass that leaves the level outside the tolerance the
+// solve was given has not landed, whether or not the reading is still above
+// hiss: every figure of the pass after it is measured on a signal the target
+// did not ask for.
 func land(
 	ctx context.Context,
 	w io.Writer,
@@ -820,32 +1238,48 @@ func land(
 	knobs []solve.Knob,
 	steps []solve.Step,
 	settled float64,
-) error {
+) (bool, error) {
 	scale := 1.0
 
 	for range backoffs {
 		if err := apply(ctx, opts, knobs, scaled(steps, scale)); err != nil {
-			return err
+			return false, err
 		}
 
 		got, err := sdk.Fingerprint(ctx, bench, signal)
 		if err != nil {
-			return err
+			return false, err
 		}
 
-		if got.Level >= settled-silent {
-			return nil
+		if got.Level >= settled-drift {
+			return true, nil
 		}
 
 		scale /= 2
 
 		_, _ = fmt.Fprintf(w,
-			"       that muted the chain at %.1fdB against %.1f settled, "+
+			"       that spent the level, %.1fdB against %.1f settled, "+
 				"so half of it instead\n", got.Level, settled)
 	}
 
-	return fmt.Errorf("%w: every move that closes this target mutes the chain",
-		ErrNoTarget)
+	// Put back rather than left at a sixteenth, and reported rather than
+	// refused. A sixteenth of a move that costs the level at full length still
+	// costs some of it, so the chain the next pass reads is already degraded and
+	// the pass is measuring its own damage. Scale zero is every control where
+	// this pass found it.
+	//
+	// Refusing the run instead loses the passes that did land. The caller stops
+	// here with the chain it had, which is the same thing it does when a pass
+	// stops improving.
+	if err := apply(ctx, opts, knobs, scaled(steps, 0)); err != nil {
+		return false, err
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"       every length of that move costs more than %.0fdB of level, "+
+			"so the dials go back where this pass found them\n", drift)
+
+	return false, nil
 }
 
 // backoffs is how many times a pass may halve its moves before giving up.

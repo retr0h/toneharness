@@ -36,12 +36,23 @@ import (
 
 // brokenWriter fails every write, so a reporting failure is reported rather
 // than swallowed.
-type brokenWriter struct{}
+type brokenWriter struct {
+	// after is how many writes it takes before giving up, so a test can reach a
+	// later write than the first. Zero fails at once.
+	after int
+	seen  int
+}
 
-func (*brokenWriter) Write(
-	[]byte,
+func (b *brokenWriter) Write(
+	p []byte,
 ) (int, error) {
-	return 0, errors.New("boom")
+	b.seen++
+
+	if b.seen > b.after {
+		return 0, errors.New("boom")
+	}
+
+	return len(p), nil
 }
 
 // valid is the smallest rig the contract accepts, so a test about rendering

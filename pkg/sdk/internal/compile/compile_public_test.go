@@ -121,11 +121,13 @@ func (s *CompilePublicTestSuite) TestRealise() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			want, wantErr := compile.Realise("a-rig", tt.spec, s.cat)
-			got, err := compile.New().Realise("a-rig", tt.spec, s.cat)
+			want, wantDropped, wantErr := compile.Realise("a-rig", tt.spec, s.cat)
+			got, gotDropped, err := compile.New().Realise("a-rig", tt.spec, s.cat)
 
 			s.Require().Equal(wantErr == nil, err == nil)
 			s.Require().Equal(want, got)
+			s.Require().Equal(wantDropped, gotDropped,
+				"and the controls it passed over come through the type too")
 		})
 	}
 }

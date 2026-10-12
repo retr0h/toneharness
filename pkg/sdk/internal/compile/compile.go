@@ -25,6 +25,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/result"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
@@ -66,7 +67,7 @@ func (*Compiler) Realise(
 	id string,
 	spec rig.Spec,
 	cat *catalog.Catalog,
-) (plan.Plan, error) {
+) (plan.Plan, []result.Dropped, error) {
 	return Realise(id, spec, cat)
 }
 

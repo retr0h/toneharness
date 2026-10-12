@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/reamp"
 )
 
@@ -104,6 +105,154 @@ func (s *VolumeTestSuite) TestLevelled() {
 //
 // Zero is a real output level. A library recording 0 where nothing could be
 // read would claim the reference was played in silence.
+// TestPlaysThrough covers setting which device the computer plays through.
+//
+// The level is pinned on whichever device the platform plays through, so a rig
+// that plays the reference out of the computer has to agree about which one that
+// is. It did not, and nothing said so: a Mac with its default on a pair of
+// Bluetooth headphones pinned those while the jack feeding the pedal sat
+// wherever it was left, and the loop read 66dB of loss.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *VolumeTestSuite) TestPlaysThrough() {
+	for _, tt := range []struct {
+		name string
+		// hardware is what the run was given.
+		hardware string
+		// at, moved and err are what the platform answers.
+		at    string
+		moved bool
+		err   error
+		// asked is the device the setter was told to use, empty for never called.
+		asked string
+		says  string
+	}{
+		{
+			// The pedal plays, so the computer's output is not in the path.
+			name:     "one device plays and records",
+			hardware: "HX Stomp",
+		},
+		{
+			name:     "the device was already the one that plays",
+			hardware: "External Headphones,HX Stomp",
+			at:       "External Headphones",
+			asked:    "External Headphones",
+			says:     "which the level below belongs to",
+		},
+		{
+			// The case this exists for.
+			name:     "the device had to be moved",
+			hardware: "External Headphones,HX Stomp",
+			at:       "External Headphones",
+			moved:    true,
+			asked:    "External Headphones",
+			says:     "the computer now plays through External Headphones",
+		},
+		{
+			// Warned and carried on from, because a rig somebody sets by hand is
+			// still a rig, and refusing would stop a campaign over a setting that
+			// may already be right.
+			name:     "a platform that will not be told",
+			hardware: "External Headphones,HX Stomp",
+			err:      errors.New("no such thing here"),
+			asked:    "External Headphones",
+			says:     "could not be set",
+		},
+	} {
+		s.Run(tt.name, func() {
+			asked := ""
+
+			w := buffer()
+
+			playsThrough(w, TuneOptions{Hardware: tt.hardware},
+				func(want string) (string, bool, error) {
+					asked = want
+
+					return tt.at, tt.moved, tt.err
+				})
+
+			s.Require().Equal(tt.asked, asked,
+				"the playback half of --hardware, or nothing at all")
+
+			if tt.says == "" {
+				s.Require().Empty(w.String())
+
+				return
+			}
+
+			s.Require().Contains(w.String(), tt.says)
+		})
+	}
+}
+
+// pins is a bench that says whether the pinned level is its own.
+type pins struct {
+	bench
+
+	reaches bool
+}
+
+func (p pins) PinReaches() bool { return p.reaches }
+
+func (pins) Name() string { return "External Headphones into HX Stomp" }
+
+// TestPinLands covers the check that the pinned level reached the device the
+// reference plays through.
+//
+// Belt and braces over `playsThrough`, and worth it because the two halves match
+// a device name against two different lists: `--hardware` against the ones the
+// audio backend enumerates, and the output switch against the ones CoreAudio
+// does. Agreeing on a name is not the same as agreeing on a device.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *VolumeTestSuite) TestPinLands() {
+	for _, tt := range []struct {
+		name     string
+		hardware string
+		bench    sdk.Bench
+		says     string
+	}{
+		{
+			// The pedal plays, so nothing is pinned into the path.
+			name:     "one device plays and records",
+			hardware: "HX Stomp",
+			bench:    pins{},
+		},
+		{
+			name:     "the pin reached the device that plays",
+			hardware: "External Headphones,HX Stomp",
+			bench:    pins{reaches: true},
+		},
+		{
+			name:     "the pin reached something else",
+			hardware: "External Headphones,HX Stomp",
+			bench:    pins{},
+			says:     "not in the signal path",
+		},
+		{
+			// A bench that does not claim to know, which is every double but
+			// one and the plain reader a test hands in.
+			name:     "a bench that cannot say",
+			hardware: "External Headphones,HX Stomp",
+			bench:    bench{},
+		},
+	} {
+		s.Run(tt.name, func() {
+			w := buffer()
+
+			pinLands(w, TuneOptions{Hardware: tt.hardware}, tt.bench)
+
+			if tt.says == "" {
+				s.Require().Empty(w.String())
+
+				return
+			}
+
+			s.Require().Contains(w.String(), tt.says)
+		})
+	}
+}
+
 func (s *VolumeTestSuite) TestALevelNobodyCheckedIsNotZero() {
 	s.Require().Equal(-1, unknownVolume)
 	s.Require().NotEqual(0, unknownVolume)

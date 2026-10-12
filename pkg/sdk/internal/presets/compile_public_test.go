@@ -156,6 +156,24 @@ func (s *CompilePublicTestSuite) nameless(
 	return path
 }
 
+// pastItsRange writes a rig whose control is set well outside what the catalog
+// says the control can take.
+//
+// Reachable only since compiling started using the values a document states: when
+// every block came back at the catalog's defaults there was no way for a document
+// to put a bad one into the plan, and `plan.Validate` had nothing to catch.
+func (s *CompilePublicTestSuite) pastItsRange(
+	dir string,
+) string {
+	path := filepath.Join(dir, "past.yaml")
+	s.Require().NoError(os.WriteFile(path, []byte(
+		"schema: ToneSpec\nid: past\nrig:\n"+
+			"  instrument: bass\n  chain:\n    - role: amp\n"+
+			"      gear: Ampeg SVT\n      controls: {Drive: \"8.0\"}\n"), 0o600))
+
+	return path
+}
+
 // TestCompile covers turning a rig into a preset.
 func (s *CompilePublicTestSuite) TestCompile() {
 	tests := []struct {
@@ -239,6 +257,14 @@ func (s *CompilePublicTestSuite) TestCompile() {
 			contains: []string{`"@fs_label": "Chunk"`},
 		},
 		{name: "a rig that is not there", rig: slotFixture("nope.yaml"), errText: "opening"},
+		{
+			// Refused before anything is written, because the device rejects the
+			// whole preset over one value past a control's end and finding that out
+			// from the pedal is worse than from a message naming the control.
+			name:    "a control set past what it can take",
+			rig:     "past-its-range",
+			errText: "will not load",
+		},
 		{
 			// A plan is written by a driver and edited by hand, so a knob no
 			// model carries reaches here. A pedal moving whatever happens to
@@ -351,6 +377,8 @@ func (s *CompilePublicTestSuite) TestCompile() {
 				rigPath = s.unknownGear(dir)
 			case tt.rig == "nameless gear":
 				rigPath = s.nameless(dir)
+			case tt.rig == "past-its-range":
+				rigPath = s.pastItsRange(dir)
 			default:
 				rigPath = tt.rig
 			}

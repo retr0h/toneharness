@@ -274,10 +274,59 @@ func (s *ChangePublicTestSuite) TestBuilt() {
 			want: []string{"1 block in the chain"},
 		},
 		{
+			// A control the block does not carry, which is a value the document
+			// states and the preset does not hold. Said rather than refused: a
+			// preset keeps the parameters of whatever its blocks used to be, so a
+			// document lifted off one names controls from two models.
+			name: "a control the block does not carry",
+			in: sdk.Built{
+				Name: "Mike Dirnt", Blocks: 3, Path: "/tmp/one.hlx",
+				Dropped: []sdk.Dropped{{
+					Block: 0, Control: "PeakReduction", Value: "0.78",
+					Near: []string{"drive", "level", "mix"},
+				}},
+			},
+			want: []string{
+				`chain[0] has no "PeakReduction"`,
+				"0.78 was not set",
+				"it takes drive, level, mix",
+			},
+		},
+		{
+			// The same with nothing to suggest, which is a block whose controls
+			// answer to none of the words.
+			name: "a control dropped with nothing to suggest",
+			in: sdk.Built{
+				Name: "Mike Dirnt", Blocks: 1, Path: "/tmp/one.hlx",
+				Dropped: []sdk.Dropped{{Block: 2, Control: "Thresh", Value: "0.4"}},
+			},
+			want: []string{`chain[2] has no "Thresh"`},
+		},
+		{
 			name: "nowhere to say it",
 			in:   sdk.Built{Name: "Mike Dirnt", Blocks: 3, Path: "/tmp/one.hlx"},
 			to:   &brokenWriter{},
 			err:  true,
+		},
+		{
+			// Nowhere to put the blank line a note sits under.
+			name: "nowhere to open a note",
+			in: sdk.Built{
+				Name: "Mike Dirnt", Blocks: 3, Path: "/tmp/one.hlx",
+				Dropped: []sdk.Dropped{{Block: 0, Control: "Typo", Value: "0.5"}},
+			},
+			to:  &brokenWriter{after: 1},
+			err: true,
+		},
+		{
+			// And nowhere to put the note itself, one write further on.
+			name: "nowhere to say a dropped control",
+			in: sdk.Built{
+				Name: "Mike Dirnt", Blocks: 3, Path: "/tmp/one.hlx",
+				Dropped: []sdk.Dropped{{Block: 0, Control: "Typo", Value: "0.5"}},
+			},
+			to:  &brokenWriter{after: 2},
+			err: true,
 		},
 	}
 

@@ -188,6 +188,33 @@ func (s *session) Call(
 	opcode uint64,
 	args []wire.Arg,
 ) (wire.Response, error) {
+	return s.call(ctx, channelName, opcode, args, 1, 0)
+}
+
+// call makes one request and waits for its reply, asking again up to tries
+// times with retry between attempts.
+//
+// Re-sent under the same transaction number rather than a new one, which is the
+// difference between asking again and asking twice. A device that did take the
+// request and whose reply was lost can answer the second copy, and the first
+// reply arriving late still matches the number being waited on. A fresh number
+// would strand both.
+//
+// Only silence is retried. A refusal is the device saying the request was wrong,
+// and re-sending it unchanged turns a clear failure into a slow one.
+//
+// One try is every caller but one, because asking again is only safe where the
+// request is idempotent. Setting a parameter to the value it is already being
+// set to leaves the same state; writing a slot does not, and nothing here lets
+// a flash write acquire a retry by default.
+func (s *session) call(
+	ctx context.Context,
+	channelName string,
+	opcode uint64,
+	args []wire.Arg,
+	tries int,
+	retry time.Duration,
+) (wire.Response, error) {
 	c, err := s.channel(channelName)
 	if err != nil {
 		return wire.Response{}, err
@@ -202,14 +229,39 @@ func (s *session) Call(
 	txn := s.nextTxn(c)
 	body := wire.EncodeRequest(wire.Request{Txn: txn, Opcode: opcode, Args: args})
 
-	err = s.send(c, wire.MsgData, wire.EncodeEnvelope(wire.Envelope{
-		Originator: wire.FromHost, Service: 2, Body: body,
-	}))
-	if err != nil {
-		return wire.Response{}, err
+	for try := range tries {
+		// Through s.after rather than by sleeping, so a test drives the wait on
+		// its own clock instead of spending it.
+		//
+		// Nothing short-circuits the wait. A bus that has gone and a context
+		// that has been cancelled are both caught by the send and the await
+		// below, so watching for them here would buy one backoff of latency on
+		// a path that is already failing and cost two branches no test can
+		// reach without racing the clock.
+		if try > 0 {
+			<-s.after(retry)
+		}
+
+		err = s.send(c, wire.MsgData, wire.EncodeEnvelope(wire.Envelope{
+			Originator: wire.FromHost, Service: 2, Body: body,
+		}))
+		if err != nil {
+			return wire.Response{}, err
+		}
+
+		var resp wire.Response
+
+		resp, err = s.awaitReply(ctx, c, txn, opcode, s.budgets.reply)
+		if err == nil {
+			return resp, nil
+		}
+
+		if !errors.Is(err, errNoReply) {
+			return wire.Response{}, err
+		}
 	}
 
-	return s.awaitReply(ctx, c, txn, opcode, s.budgets.reply)
+	return wire.Response{}, err
 }
 
 // awaitReply waits for the reply to one transaction, or for budget to run
