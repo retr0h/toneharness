@@ -33,6 +33,11 @@ import (
 type Moved struct {
 	// Term is the word that moved it.
 	Term string
+	// At is which block in the chain holds the control, so a later pass can
+	// tell whether the control is still where this left it. Two blocks can
+	// carry a control of the same name, which is why the name alone will not
+	// do.
+	At int
 	// Param is the control it moved. Empty when nothing in the chain answers
 	// to this term yet, which is most of the vocabulary.
 	Param string
@@ -58,7 +63,19 @@ type Moved struct {
 	// step. Less than that when the term's own evidence measured the gap
 	// that earned it and the gap is small.
 	Weight float64
+	// Held is what the chain ends up holding, where a later pass wrote over
+	// what this word did, and Overridden says that it did.
+	//
+	// A rig stating a control outright beats a word, by design and in that
+	// order, so the word's own move is an intermediate step rather than the
+	// outcome. Reporting it as the outcome told somebody their hand edit had
+	// not taken when it had.
+	Held       float64
+	Overridden bool
 }
+
+// Beaten says whether something wrote over what this word did.
+func (m Moved) Beaten() bool { return m.Overridden }
 
 // Acted says whether the term moved anything.
 func (m Moved) Acted() bool { return m.Param != "" }
@@ -396,6 +413,7 @@ func indexOf(
 
 // apply turns one knob, or reports why it could not.
 func apply(
+	at int,
 	b catalog.Block,
 	params plan.Params,
 	h heard,
@@ -418,7 +436,9 @@ func apply(
 
 	params[key] = catalog.Float(to)
 
-	return Moved{Term: term, Param: key, From: from, To: to, Weight: h.weight}
+	return Moved{
+		At: at, Term: term, Param: key, From: from, To: to, Weight: h.weight,
+	}
 }
 
 // step is how far one term moves this parameter.
@@ -663,7 +683,7 @@ func moveOne(
 ) Moved {
 	at, param, found := answered(blocks, t)
 	if found {
-		return apply(blocks[at], built.Blocks[at].Params, h, t, param, stats)
+		return apply(at, blocks[at], built.Blocks[at].Params, h, t, param, stats)
 	}
 
 	at = indexOf(blocks, t.category)

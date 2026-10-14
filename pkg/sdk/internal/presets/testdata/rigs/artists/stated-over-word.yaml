@@ -1,0 +1,31 @@
+# A document that states a control a word also moves. The ordering is
+# deliberate: words run first and a stated value beats one, so `Drive: 0.88` is
+# not undone by somebody having written a word that reaches Drive. What was not
+# deliberate is the report printing the word's step as though it were the
+# outcome.
+
+schema: ToneSpec
+id: stated-over-word
+
+ask:
+  genre: [rock]
+
+  subject:
+    kind: artist
+    name: Stated Over Word
+  words:
+    - term: grit-on-attack
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      controls:
+        Drive: "0.88"
+      evidence: [{ kind: llm }]
+    - role: cab
+      gear: Ampeg SVT 410HLF
+      evidence: [{ kind: llm }]
