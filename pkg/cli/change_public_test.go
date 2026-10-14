@@ -260,7 +260,9 @@ func (s *ChangePublicTestSuite) TestBuilt() {
 		in   sdk.Built
 		to   io.Writer
 		want []string
-		err  bool
+		// absent is what the report must not say, for a row about silence.
+		absent []string
+		err    bool
 	}{
 		{
 			name: "a chain of several blocks",
@@ -303,10 +305,68 @@ func (s *ChangePublicTestSuite) TestBuilt() {
 			want: []string{`chain[2] has no "Thresh"`},
 		},
 		{
+			// The ask this command does not resolve, and the one that does.
+			// Compiling a document with words silently built the rig half and
+			// said nothing, so somebody who wrote `sub-octave` got a preset
+			// without one and no reason given. It cost a session to work out
+			// from the two commands' help.
+			name: "words this command does not resolve",
+			in: sdk.Built{
+				Name: "Mike Dirnt", Blocks: 3, Path: "/tmp/one.hlx",
+				Ignored: []string{"sub-octave", "grit-on-attack"},
+			},
+			want: []string{
+				"this builds the rig",
+				"2 words moved nothing",
+				"sub-octave, grit-on-attack",
+				"`presets make --rig` is what resolves them",
+			},
+		},
+		{
+			// A chain of one word reads as "1 words" without this.
+			name: "one word this command does not resolve",
+			in: sdk.Built{
+				Name: "Mike Dirnt", Blocks: 3, Path: "/tmp/one.hlx",
+				Ignored: []string{"sub-octave"},
+			},
+			want: []string{"1 word moved nothing"},
+		},
+		{
+			// Most documents reaching here have no ask at all, and there is
+			// nothing to say about one.
+			name: "a document with no ask",
+			in:   sdk.Built{Name: "Mike Dirnt", Blocks: 3, Path: "/tmp/one.hlx"},
+			want: []string{"3 blocks in the chain"},
+			absent: []string{
+				"this builds the rig", "presets make",
+			},
+		},
+		{
 			name: "nowhere to say it",
 			in:   sdk.Built{Name: "Mike Dirnt", Blocks: 3, Path: "/tmp/one.hlx"},
 			to:   &brokenWriter{},
 			err:  true,
+		},
+		{
+			// The note about an ask is written in two parts, a blank line and
+			// the sentence, and a writer failing at either must be reported
+			// rather than leaving half a report and a success.
+			name: "nowhere to open the note about an ask",
+			in: sdk.Built{
+				Name: "Mike Dirnt", Blocks: 3, Path: "/tmp/one.hlx",
+				Ignored: []string{"sub-octave"},
+			},
+			to:  &stops{ok: 1},
+			err: true,
+		},
+		{
+			name: "nowhere to say the note about an ask",
+			in: sdk.Built{
+				Name: "Mike Dirnt", Blocks: 3, Path: "/tmp/one.hlx",
+				Ignored: []string{"sub-octave"},
+			},
+			to:  &stops{ok: 2},
+			err: true,
 		},
 		{
 			// Nowhere to put the blank line a note sits under.
@@ -351,6 +411,10 @@ func (s *ChangePublicTestSuite) TestBuilt() {
 
 			for _, want := range tt.want {
 				s.Require().Contains(buf.String(), want)
+			}
+
+			for _, not := range tt.absent {
+				s.Require().NotContains(buf.String(), not)
 			}
 		})
 	}

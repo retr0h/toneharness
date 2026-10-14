@@ -75,7 +75,7 @@ func Compile(
 		return result.Built{}, err
 	}
 
-	made, name, blocks, dropped, err := readOne(ctx, opts, cat)
+	made, name, blocks, dropped, ignored, err := readOne(ctx, opts, cat)
 	if err != nil {
 		return result.Built{}, err
 	}
@@ -123,6 +123,7 @@ func Compile(
 		Blocks:  blocks,
 		Path:    opts.OutputPath,
 		Dropped: dropped,
+		Ignored: ignored,
 	}, nil
 }
 
@@ -140,12 +141,12 @@ func readOne(
 	ctx context.Context,
 	opts CompileOptions,
 	cat *catalog.Catalog,
-) (plan.Plan, string, int, []result.Dropped, error) {
+) (plan.Plan, string, int, []result.Dropped, []string, error) {
 	named := opts.RigPath != ""
 	alsoNamed := opts.PlanPath != ""
 
 	if named == alsoNamed {
-		return plan.Plan{}, "", 0, nil, ErrOnePath
+		return plan.Plan{}, "", 0, nil, nil, ErrOnePath
 	}
 
 	// A plan has already chosen its models and carries its own values, so there
@@ -153,32 +154,32 @@ func readOne(
 	if alsoNamed {
 		made, err := readPlan(ctx, opts.PlanPath)
 		if err != nil {
-			return plan.Plan{}, "", 0, nil, err
+			return plan.Plan{}, "", 0, nil, nil, err
 		}
 
-		return made, made.Name, len(made.Blocks), nil, nil
+		return made, made.Name, len(made.Blocks), nil, nil, nil
 	}
 
 	doc, err := readDoc(ctx, opts.RigPath)
 	if err != nil {
-		return plan.Plan{}, "", 0, nil, err
+		return plan.Plan{}, "", 0, nil, nil, err
 	}
 
 	id, spec := doc.Id, doc.Rig
 
 	made, dropped, err := opts.compiler().Realise(id, spec, cat)
 	if err != nil {
-		return plan.Plan{}, "", 0, nil, err
+		return plan.Plan{}, "", 0, nil, nil, err
 	}
 
 	// After realising, because a move names a role and a role has no position
 	// until the chain is laid out. Nothing fits on this path, so the position
 	// Realise gave each block is the one the preset gets.
 	if err := opts.compiler().Moves(&made, spec, made.Blocks, cat); err != nil {
-		return plan.Plan{}, "", 0, nil, err
+		return plan.Plan{}, "", 0, nil, nil, err
 	}
 
-	return made, id, len(spec.Chain), dropped, nil
+	return made, id, len(spec.Chain), dropped, asked(doc.Ask), nil
 }
 
 // readPlan loads a plan from disk.
@@ -238,4 +239,29 @@ func template(
 	}
 
 	return fileslots.ReadPreset(ctx, path)
+}
+
+// asked is the words a document asks for, which this path does not resolve.
+//
+// Named rather than counted, because the useful sentence names them: somebody
+// who wrote `sub-octave` and got a preset without one is looking for that word,
+// not for the number three.
+//
+// Every word the ask carries, including the ones nothing acts on. Which words
+// reach a control is what the vocabulary decides and this is not the place that
+// knows, so filtering here would be a second opinion about the vocabulary kept
+// in a file that has none.
+func asked(
+	ask *tone.Ask,
+) []string {
+	if ask == nil || ask.Words == nil {
+		return nil
+	}
+
+	out := make([]string, 0, len(*ask.Words))
+	for _, w := range *ask.Words {
+		out = append(out, w.Term)
+	}
+
+	return out
 }

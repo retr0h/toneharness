@@ -65,3 +65,17 @@ run.
 A word beaten this way is still printed rather than dropped. A word that moved
 nothing because a number outranked it is exactly the kind of decision taken on
 somebody's behalf that has to be visible.
+
+**`presets compile` resolves no words at all, and says so.** It builds the `rig:`
+half, which is the layering rather than a gap: resolving words needs the corpus
+and a second chain builder, and `presets make` is that. What it would not do
+until 2026-10-14 is admit it:
+
+```
+note this builds the rig, so the ask's 2 words moved nothing: sub-octave, grit-on-attack.
+     `presets make --rig` is what resolves them.
+```
+
+Handing a whole document to the command that uses half of it is an easy mistake
+to make and was an impossible one to see. Working it out from the two commands'
+help cost a session.
