@@ -199,6 +199,34 @@ type Library struct {
 	// and two laptops at 38 put out different levels. Baseline is what makes
 	// two libraries comparable. This is what makes one reproducible.
 	Volume int `json:"volume,omitempty"`
+	// Rig is the audio devices the reference went out of and came back in on,
+	// as `--hardware` received them, and Open says the two were different so
+	// the chain could not hear itself.
+	//
+	// **The field that decides whether a reading may be compared with
+	// another**, and the one this file went without. AGENTS.md states the rule
+	// it was missing: a figure measured on one device is a figure about that
+	// device, say which. The two rigs disagree even about a block neither
+	// refused, an Ampeg SVT reading 12.7% of its energy in the mids on one and
+	// 4.0% on the other, and the committed baseline of 155.27Hz at -58.55dB
+	// sits thirty decibels from what the open loop settles at. That is almost
+	// certainly because these came off the closed rig, and the file could not
+	// say so.
+	//
+	// Empty in a library written before this was recorded, which is not the
+	// same as a closed loop: it is a rig nobody wrote down.
+	Rig  []string `json:"rig,omitempty"`
+	Open bool     `json:"open,omitempty"`
+	// PinnedOn is the output device the level was pinned on, which is the one
+	// `Volume` reached.
+	//
+	// New with the setting that moves it, and the one that silently invalidates
+	// everything else. A Mac with its default output on Bluetooth headphones
+	// pins those while the jack feeding the pedal sits wherever it was left,
+	// which is how a run came to read 66dB of loss with the cabling correct.
+	// A library written in that state records its volume honestly and describes
+	// a signal path nobody measured.
+	PinnedOn string `json:"pinned_on,omitempty"`
 	// Baseline is the empty loop, measured first.
 	//
 	// Without it a figure says nothing. 95 Hz is not what an equaliser does

@@ -108,10 +108,18 @@ func MeasureBlocks(
 		return err
 	}
 
+	rig, open := rigTaken(opts.Hardware)
+
 	lib := measured.Library{
 		Device:   cat.Device,
 		Isolated: true,
 		Blocks:   map[string]measured.Block{},
+		// Which rig took these, because a figure measured on one device is a
+		// figure about that device. Without it the file cannot answer whether
+		// its readings compare with anybody else's.
+		Rig:      rig,
+		Open:     open,
+		PinnedOn: pinnedOn(),
 		// Said in the file rather than left to the reference's filename,
 		// because a figure is a figure about one instrument through one loop
 		// and neither is recoverable from a path somebody may rename.
