@@ -154,6 +154,48 @@ func unreached(
 	return out
 }
 
+// holding is the axes already inside tolerance, which may not be pushed out.
+//
+// The complement of `unreached`, and needed for the same reason it exists. An
+// axis inside tolerance is absent from what a shortlist aims at, so nothing
+// scoring a block or a control position for the axes still out would notice it
+// spending one that was fine. Level is the one this keeps costing: it sits
+// inside its tolerance, drops out of `want` for that reason, and is the axis a
+// position can most easily buy tone with.
+//
+// Need is left at zero because the ask is to stay put, and Tol travels so the
+// caller knows how far counts as staying.
+func holding(
+	aims map[audio.Figure]solve.Aim,
+	now map[audio.Figure]float64,
+) []measured.Want {
+	out := make([]measured.Want, 0, len(aims))
+
+	for _, key := range measured.Named() {
+		aim, asked := aims[key]
+		if !asked || aim.Tol == 0 {
+			continue
+		}
+
+		read, has := now[key]
+		if !has {
+			continue
+		}
+
+		need := aim.Want - read
+		if need < 0 && -need >= aim.Tol || need >= 0 && need >= aim.Tol {
+			continue
+		}
+
+		out = append(out, measured.Want{
+			Figure: key,
+			Tol:    inLibraryScale(key, aim.Tol),
+		})
+	}
+
+	return out
+}
+
 // inLibraryScale is the inverse of inCorpusScale, for one figure.
 //
 // Which axes are shares is audio.Figure.Share's to say, so the two directions

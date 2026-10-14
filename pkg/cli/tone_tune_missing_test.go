@@ -272,3 +272,84 @@ func (s *MissingTestSuite) TestMissing() {
 		})
 	}
 }
+
+// TestHolding covers the axes a position may not disturb.
+//
+// The complement of TestUnreached, and it exists for the reason the function
+// does: an axis inside tolerance drops out of what anything aims at, so
+// nothing scoring a block or a control position would notice it spending one
+// that was fine.
+func (s *MissingTestSuite) TestHolding() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The case this was written for. Level sits where it should, so it
+			// is not wanted, and it is the axis a control position can most
+			// easily buy tone with.
+			name: "an axis inside its tolerance is held",
+			then: func() {
+				aims := map[audio.Figure]solve.Aim{
+					audio.KeyLevel: {Want: -18, Tol: 6},
+				}
+
+				got := holding(aims, map[audio.Figure]float64{audio.KeyLevel: -20})
+				s.Require().Len(got, 1)
+				s.Require().Equal(audio.KeyLevel, got[0].Figure)
+				s.Require().InDelta(6.0, got[0].Tol, 1e-9)
+			},
+		},
+		{
+			// An axis still out is the solver's to close, not something to
+			// protect, and `unreached` already has it.
+			name: "an axis outside its tolerance is not held",
+			then: func() {
+				aims := map[audio.Figure]solve.Aim{
+					audio.KeyLevel: {Want: -18, Tol: 6},
+				}
+
+				s.Require().Empty(
+					holding(aims, map[audio.Figure]float64{audio.KeyLevel: -40}),
+					"twenty-two decibels out is a gap, not something to keep")
+			},
+		},
+		{
+			// Need is zero because the ask is to stay put. A caller reading it
+			// as a direction would be told to move the axis nowhere, which is
+			// the right answer by accident and the wrong field to rely on.
+			name: "a held axis asks for no movement",
+			then: func() {
+				aims := map[audio.Figure]solve.Aim{
+					audio.KeyCentroid: {Want: 144, Tol: 20},
+				}
+
+				got := holding(aims, map[audio.Figure]float64{audio.KeyCentroid: 150})
+				s.Require().Len(got, 1)
+				s.Require().Zero(got[0].Need)
+			},
+		},
+		{
+			// The two guards that keep a figure nobody asked about out of it.
+			name: "an axis with no aim, no tolerance or no reading is not held",
+			then: func() {
+				none := map[audio.Figure]solve.Aim{}
+				s.Require().Empty(holding(none,
+					map[audio.Figure]float64{audio.KeyLevel: -20}))
+
+				loose := map[audio.Figure]solve.Aim{audio.KeyLevel: {Want: -18}}
+				s.Require().Empty(holding(loose,
+					map[audio.Figure]float64{audio.KeyLevel: -20}),
+					"a tolerance of zero is an axis nothing was asked of")
+
+				unread := map[audio.Figure]solve.Aim{
+					audio.KeyLevel: {Want: -18, Tol: 6},
+				}
+				s.Require().Empty(holding(unread, map[audio.Figure]float64{}),
+					"an axis the chain never reported cannot be held")
+			},
+		},
+	} {
+		s.Run(tt.name, tt.then)
+	}
+}

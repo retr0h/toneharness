@@ -700,6 +700,50 @@ amended document is a separate thing somebody does on purpose, and the reason is
 the one above: the fingerprint is that block alone at its defaults, so what it
 does in this chain is still unmeasured. One block per run, for the same reason.
 
+### Where its controls start
+
+`--sweeps` points at the committed curves, and one control of the proposed block
+is written from them: the position whose own sweep moves a missing axis furthest
+in the needed direction, in multiples of the noise beside it. Three noise-widths
+is the bar, because one is the size of the measurement's own wobble.
+
+One control, not every control. Each curve was swept with that control alone
+moving, so two positions taken from two curves are two independent estimates and
+the chain does not add them up.
+
+Everything is scored inside one sweep. A fingerprint and a sweep are separate
+runs at separate output levels: a Deluxe Comp reads -49.56dB in
+`fingerprints.json`, taken at volume 38, and -31.34dB across its own sweep, which
+records no volume at all. Eighteen decibels apart for the same block in the same
+isolated chain, so subtracting one from the other produces a figure about the two
+runs.
+
+**Five ways a swept position is refused**, and each was found in the committed
+readings rather than imagined:
+
+| Refused                                      | Because                                                                                   |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| a position within 2dB of full scale          | a Deluxe Comp's Level at its top stop reads -1.14dB with an empty `clippedAt`             |
+| a curve that settles at the ceiling          | all seven of an HD2_AmpWoodyBlue's curves do, and its centroid leaps 85Hz to 2,453Hz      |
+| an amplifier                                 | swept with no cabinet, so what comes back is the buzz a cabinet exists to absorb          |
+| a position that moves level off its settling | level sits inside tolerance, drops out of what is aimed at, and is what tone gets bought with |
+| the valve's guts                             | a solve may not move `Sag` to close a band share, so neither may a document                |
+
+The amplifier exclusion is the one that costs most. 43 of the 121 usable curves
+hold a position reading more than half its energy in the high band, and all 43
+are amplifiers: a MESA Bass 400+ goes from 96.76% low to 94.85% high across one
+step of its Master, at levels nowhere near the ceiling. Those are not wrong
+readings. They are readings of a chain that ends in an amplifier, and the chain a
+proposed block joins ends in a cabinet. `Straight` does not separate them either,
+running from 0.012 to 0.98 across the inverted curves.
+
+**Expect no position most of the time, and read what it says.** 19 of the
+device's 661 blocks have been swept, the curves are not packed into the binary,
+and none of the 19 is a block the shortlist picks for a chain that already holds
+an amplifier and a cabinet. So the usual answer names the block, says its
+controls arrive at the catalog's defaults, and names the `measure controls` run
+that would change that.
+
 ## Where the edit goes
 
 Into the **rig**, not the request. A knob position is only meaningful against a

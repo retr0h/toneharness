@@ -193,16 +193,7 @@ func suggest(
 		moved := now - was
 		out.Moves[w.Figure] = moved
 
-		// What is left once this block's own effect is credited against what
-		// the chain needed, in tolerances. A block that moves the figure
-		// further than the gap overshoots, and an overshoot is a gap too:
-		// its dials have to come back, which is what the solver is for.
-		left := (w.Need - moved) / w.Tol
-		if left < 0 {
-			left = -left
-		}
-
-		if left > out.Worst {
+		if left := leftOf(moved, w); left > out.Worst {
 			out.Worst = left
 		}
 
@@ -223,6 +214,24 @@ func suggest(
 	sort.Slice(out.Hurts, func(i, j int) bool { return out.Hurts[i] < out.Hurts[j] })
 
 	return out, true
+}
+
+// leftOf is what one axis has left once a move is credited against it, in
+// tolerances.
+//
+// A move further than the gap overshoots, and an overshoot is a gap too: its
+// dials have to come back, which is what the solver is for. So the distance is
+// scored rather than the direction, and the sign is dropped.
+func leftOf(
+	moved float64,
+	w Want,
+) float64 {
+	left := (w.Need - moved) / w.Tol
+	if left < 0 {
+		return -left
+	}
+
+	return left
 }
 
 // Categories narrows a shortlist to the kinds of block worth adding.

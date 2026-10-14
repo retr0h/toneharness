@@ -35,6 +35,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
@@ -563,6 +564,263 @@ func (s *ExtendTestSuite) TestRanked() {
 			_, ok := ranked(
 				plan.Plan{Blocks: tt.blocks}, aims, tt.now, s.cat(), tt.g)
 			s.Require().Equal(tt.want, ok)
+		})
+	}
+}
+
+// TestParam covers turning a swept position into a value of its own kind.
+func (s *ExtendTestSuite) TestParam() {
+	for _, tt := range []struct {
+		name  string
+		of    catalog.ModelID
+		at    measured.Starting
+		want  string
+		known bool
+	}{
+		{
+			// A float stays a float. A document read through a route that
+			// turns 6.0 into 6 is a document the device reads differently.
+			name:  "a dial",
+			of:    catalog.ModelID("HD2_EQSimple3Band"),
+			at:    measured.Starting{Control: "LowGain", Value: -6},
+			want:  "-6.0",
+			known: true,
+		},
+		{
+			// An integer control, written without a point for the same reason.
+			name:  "a control counted in whole numbers",
+			of:    catalog.ModelID("HD2_CabMicIr_2x15Brute"),
+			at:    measured.Starting{Control: "Mic", Value: 3},
+			want:  "3",
+			known: true,
+		},
+		{
+			// A switch is a list of two, and a swept position is a number
+			// along it. Which number means which setting is the list's own
+			// business; a sweep moved an index and read what came back, and
+			// guessing the name would write a setting nobody measured.
+			name:  "a control that is a switch",
+			of:    catalog.ModelID("HD2_AmpAgua51"),
+			at:    measured.Starting{Control: "Bright", Value: 1},
+			known: false,
+		},
+		{
+			// A sweep and a catalog that disagree. Dropped rather than
+			// written, because a value the catalog would refuse is a document
+			// that will not build.
+			name:  "a control the catalog does not carry",
+			of:    catalog.ModelID("HD2_EQSimple3Band"),
+			at:    measured.Starting{Control: "Nonesuch", Value: 1},
+			known: false,
+		},
+		{
+			name:  "a model the catalog does not carry",
+			of:    catalog.ModelID("HD2_Nonesuch"),
+			at:    measured.Starting{Control: "LowGain", Value: 1},
+			known: false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			got, known := param(s.cat(), tt.of, tt.at)
+
+			s.Require().Equal(tt.known, known)
+
+			if !tt.known {
+				return
+			}
+
+			s.Require().Equal(tt.want, got.String())
+		})
+	}
+}
+
+// TestStartAtReads covers reading a proposed block's sweep off disk.
+//
+// Every answer is reported, including every way there is no answer. "Its
+// controls are at the catalog's defaults" is as much a fact about the document
+// somebody is about to read as a value would be, and the message names the
+// command that would change it.
+func (s *ExtendTestSuite) TestStartAtReads() {
+	aims := map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 9000, Tol: 1}}
+	now := map[audio.Figure]float64{audio.KeyCentroid: 100}
+
+	swept := measured.Suggestion{Block: measured.Block{
+		ID: "HD2_EQSimple3Band", Name: "Simple EQ", Category: catalog.CategoryEQ,
+	}}
+	bare := measured.Suggestion{Block: measured.Block{
+		ID: "HD2_DistMegaphone", Name: "Megaphone", Category: catalog.CategoryDrive,
+	}}
+
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The sweep has something to say, so the document says it.
+			name: "a block with a committed sweep",
+			then: func() {
+				w := buffer()
+
+				got, set := startAt(w,
+					TuneOptions{Sweeps: filepath.Join("testdata", "sweeps")},
+					swept, aims, now)
+
+				s.Require().True(set)
+				s.Require().NotEmpty(got.Control)
+				s.Require().Contains(w.String(), "Simple EQ arrives with")
+				s.Require().Contains(w.String(), "times")
+				s.Require().Contains(w.String(),
+					"starting position", "it must not read as a setting")
+			},
+		},
+		{
+			// The common answer, and the one worth reporting well: 19 of the
+			// device's 661 blocks have been swept, and none of them is a block
+			// the shortlist picks for a chain that already holds an amplifier
+			// and a cabinet.
+			name: "a block nobody has swept",
+			then: func() {
+				w := buffer()
+
+				_, set := startAt(w,
+					TuneOptions{Sweeps: filepath.Join("testdata", "sweeps")},
+					bare, aims, now)
+
+				s.Require().False(set)
+				s.Require().Contains(w.String(), "has no committed sweep")
+				s.Require().Contains(w.String(),
+					"measure controls --model HD2_DistMegaphone",
+					"the message has to name what would change it")
+			},
+		},
+		{
+			// Only the fingerprints are packed into the binary, so a release
+			// has no curves at all and nothing here pretends otherwise.
+			name: "no sweeps to read",
+			then: func() {
+				w := buffer()
+
+				_, set := startAt(w, TuneOptions{}, swept, aims, now)
+
+				s.Require().False(set)
+				s.Require().Empty(w.String(),
+					"a run that was never given a sweep tree has nothing to report")
+			},
+		},
+		{
+			name: "a sweep that will not parse",
+			then: func() {
+				dir := s.T().TempDir()
+				s.Require().NoError(os.WriteFile(
+					filepath.Join(dir, "HD2_EQSimple3Band.json"),
+					[]byte("{not json"), 0o600))
+
+				w := buffer()
+
+				_, set := startAt(w, TuneOptions{Sweeps: dir}, swept, aims, now)
+
+				s.Require().False(set)
+				s.Require().Contains(w.String(), "arrive at the catalog's defaults")
+			},
+		},
+		{
+			// Swept, and with nothing worth writing down. The fixture is a
+			// real sweep whose own noise figures are wider than anything its
+			// controls do, so every move it reports is inside the
+			// measurement's wobble.
+			name: "a sweep that says nothing convincingly",
+			then: func() {
+				w := buffer()
+
+				quiet := measured.Suggestion{Block: measured.Block{
+					ID:       "HD2_EQSimpleTilt",
+					Name:     "Simple Tilt",
+					Category: catalog.CategoryEQ,
+				}}
+
+				_, set := startAt(w,
+					TuneOptions{Sweeps: filepath.Join("testdata", "sweeps")},
+					quiet, aims, now)
+
+				s.Require().False(set)
+				s.Require().Contains(w.String(), "is swept, and no position")
+			},
+		},
+	} {
+		s.Run(tt.name, tt.then)
+	}
+}
+
+// TestAmendWritesTheControl covers the control landing in the document.
+func (s *ExtendTestSuite) TestAmendWritesTheControl() {
+	doc := sdk.Rig{Known: sdk.Known{
+		ID: "matt-freeman",
+		Rig: rig.Spec{
+			Instrument: rig.InstrumentBass,
+			Chain: []rig.ChainEntry{
+				{Gear: "Ampeg SVT", Role: rig.RoleAmp},
+			},
+		},
+	}}
+	pick := measured.Suggestion{Block: measured.Block{
+		ID: "HD2_EQSimple3Band", Name: "Simple EQ", Category: catalog.CategoryEQ,
+	}}
+
+	for _, tt := range []struct {
+		name string
+		at   measured.Starting
+		set  bool
+		want map[string]string
+	}{
+		{
+			// Partial on purpose, which the contract's own field allows: the
+			// one control the sweep argued for, and the rest answered from
+			// corpus medians the way every other build answers them.
+			name: "a position the sweep argued for",
+			at:   measured.Starting{Control: "LowGain", Value: -6},
+			set:  true,
+			want: map[string]string{"LowGain": "-6.0"},
+		},
+		{
+			// No sweep, no controls, and the entry carries none rather than
+			// carrying defaults written out as though they were chosen.
+			name: "nothing to say",
+			set:  false,
+		},
+		{
+			// A sweep and a catalog that disagree. The block is still added,
+			// because the block choice did not depend on the control.
+			name: "a control the catalog does not carry",
+			at:   measured.Starting{Control: "Nonesuch", Value: 1},
+			set:  true,
+		},
+	} {
+		s.Run(tt.name, func() {
+			got, err := amend(doc, pick, s.cat(), TuneOptions{ID: "matt-freeman"},
+				corpus.Grammar{}, tt.at, tt.set)
+			s.Require().NoError(err)
+
+			var held *map[string]catalog.Setting
+
+			for _, one := range got.Rig.Chain {
+				if one.Gear != "Ampeg SVT" {
+					held = one.Controls
+				}
+			}
+
+			if tt.want == nil {
+				s.Require().Nil(held, "no control was argued for, so none is written")
+
+				return
+			}
+
+			s.Require().NotNil(held)
+
+			for name, value := range tt.want {
+				at, carried := (*held)[name]
+				s.Require().True(carried)
+				s.Require().Equal(value, at.String())
+			}
 		})
 	}
 }
