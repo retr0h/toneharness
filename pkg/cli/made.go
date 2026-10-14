@@ -86,13 +86,18 @@ func made(
 	return err
 }
 
-// saysLevel says where the build is expected to come out, against where it was
-// asked to.
+// saysLevel says what was done to match another rig's loudness.
 //
-// After playing, because both come off the Setup and this is the one a person
+// After playing, because both come off the Setup and this is the one somebody
 // reads to decide whether two presets can be compared at all. Said whether or
-// not anything moved: a build that quietly failed to reach a level is a build
-// somebody A/Bs against another one and draws a conclusion from.
+// not anything moved: a build that quietly failed to match is a build somebody
+// A/Bs against another one and draws a conclusion from.
+//
+// **It reports a gap between two cabinets and says so**, rather than printing
+// either figure as the level the chain comes out at. A cabinet is measured
+// alone and reads within a decibel of the empty loop, while the chain it ends
+// is twenty louder, so "comes out at -59.6dB" would be a measurement nobody
+// took. The gap is the part that is real and the part that decides the move.
 func saysLevel(
 	w io.Writer,
 	at sdk.Levelled,
@@ -102,17 +107,20 @@ func saysLevel(
 	}
 
 	if at.Param == "" {
-		_, err := fmt.Fprintf(w, "\n%s%s asked for %.1fdB and comes out at "+
-			"%.1fdB: %s\n",
-			paint.Indent, paint.Mute(w, "level"), at.Wanted, at.Was, at.Because)
+		_, err := fmt.Fprintf(w,
+			"\n%s%s %s, whose cabinet reads %.1fdB against this one's %.1fdB: %s\n",
+			paint.Indent, paint.Mute(w, "as loud as"), at.Rig,
+			at.Wanted, at.Was, at.Because)
 
 		return err
 	}
 
-	_, err := fmt.Fprintf(w, "\n%s%s asked for %.1fdB, %s %g to %g, "+
-		"which lands it at %.1fdB from %.1fdB\n",
-		paint.Indent, paint.Mute(w, "level"), at.Wanted,
-		at.Param, at.From, at.To, at.Reached, at.Was)
+	_, err := fmt.Fprintf(w,
+		"\n%s%s %s: %s %g to %g, closing %.1fdB of a %.1fdB gap between "+
+			"their cabinets\n",
+		paint.Indent, paint.Mute(w, "as loud as"), at.Rig,
+		at.Param, at.From, at.To,
+		at.Matches-at.Was, at.Wanted-at.Was)
 
 	return err
 }

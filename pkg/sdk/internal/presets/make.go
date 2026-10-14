@@ -144,20 +144,17 @@ func Make(
 	// and has no number the fit could invalidate.
 	spec = compile.Refit(spec, before, spec.Blocks)
 
-	// Where it lands, after the fit so the plan being levelled is the one that
-	// will be written. Only when a Setup asked: a build that was not given a
-	// target comes out wherever its gear leaves it, which is what every build
-	// did before this.
-	var levelled result.Levelled
+	// How loud it comes out, after the fit so the plan being matched is the one
+	// that will be written. Only when a Setup named a rig: a build that was
+	// not asked to match anything comes out wherever its gear leaves it, which
+	// is what every build did before this.
+	levelled, err := opts.matched(held, known.ID, spec, cat)
+	if err != nil {
+		return result.Made{}, err
+	}
 
-	if intent.Level != nil {
-		lib, err := opts.library()
-		if err != nil {
-			return result.Made{}, err
-		}
-
-		spec, levelled = opts.compiler().Level(
-			spec, cat, *intent.Level, lib, curvesIn(opts.SweepsDir, spec, cat))
+	if levelled.Param != "" {
+		spec = levelled.Plan
 	}
 
 	if err := plan.Validate(cat, spec, limits); err != nil {
@@ -204,7 +201,7 @@ func Make(
 		Moved:      movedFrom(moved),
 		Unfamiliar: unfamiliar(intent),
 		Playing:    result.Playing{Terms: playing.Terms, Said: playing.Said},
-		Levelled:   levelled,
+		Levelled:   levelled.Levelled,
 		Path:       opts.OutputPath,
 		Preset:     doc,
 	}, nil
@@ -279,14 +276,6 @@ func intentOf(
 	// how it was played and the Setup says how this person does.
 	if held != nil && held.Technique != nil {
 		out.Playing = compile.Playing{Attack: string(held.Technique.Attack)}
-	}
-
-	// How loud it should come out, which comes off the Setup for the same
-	// reason the right hand does: it is a fact about somebody's rig rather
-	// than about the sound they are after.
-	if held != nil && held.OutputLevel != nil {
-		want := *held.OutputLevel
-		out.Level = &want
 	}
 
 	if ask == nil {
@@ -500,6 +489,14 @@ func (o MakeOptions) known() (result.Known, error) {
 // ErrOneRig reports neither a rig named nor both.
 var ErrOneRig = errors.New("name one of a rig identifier or a rig file")
 
+// ErrNoLoudness is a rig named as a loudness to match whose chain has no
+// cabinet anybody has measured.
+//
+// Refused rather than passed over, because the Setup asked for something this
+// cannot do and a build that quietly came out at its own loudness is a build
+// somebody compares against another one.
+var ErrNoLoudness = errors.New("no measured cabinet to match")
+
 func setupAt(
 	at string,
 ) (*tone.Setup, error) {
@@ -569,4 +566,90 @@ func curvesIn(
 	}
 
 	return out
+}
+
+// matchedTo is a level match and the plan it produced.
+//
+// The plan travels with the answer because a caller that moved a control has a
+// different plan from the one it passed in, and returning only the report would
+// leave the two to be reassembled by whoever remembered to.
+type matchedTo struct {
+	result.Levelled
+
+	Plan plan.Plan
+}
+
+// matched makes this build as loud as the rig a Setup named.
+//
+// Does nothing without one, and nothing when the rig named is the one being
+// built: a chain is already as loud as itself, and saying so would be a report
+// about nothing.
+func (o MakeOptions) matched(
+	held *tone.Setup,
+	id string,
+	spec plan.Plan,
+	cat *catalog.Catalog,
+) (matchedTo, error) {
+	if held == nil || held.MatchLoudness == nil || *held.MatchLoudness == "" ||
+		*held.MatchLoudness == id {
+		return matchedTo{}, nil
+	}
+
+	lib, err := o.library()
+	if err != nil {
+		return matchedTo{}, err
+	}
+
+	want, err := o.loudnessOf(*held.MatchLoudness, cat, lib)
+	if err != nil {
+		return matchedTo{}, err
+	}
+
+	built, at := o.compiler().Level(
+		spec, cat, want, lib, curvesIn(o.SweepsDir, spec, cat))
+	at.Rig = *held.MatchLoudness
+
+	return matchedTo{Levelled: at, Plan: built}, nil
+}
+
+// loudnessOf is the cabinet reading of the rig a Setup named.
+//
+// Realised rather than built: what is wanted is which cabinet that rig ends in,
+// and realising answers it from the rig and the catalog alone. A full build
+// would resolve its words and fill from the corpus to arrive at the same
+// cabinet, and would read the Setup again on the way, which is the Setup that
+// sent it here.
+func (o MakeOptions) loudnessOf(
+	id string,
+	cat *catalog.Catalog,
+	lib measured.Library,
+) (float64, error) {
+	found, err := o.rigs().Find(o.Source, id)
+	if err != nil {
+		return 0, fmt.Errorf(
+			"the Setup says to come out as loud as %q: %w", id, err)
+	}
+
+	spec, _, err := o.compiler().Realise(id, found.Rig, cat)
+	if err != nil {
+		return 0, fmt.Errorf(
+			"the Setup says to come out as loud as %q, which will not build: %w",
+			id, err)
+	}
+
+	for _, b := range spec.Blocks {
+		one, known := cat.Block(b.Model)
+		if !known || one.Category != catalog.CategoryCab {
+			continue
+		}
+
+		if read, measured := lib.Blocks[string(b.Model)]; measured &&
+			read.Measured() {
+			return read.Level, nil
+		}
+	}
+
+	return 0, fmt.Errorf(
+		"%w: the Setup says to come out as loud as %q, and nothing in that "+
+			"rig's chain has a measured cabinet", ErrNoLoudness, id)
 }

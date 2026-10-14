@@ -136,34 +136,40 @@ func (s *MadePublicTestSuite) TestMade() {
 						absent: []string{"added", "no such word"},
 					},
 					{
-						// Where it comes out, against where it was asked to. A
-						// build that quietly failed to hit a level is a build
-						// somebody A/Bs against another one and draws a
-						// conclusion from.
-						name: "the level it was asked to land on",
+						// The gap between two cabinets and what was moved to
+						// close it. Reported as a gap rather than as a level,
+						// because a cabinet is measured alone and reads within
+						// a decibel of the empty loop while the chain it ends
+						// is twenty louder.
+						name: "the rig it was asked to match",
 						in: s.made(func(m *sdk.Made) {
 							m.Levelled = sdk.Levelled{
-								Wanted: -56.76, Was: -59.62, Reached: -57.12,
-								Param: "ChVol", From: 0.8, To: 0.875,
+								Rig: "punk", Wanted: -56.76, Was: -59.62,
+								Matches: -57.12, Param: "ChVol", From: 0.8, To: 0.875,
 							}
 						}),
 						want: []string{
-							"level", "-56.8dB", "ChVol 0.8 to 0.875", "-57.1dB", "-59.6dB",
+							"as loud as punk", "ChVol 0.8 to 0.875",
+							"2.5dB", "2.9dB", "between their cabinets",
 						},
+						// Neither figure may be printed as the level the chain
+						// comes out at, which is a measurement nobody took.
+						absent: []string{"comes out at -59.6dB"},
 					},
 					{
 						// Nothing moved, and the reason is the point. "no
 						// committed sweep" names what would change it.
-						name: "a level it could not reach",
+						name: "a loudness it could not match",
 						in: s.made(func(m *sdk.Made) {
 							m.Levelled = sdk.Levelled{
-								Wanted: -56.76, Was: -59.62, Reached: -59.62,
+								Rig: "punk", Wanted: -56.76, Was: -59.62,
+								Matches: -59.62,
 								Because: "AmpTest has no committed sweep",
 							}
 						}),
 						want: []string{
-							"level", "-56.8dB", "comes out at", "-59.6dB",
-							"no committed sweep",
+							"as loud as punk", "whose cabinet reads", "-56.8dB",
+							"-59.6dB", "no committed sweep",
 						},
 						absent: []string{"ChVol"},
 					},
@@ -171,9 +177,9 @@ func (s *MadePublicTestSuite) TestMade() {
 						// A Setup that said nothing leaves both figures at
 						// zero, and a build that was never given a target says
 						// nothing about one.
-						name:   "no level asked for at all",
+						name:   "no rig to match at all",
 						in:     s.made(nil),
-						absent: []string{"level"},
+						absent: []string{"as loud as"},
 					},
 					{
 						// A rig names an amp; a rig is several blocks. Whatever the
@@ -414,8 +420,8 @@ func (s *MadePublicTestSuite) TestMade() {
 						Said:  "you play with a pick",
 					}
 					m.Levelled = sdk.Levelled{
-						Wanted: -56.76, Was: -59.62, Reached: -57.12,
-						Param: "ChVol", From: 0.8, To: 0.875,
+						Rig: "punk", Wanted: -56.76, Was: -59.62,
+						Matches: -57.12, Param: "ChVol", From: 0.8, To: 0.875,
 					}
 				})
 

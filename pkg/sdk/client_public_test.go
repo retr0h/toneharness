@@ -381,18 +381,18 @@ func (s *ClientPublicTestSuite) TestWithSetup() {
 		"the Client read the Setup it was given")
 }
 
-// TestWithSweeps covers naming the curves a stated output level is reached with.
+// TestWithSweeps covers naming the curves a loudness match is made with.
 //
 // A client option beside WithSetup, because what it serves changes on that
 // clock. Asserted end to end rather than on the option, because the figure it
-// produces is the point: Krist Novoselic's `2x15 Brute` reads -59.62dB and the
-// level asked for here is the `8x10 Ampeg SVT-E`'s -56.76dB, which is the 2.9dB
+// produces is the point: Krist Novoselic's rig ends in a `2x15 Brute` at
+// -59.62dB and punk's in an `8x10 Ampeg SVT-E` at -56.76dB, which is the 2.9dB
 // gap that was found by playing the two and hearing one as quiet.
 func (s *ClientPublicTestSuite) TestWithSweeps() {
 	at := filepath.Join(s.T().TempDir(), "setup.yaml")
 
 	s.Require().NoError(os.WriteFile(at,
-		[]byte("schema: Setup\noutput_level: -56.76\n"), 0o600))
+		[]byte("schema: Setup\nmatch_loudness: punk\n"), 0o600))
 
 	for _, tt := range []struct {
 		name   string
@@ -428,7 +428,12 @@ func (s *ClientPublicTestSuite) TestWithSweeps() {
 
 			s.Require().NoError(err)
 			s.Require().True(got.Levelled.Asked())
-			s.Require().InDelta(-56.76, got.Levelled.Wanted, 1e-6)
+			s.Require().Equal("punk", got.Levelled.Rig)
+			// The two cabinet readings, to the precision this comment and the
+			// contract quote them at. An exact literal here would be a test
+			// about how many decimals the library happens to hold.
+			s.Require().InDelta(-56.76, got.Levelled.Wanted, 0.01)
+			s.Require().InDelta(-59.62, got.Levelled.Was, 0.01)
 
 			if !tt.moved {
 				s.Require().Empty(got.Levelled.Param)
@@ -440,7 +445,7 @@ func (s *ClientPublicTestSuite) TestWithSweeps() {
 			s.Require().Equal(tt.param, got.Levelled.Param)
 			s.Require().Greater(got.Levelled.To, got.Levelled.From,
 				"a chain below its target comes up")
-			s.Require().Greater(got.Levelled.Reached, got.Levelled.Was,
+			s.Require().Greater(got.Levelled.Matches, got.Levelled.Was,
 				"and the level it reaches is louder than where it started")
 		})
 	}

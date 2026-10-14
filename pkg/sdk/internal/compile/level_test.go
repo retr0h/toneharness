@@ -32,7 +32,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/result"
 )
 
-// LevelTestSuite covers landing a build on a stated output level.
+// LevelTestSuite covers making a build as loud as another rig.
 //
 // Found by playing two rigs built from the same corpus: one read as quiet, and
 // the cause was one block. Across the 133 cabinets measured here the readings
@@ -123,7 +123,7 @@ func (s *LevelTestSuite) TestLevel() {
 
 		param   string
 		to      float64
-		reached float64
+		matches float64
 		because string
 	}{
 		{
@@ -136,7 +136,7 @@ func (s *LevelTestSuite) TestLevel() {
 			curves:  s.curves(),
 			param:   "ChVol",
 			to:      0.75,
-			reached: -53.62,
+			matches: -53.62,
 		},
 		{
 			// And down, which is the same arithmetic with the sign flipped.
@@ -151,7 +151,7 @@ func (s *LevelTestSuite) TestLevel() {
 			curves:  s.curves(),
 			param:   "ChVol",
 			to:      0.75,
-			reached: -65.62,
+			matches: -65.62,
 		},
 		{
 			// Below what anybody reliably hears on a broadband signal. A build
@@ -161,7 +161,7 @@ func (s *LevelTestSuite) TestLevel() {
 			built:   s.chain(),
 			want:    -59.2,
 			curves:  s.curves(),
-			because: "it already comes out within 1dB of that",
+			because: "its cabinet is already within 1dB of that one's",
 		},
 		{
 			// The common answer on a release: the curves are not packed into
@@ -249,7 +249,7 @@ func (s *LevelTestSuite) TestLevel() {
 			},
 			param:   "ChVol",
 			to:      0.75,
-			reached: -53.62,
+			matches: -53.62,
 		},
 		{
 			// And one below the curve's own floor reads hiss. The curve says
@@ -269,7 +269,7 @@ func (s *LevelTestSuite) TestLevel() {
 			},
 			param:   "ChVol",
 			to:      0.75,
-			reached: -53.62,
+			matches: -53.62,
 		},
 		{
 			// The sweep flagged it, which the measured ceiling is a floor
@@ -289,7 +289,7 @@ func (s *LevelTestSuite) TestLevel() {
 			},
 			param:   "ChVol",
 			to:      0.75,
-			reached: -53.62,
+			matches: -53.62,
 		},
 		{
 			name:  "a position the sweep flagged as muted",
@@ -307,7 +307,7 @@ func (s *LevelTestSuite) TestLevel() {
 			},
 			param:   "ChVol",
 			to:      0.75,
-			reached: -53.62,
+			matches: -53.62,
 		},
 		{
 			// Every position unusable, so the curve says nothing about where
@@ -358,7 +358,7 @@ func (s *LevelTestSuite) TestLevel() {
 			curves:  s.curves(),
 			param:   "ChVol",
 			to:      1,
-			reached: -47.62,
+			matches: -47.62,
 		},
 	} {
 		s.Run(tt.name, func() {
@@ -379,7 +379,7 @@ func (s *LevelTestSuite) TestLevel() {
 			held, _ := got.Blocks[0].Params[tt.param].Float()
 			s.Require().InDelta(tt.to, held, 1e-9)
 			s.Require().InDelta(tt.to, at.To, 1e-9)
-			s.Require().InDelta(tt.reached, at.Reached, 1e-6)
+			s.Require().InDelta(tt.matches, at.Matches, 1e-6)
 		})
 	}
 }

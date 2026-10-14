@@ -78,8 +78,8 @@ const audible = 1.0
 // name gets the sign wrong.
 var levelControls = []string{"ChVol", "Master", "Level"}
 
-// Level moves the amplifier's level control so the chain lands where a Setup
-// asked.
+// Level moves the amplifier's level control so this chain comes out as loud as
+// the one a Setup named.
 //
 // Reports what it did either way, including every way it did nothing, because
 // a build that silently failed to hit a level is a build somebody compares
@@ -100,12 +100,12 @@ func Level(
 		return built, out
 	}
 
-	out.Was, out.Reached = was, was
+	out.Was, out.Matches = was, was
 
 	gap := want - was
 	if gap < audible && gap > -audible {
 		out.Because = fmt.Sprintf(
-			"it already comes out within %.0fdB of that", audible)
+			"its cabinet is already within %.0fdB of that one's", audible)
 
 		return built, out
 	}
@@ -138,7 +138,7 @@ func Level(
 
 	built.Blocks[at].Params[name] = catalog.Float(to)
 	out.Param, out.From, out.To = name, from, to
-	out.Reached = was + moved
+	out.Matches = was + moved
 
 	return built, out
 }

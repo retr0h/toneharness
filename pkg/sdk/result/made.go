@@ -59,7 +59,7 @@ type Made struct {
 	// because of a right hand is a different claim from one moved because of a
 	// word.
 	Playing Playing `json:"playing"`
-	// Levelled is what was done about a stated output level, and why.
+	// Levelled is what was done to match another rig's loudness, and why.
 	//
 	// Beside Playing and for the same reason: it is a decision taken from
 	// what somebody has rather than from what they asked for, so it is
@@ -90,13 +90,23 @@ type Playing struct {
 	Said string `json:"said,omitempty"`
 }
 
-// Levelled is what a build did about a stated output level.
+// Levelled is what a build did to come out as loud as another rig.
 //
 // Here rather than in compile because compile already answers with this
 // package's types and the dependency only runs one way.
 type Levelled struct {
-	// Wanted is the level the Setup asked for, and Was the level the chain's
-	// own gear leaves it at. Both in decibels below full scale.
+	// Rig is the rig this was asked to come out as loud as.
+	Rig string `json:"rig,omitempty"`
+	// Wanted is the cabinet reading of the rig this was asked to match, and
+	// Was this chain's own cabinet reading. Both in the scale the block
+	// library measures a cabinet in.
+	//
+	// **Not a level the chain comes out at**, and the difference matters. A
+	// cabinet is measured in a chain holding that cabinet alone, which reads
+	// within a decibel of the empty loop while the chain it ends is twenty
+	// louder. What these two figures support is the gap between them, which
+	// is what decides the move. Reporting either as "the level" would be
+	// claiming a measurement nobody took.
 	Wanted float64 `json:"wanted"`
 	Was    float64 `json:"was"`
 	// Param is the control that was moved, with From and To either side.
@@ -104,9 +114,10 @@ type Levelled struct {
 	Param string  `json:"param,omitempty"`
 	From  float64 `json:"from,omitempty"`
 	To    float64 `json:"to,omitempty"`
-	// Reached is the level the chain is expected to come out at now. Equal to
-	// Was when nothing moved.
-	Reached float64 `json:"reached"`
+	// Matches is where this chain's cabinet reading sits once the move is
+	// credited, so Wanted minus this is what is left of the gap. Equal to Was
+	// when nothing moved.
+	Matches float64 `json:"matches"`
 	// Because says why nothing moved, when nothing did. Empty when something
 	// did.
 	Because string `json:"because,omitempty"`

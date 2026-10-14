@@ -84,6 +84,25 @@ func (s *MakePublicTestSuite) lib() presets.Libraries {
 			Category: catalog.CategoryCab,
 			Figures:  measured.Figures{Level: -59.62},
 		},
+		"HD2_Cab8x10SVBeast": {
+			ID:       "HD2_Cab8x10SVBeast",
+			Category: catalog.CategoryCab,
+			Figures:  measured.Figures{Level: -56.76},
+		},
+	}}}
+}
+
+// thin is readings for this chain's cabinet and not for the matched rig's.
+//
+// So the match has nothing to aim at while the chain it is matching has a
+// figure of its own, which is the one case that reaches ErrNoLoudness.
+func (s *MakePublicTestSuite) thin() presets.Libraries {
+	return readings{at: measured.Library{Blocks: map[string]measured.Block{
+		"HD2_CabNamed": {
+			ID:       "HD2_CabNamed",
+			Category: catalog.CategoryCab,
+			Figures:  measured.Figures{Level: -59.62},
+		},
 	}}}
 }
 
@@ -146,8 +165,12 @@ func (s *MakePublicTestSuite) TestMake() {
 		// invented and the shipped readings know nothing about them.
 		ownLibrary bool
 		// badLibrary supplies readings that will not open, for the row about a
-		// build that cannot measure what it was asked to land on.
+		// build that cannot measure what it was asked to match.
 		badLibrary bool
+		// thinLibrary supplies readings that hold this chain's cabinet and
+		// not the matched rig's, for the row about a rig there is no figure
+		// for.
+		thinLibrary bool
 		// named is what the preset should be called, where the row builds a
 		// rig whose subject is not the usual one.
 		named string
@@ -303,10 +326,10 @@ func (s *MakePublicTestSuite) TestMake() {
 		{
 			// The gap that was found by playing two rigs: one read as quiet,
 			// and the cabinet alone accounted for 2.9dB of it. With the curve
-			// in hand the build lands on the level asked for.
-			name:       "a level it was asked to land on",
+			// in hand the build closes it.
+			name:       "a rig it was asked to come out as loud as",
 			id:         "test-player",
-			setup:      "schema: Setup\noutput_level: -50.0\n",
+			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
 			sweeps:     filepath.Join("testdata", "sweeps"),
 			level:      "ChVol",
 			ownLibrary: true,
@@ -317,22 +340,23 @@ func (s *MakePublicTestSuite) TestMake() {
 			// from a release has no curves. It says so rather than guessing
 			// what a turn is worth: the five amplifiers swept disagree by a
 			// factor of two about the same control.
-			name:       "a level with no curves to reach it with",
+			name:       "a loudness with no curves to match it with",
 			id:         "test-player",
-			setup:      "schema: Setup\noutput_level: -50.0\n",
+			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
 			level:      "no committed sweep",
 			ownLibrary: true,
 			loadable:   true,
 		},
 		{
-			// Within a decibel, which is under what anybody reliably hears on
-			// a broadband signal. Reporting a control moved a third of a
-			// decibel spends somebody's attention on nothing.
-			name:       "a level it already comes out at",
+			// Two rigs ending in the same cabinet. Within a decibel is under
+			// what anybody reliably hears on a broadband signal, so nothing
+			// moves: reporting a control turned a third of a decibel spends
+			// somebody's attention on nothing.
+			name:       "a rig that ends in the same cabinet",
 			id:         "test-player",
-			setup:      "schema: Setup\noutput_level: -59.3\n",
+			setup:      "schema: Setup\nmatch_loudness: gear-only\n",
 			sweeps:     filepath.Join("testdata", "sweeps"),
-			level:      "already comes out within",
+			level:      "already within",
 			ownLibrary: true,
 			loadable:   true,
 		},
@@ -343,23 +367,11 @@ func (s *MakePublicTestSuite) TestMake() {
 			// over a file they never asked it to read.
 			name:        "a sweep that will not parse",
 			id:          "test-player",
-			setup:       "schema: Setup\noutput_level: -50.0\n",
+			setup:       "schema: Setup\nmatch_loudness: louder-rig\n",
 			brokenSweep: true,
 			level:       "no committed sweep",
 			ownLibrary:  true,
 			loadable:    true,
-		},
-		{
-			// Nil reads the readings packed into this binary, which is what
-			// every build outside a test does. `HD2_CabNamed` is a model this
-			// test invented, so the shipped library has no figure for it.
-			name:       "the shipped library",
-			id:         "test-player",
-			setup:      "schema: Setup\noutput_level: -50.0\n",
-			sweeps:     filepath.Join("testdata", "sweeps"),
-			ownLibrary: false,
-			level:      "nothing in the chain has a measured level",
-			loadable:   true,
 		},
 		{
 			// A sweeps tree with nothing in it for this amplifier, which is
@@ -368,18 +380,71 @@ func (s *MakePublicTestSuite) TestMake() {
 			// is not named.
 			name:       "a sweeps tree with no curve for this amplifier",
 			id:         "test-player",
-			setup:      "schema: Setup\noutput_level: -50.0\n",
+			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
 			sweeps:     filepath.Join("testdata", "rigs"),
 			ownLibrary: true,
 			level:      "no committed sweep",
 			loadable:   true,
 		},
 		{
+			// A rig the Setup names and nothing has. Refused, because the
+			// Setup asked for something this cannot do and a build that
+			// quietly came out at its own loudness is a build somebody
+			// compares against another one.
+			name:       "a rig to match that does not exist",
+			id:         "test-player",
+			setup:      "schema: Setup\nmatch_loudness: no-such-rig\n",
+			ownLibrary: true,
+			errText:    "as loud as \"no-such-rig\"",
+		},
+		{
+			// Naming the rig being built. Nothing happens and nothing is
+			// reported, which is the right answer rather than an error: a
+			// chain is already as loud as itself.
+			name:     "the rig being built",
+			id:       "test-player",
+			setup:    "schema: Setup\nmatch_loudness: test-player\n",
+			sweeps:   filepath.Join("testdata", "sweeps"),
+			loadable: true,
+		},
+		{
+			// A rig whose own chain has no cabinet anybody measured, so there
+			// is no figure to match. Refused for the same reason.
+			name:        "a rig with no measured cabinet",
+			id:          "test-player",
+			setup:       "schema: Setup\nmatch_loudness: louder-rig\n",
+			thinLibrary: true,
+			sweeps:      filepath.Join("testdata", "sweeps"),
+			err:         presets.ErrNoLoudness,
+		},
+		{
+			// A rig named as a loudness whose own chain will not realise.
+			// Refused and named, because the Setup asked to match something
+			// this cannot work out.
+			name:       "a rig to match that will not build",
+			id:         "test-player",
+			setup:      "schema: Setup\nmatch_loudness: unbuildable\n",
+			ownLibrary: true,
+			errText:    "which will not build",
+		},
+		{
+			// Nil readings read the ones packed into this binary, which is
+			// what every build outside a test does. `HD2_CabNamed` is a model
+			// this fixture invented, so the shipped readings have no figure
+			// for the chain being built.
+			name:     "the readings packed into the binary",
+			id:       "test-player",
+			setup:    "schema: Setup\nmatch_loudness: louder-rig\n",
+			sweeps:   filepath.Join("testdata", "sweeps"),
+			level:    "nothing in the chain has a measured level",
+			loadable: true,
+		},
+		{
 			// Readings that will not open. Refused rather than levelled
 			// against nothing, because every figure below them is theirs.
 			name:       "readings that will not open",
 			id:         "test-player",
-			setup:      "schema: Setup\noutput_level: -50.0\n",
+			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
 			badLibrary: true,
 			err:        errNoReadings,
 		},
@@ -487,6 +552,8 @@ func (s *MakePublicTestSuite) TestMake() {
 			switch {
 			case tt.badLibrary:
 				o.Libraries = readings{err: errNoReadings}
+			case tt.thinLibrary:
+				o.Libraries = s.thin()
 			case tt.ownLibrary:
 				o.Libraries = s.lib()
 			}
@@ -535,15 +602,24 @@ func (s *MakePublicTestSuite) TestMake() {
 				s.Require().NotContains(got, not)
 			}
 
+			// A row naming a control asserts that control moved; a row
+			// naming anything else asserts the reason nothing did. Decided by
+			// the row rather than by what came back, because a refusal naming
+			// the control it could not turn would otherwise satisfy a row that
+			// asked for the turn: "no committed sweep, so what a turn of its
+			// ChVol is worth is unmeasured" contains ChVol.
 			switch {
 			case tt.level == "":
 				s.Require().False(made.Levelled.Asked(),
-					"no level was asked for, so none is reported")
-			case made.Levelled.Param != "":
+					"no rig to match, so nothing is reported")
+			case tt.level == "ChVol":
 				s.Require().Equal(tt.level, made.Levelled.Param)
 				s.Require().NotEqual(made.Levelled.From, made.Levelled.To,
 					"a control named as moved has to have moved")
+				s.Require().Empty(made.Levelled.Because)
 			default:
+				s.Require().Empty(made.Levelled.Param,
+					"nothing moved, so no control is named")
 				s.Require().Contains(made.Levelled.Because, tt.level)
 			}
 

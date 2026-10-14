@@ -24,14 +24,22 @@
    "noise": {
     "level": 0.05
    },
-   "settled": -20,
+   "settled": -26,
    "silentBelow": -50,
    "mutedAt": null,
    "clippedAt": null,
    "points": [
     {
      "value": 0.5,
-     "level": -30,
+     "level": -30.0,
+     "centroid": 150,
+     "low": 90,
+     "mid": 9,
+     "high": 1
+    },
+    {
+     "value": 0.625,
+     "level": -28.5,
      "centroid": 150,
      "low": 90,
      "mid": 9,
@@ -39,7 +47,15 @@
     },
     {
      "value": 0.75,
-     "level": -24,
+     "level": -27.0,
+     "centroid": 150,
+     "low": 90,
+     "mid": 9,
+     "high": 1
+    },
+    {
+     "value": 0.875,
+     "level": -25.5,
      "centroid": 150,
      "low": 90,
      "mid": 9,
@@ -47,7 +63,7 @@
     },
     {
      "value": 1.0,
-     "level": -18,
+     "level": -24.0,
      "centroid": 150,
      "low": 90,
      "mid": 9,
