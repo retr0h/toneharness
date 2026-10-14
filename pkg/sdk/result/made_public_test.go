@@ -78,6 +78,45 @@ func (s *MadePublicTestSuite) TestAsked() {
 	}
 }
 
+// TestBeaten covers whether something wrote over what a word did.
+//
+// Read before Acted by anything reporting, because a word that moved a control
+// and then lost it to a stated value did both and only the second is the
+// outcome. The report printed the first and told somebody hand-editing a
+// document that their edit had not taken.
+func (s *MadePublicTestSuite) TestBeaten() {
+	for _, tt := range []struct {
+		name string
+		in   result.Moved
+		want bool
+	}{
+		{
+			// `grit-on-attack` reached Drive and the document stated 0.88.
+			name: "a word the document wrote over",
+			in: result.Moved{
+				Term: "grit-on-attack", Param: "Drive", From: 0.6, To: 0.72,
+				Held: 0.88, Overridden: true,
+			},
+			want: true,
+		},
+		{
+			// Still where the word left it, so the ordinary line stands.
+			name: "a word nothing wrote over",
+			in: result.Moved{
+				Term: "grit-on-attack", Param: "Drive", From: 0.6, To: 0.72,
+			},
+		},
+		{
+			name: "a word that moved nothing",
+			in:   result.Moved{Term: "short-decay"},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, tt.in.Beaten())
+		})
+	}
+}
+
 func TestMadePublicTestSuite(
 	t *testing.T,
 ) {

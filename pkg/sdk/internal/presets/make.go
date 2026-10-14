@@ -437,15 +437,18 @@ func movedFrom(
 	out := make([]result.Moved, 0, len(moved))
 	for _, m := range moved {
 		out = append(out, result.Moved{
-			Term:      m.Term,
-			Param:     m.Param,
-			From:      m.From,
-			To:        m.To,
-			Against:   m.Against,
-			YieldedTo: m.YieldedTo,
-			Because:   m.Because,
-			Already:   m.Already,
-			Weight:    m.Weight,
+			Term:       m.Term,
+			At:         m.At,
+			Param:      m.Param,
+			From:       m.From,
+			To:         m.To,
+			Against:    m.Against,
+			YieldedTo:  m.YieldedTo,
+			Because:    m.Because,
+			Already:    m.Already,
+			Weight:     m.Weight,
+			Held:       m.Held,
+			Overridden: m.Overridden,
 		})
 	}
 

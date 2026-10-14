@@ -177,6 +177,13 @@ func Resolve(
 		return plan.Plan{}, nil, nil, Compensated{}, err
 	}
 
+	// What the chain actually holds, now that everything entitled to write
+	// over a word has written. Read rather than predicted: the two passes
+	// above are the ones that beat a word, and asking the plan what it holds
+	// cannot drift from them the way a second list of who-overrides-whom
+	// would.
+	outlived(moved, built)
+
 	// The members a rig states beside its chain are not folded into the plan.
 	// They reach the file through ApplyMembers, which merges them over what the
 	// preset underneath holds, and a plan's own `device:` is what a lift fills.
@@ -851,4 +858,36 @@ func saidKnobs(
 	}
 
 	return errors.Join(out...)
+}
+
+// outlived marks the words whose move something later wrote over.
+//
+// The report exists so somebody hand-editing a document can see what their edit
+// did, and it was printing the step before the edit. A rig stating `Attack`
+// outright beats a word, by design and in the order above, and a build said
+// "says percussive — Attack 0.04 to 0.06" while writing 0.12 into the file.
+// Both figures in that line were real and neither was the answer.
+//
+// By reading the plan rather than by tracking which pass wrote what. The value
+// a word wrote was put there by this package and nothing rounds it on the way,
+// so a control that no longer holds it is a control something overwrote. A
+// second account of which pass outranks which would be a thing to keep in step
+// with the ordering, and the ordering is the part that gets changed.
+func outlived(
+	moved []Moved,
+	built plan.Plan,
+) {
+	for i, one := range moved {
+		if one.Param == "" || one.At >= len(built.Blocks) {
+			continue
+		}
+
+		held, ok := built.Blocks[one.At].Params[one.Param].Float()
+		if !ok || held == one.To {
+			continue
+		}
+
+		moved[i].Held = held
+		moved[i].Overridden = true
+	}
 }

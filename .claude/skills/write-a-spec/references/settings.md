@@ -47,3 +47,21 @@ mise exec -- go run main.go corpus presets show --model HD2_AmpSVBeastBrt --json
 
 Leaving `settings` out is fine and often better. The four inputs still run, and
 the build reports what each one did.
+
+**The report says what the preset holds, not what each input wanted.** Where a
+number beats a word the line says so and shows both:
+
+```
+says grit-on-attack — Drive is 0.88, which the document states: the word would have made it 0.72
+```
+
+It printed only the word's move until 2026-10-14, which made it wrong by
+whatever the stated value was: "Drive 0.60 to 0.72" against an 0.88 in the file.
+That is the one job the line has. Somebody hand-editing a document reads it to
+check their edit took effect, and it told them it had not. It was caught by
+dumping the `.hlx` and comparing, which is not a check anybody should have to
+run.
+
+A word beaten this way is still printed rather than dropped. A word that moved
+nothing because a number outranked it is exactly the kind of decision taken on
+somebody's behalf that has to be visible.

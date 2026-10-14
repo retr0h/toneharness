@@ -133,6 +133,22 @@ func (l Levelled) Asked() bool { return l.Wanted != 0 || l.Was != 0 }
 type Moved struct {
 	// Term is the word that moved it.
 	Term string `json:"term"`
+	// At is which block in the chain holds the control, so a later pass can
+	// tell whether that control is still where the word left it. Two blocks
+	// can carry a control of the same name, which is why the name alone will
+	// not do.
+	At int `json:"at"`
+	// Held is what the preset ends up holding, where that is not what the
+	// word wrote, and Overridden says so.
+	//
+	// The two exist because the report used to print a word's move as though
+	// it were the outcome. A rig stating `Attack` outright beats a word, by
+	// design and in that order, and a build said "says percussive — Attack
+	// 0.04 to 0.06" while writing 0.12 into the file. Somebody hand-editing a
+	// document reads that line to check their edit took, and it told them it
+	// had not.
+	Held       float64 `json:"held,omitempty"`
+	Overridden bool    `json:"overridden,omitempty"`
 	// Param is the control it moved. Empty when nothing in the chain answers
 	// to this term yet, which is most of the vocabulary.
 	Param string `json:"param"`
@@ -169,6 +185,13 @@ type Moved struct {
 // Measured says whether a measurement sized the move rather than the word
 // alone.
 func (m Moved) Measured() bool { return m.Acted() && m.Weight > 0 && m.Weight < 1 }
+
+// Beaten says whether something wrote over what this word did.
+//
+// Checked before Acted by anything reporting, because a word that moved a
+// control and then lost it to a stated value did both and only the second is
+// the outcome.
+func (m Moved) Beaten() bool { return m.Overridden }
 
 // Acted says whether the term moved anything.
 func (m Moved) Acted() bool { return m.Param != "" }

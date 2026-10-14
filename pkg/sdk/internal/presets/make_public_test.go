@@ -171,6 +171,11 @@ func (s *MakePublicTestSuite) TestMake() {
 		// not the matched rig's, for the row about a rig there is no figure
 		// for.
 		thinLibrary bool
+		// wroteOver is a control the document states over a word, and held
+		// what the preset must end up holding for it. Empty asserts that no
+		// word was written over.
+		wroteOver string
+		held      float64
 		// named is what the preset should be called, where the row builds a
 		// rig whose subject is not the usual one.
 		named string
@@ -322,6 +327,20 @@ func (s *MakePublicTestSuite) TestMake() {
 			id:      "test-player",
 			out:     filepath.Join("no", "such", "dir.hlx"),
 			errText: "writing",
+		},
+		{
+			// The report has to say what the preset holds. The ordering is
+			// deliberate, words first and a stated value beating one, and the
+			// report printed the word's step as though it were the outcome:
+			// "Drive 0.60 to 0.72" against an 0.88 in the file. Somebody
+			// hand-editing a document reads that line to check their edit
+			// took, and it told them it had not.
+			name:      "a word the document wrote over",
+			id:        "stated-over-word",
+			named:     "Stated Over Word",
+			loadable:  true,
+			wroteOver: "Drive",
+			held:      0.88,
 		},
 		{
 			// The gap that was found by playing two rigs: one read as quiet,
@@ -600,6 +619,31 @@ func (s *MakePublicTestSuite) TestMake() {
 
 			for _, not := range tt.absent {
 				s.Require().NotContains(got, not)
+			}
+
+			// What the preset ends up holding, where the document states a
+			// control a word also moves. Read off the plan as well as the
+			// report, because the two disagreeing is the whole of what this
+			// row is about.
+			if tt.wroteOver != "" {
+				var beaten result.Moved
+
+				for _, m := range made.Moved {
+					if m.Beaten() && m.Param == tt.wroteOver {
+						beaten = m
+					}
+				}
+
+				s.Require().NotEmpty(beaten.Term,
+					"a word reached %s and the document states it", tt.wroteOver)
+				s.Require().InDelta(tt.held, beaten.Held, 1e-9)
+				s.Require().NotEqual(beaten.To, beaten.Held,
+					"the word's own move is not what the preset holds")
+
+				held, ok := made.Plan.Blocks[beaten.At].Params[tt.wroteOver].Float()
+				s.Require().True(ok)
+				s.Require().InDelta(tt.held, held,
+					1e-9, "and the report agrees with the plan")
 			}
 
 			// A row naming a control asserts that control moved; a row

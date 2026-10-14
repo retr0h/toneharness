@@ -211,6 +211,15 @@ func says(
 				m.Term, m.YieldedTo)
 		case m.Holds():
 			line = fmt.Sprintf("%s — %s", m.Term, m.Already)
+		case m.Beaten():
+			// The outcome, and the word's own move beside it so its
+			// contribution is still visible. Printing only what the word did
+			// said a hand edit had not taken when it had, and printing only
+			// the outcome would hide that the word moved at all.
+			line = fmt.Sprintf(
+				"%s — %s is %.2f, which the document states: the word would "+
+					"have made it %.2f",
+				m.Term, m.Param, m.Held, m.To)
 		case m.Acted():
 			line = fmt.Sprintf("%s — %s %.2f to %.2f", m.Term, m.Param, m.From, m.To)
 			if m.Measured() {

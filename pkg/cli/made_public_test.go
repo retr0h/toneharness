@@ -136,6 +136,24 @@ func (s *MadePublicTestSuite) TestMade() {
 						absent: []string{"added", "no such word"},
 					},
 					{
+						// What the preset ends up holding, with the word's own
+						// move beside it. The line used to print only the
+						// move, which told somebody hand-editing a document
+						// that their edit had not taken when it had.
+						name: "a word the document wrote over",
+						in: s.made(func(m *sdk.Made) {
+							m.Moved = []sdk.Moved{{
+								Term: "grit-on-attack", Param: "Drive",
+								From: 0.6, To: 0.72,
+								Held: 0.88, Overridden: true,
+							}}
+						}),
+						want: []string{
+							"grit-on-attack", "Drive is 0.88",
+							"which the document states", "0.72",
+						},
+					},
+					{
 						// The gap between two cabinets and what was moved to
 						// close it. Reported as a gap rather than as a level,
 						// because a cabinet is measured alone and reads within
@@ -413,7 +431,13 @@ func (s *MadePublicTestSuite) TestMade() {
 			then: func() {
 				full := s.made(func(m *sdk.Made) {
 					m.Added = []sdk.Added{{Name: "Minotaur", Reason: "drive", Share: 0.95}}
-					m.Moved = []sdk.Moved{{Term: "mid-forward", Param: "Mid", From: 0.5, To: 0.6}}
+					m.Moved = []sdk.Moved{
+						{Term: "mid-forward", Param: "Mid", From: 0.5, To: 0.6},
+						{
+							Term: "grit-on-attack", Param: "Drive",
+							From: 0.6, To: 0.72, Held: 0.88, Overridden: true,
+						},
+					}
 					m.Unfamiliar = []sdk.Unfamiliar{{Term: "wet paper bag"}}
 					m.Playing = sdk.Playing{
 						Terms: []string{"soft-attack", "scooped"},
