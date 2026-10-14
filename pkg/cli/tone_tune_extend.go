@@ -60,6 +60,14 @@ import (
 // the rig it came from: the amended document goes where `--extend` says, and
 // building it is a separate thing somebody does on purpose.
 
+// grammarOf is the corpus statistics, as a seam.
+//
+// A package-level var the way `audio.Write` takes `creates` and `closes`: the
+// embedded copy is a compile-time constant and cannot be damaged at run time,
+// so a build that shipped a truncated one is the only thing that reaches the
+// error path and a test is the only way to be that build.
+var grammarOf = corpus.BuiltIn
+
 // extend writes the rig the run aimed at, with the block the measurement asked
 // for added to its chain.
 //
@@ -85,7 +93,18 @@ func extend(
 	// `instrument:` says.
 	instrument := plan.InstrumentFor(made, cat)
 
-	pick, ok := ranked(made, aims, now, cat, instrument)
+	// Once, here, rather than per candidate inside the ranking. Every other
+	// consumer of the statistics in this tree is handed them, and the call
+	// gunzips and parses 33KB, which the shortlist loop was doing per block it
+	// considered.
+	stats, err := grammarOf()
+	if err != nil {
+		return fmt.Errorf("reading the corpus statistics: %w", err)
+	}
+
+	g := stats.Grammar[instrument]
+
+	pick, ok := ranked(made, aims, now, cat, g)
 	if !ok {
 		_, _ = fmt.Fprintf(w,
 			"  nothing measured moves what is missing, so there is no block to add\n")
@@ -98,7 +117,7 @@ func extend(
 		return err
 	}
 
-	amended, err := amend(doc, pick, cat, opts, instrument)
+	amended, err := amend(doc, pick, cat, opts, g)
 	if err != nil {
 		return err
 	}
@@ -123,7 +142,7 @@ func extend(
 			"       Build it and tune it again to find out whether it helps: a block\n"+
 			"       measured alone is not that block in this chain.\n",
 		opts.Extend, opts.ID, pick.Block.Name,
-		side(pick.Block.Category, instrument))
+		side(g, pick.Block.Category))
 
 	return nil
 }
@@ -167,7 +186,7 @@ func ranked(
 	aims map[audio.Figure]solve.Aim,
 	now map[audio.Figure]float64,
 	cat *catalog.Catalog,
-	instrument string,
+	g corpus.Grammar,
 ) (measured.Suggestion, bool) {
 	lib, err := measured.BuiltIn()
 	if err != nil {
@@ -186,7 +205,7 @@ func ranked(
 	runs := inSeries(made, cat)
 
 	for _, one := range got {
-		if room(runs, one.Block.Category, instrument) {
+		if room(g, runs, one.Block.Category) {
 			return one, true
 		}
 	}
@@ -258,13 +277,13 @@ func byRun(
 
 // room reports whether the chain may take another of a kind.
 //
-// An instrument the corpus never measured refuses every repeat, which is the
-// same direction `side` takes for a kind it never counted: a chain left as it
-// is beats one given a block on no evidence.
+// An instrument the corpus never measured has an empty grammar and refuses
+// every repeat, which is the same direction `side` takes for a kind it never
+// counted: a chain left as it is beats one given a block on no evidence.
 func room(
+	g corpus.Grammar,
 	runs map[catalog.Category]int,
 	c catalog.Category,
-	instrument string,
 ) bool {
 	has := runs[c]
 	if has == 0 {
@@ -272,16 +291,6 @@ func room(
 	}
 
 	if has >= holdsTwo {
-		return false
-	}
-
-	stats, err := corpus.BuiltIn()
-	if err != nil {
-		return false
-	}
-
-	g, seen := stats.Grammar[instrument]
-	if !seen {
 		return false
 	}
 
@@ -300,7 +309,7 @@ func amend(
 	pick measured.Suggestion,
 	cat *catalog.Catalog,
 	opts TuneOptions,
-	instrument string,
+	g corpus.Grammar,
 ) (tone.Spec, error) {
 	block, known := cat.Block(catalog.ModelID(pick.Block.ID))
 	if !known {
@@ -329,7 +338,7 @@ func amend(
 
 	out := doc.Rig
 	out.Chain = placed(
-		out.Chain, entry, side(pick.Block.Category, instrument) == "before")
+		out.Chain, entry, side(g, pick.Block.Category) == "before")
 
 	return tone.Spec{Schema: tone.SchemaToneSpec, Id: doc.ID, Rig: out, Ask: doc.Ask}, nil
 }
@@ -371,21 +380,12 @@ func placed(
 //
 // A kind the corpus never counted goes after, which is the safer end: a block
 // ahead of an amplifier changes what the amplifier is fed, and guessing that
-// from no evidence would be deciding something nobody measured.
+// from no evidence would be deciding something nobody measured. An instrument
+// nothing measured has an empty grammar and answers the same way.
 func side(
+	g corpus.Grammar,
 	c catalog.Category,
-	instrument string,
 ) string {
-	stats, err := corpus.BuiltIn()
-	if err != nil {
-		return "after"
-	}
-
-	g, seen := stats.Grammar[instrument]
-	if !seen {
-		return "after"
-	}
-
 	s, counted := g.Categories[c]
 	if !counted || s.BeforeAmp() < 0.5 {
 		return "after"
