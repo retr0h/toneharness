@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
@@ -117,7 +118,12 @@ func extend(
 		return err
 	}
 
-	amended, err := amend(doc, pick, cat, opts, g)
+	// What the block's own sweep says to set, where there is one. Reported
+	// whichever way it comes back, because "it arrives at its defaults" is a
+	// fact about the document somebody is about to read.
+	at, set := startAt(w, opts, pick, aims, now)
+
+	amended, err := amend(doc, pick, cat, opts, g, at, set)
 	if err != nil {
 		return err
 	}
@@ -310,6 +316,8 @@ func amend(
 	cat *catalog.Catalog,
 	opts TuneOptions,
 	g corpus.Grammar,
+	at measured.Starting,
+	set bool,
 ) (tone.Spec, error) {
 	block, known := cat.Block(catalog.ModelID(pick.Block.ID))
 	if !known {
@@ -334,6 +342,16 @@ func amend(
 		Gear:     gear,
 		Role:     rig.Role(pick.Block.Category),
 		Evidence: &[]tone.Evidence{{Kind: kind, Note: &note}},
+	}
+
+	// Partial on purpose, which the contract's own field says is allowed: one
+	// control the sweep had something to say about, and the rest answered from
+	// corpus medians the way every other build answers them.
+	if set {
+		value, known := param(cat, catalog.ModelID(pick.Block.ID), at)
+		if known {
+			entry.Controls = &map[string]catalog.Setting{at.Control: value}
+		}
 	}
 
 	out := doc.Rig
@@ -413,4 +431,107 @@ func stillOut(
 	}
 
 	return out
+}
+
+// startAt is where the proposed block's own sweep says to start one control.
+//
+// Read off disk rather than out of the binary, because the curves are not
+// packed into it: `just pack-measured` embeds the fingerprints and the sweeps
+// stay under resources/sweeps/. So a run from an installed release has no
+// curves and says the block arrives at its defaults, which is true.
+//
+// Says what it found either way. A document nobody can tell the provenance of
+// is the thing this whole command exists to avoid, and "its controls are at
+// the catalog's defaults" is as much a fact about it as a value would be.
+func startAt(
+	w io.Writer,
+	opts TuneOptions,
+	pick measured.Suggestion,
+	aims map[audio.Figure]solve.Aim,
+	now map[audio.Figure]float64,
+) (measured.Starting, bool) {
+	if opts.Sweeps == "" {
+		return measured.Starting{}, false
+	}
+
+	at := filepath.Join(opts.Sweeps, pick.Block.ID+".json")
+
+	f, err := os.Open(at) //nolint:gosec // a path built from the catalog
+	if err != nil {
+		_, _ = fmt.Fprintf(w,
+			"  %s has no committed sweep, so its controls arrive at the catalog's\n"+
+				"  defaults. `measure controls --model %s` is what would change that.\n",
+			pick.Block.Name, pick.Block.ID)
+
+		return measured.Starting{}, false
+	}
+
+	curves, err := measured.LoadCurves(f)
+
+	_ = f.Close()
+
+	if err != nil {
+		_, _ = fmt.Fprintf(w,
+			"  %s: %s, so its controls arrive at the catalog's defaults\n",
+			at, err)
+
+		return measured.Starting{}, false
+	}
+
+	got, found := measured.StartAt(
+		curves, pick.Block.Category,
+		unreached(aims, now), holding(aims, now), valveGuts)
+	if !found {
+		_, _ = fmt.Fprintf(w,
+			"  %s is swept, and no position of any control moves what is missing\n"+
+				"  convincingly enough to write down, so its controls arrive at the\n"+
+				"  catalog's defaults.\n", pick.Block.Name)
+
+		return measured.Starting{}, false
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"  %s arrives with %s at %g, which its own sweep moves %s by %.0f times\n"+
+			"  the noise beside it. Swept alone, so it is a starting position\n"+
+			"  rather than a setting.\n",
+		pick.Block.Name, got.Control, got.Value, got.Figure, got.Noises)
+
+	return got, true
+}
+
+// param turns a swept position into a value of the control's own kind.
+//
+// The kind has to survive, because a document is read through a route that
+// turns a float of 6.0 into the integer 6 and the device reads those as
+// different settings. The catalog is what knows which a control is.
+//
+// False for a control the catalog does not carry under that name, which is a
+// sweep and a catalog that disagree. Dropped rather than written, because a
+// value the catalog would refuse is a document that will not build.
+func param(
+	cat *catalog.Catalog,
+	of catalog.ModelID,
+	at measured.Starting,
+) (catalog.Setting, bool) {
+	block, known := cat.Block(of)
+	if !known {
+		return catalog.Setting{}, false
+	}
+
+	spec, carried := block.Params[at.Control]
+	if !carried {
+		return catalog.Setting{}, false
+	}
+
+	switch spec.Type {
+	case catalog.ParamFloat:
+		return catalog.Set(catalog.Float(at.Value)), true
+	case catalog.ParamInt:
+		return catalog.Set(catalog.Int(int64(at.Value))), true
+	}
+
+	// A bool and an enum are both lists, and a swept position is a number
+	// along one. Which number means which setting is the enum's own business
+	// and not something to guess at from a sweep's axis.
+	return catalog.Setting{}, false
 }

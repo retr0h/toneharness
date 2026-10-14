@@ -158,6 +158,10 @@ type TuneOptions struct {
 	// Only ever reached where the dials ran out, because a chain that met its
 	// target has nothing missing.
 	Extend string
+	// Sweeps is the tree holding the committed curves, which say where to
+	// start a proposed block's controls. Empty reads none, and the block
+	// arrives at the catalog's defaults.
+	Sweeps string
 	// Keep is a directory to write what the chain played into, as WAVs somebody
 	// can listen to. Empty keeps none of it, which is the default.
 	//
