@@ -381,6 +381,71 @@ func (s *ClientPublicTestSuite) TestWithSetup() {
 		"the Client read the Setup it was given")
 }
 
+// TestWithSweeps covers naming the curves a stated output level is reached with.
+//
+// A client option beside WithSetup, because what it serves changes on that
+// clock. Asserted end to end rather than on the option, because the figure it
+// produces is the point: Krist Novoselic's `2x15 Brute` reads -59.62dB and the
+// level asked for here is the `8x10 Ampeg SVT-E`'s -56.76dB, which is the 2.9dB
+// gap that was found by playing the two and hearing one as quiet.
+func (s *ClientPublicTestSuite) TestWithSweeps() {
+	at := filepath.Join(s.T().TempDir(), "setup.yaml")
+
+	s.Require().NoError(os.WriteFile(at,
+		[]byte("schema: Setup\noutput_level: -56.76\n"), 0o600))
+
+	for _, tt := range []struct {
+		name   string
+		sweeps string
+		param  string
+		moved  bool
+	}{
+		{
+			// The amplifier Novoselic's rig names is one of the swept ones, so
+			// the curve says what a turn of its ChVol is worth and the build
+			// lands on the level.
+			name:   "the committed curves",
+			sweeps: filepath.Join("..", "..", "resources", "sweeps", "hx-stomp"),
+			param:  "ChVol",
+			moved:  true,
+		},
+		{
+			// Only the fingerprints are packed into the binary, so a build
+			// from a release has no curves. It reports the gap and moves
+			// nothing, which is the honest answer rather than a guess at what
+			// a turn is worth.
+			name:   "no curves to read",
+			sweeps: "no-such-directory",
+		},
+	} {
+		s.Run(tt.name, func() {
+			got, err := sdk.New(
+				sdk.WithSetup(at), sdk.WithSweeps(tt.sweeps),
+			).Make(context.Background(), sdk.Build{
+				RigID: "krist-novoselic",
+				Out:   filepath.Join(s.T().TempDir(), "o.hlx"),
+			})
+
+			s.Require().NoError(err)
+			s.Require().True(got.Levelled.Asked())
+			s.Require().InDelta(-56.76, got.Levelled.Wanted, 1e-6)
+
+			if !tt.moved {
+				s.Require().Empty(got.Levelled.Param)
+				s.Require().NotEmpty(got.Levelled.Because)
+
+				return
+			}
+
+			s.Require().Equal(tt.param, got.Levelled.Param)
+			s.Require().Greater(got.Levelled.To, got.Levelled.From,
+				"a chain below its target comes up")
+			s.Require().Greater(got.Levelled.Reached, got.Levelled.Was,
+				"and the level it reaches is louder than where it started")
+		})
+	}
+}
+
 // TestWithRigs covers naming a directory of rigs.
 func (s *ClientPublicTestSuite) TestWithRigs() {
 	got, err := sdk.New(sdk.WithRigs("no-such-directory")).

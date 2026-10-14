@@ -23,6 +23,7 @@ package compile
 import (
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
@@ -69,6 +70,18 @@ func (*Compiler) Realise(
 	cat *catalog.Catalog,
 ) (plan.Plan, []result.Dropped, error) {
 	return Realise(id, spec, cat)
+}
+
+// Level moves the amplifier's level control so the chain lands where a Setup
+// asked.
+func (*Compiler) Level(
+	built plan.Plan,
+	cat *catalog.Catalog,
+	want float64,
+	lib measured.Library,
+	curves map[catalog.ModelID]measured.Curves,
+) (plan.Plan, result.Levelled) {
+	return Level(built, cat, want, lib, curves)
 }
 
 // Sections writes a rig's song sections into a preset's snapshots.

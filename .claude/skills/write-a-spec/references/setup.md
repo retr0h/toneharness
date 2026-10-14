@@ -98,6 +98,53 @@ Ask for it when writing a Setup. It is the one field here that changes what a
 build does for the person rather than for the record, and somebody who does not
 state it gets a preset tuned for whoever made the recording.
 
+## How loud it should come out
+
+`output_level` is the level a build should land on, in decibels, as this project
+measures a block: full scale is 0 and everything is below it. Absent asks for
+nothing, and the build comes out wherever its gear leaves it.
+
+**Why it has to be asked for.** Two rigs built from the same corpus arrive at
+different loudness and the cabinet decides most of it. Across the 133 cabinets
+measured here the readings run -67.88dB to -56.56dB, a spread of 11.3dB. A
+`2x15 Brute` reads -59.62dB and an `8x10 Ampeg SVT-E` -56.76dB, so two chains
+identical in every other level control sit 2.9dB apart. That was found by
+playing them: one read as quiet, and the quieter of two presets loses an A/B
+almost regardless of its tone.
+
+There is no right figure to normalise to, which is why this is a field rather
+than a rule the compiler applies. The median of the cabinets would make the 8x10
+chain quieter rather than the 2x15 chain louder, and the 8x10 is the unusual one.
+A target belongs to the person, their amplifier and how loud they play.
+
+A build moves the amplifier's own level control to land there and says what it
+did:
+
+```
+level asked for -56.8dB, ChVol 0.8 to 0.875, which lands it at -57.1dB from -59.6dB
+```
+
+**It reads the amplifier's committed sweep to know what a turn is worth**, because
+a turn is not worth the same on two amplifiers: the five swept here run 19.8dB to
+42.3dB across the same control. The positions it picks from are ones the device
+was actually set to rather than points on a slope, and a position at the
+converters' ceiling or below the curve's own floor is refused. An amplifier
+nobody has swept gets the gap reported and nothing moved, which names the
+`measure controls` run that would change it.
+
+Three things it will not do. It will not touch `Drive`, which changes loudness
+and is not a level control: the sweep says Drive 0.46 reads -15.2dB and 0.60
+reads -16.1dB on one amplifier, so turning it down is marginally louder and
+anybody reasoning from the name gets the sign wrong. It will not move anything
+for a gap under a decibel, which is below what anybody reliably hears. And it
+will not aim from a cabinet nobody has measured.
+
+Worth knowing whenever judging two presets by ear: **louder wins a quick A/B
+almost regardless of tone**, so a preference between two builds at different
+levels says little until they are matched. Perceived loudness is also not level:
+`scooped` and `dark` pull energy out of the bands the ear weighs most, so a rig
+can read as quiet while measuring the same.
+
 ## Why a rig may not name what a device lacks
 
 A rig used to carry a `requires` list naming impulse responses and bought models.

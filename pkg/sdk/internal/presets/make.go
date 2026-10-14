@@ -26,13 +26,16 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
@@ -44,6 +47,10 @@ type MakeOptions struct {
 	// Deps are the collaborators this command works through.
 	Deps
 
+	// SweepsDir is the tree holding the committed curves, which say what a
+	// turn of an amplifier's level control is worth. Empty reads none, and a
+	// stated level is reported rather than reached.
+	SweepsDir string
 	// RigID names the curated knowledge to build from.
 	RigID string
 	// Source is where rigs are read from. The zero value is the rigs that
@@ -137,6 +144,22 @@ func Make(
 	// and has no number the fit could invalidate.
 	spec = compile.Refit(spec, before, spec.Blocks)
 
+	// Where it lands, after the fit so the plan being levelled is the one that
+	// will be written. Only when a Setup asked: a build that was not given a
+	// target comes out wherever its gear leaves it, which is what every build
+	// did before this.
+	var levelled result.Levelled
+
+	if intent.Level != nil {
+		lib, err := opts.library()
+		if err != nil {
+			return result.Made{}, err
+		}
+
+		spec, levelled = opts.compiler().Level(
+			spec, cat, *intent.Level, lib, curvesIn(opts.SweepsDir, spec, cat))
+	}
+
 	if err := plan.Validate(cat, spec, limits); err != nil {
 		return result.Made{}, fmt.Errorf(
 			"the chain this rig describes will not load: %w", err)
@@ -181,6 +204,7 @@ func Make(
 		Moved:      movedFrom(moved),
 		Unfamiliar: unfamiliar(intent),
 		Playing:    result.Playing{Terms: playing.Terms, Said: playing.Said},
+		Levelled:   levelled,
 		Path:       opts.OutputPath,
 		Preset:     doc,
 	}, nil
@@ -255,6 +279,14 @@ func intentOf(
 	// how it was played and the Setup says how this person does.
 	if held != nil && held.Technique != nil {
 		out.Playing = compile.Playing{Attack: string(held.Technique.Attack)}
+	}
+
+	// How loud it should come out, which comes off the Setup for the same
+	// reason the right hand does: it is a fact about somebody's rig rather
+	// than about the sound they are after.
+	if held != nil && held.OutputLevel != nil {
+		want := *held.OutputLevel
+		out.Level = &want
 	}
 
 	if ask == nil {
@@ -488,4 +520,53 @@ func setupAt(
 	}
 
 	return &held, nil
+}
+
+// curvesIn reads the committed sweeps for whatever the chain holds.
+//
+// Off disk rather than out of the binary, because the curves are not packed
+// into it: `just pack-measured` embeds the fingerprints and the sweeps stay
+// under resources/sweeps/. So a build from an installed release has none, and
+// a stated level is reported rather than reached.
+//
+// A sweep that will not open or will not parse is a sweep this does not have,
+// which is the same answer as not having one. The level step says so by name,
+// and refusing a whole build over one unreadable curve would be refusing
+// somebody a preset over a file they never asked it to read.
+func curvesIn(
+	dir string,
+	spec plan.Plan,
+	cat *catalog.Catalog,
+) map[catalog.ModelID]measured.Curves {
+	if dir == "" {
+		return nil
+	}
+
+	out := map[catalog.ModelID]measured.Curves{}
+
+	for _, b := range spec.Blocks {
+		if one, known := cat.Block(b.Model); !known ||
+			one.Category != catalog.CategoryAmp {
+			continue
+		}
+
+		f, err := os.Open(
+			filepath.Join(dir, string(b.Model)+".json"),
+		) //nolint:gosec // a path built from the catalog
+		if err != nil {
+			continue
+		}
+
+		got, err := measured.LoadCurves(f)
+
+		_ = f.Close()
+
+		if err != nil {
+			continue
+		}
+
+		out[b.Model] = got
+	}
+
+	return out
 }

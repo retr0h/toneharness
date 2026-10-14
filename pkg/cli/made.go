@@ -77,7 +77,42 @@ func made(
 		return err
 	}
 
+	if err := saysLevel(w, m.Levelled); err != nil {
+		return err
+	}
+
 	_, err := fmt.Fprintf(w, "\n%s%s\n\n", paint.Indent, paint.Success(w, "wrote "+m.Path))
+
+	return err
+}
+
+// saysLevel says where the build is expected to come out, against where it was
+// asked to.
+//
+// After playing, because both come off the Setup and this is the one a person
+// reads to decide whether two presets can be compared at all. Said whether or
+// not anything moved: a build that quietly failed to reach a level is a build
+// somebody A/Bs against another one and draws a conclusion from.
+func saysLevel(
+	w io.Writer,
+	at sdk.Levelled,
+) error {
+	if !at.Asked() {
+		return nil
+	}
+
+	if at.Param == "" {
+		_, err := fmt.Fprintf(w, "\n%s%s asked for %.1fdB and comes out at "+
+			"%.1fdB: %s\n",
+			paint.Indent, paint.Mute(w, "level"), at.Wanted, at.Was, at.Because)
+
+		return err
+	}
+
+	_, err := fmt.Fprintf(w, "\n%s%s asked for %.1fdB, %s %g to %g, "+
+		"which lands it at %.1fdB from %.1fdB\n",
+		paint.Indent, paint.Mute(w, "level"), at.Wanted,
+		at.Param, at.From, at.To, at.Reached, at.Was)
 
 	return err
 }

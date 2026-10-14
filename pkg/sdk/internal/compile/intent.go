@@ -49,6 +49,15 @@ type Intent struct {
 	// Playing is how the person who will play this preset plays, where the
 	// Setup says. Empty is a Setup that did not, and compensates for nothing.
 	Playing Playing
+	// Level is the output level a Setup asked a build to land on, in decibels
+	// below full scale. Nil is a Setup that did not ask, which is most of
+	// them, and asks for nothing.
+	//
+	// Beside Playing because it comes off the same document and for the same
+	// reason: how loud somebody plays changes on the clock a pedal changes on
+	// rather than once per sound, and restating it per request is how the
+	// twelfth one comes to contradict the first.
+	Level *float64
 	// Name is what the preset should be called, which is the subject the ask
 	// names: "Mike Dirnt" is what somebody wants to read on the screen.
 	//

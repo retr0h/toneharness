@@ -28,210 +28,52 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/result"
 )
 
-// MadePublicTestSuite covers what a caller is handed for a build.
+// MadePublicTestSuite covers what a build answers with.
 type MadePublicTestSuite struct {
 	suite.Suite
 }
 
-// TestMeasured covers telling a move a measurement sized from one the word
-// sized on its own.
-func (s *MadePublicTestSuite) TestMeasured() {
-	tests := []struct {
+// TestAsked covers whether a Setup stated an output level at all.
+//
+// The distinction matters to a reader rather than to the arithmetic: a build
+// given no target must say nothing about one, and a build that reached its
+// target must not be confused with one that was never given it.
+func (s *MadePublicTestSuite) TestAsked() {
+	for _, tt := range []struct {
 		name string
-		in   result.Moved
+		in   result.Levelled
 		want bool
 	}{
 		{
-			// Half of what the other players read, so half a step.
-			name: "a move the records sized",
-			in: result.Moved{
-				Term: "clean", Param: "Drive", From: 0.26, To: 0.14, Weight: 0.5,
-			},
+			// Asked for, and reached. Novoselic's `2x15 Brute` against the
+			// `8x10 Ampeg SVT-E`'s reading, which is the 2.9dB that was found
+			// by playing the two.
+			name: "a level that was asked for",
+			in:   result.Levelled{Wanted: -56.76, Was: -59.62},
 			want: true,
 		},
 		{
-			name: "a word nobody measured, worth its whole step",
-			in: result.Moved{
-				Term: "saturated", Param: "Drive", From: 0.26, To: 0.38, Weight: 1,
-			},
-		},
-		{
-			// Every rig written before a move could be weighed, read back
-			// through a result that now carries one.
-			name: "a build from before any of this was measured",
-			in:   result.Moved{Term: "saturated", Param: "Drive", From: 0.26, To: 0.38},
-		},
-		{
-			name: "a word that moved nothing at all",
-			in:   result.Moved{Term: "short-decay", Weight: 0.5},
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			s.Require().Equal(tt.want, tt.in.Measured())
-		})
-	}
-}
-
-// TestActed covers telling a word that turned a knob from one that did not.
-func (s *MadePublicTestSuite) TestActed() {
-	tests := []struct {
-		name string
-		in   result.Moved
-		want bool
-	}{
-		{
-			name: "a word that moved a control",
-			in:   result.Moved{Term: "mid-forward", Param: "Mid", From: 0.5, To: 0.58},
+			// Read but not asked for, which is still something to say.
+			name: "a reading with no target",
+			in:   result.Levelled{Was: -59.62},
 			want: true,
 		},
 		{
-			// Four of the ten axes describe the player and the instrument
-			// rather than the rig, and a term from one of those is recorded
-			// and moves nothing.
-			name: "a word nothing acts on yet",
-			in:   result.Moved{Term: "short-decay"},
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			s.Require().Equal(tt.want, tt.in.Acted())
-		})
-	}
-}
-
-// TestContested covers a rig answering one question twice.
-func (s *MadePublicTestSuite) TestContested() {
-	tests := []struct {
-		name string
-		in   result.Moved
-		want bool
-	}{
-		{
-			// Two words from one axis cancel, so neither is applied and the
-			// axis is named instead.
-			name: "another word already spoke for this axis",
-			in:   result.Moved{Term: "minimal-drive", Against: "drive"},
+			// A target with nothing read, which is a chain nothing has a
+			// level for.
+			name: "a target with nothing read",
+			in:   result.Levelled{Wanted: -56.76},
 			want: true,
 		},
 		{
-			name: "the only word on its axis",
-			in:   result.Moved{Term: "mid-forward", Param: "Mid"},
+			// A Setup that said nothing leaves both at zero, and a target of
+			// zero would be a chain asked to come out at full scale, which
+			// nobody asks for.
+			name: "nothing asked and nothing read",
 		},
-	}
-
-	for _, tt := range tests {
+	} {
 		s.Run(tt.name, func() {
-			s.Require().Equal(tt.want, tt.in.Contested())
-		})
-	}
-}
-
-// TestYielded covers a measured word standing aside for one somebody wrote.
-func (s *MadePublicTestSuite) TestYielded() {
-	tests := []struct {
-		name string
-		in   result.Moved
-		want bool
-	}{
-		{
-			// Not a contradiction. The person said it and a population did not,
-			// so theirs answers the axis and this one names whose it was.
-			name: "a genre's word outranked by one somebody wrote",
-			in:   result.Moved{Term: "clean", YieldedTo: "grit-on-attack"},
-			want: true,
-		},
-		{
-			// The other outcome on a shared axis, and the one that must not read
-			// as this: two words of the same standing cancel each other, and
-			// nobody's word stood.
-			name: "two words of the same standing contradicting",
-			in:   result.Moved{Term: "minimal-drive", Against: "drive"},
-		},
-		{
-			name: "the only word on its axis",
-			in:   result.Moved{Term: "mid-forward", Param: "Mid"},
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			s.Require().Equal(tt.want, tt.in.Yielded())
-		})
-	}
-}
-
-// TestUnanswered covers telling the two silences apart.
-func (s *MadePublicTestSuite) TestUnanswered() {
-	tests := []struct {
-		name string
-		in   result.Moved
-		want bool
-	}{
-		{
-			// A control exists for this word. This chain does not have it,
-			// which is a fact about the rig and worth saying.
-			name: "the chain has nowhere to put it",
-			in: result.Moved{
-				Term:    "audible-pick-attack",
-				Because: "the LA Studio Comp has no Attack",
-			},
-			want: true,
-		},
-		{
-			// The other silence: nothing anywhere acts on this word, so the
-			// chain is not what is missing.
-			name: "nothing acts on it at all",
-			in:   result.Moved{Term: "short-decay"},
-		},
-		{
-			name: "a word that moved a control",
-			in:   result.Moved{Term: "mid-forward", Param: "Mid"},
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			s.Require().Equal(tt.want, tt.in.Unanswered())
-		})
-	}
-}
-
-// TestHolds covers a word the chain answers without a knob being turned.
-func (s *MadePublicTestSuite) TestHolds() {
-	tests := []struct {
-		name string
-		in   result.Moved
-		want bool
-	}{
-		{
-			// Nothing was turned and nothing is missing. A chain with no
-			// reverb in it has no room on it, which is what dry asked for.
-			name: "the chain is already what was asked for",
-			in: result.Moved{
-				Term:    "dry",
-				Already: "this chain has no reverb, so it is already dry",
-			},
-			want: true,
-		},
-		{
-			name: "a word the chain could not answer",
-			in: result.Moved{
-				Term:    "roomy",
-				Because: "this chain holds no reverb",
-			},
-		},
-		{
-			name: "a word that moved a control",
-			in:   result.Moved{Term: "mid-forward", Param: "Mid"},
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			s.Require().Equal(tt.want, tt.in.Holds())
+			s.Require().Equal(tt.want, tt.in.Asked())
 		})
 	}
 }

@@ -69,6 +69,8 @@ type (
 	Moved = result.Moved
 	// Playing is the compensation made for how somebody plays.
 	Playing = result.Playing
+	// Levelled is what a build did about a stated output level.
+	Levelled = result.Levelled
 
 	// Rigs is every rig under one directory.
 	Rigs = result.Rigs

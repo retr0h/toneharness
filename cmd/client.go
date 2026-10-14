@@ -69,6 +69,7 @@ type clientFlags struct {
 	device    string
 	stats     string
 	setup     string
+	sweeps    string
 	rigs      string
 	backupDir string
 }
@@ -82,6 +83,7 @@ func (f *clientFlags) client(
 		sdk.WithDevice(f.device),
 		sdk.WithStats(f.stats),
 		sdk.WithSetup(f.setup),
+		sdk.WithSweeps(f.sweeps),
 		sdk.WithRigs(f.rigs),
 		sdk.WithBackupDir(f.backupDir),
 	}, opts...)...)

@@ -1184,6 +1184,17 @@ type Setup struct {
 	// Instruments What they play. More than one, because most people have more than one and they do not sound the same.
 	Instruments *[]Held `json:"instruments,omitempty"`
 
+	// OutputLevel The level a build should come out at, in decibels, as this project measures a block: full scale is 0 and everything is below it.
+	//
+	// Here rather than on a request because it is a fact about somebody's rig and their room, and it changes on the same clock as the pedal rather than once per sound. Absent asks for nothing and every build comes out wherever its gear leaves it.
+	//
+	// **Why it has to be asked for rather than worked out.** Two rigs built from the same corpus arrive at different loudness, and the cabinet alone decides most of it: across the 133 cabinets measured here the readings run -67.88dB to -56.56dB, a spread of 11.3dB. A `2x15 Brute` reads -59.62dB and an `8x10 Ampeg SVT-E` -56.76dB, so two chains identical in every other level control sit 2.9dB apart, and the quieter one reads as worse in an A/B almost regardless of its tone.
+	//
+	// There is no right figure to normalise to, which is why this is a field and not a rule. The median of the cabinets would make the 8x10 chain quieter rather than the 2x15 chain louder, and the 8x10 is the unusual one. A target belongs to the person, their amplifier and how loud they play.
+	//
+	// A build moves the amplifier's own level control to land here and says by how much. It reads that control's committed sweep to know what a turn is worth, because a turn is not worth the same on two amplifiers: the five swept here run 19.8dB to 42.3dB across the same control. An amplifier nobody has swept gets the gap reported and nothing moved.
+	OutputLevel *float64 `json:"output_level,omitempty"`
+
 	// Owns Content the device does not ship with: impulse responses somebody loaded, models somebody bought.
 	//
 	// A preset naming one of these on a device that does not have it is silent in that block, and nothing could tell before this: the catalog knows what ships and only the owner knows what else is there.

@@ -136,6 +136,46 @@ func (s *MadePublicTestSuite) TestMade() {
 						absent: []string{"added", "no such word"},
 					},
 					{
+						// Where it comes out, against where it was asked to. A
+						// build that quietly failed to hit a level is a build
+						// somebody A/Bs against another one and draws a
+						// conclusion from.
+						name: "the level it was asked to land on",
+						in: s.made(func(m *sdk.Made) {
+							m.Levelled = sdk.Levelled{
+								Wanted: -56.76, Was: -59.62, Reached: -57.12,
+								Param: "ChVol", From: 0.8, To: 0.875,
+							}
+						}),
+						want: []string{
+							"level", "-56.8dB", "ChVol 0.8 to 0.875", "-57.1dB", "-59.6dB",
+						},
+					},
+					{
+						// Nothing moved, and the reason is the point. "no
+						// committed sweep" names what would change it.
+						name: "a level it could not reach",
+						in: s.made(func(m *sdk.Made) {
+							m.Levelled = sdk.Levelled{
+								Wanted: -56.76, Was: -59.62, Reached: -59.62,
+								Because: "AmpTest has no committed sweep",
+							}
+						}),
+						want: []string{
+							"level", "-56.8dB", "comes out at", "-59.6dB",
+							"no committed sweep",
+						},
+						absent: []string{"ChVol"},
+					},
+					{
+						// A Setup that said nothing leaves both figures at
+						// zero, and a build that was never given a target says
+						// nothing about one.
+						name:   "no level asked for at all",
+						in:     s.made(nil),
+						absent: []string{"level"},
+					},
+					{
 						// A rig names an amp; a rig is several blocks. Whatever the
 						// corpus contributed has to be visible before anybody plugs in.
 						name: "what the corpus added unasked",
@@ -372,6 +412,10 @@ func (s *MadePublicTestSuite) TestMade() {
 					m.Playing = sdk.Playing{
 						Terms: []string{"soft-attack", "scooped"},
 						Said:  "you play with a pick",
+					}
+					m.Levelled = sdk.Levelled{
+						Wanted: -56.76, Was: -59.62, Reached: -57.12,
+						Param: "ChVol", From: 0.8, To: 0.875,
 					}
 				})
 

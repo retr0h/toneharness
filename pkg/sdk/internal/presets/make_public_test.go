@@ -22,6 +22,7 @@ package presets_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,6 +37,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
 	presetmocks "github.com/retr0h/toneharness/pkg/sdk/internal/presets/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -69,6 +71,38 @@ func (s *MakePublicTestSuite) opts(
 	}
 }
 
+// lib is a reading for the cabinet this fixture rig resolves to.
+//
+// Its own rather than the shipped library, because `HD2_CabNamed` is a model
+// this test invented and the shipped readings know nothing about it. The figure
+// is the real `2x15 Brute`'s, which is the quiet half of the pair that was
+// found by playing two rigs and hearing one as quiet.
+func (s *MakePublicTestSuite) lib() presets.Libraries {
+	return readings{at: measured.Library{Blocks: map[string]measured.Block{
+		"HD2_CabNamed": {
+			ID:       "HD2_CabNamed",
+			Category: catalog.CategoryCab,
+			Figures:  measured.Figures{Level: -59.62},
+		},
+	}}}
+}
+
+// readings hands over block readings, or refuses to.
+//
+// Hand-written rather than generated because it is two fields and no
+// expectations: what the rows need is readings of their own and one that will
+// not open, and a mock with call assertions would say more about the test than
+// about the build.
+type readings struct {
+	at  measured.Library
+	err error
+}
+
+func (r readings) Library() (measured.Library, error) { return r.at, r.err }
+
+// errNoReadings stands in for a library that will not open.
+var errNoReadings = errors.New("no readings")
+
 // TestMake builds a preset out of a rig.
 func (s *MakePublicTestSuite) TestMake() {
 	tests := []struct {
@@ -96,6 +130,24 @@ func (s *MakePublicTestSuite) TestMake() {
 		// playing is a fragment the compensation has to say. Empty asks for
 		// none, which is a build that made none.
 		playing string
+		// sweeps is the tree of committed curves, which say what a turn of an
+		// amplifier's level control is worth. Empty reads none, and a stated
+		// level is reported rather than reached.
+		sweeps string
+		// level is what the level report has to say: the control it moved, or
+		// a fragment of why it moved nothing. Empty is a build given no
+		// target, which must say nothing about one.
+		level string
+		// brokenSweep writes a curve that will not parse, where the row is
+		// about a sweep this does not have rather than one it lacks.
+		brokenSweep bool
+		// ownLibrary says whether the row supplies readings of its own. Rows
+		// about a level want them, because the blocks this fixture names are
+		// invented and the shipped readings know nothing about them.
+		ownLibrary bool
+		// badLibrary supplies readings that will not open, for the row about a
+		// build that cannot measure what it was asked to land on.
+		badLibrary bool
 		// named is what the preset should be called, where the row builds a
 		// rig whose subject is not the usual one.
 		named string
@@ -249,6 +301,89 @@ func (s *MakePublicTestSuite) TestMake() {
 			errText: "writing",
 		},
 		{
+			// The gap that was found by playing two rigs: one read as quiet,
+			// and the cabinet alone accounted for 2.9dB of it. With the curve
+			// in hand the build lands on the level asked for.
+			name:       "a level it was asked to land on",
+			id:         "test-player",
+			setup:      "schema: Setup\noutput_level: -50.0\n",
+			sweeps:     filepath.Join("testdata", "sweeps"),
+			level:      "ChVol",
+			ownLibrary: true,
+			loadable:   true,
+		},
+		{
+			// Only the fingerprints are packed into the binary, so a build
+			// from a release has no curves. It says so rather than guessing
+			// what a turn is worth: the five amplifiers swept disagree by a
+			// factor of two about the same control.
+			name:       "a level with no curves to reach it with",
+			id:         "test-player",
+			setup:      "schema: Setup\noutput_level: -50.0\n",
+			level:      "no committed sweep",
+			ownLibrary: true,
+			loadable:   true,
+		},
+		{
+			// Within a decibel, which is under what anybody reliably hears on
+			// a broadband signal. Reporting a control moved a third of a
+			// decibel spends somebody's attention on nothing.
+			name:       "a level it already comes out at",
+			id:         "test-player",
+			setup:      "schema: Setup\noutput_level: -59.3\n",
+			sweeps:     filepath.Join("testdata", "sweeps"),
+			level:      "already comes out within",
+			ownLibrary: true,
+			loadable:   true,
+		},
+		{
+			// A sweep that will not parse is a sweep this does not have, which
+			// is the same answer as not having one. Refusing a whole build
+			// over an unreadable curve would be refusing somebody a preset
+			// over a file they never asked it to read.
+			name:        "a sweep that will not parse",
+			id:          "test-player",
+			setup:       "schema: Setup\noutput_level: -50.0\n",
+			brokenSweep: true,
+			level:       "no committed sweep",
+			ownLibrary:  true,
+			loadable:    true,
+		},
+		{
+			// Nil reads the readings packed into this binary, which is what
+			// every build outside a test does. `HD2_CabNamed` is a model this
+			// test invented, so the shipped library has no figure for it.
+			name:       "the shipped library",
+			id:         "test-player",
+			setup:      "schema: Setup\noutput_level: -50.0\n",
+			sweeps:     filepath.Join("testdata", "sweeps"),
+			ownLibrary: false,
+			level:      "nothing in the chain has a measured level",
+			loadable:   true,
+		},
+		{
+			// A sweeps tree with nothing in it for this amplifier, which is
+			// the same answer as no tree at all and reached by a different
+			// path: one file that is not there rather than a directory that
+			// is not named.
+			name:       "a sweeps tree with no curve for this amplifier",
+			id:         "test-player",
+			setup:      "schema: Setup\noutput_level: -50.0\n",
+			sweeps:     filepath.Join("testdata", "rigs"),
+			ownLibrary: true,
+			level:      "no committed sweep",
+			loadable:   true,
+		},
+		{
+			// Readings that will not open. Refused rather than levelled
+			// against nothing, because every figure below them is theirs.
+			name:       "readings that will not open",
+			id:         "test-player",
+			setup:      "schema: Setup\noutput_level: -50.0\n",
+			badLibrary: true,
+			err:        errNoReadings,
+		},
+		{
 			// Every figure in the corpus came off somebody else's playing, so
 			// a rig played with a pick is duller in the hands of somebody who
 			// uses fingers. With both sides stated the difference is a knob
@@ -337,6 +472,25 @@ func (s *MakePublicTestSuite) TestMake() {
 				o.Catalogs = s.catalogs(tt.catalog)
 			}
 
+			o.SweepsDir = tt.sweeps
+
+			if tt.brokenSweep {
+				at := filepath.Join(dir, "sweeps")
+				s.Require().NoError(os.MkdirAll(at, 0o750))
+				s.Require().NoError(os.WriteFile(
+					filepath.Join(at, "HD2_AmpSVBeastBrt.json"),
+					[]byte("{not json"), 0o600))
+
+				o.SweepsDir = at
+			}
+
+			switch {
+			case tt.badLibrary:
+				o.Libraries = readings{err: errNoReadings}
+			case tt.ownLibrary:
+				o.Libraries = s.lib()
+			}
+
 			switch {
 			case tt.setup != "":
 				at := filepath.Join(dir, "setup.yaml")
@@ -379,6 +533,18 @@ func (s *MakePublicTestSuite) TestMake() {
 
 			for _, not := range tt.absent {
 				s.Require().NotContains(got, not)
+			}
+
+			switch {
+			case tt.level == "":
+				s.Require().False(made.Levelled.Asked(),
+					"no level was asked for, so none is reported")
+			case made.Levelled.Param != "":
+				s.Require().Equal(tt.level, made.Levelled.Param)
+				s.Require().NotEqual(made.Levelled.From, made.Levelled.To,
+					"a control named as moved has to have moved")
+			default:
+				s.Require().Contains(made.Levelled.Because, tt.level)
 			}
 
 			if tt.playing == "" {

@@ -59,6 +59,13 @@ type Made struct {
 	// because of a right hand is a different claim from one moved because of a
 	// word.
 	Playing Playing `json:"playing"`
+	// Levelled is what was done about a stated output level, and why.
+	//
+	// Beside Playing and for the same reason: it is a decision taken from
+	// what somebody has rather than from what they asked for, so it is
+	// reported on its own rather than folded into the words. A knob moved to
+	// land on a level is a different claim from one moved because of a word.
+	Levelled Levelled `json:"levelled"`
 	// Path is the file that was written.
 	Path string `json:"path"`
 	// Preset is the document that was written, as it stood when it was written.
@@ -82,6 +89,34 @@ type Playing struct {
 	// Said is the whole of it in a sentence, ready to print.
 	Said string `json:"said,omitempty"`
 }
+
+// Levelled is what a build did about a stated output level.
+//
+// Here rather than in compile because compile already answers with this
+// package's types and the dependency only runs one way.
+type Levelled struct {
+	// Wanted is the level the Setup asked for, and Was the level the chain's
+	// own gear leaves it at. Both in decibels below full scale.
+	Wanted float64 `json:"wanted"`
+	Was    float64 `json:"was"`
+	// Param is the control that was moved, with From and To either side.
+	// Empty when nothing moved.
+	Param string  `json:"param,omitempty"`
+	From  float64 `json:"from,omitempty"`
+	To    float64 `json:"to,omitempty"`
+	// Reached is the level the chain is expected to come out at now. Equal to
+	// Was when nothing moved.
+	Reached float64 `json:"reached"`
+	// Because says why nothing moved, when nothing did. Empty when something
+	// did.
+	Because string `json:"because,omitempty"`
+}
+
+// Asked reports whether a Setup stated a level at all.
+//
+// A Setup that said nothing leaves both figures at zero, and a zero target
+// would be a chain asked to come out at full scale, which nobody asks for.
+func (l Levelled) Asked() bool { return l.Wanted != 0 || l.Was != 0 }
 
 // Moved is what a word did to a parameter.
 type Moved struct {

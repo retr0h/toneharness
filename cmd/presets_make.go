@@ -99,6 +99,13 @@ func init() {
 	f.StringVar(&presetsMakeClient.stats, "stats", "",
 		"measured corpus statistics to use instead of the built-in ones")
 	f.StringVar(&presetsMakeClient.setup, "setup", "", setupUsage)
+	f.StringVar(&presetsMakeClient.sweeps, "sweeps", "resources/sweeps/hx-stomp",
+		"the committed curves a stated output level is reached with. They say "+
+			"what a turn of an amplifier's level control is worth, which is not the "+
+			"same on two amplifiers: the five swept here run 19.8dB to 42.3dB "+
+			"across the same control. Only the fingerprints are packed into the "+
+			"binary, so a release has none of these and a stated level is reported "+
+			"rather than reached")
 	f.StringVar(&presetsMakeOut, "out", "", "where to write the preset")
 	// Fails only for a flag that does not exist, and these are defined above.
 	presetsMakeCmd.MarkFlagsOneRequired("id", "rig")
