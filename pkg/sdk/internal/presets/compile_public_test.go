@@ -92,6 +92,58 @@ rig:
 	return out
 }
 
+// withAnAsk writes a document carrying both halves and returns where it went.
+//
+// Compiling one builds the rig half and resolves none of the ask, which is the
+// layering rather than a gap: resolving words needs the corpus and a second
+// chain builder, which `presets make` is. What it must not do is pass over the
+// ask in silence, because then the document reads one way and builds another.
+func (s *CompilePublicTestSuite) withAnAsk(
+	dir string,
+) string {
+	out := filepath.Join(dir, "asked.yaml")
+
+	s.Require().NoError(os.WriteFile(out, []byte(`schema: ToneSpec
+id: asked
+ask:
+  genre: [punk]
+  words:
+    - term: sub-octave
+    - term: grit-on-attack
+rig:
+  instrument: bass
+  chain:
+    - { role: amp, gear: Ampeg SVT }
+`), 0o600))
+
+	return out
+}
+
+// badMove writes a document whose pedal is claimed twice, which is the one
+// thing a move cannot be.
+//
+// On the rig path rather than the plan path, because the two reach Moves
+// through different code and only the plan one was covered. A document is the
+// weaker input of the two: it is a file somebody typed.
+func (s *CompilePublicTestSuite) badMove(
+	dir string,
+) string {
+	out := filepath.Join(dir, "badmove.yaml")
+
+	s.Require().NoError(os.WriteFile(out, []byte(`schema: ToneSpec
+id: badmove
+rig:
+  instrument: bass
+  chain:
+    - { role: amp, gear: Ampeg SVT }
+  moves:
+    - { by: expression, role: amp, setting: drive }
+    - { by: expression, role: amp, setting: bass }
+`), 0o600))
+
+	return out
+}
+
 // exported writes a slot out as a rig and returns where it went.
 func (s *CompilePublicTestSuite) exported(
 	dir string,
@@ -199,6 +251,10 @@ func (s *CompilePublicTestSuite) TestCompile() {
 		absent   []string
 		// the chain must come back out of what was written.
 		loadable bool
+		// ignored is the words the document asks for that this command does
+		// not resolve, in the order it asks for them. Empty asserts that the
+		// answer names none, which is a document with no ask.
+		ignored []string
 
 		// a compiler that leaves the preset unable to encode.
 		unencodable bool
@@ -255,6 +311,30 @@ func (s *CompilePublicTestSuite) TestCompile() {
 			plan:     planFixture("with-switch.yaml"),
 			loadable: true,
 			contains: []string{`"@fs_label": "Chunk"`},
+		},
+		{
+			// The ask this command does not resolve. Named rather than
+			// counted, and reported rather than passed over in silence:
+			// somebody who wrote `sub-octave` and got a preset without one
+			// needs to be told which command resolves it.
+			name:     "a document carrying an ask",
+			rig:      "with an ask",
+			ignored:  []string{"sub-octave", "grit-on-attack"},
+			loadable: true,
+		},
+		{
+			// Most documents reaching here have no ask, and there is nothing
+			// to say about one.
+			name:     "a document carrying none",
+			rig:      "hand-written",
+			loadable: true,
+		},
+		{
+			// Two movers on one pedal. Legal to put two movers on two knobs,
+			// and this is the other thing: two claims on one mover.
+			name:    "a document whose pedal is claimed twice",
+			rig:     "a pedal claimed twice",
+			errText: "already claimed by",
 		},
 		{name: "a rig that is not there", rig: slotFixture("nope.yaml"), errText: "opening"},
 		{
@@ -373,6 +453,10 @@ func (s *CompilePublicTestSuite) TestCompile() {
 				rigPath = s.exported(dir)
 			case tt.rig == "hand-written":
 				rigPath = s.handWritten(dir)
+			case tt.rig == "a pedal claimed twice":
+				rigPath = s.badMove(dir)
+			case tt.rig == "with an ask":
+				rigPath = s.withAnAsk(dir)
 			case tt.rig == "unknown gear":
 				rigPath = s.unknownGear(dir)
 			case tt.rig == "nameless gear":
@@ -443,6 +527,11 @@ func (s *CompilePublicTestSuite) TestCompile() {
 			if tt.blocks != 0 {
 				s.Require().Equal(tt.blocks, got.Blocks)
 			}
+
+			// The ask this command does not resolve, named in the order it
+			// was asked for. Asserted exactly rather than by length, because
+			// the order is what makes the sentence read like the document.
+			s.Require().Equal(tt.ignored, got.Ignored)
 
 			raw, err := os.ReadFile(out) //nolint:gosec // a path this test chose
 			s.Require().NoError(err)

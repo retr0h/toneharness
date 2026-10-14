@@ -155,8 +155,46 @@ func Built(
 		return err
 	}
 
+	if err := ignored(w, b.Ignored); err != nil {
+		return err
+	}
+
 	_, err := fmt.Fprintf(w, "\n%s%s\n\n",
 		paint.Indent, paint.Success(w, "wrote "+b.Path))
+
+	return err
+}
+
+// ignored names the words a document asks for that this command does not
+// resolve, and the one that does.
+//
+// Printed for the reason dropped is. A ToneSpec is one document holding an
+// `ask:` and a `rig:`, and this builds the rig half, so handing the whole
+// document over leaves half of it doing nothing. Silence there is the failure
+// `dropped` already names: the document reads one way and builds another.
+//
+// It names the other command rather than only the omission, because somebody
+// who wrote `sub-octave` and got a preset without one does not need to be told
+// they were wrong, they need to be told where to go. Working that out from the
+// two commands' help cost a session.
+func ignored(
+	w io.Writer,
+	all []string,
+) error {
+	if len(all) == 0 {
+		return nil
+	}
+
+	if _, err := fmt.Fprintln(w); err != nil {
+		return err
+	}
+
+	_, err := fmt.Fprintf(w,
+		"%s%s this builds the rig, so the ask's %s moved nothing: %s.\n"+
+			"%s     `presets make --rig` is what resolves them.\n",
+		paint.Indent, paint.Mute(w, "note"),
+		Plural(len(all), "word"), strings.Join(all, ", "),
+		paint.Indent)
 
 	return err
 }

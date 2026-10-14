@@ -107,6 +107,19 @@ type Built struct {
 	// in silence is the other failure, where a document reads one way and builds
 	// another.
 	Dropped []Dropped `json:"dropped"`
+	// Ignored are the words the document asks for that this did not resolve,
+	// in the order it asks for them. Empty for a document with no ask, which
+	// is most of what reaches here.
+	//
+	// Here for the reason Dropped is. A ToneSpec is one document holding an
+	// `ask:` and a `rig:`, and this builds the rig half: resolving words needs
+	// the corpus and a second chain builder, which `presets make` is. Handing
+	// the whole document over and having half of it quietly do nothing is the
+	// failure Dropped already names, where a document reads one way and builds
+	// another. Somebody who wrote `sub-octave` and got a preset without one
+	// should be told which command resolves it rather than left to work out
+	// that this is not that command.
+	Ignored []string `json:"ignored"`
 }
 
 // Dropped is one control a document states that the block it resolved to does
