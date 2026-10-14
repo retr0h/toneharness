@@ -1,0 +1,18 @@
+# A rig that ends in a different cabinet from test-player's, so there is a real
+# gap between the two for a loudness match to close. The cabinet is what decides
+# most of a chain's loudness and the two here are 2.9dB apart, which is the gap
+# that was found by playing a pair of real presets and hearing one as quiet.
+
+schema: ToneSpec
+id: louder-rig
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      evidence: [{ kind: llm }]
+    - role: cab
+      gear: 8x10 Ampeg SVT-E
+      evidence: [{ kind: llm }]

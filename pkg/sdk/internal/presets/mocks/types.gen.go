@@ -17,6 +17,7 @@ import (
 	corpus "github.com/retr0h/toneharness/pkg/sdk/corpus"
 	compile "github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	rigs "github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	measured "github.com/retr0h/toneharness/pkg/sdk/measured"
 	plan "github.com/retr0h/toneharness/pkg/sdk/plan"
 	preset "github.com/retr0h/toneharness/pkg/sdk/preset"
 	result "github.com/retr0h/toneharness/pkg/sdk/result"
@@ -61,6 +62,45 @@ func (m *MockCatalogs) Catalog(ctx context.Context) (*catalog.Catalog, error) {
 func (mr *MockCatalogsMockRecorder) Catalog(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Catalog", reflect.TypeOf((*MockCatalogs)(nil).Catalog), ctx)
+}
+
+// MockLibraries is a mock of Libraries interface.
+type MockLibraries struct {
+	ctrl     *gomock.Controller
+	recorder *MockLibrariesMockRecorder
+	isgomock struct{}
+}
+
+// MockLibrariesMockRecorder is the mock recorder for MockLibraries.
+type MockLibrariesMockRecorder struct {
+	mock *MockLibraries
+}
+
+// NewMockLibraries creates a new mock instance.
+func NewMockLibraries(ctrl *gomock.Controller) *MockLibraries {
+	mock := &MockLibraries{ctrl: ctrl}
+	mock.recorder = &MockLibrariesMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockLibraries) EXPECT() *MockLibrariesMockRecorder {
+	return m.recorder
+}
+
+// Library mocks base method.
+func (m *MockLibraries) Library() (measured.Library, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Library")
+	ret0, _ := ret[0].(measured.Library)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Library indicates an expected call of Library.
+func (mr *MockLibrariesMockRecorder) Library() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Library", reflect.TypeOf((*MockLibraries)(nil).Library))
 }
 
 // MockRigs is a mock of Rigs interface.
@@ -162,6 +202,21 @@ func (m *MockCompiler) Footswitches(doc *preset.Document, made plan.Plan, cat *c
 func (mr *MockCompilerMockRecorder) Footswitches(doc, made, cat any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Footswitches", reflect.TypeOf((*MockCompiler)(nil).Footswitches), doc, made, cat)
+}
+
+// Level mocks base method.
+func (m *MockCompiler) Level(built plan.Plan, cat *catalog.Catalog, want float64, lib measured.Library, curves map[catalog.ModelID]measured.Curves) (plan.Plan, result.Levelled) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Level", built, cat, want, lib, curves)
+	ret0, _ := ret[0].(plan.Plan)
+	ret1, _ := ret[1].(result.Levelled)
+	return ret0, ret1
+}
+
+// Level indicates an expected call of Level.
+func (mr *MockCompilerMockRecorder) Level(built, cat, want, lib, curves any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Level", reflect.TypeOf((*MockCompiler)(nil).Level), built, cat, want, lib, curves)
 }
 
 // Lower mocks base method.

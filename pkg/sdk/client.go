@@ -102,7 +102,8 @@ type options struct {
 	stats string
 	// setup is what the person has, which is what makes an answer fit them
 	// rather than the record. Empty builds for the record.
-	setup string
+	setup  string
+	sweeps string
 	// rigs is a directory of rigs. Empty means the ones that ship.
 	rigs string
 	// userRigs is somebody's own directory of rigs, layered over rigs.
@@ -165,6 +166,24 @@ func WithSetup(
 	path string,
 ) Option {
 	return func(o *options) { o.setup = path }
+}
+
+// WithSweeps reads the committed curves, which say what a turn of a control is
+// worth.
+//
+// A client option beside WithSetup, because what it serves changes on that
+// clock: an output level is a fact about somebody's rig, and the curves are how
+// a build reaches one. A turn is not worth the same on two amplifiers, so this
+// cannot be assumed: the five swept here run 19.8dB to 42.3dB across the same
+// control.
+//
+// Only the fingerprints are packed into the binary. The curves stay under
+// resources/sweeps/, so a build from an installed release has none and a stated
+// level is reported rather than reached.
+func WithSweeps(
+	path string,
+) Option {
+	return func(o *options) { o.sweeps = path }
 }
 
 // WithRigs reads rigs from a directory instead of the ones that ship.
@@ -663,6 +682,7 @@ func (c *Client) makeOpts(
 		Source:     c.source(),
 		StatsPath:  c.opts.stats,
 		SetupPath:  c.opts.setup,
+		SweepsDir:  c.opts.sweeps,
 		OutputPath: in.Out,
 		Existing:   in.Existing,
 	}

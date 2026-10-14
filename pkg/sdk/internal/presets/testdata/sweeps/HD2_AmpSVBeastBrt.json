@@ -1,0 +1,75 @@
+{
+ "device": "HX Stomp",
+ "gear": "Ampeg SVT Brt",
+ "block": "HD2_AmpSVBeastBrt",
+ "slot": 1,
+ "isolated": true,
+ "chain": "",
+ "probed": true,
+ "reference": {
+  "file": "resources/dry/bass-di.wav",
+  "sha256": "x",
+  "seconds": 4
+ },
+ "controls": {
+  "ChVol": {
+   "index": 3,
+   "kind": "float",
+   "control": "ChVol",
+   "span": {
+    "low": 0,
+    "high": 1,
+    "fromCatalog": true
+   },
+   "noise": {
+    "level": 0.05
+   },
+   "settled": -26,
+   "silentBelow": -50,
+   "mutedAt": null,
+   "clippedAt": null,
+   "points": [
+    {
+     "value": 0.5,
+     "level": -30.0,
+     "centroid": 150,
+     "low": 90,
+     "mid": 9,
+     "high": 1
+    },
+    {
+     "value": 0.625,
+     "level": -28.5,
+     "centroid": 150,
+     "low": 90,
+     "mid": 9,
+     "high": 1
+    },
+    {
+     "value": 0.75,
+     "level": -27.0,
+     "centroid": 150,
+     "low": 90,
+     "mid": 9,
+     "high": 1
+    },
+    {
+     "value": 0.875,
+     "level": -25.5,
+     "centroid": 150,
+     "low": 90,
+     "mid": 9,
+     "high": 1
+    },
+    {
+     "value": 1.0,
+     "level": -24.0,
+     "centroid": 150,
+     "low": 90,
+     "mid": 9,
+     "high": 1
+    }
+   ]
+  }
+ }
+}

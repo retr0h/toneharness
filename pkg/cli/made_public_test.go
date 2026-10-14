@@ -136,6 +136,52 @@ func (s *MadePublicTestSuite) TestMade() {
 						absent: []string{"added", "no such word"},
 					},
 					{
+						// The gap between two cabinets and what was moved to
+						// close it. Reported as a gap rather than as a level,
+						// because a cabinet is measured alone and reads within
+						// a decibel of the empty loop while the chain it ends
+						// is twenty louder.
+						name: "the rig it was asked to match",
+						in: s.made(func(m *sdk.Made) {
+							m.Levelled = sdk.Levelled{
+								Rig: "punk", Wanted: -56.76, Was: -59.62,
+								Matches: -57.12, Param: "ChVol", From: 0.8, To: 0.875,
+							}
+						}),
+						want: []string{
+							"as loud as punk", "ChVol 0.8 to 0.875",
+							"2.5dB", "2.9dB", "between their cabinets",
+						},
+						// Neither figure may be printed as the level the chain
+						// comes out at, which is a measurement nobody took.
+						absent: []string{"comes out at -59.6dB"},
+					},
+					{
+						// Nothing moved, and the reason is the point. "no
+						// committed sweep" names what would change it.
+						name: "a loudness it could not match",
+						in: s.made(func(m *sdk.Made) {
+							m.Levelled = sdk.Levelled{
+								Rig: "punk", Wanted: -56.76, Was: -59.62,
+								Matches: -59.62,
+								Because: "AmpTest has no committed sweep",
+							}
+						}),
+						want: []string{
+							"as loud as punk", "whose cabinet reads", "-56.8dB",
+							"-59.6dB", "no committed sweep",
+						},
+						absent: []string{"ChVol"},
+					},
+					{
+						// A Setup that said nothing leaves both figures at
+						// zero, and a build that was never given a target says
+						// nothing about one.
+						name:   "no rig to match at all",
+						in:     s.made(nil),
+						absent: []string{"as loud as"},
+					},
+					{
 						// A rig names an amp; a rig is several blocks. Whatever the
 						// corpus contributed has to be visible before anybody plugs in.
 						name: "what the corpus added unasked",
@@ -372,6 +418,10 @@ func (s *MadePublicTestSuite) TestMade() {
 					m.Playing = sdk.Playing{
 						Terms: []string{"soft-attack", "scooped"},
 						Said:  "you play with a pick",
+					}
+					m.Levelled = sdk.Levelled{
+						Rig: "punk", Wanted: -56.76, Was: -59.62,
+						Matches: -57.12, Param: "ChVol", From: 0.8, To: 0.875,
 					}
 				})
 

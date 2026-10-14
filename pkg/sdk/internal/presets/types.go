@@ -27,6 +27,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
@@ -40,6 +41,17 @@ type Catalogs interface {
 	Catalog(ctx context.Context) (*catalog.Catalog, error)
 }
 
+// Libraries hands over the block readings a stated output level is measured
+// against.
+//
+// An interface for the reason Catalogs is: the readings are packed into the
+// binary and opening them can fail, and a build that cannot read them has to
+// say so rather than silently level against nothing.
+type Libraries interface {
+	// Library returns the block readings, opening them on first use.
+	Library() (measured.Library, error)
+}
+
 // Rigs finds the curated rig a build starts from, and the ask beside it.
 type Rigs interface {
 	// Find returns the rig with the given identifier, and the ask beside it,
@@ -49,7 +61,7 @@ type Rigs interface {
 
 // Compiler turns a rig into a preset a device has room for.
 //
-// Six of the seven methods pkg/compile carries. Resolve and Fit build a chain
+// Seven of the methods pkg/compile carries. Resolve and Fit build a chain
 // from a rig, Sections writes its song sections, Controllers writes what
 // moves while you play, Footswitches writes what the pedal prints, and Lower
 // writes a rig into a preset. Lift reads a slot rather than building one, so
@@ -63,6 +75,15 @@ type Compiler interface {
 		cat *catalog.Catalog,
 		stats *corpus.Stats,
 	) (plan.Plan, []compile.Added, []compile.Moved, compile.Compensated, error)
+	// Level moves the amplifier's level control so the chain lands where a
+	// Setup asked, and says what it did either way.
+	Level(
+		built plan.Plan,
+		cat *catalog.Catalog,
+		want float64,
+		lib measured.Library,
+		curves map[catalog.ModelID]measured.Curves,
+	) (plan.Plan, result.Levelled)
 	// Fit drops what a device has no room for.
 	Fit(spec plan.Plan, cat *catalog.Catalog, lim plan.Limits) plan.Plan
 	// Realise turns a rig into the plan that answers it on this device, and says
@@ -101,6 +122,22 @@ type Deps struct {
 	Rigs Rigs
 	// Compiler turns a rig into a chain. Nil uses pkg/compile.
 	Compiler Compiler
+	// Libraries hands over the block readings a stated output level is
+	// measured against. Nil reads the ones packed into this binary.
+	//
+	// Injectable for the reason the catalog is: a test naming blocks of its
+	// own has readings of its own, and a build that reached past them into
+	// the shipped library would be measuring a chain nobody built.
+	Libraries Libraries
+}
+
+// library is the block readings to level a build against.
+func (d Deps) library() (measured.Library, error) {
+	if d.Libraries != nil {
+		return d.Libraries.Library()
+	}
+
+	return measured.BuiltIn()
 }
 
 func (d Deps) catalog(

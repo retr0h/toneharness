@@ -1184,6 +1184,19 @@ type Setup struct {
 	// Instruments What they play. More than one, because most people have more than one and they do not sound the same.
 	Instruments *[]Held `json:"instruments,omitempty"`
 
+	// MatchLoudness A rig every build should come out as loud as, by its identifier.
+	//
+	// Here rather than on a request because it is a preference about somebody's own pedal: they want their own presets comparable to each other, which is as true at the twelfth build as at the first.
+	//
+	// **Why this names a rig rather than stating decibels.** The only loudness anything here has measured is per block, in a chain holding that block alone, and a chain's level is not the sum of its blocks. A cabinet's own reading sits within a decibel of the empty loop while the chain it ends is twenty louder, so a figure in those units is not a level anything comes out at and nobody could obtain one to write down. What is sound is the difference between two cabinets, and that is what this asks for: as loud as that one.
+	//
+	// It is worth asking for because the cabinet decides most of it and nothing noticed. Across the 133 cabinets measured here the readings run -67.88dB to -56.56dB, a spread of 11.3dB. A `2x15 Brute` reads -59.62dB and an `8x10 Ampeg SVT-E` -56.76dB, so two chains identical in every other level control sit 2.9dB apart, and the quieter one reads as worse in an A/B almost regardless of its tone.
+	//
+	// A build moves the amplifier's own level control to close the gap and says by how much. It reads that control's committed sweep to know what a turn is worth, because a turn is not worth the same on two amplifiers: the five swept here run 19.8dB to 42.3dB across the same control. An amplifier nobody has swept gets the gap reported and nothing moved.
+	//
+	// Naming the rig being built changes nothing, which is the right answer rather than an error: it is already as loud as itself.
+	MatchLoudness *string `json:"match_loudness,omitempty"`
+
 	// Owns Content the device does not ship with: impulse responses somebody loaded, models somebody bought.
 	//
 	// A preset naming one of these on a device that does not have it is silent in that block, and nothing could tell before this: the catalog knows what ships and only the owner knows what else is there.

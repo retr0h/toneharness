@@ -22,6 +22,7 @@ package presets_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,6 +37,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
 	presetmocks "github.com/retr0h/toneharness/pkg/sdk/internal/presets/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -69,6 +71,57 @@ func (s *MakePublicTestSuite) opts(
 	}
 }
 
+// lib is a reading for the cabinet this fixture rig resolves to.
+//
+// Its own rather than the shipped library, because `HD2_CabNamed` is a model
+// this test invented and the shipped readings know nothing about it. The figure
+// is the real `2x15 Brute`'s, which is the quiet half of the pair that was
+// found by playing two rigs and hearing one as quiet.
+func (s *MakePublicTestSuite) lib() presets.Libraries {
+	return readings{at: measured.Library{Blocks: map[string]measured.Block{
+		"HD2_CabNamed": {
+			ID:       "HD2_CabNamed",
+			Category: catalog.CategoryCab,
+			Figures:  measured.Figures{Level: -59.62},
+		},
+		"HD2_Cab8x10SVBeast": {
+			ID:       "HD2_Cab8x10SVBeast",
+			Category: catalog.CategoryCab,
+			Figures:  measured.Figures{Level: -56.76},
+		},
+	}}}
+}
+
+// thin is readings for this chain's cabinet and not for the matched rig's.
+//
+// So the match has nothing to aim at while the chain it is matching has a
+// figure of its own, which is the one case that reaches ErrNoLoudness.
+func (s *MakePublicTestSuite) thin() presets.Libraries {
+	return readings{at: measured.Library{Blocks: map[string]measured.Block{
+		"HD2_CabNamed": {
+			ID:       "HD2_CabNamed",
+			Category: catalog.CategoryCab,
+			Figures:  measured.Figures{Level: -59.62},
+		},
+	}}}
+}
+
+// readings hands over block readings, or refuses to.
+//
+// Hand-written rather than generated because it is two fields and no
+// expectations: what the rows need is readings of their own and one that will
+// not open, and a mock with call assertions would say more about the test than
+// about the build.
+type readings struct {
+	at  measured.Library
+	err error
+}
+
+func (r readings) Library() (measured.Library, error) { return r.at, r.err }
+
+// errNoReadings stands in for a library that will not open.
+var errNoReadings = errors.New("no readings")
+
 // TestMake builds a preset out of a rig.
 func (s *MakePublicTestSuite) TestMake() {
 	tests := []struct {
@@ -96,6 +149,28 @@ func (s *MakePublicTestSuite) TestMake() {
 		// playing is a fragment the compensation has to say. Empty asks for
 		// none, which is a build that made none.
 		playing string
+		// sweeps is the tree of committed curves, which say what a turn of an
+		// amplifier's level control is worth. Empty reads none, and a stated
+		// level is reported rather than reached.
+		sweeps string
+		// level is what the level report has to say: the control it moved, or
+		// a fragment of why it moved nothing. Empty is a build given no
+		// target, which must say nothing about one.
+		level string
+		// brokenSweep writes a curve that will not parse, where the row is
+		// about a sweep this does not have rather than one it lacks.
+		brokenSweep bool
+		// ownLibrary says whether the row supplies readings of its own. Rows
+		// about a level want them, because the blocks this fixture names are
+		// invented and the shipped readings know nothing about them.
+		ownLibrary bool
+		// badLibrary supplies readings that will not open, for the row about a
+		// build that cannot measure what it was asked to match.
+		badLibrary bool
+		// thinLibrary supplies readings that hold this chain's cabinet and
+		// not the matched rig's, for the row about a rig there is no figure
+		// for.
+		thinLibrary bool
 		// named is what the preset should be called, where the row builds a
 		// rig whose subject is not the usual one.
 		named string
@@ -249,6 +324,131 @@ func (s *MakePublicTestSuite) TestMake() {
 			errText: "writing",
 		},
 		{
+			// The gap that was found by playing two rigs: one read as quiet,
+			// and the cabinet alone accounted for 2.9dB of it. With the curve
+			// in hand the build closes it.
+			name:       "a rig it was asked to come out as loud as",
+			id:         "test-player",
+			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
+			sweeps:     filepath.Join("testdata", "sweeps"),
+			level:      "ChVol",
+			ownLibrary: true,
+			loadable:   true,
+		},
+		{
+			// Only the fingerprints are packed into the binary, so a build
+			// from a release has no curves. It says so rather than guessing
+			// what a turn is worth: the five amplifiers swept disagree by a
+			// factor of two about the same control.
+			name:       "a loudness with no curves to match it with",
+			id:         "test-player",
+			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
+			level:      "no committed sweep",
+			ownLibrary: true,
+			loadable:   true,
+		},
+		{
+			// Two rigs ending in the same cabinet. Within a decibel is under
+			// what anybody reliably hears on a broadband signal, so nothing
+			// moves: reporting a control turned a third of a decibel spends
+			// somebody's attention on nothing.
+			name:       "a rig that ends in the same cabinet",
+			id:         "test-player",
+			setup:      "schema: Setup\nmatch_loudness: gear-only\n",
+			sweeps:     filepath.Join("testdata", "sweeps"),
+			level:      "already within",
+			ownLibrary: true,
+			loadable:   true,
+		},
+		{
+			// A sweep that will not parse is a sweep this does not have, which
+			// is the same answer as not having one. Refusing a whole build
+			// over an unreadable curve would be refusing somebody a preset
+			// over a file they never asked it to read.
+			name:        "a sweep that will not parse",
+			id:          "test-player",
+			setup:       "schema: Setup\nmatch_loudness: louder-rig\n",
+			brokenSweep: true,
+			level:       "no committed sweep",
+			ownLibrary:  true,
+			loadable:    true,
+		},
+		{
+			// A sweeps tree with nothing in it for this amplifier, which is
+			// the same answer as no tree at all and reached by a different
+			// path: one file that is not there rather than a directory that
+			// is not named.
+			name:       "a sweeps tree with no curve for this amplifier",
+			id:         "test-player",
+			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
+			sweeps:     filepath.Join("testdata", "rigs"),
+			ownLibrary: true,
+			level:      "no committed sweep",
+			loadable:   true,
+		},
+		{
+			// A rig the Setup names and nothing has. Refused, because the
+			// Setup asked for something this cannot do and a build that
+			// quietly came out at its own loudness is a build somebody
+			// compares against another one.
+			name:       "a rig to match that does not exist",
+			id:         "test-player",
+			setup:      "schema: Setup\nmatch_loudness: no-such-rig\n",
+			ownLibrary: true,
+			errText:    "as loud as \"no-such-rig\"",
+		},
+		{
+			// Naming the rig being built. Nothing happens and nothing is
+			// reported, which is the right answer rather than an error: a
+			// chain is already as loud as itself.
+			name:     "the rig being built",
+			id:       "test-player",
+			setup:    "schema: Setup\nmatch_loudness: test-player\n",
+			sweeps:   filepath.Join("testdata", "sweeps"),
+			loadable: true,
+		},
+		{
+			// A rig whose own chain has no cabinet anybody measured, so there
+			// is no figure to match. Refused for the same reason.
+			name:        "a rig with no measured cabinet",
+			id:          "test-player",
+			setup:       "schema: Setup\nmatch_loudness: louder-rig\n",
+			thinLibrary: true,
+			sweeps:      filepath.Join("testdata", "sweeps"),
+			err:         presets.ErrNoLoudness,
+		},
+		{
+			// A rig named as a loudness whose own chain will not realise.
+			// Refused and named, because the Setup asked to match something
+			// this cannot work out.
+			name:       "a rig to match that will not build",
+			id:         "test-player",
+			setup:      "schema: Setup\nmatch_loudness: unbuildable\n",
+			ownLibrary: true,
+			errText:    "which will not build",
+		},
+		{
+			// Nil readings read the ones packed into this binary, which is
+			// what every build outside a test does. `HD2_CabNamed` is a model
+			// this fixture invented, so the shipped readings have no figure
+			// for the chain being built.
+			name:     "the readings packed into the binary",
+			id:       "test-player",
+			setup:    "schema: Setup\nmatch_loudness: louder-rig\n",
+			sweeps:   filepath.Join("testdata", "sweeps"),
+			level:    "nothing in the chain has a measured level",
+			loadable: true,
+		},
+		{
+			// Readings that will not open. Refused rather than levelled
+			// against nothing, because every figure below them is theirs.
+			name:       "readings that will not open",
+			id:         "test-player",
+			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
+			badLibrary: true,
+			err:        errNoReadings,
+		},
+		{
 			// Every figure in the corpus came off somebody else's playing, so
 			// a rig played with a pick is duller in the hands of somebody who
 			// uses fingers. With both sides stated the difference is a knob
@@ -337,6 +537,27 @@ func (s *MakePublicTestSuite) TestMake() {
 				o.Catalogs = s.catalogs(tt.catalog)
 			}
 
+			o.SweepsDir = tt.sweeps
+
+			if tt.brokenSweep {
+				at := filepath.Join(dir, "sweeps")
+				s.Require().NoError(os.MkdirAll(at, 0o750))
+				s.Require().NoError(os.WriteFile(
+					filepath.Join(at, "HD2_AmpSVBeastBrt.json"),
+					[]byte("{not json"), 0o600))
+
+				o.SweepsDir = at
+			}
+
+			switch {
+			case tt.badLibrary:
+				o.Libraries = readings{err: errNoReadings}
+			case tt.thinLibrary:
+				o.Libraries = s.thin()
+			case tt.ownLibrary:
+				o.Libraries = s.lib()
+			}
+
 			switch {
 			case tt.setup != "":
 				at := filepath.Join(dir, "setup.yaml")
@@ -379,6 +600,27 @@ func (s *MakePublicTestSuite) TestMake() {
 
 			for _, not := range tt.absent {
 				s.Require().NotContains(got, not)
+			}
+
+			// A row naming a control asserts that control moved; a row
+			// naming anything else asserts the reason nothing did. Decided by
+			// the row rather than by what came back, because a refusal naming
+			// the control it could not turn would otherwise satisfy a row that
+			// asked for the turn: "no committed sweep, so what a turn of its
+			// ChVol is worth is unmeasured" contains ChVol.
+			switch tt.level {
+			case "":
+				s.Require().False(made.Levelled.Asked(),
+					"no rig to match, so nothing is reported")
+			case "ChVol":
+				s.Require().Equal(tt.level, made.Levelled.Param)
+				s.Require().NotEqual(made.Levelled.From, made.Levelled.To,
+					"a control named as moved has to have moved")
+				s.Require().Empty(made.Levelled.Because)
+			default:
+				s.Require().Empty(made.Levelled.Param,
+					"nothing moved, so no control is named")
+				s.Require().Contains(made.Levelled.Because, tt.level)
 			}
 
 			if tt.playing == "" {

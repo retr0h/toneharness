@@ -98,6 +98,59 @@ Ask for it when writing a Setup. It is the one field here that changes what a
 build does for the person rather than for the record, and somebody who does not
 state it gets a preset tuned for whoever made the recording.
 
+## Coming out as loud as another rig
+
+`match_loudness` names a rig every build should come out as loud as, by its
+identifier. Absent asks for nothing, and a build comes out wherever its gear
+leaves it.
+
+```
+as loud as punk: ChVol 0.8 to 0.875, closing 2.5dB of a 2.9dB gap between their cabinets
+```
+
+**Why it names a rig rather than stating decibels.** The only loudness anything
+here has measured is per block, in a chain holding that block alone, and a
+chain's level is not the sum of its blocks. A cabinet's own reading sits within
+a decibel of the empty loop at -58.55dB while the chain it ends is twenty
+louder. So a figure in those units is not a level anything comes out at, and
+nobody could obtain one to write down. What is sound is the difference between
+two cabinets, and that is what this asks for.
+
+It is worth asking for because the cabinet decides most of it and nothing
+noticed. Across the 133 cabinets measured the readings run -67.88dB to
+-56.56dB, a spread of 11.3dB. A `2x15 Brute` reads -59.62dB and an
+`8x10 Ampeg SVT-E` -56.76dB, so two chains identical in every other level
+control sit 2.9dB apart. That was found by playing them: one read as quiet.
+
+**The report says a gap, not a level**, and the distinction is the point. Either
+figure printed as "the level this comes out at" would be a measurement nobody
+took.
+
+A build moves the amplifier's own level control to close the gap, reading that
+control's committed sweep to know what a turn is worth. A turn is not worth the
+same on two amplifiers: the five swept here run 19.8dB to 42.3dB across the same
+control. The positions it picks are ones the device was actually set to rather
+than points on a slope.
+
+What it will not do:
+
+| Refused                                          | Because                                                                                       |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| a gap under a decibel                            | below what anybody reliably hears, so the report would spend attention on nothing             |
+| `Drive`                                          | it changes loudness and is not a level control: Drive 0.46 reads -15.2dB and 0.60 reads -16.1dB, so turning it down is marginally louder |
+| a position at the converters' ceiling or the curve's floor | the reading is the converters' or the hiss's                                        |
+| an amplifier nobody has swept                    | what a turn is worth is unmeasured, so the gap is reported and nothing moves                  |
+| a rig whose chain has no measured cabinet        | there is no figure to match, and the build is refused rather than coming out at its own loudness |
+
+Naming the rig being built changes nothing, which is right rather than an error:
+it is already as loud as itself.
+
+**Matching loudness is necessary for an honest A/B and not sufficient.** Louder
+wins a quick comparison almost regardless of tone, so a preference between two
+builds at different levels says little. But perceived loudness is not level
+either: `scooped` and `dark` pull energy out of the bands the ear weighs most, so
+a rig can read as quiet while measuring the same.
+
 ## Why a rig may not name what a device lacks
 
 A rig used to carry a `requires` list naming impulse responses and bought models.
