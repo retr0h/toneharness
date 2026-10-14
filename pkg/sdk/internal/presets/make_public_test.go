@@ -608,11 +608,11 @@ func (s *MakePublicTestSuite) TestMake() {
 			// the control it could not turn would otherwise satisfy a row that
 			// asked for the turn: "no committed sweep, so what a turn of its
 			// ChVol is worth is unmeasured" contains ChVol.
-			switch {
-			case tt.level == "":
+			switch tt.level {
+			case "":
 				s.Require().False(made.Levelled.Asked(),
 					"no rig to match, so nothing is reported")
-			case tt.level == "ChVol":
+			case "ChVol":
 				s.Require().Equal(tt.level, made.Levelled.Param)
 				s.Require().NotEqual(made.Levelled.From, made.Levelled.To,
 					"a control named as moved has to have moved")
