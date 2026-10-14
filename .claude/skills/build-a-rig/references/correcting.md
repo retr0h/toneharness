@@ -648,8 +648,57 @@ which is a reasonable default aimed at nothing.
 Three readings are never shortlisted. A clipped one is a reading of the clipping,
 and flat tops make harmonics that were never in the signal, so it would win a
 search for saturation every time while being the one block that cannot provide
-it. One the device refused has no figures. And a block already in the chain is
-not an addition.
+it. One the device refused has no figures. And the same model twice is not an
+addition.
+
+## How many of a kind a chain may hold
+
+The same kind twice is a different question, and the corpus answers it rather
+than any rule written here. `Repeats` is the share of chains holding one of a
+kind that hold two of it in one series run:
+
+```
+bass     comp 26.7%  drive 19.6%  mod 14.8%  delay 12.0%  eq 7.7%
+         reverb 4.3%  pitch 4.3%  cab 0.0%   amp 1.2%
+guitar   eq 32.1%  mod 20.1%  drive 19.9%  delay 17.9%  reverb 9.1%
+         comp 7.4%  amp 7.3%  pitch 3.6%  cab 0.3%
+```
+
+One chain in fifty is the bar, and the gap it sits in is wide: nothing measured
+falls between 0.3% and 3.6%. Two is the most any kind gets, because the figure
+counts chains holding two or more without separating two from three, and reading
+it as licence for a third claims something nobody counted.
+
+**A series run, which is the only shape a rig's chain can express.** Two
+cabinets either side of a parallel split is a blend people really build, and it
+is not what appending to a flat chain produces. Counting the split as a repeat
+read bass cab at 16.3% instead of zero, and a figure measured that way is
+evidence for a chain nothing here can write.
+
+The amplifier needs no threshold. It is kept out of the grammar altogether,
+because the amp is what every other block is positioned around rather than a
+neighbour of itself, so its share reads zero and zero means do not repeat. That
+is the right answer for a different reason than the number suggests: an
+amplifier's reading moves the centroid further than almost anything measured, so
+amplifiers win the ranking outright, and acting on that once appended an
+`EVH 5150III` to a chain that already had an Ampeg SVT.
+
+Refusing every kind the chain already held was the first rule here, and it
+stopped that. It also stopped `pitch -> drive -> amp -> cab -> eq -> drive`, a
+drive on each side of the amplifier, which is a shape people build and the
+corpus attests at 19.6% for bass. One rule could not be right for both.
+
+## Writing the block down
+
+`tone tune --extend <path>` writes the rig the run aimed at with the block the
+measurement ranked first added to its chain, placed where the corpus puts that
+kind, carrying evidence that says it arrived by measurement rather than by
+anybody naming it.
+
+Nothing reaches the device and the rig it came from is not touched. Building the
+amended document is a separate thing somebody does on purpose, and the reason is
+the one above: the fingerprint is that block alone at its defaults, so what it
+does in this chain is still unmeasured. One block per run, for the same reason.
 
 ## Where the edit goes
 

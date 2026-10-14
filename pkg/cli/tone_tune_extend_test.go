@@ -34,10 +34,14 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
+
+// errBadStatistics stands in for an archive that will not decode.
+var errBadStatistics = errors.New("truncated")
 
 // ExtendTestSuite covers writing the rig the measurement asked for.
 //
@@ -124,8 +128,12 @@ func (s *ExtendTestSuite) TestPlaced() {
 // TestSide covers reading which end of the amplifier a kind belongs from the
 // corpus rather than deciding it here.
 func (s *ExtendTestSuite) TestSide() {
+	bass, err := corpus.BuiltIn()
+	s.Require().NoError(err)
+
 	for _, tt := range []struct {
 		name string
+		g    corpus.Grammar
 		of   catalog.Category
 		want string
 	}{
@@ -133,12 +141,14 @@ func (s *ExtendTestSuite) TestSide() {
 			// 81% of pitch blocks in the corpus sit ahead of the amp, which is
 			// where slot 05C's octaver is.
 			name: "a pitch block",
+			g:    bass.Grammar["bass"],
 			of:   catalog.CategoryPitch,
 			want: "before",
 		},
 		{
 			// 72% of EQs sit after it.
 			name: "an equaliser",
+			g:    bass.Grammar["bass"],
 			of:   catalog.CategoryEQ,
 			want: "after",
 		},
@@ -146,23 +156,20 @@ func (s *ExtendTestSuite) TestSide() {
 			// A kind the corpus never counted goes after, which is the safer
 			// end: a block ahead of an amplifier changes what it is fed.
 			name: "a kind nothing has counted",
+			g:    bass.Grammar["bass"],
 			of:   catalog.Category("nonesuch"),
 			want: "after",
 		},
 		{
-			// An instrument with no grammar answers the same way.
+			// An instrument with no grammar is an empty one, and answers the
+			// same way.
 			name: "an instrument nothing measured",
 			of:   catalog.CategoryEQ,
 			want: "after",
 		},
 	} {
 		s.Run(tt.name, func() {
-			instrument := "bass"
-			if tt.name == "an instrument nothing measured" {
-				instrument = "theremin"
-			}
-
-			s.Require().Equal(tt.want, side(tt.of, instrument))
+			s.Require().Equal(tt.want, side(tt.g, tt.of))
 		})
 	}
 }
@@ -231,6 +238,33 @@ func (s *ExtendTestSuite) TestExtend() {
 				s.Require().Contains(body, "kind: corpus")
 				s.Require().Contains(body, "the dials ran out")
 				s.Require().Contains(w.String(), "Build it and tune it again")
+			},
+		},
+		{
+			// The embedded statistics are a compile-time constant and cannot be
+			// damaged at run time, so a build that shipped a truncated archive
+			// is the only thing that reaches this and the seam is the only way
+			// to be that build. It refuses rather than carrying on with no
+			// grammar, because every decision below it is the corpus's.
+			name: "statistics that will not load",
+			then: func() {
+				at := filepath.Join(s.T().TempDir(), "extended.yaml")
+
+				was := grammarOf
+				grammarOf = func() (*corpus.Stats, error) {
+					return nil, errBadStatistics
+				}
+
+				defer func() { grammarOf = was }()
+
+				opts := TuneOptions{
+					Client: s.pedal, ID: "matt-freeman", Genre: "punk", Extend: at,
+				}
+
+				err := extend(context.Background(), buffer(), opts,
+					made, aims, now, s.cat())
+				s.Require().ErrorIs(err, errBadStatistics)
+				s.Require().NoFileExists(at)
 			},
 		},
 		{
@@ -307,4 +341,228 @@ func TestExtendTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(ExtendTestSuite))
+}
+
+// TestRoom covers how many of a kind a chain may be given.
+//
+// The figures in the cases are the corpus's own, printed by `ranked`'s comment
+// and measured within one series run. They move when records are added, so a
+// case that starts failing is a signal to re-read them rather than to change
+// the expectation.
+func (s *ExtendTestSuite) TestRoom() {
+	stats, err := corpus.BuiltIn()
+	s.Require().NoError(err)
+
+	bass := stats.Grammar["bass"]
+
+	for _, tt := range []struct {
+		name string
+		g    corpus.Grammar
+		runs map[catalog.Category]int
+		of   catalog.Category
+		want bool
+	}{
+		{
+			// Nothing of that kind in the chain, so nothing to decide.
+			name: "a kind the chain does not hold",
+			g:    bass,
+			runs: map[catalog.Category]int{},
+			of:   catalog.CategoryDrive,
+			want: true,
+		},
+		{
+			// 19.6% of bass chains holding a drive hold two, which is the
+			// shape 05C is built on and the one the first rule here refused.
+			name: "a second drive on a bass chain",
+			g:    bass,
+			runs: map[catalog.Category]int{catalog.CategoryDrive: 1},
+			of:   catalog.CategoryDrive,
+			want: true,
+		},
+		{
+			// 26.7%, the most repeated kind on a bass chain.
+			name: "a second compressor on a bass chain",
+			g:    bass,
+			runs: map[catalog.Category]int{catalog.CategoryComp: 1},
+			of:   catalog.CategoryComp,
+			want: true,
+		},
+		{
+			// `tonal` keeps the amplifier out of the grammar, so Repeats reads
+			// zero for it. This is the EVH 5150III appended after an SVT.
+			name: "a second amplifier",
+			g:    bass,
+			runs: map[catalog.Category]int{catalog.CategoryAmp: 1},
+			of:   catalog.CategoryAmp,
+			want: false,
+		},
+		{
+			// 0.0% for bass. Two cabinets in series is not the blend people
+			// build; that one is either side of a split.
+			name: "a second cabinet",
+			g:    bass,
+			runs: map[catalog.Category]int{catalog.CategoryCab: 1},
+			of:   catalog.CategoryCab,
+			want: false,
+		},
+		{
+			// Two is the most the evidence supports, because Repeats counts
+			// chains holding two or more without separating two from three.
+			name: "a third drive",
+			g:    bass,
+			runs: map[catalog.Category]int{catalog.CategoryDrive: 2},
+			of:   catalog.CategoryDrive,
+			want: false,
+		},
+		{
+			// An instrument nothing measured is an empty grammar: no evidence,
+			// no repeat.
+			name: "an instrument nothing measured",
+			runs: map[catalog.Category]int{catalog.CategoryDrive: 1},
+			of:   catalog.CategoryDrive,
+			want: false,
+		},
+		{
+			// A kind the corpus never counted answers the same way.
+			name: "a kind nothing has counted",
+			g:    bass,
+			runs: map[catalog.Category]int{catalog.Category("nonesuch"): 1},
+			of:   catalog.Category("nonesuch"),
+			want: false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, room(tt.g, tt.runs, tt.of))
+		})
+	}
+}
+
+// TestInSeries covers counting what the chain already holds.
+//
+// Per run, because that is how the corpus counts: two of a kind either side of
+// a parallel split is not two in series, and reading it as such put bass cab at
+// 16.3% where the real figure is zero.
+func (s *ExtendTestSuite) TestInSeries() {
+	drive := catalog.ModelID("HD2_DistObsidian7000")
+	amp := catalog.ModelID("HD2_AmpSVBeastBrt")
+
+	for _, tt := range []struct {
+		name   string
+		blocks []plan.Block
+		of     catalog.Category
+		want   int
+	}{
+		{
+			name:   "an empty chain",
+			blocks: nil,
+			of:     catalog.CategoryDrive,
+			want:   0,
+		},
+		{
+			name: "two drives in one run",
+			blocks: []plan.Block{
+				{Model: drive, Pos: 0, Enabled: true},
+				{Model: amp, Pos: 1, Enabled: true},
+				{Model: drive, Pos: 2, Enabled: true},
+			},
+			of:   catalog.CategoryDrive,
+			want: 2,
+		},
+		{
+			name: "two drives on different processors",
+			blocks: []plan.Block{
+				{Model: drive, DSP: 0, Pos: 0, Enabled: true},
+				{Model: drive, DSP: 1, Pos: 0, Enabled: true},
+			},
+			of:   catalog.CategoryDrive,
+			want: 1,
+		},
+		{
+			// A bypassed block still occupies its position, and a chain that
+			// is given a second one still ends up holding two.
+			name: "a bypassed drive still counts",
+			blocks: []plan.Block{
+				{Model: drive, Pos: 0, Enabled: false},
+				{Model: drive, Pos: 1, Enabled: true},
+			},
+			of:   catalog.CategoryDrive,
+			want: 2,
+		},
+		{
+			// A model the catalog does not carry cannot be categorised, so it
+			// cannot be counted.
+			name: "a model the catalog lacks",
+			blocks: []plan.Block{
+				{Model: catalog.ModelID("HD2_Nonesuch"), Pos: 0, Enabled: true},
+			},
+			of:   catalog.CategoryDrive,
+			want: 0,
+		},
+	} {
+		s.Run(tt.name, func() {
+			got := inSeries(plan.Plan{Blocks: tt.blocks}, s.cat())
+			s.Require().Equal(tt.want, got[tt.of])
+		})
+	}
+}
+
+// TestRanked covers which block the measurement asks for, and when it asks for
+// none.
+func (s *ExtendTestSuite) TestRanked() {
+	stats, err := corpus.BuiltIn()
+	s.Require().NoError(err)
+
+	// A target far enough out that something in the library moves it. The
+	// shortlist for it is five blocks across three kinds: amp, drive and mod.
+	aims := map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 9000, Tol: 1}}
+	now := map[audio.Figure]float64{audio.KeyCentroid: 100}
+	met := map[audio.Figure]float64{audio.KeyCentroid: 9000}
+
+	amp := plan.Block{Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true}
+	drive := plan.Block{Model: catalog.ModelID("HD2_DistObsidian7000"), Pos: 1, Enabled: true}
+	mod := plan.Block{Model: catalog.ModelID("HD2_Chorus"), Pos: 2, Enabled: true}
+
+	for _, tt := range []struct {
+		name   string
+		blocks []plan.Block
+		g      corpus.Grammar
+		now    map[audio.Figure]float64
+		want   bool
+	}{
+		{
+			// An amplifier on its own: the shortlist offers a drive the chain
+			// has none of, so there is something to ask for.
+			name:   "a chain with room for what was ranked",
+			blocks: []plan.Block{amp},
+			g:      stats.Grammar["bass"],
+			now:    now,
+			want:   true,
+		},
+		{
+			// Every axis inside tolerance, so nothing is missing and the
+			// shortlist is never consulted.
+			name:   "a chain that met its target",
+			blocks: []plan.Block{amp},
+			g:      stats.Grammar["bass"],
+			now:    met,
+			want:   false,
+		},
+		{
+			// The shortlist's five candidates are all amps, drives or mods.
+			// A chain holding an amp, a drive and a chorus, with no grammar
+			// to license a second of any kind, refuses all five and falls
+			// through. That is the honest answer rather than a block added on
+			// no evidence.
+			name:   "a chain with room for none of them",
+			blocks: []plan.Block{amp, drive, mod},
+			now:    now,
+			want:   false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			_, ok := ranked(
+				plan.Plan{Blocks: tt.blocks}, aims, tt.now, s.cat(), tt.g)
+			s.Require().Equal(tt.want, ok)
+		})
+	}
 }

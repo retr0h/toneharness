@@ -162,6 +162,40 @@ func (s *EmbedPublicTestSuite) TestBeforeAmp() {
 	}
 }
 
+// TestRepeats is the share of chains holding one of a kind that hold two.
+func (s *EmbedPublicTestSuite) TestRepeats() {
+	tests := []struct {
+		name string
+		in   corpus.CategoryStats
+		want float64
+	}{
+		{
+			// Bass drive: 21 of the 107 chains that hold one hold two, which
+			// is the shape a drive either side of the amplifier needs.
+			name: "a kind chains double",
+			in:   corpus.CategoryStats{Chains: 107, Twice: 21},
+			want: 0.19626168224299065,
+		},
+		{
+			// Bass cab. Two in series is not the blend people build.
+			name: "a kind chains never double",
+			in:   corpus.CategoryStats{Chains: 66},
+			want: 0,
+		},
+		{
+			// Zero means do not repeat, which is also what a statistic
+			// measured before this was counted reads as.
+			name: "nothing measured at all",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.Require().InDelta(tt.want, tt.in.Repeats(), 1e-9)
+		})
+	}
+}
+
 // TestLoad reads statistics off a reader.
 func (s *EmbedPublicTestSuite) TestLoad() {
 	// The generator writes gzip because the file is embedded, but somebody
