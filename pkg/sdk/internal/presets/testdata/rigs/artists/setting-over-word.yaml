@@ -1,0 +1,30 @@
+# The other half of the ordering. `settings` is seven musical words the compiler
+# turns into values and `controls` is the values outright, and both are written
+# over a word by a different pass. A report that got one right and the other
+# wrong would be worse than one that got both wrong, because nobody would look.
+
+schema: ToneSpec
+id: setting-over-word
+
+ask:
+  genre: [rock]
+
+  subject:
+    kind: artist
+    name: Setting Over Word
+  words:
+    - term: grit-on-attack
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      settings:
+        drive: 0.2
+      evidence: [{ kind: llm }]
+    - role: cab
+      gear: Ampeg SVT 410HLF
+      evidence: [{ kind: llm }]

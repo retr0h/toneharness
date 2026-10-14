@@ -343,6 +343,18 @@ func (s *MakePublicTestSuite) TestMake() {
 			held:      0.88,
 		},
 		{
+			// The other pass that writes over a word. `settings` is seven
+			// musical words the compiler turns into values, `controls` is the
+			// values outright, and they reach the chain through different
+			// code. Both have to report what the preset holds.
+			name:      "a word a setting wrote over",
+			id:        "setting-over-word",
+			named:     "Setting Over Word",
+			loadable:  true,
+			wroteOver: "Drive",
+			held:      0.2,
+		},
+		{
 			// The gap that was found by playing two rigs: one read as quiet,
 			// and the cabinet alone accounted for 2.9dB of it. With the curve
 			// in hand the build closes it.
