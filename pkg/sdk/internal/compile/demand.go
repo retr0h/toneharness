@@ -137,13 +137,39 @@ func demand(
 			added = append(added, Added{
 				Block: pick,
 				Reason: fmt.Sprintf(
-					"the ask says %s and nothing here had a %s", h.term, where,
+					"the ask says %s and nothing here had %s %s",
+					h.term, article(where), where,
 				),
 			})
 		}
 	}
 
 	return blocks, said, added
+}
+
+// article is "a" or "an", for a control named in a sentence.
+//
+// The controls are the catalog's names rather than prose, so which one lands
+// here is not something this file chooses: `Octave` read as "a Octave" the
+// first time a vowel-initial control reached it.
+//
+// The written letter rather than the sound, which is wrong for a control like
+// `Hum` nobody spells out loud and right for every one in the catalog today.
+// A rule that asked how a name is pronounced would need a pronunciation for
+// 5,602 of them.
+func article(
+	of string,
+) string {
+	if of == "" {
+		return "a"
+	}
+
+	switch of[0] {
+	case 'A', 'E', 'I', 'O', 'U', 'a', 'e', 'i', 'o', 'u':
+		return "an"
+	}
+
+	return "a"
 }
 
 // claimed is everything an ask says that might name a block.

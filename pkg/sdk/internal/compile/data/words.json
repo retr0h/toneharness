@@ -24,6 +24,12 @@
         "punchy": "the bottom stops when the note does, and the front of the note is what you hear first"
       }
     },
+    "octave": {
+      "about": "whether a note an octave below sits under the one being played",
+      "terms": {
+        "sub-octave": "an octave below the note, under the dry signal rather than instead of it"
+      }
+    },
     "decay": {
       "about": "how long a note lasts once it is struck",
       "terms": {
