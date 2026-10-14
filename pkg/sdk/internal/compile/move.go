@@ -159,6 +159,36 @@ var turns = map[string][]turn{
 	"tight-low-end": {{axis: "low-end", category: catalog.CategoryAmp, param: "Sag", steps: -1}},
 	"loose-low-end": {{axis: "low-end", category: catalog.CategoryAmp, param: "Sag", steps: 1}},
 
+	// Not the same question as low-end, which is how the bottom behaves. This
+	// is whether there is a second note under the first, an octave down, and
+	// slot 05C is why the vocabulary needed it: its EBS OctaBass sits at
+	// `Octave: 0.30` against `Normal: 0.90`, and that added content an octave
+	// below is most of why the preset reads as deeper than anything built
+	// here. `loose-low-end` was the nearest word and it is about a different
+	// thing.
+	//
+	// It turns a control and does not add a block, which is the rule rather
+	// than a limitation of this entry. A term that adds a block is a different
+	// kind of term from one that turns a knob, and the trap is recorded two
+	// comments up: seating a compressor for `audible-pick-attack` was
+	// circular, a block added so its attack could be turned up so that the
+	// block just added would not remove the thing it was added for. Blocks
+	// arrive by measurement proposing one and somebody accepting it, which is
+	// what `tone tune --extend` is.
+	//
+	// So a chain with no pitch block cannot answer this, and the build says
+	// the word moved nothing. `absenceMeans` stays empty because absence is
+	// not an answer here: a chain with no octaver is not a chain with a
+	// sub-octave, it is a chain that cannot have one.
+	//
+	// Two control names because the octavers spell it differently. A DM4 Bass
+	// Octaver calls the blend `Octave` and a Double Bass calls its first voice
+	// `-1oct G`, and both are the level of the note an octave down.
+	"sub-octave": {{
+		axis: "octave", category: catalog.CategoryPitch, param: "Octave", steps: 1,
+		also: []answers{{catalog.CategoryPitch, "-1oct G"}},
+	}},
+
 	// The first word here that answers two questions, and the reason the
 	// vocabulary had to be able to hold one. Players say "punchy" constantly
 	// and it is not a synonym for either half: it is a bottom that stops with

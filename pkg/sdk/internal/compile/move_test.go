@@ -48,13 +48,17 @@ func (s *MoveTestSuite) amp() catalog.Block {
 	}
 }
 
-// chain is an amplifier, a reverb and a compressor, which between them answer
-// for every axis that acts.
+// chain is an amplifier, a reverb, a compressor and an octaver, which between
+// them answer for every axis that acts.
 func (s *MoveTestSuite) blocks() []catalog.Block {
 	return []catalog.Block{
 		{
 			ID: "HD2_CompTest", Category: catalog.CategoryComp,
 			Params: map[string]catalog.Param{"Attack": knob},
+		},
+		{
+			ID: "HD2_PitchTest", Category: catalog.CategoryPitch,
+			Params: map[string]catalog.Param{"Octave": knob},
 		},
 		s.amp(),
 		{
@@ -68,6 +72,7 @@ func (s *MoveTestSuite) blocks() []catalog.Block {
 func (s *MoveTestSuite) built() plan.Plan {
 	return plan.Plan{Blocks: []plan.Block{
 		{Model: "HD2_CompTest", Params: plan.Params{"Attack": catalog.Float(0.5)}},
+		{Model: "HD2_PitchTest", Params: plan.Params{"Octave": catalog.Float(0.5)}},
 		{Model: "HD2_AmpTestBass", Params: s.params()},
 		{Model: "HD2_ReverbTest", Params: plan.Params{"Mix": catalog.Float(0.5)}},
 	}}
@@ -286,6 +291,15 @@ func (s *MoveTestSuite) TestMove() {
 									name:  "notes that arrive rather than start",
 									terms: []string{"soft-attack"},
 									param: "Attack", want: 0.4,
+								},
+								{
+									// Not the same question as low-end, which is how the bottom
+									// behaves. This is whether there is a second note under the
+									// first, and slot 05C is why the vocabulary needed it: its
+									// EBS OctaBass sits at Octave 0.30 against Normal 0.90.
+									name:  "a note an octave under the one being played",
+									terms: []string{"sub-octave"},
+									param: "Octave", want: 0.6,
 								},
 								{
 									name:  "a word the vocabulary does not carry at all",
@@ -507,9 +521,12 @@ func (s *MoveTestSuite) TestMove() {
 							s.Require().NotEmpty(move(s.blocks(), measured,
 								[]heard{{term: "clean", weight: 0.5}}, nil))
 
-							was, _ := s.built().Blocks[1].Params["Drive"].Float()
-							full, _ := asserted.Blocks[1].Params["Drive"].Float()
-							half, _ := measured.Blocks[1].Params["Drive"].Float()
+							// By control rather than by index: the chain this runs
+							// against gained a block when the octave axis needed
+							// somewhere to land, and an index moved with it.
+							was := s.paramOf(s.built(), "Drive")
+							full := s.paramOf(asserted, "Drive")
+							half := s.paramOf(measured, "Drive")
 
 							s.Require().Less(full, half, "half a step lands nearer where it started")
 							s.Require().Less(half, was, "and still moves the control the way the word says")
@@ -742,6 +759,49 @@ func (s *MoveTestSuite) TestTermsOf() {
 			got := termsOf(tt.in)
 
 			s.Require().Equal(tt.want, got)
+		})
+	}
+}
+
+// TestArticle covers the indefinite article a seated block's reason reads with.
+//
+// A control's name is the catalog's rather than prose, so which one lands in
+// that sentence is not something the code chooses: `Octave` read as "a Octave"
+// the first time a vowel-initial control reached it.
+func (s *MoveTestSuite) TestArticle() {
+	for _, tt := range []struct {
+		name string
+		of   string
+		want string
+	}{
+		{
+			// The one that found this.
+			name: "a control that starts with a vowel",
+			of:   "Octave",
+			want: "an",
+		},
+		{
+			name: "a control that does not",
+			of:   "Drive",
+			want: "a",
+		},
+		{
+			// The written letter rather than the sound, which is right for
+			// every control in the catalog today and would need a
+			// pronunciation for 5,602 of them to do better.
+			name: "a lower-case name",
+			of:   "octave",
+			want: "an",
+		},
+		{
+			// Nothing to read a first letter off. "a" is the safer of the two
+			// because it is what the sentence said before this existed.
+			name: "no name at all",
+			want: "a",
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, article(tt.of))
 		})
 	}
 }
