@@ -31,11 +31,38 @@ import (
 // nearUniversal is how common a kind of block must be before one is added to a
 // chain that did not ask for it.
 //
-// Set high on purpose. A compressor in 88% of bass chains is a convention, and
-// leaving it out produces something nobody would recognise. Drive in 62% is a
+// Set high on purpose. A compressor in 86% of bass chains is a convention, and
+// leaving it out produces something nobody would recognise. Drive in 63% is a
 // choice, and making it silently would be this tool having opinions it cannot
 // justify. A rig naming a pedal always gets it, whatever the figure.
+//
+// It sits in a gap in the evidence rather than at a round number. Bass runs
+// 63.3% for drive and then 86.4% for the compressor with nothing between;
+// guitar runs 76.7% for delay and then 55.0% for modulation.
 const nearUniversal = 0.75
+
+// usuallyOn is how often a kind of block is running, among the chains that hold
+// one, before one is added switched on rather than bypassed.
+//
+// **Two questions were being answered by one number.** Whether a player would
+// have this block and whether they would use it are different facts, and the
+// corpus disagrees about them sharply. Of the guitar chains that hold a delay,
+// 61.6% run it; of those holding a drive, 47.3%. Both clear the presence gate,
+// so both were being added and switched on, which decided for the player in
+// exactly the way the comment above exists to prevent. Nobody noticed because
+// the figure that would have shown it was not counted.
+//
+// This one also sits in a gap, and a wide one: across both instruments nothing
+// measured falls between 61.6% and 82.1%. Above it are the conventions, a
+// compressor at 87.0% on bass and a reverb at 92.1% on guitar. Below it are the
+// pedals, and a wah is the clearest of them at 3.8% on guitar, present in one
+// chain in six and running in one in twenty-six.
+//
+// A block that does not clear it is still added, bypassed. It costs the chain
+// its DSP and nothing else, the device's own footswitches toggle it, and the
+// player decides. That is the answer to a block the corpus says to carry and
+// not to commit to.
+const usuallyOn = 0.75
 
 // Added records a block the chain did not ask for, and why it is there.
 //
@@ -45,6 +72,10 @@ type Added struct {
 	Block  catalog.Block
 	Reason string
 	Share  float64
+	// Bypassed says the block arrived switched off, because the chains that
+	// carry one mostly do not run it, and Running is the share that do.
+	Bypassed bool
+	Running  float64
 }
 
 // fill adds the blocks a chain of this kind almost always has.
@@ -101,10 +132,23 @@ func fill(
 			continue
 		}
 
-		blocks, said = insert(blocks, said, pick, s.BeforeAmp() >= 0.5)
+		// Switched on only where the chains that carry one run it. Otherwise
+		// it arrives bypassed, which carries the evidence for its presence
+		// without making a decision the evidence does not support.
+		running := s.Running()
+		bypassed := running < usuallyOn
+
+		blocks, said = insert(blocks, said, pick, s.BeforeAmp() >= 0.5, bypassed)
+
+		why := "almost every chain has one"
+		if bypassed {
+			why = "almost every chain carries one and most leave it off, " +
+				"so this arrives bypassed"
+		}
+
 		added = append(added, Added{
-			Block: pick, Share: share,
-			Reason: "almost every chain has one",
+			Block: pick, Share: share, Reason: why,
+			Bypassed: bypassed, Running: running,
 		})
 	}
 
@@ -124,9 +168,17 @@ func insert(
 	said []*wanted,
 	b catalog.Block,
 	beforeAmp bool,
+	bypassed bool,
 ) ([]catalog.Block, []*wanted) {
+	// A wanted rather than nil, so the bypass travels with the block. Nil is
+	// what a block nobody asked for used to carry, and it could say nothing.
+	var with *wanted
+	if bypassed {
+		with = &wanted{bypassed: true}
+	}
+
 	if !beforeAmp {
-		return append(blocks, b), append(said, nil)
+		return append(blocks, b), append(said, with)
 	}
 
 	at := 0
@@ -144,7 +196,7 @@ func insert(
 	out = append(out, b)
 	out = append(out, blocks[at:]...)
 
-	return out, spliced(said, at)
+	return out, spliced(said, at, with)
 }
 
 // spliced opens a gap at the same index the blocks did, holding no settings.
@@ -175,14 +227,15 @@ func insert(
 func spliced(
 	said []*wanted,
 	at int,
+	with *wanted,
 ) []*wanted {
 	if at >= len(said) {
-		return append(said, nil)
+		return append(said, with)
 	}
 
 	out := make([]*wanted, 0, len(said)+1)
 	out = append(out, said[:at]...)
-	out = append(out, nil)
+	out = append(out, with)
 
 	return append(out, said[at:]...)
 }

@@ -421,9 +421,11 @@ func addedFrom(
 	out := make([]result.Added, 0, len(added))
 	for _, a := range added {
 		out = append(out, result.Added{
-			Name:   a.Block.Name,
-			Reason: a.Reason,
-			Share:  a.Share,
+			Name:     a.Block.Name,
+			Reason:   a.Reason,
+			Share:    a.Share,
+			Bypassed: a.Bypassed,
+			Running:  a.Running,
 		})
 	}
 

@@ -367,6 +367,62 @@ func (s *CorpusgenPublicTestSuite) TestMeasureADirectoryThatIsNotThere() {
 	s.Require().ErrorContains(err, "searching")
 }
 
+// TestEngaged counts the chains that have one of a kind switched on.
+//
+// Once per chain, however many are on. A chain carrying three drives with one
+// engaged used its drive, and the question is whether the player left any of
+// them doing something rather than how many.
+//
+// Its own corpus, not the one TestTwice reads: these presets exist to be counted
+// a particular way and dropping them in beside those moved a count that test
+// reasons about preset by preset.
+//
+// `twodrives.hlx` has its drives on, `mixeddrive.hlx` one on and one off, and
+// `offdrive.hlx` its only drive off.
+func (s *CorpusgenPublicTestSuite) TestEngaged() {
+	tests := []struct {
+		name    string
+		of      catalog.Category
+		chains  int
+		engaged int
+	}{
+		{
+			// Three chains hold a drive and two have one running. The one
+			// with its only drive switched off does not count, and the one
+			// with a drive on and a drive off does.
+			name:    "a kind most chains run",
+			of:      catalog.CategoryDrive,
+			chains:  3,
+			engaged: 2,
+		},
+		{
+			// Every fixture's cabinet is on, so holding one and running one
+			// are the same number here.
+			name:    "a kind every chain runs",
+			of:      catalog.CategoryCab,
+			chains:  3,
+			engaged: 3,
+		},
+	}
+
+	cat, err := catalog.Open(filepath.Join("testdata", "catalog.json"))
+	s.Require().NoError(err)
+
+	got, err := corpusgen.Measure(corpusgen.Options{
+		CorpusDir: filepath.Join("testdata", "engaged"),
+	}, cat)
+	s.Require().NoError(err)
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			c := got.Grammar["bass"].Categories[tt.of]
+
+			s.Require().Equal(tt.chains, c.Chains)
+			s.Require().Equal(tt.engaged, c.Engaged)
+		})
+	}
+}
+
 func TestCorpusgenPublicTestSuite(
 	t *testing.T,
 ) {

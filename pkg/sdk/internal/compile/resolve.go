@@ -575,7 +575,7 @@ func specFor(
 			Params:  settings(b, stats),
 			DSP:     0,
 			Pos:     at(entry.Position, i),
-			Enabled: playing(entry),
+			Enabled: playing(entry) && !bypassedAt(said, i),
 			Attrs:   attrsFrom(entry),
 		})
 	}
@@ -717,6 +717,25 @@ type wanted struct {
 	// position, its parallel path and the rest of the device's own attributes
 	// come from. A block the corpus added has none and takes the defaults.
 	entry *rig.ChainEntry
+	// bypassed says a block the corpus added arrives switched off, because the
+	// chains that carry one mostly do not run it.
+	//
+	// Only ever set on a block nobody asked for. A block a rig names arrives
+	// however the rig says, because that is somebody's decision rather than a
+	// statistic.
+	bypassed bool
+}
+
+// bypassedAt says whether the corpus added this block switched off.
+//
+// Off the wanted rather than off the entry, because a block nobody asked for has
+// no entry: the rig said nothing about it, which is exactly why the corpus is
+// deciding and why the decision has to be visible.
+func bypassedAt(
+	said []*wanted,
+	i int,
+) bool {
+	return i < len(said) && said[i] != nil && said[i].bypassed
 }
 
 // statedControls puts the values a rig states outright onto their blocks.

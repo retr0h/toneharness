@@ -66,6 +66,58 @@ A word beaten this way is still printed rather than dropped. A word that moved
 nothing because a number outranked it is exactly the kind of decision taken on
 somebody's behalf that has to be visible.
 
+## A block the corpus adds, and whether it arrives switched on
+
+Two questions, and one number was answering both: would a player have this
+block, and would they use it. The corpus disagrees about them sharply. Of the
+chains that hold one, these run it:
+
+```
+bass     cab 97.0%  gate 88.9%  comp 87.0%  eq 83.3%  reverb 67.4%
+         delay 52.0%  drive 48.6%  filter 45.5%  mod 27.8%  pitch 26.1%  wah 0.0%
+guitar   cab 95.6%  reverb 92.1%  comp 84.3%  eq 84.3%  gate 82.1%
+         delay 61.6%  mod 48.1%  drive 47.3%  filter 38.8%  pitch 38.6%  wah 3.8%
+```
+
+**Nothing falls between 61.6% and 82.1%**, which is where the line goes. Above it
+are the conventions, below it the pedals. A guitar wah is the clearest: present
+in one chain in six and running in one in twenty-six.
+
+So a block clears one gate to be added and a second to be switched on:
+
+| gate | at | what it answers |
+| ---- | -- | --------------- |
+| presence | 75% of chains hold one | should this be in the chain |
+| engagement | 75% of those run it | should it be doing something |
+
+A block clearing the first and not the second **arrives bypassed**. It costs the
+chain its DSP and nothing else, the device's own footswitches toggle it, and the
+player decides.
+
+```
+added Simple Delay — almost every chain carries one and most leave it off, so
+      this arrives bypassed (77% of chains carry one, 62% of those run it)
+```
+
+**This was wrong on the guitar side until 2026-10-17** and nobody noticed,
+because the figure that would have shown it was not counted. A guitar build
+arrived with a delay and a drive switched on at 61.6% and 47.3% engagement, so
+the gate decided the sound for the player in exactly the way the presence gate
+exists to prevent. Bass was unaffected: a compressor reads 87.0% and stays on.
+
+Both figures are measured per instrument and not per genre, because the preset
+corpus carries no genre: a preset holds a `build_sha` and a name. The genre
+figures come from records, which are a different corpus and say nothing about
+what blocks anybody put in a chain.
+
+A block a **word** asks for still arrives on, whatever these figures say. A block
+seated because somebody described a sound is a block they want doing something;
+the corpus adding one on a statistic is the other case.
+
+Statistics measured before engagement was counted read as nothing running, so a
+block from them arrives bypassed. A block switched off changes no sound, which is
+the direction to be wrong in.
+
 **`presets compile` resolves no words at all, and says so.** It builds the `rig:`
 half, which is the layering rather than a gap: resolving words needs the corpus
 and a second chain builder, and `presets make` is that. What it would not do

@@ -219,6 +219,7 @@ func (m *measurer) grammarOf(
 	}
 
 	seen := map[catalog.Category]bool{}
+	running := map[catalog.Category]bool{}
 	held := map[catalog.ModelID]bool{}
 	runs := map[run]map[catalog.Category]int{}
 
@@ -248,6 +249,15 @@ func (m *measurer) grammarOf(
 		if !seen[blk.Category] {
 			c.chains++
 			seen[blk.Category] = true
+		}
+
+		// Once per chain, the first time one of this kind is found switched
+		// on. A chain carrying three drives with one engaged used its drive,
+		// which is the question: not how many are on, but whether the player
+		// left any of them doing something.
+		if b.Enabled && !running[blk.Category] {
+			c.engaged++
+			running[blk.Category] = true
 		}
 
 		if i < ampAt {
@@ -357,7 +367,7 @@ func (m *measurer) reduce(
 		for category, c := range cats {
 			g.Categories[category] = corpus.CategoryStats{
 				Chains: c.chains, Before: c.before, After: c.after,
-				Twice: c.twice,
+				Twice: c.twice, Engaged: c.engaged,
 			}
 		}
 

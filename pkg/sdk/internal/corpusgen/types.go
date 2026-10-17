@@ -49,10 +49,11 @@ type sample []float64
 // counter tallies how often a category appears and where it sits relative to
 // the amp.
 type counter struct {
-	chains int
-	before int
-	after  int
-	twice  int
+	chains  int
+	before  int
+	after   int
+	twice   int
+	engaged int
 }
 
 // run identifies one series run: a processor and a side of a parallel split.

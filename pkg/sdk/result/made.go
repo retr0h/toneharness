@@ -220,6 +220,16 @@ type Added struct {
 	// block substituted for gear no model emulates was not counted, and
 	// reporting it as none would read as one.
 	Share float64 `json:"share"`
+	// Bypassed says it arrived switched off, and Running is the share of
+	// chains carrying one that have it on.
+	//
+	// Two figures because they answer two questions. Share says a player would
+	// have this block; Running says whether they would use it. Of the guitar
+	// chains holding a delay 61.6% run it, and of those holding a drive 47.3%,
+	// so adding either switched on decides something the evidence does not
+	// support. Bypassed is what the build did about that.
+	Bypassed bool    `json:"bypassed,omitempty"`
+	Running  float64 `json:"running,omitempty"`
 }
 
 // Unfamiliar is a character term nothing defines.

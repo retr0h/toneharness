@@ -136,6 +136,41 @@ func (s *MadePublicTestSuite) TestMade() {
 						absent: []string{"added", "no such word"},
 					},
 					{
+						// A block the corpus carries but most players leave
+						// off, which arrives bypassed. Both figures printed
+						// and each labelled, because they answered two
+						// questions and the second decided the bypass.
+						name: "a block added switched off",
+						in: s.made(func(m *sdk.Made) {
+							m.Added = []sdk.Added{{
+								Name:     "Simple Delay",
+								Reason:   "almost every chain carries one and most leave it off, so this arrives bypassed",
+								Share:    0.767,
+								Running:  0.616,
+								Bypassed: true,
+							}}
+						}),
+						want: []string{
+							"Simple Delay", "arrives bypassed",
+							"77% of chains carry one", "62% of those run it",
+						},
+					},
+					{
+						// A block the chains that carry one also run, which
+						// arrives on and says only how common it is.
+						name: "a block added switched on",
+						in: s.made(func(m *sdk.Made) {
+							m.Added = []sdk.Added{{
+								Name:    "Deluxe Comp",
+								Reason:  "almost every chain has one",
+								Share:   0.864,
+								Running: 0.870,
+							}}
+						}),
+						want:   []string{"Deluxe Comp", "86% of chains"},
+						absent: []string{"bypassed", "of those run it"},
+					},
+					{
 						// What the preset ends up holding, with the word's own
 						// move beside it. The line used to print only the
 						// move, which told somebody hand-editing a document

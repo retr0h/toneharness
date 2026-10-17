@@ -101,6 +101,25 @@ type CategoryStats struct {
 	// drive after it does something else entirely.
 	Before int `json:"before"`
 	After  int `json:"after"`
+	// Engaged is how many of those chains have at least one of these
+	// switched on.
+	//
+	// The figure that separates two questions one number was answering. A
+	// chain holding a block and a chain using it are different facts, and the
+	// corpus disagrees about them sharply: of the 123 bass chains ending in a
+	// cabinet, 73.2% hold a drive and 35.0% have one running, so barely half
+	// the players who carry one leave it engaged. A gate reading only
+	// presence and then switching the block on decides for them.
+	//
+	// It goes the other way too, and that is the useful half. 13.0% hold a
+	// noise gate and every one of them runs it; 5.7% hold a wah and not one
+	// does, which is a footswitch effect sitting there waiting to be stepped
+	// on rather than a block anybody wanted in the signal.
+	//
+	// Empty in statistics measured before it was counted, which reads as
+	// nothing engaged and so as a block to add bypassed. That is the safe
+	// direction: a block switched off changes no sound.
+	Engaged int `json:"engaged,omitempty"`
 	// Twice is how many of those chains hold two or more in one series run.
 	//
 	// Within one run, because that is the only arrangement a rig's chain can
@@ -128,6 +147,24 @@ func (c CategoryStats) Frequency(
 	}
 
 	return float64(c.Chains) / float64(chains)
+}
+
+// Running is the share of chains holding one of these that have one switched
+// on.
+//
+// What decides whether a block the corpus says to add arrives enabled or
+// bypassed. A compressor reads 83.3% here, so a chain that has one uses it and
+// adding one switched on is what players do. A drive reads 47.8%, so adding one
+// switched on is a decision half of them did not make.
+//
+// Zero where nothing counted it, which reads as bypassed. A block switched off
+// changes no sound, so that is the direction to be wrong in.
+func (c CategoryStats) Running() float64 {
+	if c.Chains == 0 {
+		return 0
+	}
+
+	return float64(c.Engaged) / float64(c.Chains)
 }
 
 // Repeats is the share of chains holding one of these that hold two.

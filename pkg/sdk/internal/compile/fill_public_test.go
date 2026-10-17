@@ -102,11 +102,25 @@ func (s *FillPublicTestSuite) TestResolveFill() {
 					wantIDs   []catalog.ModelID
 					wantName  string
 					wantShare float64
+					// whether the added block arrives switched on.
+					//
+					// False by default, and that is the point rather than a
+					// convenience: a row whose statistics say nothing about
+					// engagement is a block to carry and not to commit to, and
+					// every row here written before engagement was counted
+					// reads that way. A block switched off changes no sound,
+					// so that is the direction to be wrong in.
+					wantOn bool
 					// the category of the first block in the chain, and of the last.
 					first catalog.Category
 					last  catalog.Category
 				}{
 					{
+						// 90 chains hold one and none of them was counted as
+						// running it, which reads as a block to carry and not
+						// to commit to. Statistics measured before engagement
+						// was counted land here too, and bypassed is the safe
+						// direction: a block switched off changes no sound.
 						name: "a block nearly every chain has",
 						cats: map[catalog.Category]corpus.CategoryStats{
 							catalog.CategoryDrive: {Chains: 90, Before: 90},
@@ -117,6 +131,44 @@ func (s *FillPublicTestSuite) TestResolveFill() {
 						wantShare: 0.9,
 						// Drive feeds the amp's input, so it belongs ahead of it.
 						first: catalog.CategoryDrive,
+					},
+					{
+						// The same block, and the chains that hold one run it.
+						// A compressor reads 87.0% here on real bass chains, so
+						// this is the convention case: added and switched on.
+						name: "a block nearly every chain has and uses",
+						cats: map[catalog.Category]corpus.CategoryStats{
+							catalog.CategoryDrive: {Chains: 90, Engaged: 80, Before: 90},
+						},
+						models:    map[catalog.ModelID]corpus.ModelStats{"HD2_DistMinotaur": {Uses: 40}},
+						want:      1,
+						wantShare: 0.9,
+						wantOn:    true,
+						first:     catalog.CategoryDrive,
+					},
+					{
+						// Held by nearly every chain and run by under half,
+						// which is a guitar drive at 47.3% and a guitar delay
+						// at 61.6%. Added, and switched off.
+						name: "a block nearly every chain has and most leave off",
+						cats: map[catalog.Category]corpus.CategoryStats{
+							catalog.CategoryDrive: {Chains: 90, Engaged: 40, Before: 90},
+						},
+						models: map[catalog.ModelID]corpus.ModelStats{"HD2_DistMinotaur": {Uses: 40}},
+						want:   1,
+						first:  catalog.CategoryDrive,
+					},
+					{
+						// After the amplifier rather than before it, because
+						// the bypass travelled through a different branch of
+						// the insert and only one of the two was carrying it.
+						name: "a bypassed block that belongs after the amp",
+						cats: map[catalog.Category]corpus.CategoryStats{
+							catalog.CategoryReverb: {Chains: 95, Engaged: 10, After: 95},
+						},
+						models: map[catalog.ModelID]corpus.ModelStats{"HD2_ReverbTest": {Uses: 40}},
+						want:   1,
+						last:   catalog.CategoryReverb,
 					},
 					{
 						name: "a block that belongs after the amp",
@@ -341,6 +393,22 @@ func (s *FillPublicTestSuite) TestResolveFill() {
 								s.Require().InDelta(tt.wantShare, added[0].Share, 1e-9)
 							}
 
+							// Both the report and the plan, because they were
+							// able to disagree: `spliced` put a nil where the
+							// bypass should have gone, so a block inserted
+							// ahead of the amplifier was reported bypassed and
+							// written enabled. Every drive goes ahead of the
+							// amplifier.
+							if len(added) > 0 {
+								s.Require().Equal(!tt.wantOn, added[0].Bypassed,
+									"the report says whether it was bypassed")
+
+								at := s.indexOfModel(spec, added[0].Block.ID)
+								s.Require().GreaterOrEqual(at, 0)
+								s.Require().Equal(tt.wantOn, spec.Blocks[at].Enabled,
+									"and the plan agrees with the report")
+							}
+
 							if tt.first != "" {
 								s.Require().Equal(tt.first, s.categoryAt(spec, 0))
 							}
@@ -471,6 +539,23 @@ func (s *FillPublicTestSuite) categoryAt(
 	s.Require().True(ok)
 
 	return b.Category
+}
+
+// indexOfModel finds where a model landed in the chain.
+//
+// By model rather than by position, because the bug this guards against was a
+// block reported one way and written another, and the position is what moved.
+func (s *FillPublicTestSuite) indexOfModel(
+	spec plan.Plan,
+	id catalog.ModelID,
+) int {
+	for i, b := range spec.Blocks {
+		if b.Model == id {
+			return i
+		}
+	}
+
+	return -1
 }
 
 func TestFillPublicTestSuite(
