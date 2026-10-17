@@ -162,6 +162,54 @@ func (s *EmbedPublicTestSuite) TestBeforeAmp() {
 	}
 }
 
+// TestRunning is the share of chains holding one of a kind that run it.
+func (s *EmbedPublicTestSuite) TestRunning() {
+	tests := []struct {
+		name string
+		in   corpus.CategoryStats
+		want float64
+	}{
+		{
+			// Bass compressor: 146 chains hold one and 127 run it. A chain
+			// that has one uses it, so adding one switched on is what players
+			// do.
+			name: "a kind chains hold and use",
+			in:   corpus.CategoryStats{Chains: 146, Engaged: 127},
+			want: 0.8698630136986302,
+		},
+		{
+			// Guitar drive: 2785 hold one and 1317 run it. Adding one
+			// switched on decides something half of them did not.
+			name: "a kind chains hold and mostly leave off",
+			in:   corpus.CategoryStats{Chains: 2785, Engaged: 1317},
+			want: 0.47289048473967685,
+		},
+		{
+			// Guitar wah, which is the clearest footswitch effect measured:
+			// present in one chain in six and running in one in twenty-six.
+			name: "a kind nobody runs",
+			in:   corpus.CategoryStats{Chains: 601, Engaged: 23},
+			want: 0.03826955074875208,
+		},
+		{
+			// Statistics measured before engagement was counted, which read
+			// as bypassed. A block switched off changes no sound.
+			name: "nothing counted",
+			in:   corpus.CategoryStats{Chains: 90},
+			want: 0,
+		},
+		{
+			name: "no chains at all",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.Require().InDelta(tt.want, tt.in.Running(), 1e-9)
+		})
+	}
+}
+
 // TestRepeats is the share of chains holding one of a kind that hold two.
 func (s *EmbedPublicTestSuite) TestRepeats() {
 	tests := []struct {

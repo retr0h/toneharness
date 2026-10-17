@@ -92,7 +92,10 @@ func demand(
 			continue
 		}
 
-		blocks, said = insert(blocks, said, pick, beforeAmp(g, want))
+		// On, not bypassed: a word asked for this block, and a block seated
+		// because somebody described a sound is a block they want doing
+		// something. The corpus adding one on a statistic is the other case.
+		blocks, said = insert(blocks, said, pick, beforeAmp(g, want), false)
 		added = append(added, Added{
 			Block:  pick,
 			Reason: fmt.Sprintf("the ask says %s, which needs one", c),
@@ -133,7 +136,7 @@ func demand(
 				continue
 			}
 
-			blocks, said = insert(blocks, said, pick, beforeAmp(g, pick.Category))
+			blocks, said = insert(blocks, said, pick, beforeAmp(g, pick.Category), false)
 			added = append(added, Added{
 				Block: pick,
 				Reason: fmt.Sprintf(

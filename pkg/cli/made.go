@@ -162,7 +162,15 @@ func added(
 		// substituted for gear no model emulates cannot, and appending "0% of
 		// chains" to it would read as a measurement.
 		line := fmt.Sprintf("%s — %s", a.Name, a.Reason)
-		if a.Share > 0 {
+
+		switch {
+		case a.Share > 0 && a.Bypassed:
+			// Both figures, because they answered two questions and the
+			// second is the one that decided the bypass: how many chains
+			// carry one, and how many of those run it.
+			line += fmt.Sprintf(" (%.0f%% of chains carry one, %.0f%% of those run it)",
+				a.Share*100, a.Running*100)
+		case a.Share > 0:
 			line += fmt.Sprintf(" (%.0f%% of chains)", a.Share*100)
 		}
 
