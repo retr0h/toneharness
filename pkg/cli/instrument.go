@@ -49,12 +49,19 @@ import (
 // reference.
 var ErrWrongInstrument = errors.New("the reference is not this chain's instrument")
 
-// chainIsFor is the instrument a chain is for, by the amplifiers in it.
+// chainIsFor is the instrument a chain is for: what its document says, or what
+// its amplifiers say where no document does.
 //
-// plan.InstrumentFor holds the rule, shared with the compiler and the corpus
-// measurer, and the three have to agree: this refuses a rig for the instrument
-// the rig itself says it is, so a different answer here is a bass rig turned
-// away from a bass recording.
+// The document first, and the order is the whole of it. Dusty Hill plays bass
+// through a Marshall Super Lead 100, which is a guitar head, because ZZ Top ran
+// the same Marshall rig for his bass as for the guitars. By the amplifier his
+// chain is a guitar chain, so this guard refused his bass rig a bass recording
+// and told him to push a guitar one. By what he is playing it is a bass chain,
+// and that is what the document says.
+//
+// plan.InstrumentFor is the fallback and holds the rule for a chain with no
+// document, which is every preset in the corpus: a `.hlx` carries a `build_sha`
+// and a name, so the amplifier is the only label there is.
 //
 // The empty answer is kept rather than turned into a word. An effect serves
 // either instrument, so a chain with no amplifier makes no claim, and a guard
@@ -62,7 +69,12 @@ var ErrWrongInstrument = errors.New("the reference is not this chain's instrumen
 func chainIsFor(
 	made plan.Plan,
 	cat *catalog.Catalog,
+	declared string,
 ) string {
+	if declared != "" {
+		return declared
+	}
+
 	return plan.InstrumentFor(made, cat)
 }
 
@@ -83,14 +95,15 @@ func sameInstrument(
 	made plan.Plan,
 	cat *catalog.Catalog,
 	dry string,
+	declared string,
 ) error {
-	chain, reference := chainIsFor(made, cat), referenceIsFor(dry)
+	chain, reference := chainIsFor(made, cat, declared), referenceIsFor(dry)
 	if chain == "" || reference == "" || chain == reference {
 		return nil
 	}
 
 	return fmt.Errorf(
-		"%w: this chain's amplifier is a %s amplifier and %s is a %s recording. "+
+		"%w: this chain is a %s chain and %s is a %s recording. "+
 			"Every figure measured through it would describe the reference rather "+
 			"than the chain, so the solve would spend its dials on the difference. "+
 			"Push a %s recording with --dry",

@@ -49,3 +49,56 @@ a cabinet and "position 4" does not.
 
 A drive behind the amplifier is the case worth knowing about. It is a known way
 to use one rather than a mistake.
+
+## A player's instrument is not their amplifier's
+
+`instrument:` on a rig is what somebody plays. It is not derived from the
+amplifier, and the two genuinely disagree.
+
+Dusty Hill played bass through a Marshall Super Lead 100, which is a guitar
+head: ZZ Top ran the same Marshall rig for his bass as for the guitars, because
+the grind those amps offered worked for both. Glen Matlock's rig names a Fender
+Bassman. Neither is a mistake in the document and neither is a substitution.
+
+Until 2026-10-17 the amplifier decided, and both rigs read as guitar chains to
+everything downstream. What that cost:
+
+- the corpus filled them from guitar habits, so a bass player got a guitar
+  chain's conventions
+- a loudness match read guitar cabinets
+- the guard that compares a chain against its reference refused Dusty Hill's
+  bass rig a bass recording and told him to push a guitar one
+
+**So the document decides, and the amplifier is the fallback.** A chain with no
+document has only its amplifier to go on, which is every preset in the corpus: a
+`.hlx` carries a `build_sha` and a name. `plan.InstrumentFor` is that fallback
+and nothing else should reach for it where a rig is in hand.
+
+## What you may name, and what the device has
+
+A rig names gear a person would recognise and the catalog resolves it. Where
+nothing emulates the named gear, the rig states a `substitute:`, which is
+somebody deciding rather than a search guessing.
+
+For bass the device models fourteen real amplifiers, and that is the list an
+automated rig has to land on:
+
+```
+Ampeg SVT (bright, normal)        Ampeg B-15NF Portaflex
+MESA/Boogie Bass 400+ (ch 1, 2)   MESA/Boogie M9 Carbine
+Gallien-Krueger GK 800RB          Sunn Coliseum 300
+Acoustic 360                      Aguilar DB51
+Aguilar Tone Hammer               Pearce BC-1 (ch 1, ch 2, jumped)
+```
+
+Ask the catalog rather than this list, which is right the day it is written:
+
+```bash
+mise exec -- go run main.go catalog list --category amp --json
+```
+
+**An artist whose amplifier is not among them needs a stated substitute before
+they can be built automatically.** A name found only among the other
+instrument's amplifiers is not a substitute: it is a different instrument's
+amplifier that happens to share a name, and resolving to it silently is what
+produced a guitar rig for a bass player.

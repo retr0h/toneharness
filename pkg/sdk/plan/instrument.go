@@ -38,6 +38,18 @@ const (
 
 // InstrumentFor is the instrument a chain is for, by the amplifiers in it.
 //
+// **Only where nothing else says.** A document declaring `instrument: bass` has
+// settled the question and this is the fallback for a chain that arrived without
+// one, which is every preset in the corpus: a `.hlx` holds a `build_sha` and a
+// name, so the amplifier is the only label there is.
+//
+// Asking it of a chain that does have a document gets the wrong answer for a
+// real case. Dusty Hill played bass through a Marshall Super Lead 100, a guitar
+// head, and ZZ Top ran the same Marshall rig for his bass as for the guitars. By
+// the amplifier his chain is a guitar chain; by what he is playing it is a bass
+// chain, and bass is the population whose statistics should fill it and whose
+// recordings it should be measured against.
+//
 // **Every amplifier, and a bass one anywhere decides it.** Returning on the
 // first amplifier found is not the same rule: a chain holding a guitar amp
 // before a bass amp reads as bass here and would have read as guitar there.
