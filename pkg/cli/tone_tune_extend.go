@@ -87,23 +87,45 @@ func extend(
 		return nil
 	}
 
-	// The chain's own instrument, not the document's declared one, because
-	// both lookups below land in the corpus grammar and the corpus keys it by
-	// what the chain's amplifier is for. A rig that asks for bass and resolved
-	// to a guitar amplifier is described by the guitar statistics whatever its
-	// `instrument:` says.
-	instrument := plan.InstrumentFor(made, cat)
+	// Nothing missing, nothing to propose, and no reason to read a document.
+	// Checked before the rig is fetched because a run that met its target has
+	// no use for either.
+	if len(unreached(aims, now)) == 0 {
+		_, _ = fmt.Fprintf(w,
+			"  nothing measured moves what is missing, so there is no block to add\n")
+
+		return nil
+	}
 
 	// Once, here, rather than per candidate inside the ranking. Every other
 	// consumer of the statistics in this tree is handed them, and the call
 	// gunzips and parses 33KB, which the shortlist loop was doing per block it
 	// considered.
+	//
+	// Before the document, so a run that cannot read the statistics says so
+	// without fetching a rig it has no use for.
 	stats, err := grammarOf()
 	if err != nil {
 		return fmt.Errorf("reading the corpus statistics: %w", err)
 	}
 
-	g := stats.Grammar[instrument]
+	// The document's instrument, not the amplifier's. This asked the amplifier
+	// until 2026-10-17, on the reasoning that the corpus keys its grammar that
+	// way, which is right about the label and wrong about which population a
+	// player belongs to.
+	//
+	// Dusty Hill plays bass through a Marshall Super Lead 100, a guitar head,
+	// because ZZ Top ran the same Marshall rig for his bass as for the guitars.
+	// Asking the amplifier called his chain a guitar chain, so the corpus filled
+	// it from guitar habits and a loudness match read guitar cabinets, for a
+	// bass player. The corpus measurer has to ask the amplifier because a preset
+	// carries no document. A build has one, and it says bass.
+	doc, err := opts.Client.Rig(ctx, opts.ID)
+	if err != nil {
+		return err
+	}
+
+	g := stats.Grammar[string(doc.Rig.Instrument)]
 
 	pick, ok := ranked(made, aims, now, cat, g)
 	if !ok {
@@ -111,11 +133,6 @@ func extend(
 			"  nothing measured moves what is missing, so there is no block to add\n")
 
 		return nil
-	}
-
-	doc, err := opts.Client.Rig(ctx, opts.ID)
-	if err != nil {
-		return err
 	}
 
 	// What the block's own sweep says to set, where there is one. Reported

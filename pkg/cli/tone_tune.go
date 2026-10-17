@@ -244,7 +244,15 @@ func Tune(
 		return err
 	}
 
-	if err := sameInstrument(made.Plan, cat, opts.Dry); err != nil {
+	// The rig's own instrument beats the amplifier's, for the reason
+	// chainIsFor gives: a bass player through a guitar head is playing bass,
+	// and this guard refused Dusty Hill's bass rig a bass recording.
+	declared := ""
+	if doc, err := opts.Client.Rig(ctx, opts.ID); err == nil {
+		declared = string(doc.Rig.Instrument)
+	}
+
+	if err := sameInstrument(made.Plan, cat, opts.Dry, declared); err != nil {
 		return err
 	}
 

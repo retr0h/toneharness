@@ -34,6 +34,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // SlopesTestSuite covers holding a committed sweep to the chain it is
@@ -73,6 +74,14 @@ func (s *SlopesTestSuite) SetupTest() {
 	s.pedal.EXPECT().
 		Compile(gomock.Any(), gomock.Any()).
 		Return(sdk.Built{}, nil).AnyTimes()
+	// The rig, for its own `instrument:`. A bass player through a guitar head
+	// is still playing bass, and the guard that compares the chain against the
+	// reference asks the document before it asks the amplifier.
+	s.pedal.EXPECT().
+		Rig(gomock.Any(), gomock.Any()).
+		Return(sdk.Rig{Known: sdk.Known{
+			Rig: rig.Spec{Instrument: rig.InstrumentBass},
+		}}, nil).AnyTimes()
 }
 
 func (s *SlopesTestSuite) opts() SlopesOptions {

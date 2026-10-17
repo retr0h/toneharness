@@ -57,8 +57,8 @@ func (s *InstrumentTestSuite) chain(
 	}}}
 }
 
-// TestChainIsFor covers chainIsFor, which is the instrument a chain is for,
-// by the amplifiers in it.
+// TestChainIsFor covers chainIsFor, which is the instrument a chain is for:
+// what its document says, or what its amplifiers say where no document does.
 //
 // One method and one table, so a case is a row rather than a file.
 func (s *InstrumentTestSuite) TestChainIsFor() {
@@ -75,7 +75,7 @@ func (s *InstrumentTestSuite) TestChainIsFor() {
 				s.Require().Equal("Bass", bass.Subcategory,
 					"Line 6 tag this one Bass, which is what the guard reads")
 
-				s.Require().Equal("bass", chainIsFor(s.chain("HD2_AmpSVBeastNrm"), s.cat))
+				s.Require().Equal("bass", chainIsFor(s.chain("HD2_AmpSVBeastNrm"), s.cat, ""))
 			},
 		},
 		{
@@ -101,17 +101,44 @@ func (s *InstrumentTestSuite) TestChainIsFor() {
 				s.Require().NotEqual("Bass", guitar.Subcategory,
 					"the first amplifier here is not a bass amplifier")
 
-				s.Require().Equal("bass", chainIsFor(both, s.cat))
+				s.Require().Equal("bass", chainIsFor(both, s.cat, ""))
 
-				s.Require().NoError(sameInstrument(both, s.cat, "resources/dry/bass-di.wav"),
+				s.Require().NoError(sameInstrument(both, s.cat, "resources/dry/bass-di.wav", ""),
 					"and a bass reference through it is not refused")
+			},
+		},
+		{
+			// A bass player through a guitar head, which is a real rig rather
+			// than a mistake: Dusty Hill played bass through a Marshall Super
+			// Lead 100, because ZZ Top ran the same Marshall rig for his bass
+			// as for the guitars.
+			//
+			// By the amplifier his chain is a guitar chain, and this guard
+			// refused his bass rig a bass recording and told him to push a
+			// guitar one. The document is what settles it.
+			name: "a document beats the amplifier",
+			then: func() {
+				guitarAmp := s.chain("HD2_AmpBrit2203")
+
+				s.Require().Equal("guitar", chainIsFor(guitarAmp, s.cat, ""),
+					"the amplifier alone still answers guitar")
+				s.Require().Equal("bass", chainIsFor(guitarAmp, s.cat, "bass"),
+					"and the document overrules it")
+
+				s.Require().NoError(
+					sameInstrument(guitarAmp, s.cat, "resources/dry/bass-di.wav", "bass"),
+					"so a bass recording through it is not refused")
+
+				s.Require().Error(
+					sameInstrument(guitarAmp, s.cat, "resources/dry/bass-di.wav", ""),
+					"and without a document the amplifier still decides")
 			},
 		},
 		{
 			// Not over-correcting.
 			name: "a guitar only chain still answers guitar",
 			then: func() {
-				s.Require().Equal("guitar", chainIsFor(s.chain("HD2_AmpBrit2203"), s.cat))
+				s.Require().Equal("guitar", chainIsFor(s.chain("HD2_AmpBrit2203"), s.cat, ""))
 			},
 		},
 		{
@@ -121,11 +148,11 @@ func (s *InstrumentTestSuite) TestChainIsFor() {
 			// to find and refusing one would stop somebody measuring a delay.
 			name: "a chain with no amplifier names no instrument",
 			then: func() {
-				s.Require().Empty(chainIsFor(s.chain("HD2_CabMicIr_2x15Brute"), s.cat))
-				s.Require().Empty(chainIsFor(plan.Plan{}, s.cat))
+				s.Require().Empty(chainIsFor(s.chain("HD2_CabMicIr_2x15Brute"), s.cat, ""))
+				s.Require().Empty(chainIsFor(plan.Plan{}, s.cat, ""))
 
 				s.Require().NoError(sameInstrument(
-					s.chain("HD2_CabMicIr_2x15Brute"), s.cat, "resources/dry/guitar-di.wav"),
+					s.chain("HD2_CabMicIr_2x15Brute"), s.cat, "resources/dry/guitar-di.wav", ""),
 					"nothing known, nothing refused")
 			},
 		},
@@ -150,7 +177,7 @@ func (s *InstrumentTestSuite) TestSameInstrument() {
 			name: "a bass chain through a bass reference is fine",
 			then: func() {
 				s.Require().NoError(sameInstrument(
-					s.chain("HD2_AmpSVBeastNrm"), s.cat, "resources/dry/bass-di.wav"))
+					s.chain("HD2_AmpSVBeastNrm"), s.cat, "resources/dry/bass-di.wav", ""))
 			},
 		},
 		{
@@ -165,10 +192,10 @@ func (s *InstrumentTestSuite) TestSameInstrument() {
 			name: "a bass chain through a guitar reference is refused",
 			then: func() {
 				err := sameInstrument(
-					s.chain("HD2_AmpSVBeastNrm"), s.cat, "resources/dry/guitar-di.wav")
+					s.chain("HD2_AmpSVBeastNrm"), s.cat, "resources/dry/guitar-di.wav", "")
 
 				s.Require().ErrorIs(err, ErrWrongInstrument)
-				s.Require().ErrorContains(err, "bass amplifier")
+				s.Require().ErrorContains(err, "bass chain")
 				s.Require().ErrorContains(err, "guitar recording")
 				s.Require().ErrorContains(err, "--dry",
 					"it says what to do, not only that it will not")
@@ -183,7 +210,7 @@ func (s *InstrumentTestSuite) TestSameInstrument() {
 			name: "a reference naming neither is not refused",
 			then: func() {
 				s.Require().NoError(sameInstrument(
-					s.chain("HD2_AmpSVBeastNrm"), s.cat, "take-3.wav"))
+					s.chain("HD2_AmpSVBeastNrm"), s.cat, "take-3.wav", ""))
 			},
 		},
 	} {

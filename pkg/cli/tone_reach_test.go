@@ -35,6 +35,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
 
@@ -76,6 +77,14 @@ func (s *ReachTestSuite) SetupTest() {
 	s.pedal.EXPECT().
 		Compile(gomock.Any(), gomock.Any()).
 		Return(sdk.Built{}, nil).AnyTimes()
+	// The rig, for its own `instrument:`. The guard comparing the chain
+	// against the reference asks the document before the amplifier, because a
+	// bass player through a guitar head is still playing bass.
+	s.pedal.EXPECT().
+		Rig(gomock.Any(), gomock.Any()).
+		Return(sdk.Rig{Known: sdk.Known{
+			Rig: rig.Spec{Instrument: rig.InstrumentBass},
+		}}, nil).AnyTimes()
 }
 
 func (s *ReachTestSuite) opts() ReachOptions {
