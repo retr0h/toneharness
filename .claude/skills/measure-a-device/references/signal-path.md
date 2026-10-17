@@ -110,6 +110,36 @@ They were all measuring the loop's own noise. The block being swept cannot tell
 you this: `HD2_EQSimple3Band` read 11,990 Hz that day against the 93 Hz its own
 committed sweep holds, on identical routing.
 
+## A reading says which rig took it
+
+Every sweep and every fingerprint library now records three things beside its
+volume, and the first two decide whether its figures may be compared with
+anybody else's:
+
+```
+rig          ["External Headphones", "HX Stomp"]
+open         true
+pinned_on    External Headphones
+```
+
+`rig` is the two devices as `--hardware` received them and `open` says they
+differ, so the chain could not hear its own output. A library written before
+this has neither, which is not the same as a closed loop: it is a rig nobody
+wrote down.
+
+**`pinned_on` is the one that silently invalidates the rest.** `volume: 38`
+records the number that was set, not the device it reached. A Mac with its
+default output on Bluetooth headphones pins those while the jack feeding the
+pedal sits wherever it was left, which is how a run came to read 66dB of loss
+with the cabling correct: the file recorded its volume honestly and described a
+signal path nobody measured.
+
+The question this answers is "do these figures need taking again", which could
+not be answered from a file before. The shipped library has none of the three,
+and its baseline of 155.27Hz at -58.55dB sits thirty decibels from where the
+open loop settles, so it almost certainly came off the closed rig. That is now
+a thing a file can say rather than a thing somebody infers.
+
 ## Which leg is broken: a test that takes a minute
 
 A wrong baseline says the loop is bad and nothing about which half. Measure a

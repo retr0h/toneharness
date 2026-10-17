@@ -183,11 +183,16 @@ func MeasureControls(
 
 	defer release()
 
+	curveRig, curveOpen := rigTaken(opts.Hardware)
+
 	out := measured.Curves{
 		Device: cat.Device, Gear: block.Name, Block: string(block.ID),
 		Slot: alone, Isolated: true, Probed: probed,
 		Instrument: referenceIsFor(opts.Dry), Headroom: opts.Headroom,
 		Volume: level,
+		// The same three the fingerprint library records, for the same
+		// reason: a curve taken on one rig is a curve about that rig.
+		Rig: curveRig, Open: curveOpen, PinnedOn: pinnedOn(),
 		Reference: measured.Reference{
 			File: opts.Dry, SHA256: sum, Seconds: opts.Seconds,
 		},
