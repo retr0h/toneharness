@@ -364,6 +364,20 @@ func anyInstrument(
 		return b, true
 	}
 
+	// A name missing from one instrument's amplifiers may be found among
+	// another's, and that is sometimes the right answer rather than a
+	// substitution. Dusty Hill played bass through a Marshall Super Lead 100,
+	// which is a guitar head, and ZZ Top ran the same Marshall rig for his bass
+	// as for the guitars: the grind those amps offered worked for both.
+	//
+	// So the gear is not the problem and refusing it would refuse a correct
+	// rig. What was wrong is that the chain then read as a guitar chain to
+	// everything downstream, which is the document's instrument to settle and
+	// not the amplifier's.
+	//
+	// A Tube Screamer is a Tube Screamer whichever instrument is going through
+	// it, and a Marshall somebody played a bass through is that Marshall.
+	//
 	// No guard for an empty instrument. The contract requires one on every rig, so
 	// the second pass is never the same search twice, and a guard against it would
 	// be a branch nothing can reach.
