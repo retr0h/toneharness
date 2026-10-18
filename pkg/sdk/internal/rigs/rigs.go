@@ -126,7 +126,7 @@ func readFS(
 	// several and the ask already names them.
 	//
 	// Any directory, which is why the teaching documents moved out of the tier
-	// to `marketplace/examples/`. A glob this wide read each of them as a rig
+	// to `docs/examples/`. A glob this wide read each of them as a rig
 	// that would not load.
 	paths, _ := fs.Glob(fsys, path.Join("*", "*.yaml"))
 

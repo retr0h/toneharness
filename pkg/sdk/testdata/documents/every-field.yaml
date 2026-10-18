@@ -11,7 +11,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-id: mike-dirnt
+id: every-field
 
 ask:
   genre: [pop-punk, punk]

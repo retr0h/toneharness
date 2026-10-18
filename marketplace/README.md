@@ -26,10 +26,11 @@ A genre rig is built rather than researched, because there is nobody to cite.
 measure as and takes the nearest, which is reproducible and is also why one is
 worth rebuilding as the corpus grows rather than trusting indefinitely.
 
-[examples/](examples/README.md) is outside both tiers: one of each document,
-commented, for somebody learning the formats. The loader reads one level inside
-a tier, so a teaching document left in there would be read as a rig that will
-not load.
+The teaching documents are not here. One of each document, commented, lives in
+[docs/examples/](../docs/examples/README.md), because this tree is what somebody
+references for a rig and a document explaining the format is not one. They were
+in a third directory beside the tiers, and the loader reads one level inside a
+tier, so anything left here is read as a rig that will not load.
 
 ## Using them
 

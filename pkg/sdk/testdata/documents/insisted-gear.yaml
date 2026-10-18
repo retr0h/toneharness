@@ -10,7 +10,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-id: chunky-punk
+id: insisted-gear
 
 ask:
   # A genre the corpus has measured, which is what makes it a target rather than

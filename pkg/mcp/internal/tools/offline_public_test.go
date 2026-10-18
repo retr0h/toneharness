@@ -368,7 +368,8 @@ func (s *OfflinePublicTestSuite) TestPresetMake() {
 		"..",
 		"..",
 		"marketplace",
-		"examples",
+		"core",
+		"artists",
 		"mike-dirnt.yaml",
 	)
 

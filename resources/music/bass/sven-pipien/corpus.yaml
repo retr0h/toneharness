@@ -1,0 +1,25 @@
+artist: Sven Pipien
+tracks:
+  - track: only-a-fool
+    url: https://open.spotify.com/track/4gYTvZNbAcljgqQcqPChXN
+    year: 1998
+    band: The Black Crowes
+    genres: [southern-rock, hard-rock]
+    genres_by: llm
+    note: >-
+      By Your Side. 223 seconds as Spotify holds it. The year is Spotify's for
+      this release; the album reached shops in January 1999
+  - track: go-faster
+    url: https://open.spotify.com/track/4XLROKNCwP8sKHpJvLxnFB
+    year: 1998
+    band: The Black Crowes
+    genres: [southern-rock, hard-rock]
+    genres_by: llm
+    note: By Your Side. 242 seconds as Spotify holds it
+  - track: soul-singing
+    url: https://open.spotify.com/track/7gOO4Qhu5oEtbB6FcY1xKg
+    year: 2001
+    band: The Black Crowes
+    genres: [southern-rock, hard-rock]
+    genres_by: llm
+    note: Lions. 233 seconds as Spotify holds it

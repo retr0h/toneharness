@@ -1,0 +1,61 @@
+# Allen Woody — Gov't Mule
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: allen-woody
+
+ask:
+  genre: [southern-rock, blues-rock]
+
+  aliases:
+    - govt-mule
+    - gov't-mule
+
+  subject:
+    kind: artist
+    name: Allen Woody
+    band: Gov't Mule
+    era: Gov't Mule to Dose
+    years:
+      from: 1995
+      to: 1998
+
+  instrument: bass
+
+  words: []
+
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          url: https://www.vintageguitar.com/2794/allen-woody/
+          note: >-
+            Vintage Guitar, in his own words, and he draws the line between his two
+            bands himself. On this one: "With Gov't Mule, it's all SVTs and Orange
+            amps, and I've also been using the reissue Crossroad stacks; Bud Ross of
+            Kustom fame made them; they're even rolled and pleated." On the other: "My
+            amp set-up with the Brothers is geared toward a high fidelity sound; lots
+            of power amps, preamps, high-end cabinets, plus one SVT cabinet that we
+            use just for 'dirt'", and without it "the sound would be too clean".
+          caveat: >-
+            Part of a rig rather than the rig, and the SVT is the part this device
+            has. The Orange amplifiers he blends with it are modelled by nothing here,
+            and neither are the Crossroad stacks, so what is below is the Ampeg half
+            of a two-amplifier sound. He is explicit that the two bands were different
+            rigs, which is why the era above is Gov't Mule rather than his Allman
+            Brothers years: with the Brothers the SVT was one cabinet for grit inside
+            a high-fidelity rack, and that is not what this chain would be.
+    # No cabinet named, so the amp's own pairing is used, which is the Ampeg
+    # 8x10 an SVT head is ordinarily stacked on. He named SVTs and no cabinet,
+    # and he was a collector who ran several at once, so claiming one would be
+    # inventing it.

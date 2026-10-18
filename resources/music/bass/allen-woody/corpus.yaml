@@ -1,0 +1,28 @@
+artist: Allen Woody
+tracks:
+  - track: blind-man-in-the-dark
+    url: https://open.spotify.com/track/3vWP0oPj1CB0AFQzdbmejx
+    year: 1998
+    band: Gov't Mule
+    genres: [southern-rock, blues-rock]
+    genres_by: llm
+    note: >-
+      Dose. 407 seconds as Spotify holds it. All three records are from this one
+      album, which sits inside the years he describes as the all-SVT rig
+  - track: thorazine-shuffle
+    url: https://open.spotify.com/track/1nkMih9NE9Ha0hH9aTGYCI
+    year: 1998
+    band: Gov't Mule
+    genres: [southern-rock, blues-rock]
+    genres_by: llm
+    note: Dose. 407 seconds as Spotify holds it
+  - track: john-the-revelator
+    url: https://open.spotify.com/track/594c8sBqf0bZJLS7liw563
+    year: 1998
+    band: Gov't Mule
+    genres: [southern-rock, blues-rock]
+    genres_by: llm
+    note: >-
+      Dose. 229 seconds as Spotify holds it. Here because Mother Earth and
+      Rocking Horse both resolve to The Tel-Star Sessions, a 2016 release of
+      1994 demos, which is neither the album nor the era

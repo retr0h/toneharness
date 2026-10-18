@@ -100,7 +100,7 @@ func (s *CoveragePublicTestSuite) TestEveryFieldAppearsInARig() {
 	}
 
 	s.Require().Empty(missing,
-		"no document under marketplace/examples or marketplace/core "+
+		"no document under pkg/sdk/testdata/documents or marketplace/core "+
 			"writes these. "+
 			"Add one to a document, or add it to exempt with a reason: %v", missing)
 }
@@ -174,7 +174,7 @@ func (s *CoveragePublicTestSuite) written() map[string]bool {
 	}
 
 	for _, pattern := range [][]string{
-		{"..", "..", "..", "marketplace", "examples", "*.yaml"},
+		{"..", "testdata", "documents", "*.yaml"},
 	} {
 		paths, err := filepath.Glob(filepath.Join(pattern...))
 		s.Require().NoError(err)

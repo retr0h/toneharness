@@ -55,11 +55,11 @@ rig:
       Drive: '0.6'
       Hum: '0.5'
       Master: '1.0'
-      Mid: '0.7100000000000001'
+      Mid: '0.7328571428571429'
       MidFreq: '2'
       Ripple: '0.5'
       Sag: '0.5'
-      Treble: '0.8363636363636363'
+      Treble: '0.836111111111111'
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
         the microphone, the desk and the master of every one of them. The amplifier

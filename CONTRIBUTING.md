@@ -170,9 +170,9 @@ marketplace/         rigs people use and send
   core/artists/      cited people, copied into pkg/sdk/shipped by a generator
   core/genres/       the sound of a genre, built by measurement rather than cited
   community/         submissions, loaded with --rigs. Same two directories
-  examples/          one of each document, commented. What the tests read
 asset/               the logos the README shows
 docs/                what is built and what is not, and the design records
+  examples/          one of each document, commented. What the tests read
 .github/workflows/   CI
 ```
 
