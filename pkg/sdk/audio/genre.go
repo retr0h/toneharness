@@ -284,21 +284,32 @@ func profilesByGenre(
 
 // displaced is where a pooled group sits against the others, by its middle.
 //
-// Not Derive, and the difference is the whole reason this exists. Derive earns a
-// term only where a player's entire spread sits outside the middle half of the
-// others, which is right for one player's habit over three or four records. A
-// genre pools several players, so its spread runs two to three times wider than
-// any of theirs: measured on this corpus, 64 to 92Hz of centroid against 17 to
-// 41Hz for a player. A spread that wide cannot sit clear of anything, so the
-// whole-spread rule earns a genre nothing whatever the figures say.
+// Not Derive, and the difference is the whole reason this exists. Derive asks
+// that a player's entire spread sit on one side of the others, which is right
+// for one player's habit over three or four records. A genre pools several
+// players, so its spread runs two to three times wider than any of theirs:
+// measured on this corpus, 64 to 92Hz of centroid against 17 to 41Hz for a
+// player. A spread that wide cannot sit clear of anything, so the whole-spread
+// rule earns a genre nothing whatever the figures say.
 //
-// So the middle against the middle half. Punk earns a word where the median of
-// punk records sits outside the quartiles of the players who play none, which is
-// the same displacement claim without requiring every punk record to be extreme.
+// So the middle rather than the whole spread. A genre earns a word where its
+// median sits far enough from the median of the players who play none of it,
+// which is the same displacement claim without requiring every record in the
+// genre to be extreme.
+//
+// Both paths share the threshold and [Axis.clears] holds it, so a word means the
+// same thing whichever asked for it. Against the others' median rather than
+// their quartile, because a word describes a sound and does not have to prove it
+// unique: any number of genres may be darker than typical, and nothing takes the
+// word off one of them because another arrived carrying it too. Grunge is what
+// settled that. It earned scooped, dark and clean, twenty-five records of rock,
+// metal and nu-metal joined the corpus, the metal players are dark, and grunge
+// earned nothing. Grunge had not changed; darkness had stopped being unusual.
 //
 // The margin travels with it, because two words that read alike are not alike: a
-// median just past the quartile is a word the next player measured could take
-// away, and one far past it is not.
+// median barely past the line is a word the next player measured could take
+// away, and one far past it is not. That is where distinctiveness lives now,
+// rather than in whether the word was awarded at all.
 // elsewhere is where the players holding none of a genre sit, per figure.
 //
 // The median of their medians, which is the same number [displaced] compares a
@@ -358,15 +369,17 @@ func displaced(
 		sort.Float64s(rest)
 
 		at := mine.Measured()[string(ax.Key)]
+		middle := between(rest, 0.5)
 		lower, upper := between(rest, 0.25), between(rest, 0.75)
+		spread := upper - lower
 
 		switch {
-		case at > upper:
+		case at > middle && ax.clears(at-middle, spread):
 			out = append(out, made(
-				ax, ax.More, mine, rest, len(others)+1, at-upper, lower, upper))
-		case at < lower:
+				ax, ax.More, mine, rest, len(others)+1, at-middle, lower, upper))
+		case ax.Less != "" && at < middle && ax.clears(middle-at, spread):
 			out = append(out, made(
-				ax, ax.Less, mine, rest, len(others)+1, lower-at, lower, upper))
+				ax, ax.Less, mine, rest, len(others)+1, middle-at, lower, upper))
 		}
 	}
 

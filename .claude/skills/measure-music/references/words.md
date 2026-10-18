@@ -5,19 +5,95 @@ mise exec -- go run main.go measure players --corpus resources/music/bass --json
 mise exec -- go run main.go measure players --corpus resources/music/bass --evidence
 ```
 
-The only mode that produces words, because a word is earned by sitting clear of
-the other players and one player has nobody to be clear of. `nothing` is the
+The only mode that produces words, because a word is earned against the other
+players and one player has nobody to be measured against. `nothing` is the
 ordinary answer rather than a failure: a player whose own records disagree with
 each other earns nothing, and so does one sitting where everybody else sits.
+
+## A word describes a sound, it does not prove it unique
+
+A word is earned by sitting on one side of the **middle** of the others, by at
+least a quarter of their spread. Not outside their quartiles, which is what it
+used to be, and the difference is that **words overlap**.
+
+Any number of players or genres may be darker than typical. Nothing takes the
+word off one of them because another arrived carrying it too, and what a genre
+is, is the combination it earns rather than the one word nobody else has. Six
+genres on this corpus read `dark` and four read `scooped`.
+
+That is a change from a rule that kept quietly removing words. Grunge earned
+`scooped`, `dark` and `clean`; twenty-five records of rock, metal and nu-metal
+joined the corpus, the metal players are dark, and grunge earned nothing.
+Grunge had not changed. Darkness had stopped being unusual, and because these
+words move controls, a genre's preset was depending on which unrelated genres
+happened to have been measured.
+
+Distinctiveness did not stop mattering. It moved to the margin, which is what
+`holds` prints: the word says what the sound is, and the margin says how far
+from typical it sits.
+
+**The quarter is not taste.** Measured across all 21 genres on all three axes,
+the margins as a share of the others' spread fall in two groups with nothing
+between them:
+
+```
+0.00 0.00 0.01 0.02 0.03 0.04 0.05 0.08 0.11 0.12 0.14 0.16 0.18 0.19 0.21
+0.38 0.41 0.44 0.46 0.49 0.51 0.57 0.58 0.69 0.83 1.27 2.41
+```
+
+Any threshold between 0.21 and 0.38 answers the same way, so a quarter is the
+round number inside the gap. A tenth was available and refused: it would have
+separated southern rock from pop punk, which is the pair this corpus most wants
+separated, on margins of 6Hz. Choosing a threshold for the answer it gives is
+how a measurement stops being one.
 
 Point it at one instrument. A guitar's centre of gravity sits an octave above a
 bass guitar's, so pooling both would earn every bassist `dark` and every guitarist
 `bright` and mean nothing by either.
 
-`holds` is the margin past the line the word had to clear, in the measure's own
-unit, which is what tells one word from another. A word with a wide margin
-survives the next player being measured; one at a tenth of a percent is the next
-thing to move.
+`holds` is the margin past the middle of the others, in the measure's own unit,
+which is what tells one word from another. A word with a wide margin survives
+the next player being measured; one just over the line is the next thing to
+move. Two players may share a word and not be alike, and this is where that
+shows.
+
+## Nothing earns `clean`, and the axis it came from has one pole
+
+`saturated` is earned from the share of energy above the fundamental. Its
+opposite is not, and the corpus is why.
+
+Four of the five players earning `saturated` have a drive device written into
+their own rig: Chuck Dukowski, Tim Commerford, Matt Freeman, and Tobin Esperance
+with a Malekko B:Assmaster on his board. The high end of that measure tracks
+something real.
+
+The low end tracked nothing. Three of the four players that used to earn `clean`
+have documented gain. Chi Cheng read 0.081, and his own rig quotes Premier
+Guitar on the Tech 21 SansAmp GT2 he used "for extra balls". Troy Sanders read
+0.059, the cleanest figure in the corpus, and runs a Wren and Cuff Tall Font
+Russian distortion. Klaus Flouride read 0.077 on Dead Kennedys records nobody
+would call clean. Grunge earned `clean` as a genre, which is the one thing
+grunge is not.
+
+**The separation is the reason, not the arithmetic.** Distortion products are
+broadband and sit where the guitars sit, so splitting a mix assigns them to the
+guitar stem, and the dirtier and denser the record the more of them leave.
+Grunge, Deftones and Mastodon are the densest mixes here and they read the
+lowest. A measure reporting its own blind spot as a positive finding is worse
+than one that says nothing.
+
+It is not brightness in disguise, which was the other suspicion worth ruling
+out. Centroid and harmonics correlate +0.43, the four former `clean` players
+span 97Hz to 191Hz of centroid, and Tim Commerford earns `saturated` at 109Hz.
+Dark and saturated is reachable, so the axis is not reading the top end twice.
+
+`clean` is still a word a person may write in an ask, and it still moves Drive.
+What changed is that no measurement asserts it. Restoring the pole needs a
+measurement of breakup rather than of harmonic content, taken before separation
+or on a signal that never needed it. The word means "no breakup at any dynamic",
+and a median share of energy cannot speak about any dynamic: somebody who breaks
+up only when hit hard reads low, and `grit-on-attack` and `minimal-drive` exist
+for that.
 
 ## `scattered` is the other reason nothing was earned
 

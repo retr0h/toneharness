@@ -52,7 +52,7 @@ rig:
       Bias: '0.55'
       BiasX: '0.9'
       ChVol: '0.74'
-      Drive: '0.62'
+      Drive: '0.7109090909090908'
       HighMid: '0.5'
       Hum: '0.5'
       Master: '0.6'
@@ -66,16 +66,19 @@ rig:
         below is what sits nearest those figures, not one anybody is known to have
         used. It also moves: a genre is measured against the players who play none
         of it, so this answer changes when the corpus gains players, and it is worth
-        rebuilding rather than trusting indefinitely. Grunge held scooped, dark
-        and clean until twenty-five records from five other genres joined the corpus
-        and closed every one of those gaps.'
+        rebuilding rather than trusting indefinitely. Grunge is the example. It
+        held scooped, dark and clean; twenty-five records from five other genres
+        joined the corpus and it held nothing, because the rule then asked a genre
+        to be unusual rather than to be something; it holds scooped again now that
+        words may overlap, and clean is gone from every subject because a low share
+        of energy above the fundamental turned out not to be evidence of no drive.'
       kind: audio
       note: Chosen by measurement rather than by anybody's say-so. Across 16 records
         from 5 players, alternative-metal measures a centroid the device's nearest
         bass amplifier sits at 150 Hz against 134, which is the closest of the twenty-seven
-        it models for this instrument. Its records earn dark, measured against the
-        players who play none of it, and that word is what moves the controls below
-        off the medians this instrument's presets sit at.
+        it models for this instrument. Its records earn dark and saturated, measured
+        against the players who play none of it, and that is what moves the controls
+        below off the medians this instrument's presets sit at.
     gear: MESA/Boogie Bass 400+
     position: 1
     role: amp

@@ -20,9 +20,7 @@ ask:
   subject:
     kind: genre
     name: Punk
-  words:
-  - term: mid-forward
-  - term: bright
+  words: []
 id: punk
 rig:
   chain:
@@ -71,12 +69,12 @@ rig:
         it, so this answer changes when the corpus gains players, and it is worth
         rebuilding rather than trusting indefinitely.'
       kind: audio
-      note: 'chosen by measurement rather than by anybody''s say-so. Across 21 records
-        from 7 players, punk measures a centroid the device''s nearest bass amplifier
+      note: chosen by measurement rather than by anybody's say-so. Across 21 records
+        from 7 players, punk measures a centroid the device's nearest bass amplifier
         sits at 189 Hz against 195, which is the closest of the twenty-seven it
-        models for this instrument.
-
-        Its records earn mid-forward and bright.'
+        models for this instrument. Its records earn mid-forward and bright, measured
+        against the players who play none of it, and that is what moves the controls
+        below off the medians this instrument's presets sit at.
     gear: Ampeg SVT
     position: 1
     role: amp

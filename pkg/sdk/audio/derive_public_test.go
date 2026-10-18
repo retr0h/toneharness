@@ -117,7 +117,10 @@ func (s *DerivePublicTestSuite) TestDerive() {
 						},
 					},
 					{
-						// The other direction.
+						// The other direction, and harmonics has no other
+						// direction: a low share of energy above the
+						// fundamental is not evidence of no drive, so that axis
+						// earns `saturated` and nothing earns `clean`.
 						name: "an artist below the rest earns the other word",
 						then: func() {
 							got := audio.Derive(
@@ -129,7 +132,7 @@ func (s *DerivePublicTestSuite) TestDerive() {
 							)
 
 							s.Require().ElementsMatch(
-								[]string{"dark", "scooped", "clean"}, s.terms(got))
+								[]string{"dark", "scooped"}, s.terms(got))
 						},
 					},
 					{
@@ -315,6 +318,17 @@ func (s *DerivePublicTestSuite) TestDerive() {
 
 				for _, ax := range audio.Axes {
 					s.Require().True(known[ax.More], "%s is not a term move.go holds", ax.More)
+
+					// An axis may have one pole. Harmonics does: a high share
+					// of energy above the fundamental is evidence of drive and
+					// a low one is not evidence of its absence, so `Less` is
+					// empty there and nothing earns `clean` from a measurement.
+					// A person may still write it in an ask, which is why
+					// move.go still holds it.
+					if ax.Less == "" {
+						continue
+					}
+
 					s.Require().True(known[ax.Less], "%s is not a term move.go holds", ax.Less)
 				}
 			},
