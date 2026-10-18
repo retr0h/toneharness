@@ -53,6 +53,19 @@ package catalog
 // which is every other collision on the device: two models of one family with
 // one name are two spellings of the same thing.
 func (b Block) Preferred() int {
+	// Behind every family, whatever family it is in. A legacy model is an
+	// older port of the same gear carrying fewer controls, and two of them
+	// collide with a current model under one name: a Teletronix LA-2A is the
+	// LA Studio Comp with six controls and a DM4 Tube Comp with one. Deciding
+	// it by family cannot work, because both of those are compressors.
+	//
+	// This is what lets a document name gear rather than a model. Until it
+	// existed the only way to be sure which LA-2A a rig meant was to write
+	// Line 6's name for the block, which the contract's `gear` field refuses.
+	if b.Subcategory == legacy {
+		return len(preferences) + 1
+	}
+
 	for at, family := range preferences {
 		if b.Family == family {
 			return at
@@ -61,6 +74,10 @@ func (b Block) Preferred() int {
 
 	return len(preferences)
 }
+
+// legacy is Line 6's own grouping for a model kept for compatibility rather
+// than because it is the best one of its gear on the device.
+const legacy = "Legacy"
 
 // preferences is the order families are chosen in, the most wanted first.
 var preferences = []string{

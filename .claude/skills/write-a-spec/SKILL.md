@@ -78,7 +78,8 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 | what a Plan holds that no rig does, and why                       | [references/plan.md](references/plan.md)                   |
 | recording what a person thought of the result                     | [references/corrections.md](references/corrections.md)     |
 | impulse responses, bought models, what one person owns            | [references/setup.md](references/setup.md)                 |
-| all of it, in order                                               | All ten, in that order                                   |
+| the contract's own version, and which number a change moves       | [references/versions.md](references/versions.md)           |
+| all of it, in order                                               | All eleven, in that order                                   |
 
 ## 4. Every field earns its place
 

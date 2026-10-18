@@ -124,7 +124,7 @@ func (s *LiftPublicTestSuite) TestLift() {
 					{
 						name:           "an amp emulating real gear, named the way a person would",
 						model:          "HD2_AmpSVBeastNrm",
-						wantGear:       "Ampeg SVT® (normal channel)",
+						wantGear:       "Ampeg SVT (normal channel)",
 						wantInstrument: rig.InstrumentBass,
 					},
 					{
@@ -207,7 +207,7 @@ func (s *LiftPublicTestSuite) TestLift() {
 						raw: `{"schema":"L6Preset","version":6,"data":{"device":2162694,` +
 							`"meta":{"name":"Second"},"tone":{"dsp1":{"block0":` +
 							`{"@model":"HD2_AmpSVBeastNrm","@enabled":true,"@position":0}}}}}`,
-						wantGear: "Ampeg SVT® (normal channel)",
+						wantGear: "Ampeg SVT (normal channel)",
 						wantDSP:  1,
 					},
 					{

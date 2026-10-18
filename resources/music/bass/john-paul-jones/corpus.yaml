@@ -4,7 +4,7 @@ tracks:
     url: https://open.spotify.com/track/3MODES4TNtygekLl146Dxd
     year: 1969
     band: Led Zeppelin
-    genres: [rock, hard-rock]
+    genres: [rock, hard-rock, blues-rock]
     genres_by: llm
     note: >-
       Led Zeppelin II. 263 seconds as Spotify holds it, as the 1990 remaster:
@@ -14,7 +14,7 @@ tracks:
     url: https://open.spotify.com/track/5qbVkwfy0RYGFA6hAiIL90
     year: 1969
     band: Led Zeppelin
-    genres: [rock, hard-rock]
+    genres: [rock, hard-rock, blues-rock]
     genres_by: llm
     note: >-
       Led Zeppelin II. 379 seconds as Spotify holds it, as the 1993 remaster.
@@ -23,7 +23,7 @@ tracks:
     url: https://open.spotify.com/track/3qT4bUD1MaWpGrTwcvguhb
     year: 1971
     band: Led Zeppelin
-    genres: [rock, hard-rock]
+    genres: [rock, hard-rock, blues-rock]
     genres_by: llm
     note: >-
       Led Zeppelin IV, from the Deluxe Edition remaster. 295 seconds as

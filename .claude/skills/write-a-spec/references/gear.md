@@ -2,11 +2,28 @@
 
 ## Name it the way a person would
 
-`gear: Ampeg SVT`, never `HD2_AmpSVBeastNrm`.
+`gear: Ampeg SVT`, never `HD2_AmpSVBeastNrm`, and never `Ampeg SVT Brt`.
 
 Line 6 rename every model for trademark reasons. Naming the identifier would
 tie a rig to one manufacturer, break when they rename a model, and stop it being
 read on other hardware, which is the whole reason the format exists.
+
+**The model's name is as wrong as its identifier, and it is the one that gets
+written.** `Cali 400 Ch1` is this manufacturer's label for a MESA/Boogie Bass
+400+ and `Agua Sledge` is theirs for an Aguilar Tone Hammer. Twelve shipped
+documents read that way, because two writers disagreed: the compiler names a
+block it adds by the gear it emulates, so a cabinet came out `Legacy 6x10"
+MESA/Boogie Power House`, while the chooser that picks an amplifier by
+measurement named it off the measured library, which files a sweep under Line
+6's name. A test now refuses it, by asking whether the name says something other
+than the gear underneath it: the catalog's own entry for an Ampeg B-15NF is
+named "Ampeg B-15NF", and that is the gear, not a label for it.
+
+Where two models claim one gear name, name the gear anyway. `Teletronix LA-2A`
+is both an LA Studio Comp with six controls and a legacy DM4 Tube Comp with one,
+and the catalog sorts a legacy model last, so the name reaches the model with the
+controls. Reaching for the model name to disambiguate is how a document stops
+being readable anywhere else.
 
 Check the name resolves before trusting it:
 

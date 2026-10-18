@@ -1,0 +1,25 @@
+artist: Robert DeLeo
+tracks:
+  - track: meadow
+    url: https://open.spotify.com/track/2gRk5paar8fnT28Q6AsKTj
+    year: 2018
+    band: Stone Temple Pilots
+    genres: [alternative-rock, hard-rock]
+    genres_by: llm
+    note: >-
+      Stone Temple Pilots, the 2018 album, which is the record the Premier
+      Guitar piece on his rig accompanies. 208 seconds as Spotify holds it
+  - track: roll-me-under
+    url: https://open.spotify.com/track/62e5c5tNuR641PEsB6e5wD
+    year: 2018
+    band: Stone Temple Pilots
+    genres: [alternative-rock, hard-rock]
+    genres_by: llm
+    note: Stone Temple Pilots, 2018. 225 seconds as Spotify holds it
+  - track: the-art-of-letting-go
+    url: https://open.spotify.com/track/7wvD299omOEJLwxHDs4GeY
+    year: 2018
+    band: Stone Temple Pilots
+    genres: [alternative-rock, hard-rock]
+    genres_by: llm
+    note: Stone Temple Pilots, 2018. 275 seconds as Spotify holds it

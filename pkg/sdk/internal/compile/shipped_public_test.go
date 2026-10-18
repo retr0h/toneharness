@@ -343,6 +343,63 @@ func (s *ShippedPublicTestSuite) TestEveryShippedAmplifierResolvesToItself() {
 	}
 }
 
+// TestNoShippedRigNamesADeviceModel covers the third bar: a rig says what the
+// gear is, never what one manufacturer calls their model of it.
+//
+// The contract's `gear` field has always said so, and twelve shipped documents
+// broke it anyway, because the two writers disagreed: the compiler names a
+// block it adds by the gear it emulates, so a cabinet read `Legacy 6x10"
+// MESA/Boogie Power House`, while the chooser that picks an amplifier by
+// measurement named it off the measured library, which files a sweep under Line
+// 6's own name. Ten genre rigs therefore said `Cali 400 Ch1` for a MESA/Boogie
+// Bass 400+ and one said `Agua Sledge` for an Aguilar Tone Hammer.
+//
+// A model name and the gear's name are the same string often enough that this
+// has to tell them apart rather than refuse every match: the catalog's own entry
+// for an Ampeg B-15NF is named "Ampeg B-15NF". What marks a model name is that
+// it says something else from the gear underneath it, which is why this asks
+// whether the name is part of what the block emulates.
+func (s *ShippedPublicTestSuite) TestNoShippedRigNamesADeviceModel() {
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	// Every model name the device carries, against the gear it emulates, held
+	// only where the two say different things.
+	models := map[string]catalog.Block{}
+
+	for _, block := range cat.Blocks {
+		if block.Name == "" || block.Gear() == "" {
+			continue
+		}
+
+		if strings.Contains(
+			strings.ToLower(block.Gear()), strings.ToLower(block.Name),
+		) {
+			continue
+		}
+
+		models[strings.ToLower(block.Name)] = block
+	}
+
+	s.Require().NotEmpty(models, "no model names to check against")
+
+	for name, spec := range s.specs() {
+		s.Run(name, func() {
+			for _, entry := range spec.Rig.Chain {
+				block, named := models[strings.ToLower(strings.TrimSpace(entry.Gear))]
+
+				s.Require().False(
+					named,
+					"%s is named %q, which is Line 6's model name for a %s. A "+
+						"rig names the gear: those labels change between "+
+						"releases and mean nothing on other hardware",
+					entry.Role, entry.Gear, block.Gear(),
+				)
+			}
+		})
+	}
+}
+
 func TestShippedPublicTestSuite(
 	t *testing.T,
 ) {

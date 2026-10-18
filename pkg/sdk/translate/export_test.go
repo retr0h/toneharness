@@ -39,4 +39,7 @@ var (
 	SplitsByInstrument = splitsByInstrument
 	// DisplacedTo turns a genre into a target a block can be ranked against.
 	DisplacedTo = displacedTo
+	// Named is the gear a chosen block is written down as, which is never the
+	// manufacturer's name for it where the catalog says what it emulates.
+	Named = named
 )

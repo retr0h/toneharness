@@ -39,14 +39,14 @@ ask:
   # Gear the request names, where somebody wants a particular thing rather than
   # a particular sound. Everything not named here is chosen by measuring.
   gear:
-    - gear: LA Studio Comp
+    - gear: Teletronix LA-2A
       role: comp
 
 rig:
   instrument: bass
   chain:
     - role: comp
-      gear: LA Studio Comp
+      gear: Teletronix LA-2A
       evidence:
         - kind: user
           note: the one piece this request names by hand.

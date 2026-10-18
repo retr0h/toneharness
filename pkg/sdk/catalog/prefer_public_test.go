@@ -96,6 +96,38 @@ func (s *PreferPublicTestSuite) TestPreferred() {
 			},
 		},
 		{
+			// What lets a document name gear instead of a model.
+			//
+			// A Teletronix LA-2A is two compressors on this device: an LA
+			// Studio Comp with six controls and a legacy DM4 Tube Comp with
+			// one. Both are family "compressor", so the family cannot decide
+			// it, and the identifier picked the right one by the alphabet
+			// alone. Without this the only certain way to name the six-control
+			// model was Line 6's name for it, which the contract's `gear`
+			// field refuses.
+			name: "a legacy model sorts behind a current one of any family",
+			then: func() {
+				now := catalog.Block{
+					ID: "HD2_CompressorLAStudioComp", Family: "compressor",
+					Subcategory: "Mono, Stereo",
+				}
+				old := catalog.Block{
+					ID: "HD2_DM4TubeComp", Family: "compressor",
+					Subcategory: "Legacy",
+				}
+
+				s.Require().Less(now.Preferred(), old.Preferred())
+
+				// Behind a family nobody ranked, too, which is the point of
+				// asking before the family rather than after it.
+				unranked := catalog.Block{
+					ID: "HD2_DistTubeDrive", Family: "distortion",
+				}
+
+				s.Require().Greater(old.Preferred(), unranked.Preferred())
+			},
+		},
+		{
 			// How both resolvers use it.
 			//
 			// Sorting by Preferred and then by identifier is the shape the
