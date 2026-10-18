@@ -201,8 +201,9 @@ func againstOf(
 
 // figure prints one measure in the unit it is measured in.
 //
-// A centroid is hertz and the rest are shares of the whole, and printing a
-// share as 264 or a frequency as 26400% is how a table stops being read.
+// A centroid is hertz, a decay is seconds and the rest are shares of the
+// whole. Printing a share as 264, a frequency as 26400% or a ring time as 66%
+// is how a table stops being read.
 //
 // A share under one percent keeps a decimal. Whole percents are enough for
 // where a player sits and not for how far past the line they sit: Geddy Lee
@@ -214,6 +215,10 @@ func figure(
 ) string {
 	if key == audio.KeyCentroid {
 		return fmt.Sprintf("%.0f Hz", v)
+	}
+
+	if key == audio.KeyDecay {
+		return fmt.Sprintf("%.2fs", v)
 	}
 
 	if share := v * 100; share < 1 {

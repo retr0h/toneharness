@@ -422,6 +422,38 @@ func transient(
 // measure correctly there.
 const onsetRise = 0.06
 
+// onsetApart is how close together two notes may be counted, in seconds.
+//
+// The rise test alone counted every frame that happened to get louder, which
+// on a dense line is most of them: 6,131 onsets in 199 seconds of God Save
+// the Queen, thirty a second, which no bass plays. Keeping only the largest
+// rise in a neighbourhood is ordinary peak-picking and brings the same track
+// to 718.
+//
+// An eighth note at 240bpm is 125ms, which is faster than any line in this
+// corpus, so 120ms admits every note anybody plays and refuses the frames
+// between them.
+const onsetApart = 0.12
+
+// ringWindow is how long a note is given to die before its decay is counted
+// unmeasurable, in seconds.
+//
+// The fall to a quarter is what a dense mix never does. The bass level in one
+// sits within 12dB of its own local peak until the arrangement changes, so a
+// note timed to wherever it finally falls reports the section rather than the
+// string: God Save the Queen read 21.01s a note, against 1.44s on another
+// track by the same player on the same rig.
+//
+// A note that has not died inside this window is dropped rather than timed,
+// which is the honest answer. The alternative was to cut each note off at the
+// next onset, and that was measured and refused: it is stable, 0.15s of drift
+// against 19.57s, and what it measures is how fast somebody plays. Every
+// player read between 0.11s and 0.18s, a spread narrower than the drift.
+//
+// Two seconds is longer than any bass note rings usefully inside a mix and
+// short enough that a section cannot fit in it.
+const ringWindow = 2.0
+
 // decay is how long a note takes to fall to a quarter of itself, across the
 // notes in a recording.
 //
@@ -474,6 +506,14 @@ func decay(
 
 	rang := make([]float64, 0, len(levels)/4)
 
+	// How many frames the two windows are, in the frames this recording was
+	// cut into.
+	per := float64(rate) / float64(frame)
+	apart := int(math.Round(onsetApart * per))
+	window := int(math.Round(ringWindow * per))
+
+	last := -apart
+
 	for i := range levels {
 		if !held[i] {
 			continue
@@ -488,13 +528,31 @@ func decay(
 			continue
 		}
 
+		// The largest rise in its neighbourhood, rather than every frame that
+		// rose at all. Without this the frames inside one note each start a
+		// note of their own.
+		if i > 0 && held[i-1] && !steepest(levels, i, apart) {
+			continue
+		}
+
+		// And no two notes closer together than anybody plays.
+		if i-last < apart {
+			continue
+		}
+
+		last = i
+
 		// This note's own peak, which is at the onset or just after it.
 		peak := levels[i]
 		for j := i + 1; j < len(levels) && held[j] && levels[j] > peak; j++ {
 			peak = levels[j]
 		}
 
-		for j := i + 1; j < len(levels); j++ {
+		// A note is given ringWindow to die and dropped if it does not. What
+		// it would otherwise report is the arrangement: see ringWindow.
+		stop := min(len(levels), i+window+1)
+
+		for j := i + 1; j < stop; j++ {
 			// Either the note has fallen far enough, or the playing stopped
 			// while it was still sounding. Both end this note.
 			//
@@ -522,6 +580,32 @@ func decay(
 	slices.Sort(rang)
 
 	return Reading{Value: quantile(rang, 0.5), Known: true}
+}
+
+// steepest reports whether the rise into this frame is the largest within
+// apart frames of it.
+//
+// Peak-picking, which is what turns "the level went up here" into "a note
+// started here". A note's attack spans several frames and every one of them
+// rises, so without this one note is counted as many and each of the extras
+// times its decay from part way down the first one.
+func steepest(
+	levels []float64,
+	at int,
+	apart int,
+) bool {
+	rise := levels[at] - levels[at-1]
+
+	from := max(1, at-apart)
+	to := min(len(levels), at+apart+1)
+
+	for j := from; j < to; j++ {
+		if levels[j]-levels[j-1] > rise {
+			return false
+		}
+	}
+
+	return true
 }
 
 // dynamicRange is the gap between the loudest frame and the median one, in

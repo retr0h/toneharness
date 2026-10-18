@@ -11,9 +11,9 @@
         "spread": 57
       },
       "decay": {
-        "mean": -0.22,
-        "median": -0.13,
-        "spread": 0.67
+        "mean": -0.14,
+        "median": -0.03,
+        "spread": 0.63
       },
       "dynamics": {
         "mean": 0.09,

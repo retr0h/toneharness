@@ -204,6 +204,39 @@ func (s *MeasurePublicTestSuite) TestMeasure() {
 			},
 		},
 		{
+			// Peak-picking, which is what the onset rule was missing.
+			//
+			// Notes with no silence between them, so nothing resumes from a rest
+			// and the only thing marking a note is the rise into it. A note's
+			// attack spans several frames and every one of them rises, so without
+			// peak-picking one note is counted as many: on real music that read
+			// 6,131 notes in 199 seconds, thirty a second.
+			//
+			// Three notes of known length, played into each other. The figure has
+			// to describe one of them rather than a fraction of one.
+			name: "notes played into each other are counted once each",
+			then: func() {
+				samples := make([]float64, 0, rate*3)
+				for range 3 {
+					samples = append(samples, audio.Plucked(110, 0.9, rate, 0.9, 6)...)
+				}
+
+				got := audio.Measure(samples, rate)
+
+				s.Require().True(got.Decay.Known,
+					"three plucks played into each other are three notes")
+
+				// A pluck at this decay rate falls to a quarter of itself in
+				// about 0.23s, and the figure has to land near that rather than
+				// near a frame or near the whole run.
+				s.Require().Greater(got.Decay.Value, 0.1,
+					"a note read as starting part way down the one before it "+
+						"reads far too short")
+				s.Require().Less(got.Decay.Value, 0.9,
+					"and one read as never dying reads the whole run")
+			},
+		},
+		{
 			// The failure this replaced.
 			//
 			// On a dense line the loudest frame is one accent, and the level

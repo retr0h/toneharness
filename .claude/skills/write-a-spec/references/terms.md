@@ -29,6 +29,33 @@ said "not scooped", and an ask claiming both has claimed nothing.
 amplifier, reverb or compressor has a control for. Use them anyway: they are part
 of what somebody listening compares the preset against.
 
+**And a word being in the vocabulary does not mean a corpus can earn it.** Two
+different things have to be true, and the table says which words have each:
+
+| | moves a control | a corpus can earn it |
+| --- | --- | --- |
+| `mid-forward`, `scooped` | yes, the amplifier's Mid | yes |
+| `bright`, `dark`, `glassy` | yes, Treble | yes |
+| `saturated` | yes, Drive | yes, and `clean` is not earnable from the same axis |
+| `short-decay`, `long-decay` | **no** | yes, since the measure was fixed |
+| `tight-low-end`, `loose-low-end` | yes, Sag | **no** |
+| `audible-pick-attack`, `soft-attack`, `percussive` | some | **no** |
+| `sub-octave` | yes, where a pitch block is there | **no** |
+
+The two columns are independent, which is the part worth knowing before writing
+an ask. `short-decay` is measured off records and moves nothing, so a rig can
+say it truthfully and the preset will not differ. `tight-low-end` turns Sag and
+no measurement will ever justify it, because the figure behind it is the low
+band's share, which is the mid band's share inverted: across forty-two players
+the two correlate at -0.994, so it is one axis read twice.
+
+Four figures can never earn a word for a plainer reason. Typical drift inside
+one player's own records, over the spread between players: transient 1.15, high
+1.21, even-odd 1.30, dynamics 1.05. Anything at or above 1 moves further inside
+one player than it separates two, so no corpus however large makes it a
+comparison. The three that carry words sit at 0.60, 0.77 and 0.79, and decay at
+0.69 after its measure was fixed. `audio.Axes` records the whole table.
+
 ## A measured term carries the figures that earned it
 
 ```yaml
