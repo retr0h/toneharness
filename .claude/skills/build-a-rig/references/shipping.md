@@ -25,6 +25,13 @@ Inside either tier, the directory is what the subject is:
 | ------------------------------------------------ | ---------- |
 | a player, a band, an era                         | `artists/` |
 | a genre, with nobody named                       | `genres/`  |
+| a sound, where the gear could not be identified  | `sounds/`  |
+
+A sound goes in the third because it is attributed to nobody: it is what a set
+of records measures as, resolved to gear, written where the research into who
+played what bottomed out. See
+[evidence.md](evidence.md), "Where the gear cannot be identified, offer a
+sound-alike", which also says when not to write one.
 
 **A person is never filed under a genre.** Most play several, the ask's `genre:`
 already names which, and a directory would have to pick one and be wrong about

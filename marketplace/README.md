@@ -13,10 +13,11 @@ Two tiers, and the difference is what somebody had to prove.
 
 Each tier holds two directories, and the split is what the subject is:
 
-| directory  | what is in it                                                        |
-| ---------- | -------------------------------------------------------------------- |
-| `artists/` | people. A player, a band, an era: `kind: artist` or `kind: band`     |
-| `genres/`  | the sound of a genre rather than anybody who plays it: `kind: genre` |
+| directory  | what is in it                                                                         |
+| ---------- | ------------------------------------------------------------------------------------- |
+| `artists/` | people. A player, a band, an era: `kind: artist` or `kind: band`                      |
+| `genres/`  | the sound of a genre rather than anybody who plays it: `kind: genre`                  |
+| `sounds/`  | what a set of records measures as, where the gear was never identified: `kind: sound` |
 
 A person is never filed under a genre. Most play several, the ask already names
 which, and a directory would have to pick one and be wrong about the rest.
@@ -106,6 +107,24 @@ knowledge. If the research did not reach a source, say which piece of gear it
 could not reach rather than filling the field in. `confidence` and `caveat`
 exist for exactly the honest middle: a cited amplifier, a guessed cabinet, and a
 sentence saying which is which.
+
+## A sound is not somebody's rig
+
+`sounds/` holds documents attributed to nobody. They exist because the research
+into who played what bottomed out, and the honest answer was to stop putting a
+name on an amplifier nobody established.
+
+Each one names the amplifier that measures nearest the records themselves,
+chosen by ranking the device's twenty-seven bass amplifiers against the
+separated bass stems one record at a time. That is reproducible: run it again on
+the same stems and it answers the same way. It is also weak, and each document
+says how in its own caveat. The records disagree with each other, and the
+winners cluster at the dark end of what the device models, so a record sitting
+below most candidates picks whichever is darkest rather than whichever is
+nearest.
+
+They live in `community/` and they are buildable, which is the point. A cited
+amplifier for the player replaces one outright.
 
 ## Getting into core
 
