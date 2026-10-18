@@ -1,0 +1,35 @@
+artist: Chris Joannou
+# One record per album across the three he made inside the era the rig claims,
+# because the sentence the rig cites is about every record rather than one of
+# them.
+tracks:
+  - track: tomorrow
+    url: https://open.spotify.com/track/4OIpGuYJ6ph56K5GTOqjU7
+    year: 1995
+    seconds: 265
+    band: Silverchair
+    genres: [grunge, alternative-rock]
+    genres_by: llm
+    note: Frogstomp, 1995. 265 seconds as Spotify holds it
+  - track: freak
+    url: https://open.spotify.com/track/2RDgs05sg2vrpwiAEUkWd0
+    year: 1997
+    seconds: 226
+    band: Silverchair
+    genres: [grunge, alternative-rock]
+    genres_by: llm
+    note: >-
+      Freak Show, 1997. 226 seconds as Spotify holds it. The album's own track
+      rather than the copy on The Essential Indie Album, a 2011 compilation
+      that a search returns first and that holds the same take a second longer
+  - track: anthem-for-the-year-2000
+    url: https://open.spotify.com/track/3qaoPiN33Fc5uJRfhYjN34
+    year: 1999
+    seconds: 247
+    band: Silverchair
+    genres: [grunge, alternative-rock]
+    genres_by: llm
+    note: >-
+      Neon Ballroom, 1999. 247 seconds as Spotify holds it. The album's own
+      track rather than the one tagged Freak Show/Neon Ballroom, a two-album
+      bundle holding the same recording
