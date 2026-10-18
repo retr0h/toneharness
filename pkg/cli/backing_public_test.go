@@ -110,14 +110,14 @@ func (s *BackingPublicTestSuite) TestBacking() {
 		{
 			// The row for a directory nobody claims,
 			// which otherwise reads as a rig nobody has measured.
-			name: "records no rig is named for",
+			name: "records no rig read here names",
 			then: func() {
 				got := s.render([]sdk.Backing{{
 					ID: "mccartney", NoRig: true,
 					Records: []sdk.Record{{Track: "silly-love-songs", Year: 1976}},
 				}})
 
-				s.Require().Contains(got, "no rig is named for this directory")
+				s.Require().Contains(got, "no rig read here names this directory")
 				s.Require().Contains(got, "1 with something to answer for")
 			},
 		},
@@ -225,14 +225,14 @@ func (s *BackingPublicTestSuite) TestBacking() {
 			//
 			// A directory no rig answers to has no chain to read, so the column has
 			// nothing to say and must not guess.
-			name: "records no rig is named for say nothing about the room",
+			name: "records no rig read here names say nothing about the room",
 			then: func() {
 				got := s.render([]sdk.Backing{{
 					ID: "nobody", NoRig: true,
 					Records: []sdk.Record{{Track: "a-record", Year: 1990}},
 				}})
 
-				s.Require().Contains(got, "no rig is named for this directory")
+				s.Require().Contains(got, "no rig read here names this directory")
 			},
 		},
 		{

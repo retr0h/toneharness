@@ -34,6 +34,21 @@ identifier is the only thing joining a rig to its records, so a directory spelle
 any other way is a rig nobody measured, which looks identical to the ordinary
 case.
 
+**Read both tiers, or it reports tiers rather than eras.** The rigs that ship
+are core's, so a run naming no directory says "no rig read here names this
+directory" for every community player, which is a tier nobody mentioned rather
+than a missing rig. `--dir` layers a directory over the ones that ship:
+
+```bash
+mise exec -- go run main.go rigs records --corpus resources/music/bass \
+  --dir marketplace/community
+```
+
+Ten of the forty-one directories read that way until somebody passed it, and all
+ten pass once the tier holding them is read. A test holds every directory in both
+tiers now, so a rig whose records drift out of its era fails the gate rather than
+waiting for somebody to run the command with the right flag.
+
 ## Replacing the records
 
 This is the ordinary case rather than an exception. One player here did not pass
