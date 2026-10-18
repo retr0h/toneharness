@@ -55,10 +55,10 @@ rig:
       HighMid: "0.5"
       Hum: "0.5"
       Master: "0.6"
-      Mid: "0.56"
+      Mid: "0.5466666666666667"
       Ripple: "0.5"
       Sag: "0.5"
-      Treble: "0.4607843137254902"
+      Treble: "0.4523809523809524"
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
         the microphone, the desk and the master of every one of them. The amplifier
@@ -75,9 +75,9 @@ rig:
       note: Chosen by measurement rather than by anybody's say-so. Across 19 records
         from 6 players, alternative-metal measures a centroid the device's nearest
         bass amplifier sits at 150 Hz against 135, which is the closest of the 27
-        it models for this instrument. Its records earn dark and short-decay, measured
-        against the players who play none of it, and that is what moves the controls
-        below off the medians this instrument's presets sit at.
+        it models for this instrument. Its records earn scooped, dark and short-decay,
+        measured against the players who play none of it, and that is what moves the
+        controls below off the medians this instrument's presets sit at.
     gear: MESA/Boogie Bass 400+ (channel 1)
     position: 1
     role: amp

@@ -7,7 +7,10 @@ tracks:
     band: blink-182
     genres: [pop-punk]
     genres_by: person
-    note: Dude Ranch, 1997
+    note: >-
+      Dude Ranch, 1997. The download runs 170.6s against the 165 the link
+      states, and a refetch returns the same length, so the two are different
+      masters of this song rather than a wrong match.
   - track: whats-my-age-again
     url: https://open.spotify.com/track/4LJhJ6DQS7NwE7UKtvcM52
     year: 1999

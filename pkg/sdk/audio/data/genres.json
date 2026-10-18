@@ -57,8 +57,8 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.3,
-      "dynamics": 7.45,
+      "decay": 0.33,
+      "dynamics": 7.1,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -68,6 +68,20 @@
     },
     "terms": [
       {
+        "term": "scooped",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.01,
+        "others": 0.03,
+        "of": 37,
+        "margin": 0.019999999999999997,
+        "spread": 0.06,
+        "against": [
+          0.01,
+          0.07
+        ]
+      },
+      {
         "term": "dark",
         "key": "centroid",
         "why": "the spectrum's centre of gravity, in hertz",
@@ -75,10 +89,10 @@
         "others": 134,
         "of": 37,
         "margin": 20,
-        "spread": 51,
+        "spread": 42,
         "against": [
           113,
-          165
+          155
         ]
       },
       {
@@ -86,13 +100,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.23,
-        "others": 0.3,
+        "others": 0.33,
         "of": 37,
-        "margin": 0.06999999999999998,
+        "margin": 0.09999999999999995,
         "spread": 0.24,
         "against": [
-          0.21,
-          0.45
+          0.23,
+          0.47
         ]
       }
     ],
@@ -157,8 +171,8 @@
     },
     "elsewhere": {
       "centroid": 132,
-      "decay": 0.3,
-      "dynamics": 7.65,
+      "decay": 0.33,
+      "dynamics": 7.5,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -172,13 +186,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.45,
-        "others": 0.3,
+        "others": 0.33,
         "of": 41,
-        "margin": 0.15000000000000002,
+        "margin": 0.12000000000000005,
         "spread": 0.26,
         "against": [
-          0.19,
-          0.45
+          0.21,
+          0.47
         ]
       }
     ],
@@ -194,49 +208,49 @@
     "across": {
       "tracks": 9,
       "low": {
-        "low": 0.6395763304995049,
+        "low": 0.8950727309792786,
         "mid": 0.9640570955302763,
         "high": 0.9895610739786718
       },
       "mid": {
         "low": 0.01041629425464347,
         "mid": 0.03559747200222618,
-        "high": 0.30464245674132184
+        "high": 0.10490002657237522
       },
       "high": {
         "low": 0.000006665140587532032,
         "mid": 0.00003486824390546876,
-        "high": 0.05578121275917322
+        "high": 0.0003454324674974899
       },
       "centroid": {
         "low": 119.74507869046063,
-        "mid": 145.45746607587665,
-        "high": 570.4710742497616
+        "mid": 137.83681390097132,
+        "high": 166.538515154204
       },
       "transient": {
         "low": 0.48349114140742344,
-        "mid": 0.712024481450262,
+        "mid": 0.7196293585319659,
         "high": 0.7968656606279481,
         "from": 9
       },
       "decay": {
-        "low": 0.03,
-        "mid": 0.23,
-        "high": 0.54,
+        "low": 0.16,
+        "mid": 0.24,
+        "high": 0.8,
         "from": 9
       },
       "dynamic_range": {
         "low": 5.768729455050173,
-        "mid": 7.43486471805322,
-        "high": 29.38482387097443
+        "mid": 6.901817980028543,
+        "high": 11.742263279512109
       },
       "harmonics": {
         "low": 0.034007958515628024,
-        "mid": 0.15784547460748755,
-        "high": 0.4391212479541337
+        "mid": 0.11110602500090948,
+        "high": 0.18705046564498948
       },
       "even_odd": {
-        "low": 0.21313074976762558,
+        "low": 0.6491652260789232,
         "mid": 0.8794745090015742,
         "high": 0.974262468986323
       }
@@ -244,7 +258,7 @@
     "elsewhere": {
       "centroid": 128,
       "decay": 0.35,
-      "dynamics": 7.6,
+      "dynamics": 7.5,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -254,30 +268,16 @@
     },
     "terms": [
       {
-        "term": "bright",
-        "key": "centroid",
-        "why": "the spectrum's centre of gravity, in hertz",
-        "mine": 145,
-        "others": 128,
-        "of": 40,
-        "margin": 17,
-        "spread": 53,
-        "against": [
-          110,
-          163
-        ]
-      },
-      {
         "term": "short-decay",
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
-        "mine": 0.23,
+        "mine": 0.24,
         "others": 0.35,
         "of": 40,
-        "margin": 0.11999999999999997,
-        "spread": 0.26,
+        "margin": 0.10999999999999999,
+        "spread": 0.25,
         "against": [
-          0.2,
+          0.21,
           0.46
         ]
       }
@@ -294,22 +294,22 @@
     "across": {
       "tracks": 4,
       "low": {
-        "low": 0.7521448055229449,
-        "mid": 0.7694327616746797,
+        "low": 0.7667944667536165,
+        "mid": 0.8133034478977782,
         "high": 0.8140450686347253
       },
       "mid": {
         "low": 0.18470937628242043,
-        "mid": 0.2303696966660353,
-        "high": 0.24720364885040583
+        "mid": 0.22815766818710795,
+        "high": 0.2303696966660353
       },
       "high": {
         "low": 0.00019754165928508624,
-        "mid": 0.0012455550828543369,
+        "mid": 0.0013559996581471382,
         "high": 0.005047865059275426
       },
       "centroid": {
-        "low": 194.05050313197808,
+        "low": 177.09785786559615,
         "mid": 213.68606132896494,
         "high": 235.2989417966604
       },
@@ -320,31 +320,31 @@
         "from": 4
       },
       "decay": {
-        "low": 0.09,
+        "low": 0.07,
         "mid": 0.14,
         "high": 0.15,
         "from": 4
       },
       "dynamic_range": {
         "low": 13.438441948376648,
-        "mid": 18.436743703874278,
+        "mid": 17.985601154449917,
         "high": 19.64714165136993
       },
       "harmonics": {
         "low": 0.09902875473532834,
         "mid": 0.2173290635719513,
-        "high": 0.2565677219206036
+        "high": 0.24939185829882263
       },
       "even_odd": {
         "low": 0.6236011318809948,
-        "mid": 0.7850160903701491,
+        "mid": 0.7641120396589952,
         "high": 0.8263054023823984
       }
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.31,
-      "dynamics": 7.5,
+      "decay": 0.35,
+      "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -361,10 +361,10 @@
         "others": 0.03,
         "of": 42,
         "margin": 0.2,
-        "spread": 0.05,
+        "spread": 0.04,
         "against": [
           0.01,
-          0.06
+          0.05
         ]
       },
       {
@@ -375,10 +375,10 @@
         "others": 130,
         "of": 42,
         "margin": 84,
-        "spread": 51,
+        "spread": 39,
         "against": [
           110,
-          161
+          149
         ]
       },
       {
@@ -400,13 +400,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.14,
-        "others": 0.31,
+        "others": 0.35,
         "of": 42,
-        "margin": 0.16999999999999998,
-        "spread": 0.24,
+        "margin": 0.20999999999999996,
+        "spread": 0.25,
         "against": [
           0.21,
-          0.45
+          0.46
         ]
       }
     ],
@@ -471,8 +471,8 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.31,
-      "dynamics": 7.5,
+      "decay": 0.35,
+      "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -503,10 +503,10 @@
         "others": 130,
         "of": 42,
         "margin": 134,
-        "spread": 51,
+        "spread": 39,
         "against": [
           110,
-          161
+          149
         ]
       },
       {
@@ -528,13 +528,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.07,
-        "others": 0.31,
+        "others": 0.35,
         "of": 42,
-        "margin": 0.24,
-        "spread": 0.24,
+        "margin": 0.27999999999999997,
+        "spread": 0.25,
         "against": [
           0.21,
-          0.45
+          0.46
         ]
       }
     ],
@@ -599,8 +599,8 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.31,
-      "dynamics": 7.6,
+      "decay": 0.35,
+      "dynamics": 7.5,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -617,10 +617,10 @@
         "others": 0.03,
         "of": 42,
         "margin": 0.03,
-        "spread": 0.05,
+        "spread": 0.04,
         "against": [
           0.01,
-          0.06
+          0.05
         ]
       },
       {
@@ -628,13 +628,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.21,
-        "others": 0.31,
+        "others": 0.35,
         "of": 42,
-        "margin": 0.1,
-        "spread": 0.26,
+        "margin": 0.13999999999999999,
+        "spread": 0.25,
         "against": [
-          0.19,
-          0.45
+          0.21,
+          0.46
         ]
       }
     ],
@@ -699,9 +699,9 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.27,
-      "dynamics": 7.55,
-      "harmonics": 0.18,
+      "decay": 0.28,
+      "dynamics": 7.45,
+      "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
       "low": 0.97,
@@ -717,10 +717,10 @@
         "others": 0.04,
         "of": 39,
         "margin": 0.025,
-        "spread": 0.07,
+        "spread": 0.05,
         "against": [
           0.01,
-          0.08
+          0.06
         ]
       },
       {
@@ -728,13 +728,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.41,
-        "others": 0.27,
+        "others": 0.28,
         "of": 39,
-        "margin": 0.14499999999999996,
+        "margin": 0.12999999999999995,
         "spread": 0.25,
         "against": [
-          0.19,
-          0.44
+          0.2,
+          0.45
         ]
       }
     ],
@@ -799,9 +799,9 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.27,
-      "dynamics": 7.6,
-      "harmonics": 0.18,
+      "decay": 0.29,
+      "dynamics": 6.8,
+      "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
       "low": 0.97,
@@ -814,13 +814,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.45,
-        "others": 0.27,
+        "others": 0.29,
         "of": 38,
-        "margin": 0.18,
-        "spread": 0.24,
+        "margin": 0.16000000000000003,
+        "spread": 0.23,
         "against": [
-          0.19,
-          0.43
+          0.21,
+          0.44
         ]
       }
     ],
@@ -885,8 +885,8 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.31,
-      "dynamics": 7.5,
+      "decay": 0.35,
+      "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -903,10 +903,10 @@
         "others": 0.03,
         "of": 42,
         "margin": 0.36,
-        "spread": 0.05,
+        "spread": 0.04,
         "against": [
           0.01,
-          0.06
+          0.05
         ]
       },
       {
@@ -917,10 +917,10 @@
         "others": 130,
         "of": 42,
         "margin": 129,
-        "spread": 51,
+        "spread": 39,
         "against": [
           110,
-          161
+          149
         ]
       },
       {
@@ -942,13 +942,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.14,
-        "others": 0.31,
+        "others": 0.35,
         "of": 42,
-        "margin": 0.16999999999999998,
-        "spread": 0.24,
+        "margin": 0.20999999999999996,
+        "spread": 0.25,
         "against": [
           0.21,
-          0.45
+          0.46
         ]
       }
     ],
@@ -1013,8 +1013,8 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.31,
-      "dynamics": 7.5,
+      "decay": 0.36,
+      "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -1031,10 +1031,10 @@
         "others": 0.03,
         "of": 40,
         "margin": 0.019999999999999997,
-        "spread": 0.07,
+        "spread": 0.05,
         "against": [
           0.01,
-          0.08
+          0.06
         ]
       },
       {
@@ -1045,10 +1045,10 @@
         "others": 134,
         "of": 40,
         "margin": 25,
-        "spread": 51,
+        "spread": 43,
         "against": [
           114,
-          165
+          157
         ]
       },
       {
@@ -1056,13 +1056,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.23,
-        "others": 0.31,
+        "others": 0.36,
         "of": 40,
-        "margin": 0.07999999999999999,
+        "margin": 0.12999999999999998,
         "spread": 0.26,
         "against": [
-          0.2,
-          0.46
+          0.21,
+          0.47
         ]
       }
     ],
@@ -1127,8 +1127,8 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.31,
-      "dynamics": 7.5,
+      "decay": 0.35,
+      "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -1145,10 +1145,10 @@
         "others": 134,
         "of": 42,
         "margin": 38,
-        "spread": 53,
+        "spread": 42,
         "against": [
           111,
-          164
+          153
         ]
       },
       {
@@ -1170,13 +1170,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.13,
-        "others": 0.31,
+        "others": 0.35,
         "of": 42,
-        "margin": 0.18,
-        "spread": 0.24,
+        "margin": 0.21999999999999997,
+        "spread": 0.25,
         "against": [
           0.21,
-          0.45
+          0.46
         ]
       }
     ],
@@ -1241,8 +1241,8 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.31,
-      "dynamics": 7.5,
+      "decay": 0.35,
+      "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -1259,10 +1259,10 @@
         "others": 0.03,
         "of": 40,
         "margin": 0.03,
-        "spread": 0.07,
+        "spread": 0.05,
         "against": [
           0.01,
-          0.08
+          0.06
         ]
       },
       {
@@ -1273,10 +1273,10 @@
         "others": 134,
         "of": 40,
         "margin": 25,
-        "spread": 53,
+        "spread": 45,
         "against": [
           113,
-          165
+          157
         ]
       },
       {
@@ -1284,13 +1284,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.23,
-        "others": 0.31,
+        "others": 0.35,
         "of": 40,
-        "margin": 0.07999999999999999,
+        "margin": 0.11999999999999997,
         "spread": 0.25,
         "against": [
-          0.21,
-          0.46
+          0.22,
+          0.47
         ]
       }
     ],
@@ -1306,22 +1306,22 @@
     "across": {
       "tracks": 4,
       "low": {
-        "low": 0.7521448055229449,
-        "mid": 0.7694327616746797,
+        "low": 0.7667944667536165,
+        "mid": 0.8133034478977782,
         "high": 0.8140450686347253
       },
       "mid": {
         "low": 0.18470937628242043,
-        "mid": 0.2303696966660353,
-        "high": 0.24720364885040583
+        "mid": 0.22815766818710795,
+        "high": 0.2303696966660353
       },
       "high": {
         "low": 0.00019754165928508624,
-        "mid": 0.0012455550828543369,
+        "mid": 0.0013559996581471382,
         "high": 0.005047865059275426
       },
       "centroid": {
-        "low": 194.05050313197808,
+        "low": 177.09785786559615,
         "mid": 213.68606132896494,
         "high": 235.2989417966604
       },
@@ -1332,31 +1332,31 @@
         "from": 4
       },
       "decay": {
-        "low": 0.09,
+        "low": 0.07,
         "mid": 0.14,
         "high": 0.15,
         "from": 4
       },
       "dynamic_range": {
         "low": 13.438441948376648,
-        "mid": 18.436743703874278,
+        "mid": 17.985601154449917,
         "high": 19.64714165136993
       },
       "harmonics": {
         "low": 0.09902875473532834,
         "mid": 0.2173290635719513,
-        "high": 0.2565677219206036
+        "high": 0.24939185829882263
       },
       "even_odd": {
         "low": 0.6236011318809948,
-        "mid": 0.7850160903701491,
+        "mid": 0.7641120396589952,
         "high": 0.8263054023823984
       }
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.31,
-      "dynamics": 7.5,
+      "decay": 0.35,
+      "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -1373,10 +1373,10 @@
         "others": 0.03,
         "of": 42,
         "margin": 0.2,
-        "spread": 0.05,
+        "spread": 0.04,
         "against": [
           0.01,
-          0.06
+          0.05
         ]
       },
       {
@@ -1387,10 +1387,10 @@
         "others": 130,
         "of": 42,
         "margin": 84,
-        "spread": 51,
+        "spread": 39,
         "against": [
           110,
-          161
+          149
         ]
       },
       {
@@ -1412,13 +1412,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.14,
-        "others": 0.31,
+        "others": 0.35,
         "of": 42,
-        "margin": 0.16999999999999998,
-        "spread": 0.24,
+        "margin": 0.20999999999999996,
+        "spread": 0.25,
         "against": [
           0.21,
-          0.45
+          0.46
         ]
       }
     ],
@@ -1435,55 +1435,55 @@
       "tracks": 3,
       "low": {
         "low": 0.6823547635422205,
-        "mid": 0.8466305998784809,
+        "mid": 0.9014326273134198,
         "high": 0.9654913627918413
       },
       "mid": {
         "low": 0.03449966572837454,
-        "mid": 0.15335742624813783,
+        "mid": 0.09856245312290766,
         "high": 0.31762174917546626
       },
       "high": {
-        "low": 0.000008971479784074724,
-        "mid": 0.000011973873381232847,
+        "low": 0.000004919563672585028,
+        "mid": 0.000008971479784074724,
         "high": 0.000023487282313323927
       },
       "centroid": {
         "low": 140.43826665622996,
-        "mid": 165.93961933568983,
+        "mid": 149.34610856846467,
         "high": 215.14216445408235
       },
       "transient": {
-        "low": 0.7302759191437851,
+        "low": 0.7266368163028871,
         "mid": 0.7361913455780849,
         "high": 0.8058885836636915,
         "from": 3
       },
       "decay": {
-        "low": 0.13,
-        "mid": 0.15,
+        "low": 0.15,
+        "mid": 0.25,
         "high": 0.34,
         "from": 3
       },
       "dynamic_range": {
-        "low": 6.562909014328833,
-        "mid": 9.902945577096595,
+        "low": 6.382145681544289,
+        "mid": 6.562909014328833,
         "high": 10.34919968047589
       },
       "harmonics": {
         "low": 0.08700957288827386,
-        "mid": 0.18115635403435187,
+        "mid": 0.15856972227977995,
         "high": 0.22604787880173244
       },
       "even_odd": {
-        "low": 0.8418118169240326,
+        "low": 0.837335922822712,
         "mid": 0.8709374589043585,
         "high": 0.8870800559194838
       }
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.31,
+      "decay": 0.35,
       "dynamics": 7.5,
       "harmonics": 0.17,
       "high": 0,
@@ -1497,42 +1497,42 @@
         "term": "mid-forward",
         "key": "mid",
         "why": "share of energy between 250Hz and 2kHz",
-        "mine": 0.15,
+        "mine": 0.1,
         "others": 0.03,
         "of": 42,
-        "margin": 0.12,
-        "spread": 0.05,
+        "margin": 0.07,
+        "spread": 0.04,
         "against": [
           0.01,
-          0.06
+          0.05
         ]
       },
       {
         "term": "bright",
         "key": "centroid",
         "why": "the spectrum's centre of gravity, in hertz",
-        "mine": 166,
+        "mine": 149,
         "others": 130,
         "of": 42,
-        "margin": 36,
-        "spread": 51,
+        "margin": 19,
+        "spread": 43,
         "against": [
           110,
-          161
+          153
         ]
       },
       {
         "term": "short-decay",
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
-        "mine": 0.15,
-        "others": 0.31,
+        "mine": 0.25,
+        "others": 0.35,
         "of": 42,
-        "margin": 0.16,
-        "spread": 0.24,
+        "margin": 0.09999999999999998,
+        "spread": 0.25,
         "against": [
           0.21,
-          0.45
+          0.46
         ]
       }
     ],
@@ -1597,9 +1597,9 @@
     },
     "elsewhere": {
       "centroid": 132,
-      "decay": 0.27,
-      "dynamics": 7.65,
-      "harmonics": 0.18,
+      "decay": 0.28,
+      "dynamics": 7.55,
+      "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
       "low": 0.97,
@@ -1612,13 +1612,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.49,
-        "others": 0.27,
+        "others": 0.28,
         "of": 39,
-        "margin": 0.22499999999999998,
-        "spread": 0.23,
+        "margin": 0.20999999999999996,
+        "spread": 0.25,
         "against": [
-          0.19,
-          0.42
+          0.2,
+          0.45
         ]
       }
     ],
@@ -1683,8 +1683,8 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.29,
-      "dynamics": 7.5,
+      "decay": 0.31,
+      "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -1701,10 +1701,10 @@
         "others": 0.03,
         "of": 42,
         "margin": 0.11000000000000001,
-        "spread": 0.05,
+        "spread": 0.04,
         "against": [
           0.01,
-          0.06
+          0.05
         ]
       },
       {
@@ -1715,10 +1715,10 @@
         "others": 130,
         "of": 42,
         "margin": 47,
-        "spread": 51,
+        "spread": 39,
         "against": [
           110,
-          161
+          149
         ]
       },
       {
@@ -1740,13 +1740,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.46,
-        "others": 0.29,
+        "others": 0.31,
         "of": 42,
-        "margin": 0.17000000000000004,
-        "spread": 0.25,
+        "margin": 0.15000000000000002,
+        "spread": 0.24,
         "against": [
-          0.19,
-          0.44
+          0.21,
+          0.45
         ]
       }
     ],
@@ -1811,8 +1811,8 @@
     },
     "elsewhere": {
       "centroid": 128,
-      "decay": 0.27,
-      "dynamics": 7.7,
+      "decay": 0.31,
+      "dynamics": 7.6,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -1843,10 +1843,10 @@
         "others": 128,
         "of": 36,
         "margin": 46,
-        "spread": 36,
+        "spread": 35,
         "against": [
           110,
-          146
+          145
         ]
       },
       {
@@ -1854,13 +1854,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.4,
-        "others": 0.27,
+        "others": 0.31,
         "of": 36,
-        "margin": 0.13,
+        "margin": 0.09000000000000002,
         "spread": 0.25,
         "against": [
-          0.19,
-          0.44
+          0.2,
+          0.45
         ]
       }
     ],
@@ -1925,8 +1925,8 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.31,
-      "dynamics": 7.5,
+      "decay": 0.35,
+      "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -1943,10 +1943,10 @@
         "others": 134,
         "of": 42,
         "margin": 38,
-        "spread": 53,
+        "spread": 42,
         "against": [
           111,
-          164
+          153
         ]
       },
       {
@@ -1968,13 +1968,13 @@
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
         "mine": 0.13,
-        "others": 0.31,
+        "others": 0.35,
         "of": 42,
-        "margin": 0.18,
-        "spread": 0.24,
+        "margin": 0.21999999999999997,
+        "spread": 0.25,
         "against": [
           0.21,
-          0.45
+          0.46
         ]
       }
     ],
@@ -2039,8 +2039,8 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.29,
-      "dynamics": 7.5,
+      "decay": 0.31,
+      "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -2071,10 +2071,10 @@
         "others": 134,
         "of": 42,
         "margin": 25,
-        "spread": 53,
+        "spread": 42,
         "against": [
           111,
-          164
+          153
         ]
       },
       {
@@ -2090,20 +2090,6 @@
           0.11,
           0.22
         ]
-      },
-      {
-        "term": "long-decay",
-        "key": "decay",
-        "why": "how long a note takes to fall to a quarter, in seconds",
-        "mine": 0.36,
-        "others": 0.29,
-        "of": 42,
-        "margin": 0.07,
-        "spread": 0.26,
-        "against": [
-          0.19,
-          0.45
-        ]
       }
     ],
     "usable": false,
@@ -2118,18 +2104,18 @@
     "across": {
       "tracks": 15,
       "low": {
-        "low": 0.8466305998784809,
+        "low": 0.8613701305344209,
         "mid": 0.9640570955302763,
         "high": 0.9977953001550502
       },
       "mid": {
         "low": 0.002200110177588219,
         "mid": 0.03559747200222618,
-        "high": 0.15335742624813783
+        "high": 0.13862293413127016
       },
       "high": {
-        "low": 0.0000052415915203575805,
-        "mid": 0.00001120035300922768,
+        "low": 0.000004919563672585028,
+        "mid": 0.000009847221984992494,
         "high": 0.00014339932355404142
       },
       "centroid": {
@@ -2144,14 +2130,14 @@
         "from": 15
       },
       "decay": {
-        "low": 0.15,
-        "mid": 0.21,
+        "low": 0.16,
+        "mid": 0.23,
         "high": 0.5,
         "from": 15
       },
       "dynamic_range": {
         "low": 4.495808426124952,
-        "mid": 7.43486471805322,
+        "mid": 7.370727918805578,
         "high": 10.414425808340118
       },
       "harmonics": {
@@ -2167,28 +2153,42 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.35,
+      "decay": 0.36,
       "dynamics": 7.5,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
       "low": 0.97,
       "mid": 0.03,
-      "transient": 0.7
+      "transient": 0.71
     },
     "terms": [
+      {
+        "term": "mid-forward",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.04,
+        "others": 0.03,
+        "of": 38,
+        "margin": 0.010000000000000002,
+        "spread": 0.04,
+        "against": [
+          0.01,
+          0.05
+        ]
+      },
       {
         "term": "short-decay",
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
-        "mine": 0.21,
-        "others": 0.35,
+        "mine": 0.23,
+        "others": 0.36,
         "of": 38,
-        "margin": 0.13999999999999999,
-        "spread": 0.24,
+        "margin": 0.12999999999999998,
+        "spread": 0.25,
         "against": [
           0.21,
-          0.45
+          0.46
         ]
       }
     ],
@@ -2204,49 +2204,49 @@
     "across": {
       "tracks": 30,
       "low": {
-        "low": 0.9105389050131276,
+        "low": 0.9195798844494951,
         "mid": 0.9754276270349684,
         "high": 0.9952022431288936
       },
       "mid": {
         "low": 0.005680120294132499,
         "mid": 0.025259540209867693,
-        "high": 0.10490002657237522
+        "high": 0.08945427469235685
       },
       "high": {
         "low": 0.000003998171001003733,
         "mid": 0.00002263176668488143,
-        "high": 0.000355646452590012
+        "high": 0.000307398752245911
       },
       "centroid": {
         "low": 107.94492854523283,
         "mid": 131.0508479839902,
-        "high": 166.538515154204
+        "high": 155.25947990000742
       },
       "transient": {
         "low": 0.5736204721586234,
-        "mid": 0.7075443169015444,
+        "mid": 0.7119544680580309,
         "high": 0.7968656606279481,
         "from": 30
       },
       "decay": {
         "low": 0.17,
-        "mid": 0.23,
-        "high": 0.54,
+        "mid": 0.24,
+        "high": 0.58,
         "from": 30
       },
       "dynamic_range": {
         "low": 5.768729455050173,
-        "mid": 8.276440599965058,
-        "high": 14.120197424650499
+        "mid": 8.087713923399185,
+        "high": 13.934015744815051
       },
       "harmonics": {
         "low": 0.078772061110912,
-        "mid": 0.16910397016621062,
-        "high": 0.25122253842895376
+        "mid": 0.16429994869813835,
+        "high": 0.25103009774292895
       },
       "even_odd": {
-        "low": 0.702497048199044,
+        "low": 0.7251516492745288,
         "mid": 0.8926855979559514,
         "high": 0.9612896860270994
       }
@@ -2254,7 +2254,7 @@
     "elsewhere": {
       "centroid": 126,
       "decay": 0.37,
-      "dynamics": 7.65,
+      "dynamics": 7.55,
       "harmonics": 0.17,
       "high": 0,
       "lean": 0.87,
@@ -2267,13 +2267,13 @@
         "term": "short-decay",
         "key": "decay",
         "why": "how long a note takes to fall to a quarter, in seconds",
-        "mine": 0.23,
+        "mine": 0.24,
         "others": 0.37,
         "of": 33,
-        "margin": 0.13499999999999998,
-        "spread": 0.29,
+        "margin": 0.125,
+        "spread": 0.28,
         "against": [
-          0.18,
+          0.19,
           0.47
         ]
       }

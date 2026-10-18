@@ -7,7 +7,10 @@ tracks:
     band: Green Day
     genres: [pop-punk]
     genres_by: person
-    note: American Idiot, 2004
+    note: >-
+      American Idiot, 2004. The download runs 181.4s against the 176 the link
+      states, and a refetch returns the same length, so the two are different
+      masters of this song rather than a wrong match.
   - track: holiday
     url: https://open.spotify.com/track/0lvhEsN1zkMzfp2M1o17yy
     year: 2004

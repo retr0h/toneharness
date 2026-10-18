@@ -27,7 +27,9 @@ tracks:
     genres: [punk]
     genres_by: person
     note: >-
-      London Calling, 1979. 208 seconds as Spotify holds it.
-      Clampdown was the third pick and was dropped: the only source that
-      resolves for it runs 3:55 against Spotify's 3:49, with no silence to
-      explain the difference, so it is a different edit
+      London Calling, 1979. 208 seconds as Spotify holds it. Clampdown was the
+      third pick and was dropped: the only source that resolves for it runs
+      3:55 against Spotify's 3:49, with no silence to explain the difference,
+      so it is a different edit. The download runs 213.6s against the 208 the
+      link states, and a refetch returns the same length, so the two are
+      different masters of this song rather than a wrong match.

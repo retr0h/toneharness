@@ -10,7 +10,9 @@ tracks:
     note: >-
       Dirt, from the 2022 remaster. 206 seconds as Spotify holds it. The one
       record the gear account is actually about: three bass tracks blended, of
-      which only the first went through an amplifier
+      which only the first went through an amplifier. The download runs 213.8s
+      against the 206 the link states, and a refetch returns the same length,
+      so the two are different masters of this song rather than a wrong match.
   - track: them-bones
     url: https://open.spotify.com/track/4A065x9kJt955eGVqf813g
     year: 1992

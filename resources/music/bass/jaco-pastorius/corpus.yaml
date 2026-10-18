@@ -36,4 +36,7 @@ tracks:
     seconds: 369
     genres: [jazz-fusion]
     genres_by: person
-    note: Word of Mouth, 1981
+    note: >-
+      Word of Mouth, 1981. The download runs 375.3s against the 369 the link
+      states, and a refetch returns the same length, so the two are different
+      masters of this song rather than a wrong match.

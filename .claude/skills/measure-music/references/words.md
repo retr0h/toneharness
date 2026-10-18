@@ -144,6 +144,25 @@ three answers:
 | one record is from another era                | drop it. [era.md](era.md) is the check that catches this    |
 | the career genuinely holds two sounds         | a rig per era, each with its own records. `extends` chains them |
 | the records are right and the player is varied | leave it. Say `scattered` in the caveat of any word they earn |
+| **one record's stem is not the instrument**   | replace it, from the same album where there is one          |
+
+The fourth was not on this list until a record turned out not to be measuring a
+bass at all. Allen Woody's John the Revelator read a centroid of 947Hz with 53%
+of its energy in the mid band, against 126Hz and 3% on one of his other two and
+167Hz and 11% on the other, and his three spanned 821Hz between them.
+
+**Nothing else in the corpus reads above 264Hz.** A bass stem four times the
+highest figure anybody else has is not a bass, whatever the file is, and
+refetching does not help: an older download of that song read 550Hz and a
+refetch matching Spotify's length to the second read 937Hz. Separation puts the
+loudest thing in the mix into the stem it was asked for, and on that song it is
+not the bass.
+
+So check the figure before believing a scattered verdict. A record whose
+centroid sits outside the whole corpus is the one to replace, and the swap costs
+nothing: another track from the same album is the same player on the same rig in
+the same week. Replacing that one took him from `nothing: scattered` to
+`mid-forward` in southern rock.
 
 The third is the common one and it is not a defect to fix. What it forbids is
 quoting the average as though it described a sound.

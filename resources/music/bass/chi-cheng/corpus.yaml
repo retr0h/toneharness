@@ -8,9 +8,11 @@ tracks:
     genres: [nu-metal, alternative-metal]
     genres_by: llm
     note: >-
-      Around the Fur. 214 seconds as Spotify holds it. The download carries six
-      seconds of leading silence and four of trailing, which is what the length
-      check had to subtract before it agreed
+      Around the Fur. 214 seconds as Spotify holds it. The download carries
+      six seconds of leading silence and four of trailing, which is what the
+      length check had to subtract before it agreed. The download runs 225.3s
+      against the 214 the link states, and a refetch returns the same length,
+      so the two are different masters of this song rather than a wrong match.
   - track: change-in-the-house-of-flies
     url: https://open.spotify.com/track/51c94ac31swyDQj9B3Lzs3
     year: 2000

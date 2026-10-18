@@ -13,7 +13,10 @@ tracks:
     seconds: 208
     genres: [funk-rock, alternative-rock]
     genres_by: person
-    note: I'm With You, 2011
+    note: >-
+      I'm With You, 2011. The download runs 216.3s against the 208 the link
+      states, and a refetch returns the same length, so the two are different
+      masters of this song rather than a wrong match.
   - track: ethiopia
     url: https://open.spotify.com/track/33sXl7ETOUGrHp1mSfr9R1
     year: 2011

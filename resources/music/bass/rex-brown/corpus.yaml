@@ -8,8 +8,11 @@ tracks:
     genres: [metal]
     genres_by: llm
     note: >-
-      243 seconds as Spotify holds it. The first official Pantera record, which
-      is the one Brown names as where his SVT arrives
+      243 seconds as Spotify holds it. The first official Pantera record,
+      which is the one Brown names as where his SVT arrives. The download runs
+      249.9s against the 243 the link states, and a refetch returns the same
+      length, so the two are different masters of this song rather than a
+      wrong match.
   - track: walk
     url: https://open.spotify.com/track/7fcfNW0XxTWlwVlftzfDOR
     year: 1992

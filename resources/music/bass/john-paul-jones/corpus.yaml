@@ -10,7 +10,10 @@ tracks:
     note: >-
       Led Zeppelin II. 263 seconds as Spotify holds it, as the 1990 remaster:
       the year is the recording's, the master is twenty years younger, and
-      every figure carries that remaster rather than the 1969 cut
+      every figure carries that remaster rather than the 1969 cut. The
+      download runs 268.9s against the 263 the link states, and a refetch
+      returns the same length, so the two are different masters of this song
+      rather than a wrong match.
   - track: the-lemon-song
     url: https://open.spotify.com/track/5qbVkwfy0RYGFA6hAiIL90
     year: 1969
