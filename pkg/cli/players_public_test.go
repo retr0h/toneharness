@@ -68,6 +68,22 @@ func (s *PlayersPublicTestSuite) TestPlayers() {
 			want: []string{"pino-palladino", "dark", "96 Hz against 170 Hz"},
 		},
 		{
+			// The third unit, and the one that read as nonsense until decay
+			// became an axis: a ring time of 0.66 seconds printed as "66%".
+			name: "a decay is printed in seconds",
+			of: []audio.Player{{
+				ID:      "glen-matlock",
+				Records: 3,
+				Terms: []audio.Derived{
+					{
+						Term: "long-decay", Key: audio.KeyDecay,
+						Mine: 0.66, Others: 0.29, Of: 42,
+					},
+				},
+			}},
+			want: []string{"glen-matlock", "long-decay", "0.66s against 0.29s"},
+		},
+		{
 			// The other unit. A share printed as hertz reads as nonsense.
 			name: "a share is printed as a share",
 			of: []audio.Player{{
