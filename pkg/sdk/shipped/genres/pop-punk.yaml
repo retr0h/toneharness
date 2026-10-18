@@ -20,6 +20,7 @@ ask:
   subject:
     kind: genre
     name: Pop-punk
+  words: []
 id: pop-punk
 rig:
   chain:
@@ -71,10 +72,11 @@ rig:
       note: 'chosen by measurement rather than by anybody''s say-so. Across 12 records
         from 4 players, pop-punk measures a centroid the device''s nearest bass
         amplifier sits at 150 Hz against 147, which is the closest of the twenty-seven
-        it models for this instrument.
-
-        Its records earn no word: the genre has a position and nothing that sets
-        it apart from the players who play none of it.'
+        it models for this instrument. Its records earn no word: on every figure
+        a word can come from, it sits within a quarter of a spread of the players
+        who play none of it. The controls below are therefore this instrument''s
+        corpus medians, and the amplifier is the only part of this rig the genre''s
+        own figures decided.'
     - kind: audio
       note: 'This rig is the same chain as Southern rock''s, control for control,
         and that is the evidence rather than a bug. On the three figures a word

@@ -266,20 +266,6 @@
           0.01,
           0.06
         ]
-      },
-      {
-        "term": "clean",
-        "key": "harmonics",
-        "why": "share of energy above the fundamental",
-        "mine": 0.07,
-        "others": 0.17,
-        "of": 36,
-        "margin": 0.1,
-        "spread": 0.12,
-        "against": [
-          0.12,
-          0.24
-        ]
       }
     ],
     "usable": false,
@@ -679,20 +665,6 @@
         "against": [
           0.01,
           0.06
-        ]
-      },
-      {
-        "term": "clean",
-        "key": "harmonics",
-        "why": "share of energy above the fundamental",
-        "mine": 0.13,
-        "others": 0.17,
-        "of": 34,
-        "margin": 0.04000000000000001,
-        "spread": 0.12,
-        "against": [
-          0.12,
-          0.24
         ]
       }
     ],

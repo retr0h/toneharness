@@ -20,10 +20,7 @@ ask:
   subject:
     kind: genre
     name: Grunge
-  words:
-  - term: scooped
-  - term: dark
-  - term: clean
+  words: []
 id: grunge
 rig:
   chain:
@@ -54,14 +51,14 @@ rig:
       Bias: '0.74'
       BiasX: '0.5'
       ChVol: '0.8'
-      Drive: '0.35'
+      Drive: '0.6'
       Hum: '0.5'
       Master: '1.0'
-      Mid: '0.6900000000000001'
+      Mid: '0.73'
       MidFreq: '2'
       Ripple: '0.5'
       Sag: '0.5'
-      Treble: '0.82'
+      Treble: '0.85'
     evidence:
     - caveat: 'a genre measured off finished records, so the figures carry the amplifier,
         the microphone, the desk and the master of every one of them. The amplifier
@@ -72,12 +69,12 @@ rig:
         it, so this answer changes when the corpus gains players, and it is worth
         rebuilding rather than trusting indefinitely.'
       kind: audio
-      note: 'chosen by measurement rather than by anybody''s say-so. Across 9 records
-        from 3 players, grunge measures a centroid the device''s nearest bass amplifier
+      note: chosen by measurement rather than by anybody's say-so. Across 9 records
+        from 3 players, grunge measures a centroid the device's nearest bass amplifier
         sits at 117 Hz against 135, which is the closest of the twenty-seven it
-        models for this instrument.
-
-        Its records earn scooped, dark and clean.'
+        models for this instrument. Its records earn scooped, measured against the
+        players who play none of it, and that is what moves the controls below off
+        the medians this instrument's presets sit at.
     gear: Ampeg SVT
     position: 1
     role: amp

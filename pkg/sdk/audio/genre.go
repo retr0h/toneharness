@@ -377,7 +377,7 @@ func displaced(
 		case at > middle && ax.clears(at-middle, spread):
 			out = append(out, made(
 				ax, ax.More, mine, rest, len(others)+1, at-middle, lower, upper))
-		case at < middle && ax.clears(middle-at, spread):
+		case ax.Less != "" && at < middle && ax.clears(middle-at, spread):
 			out = append(out, made(
 				ax, ax.Less, mine, rest, len(others)+1, middle-at, lower, upper))
 		}

@@ -57,6 +57,44 @@ the next player being measured; one just over the line is the next thing to
 move. Two players may share a word and not be alike, and this is where that
 shows.
 
+## Nothing earns `clean`, and the axis it came from has one pole
+
+`saturated` is earned from the share of energy above the fundamental. Its
+opposite is not, and the corpus is why.
+
+Four of the five players earning `saturated` have a drive device written into
+their own rig: Chuck Dukowski, Tim Commerford, Matt Freeman, and Tobin Esperance
+with a Malekko B:Assmaster on his board. The high end of that measure tracks
+something real.
+
+The low end tracked nothing. Three of the four players that used to earn `clean`
+have documented gain. Chi Cheng read 0.081, and his own rig quotes Premier
+Guitar on the Tech 21 SansAmp GT2 he used "for extra balls". Troy Sanders read
+0.059, the cleanest figure in the corpus, and runs a Wren and Cuff Tall Font
+Russian distortion. Klaus Flouride read 0.077 on Dead Kennedys records nobody
+would call clean. Grunge earned `clean` as a genre, which is the one thing
+grunge is not.
+
+**The separation is the reason, not the arithmetic.** Distortion products are
+broadband and sit where the guitars sit, so splitting a mix assigns them to the
+guitar stem, and the dirtier and denser the record the more of them leave.
+Grunge, Deftones and Mastodon are the densest mixes here and they read the
+lowest. A measure reporting its own blind spot as a positive finding is worse
+than one that says nothing.
+
+It is not brightness in disguise, which was the other suspicion worth ruling
+out. Centroid and harmonics correlate +0.43, the four former `clean` players
+span 97Hz to 191Hz of centroid, and Tim Commerford earns `saturated` at 109Hz.
+Dark and saturated is reachable, so the axis is not reading the top end twice.
+
+`clean` is still a word a person may write in an ask, and it still moves Drive.
+What changed is that no measurement asserts it. Restoring the pole needs a
+measurement of breakup rather than of harmonic content, taken before separation
+or on a signal that never needed it. The word means "no breakup at any dynamic",
+and a median share of energy cannot speak about any dynamic: somebody who breaks
+up only when hit hard reads low, and `grit-on-attack` and `minimal-drive` exist
+for that.
+
 ## `scattered` is the other reason nothing was earned
 
 Two players earn nothing for opposite reasons, and the table tells them apart.

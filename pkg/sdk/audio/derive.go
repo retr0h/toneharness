@@ -102,7 +102,45 @@ var Axes = []Axis{
 		of:     func(a Across) Spread { return a.Centroid },
 	},
 	{
-		Key: KeyHarmonics, More: "saturated", Less: "clean",
+		// One pole. A high harmonic share is evidence of drive and a low one is
+		// not evidence of its absence, so this axis earns `saturated` and
+		// nothing earns `clean`.
+		//
+		// The asymmetry is not a hedge, it is what the corpus shows. Four of
+		// the five players earning `saturated` have a drive device written into
+		// their own rig: Chuck Dukowski, Tim Commerford, Matt Freeman, and
+		// Tobin Esperance with a Malekko B:Assmaster on his board. The high end
+		// of this measure tracks something real.
+		//
+		// The low end tracked nothing. Three of the four players earning `clean`
+		// have documented gain. Chi Cheng read 0.081, the second cleanest figure
+		// measured, and his own rig quotes Premier Guitar on the Tech 21 SansAmp
+		// GT2 he used "for extra balls". Troy Sanders read 0.059, the cleanest of
+		// all, and runs a Wren and Cuff Tall Font Russian distortion. Klaus
+		// Flouride read 0.077 on Dead Kennedys records nobody would call clean.
+		//
+		// The reason is the separation rather than the arithmetic. Distortion
+		// products are broadband and sit where the guitars sit, so splitting a
+		// mix assigns them to the guitar stem, and the dirtier and denser the
+		// record the more of them leave. Grunge, Deftones and Mastodon are the
+		// densest mixes here and they read the lowest. A measure that reports
+		// its own blind spot as a positive finding is worse than one that says
+		// nothing: `clean` was being asserted of the records least able to
+		// support it.
+		//
+		// It is not brightness in disguise either, which was the other
+		// suspicion. Centroid and this correlate +0.43, and the four `clean`
+		// players span 97Hz to 191Hz of centroid while Tim Commerford earns
+		// `saturated` at 109Hz. Dark and saturated is reachable, so the axis is
+		// not reading the top end twice.
+		//
+		// What would restore the pole is a measurement of breakup rather than of
+		// harmonic content, taken before separation or on a signal that never
+		// needed it. `clean` in words.json means "no breakup at any dynamic",
+		// and a median share of energy cannot speak about any dynamic: a player
+		// who breaks up only when hit hard reads low, and the vocabulary already
+		// has `grit-on-attack` and `minimal-drive` for exactly that.
+		Key: KeyHarmonics, More: "saturated", Less: "",
 		Why:    "share of energy above the fundamental",
 		places: 2,
 		of:     func(a Across) Spread { return a.Harmonics },
@@ -304,7 +342,8 @@ func Derive(
 		case span.Low > middle && ax.clears(span.Low-middle, spread):
 			out = append(out, made(
 				ax, ax.More, mine, rest, len(others)+1, span.Low-middle, lower, upper))
-		case span.High < middle && ax.clears(middle-span.High, spread):
+		case ax.Less != "" && span.High < middle &&
+			ax.clears(middle-span.High, spread):
 			out = append(out, made(
 				ax, ax.Less, mine, rest, len(others)+1, middle-span.High, lower, upper))
 		}
