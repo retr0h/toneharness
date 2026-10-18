@@ -78,6 +78,31 @@ rig:
         it sits within a quarter of a spread of the players who play none of it. The
         controls below are therefore this instrument''s corpus medians, and the amplifier
         is the only part of this rig the genre''s own figures decided.'
+    - kind: audio
+      note: |-
+        This rig is the same chain as Pop punk and Southern rock's, control for control, and that is the evidence rather than a bug. On the figures a word can be earned from, the three are nearly one genre: median centroids of 132 Hz for hard-rock, 133 Hz for pop-punk, 131 Hz for southern-rock, 3.1% for hard-rock, 2.4% for pop-punk, 2.5% for southern-rock of the energy in the mids, and 1.6% for hard-rock, 1.7% for pop-punk, 2.5% for southern-rock of it above the fundamental. None of them earns a word, so none moves off this instrument's corpus medians, and the nearest amplifier to all three is the same one.
+
+        The figure that does separate them is decay, 0.55 for hard-rock, 0.85 for pop-punk, 0.28 for southern-rock, and it cannot award a word: a player's own records disagree on decay by more than the whole corpus spans, so an axis built on it would hand out verdicts on noise.
+
+        Growing the corpus has not changed it. These were two identical rigs when southern rock held 18 records; it holds 16 from 5 players now, hard rock joined them rather than separating, and all three are still the same preset.
+    - kind: audio
+      note: |-
+        This rig is the same chain as Pop punk and Southern rock's, control for control, and that is the evidence rather than a bug.
+
+        On the figures a word can be earned from, the three are nearly one genre. Median centroid: 132 Hz hard-rock, 133 Hz pop-punk, 131 Hz southern-rock. Share of the energy in the mids: 3.1% hard-rock, 2.4% pop-punk, 2.5% southern-rock. Share above the fundamental: 1.6% hard-rock, 1.7% pop-punk, 2.5% southern-rock. None of them earns a word, so none moves off this instrument's corpus medians, and the nearest amplifier to all three is the same one.
+
+        The figure that does separate them is decay, where they read 0.55 hard-rock, 0.85 pop-punk, 0.28 southern-rock, and it cannot award a word: a player's own records disagree on decay by more than the whole corpus spans, so an axis built on it would hand out verdicts on noise.
+
+        Growing the corpus has not changed it. Two of these were identical when southern rock held 18 records; it holds 16 from 5 players now, hard rock joined them rather than separating, and all three are still one preset.
+    - kind: audio
+      note: |-
+        This rig is the same chain as Pop punk and Southern rock's, control for control, and that is the evidence rather than a bug.
+
+        On the figures a word can be earned from, the three are nearly one genre. Median centroid: 132 Hz hard-rock, 133 Hz pop-punk, 131 Hz southern-rock. Share of the energy in the mids: 3.1% hard-rock, 2.4% pop-punk, 2.5% southern-rock. Share above the fundamental: 1.6% hard-rock, 1.7% pop-punk, 2.5% southern-rock. None of them earns a word, so none moves off this instrument's corpus medians, and the nearest amplifier to all three is the same one.
+
+        The figure that does separate them is decay, where they read 0.55 hard-rock, 0.85 pop-punk, 0.28 southern-rock, and it cannot award a word: a player's own records disagree on decay by more than the whole corpus spans, so an axis built on it would hand out verdicts on noise.
+
+        Growing the corpus has not changed it. Two of these were identical when southern rock held 18 records; it holds 30 from 10 players now, hard rock joined them rather than separating, and all three are still one preset.
     gear: MESA/Boogie Bass 400+ (channel 2)
     position: 1
     role: amp

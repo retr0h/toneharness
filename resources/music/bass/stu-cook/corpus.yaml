@@ -1,0 +1,29 @@
+artist: Stu Cook
+tracks:
+  - track: born-on-the-bayou
+    url: https://open.spotify.com/track/587bVBCHYW5Q2VNRLig4AS
+    year: 1969
+    seconds: 315
+    band: Creedence Clearwater Revival
+    genres: [southern-rock, rock]
+    genres_by: person
+    note: >-
+      Bayou Country, the first album of the years his cited Kustom rig covers
+  - track: fortunate-son
+    url: https://open.spotify.com/track/4BP3uh0hFLFRb5cjsgLqDh
+    year: 1969
+    seconds: 140
+    band: Creedence Clearwater Revival
+    genres: [southern-rock, rock]
+    genres_by: person
+    note: Willy and the Poor Boys, 1969
+  - track: travelin-band
+    url: https://open.spotify.com/track/0INUNNYfsp4qr6kJdY46mY
+    year: 1970
+    seconds: 127
+    band: Creedence Clearwater Revival
+    genres: [southern-rock, rock]
+    genres_by: person
+    note: >-
+      Cosmo's Factory, 1970, and the song Bass Player titled his interview
+      after

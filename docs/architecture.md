@@ -40,8 +40,8 @@ come out generic.
 | Which blocks are in it    | the gear a rig names, plus the grammar             | shortlisted by measurement when a solve stalls     |
 | Which way a knob moves    | swept on the device, in `resources/sweeps/`        | 19 blocks measured and shipped, on bass            |
 | What values to set        | catalog defaults, corpus medians, intent           | six axes of ten                                    |
-| What a genre sounds like  | displacement over `resources/music/`               | 21 tagged, 17 earning a word, 10 aimable, all bass |
-| What a player sounds like | measured over `resources/music/bass/`              | 41 players, 128 records, 19 earning a word         |
+| What a genre sounds like  | displacement over `resources/music/`               | 21 tagged, 16 earning a word, 10 aimable, all bass |
+| What a player sounds like | measured over `resources/music/bass/`              | 42 players, 131 records, 20 earning a word         |
 
 **Every measurement here is of a bass, and that is a limit rather than a
 default.** The corpus tree holds `bass/` and nothing else, so each genre's

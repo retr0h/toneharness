@@ -54,10 +54,10 @@ rig:
       HighMid: "0.5"
       Hum: "0.5"
       Master: "0.6"
-      Mid: "0.584"
+      Mid: "0.56"
       Ripple: "0.5"
       Sag: "0.5"
-      Treble: "0.5283018867924528"
+      Treble: "0.5"
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
         the microphone, the desk and the master of every one of them. The amplifier
@@ -71,12 +71,13 @@ rig:
         may overlap, and clean is gone from every subject because a low share of energy
         above the fundamental turned out not to be evidence of no drive.'
       kind: audio
-      note: Chosen by measurement rather than by anybody's say-so. Across 12 records
-        from 4 players, rock measures a centroid the device's nearest bass amplifier
-        sits at 155 Hz against 170, which is the closest of the 27 it models for this
-        instrument. Its records earn mid-forward and bright, measured against the
-        players who play none of it, and that is what moves the controls below off
-        the medians this instrument's presets sit at.
+      note: 'Chosen by measurement rather than by anybody''s say-so. Across 15 records
+        from 5 players, rock measures a centroid the device''s nearest bass amplifier
+        sits at 155 Hz against 165, which is the closest of the 27 it models for this
+        instrument. Its records earn no word: on every figure a word can come from,
+        it sits within a quarter of a spread of the players who play none of it. The
+        controls below are therefore this instrument''s corpus medians, and the amplifier
+        is the only part of this rig the genre''s own figures decided.'
     gear: MESA/Boogie Bass 400+ (channel 1)
     position: 1
     role: amp

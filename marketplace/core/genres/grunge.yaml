@@ -47,12 +47,16 @@ rig:
     confidence: low
     controls:
       Bass: "0.5"
-      Ch Vol: "1.0"
-      Drive: "0.0"
-      Gain: "0.32"
-      Master: "0.5"
-      Mid: "0.4625"
-      Mid Freq: "0.5"
+      Bias: "0.55"
+      BiasX: "0.9"
+      ChVol: "0.74"
+      Drive: "0.62"
+      HighMid: "0.5"
+      Hum: "0.5"
+      Master: "0.6"
+      Mid: "0.5428571428571429"
+      Ripple: "0.5"
+      Sag: "0.5"
       Treble: "0.5"
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
@@ -69,11 +73,11 @@ rig:
       kind: audio
       note: Chosen by measurement rather than by anybody's say-so. Across 12 records
         from 4 players, grunge measures a centroid the device's nearest bass amplifier
-        sits at 121 Hz against 145, which is the closest of the 27 it models for this
+        sits at 150 Hz against 145, which is the closest of the 27 it models for this
         instrument. Its records earn scooped, measured against the players who play
         none of it, and that is what moves the controls below off the medians this
         instrument's presets sit at.
-    gear: Aguilar Tone Hammer
+    gear: MESA/Boogie Bass 400+ (channel 1)
     position: 1
     role: amp
   - attrs:
@@ -83,12 +87,12 @@ rig:
       EarlyReflections: "0.0"
       HighCut: "8000.0"
       Level: "0.0"
-      LowCut: "20.0"
+      LowCut: "19.9"
     evidence:
     - kind: corpus
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
-    gear: Legacy 2x15" MESA/Boogie 2x15 EV
+    gear: Legacy 6x10" MESA/Boogie Power House
     position: 2
     role: cab
   instrument: bass

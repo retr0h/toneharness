@@ -1,0 +1,277 @@
+# Stu Cook — Creedence Clearwater Revival
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+#
+# Filed in community because this device models none of what he played. His
+# amplifier is cited and in his own words, which is why this is a rig at all
+# rather than a sound-alike: what blocks it from core is the device, not the
+# research.
+#
+# Kustom 400 heads into Sunn 2000S cabinets. No Kustom bass amplifier is
+# modelled here at all, and the Sunn that is modelled is a Coliseum rather than
+# a 2000S, so the maker of his cabinets is right and nothing else is. The
+# substitution below says so.
+#
+# core/ requires two things of every rig: a source somebody opened for each
+# claim, and no gear substituted by the gear map. See build-a-rig's
+# shipping.md, "Two bars for core, and where each one falls".
+
+ask:
+  aliases:
+  - ccr
+  - creedence
+  - creedence-clearwater-revival
+  confidence: medium
+  genre:
+  - southern-rock
+  - rock
+  instrument: bass
+  subject:
+    band: Creedence Clearwater Revival
+    era: the Kustom years, Bayou Country to Cosmo's Factory
+    kind: artist
+    name: Stu Cook
+    years:
+      from: 1969
+      to: 1970
+  words:
+  - evidence:
+    - against:
+        centroid: 134
+      caveat: |-
+        It measures the records rather than the player, and these three are 1969 and 1970 mixes at Wally Heider's and RCA, cut to be played on a radio. No citation argues for the word: the Bass Player interview is about his basses and his amplifiers, not about how the records sound.
+
+        It also describes a record made through gear this device does not model, which is the thing to hold against it. The rig below is a Sunn standing in for a Kustom, and the word was earned by neither.
+      kind: audio
+      measured:
+        centroid: 108
+      note: His centroid sits at 108 Hz across Born on the Bayou, Fortunate Son and
+        Travelin' Band, against a middle of 134 Hz across the forty-two other players
+        measured. Clear by 26 Hz, which is 49% of the width of their middle half.
+        Reproduce with `go run main.go measure players --corpus resources/music/bass`.
+      spread:
+        centroid: 53
+    term: dark
+id: stu-cook
+rig:
+  chain:
+  - attrs:
+      '@position': "0"
+    controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    position: 0
+    role: comp
+  - attrs:
+      '@position': "1"
+    confidence: medium
+    controls:
+      4kHz: "3.8"
+      125Hz: "4.7"
+      1kHz: "3.7"
+      62p5Hz: "5.7"
+      250Hz: "1.3"
+      2kHz: "-1.7"
+      500Hz: "-2.0"
+      Bright: "true"
+      ChVol: "0.8"
+      Contour: "true"
+      Gain: "0.82"
+      Master: "0.75"
+    evidence:
+    - caveat: |-
+        Read from the Wayback Machine. The page is a fan site carrying the article with the author's permission, which it states, and the site itself is gone: riverising.tripod.com no longer resolves.
+
+        He dates the Kustoms as "when Creedence got some money" and gives no year, so the window above is their hit years rather than anything he said. The pre-fame Fender rig is outside it and is not what this names.
+      kind: cited
+      note: 'Bass Player, April 1998, "Playin'' In A Traveling Band" by Ed Friedland,
+        in his own words: "When Creedence got some money, we all went out and bought
+        a bunch of Kustom amps, the tuck and roll stuff. I had a couple of 400 watt
+        heads and 4 Sunn 2000S cabinets, I had a lot of noise behind me." Friedland
+        dates what came before it himself: Cook "played many of his pre-fame gigs
+        on a Fender Showman head through a Dual Showman cabinet with 2 15\" speakers".'
+      url: http://web.archive.org/web/20260411181704/https://riverising.tripod.com/stu/bassplayer.htm
+    gear: Kustom 400
+    position: 1
+    role: amp
+    substitute:
+      confidence: low
+      evidence:
+      - caveat: Nobody has A/B'd these and no source relates them. This is the nearest
+          thing the device carries to any part of his rig rather than a claim that
+          they sound alike.
+        kind: user
+        note: 'A stand-in chosen on the one thread of his rig this device holds: his
+          cabinets were Sunn, so a Sunn amplifier keeps the maker even though it keeps
+          nothing else. The Coliseum 300 is a valve head and the Kustom 400 was solid
+          state, which is the part of the substitution to disbelieve first.'
+      gear: Sunn Coliseum 300
+  - attrs:
+      '@position': "2"
+    controls:
+      Distance: "1.5"
+      EarlyReflections: "0.0"
+      HighCut: "20100.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Legacy 1x18" Sunn Coliseum
+    position: 2
+    role: cab
+  - attrs:
+      '@position': "3"
+    controls:
+      HighGain: "0.48113207547169806"
+      Level: "0.0"
+      LowGain: "0.0"
+      MidFreq: "600.0"
+      MidGain: "0.96"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Simple EQ
+    position: 3
+    role: eq
+  instrument: bass
+  preset:
+    dsp0:
+      members:
+        inputA:
+          attrs:
+            '@input': "1"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        inputB:
+          attrs:
+            '@input': "0"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        join:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
+          controls:
+            A Level: "0"
+            A Pan: "0.5"
+            B Level: "0"
+            B Pan: "0.5"
+            B Polarity: "false"
+            Level: "0"
+          model: HD2_AppDSPFlowJoin
+        outputA:
+          attrs:
+            '@output': "1"
+          controls:
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputMain
+        outputB:
+          attrs:
+            '@output': "0"
+          controls:
+            Type: "true"
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputSend
+        split:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
+          controls:
+            BalanceA: "0.5"
+            BalanceB: "0.5"
+            bypass: "false"
+          model: HD2_AppDSPFlowSplitY
+    dsp1:
+      members: {}
+    global:
+      attrs:
+        '@DtSelect': "2"
+        '@PowercabMode': "0"
+        '@PowercabSelect': "2"
+        '@PowercabVoicing': "0"
+        '@current_snapshot': "0"
+        '@cursor_dsp': "0"
+        '@cursor_group': ""
+        '@cursor_path': "0"
+        '@cursor_position': "0"
+        '@guitarinputZ': "0"
+        '@guitarpad': "0"
+        '@pedalstate': "2"
+        '@tempo': "120"
+        '@topology0': A
+        '@topology1': "0"
+      model: '@global_params'
+    snapshot0:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 1
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot1:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 2
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot2:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 3
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    variax:
+      attrs:
+        '@variax_customtuning': "true"
+        '@variax_lockctrls': "0"
+        '@variax_magmode': "false"
+        '@variax_model': "0"
+        '@variax_str1level': "1"
+        '@variax_str1tuning': "0"
+        '@variax_str2level': "1"
+        '@variax_str2tuning': "0"
+        '@variax_str3level': "1"
+        '@variax_str3tuning': "0"
+        '@variax_str4level': "1"
+        '@variax_str4tuning': "0"
+        '@variax_str5level': "1"
+        '@variax_str5tuning': "0"
+        '@variax_str6level': "1"
+        '@variax_str6tuning': "0"
+        '@variax_toneknob': "-0.10000002384185791"
+        '@variax_volumeknob': "-0.10000002384185791"
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec
+version: 3.0.0
