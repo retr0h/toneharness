@@ -52,7 +52,7 @@ rig:
       Bias: '0.55'
       BiasX: '0.9'
       ChVol: '0.74'
-      Drive: '0.62'
+      Drive: '0.7109090909090908'
       HighMid: '0.5'
       Hum: '0.5'
       Master: '0.6'

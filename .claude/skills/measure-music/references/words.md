@@ -5,19 +5,57 @@ mise exec -- go run main.go measure players --corpus resources/music/bass --json
 mise exec -- go run main.go measure players --corpus resources/music/bass --evidence
 ```
 
-The only mode that produces words, because a word is earned by sitting clear of
-the other players and one player has nobody to be clear of. `nothing` is the
+The only mode that produces words, because a word is earned against the other
+players and one player has nobody to be measured against. `nothing` is the
 ordinary answer rather than a failure: a player whose own records disagree with
 each other earns nothing, and so does one sitting where everybody else sits.
+
+## A word describes a sound, it does not prove it unique
+
+A word is earned by sitting on one side of the **middle** of the others, by at
+least a quarter of their spread. Not outside their quartiles, which is what it
+used to be, and the difference is that **words overlap**.
+
+Any number of players or genres may be darker than typical. Nothing takes the
+word off one of them because another arrived carrying it too, and what a genre
+is, is the combination it earns rather than the one word nobody else has. Six
+genres on this corpus read `dark` and four read `scooped`.
+
+That is a change from a rule that kept quietly removing words. Grunge earned
+`scooped`, `dark` and `clean`; twenty-five records of rock, metal and nu-metal
+joined the corpus, the metal players are dark, and grunge earned nothing.
+Grunge had not changed. Darkness had stopped being unusual, and because these
+words move controls, a genre's preset was depending on which unrelated genres
+happened to have been measured.
+
+Distinctiveness did not stop mattering. It moved to the margin, which is what
+`holds` prints: the word says what the sound is, and the margin says how far
+from typical it sits.
+
+**The quarter is not taste.** Measured across all 21 genres on all three axes,
+the margins as a share of the others' spread fall in two groups with nothing
+between them:
+
+```
+0.00 0.00 0.01 0.02 0.03 0.04 0.05 0.08 0.11 0.12 0.14 0.16 0.18 0.19 0.21
+0.38 0.41 0.44 0.46 0.49 0.51 0.57 0.58 0.69 0.83 1.27 2.41
+```
+
+Any threshold between 0.21 and 0.38 answers the same way, so a quarter is the
+round number inside the gap. A tenth was available and refused: it would have
+separated southern rock from pop punk, which is the pair this corpus most wants
+separated, on margins of 6Hz. Choosing a threshold for the answer it gives is
+how a measurement stops being one.
 
 Point it at one instrument. A guitar's centre of gravity sits an octave above a
 bass guitar's, so pooling both would earn every bassist `dark` and every guitarist
 `bright` and mean nothing by either.
 
-`holds` is the margin past the line the word had to clear, in the measure's own
-unit, which is what tells one word from another. A word with a wide margin
-survives the next player being measured; one at a tenth of a percent is the next
-thing to move.
+`holds` is the margin past the middle of the others, in the measure's own unit,
+which is what tells one word from another. A word with a wide margin survives
+the next player being measured; one just over the line is the next thing to
+move. Two players may share a word and not be alike, and this is where that
+shows.
 
 ## `scattered` is the other reason nothing was earned
 

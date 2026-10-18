@@ -405,16 +405,20 @@ func MeasuredGenres(
 			lipgloss.Left, lipgloss.Left,
 		},
 		Empty: "no records carry a genre",
-		Summary: "a genre earns a word where its middle sits outside the " +
-			"middle half of the players who play none of it, and the margin " +
-			"says how far past the line",
+		Summary: "a genre earns a word where its middle sits a quarter of " +
+			"their spread or more from the middle of the players who play " +
+			"none of it, and the margin says how much further. Words " +
+			"overlap: a genre is the combination it earns, not a word " +
+			"nobody else has",
 	}.Render(w)
 }
 
 // measuredHeld says how many were measured and how many earned anything.
 //
 // The two are not the same, and the gap is the finding: a genre can clear the
-// record threshold and still sit inside the middle half on every axis.
+// record threshold and still sit too close to the middle on every axis to say
+// anything. Southern rock and pop punk both do, which is why they resolve to
+// the same chain.
 func measuredHeld(
 	found, earning int,
 ) string {

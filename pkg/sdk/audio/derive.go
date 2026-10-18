@@ -118,6 +118,50 @@ var Axes = []Axis{
 // The precision rather than a threshold somebody chose. Measured() reports a
 // centroid to the hertz and a band share to two places, so below that there is
 // no difference to report rather than a small one.
+// offMiddle is how far from the middle of the others a figure has to sit before it
+// is worth a word, as a share of their middle half.
+//
+// A quarter, and the corpus chose it rather than taste. Measured across all 21
+// genres on all three axes, the margins as a share of the others' spread land
+// in two groups with nothing between them:
+//
+//	0.00 0.00 0.01 0.02 0.03 0.04 0.05 0.08 0.11 0.12 0.14 0.16 0.18 0.19 0.21
+//	0.38 0.41 0.44 0.46 0.49 0.51 0.57 0.58 0.69 0.83 1.27 2.41
+//
+// Any threshold between 0.21 and 0.38 produces the same answer, so a quarter is
+// the round number inside the gap rather than a line drawn through data.
+//
+// Without it the median comparison awards almost everything. Southern rock sits
+// 2.9Hz from the middle of a population spanning 65Hz, which is 4% of the
+// spread, and would read `bright` on it. The precision floor cannot catch that:
+// 2.9Hz rounds to 3Hz and resolves fine. What was missing is a scale, and the
+// spread is the scale the report already prints a margin against.
+//
+// A tighter number was available and refused. At a tenth, southern rock earns
+// `scooped` and `clean` and pop punk still earns nothing, which separates the
+// two genres this corpus most wants separated. That is choosing the threshold
+// for the answer it gives, on margins of 6Hz, and it is the mistake the note
+// above Axes records somebody already making once with the click measure.
+const offMiddle = 0.25
+
+// clears says whether a margin is far enough from the middle of the others to
+// mean something, by both floors: the measure's own precision, and a quarter of
+// the spread of whoever it was measured against.
+//
+// A zero spread clears on precision alone. Every other subject read the same
+// figure, so there is no scale to be a share of, and inventing one would refuse
+// a word the figures plainly support.
+func (a Axis) clears(
+	margin float64,
+	spread float64,
+) bool {
+	if !a.resolves(margin) {
+		return false
+	}
+
+	return spread <= 0 || margin >= spread*offMiddle
+}
+
 func (a Axis) resolves(
 	margin float64,
 ) bool {
@@ -137,8 +181,12 @@ type Derived struct {
 	// Of is how many artists the comparison was against, this one included.
 	Of int `json:"of"`
 	// Margin is how far past the line this player sits, in the measure's own
-	// units: how much the other players' quartile would have to move to take
+	// units: how much the other players' median would have to move to take
 	// the word away.
+	//
+	// This is where distinctiveness lives now that the gate does not test for
+	// it. Two artists may both be `dark`, and the margin is what says one of
+	// them is barely darker than typical and the other is nothing like it.
 	//
 	// Two words that read alike are not alike. 39% of the energy in the mid
 	// band against 4% is a word nothing will overturn; 8% against 4% flipped
@@ -183,20 +231,40 @@ type Derived struct {
 // Derive is what an artist's measurements say about them, against others
 // measured the same way.
 //
-// An artist earns a term only where their whole range sits outside the middle
-// half of the other artists: above the others' upper quartile, or below their
-// lower quartile. So a word means more than most of the population, not more
-// than every member of it.
+// An artist earns a term where their whole range sits on one side of the
+// middle of the other artists: entirely above the others' median, or entirely
+// below it. So a word says this one is consistently darker, or more
+// mid-forward, than the typical artist measured.
 //
-// It was more than every member of it at first, and that rule got stricter
-// with every artist added. Each one could only raise the highest middle or
-// lower the lowest, so with five artists at most one could clear an axis in
-// each direction. One player earned three terms against two other artists and
-// none against four, which is more data giving fewer answers.
+// **A word describes a sound rather than proving it unique, so words overlap.**
+// Any number of artists may be darker than the median, and nothing takes the
+// word off one of them because another arrived carrying it too. What a genre
+// is, is the combination of words it earns rather than the one word nobody
+// else has.
 //
-// The quartiles are interpolated between neighbours. Taken on a single
-// neighbour, the upper quartile of four artists is simply the highest of them,
-// which is the old rule back again.
+// This is the second time the rule has been loosened, and both times for the
+// same reason: it was answering "is this unusual" where the caller wanted
+// "what does this sound like". It began as more than every member of the
+// population, and got stricter with every artist added, because each one could
+// only raise the highest middle or lower the lowest. With five artists at most
+// one could clear an axis in each direction, and one player earned three terms
+// against two other artists and none against four, which is more data giving
+// fewer answers.
+//
+// Outside the middle half was better and had the same shape of fault. Grunge
+// earned `scooped`, `dark` and `clean`, then twenty-five records of rock, metal
+// and nu-metal joined the corpus, the metal players are dark, and grunge earned
+// nothing. Grunge had not changed. Darkness had stopped being unusual. These
+// words move controls, so a genre's preset was depending on which unrelated
+// genres happened to have been measured.
+//
+// Distinctiveness is still worth knowing and it is Margin's job, not this
+// gate's: the word says what the sound is, and the margin says how far from
+// typical it sits.
+//
+// The median and the quartiles are interpolated between neighbours. Taken on a
+// single neighbour, the upper quartile of four artists is simply the highest of
+// them, which is the oldest rule back again.
 //
 // The whole range rather than the middle, because the middle alone is not
 // enough: one artist reads 0% mid across two records and 15% on a third, so
@@ -225,14 +293,20 @@ func Derive(
 		slices.Sort(rest)
 		span := ax.of(mine)
 
-		// Clear of the rest, and clear by enough for the measure to see it.
-		switch upper, lower := between(rest, 0.75), between(rest, 0.25); {
-		case span.Low > upper && ax.resolves(span.Low-upper):
+		// On one side of the middle of the rest, and far enough from it to
+		// mean something. The quartiles are the scale that decides how far is
+		// far enough, and the scale the margin is reported against.
+		middle := between(rest, 0.5)
+		lower, upper := between(rest, 0.25), between(rest, 0.75)
+		spread := upper - lower
+
+		switch {
+		case span.Low > middle && ax.clears(span.Low-middle, spread):
 			out = append(out, made(
-				ax, ax.More, mine, rest, len(others)+1, span.Low-upper, lower, upper))
-		case span.High < lower && ax.resolves(lower-span.High):
+				ax, ax.More, mine, rest, len(others)+1, span.Low-middle, lower, upper))
+		case span.High < middle && ax.clears(middle-span.High, spread):
 			out = append(out, made(
-				ax, ax.Less, mine, rest, len(others)+1, lower-span.High, lower, upper))
+				ax, ax.Less, mine, rest, len(others)+1, middle-span.High, lower, upper))
 		}
 	}
 
