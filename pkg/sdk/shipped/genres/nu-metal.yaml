@@ -54,26 +54,31 @@ rig:
       Master: "0.5"
       Mid: "0.44"
       Mid Freq: "0.5"
-      Treble: "0.4444444444444444"
+      Treble: "0.44047619047619047"
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
-        the microphone, the desk and the master of every one of them. The amplifier
-        below is what sits nearest those figures, not one anybody is known to have
-        used. It also moves: a genre is measured against the players who play none
-        of it, so this answer changes when the corpus gains players, and it is worth
-        rebuilding rather than trusting indefinitely. Grunge is the example. It held
-        scooped, dark and clean; twenty-five records from five other genres joined
-        the corpus and it held nothing, because the rule then asked a genre to be
-        unusual rather than to be something; it holds scooped again now that words
-        may overlap, and clean is gone from every subject because a low share of energy
-        above the fundamental turned out not to be evidence of no drive.'
+        the microphone, the desk and the master of every one of them. This block is
+        what sits nearest those figures, not one anybody is known to have used. It
+        also moves: a genre is measured against the players who play none of it, so
+        this answer changes when the corpus gains players, and it is worth rebuilding
+        rather than trusting indefinitely.'
       kind: audio
-      note: Chosen by measurement rather than by anybody's say-so. Across 9 records
-        from 3 players, nu-metal measures a centroid the device's nearest bass amplifier
-        sits at 121 Hz against 130, which is the closest of the 27 it models for this
-        instrument. Its records earn scooped, dark and short-decay, measured against
-        the players who play none of it, and that is what moves the controls below
-        off the medians this instrument's presets sit at.
+      measured:
+        centroid: 109
+        decay: 0.23
+        dynamics: 7.2
+        harmonics: 0.17
+        high: 0
+        lean: 0.92
+        low: 1
+        mid: 0
+        transient: 0.72
+      note: Chosen by measurement rather than by anybody's say-so. Aguilar Tone Hammer
+        is the closest of the 27 bass amplifiers this device models to nu-metal, sitting
+        at 121 Hz against 130. Across 9 records from 3 players, nu-metal earns scooped,
+        dark and short-decay, measured against the players who play none of it, and
+        that is what moves the controls off the medians this instrument's presets
+        sit at.
     gear: Aguilar Tone Hammer
     position: 1
     role: amp

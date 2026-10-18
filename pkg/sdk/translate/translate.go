@@ -664,10 +664,12 @@ func nearestTo(
 	category catalog.Category,
 	notes *Notes,
 ) (rig.ChainEntry, bool) {
-	want, from, ok := target(spec, deps, notes)
+	at, ok := target(spec, deps, notes)
 	if !ok {
 		return rig.ChainEntry{}, false
 	}
+
+	want, from := at.figures, at.named
 
 	// The instrument the chain is for. The ask where it says, and otherwise
 	// whatever instrumentFor settled on for the rig being written, so the
@@ -710,9 +712,28 @@ func nearestTo(
 		Honoured: true,
 	})
 
+	// Why this block, written onto the block itself rather than only into the
+	// report. The report is read once by whoever ran the build; the document is
+	// what everybody downstream has, and a measured choice with nothing behind
+	// it reads exactly like a claim somebody made up.
+	//
+	// It was hand-written before, on every genre rig in the marketplace, and
+	// rebuilding them dropped all eleven at once. Nothing but
+	// TestEveryShippedGearClaimHasASource said so.
+	held := at.because(gear, len(ranked), best.Centroid, wants)
+
+	// A measurement off a finished record carries whatever microphone was in
+	// front of whatever cabinet, and this block was picked to sit near that
+	// figure rather than to reproduce the room. Low confidence because nobody
+	// is known to have played it: it is the nearest of what the device models.
+	down, weak := tone.CaptureDirect, tone.ConfidenceLow
+
 	return rig.ChainEntry{
-		Role: rig.Role(category),
-		Gear: gear,
+		Role:       rig.Role(category),
+		Gear:       gear,
+		Evidence:   &[]tone.Evidence{held},
+		Capture:    &down,
+		Confidence: &weak,
 	}, true
 } // named is the block the way a rig has to say it: the gear it emulates, which
 
@@ -877,13 +898,113 @@ func splitsByInstrument(
 	return false
 }
 
+// aim is what a request is aiming at, and enough about where that came from to
+// write the evidence for whatever gets chosen.
+//
+// The figures and the name were all this carried, and they are all a ranking
+// needs. Evidence needs the rest: how many records stand behind the target, how
+// many players made them, what their own figures read, and what their records
+// earned. Those are known where the target is worked out and nowhere after it,
+// so they travel with it rather than being looked up a second time.
+type aim struct {
+	// figures is the target in the figures a block is measured in.
+	figures measured.Figures
+	// named is what it came from, as a report and a document should say it: a
+	// genre's name, or the path of the recording.
+	named string
+	// read is the target's own measurements, which go into the evidence as the
+	// figures anybody holding the same records can take again. Empty for a
+	// target with nothing to report, which is not an error.
+	read map[string]float64
+	// records and players are how much stands behind it. Zero for a recording,
+	// which is one performance and says so by naming itself.
+	records, players int
+	// earned is the words the target's records earn against everything measured
+	// the same way, which is what moves the controls off the corpus medians.
+	earned []string
+	// caveat is what measuring this kind of target cannot show.
+	caveat string
+}
+
+// because is the evidence for choosing one block, which is the reasoning the
+// ranking already did written where the document keeps it.
+//
+// Assembled from both halves and neither alone: this value knows what was aimed
+// at and [nearestTo] knows what came nearest, so the sentence is built where the
+// second half arrives.
+func (a aim) because(
+	gear string,
+	ranked int,
+	sat float64,
+	instrument string,
+) tone.Evidence {
+	said := fmt.Sprintf(
+		"Chosen by measurement rather than by anybody's say-so. %s is the "+
+			"closest of the %d %s amplifiers this device models to %s, sitting "+
+			"at %.0f Hz against %.0f.",
+		gear, ranked, instrument, a.named, sat, a.figures.Centroid)
+
+	if a.records > 0 {
+		// Counted straight, with no pluraliser. The only target that fills these
+		// is a genre and [audio.Genre.Usable] holds one to eight records from
+		// three players before it may be aimed at, so neither can read "1
+		// records". A recording leaves them zero and skips this, since it is one
+		// performance and the name above says which.
+		//
+		// The name goes mid-sentence rather than first. A genre is spelled the
+		// way the ask spells it, which is lower case, and starting a sentence
+		// with it reads as a typo.
+		said += fmt.Sprintf(" Across %d records from %d players, %s ",
+			a.records, a.players, a.named)
+
+		// A target that earns nothing says so. It is the ordinary answer for
+		// something sitting where everything else sits, and a note that goes
+		// quiet instead reads as though the words were simply not looked up.
+		if len(a.earned) == 0 {
+			said += "earns no word against the players who play none of it, so " +
+				"nothing moves the controls off the medians this instrument's " +
+				"presets sit at."
+		} else {
+			said += fmt.Sprintf("earns %s, measured against the players who "+
+				"play none of it, and that is what moves the controls off the "+
+				"medians this instrument's presets sit at.", said3(a.earned))
+		}
+	}
+
+	held := tone.Evidence{Kind: tone.EvidenceAudio, Note: &said}
+
+	if len(a.read) > 0 {
+		read := a.read
+		held.Measured = &read
+	}
+
+	if a.caveat != "" {
+		why := a.caveat
+		held.Caveat = &why
+	}
+
+	return held
+}
+
+// said3 is a list the way a sentence says one, because these notes are read as
+// prose and "scooped, dark, long-decay" is not a sentence.
+func said3(
+	words []string,
+) string {
+	if len(words) < 2 {
+		return strings.Join(words, "")
+	}
+
+	return strings.Join(words[:len(words)-1], ", ") + " and " + words[len(words)-1]
+}
+
 // target is what a request is aiming at, in the figures a block is measured
 // in, and what it came from.
 func target(
 	spec tone.Ask,
 	deps Deps,
 	notes *Notes,
-) (measured.Figures, string, bool) {
+) (aim, bool) {
 	if spec.Like == nil || spec.Like.Recording == nil {
 		// A genre is the weaker target and the one almost every ask carries, so
 		// it answers where a recording does not rather than instead of one. A
@@ -901,7 +1022,7 @@ func target(
 			Said:  fmt.Sprintf("cannot be read, so nothing was measured from it: %v", err),
 		})
 
-		return measured.Figures{}, "", false
+		return aim{}, false
 	}
 
 	defer func() { _ = f.Close() }()
@@ -913,19 +1034,30 @@ func target(
 			Said:  fmt.Sprintf("is not audio this can read: %v", err),
 		})
 
-		return measured.Figures{}, "", false
+		return aim{}, false
 	}
 
 	// Through the same code every block went through, which is the only
 	// reason the two are comparable at all.
 	read := audio.Measure(samples, rate)
 
-	return measured.Figures{
-		Low:      100 * read.Low,
-		Mid:      100 * read.Mid,
-		High:     100 * read.High,
-		Centroid: read.Centroid,
-	}, at, true
+	return aim{
+		figures: measured.Figures{
+			Low:      100 * read.Low,
+			Mid:      100 * read.Mid,
+			High:     100 * read.High,
+			Centroid: read.Centroid,
+		},
+		named: at,
+		read:  read.Measured(),
+		// No record or player count, because a recording is one performance and
+		// the path above names which. The caveat is the one thing a reader needs
+		// that the figures do not say.
+		caveat: "A recording measured as it was finished, so the figures " +
+			"carry the amplifier, the microphone, the desk and the master as " +
+			"well as the player. This block is what sits nearest those " +
+			"figures, not one anybody is known to have used.",
+	}, true
 }
 
 // genreTarget is the middle of a genre's records, for an ask that names no
@@ -951,7 +1083,7 @@ func genreTarget(
 	spec tone.Ask,
 	deps Deps,
 	notes *Notes,
-) (measured.Figures, string, bool) {
+) (aim, bool) {
 	wants := ""
 	if spec.Instrument != nil {
 		wants = string(*spec.Instrument)
@@ -979,10 +1111,34 @@ func genreTarget(
 		// No second check on the comparison population. Usable carries it, so a
 		// genre that passed the test above has somewhere else to be measured
 		// against by construction.
-		return displacedTo(got, deps.Measured.Baseline), named, true
+		earned := make([]string, 0, len(got.Terms))
+		for _, term := range got.Terms {
+			earned = append(earned, term.Term)
+		}
+
+		return aim{
+			figures: displacedTo(got, deps.Measured.Baseline),
+			named:   named,
+			read:    got.Across.Measured(),
+			records: got.Records,
+			players: got.Players,
+			earned:  earned,
+			// The same caveat for every genre, because it is about the method
+			// rather than about the genre: it says what measuring finished
+			// records cannot separate, and that the answer moves when the
+			// corpus gains players.
+			caveat: "A genre measured off finished records, so the figures " +
+				"carry the amplifier, the microphone, the desk and the master " +
+				"of every one of them. This block is what sits nearest " +
+				"those figures, not one anybody is known to have used. It " +
+				"also moves: a genre is measured against the players who play " +
+				"none of it, so this answer changes when the corpus gains " +
+				"players, and it is worth rebuilding rather than trusting " +
+				"indefinitely.",
+		}, true
 	}
 
-	return measured.Figures{}, "", false
+	return aim{}, false
 }
 
 // displacedTo is the genre as a target a block can be ranked against.
