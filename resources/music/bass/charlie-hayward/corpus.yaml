@@ -3,6 +3,7 @@ tracks:
   - track: behind-your-eyes
     url: https://open.spotify.com/track/33Ox6NnX1TQfnWpM4MESla
     year: 1979
+    seconds: 234
     band: The Charlie Daniels Band
     genres: [southern-rock]
     genres_by: person
@@ -14,6 +15,7 @@ tracks:
   - track: passing-lane
     url: https://open.spotify.com/track/3oA1aix9K2N6jESkVZMOu6
     year: 1979
+    seconds: 195
     band: The Charlie Daniels Band
     genres: [southern-rock]
     genres_by: person
@@ -22,6 +24,7 @@ tracks:
   - track: mississippi
     url: https://open.spotify.com/track/6lLm1GktzH1dC5NLmEUtV0
     year: 1979
+    seconds: 189
     band: The Charlie Daniels Band
     genres: [southern-rock]
     genres_by: person

@@ -3,6 +3,7 @@ tracks:
   - track: hard-as-a-rock
     url: https://open.spotify.com/track/1gij27s31tFKcTHa8f1u4g
     year: 1995
+    seconds: 270
     band: AC/DC
     genres: [rock, hard-rock]
     genres_by: llm
@@ -13,6 +14,7 @@ tracks:
   - track: stiff-upper-lip
     url: https://open.spotify.com/track/1KBuhAHzia2qoD4u6YhvER
     year: 2000
+    seconds: 214
     band: AC/DC
     genres: [rock, hard-rock]
     genres_by: llm
@@ -20,6 +22,7 @@ tracks:
   - track: rock-n-roll-train
     url: https://open.spotify.com/track/4feXJ5IC3avXsVW9WNFSag
     year: 2008
+    seconds: 260
     band: AC/DC
     genres: [rock, hard-rock]
     genres_by: llm

@@ -3,6 +3,7 @@ tracks:
   - track: whats-your-name
     url: https://open.spotify.com/track/0uZs7p6cbEUNwGMdfNj9Kk
     year: 1977
+    seconds: 213
     band: Lynyrd Skynyrd
     genres: [southern-rock]
     genres_by: person
@@ -13,6 +14,7 @@ tracks:
   - track: that-smell
     url: https://open.spotify.com/track/52DKGPMQ21DauCR19pQ0BK
     year: 1977
+    seconds: 348
     band: Lynyrd Skynyrd
     genres: [southern-rock]
     genres_by: person
@@ -21,6 +23,7 @@ tracks:
   - track: you-got-that-right
     url: https://open.spotify.com/track/2lLWfAW32oxUCv0iYQQwSX
     year: 1977
+    seconds: 227
     band: Lynyrd Skynyrd
     genres: [southern-rock]
     genres_by: person

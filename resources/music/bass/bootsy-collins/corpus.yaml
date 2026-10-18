@@ -10,12 +10,14 @@ tracks:
   - track: stretchin-out
     url: https://open.spotify.com/track/6uMVhDeEggpgKdSAjqtCdw
     year: 1976
+    seconds: 411
     genres: [funk, p-funk]
     genres_by: person
     note: Stretchin' Out in Bootsy's Rubber Band, 1976
   - track: i-d-rather-be-with-you
     url: https://open.spotify.com/track/0rDzbrqJfF0zgQKvrnAjRJ
     year: 1976
+    seconds: 298
     genres: [funk, p-funk]
     genres_by: person
     note: Stretchin' Out in Bootsy's Rubber Band, 1976. The envelope filter
@@ -23,12 +25,14 @@ tracks:
   - track: the-pinocchio-theory
     url: https://open.spotify.com/track/1kbNfis640l0Y32BDfDdzR
     year: 1977
+    seconds: 366
     genres: [funk, p-funk]
     genres_by: person
     note: Ahh... The Name Is Bootsy, Baby!, 1977
   - track: munchies-for-your-love
     url: https://open.spotify.com/track/6gOY69g42Ex8Kad665i53a
     year: 1977
+    seconds: 577
     genres: [funk, p-funk]
     genres_by: person
     note: Ahh... The Name Is Bootsy, Baby!, 1977

@@ -3,6 +3,7 @@ tracks:
   - track: ramble-on
     url: https://open.spotify.com/track/3MODES4TNtygekLl146Dxd
     year: 1969
+    seconds: 263
     band: Led Zeppelin
     genres: [rock, hard-rock, blues-rock]
     genres_by: llm
@@ -13,6 +14,7 @@ tracks:
   - track: the-lemon-song
     url: https://open.spotify.com/track/5qbVkwfy0RYGFA6hAiIL90
     year: 1969
+    seconds: 379
     band: Led Zeppelin
     genres: [rock, hard-rock, blues-rock]
     genres_by: llm
@@ -22,6 +24,7 @@ tracks:
   - track: black-dog
     url: https://open.spotify.com/track/3qT4bUD1MaWpGrTwcvguhb
     year: 1971
+    seconds: 295
     band: Led Zeppelin
     genres: [rock, hard-rock, blues-rock]
     genres_by: llm

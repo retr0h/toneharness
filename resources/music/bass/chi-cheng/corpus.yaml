@@ -3,6 +3,7 @@ tracks:
   - track: my-own-summer
     url: https://open.spotify.com/track/1158ckiB5S4cpsdYHDB9IF
     year: 1997
+    seconds: 214
     band: Deftones
     genres: [nu-metal, alternative-metal]
     genres_by: llm
@@ -13,6 +14,7 @@ tracks:
   - track: change-in-the-house-of-flies
     url: https://open.spotify.com/track/51c94ac31swyDQj9B3Lzs3
     year: 2000
+    seconds: 299
     band: Deftones
     genres: [nu-metal, alternative-metal]
     genres_by: llm
@@ -22,6 +24,7 @@ tracks:
   - track: digital-bath
     url: https://open.spotify.com/track/2jSJm3Gv6GLxduWLenmjKS
     year: 2000
+    seconds: 255
     band: Deftones
     genres: [nu-metal, alternative-metal]
     genres_by: llm

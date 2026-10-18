@@ -3,6 +3,7 @@ tracks:
   - track: american-idiot
     url: https://open.spotify.com/track/6nTiIhLmQ3FWhvrGafw2zj
     year: 2004
+    seconds: 176
     band: Green Day
     genres: [pop-punk]
     genres_by: person
@@ -10,6 +11,7 @@ tracks:
   - track: holiday
     url: https://open.spotify.com/track/0lvhEsN1zkMzfp2M1o17yy
     year: 2004
+    seconds: 232
     band: Green Day
     genres: [pop-punk]
     genres_by: person
@@ -26,6 +28,7 @@ tracks:
   - track: st-jimmy
     url: https://open.spotify.com/track/09hW1hlP52DBiU3aO8jkgz
     year: 2004
+    seconds: 175
     band: Green Day
     genres: [pop-punk]
     genres_by: person

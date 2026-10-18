@@ -3,6 +3,7 @@ tracks:
   - track: meadow
     url: https://open.spotify.com/track/2gRk5paar8fnT28Q6AsKTj
     year: 2018
+    seconds: 208
     band: Stone Temple Pilots
     genres: [alternative-rock, hard-rock]
     genres_by: llm
@@ -12,6 +13,7 @@ tracks:
   - track: roll-me-under
     url: https://open.spotify.com/track/62e5c5tNuR641PEsB6e5wD
     year: 2018
+    seconds: 225
     band: Stone Temple Pilots
     genres: [alternative-rock, hard-rock]
     genres_by: llm
@@ -19,6 +21,7 @@ tracks:
   - track: the-art-of-letting-go
     url: https://open.spotify.com/track/7wvD299omOEJLwxHDs4GeY
     year: 2018
+    seconds: 275
     band: Stone Temple Pilots
     genres: [alternative-rock, hard-rock]
     genres_by: llm

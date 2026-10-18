@@ -68,6 +68,21 @@ type Record struct {
 	// another one measures another rig: an Acoustic 360 cannot be on a 1966
 	// record because Acoustic had not built one.
 	Year int `yaml:"year"`
+	// Seconds is how long the recording is where the url points, which is
+	// what tells a download of the right song from a download of another
+	// take of it.
+	//
+	// Required. A wrong file measures without complaining: a lyric video pads
+	// the end, these downloads pad the front, and a live version measures a
+	// different room. The only thing that catches any of it is the length the
+	// source holds, and until this existed that number lived in a `note` as
+	// prose, where nothing could read it and three of twenty-four files were
+	// called wrong by a check that looked at the tail alone.
+	//
+	// What the source holds rather than what is on disk. The file is the thing
+	// being checked and the link is what it is checked against, so a figure
+	// taken off the file would agree with itself forever.
+	Seconds int `yaml:"seconds"`
 	// At is the part measured, as "1:20" or "1:20-1:45".
 	At string `yaml:"at"`
 	// Note is anything worth saying about this recording in particular.
@@ -360,6 +375,13 @@ func (r Record) check() error {
 		return fmt.Errorf("reading manifest: %s has a source that is not Spotify "+
 			"or YouTube: %q. A source is what spotdl fetches the audio from, and "+
 			"it reads those two", r.Track, r.Source)
+	}
+
+	if r.Seconds <= 0 {
+		return fmt.Errorf("reading manifest: %s has no seconds, so nothing can "+
+			"tell the recording the url names from another take of it. "+
+			"`uvx spotdl save <url> --save-file t.spotdl` prints what the "+
+			"source holds", r.Track)
 	}
 
 	if err := r.checkGenres(); err != nil {

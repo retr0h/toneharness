@@ -105,6 +105,9 @@ type MusicRecord struct {
 	Track string `json:"track"`
 	// Year is when it was made.
 	Year int `json:"year"`
+	// Seconds is how long the recording is where its url points, which is
+	// what a file on disk is checked against.
+	Seconds int `json:"seconds"`
 	// Band is who made it, where the player was in one.
 	Band string `json:"band"`
 	// Genres are what it is, and DecidedBy who said so.

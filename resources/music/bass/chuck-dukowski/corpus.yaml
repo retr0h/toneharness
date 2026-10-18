@@ -3,6 +3,7 @@ tracks:
   - track: rise-above
     url: https://open.spotify.com/track/4kFfFe38CRVnTsakUTL4E4
     year: 1981
+    seconds: 146
     band: Black Flag
     genres: [punk]
     genres_by: person
@@ -11,6 +12,7 @@ tracks:
   - track: six-pack
     url: https://open.spotify.com/track/5Og9VyCOfxmZCuv1UhIyxE
     year: 1981
+    seconds: 140
     band: Black Flag
     genres: [punk]
     genres_by: person
@@ -19,6 +21,7 @@ tracks:
   - track: tv-party
     url: https://open.spotify.com/track/4DA95pyBe6QORPGvTEuMWQ
     year: 1981
+    seconds: 211
     band: Black Flag
     genres: [punk]
     genres_by: person

@@ -3,6 +3,7 @@ tracks:
   - track: dig
     url: https://open.spotify.com/track/7vrLphPq4yjaX7jiDdd2Nc
     year: 2000
+    seconds: 162
     band: Mudvayne
     genres: [nu-metal, alternative-metal]
     genres_by: llm
@@ -10,6 +11,7 @@ tracks:
   - track: death-blooms
     url: https://open.spotify.com/track/3Y4rNagSf2IukhcOTWYJuV
     year: 2000
+    seconds: 291
     band: Mudvayne
     genres: [nu-metal, alternative-metal]
     genres_by: llm
@@ -17,6 +19,7 @@ tracks:
   - track: not-falling
     url: https://open.spotify.com/track/15TzkwxGNvM3RGib0YkH4T
     year: 2002
+    seconds: 243
     band: Mudvayne
     genres: [nu-metal, alternative-metal]
     genres_by: llm

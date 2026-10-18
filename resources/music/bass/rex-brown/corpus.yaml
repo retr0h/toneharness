@@ -3,6 +3,7 @@ tracks:
   - track: cowboys-from-hell
     url: https://open.spotify.com/track/2SgbR6ttzoNlCRGQOKjrop
     year: 1990
+    seconds: 243
     band: Pantera
     genres: [metal]
     genres_by: llm
@@ -12,6 +13,7 @@ tracks:
   - track: walk
     url: https://open.spotify.com/track/7fcfNW0XxTWlwVlftzfDOR
     year: 1992
+    seconds: 315
     band: Pantera
     genres: [metal]
     genres_by: llm
@@ -19,6 +21,7 @@ tracks:
   - track: mouth-for-war
     url: https://open.spotify.com/track/6rkeaQRCWZxwkjhyqgxjXi
     year: 1992
+    seconds: 237
     band: Pantera
     genres: [metal]
     genres_by: llm

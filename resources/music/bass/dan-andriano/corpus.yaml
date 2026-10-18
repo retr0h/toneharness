@@ -3,6 +3,7 @@ tracks:
   - track: this-addiction
     url: https://open.spotify.com/track/2sTiGv2fPnxqH3igvfnaVf
     year: 2010
+    seconds: 154
     band: Alkaline Trio
     genres: [pop-punk]
     genres_by: person
@@ -10,6 +11,7 @@ tracks:
   - track: dine-dine-my-darling
     url: https://open.spotify.com/track/5erHygNGUkStzwvGFckRco
     year: 2010
+    seconds: 178
     band: Alkaline Trio
     genres: [pop-punk]
     genres_by: person
@@ -17,6 +19,7 @@ tracks:
   - track: lead-poisoning
     url: https://open.spotify.com/track/3FXVuafyH7AuWAERZw5nvs
     year: 2010
+    seconds: 157
     band: Alkaline Trio
     genres: [pop-punk]
     genres_by: person

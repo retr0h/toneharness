@@ -3,6 +3,7 @@ tracks:
   - track: london-calling
     url: https://open.spotify.com/track/124Y9LPRCAz3q2OP0iCvcJ
     year: 1979
+    seconds: 199
     band: The Clash
     genres: [punk]
     genres_by: person
@@ -12,6 +13,7 @@ tracks:
   - track: the-guns-of-brixton
     url: https://open.spotify.com/track/1d0RJmZXAncCnTYHFlhaj4
     year: 1979
+    seconds: 189
     band: The Clash
     genres: [punk]
     genres_by: person
@@ -20,6 +22,7 @@ tracks:
   - track: rudie-cant-fail
     url: https://open.spotify.com/track/4W9zZsQKsqikYbKM9vcN5Q
     year: 1979
+    seconds: 208
     band: The Clash
     genres: [punk]
     genres_by: person

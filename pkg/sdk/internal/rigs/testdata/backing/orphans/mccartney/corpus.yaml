@@ -3,6 +3,8 @@ tracks:
   - track: one
     url: https://open.spotify.com/track/abc
     year: 1991
+    seconds: 180
   - track: two
     url: https://open.spotify.com/track/def
     year: 1994
+    seconds: 180

@@ -3,6 +3,7 @@ tracks:
   - track: fire-on-the-mountain
     url: https://open.spotify.com/track/5YUIDMCtzUflSrONeYMWac
     year: 1975
+    seconds: 236
     band: The Marshall Tucker Band
     genres: [southern-rock]
     genres_by: person
@@ -11,6 +12,7 @@ tracks:
   - track: searchin-for-a-rainbow
     url: https://open.spotify.com/track/3QGT3GLyCV16E3vUPkFyD4
     year: 1975
+    seconds: 231
     band: The Marshall Tucker Band
     genres: [southern-rock]
     genres_by: person
@@ -19,6 +21,7 @@ tracks:
   - track: bob-away-my-blues
     url: https://open.spotify.com/track/40sjtU6ksTqt2xslMynrz6
     year: 1975
+    seconds: 166
     band: The Marshall Tucker Band
     genres: [southern-rock]
     genres_by: person

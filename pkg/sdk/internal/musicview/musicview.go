@@ -189,7 +189,8 @@ func Records(
 			out = append(out, result.MusicRecord{
 				Instrument: p.Instrument,
 				Player:     p.ID, Track: rec.Track, Year: rec.Year,
-				Band: rec.Band, Genres: rec.Genres,
+				Seconds: rec.Seconds,
+				Band:    rec.Band, Genres: rec.Genres,
 				DecidedBy: string(rec.GenresBy),
 				Separated: separated(fsys, dir, p.Instrument, p.ID, rec.Track),
 			})
