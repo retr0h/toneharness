@@ -1,0 +1,25 @@
+artist: Tobin Esperance
+tracks:
+  - track: last-resort
+    url: https://open.spotify.com/track/5W8YXBz9MTIDyrpYaCg2Ky
+    year: 2000
+    band: Papa Roach
+    genres: [nu-metal, alternative-metal]
+    genres_by: llm
+    note: Infest. 199 seconds as Spotify holds it
+  - track: between-angels-and-insects
+    url: https://open.spotify.com/track/24z528iI9kZu5LbkLainjI
+    year: 2000
+    band: Papa Roach
+    genres: [nu-metal, alternative-metal]
+    genres_by: llm
+    note: Infest. 234 seconds as Spotify holds it
+  - track: broken-home
+    url: https://open.spotify.com/track/1s4BLQm5rznGLrNZd0GlwM
+    year: 2000
+    band: Papa Roach
+    genres: [nu-metal, alternative-metal]
+    genres_by: llm
+    note: >-
+      Infest. 222 seconds as Spotify holds it. Here because She Loves Me Not
+      downloads eleven seconds long twice over, which is a different master

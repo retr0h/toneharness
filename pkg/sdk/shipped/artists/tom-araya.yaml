@@ -1,0 +1,70 @@
+# Tom Araya — Slayer
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: tom-araya
+
+ask:
+  genre: [metal]
+  subject:
+    kind: artist
+    name: Tom Araya
+    band: Slayer
+    era: Reign in Blood
+    years:
+      from: 1986
+      to: 1986
+
+  instrument: bass
+
+  # How it should sound, in the words a person would use. Nothing here:
+  # no word has been earned from these records against the others, and a
+  # word written by hand would move a control on nobody's authority.
+  words: []
+
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          url: https://mixdownmag.com.au/features/gear-rundown-slayers-reign-in-blood/
+          note: >-
+            A gear rundown of the record itself: "Araya recorded most of his bass
+            parts on Reign In Blood through a massive Ampeg SVT head, paired with a
+            classic 8x10 fridge cabinet." The same piece has him on a B.C. Rich Wave
+            fitted with two P-Bass style single coils for most of the 1980s.
+          caveat: >-
+            Written long after the sessions and it names no model variant or serial.
+            It is the only source found that ties an amplifier to this record, which
+            is why all three records measured are from this one album.
+        - kind: user
+          url: https://www.talkbass.com/threads/tom-arayas-gear-setup.164746/
+          note: >-
+            Opened, and it establishes nothing. Every post about the amplifier is
+            hedged opinion — "I'm almost certain that it is the Ampegs", "I'd be
+            willing to bet that's what it came from" — and post 113 has him on a later
+            rig entirely: "now Tom Araya uses a custom marshall head and custom
+            marshall 8x10's".
+          caveat: >-
+            Recorded so the next reader does not re-open it expecting evidence. The
+            Marshall rig is real and belongs to a different era than these records.
+    - role: cab
+      gear: Ampeg 8x10
+      confidence: medium
+      evidence:
+        - kind: cited
+          url: https://mixdownmag.com.au/features/gear-rundown-slayers-reign-in-blood/
+          note: >-
+            The same sentence that names the head: "paired with a classic 8x10 fridge
+            cabinet", which is the Ampeg SVT-810.
+          caveat: >-
+            "Fridge" is a nickname rather than a model number.

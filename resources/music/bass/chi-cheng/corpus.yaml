@@ -1,0 +1,31 @@
+artist: Chi Cheng
+tracks:
+  - track: my-own-summer
+    url: https://open.spotify.com/track/1158ckiB5S4cpsdYHDB9IF
+    year: 1997
+    band: Deftones
+    genres: [nu-metal, alternative-metal]
+    genres_by: llm
+    note: >-
+      Around the Fur. 214 seconds as Spotify holds it. The download carries six
+      seconds of leading silence and four of trailing, which is what the length
+      check had to subtract before it agreed
+  - track: change-in-the-house-of-flies
+    url: https://open.spotify.com/track/51c94ac31swyDQj9B3Lzs3
+    year: 2000
+    band: Deftones
+    genres: [nu-metal, alternative-metal]
+    genres_by: llm
+    note: >-
+      White Pony. 299 seconds as Spotify holds it. The album the amplifier
+      evidence names him on by name
+  - track: digital-bath
+    url: https://open.spotify.com/track/2jSJm3Gv6GLxduWLenmjKS
+    year: 2000
+    band: Deftones
+    genres: [nu-metal, alternative-metal]
+    genres_by: llm
+    note: >-
+      White Pony. 255 seconds as Spotify holds it. Here because Be Quiet and
+      Drive downloads six seconds long and does so on a refetch, so the file
+      and the link are not the same recording

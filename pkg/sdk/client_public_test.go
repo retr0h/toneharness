@@ -1634,6 +1634,10 @@ func (s *ClientPublicTestSuite) TestTone() {
 			// measured either, because a measured one is a target: punk here
 			// would choose an amplifier and there would be nothing to refuse.
 			//
+			// The genre is a sentinel rather than a real name. This read `rock`
+			// until rock was measured, and the case started passing a build
+			// where it wanted a refusal.
+			//
 			// A player who is in no rig at all rather than one in the corpus
 			// without gear. Every player the corpus holds has a rig now, so the
 			// second kind no longer exists to name, and this read Cone McCaslin
@@ -1642,7 +1646,7 @@ func (s *ClientPublicTestSuite) TestTone() {
 			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
 id: nobody-researched
 ask:
-  genre: [rock]
+  genre: [not-a-measured-genre]
   like:
     artist: Esperanza Spalding
 rig:

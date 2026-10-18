@@ -61,6 +61,10 @@ func (s *TranslatePublicTestSuite) SetupSuite() {
 // describes an ask as a section of one and a body checked outside it would be
 // checked against nothing. A row writes the ask's own fields at the left margin,
 // which is the shape they read in, and this nests them.
+// unmeasuredGenre is a genre no record carries and none ever will, which is
+// what makes it safe to default an ask to.
+const unmeasuredGenre = "not-a-measured-genre"
+
 func (s *TranslatePublicTestSuite) ask(
 	body string,
 ) tone.Ask {
@@ -71,12 +75,13 @@ func (s *TranslatePublicTestSuite) ask(
 		// A genre the corpus has not measured, so it names no target and the
 		// cases below see only what they are about.
 		//
-		// This was `punk` until a measured genre could choose an amplifier.
-		// After that the default quietly added one to every chain, and three
-		// rows asserting the shape of the gear they named were failing on a
-		// block they had not asked for. A row that wants a target names punk
-		// itself.
-		head = "genre: [rock]\n"
+		// A sentinel rather than a real genre, and that is the point. This was
+		// `punk` until a measured genre could choose an amplifier, then `rock`
+		// until rock was measured too, and both times the default quietly added
+		// an amplifier to every chain and rows asserting the gear they named
+		// failed on a block they had not asked for. Any real genre name is a
+		// name somebody may tag a record with next week. This one is not.
+		head = "genre: [" + unmeasuredGenre + "]\n"
 	}
 
 	// The gear is required, so the document carries the least that will do. What
@@ -578,7 +583,7 @@ like:
 			name: "a request with nothing in it is refused",
 			then: func() {
 				_, notes, err := translate.Translate(
-					s.ask("genre: [rock]\ninstrument: bass\n"), s.setup(""), s.deps)
+					s.ask("genre: ["+unmeasuredGenre+"]\ninstrument: bass\n"), s.setup(""), s.deps)
 
 				s.Require().ErrorIs(err, translate.ErrNothingToBuildFrom)
 				s.Require().NotEmpty(notes, "and it still says what it assumed on the way")
@@ -620,7 +625,7 @@ like:
 			name: "nothing to build from is refused",
 			then: func() {
 				_, _, err := translate.Translate(
-					s.ask("genre: [rock]\nwords:\n  - term: dark\n"), s.setup(""), s.deps)
+					s.ask("genre: ["+unmeasuredGenre+"]\nwords:\n  - term: dark\n"), s.setup(""), s.deps)
 
 				s.Require().ErrorContains(err, "no chain to build")
 			},
@@ -1117,7 +1122,7 @@ words:
 			// computed from: eight records from three players, or the figures
 			// are one band's sound wearing a genre's name.
 			name: "a genre nobody has measured names nothing",
-			ask:  "genre: [rock]\ninstrument: bass\n",
+			ask:  "genre: [" + unmeasuredGenre + "]\ninstrument: bass\n",
 			err:  translate.ErrNothingToBuildFrom,
 		},
 		{
@@ -1144,7 +1149,7 @@ words:
 			// so the one it was named for first is the one aimed at. Averaging
 			// two populations would invent a third nobody measured.
 			name: "the first genre that can answer does",
-			ask:  "genre: [rock, pop-punk]\ninstrument: bass\n",
+			ask:  "genre: [" + unmeasuredGenre + ", pop-punk]\ninstrument: bass\n",
 			said: []string{"to pop-punk"},
 		},
 		{
@@ -1312,15 +1317,35 @@ like:
 			// what it cannot do.
 			name: "a genre that earns words",
 			then: func() {
+				// Whichever genre earns one, read off the packed figures rather
+				// than named here. Every record added moves what every genre
+				// earns: this row asserted grunge and "scooped" until
+				// twenty-five records closed that gap, and the test failed on a
+				// corpus change with nothing wrong with the code.
+				shipped, err := audio.Shipped()
+				s.Require().NoError(err)
+
+				var slug, term string
+
+				for _, g := range shipped {
+					if g.Usable && len(g.Terms) > 0 {
+						slug, term = g.Slug, g.Terms[0].Term
+
+						break
+					}
+				}
+
+				s.Require().NotEmpty(slug, "no aimable genre earns a word")
+
 				_, notes, err := translate.Translate(
-					s.ask("genre: [grunge]\nlike:\n  recording: "+s.recording()+"\n"),
+					s.ask("genre: ["+slug+"]\nlike:\n  recording: "+s.recording()+"\n"),
 					s.setup(""), s.deps)
 
 				s.Require().NoError(err)
 
 				said := strings.Join(sayings(notes.Unmet()), " ")
 				s.Require().Contains(said, "measured across")
-				s.Require().Contains(said, "scooped")
+				s.Require().Contains(said, term)
 			},
 		},
 		{

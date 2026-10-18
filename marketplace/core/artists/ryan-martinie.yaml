@@ -1,0 +1,63 @@
+# Ryan Martinie — Mudvayne
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: ryan-martinie
+
+ask:
+  genre: [nu-metal, alternative-metal]
+  subject:
+    kind: artist
+    name: Ryan Martinie
+    band: Mudvayne
+    era: L.D. 50 to The End of All Things to Come
+    years:
+      from: 2000
+      to: 2002
+
+  instrument: bass
+
+  # How it should sound, in the words a person would use. Nothing here:
+  # no word has been earned from these records against the others, and a
+  # word written by hand would move a control on nobody's authority.
+  words: []
+
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/everything-u-wanna-know-bout-ryan-martinies-gear.143513/
+          note: >-
+            A forum post transcribing a Bass Player magazine interview in full, which
+            is the print source reaching the open web. The poster, bass element, gives
+            the live rig as "runs his bass into a Shure UHF U4D dual-channel wireless
+            unit, Whirlwind multi-selector, dbx 160 compressor, Ampeg SVT-4Pro head on
+            an SVT PR-810H 8x10 cabinet", and says where it came from: "i finally got
+            this old ass edition of Bass Player Magazine that had a kickass
+            interview".
+          caveat: >-
+            A transcription, so the magazine is the source and nobody has checked the
+            copying against it. The same post gives the recording rig as the full
+            Ampeg plus an SWR Workingman's 10 head driving a Mesa/Boogie 4x12 guitar
+            cabinet for added midrange and top end, which means the records measured
+            here carry a second amplifier this chain does not have.
+    - role: cab
+      gear: Ampeg 8x10
+      confidence: medium
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/everything-u-wanna-know-bout-ryan-martinies-gear.143513/
+          note: >-
+            Named in the same transcribed sentence as the head: an Ampeg SVT PR-810H.
+          caveat: >-
+            The device models a legacy Ampeg SVT-E 8x10 rather than the PR-810H.

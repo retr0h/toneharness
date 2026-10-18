@@ -26,9 +26,11 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/shipped"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -152,6 +154,193 @@ func (s *ShippedPublicTestSuite) TestEveryExampleUsesTheVocabulary() {
 
 			s.Require().Empty(compile.CheckWords(words))
 			s.Require().Empty(compile.CheckAxes(words))
+		})
+	}
+}
+
+// distinctive is the words in a gear name that say which gear it is.
+//
+// A maker's name and a cabinet's size are shared by dozens of models, so an
+// "Ampeg 8x10" matching an "Ampeg SVT 410HLF" on the word "Ampeg" would call
+// a substitution a match. What is left is the part that identifies the unit.
+func distinctive(
+	name string,
+) map[string]bool {
+	shared := map[string]bool{
+		"the": true, "a": true, "ampeg": true, "legacy": true, "line": true,
+		"6": true, "original": true, "pro": true, "brt": true, "nrm": true,
+		"ch1": true, "ch2": true, "jump": true, "x": true,
+		"2": true, "4": true, "8": true, "10": true, "12": true, "15": true,
+	}
+
+	out := map[string]bool{}
+
+	for _, w := range strings.FieldsFunc(strings.ToLower(name), func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	}) {
+		if !shared[w] {
+			out[w] = true
+		}
+	}
+
+	return out
+}
+
+// shares says whether two gear names have a distinctive word in common.
+func shares(
+	gear string,
+	names ...string,
+) bool {
+	want := distinctive(gear)
+	if len(want) == 0 {
+		return true
+	}
+
+	for _, n := range names {
+		for w := range distinctive(n) {
+			if want[w] {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// specs reads every rig that ships, by identifier.
+func (s *ShippedPublicTestSuite) specs() map[string]tone.Spec {
+	paths, err := fs.Glob(shipped.FS, filepath.Join("*", "*.yaml"))
+	s.Require().NoError(err)
+	s.Require().NotEmpty(paths, "no documents found to check")
+
+	out := map[string]tone.Spec{}
+
+	for _, p := range paths {
+		f, err := shipped.FS.Open(p)
+		s.Require().NoError(err)
+
+		spec, err := tone.Load(f)
+		s.Require().NoError(f.Close())
+		s.Require().NoError(err)
+
+		out[filepath.Base(p)] = spec
+	}
+
+	return out
+}
+
+// TestEveryShippedGearClaimHasASource covers the first of the two bars a rig
+// clears before it may ship: a source somebody opened for every claim.
+//
+// `llm` alone means a model asserted the gear and nobody confirmed it, which is
+// the same thing as made up. Four rigs read that way until this test existed,
+// and nothing but reading all of them by hand would have said so: an Ampeg SVT
+// for Charlie Hayward, the same for Tommy Caldwell and Cone McCaslin, and a
+// Marshall stack for Dusty Hill that two Premier Guitar pieces were opened
+// looking for and neither carries.
+//
+// A corpus-added block is exempt and is not an exception. It is a statistic
+// over other people's presets rather than a claim about this player, it says so
+// in its own note, and no research would make it anything else.
+func (s *ShippedPublicTestSuite) TestEveryShippedGearClaimHasASource() {
+	sourced := map[tone.EvidenceKind]bool{
+		"cited": true, "heard": true, "user": true, "audio": true, "store": true,
+	}
+
+	for name, spec := range s.specs() {
+		s.Run(name, func() {
+			for _, entry := range spec.Rig.Chain {
+				s.Require().NotNil(
+					entry.Evidence,
+					"%s %q carries no evidence at all", entry.Role, entry.Gear,
+				)
+
+				kinds := map[tone.EvidenceKind]bool{}
+				for _, ev := range *entry.Evidence {
+					kinds[ev.Kind] = true
+				}
+
+				if kinds["corpus"] {
+					continue
+				}
+
+				has := false
+				for k := range kinds {
+					if sourced[k] {
+						has = true
+
+						break
+					}
+				}
+
+				s.Require().True(
+					has,
+					"%s %q rests on no source anybody opened. Research it, or "+
+						"move the rig to marketplace/community",
+					entry.Role, entry.Gear,
+				)
+			}
+		})
+	}
+}
+
+// TestEveryShippedAmplifierResolvesToItself covers the second bar: the
+// amplifier named is the amplifier that comes out.
+//
+// A gear name resolves to the nearest model when the real thing is not
+// emulated, which is right for somebody building a sound and wrong to ship as a
+// citation. Berry Oakley's Fender PS400 came out an Ampeg SVT, which is not a
+// Berry Oakley rig but an Ampeg SVT with his name on it. Five rigs read that
+// way and the document showed nothing: the file says `Fender 400 PS` and only
+// the resolve says otherwise.
+//
+// The amplifier rather than every role, because it is the block that decides
+// the sound, and because this device models fourteen bass amplifiers and fewer
+// cabinets. A cabinet may substitute where the claim is cited and the caveat
+// says so: Geddy Lee's Ampeg V-4B cabinets are cited from three print sources
+// in his own words and nothing here models one, and deleting that would throw
+// away the research without making the rig any more accurate.
+func (s *ShippedPublicTestSuite) TestEveryShippedAmplifierResolvesToItself() {
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	for name, spec := range s.specs() {
+		s.Run(name, func() {
+			asked := ""
+			for _, entry := range spec.Rig.Chain {
+				if entry.Role == tone.RoleAmp {
+					asked = entry.Gear
+
+					break
+				}
+			}
+
+			if asked == "" {
+				return
+			}
+
+			// No corpus, so nothing is filled and what comes back is the rig.
+			got, _, _, _, err := compile.Resolve(
+				spec.Id, spec.Rig, compile.Intent{}, cat, nil,
+			)
+			s.Require().NoError(err)
+
+			for _, b := range got.Blocks {
+				block, found := cat.Block(b.Model)
+				s.Require().True(found, "model %q is not in the catalog", b.Model)
+
+				if block.Category != catalog.CategoryAmp {
+					continue
+				}
+
+				s.Require().True(
+					shares(asked, block.Name, block.BasedOn),
+					"asked for %q and got %q (%s). An amplifier is never "+
+						"substituted in a shipped rig: move it to "+
+						"marketplace/community and say so in the caveat",
+					asked, block.Name, block.BasedOn,
+				)
+			}
 		})
 	}
 }

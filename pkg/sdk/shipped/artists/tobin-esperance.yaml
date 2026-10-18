@@ -1,0 +1,55 @@
+# Tobin Esperance — Papa Roach
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: tobin-esperance
+
+ask:
+  genre: [nu-metal, alternative-metal]
+  subject:
+    kind: artist
+    name: Tobin Esperance
+    band: Papa Roach
+    era: Infest to lovehatetragedy
+    years:
+      from: 2000
+      to: 2002
+
+  instrument: bass
+
+  # How it should sound, in the words a person would use. Nothing here:
+  # no word has been earned from these records against the others, and a
+  # word written by hand would move a control on nobody's authority.
+  words: []
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      confidence: low
+      evidence:
+        - kind: cited
+          url: https://www.premierguitar.com/gear/rig-rundown-papa-roachs-jerry-horton-tobin-esperance
+          note: >-
+            A Premier Guitar rig rundown: "Following Horton's reduction motif,
+            Esperance is only bringing out two rackmounted Ampegs amps. His main stage
+            head is a SVT-4 Pro and the backup is a BR5." It also has him on custom
+            Lakland 44-94 four-strings, D'Addario .050-.120 strings, and fingers
+            rather than a pick.
+          caveat: >-
+            A touring rundown filmed well after the records measured here, which are
+            the 2000 and 2002 albums. The SVT-4 Pro was available from the mid-1990s
+            so it was obtainable for those sessions, but nothing dates it to them:
+            this is his rig, not demonstrably the rig those records were made on. It
+            names no cabinet, so none is claimed below. The SVT-4 Pro is a hybrid with
+            a valve preamp and solid-state output; the model here is the all-valve
+            original.
+    # No cabinet named, so the amp's own pairing is used — which is
+    # what Line 6 voiced it with, and which is all the source supports.

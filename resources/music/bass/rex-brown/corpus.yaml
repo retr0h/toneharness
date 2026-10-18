@@ -1,0 +1,25 @@
+artist: Rex Brown
+tracks:
+  - track: cowboys-from-hell
+    url: https://open.spotify.com/track/2SgbR6ttzoNlCRGQOKjrop
+    year: 1990
+    band: Pantera
+    genres: [metal]
+    genres_by: llm
+    note: >-
+      243 seconds as Spotify holds it. The first official Pantera record, which
+      is the one Brown names as where his SVT arrives
+  - track: walk
+    url: https://open.spotify.com/track/7fcfNW0XxTWlwVlftzfDOR
+    year: 1992
+    band: Pantera
+    genres: [metal]
+    genres_by: llm
+    note: Vulgar Display of Power. 315 seconds as Spotify holds it
+  - track: mouth-for-war
+    url: https://open.spotify.com/track/6rkeaQRCWZxwkjhyqgxjXi
+    year: 1992
+    band: Pantera
+    genres: [metal]
+    genres_by: llm
+    note: Vulgar Display of Power. 237 seconds as Spotify holds it

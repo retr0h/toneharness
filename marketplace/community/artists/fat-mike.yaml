@@ -1,0 +1,67 @@
+# Fat Mike — NOFX
+#
+# Filed in community because the amplifier is not established, and kept because
+# the gear everything points at is gear this device models exactly.
+#
+# He is the reason the rule in build-a-rig's shipping.md distinguishes a source
+# that hedges from a model inventing something. He says he is probably on an
+# Ampeg, which is weak evidence about an Ampeg rather than no evidence at all,
+# and the caveat below carries the hedge instead of smoothing it out.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: fat-mike
+
+ask:
+  genre: [punk, pop-punk]
+
+  aliases:
+    - nofx
+    - fat-mike
+
+  subject:
+    kind: artist
+    name: Michael "Fat Mike" Burkett
+    band: NOFX
+
+  instrument: bass
+
+  words: []
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      confidence: low
+      evidence:
+        - kind: llm
+          note: >-
+            Asserted here and confirmed by nobody, which is why this rig is in
+            community. Everything found points at an Ampeg SVT and nothing
+            found establishes it.
+          caveat: >-
+            What was searched, and where it ran out. A Guitar World interview is
+            reported to carry him on his own amplifier, saying he used to use a
+            Mesa/Boogie and thinks he is on an Ampeg now but is not sure. That
+            page would not open from here and web.archive.org is unreachable
+            from this session, so the quotation is not entered: a quote nobody
+            opened is the citation this project exists to refuse. His TalkBass
+            tone thread was opened and settles nothing either, the one gear post
+            being "Unless you wanna spring for an Ampeg 8x10 and (presumably) an
+            SVT CL Head", where the poster says presumably himself. A Fender
+            Super Bassman 100 also circulates for the early records and traces
+            to equipboard, which is not a source.
+        - kind: cited
+          url: https://www.guitarworld.com/features/fat-mike-nofx-double-album
+          note: >-
+            The interview the hedge comes from, recorded as a link to follow
+            rather than as a quotation, because it could not be opened here.
+            Somebody who can read it can settle this rig in one sitting, and if
+            it names the amplifier plainly this moves to core.
+    # No cabinet named, so the amp's own pairing is used. An Ampeg 8x10 is what
+    # stands behind him in every photograph, and no source here says so.

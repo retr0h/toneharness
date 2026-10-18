@@ -1,0 +1,30 @@
+artist: John Paul Jones
+tracks:
+  - track: ramble-on
+    url: https://open.spotify.com/track/3MODES4TNtygekLl146Dxd
+    year: 1969
+    band: Led Zeppelin
+    genres: [rock, hard-rock]
+    genres_by: llm
+    note: >-
+      Led Zeppelin II. 263 seconds as Spotify holds it, as the 1990 remaster:
+      the year is the recording's, the master is twenty years younger, and
+      every figure carries that remaster rather than the 1969 cut
+  - track: the-lemon-song
+    url: https://open.spotify.com/track/5qbVkwfy0RYGFA6hAiIL90
+    year: 1969
+    band: Led Zeppelin
+    genres: [rock, hard-rock]
+    genres_by: llm
+    note: >-
+      Led Zeppelin II. 379 seconds as Spotify holds it, as the 1993 remaster.
+      The bass is unusually far forward on this one, which is why it is here
+  - track: black-dog
+    url: https://open.spotify.com/track/3qT4bUD1MaWpGrTwcvguhb
+    year: 1971
+    band: Led Zeppelin
+    genres: [rock, hard-rock]
+    genres_by: llm
+    note: >-
+      Led Zeppelin IV, from the Deluxe Edition remaster. 295 seconds as
+      Spotify holds it
