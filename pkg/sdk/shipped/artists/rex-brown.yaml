@@ -3,50 +3,36 @@
 # One document: the ask says who it is for, the rig below says what the gear is.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: rex-brown
-
 ask:
-  genre: [metal]
+  confidence: medium
+  genre:
+  - metal
+  instrument: bass
   subject:
-    kind: artist
-    name: Rex Brown
     band: Pantera
     era: Cowboys from Hell to Vulgar Display of Power
+    kind: artist
+    name: Rex Brown
     years:
       from: 1990
       to: 1992
-
-  instrument: bass
-
-  # How it should sound, in the words a person would use. Nothing here:
-  # no word has been earned from these records against the others, and a
-  # word written by hand would move a control on nobody's authority.
   words: []
-
-  confidence: medium
-
+id: rex-brown
 rig:
-  instrument: bass
-
   chain:
-    - role: amp
-      gear: Ampeg SVT
-      confidence: medium
-      evidence:
-        - kind: cited
-          url: https://www.yahoo.com/entertainment/music/articles/dimebag-darrell-pushed-pantera-bassist-135400189.html
-          note: >-
-            His own words on when the amplifier arrives, which is what dates every
-            record here: "I don't think I got my SVT until the first official Pantera
-            record. But once I got my SVT stacks, that changed everything." The first
-            official Pantera record is Cowboys from Hell, 1990, so no record earlier
-            than that is measured.
-          caveat: >-
-            He says "SVT stacks" and names no model variant. The interview is about
-            his playing rather than his gear, so this one sentence is all it carries
-            about the amplifier.
-    # No cabinet named, so the amp's own pairing is used — which is
-    # what Line 6 voiced it with. He says "SVT stacks" and names no
-    # cabinet, so claiming one would be inventing it.
+  - confidence: medium
+    evidence:
+    - caveat: He says "SVT stacks" and names no model variant. The interview is
+        about his playing rather than his gear, so this one sentence is all it carries
+        about the amplifier.
+      kind: cited
+      note: 'His own words on when the amplifier arrives, which is what dates every
+        record here: "I don''t think I got my SVT until the first official Pantera
+        record. But once I got my SVT stacks, that changed everything." The first
+        official Pantera record is Cowboys from Hell, 1990, so no record earlier
+        than that is measured.'
+      url: https://www.yahoo.com/entertainment/music/articles/dimebag-darrell-pushed-pantera-bassist-135400189.html
+    gear: Ampeg SVT
+    role: amp
+  instrument: bass
+schema: ToneSpec

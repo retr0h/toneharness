@@ -1,19 +1,18 @@
-# Filed in community because its gear was never sourced.
+# Filed in community because this device does not model its gear, and because
+# the era does not match the records.
 #
-# Its amplifier and cabinet rest on no source. Premier Guitar's ZZ Top gear
-# gallery and their obituary for him were both opened and neither carries the
-# Marshall, which is an unusually specific claim and so an unusually checkable
-# one: somebody with the period press can confirm or kill it in one reading.
+# His amplifier is now sourced: a Marshall JMP-1 into Marshall Valvestate 8008
+# power amps, named by his own tech on camera in Premier Guitar's 2015 rig
+# rundown. The device models neither, and 2015 is not Tres Hombres. What he
+# played in 1973 is still not established.
+#
+# This replaced a Marshall Super Lead 100 that rested on no source at all.
 #
 # core/ requires two things of every rig: a source somebody opened for each
 # claim, and no gear substituted by the gear map. See build-a-rig's
-# shipping.md, "Two bars for core, not one". Nothing here is deleted: the
-# research stands and the player stays, and a rig that clears both bars
-# later moves back across.
+# shipping.md, "Two bars for core, and where each one falls".
 #
 # Dusty Hill — ZZ Top
-#
-# One document: the ask says who it is for, the rig below says what the gear is.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 ask:
@@ -37,188 +36,206 @@ id: dusty-hill
 rig:
   chain:
   - controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
+      Attack: '0.035'
+      Knee: '6.0'
+      Level: '5.2'
+      Mix: '1.0'
+      Ratio: '3'
+      Release: '0.2'
+      Threshold: '-37.1'
     evidence:
     - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
+      note: 'added by the compiler rather than named in the rig: a chain of this
+        kind almost always holds one, and the corpus statistics are what put it
+        here.'
     gear: Deluxe Comp
     role: comp
   - capture: direct
     confidence: low
     controls:
-      Bass: "0.9"
-      Bias: "0.65"
-      BiasX: "0.5"
-      BrtDrive: "0.76"
-      ChVol: "0.63"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.81"
-      NrmDrive: "0.72"
-      Presence: "0.7"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.73"
+      Bass: '0.9'
+      Bias: '0.65'
+      BiasX: '0.5'
+      BrtDrive: '0.76'
+      ChVol: '0.63'
+      Hum: '0.5'
+      Master: '1.0'
+      Mid: '0.81'
+      NrmDrive: '0.72'
+      Presence: '0.7'
+      Ripple: '0.5'
+      Sag: '0.5'
+      Treble: '0.73'
     evidence:
-    - caveat: |-
-        what was searched, and where it ran out. Premier Guitar's ZZ Top gear gallery and their obituary for him were both opened and neither carries this; the gallery has his tech on his tone and no models for this period. No page was found that states it, so this is the claim as it is repeated rather than as anybody printed it.
-        It is worth keeping rather than dropping because it is unusually specific and it is checkable: a Danelectro through a Marshall guitar stack is a strange enough rig that somebody with the period press can confirm or kill it in one reading. If you have that, please open a pull request.
-        Line 6 tag this model a guitar amplifier, which is what it is. A rig naming it on purpose is the case the instrument filter was taught not to refuse.
-      kind: llm
-      note: asserted by a model and confirmed by nobody. The account that circulates
-        is that these sessions caught him without his '51 Telecaster bass, so he played
-        a Danelectro Longhorn through a 100-watt Marshall, the same model of amplifier
-        the guitars were running, and that the band recorded the record largely live
-        in the studio on a newly bought touring rig.
-    gear: Marshall Super Lead 100
+    - caveat: 'Two things stop this being his rig for the records measured here,
+        and both matter.
+
+        **It is the wrong era.** This is the 2015 touring rig and the three records
+        measured for him are Tres Hombres, 1973. Nothing found establishes what
+        he played through then, and the Marshall Super Lead this document used to
+        assert had no source at all: Premier Guitar''s ZZ Top gear gallery and their
+        obituary for him were both opened looking for it and neither carries it.
+        The guess landed in the right family by luck and nothing more.
+
+        **And the device models neither box.** A Marshall JMP-1 is a rack preamp
+        and the Valvestate 8008 a hybrid power amp; this device''s Marshalls are
+        all guitar heads, a JCM-800, a JTM-45, a JTM-50 and a Super Lead. The JMP-1
+        was built to give JCM-800 voicings in a rack, so Brit 2203 is its nearest
+        relative here, and a relative is a substitution rather than a match.
+
+        Worth somebody''s time: the octave is a word this vocabulary can express,
+        `sub-octave`, and the high-pass before it is why it tracks cleanly. A rig
+        aimed at his later sound could be built from that even though the amplifier
+        cannot.
+
+        Taken from the video''s own captions rather than from watching it, so the
+        spoken model numbers are as the automatic transcript renders them: "the
+        808s" for the 8008, and "Micro Thumpin" for the Micro Thumpinator.'
+      kind: cited
+      note: 'The one amplifier anybody has documented for him, and it is his tech
+        saying it on camera. Elwood Francis, who handled all of ZZ Top''s gear on
+        the 2015 tour, walking through Dusty''s rig in Premier Guitar''s rig rundown:
+        "this whole thing is Dusty''s rigs, the main and the spare. It''s really
+        simple. Just wireless into an amp splitter into a bunch of amps and a DI.
+        He uses the JMP-1s and the Marshall Valvestate, what are these, the 808s
+        I think." He runs one dirty channel and keeps the other two as spares.
+
+        The rest of the chain, from the same walkthrough, because it explains the
+        sound better than the amplifier does: "a signal goes from the bass into
+        the splitter into the Marshall into a direct box and into this is an octave
+        down and this is a filter that takes everything from the low B down", a
+        Micro Thumpinator, "it filters off everything below B flat cause we want
+        the octave down effect on every note except B flat and lower". Three channels
+        are blended: "just clean clean DI, the octave DI, and a dirty amp", and
+        the amp goes "to an ISO cabinet and it''s miked in there". On how it reads
+        to anybody standing near it: "when I check Dusty''s bass I mean people look
+        around like man what''s going wrong because it''s really really big and
+        distorted".'
+      url: https://www.youtube.com/watch?v=1x_kg6pOvGU
+    gear: Marshall JMP-1
     role: amp
-  - capture: direct
-    confidence: low
-    controls:
-      Angle: "45.0"
-      Distance: "1.0"
-      HighCut: "12000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-      Mic: "2"
-      Position: "0.15"
-    evidence:
-    - caveat: the same unsourced account as the head, so the two stand or fall together,
-        and which 4x12 is not established at all.
-      kind: llm
-      note: the cabinet that goes with the head above, on the same account of two
-        identical stacks shared between guitar and bass.
-    gear: Marshall 4x12
-    role: cab
   instrument: bass
   preset:
     dsp0:
       members:
         inputA:
           attrs:
-            '@input': "1"
+            '@input': '1'
           controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
+            decay: '0.5'
+            noiseGate: 'false'
+            threshold: '-48'
           model: HelixStomp_AppDSPFlowInput
         inputB:
           attrs:
-            '@input': "0"
+            '@input': '0'
           controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
+            decay: '0.5'
+            noiseGate: 'false'
+            threshold: '-48'
           model: HelixStomp_AppDSPFlowInput
         join:
           attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
+            '@enabled': 'true'
+            '@no_snapshot_bypass': 'false'
+            '@position': '8'
           controls:
-            A Level: "0"
-            A Pan: "0.5"
-            B Level: "0"
-            B Pan: "0.5"
-            B Polarity: "false"
-            Level: "0"
+            A Level: '0'
+            A Pan: '0.5'
+            B Level: '0'
+            B Pan: '0.5'
+            B Polarity: 'false'
+            Level: '0'
           model: HD2_AppDSPFlowJoin
         outputA:
           attrs:
-            '@output': "1"
+            '@output': '1'
           controls:
-            gain: "0"
-            pan: "0.5"
+            gain: '0'
+            pan: '0.5'
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
           attrs:
-            '@output': "0"
+            '@output': '0'
           controls:
-            Type: "true"
-            gain: "0"
-            pan: "0.5"
+            Type: 'true'
+            gain: '0'
+            pan: '0.5'
           model: HelixStomp_AppDSPFlowOutputSend
         split:
           attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
+            '@enabled': 'true'
+            '@no_snapshot_bypass': 'false'
+            '@position': '0'
           controls:
-            BalanceA: "0.5"
-            BalanceB: "0.5"
-            bypass: "false"
+            BalanceA: '0.5'
+            BalanceB: '0.5'
+            bypass: 'false'
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
     global:
       attrs:
-        '@DtSelect': "2"
-        '@PowercabMode': "0"
-        '@PowercabSelect': "2"
-        '@PowercabVoicing': "0"
-        '@current_snapshot': "0"
-        '@cursor_dsp': "0"
-        '@cursor_group': ""
-        '@cursor_path': "0"
-        '@cursor_position': "0"
-        '@guitarinputZ': "0"
-        '@guitarpad': "0"
-        '@pedalstate': "2"
-        '@tempo': "120"
+        '@DtSelect': '2'
+        '@PowercabMode': '0'
+        '@PowercabSelect': '2'
+        '@PowercabVoicing': '0'
+        '@current_snapshot': '0'
+        '@cursor_dsp': '0'
+        '@cursor_group': ''
+        '@cursor_path': '0'
+        '@cursor_position': '0'
+        '@guitarinputZ': '0'
+        '@guitarpad': '0'
+        '@pedalstate': '2'
+        '@tempo': '120'
         '@topology0': A
-        '@topology1': "0"
+        '@topology1': '0'
       model: '@global_params'
     snapshot0:
       attrs:
-        '@custom_name': "false"
-        '@ledcolor': "0"
+        '@custom_name': 'false'
+        '@ledcolor': '0'
         '@name': SNAPSHOT 1
-        '@pedalstate': "0"
-        '@tempo': "120"
-        '@valid': "false"
+        '@pedalstate': '0'
+        '@tempo': '120'
+        '@valid': 'false'
     snapshot1:
       attrs:
-        '@custom_name': "false"
-        '@ledcolor': "0"
+        '@custom_name': 'false'
+        '@ledcolor': '0'
         '@name': SNAPSHOT 2
-        '@pedalstate': "0"
-        '@tempo': "120"
-        '@valid': "false"
+        '@pedalstate': '0'
+        '@tempo': '120'
+        '@valid': 'false'
     snapshot2:
       attrs:
-        '@custom_name': "false"
-        '@ledcolor': "0"
+        '@custom_name': 'false'
+        '@ledcolor': '0'
         '@name': SNAPSHOT 3
-        '@pedalstate': "0"
-        '@tempo': "120"
-        '@valid': "false"
+        '@pedalstate': '0'
+        '@tempo': '120'
+        '@valid': 'false'
     variax:
       attrs:
-        '@variax_customtuning': "true"
-        '@variax_lockctrls': "0"
-        '@variax_magmode': "false"
-        '@variax_model': "0"
-        '@variax_str1level': "1"
-        '@variax_str1tuning': "0"
-        '@variax_str2level': "1"
-        '@variax_str2tuning': "0"
-        '@variax_str3level': "1"
-        '@variax_str3tuning': "0"
-        '@variax_str4level': "1"
-        '@variax_str4tuning': "0"
-        '@variax_str5level': "1"
-        '@variax_str5tuning': "0"
-        '@variax_str6level': "1"
-        '@variax_str6tuning': "0"
-        '@variax_toneknob': "-0.10000002384185791"
-        '@variax_volumeknob': "-0.10000002384185791"
+        '@variax_customtuning': 'true'
+        '@variax_lockctrls': '0'
+        '@variax_magmode': 'false'
+        '@variax_model': '0'
+        '@variax_str1level': '1'
+        '@variax_str1tuning': '0'
+        '@variax_str2level': '1'
+        '@variax_str2tuning': '0'
+        '@variax_str3level': '1'
+        '@variax_str3tuning': '0'
+        '@variax_str4level': '1'
+        '@variax_str4tuning': '0'
+        '@variax_str5level': '1'
+        '@variax_str5tuning': '0'
+        '@variax_str6level': '1'
+        '@variax_str6tuning': '0'
+        '@variax_toneknob': '-0.10000002384185791'
+        '@variax_volumeknob': '-0.10000002384185791'
   resolved:
     catalog: HX Edit 3.82
     device: HX Stomp
