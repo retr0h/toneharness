@@ -80,8 +80,16 @@ ffmpeg -hide_banner -i <file> -af silencedetect=n=-45dB:d=1 -f null - 2>&1 \
   | grep silence_
 ```
 
-Subtract the silence at **both ends** from the file's length and it should land
-within a few seconds of what Spotify holds. Lyric videos pad the end, and these
+**Compare the file's own length first, and reach for the silence only when the
+file is long.** Padding makes a download longer than the source; nothing makes
+it shorter. So a file whose length already matches is the right recording, and
+subtracting silence from it can only invent a problem: Cygnus X-1 runs 621.0s
+against a stated 621 and opens and closes quietly, and Goodnight Tonight runs
+261.8s against 262 and fades out. Trimming both made them look five and eight
+seconds short when neither was wrong.
+
+Where the file *is* long, subtract the silence at **both ends** and it should
+then land within a few seconds of what Spotify holds. Lyric videos pad the end, and these
 downloads pad the front: Mudvayne's "Dig" arrives 169 seconds against Spotify's
 162, and it is six seconds of leading silence plus two of trailing. Checking only
 the tail called seven of twenty-four files wrong when one was.

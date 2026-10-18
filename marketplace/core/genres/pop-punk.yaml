@@ -81,7 +81,7 @@ rig:
       note: |-
         This rig is the same chain as Hard rock and Southern rock's, control for control, and that is the evidence rather than a bug.
 
-        On the figures a word can be earned from, the three are nearly one genre. Median centroid: 132 Hz hard-rock, 133 Hz pop-punk, 131 Hz southern-rock. Share of the energy in the mids: 3.1% hard-rock, 2.4% pop-punk, 2.5% southern-rock. Share above the fundamental: 1.6% hard-rock, 1.7% pop-punk, 2.5% southern-rock. None of those separates them, so none moves off this instrument's corpus medians, and the nearest amplifier to all three is the same one.
+        On the figures a word can be earned from, the three are nearly one genre. Median centroid: 132 Hz hard-rock, 133 Hz pop-punk, 131 Hz southern-rock. Share of the energy in the mids: 3.1% hard-rock, 1.9% pop-punk, 2.5% southern-rock. Share above the fundamental: 1.6% hard-rock, 1.7% pop-punk, 2.5% southern-rock. None of those separates them, so none moves off this instrument's corpus medians, and the nearest amplifier to all three is the same one.
 
         Decay does separate them, and it cannot help. They read 0.45s hard-rock, 0.49s pop-punk, 0.23s southern-rock, and since the measure was fixed that is a real difference rather than noise: it earns short-decay for southern rock and long-decay for the other two. What it cannot do is move anything. Decay describes the hands and the strings, and no amplifier, compressor or reverb on this device has a control for it, so the word is recorded and the preset is unchanged. The figure that tells these genres apart is one there is nothing in a Helix to spend.
 

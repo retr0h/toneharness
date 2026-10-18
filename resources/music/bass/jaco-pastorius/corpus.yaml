@@ -18,7 +18,11 @@ tracks:
     seconds: 187
     genres: [jazz-fusion]
     genres_by: person
-    note: Weather Report, Black Market, 1976
+    note: >-
+      Weather Report, Black Market, 1976. The download runs 188.7s against the
+      187 Spotify holds, which is the right recording. It was once reported as
+      six seconds short, because the check subtracted the eight-second fade at
+      the end from a file whose own length already matched.
   - track: teen-town
     url: https://open.spotify.com/track/3Vnd9kqU36jdtgXXcxEJHW
     year: 1977

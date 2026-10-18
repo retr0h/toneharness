@@ -29,4 +29,7 @@ tracks:
     genres: [southern-rock]
     genres_by: person
     note: >-
-      Million Mile Reflections, 1979. 189 seconds as Spotify holds it
+      Million Mile Reflections, 1979. The download runs 185.0s against the 189
+      Spotify holds, and a refetch returns the same length to the tenth of a
+      second, so the link and the download source are different masters of
+      this song rather than a wrong match.
