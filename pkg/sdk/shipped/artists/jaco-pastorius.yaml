@@ -101,7 +101,9 @@ ask:
 id: jaco-pastorius
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -114,8 +116,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: both
+  - attrs:
+      '@position': "1"
+    capture: both
     confidence: medium
     controls:
       Bass: "0.684"
@@ -151,8 +156,11 @@ rig:
         the stage sound: "it''s the same exact sound as I get in the studio."'
       url: https://reverb.com/news/jaco-pastorius-on-how-he-learned-bass-and-composition-bacons-archive
     gear: Acoustic 360
+    position: 1
     role: amp
-  - capture: both
+  - attrs:
+      '@position': "2"
+    capture: both
     confidence: medium
     controls:
       Distance: "1.5"
@@ -165,6 +173,7 @@ rig:
       note: the 1x18 folded horn the 360 was sold with
       url: https://mixdownmag.com.au/features/rig-rundown-jaco-pastorius/
     gear: Acoustic 361
+    position: 2
     role: cab
     substitute:
       confidence: medium
@@ -173,7 +182,9 @@ rig:
         note: the device carries a 1x18 named for the 360 rather than the 361 it was
           sold with. The same box, as far as anything here knows.
       gear: Acoustic 360
-  - controls:
+  - attrs:
+      '@position': "3"
+    controls:
       HighGain: "0.0"
       Level: "0.0"
       LowGain: "0.0"
@@ -184,6 +195,7 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Simple EQ
+    position: 3
     role: eq
   instrument: bass
   preset:
@@ -311,3 +323,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

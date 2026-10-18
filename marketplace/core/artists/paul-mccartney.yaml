@@ -86,7 +86,9 @@ ask:
 id: paul-mccartney
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -99,8 +101,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: low
     controls:
       Bass: "0.684"
@@ -131,6 +136,7 @@ rig:
         angled speakers."'
       url: https://guitar.com/features/interviews/paul-mccartney-beatles-wings/
     gear: Acoustic 360
+    position: 1
     role: amp
     stage: true
     substitute:
@@ -141,7 +147,9 @@ rig:
           device models none of those parts. The Acoustic 360 is the only Wings-era
           bass amplifier it carries, so it stands in for a rig it is not.
       gear: Acoustic 360
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: low
     controls:
       Distance: "1.5"
@@ -158,6 +166,7 @@ rig:
         tours along with the 360 head it was part of.
       url: https://guitar.com/features/interviews/paul-mccartney-beatles-wings/
     gear: Acoustic 361
+    position: 2
     role: cab
     stage: true
     substitute:
@@ -166,7 +175,9 @@ rig:
       - kind: llm
         note: the device carries a 1x18 named for the 360 rather than the 361.
       gear: Acoustic 360
-  - controls:
+  - attrs:
+      '@position': "3"
+    controls:
       HighGain: "0.0"
       Level: "0.0"
       LowGain: "0.0"
@@ -177,6 +188,7 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Simple EQ
+    position: 3
     role: eq
   instrument: bass
   preset:
@@ -304,3 +316,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

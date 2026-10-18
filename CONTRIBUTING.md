@@ -600,6 +600,13 @@ Nothing regenerates the pair. `just generate` compiles the Go types out of the
 contract and never touches the version, which is how it sat at 2.0.0 through
 four merged pull requests that changed the file.
 
+Every document states the version it was written against, in a `version` beside
+`schema`, and one without it is refused. The reader checks the major, because a
+different major means something that used to validate no longer does; a later
+minor or patch is accepted. Anything the SDK writes is stamped with this
+binary's version, and a document read and written back keeps the version it
+arrived with.
+
 Which number moves: major for a document that used to validate and no longer
 does, minor for anything added, patch for wording that changes nothing about
 what is accepted. A `description:` is the grammar for its field rather than a

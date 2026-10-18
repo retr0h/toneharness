@@ -1,6 +1,7 @@
 # A genre rig, which reaches its records by their tags rather than by a
 # directory. Nothing in the corpus is called "thrash".
 schema: ToneSpec
+version: "3.0.0"
 id: thrash
 
 ask:

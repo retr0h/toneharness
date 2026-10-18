@@ -400,6 +400,75 @@ func (s *ShippedPublicTestSuite) TestNoShippedRigNamesADeviceModel() {
 	}
 }
 
+// TestEveryMarketplaceRigCarriesItsResolution covers a document being the
+// whole answer rather than a gesture at one.
+//
+// A rig may name one amplifier and nothing else, and resolving it writes every
+// control the chain ends up holding, so the file describes the preset instead
+// of describing the research. Both tiers were half and half: nineteen of
+// thirty-one core rigs carried their controls and twelve did not, with nothing
+// marking which, and a reader could not tell a rig nobody had resolved from one
+// whose gear this device cannot do.
+//
+// Either direction fails, which is what catches the second kind. Dusty Hill's
+// rig cited a Marshall JMP-1 and carried thirteen controls with `BrtDrive` and
+// `NrmDrive` in them: a jumped Marshall Super Lead, which is a guitar
+// amplifier, resolved into a bass rig before the shortlist was held to the
+// instrument. The resolver refuses it today, so the controls were a claim
+// nothing could reproduce, and a test asking only "is it resolved" would have
+// passed it.
+func (s *ShippedPublicTestSuite) TestEveryMarketplaceRigCarriesItsResolution() {
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	paths, err := filepath.Glob(
+		filepath.Join("..", "..", "..", "..", "marketplace", "*", "*", "*.yaml"),
+	)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(paths, "no marketplace rigs found to check")
+
+	for _, path := range paths {
+		s.Run(filepath.Join(filepath.Base(filepath.Dir(path)), filepath.Base(path)), func() {
+			f, err := os.Open(path)
+			s.Require().NoError(err)
+
+			spec, err := tone.Load(f)
+			s.Require().NoError(f.Close())
+			s.Require().NoError(err)
+
+			// Whether the document says what it resolved to. The target is the
+			// field only a resolve writes, and the controls are what it wrote.
+			claims := spec.Rig.Resolved != nil
+
+			// No corpus, so nothing is filled from statistics and what comes
+			// back is this rig on this device.
+			_, _, _, _, err = compile.Resolve(
+				spec.Id, spec.Rig, compile.Intent{}, cat, nil,
+			)
+			if err != nil {
+				s.Require().False(
+					claims,
+					"says what it resolved to and will not resolve: %v. A "+
+						"resolution nothing can reproduce is a claim about a "+
+						"preset nobody can build, so take the controls out and "+
+						"leave the gear and its evidence",
+					err,
+				)
+
+				return
+			}
+
+			s.Require().True(
+				claims,
+				"resolves on this device and does not say what to. Run "+
+					"`rigs resolve --dir <tier> --id %s` so the file carries "+
+					"every control the chain holds",
+				spec.Id,
+			)
+		})
+	}
+}
+
 func TestShippedPublicTestSuite(
 	t *testing.T,
 ) {

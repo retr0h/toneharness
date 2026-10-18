@@ -5,6 +5,7 @@
 # outcome.
 
 schema: ToneSpec
+version: "3.0.0"
 id: stated-over-word
 
 ask:

@@ -17,7 +17,9 @@ ask:
 id: jeff-ament
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -30,8 +32,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: low
     controls:
       Bass: "0.5"
@@ -56,8 +61,11 @@ rig:
         The window is the thread's own subject and it brackets this record: "from when PJ began (as Mookie Blaylock late 1990) until late 1991 when Jeff seems to have changed his rig to mostly SWR gear". Ten was recorded in the spring of 1991, inside it.
       url: https://www.talkbass.com/threads/jeff-aments-rig-late-1990-through-1991.1636698/
     gear: MESA/Boogie Bass 400+
+    position: 1
     role: amp
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: low
     controls:
       Angle: "45.0"
@@ -77,6 +85,7 @@ rig:
         Energy 1x15", "sometimes doubled up live for larger gigs".'
       url: https://www.talkbass.com/threads/jeff-aments-rig-late-1990-through-1991.1636698/
     gear: Mesa/Boogie 2x15
+    position: 2
     role: cab
     substitute:
       confidence: low
@@ -212,3 +221,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

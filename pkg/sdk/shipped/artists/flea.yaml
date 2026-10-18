@@ -113,7 +113,9 @@ ask:
 id: flea
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -126,8 +128,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - confidence: medium
+  - attrs:
+      '@position': "1"
+    confidence: medium
     controls:
       Bass: "0.5"
       Boost: "0.5"
@@ -149,6 +154,7 @@ rig:
         Love, which dates this rig to before that
       url: https://www.guitarworld.com/news/flea-red-hot-chili-peppers-unlimited-love-new-bass-amp-setup
     gear: Gallien-Krueger 2001RB
+    position: 1
     role: amp
     stage: true
     substitute:
@@ -158,7 +164,9 @@ rig:
         note: the 800RB is the only Gallien-Krueger this device models. Same maker,
           a different head, and nobody has compared them.
       gear: Gallien-Krueger 800RB
-  - confidence: medium
+  - attrs:
+      '@position': "2"
+    confidence: medium
     controls:
       Distance: "1.0"
       EarlyReflections: "0.0"
@@ -170,6 +178,7 @@ rig:
       note: three 410 cabinets and three 115s in the 2012 rundown
       url: https://www.premierguitar.com/rig-rundown-red-hot-chili-peppers-flea
     gear: Gallien-Krueger 410
+    position: 2
     role: cab
     stage: true
     substitute:
@@ -305,3 +314,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

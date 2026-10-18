@@ -857,7 +857,7 @@ func (s *TuneTestSuite) TestTune() {
 					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
 
 				at := filepath.Join(s.T().TempDir(), "ask.yaml")
-				s.Require().NoError(os.WriteFile(at, []byte("schema: Setup\n"), 0o600))
+				s.Require().NoError(os.WriteFile(at, []byte("schema: Setup\nversion: \"3.0.0\"\n"), 0o600))
 
 				opts := s.opts()
 				opts.Ask = at
@@ -1485,6 +1485,7 @@ func (s *TuneTestSuite) askWith(
 	at := filepath.Join(s.T().TempDir(), "ask.yaml")
 
 	s.Require().NoError(os.WriteFile(at, []byte(`schema: ToneSpec
+version: "3.0.0"
 id: matt-freeman
 ask:
   subject:

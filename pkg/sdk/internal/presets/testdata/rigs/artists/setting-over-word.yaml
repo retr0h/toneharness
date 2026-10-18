@@ -4,6 +4,7 @@
 # wrong would be worse than one that got both wrong, because nobody would look.
 
 schema: ToneSpec
+version: "3.0.0"
 id: setting-over-word
 
 ask:

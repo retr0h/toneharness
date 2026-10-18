@@ -17,6 +17,7 @@
 # so that is visible rather than surprising.
 
 schema: ToneSpec
+version: "3.0.0"
 id: corrected-by-ear
 
 ask:

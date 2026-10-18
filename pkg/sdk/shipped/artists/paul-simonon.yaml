@@ -33,7 +33,9 @@ ask:
 id: paul-simonon
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -46,8 +48,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: low
     controls:
       Bass: "0.41"
@@ -72,8 +77,11 @@ rig:
         Ampeg SVT" in 1979.'
       url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
     gear: Ampeg SVT
+    position: 1
     role: amp
-  - controls:
+  - attrs:
+      '@position': "2"
+    controls:
       Distance: "1.0"
       EarlyReflections: "0.0"
       High Cut: "8000.0"
@@ -84,6 +92,7 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: 8x10 Ampeg SVT-E
+    position: 2
     role: cab
   instrument: bass
   preset:
@@ -211,3 +220,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

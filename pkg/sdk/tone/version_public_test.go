@@ -23,7 +23,11 @@ package tone_test
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"regexp"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -39,8 +43,8 @@ import (
 // generator would move the hash on its own and the whole point is that
 // changing the contract costs a decision about which number moves.
 const (
-	contractVersion = "2.4.1"
-	contractSHA     = "1868bee0bbe78f386b0b404c422883c78926ac7772a78e144136b3d41c87cf0b"
+	contractVersion = "3.0.0"
+	contractSHA     = "6736b0185a55f7be6d5e1de6d0f4906712bd52bbf83df1e1e1c747945e3e94e0"
 )
 
 // semver is major.minor.patch and nothing else. No build metadata and no
@@ -115,6 +119,188 @@ func (s *VersionPublicTestSuite) TestTheContractsVersionMovedWithIt() {
 			"without the other",
 		s.version(), contractVersion,
 	)
+}
+
+// TestADocumentStatesWhichContractItWasWrittenAgainst covers the version a
+// document carries, and what a reader does with it.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *VersionPublicTestSuite) TestADocumentStatesWhichContractItWasWrittenAgainst() {
+	mine, err := tone.Version()
+	s.Require().NoError(err)
+
+	// Whatever the contract is at, and the three versions around it.
+	parts := strings.Split(mine, ".")
+	s.Require().Len(parts, 3)
+
+	bump := func(at int, by int) string {
+		n, err := strconv.Atoi(parts[at])
+		s.Require().NoError(err)
+
+		out := append([]string(nil), parts...)
+		out[at] = strconv.Itoa(n + by)
+
+		return strings.Join(out, ".")
+	}
+
+	document := func(version string) string {
+		return fmt.Sprintf(`schema: ToneSpec
+version: %q
+id: whoever
+rig:
+  instrument: bass
+  chain:
+    - {role: amp, gear: Ampeg SVT}
+`, version)
+	}
+
+	for _, tt := range []struct {
+		name    string
+		version string
+		refused string
+	}{
+		{
+			name:    "the version this binary reads",
+			version: mine,
+		},
+		{
+			// Minors add, so a document written against a later one is a
+			// document using fields this reader knows and not using the new
+			// ones. Nothing about it is unsafe to read.
+			name:    "a later minor",
+			version: bump(1, 1),
+		},
+		{
+			name:    "a later patch",
+			version: bump(2, 1),
+		},
+		{
+			// The whole point of the field. A major means something that used
+			// to validate no longer does, so what the fields mean cannot be
+			// assumed from their names.
+			name:    "another major is refused, and says both versions",
+			version: bump(0, 1),
+			refused: bump(0, 1),
+		},
+		{
+			name:    "an earlier major is refused too",
+			version: "1.0.0",
+			refused: "1.0.0",
+		},
+	} {
+		s.Run(tt.name, func() {
+			_, err := tone.Load(strings.NewReader(document(tt.version)))
+
+			if tt.refused == "" {
+				s.Require().NoError(err)
+
+				return
+			}
+
+			s.Require().ErrorIs(err, tone.ErrInvalid)
+			s.Require().ErrorContains(err, tt.refused)
+			s.Require().ErrorContains(err, mine)
+			s.Require().ErrorContains(err, "version")
+		})
+	}
+}
+
+// TestADocumentWithNoVersionIsRefused covers the field being required.
+//
+// The failure it prevents: a document that says nothing about which rules it
+// was written under reads exactly like one written against these rules and
+// wrong, and nothing can tell them apart.
+func (s *VersionPublicTestSuite) TestADocumentWithNoVersionIsRefused() {
+	for _, tt := range []struct {
+		name string
+		raw  string
+	}{
+		{
+			name: "a ToneSpec",
+			raw: `schema: ToneSpec
+id: whoever
+rig:
+  instrument: bass
+  chain:
+    - {role: amp, gear: Ampeg SVT}
+`,
+		},
+		{
+			name: "a Setup",
+			raw:  "schema: Setup\n",
+		},
+	} {
+		s.Run(tt.name, func() {
+			var err error
+
+			if strings.Contains(tt.raw, "ToneSpec") {
+				_, err = tone.Load(strings.NewReader(tt.raw))
+			} else {
+				_, err = tone.LoadSetup(strings.NewReader(tt.raw))
+			}
+
+			s.Require().ErrorIs(err, tone.ErrInvalid)
+			s.Require().ErrorContains(err, "version")
+		})
+	}
+}
+
+// TestSameContractAndMajorAnswerWhatNoDocumentCanAsk covers the two branches a
+// document cannot reach, because the schema refuses what would reach them.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *VersionPublicTestSuite) TestSameContractAndMajorAnswerWhatNoDocumentCanAsk() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// A version with no dot in it. The pattern on the field refuses
+			// one, so this is the answer for a caller that is not a document.
+			name: "a version that is not major.minor.patch",
+			then: func() {
+				s.Require().Equal("3", tone.Major("3"))
+				s.Require().Equal("", tone.Major(""))
+			},
+		},
+		{
+			// The embedded contract cannot fail to parse, so this is what a
+			// binary built without it would do: refuse the document rather
+			// than read it against a version nobody knows.
+			name: "no version to compare against",
+			then: func() {
+				was := tone.Version
+				tone.Version = func() (string, error) {
+					return "", errors.New("built without the contract")
+				}
+
+				defer func() { tone.Version = was }()
+
+				s.Require().ErrorContains(
+					tone.SameContract(
+						map[string]any{"version": "3.0.0"}, "ToneSpec",
+					),
+					"built without the contract",
+				)
+			},
+		},
+		{
+			name: "something that is not a set of fields at all",
+			then: func() {
+				s.Require().NoError(tone.SameContract("not a document", "ToneSpec"))
+			},
+		},
+		{
+			name: "a version that is not a string",
+			then: func() {
+				s.Require().NoError(tone.SameContract(
+					map[string]any{"version": 3}, "ToneSpec",
+				))
+			},
+		},
+	} {
+		s.Run(tt.name, tt.then)
+	}
 }
 
 func TestVersionPublicTestSuite(

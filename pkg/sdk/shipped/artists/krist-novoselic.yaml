@@ -17,7 +17,9 @@ ask:
 id: krist-novoselic
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -30,8 +32,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: low
     controls:
       Bass: "0.41"
@@ -64,8 +69,11 @@ rig:
         and a converted Marshall plexi for In Utero, so a rig covering 1993 is a different
         rig from this one, and the device models the Hiwatt as well.
     gear: Ampeg SVT
+    position: 1
     role: amp
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: low
     controls:
       Angle: "45.0"
@@ -86,6 +94,7 @@ rig:
         carries a Mesa/Boogie 2x15, which is the one box in that list it models.
       url: https://www.livenirvana.com/equipment/krist.php
     gear: Mesa/Boogie 2x15
+    position: 2
     role: cab
   instrument: bass
   preset:
@@ -213,3 +222,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

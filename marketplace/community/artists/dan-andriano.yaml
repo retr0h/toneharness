@@ -43,7 +43,9 @@ ask:
 id: dan-andriano
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -56,8 +58,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - confidence: medium
+  - attrs:
+      '@position': "1"
+    confidence: medium
     controls:
       Bass: "0.41"
       Bias: "0.74"
@@ -84,6 +89,7 @@ rig:
         almost like naturally compressed sound."'
       url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
     gear: Marshall Major
+    position: 1
     role: amp
     substitute:
       confidence: low
@@ -98,7 +104,9 @@ rig:
           like it.
         url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
       gear: Ampeg SVT
-  - controls:
+  - attrs:
+      '@position': "2"
+    controls:
       Distance: "1.0"
       EarlyReflections: "0.0"
       High Cut: "8000.0"
@@ -109,6 +117,7 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: 8x10 Ampeg SVT-E
+    position: 2
     role: cab
   instrument: bass
   preset:
@@ -236,3 +245,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

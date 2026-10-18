@@ -80,7 +80,9 @@ ask:
 id: bootsy-collins
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Drive: "true"
       Gain: "0.15"
       Level: "1.0"
@@ -93,8 +95,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Musitronics Mu-Tron III
+    position: 0
     role: filter
-  - controls:
+  - attrs:
+      '@position': "1"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -107,8 +112,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 1
     role: comp
-  - confidence: medium
+  - attrs:
+      '@position': "2"
+    confidence: medium
     controls:
       Bass: "0.67"
       Bias: "0.66"
@@ -130,6 +138,7 @@ rig:
         cabinets
       url: https://www.uberproaudio.com/who-plays-what/295-bootsy-collins-bass-rig-gear-and-equipment
     gear: Alembic F2-B
+    position: 2
     role: amp
     substitute:
       confidence: low
@@ -138,7 +147,9 @@ rig:
         note: a model's guess at the nearest clean tube bass preamp this device carries.
           Nobody has compared them.
       gear: Ampeg B-15
-  - controls:
+  - attrs:
+      '@position': "3"
+    controls:
       Distance: "1.0"
       EarlyReflections: "0.0"
       HighCut: "8000.0"
@@ -149,8 +160,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Legacy 1x15" Ampeg B-15
+    position: 3
     role: cab
-  - controls:
+  - attrs:
+      '@position': "4"
+    controls:
       HighGain: "0.0"
       Level: "0.0"
       LowGain: "0.0"
@@ -161,6 +175,7 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Simple EQ
+    position: 4
     role: eq
   instrument: bass
   preset:
@@ -288,3 +303,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

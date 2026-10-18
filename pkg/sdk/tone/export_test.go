@@ -45,3 +45,14 @@ var Against = against
 // is not, the way a rig carries the raw state a device wrote, and a test is
 // how it stays a guard rather than becoming dead code somebody deletes.
 var Check = check
+
+// SameContract refuses a document written against another major version of
+// the contract, exposed because two of its branches cannot be reached through
+// a document: the schema has already refused what would reach them by the
+// time it is called, and they are still the contract.
+var SameContract = sameContract
+
+// Major is the first part of a semantic version, exposed for the same reason.
+// The pattern on the field has already held the string to major.minor.patch,
+// so nothing arriving through a document can be missing its dot.
+var Major = major

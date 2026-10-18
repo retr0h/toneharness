@@ -31,3 +31,4 @@ rig:
     role: reverb
   instrument: guitar
 schema: ToneSpec
+version: "3.0.0"
