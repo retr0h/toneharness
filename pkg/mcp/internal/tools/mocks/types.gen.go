@@ -241,6 +241,21 @@ func (mr *MockClientMockRecorder) MusicGenres(ctx, corpus any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MusicGenres", reflect.TypeOf((*MockClient)(nil).MusicGenres), ctx, corpus)
 }
 
+// MusicLengths mocks base method.
+func (m *MockClient) MusicLengths(ctx context.Context, corpus string) ([]sdk.MusicLength, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MusicLengths", ctx, corpus)
+	ret0, _ := ret[0].([]sdk.MusicLength)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MusicLengths indicates an expected call of MusicLengths.
+func (mr *MockClientMockRecorder) MusicLengths(ctx, corpus any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MusicLengths", reflect.TypeOf((*MockClient)(nil).MusicLengths), ctx, corpus)
+}
+
 // MusicPlayers mocks base method.
 func (m *MockClient) MusicPlayers(ctx context.Context, corpus string) ([]sdk.MusicPlayer, error) {
 	m.ctrl.T.Helper()

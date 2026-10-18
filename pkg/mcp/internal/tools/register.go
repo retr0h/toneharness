@@ -175,6 +175,12 @@ func register(
 		OutputSchema: mustOutputSchema[[]sdk.MusicRecord](),
 	}, h.corpusMusicRecords)
 	addTool(s, &gomcp.Tool{
+		Name:         "corpus_music_lengths",
+		Description:  "Every separated recording held to the length its link states, which is what catches a download that is the wrong recording: a live take, a lyric video's padding, or the segue into the next song on the album. Reads the audio, so it costs seconds a record; corpus_music_records answers from the manifests and says only whether a stem exists. A second or two out is routine, because the stated length is the source's own metadata and the audio comes from another host.",
+		Annotations:  readOnly(),
+		OutputSchema: mustOutputSchema[[]sdk.MusicLength](),
+	}, h.corpusMusicLengths)
+	addTool(s, &gomcp.Tool{
 		Name:         "rigs_records",
 		Description:  "Every rig held to the era its ask claims. A record made outside that period measures other gear, so this reports which records fall outside it. It reports rather than refuses: which half is wrong is a judgement only somebody who knows the player can make.",
 		Annotations:  readOnly(),

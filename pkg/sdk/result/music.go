@@ -95,6 +95,42 @@ type MusicGroup struct {
 	Geared int `json:"geared"`
 }
 
+// MusicLength is one recording held to the length its link states.
+//
+// A wrong download measures without complaining, and this is what catches it.
+// Two of this corpus's own records turned out to be a different edit the first
+// time it was run by hand, one of them carrying the segue into the next song
+// on the album.
+type MusicLength struct {
+	// Instrument is the tree it sits in, and Player the directory.
+	Instrument string `json:"instrument"`
+	Player     string `json:"player"`
+	// Track is the recording's name.
+	Track string `json:"track"`
+	// States is what the manifest says the source holds, in seconds.
+	States int `json:"states"`
+	// Seconds is the separated stem's own length, and Sounding is that with
+	// the quiet at both ends taken off. Both zero where there is no stem to
+	// read.
+	Seconds  float64 `json:"seconds"`
+	Sounding float64 `json:"sounding"`
+	// Read says whether a stem was found and decoded. A record nobody has
+	// separated yet is reported rather than skipped: that is the ordinary
+	// state between a fetch and a measure, and it is not a mismatch.
+	Read bool `json:"read"`
+	// Why is what went wrong where Read is false.
+	Why string `json:"why,omitempty"`
+	// Off is how far the file is from what the source states, in seconds, and
+	// positive where the file is longer.
+	//
+	// The file's length rather than its sounding part: padding makes a
+	// download longer than its source and nothing makes it shorter, so a file
+	// whose length matches is the right recording however much quiet it
+	// carries. Three records were called wrong by a check that subtracted the
+	// quiet from files that already matched.
+	Off float64 `json:"off"`
+}
+
 // MusicRecord is one recording, with the player it was measured for.
 type MusicRecord struct {
 	// Instrument is the tree it sits in.

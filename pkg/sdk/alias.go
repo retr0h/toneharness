@@ -158,6 +158,9 @@ type (
 	MusicGroup = result.MusicGroup
 	// MusicRecord is one recording, with the player it was measured for.
 	MusicRecord = result.MusicRecord
+	// MusicLength is one recording held to the length its link states, which
+	// is the one of these that reads the audio.
+	MusicLength = result.MusicLength
 )
 
 // MeasuredGenre is one genre measured against the players who do not play it.

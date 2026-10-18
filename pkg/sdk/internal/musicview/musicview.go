@@ -29,6 +29,7 @@ package musicview
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"path"
 	"slices"
@@ -170,6 +171,122 @@ func Bands(
 	}
 
 	return grouped(audio.Bands(audio.Grouping(held))), nil
+}
+
+// Lengths holds every separated recording to the length its link states.
+//
+// The stem rather than the download, and not because the stem is the better
+// witness: `audio.Read` decodes WAV and the downloads are MP3, so the stem is
+// the only one of the two this can open. It is also the file every figure comes
+// from, so holding that one to the manifest checks what was measured rather
+// than what sits beside it.
+//
+// Reads audio, so it costs seconds a record where the rest of this package
+// costs a file read.
+func Lengths(
+	fsys fs.FS,
+	dir string,
+) ([]result.MusicLength, error) {
+	held, err := read(fsys, dir)
+	if err != nil {
+		return nil, err
+	}
+
+	out := []result.MusicLength(nil)
+
+	for _, p := range held {
+		for _, rec := range p.Tracks {
+			one := result.MusicLength{
+				Instrument: p.Instrument, Player: p.ID,
+				Track: rec.Track, States: rec.Seconds,
+			}
+
+			at, found := stem(fsys, dir, p.Instrument, p.ID, rec.Track)
+			if !found {
+				one.Why = "nothing has separated it yet"
+				out = append(out, one)
+
+				continue
+			}
+
+			got, err := lengthen(fsys, at)
+			if err != nil {
+				one.Why = err.Error()
+				out = append(out, one)
+
+				continue
+			}
+
+			one.Read = true
+			one.Seconds, one.Sounding = got.Seconds, got.Sounding()
+			one.Off = got.Seconds - float64(rec.Seconds)
+
+			out = append(out, one)
+		}
+	}
+
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Instrument != out[j].Instrument {
+			return out[i].Instrument < out[j].Instrument
+		}
+
+		if out[i].Player != out[j].Player {
+			return out[i].Player < out[j].Player
+		}
+
+		return out[i].Track < out[j].Track
+	})
+
+	return out, nil
+}
+
+// lengthen opens one stem and measures how long it is.
+func lengthen(
+	fsys fs.FS,
+	at string,
+) (audio.Length, error) {
+	f, err := fsys.Open(at)
+	if err != nil {
+		return audio.Length{}, fmt.Errorf("opening %s: %w", at, err)
+	}
+
+	defer func() { _ = f.Close() }()
+
+	// Seekable because a WAV header is read before the samples are. Every
+	// filesystem this is given is a directory of files, which are.
+	r, ok := f.(io.ReadSeeker)
+	if !ok {
+		return audio.Length{}, fmt.Errorf("%s cannot be read as a file", at)
+	}
+
+	samples, rate, err := audio.Read(r)
+	if err != nil {
+		return audio.Length{}, fmt.Errorf("reading %s: %w", at, err)
+	}
+
+	return audio.Lengthen(samples, rate), nil
+}
+
+// stem is where the separated part of one recording sits, and whether it is
+// there.
+//
+// The same join `separated` makes, carried one level further to the file
+// itself, because a directory with no stem in it is a separation that did not
+// finish.
+func stem(
+	fsys fs.FS,
+	dir, instrument, id, track string,
+) (string, bool) {
+	for _, model := range []string{"htdemucs", "htdemucs_6s"} {
+		for _, part := range []string{"bass.wav", "guitar.wav", "other.wav"} {
+			at := path.Join(dir, instrument, id, "stems", model, track, part)
+			if _, err := fs.Stat(fsys, at); err == nil {
+				return at, true
+			}
+		}
+	}
+
+	return "", false
 }
 
 // Records is every recording the corpus names, and whether it has stems yet.

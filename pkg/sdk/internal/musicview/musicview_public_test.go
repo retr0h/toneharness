@@ -22,11 +22,17 @@ package musicview_test
 
 import (
 	"fmt"
+	"io/fs"
+	"math"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"testing/fstest"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/musicview"
 )
 
@@ -329,6 +335,268 @@ func (s *MusicviewPublicTestSuite) TestBands() {
 // whether it has stems yet.
 //
 // One method and one table, so a case is a row rather than a file.
+// wav is a WAV file's bytes, holding seconds of sound after a head of quiet.
+//
+// Written to a real file and read back, because the encoder needs somewhere to
+// seek and a corpus in this package's tests is a map of bytes.
+func (s *MusicviewPublicTestSuite) wav(
+	quiet, sound float64,
+) string {
+	const rate = 48000
+
+	samples := make([]float32, 0, int((quiet+sound)*rate))
+	for range int(quiet * rate) {
+		samples = append(samples, 0)
+	}
+
+	for i := range int(sound * rate) {
+		samples = append(samples, float32(0.8*math.Sin(2*math.Pi*110*float64(i)/rate)))
+	}
+
+	at := filepath.Join(s.T().TempDir(), "stem.wav")
+	s.Require().NoError(audio.Write(at, samples, rate))
+
+	raw, err := os.ReadFile(at) //nolint:gosec // a file this test just wrote
+	s.Require().NoError(err)
+
+	return string(raw)
+}
+
+// TestLengths covers holding a separated recording to the length its link
+// states.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MusicviewPublicTestSuite) TestLengths() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The ordinary answer, and what `off` is measured from. The stem
+			// carries two seconds of quiet before the sound, which is where
+			// the instrument comes in rather than padding, so it changes the
+			// sounding part and not the comparison.
+			name: "a stem is held to its own length, not its sounding part",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"mike-dirnt/corpus.yaml": one("Mike Dirnt", "longview", "Green Day",
+						"punk", "person"),
+					"mike-dirnt/stems/htdemucs/longview/bass.wav": s.wav(2, 3),
+				})
+
+				got, err := musicview.Lengths(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+
+				s.Require().True(got[0].Read)
+				s.Require().Equal(180, got[0].States)
+				s.Require().InDelta(5.0, got[0].Seconds, 0.05)
+				s.Require().InDelta(3.0, got[0].Sounding, 0.1)
+				s.Require().InDelta(5.0-180, got[0].Off, 0.05)
+			},
+		},
+		{
+			// A record between a fetch and a separation. Reported rather than
+			// skipped, because that is an ordinary state and not a mismatch.
+			name: "a record nobody has separated says so",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"mike-dirnt/corpus.yaml": one("Mike Dirnt", "longview", "Green Day",
+						"punk", "person"),
+				})
+
+				got, err := musicview.Lengths(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+
+				s.Require().False(got[0].Read)
+				s.Require().Contains(got[0].Why, "separated")
+				s.Require().Zero(got[0].Seconds)
+			},
+		},
+		{
+			// A directory the separator made and did not fill, or a file that
+			// is not audio. Both are reported against the record rather than
+			// failing the whole run, because one bad file would otherwise
+			// hide every good one.
+			name: "a stem that will not decode is reported and the rest still read",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"mike-dirnt/corpus.yaml": one("Mike Dirnt", "longview", "Green Day",
+						"punk", "person") +
+						"  - track: holiday\n    url: https://open.spotify.com/track/y\n" +
+						"    year: 2004\n    seconds: 232\n",
+					"mike-dirnt/stems/htdemucs/longview/bass.wav": "not a wav at all",
+					"mike-dirnt/stems/htdemucs/holiday/bass.wav":  s.wav(0, 1),
+				})
+
+				got, err := musicview.Lengths(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 2)
+
+				s.Require().Equal("holiday", got[0].Track)
+				s.Require().True(got[0].Read)
+
+				s.Require().Equal("longview", got[1].Track)
+				s.Require().False(got[1].Read)
+				s.Require().Contains(got[1].Why, "longview")
+			},
+		},
+		{
+			// A guitar corpus, which separates with a different model into a
+			// different part. The join has to find either.
+			name: "a guitar stem is found too",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"a/corpus.yaml":                       one("A", "song", "B", "rock", "person"),
+					"a/stems/htdemucs_6s/song/guitar.wav": s.wav(0, 2),
+				})
+
+				got, err := musicview.Lengths(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+				s.Require().True(got[0].Read)
+			},
+		},
+		{
+			// Sorted the way the other tables are, so two runs read the same
+			// and a diff between them is a change rather than a reshuffle.
+			name: "sorted by instrument, then player, then track",
+			then: func() {
+				fsys := corpus(map[string]string{
+					"bass/b-player/corpus.yaml": one("B", "song", "Band", "rock", "person"),
+					"bass/a-player/corpus.yaml": one("A", "zzz", "Band", "rock", "person") +
+						"  - track: aaa\n    url: https://open.spotify.com/track/y\n" +
+						"    year: 2004\n    seconds: 100\n",
+					"guitar/a-player/corpus.yaml": one("A", "song", "Band", "rock", "person"),
+				})
+
+				got, err := musicview.Lengths(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 4)
+
+				s.Require().Equal([]string{"bass", "bass", "bass", "guitar"},
+					[]string{
+						got[0].Instrument, got[1].Instrument,
+						got[2].Instrument, got[3].Instrument,
+					})
+				s.Require().Equal([]string{"aaa", "zzz", "song", "song"},
+					[]string{got[0].Track, got[1].Track, got[2].Track, got[3].Track})
+			},
+		},
+		{
+			// A filesystem whose files cannot seek. A WAV header is read
+			// before its samples are, so one that cannot is refused by name
+			// rather than decoded into nonsense.
+			name: "a stem that cannot be seeked is refused by name",
+			then: func() {
+				fsys := unseekable{corpus(map[string]string{
+					"a/corpus.yaml":                  one("A", "song", "B", "rock", "person"),
+					"a/stems/htdemucs/song/bass.wav": s.wav(0, 1),
+				})}
+
+				got, err := musicview.Lengths(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+
+				s.Require().False(got[0].Read)
+				s.Require().Contains(got[0].Why, "bass.wav")
+			},
+		},
+		{
+			// A stem the walk can see and cannot read, which is a permission
+			// or a vanished file between the two calls. Reported against the
+			// record rather than stopping the run.
+			name: "a stem that will not open is reported",
+			then: func() {
+				fsys := unopenable{corpus(map[string]string{
+					"a/corpus.yaml":                  one("A", "song", "B", "rock", "person"),
+					"a/stems/htdemucs/song/bass.wav": s.wav(0, 1),
+				})}
+
+				got, err := musicview.Lengths(fsys, ".")
+				s.Require().NoError(err)
+				s.Require().Len(got, 1)
+
+				s.Require().False(got[0].Read)
+				s.Require().Contains(got[0].Why, "opening")
+			},
+		},
+		{
+			name: "a tree with no manifests",
+			then: func() {
+				_, err := musicview.Lengths(corpus(map[string]string{}), ".")
+				s.Require().ErrorIs(err, musicview.ErrNoCorpus)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
+}
+
+// unseekable is a filesystem whose files can be read and not seeked.
+//
+// fstest.MapFS hands back files that seek, and so does a directory on disk, so
+// this is the only way to reach what happens to one that does not.
+type unseekable struct {
+	fs.FS
+}
+
+func (u unseekable) Open(
+	name string,
+) (fs.File, error) {
+	f, err := u.FS.Open(name)
+	if err != nil {
+		return nil, err
+	}
+
+	// The audio only. A directory still has to list itself, which is how the
+	// manifests are found in the first place.
+	if !strings.HasSuffix(name, ".wav") {
+		return f, nil
+	}
+
+	return readOnly{f}, nil
+}
+
+// unopenable is a filesystem that admits a stem exists and will not hand it
+// over, which is a permission or a file that went away between the two calls.
+type unopenable struct {
+	fstest.MapFS
+}
+
+// Stat answers, so the walk finds the stem. Without this the open below is
+// never reached: fs.Stat falls back to opening a file on a filesystem that
+// does not implement it, and the record would read as one nobody separated.
+func (u unopenable) Stat(
+	name string,
+) (fs.FileInfo, error) {
+	return u.MapFS.Stat(name)
+}
+
+func (u unopenable) Open(
+	name string,
+) (fs.File, error) {
+	if strings.HasSuffix(name, ".wav") {
+		return nil, fs.ErrPermission
+	}
+
+	return u.MapFS.Open(name)
+}
+
+// readOnly hides whatever else the file underneath can do.
+type readOnly struct {
+	fs.File
+}
+
+func (r readOnly) Read(
+	p []byte,
+) (int, error) {
+	return r.File.Read(p)
+}
+
 func (s *MusicviewPublicTestSuite) TestRecords() {
 	for _, tt := range []struct {
 		name string
