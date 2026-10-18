@@ -2185,7 +2185,7 @@ func (s *ClientPublicTestSuite) TestMusic() {
 	s.Require().NoError(os.MkdirAll(dir, 0o750))
 	s.Require().NoError(os.WriteFile(filepath.Join(dir, "corpus.yaml"),
 		[]byte("artist: Mike Dirnt\ntracks:\n  - track: longview\n"+
-			"    url: https://open.spotify.com/track/x\n    year: 1994\n"+
+			"    url: https://open.spotify.com/track/x\n    year: 1994\n    seconds: 180\n"+
 			"    band: Green Day\n    genres: [punk]\n    genres_by: llm\n"), 0o600))
 
 	tests := []struct {
@@ -2304,7 +2304,7 @@ func (s *ClientPublicTestSuite) TestMeasuredGenres() {
 				s.Require().NoError(os.MkdirAll(dir, 0o750))
 				s.Require().NoError(os.WriteFile(filepath.Join(dir, "corpus.yaml"),
 					[]byte("artist: A\ntracks:\n  - track: t\n"+
-						"    url: https://open.spotify.com/track/x\n    year: 1994\n"+
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n    seconds: 180\n"+
 						"    genres: [punk]\n    genres_by: llm\n"), 0o600))
 
 				// A manifest naming a record nothing separated, which is a genre measured
@@ -2361,7 +2361,7 @@ func (s *ClientPublicTestSuite) TestMeasuredPlayers() {
 				s.Require().NoError(os.MkdirAll(dir, 0o750))
 				s.Require().NoError(os.WriteFile(filepath.Join(dir, "corpus.yaml"),
 					[]byte("artist: A\ntracks:\n  - track: t\n"+
-						"    url: https://open.spotify.com/track/x\n    year: 1994\n"), 0o600))
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n    seconds: 180\n"), 0o600))
 
 				// A manifest naming a record nothing separated, so there is a player and
 				// no audio behind them.

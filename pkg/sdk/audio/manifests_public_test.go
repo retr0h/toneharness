@@ -67,9 +67,9 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			then: func() {
 				fsys := tree(map[string]string{
 					"bass/mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
-						"    url: https://open.spotify.com/track/x\n    year: 1994\n",
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n    seconds: 180\n",
 					"guitar/somebody/corpus.yaml": "artist: Somebody\ntracks:\n  - track: u\n" +
-						"    url: https://open.spotify.com/track/y\n    year: 1999\n",
+						"    url: https://open.spotify.com/track/y\n    year: 1999\n    seconds: 180\n",
 				})
 
 				got, err := audio.Manifests(fsys, ".")
@@ -96,7 +96,7 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			then: func() {
 				fsys := tree(map[string]string{
 					"mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
-						"    url: https://open.spotify.com/track/x\n    year: 1994\n",
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n    seconds: 180\n",
 				})
 
 				got, err := audio.Manifests(fsys, ".")
@@ -115,7 +115,7 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			then: func() {
 				fsys := tree(map[string]string{
 					"bass/mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
-						"    url: https://open.spotify.com/track/x\n    year: 1994\n",
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n    seconds: 180\n",
 					"bass/ben-shepherd/notes.txt": "nothing yet",
 				})
 
@@ -170,9 +170,9 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			then: func() {
 				fsys := tree(map[string]string{
 					"bass/mike-dirnt/corpus.yaml": "artist: Mike Dirnt\ntracks:\n  - track: t\n" +
-						"    url: https://open.spotify.com/track/x\n    year: 1994\n",
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n    seconds: 180\n",
 					"bass/ben-shepherd/corpus.yaml": "artist: Ben Shepherd\ntracks:\n  - track: u\n" +
-						"    url: https://open.spotify.com/track/y\n    year: 1991\n",
+						"    url: https://open.spotify.com/track/y\n    year: 1991\n    seconds: 180\n",
 				})
 
 				got, err := audio.Manifests(fsys, ".")
@@ -188,7 +188,7 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			then: func() {
 				fsys := tree(map[string]string{
 					"bass/a/corpus.yaml": "artist: A\ntracks:\n  - track: t\n" +
-						"    url: https://open.spotify.com/track/x\n    year: 1994\n",
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n    seconds: 180\n",
 				})
 
 				_, err := audio.Manifests(refusing{fsys}, ".")

@@ -329,7 +329,7 @@ func (s *MeasuredGenresPublicTestSuite) playerOn(
 
 	for i, track := range tracks {
 		body += fmt.Sprintf("  - track: %s\n    url: https://open.spotify.com/track/x%d\n"+
-			"    year: 1994\n", track, i)
+			"    year: 1994\n    seconds: 180\n", track, i)
 
 		if genres != "" {
 			body += "    genres: [" + genres + "]\n    genres_by: llm\n"
@@ -626,7 +626,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 				s.Require().NoError(os.MkdirAll(dir, 0o750))
 				s.Require().NoError(os.WriteFile(filepath.Join(dir, "corpus.yaml"),
 					[]byte("artist: Waiting\ntracks:\n  - track: soon\n"+
-						"    url: https://open.spotify.com/track/x\n    year: 1994\n"), 0o600))
+						"    url: https://open.spotify.com/track/x\n    year: 1994\n    seconds: 180\n"), 0o600))
 
 				got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
 				s.Require().NoError(err)

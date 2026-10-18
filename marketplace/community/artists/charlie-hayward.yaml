@@ -1,23 +1,24 @@
-# Filed in community because its gear was never sourced.
-#
-# Its amplifier is an Ampeg SVT on no source at all. The only TalkBass
-# thread about him discusses his basses and never an amp, and the Aguilar head
-# and Mesa cabinet that circulate for his live rig trace to equipboard, which
-# scrapes Wikipedia and tags its own entries unverified.
-#
-# core/ requires two things of every rig: a source somebody opened for each
-# claim, and no gear substituted by the gear map. See build-a-rig's
-# shipping.md, "Two bars for core, not one". Nothing here is deleted: the
-# research stands and the player stays, and a rig that clears both bars
-# later moves back across.
-#
 # Charlie Hayward — The Charlie Daniels Band
 #
 # One document: the ask says who it is for, the rig below says what the gear is.
 #
-# The amplifier is a model's assertion. The instrument is on film.
-#
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+#
+# Filed in community because his amplifier is not established. The research
+# bottomed out: the only TalkBass thread about him discusses his basses and
+# never an amp, and the Aguilar head and Mesa cabinet that circulate for his
+# live rig trace to equipboard, which scrapes Wikipedia and tags its own
+# entries unverified.
+#
+# So the amplifier below is measured rather than claimed, where it used to be
+# an Ampeg SVT on no source at all. It is what his own records rank nearest,
+# and the sound-alike beside this (million-mile-reflections) is the document
+# that answers for the sound. The instrument is on film and stays as it was.
+#
+# core/ requires two things of every rig: a source somebody opened for each
+# claim, and no gear substituted by the gear map. See build-a-rig's
+# shipping.md, "Two bars for core, and where each one falls".
+
 ask:
   aliases:
   - hayward
@@ -75,26 +76,34 @@ rig:
     capture: direct
     confidence: low
     controls:
-      Bass: "0.41"
-      Bias: "0.74"
+      Bass: "0.67"
+      Bias: "0.66"
       BiasX: "0.5"
-      ChVol: "0.8"
-      Drive: "0.6"
+      ChVol: "1.0"
+      Drive: "0.7"
+      HighMid: "0.5"
       Hum: "0.5"
+      LowMid: "0.65"
       Master: "1.0"
-      Mid: "0.79"
-      MidFreq: "2"
       Ripple: "0.5"
       Sag: "0.5"
-      Treble: "0.85"
+      Treble: "0.69"
     evidence:
     - caveat: |-
-        what was searched, and where it ran out. His rig is documented and it is the wrong rig: an Avalon U5 into an Aguilar head and a Mesa cabinet, which is what he plays now. Aguilar did not exist in 1979, so that account cannot describe this record however often it is repeated, and taking it would be worse than admitting the gap.
-        The TalkBass thread about him and Vintage Guitar's Charlie Daniels feature were both read, and neither names a period amplifier. If you know what he recorded this through, please open a pull request.
-      kind: llm
-      note: asserted by a model and confirmed by nobody. A big valve head is what
-        a band of this size carried in 1979, and the SVT is the one this device models.
-    gear: Ampeg SVT
+        **Not a claim about what he played.** This was an Ampeg SVT asserted by a model and confirmed by nobody until the research was done and found nothing; a measured amplifier is at least reproducible, and this is the only reason it is here rather than that one.
+
+        The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
+      kind: audio
+      note: Chosen by measurement rather than asserted. Ampeg B-15NF Portaflex was
+        researched and bottomed out. Nothing names his amplifier. What is written
+        about him is about his playing, and the gear pages that carry a figure for
+        him carry it with nothing underneath. So the device's twenty-seven bass amplifiers
+        were ranked against his own separated bass stems, one record at a time, across
+        Behind Your Eyes, Mississippi and Passing Lane, and this is the one that came
+        nearest on two of the three. The vote, the margins and what is weak about
+        them are in the million-mile-reflections sound-alike beside this, which is
+        the document that answers for the sound rather than for him.
+    gear: Ampeg B-15NF Portaflex
     position: 1
     role: amp
   - attrs:
@@ -102,14 +111,14 @@ rig:
     controls:
       Distance: "1.0"
       EarlyReflections: "0.0"
-      High Cut: "8000.0"
+      HighCut: "8000.0"
       Level: "0.0"
       LowCut: "19.9"
     evidence:
     - kind: corpus
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
-    gear: 8x10 Ampeg SVT-E
+    gear: Legacy 1x15" Ampeg B-15
     position: 2
     role: cab
   instrument: bass

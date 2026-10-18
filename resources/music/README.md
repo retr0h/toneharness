@@ -13,6 +13,13 @@ nobody has measured and the records as belonging to nobody, which look identical
 to the ordinary cases. `toneharness rigs records --corpus resources/music/bass`
 names both.
 
+Every record carries a `seconds`, which is how long the recording is where its
+url points rather than how long the file on disk is. The file is what gets
+checked and the link is what it is checked against, so a figure taken off the
+file would agree with itself forever. The manifest does not read without it: a
+wrong download measures without complaining, and the length the source holds is
+the only thing that catches a lyric video, a live take or a different master.
+
 A genre says who decided it, in `genres_by`: `llm` where a model labelled the
 track, which is the fast path, or `person` where somebody said so or overruled a
 model. A record naming genres without it does not read. The field exists because

@@ -52,12 +52,14 @@ tracks:
   - track: longview
     url: https://open.spotify.com/track/abc
     year: 1994
+    seconds: 180
     source: https://www.youtube.com/watch?v=abc
     at: "1:20-1:45"
     note: the bass carries the verse alone
   - track: basket-case
     url: https://open.spotify.com/track/def
     year: 1994
+    seconds: 180
 `
 
 // TestItReadsWhatWasMeasured covers the whole shape.
@@ -99,7 +101,7 @@ func (s *ManifestPublicTestSuite) TestReadManifest() {
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
 					"tracks:\n  - track: longview\n    url: https://open.spotify.com/track/abc\n" +
-						"    year: 1994\n    source: watch?v=abc\n"))
+						"    year: 1994\n    seconds: 180\n    source: watch?v=abc\n"))
 
 				s.Require().Error(err)
 				s.Require().Contains(err.Error(), "longview")
@@ -128,7 +130,7 @@ func (s *ManifestPublicTestSuite) TestReadManifest() {
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
 					"tracks:\n  - track: longview\n    url: https://open.spotify.com/track/abc\n" +
-						"    year: 1994\n    at: \"about a minute in\"\n"))
+						"    year: 1994\n    seconds: 180\n    at: \"about a minute in\"\n"))
 
 				s.Require().Error(err)
 				s.Require().Contains(err.Error(), "longview")
@@ -146,7 +148,7 @@ func (s *ManifestPublicTestSuite) TestReadManifest() {
 			name: "a record with no link is refused",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
-					"tracks:\n  - track: longview\n    year: 1994\n    note: no link\n"))
+					"tracks:\n  - track: longview\n    year: 1994\n    seconds: 180\n    note: no link\n"))
 
 				s.Require().Error(err)
 				s.Require().Contains(err.Error(), "longview")
@@ -180,7 +182,7 @@ func (s *ManifestPublicTestSuite) TestReadManifest() {
 			name: "a url somewhere else is refused",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
-					"tracks:\n  - track: longview\n    year: 1994\n" +
+					"tracks:\n  - track: longview\n    year: 1994\n    seconds: 180\n" +
 						"    url: https://example.com/longview.mp3\n"))
 
 				s.Require().Error(err)
@@ -197,7 +199,7 @@ func (s *ManifestPublicTestSuite) TestReadManifest() {
 			name: "a you tube url is refused",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
-					"tracks:\n  - track: longview\n    year: 1994\n" +
+					"tracks:\n  - track: longview\n    year: 1994\n    seconds: 180\n" +
 						"    url: https://www.youtube.com/watch?v=abc\n"))
 
 				s.Require().Error(err)
@@ -209,7 +211,7 @@ func (s *ManifestPublicTestSuite) TestReadManifest() {
 			name: "a source somewhere else is refused",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
-					"tracks:\n  - track: longview\n    year: 1994\n" +
+					"tracks:\n  - track: longview\n    year: 1994\n    seconds: 180\n" +
 						"    url: https://open.spotify.com/track/abc\n" +
 						"    source: https://example.com/longview.mp3\n"))
 
@@ -229,7 +231,7 @@ func (s *ManifestPublicTestSuite) TestReadManifest() {
 			name: "a url the parser cannot read is refused",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
-					"tracks:\n  - track: longview\n    year: 1994\n" +
+					"tracks:\n  - track: longview\n    year: 1994\n    seconds: 180\n" +
 						"    url: \"http://[::1\"\n"))
 
 				s.Require().Error(err)
@@ -241,7 +243,7 @@ func (s *ManifestPublicTestSuite) TestReadManifest() {
 			name: "a bad link is caught here",
 			then: func() {
 				_, err := audio.ReadManifest(strings.NewReader(
-					"tracks:\n  - track: longview\n    year: 1994\n    url: spotify:track:abc\n"))
+					"tracks:\n  - track: longview\n    year: 1994\n    seconds: 180\n    url: spotify:track:abc\n"))
 
 				s.Require().Error(err)
 				s.Require().Contains(err.Error(), "longview")
@@ -276,6 +278,7 @@ tracks:
   - track: longview
     url: https://open.spotify.com/track/x
     year: 1994
+    seconds: 180
     genres: [punk, pop-punk]
     genres_by: person
 `))
@@ -333,6 +336,7 @@ tracks:
   - track: longview
     url: https://open.spotify.com/track/x
     year: 1994
+    seconds: 180
 ` + tt.body))
 
 						if tt.want == "" {
@@ -369,7 +373,7 @@ func (s *ManifestPublicTestSuite) TestItNamesNoFiles() {
 // TestASourceFromYouTubeIsAccepted covers the ordinary fallback.
 func (s *ManifestPublicTestSuite) TestASourceFromYouTubeIsAccepted() {
 	got := s.read(
-		"tracks:\n  - track: longview\n    year: 1994\n" +
+		"tracks:\n  - track: longview\n    year: 1994\n    seconds: 180\n" +
 			"    url: https://open.spotify.com/track/abc\n" +
 			"    source: https://www.youtube.com/watch?v=abc\n")
 
@@ -415,7 +419,7 @@ func (s *ManifestPublicTestSuite) TestJoin() {
 			name: "join ignores case",
 			then: func() {
 				got := s.read(
-					"tracks:\n  - track: LongView\n    year: 1994\n    url: https://open.spotify.com/track/ghi\n",
+					"tracks:\n  - track: LongView\n    year: 1994\n    seconds: 180\n    url: https://open.spotify.com/track/ghi\n",
 				).
 					Join([]audio.Named{{Name: "longview"}})
 

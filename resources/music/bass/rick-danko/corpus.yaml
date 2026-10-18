@@ -4,6 +4,7 @@ tracks:
     url: https://open.spotify.com/track/7uYK13jsmGi8flq2bF6r90
     source: https://www.youtube.com/watch?v=j3settN01ac
     year: 1970
+    seconds: 223
     band: The Band
     genres: [southern-rock, rock]
     genres_by: person
@@ -16,6 +17,7 @@ tracks:
   - track: life-is-a-carnival
     url: https://open.spotify.com/track/7mDMyulAVzNBxNYt8sUVXB
     year: 1971
+    seconds: 235
     band: The Band
     genres: [southern-rock, rock]
     genres_by: person
@@ -23,6 +25,7 @@ tracks:
   - track: ophelia
     url: https://open.spotify.com/track/2fx1hkMHTVdDim274rwoPa
     year: 1975
+    seconds: 212
     band: The Band
     genres: [southern-rock, rock]
     genres_by: person

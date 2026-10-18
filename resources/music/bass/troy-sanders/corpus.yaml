@@ -3,6 +3,7 @@ tracks:
   - track: high-road
     url: https://open.spotify.com/track/4coYVm83MTdcEKlWcbU4Zh
     year: 2014
+    seconds: 255
     band: Mastodon
     genres: [metal]
     genres_by: llm
@@ -13,6 +14,7 @@ tracks:
   - track: the-motherload
     url: https://open.spotify.com/track/6EF0xhfKtQNqUPz2mnE5BD
     year: 2014
+    seconds: 299
     band: Mastodon
     genres: [metal]
     genres_by: llm
@@ -20,6 +22,7 @@ tracks:
   - track: chimes-at-midnight
     url: https://open.spotify.com/track/4KYy8DKz2E9DSnlgN0YJOs
     year: 2014
+    seconds: 332
     band: Mastodon
     genres: [metal]
     genres_by: llm

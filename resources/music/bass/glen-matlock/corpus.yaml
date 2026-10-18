@@ -3,6 +3,7 @@ tracks:
   - track: anarchy-in-the-uk
     url: https://open.spotify.com/track/3LoDeIbiR12sAznmpNEmKA
     year: 1977
+    seconds: 211
     band: Sex Pistols
     genres: [punk]
     genres_by: person
@@ -14,6 +15,7 @@ tracks:
   - track: god-save-the-queen
     url: https://open.spotify.com/track/6ui6l3ZNvlrGQZArwo8195
     year: 1977
+    seconds: 200
     band: Sex Pistols
     genres: [punk]
     genres_by: person
@@ -22,6 +24,7 @@ tracks:
   - track: pretty-vacant
     url: https://open.spotify.com/track/2mKj8Em0GLFu8I78yM1CfU
     year: 1977
+    seconds: 198
     band: Sex Pistols
     genres: [punk]
     genres_by: person

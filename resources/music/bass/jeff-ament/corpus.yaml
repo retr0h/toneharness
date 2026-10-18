@@ -3,6 +3,7 @@ tracks:
   - track: jeremy
     url: https://open.spotify.com/track/62nQ8UZVqR2RMvkJHkcO2o
     year: 1991
+    seconds: 318
     band: Pearl Jam
     genres: [grunge]
     genres_by: llm
@@ -10,6 +11,7 @@ tracks:
   - track: even-flow
     url: https://open.spotify.com/track/6QewNVIDKdSl8Y3ycuHIei
     year: 1991
+    seconds: 292
     band: Pearl Jam
     genres: [grunge]
     genres_by: llm
@@ -17,6 +19,7 @@ tracks:
   - track: animal
     url: https://open.spotify.com/track/2EzaNI2kE2AoBfJ8mRZLSJ
     year: 1993
+    seconds: 168
     band: Pearl Jam
     genres: [grunge]
     genres_by: llm

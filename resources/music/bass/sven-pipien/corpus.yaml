@@ -3,6 +3,7 @@ tracks:
   - track: only-a-fool
     url: https://open.spotify.com/track/4gYTvZNbAcljgqQcqPChXN
     year: 1998
+    seconds: 223
     band: The Black Crowes
     genres: [southern-rock, hard-rock]
     genres_by: llm
@@ -12,6 +13,7 @@ tracks:
   - track: go-faster
     url: https://open.spotify.com/track/4XLROKNCwP8sKHpJvLxnFB
     year: 1998
+    seconds: 242
     band: The Black Crowes
     genres: [southern-rock, hard-rock]
     genres_by: llm
@@ -19,6 +21,7 @@ tracks:
   - track: soul-singing
     url: https://open.spotify.com/track/7gOO4Qhu5oEtbB6FcY1xKg
     year: 2001
+    seconds: 233
     band: The Black Crowes
     genres: [southern-rock, hard-rock]
     genres_by: llm

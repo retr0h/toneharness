@@ -53,7 +53,7 @@ func one(
 	artist, track, band, genres, by string,
 ) string {
 	out := "artist: " + artist + "\ntracks:\n  - track: " + track +
-		"\n    url: https://open.spotify.com/track/x\n    year: 1994\n"
+		"\n    url: https://open.spotify.com/track/x\n    year: 1994\n    seconds: 180\n"
 
 	if band != "" {
 		out += "    band: " + band + "\n"
@@ -86,7 +86,7 @@ func (s *MusicviewPublicTestSuite) TestPlayers() {
 					// to report. A record naming none counts towards no genre at all.
 					"flea/corpus.yaml": one("Flea", "aeroplane", "", "", "") +
 						"  - track: ethiopia\n    url: https://open.spotify.com/track/y\n" +
-						"    year: 2016\n",
+						"    year: 2016\n    seconds: 180\n",
 					// A directory with no manifest, which is a player whose records
 					// somebody is still choosing.
 					"ben-shepherd/notes.txt": "nothing yet",
@@ -345,7 +345,7 @@ func (s *MusicviewPublicTestSuite) TestRecords() {
 					"mike-dirnt/corpus.yaml": one("Mike Dirnt", "longview", "Green Day",
 						"punk", "person") +
 						"  - track: holiday\n    url: https://open.spotify.com/track/y\n" +
-						"    year: 2004\n",
+						"    year: 2004\n    seconds: 180\n",
 					"mike-dirnt/stems/htdemucs/longview/bass.wav": "",
 				})
 
@@ -399,7 +399,7 @@ func many(
 	for i := range n {
 		out += fmt.Sprintf(
 			"  - track: t%d\n    url: https://open.spotify.com/track/x%d\n"+
-				"    year: 1994\n    genres: [%s]\n    genres_by: llm\n",
+				"    year: 1994\n    seconds: 180\n    genres: [%s]\n    genres_by: llm\n",
 			i, i, genre)
 	}
 

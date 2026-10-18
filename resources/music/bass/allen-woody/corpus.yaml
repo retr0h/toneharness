@@ -3,6 +3,7 @@ tracks:
   - track: blind-man-in-the-dark
     url: https://open.spotify.com/track/3vWP0oPj1CB0AFQzdbmejx
     year: 1998
+    seconds: 407
     band: Gov't Mule
     genres: [southern-rock, blues-rock]
     genres_by: llm
@@ -12,6 +13,7 @@ tracks:
   - track: thorazine-shuffle
     url: https://open.spotify.com/track/1nkMih9NE9Ha0hH9aTGYCI
     year: 1998
+    seconds: 407
     band: Gov't Mule
     genres: [southern-rock, blues-rock]
     genres_by: llm
@@ -19,6 +21,7 @@ tracks:
   - track: john-the-revelator
     url: https://open.spotify.com/track/594c8sBqf0bZJLS7liw563
     year: 1998
+    seconds: 229
     band: Gov't Mule
     genres: [southern-rock, blues-rock]
     genres_by: llm

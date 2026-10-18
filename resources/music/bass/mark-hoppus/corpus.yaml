@@ -3,6 +3,7 @@ tracks:
   - track: dammit
     url: https://open.spotify.com/track/6WkSUgo1VdpzgtiXKlFPcY
     year: 1997
+    seconds: 165
     band: blink-182
     genres: [pop-punk]
     genres_by: person
@@ -10,6 +11,7 @@ tracks:
   - track: whats-my-age-again
     url: https://open.spotify.com/track/4LJhJ6DQS7NwE7UKtvcM52
     year: 1999
+    seconds: 148
     band: blink-182
     genres: [pop-punk]
     genres_by: person
@@ -17,6 +19,7 @@ tracks:
   - track: feeling-this
     url: https://open.spotify.com/track/26AYR77170U49cMcXB7aRV
     year: 2003
+    seconds: 172
     band: blink-182
     genres: [pop-punk]
     genres_by: person

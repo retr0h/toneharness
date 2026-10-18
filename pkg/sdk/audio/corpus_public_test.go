@@ -188,7 +188,7 @@ func (s *CorpusPublicTestSuite) manifest(
 	body := "artist: " + player + "\ntracks:\n"
 	for _, t := range tracks {
 		body += "  - track: " + t +
-			"\n    url: https://open.spotify.com/track/abc\n    year: 1994\n"
+			"\n    url: https://open.spotify.com/track/abc\n    year: 1994\n    seconds: 180\n"
 	}
 
 	s.Require().NoError(os.WriteFile(
@@ -205,7 +205,7 @@ func (s *CorpusPublicTestSuite) tagged(
 	body := "artist: " + player + "\ntracks:\n"
 	for _, t := range tracks {
 		body += "  - track: " + t +
-			"\n    url: https://open.spotify.com/track/abc\n    year: 1994\n" +
+			"\n    url: https://open.spotify.com/track/abc\n    year: 1994\n    seconds: 180\n" +
 			"    genres: [" + genres + "]\n    genres_by: person\n"
 	}
 

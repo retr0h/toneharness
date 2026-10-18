@@ -3,6 +3,7 @@ tracks:
   - track: lounge-act
     url: https://open.spotify.com/track/7glld4kxYHp61zIPtSVHNk
     year: 1991
+    seconds: 156
     band: Nirvana
     genres: [grunge]
     genres_by: llm
@@ -10,6 +11,7 @@ tracks:
   - track: come-as-you-are
     url: https://open.spotify.com/track/4P5KoWXOxwuobLmHXLMobV
     year: 1991
+    seconds: 218
     band: Nirvana
     genres: [grunge]
     genres_by: llm
@@ -17,6 +19,7 @@ tracks:
   - track: heart-shaped-box
     url: https://open.spotify.com/track/11LmqTE2naFULdEP94AUBa
     year: 1993
+    seconds: 281
     band: Nirvana
     genres: [grunge]
     genres_by: llm

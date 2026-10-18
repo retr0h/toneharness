@@ -3,6 +3,7 @@ tracks:
   - track: angel-of-death
     url: https://open.spotify.com/track/5ohfpKB5tt275f4Y4lQ9F7
     year: 1986
+    seconds: 291
     band: Slayer
     genres: [metal]
     genres_by: llm
@@ -12,6 +13,7 @@ tracks:
   - track: raining-blood
     url: https://open.spotify.com/track/4fiOTntQKr24p07FvQDHZE
     year: 1986
+    seconds: 255
     band: Slayer
     genres: [metal]
     genres_by: llm
@@ -19,6 +21,7 @@ tracks:
   - track: altar-of-sacrifice
     url: https://open.spotify.com/track/4LvQil7PXdldIl2jwrMCcV
     year: 1986
+    seconds: 170
     band: Slayer
     genres: [metal]
     genres_by: llm
@@ -29,6 +32,7 @@ tracks:
   - track: jesus-saves
     url: https://open.spotify.com/track/47YR9X6SpcI4jYA2DOOhZm
     year: 1986
+    seconds: 174
     band: Slayer
     genres: [metal]
     genres_by: llm

@@ -10,6 +10,7 @@ download reads. Written first, the record measured is the one the evidence names
   - track: silly-love-songs
     url: https://open.spotify.com/track/…
     year: 1976
+    seconds: 346
     band: Wings
     genres: [rock, pop]
     genres_by: llm
@@ -18,8 +19,8 @@ download reads. Written first, the record measured is the one the evidence names
 `track` is the source file's own name without its extension, and the stem directory
 takes the same name. A name matching nothing is reported, and so is a stray stem.
 
-**Every entry carries a `url` and a `year`**, and the manifest is refused without a
-link where it is read rather than years later. Three players once got three tracks
+**Every entry carries a `url`, a `year` and a `seconds`**, and the manifest is
+refused without them where it is read rather than years later. Three players once got three tracks
 each and no links, and once the audio was gone nobody could refetch them or check
 which takes had been measured. An album name does not stand in: it does not say
 which of several tracks with that title was meant.
@@ -54,9 +55,24 @@ written into the entry's `source`: `url` stays the evidence a rig quotes, `sourc
 only the downloader's way back. Never pass a YouTube link alone, or spotdl searches
 Spotify for the video's title and tags the file as another artist's song.
 
+`seconds` is how long the recording is **where the url points**, not how long
+the file on disk is. The file is the thing being checked and the link is what it
+is checked against, so a figure read off the file would agree with itself
+forever. `uvx spotdl save <url> --save-file t.spotdl` prints it.
+
+That number used to live in a `note` as prose, where nothing could read it:
+
+```yaml
+    note: Stone Temple Pilots, 2018. 275 seconds as Spotify holds it
+```
+
+Keep writing the sentence if it helps a reader, but the field is the one a tool
+can compare against.
+
 ## Check it is the recording
 
-A wrong file measures without complaint, so compare lengths:
+A wrong file measures without complaint, so compare lengths against the
+`seconds` the entry carries:
 
 ```bash
 ffprobe -v error -show_entries format=duration <file>

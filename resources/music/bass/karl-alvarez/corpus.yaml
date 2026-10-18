@@ -3,6 +3,7 @@ tracks:
   - track: coolidge
     url: https://open.spotify.com/track/1sYjTUX8Fc9bhPdH44gC3i
     year: 1987
+    seconds: 167
     band: Descendents
     genres: [punk]
     genres_by: person
@@ -11,6 +12,7 @@ tracks:
   - track: van
     url: https://open.spotify.com/track/2B0DG360FjKtHuFnLzaZnm
     year: 1987
+    seconds: 181
     band: Descendents
     genres: [punk]
     genres_by: person
@@ -19,6 +21,7 @@ tracks:
   - track: cameage
     url: https://open.spotify.com/track/6B9Tw4MFMLCDXEkRY3fcnb
     year: 1987
+    seconds: 185
     band: Descendents
     genres: [punk]
     genres_by: person
