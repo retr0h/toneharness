@@ -123,19 +123,58 @@ func (s *GenrePublicTestSuite) TestSittingInsideThePackEarnsNothing() {
 }
 
 // TestTheMarginIsHowFarPastTheLine covers what tells a strong word from a weak
-// one.
+// one, which is the whole job now that the gate no longer tests for
+// distinctiveness.
 //
 // Two words that read alike are not alike. The pack sits at 0.20, 0.22, 0.24 and
-// 0.26, so its upper quartile interpolates to 0.245: a median of 0.26 is 0.015
-// past the line and one more player could take it away, where 0.60 could not.
+// 0.26, so its median interpolates to 0.23: a median of 0.26 is 0.03 past the
+// line and one more player could take it away, where 0.60 could not.
 func (s *GenrePublicTestSuite) TestTheMarginIsHowFarPastTheLine() {
 	weak := audio.Displaced(sitting(9, 0.26, 165, 0.33), pack())
 	s.Require().Len(weak, 1)
-	s.Require().InDelta(0.015, weak[0].Margin, 0.001)
+	s.Require().InDelta(0.03, weak[0].Margin, 0.001)
 
 	strong := audio.Displaced(sitting(9, 0.60, 165, 0.33), pack())
 	s.Require().Len(strong, 1)
 	s.Require().Greater(strong[0].Margin, weak[0].Margin)
+}
+
+// TestWordsOverlap covers the rule a word describes a sound rather than proving
+// it unique.
+//
+// Two groups on the same side of the pack both earn the word, and the margin is
+// what separates them. Under the old rule the second one to arrive could take
+// the word off the first by widening the quartiles, so grunge held `scooped`,
+// `dark` and `clean` until twenty-five records of rock, metal and nu-metal
+// joined the corpus and left it with nothing. Grunge had not changed.
+func (s *GenrePublicTestSuite) TestWordsOverlap() {
+	one := audio.Displaced(sitting(9, 0.60, 165, 0.33), pack())
+	two := audio.Displaced(sitting(9, 0.90, 165, 0.33), pack())
+
+	s.Require().Len(one, 1)
+	s.Require().Len(two, 1)
+	s.Require().Equal("mid-forward", one[0].Term)
+	s.Require().Equal("mid-forward", two[0].Term,
+		"both are above the pack, so both earn it")
+	s.Require().Greater(two[0].Margin, one[0].Margin,
+		"and the margin is where the difference between them lives")
+}
+
+// TestTooCloseToTheMiddleEarnsNothing covers the floor that replaced the
+// quartile, on the axis where it is visibly doing the work.
+//
+// The pack's centroids are 150, 160, 170 and 180, so the middle is 165 and the
+// middle half is 20Hz wide. A quarter of that is 5Hz, and a genre at 168Hz is
+// on the high side of the middle by 3Hz. The measure's own precision cannot
+// refuse that, because a centroid is reported to the hertz and 3Hz resolves
+// fine. What refuses it is the scale.
+//
+// Southern rock is the real case: 2.9Hz from the middle of a population
+// spanning 65Hz, which would have read `bright` on a median comparison with no
+// floor under it.
+func (s *GenrePublicTestSuite) TestTooCloseToTheMiddleEarnsNothing() {
+	s.Require().Empty(audio.Displaced(sitting(9, 0.23, 168, 0.33), pack()),
+		"3Hz off the middle of a 20Hz spread is not a word")
 }
 
 // TestTooFewToStandAgainst covers the comparison having nothing behind it.

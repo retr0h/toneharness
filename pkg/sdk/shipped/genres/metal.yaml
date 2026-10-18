@@ -52,7 +52,7 @@ rig:
       Drive: '0.0'
       Gain: '0.32'
       Master: '0.5'
-      Mid: '0.5'
+      Mid: '0.44'
       Mid Freq: '0.5'
       Treble: '0.4519230769230769'
     evidence:

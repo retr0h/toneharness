@@ -32,12 +32,18 @@ for a genre afterwards costs no audio.
 
 ## A genre is measured by a different rule than a player
 
-A player earns a word where their whole spread sits outside the middle half of the
-others, which suits three records by one person. A genre pools several players, so
-its spread runs two to three times wider, 64 to 92Hz of centroid against 17 to
-41Hz for a player, and nothing that wide can sit clear of anything. So a genre is
-measured by its **middle** against the others' middle half, carrying the margin,
-and the others are the players who play none of it.
+A player earns a word where their whole spread sits on one side of the middle of
+the others, which suits three records by one person. A genre pools several
+players, so its spread runs two to three times wider, 64 to 92Hz of centroid
+against 17 to 41Hz for a player, and nothing that wide can sit clear of
+anything. So a genre is measured by its **middle** against the others' middle,
+carrying the margin, and the others are the players who play none of it.
+
+Both rules share the line and the floor: one side of the others' median, by at
+least a quarter of their spread. So **words overlap**, and a genre is the
+combination it earns rather than a word nobody else has. Six genres here read
+`dark`. See [words.md](words.md) for why the quarter, and for what the rule used
+to be.
 
 Finding that out cost a rewrite. Applying the player rule to a genre is not
 stricter, it is unanswerable: it returns `nothing` for everything, which reads as
@@ -51,10 +57,19 @@ and a request for the genre would get the band. The figures cannot tell those
 apart, so the count is the only thing that can.
 
 Over it, a genre can still earn nothing, and that is worth reporting rather than
-worth fixing. The genre here with the most records and the most players sets
-nothing apart, sitting inside the middle half of everything else on every axis. So
-clearing the threshold says a genre has enough behind it, not that it sounds like
-anything in particular.
+worth fixing. Three genres here do: rock, pop punk and southern rock all sit
+within a quarter of a spread of the middle on every axis, so they resolve to the
+same chain and the evidence in each says so. Clearing the threshold says a genre
+has enough behind it, not that it sounds like anything in particular.
+
+Southern rock against pop punk is the case worth knowing, because it looks like
+a bug and is not. They agree to within a hertz of centroid, a tenth of a percent
+of mid and under a percent of harmonics. The figure that separates them is decay,
+0.28 against 0.85, and no word can be earned from decay: one player's own three
+records span 1.44 to 21.01 seconds of it. And these figures come off a separated
+bass stem, so what makes the records sound different, the tempo, the feel, the
+guitars, the drums and the vocal, is not in what was measured and is not
+something an amplifier setting reproduces.
 
 Read the margin the way a player's is read. A word a hundredth past its line is
 the kind one more player measured could take away, and saying so is more useful

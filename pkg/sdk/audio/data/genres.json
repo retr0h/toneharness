@@ -74,11 +74,25 @@
         "mine": 113,
         "others": 134,
         "of": 32,
-        "margin": 0.5,
+        "margin": 21,
         "spread": 52,
         "against": [
           114,
           165
+        ]
+      },
+      {
+        "term": "saturated",
+        "key": "harmonics",
+        "why": "share of energy above the fundamental",
+        "mine": 0.21,
+        "others": 0.17,
+        "of": 32,
+        "margin": 0.03999999999999998,
+        "spread": 0.11,
+        "against": [
+          0.12,
+          0.22
         ]
       }
     ],
@@ -160,7 +174,7 @@
         "mine": 0.06,
         "others": 0.03,
         "of": 36,
-        "margin": 0.0049999999999999975,
+        "margin": 0.03,
         "spread": 0.05,
         "against": [
           0.01,
@@ -240,13 +254,27 @@
     },
     "terms": [
       {
+        "term": "scooped",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.01,
+        "others": 0.03,
+        "of": 36,
+        "margin": 0.019999999999999997,
+        "spread": 0.05,
+        "against": [
+          0.01,
+          0.06
+        ]
+      },
+      {
         "term": "clean",
         "key": "harmonics",
         "why": "share of energy above the fundamental",
         "mine": 0.07,
         "others": 0.17,
         "of": 36,
-        "margin": 0.04999999999999999,
+        "margin": 0.1,
         "spread": 0.12,
         "against": [
           0.12,
@@ -332,7 +360,7 @@
         "mine": 0.23,
         "others": 0.03,
         "of": 36,
-        "margin": 0.17500000000000002,
+        "margin": 0.2,
         "spread": 0.05,
         "against": [
           0.01,
@@ -346,11 +374,25 @@
         "mine": 214,
         "others": 134,
         "of": 36,
-        "margin": 51.5,
+        "margin": 80,
         "spread": 53,
         "against": [
           110,
           163
+        ]
+      },
+      {
+        "term": "saturated",
+        "key": "harmonics",
+        "why": "share of energy above the fundamental",
+        "mine": 0.22,
+        "others": 0.17,
+        "of": 36,
+        "margin": 0.04999999999999999,
+        "spread": 0.12,
+        "against": [
+          0.12,
+          0.24
         ]
       }
     ],
@@ -426,13 +468,27 @@
     },
     "terms": [
       {
+        "term": "mid-forward",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.05,
+        "others": 0.03,
+        "of": 36,
+        "margin": 0.020000000000000004,
+        "spread": 0.05,
+        "against": [
+          0.01,
+          0.06
+        ]
+      },
+      {
         "term": "bright",
         "key": "centroid",
         "why": "the spectrum's centre of gravity, in hertz",
         "mine": 264,
         "others": 134,
         "of": 36,
-        "margin": 101.5,
+        "margin": 130,
         "spread": 53,
         "against": [
           110,
@@ -446,7 +502,7 @@
         "mine": 0.24,
         "others": 0.17,
         "of": 36,
-        "margin": 0.014999999999999986,
+        "margin": 0.06999999999999998,
         "spread": 0.11,
         "against": [
           0.12,
@@ -532,7 +588,7 @@
         "mine": 0.06,
         "others": 0.03,
         "of": 36,
-        "margin": 0.0049999999999999975,
+        "margin": 0.03,
         "spread": 0.05,
         "against": [
           0.01,
@@ -610,7 +666,36 @@
       "mid": 0.04,
       "transient": 0.74
     },
-    "terms": null,
+    "terms": [
+      {
+        "term": "scooped",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.01,
+        "others": 0.04,
+        "of": 34,
+        "margin": 0.03,
+        "spread": 0.05,
+        "against": [
+          0.01,
+          0.06
+        ]
+      },
+      {
+        "term": "clean",
+        "key": "harmonics",
+        "why": "share of energy above the fundamental",
+        "mine": 0.13,
+        "others": 0.17,
+        "of": 34,
+        "margin": 0.04000000000000001,
+        "spread": 0.12,
+        "against": [
+          0.12,
+          0.24
+        ]
+      }
+    ],
     "usable": true,
     "instrument": "bass"
   },
@@ -681,7 +766,36 @@
       "mid": 0.03,
       "transient": 0.73
     },
-    "terms": null,
+    "terms": [
+      {
+        "term": "mid-forward",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.06,
+        "others": 0.03,
+        "of": 34,
+        "margin": 0.03,
+        "spread": 0.05,
+        "against": [
+          0.01,
+          0.06
+        ]
+      },
+      {
+        "term": "bright",
+        "key": "centroid",
+        "why": "the spectrum's centre of gravity, in hertz",
+        "mine": 161,
+        "others": 134,
+        "of": 34,
+        "margin": 27,
+        "spread": 54,
+        "against": [
+          110,
+          164
+        ]
+      }
+    ],
     "usable": true,
     "instrument": "bass"
   },
@@ -760,7 +874,7 @@
         "mine": 0.39,
         "others": 0.03,
         "of": 36,
-        "margin": 0.335,
+        "margin": 0.36,
         "spread": 0.05,
         "against": [
           0.01,
@@ -774,7 +888,7 @@
         "mine": 259,
         "others": 134,
         "of": 36,
-        "margin": 96.5,
+        "margin": 125,
         "spread": 53,
         "against": [
           110,
@@ -788,7 +902,7 @@
         "mine": 0.26,
         "others": 0.17,
         "of": 36,
-        "margin": 0.035,
+        "margin": 0.09,
         "spread": 0.11,
         "against": [
           0.12,
@@ -868,13 +982,27 @@
     },
     "terms": [
       {
+        "term": "scooped",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.01,
+        "others": 0.04,
+        "of": 34,
+        "margin": 0.03,
+        "spread": 0.05,
+        "against": [
+          0.01,
+          0.06
+        ]
+      },
+      {
         "term": "dark",
         "key": "centroid",
         "why": "the spectrum's centre of gravity, in hertz",
         "mine": 109,
         "others": 134,
         "of": 34,
-        "margin": 5,
+        "margin": 25,
         "spread": 52,
         "against": [
           114,
@@ -960,7 +1088,7 @@
         "mine": 96,
         "others": 134,
         "of": 36,
-        "margin": 14.5,
+        "margin": 38,
         "spread": 55,
         "against": [
           111,
@@ -974,7 +1102,7 @@
         "mine": 0.28,
         "others": 0.17,
         "of": 36,
-        "margin": 0.05500000000000002,
+        "margin": 0.11000000000000001,
         "spread": 0.11,
         "against": [
           0.12,
@@ -1060,7 +1188,7 @@
         "mine": 0,
         "others": 0.04,
         "of": 34,
-        "margin": 0.01,
+        "margin": 0.04,
         "spread": 0.05,
         "against": [
           0.01,
@@ -1074,7 +1202,7 @@
         "mine": 109,
         "others": 134,
         "of": 34,
-        "margin": 2,
+        "margin": 25,
         "spread": 55,
         "against": [
           111,
@@ -1160,7 +1288,7 @@
         "mine": 0.23,
         "others": 0.03,
         "of": 36,
-        "margin": 0.17500000000000002,
+        "margin": 0.2,
         "spread": 0.05,
         "against": [
           0.01,
@@ -1174,11 +1302,25 @@
         "mine": 214,
         "others": 134,
         "of": 36,
-        "margin": 51.5,
+        "margin": 80,
         "spread": 53,
         "against": [
           110,
           163
+        ]
+      },
+      {
+        "term": "saturated",
+        "key": "harmonics",
+        "why": "share of energy above the fundamental",
+        "mine": 0.22,
+        "others": 0.17,
+        "of": 36,
+        "margin": 0.04999999999999999,
+        "spread": 0.12,
+        "against": [
+          0.12,
+          0.24
         ]
       }
     ],
@@ -1260,7 +1402,7 @@
         "mine": 0.15,
         "others": 0.03,
         "of": 36,
-        "margin": 0.095,
+        "margin": 0.12,
         "spread": 0.05,
         "against": [
           0.01,
@@ -1274,7 +1416,7 @@
         "mine": 166,
         "others": 134,
         "of": 36,
-        "margin": 3.5,
+        "margin": 32,
         "spread": 53,
         "against": [
           110,
@@ -1431,7 +1573,7 @@
         "mine": 0.14,
         "others": 0.03,
         "of": 36,
-        "margin": 0.08500000000000002,
+        "margin": 0.11000000000000001,
         "spread": 0.05,
         "against": [
           0.01,
@@ -1445,7 +1587,7 @@
         "mine": 177,
         "others": 134,
         "of": 36,
-        "margin": 14.5,
+        "margin": 43,
         "spread": 53,
         "against": [
           110,
@@ -1459,7 +1601,7 @@
         "mine": 0.29,
         "others": 0.17,
         "of": 36,
-        "margin": 0.06499999999999997,
+        "margin": 0.11999999999999997,
         "spread": 0.11,
         "against": [
           0.12,
@@ -1545,7 +1687,7 @@
         "mine": 0.11,
         "others": 0.02,
         "of": 30,
-        "margin": 0.06,
+        "margin": 0.09,
         "spread": 0.04,
         "against": [
           0.01,
@@ -1559,7 +1701,7 @@
         "mine": 174,
         "others": 128,
         "of": 30,
-        "margin": 29,
+        "margin": 46,
         "spread": 36,
         "against": [
           109,
@@ -1645,7 +1787,7 @@
         "mine": 96,
         "others": 134,
         "of": 36,
-        "margin": 14.5,
+        "margin": 38,
         "spread": 55,
         "against": [
           111,
@@ -1659,7 +1801,7 @@
         "mine": 0.28,
         "others": 0.17,
         "of": 36,
-        "margin": 0.05500000000000002,
+        "margin": 0.11000000000000001,
         "spread": 0.11,
         "against": [
           0.12,
@@ -1739,13 +1881,27 @@
     },
     "terms": [
       {
+        "term": "mid-forward",
+        "key": "mid",
+        "why": "share of energy between 250Hz and 2kHz",
+        "mine": 0.05,
+        "others": 0.03,
+        "of": 36,
+        "margin": 0.020000000000000004,
+        "spread": 0.05,
+        "against": [
+          0.01,
+          0.06
+        ]
+      },
+      {
         "term": "dark",
         "key": "centroid",
         "why": "the spectrum's centre of gravity, in hertz",
         "mine": 109,
         "others": 134,
         "of": 36,
-        "margin": 1.5,
+        "margin": 25,
         "spread": 55,
         "against": [
           111,
@@ -1759,7 +1915,7 @@
         "mine": 0.24,
         "others": 0.17,
         "of": 36,
-        "margin": 0.014999999999999986,
+        "margin": 0.06999999999999998,
         "spread": 0.11,
         "against": [
           0.12,
