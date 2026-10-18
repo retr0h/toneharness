@@ -385,6 +385,68 @@ func (s *BackingPublicTestSuite) TestBacking() {
 	}
 }
 
+// TestEveryCorpusDirectoryIsHeldToAnEra covers the join nobody was running.
+//
+// A rig says which years its gear describes and a manifest says when each
+// record was made, and this is the check that holds one to the other. Running
+// it is the part that was missing: the rigs that ship are core's, so a run that
+// names no directory reports every community player as a directory no rig is
+// named for, which reads like a missing rig and is a tier nobody mentioned. Ten
+// of the forty-one directories read that way, and all ten pass once the tier
+// holding them is read.
+//
+// Both tiers, because a corpus directory does not know which tier its rig is
+// in. The real tiers rather than a fixture: a fixture would prove the join
+// works and this is about whether the repository's own records match the rigs
+// that cite them.
+func (s *BackingPublicTestSuite) TestEveryCorpusDirectoryIsHeldToAnEra() {
+	root := filepath.Join("..", "..", "..", "..")
+
+	all, err := rigs.Backing(
+		// Dir empty is the rigs that ship, which is core, and the community
+		// tier layered over it the way `--dir` does.
+		rigs.Source{User: filepath.Join(root, "marketplace", "community")},
+		filepath.Join(root, "resources", "music", "bass"),
+	)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(all, "nothing read, so nothing was held to anything")
+
+	held := 0
+
+	for _, b := range all {
+		s.Run(b.ID, func() {
+			s.Require().False(
+				b.NoRig,
+				"records measured under this name and no rig in either tier "+
+					"names it. Either the directory is spelt differently from "+
+					"the rig's identifier, which is the only thing joining "+
+					"them, or the rig was never written",
+			)
+
+			s.Require().Empty(
+				b.Misnamed,
+				"the rig names records the manifest does not hold",
+			)
+
+			if len(b.Records) == 0 || !b.Stated() {
+				return
+			}
+
+			held++
+
+			s.Require().Zero(
+				b.Outside(),
+				"%d of %d records are from outside the era this rig claims, "+
+					"so the words derived from them describe other gear. "+
+					"measure-music's era.md says which half to change",
+				b.Outside(), len(b.Records),
+			)
+		})
+	}
+
+	s.Require().NotZero(held, "no rig stated an era, so nothing was checked")
+}
+
 func TestBackingPublicTestSuite(
 	t *testing.T,
 ) {

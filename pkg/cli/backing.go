@@ -66,7 +66,9 @@ func Backing(
 		Empty: "no rigs to read",
 		Summary: "a record made outside a rig's era measures gear the rig " +
 			"does not describe, and one made in another room measures gear " +
-			"that was never in the signal",
+			"that was never in the signal. A directory no rig here names may " +
+			"have one in a tier this run did not read: --dir layers a " +
+			"directory of rigs over the ones that ship",
 	}.Render(w)
 }
 
@@ -159,7 +161,7 @@ func verdictOf(
 ) string {
 	switch {
 	case b.NoRig:
-		return paint.Err(w, "no rig is named for this directory")
+		return paint.Err(w, "no rig read here names this directory")
 	case len(b.Misnamed) > 0:
 		return paint.Err(w, fmt.Sprintf("no record called %s",
 			strings.Join(b.Misnamed, ", ")))
