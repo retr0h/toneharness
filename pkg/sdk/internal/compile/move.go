@@ -144,7 +144,14 @@ type answers struct {
 // The other four axes — decay, string-noise, pickup, movement — describe the
 // player and the instrument, and no amplifier, reverb or compressor has a
 // control for them. A term from one of those is recorded and moves nothing,
-// which a build says out loud.
+// which a build says out loud: "says short-decay — nothing acts on this yet".
+//
+// Decay is the one of the four a corpus can earn, since its measure was fixed,
+// and that changed nothing here. It is why hard rock, pop punk and southern
+// rock resolve to one chain: the figure that separates those three is real and
+// there is no control on this device to spend it on. A word earned on it is
+// evidence about the records rather than an instruction about the preset, and
+// the genre rigs' own notes say so.
 var turns = map[string][]turn{
 	"mid-forward": {{
 		axis: "mids", category: catalog.CategoryAmp, param: "Mid", steps: 1,

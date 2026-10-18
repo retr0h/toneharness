@@ -74,9 +74,9 @@ rig:
       note: Chosen by measurement rather than by anybody's say-so. Across 12 records
         from 4 players, grunge measures a centroid the device's nearest bass amplifier
         sits at 150 Hz against 145, which is the closest of the 27 it models for this
-        instrument. Its records earn scooped, measured against the players who play
-        none of it, and that is what moves the controls below off the medians this
-        instrument's presets sit at.
+        instrument. Its records earn scooped and long-decay, measured against the
+        players who play none of it, and that is what moves the controls below off
+        the medians this instrument's presets sit at.
     gear: MESA/Boogie Bass 400+ (channel 1)
     position: 1
     role: amp

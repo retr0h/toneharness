@@ -32,20 +32,31 @@ Distinctiveness did not stop mattering. It moved to the margin, which is what
 `holds` prints: the word says what the sound is, and the margin says how far
 from typical it sits.
 
-**The quarter is not taste.** Measured across all 21 genres on all three axes,
-the margins as a share of the others' spread fall in two groups with nothing
-between them:
+**The quarter was not taste, and is now a choice.** Measured across all 21
+genres on mid, centroid and harmonics, the margins as a share of the others'
+spread fell in two groups with nothing between them:
 
 ```
 0.00 0.00 0.01 0.02 0.03 0.04 0.05 0.08 0.11 0.12 0.14 0.16 0.18 0.19 0.21
 0.38 0.41 0.44 0.46 0.49 0.51 0.57 0.58 0.69 0.83 1.27 2.41
 ```
 
-Any threshold between 0.21 and 0.38 answers the same way, so a quarter is the
+Any threshold between 0.21 and 0.38 answered the same way, so a quarter was the
 round number inside the gap. A tenth was available and refused: it would have
 separated southern rock from pop punk, which is the pair this corpus most wants
 separated, on margins of 6Hz. Choosing a threshold for the answer it gives is
 how a measurement stops being one.
+
+**Adding decay as a fourth axis closed that gap.** The same measurement over
+four axes runs straight through it, 0.20 0.20 0.20 0.20 0.25 0.27 0.29 0.29
+0.30, with no break anywhere between 0.02 and 1.00 wider than 0.05. Sixty-three
+points had a gap and seventy-three do not, which is what usually happens to a
+gap found in a small sample.
+
+So the quarter is a chosen threshold now rather than one the data picks out, and
+it is kept because moving it moves every word in the corpus on no evidence. Say
+that when quoting it: the number is the same and what stands behind it is
+weaker.
 
 Point it at one instrument. A guitar's centre of gravity sits an octave above a
 bass guitar's, so pooling both would earn every bassist `dark` and every guitarist
@@ -136,6 +147,33 @@ three answers:
 
 The third is the common one and it is not a defect to fix. What it forbids is
 quoting the average as though it described a sound.
+
+## Decay earns a word now, and still moves nothing
+
+It was refused twice before, and the measure was wrong both times. What it timed
+was the arrangement: a note was followed until its level fell by 12dB, and in a
+dense mix that is a section change rather than a string stopping, so God Save
+the Queen read 21.01 seconds a note against 1.44 on another track by the same
+player on the same rig.
+
+Two rules fixed it. Onsets are peak-picked and no closer than 120ms, where
+before every frame that got louder started a note: 6,131 of them in 199
+seconds, thirty a second. And a note is given two seconds to die and dropped if
+it does not, rather than timed to wherever it eventually falls. The worst
+drifter in the corpus went from 19.57 seconds of spread across one player's
+three records to 0.62.
+
+**It passes the same test the other three pass.** Drift inside one player over
+the spread between players: centroid 0.60, decay 0.69, harmonics 0.77, mid 0.79.
+So `short-decay` and `long-decay` are earnable, twenty players earn one, and all
+ten aimable genres now earn at least one word where four earned none.
+
+**And no preset changed.** Decay describes the hands and the strings, and no
+amplifier, compressor or reverb on this device has a control for it, so a word
+earned on it is recorded and moves nothing. That is why hard rock, pop punk and
+southern rock still resolve to one chain: the figure that separates them is real
+and there is nothing in a Helix to spend it on. Knowing it is still worth
+having, because it is what somebody compares the preset against by ear.
 
 ## A lost word is not a regression
 

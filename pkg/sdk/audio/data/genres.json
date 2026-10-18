@@ -34,9 +34,9 @@
         "from": 19
       },
       "decay": {
-        "low": 0.11,
-        "mid": 0.27,
-        "high": 1.48,
+        "low": 0.06,
+        "mid": 0.23,
+        "high": 0.78,
         "from": 19
       },
       "dynamic_range": {
@@ -57,7 +57,7 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.4,
+      "decay": 0.3,
       "dynamics": 7.15,
       "harmonics": 0.17,
       "high": 0,
@@ -93,6 +93,20 @@
         "against": [
           0.12,
           0.22
+        ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.23,
+        "others": 0.3,
+        "of": 37,
+        "margin": 0.06999999999999998,
+        "spread": 0.24,
+        "against": [
+          0.21,
+          0.45
         ]
       }
     ],
@@ -136,7 +150,7 @@
       "decay": {
         "low": 0.15,
         "mid": 0.45,
-        "high": 0.81,
+        "high": 0.46,
         "from": 6
       },
       "dynamic_range": {
@@ -157,7 +171,7 @@
     },
     "elsewhere": {
       "centroid": 132,
-      "decay": 0.4,
+      "decay": 0.3,
       "dynamics": 7.5,
       "harmonics": 0.17,
       "high": 0,
@@ -166,7 +180,22 @@
       "mid": 0.03,
       "transient": 0.72
     },
-    "terms": null,
+    "terms": [
+      {
+        "term": "long-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.45,
+        "others": 0.3,
+        "of": 41,
+        "margin": 0.15000000000000002,
+        "spread": 0.26,
+        "against": [
+          0.19,
+          0.45
+        ]
+      }
+    ],
     "usable": false,
     "instrument": "bass"
   },
@@ -205,9 +234,9 @@
         "from": 9
       },
       "decay": {
-        "low": 0.02,
-        "mid": 0.25,
-        "high": 0.97,
+        "low": 0.03,
+        "mid": 0.23,
+        "high": 0.54,
         "from": 9
       },
       "dynamic_range": {
@@ -228,7 +257,7 @@
     },
     "elsewhere": {
       "centroid": 128,
-      "decay": 0.45,
+      "decay": 0.35,
       "dynamics": 7.5,
       "harmonics": 0.17,
       "high": 0,
@@ -250,6 +279,20 @@
         "against": [
           110,
           163
+        ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.23,
+        "others": 0.35,
+        "of": 40,
+        "margin": 0.11999999999999997,
+        "spread": 0.26,
+        "against": [
+          0.2,
+          0.46
         ]
       }
     ],
@@ -291,9 +334,9 @@
         "from": 4
       },
       "decay": {
-        "low": 0.11,
-        "mid": 0.17,
-        "high": 0.25,
+        "low": 0.09,
+        "mid": 0.14,
+        "high": 0.15,
         "from": 4
       },
       "dynamic_range": {
@@ -314,7 +357,7 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.45,
+      "decay": 0.31,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -365,6 +408,20 @@
           0.11,
           0.23
         ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.14,
+        "others": 0.31,
+        "of": 42,
+        "margin": 0.16999999999999998,
+        "spread": 0.24,
+        "against": [
+          0.21,
+          0.45
+        ]
       }
     ],
     "usable": false,
@@ -406,8 +463,8 @@
       },
       "decay": {
         "low": 0.03,
-        "mid": 0.16,
-        "high": 0.19,
+        "mid": 0.07,
+        "high": 0.12,
         "from": 4
       },
       "dynamic_range": {
@@ -428,7 +485,7 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.45,
+      "decay": 0.31,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -479,6 +536,20 @@
           0.11,
           0.22
         ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.07,
+        "others": 0.31,
+        "of": 42,
+        "margin": 0.24,
+        "spread": 0.24,
+        "against": [
+          0.21,
+          0.45
+        ]
       }
     ],
     "usable": false,
@@ -521,7 +592,7 @@
       "decay": {
         "low": 0.15,
         "mid": 0.21,
-        "high": 0.23,
+        "high": 0.21,
         "from": 3
       },
       "dynamic_range": {
@@ -542,7 +613,7 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.45,
+      "decay": 0.31,
       "dynamics": 7.5,
       "harmonics": 0.17,
       "high": 0,
@@ -564,6 +635,20 @@
         "against": [
           0.01,
           0.06
+        ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.21,
+        "others": 0.31,
+        "of": 42,
+        "margin": 0.1,
+        "spread": 0.26,
+        "against": [
+          0.19,
+          0.45
         ]
       }
     ],
@@ -605,9 +690,9 @@
         "from": 12
       },
       "decay": {
-        "low": 0.45,
-        "mid": 0.73,
-        "high": 1.48,
+        "low": 0.27,
+        "mid": 0.41,
+        "high": 0.77,
         "from": 12
       },
       "dynamic_range": {
@@ -628,7 +713,7 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.33,
+      "decay": 0.27,
       "dynamics": 7.45,
       "harmonics": 0.18,
       "high": 0,
@@ -650,6 +735,20 @@
         "against": [
           0.01,
           0.08
+        ]
+      },
+      {
+        "term": "long-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.41,
+        "others": 0.27,
+        "of": 39,
+        "margin": 0.14499999999999996,
+        "spread": 0.25,
+        "against": [
+          0.19,
+          0.44
         ]
       }
     ],
@@ -691,9 +790,9 @@
         "from": 16
       },
       "decay": {
-        "low": 0.24,
-        "mid": 0.55,
-        "high": 0.93,
+        "low": 0.19,
+        "mid": 0.45,
+        "high": 0.58,
         "from": 16
       },
       "dynamic_range": {
@@ -714,7 +813,7 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.33,
+      "decay": 0.27,
       "dynamics": 6.9,
       "harmonics": 0.18,
       "high": 0,
@@ -723,7 +822,22 @@
       "mid": 0.03,
       "transient": 0.72
     },
-    "terms": null,
+    "terms": [
+      {
+        "term": "long-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.45,
+        "others": 0.27,
+        "of": 38,
+        "margin": 0.18,
+        "spread": 0.24,
+        "against": [
+          0.19,
+          0.43
+        ]
+      }
+    ],
     "usable": true,
     "instrument": "bass"
   },
@@ -762,9 +876,9 @@
         "from": 4
       },
       "decay": {
-        "low": 0.14,
-        "mid": 0.27,
-        "high": 0.67,
+        "low": 0.1,
+        "mid": 0.14,
+        "high": 0.49,
         "from": 4
       },
       "dynamic_range": {
@@ -785,7 +899,7 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.45,
+      "decay": 0.31,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -836,6 +950,20 @@
           0.11,
           0.22
         ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.14,
+        "others": 0.31,
+        "of": 42,
+        "margin": 0.16999999999999998,
+        "spread": 0.24,
+        "against": [
+          0.21,
+          0.45
+        ]
       }
     ],
     "usable": false,
@@ -876,9 +1004,9 @@
         "from": 10
       },
       "decay": {
-        "low": 0.17,
-        "mid": 0.34,
-        "high": 0.86,
+        "low": 0.12,
+        "mid": 0.23,
+        "high": 0.51,
         "from": 10
       },
       "dynamic_range": {
@@ -899,7 +1027,7 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.55,
+      "decay": 0.31,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -935,6 +1063,20 @@
         "against": [
           114,
           165
+        ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.23,
+        "others": 0.31,
+        "of": 40,
+        "margin": 0.07999999999999999,
+        "spread": 0.26,
+        "against": [
+          0.2,
+          0.46
         ]
       }
     ],
@@ -976,9 +1118,9 @@
         "from": 3
       },
       "decay": {
-        "low": 0.09,
+        "low": 0.06,
         "mid": 0.13,
-        "high": 0.33,
+        "high": 0.24,
         "from": 3
       },
       "dynamic_range": {
@@ -999,7 +1141,7 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.45,
+      "decay": 0.31,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -1035,6 +1177,20 @@
         "against": [
           0.11,
           0.22
+        ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.13,
+        "others": 0.31,
+        "of": 42,
+        "margin": 0.18,
+        "spread": 0.24,
+        "against": [
+          0.21,
+          0.45
         ]
       }
     ],
@@ -1076,9 +1232,9 @@
         "from": 9
       },
       "decay": {
-        "low": 0.12,
-        "mid": 0.27,
-        "high": 1.18,
+        "low": 0.07,
+        "mid": 0.23,
+        "high": 0.78,
         "from": 9
       },
       "dynamic_range": {
@@ -1099,7 +1255,7 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.45,
+      "decay": 0.31,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -1135,6 +1291,20 @@
         "against": [
           113,
           165
+        ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.23,
+        "others": 0.31,
+        "of": 40,
+        "margin": 0.07999999999999999,
+        "spread": 0.25,
+        "against": [
+          0.21,
+          0.46
         ]
       }
     ],
@@ -1176,9 +1346,9 @@
         "from": 4
       },
       "decay": {
-        "low": 0.11,
-        "mid": 0.17,
-        "high": 0.25,
+        "low": 0.09,
+        "mid": 0.14,
+        "high": 0.15,
         "from": 4
       },
       "dynamic_range": {
@@ -1199,7 +1369,7 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.45,
+      "decay": 0.31,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -1250,6 +1420,20 @@
           0.11,
           0.23
         ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.14,
+        "others": 0.31,
+        "of": 42,
+        "margin": 0.16999999999999998,
+        "spread": 0.24,
+        "against": [
+          0.21,
+          0.45
+        ]
       }
     ],
     "usable": false,
@@ -1290,9 +1474,9 @@
         "from": 3
       },
       "decay": {
-        "low": 0.23,
-        "mid": 0.25,
-        "high": 0.46,
+        "low": 0.13,
+        "mid": 0.15,
+        "high": 0.34,
         "from": 3
       },
       "dynamic_range": {
@@ -1313,7 +1497,7 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.45,
+      "decay": 0.31,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -1349,6 +1533,20 @@
         "against": [
           110,
           161
+        ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.15,
+        "others": 0.31,
+        "of": 42,
+        "margin": 0.16,
+        "spread": 0.24,
+        "against": [
+          0.21,
+          0.45
         ]
       }
     ],
@@ -1390,9 +1588,9 @@
         "from": 12
       },
       "decay": {
-        "low": 0.45,
-        "mid": 0.85,
-        "high": 2.54,
+        "low": 0.29,
+        "mid": 0.49,
+        "high": 0.68,
         "from": 12
       },
       "dynamic_range": {
@@ -1413,7 +1611,7 @@
     },
     "elsewhere": {
       "centroid": 132,
-      "decay": 0.33,
+      "decay": 0.27,
       "dynamics": 7.65,
       "harmonics": 0.18,
       "high": 0,
@@ -1422,7 +1620,22 @@
       "mid": 0.03,
       "transient": 0.72
     },
-    "terms": null,
+    "terms": [
+      {
+        "term": "long-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.49,
+        "others": 0.27,
+        "of": 39,
+        "margin": 0.22499999999999998,
+        "spread": 0.23,
+        "against": [
+          0.19,
+          0.42
+        ]
+      }
+    ],
     "usable": true,
     "instrument": "bass"
   },
@@ -1461,9 +1674,9 @@
         "from": 4
       },
       "decay": {
-        "low": 0.42,
-        "mid": 0.55,
-        "high": 0.65,
+        "low": 0.24,
+        "mid": 0.46,
+        "high": 0.52,
         "from": 4
       },
       "dynamic_range": {
@@ -1484,7 +1697,7 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.34,
+      "decay": 0.29,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -1535,6 +1748,20 @@
           0.11,
           0.22
         ]
+      },
+      {
+        "term": "long-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.46,
+        "others": 0.29,
+        "of": 42,
+        "margin": 0.17000000000000004,
+        "spread": 0.25,
+        "against": [
+          0.19,
+          0.44
+        ]
       }
     ],
     "usable": false,
@@ -1575,9 +1802,9 @@
         "from": 21
       },
       "decay": {
-        "low": 0.19,
-        "mid": 0.58,
-        "high": 2.07,
+        "low": 0.15,
+        "mid": 0.4,
+        "high": 0.66,
         "from": 21
       },
       "dynamic_range": {
@@ -1598,7 +1825,7 @@
     },
     "elsewhere": {
       "centroid": 128,
-      "decay": 0.34,
+      "decay": 0.27,
       "dynamics": 7.6,
       "harmonics": 0.17,
       "high": 0,
@@ -1634,6 +1861,20 @@
         "against": [
           110,
           146
+        ]
+      },
+      {
+        "term": "long-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.4,
+        "others": 0.27,
+        "of": 36,
+        "margin": 0.13,
+        "spread": 0.25,
+        "against": [
+          0.19,
+          0.44
         ]
       }
     ],
@@ -1675,9 +1916,9 @@
         "from": 3
       },
       "decay": {
-        "low": 0.09,
+        "low": 0.06,
         "mid": 0.13,
-        "high": 0.33,
+        "high": 0.24,
         "from": 3
       },
       "dynamic_range": {
@@ -1698,7 +1939,7 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.45,
+      "decay": 0.31,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -1734,6 +1975,20 @@
         "against": [
           0.11,
           0.22
+        ]
+      },
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.13,
+        "others": 0.31,
+        "of": 42,
+        "margin": 0.18,
+        "spread": 0.24,
+        "against": [
+          0.21,
+          0.45
         ]
       }
     ],
@@ -1775,9 +2030,9 @@
         "from": 3
       },
       "decay": {
-        "low": 0.17,
-        "mid": 0.69,
-        "high": 0.75,
+        "low": 0.15,
+        "mid": 0.36,
+        "high": 0.44,
         "from": 3
       },
       "dynamic_range": {
@@ -1798,7 +2053,7 @@
     },
     "elsewhere": {
       "centroid": 134,
-      "decay": 0.34,
+      "decay": 0.29,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -1849,6 +2104,20 @@
           0.11,
           0.22
         ]
+      },
+      {
+        "term": "long-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.36,
+        "others": 0.29,
+        "of": 42,
+        "margin": 0.07,
+        "spread": 0.26,
+        "against": [
+          0.19,
+          0.45
+        ]
       }
     ],
     "usable": false,
@@ -1889,9 +2158,9 @@
         "from": 15
       },
       "decay": {
-        "low": 0.16,
-        "mid": 0.25,
-        "high": 0.93,
+        "low": 0.15,
+        "mid": 0.21,
+        "high": 0.5,
         "from": 15
       },
       "dynamic_range": {
@@ -1912,7 +2181,7 @@
     },
     "elsewhere": {
       "centroid": 130,
-      "decay": 0.55,
+      "decay": 0.35,
       "dynamics": 7.4,
       "harmonics": 0.17,
       "high": 0,
@@ -1921,7 +2190,22 @@
       "mid": 0.03,
       "transient": 0.71
     },
-    "terms": null,
+    "terms": [
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.21,
+        "others": 0.35,
+        "of": 38,
+        "margin": 0.13999999999999999,
+        "spread": 0.24,
+        "against": [
+          0.21,
+          0.45
+        ]
+      }
+    ],
     "usable": true,
     "instrument": "bass"
   },
@@ -1960,9 +2244,9 @@
         "from": 30
       },
       "decay": {
-        "low": 0.16,
-        "mid": 0.28,
-        "high": 0.78,
+        "low": 0.17,
+        "mid": 0.23,
+        "high": 0.54,
         "from": 30
       },
       "dynamic_range": {
@@ -1983,7 +2267,7 @@
     },
     "elsewhere": {
       "centroid": 127,
-      "decay": 0.55,
+      "decay": 0.37,
       "dynamics": 7.55,
       "harmonics": 0.17,
       "high": 0,
@@ -1992,7 +2276,22 @@
       "mid": 0.03,
       "transient": 0.73
     },
-    "terms": null,
+    "terms": [
+      {
+        "term": "short-decay",
+        "key": "decay",
+        "why": "how long a note takes to fall to a quarter, in seconds",
+        "mine": 0.23,
+        "others": 0.37,
+        "of": 33,
+        "margin": 0.13499999999999998,
+        "spread": 0.29,
+        "against": [
+          0.18,
+          0.47
+        ]
+      }
+    ],
     "usable": true,
     "instrument": "bass"
   }

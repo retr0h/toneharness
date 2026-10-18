@@ -145,6 +145,53 @@ var Axes = []Axis{
 		places: 2,
 		of:     func(a Across) Spread { return a.Harmonics },
 	},
+	{
+		// Here after being refused twice, because the measure it reads was
+		// wrong both times and is not now.
+		//
+		// What it used to time was the arrangement. Two faults, and the first
+		// was not the one that mattered: the onset test counted every frame
+		// that happened to get louder, 6,131 of them in 199 seconds of God
+		// Save the Queen, thirty a second. Peak-picking brings that track to
+		// 718 onsets and its decay from 21.01s to 15.70s, which is still
+		// nonsense, so the onsets were never the cause.
+		//
+		// The cause was the fall. A note was timed to wherever its level
+		// finally dropped by 12dB, and in a dense mix that is a section change
+		// rather than a string stopping. Giving each note two seconds to die
+		// and dropping the ones that do not is what fixed it: the worst
+		// drifter in the corpus went from 19.57s of spread across one player's
+		// three records to 0.62s.
+		//
+		// A third rule was tried and refused. Cutting each note off at the
+		// next onset is stable too, 0.15s of drift, and what it measures is
+		// how fast somebody plays: every player landed between 0.11s and
+		// 0.18s, a spread narrower than the drift inside one of them.
+		//
+		// Now it clears the same test the three above clear. Typical drift
+		// inside one player's records over the spread between players, which
+		// is what decides whether a figure can carry a comparison at all:
+		//
+		//	centroid   0.60
+		//	decay      0.69
+		//	harmonics  0.77
+		//	mid        0.79
+		//	low        0.79, and -0.994 correlated with mid: the same axis
+		//	dynamics   1.05
+		//	transient  1.15
+		//	high       1.21
+		//	even-odd   1.30
+		//
+		// Everything at or above 1 drifts further inside one player than it
+		// separates two, so nothing there can ever earn a word however the
+		// corpus grows. That is six of the ten figures measured, and
+		// write-a-spec's terms.md says so where somebody reading the
+		// vocabulary would otherwise assume a term in it is reachable.
+		Key: KeyDecay, More: "long-decay", Less: "short-decay",
+		Why:    "how long a note takes to fall to a quarter, in seconds",
+		places: 2,
+		of:     func(a Across) Spread { return a.Decay.Spread },
+	},
 }
 
 // resolves says whether a margin is a difference this measure can see.
@@ -159,15 +206,26 @@ var Axes = []Axis{
 // offMiddle is how far from the middle of the others a figure has to sit before it
 // is worth a word, as a share of their middle half.
 //
-// A quarter, and the corpus chose it rather than taste. Measured across all 21
-// genres on all three axes, the margins as a share of the others' spread land
-// in two groups with nothing between them:
+// A quarter, and the corpus chose it on three axes. Measured across all 21
+// genres on mid, centroid and harmonics, the margins as a share of the others'
+// spread landed in two groups with nothing between them:
 //
 //	0.00 0.00 0.01 0.02 0.03 0.04 0.05 0.08 0.11 0.12 0.14 0.16 0.18 0.19 0.21
 //	0.38 0.41 0.44 0.46 0.49 0.51 0.57 0.58 0.69 0.83 1.27 2.41
 //
-// Any threshold between 0.21 and 0.38 produces the same answer, so a quarter is
-// the round number inside the gap rather than a line drawn through data.
+// Any threshold between 0.21 and 0.38 produced the same answer, so a quarter
+// was the round number inside the gap rather than a line drawn through data.
+//
+// **Adding decay closed the gap.** On four axes the same measurement runs
+// continuously through it: 0.20 0.20 0.20 0.20 0.25 0.27 0.29 0.29 0.30, with
+// no break anywhere between 0.02 and 1.00 wider than 0.05. Sixty-three points
+// had a gap and seventy-three do not, which is the ordinary fate of a gap found
+// in a small sample.
+//
+// So the quarter is now a chosen threshold rather than one the data picks out,
+// and it is kept because moving it would move every word in the corpus on no
+// evidence at all. What would justify a different number is a reason to prefer
+// it, and nothing here has one.
 //
 // Without it the median comparison awards almost everything. Southern rock sits
 // 2.9Hz from the middle of a population spanning 65Hz, which is 4% of the

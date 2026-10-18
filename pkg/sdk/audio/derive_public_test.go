@@ -279,16 +279,27 @@ func (s *DerivePublicTestSuite) TestDerive() {
 			},
 		},
 		{
-			// A deliberate absence.
+			// A deliberate absence, and the measured reason for it.
 			//
-			// Sag and reverb Mix have no measurement at all, and the compressor's Attack
-			// has one that is not trusted: the artist whose rig says `percussive` measured
-			// the lowest transient of three. Nothing derives from any of them.
+			// Sag and reverb Mix have no measurement at all. The rest have one that
+			// drifts further inside one player's own records than it separates two
+			// players, so no corpus however large turns them into a comparison.
+			// Typical drift over the spread between players, across 42 players:
+			// dynamics 1.05, transient 1.15, high 1.21, even-odd 1.30, against 0.60
+			// to 0.79 for the ones that do carry words.
+			//
+			// `low` is refused for a different reason and the figure is fine: it
+			// correlates with mid at -0.994 and low plus mid plus high sums to 1.00,
+			// so it is the mid axis read backwards and would hand out two words for
+			// one measurement.
 			name: "no axis derives from a measure nobody trusts",
 			then: func() {
-				for _, ax := range audio.Axes {
-					s.Require().NotEqual(audio.KeyTransient, ax.Key)
-					s.Require().NotEqual(audio.KeyDecay, ax.Key)
+				for _, key := range []audio.Figure{
+					audio.KeyTransient, audio.KeyLow, audio.KeyHigh,
+				} {
+					for _, ax := range audio.Axes {
+						s.Require().NotEqual(key, ax.Key)
+					}
 				}
 
 				for _, term := range []string{
@@ -303,10 +314,46 @@ func (s *DerivePublicTestSuite) TestDerive() {
 			},
 		},
 		{
+			// Decay was in the list above twice and is not now, because the
+			// measure was wrong both times rather than the figure being unusable.
+			//
+			// It timed the arrangement: a note was followed until its level fell
+			// 12dB, which in a dense mix is a section change, so one punk track
+			// read 21.01s a note against 1.44s on another by the same player.
+			// Peak-picked onsets and a two-second window to die in brought the
+			// worst drift in the corpus from 19.57s to 0.62s, and it now sits at
+			// 0.69 on the same test the other three pass.
+			name: "decay derives now that its measure is sound",
+			then: func() {
+				found := false
+
+				for _, ax := range audio.Axes {
+					if ax.Key != audio.KeyDecay {
+						continue
+					}
+
+					found = true
+
+					s.Require().Equal("long-decay", ax.More)
+					s.Require().Equal("short-decay", ax.Less)
+				}
+
+				s.Require().True(found, "decay is not an axis")
+			},
+		},
+		{
 			// The words being spellable.
 			//
-			// A term the compiler's table does not hold moves nothing, and would arrive as
-			// a word that silently does nothing rather than as an error.
+			// A term nothing downstream holds would arrive as a word that silently
+			// does nothing rather than as an error.
+			//
+			// The vocabulary rather than the table of controls, which are two
+			// different lists and were conflated here. `short-decay` is in the
+			// vocabulary and in no control's table, because decay describes the
+			// hands and the strings and no amplifier, compressor or reverb has a
+			// control for it. It is not silent: a build says "says short-decay —
+			// nothing acts on this yet", and says so again when a genre's earned
+			// decay word yields to one somebody wrote by hand.
 			name: "every derived term is one the compiler knows",
 			then: func() {
 				known := map[string]bool{
@@ -314,6 +361,7 @@ func (s *DerivePublicTestSuite) TestDerive() {
 					"dark": true, "bright": true, "glassy": true,
 					"clean": true, "minimal-drive": true,
 					"grit-on-attack": true, "saturated": true,
+					"short-decay": true, "long-decay": true,
 				}
 
 				for _, ax := range audio.Axes {

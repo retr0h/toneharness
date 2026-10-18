@@ -71,13 +71,12 @@ rig:
         may overlap, and clean is gone from every subject because a low share of energy
         above the fundamental turned out not to be evidence of no drive.'
       kind: audio
-      note: 'Chosen by measurement rather than by anybody''s say-so. Across 15 records
-        from 5 players, rock measures a centroid the device''s nearest bass amplifier
+      note: Chosen by measurement rather than by anybody's say-so. Across 15 records
+        from 5 players, rock measures a centroid the device's nearest bass amplifier
         sits at 155 Hz against 165, which is the closest of the 27 it models for this
-        instrument. Its records earn no word: on every figure a word can come from,
-        it sits within a quarter of a spread of the players who play none of it. The
-        controls below are therefore this instrument''s corpus medians, and the amplifier
-        is the only part of this rig the genre''s own figures decided.'
+        instrument. Its records earn short-decay, measured against the players who
+        play none of it, and that is what moves the controls below off the medians
+        this instrument's presets sit at.
     gear: MESA/Boogie Bass 400+ (channel 1)
     position: 1
     role: amp
