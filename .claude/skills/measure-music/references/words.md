@@ -165,8 +165,8 @@ three records to 0.62.
 
 **It passes the same test the other three pass.** Drift inside one player over
 the spread between players: centroid 0.60, decay 0.69, harmonics 0.77, mid 0.79.
-So `short-decay` and `long-decay` are earnable, twenty players earn one, and all
-ten aimable genres now earn at least one word where four earned none.
+So `short-decay` and `long-decay` are earnable, around half the players earn one,
+and every aimable genre now earns at least one word where four earned none.
 
 **And no preset changed.** Decay describes the hands and the strings, and no
 amplifier, compressor or reverb on this device has a control for it, so a word

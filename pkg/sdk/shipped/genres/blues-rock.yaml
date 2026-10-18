@@ -1,3 +1,15 @@
+# Blues rock — the genre, not a player
+#
+# A rig for the sound of a genre rather than for somebody who plays it. The
+# artists under ../artists/ are people; this is what the records of a genre
+# measure as, resolved to gear.
+#
+# Built rather than researched, then resolved: `tone build` ranked the device's
+# bass amplifiers against what blues rock measures as and took the nearest, and
+# `rigs resolve` wrote every control that came out. Both are reproducible on the
+# same corpus.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 ask:
   aliases:
   - blues-rock-sound
@@ -42,10 +54,10 @@ rig:
       HighMid: "0.5"
       Hum: "0.5"
       Master: "0.6"
-      Mid: "0.56"
+      Mid: "0.5680000000000001"
       Ripple: "0.5"
       Sag: "0.5"
-      Treble: "0.5320754716981132"
+      Treble: "0.5377777777777778"
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
         the microphone, the desk and the master of every one of them. The amplifier
@@ -60,11 +72,11 @@ rig:
         above the fundamental turned out not to be evidence of no drive.'
       kind: audio
       note: Chosen by measurement rather than by anybody's say-so. Across 9 records
-        from 3 players, blues-rock measures a centroid the device's nearest bass amplifier
+        from 3 players, blues rock measures a centroid the device's nearest bass amplifier
         sits at 155 Hz against 172, which is the closest of the 27 it models for this
-        instrument. Its records earn bright and short-decay, measured against the
-        players who play none of it, and that is what moves the controls below off
-        the medians this instrument's presets sit at.
+        instrument. Its records earn mid-forward, bright and short-decay, measured
+        against the players who play none of it, and that is what moves the controls
+        below off the medians this instrument's presets sit at.
     gear: MESA/Boogie Bass 400+ (channel 1)
     position: 1
     role: amp
