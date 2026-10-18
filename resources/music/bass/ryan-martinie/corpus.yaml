@@ -1,0 +1,23 @@
+artist: Ryan Martinie
+tracks:
+  - track: dig
+    url: https://open.spotify.com/track/7vrLphPq4yjaX7jiDdd2Nc
+    year: 2000
+    band: Mudvayne
+    genres: [nu-metal, alternative-metal]
+    genres_by: llm
+    note: L.D. 50. 162 seconds as Spotify holds it
+  - track: death-blooms
+    url: https://open.spotify.com/track/3Y4rNagSf2IukhcOTWYJuV
+    year: 2000
+    band: Mudvayne
+    genres: [nu-metal, alternative-metal]
+    genres_by: llm
+    note: L.D. 50. 291 seconds as Spotify holds it
+  - track: not-falling
+    url: https://open.spotify.com/track/15TzkwxGNvM3RGib0YkH4T
+    year: 2002
+    band: Mudvayne
+    genres: [nu-metal, alternative-metal]
+    genres_by: llm
+    note: The End Of All Things To Come. 243 seconds as Spotify holds it

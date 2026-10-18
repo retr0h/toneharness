@@ -1,0 +1,69 @@
+# John Paul Jones — Led Zeppelin
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: john-paul-jones
+
+ask:
+  genre: [rock, hard-rock]
+  subject:
+    kind: artist
+    name: John Paul Jones
+    band: Led Zeppelin
+    era: Led Zeppelin II to Physical Graffiti
+    years:
+      from: 1969
+      to: 1975
+
+  instrument: bass
+
+  # How it should sound, in the words a person would use. Nothing here:
+  # no word has been earned from these records against the others, and a
+  # word written by hand would move a control on nobody's authority.
+  words: []
+
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Acoustic 360
+      confidence: medium
+      evidence:
+        - kind: cited
+          url: https://www.guitar-auctions.co.uk/sale/149/544/John-Paul-Jones-Led-Zeppelin--Acoustic-360-bass-guitar-head-made-by-Acoustic-Control-Corporation-Los-Angeles-California-circa-March-1969-ser-no-L1009
+          note: >-
+            His own head, sold at auction with provenance: an Acoustic 360 made by
+            Acoustic Control Corporation circa March 1969, serial no. L1009. The lot
+            reads "purchased by John Paul Jones during Led Zeppelin's spring 1969 USA
+            tour and used on stage with Led Zeppelin between May 1969 and the Earls
+            Court shows in 1975". It is one of the earliest production 360s to leave
+            the factory, the numbering having started at L1000, and the lot notes a
+            1976 Beat Instrumental feature carrying a ledger of Led Zeppelin's
+            complete tour equipment which mentions this unit.
+          caveat: >-
+            The provenance is for the stage rig. What a studio take went through is a
+            separate question this does not answer, and all three records measured are
+            studio recordings. The 360 drove a 361 cabinet, a rear-firing 18-inch
+            folded horn, which is the pairing taken below.
+        - kind: user
+          url: https://www.talkbass.com/threads/john-paul-jones-rig.259308/
+          note: >-
+            Opened, and it is weaker than it looks. Eleven posts, most of them hedged:
+            "I think for a lot of it it was an Acoustic 360 rig with folded a 18
+            cabinet". One post is first-hand and contradicts the rest for the earliest
+            tour — chadds, who saw them open for The Who on the first album tour: "JPJ
+            had 4 trapezoid shaped 2x15 Rickenbacker cabs each with a Hiwatt 100
+            head". That is before the spring 1969 purchase the auction lot dates, so
+            the two agree rather than conflict, and it is the reason no record here
+            predates mid-1969.
+          caveat: >-
+            A forum thread of recollection. It is carried because it brackets the era
+            from the other side, not because it establishes the amplifier.
+    # No cabinet named, so the amp's own pairing is used — which is
+    # what Line 6 voiced it with, and which is all the source supports.

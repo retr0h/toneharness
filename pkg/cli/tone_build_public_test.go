@@ -167,13 +167,19 @@ rig:
 		},
 		{
 			// An ask with nothing to build from.
+			//
+			// The genre is a sentinel no record carries, and that is deliberate.
+			// A measured genre is a target: it chooses an amplifier and there is
+			// nothing left to refuse. This read `rock` until rock was measured,
+			// and `punk` before that, so any real genre name is one somebody may
+			// tag a record with next week.
 			name: "a request it cannot answer fails",
 			then: func() {
 				var buf bytes.Buffer
 
 				err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
 					Ask: s.file("ask.yaml", "schema: ToneSpec\nid: an-ask\n"+
-						"ask:\n  genre: [rock]\n  words:\n    - term: dark\n"+
+						"ask:\n  genre: [not-a-measured-genre]\n  words:\n    - term: dark\n"+
 						"rig:\n  instrument: bass\n"+
 						"  chain:\n    - {role: amp, gear: Ampeg SVT}\n"),
 				})
@@ -194,7 +200,7 @@ rig:
 
 				err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
 					Ask: s.file("ask.yaml", "schema: ToneSpec\nid: an-ask\n"+
-						"ask:\n  genre: [rock]\n  words:\n    - term: dark\n"+
+						"ask:\n  genre: [not-a-measured-genre]\n  words:\n    - term: dark\n"+
 						"rig:\n  instrument: bass\n"+
 						"  chain:\n    - {role: amp, gear: Ampeg SVT}\n"),
 					AsData: true,

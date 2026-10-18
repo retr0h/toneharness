@@ -43,6 +43,83 @@ the work is gone with no error. After changing anything in `core/`, run
 `mise exec -- just generate` and commit both, which is what packs it into the
 binary.
 
+## Two bars for core, and where each one falls
+
+`core/` ships in the binary, so a rig there reaches everybody who installs this.
+Two things have to be true.
+
+**Bar one: every gear claim has a source somebody opened.** No exceptions. `llm`
+alone means a model asserted the gear and nobody confirmed it, which is the same
+thing as made up. An audit of 122 gear claims across the marketplace found six
+like that on four rigs: an Ampeg SVT for Charlie Hayward with nothing behind it,
+the same for Tommy Caldwell and Cone McCaslin, and a Marshall stack for Dusty
+Hill that Premier Guitar's ZZ Top gallery and his obituary were both opened
+looking for and neither carries.
+
+**Bar two: the amplifier resolves to the amplifier named.** A `gear:` name
+resolves through the gear map to the nearest model when the real thing is not
+emulated, which is right for somebody building a sound and wrong to ship as a
+citation. Berry Oakley's Fender PS400 resolving to an Ampeg SVT is not a Berry
+Oakley rig, it is an Ampeg SVT with his name on it. The amplifier is the block
+that decides the sound, so this bar is drawn there.
+
+**A cabinet or a pedal may substitute, where the claim is cited and the caveat
+says so.** This device models fourteen bass amplifiers and fewer cabinets, and
+the best-sourced claims in this marketplace are cabinet claims the device cannot
+honour: Geddy Lee's two Ampeg V-4B cabinets are cited from Canadian Musician in
+1979 and 1981 and Guitar Player in 1980, three print sources in his own words,
+and nothing here models one. Deleting that to satisfy a rule aimed at invented
+gear would throw away the research and leave the rig no more accurate. Name the
+substitution in the caveat and keep it.
+
+**A source that hedges is still a source.** Somebody saying they think they use
+an Ampeg is evidence about an Ampeg, weak and honestly labelled, which is a
+different thing from a model inventing one. That rig goes in `community/` with
+the hedge quoted rather than smoothed out, because "I think" is not a settled
+claim and is not nothing either.
+
+Check both bars before filing anything in core:
+
+```bash
+# every gear claim and the evidence under it
+mise exec -- go run main.go rigs show --id <id> --json
+
+# what each name resolved to, which is the only place a substitution shows
+mise exec -- go run main.go rigs resolve --id <id> --json
+```
+
+A substitution is invisible in the document. The file says `Fender 400 PS` and
+reads as settled; only the resolve says an Ampeg came out.
+
+## Do not replace a player to keep a genre alive
+
+A genre needs eight records from three players before anything may aim at it, so
+moving one rig out of core can drop a genre under the line. That is not a reason
+to keep a rig whose gear nobody sourced, and not a reason to swap in whoever
+happens to map.
+
+The order:
+
+1. **Research deeper first.** A famous player with unsourced gear in the file is
+   usually a research failure rather than a bad choice of player. Klaus
+   Flouride's amplifier sat on `llm` while the answer was a MusicRadar interview
+   with him, cited in the footnote under the Wikipedia entry nobody had
+   followed. Wikipedia is never the source and its references are.
+2. **Keep the player and move the file** where the gear is real and cited and
+   this device models no amplifier like it. The research is good and only the
+   mapping failed, so it goes to `community/` with the substitution named.
+   Dropping the player throws away the one part that was right.
+3. **Replace only with somebody who clears both bars**, before a single record is
+   downloaded.
+4. **Let a genre go dead rather than prop it up.** A genre nothing can aim at
+   reports that it is short and by how much. A genre carried by a player whose
+   amplifier was invented reports that it is ready, and every rig built from it
+   inherits the invention.
+
+Nothing is deleted to reach a threshold and nothing is deleted to satisfy this
+page. A rig moves tier, and the research moves with it. Somebody holding the
+pedal can override any of it by hand; what ships by default has to be checkable.
+
 ## Scaffold rather than write from scratch
 
 ```bash

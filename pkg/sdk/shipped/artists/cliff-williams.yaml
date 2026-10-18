@@ -1,0 +1,74 @@
+# Cliff Williams — AC/DC
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: cliff-williams
+
+ask:
+  genre: [rock, hard-rock]
+  subject:
+    kind: artist
+    name: Cliff Williams
+    band: AC/DC
+    era: Ballbreaker to Black Ice
+    years:
+      from: 1995
+      to: 2008
+
+  instrument: bass
+
+  # How it should sound, in the words a person would use. Nothing here:
+  # no word has been earned from these records against the others, and a
+  # word written by hand would move a control on nobody's authority.
+  words: []
+
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          url: https://ampeg.com/artists/437/Cliff%20Williams/
+          note: >-
+            Ampeg's own artist page, which is the maker stating its own endorsement.
+            It lists him with two products and no prose: an SVT-4PRO head and an
+            SVT-810E cabinet.
+          caveat: >-
+            First-party and undated. An artist page says what somebody uses now and
+            brackets no era, which is why the records measured here are the later
+            albums rather than the famous late-1970s ones. The SVT-4PRO is a hybrid
+            with a valve preamp and a solid-state output section; the model on this
+            device is the original all-valve SVT, so this is the same family and not
+            the same amplifier.
+        - kind: user
+          url: https://www.talkbass.com/threads/cliff-williams-ac-dc-bass-tone.1444592/
+          note: >-
+            Opened. One post is first-hand observation rather than opinion, from
+            descendent22: "Cliff uses a couple 810 SVT cabs and I've seen him use SVT
+            heads, SVT pro 4 heads and possibly SVT pro 3 at times." A second post,
+            from Briton, puts him elsewhere for the 1970s: "On the Highway to Hell and
+            Powerage LP's he also used a Jazz Bass and a B-15 Flip Top".
+          caveat: >-
+            The B-15 claim is the interesting one and it is unsourced hearsay, so no
+            record from that era is measured here. If somebody can confirm it from
+            period press, this rig should be split in two: an Ampeg B-15NF for
+            1978-1980 and this one for the 1990s on.
+    - role: cab
+      gear: Ampeg 8x10
+      confidence: medium
+      evidence:
+        - kind: cited
+          url: https://ampeg.com/artists/437/Cliff%20Williams/
+          note: >-
+            Named by the maker on the same page as the head: an SVT-810E.
+          caveat: >-
+            Which 8x10 the device models is a legacy Ampeg SVT-E rather than the 810E
+            specifically.

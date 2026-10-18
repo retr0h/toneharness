@@ -6,10 +6,10 @@ it travels in a way a `.hlx` does not.
 
 Two tiers, and the difference is what somebody had to prove.
 
-|                          | what is in it        | the bar                                                  | ships in the binary |
-| ------------------------ | -------------------- | -------------------------------------------------------- | ------------------- |
-| [core/](core/)           | 27 artists, 4 genres | every claim has a source somebody opened                 | yes                 |
-| [community/](community/) | submissions          | it parses, it builds, and it says how well sourced it is | no                  |
+|                          | what is in it        | the bar                                                        | ships in the binary |
+| ------------------------ | -------------------- | -------------------------------------------------------------- | ------------------- |
+| [core/](core/)           | 26 artists, 4 genres | a source for every claim, and the amplifier is not substituted | yes                 |
+| [community/](community/) | submissions          | it parses, it builds, and it says how well sourced it is       | no                  |
 
 Each tier holds two directories, and the split is what the subject is:
 
@@ -108,13 +108,29 @@ sentence saying which is which.
 
 ## Getting into core
 
-Citations. That is the only difference, and it is not a formality: core ships in
-the binary, so a wrong claim there reaches everybody who installs this and looks
-like something somebody checked.
+Two bars, and core ships in the binary, so a wrong claim here reaches everybody
+who installs this and looks like something somebody checked.
 
-A community rig whose gear gets sourced moves across, and `rigs show <slug>`
-prints the caveats so a reviewer can see what each claim rests on without
-opening the YAML.
+**A source somebody opened, for every claim.** `llm` alone means a model
+asserted the gear and nobody confirmed it.
+
+**The amplifier that comes out is the amplifier named.** A gear name resolves to
+the nearest model when the real thing is not emulated, so a rig can read as
+settled while an Ampeg comes out of a Fender. A cabinet or a pedal may
+substitute where the claim is cited and the caveat says so, because this device
+models fourteen bass amplifiers and fewer cabinets.
+
+Both are enforced rather than described, by
+`TestEveryShippedGearClaimHasASource` and
+`TestEveryShippedAmplifierResolvesToItself` in
+`pkg/sdk/internal/compile/shipped_public_test.go`. Nine rigs failed them the day
+they were written. The reasoning behind the bars, and what to do when a player
+cannot clear them, is
+[build-a-rig's shipping.md](../.claude/skills/build-a-rig/references/shipping.md),
+which owns the rule.
+
+A community rig that clears both moves across, and `rigs show <slug>` prints the
+caveats so a reviewer can see what each claim rests on without opening the YAML.
 
 ## The copy under pkg/sdk
 

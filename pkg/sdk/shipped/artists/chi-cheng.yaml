@@ -1,0 +1,53 @@
+# Chi Cheng — Deftones
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: chi-cheng
+
+ask:
+  genre: [nu-metal, alternative-metal]
+  subject:
+    kind: artist
+    name: Chi Cheng
+    band: Deftones
+    era: Around the Fur to White Pony
+    years:
+      from: 1997
+      to: 2000
+
+  instrument: bass
+
+  # How it should sound, in the words a person would use. Nothing here:
+  # no word has been earned from these records against the others, and a
+  # word written by hand would move a control on nobody's authority.
+  words: []
+
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          url: https://www.premierguitar.com/articles/In_Remembrance_Chi_Chengs_Low_End_Legacy
+          note: >-
+            Premier Guitar's remembrance of him, which states the rig in one sentence:
+            "Cheng held the fort down with 4-string Fender P basses played with his
+            fingers—occasionally using fretless models on White Pony—through Ampeg
+            SVT-2 Pro heads and really only used a Tech 21 SansAmp GT2 for extra
+            balls."
+          caveat: >-
+            It covers his whole tenure rather than one record, and it names no
+            cabinet, so no cabinet is claimed below. The SVT-2 Pro is the valve SVT
+            reissue generation, so the model here is the same amplifier a generation
+            earlier. The SansAmp is omitted: it is a preamp pedal used for gain and
+            nothing establishes a setting for it.
+    # No cabinet named, so the amp's own pairing is used — which is
+    # what Line 6 voiced it with, and which is all the source supports.

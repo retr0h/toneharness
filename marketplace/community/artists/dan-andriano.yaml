@@ -1,3 +1,14 @@
+# Filed in community because this device does not model its gear.
+#
+# A Marshall Major, cited, and modelled by nothing here. The name resolves
+# to an Ampeg SVT.
+#
+# core/ requires two things of every rig: a source somebody opened for each
+# claim, and no gear substituted by the gear map. See build-a-rig's
+# shipping.md, "Two bars for core, not one". Nothing here is deleted: the
+# research stands and the player stays, and a rig that clears both bars
+# later moves back across.
+#
 # Dan Andriano — Alkaline Trio
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.

@@ -1,0 +1,26 @@
+artist: Troy Sanders
+tracks:
+  - track: high-road
+    url: https://open.spotify.com/track/4coYVm83MTdcEKlWcbU4Zh
+    year: 2014
+    band: Mastodon
+    genres: [metal]
+    genres_by: llm
+    note: >-
+      Once More 'Round the Sun. 255 seconds as Spotify holds it. The album of
+      the year the rig rundown was filmed, which is the only year his
+      amplifiers are established for
+  - track: the-motherload
+    url: https://open.spotify.com/track/6EF0xhfKtQNqUPz2mnE5BD
+    year: 2014
+    band: Mastodon
+    genres: [metal]
+    genres_by: llm
+    note: Once More 'Round the Sun. 299 seconds as Spotify holds it
+  - track: chimes-at-midnight
+    url: https://open.spotify.com/track/4KYy8DKz2E9DSnlgN0YJOs
+    year: 2014
+    band: Mastodon
+    genres: [metal]
+    genres_by: llm
+    note: Once More 'Round the Sun. 332 seconds as Spotify holds it

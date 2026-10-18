@@ -1,0 +1,26 @@
+artist: Cliff Williams
+tracks:
+  - track: hard-as-a-rock
+    url: https://open.spotify.com/track/1gij27s31tFKcTHa8f1u4g
+    year: 1995
+    band: AC/DC
+    genres: [rock, hard-rock]
+    genres_by: llm
+    note: >-
+      Ballbreaker. 270 seconds as Spotify holds it. Chosen for its date rather
+      than its fame: the amplifier Ampeg's own artist page names for him is an
+      SVT-4PRO, which did not exist for Highway to Hell
+  - track: stiff-upper-lip
+    url: https://open.spotify.com/track/1KBuhAHzia2qoD4u6YhvER
+    year: 2000
+    band: AC/DC
+    genres: [rock, hard-rock]
+    genres_by: llm
+    note: 214 seconds as Spotify holds it
+  - track: rock-n-roll-train
+    url: https://open.spotify.com/track/4feXJ5IC3avXsVW9WNFSag
+    year: 2008
+    band: AC/DC
+    genres: [rock, hard-rock]
+    genres_by: llm
+    note: Black Ice. 260 seconds as Spotify holds it

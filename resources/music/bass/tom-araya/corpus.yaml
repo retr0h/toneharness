@@ -1,0 +1,35 @@
+artist: Tom Araya
+tracks:
+  - track: angel-of-death
+    url: https://open.spotify.com/track/5ohfpKB5tt275f4Y4lQ9F7
+    year: 1986
+    band: Slayer
+    genres: [metal]
+    genres_by: llm
+    note: >-
+      Reign In Blood, from the Expanded edition. 291 seconds as Spotify holds
+      it. Every record here is from the one album the amplifier evidence covers
+  - track: raining-blood
+    url: https://open.spotify.com/track/4fiOTntQKr24p07FvQDHZE
+    year: 1986
+    band: Slayer
+    genres: [metal]
+    genres_by: llm
+    note: Reign In Blood (Expanded). 255 seconds as Spotify holds it
+  - track: altar-of-sacrifice
+    url: https://open.spotify.com/track/4LvQil7PXdldIl2jwrMCcV
+    year: 1986
+    band: Slayer
+    genres: [metal]
+    genres_by: llm
+    note: >-
+      Reign In Blood (Expanded). 170 seconds as Spotify holds it. Here because
+      Postmortem and Criminally Insane both download nine seconds long and do
+      so reproducibly, which is a different master rather than a bad match
+  - track: jesus-saves
+    url: https://open.spotify.com/track/47YR9X6SpcI4jYA2DOOhZm
+    year: 1986
+    band: Slayer
+    genres: [metal]
+    genres_by: llm
+    note: Reign In Blood (Expanded). 174 seconds as Spotify holds it

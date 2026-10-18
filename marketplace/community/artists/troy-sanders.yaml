@@ -1,0 +1,56 @@
+# Troy Sanders — Mastodon
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: troy-sanders
+
+ask:
+  genre: [metal]
+  subject:
+    kind: artist
+    name: Troy Sanders
+    band: Mastodon
+    era: Once More 'Round the Sun
+    years:
+      from: 2014
+      to: 2014
+
+  instrument: bass
+
+  # How it should sound, in the words a person would use. Nothing here:
+  # no word has been earned from these records against the others, and a
+  # word written by hand would move a control on nobody's authority.
+  words: []
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      confidence: low
+      evidence:
+        - kind: cited
+          url: https://www.premierguitar.com/rig-rundown-mastodon-2014
+          note: >-
+            A rig rundown of the 2014 touring rig: "A 300-watt Ampeg SVT-VR handles
+            his clean sounds, and a 485-watt Mesa/Boogie Bass Strategy Eight:88 drives
+            the other half of his rig." And on the cabinets: "Sanders runs each amp
+            into two Mesa/Boogie RoadReady cabs, one a 4x12, the other an 8x10."
+          caveat: >-
+            This rig is half of his and that is why the document sits in community
+            rather than core. The Ampeg SVT-VR is the faithful reissue of the
+            amplifier this device models, so that half maps exactly. The Mesa Bass
+            Strategy Eight:88 it is blended with is modelled by nothing here, and
+            neither are the Mesa RoadReady cabinets, so what is below is the clean
+            half of a two-amplifier rig and not the rig. He is separately on record
+            choosing Gallien-Krueger heads for Leviathan because he could not get the
+            sound he wanted out of any Ampeg he tried, so this is the 2014 rig and no
+            other, which is why all three records measured are from the 2014 album.
+    # No cabinet named, so the amp's own pairing is used — which is
+    # what Line 6 voiced it with, and which is all the source supports.

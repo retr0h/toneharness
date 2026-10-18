@@ -64,7 +64,24 @@ ffmpeg -hide_banner -i <file> -af silencedetect=n=-45dB:d=1 -f null - 2>&1 \
   | grep silence_
 ```
 
-Subtract the trailing silence from the file's length and it should land within a few
-seconds of what Spotify holds. Lyric videos pad the end. A difference the silence
-does not explain is a different recording: delete it and fetch again. A compilation
-tag is fine where the compilation reuses the take.
+Subtract the silence at **both ends** from the file's length and it should land
+within a few seconds of what Spotify holds. Lyric videos pad the end, and these
+downloads pad the front: Mudvayne's "Dig" arrives 169 seconds against Spotify's
+162, and it is six seconds of leading silence plus two of trailing. Checking only
+the tail called seven of twenty-four files wrong when one was.
+
+A compilation tag is fine where the compilation reuses the take.
+
+**A mismatch that reproduces is a different master, not a bad match.** Delete and
+fetch again first, because a wrong search result is the common cause and it does
+not come back twice. Where the second download is the same length to the second,
+the download source and the link are different masters of the same song, and no
+number of retries will fix it. Three of twenty-four behaved that way, all by six
+to eleven seconds, and two were on the same album: Slayer's Postmortem and
+Criminally Insane off Reign In Blood (Expanded), and Papa Roach's She Loves Me
+Not. Swap the track for another off the same record rather than keeping a file
+whose length the manifest cannot account for. Altar of Sacrifice and Jesus Saves
+both came down within a second.
+
+Say which you did in the note. A manifest entry whose length nobody can reproduce
+is the one somebody will re-derive a figure from.
