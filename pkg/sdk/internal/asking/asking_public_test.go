@@ -65,10 +65,8 @@ func (s *AskingPublicTestSuite) at(
 	return filepath.Join(
 		"..",
 		"..",
-		"..",
-		"..",
-		"marketplace",
-		"examples",
+		"testdata",
+		"documents",
 		name,
 	)
 }

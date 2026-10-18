@@ -54,7 +54,7 @@ rig:
       Drive: '0.6'
       Hum: '0.5'
       Master: '1.0'
-      Mid: '0.73'
+      Mid: '0.7471428571428572'
       MidFreq: '2'
       Ripple: '0.5'
       Sag: '0.5'

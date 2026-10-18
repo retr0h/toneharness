@@ -1,0 +1,66 @@
+# Sven Pipien — The Black Crowes
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: sven-pipien
+
+ask:
+  genre: [southern-rock, hard-rock]
+
+  aliases:
+    - black-crowes
+    - the-black-crowes
+
+  subject:
+    kind: artist
+    name: Sven Pipien
+    band: The Black Crowes
+    era: By Your Side to Lions
+    years:
+      from: 1998
+      to: 2001
+
+  instrument: bass
+
+  words: []
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      confidence: low
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/x.303485/
+          note: >-
+            Opened. The one post carrying gear is ETEcarmine, who has seen the band
+            repeatedly: "He used to use 2 Ampeg SVT 6 and either an Ampeg 8x10 or a
+            4x10 w/ a 1x15, depending on the show. Now he uses the chocolate thunder
+            Aguilar DB 8x10, but I don't know if he switched amps."
+          caveat: >-
+            A forum account rather than a citation, and it hedges in the right place:
+            the SVT-6 is stated flatly and what he moved to is not. The SVT-6 is a
+            hybrid with a valve preamp and a solid-state output section, where the
+            model here is the original all-valve SVT, so this is the same family and
+            not the same amplifier. A second thread was opened and adds only a first-
+            hand sighting of the Aguilar cabinet at a later show, which is why the era
+            above stops before it.
+    - role: cab
+      gear: Ampeg 8x10
+      confidence: low
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/x.303485/
+          note: >-
+            Named in the same sentence as the head, as one of two he chose between by
+            the size of the room: "either an Ampeg 8x10 or a 4x10 w/ a 1x15".
+          caveat: >-
+            Which of the two he used on any given night is not established, and
+            neither is which 8x10. The device models a legacy Ampeg SVT-E.

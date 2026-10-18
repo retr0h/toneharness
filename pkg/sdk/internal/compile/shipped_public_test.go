@@ -130,10 +130,8 @@ func (s *ShippedPublicTestSuite) TestEveryExampleUsesTheVocabulary() {
 		filepath.Join(
 			"..",
 			"..",
-			"..",
-			"..",
-			"marketplace",
-			"examples",
+			"testdata",
+			"documents",
 			"*.yaml",
 		),
 	)
