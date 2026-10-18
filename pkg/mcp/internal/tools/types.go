@@ -55,6 +55,10 @@ type Client interface {
 	MusicBands(ctx context.Context, corpus string) ([]sdk.MusicGroup, error)
 	MusicGenres(ctx context.Context, corpus string) ([]sdk.MusicGroup, error)
 	MusicRecords(ctx context.Context, corpus string) ([]sdk.MusicRecord, error)
+	// This one reads the recordings too, a stem per record rather than a
+	// whole measurement, so it costs seconds where the four above cost a file
+	// read.
+	MusicLengths(ctx context.Context, corpus string) ([]sdk.MusicLength, error)
 	// These read the recordings, which costs minutes per record.
 	MeasuredGenres(ctx context.Context, corpus string) ([]audio.Genre, error)
 	MeasuredPlayers(ctx context.Context, corpus string) ([]audio.Player, error)

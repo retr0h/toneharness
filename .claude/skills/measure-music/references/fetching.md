@@ -71,8 +71,26 @@ can compare against.
 
 ## Check it is the recording
 
-A wrong file measures without complaint, so compare lengths against the
-`seconds` the entry carries:
+A wrong file measures without complaint, so hold every record to the `seconds`
+its entry carries:
+
+```bash
+mise exec -- go run main.go corpus music lengths --corpus resources/music/bass
+```
+
+It reads the separated stems, a second or two a record, and reports each one's
+length against what its link states. Stems rather than the downloads because
+`audio.Read` decodes WAV and the downloads are MP3, and because the stem is the
+file every figure comes from.
+
+**What it marks is worth a look, not wrong.** Measured across all 131 records,
+the gap between a file's length and its stated one has no gap in it anywhere:
+half within 1.5s, three quarters within 3.1s, nine tenths within 5.9s. A second
+or two is routine, because the stated length is the source's own metadata and
+the audio comes from another host. The line sits at five seconds because that is
+where the two genuinely wrong recordings sat.
+
+For one file, by hand:
 
 ```bash
 ffprobe -v error -show_entries format=duration <file>
@@ -81,7 +99,9 @@ ffmpeg -hide_banner -i <file> -af silencedetect=n=-45dB:d=1 -f null - 2>&1 \
 ```
 
 **Compare the file's own length first, and reach for the silence only when the
-file is long.** Padding makes a download longer than the source; nothing makes
+file is long.** On a separated stem the quiet at the ends is where the
+instrument is not playing rather than padding: Allen Woody's John the Revelator
+opens with eighteen seconds that have no bass in them. Padding makes a download longer than the source; nothing makes
 it shorter. So a file whose length already matches is the right recording, and
 subtracting silence from it can only invent a problem: Cygnus X-1 runs 621.0s
 against a stated 621 and opens and closes quietly, and Goodnight Tonight runs

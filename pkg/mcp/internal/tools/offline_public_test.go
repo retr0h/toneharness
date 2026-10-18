@@ -682,6 +682,62 @@ func (s *OfflinePublicTestSuite) TestCorpusMusicRecords() {
 	})
 }
 
+// TestCorpusMusicLengths covers holding a record to the length its link
+// states, and the count of what is worth a look.
+func (s *OfflinePublicTestSuite) TestCorpusMusicLengths() {
+	s.run("corpus_music_lengths", []row{
+		{
+			name: "one near enough and one that is not",
+			args: tools.Corpus{Corpus: "resources/music/bass"},
+			setup: func(c *mocks.MockClient) {
+				c.EXPECT().MusicLengths(gomock.Any(), "resources/music/bass").
+					Return([]sdk.MusicLength{
+						{
+							Player: "ben-shepherd", Track: "spoonman",
+							States: 246, Seconds: 246.5, Sounding: 244.2,
+							Read: true, Off: 0.5,
+						},
+						{
+							Player: "mike-dirnt", Track: "holiday",
+							States: 232, Seconds: 240.4, Sounding: 239.2,
+							Read: true, Off: 8.4,
+						},
+						{
+							// Shorter than its source, which the count has to
+							// take as readily as a long one.
+							Player: "charlie-hayward", Track: "mississippi",
+							States: 189, Seconds: 182.0, Sounding: 180.2,
+							Read: true, Off: -7.0,
+						},
+						{
+							// No stem, so nothing to compare and nothing to
+							// count against it.
+							Player: "rick-danko", Track: "ophelia", States: 212,
+							Why: "nothing has separated it yet",
+						},
+					}, nil)
+			},
+			want: "4 records in resources/music/bass, 2 more than 5s from the length their link states",
+			check: func(s *OfflinePublicTestSuite, res *gomcp.CallToolResult) {
+				var got []sdk.MusicLength
+				structured(s.T(), res, &got)
+				s.InDelta(8.4, got[1].Off, 0.01)
+				s.False(got[3].Read)
+			},
+		},
+		{
+			name: "a corpus that will not read",
+			args: tools.Corpus{Corpus: "nowhere"},
+			setup: func(c *mocks.MockClient) {
+				c.EXPECT().MusicLengths(gomock.Any(), gomock.Any()).
+					Return(nil, errors.New("no such corpus"))
+			},
+			want: "no such corpus",
+			err:  true,
+		},
+	})
+}
+
 // TestCorpusPresetsChains covers what a chain almost always holds.
 func (s *OfflinePublicTestSuite) TestCorpusPresetsChains() {
 	s.run("corpus_presets_chains", []row{

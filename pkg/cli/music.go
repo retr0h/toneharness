@@ -23,6 +23,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 
@@ -325,6 +326,133 @@ func MusicRecords(
 		Summary: "a record with no stems is named here and measured by " +
 			"nothing: separate it with `just stems`",
 	}.Render(w)
+}
+
+// offBy is how far outside the stated length a file has to sit before it is
+// worth a second look, in seconds.
+//
+// Five, and the number is as weak as the thing it is drawn through. Measured
+// across all 131 records in this corpus, the gap between a file's length and
+// what its link states has no gap in it anywhere:
+//
+//	half within 1.5s, three quarters within 3.1s, nine tenths within 5.9s,
+//	worst 13.0s
+//
+// A second or two is routine, because `seconds` is what the source's own
+// metadata states and the audio is fetched from a different host: the same
+// song on two services differs by an intro, a fade or a lead-in. So a line
+// here cannot separate a wrong recording from a different encode of the right
+// one.
+//
+// Five is where the two recordings that were genuinely wrong sat, 5.0s and
+// 7.2s, one of them carrying the segue into the next song on the album. It
+// flags twenty of the hundred and thirty-one, so most of what it marks is a
+// different encode rather than a mistake, and the column says "worth a look"
+// rather than "wrong" for that reason.
+const offBy = 5.0
+
+// MusicLengths prints every separated recording against the length its link
+// states.
+func MusicLengths(
+	w io.Writer,
+	of []sdk.MusicLength,
+) error {
+	rows := make([][]string, 0, len(of))
+	out, waiting := 0, 0
+
+	for _, l := range of {
+		switch {
+		case !l.Read:
+			waiting++
+		case math.Abs(l.Off) > offBy:
+			out++
+		}
+
+		rows = append(rows, []string{
+			paint.Accent(w, l.Player),
+			l.Track,
+			strconv.Itoa(l.States) + "s",
+			heldOf(l),
+			playsFor(l),
+			lengthReads(w, l),
+		})
+	}
+
+	return paint.Section{
+		Title: "Every record against the length its link states",
+		Detail: fmt.Sprintf("%s, %d worth a look, %d not separated yet",
+			Plural(len(of), "record"), out, waiting),
+		Headers: []string{"player", "track", "says", "stem", "plays for", "reads"},
+		Rows:    rows,
+		Align: []lipgloss.Position{
+			lipgloss.Left, lipgloss.Left, lipgloss.Right, lipgloss.Right,
+			lipgloss.Right, lipgloss.Left,
+		},
+		Empty: "no records in this corpus",
+		Summary: "a second or two is routine, because the stated length is " +
+			"the source's own metadata and the audio comes from another " +
+			"host. What is worth chasing is a file much longer than its " +
+			"source, which is padding or a segue, or a shorter one, which is " +
+			"a different master: delete it and fetch again, and where the " +
+			"second download is the same length, say so in the entry's note",
+	}.Render(w)
+}
+
+// heldOf is how long the stem is.
+func heldOf(
+	l sdk.MusicLength,
+) string {
+	if !l.Read {
+		return "—"
+	}
+
+	return fmt.Sprintf("%.1fs", l.Seconds)
+}
+
+// playsFor is how much of the stem the instrument is actually in.
+//
+// Printed beside the length rather than taken off it, and it is not a measure
+// of padding. On a separated stem the quiet at the ends is where the
+// instrument is not playing: Allen Woody's John the Revelator opens with
+// eighteen seconds that have no bass in them, which is the arrangement rather
+// than a bad download. Subtracting it called three correct files wrong.
+//
+// It is here because it answers a different question somebody asks at the same
+// moment, which is how much of a record a figure was measured from.
+func playsFor(
+	l sdk.MusicLength,
+) string {
+	if !l.Read {
+		return "—"
+	}
+
+	return fmt.Sprintf("%.1fs", l.Sounding)
+}
+
+// lengthReads says what the comparison amounts to.
+//
+// The file's own length and nothing else. The quiet beside it belongs to the
+// arrangement on a separated stem, so taking it off would hand back the
+// instrument's playing time and compare that to a whole song.
+func lengthReads(
+	w io.Writer,
+	l sdk.MusicLength,
+) string {
+	if !l.Read {
+		return paint.Mute(w, l.Why)
+	}
+
+	if math.Abs(l.Off) <= offBy {
+		return paint.OK(w, fmt.Sprintf("near enough, %+.1fs", l.Off))
+	}
+
+	if l.Off < 0 {
+		return paint.Err(w, fmt.Sprintf(
+			"%.1fs shorter: a different master, and no refetch fixes one", -l.Off))
+	}
+
+	return paint.Err(w, fmt.Sprintf(
+		"%.1fs longer: padding, a segue or another edit", l.Off))
 }
 
 // decidedOf says who put the genres on a record.

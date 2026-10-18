@@ -210,7 +210,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 	reads := []string{
 		"catalog_show", "catalog_list", "corpus_presets_show", "corpus_presets_chains",
 		"corpus_music_players", "corpus_music_bands", "corpus_music_genres",
-		"corpus_music_records",
+		"corpus_music_records", "corpus_music_lengths",
 		"tone_build", "presets_make", "rigs_show", "rigs_list", "rigs_records",
 		"measure_genres", "measure_players", "measure_recordings",
 		"device_hardware", "slots_list", "presets_show", "slots_export", "device_select",
@@ -234,7 +234,8 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 				"slots_export": false, "device_select": false,
 				"corpus_presets_chains": true, "corpus_music_players": true,
 				"corpus_music_bands": true, "corpus_music_genres": true,
-				"corpus_music_records": true, "rigs_records": true,
+				"corpus_music_records": true, "corpus_music_lengths": true,
+				"rigs_records":   true,
 				"measure_genres": true, "measure_players": true,
 				"measure_recordings": true, "device_current": true,
 			},

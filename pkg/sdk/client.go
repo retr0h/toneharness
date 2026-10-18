@@ -1121,6 +1121,26 @@ func (c *Client) MusicRecords(
 	return musicview.Records(os.DirFS(corpus), ".")
 }
 
+// MusicLengths holds every separated recording to the length its link states.
+//
+// What it catches is a download that is the wrong recording, which measures
+// without complaining otherwise: a live take, a lyric video's padding, or the
+// segue into the next song on the album. Two of this corpus's own records were
+// a different edit when it was first run.
+//
+// Reads the audio, so it costs seconds a record. MusicRecords answers from the
+// manifests alone and says only whether a stem exists.
+func (c *Client) MusicLengths(
+	ctx context.Context,
+	corpus string,
+) ([]MusicLength, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	return musicview.Lengths(os.DirFS(corpus), ".")
+}
+
 // MusicGenres measures every genre in a corpus against the players who play
 // none of it.
 //

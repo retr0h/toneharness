@@ -106,6 +106,81 @@ func (s *MusicPublicTestSuite) measured(
 	return buf.String()
 }
 
+// lengths draws a set of records against the lengths their links state.
+func (s *MusicPublicTestSuite) lengths(
+	of []sdk.MusicLength,
+) string {
+	var buf bytes.Buffer
+
+	s.Require().NoError(cli.MusicLengths(&buf, of))
+
+	return buf.String()
+}
+
+// TestMusicLengths covers every verdict the length check can print.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MusicPublicTestSuite) TestMusicLengths() {
+	for _, tt := range []struct {
+		name string
+		of   []sdk.MusicLength
+		want []wanted
+		not  []wanted
+	}{
+		{
+			name: "what each comparison amounts to",
+			of: []sdk.MusicLength{
+				{
+					Player: "ben-shepherd", Track: "spoonman", States: 246,
+					Seconds: 246.5, Sounding: 244.2, Read: true, Off: 0.5,
+				},
+				{
+					// A stem whose quiet is the arrangement rather than
+					// padding: the comparison is on the length regardless.
+					Player: "allen-woody", Track: "blind-man", States: 407,
+					Seconds: 407.1, Sounding: 401.3, Read: true, Off: 0.1,
+				},
+				{
+					// The one that was the wrong recording: it carried the
+					// segue into the next song on the album.
+					Player: "mike-dirnt", Track: "holiday", States: 232,
+					Seconds: 240.4, Sounding: 239.2, Read: true, Off: 8.4,
+				},
+				{
+					// Shorter than its source, which padding cannot explain.
+					Player: "charlie-hayward", Track: "mississippi", States: 189,
+					Seconds: 185.0, Sounding: 183.2, Read: true, Off: -4.0 - 2,
+				},
+				{
+					Player: "rick-danko", Track: "ophelia", States: 212,
+					Why: "nothing has separated it yet",
+				},
+			},
+			want: []wanted{
+				{text: "near enough, +0.5s"},
+				{text: "8.4s longer", why: "and what that usually means"},
+				{text: "segue"},
+				{text: "6.0s shorter", why: "which no refetch fixes"},
+				{text: "different master"},
+				{text: "nothing has separated it yet"},
+				{text: "401.3s", why: "how much of the record it plays on"},
+				{text: "5 records, 2 worth a look, 1 not separated yet"},
+			},
+			not: []wanted{
+				{text: "0.1s longer", why: "a tenth of a second is not a finding"},
+			},
+		},
+		{
+			name: "a corpus with nothing in it",
+			want: []wanted{{text: "no records in this corpus"}},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.holds(s.lengths(tt.of), tt.want, tt.not)
+		})
+	}
+}
+
 // TestMusicPlayers covers the table somebody growing a corpus reads.
 func (s *MusicPublicTestSuite) TestMusicPlayers() {
 	for _, tt := range []struct {

@@ -212,6 +212,28 @@ func (h *handlers) corpusMusicRecords(
 	return said("%d records in %s", len(found), in.Corpus), found, nil
 }
 
+func (h *handlers) corpusMusicLengths(
+	ctx context.Context,
+	_ *gomcp.CallToolRequest,
+	in Corpus,
+) (*gomcp.CallToolResult, []sdk.MusicLength, error) {
+	found, err := h.client.MusicLengths(ctx, in.Corpus)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	out := 0
+
+	for _, one := range found {
+		if one.Read && (one.Off > 5 || one.Off < -5) {
+			out++
+		}
+	}
+
+	return said("%d records in %s, %d more than 5s from the length their link states",
+		len(found), in.Corpus, out), found, nil
+}
+
 func (h *handlers) corpusPresetsChains(
 	ctx context.Context,
 	_ *gomcp.CallToolRequest,
