@@ -1,0 +1,216 @@
+# Million Mile Reflections, 1979 — a sound, not somebody's rig
+#
+# Attributed to a sound because the gear is not established. Charlie Hayward of
+# The Charlie Daniels Band played these records and what he played them through
+# is not known, so claiming a rig for him would be inventing one. This is the
+# amplifier that measures nearest the records themselves.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+#
+# No cabinet named. The amplifier's own pairing is used, because the measurement
+# chose an amplifier and says nothing about a cabinet.
+
+ask:
+  confidence: low
+  genre:
+  - southern-rock
+  instrument: bass
+  subject:
+    era: Million Mile Reflections, 1979
+    kind: sound
+    name: Million Mile Reflections, 1979
+  words: []
+id: million-mile-reflections
+rig:
+  chain:
+  - attrs:
+      '@position': "0"
+    controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    position: 0
+    role: comp
+  - attrs:
+      '@position': "1"
+    capture: direct
+    confidence: low
+    controls:
+      Bass: "0.67"
+      Bias: "0.66"
+      BiasX: "0.5"
+      ChVol: "1.0"
+      Drive: "0.7"
+      HighMid: "0.5"
+      Hum: "0.5"
+      LowMid: "0.65"
+      Master: "1.0"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.69"
+    evidence:
+    - caveat: |-
+        **This is not a claim about what Charlie Hayward played.** His amplifier is not established and the searching for it has bottomed out: nothing names one, and what is written about him is about his playing.
+
+        It is weak even as a sound-alike, for two reasons. The records disagree, and the note says how. And the margin runs the wrong way: these records sit at 144 and 151 Hz while the amplifier that won reads 105, so what the comparison found is the nearest of a field that is entirely darker than the records rather than a match. That is the pathology the measured library's own notes record. A cited amplifier would replace this outright.
+      kind: audio
+      note: Chosen by measurement rather than by anybody's say-so. The device's twenty-seven
+        bass amplifiers were ranked against Charlie Hayward's own separated bass stems,
+        one record at a time, and the Ampeg B-15NF came nearest on two of the three,
+        Behind Your Eyes and Mississippi; the third, Passing Lane, picked a MESA/Boogie
+        Bass 400+. It reads 105 Hz against 151 on one and 144 on the other. Run it
+        again on the same stems and it answers the same way.
+    gear: Ampeg B-15NF Portaflex
+    position: 1
+    role: amp
+  - attrs:
+      '@position': "2"
+    controls:
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      HighCut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Legacy 1x15" Ampeg B-15
+    position: 2
+    role: cab
+  instrument: bass
+  preset:
+    dsp0:
+      members:
+        inputA:
+          attrs:
+            '@input': "1"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        inputB:
+          attrs:
+            '@input': "0"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        join:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
+          controls:
+            A Level: "0"
+            A Pan: "0.5"
+            B Level: "0"
+            B Pan: "0.5"
+            B Polarity: "false"
+            Level: "0"
+          model: HD2_AppDSPFlowJoin
+        outputA:
+          attrs:
+            '@output': "1"
+          controls:
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputMain
+        outputB:
+          attrs:
+            '@output': "0"
+          controls:
+            Type: "true"
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputSend
+        split:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
+          controls:
+            BalanceA: "0.5"
+            BalanceB: "0.5"
+            bypass: "false"
+          model: HD2_AppDSPFlowSplitY
+    dsp1:
+      members: {}
+    global:
+      attrs:
+        '@DtSelect': "2"
+        '@PowercabMode': "0"
+        '@PowercabSelect': "2"
+        '@PowercabVoicing': "0"
+        '@current_snapshot': "0"
+        '@cursor_dsp': "0"
+        '@cursor_group': ""
+        '@cursor_path': "0"
+        '@cursor_position': "0"
+        '@guitarinputZ': "0"
+        '@guitarpad': "0"
+        '@pedalstate': "2"
+        '@tempo': "120"
+        '@topology0': A
+        '@topology1': "0"
+      model: '@global_params'
+    snapshot0:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 1
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot1:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 2
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot2:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 3
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    variax:
+      attrs:
+        '@variax_customtuning': "true"
+        '@variax_lockctrls': "0"
+        '@variax_magmode': "false"
+        '@variax_model': "0"
+        '@variax_str1level': "1"
+        '@variax_str1tuning': "0"
+        '@variax_str2level': "1"
+        '@variax_str2tuning': "0"
+        '@variax_str3level': "1"
+        '@variax_str3tuning': "0"
+        '@variax_str4level': "1"
+        '@variax_str4tuning': "0"
+        '@variax_str5level': "1"
+        '@variax_str5tuning': "0"
+        '@variax_str6level': "1"
+        '@variax_str6tuning': "0"
+        '@variax_toneknob': "-0.10000002384185791"
+        '@variax_volumeknob': "-0.10000002384185791"
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec
+version: 3.0.0

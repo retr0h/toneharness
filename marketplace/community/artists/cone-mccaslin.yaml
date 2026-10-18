@@ -1,22 +1,24 @@
-# Filed in community because its gear was never sourced.
-#
-# Its amplifier and cabinet rest on no source. An Ampeg SVT-CL and an
-# SVT-1000 are widely listed for him, but only on equipboard and uberproaudio,
-# and he is not on Ampeg's own artist roster.
-#
-# core/ requires two things of every rig: a source somebody opened for each
-# claim, and no gear substituted by the gear map. See build-a-rig's
-# shipping.md, "Two bars for core, not one". Nothing here is deleted: the
-# research stands and the player stays, and a rig that clears both bars
-# later moves back across.
-#
 # Cone McCaslin — Sum 41
 #
 # One document: the ask says who it is for, the rig below says what the gear is.
 #
-# The amplifier is a model's assertion. See the caveat for what was searched.
-#
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+#
+# Filed in community because his amplifier is not established. An Ampeg SVT-CL
+# and an SVT-1000 are widely listed for him, but only on equipboard and
+# uberproaudio, and he is not on Ampeg's own artist roster. The Sum 41 gear
+# rundown covers the guitarists' Soldano and Marshalls and mentions him only to
+# say which bass he swaps to.
+#
+# So the amplifier below is measured rather than claimed, where it used to be
+# an Ampeg SVT with a cabinet beside it on the same nothing. It is what his own
+# records rank nearest, and the sound-alike beside this
+# (all-killer-no-filler) is the document that answers for the sound.
+#
+# core/ requires two things of every rig: a source somebody opened for each
+# claim, and no gear substituted by the gear map. See build-a-rig's
+# shipping.md, "Two bars for core, and where each one falls".
+
 ask:
   aliases:
   - cone
@@ -59,45 +61,49 @@ rig:
     capture: direct
     confidence: low
     controls:
-      Bass: "0.41"
-      Bias: "0.74"
-      BiasX: "0.5"
+      62p5Hz: "5.7"
+      125Hz: "4.7"
+      1kHz: "3.7"
+      250Hz: "1.3"
+      2kHz: "-1.7"
+      4kHz: "3.8"
+      500Hz: "-2.0"
+      Bright: "true"
       ChVol: "0.8"
-      Drive: "0.6"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.79"
-      MidFreq: "2"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.85"
+      Contour: "true"
+      Gain: "0.82"
+      Master: "0.75"
     evidence:
     - caveat: |-
-        what was searched, and where it ran out. The pages carrying this are uberproaudio and whatgear, which are the kind that scrape and do not cite, and the project treats those as not sources. The one TalkBass thread about him is three posts arguing about whether he is any good and names no equipment at all. Guitar World's Sum 41 feature is behind a membership prompt and could not be read.
-        An SVT into an eight-by-ten is also the answer this corpus gives for almost every rock bassist in it, which is a reason to trust it less rather than more: it is what a guess looks like when it happens to be plausible.
-        Worth naming what would settle it. These sessions were produced by Jerry Finn, and a Finn interview or a Mix piece on the record would be first-hand about what went to tape. If you have one, please open a pull request.
-      kind: llm
-      note: asserted by a model and confirmed by nobody. The figure repeated across
-        gear pages is an Ampeg SVT into an Ampeg 8x10, held to since he joined the
-        band, with a SansAmp used in the studio and Evil Twin tube direct boxes live.
-    gear: Ampeg SVT
+        **Not a claim about what he played.** This was an Ampeg SVT asserted by a model and confirmed by nobody until the research was done and found nothing; a measured amplifier is at least reproducible, and this is the only reason it is here rather than that one.
+
+        The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
+      kind: audio
+      note: Chosen by measurement rather than asserted. Sunn Coliseum 300 was researched
+        and bottomed out. The Sum 41 gear rundown covers the guitarists' Soldano and
+        Marshalls and mentions him only to say which bass he swaps to. The Ampeg SVT
+        repeated on gear pages for him rests on nothing those pages name. So the device's
+        twenty-seven bass amplifiers were ranked against his own separated bass stems,
+        one record at a time, across Fat Lip, In Too Deep and Motivation, and this
+        is the one that came nearest on two of the three. The vote, the margins and
+        what is weak about them are in the all-killer-no-filler sound-alike beside
+        this, which is the document that answers for the sound rather than for him.
+    gear: Sunn Coliseum 300
     position: 1
     role: amp
   - attrs:
       '@position': "2"
-    capture: direct
-    confidence: low
     controls:
-      Distance: "1.0"
+      Distance: "1.5"
       EarlyReflections: "0.0"
-      High Cut: "8000.0"
+      HighCut: "20100.0"
       Level: "0.0"
       LowCut: "19.9"
     evidence:
-    - caveat: the same unsourced account as the head, so the two stand or fall together.
-      kind: llm
-      note: the cabinet named alongside the head in the same pages.
-    gear: Ampeg 8x10
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Legacy 1x18" Sunn Coliseum
     position: 2
     role: cab
   instrument: bass

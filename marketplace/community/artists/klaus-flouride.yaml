@@ -1,25 +1,31 @@
-# Filed in community because this device does not model its gear.
-#
-# Acoustic 150B head into an Acoustic 402 cabinet, which is real and now
-# properly sourced: the Wikipedia entry's own footnote is a MusicRadar interview
-# with Flouride himself. This device models the Acoustic 360, a folded-horn
-# 18-inch rig and a different amplifier, so the name resolves to gear he did not
-# play.
-#
-# core/ requires two things of every rig: a source somebody opened for each
-# claim, and no gear substituted by the gear map. See build-a-rig's
-# shipping.md, "Two bars for core, not one". Nothing here is deleted: the
-# research stands and the player stays, and a rig that clears both bars
-# later moves back across.
-#
 # Klaus Flouride — Dead Kennedys
 #
 # One document: the ask says who it is for, the rig below says what the gear is.
 #
-# The amplifier here is a model's assertion and nobody has confirmed it. See the
-# caveat on the chain entry for what was searched and where it ran out.
-#
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+#
+# Filed in community because his amplifier is not established.
+#
+# This file used to say the Acoustic 150B and Acoustic 402 were "real and now
+# properly sourced: the Wikipedia entry's own footnote is a MusicRadar
+# interview with Flouride himself". The footnote was never opened. Joe
+# Shooman's MusicRadar interview of 7 December 2017 names no amplifier
+# anywhere in its body, the Wikipedia sentence carrying the models has no
+# citation of its own, and the TalkBass thread that repeats it is quoting that
+# same sentence with the poster saying twice that he is assuming what
+# "acoustic" means in it. A footnote on the paragraph is not a source for the
+# sentence.
+#
+# So the amplifier below is measured rather than claimed: it is what his own
+# records rank nearest, and the sound-alike beside this
+# (fresh-fruit-for-rotting-vegetables) is the document that answers for the
+# sound. Nothing is deleted, the player stays, and a cited amplifier moves
+# this back across to core.
+#
+# core/ requires two things of every rig: a source somebody opened for each
+# claim, and no gear substituted by the gear map. See build-a-rig's
+# shipping.md, "Two bars for core, and where each one falls".
+
 ask:
   aliases:
   - flouride
@@ -77,71 +83,55 @@ rig:
     capture: direct
     confidence: low
     controls:
-      Bass: "0.684"
-      Bright: "false"
-      ChVol: "0.7"
-      Drive: "0.45"
-      Effect: "0.332"
-      Hum: "0.274"
+      Bass: "0.41"
+      Bias: "0.74"
+      BiasX: "0.5"
+      ChVol: "0.8"
+      Drive: "0.6"
+      Hum: "0.5"
       Master: "1.0"
-      TFCoarse: "0.472"
-      TFFine: "0.308"
-      Treble: "0.741"
-      TuningFork: "0.0"
-      Variamp: "2"
+      Mid: "0.89"
+      MidFreq: "2"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.88"
     evidence:
     - caveat: |-
-        what was searched, and where it ran out. The sentence everybody quotes — "according to the man himself, Klaus used an acoustic amplifier with stock speakers on Fresh Fruit for Rotting Vegetables" — is not an interview. It appears in the TalkBass thread at https://www.talkbass.com/threads/dead-kennedys-tone.287737/ in post 8, where the poster pjmuck is quoting Wikipedia and says so, then immediately doubts his own reading of it: "Now I assume they mean the Acoustic (caps) brand name of bass amps… But maybe he did play through an acoustic guitar amp???" Wikipedia cites nothing beneath it.
-        Nobody in that thread was there. One poster who saw them five or six times says "Not sure what amps- likely something borrowed/stole"; another offers "i read something years ago that said it was a traynor monoblock II", which is a different amplifier entirely.
-        Two long published interviews were read in full and neither mentions an amplifier: Mark Prindle's at http://www.markprindle.com/flouride-i.htm, and Jay Stone's for Dying Scene cited above. The Vinyl Guide podcast episode 23 is specifically about the making of this record and is audio nobody has transcribed here.
-        If you know what he actually played through, please open a pull request.
-      kind: llm
-      note: asserted by a model and confirmed by nobody. The figure repeated everywhere
-        is an "Acoustic 150B head and Acoustic 402 cabinet, stock speakers", said
-        to run at least through In God We Trust, Inc.
-    gear: Acoustic 150B
+        **Not a claim about what he played.** This was an Ampeg SVT asserted by a model and confirmed by nobody until the research was done and found nothing; a measured amplifier is at least reproducible, and this is the only reason it is here rather than that one.
+
+        The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
+      kind: audio
+      note: Chosen by measurement rather than asserted. Ampeg SVT (bright channel)
+        was researched and bottomed out. An Acoustic 150B and an Acoustic 402 cabinet
+        are repeated for him everywhere and the trail ends in nothing. The sentence
+        is uncited on Wikipedia; its paragraph's only footnote is Joe Shooman's MusicRadar
+        interview of 7 December 2017, which names no amplifier anywhere in its body;
+        and the TalkBass thread that carries the same claim is quoting that Wikipedia
+        line, with the poster saying twice that he is assuming what "acoustic" means
+        in it. So the device's twenty-seven bass amplifiers were ranked against his
+        own separated bass stems, one record at a time, across California Uber Alles,
+        Holiday in Cambodia and Kill the Poor, and this is the one that came nearest
+        on two of the three. The vote, the margins and what is weak about them are
+        in the fresh-fruit-for-rotting-vegetables sound-alike beside this, which is
+        the document that answers for the sound rather than for him.
+    gear: Ampeg SVT (bright channel)
     position: 1
     role: amp
-    substitute:
-      confidence: low
-      evidence:
-      - caveat: a substitute for a claim that is itself unconfirmed, so it is a guess
-          resting on a guess. Both halves want correcting together.
-        kind: llm
-        note: the same manufacturer, and the only one of theirs this device models.
-          The Acoustic 360 is their folded-horn preamp and the 150B a later head,
-          so this keeps the brand where it cannot keep the model.
-      gear: Acoustic 360
   - attrs:
       '@position': "2"
     controls:
-      Distance: "1.5"
+      Distance: "1.0"
       EarlyReflections: "0.0"
-      HighCut: "8000.0"
+      High Cut: "8000.0"
       Level: "0.0"
-      LowCut: "20.0"
+      LowCut: "19.9"
     evidence:
     - kind: corpus
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
-    gear: Legacy 1x18" Acoustic 360
+    gear: 8x10 Ampeg SVT-E
     position: 2
     role: cab
-  - attrs:
-      '@position': "3"
-    controls:
-      HighGain: "0.0"
-      Level: "0.0"
-      LowGain: "0.0"
-      MidFreq: "600.0"
-      MidGain: "1.6"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Simple EQ
-    position: 3
-    role: eq
   instrument: bass
   preset:
     dsp0:

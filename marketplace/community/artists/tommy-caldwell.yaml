@@ -1,22 +1,26 @@
-# Filed in community because its gear was never sourced.
-#
-# Its amplifier is an Ampeg SVT on no source at all. What research reaches
-# is "tube amplifiers" with no model, anywhere.
-#
-# core/ requires two things of every rig: a source somebody opened for each
-# claim, and no gear substituted by the gear map. See build-a-rig's
-# shipping.md, "Two bars for core, not one". Nothing here is deleted: the
-# research stands and the player stays, and a rig that clears both bars
-# later moves back across.
-#
 # Tommy Caldwell — The Marshall Tucker Band
 #
 # One document: the ask says who it is for, the rig below says what the gear is.
 #
-# The amplifier is a model's assertion. The instrument and the right hand are
-# not, and on this player the right hand is most of the sound.
-#
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+#
+# Filed in community because his amplifier is not established. What research
+# reaches is "tube amplifiers" with no model, anywhere: the one Guitar Player
+# interview barely touches gear, by the account of somebody who read it, and a
+# TalkBass thread of eleven posts on his tone names no amplifier in any of
+# them. They are about his thumb, his DiMarzio pickup and a hunk of plastic he
+# palmed to fortify his thumbnail.
+#
+# So the amplifier below is measured rather than claimed, where it used to be
+# an Ampeg SVT on no source at all. It is what his own records rank nearest,
+# and the sound-alike beside this (marshall-tucker-mid-seventies) is the
+# document that answers for the sound. The instrument and the right hand are
+# sourced, and on this player the right hand is most of the sound.
+#
+# core/ requires two things of every rig: a source somebody opened for each
+# claim, and no gear substituted by the gear map. See build-a-rig's
+# shipping.md, "Two bars for core, and where each one falls".
+
 ask:
   aliases:
   - caldwell
@@ -81,42 +85,51 @@ rig:
     capture: direct
     confidence: low
     controls:
-      Bass: "0.41"
-      Bias: "0.74"
-      BiasX: "0.5"
-      ChVol: "0.8"
-      Drive: "0.6"
-      Hum: "0.5"
+      Bass: "0.684"
+      Bright: "false"
+      ChVol: "0.7"
+      Drive: "0.45"
+      Effect: "0.332"
+      Hum: "0.274"
       Master: "1.0"
-      Mid: "0.79"
-      MidFreq: "2"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.85"
+      TFCoarse: "0.472"
+      TFFine: "0.308"
+      Treble: "0.616"
+      TuningFork: "0.0"
+      Variamp: "2"
     evidence:
     - caveat: |-
-        what was searched, and where it ran out. Two TalkBass threads about him, Vintage Guitar's Marshall Tucker Band feature and their Fretprints piece on his brother Toy were all read, and every one of them is about the basses, the strings and the thumb. Not one names an amplifier.
-        So this is a guess from the era and the size of the band, which is the weakest reason this project accepts for anything. The instrument and the technique above are what the figures should be read against until somebody fills this in. If you know what he played through, please open a pull request.
-      kind: llm
-      note: asserted by a model and confirmed by nobody. A big valve head is what
-        a southern rock band of this size carried in 1975, and the SVT is the one
-        this device models.
-    gear: Ampeg SVT
+        **Not a claim about what he played.** This was an Ampeg SVT asserted by a model and confirmed by nobody until the research was done and found nothing; a measured amplifier is at least reproducible, and this is the only reason it is here rather than that one.
+
+        The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
+      kind: audio
+      note: 'Chosen by measurement rather than asserted. Acoustic 360 was researched
+        and bottomed out. One Guitar Player interview with him exists and JTE, who
+        read it, reports that it barely touched on gear. A TalkBass thread of eleven
+        posts about his tone names no amplifier in any of them: they are about his
+        thumb, his DiMarzio pickup and a hunk of plastic he palmed to fortify his
+        thumbnail. So the device''s twenty-seven bass amplifiers were ranked against
+        his own separated bass stems, one record at a time, across Fire on the Mountain,
+        Searchin'' for a Rainbow and Bob Away My Blues, and this is the one that came
+        nearest on two of the three. The vote, the margins and what is weak about
+        them are in the marshall-tucker-mid-seventies sound-alike beside this, which
+        is the document that answers for the sound rather than for him.'
+    gear: Acoustic 360
     position: 1
     role: amp
   - attrs:
       '@position': "2"
     controls:
-      Distance: "1.0"
+      Distance: "1.5"
       EarlyReflections: "0.0"
-      High Cut: "8000.0"
+      HighCut: "8000.0"
       Level: "0.0"
-      LowCut: "19.9"
+      LowCut: "20.0"
     evidence:
     - kind: corpus
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
-    gear: 8x10 Ampeg SVT-E
+    gear: Legacy 1x18" Acoustic 360
     position: 2
     role: cab
   instrument: bass
