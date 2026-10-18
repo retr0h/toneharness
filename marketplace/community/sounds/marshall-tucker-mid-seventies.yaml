@@ -6,58 +6,223 @@
 # amplifier that measures nearest the records themselves.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: marshall-tucker-mid-seventies
+#
+# No cabinet named. The amplifier's own pairing is used, because the
+# measurement chose an amplifier and says nothing about a cabinet.
 
 ask:
-  genre: [southern-rock]
-
+  confidence: low
+  genre:
+  - southern-rock
+  instrument: bass
   subject:
+    era: A New Life and Searchin' for a Rainbow, 1974 to 1975
     kind: sound
     name: Marshall Tucker, 1974 to 1975
-    era: A New Life and Searchin' for a Rainbow, 1974 to 1975
-
-  instrument: bass
-
   words: []
-
-  confidence: low
-
+id: marshall-tucker-mid-seventies
 rig:
-  instrument: bass
-
   chain:
-    - role: amp
-      gear: Acoustic 360
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          note: >-
-            Chosen by measurement rather than by anybody's say-so. The device's
-            twenty-seven bass amplifiers were ranked against Tommy Caldwell's own
-            separated bass stems, one record at a time, and the Acoustic 360 came
-            nearest on two of the three; the third picked an Aguilar DB51. It reads 91
-            Hz against 112 on one record and 128 on the other. Run it again on the
-            same stems and it answers the same way.
-          caveat: >-
-            **This is not a claim about what Tommy Caldwell played.** His amplifier is
-            not established, and the primary source was opened and settles it
-            negatively. One Guitar Player interview with him exists, and JTE, who read
-            it, reports: "I have no idea about amps. Partly because I just didn't pay
-            much attention to that at the time, and partly because the interview
-            barely touched on gear." So this document is attributed to a sound rather
-            than to him: it is the amplifier nearest these 3 records, and nothing
-            more. Two things make it weak even as that. The records disagree, and the
-            caveat above says how. And the winners of this comparison cluster at the
-            dark end of what the device has: the Acoustic 360 reads 91 Hz and the Sunn
-            Coliseum 300 reads 98 Hz, the two darkest bass amplifiers it models, and
-            every record here sits below most of the candidates. That is the pathology
-            the measured library's own notes record, where every candidate is out of
-            range and the nearest is whichever is darkest. It is here because it is
-            buildable and honest, not because it is settled. A cited amplifier for
-            Tommy Caldwell would replace it, and a model of the Fender and Peavey
-            amplifiers this era actually ran would make the comparison worth more.
-    # No cabinet named. The amplifier's own pairing is used, because the
-    # measurement chose an amplifier and says nothing about a cabinet.
+  - attrs:
+      '@position': "0"
+    controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    position: 0
+    role: comp
+  - attrs:
+      '@position': "1"
+    capture: direct
+    confidence: low
+    controls:
+      Bass: "0.684"
+      Bright: "false"
+      ChVol: "0.7"
+      Drive: "0.45"
+      Effect: "0.332"
+      Hum: "0.274"
+      Master: "1.0"
+      TFCoarse: "0.472"
+      TFFine: "0.308"
+      Treble: "0.616"
+      TuningFork: "0.0"
+      Variamp: "2"
+    evidence:
+    - caveat: '**This is not a claim about what Tommy Caldwell played.** His amplifier
+        is not established, and the primary source was opened and settles it negatively.
+        One Guitar Player interview with him exists, and JTE, who read it, reports:
+        "I have no idea about amps. Partly because I just didn''t pay much attention
+        to that at the time, and partly because the interview barely touched on gear."
+        So this document is attributed to a sound rather than to him: it is the amplifier
+        nearest these 3 records, and nothing more. Two things make it weak even as
+        that. The records disagree, and the caveat above says how. And the winners
+        of this comparison cluster at the dark end of what the device has: the Acoustic
+        360 reads 91 Hz and the Sunn Coliseum 300 reads 98 Hz, the two darkest bass
+        amplifiers it models, and every record here sits below most of the candidates.
+        That is the pathology the measured library''s own notes record, where every
+        candidate is out of range and the nearest is whichever is darkest. It is here
+        because it is buildable and honest, not because it is settled. A cited amplifier
+        for Tommy Caldwell would replace it, and a model of the Fender and Peavey
+        amplifiers this era actually ran would make the comparison worth more.'
+      kind: audio
+      note: Chosen by measurement rather than by anybody's say-so. The device's twenty-seven
+        bass amplifiers were ranked against Tommy Caldwell's own separated bass stems,
+        one record at a time, and the Acoustic 360 came nearest on two of the three;
+        the third picked an Aguilar DB51. It reads 91 Hz against 112 on one record
+        and 128 on the other. Run it again on the same stems and it answers the same
+        way.
+    gear: Acoustic 360
+    position: 1
+    role: amp
+  - attrs:
+      '@position': "2"
+    controls:
+      Distance: "1.5"
+      EarlyReflections: "0.0"
+      HighCut: "8000.0"
+      Level: "0.0"
+      LowCut: "20.0"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Legacy 1x18" Acoustic 360
+    position: 2
+    role: cab
+  instrument: bass
+  preset:
+    dsp0:
+      members:
+        inputA:
+          attrs:
+            '@input': "1"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        inputB:
+          attrs:
+            '@input': "0"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        join:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
+          controls:
+            A Level: "0"
+            A Pan: "0.5"
+            B Level: "0"
+            B Pan: "0.5"
+            B Polarity: "false"
+            Level: "0"
+          model: HD2_AppDSPFlowJoin
+        outputA:
+          attrs:
+            '@output': "1"
+          controls:
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputMain
+        outputB:
+          attrs:
+            '@output': "0"
+          controls:
+            Type: "true"
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputSend
+        split:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
+          controls:
+            BalanceA: "0.5"
+            BalanceB: "0.5"
+            bypass: "false"
+          model: HD2_AppDSPFlowSplitY
+    dsp1:
+      members: {}
+    global:
+      attrs:
+        '@DtSelect': "2"
+        '@PowercabMode': "0"
+        '@PowercabSelect': "2"
+        '@PowercabVoicing': "0"
+        '@current_snapshot': "0"
+        '@cursor_dsp': "0"
+        '@cursor_group': ""
+        '@cursor_path': "0"
+        '@cursor_position': "0"
+        '@guitarinputZ': "0"
+        '@guitarpad': "0"
+        '@pedalstate': "2"
+        '@tempo': "120"
+        '@topology0': A
+        '@topology1': "0"
+      model: '@global_params'
+    snapshot0:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 1
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot1:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 2
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot2:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 3
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    variax:
+      attrs:
+        '@variax_customtuning': "true"
+        '@variax_lockctrls': "0"
+        '@variax_magmode': "false"
+        '@variax_model': "0"
+        '@variax_str1level': "1"
+        '@variax_str1tuning': "0"
+        '@variax_str2level': "1"
+        '@variax_str2tuning': "0"
+        '@variax_str3level': "1"
+        '@variax_str3tuning': "0"
+        '@variax_str4level': "1"
+        '@variax_str4tuning': "0"
+        '@variax_str5level': "1"
+        '@variax_str5tuning': "0"
+        '@variax_str6level': "1"
+        '@variax_str6tuning': "0"
+        '@variax_toneknob': "-0.10000002384185791"
+        '@variax_volumeknob': "-0.10000002384185791"
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec
+version: 3.0.0

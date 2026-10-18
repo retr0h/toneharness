@@ -83,7 +83,9 @@ ask:
 id: geddy-lee
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -96,8 +98,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: medium
     controls:
       Bass: "0.41"
@@ -165,8 +170,11 @@ rig:
         cabinets with four JBL 140 speakers."'
       url: http://www.2112.net/powerwindows/transcripts/19790600canadianmusician.htm
     gear: Ampeg SVT
+    position: 1
     role: amp
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: high
     controls:
       Angle: "45.0"
@@ -195,6 +203,7 @@ rig:
         two Ampeg V-4B speaker cabinets."'
       url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
     gear: Ampeg V-4B
+    position: 2
     role: cab
     substitute:
       confidence: low
@@ -330,3 +339,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

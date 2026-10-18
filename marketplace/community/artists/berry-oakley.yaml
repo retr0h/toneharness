@@ -59,7 +59,9 @@ ask:
 id: berry-oakley
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -72,8 +74,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: low
     controls:
       Bass: "0.41"
@@ -98,6 +103,7 @@ rig:
         MrBEAR, who saw them three times, dates the changes: "FIrst time I saw them he was using Marshalls, second time the Fender PS 300/400?, and the last time it was a combination of Sunn and Kustom Kasinos."
       url: https://www.talkbass.com/threads/berry-oakleys-rig.222796/
     gear: Fender 400 PS
+    position: 1
     role: amp
     substitute:
       confidence: low
@@ -111,7 +117,9 @@ rig:
           nearest thing this device models. The Fender amplifiers it does carry are
           tweed-era guitar heads of a tenth the power.
       gear: Ampeg SVT
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: low
     controls:
       Distance: "1.5"
@@ -126,6 +134,7 @@ rig:
         and Sunn cabinets later.
       url: https://www.talkbass.com/threads/berry-oakleys-rig.222796/
     gear: Sunn folded horn
+    position: 2
     role: cab
     substitute:
       confidence: low
@@ -262,3 +271,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

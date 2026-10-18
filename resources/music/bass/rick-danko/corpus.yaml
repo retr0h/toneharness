@@ -1,0 +1,32 @@
+artist: Rick Danko
+tracks:
+  - track: stage-fright
+    url: https://open.spotify.com/track/7uYK13jsmGi8flq2bF6r90
+    source: https://www.youtube.com/watch?v=j3settN01ac
+    year: 1970
+    band: The Band
+    genres: [southern-rock, rock]
+    genres_by: person
+    note: >-
+      Stage Fright, the title track, and the earliest album inside the window
+      his Ampeg rig is cited for. 223 seconds as Spotify holds it, on the
+      expanded edition's 2000 remaster. The downloader could not find it from
+      the Spotify link, and the video in `source` is the same 2000 remaster by
+      its own title
+  - track: life-is-a-carnival
+    url: https://open.spotify.com/track/7mDMyulAVzNBxNYt8sUVXB
+    year: 1971
+    band: The Band
+    genres: [southern-rock, rock]
+    genres_by: person
+    note: Cahoots, 1971. 235 seconds as Spotify holds it
+  - track: ophelia
+    url: https://open.spotify.com/track/2fx1hkMHTVdDim274rwoPa
+    year: 1975
+    band: The Band
+    genres: [southern-rock, rock]
+    genres_by: person
+    note: >-
+      Northern Lights-Southern Cross, the last studio album before The Last
+      Waltz and the far end of the cited window. 212 seconds as Spotify holds
+      it, on the expanded edition's 2000 remaster

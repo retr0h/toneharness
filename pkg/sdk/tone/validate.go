@@ -63,9 +63,19 @@ func (e *InvalidError) Error() string {
 func (*InvalidError) Unwrap() error { return ErrInvalid }
 
 // Validate reports whether a request meets the contract.
+//
+// A value with no contract version is stamped with this binary's before the
+// check, rather than refused. The version is a fact about a document on disk:
+// it says which rules the file was written under, and a file without one is
+// refused on the way in. A Spec built in memory was built against the
+// contract this binary carries, which is the only version it could have been
+// built against, so requiring every caller to say so would be requiring them
+// to repeat the one available answer.
 func Validate(
 	s Spec,
 ) error {
+	stamp(&s.Version)
+
 	if err := check(s, SchemaName); err != nil {
 		return err
 	}
@@ -124,6 +134,8 @@ const snapshotPrefix = "snapshot"
 func ValidateSetup(
 	s Setup,
 ) error {
+	stamp(&s.Version)
+
 	return check(s, SetupSchema)
 }
 

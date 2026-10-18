@@ -6,59 +6,241 @@
 # amplifier that measures nearest the records themselves.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
-schema: ToneSpec
-id: tres-hombres
+#
+# No cabinet named. The amplifier's own pairing is used, because the
+# measurement chose an amplifier and says nothing about a cabinet.
 
 ask:
-  genre: [southern-rock, blues-rock]
-
+  confidence: low
+  genre:
+  - southern-rock
+  - blues-rock
+  instrument: bass
   subject:
+    era: Tres Hombres, 1973
     kind: sound
     name: Tres Hombres
-    era: Tres Hombres, 1973
-
-  instrument: bass
-
   words: []
-
-  confidence: low
-
+id: tres-hombres
 rig:
-  instrument: bass
-
   chain:
-    - role: amp
-      gear: Sunn Coliseum 300
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          note: >-
-            Chosen by measurement rather than by anybody's say-so. The device's
-            twenty-seven bass amplifiers were ranked against Dusty Hill's own
-            separated bass stems, one record at a time, and the Sunn Coliseum 300 came
-            nearest on two of the three; the third returned no answer. It reads 98 Hz
-            against 120 on one record and 138 on the other. Run it again on the same
-            stems and it answers the same way.
-          caveat: >-
-            **This is not a claim about what Dusty Hill played.** His amplifier is not
-            established. A Marshall stack circulates for these sessions and Premier
-            Guitar's ZZ Top gear gallery and their obituary for him were both opened
-            and neither carries it. His live amplifier is documented in Premier
-            Guitar's 2015 rig rundown video, which the article text does not carry and
-            which two TalkBass posters confirm shows it without either of them being
-            able to read the badge. So this document is attributed to a sound rather
-            than to him: it is the amplifier nearest these 3 records, and nothing
-            more. Two things make it weak even as that. The records disagree, and the
-            caveat above says how. And the winners of this comparison cluster at the
-            dark end of what the device has: the Acoustic 360 reads 91 Hz and the Sunn
-            Coliseum 300 reads 98 Hz, the two darkest bass amplifiers it models, and
-            every record here sits below most of the candidates. That is the pathology
-            the measured library's own notes record, where every candidate is out of
-            range and the nearest is whichever is darkest. It is here because it is
-            buildable and honest, not because it is settled. A cited amplifier for
-            Dusty Hill would replace it, and a model of the Fender and Peavey
-            amplifiers this era actually ran would make the comparison worth more.
-    # No cabinet named. The amplifier's own pairing is used, because the
-    # measurement chose an amplifier and says nothing about a cabinet.
+  - attrs:
+      '@position': "0"
+    controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    position: 0
+    role: comp
+  - attrs:
+      '@position': "1"
+    capture: direct
+    confidence: low
+    controls:
+      125Hz: "4.7"
+      1kHz: "3.7"
+      250Hz: "1.3"
+      2kHz: "-1.7"
+      4kHz: "3.8"
+      62p5Hz: "5.7"
+      500Hz: "-2.0"
+      Bright: "true"
+      ChVol: "0.8"
+      Contour: "true"
+      Gain: "0.82"
+      Master: "0.75"
+    evidence:
+    - caveat: '**This is not a claim about what Dusty Hill played.** His amplifier
+        is not established. A Marshall stack circulates for these sessions and Premier
+        Guitar''s ZZ Top gear gallery and their obituary for him were both opened
+        and neither carries it. His live amplifier is documented in Premier Guitar''s
+        2015 rig rundown video, which the article text does not carry and which two
+        TalkBass posters confirm shows it without either of them being able to read
+        the badge. So this document is attributed to a sound rather than to him: it
+        is the amplifier nearest these 3 records, and nothing more. Two things make
+        it weak even as that. The records disagree, and the caveat above says how.
+        And the winners of this comparison cluster at the dark end of what the device
+        has: the Acoustic 360 reads 91 Hz and the Sunn Coliseum 300 reads 98 Hz, the
+        two darkest bass amplifiers it models, and every record here sits below most
+        of the candidates. That is the pathology the measured library''s own notes
+        record, where every candidate is out of range and the nearest is whichever
+        is darkest. It is here because it is buildable and honest, not because it
+        is settled. A cited amplifier for Dusty Hill would replace it, and a model
+        of the Fender and Peavey amplifiers this era actually ran would make the comparison
+        worth more.'
+      kind: audio
+      note: Chosen by measurement rather than by anybody's say-so. The device's twenty-seven
+        bass amplifiers were ranked against Dusty Hill's own separated bass stems,
+        one record at a time, and the Sunn Coliseum 300 came nearest on two of the
+        three; the third returned no answer. It reads 98 Hz against 120 on one record
+        and 138 on the other. Run it again on the same stems and it answers the same
+        way.
+    gear: Sunn Coliseum 300
+    position: 1
+    role: amp
+  - attrs:
+      '@position': "2"
+    controls:
+      Distance: "1.5"
+      EarlyReflections: "0.0"
+      HighCut: "20100.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Legacy 1x18" Sunn Coliseum
+    position: 2
+    role: cab
+  - attrs:
+      '@position': "3"
+    controls:
+      HighGain: "0.5351851851851852"
+      Level: "0.0"
+      LowGain: "0.0"
+      MidFreq: "600.0"
+      MidGain: "0.0"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Simple EQ
+    position: 3
+    role: eq
+  instrument: bass
+  preset:
+    dsp0:
+      members:
+        inputA:
+          attrs:
+            '@input': "1"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        inputB:
+          attrs:
+            '@input': "0"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        join:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
+          controls:
+            A Level: "0"
+            A Pan: "0.5"
+            B Level: "0"
+            B Pan: "0.5"
+            B Polarity: "false"
+            Level: "0"
+          model: HD2_AppDSPFlowJoin
+        outputA:
+          attrs:
+            '@output': "1"
+          controls:
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputMain
+        outputB:
+          attrs:
+            '@output': "0"
+          controls:
+            Type: "true"
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputSend
+        split:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
+          controls:
+            BalanceA: "0.5"
+            BalanceB: "0.5"
+            bypass: "false"
+          model: HD2_AppDSPFlowSplitY
+    dsp1:
+      members: {}
+    global:
+      attrs:
+        '@DtSelect': "2"
+        '@PowercabMode': "0"
+        '@PowercabSelect': "2"
+        '@PowercabVoicing': "0"
+        '@current_snapshot': "0"
+        '@cursor_dsp': "0"
+        '@cursor_group': ""
+        '@cursor_path': "0"
+        '@cursor_position': "0"
+        '@guitarinputZ': "0"
+        '@guitarpad': "0"
+        '@pedalstate': "2"
+        '@tempo': "120"
+        '@topology0': A
+        '@topology1': "0"
+      model: '@global_params'
+    snapshot0:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 1
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot1:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 2
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot2:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 3
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    variax:
+      attrs:
+        '@variax_customtuning': "true"
+        '@variax_lockctrls': "0"
+        '@variax_magmode': "false"
+        '@variax_model': "0"
+        '@variax_str1level': "1"
+        '@variax_str1tuning': "0"
+        '@variax_str2level': "1"
+        '@variax_str2tuning': "0"
+        '@variax_str3level': "1"
+        '@variax_str3tuning': "0"
+        '@variax_str4level': "1"
+        '@variax_str4tuning': "0"
+        '@variax_str5level': "1"
+        '@variax_str5tuning': "0"
+        '@variax_str6level': "1"
+        '@variax_str6tuning': "0"
+        '@variax_toneknob': "-0.10000002384185791"
+        '@variax_volumeknob': "-0.10000002384185791"
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec
+version: 3.0.0

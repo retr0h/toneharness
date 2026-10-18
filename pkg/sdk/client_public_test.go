@@ -392,7 +392,7 @@ func (s *ClientPublicTestSuite) TestWithSweeps() {
 	at := filepath.Join(s.T().TempDir(), "setup.yaml")
 
 	s.Require().NoError(os.WriteFile(at,
-		[]byte("schema: Setup\nmatch_loudness: punk\n"), 0o600))
+		[]byte("schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: punk\n"), 0o600))
 
 	for _, tt := range []struct {
 		name   string
@@ -470,7 +470,7 @@ func ownRig(
 	instrument string,
 ) map[string]string {
 	return map[string]string{
-		stem + ".yaml": "schema: ToneSpec\nid: " + id + `
+		stem + ".yaml": "schema: ToneSpec\nversion: \"3.0.0\"\nid: " + id + `
 
 ask:
   genre: [rock]
@@ -979,14 +979,14 @@ func (s *ClientPublicTestSuite) TestWithUserRigs() {
 					},
 					{
 						name:    "a file of theirs that is not a rig",
-						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nid: broken\n"},
+						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nversion: \"3.0.0\"\nid: broken\n"},
 						id:      "mike-dirnt",
 						want:    "Mike Dirnt",
 						listErr: "broken.yaml",
 					},
 					{
 						name:    "a file of theirs that is not a rig, named for the one asked for",
-						files:   map[string]string{"mike-dirnt.yaml": "schema: Setup\n"},
+						files:   map[string]string{"mike-dirnt.yaml": "schema: Setup\nversion: \"3.0.0\"\n"},
 						id:      "mike-dirnt",
 						listErr: "mike-dirnt.yaml",
 						findErr: "mike-dirnt.yaml",
@@ -1644,6 +1644,7 @@ func (s *ClientPublicTestSuite) TestTone() {
 			// until his was written.
 			name: "a request naming a player nobody has researched",
 			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
+version: "3.0.0"
 id: nobody-researched
 ask:
   genre: [not-a-measured-genre]
@@ -1663,6 +1664,7 @@ rig:
 			// chosen at all.
 			name: "a player nobody has researched, in a measured genre",
 			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
+version: "3.0.0"
 id: cone-mccaslin
 ask:
   genre: [pop-punk]
@@ -2151,7 +2153,7 @@ func TestClientPublicTestSuite(
 // "no rig" is exactly the answer somebody is looking for.
 func (s *ClientPublicTestSuite) TestMusicNeedsTheRigsToAnswerWhoHasNone() {
 	c := sdk.New(sdk.WithRigs(s.rigsDir(
-		map[string]string{"broken.yaml": "schema: ToneSpec\nid: broken\n"})))
+		map[string]string{"broken.yaml": "schema: ToneSpec\nversion: \"3.0.0\"\nid: broken\n"})))
 
 	corpus := s.T().TempDir()
 

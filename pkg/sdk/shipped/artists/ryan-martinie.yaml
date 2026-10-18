@@ -4,60 +4,215 @@
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
-schema: ToneSpec
-id: ryan-martinie
-
 ask:
-  genre: [nu-metal, alternative-metal]
+  confidence: medium
+  genre:
+  - nu-metal
+  - alternative-metal
+  instrument: bass
   subject:
-    kind: artist
-    name: Ryan Martinie
     band: Mudvayne
     era: L.D. 50 to The End of All Things to Come
+    kind: artist
+    name: Ryan Martinie
     years:
       from: 2000
       to: 2002
-
-  instrument: bass
-
-  # How it should sound, in the words a person would use. Nothing here:
-  # no word has been earned from these records against the others, and a
-  # word written by hand would move a control on nobody's authority.
   words: []
-
-  confidence: medium
-
+id: ryan-martinie
 rig:
-  instrument: bass
-
   chain:
-    - role: amp
-      gear: Ampeg SVT
-      confidence: medium
-      evidence:
-        - kind: user
-          url: https://www.talkbass.com/threads/everything-u-wanna-know-bout-ryan-martinies-gear.143513/
-          note: >-
-            A forum post transcribing a Bass Player magazine interview in full, which
-            is the print source reaching the open web. The poster, bass element, gives
-            the live rig as "runs his bass into a Shure UHF U4D dual-channel wireless
-            unit, Whirlwind multi-selector, dbx 160 compressor, Ampeg SVT-4Pro head on
-            an SVT PR-810H 8x10 cabinet", and says where it came from: "i finally got
-            this old ass edition of Bass Player Magazine that had a kickass
-            interview".
-          caveat: >-
-            A transcription, so the magazine is the source and nobody has checked the
-            copying against it. The same post gives the recording rig as the full
-            Ampeg plus an SWR Workingman's 10 head driving a Mesa/Boogie 4x12 guitar
-            cabinet for added midrange and top end, which means the records measured
-            here carry a second amplifier this chain does not have.
-    - role: cab
-      gear: Ampeg 8x10
-      confidence: medium
-      evidence:
-        - kind: user
-          url: https://www.talkbass.com/threads/everything-u-wanna-know-bout-ryan-martinies-gear.143513/
-          note: >-
-            Named in the same transcribed sentence as the head: an Ampeg SVT PR-810H.
-          caveat: >-
-            The device models a legacy Ampeg SVT-E 8x10 rather than the PR-810H.
+  - attrs:
+      '@position': "0"
+    controls:
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
+    evidence:
+    - kind: corpus
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Deluxe Comp
+    position: 0
+    role: comp
+  - attrs:
+      '@position': "1"
+    confidence: medium
+    controls:
+      Bass: "0.41"
+      Bias: "0.74"
+      BiasX: "0.5"
+      ChVol: "0.8"
+      Drive: "0.6681818181818182"
+      Hum: "0.5"
+      Master: "1.0"
+      Mid: "0.73"
+      MidFreq: "2"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.85"
+    evidence:
+    - caveat: A transcription, so the magazine is the source and nobody has checked
+        the copying against it. The same post gives the recording rig as the full
+        Ampeg plus an SWR Workingman's 10 head driving a Mesa/Boogie 4x12 guitar cabinet
+        for added midrange and top end, which means the records measured here carry
+        a second amplifier this chain does not have.
+      kind: user
+      note: 'A forum post transcribing a Bass Player magazine interview in full, which
+        is the print source reaching the open web. The poster, bass element, gives
+        the live rig as "runs his bass into a Shure UHF U4D dual-channel wireless
+        unit, Whirlwind multi-selector, dbx 160 compressor, Ampeg SVT-4Pro head on
+        an SVT PR-810H 8x10 cabinet", and says where it came from: "i finally got
+        this old ass edition of Bass Player Magazine that had a kickass interview".'
+      url: https://www.talkbass.com/threads/everything-u-wanna-know-bout-ryan-martinies-gear.143513/
+    gear: Ampeg SVT
+    position: 1
+    role: amp
+  - attrs:
+      '@position': "2"
+    confidence: medium
+    controls:
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      High Cut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
+    evidence:
+    - caveat: The device models a legacy Ampeg SVT-E 8x10 rather than the PR-810H.
+      kind: user
+      note: 'Named in the same transcribed sentence as the head: an Ampeg SVT PR-810H.'
+      url: https://www.talkbass.com/threads/everything-u-wanna-know-bout-ryan-martinies-gear.143513/
+    gear: Ampeg 8x10
+    position: 2
+    role: cab
+  instrument: bass
+  preset:
+    dsp0:
+      members:
+        inputA:
+          attrs:
+            '@input': "1"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        inputB:
+          attrs:
+            '@input': "0"
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
+          model: HelixStomp_AppDSPFlowInput
+        join:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
+          controls:
+            A Level: "0"
+            A Pan: "0.5"
+            B Level: "0"
+            B Pan: "0.5"
+            B Polarity: "false"
+            Level: "0"
+          model: HD2_AppDSPFlowJoin
+        outputA:
+          attrs:
+            '@output': "1"
+          controls:
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputMain
+        outputB:
+          attrs:
+            '@output': "0"
+          controls:
+            Type: "true"
+            gain: "0"
+            pan: "0.5"
+          model: HelixStomp_AppDSPFlowOutputSend
+        split:
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
+          controls:
+            BalanceA: "0.5"
+            BalanceB: "0.5"
+            bypass: "false"
+          model: HD2_AppDSPFlowSplitY
+    dsp1:
+      members: {}
+    global:
+      attrs:
+        '@DtSelect': "2"
+        '@PowercabMode': "0"
+        '@PowercabSelect': "2"
+        '@PowercabVoicing': "0"
+        '@current_snapshot': "0"
+        '@cursor_dsp': "0"
+        '@cursor_group': ""
+        '@cursor_path': "0"
+        '@cursor_position': "0"
+        '@guitarinputZ': "0"
+        '@guitarpad': "0"
+        '@pedalstate': "2"
+        '@tempo': "120"
+        '@topology0': A
+        '@topology1': "0"
+      model: '@global_params'
+    snapshot0:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 1
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot1:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 2
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    snapshot2:
+      attrs:
+        '@custom_name': "false"
+        '@ledcolor': "0"
+        '@name': SNAPSHOT 3
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
+    variax:
+      attrs:
+        '@variax_customtuning': "true"
+        '@variax_lockctrls': "0"
+        '@variax_magmode': "false"
+        '@variax_model': "0"
+        '@variax_str1level': "1"
+        '@variax_str1tuning': "0"
+        '@variax_str2level': "1"
+        '@variax_str2tuning': "0"
+        '@variax_str3level': "1"
+        '@variax_str3tuning': "0"
+        '@variax_str4level': "1"
+        '@variax_str4tuning': "0"
+        '@variax_str5level': "1"
+        '@variax_str5tuning': "0"
+        '@variax_str6level': "1"
+        '@variax_str6tuning': "0"
+        '@variax_toneknob': "-0.10000002384185791"
+        '@variax_volumeknob': "-0.10000002384185791"
+  resolved:
+    catalog: HX Edit 3.82
+    device: HX Stomp
+schema: ToneSpec
+version: 3.0.0

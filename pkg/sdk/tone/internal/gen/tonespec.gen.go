@@ -631,6 +631,13 @@ type Change struct {
 // Confidence How far a claim should be trusted. Set by a person, not derived. A claim asserting high confidence with no evidence behind it is worth showing as unverified whatever it says about itself.
 type Confidence string
 
+// ContractVersion Which version of this contract the document was written against, as `info.version` states it: "3.0.0".
+//
+// Required, so that a document always says. Without it a reader cannot tell a document that predates a field from one that leaves the field out, and both read as a document that is simply wrong. The major is what carries the warning: it moves when something that used to validate stops, so a document whose major is not the reader's is one the reader should refuse rather than guess at. A later minor or patch is accepted, because everything either adds or rewords.
+//
+// The reader checks the major. The pattern here only holds it to major.minor.patch, since a schema cannot compare a document against the version of the schema reading it.
+type ContractVersion = string
+
 // Controller One parameter something moves: an expression pedal, or a footswitch set to sweep a knob rather than switch a block.
 //
 // A plan records these because they are decisions somebody made about how they play, not device state. Nothing else says that the pedal under your foot is on the amp's drive rather than its volume.
@@ -1224,6 +1231,13 @@ type Setup struct {
 	//
 	// The distinction is not pedantry. A pick puts high-frequency attack into every note that fingers do not, so a rig tuned from a picked recording sounds duller played fingered, and the fix is in the amp and the compressor rather than in the player. Stating both sides lets the difference be compensated rather than discovered, and that comparison needs both to be the same kind of value: two `attack` values can be held against each other, and two sentences cannot.
 	Technique *Technique `json:"technique,omitempty"`
+
+	// Version Which version of this contract the document was written against, as `info.version` states it: "3.0.0".
+	//
+	// Required, so that a document always says. Without it a reader cannot tell a document that predates a field from one that leaves the field out, and both read as a document that is simply wrong. The major is what carries the warning: it moves when something that used to validate stops, so a document whose major is not the reader's is one the reader should refuse rather than guess at. A later minor or patch is accepted, because everything either adds or rewords.
+	//
+	// The reader checks the major. The pattern here only holds it to major.minor.patch, since a schema cannot compare a document against the version of the schema reading it.
+	Version ContractVersion `json:"version"`
 }
 
 // SetupSchema defines model for Setup.Schema.
@@ -1368,6 +1382,13 @@ type ToneSpec struct {
 
 	// Schema What this document is, so a file says so rather than being guessed at by its extension.
 	Schema ToneSpecSchema `json:"schema"`
+
+	// Version Which version of this contract the document was written against, as `info.version` states it: "3.0.0".
+	//
+	// Required, so that a document always says. Without it a reader cannot tell a document that predates a field from one that leaves the field out, and both read as a document that is simply wrong. The major is what carries the warning: it moves when something that used to validate stops, so a document whose major is not the reader's is one the reader should refuse rather than guess at. A later minor or patch is accepted, because everything either adds or rewords.
+	//
+	// The reader checks the major. The pattern here only holds it to major.minor.patch, since a schema cannot compare a document against the version of the schema reading it.
+	Version ContractVersion `json:"version"`
 }
 
 // ToneSpecSchema What this document is, so a file says so rather than being guessed at by its extension.

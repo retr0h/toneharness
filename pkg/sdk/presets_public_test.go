@@ -539,6 +539,7 @@ func (s *PresetsPublicTestSuite) rigFile(
 	path := filepath.Join(dir, id+".yaml")
 
 	s.Require().NoError(os.WriteFile(path, []byte(`schema: ToneSpec
+version: "3.0.0"
 id: `+id+`
 rig:
   instrument: bass

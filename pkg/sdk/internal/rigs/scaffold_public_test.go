@@ -127,6 +127,7 @@ func (p parentRig) text() string {
 # More of it.
 
 schema: ToneSpec
+version: "3.0.0"
 id: parent
 
 ask:
@@ -729,7 +730,7 @@ func (s *ScaffoldPublicTestSuite) TestNewFrom() {
 			if tt.broken {
 				s.Require().NoError(os.WriteFile(
 					filepath.Join(dir, "artists", "broken.yaml"),
-					[]byte("schema: ToneSpec\nid: broken\n"), 0o600))
+					[]byte("schema: ToneSpec\nversion: \"3.0.0\"\nid: broken\n"), 0o600))
 			}
 
 			if tt.unreadable {
@@ -878,14 +879,14 @@ func (s *ScaffoldPublicTestSuite) TestReplaceSubject() {
 	}{
 		{
 			name:  "an ask with a name to replace",
-			body:  "schema: ToneSpec\nask:\n  subject:\n    kind: artist\n    name: Parent Player\n",
+			body:  "schema: ToneSpec\nversion: \"3.0.0\"\nask:\n  subject:\n    kind: artist\n    name: Parent Player\n",
 			key:   "name",
 			value: "Someone Else",
 			want:  "    name: Someone Else\n",
 		},
 		{
 			name:  "an ask with a kind to replace",
-			body:  "schema: ToneSpec\nask:\n  subject:\n    kind: artist\n    name: Parent Player\n",
+			body:  "schema: ToneSpec\nversion: \"3.0.0\"\nask:\n  subject:\n    kind: artist\n    name: Parent Player\n",
 			key:   "kind",
 			value: "song",
 			want:  "    kind: song\n",
@@ -898,19 +899,19 @@ func (s *ScaffoldPublicTestSuite) TestReplaceSubject() {
 		},
 		{
 			name:    "an ask with no subject",
-			body:    "schema: ToneSpec\nask:\n  extends: parent\n",
+			body:    "schema: ToneSpec\nversion: \"3.0.0\"\nask:\n  extends: parent\n",
 			key:     "name",
 			errText: "no such field to replace",
 		},
 		{
 			name:    "a subject that holds no name",
-			body:    "schema: ToneSpec\nask:\n  subject:\n    kind: artist\n",
+			body:    "schema: ToneSpec\nversion: \"3.0.0\"\nask:\n  subject:\n    kind: artist\n",
 			key:     "name",
 			errText: "no such field to replace",
 		},
 		{
 			name:    "a subject that is not a mapping",
-			body:    "schema: ToneSpec\nask:\n  subject: Parent Player\n",
+			body:    "schema: ToneSpec\nversion: \"3.0.0\"\nask:\n  subject: Parent Player\n",
 			key:     "name",
 			errText: "no such field to replace",
 		},

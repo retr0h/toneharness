@@ -50,6 +50,7 @@ func (s *LoadPublicTestSuite) TestLoad() {
 			then: func() {
 				spec, err := tone.Load(strings.NewReader(`
 schema: ToneSpec
+version: "3.0.0"
 id: dirnt-ish
 ask:
   genre: [pop-punk, punk]
@@ -101,7 +102,7 @@ rig:
 			// removed: the line would be gone and nothing said about it.
 			name: "a misspelt field is refused",
 			then: func() {
-				_, err := tone.Load(strings.NewReader("schema: ToneSpec\ngnere: punk\n"))
+				_, err := tone.Load(strings.NewReader("schema: ToneSpec\nversion: \"3.0.0\"\ngnere: punk\n"))
 
 				s.Require().ErrorIs(err, tone.ErrInvalid)
 				s.Require().Contains(err.Error(), "gnere")
@@ -162,7 +163,7 @@ rig:
 				} {
 					s.Run(tt.name, func() {
 						_, err := tone.Load(strings.NewReader(
-							"schema: ToneSpec\nid: x\nrig:\n" + tt.rig))
+							"schema: ToneSpec\nversion: \"3.0.0\"\nid: x\nrig:\n" + tt.rig))
 
 						s.Require().ErrorIs(err, tone.ErrInvalid)
 						s.Require().Contains(err.Error(), tt.says)
@@ -179,7 +180,7 @@ rig:
 			name: "a document naming no rig is refused",
 			then: func() {
 				_, err := tone.Load(strings.NewReader(
-					"schema: ToneSpec\nid: x\nask:\n  genre: [punk]\n"))
+					"schema: ToneSpec\nversion: \"3.0.0\"\nid: x\nask:\n  genre: [punk]\n"))
 
 				s.Require().ErrorIs(err, tone.ErrInvalid)
 				s.Require().Contains(err.Error(), "rig")
@@ -227,6 +228,7 @@ func (s *LoadPublicTestSuite) TestLoadSetup() {
 			then: func() {
 				setup, err := tone.LoadSetup(strings.NewReader(`
 schema: Setup
+version: "3.0.0"
 device:
   model: HX Stomp
 instruments:
@@ -258,7 +260,7 @@ owns:
 			name: "what the pedal is plugged into is optional and spelt",
 			then: func() {
 				held, err := tone.LoadSetup(strings.NewReader(
-					"schema: Setup\ndevice:\n  model: HX Stomp\n"))
+					"schema: Setup\nversion: \"3.0.0\"\ndevice:\n  model: HX Stomp\n"))
 
 				s.Require().NoError(err)
 				s.Require().Nil(held.PlaysInto, "a setup that does not say says nothing")
@@ -267,7 +269,7 @@ owns:
 					tone.Pa, tone.Headphones, tone.AmpFront, tone.AmpReturn,
 				} {
 					got, err := tone.LoadSetup(strings.NewReader(
-						"schema: Setup\ndevice:\n  model: HX Stomp\nplays_into: " +
+						"schema: Setup\nversion: \"3.0.0\"\ndevice:\n  model: HX Stomp\nplays_into: " +
 							string(want) + "\n"))
 
 					s.Require().NoError(err, string(want))
@@ -275,7 +277,7 @@ owns:
 				}
 
 				_, err = tone.LoadSetup(strings.NewReader(
-					"schema: Setup\ndevice:\n  model: HX Stomp\nplays_into: amp\n"))
+					"schema: Setup\nversion: \"3.0.0\"\ndevice:\n  model: HX Stomp\nplays_into: amp\n"))
 
 				s.Require().ErrorIs(err, tone.ErrInvalid,
 					"`amp` is two different paths, so the contract will not take it")
@@ -289,12 +291,12 @@ owns:
 			// passed the wrong file.
 			name: "the wrong document says so",
 			then: func() {
-				_, err := tone.Load(strings.NewReader("schema: Setup\n"))
+				_, err := tone.Load(strings.NewReader("schema: Setup\nversion: \"3.0.0\"\n"))
 
 				s.Require().ErrorIs(err, tone.ErrInvalid)
 				s.Require().Contains(err.Error(), "says Setup, so this is not a ToneSpec")
 
-				_, err = tone.LoadSetup(strings.NewReader("schema: ToneSpec\n"))
+				_, err = tone.LoadSetup(strings.NewReader("schema: ToneSpec\nversion: \"3.0.0\"\n"))
 				s.Require().Contains(err.Error(), "says ToneSpec, so this is not a Setup")
 			},
 		},
@@ -320,6 +322,7 @@ owns:
 			then: func() {
 				_, err := tone.LoadSetup(strings.NewReader(`
 schema: Setup
+version: "3.0.0"
 owns:
   - kind: ir
     name: Owned 4x10

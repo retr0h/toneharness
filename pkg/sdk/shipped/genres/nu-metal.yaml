@@ -52,9 +52,9 @@ rig:
       Drive: "0.0"
       Gain: "0.32"
       Master: "0.5"
-      Mid: "0.44"
+      Mid: "0.44285714285714284"
       Mid Freq: "0.5"
-      Treble: "0.4519230769230769"
+      Treble: "0.45098039215686275"
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
         the microphone, the desk and the master of every one of them. The amplifier
@@ -218,3 +218,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

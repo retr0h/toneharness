@@ -101,7 +101,9 @@ ask:
 id: pino-palladino
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -114,8 +116,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: miked
+  - attrs:
+      '@position': "1"
+    capture: miked
     confidence: high
     controls:
       Bass: "0.67"
@@ -154,8 +159,11 @@ rig:
         on the album."'
       url: https://www.talkbass.com/threads/dangelo-voodoo.146620/
     gear: Ampeg B-15
+    position: 1
     role: amp
-  - capture: miked
+  - attrs:
+      '@position': "2"
+    capture: miked
     confidence: high
     controls:
       Angle: "45.0"
@@ -170,6 +178,7 @@ rig:
       note: the B-15 is a combo, so the cabinet is the amplifier
       url: https://mixdownmag.com.au/features/rig-rundown-pino-palladino/
     gear: Ampeg B-15
+    position: 2
     role: cab
   instrument: bass
   preset:
@@ -297,3 +306,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

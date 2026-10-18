@@ -55,7 +55,9 @@ ask:
 id: klaus-flouride
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -68,8 +70,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: low
     controls:
       Bass: "0.684"
@@ -95,6 +100,7 @@ rig:
         is an "Acoustic 150B head and Acoustic 402 cabinet, stock speakers", said
         to run at least through In God We Trust, Inc.
     gear: Acoustic 150B
+    position: 1
     role: amp
     substitute:
       confidence: low
@@ -106,7 +112,9 @@ rig:
           The Acoustic 360 is their folded-horn preamp and the 150B a later head,
           so this keeps the brand where it cannot keep the model.
       gear: Acoustic 360
-  - controls:
+  - attrs:
+      '@position': "2"
+    controls:
       Distance: "1.5"
       EarlyReflections: "0.0"
       HighCut: "8000.0"
@@ -117,8 +125,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Legacy 1x18" Acoustic 360
+    position: 2
     role: cab
-  - controls:
+  - attrs:
+      '@position': "3"
+    controls:
       HighGain: "0.0"
       Level: "0.0"
       LowGain: "0.0"
@@ -129,6 +140,7 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Simple EQ
+    position: 3
     role: eq
   instrument: bass
   preset:
@@ -256,3 +268,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

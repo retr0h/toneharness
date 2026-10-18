@@ -23,6 +23,8 @@ package rigs
 import (
 	"fmt"
 	"strings"
+
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // render writes a document as YAML, with the comments a person needs to edit
@@ -49,6 +51,16 @@ func render(
 	b.WriteString("# See the write-a-spec skill.\n\n")
 
 	b.WriteString("schema: ToneSpec\n")
+
+	// The contract version this document is written against, read from the
+	// contract rather than spelled here, so there is one place it changes.
+	// An error is impossible for the embedded schema and would mean the
+	// binary was built without it; the document is then written without the
+	// line and refused on the way back in, which is the right failure.
+	if version, err := tone.Version(); err == nil {
+		fmt.Fprintf(&b, "version: %q\n", version)
+	}
+
 	fmt.Fprintf(&b, "id: %s\n\n", opts.ID)
 
 	b.WriteString(renderAsk(opts, ""))

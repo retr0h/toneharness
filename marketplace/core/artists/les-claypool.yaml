@@ -101,7 +101,9 @@ ask:
 id: les-claypool
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.063"
       Knee: "6.0"
       Level: "5.2"
@@ -114,8 +116,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: high
     controls:
       Bass: "0.5"
@@ -137,8 +142,11 @@ rig:
       note: the Bass 400+ head through the nineties, into two Mesa 2x15 Diesel cabinets
       url: https://mixdownmag.com.au/features/rig-rundown-les-claypool/
     gear: Mesa/Boogie Bass 400+
+    position: 1
     role: amp
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: medium
     controls:
       Angle: "45.0"
@@ -162,6 +170,7 @@ rig:
         front of the bass amp, but we''ve never used it."'
       url: http://www.ram.org/music/primus/articles/bp1.html
     gear: Mesa/Boogie 2x15
+    position: 2
     role: cab
   instrument: bass
   preset:
@@ -289,3 +298,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

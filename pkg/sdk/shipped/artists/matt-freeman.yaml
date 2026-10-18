@@ -23,7 +23,9 @@ ask:
 id: matt-freeman
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -36,8 +38,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: medium
     controls:
       Bass: "0.41"
@@ -73,6 +78,7 @@ rig:
         an Ampeg SVT - it's hard to beat that."
       url: https://web.archive.org/web/20060217083255im_/http://www.greendayauthority.com/TheBand/articles/bassmag/4.jpg
     gear: Ampeg SVT-II Pro
+    position: 1
     role: amp
     substitute:
       confidence: low
@@ -82,7 +88,9 @@ rig:
           the SVT is an all-tube head of the same family and the SVT-4 Pro is a later
           one whose power section is not tube, so the SVT is the nearer of the two.
       gear: Ampeg SVT
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: low
     controls:
       Distance: "1.0"
@@ -102,6 +110,7 @@ rig:
         much amp do you want?"'
       url: https://www.talkbass.com/threads/does-anyone-know-matt-freemans-setup.39146/
     gear: Ampeg 8x10
+    position: 2
     role: cab
   instrument: bass
   preset:
@@ -229,3 +238,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

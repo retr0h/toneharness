@@ -360,7 +360,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// in hand the build closes it.
 			name:       "a rig it was asked to come out as loud as",
 			id:         "test-player",
-			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
+			setup:      "schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: louder-rig\n",
 			sweeps:     filepath.Join("testdata", "sweeps"),
 			level:      "ChVol",
 			ownLibrary: true,
@@ -373,7 +373,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// factor of two about the same control.
 			name:       "a loudness with no curves to match it with",
 			id:         "test-player",
-			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
+			setup:      "schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: louder-rig\n",
 			level:      "no committed sweep",
 			ownLibrary: true,
 			loadable:   true,
@@ -385,7 +385,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// somebody's attention on nothing.
 			name:       "a rig that ends in the same cabinet",
 			id:         "test-player",
-			setup:      "schema: Setup\nmatch_loudness: gear-only\n",
+			setup:      "schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: gear-only\n",
 			sweeps:     filepath.Join("testdata", "sweeps"),
 			level:      "already within",
 			ownLibrary: true,
@@ -398,7 +398,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// over a file they never asked it to read.
 			name:        "a sweep that will not parse",
 			id:          "test-player",
-			setup:       "schema: Setup\nmatch_loudness: louder-rig\n",
+			setup:       "schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: louder-rig\n",
 			brokenSweep: true,
 			level:       "no committed sweep",
 			ownLibrary:  true,
@@ -411,7 +411,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// is not named.
 			name:       "a sweeps tree with no curve for this amplifier",
 			id:         "test-player",
-			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
+			setup:      "schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: louder-rig\n",
 			sweeps:     filepath.Join("testdata", "rigs"),
 			ownLibrary: true,
 			level:      "no committed sweep",
@@ -424,7 +424,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// compares against another one.
 			name:       "a rig to match that does not exist",
 			id:         "test-player",
-			setup:      "schema: Setup\nmatch_loudness: no-such-rig\n",
+			setup:      "schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: no-such-rig\n",
 			ownLibrary: true,
 			errText:    "as loud as \"no-such-rig\"",
 		},
@@ -434,7 +434,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// chain is already as loud as itself.
 			name:     "the rig being built",
 			id:       "test-player",
-			setup:    "schema: Setup\nmatch_loudness: test-player\n",
+			setup:    "schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: test-player\n",
 			sweeps:   filepath.Join("testdata", "sweeps"),
 			loadable: true,
 		},
@@ -443,7 +443,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// is no figure to match. Refused for the same reason.
 			name:        "a rig with no measured cabinet",
 			id:          "test-player",
-			setup:       "schema: Setup\nmatch_loudness: louder-rig\n",
+			setup:       "schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: louder-rig\n",
 			thinLibrary: true,
 			sweeps:      filepath.Join("testdata", "sweeps"),
 			err:         presets.ErrNoLoudness,
@@ -454,7 +454,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// this cannot work out.
 			name:       "a rig to match that will not build",
 			id:         "test-player",
-			setup:      "schema: Setup\nmatch_loudness: unbuildable\n",
+			setup:      "schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: unbuildable\n",
 			ownLibrary: true,
 			errText:    "which will not build",
 		},
@@ -465,7 +465,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// for the chain being built.
 			name:     "the readings packed into the binary",
 			id:       "test-player",
-			setup:    "schema: Setup\nmatch_loudness: louder-rig\n",
+			setup:    "schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: louder-rig\n",
 			sweeps:   filepath.Join("testdata", "sweeps"),
 			level:    "nothing in the chain has a measured level",
 			loadable: true,
@@ -475,7 +475,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// against nothing, because every figure below them is theirs.
 			name:       "readings that will not open",
 			id:         "test-player",
-			setup:      "schema: Setup\nmatch_loudness: louder-rig\n",
+			setup:      "schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: louder-rig\n",
 			badLibrary: true,
 			err:        errNoReadings,
 		},
@@ -486,7 +486,7 @@ func (s *MakePublicTestSuite) TestMake() {
 			// rather than a surprise.
 			name:     "a Setup saying how this person plays",
 			id:       "picked-player",
-			setup:    "schema: Setup\ntechnique:\n  attack: fingers\n",
+			setup:    "schema: Setup\nversion: \"3.0.0\"\ntechnique:\n  attack: fingers\n",
 			loadable: true,
 			playing:  "you play with fingers",
 			named:    "Picked Player",
@@ -507,7 +507,7 @@ func (s *MakePublicTestSuite) TestMake() {
 		{
 			name:    "a Setup that is not a Setup",
 			id:      "test-player",
-			setup:   "schema: ToneSpec\n",
+			setup:   "schema: ToneSpec\nversion: \"3.0.0\"\n",
 			errText: "reading",
 		},
 		{

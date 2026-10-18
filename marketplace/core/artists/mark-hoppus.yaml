@@ -18,7 +18,9 @@ ask:
 id: mark-hoppus
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -31,15 +33,18 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: low
     controls:
       2kHz: "2.1"
       5kHz: "0.0"
-      8kHz: "0.0"
       33Hz: "0.0"
       80Hz: "0.0"
+      8kHz: "0.0"
       150Hz: "1.6"
       300Hz: "0.0"
       600Hz: "0.0"
@@ -69,6 +74,7 @@ rig:
         cabs he uses the SVT-4pro".'
       url: https://www.talkbass.com/threads/mark-hoppus-tones.19318/
     gear: Ampeg SVT-4 Pro
+    position: 1
     role: amp
     substitute:
       confidence: high
@@ -82,7 +88,9 @@ rig:
           by the name a person would write. Line 6 publish no gear this model is based
           on, so there is nothing for "Ampeg SVT-4 Pro" to match against.
       gear: SVT-4 Pro
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: low
     controls:
       Distance: "1.0"
@@ -98,6 +106,7 @@ rig:
       note: 'the same list gives the cabinets: "3 Ampeg SVT810e cabs".'
       url: https://www.talkbass.com/threads/mark-hoppus-tones.19318/
     gear: Ampeg 8x10
+    position: 2
     role: cab
   instrument: bass
   preset:
@@ -225,3 +234,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

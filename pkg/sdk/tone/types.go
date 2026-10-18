@@ -40,6 +40,9 @@ type (
 	// SpecSchema is what a document says it is, so a writer states it rather
 	// than spelling the string.
 	SpecSchema = gen.ToneSpecSchema
+	// ContractVersion is the version of the contract a document was written
+	// against, which both documents carry and neither may leave out.
+	ContractVersion = gen.ContractVersion
 	// Ask is a request for a sound: what to sound like, in whatever terms the
 	// person has. Every field on it is optional.
 	Ask = gen.Ask

@@ -17,7 +17,9 @@ ask:
 id: ben-shepherd
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -30,8 +32,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: low
     controls:
       Bass: "0.5"
@@ -56,6 +61,7 @@ rig:
         He had the issue in hand rather than the headline: he names its author, the three other bassists profiled in the same piece, and the editorial decision to put it on the cover over a Ray Brown article. That is the kind of detail nobody reproduces from a search result.
       url: https://www.talkbass.com/threads/ben-shepherd-soundgarden-what-bass-rig-did-he-play-on-badmotorfinger-album.298516/
     gear: MESA/Boogie Bass 400+
+    position: 1
     role: amp
     substitute:
       confidence: low
@@ -65,7 +71,9 @@ rig:
           400+, which is the later head of that line. Same make and same family, not
           the same amplifier.
       gear: MESA/Boogie Bass 400+
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: low
     controls:
       Angle: "45.0"
@@ -86,6 +94,7 @@ rig:
         resolves exactly and the four-by-tens do not.'
       url: https://www.talkbass.com/threads/ben-shepherd-soundgarden-what-bass-rig-did-he-play-on-badmotorfinger-album.298516/
     gear: Mesa/Boogie 2x15
+    position: 2
     role: cab
   instrument: bass
   preset:
@@ -213,3 +222,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

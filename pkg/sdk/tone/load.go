@@ -96,6 +96,14 @@ func read(
 		return err
 	}
 
+	// After the schema, which has already said the version is there and looks
+	// like one, and before the decode, because a document written against
+	// another major is one whose fields cannot be trusted to mean what this
+	// reader's types say they mean.
+	if err := sameContract(document, name); err != nil {
+		return err
+	}
+
 	// Checked rather than assumed. A document can satisfy the contract and
 	// still not fit the types: JSON Schema calls 99999999999999999999 an
 	// integer and Go's int cannot hold it, which returns a document with the
@@ -149,10 +157,17 @@ func is(
 //
 // Validated first: writing one that does not meet its own contract would put
 // a file into the world that nothing else will accept.
+//
+// The contract version is stamped rather than asked for. Whoever built this
+// document built it against the contract this binary carries, which is the
+// only version they could have built it against, so making every caller say
+// so would be making them repeat the one answer available.
 func Write(
 	w io.Writer,
 	spec Spec,
 ) error {
+	stamp(&spec.Version)
+
 	return write(w, SchemaName, spec, Validate(spec))
 }
 
@@ -161,7 +176,28 @@ func WriteSetup(
 	w io.Writer,
 	setup Setup,
 ) error {
+	stamp(&setup.Version)
+
 	return write(w, SetupSchema, setup, ValidateSetup(setup))
+}
+
+// stamp fills in the contract version where a document does not carry one.
+//
+// A version already there is left alone: a document read and written back is
+// the same document, and silently moving its version would lose the one fact
+// that says which rules it was written under.
+func stamp(
+	version *ContractVersion,
+) {
+	if *version != "" {
+		return
+	}
+
+	// Nothing to do on an error, and nothing is hidden by it: the document
+	// goes out without the field and whatever reads it next refuses it.
+	if mine, err := Version(); err == nil {
+		*version = mine
+	}
 }
 
 // write is Write and WriteSetup, with the check already made by the caller

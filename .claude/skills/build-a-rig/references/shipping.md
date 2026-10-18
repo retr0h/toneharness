@@ -165,6 +165,36 @@ claims. A rig for *Lateralus* measured against records from two albums later
 describes a different sound, which [era.md](../../measure-music/references/era.md)
 owns.
 
+## Resolve it, so the file says what the preset holds
+
+A committed rig carries every control the chain ends up with, and a test refuses
+one that does not:
+
+```bash
+mise exec -- go run main.go rigs resolve --dir marketplace/core --id <slug>
+```
+
+A researched rig names an amplifier and perhaps a cabinet. Resolving it writes
+the compressor the corpus adds, the cabinet the amplifier is voiced with, and the
+dozen controls each of those arrives at, so the document describes the preset
+rather than the research. Both tiers were half resolved and half not, nineteen
+against twelve in core alone, with nothing marking which, and a reader could not
+tell a rig nobody had resolved from one whose gear this device cannot do.
+
+**Write over the file rather than to `--out`.** The prose at the top of a file is
+put back by a rewrite; `--out` to a new path has no file to read it from, so the
+header is simply gone. A comment lower down is refused rather than dropped, by
+name and line, because a rewrite cannot know where it belongs: move what it says
+into the header or into an `evidence` note, where it travels with the document.
+
+**A rig that cannot resolve carries no controls at all.** Those are the two
+states, and the test checks both directions. Dusty Hill's rig cited a Marshall
+JMP-1, which no bass amplifier on this device emulates, and it carried thirteen
+controls with `BrtDrive` and `NrmDrive` among them: a jumped Marshall Super Lead,
+a guitar amplifier, resolved into a bass rig before the shortlist was held to the
+instrument. Taking those controls out was the fix. Choosing a stand-in nobody has
+evidence for would not have been.
+
 ## When it cannot be established
 
 Stop and say so, which [vague.md](vague.md) states plainly: do not ship a

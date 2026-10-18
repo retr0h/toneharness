@@ -33,7 +33,9 @@ ask:
 id: chuck-dukowski
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -46,8 +48,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: medium
     controls:
       Bass: "0.5"
@@ -69,6 +74,7 @@ rig:
         The same list dates the changes either side of it, which is what makes it credible as a record rather than a recollection: a GMT 250 into a 4x15 on Nervous Breakdown, an SVT into an Ampeg 2x15 folded horn on Jealous Again, a GMT 150B into the folded horn and an AE 2x15 on Six Pack.
       url: https://www.talkbass.com/threads/chuck-dukowski.670228/
     gear: GMT 150B
+    position: 1
     role: amp
     substitute:
       confidence: low
@@ -83,7 +89,9 @@ rig:
           So the GK 800RB this device models is the same company's later work, and it is the only amplifier here with any connection to the one he named.
         url: https://www.talkbass.com/threads/chuck-dukowski.670228/
       gear: Gallien-Krueger GK 800RB
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: low
     controls:
       Distance: "1.0"
@@ -103,6 +111,7 @@ rig:
         the GMT 150B into an acoustic 6x12 cab."'
       url: https://www.talkbass.com/threads/chuck-dukowski.670228/
     gear: Acoustic 6x12
+    position: 2
     role: cab
     substitute:
       confidence: low
@@ -117,7 +126,9 @@ rig:
           job. A sealed multi-ten is the nearest thing here to six twelves in one
           cabinet.
       gear: Ampeg SVT 410HLF
-  - controls:
+  - attrs:
+      '@position': "3"
+    controls:
       HighGain: "0.0"
       Level: "0.0"
       LowGain: "0.0"
@@ -128,6 +139,7 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Simple EQ
+    position: 3
     role: eq
   instrument: bass
   preset:
@@ -255,3 +267,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

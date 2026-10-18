@@ -27,7 +27,9 @@ ask:
 id: glen-matlock
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Attack: "0.035"
       Knee: "6.0"
       Level: "5.2"
@@ -40,8 +42,11 @@ rig:
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: low
     controls:
       Bass: "0.51"
@@ -66,8 +71,11 @@ rig:
         Fender Precision… used Fender Bassmans with 4x12 Fender cabinets."'
       url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
     gear: Fender Bassman
+    position: 1
     role: amp
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: low
     controls:
       Angle: "0.0"
@@ -83,6 +91,7 @@ rig:
       note: 'the same clause as the head: "used Fender Bassmans with 4x12 Fender cabinets."'
       url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
     gear: Fender Bassman 4x12
+    position: 2
     role: cab
     substitute:
       confidence: low
@@ -222,3 +231,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

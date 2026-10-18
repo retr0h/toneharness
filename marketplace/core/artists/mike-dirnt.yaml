@@ -109,7 +109,9 @@ ask:
 id: mike-dirnt
 rig:
   chain:
-  - controls:
+  - attrs:
+      '@position': "0"
+    controls:
       Emphasis: "0.09"
       Gain: "0.62"
       Level: "0.0"
@@ -128,8 +130,11 @@ rig:
         most of its peak reduction in and 0.62 of makeup gain is audibly richer and
         louder than a Deluxe Comp with no makeup at all.
     gear: Teletronix LA-2A
+    position: 0
     role: comp
-  - capture: direct
+  - attrs:
+      '@position': "1"
+    capture: direct
     confidence: medium
     controls:
       Bass: "0.41"
@@ -174,8 +179,11 @@ rig:
         8x10s".'
       url: https://web.archive.org/web/20040908171044/http://www.bassplayer.com/archive/0904/0904_Features1.htm
     gear: Ampeg SVT
+    position: 1
     role: amp
-  - capture: direct
+  - attrs:
+      '@position': "2"
+    capture: direct
     confidence: low
     controls:
       Distance: "1.0"
@@ -216,6 +224,7 @@ rig:
         don''t need that spitty sound up top.''"'
       url: https://web.archive.org/web/20040908171044/http://www.bassplayer.com/archive/0904/0904_Features1.htm
     gear: Acoustic 6x10
+    position: 2
     role: cab
     substitute:
       confidence: low
@@ -350,3 +359,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

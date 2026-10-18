@@ -58,7 +58,7 @@ rig:
       Mid: "0.56"
       Ripple: "0.5"
       Sag: "0.5"
-      Treble: "0.4607843137254902"
+      Treble: "0.46"
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
         the microphone, the desk and the master of every one of them. The amplifier
@@ -222,3 +222,4 @@ rig:
     catalog: HX Edit 3.82
     device: HX Stomp
 schema: ToneSpec
+version: 3.0.0

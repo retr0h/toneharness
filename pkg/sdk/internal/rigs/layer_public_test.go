@@ -47,7 +47,7 @@ func userRig(
 	stem, id, extra string,
 ) map[string]string {
 	return map[string]string{
-		stem + ".yaml": "schema: ToneSpec\nid: " + id + `
+		stem + ".yaml": "schema: ToneSpec\nversion: \"3.0.0\"\nid: " + id + `
 
 ask:
   genre: [rock]
@@ -176,14 +176,14 @@ func (s *LayerPublicTestSuite) TestLayered() {
 						// One mistake in their directory does not stop every shipped rig
 						// building. The listing is where it is reported.
 						name:    "a file of theirs that is not a rig, beside a shipped one",
-						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nid: broken\n"},
+						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nversion: \"3.0.0\"\nid: broken\n"},
 						id:      "mike-dirnt",
 						want:    "Mike Dirnt",
 						listErr: "broken.yaml",
 					},
 					{
 						name:    "a file of theirs that is not a rig, asked for by its filename",
-						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nid: broken\n"},
+						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nversion: \"3.0.0\"\nid: broken\n"},
 						id:      "broken",
 						findErr: "broken.yaml",
 						listErr: "broken.yaml",
@@ -192,7 +192,7 @@ func (s *LayerPublicTestSuite) TestLayered() {
 						// Building the shipped rig instead would quietly pass over the
 						// one they wrote to replace it.
 						name:    "a file of theirs that is not a rig, named for a shipped one",
-						files:   map[string]string{"mike-dirnt.yaml": "schema: ToneSpec\n"},
+						files:   map[string]string{"mike-dirnt.yaml": "schema: ToneSpec\nversion: \"3.0.0\"\n"},
 						id:      "mike-dirnt",
 						findErr: "mike-dirnt.yaml",
 						listErr: "mike-dirnt.yaml",
@@ -200,7 +200,7 @@ func (s *LayerPublicTestSuite) TestLayered() {
 					{
 						name: "a file of theirs that is not a rig, stating a shipped rig's alias",
 						files: map[string]string{
-							"other.yaml": "schema: ToneSpec\nid: other\n" +
+							"other.yaml": "schema: ToneSpec\nversion: \"3.0.0\"\nid: other\n" +
 								"ask:\n  aliases: [DIRNT, 7]\n",
 						},
 						id:      "mike-dirnt",

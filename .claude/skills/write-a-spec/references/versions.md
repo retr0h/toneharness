@@ -51,13 +51,35 @@ That reconstruction is the reason the gate is a hash rather than a note in a
 skill. Four people, or the same agent four times, read a contract with a version
 field in it and changed the file without the thought occurring.
 
-## What a version does not do
+## Every document says which version it was written against
 
-**A document does not say which version it was written against.** `schema:
-ToneSpec` is a name, with no version beside it, so a reader has no way to tell a
-document that predates a field from one that omits it. That is a gap rather than
-a decision, and it is why the major number matters: it is the only warning
-anybody gets.
+`version` sits beside `schema`, it is required, and a document without one is
+refused:
+
+```yaml
+schema: ToneSpec
+version: "3.0.0"
+id: rick-danko
+```
+
+**The major is what the reader checks.** A document whose major is not the
+reader's is refused by name, because a different major means something that used
+to validate no longer does, so which of its fields still mean what they say is a
+guess. A later minor or patch is accepted: everything in those either adds a
+field this document does not use or rewords a sentence.
+
+**The tool stamps it.** Anything the SDK writes carries the version of the
+contract that binary holds, and a document read and written back keeps the
+version it arrived with rather than being quietly moved forward. A `Spec` built
+in memory and validated is stamped before the check rather than refused, because
+the field is a fact about a file on disk and an in-memory value was built against
+the only contract available to it.
+
+This is what made the contract 3.0.0. Every document that existed validated
+without a version and none of them do now, which is the definition of a major in
+the table above.
+
+## What a version does not do
 
 **Nothing migrates.** There is no upgrade path from version 1, and there was no
 need for one: version 2 merged two contracts whose pairing was one-to-one, and
