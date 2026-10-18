@@ -245,6 +245,58 @@ rig:
 	}
 }
 
+// TestVersionOfSaysWhenThereIsNoVersionToFind covers reading a contract that
+// does not say which version it is.
+//
+// Neither case is reachable through the embedded contract, which parses and
+// states 3.0.0. Both describe a binary built without it, and the answer that
+// matters is that nothing guesses: a reader with no version of its own cannot
+// hold a document to one, so it refuses rather than reading the document
+// against a version nobody knows.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *VersionPublicTestSuite) TestVersionOfSaysWhenThereIsNoVersionToFind() {
+	for _, tt := range []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{
+			name: "the contract this binary carries",
+			raw:  string(tone.Schema),
+		},
+		{
+			name: "a schema stating no version",
+			raw:  "openapi: 3.0.3\ninfo:\n  title: ToneSpec\n",
+			want: "states no version",
+		},
+		{
+			name: "an info block with an empty one",
+			raw:  "info:\n  version: \"\"\n",
+			want: "states no version",
+		},
+		{
+			name: "something that is not a schema at all",
+			raw:  "\tnot: [yaml",
+			want: "reading the ToneSpec schema's version",
+		},
+	} {
+		s.Run(tt.name, func() {
+			got, err := tone.VersionOf([]byte(tt.raw))
+
+			if tt.want == "" {
+				s.Require().NoError(err)
+				s.Require().Regexp(semver, got)
+
+				return
+			}
+
+			s.Require().ErrorContains(err, tt.want)
+			s.Require().Empty(got)
+		})
+	}
+}
+
 // TestSameContractAndMajorAnswerWhatNoDocumentCanAsk covers the two branches a
 // document cannot reach, because the schema refuses what would reach them.
 //

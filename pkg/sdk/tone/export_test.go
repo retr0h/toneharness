@@ -56,3 +56,8 @@ var SameContract = sameContract
 // The pattern on the field has already held the string to major.minor.patch,
 // so nothing arriving through a document can be missing its dot.
 var Major = major
+
+// VersionOf reads what a contract says its version is, exposed so a test can
+// hand it one that states none, or one that is not a schema at all. The
+// embedded contract is neither.
+var VersionOf = versionOf

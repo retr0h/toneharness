@@ -32,15 +32,28 @@ import (
 // contract's own `info.version` states it.
 //
 // Read out of the embedded contract rather than written here, so there is one
-// place to change and no way for the two to disagree.
+// place to change and no way for the two to disagree. Parsed on the first
+// document checked and not again.
 var Version = sync.OnceValues(func() (string, error) {
+	return versionOf(Schema)
+})
+
+// versionOf reads what a contract says its version is.
+//
+// Takes the bytes rather than reaching for the embedded contract, because what
+// it does when there is no version to find is part of the contract and cannot
+// be reached through the one this binary carries. Both answers describe a
+// binary built without it.
+func versionOf(
+	raw []byte,
+) (string, error) {
 	var doc struct {
 		Info struct {
 			Version string `json:"version"`
 		} `json:"info"`
 	}
 
-	if err := yaml.Unmarshal(Schema, &doc); err != nil {
+	if err := yaml.Unmarshal(raw, &doc); err != nil {
 		return "", fmt.Errorf("reading the %s schema's version: %w", SchemaName, err)
 	}
 
@@ -49,7 +62,7 @@ var Version = sync.OnceValues(func() (string, error) {
 	}
 
 	return doc.Info.Version, nil
-})
+}
 
 // major is the first part of a semantic version.
 //
