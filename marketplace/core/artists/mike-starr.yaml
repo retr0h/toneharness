@@ -1,0 +1,76 @@
+# Mike Starr — Alice in Chains
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: mike-starr
+
+ask:
+  genre: [grunge, alternative-metal]
+
+  aliases:
+    - alice-in-chains
+
+  subject:
+    kind: artist
+    name: Mike Starr
+    band: Alice in Chains
+    era: Facelift to Dirt
+    years:
+      from: 1990
+      to: 1992
+
+  instrument: bass
+
+  words: []
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+      capture: both
+      confidence: low
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/x.553451/
+          note: >-
+            Opened, and it carries a named first-hand witness at one remove. Post 77
+            of the thread, from wolfkeller: "well, after speaking with Evan of Bass
+            Northwest in Seattle, who was there for the recording, here is how Would
+            was recorded. 3 tracks of bass. 1) Spector NS2 into Ampeg SVT 2 into 8x10
+            E. track 2) Spector into ART Nightbass on rickenfaker preset tweaked a bit
+            into board. track 3) Kramer Ferrington acoustic bass into board. Mixx the
+            3, that's the sound." Three other posters put him on the same gear without
+            the detail. Mr. Dead: "Mike Inez used the same bass/rig setup
+            (Spector/Ampeg) as original A.I.C. bassist Mike Starr". Angus, on the
+            band's bass sound: "Spector basses and Ampeg amps."
+          caveat: >-
+            A forum post relaying somebody who was at the session, which is one remove
+            from first-hand and better than most of what exists for this era. Evan has
+            not been asked directly and the thread is the only place this appears. Two
+            things it does not settle. The SVT-2 is the valve reissue generation where
+            the model here is the original, so this is the same amplifier a generation
+            apart. And the quotation is about one song: Would? is on Dirt and the
+            Singles soundtrack, and whether Facelift two years earlier used the same
+            rig is an assumption rather than a finding. Worth knowing for anybody
+            extending this: the account has three bass tracks blended, and only the
+            first is an amplifier. The other two are an ART Nightbass preset straight
+            to the desk and an acoustic bass guitar, so a chain with one amplifier in
+            it reproduces a third of what was printed.
+    - role: cab
+      gear: Ampeg 8x10
+      confidence: low
+      evidence:
+        - kind: user
+          url: https://www.talkbass.com/threads/x.553451/
+          note: >-
+            Named in the same sentence as the head, an Ampeg 8x10E.
+          caveat: >-
+            From the same relayed account, and the device models a legacy Ampeg SVT-E
+            rather than the 810E specifically.

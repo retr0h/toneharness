@@ -1,0 +1,28 @@
+artist: Mike Starr
+tracks:
+  - track: would
+    url: https://open.spotify.com/track/5sFDReWLrZHLFZFjHsjUTS
+    year: 1992
+    band: Alice in Chains
+    genres: [grunge, alternative-metal]
+    genres_by: llm
+    note: >-
+      Dirt, from the 2022 remaster. 206 seconds as Spotify holds it. The one
+      record the gear account is actually about: three bass tracks blended, of
+      which only the first went through an amplifier
+  - track: them-bones
+    url: https://open.spotify.com/track/4A065x9kJt955eGVqf813g
+    year: 1992
+    band: Alice in Chains
+    genres: [grunge, alternative-metal]
+    genres_by: llm
+    note: Dirt, 2022 remaster. 149 seconds as Spotify holds it
+  - track: man-in-the-box
+    url: https://open.spotify.com/track/6gZVQvQZOFpzIy3HblJ20F
+    year: 1990
+    band: Alice in Chains
+    genres: [grunge, alternative-metal]
+    genres_by: llm
+    note: >-
+      Facelift. 285 seconds as Spotify holds it. Two years before the record the
+      gear account covers, so whether the rig was the same is an assumption
