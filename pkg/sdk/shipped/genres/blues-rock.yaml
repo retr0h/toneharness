@@ -45,7 +45,7 @@ rig:
       Mid: "0.56"
       Ripple: "0.5"
       Sag: "0.5"
-      Treble: "0.530188679245283"
+      Treble: "0.5320754716981132"
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
         the microphone, the desk and the master of every one of them. The amplifier
@@ -61,7 +61,7 @@ rig:
       kind: audio
       note: Chosen by measurement rather than by anybody's say-so. Across 9 records
         from 3 players, blues-rock measures a centroid the device's nearest bass amplifier
-        sits at 155 Hz against 171, which is the closest of the 27 it models for this
+        sits at 155 Hz against 172, which is the closest of the 27 it models for this
         instrument. Its records earn bright, measured against the players who play
         none of it, and that is what moves the controls below off the medians this
         instrument's presets sit at.
