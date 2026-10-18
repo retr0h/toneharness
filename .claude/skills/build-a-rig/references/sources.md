@@ -14,6 +14,7 @@ plausible URL off a search page pasted in as though somebody had read it.
 | Discogs and Reverb JSON APIs                                      | sleeve credits, which are the label's own statement of who played what                              |
 | premierguitar.com, guitarworld.com, mixonline.com                 | rundowns and session pieces, and reprints of dead magazines                                         |
 | Maker artist pages, archived                                      | endorsements, where the capture date brackets the era                                               |
+| Rig rundowns on video, read with `just transcript`                | an amplifier the written companion never names. One voice per video, or it attributes nothing        |
 | Wikipedia                                                         | **never as a source.** Only to find the print reference underneath a claim                          |
 
 Two that are not on it:
@@ -22,6 +23,51 @@ Two that are not on it:
 in its own text, and tags its own entries "Unverified".
 
 **A search engine** is how you find a page on this list, not a source in itself.
+
+## A rig rundown is an interview that happens to be filmed
+
+The table rates `video` low, and that is right for footage of a stage: a
+photograph of a backline settles nothing, and two people who watched the same
+ZZ Top rundown could not read the badge on the amplifier between them.
+
+**A rundown where the tech or the player names the gear out loud is a different
+thing.** It is an interview, the strongest kind of citation there is, and it
+happens to have been published as video. Treat it as `cited` and say in the
+caveat that it came from the captions.
+
+Read the captions rather than guessing from the article. Most rundowns have a
+written companion and it usually covers the instruments while the amplifier is
+only spoken. There is a recipe for each half of the job:
+
+```bash
+mise exec -- just transcript-search "Rig Rundown Pantera Rex Brown bass"
+mise exec -- just transcript "https://www.youtube.com/watch?v=1x_kg6pOvGU"
+```
+
+What this is worth, measured on the eight players it was tried for. It settled
+one outright: Dusty Hill's amplifier had rested on nothing, and ZZ Top's tech
+Elwood Francis names it on camera, a Marshall JMP-1 into Valvestate 8008 power
+amps, with the whole splitter-and-three-channels chain around it. The other
+seven were dead ends, and the reason is worth knowing before spending an hour:
+**the bass is usually not the subject.** Fat Mike's Big Five is about a
+Jazzmaster through a Silvertone, the Sum 41 gear rundown covers the guitarists'
+Soldano and Marshalls and mentions the bassist only to say which bass he swaps
+to, and the Slayer rundown is Kerry King's heads throughout.
+
+**A transcript carries no speaker labels, so a video with more than one person
+in it attributes nothing.** This was nearly shipped as a citation and caught on
+re-reading. A video titled "Rex Brown's Pantera Amps & Rack Gear" opens with
+somebody saying "I use live with Megadeth" and "when I was playing bass in Van
+Halen, cause that's what Dad would play", and Rex Brown played in neither band.
+Somebody later says the SVT-4s have been in the rack forever, and that probably
+is him because the same passage mentions Down, but probably is not a citation.
+One voice walking one rack is quotable. A compilation is not, however
+promising the title.
+
+Say in the note that the transcript is automatic, and quote the model numbers as
+they arrive rather than correcting them silently. It mangles them in predictable
+ways: a Valvestate 8008 comes out "the 808s", a Micro Thumpinator comes out
+"Micro Thumpin".
 
 ## Read the forums with the tooling
 

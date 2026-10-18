@@ -146,6 +146,29 @@ forum URL:
 forum-search QUERY SUB="":
     uvx --with curl_cffi python3 resources/read_forum.py --search "{{ QUERY }}" {{ SUB }}
 
+# Read a video's captions as plain text, for a rundown where the gear is spoken
+#
+# A rig rundown is an interview that happens to have been filmed, and often the
+# only place an amplifier is named. Premier Guitar's 2015 ZZ Top article lists
+# Dusty Hill's basses and never his amplifier; the video has his tech saying
+# "he uses the JMP-1s and the Marshall Valvestate" out loud.
+#
+# The captions are automatic, so quote the model numbers as they arrive and say
+# so: a Valvestate 8008 comes out "the 808s".
+#
+# just transcript https://www.youtube.com/watch?v=1x_kg6pOvGU
+transcript URL:
+    uvx --with yt-dlp python3 resources/read_transcript.py "{{ URL }}"
+
+# Find videos worth reading the captions of
+#
+# Read the titles rather than skimming them. "Rig Rundown" is a tech walking a
+# rack; "Bass Play Through" is somebody's hands and names no gear.
+#
+# just transcript-search "Rig Rundown Pantera Rex Brown bass"
+transcript-search QUERY:
+    uvx --with yt-dlp python3 resources/read_transcript.py --search "{{ QUERY }}"
+
 # Search the open web for pages worth reading
 #
 # For finding a thread or an article, never for citing one: nothing here is

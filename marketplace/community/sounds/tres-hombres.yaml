@@ -1,0 +1,64 @@
+# Tres Hombres — a sound, not somebody's rig
+#
+# Attributed to a sound because the gear is not established. Dusty Hill of
+# ZZ Top played these records and what he played them through is not
+# known, so claiming a rig for him would be inventing one. This is the
+# amplifier that measures nearest the records themselves.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: tres-hombres
+
+ask:
+  genre: [southern-rock, blues-rock]
+
+  subject:
+    kind: sound
+    name: Tres Hombres
+    era: Tres Hombres, 1973
+
+  instrument: bass
+
+  words: []
+
+  confidence: low
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Sunn Coliseum 300
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          note: >-
+            Chosen by measurement rather than by anybody's say-so. The device's
+            twenty-seven bass amplifiers were ranked against Dusty Hill's own
+            separated bass stems, one record at a time, and the Sunn Coliseum 300 came
+            nearest on two of the three; the third returned no answer. It reads 98 Hz
+            against 120 on one record and 138 on the other. Run it again on the same
+            stems and it answers the same way.
+          caveat: >-
+            **This is not a claim about what Dusty Hill played.** His amplifier is not
+            established. A Marshall stack circulates for these sessions and Premier
+            Guitar's ZZ Top gear gallery and their obituary for him were both opened
+            and neither carries it. His live amplifier is documented in Premier
+            Guitar's 2015 rig rundown video, which the article text does not carry and
+            which two TalkBass posters confirm shows it without either of them being
+            able to read the badge. So this document is attributed to a sound rather
+            than to him: it is the amplifier nearest these 3 records, and nothing
+            more. Two things make it weak even as that. The records disagree, and the
+            caveat above says how. And the winners of this comparison cluster at the
+            dark end of what the device has: the Acoustic 360 reads 91 Hz and the Sunn
+            Coliseum 300 reads 98 Hz, the two darkest bass amplifiers it models, and
+            every record here sits below most of the candidates. That is the pathology
+            the measured library's own notes record, where every candidate is out of
+            range and the nearest is whichever is darkest. It is here because it is
+            buildable and honest, not because it is settled. A cited amplifier for
+            Dusty Hill would replace it, and a model of the Fender and Peavey
+            amplifiers this era actually ran would make the comparison worth more.
+    # No cabinet named. The amplifier's own pairing is used, because the
+    # measurement chose an amplifier and says nothing about a cabinet.
