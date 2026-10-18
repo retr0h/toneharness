@@ -2257,6 +2257,25 @@ func (s *ClientPublicTestSuite) TestMusic() {
 				return nil
 			},
 		},
+		{
+			// The record this corpus holds has no stem, which is the state
+			// this reports rather than skips: there is nothing to hold to the
+			// length its link states until somebody separates it.
+			name: "every record against the length its link states",
+			check: func(ctx context.Context, c *sdk.Client) error {
+				got, err := c.MusicLengths(ctx, root)
+				if err != nil {
+					return err
+				}
+
+				s.Require().Len(got, 1)
+				s.Require().Equal("longview", got[0].Track)
+				s.Require().False(got[0].Read, "nothing separated it")
+				s.Require().Contains(got[0].Why, "separated")
+
+				return nil
+			},
+		},
 	}
 
 	for _, tt := range tests {

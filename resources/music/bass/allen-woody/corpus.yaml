@@ -18,14 +18,24 @@ tracks:
     genres: [southern-rock, blues-rock]
     genres_by: llm
     note: Dose. 407 seconds as Spotify holds it
-  - track: john-the-revelator
-    url: https://open.spotify.com/track/594c8sBqf0bZJLS7liw563
+  - track: larger-than-life
+    url: https://open.spotify.com/track/1bRH4BOi1V31W6tKnZmjcz
     year: 1998
-    seconds: 229
+    seconds: 313
     band: Gov't Mule
     genres: [southern-rock, blues-rock]
     genres_by: llm
     note: >-
-      Dose. 229 seconds as Spotify holds it. Here because Mother Earth and
-      Rocking Horse both resolve to The Tel-Star Sessions, a 2016 release of
-      1994 demos, which is neither the album nor the era
+      Dose. 313 seconds as Spotify holds it. It replaced John the Revelator,
+      whose separated bass read a centroid of 947Hz with 53% of its energy in
+      the mid band, against 126Hz and 3% on Blind Man in the Dark and 167Hz and
+      11% on Thorazine Shuffle. Nothing in the corpus reads above 264Hz, so
+      that stem was not a bass however the file was fetched: an older download
+      of the same song read 550Hz and a refetch matching Spotify's length to
+      the second read 937Hz. His three records spanned 821Hz of centroid and he
+      earned nothing but `scattered` on them. This one reads 138Hz and 4%.
+
+
+      Mother Earth and Rocking Horse are the other two the album offers and
+      both resolve to The Tel-Star Sessions, a 2016 release of 1994 demos,
+      which is neither the album nor the era.

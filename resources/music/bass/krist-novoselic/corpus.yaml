@@ -15,7 +15,10 @@ tracks:
     band: Nirvana
     genres: [grunge]
     genres_by: llm
-    note: Nevermind, 1991. Remastered edition
+    note: >-
+      Nevermind, 1991. Remastered edition. The download runs 224.2s against
+      the 218 the link states, and a refetch returns the same length, so the
+      two are different masters of this song rather than a wrong match.
   - track: heart-shaped-box
     url: https://open.spotify.com/track/11LmqTE2naFULdEP94AUBa
     year: 1993

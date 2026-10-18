@@ -29,6 +29,8 @@ tracks:
     genres_by: person
     note: >-
       Primus, Sailing the Seas of Cheese, 1991. The album take, not the
-      earlier one on Frizzle Fry. Shares a production with
-      jerry-was-a-race-car-driver, which is a compromise: the four records
-      cover three albums rather than four
+      earlier one on Frizzle Fry. Shares a production with jerry-was-a-race-
+      car-driver, which is a compromise: the four records cover three albums
+      rather than four. The download runs 264.8s against the 253 the link
+      states, and a refetch returns the same length, so the two are different
+      masters of this song rather than a wrong match.

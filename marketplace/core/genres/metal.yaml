@@ -54,10 +54,10 @@ rig:
       HighMid: "0.5"
       Hum: "0.5"
       Master: "0.6"
-      Mid: "0.5485714285714286"
+      Mid: "0.544"
       Ripple: "0.5"
       Sag: "0.5"
-      Treble: "0.45098039215686275"
+      Treble: "0.4418604651162791"
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
         the microphone, the desk and the master of every one of them. The amplifier

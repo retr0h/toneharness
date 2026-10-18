@@ -9,7 +9,10 @@ tracks:
     seconds: 261
     genres: [prog-rock, hard-rock]
     genres_by: person
-    note: Fly by Night, 1975
+    note: >-
+      Fly by Night, 1975. The download runs 267.2s against the 261 the link
+      states, and a refetch returns the same length, so the two are different
+      masters of this song rather than a wrong match.
   - track: a-passage-to-bangkok
     url: https://open.spotify.com/track/1p9hRNRKVFPuYv0ADlkl1l
     year: 1976

@@ -23,4 +23,8 @@ tracks:
     seconds: 344
     genres: [rock, pop]
     genres_by: person
-    note: London Town, 1978. The album version, not the three minute edit
+    note: >-
+      London Town, 1978. The album version, not the three minute edit. The
+      download runs 349.5s against the 344 the link states, and a refetch
+      returns the same length, so the two are different masters of this song
+      rather than a wrong match.

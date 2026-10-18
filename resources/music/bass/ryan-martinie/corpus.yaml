@@ -7,7 +7,10 @@ tracks:
     band: Mudvayne
     genres: [nu-metal, alternative-metal]
     genres_by: llm
-    note: L.D. 50. 162 seconds as Spotify holds it
+    note: >-
+      L.D. 50. 162 seconds as Spotify holds it. The download runs 169.4s
+      against the 162 the link states, and a refetch returns the same length,
+      so the two are different masters of this song rather than a wrong match.
   - track: death-blooms
     url: https://open.spotify.com/track/3Y4rNagSf2IukhcOTWYJuV
     year: 2000

@@ -29,4 +29,7 @@ tracks:
     genres: [punk]
     genres_by: person
     note: >-
-      Never Mind the Bollocks, 1977. 198 seconds as Spotify holds it
+      Never Mind the Bollocks, 1977. 198 seconds as Spotify holds it. The
+      download runs 205.8s against the 198 the link states, and a refetch
+      returns the same length, so the two are different masters of this song
+      rather than a wrong match.

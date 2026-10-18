@@ -54,7 +54,7 @@ rig:
       HighMid: "0.5"
       Hum: "0.5"
       Master: "0.6"
-      Mid: "0.56"
+      Mid: "0.5700000000000001"
       Ripple: "0.5"
       Sag: "0.5"
       Treble: "0.5"
@@ -74,9 +74,9 @@ rig:
       note: Chosen by measurement rather than by anybody's say-so. Across 15 records
         from 5 players, rock measures a centroid the device's nearest bass amplifier
         sits at 155 Hz against 165, which is the closest of the 27 it models for this
-        instrument. Its records earn short-decay, measured against the players who
-        play none of it, and that is what moves the controls below off the medians
-        this instrument's presets sit at.
+        instrument. Its records earn mid-forward and short-decay, measured against
+        the players who play none of it, and that is what moves the controls below
+        off the medians this instrument's presets sit at.
     gear: MESA/Boogie Bass 400+ (channel 1)
     position: 1
     role: amp
