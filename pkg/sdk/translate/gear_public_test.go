@@ -238,6 +238,75 @@ func (s *GearPublicTestSuite) TestDisplacedTo() {
 	}
 }
 
+// TestNamed covers the name a chosen block is written into a rig as.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *GearPublicTestSuite) TestNamed() {
+	for _, tt := range []struct {
+		name  string
+		cat   *catalog.Catalog
+		match measured.Match
+		want  string
+	}{
+		{
+			name: "the gear the model emulates, never the model's own name",
+			cat: s.built(map[catalog.ModelID]catalog.Block{
+				"HD2_AmpCali400Ch1": {
+					Name:    "Cali 400 Ch1",
+					BasedOn: "MESA/Boogie Bass 400+ (channel 1)",
+				},
+			}),
+			match: measured.Match{Block: measured.Block{
+				ID: "HD2_AmpCali400Ch1", Name: "Cali 400 Ch1",
+			}},
+			want: "MESA/Boogie Bass 400+ (channel 1)",
+		},
+		{
+			name: "a Line 6 original emulates nothing, so its own name stands",
+			cat: s.built(map[catalog.ModelID]catalog.Block{
+				"HD2_CompressorDeluxeComp": {
+					Name:    "Deluxe Comp",
+					BasedOn: "Line 6 Original",
+				},
+			}),
+			match: measured.Match{Block: measured.Block{
+				ID: "HD2_CompressorDeluxeComp", Name: "Deluxe Comp",
+			}},
+			want: "Deluxe Comp",
+		},
+		{
+			name: "a model the catalog has no entry for keeps the library's name",
+			cat:  s.built(map[catalog.ModelID]catalog.Block{}),
+			match: measured.Match{Block: measured.Block{
+				ID: "HD2_SweptButNotInThisCatalog", Name: "Swept Thing",
+			}},
+			want: "Swept Thing",
+		},
+		{
+			name: "no catalog to ask",
+			cat:  nil,
+			match: measured.Match{Block: measured.Block{
+				ID: "HD2_AmpCali400Ch1", Name: "Cali 400 Ch1",
+			}},
+			want: "Cali 400 Ch1",
+		},
+		{
+			name: "a block the catalog holds under no name at all",
+			cat: s.built(map[catalog.ModelID]catalog.Block{
+				"HD2_Nameless": {},
+			}),
+			match: measured.Match{Block: measured.Block{
+				ID: "HD2_Nameless", Name: "Nameless",
+			}},
+			want: "Nameless",
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, translate.Named(tt.cat, tt.match))
+		})
+	}
+}
+
 func TestGearPublicTestSuite(
 	t *testing.T,
 ) {

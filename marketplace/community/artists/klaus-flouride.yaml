@@ -116,7 +116,7 @@ rig:
     - kind: corpus
       note: 'added by the compiler rather than named in the rig: a chain of this kind
         almost always holds one, and the corpus statistics are what put it here.'
-    gear: Legacy 1x18" Acoustic® 360
+    gear: Legacy 1x18" Acoustic 360
     role: cab
   - controls:
       HighGain: "0.0"

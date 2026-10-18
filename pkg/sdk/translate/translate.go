@@ -700,19 +700,47 @@ func nearestTo(
 	}
 
 	best := ranked[0]
+	gear := named(deps.Catalog, best)
 
 	*notes = append(*notes, Note{
 		About: string(category),
 		Said: fmt.Sprintf(
 			"%s is the closest of %d measured to %s, %.0f Hz against %.0f",
-			best.Name, len(ranked), from, best.Centroid, want.Centroid),
+			gear, len(ranked), from, best.Centroid, want.Centroid),
 		Honoured: true,
 	})
 
 	return rig.ChainEntry{
 		Role: rig.Role(category),
-		Gear: best.Name,
+		Gear: gear,
 	}, true
+} // named is the block the way a rig has to say it: the gear it emulates, which
+
+// the measured library does not carry and the catalog does.
+//
+// The library knows a block by Line 6's name for it, because that is what a
+// sweep was filed under. A rig may not: "Cali 400 Ch1" is this manufacturer's
+// label for somebody else's amplifier, and a document naming it is one nobody
+// can read on other hardware. A block the catalog has no entry for keeps the
+// library's name, which is the only one anybody has.
+func named(
+	cat *catalog.Catalog,
+	match measured.Match,
+) string {
+	if cat == nil {
+		return match.Name
+	}
+
+	blk, ok := cat.Block(catalog.ModelID(match.ID))
+	if !ok {
+		return match.Name
+	}
+
+	if gear := blk.Gear(); gear != "" {
+		return gear
+	}
+
+	return match.Name
 }
 
 // reachable is the blocks somebody could actually play.

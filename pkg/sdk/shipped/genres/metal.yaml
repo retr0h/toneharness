@@ -25,72 +25,74 @@ id: metal
 rig:
   chain:
   - attrs:
-      '@position': '0'
+      '@position': "0"
     controls:
-      Attack: '0.035'
-      Knee: '6.0'
-      Level: '5.2'
-      Mix: '1.0'
-      Ratio: '3'
-      Release: '0.2'
-      Threshold: '-37.1'
+      Attack: "0.035"
+      Knee: "6.0"
+      Level: "5.2"
+      Mix: "1.0"
+      Ratio: "3"
+      Release: "0.2"
+      Threshold: "-37.1"
     evidence:
     - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this
-        kind almost always holds one, and the corpus statistics are what put it
-        here.'
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
     gear: Deluxe Comp
     position: 0
     role: comp
   - attrs:
-      '@position': '1'
+      '@position': "1"
     capture: direct
     confidence: low
     controls:
-      Bass: '0.5'
-      Ch Vol: '1.0'
-      Drive: '0.0'
-      Gain: '0.32'
-      Master: '0.5'
-      Mid: '0.45714285714285713'
-      Mid Freq: '0.5'
-      Treble: '0.4528301886792453'
+      Bass: "0.5"
+      Bias: "0.55"
+      BiasX: "0.9"
+      ChVol: "0.74"
+      Drive: "0.62"
+      HighMid: "0.5"
+      Hum: "0.5"
+      Master: "0.6"
+      Mid: "0.544"
+      Ripple: "0.5"
+      Sag: "0.5"
+      Treble: "0.4519230769230769"
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
         the microphone, the desk and the master of every one of them. The amplifier
         below is what sits nearest those figures, not one anybody is known to have
         used. It also moves: a genre is measured against the players who play none
         of it, so this answer changes when the corpus gains players, and it is worth
-        rebuilding rather than trusting indefinitely. Grunge is the example. It
-        held scooped, dark and clean; twenty-five records from five other genres
-        joined the corpus and it held nothing, because the rule then asked a genre
-        to be unusual rather than to be something; it holds scooped again now that
-        words may overlap, and clean is gone from every subject because a low share
-        of energy above the fundamental turned out not to be evidence of no drive.'
+        rebuilding rather than trusting indefinitely. Grunge is the example. It held
+        scooped, dark and clean; twenty-five records from five other genres joined
+        the corpus and it held nothing, because the rule then asked a genre to be
+        unusual rather than to be something; it holds scooped again now that words
+        may overlap, and clean is gone from every subject because a low share of energy
+        above the fundamental turned out not to be evidence of no drive.'
       kind: audio
       note: Chosen by measurement rather than by anybody's say-so. Across 10 records
         from 3 players, metal measures a centroid the device's nearest bass amplifier
-        sits at 121 Hz against 130, which is the closest of the twenty- seven it
-        models for this instrument. Its records earn scooped and dark, measured
-        against the players who play none of it, and that is what moves the controls
-        below off the medians this instrument's presets sit at.
-    gear: Aguilar Tone Hammer
+        sits at 150 Hz against 130, which is the closest of the 27 it models for this
+        instrument. Its records earn scooped and dark, measured against the players
+        who play none of it, and that is what moves the controls below off the medians
+        this instrument's presets sit at.
+    gear: MESA/Boogie Bass 400+ (channel 1)
     position: 1
     role: amp
   - attrs:
-      '@position': '2'
+      '@position': "2"
     controls:
-      Distance: '1.0'
-      EarlyReflections: '0.0'
-      HighCut: '8000.0'
-      Level: '0.0'
-      LowCut: '20.0'
+      Distance: "1.0"
+      EarlyReflections: "0.0"
+      HighCut: "8000.0"
+      Level: "0.0"
+      LowCut: "19.9"
     evidence:
     - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this
-        kind almost always holds one, and the corpus statistics are what put it
-        here.'
-    gear: Legacy 2x15" MESA/Boogie 2x15 EV
+      note: 'added by the compiler rather than named in the rig: a chain of this kind
+        almost always holds one, and the corpus statistics are what put it here.'
+    gear: Legacy 6x10" MESA/Boogie Power House
     position: 2
     role: cab
   instrument: bass
@@ -99,122 +101,122 @@ rig:
       members:
         inputA:
           attrs:
-            '@input': '1'
+            '@input': "1"
           controls:
-            decay: '0.5'
-            noiseGate: 'false'
-            threshold: '-48'
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
           attrs:
-            '@input': '0'
+            '@input': "0"
           controls:
-            decay: '0.5'
-            noiseGate: 'false'
-            threshold: '-48'
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         join:
           attrs:
-            '@enabled': 'true'
-            '@no_snapshot_bypass': 'false'
-            '@position': '8'
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           controls:
-            A Level: '0'
-            A Pan: '0.5'
-            B Level: '0'
-            B Pan: '0.5'
-            B Polarity: 'false'
-            Level: '0'
+            A Level: "0"
+            A Pan: "0.5"
+            B Level: "0"
+            B Pan: "0.5"
+            B Polarity: "false"
+            Level: "0"
           model: HD2_AppDSPFlowJoin
         outputA:
           attrs:
-            '@output': '1'
+            '@output': "1"
           controls:
-            gain: '0'
-            pan: '0.5'
+            gain: "0"
+            pan: "0.5"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
           attrs:
-            '@output': '0'
+            '@output': "0"
           controls:
-            Type: 'true'
-            gain: '0'
-            pan: '0.5'
+            Type: "true"
+            gain: "0"
+            pan: "0.5"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
           attrs:
-            '@enabled': 'true'
-            '@no_snapshot_bypass': 'false'
-            '@position': '0'
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           controls:
-            BalanceA: '0.5'
-            BalanceB: '0.5'
-            bypass: 'false'
+            BalanceA: "0.5"
+            BalanceB: "0.5"
+            bypass: "false"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
     global:
       attrs:
-        '@DtSelect': '2'
-        '@PowercabMode': '0'
-        '@PowercabSelect': '2'
-        '@PowercabVoicing': '0'
-        '@current_snapshot': '0'
-        '@cursor_dsp': '0'
-        '@cursor_group': ''
-        '@cursor_path': '0'
-        '@cursor_position': '0'
-        '@guitarinputZ': '0'
-        '@guitarpad': '0'
-        '@pedalstate': '2'
-        '@tempo': '120'
+        '@DtSelect': "2"
+        '@PowercabMode': "0"
+        '@PowercabSelect': "2"
+        '@PowercabVoicing': "0"
+        '@current_snapshot': "0"
+        '@cursor_dsp': "0"
+        '@cursor_group': ""
+        '@cursor_path': "0"
+        '@cursor_position': "0"
+        '@guitarinputZ': "0"
+        '@guitarpad': "0"
+        '@pedalstate': "2"
+        '@tempo': "120"
         '@topology0': A
-        '@topology1': '0'
+        '@topology1': "0"
       model: '@global_params'
     snapshot0:
       attrs:
-        '@custom_name': 'false'
-        '@ledcolor': '0'
+        '@custom_name': "false"
+        '@ledcolor': "0"
         '@name': SNAPSHOT 1
-        '@pedalstate': '0'
-        '@tempo': '120'
-        '@valid': 'false'
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
     snapshot1:
       attrs:
-        '@custom_name': 'false'
-        '@ledcolor': '0'
+        '@custom_name': "false"
+        '@ledcolor': "0"
         '@name': SNAPSHOT 2
-        '@pedalstate': '0'
-        '@tempo': '120'
-        '@valid': 'false'
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
     snapshot2:
       attrs:
-        '@custom_name': 'false'
-        '@ledcolor': '0'
+        '@custom_name': "false"
+        '@ledcolor': "0"
         '@name': SNAPSHOT 3
-        '@pedalstate': '0'
-        '@tempo': '120'
-        '@valid': 'false'
+        '@pedalstate': "0"
+        '@tempo': "120"
+        '@valid': "false"
     variax:
       attrs:
-        '@variax_customtuning': 'true'
-        '@variax_lockctrls': '0'
-        '@variax_magmode': 'false'
-        '@variax_model': '0'
-        '@variax_str1level': '1'
-        '@variax_str1tuning': '0'
-        '@variax_str2level': '1'
-        '@variax_str2tuning': '0'
-        '@variax_str3level': '1'
-        '@variax_str3tuning': '0'
-        '@variax_str4level': '1'
-        '@variax_str4tuning': '0'
-        '@variax_str5level': '1'
-        '@variax_str5tuning': '0'
-        '@variax_str6level': '1'
-        '@variax_str6tuning': '0'
-        '@variax_toneknob': '-0.10000002384185791'
-        '@variax_volumeknob': '-0.10000002384185791'
+        '@variax_customtuning': "true"
+        '@variax_lockctrls': "0"
+        '@variax_magmode': "false"
+        '@variax_model': "0"
+        '@variax_str1level': "1"
+        '@variax_str1tuning': "0"
+        '@variax_str2level': "1"
+        '@variax_str2tuning': "0"
+        '@variax_str3level': "1"
+        '@variax_str3tuning': "0"
+        '@variax_str4level': "1"
+        '@variax_str4tuning': "0"
+        '@variax_str5level': "1"
+        '@variax_str5tuning': "0"
+        '@variax_str6level': "1"
+        '@variax_str6tuning': "0"
+        '@variax_toneknob': "-0.10000002384185791"
+        '@variax_volumeknob': "-0.10000002384185791"
   resolved:
     catalog: HX Edit 3.82
     device: HX Stomp

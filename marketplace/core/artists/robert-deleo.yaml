@@ -1,0 +1,74 @@
+# Robert DeLeo — Stone Temple Pilots
+#
+# One document: the ask says who it is for, the rig below says what the gear is.
+#
+# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+id: robert-deleo
+
+ask:
+  genre: [alternative-rock, hard-rock]
+
+  aliases:
+    - stone-temple-pilots
+    - stp
+
+  subject:
+    kind: artist
+    name: Robert DeLeo
+    band: Stone Temple Pilots
+    era: Stone Temple Pilots, the 2018 album
+    years:
+      from: 2018
+      to: 2018
+
+  instrument: bass
+
+  words: []
+
+  confidence: medium
+
+rig:
+  instrument: bass
+
+  chain:
+    - role: amp
+      gear: Ampeg B-15NF
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          url: https://www.premierguitar.com/artists/stone-temple-pilots-dean-and-robert-deleo
+          note: >-
+            Premier Guitar on the pair of them, published 26 April 2018 alongside the
+            band's self-titled album of that year, which is where these records come
+            from. It separates his studio amplifiers from his live ones, and the
+            studio list is two: a 1967 Ampeg B-15N and an Ampeg VT-22. Live he ran a
+            QSC PLX1602 power amp into two Ampeg SVT-810E extension cabinets, which is
+            a different rig and not this one. The same piece lists the basses he
+            tracked the album with: a 1965 Fender Precision, a 1976 Rickenbacker 4001,
+            a 1971 Rickenbacker 4001 in fireglo with flatwounds, a 1972 Fender Jazz
+            and a 1974 Fender Telecaster Bass.
+          caveat: >-
+            Half the studio pair. The Ampeg VT-22 he used beside the B-15N is a guitar
+            combo and this device models nothing like it, so what is below is the
+            B-15N alone rather than the two together. The era is the point of this
+            document and worth stating plainly. He has been in the band since 1986 and
+            nothing found establishes what he used on Core in 1992: Guitar World on
+            the making of that record is said to put him on an Ampeg SVT with a
+            Sennheiser 421 and is paywalled, MusicRadar on his amplifiers is
+            paywalled, and his own interview on camera says only "I had an old Ampeg
+            like this that I was going through" while pointing at something off
+            screen, with no model and no mention of Core, Purple, SVT or B-15 anywhere
+            in ten thousand words of it. A TalkBass poster adds that from Tiny Music
+            onward the studio rig was a Marshall tube head into a Marshall 8x10
+            keyboard cabinet, which would not map either. So this is 2018 and says so.
+            The grunge-era Stone Temple Pilots is still unwritten, and writing it
+            would mean citing a page nobody here could open. Bass Magazine separately
+            lists his rig as an Ampeg SVT into an SVT-810E in the gear box for Issue
+            11, which covers his 2022 solo album Lessons Learned. That album was
+            tracked "direct with no amps and with the Ampeg plug-in", so it describes
+            what he owns rather than what printed, and it is a different era again.
+    # No cabinet named. The B-15N is a combo, so the amplifier's own pairing is
+    # the cabinet it was built around rather than a claim about his.

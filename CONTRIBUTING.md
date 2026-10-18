@@ -589,6 +589,24 @@ It sits beside `resources/schemas/gear-map.json` for the same reason every other
 generator sits beside its output. It writes there by a path relative to itself,
 so which directory you run it from does not matter.
 
+### The contract carries its own version
+
+`info.version` at the top of `pkg/sdk/tone/data/tonespec.openapi.yaml` is the
+version of the contract, and it moves whenever that file does. A test pins the
+contract's sha256 against it, so a change that leaves the version alone fails
+with the hash it got.
+
+Nothing regenerates the pair. `just generate` compiles the Go types out of the
+contract and never touches the version, which is how it sat at 2.0.0 through
+four merged pull requests that changed the file.
+
+Which number moves: major for a document that used to validate and no longer
+does, minor for anything added, patch for wording that changes nothing about
+what is accepted. A `description:` is the grammar for its field rather than a
+comment on it, so a sentence rewritten to refuse something is major.
+[write-a-spec's versions.md](.claude/skills/write-a-spec/references/versions.md)
+has the detail and how the jump from 2.0.0 was worked out.
+
 ### Regenerating the catalog and corpus
 
 Nobody using toneharness does this. The catalog and the corpus statistics are

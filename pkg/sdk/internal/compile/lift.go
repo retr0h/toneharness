@@ -178,11 +178,12 @@ func entryFor(
 	return out
 }
 
-// gearName describes a block the way a person would.
+// gearName describes a block the way a person would, or by its model
+// identifier where the catalog has never heard of it.
 //
-// The gear it emulates when Line 6 say what that is, and the model's own name
-// otherwise — every Line 6 original reads "Line 6 Original", which names
-// nothing.
+// What a block is called is catalog.Block.Gear. This adds the one case a
+// catalog cannot answer: a model that is not in it has nothing but its
+// identifier, and a rig has to say what every block is.
 func gearName(
 	blk catalog.Block,
 	id catalog.ModelID,
@@ -192,12 +193,8 @@ func gearName(
 		return string(id)
 	}
 
-	if blk.BasedOn != "" && blk.BasedOn != "Line 6 Original" {
-		return blk.BasedOn
-	}
-
-	if blk.Name != "" {
-		return blk.Name
+	if name := blk.Gear(); name != "" {
+		return name
 	}
 
 	return string(id)

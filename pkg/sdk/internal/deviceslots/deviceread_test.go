@@ -163,7 +163,7 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 
 							// The slot is a factory preset, so what it holds is known
 							// before it is decoded.
-							"gear: Ampeg SVT® (normal channel)",
+							"gear: Ampeg SVT (normal channel)",
 							"gear: 8x10 Ampeg SVT-E",
 							"role: amp",
 						},

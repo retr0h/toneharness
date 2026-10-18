@@ -120,14 +120,14 @@ rig:
     - caveat: |-
         part of that difference is simply level: 0.62 of makeup gain against none makes this louder, and louder is hard to hear past in a comparison. The rest is the compressor being optical and slow, so a pick attack passes before it bites.
 
-        Named `LA Studio Comp` rather than `Teletronix LA-2A`, because two models claim that gear and the other is a legacy Tube Comp carrying only a level.
+        Named for the gear rather than for Line 6's model of it. Two models claim a Teletronix LA-2A and the other is a legacy Tube Comp carrying nothing but a level, so the catalog sorts the legacy one last and this name reaches the six-control model it was heard on.
 
         Nobody has confirmed which compressor Dirnt used, and this does not claim to be it.
       kind: user
       note: chosen by ear against the compressor the corpus picked. An LA-2A with
         most of its peak reduction in and 0.62 of makeup gain is audibly richer and
         louder than a Deluxe Comp with no makeup at all.
-    gear: LA Studio Comp
+    gear: Teletronix LA-2A
     role: comp
   - capture: direct
     confidence: medium

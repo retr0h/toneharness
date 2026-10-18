@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: ToneSpec
-  version: "2.0.0"
+  version: "2.4.1"
   description: >
     What somebody wants to sound like, and the gear that answers it.
 
@@ -31,6 +31,15 @@ info:
 
     This document is the source for the Go types in pkg/sdk/tone/internal/gen.
     Do not hand-edit those; change this and run `just generate`.
+
+
+    `info.version` above is this contract's own version and it moves whenever
+    this file does. Major is a document that used to validate and no longer
+    does; minor is anything added, which every document already written still
+    passes; patch is wording that changes nothing about what is accepted. A
+    `description:` here is the grammar for its field rather than a comment on
+    it, so a sentence rewritten to refuse something new is a major change and
+    not a patch. A test holds the pair: see write-a-spec's versions.md.
 
 paths: {}
 
