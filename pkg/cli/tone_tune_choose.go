@@ -68,7 +68,7 @@ func listsOf(
 			continue
 		}
 
-		for index, name := range wireOrder(cat, string(b.Model)) {
+		for index, name := range wireOrder(cat, string(b.Model), b.Stereo()) {
 			spec, known := block.Params[name]
 			if !known {
 				continue

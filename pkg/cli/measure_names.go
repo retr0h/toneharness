@@ -95,7 +95,10 @@ func MeasureNames(
 		return fmt.Errorf("the catalog has no %s", opts.Model)
 	}
 
-	order := wireOrder(cat, opts.Model)
+	// Mono, because this builds its own preset holding this one block and a
+	// device loads one mono unless a preset asks otherwise. What the sweep
+	// below then compares the claim against is the instance it built.
+	order := wireOrder(cat, opts.Model, false)
 
 	work, err := os.MkdirTemp("", "toneharness-names")
 	if err != nil {

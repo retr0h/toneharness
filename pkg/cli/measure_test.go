@@ -316,7 +316,7 @@ func (s *MeasureTestSuite) TestSweepable() {
 			name: "takes dials and lists",
 			then: func() {
 				block := s.cat.Blocks["HD2_CabMicIr_2x15Brute"]
-				got := Sweepable(block, WireOrder(s.cat, "HD2_CabMicIr_2x15Brute"))
+				got := Sweepable(block, WireOrder(s.cat, "HD2_CabMicIr_2x15Brute", false))
 
 				kinds := make([]string, 0, len(got))
 				for _, c := range got {
@@ -350,7 +350,7 @@ func (s *MeasureTestSuite) TestSweepable() {
 
 				var bright control
 
-				for _, c := range Sweepable(block, WireOrder(s.cat, model)) {
+				for _, c := range Sweepable(block, WireOrder(s.cat, model, false)) {
 					if c.name == "Bright" {
 						bright = c
 					}
@@ -375,7 +375,7 @@ func (s *MeasureTestSuite) TestSweepable() {
 				// This cabinet carries no switch, which is what makes it the block to ask:
 				// a switch is the one kind whose range this does not take, because the
 				// catalog does not carry one.
-				for _, c := range Sweepable(block, WireOrder(s.cat, "HD2_CabMicIr_2x15Brute")) {
+				for _, c := range Sweepable(block, WireOrder(s.cat, "HD2_CabMicIr_2x15Brute", false)) {
 					spec := block.Params[c.name]
 
 					s.Require().InDelta(spec.Min, c.low, 0.001, c.name)
@@ -390,17 +390,92 @@ func (s *MeasureTestSuite) TestSweepable() {
 	}
 }
 
-// TestWireOrderIsNotTheSortedOne is the mislabelling this prevents.
+// TestWireOrder covers the order a device addresses a model's parameters in.
 //
-// `catalog show` prints a model's parameters sorted for a reader. The device
-// sends them in its own order, and counting down the printed one files every
-// curve under the wrong control while the numbers stay plausible.
-func (s *MeasureTestSuite) TestWireOrderIsNotTheSortedOne() {
-	got := WireOrder(s.cat, "HD2_AmpUSDripmanNorm")
+// One method and one table, so a case is a row rather than a file. Every row
+// is about the same mislabelling: a curve filed under the wrong control is a
+// plausible number about a different knob, which is the one failure here that
+// reads as a result.
+func (s *MeasureTestSuite) TestWireOrder() {
+	for _, tt := range []struct {
+		name  string
+		model string
+		// stereo is which of a paired model's two orders to ask for.
+		stereo bool
+		then   func(got []string)
+	}{
+		{
+			// `catalog show` prints a model's parameters sorted for a reader.
+			// The device sends them in its own order, and counting down the
+			// printed one misfiles every curve.
+			name:  "not the sorted order",
+			model: "HD2_AmpUSDripmanNorm",
+			then: func(got []string) {
+				s.Require().Equal(
+					[]string{"Norm Drive", "Bass", "Mid", "Treble"}, got[:4])
+			},
+		},
+		{
+			// The bug this table was written for.
+			//
+			// The symbol table names a mono and a stereo instance of one model
+			// separately and the catalog names the model once, so matching the
+			// name as it stands answered for the amplifiers and cabinets,
+			// which are mono, and for nothing in the categories that come in
+			// pairs. 192 of 661 blocks returned no order at all, which put
+			// every control on a chain's compressor, equaliser, reverb and wah
+			// out of reach of a sweep and of a solve.
+			name:  "a model the table names only Mono",
+			model: "HD2_CompressorDeluxeComp",
+			then: func(got []string) {
+				// Knee last rather than beside the other shaping
+				// controls, which is the device's order and not one anybody
+				// would guess: it is fifth in the sorted printout.
+				s.Require().Equal([]string{
+					"Threshold", "Ratio", "Attack", "Release",
+					"Mix", "Level", "Knee",
+				}, got)
+			},
+		},
+		{
+			// Why the caller says which it wants rather than this picking.
+			//
+			// A stereo Chorus carries Spread at the index its mono carries
+			// Mix, and 47 of the 152 paired models diverge like that, so
+			// reading the mono order for a stereo instance misfiles every
+			// control from the divergence on.
+			name:   "the stereo order is not the mono one",
+			model:  "HD2_Chorus",
+			stereo: true,
+			then: func(got []string) {
+				mono := WireOrder(s.cat, "HD2_Chorus", false)
 
-	s.Require().Equal(
-		[]string{"Norm Drive", "Bass", "Mid", "Treble"}, got[:4])
-	s.Require().Empty(WireOrder(s.cat, "nothing calls itself this"))
+				s.Require().Equal("Spread", got[5])
+				s.Require().Equal("Mix", mono[5])
+				s.Require().NotEqual(mono, got)
+			},
+		},
+		{
+			// A device loads a block mono unless a preset asks otherwise, so
+			// the mono order is what an unasked-for instance is addressed by.
+			name:  "mono is what the pair answers by default",
+			model: "HD2_Chorus",
+			then: func(got []string) {
+				s.Require().Equal("Mix", got[5])
+			},
+		},
+		{
+			name:  "a name that is not a model",
+			model: "nothing calls itself this",
+			then: func(got []string) {
+				s.Require().Empty(got)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then(WireOrder(s.cat, tt.model, tt.stereo))
+		})
+	}
 }
 
 // TestFillGivesADialASlopeAndAListASpread covers the split.

@@ -292,7 +292,7 @@ func committedSlopes(
 				b.Model, curves.Instrument))
 		}
 
-		order := wireOrder(cat, string(b.Model))
+		order := wireOrder(cat, string(b.Model), b.Stereo())
 
 		for index, name := range order {
 			curve, swept := curves.Controls[name]

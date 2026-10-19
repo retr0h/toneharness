@@ -98,8 +98,38 @@ func (b Block) Path() int {
 	return got
 }
 
+// Stereo says whether this instance runs in stereo.
+//
+// Read out of the attributes rather than modelled as a field, for the same
+// reason Path is: that is where a preset keeps it and where a lift puts it
+// back. The catalog's own `Stereo` is a different fact, which is whether the
+// model is capable of it.
+//
+// It decides which parameter order addresses this block. The device names a
+// mono and a stereo instance of one model separately and their orders are not
+// the same list: a stereo Chorus carries Spread at the index its mono carries
+// Mix, so 47 of the 152 paired models address a different control from that
+// index on. Reading the mono order for a stereo instance files every curve
+// past that point under the wrong name, with the numbers staying plausible.
+func (b Block) Stereo() bool {
+	raw, ok := b.Attrs[attrStereo]
+	if !ok {
+		return false
+	}
+
+	var got bool
+	if err := json.Unmarshal(raw, &got); err != nil {
+		return false
+	}
+
+	return got
+}
+
 // attrPath is the device's name for which side of a split a block is on.
 const attrPath = "@path"
+
+// attrStereo is the device's name for whether a block runs in stereo.
+const attrStereo = "@stereo"
 
 // Plan is a rig realised on one device.
 //

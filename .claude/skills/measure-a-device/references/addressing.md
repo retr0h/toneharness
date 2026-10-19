@@ -32,6 +32,25 @@ values are tried per index, because a control already resting on the first would
 show no change and be reported as an index that reaches nothing. An index it
 could not test is untested rather than wrong.
 
+## A model has two orders, and they are not the same list
+
+The device's table names a mono and a stereo instance of one model separately,
+`HD2_ChorusMono` and `HD2_ChorusStereo`, while the catalog names the model once
+as `HD2_Chorus`. An exact name match answers for 469 of the 661 blocks, every
+amplifier and cabinet among them. The other 192 are named only with a suffix,
+and 152 of those carry both.
+
+**The two orders differ on 47 of those 152:** 19 delays, 19 modulations, 5
+pitch blocks, 2 reverbs, a compressor and a filter. A stereo Chorus carries
+Spread at the index its mono carries Mix, so every control from that index on
+addresses its neighbour. Which instance a block is running decides which list
+reads it, and a preset records that in its `@stereo` attribute. A device loads a
+block mono unless the preset asks otherwise, so an absent attribute means mono.
+
+This is the same failure as counting down the sorted printout, arriving by a
+different route, and it reads the same way: plausible numbers about a different
+knob.
+
 ## The block is its slot, not its place in the chain
 
 An HX Stomp's layout is fixed: 0 the input block, 1-8 path A where a chain's
