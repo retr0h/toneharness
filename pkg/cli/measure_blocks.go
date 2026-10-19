@@ -445,16 +445,28 @@ func baseline(
 		return fmt.Errorf("loading the empty loop: %w", err)
 	}
 
-	got, err := sdk.Fingerprint(ctx, bench, signal)
-	if err != nil {
-		return err
+	// Three takes and the median of them, because this one reading calibrates
+	// every other and is the noisiest the rig produces. See measured.Middle
+	// for the five reads that settled the count.
+	takes := make([]measured.Figures, 0, baselineTakes)
+
+	for range baselineTakes {
+		take, err := sdk.Fingerprint(ctx, bench, signal)
+		if err != nil {
+			return err
+		}
+
+		takes = append(takes, take)
 	}
+
+	got := measured.Middle(takes)
 
 	lib.Baseline = got
 
 	_, _ = fmt.Fprintf(w,
-		"  baseline: centroid %.1f Hz, level %.2f dB, %.1f%% low\n",
-		got.Centroid, got.Level, got.Low)
+		"  baseline: centroid %.1f Hz, level %.2f dB, %.1f%% low, "+
+			"the middle of %d takes\n",
+		got.Centroid, got.Level, got.Low, len(takes))
 
 	drifted(w, got)
 
@@ -464,14 +476,28 @@ func baseline(
 // moved is how far a baseline may sit from the shipped one before it is worth
 // saying so, in decibels of level and hertz of centroid.
 //
-// Generous, because this is for a rig somebody changed rather than for the
-// wander between two takes, which is a hundredth of these. The old rig and the
-// one that opened the loop differ by 50 hertz of centroid on a bare amplifier,
-// and a nudged volume knob moves the level by more than three.
+// Generous, because this is for a rig somebody changed. The old rig and the one
+// that opened the loop differ by 50 hertz of centroid on a bare amplifier, and
+// a nudged volume knob moves the level by more than three.
+//
+// It used to say the wander between two takes was a hundredth of these, which
+// was an assumption rather than a measurement and was wrong by two orders of
+// magnitude: five consecutive reads of an untouched rig spanned 56 hertz and
+// 5.1 decibels, so the spread of one take was wider than the gate meant to
+// catch a rewiring. Two of those five fired this warning with nothing changed
+// between them. What the gate now compares is the median of several takes,
+// which is what makes these numbers mean what they say.
 const (
 	movedBy  = 3.0
 	movedFar = 25.0
 )
+
+// baselineTakes is how many readings a baseline is the middle of.
+//
+// Three, which is the smallest number at which one wild reading is discarded
+// rather than averaged in, and costs eight seconds against a campaign measured
+// in hours.
+const baselineTakes = 3
 
 // drifted says when the empty loop no longer reads what the shipped library's
 // did.
