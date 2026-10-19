@@ -47,12 +47,17 @@ processors in the corpus have a set of keys that is not the set of slots. The sl
 is `@position` in the entry's `attrs`. Renumbering either moves blocks around the
 file.
 
-**The rest of the preset is in `rig.preset`.** Everything beside the chain: the
+**The rest of the preset is in `built.preset`.** Everything beside the chain: the
 snapshots, each processor's routing, the footswitch and expression assignments, the
 DT and Powercab members, the impulse response table. Written by a lift and merged
 over an untouched preset the device wrote, so the result carries the inputs,
 outputs, split and join a device expects. `--template` uses a particular preset as
 that base instead.
+
+`rig.preset` is the authored half of the same thing and it is sparse: a few
+member fields somebody chose, which outrank the generated ones. It was the only
+half until contract 4.0.0, when a lift's full output stopped being written into
+the field that means "a person asked for this".
 
 What still does not come back: the file's own metadata outside the preset payload,
 and the few fields the untouched preset carries that the original lacked, which are

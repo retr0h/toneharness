@@ -58,7 +58,7 @@ refused:
 
 ```yaml
 schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: rick-danko
 ```
 
@@ -78,6 +78,13 @@ the only contract available to it.
 This is what made the contract 3.0.0. Every document that existed validated
 without a version and none of them do now, which is the definition of a major in
 the table above.
+
+**4.0.0 is the other kind of major: a field that still exists and means
+something else.** A resolve used to write every control it computed into
+`rig.chain[].controls`, the field that means "a person pinned this". Reading an
+old document under the new rules would take its generated controls for overrides
+and freeze it, so the reader refuses it by name and says to rewrite it. Sixty
+documents were rewritten, and what moved is in [halves.md](halves.md).
 
 ## What a version does not do
 

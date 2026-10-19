@@ -1,15 +1,27 @@
 # Which half a fact belongs in
 
-A ToneSpec is one file with two sections. The line between them is **scope, not
-kind**. Why the request was made belongs to `ask:`. Why this particular piece of
-gear answered it belongs to `rig:`, because the rig is what gets published and a
-published chain that cannot say why this amplifier is in it is a chain nobody can
-check.
+A ToneSpec is one file with three sections, and two different lines run between
+them.
+
+**Between `ask:` and `rig:` the line is scope, not kind.** Why the request was
+made belongs to `ask:`. Why this particular piece of gear answered it belongs to
+`rig:`, because the rig is what gets published and a published chain that cannot
+say why this amplifier is in it is a chain nobody can check.
+
+**Between those two and `built:` the line is who writes it.** Both of the above
+are authored and `built:` is generated, replaced whole by every `rigs resolve`.
+So the question "which half" has a second half: a fact somebody established goes
+up, and a number the compiler worked out goes down. See the skill's own section
+on it, which carries the rule and why the sections were split in 4.0.0.
+
+A number you want to pin against the compiler is an authored fact about the
+preset, so it goes up, in a chain entry's sparse `controls:`.
 
 ## The smallest document that builds
 
 ```yaml
 schema: ToneSpec
+version: "4.0.0"
 id: mike-dirnt
 
 ask:
@@ -24,9 +36,10 @@ rig:
     - { role: cab, gear: Ampeg 8x10 }
 ```
 
-`schema`, `id` and `rig` are required. `ask` is not: gear read off a device
-answered nobody's written request, and a document with no ask is the ordinary
-shape for one.
+`schema`, `version`, `id` and `rig` are required. `ask` is not: gear read off a
+device answered nobody's written request, and a document with no ask is the
+ordinary shape for one. Neither is `built:` — this is exactly what `rigs new`
+scaffolds, and nothing has resolved it yet.
 
 Everything else is optional. `instrument` sits in both halves on purpose: the ask
 says which instrument the request is about, the rig says which one the gear is
