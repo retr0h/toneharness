@@ -84,7 +84,18 @@ func pack(
 		return nil
 	}
 
-	body, err := json.MarshalIndent(got, "", "  ")
+	// Which corpus these figures were measured over, recorded beside them.
+	// The audio cannot ship so no test can re-derive a figure, and without
+	// this the pack could not even say which records it was taken across: a
+	// pack and a corpus that had drifted apart agreed with each other and
+	// nothing could tell.
+	sha, err := audio.CorpusSHA(os.DirFS(from), ".")
+	if err != nil {
+		return fmt.Errorf("fingerprinting %s: %w", from, err)
+	}
+
+	body, err := json.MarshalIndent(
+		audio.Packed{Corpus: sha, Genres: got}, "", "  ")
 	if err != nil {
 		return fmt.Errorf("writing the genres: %w", err)
 	}
