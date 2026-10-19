@@ -21,6 +21,7 @@
 package compile
 
 import (
+	"fmt"
 	"math"
 	"slices"
 
@@ -141,17 +142,30 @@ type answers struct {
 // Guide explains it: lower values offer tighter responsiveness, higher values
 // more touch dynamics and sustain.
 //
-// The other four axes — decay, string-noise, pickup, movement — describe the
-// player and the instrument, and no amplifier, reverb or compressor has a
-// control for them. A term from one of those is recorded and moves nothing,
-// which a build says out loud: "says short-decay — nothing acts on this yet".
+// Decay was the fourth, on the grounds that nothing on this device has a
+// control for it. The committed sweeps say otherwise, and they were here the
+// whole time: a Deluxe Comp's Mix moves measured decay from 0.64s to 1.69s
+// across its span, monotone above 0.5, straightness 0.86, and a hundred times
+// the 0.01s the sweep reports as its own noise. The gap it has to close is the
+// 0.25s between southern rock at 0.24 and pop punk at 0.49, so a quarter of a
+// turn covers it.
 //
-// Decay is the one of the four a corpus can earn, since its measure was fixed,
-// and that changed nothing here. It is why hard rock, pop punk and southern
-// rock resolve to one chain: the figure that separates those three is real and
-// there is no control on this device to spend it on. A word earned on it is
-// evidence about the records rather than an instruction about the preset, and
-// the genre rigs' own notes say so.
+// **It is not the level moving the measurement's floor**, which is the
+// confound that would make this worthless: across that same sweep the level
+// falls from -13.8dB to -31.3dB while the decay rises. The signal gets quieter
+// and the tail lasts longer, which is the compressor holding the tail up
+// against the peak rather than lifting everything over a threshold. A Master
+// or a ChVol reads as the biggest decay mover on the device for exactly the
+// reason this one is not, so neither is used.
+//
+// Mix rather than Release. Release moves decay -0.029s across its whole span,
+// three times the noise floor and a ninth of the gap, so it cannot answer even
+// though it is the control the name suggests.
+//
+// The other three — string-noise, pickup, movement — still describe the player
+// and the instrument, and still move nothing. A term from one of those is
+// recorded, which a build says out loud: "says soft-attack — nothing acts on
+// this yet".
 var turns = map[string][]turn{
 	"mid-forward": {{
 		axis: "mids", category: catalog.CategoryAmp, param: "Mid", steps: 1,
@@ -175,13 +189,54 @@ var turns = map[string][]turn{
 		also: []answers{{catalog.CategoryEQ, "HighGain"}},
 	}},
 
-	"clean":          {{axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: -1}},
-	"minimal-drive":  {{axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: -0.5}},
-	"grit-on-attack": {{axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: 0.5}},
-	"saturated":      {{axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: 1}},
+	// A drive pedal is where the drive axis goes when the amplifier cannot
+	// answer, which is the same arrangement `mid-forward` has with an
+	// equaliser. Eight of this device's bass amplifiers have no Drive control
+	// at all, and one of them is already in use: Stu Cook's rig substitutes a
+	// Sunn Coliseum 300 for the Kustom nothing models, and `saturated` reached
+	// nothing on it. Sixty-five drive blocks carry a Drive, so there is
+	// somewhere for the word to land.
+	//
+	// Never instead of the amplifier's own Drive. [somewhereFor] tries the
+	// places in order and stops at the first that answers, so a chain whose
+	// amplifier has the control keeps using it and no pedal is seated.
+	"clean": {{
+		axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: -1,
+		also: []answers{{catalog.CategoryDrive, "Drive"}},
+	}},
+	"minimal-drive": {{
+		axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: -0.5,
+		also: []answers{{catalog.CategoryDrive, "Drive"}},
+	}},
+	"grit-on-attack": {{
+		axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: 0.5,
+		also: []answers{{catalog.CategoryDrive, "Drive"}},
+	}},
+	"saturated": {{
+		axis: "drive", category: catalog.CategoryAmp, param: "Drive", steps: 1,
+		also: []answers{{catalog.CategoryDrive, "Drive"}},
+	}},
 
 	"tight-low-end": {{axis: "low-end", category: catalog.CategoryAmp, param: "Sag", steps: -1}},
 	"loose-low-end": {{axis: "low-end", category: catalog.CategoryAmp, param: "Sag", steps: 1}},
+
+	// The other half of the movement axis. `envelope-swept` asserts a filter
+	// is there, which demand seats; this asserts one is not, and a chain
+	// holding no filter is already still. The same shape as `dry` against a
+	// reverb, and it reaches a control for the one case where a filter is in
+	// the chain and the ask wants it out of the way.
+	"static": {{
+		axis: "movement", category: catalog.CategoryFilter, param: "Mix", steps: -1,
+		absenceMeans: "this chain has no filter, so nothing is sweeping",
+	}},
+
+	// A compressor's Mix, for the reason the comment above this table gives:
+	// more of the compressed signal holds a note's tail up against its peak,
+	// which is the thing the decay measure measures. Every chain the corpus
+	// builds already holds a compressor, so this asks for no block that is not
+	// there.
+	"long-decay":  {{axis: "decay", category: catalog.CategoryComp, param: "Mix", steps: 1}},
+	"short-decay": {{axis: "decay", category: catalog.CategoryComp, param: "Mix", steps: -1}},
 
 	// Not the same question as low-end, which is how the bottom behaves. This
 	// is whether there is a second note under the first, an octave down, and
@@ -440,6 +495,26 @@ func apply(
 	}
 
 	to := clamp(from+t.steps*h.weight*step(b, key, p, stats), p.Min, p.Max)
+
+	// A knob already at the end it was asked to move towards. The control is
+	// there, the word reached it, and the preset is no different for it, so
+	// saying it acted is the thing [Moved] exists to stop: a build reports what
+	// a word did, not what the preset ends up holding.
+	//
+	// It is the ordinary answer for a control the corpus is unanimous about.
+	// Every bass preset measured leaves a Deluxe Comp's Mix at 1.0, so the step
+	// is small and the ceiling is where it starts: `long-decay` lands on it and
+	// has nowhere to go, while `short-decay` moves. Three genres read alike for
+	// exactly that reason, and the report is how somebody finds out rather than
+	// guessing from two files that match.
+	if to == from {
+		return Moved{
+			At: at, Term: term, Weight: h.weight,
+			Because: fmt.Sprintf(
+				"the %s's %s is already at %g, which is as far as %s asks it to go",
+				b.Name, key, from, term),
+		}
+	}
 
 	params[key] = catalog.Float(to)
 
