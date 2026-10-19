@@ -20,6 +20,11 @@
 
 package translate
 
+import (
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
+)
+
 // Exposed to this package's external tests. What a genre note says is a
 // decision with four answers and only three are reachable through whichever
 // records somebody has tagged, so the fourth is tested here directly.
@@ -43,3 +48,48 @@ var (
 	// manufacturer's name for it where the catalog says what it emulates.
 	Named = named
 )
+
+// Aim is what a request is aiming at. Aliased rather than exported outright,
+// because nothing outside this package constructs one in earnest: a build works
+// it out from the ask and hands it straight to the ranking.
+type Aim = aim
+
+// Aiming builds what a request is aiming at, so the evidence a chosen block
+// carries can be read without a corpus standing behind it.
+//
+// Two of the four answers [aim.because] gives are states no shipped genre is
+// in: one that earns no word, and a target carrying no figures at all. Both are
+// the contract whether or not today's data reaches them, and the first is the
+// ordinary answer for a genre sitting where everything else sits.
+func Aiming(
+	named string,
+	centroid float64,
+	records, players int,
+	earned []string,
+	read map[string]float64,
+	caveat string,
+) Aim {
+	return aim{
+		figures: measured.Figures{Centroid: centroid},
+		named:   named,
+		read:    read,
+		records: records,
+		players: players,
+		earned:  earned,
+		caveat:  caveat,
+	}
+}
+
+// Because is the evidence for choosing one block, written onto the block.
+func Because(
+	a Aim,
+	gear string,
+	ranked int,
+	sat float64,
+	instrument string,
+) tone.Evidence {
+	return a.because(gear, ranked, sat, instrument)
+}
+
+// Said3 is a list the way a sentence says one.
+var Said3 = said3

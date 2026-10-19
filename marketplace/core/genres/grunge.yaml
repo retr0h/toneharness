@@ -57,26 +57,31 @@ rig:
       Mid: "0.5360000000000001"
       Ripple: "0.5"
       Sag: "0.5"
-      Treble: "0.5"
+      Treble: "0.46875"
     evidence:
     - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
-        the microphone, the desk and the master of every one of them. The amplifier
-        below is what sits nearest those figures, not one anybody is known to have
-        used. It also moves: a genre is measured against the players who play none
-        of it, so this answer changes when the corpus gains players, and it is worth
-        rebuilding rather than trusting indefinitely. Grunge is the example. It held
-        scooped, dark and clean; twenty-five records from five other genres joined
-        the corpus and it held nothing, because the rule then asked a genre to be
-        unusual rather than to be something; it holds scooped again now that words
-        may overlap, and clean is gone from every subject because a low share of energy
-        above the fundamental turned out not to be evidence of no drive.'
+        the microphone, the desk and the master of every one of them. This block is
+        what sits nearest those figures, not one anybody is known to have used. It
+        also moves: a genre is measured against the players who play none of it, so
+        this answer changes when the corpus gains players, and it is worth rebuilding
+        rather than trusting indefinitely.'
       kind: audio
-      note: Chosen by measurement rather than by anybody's say-so. Across 12 records
-        from 4 players, grunge measures a centroid the device's nearest bass amplifier
-        sits at 150 Hz against 145, which is the closest of the 27 it models for this
-        instrument. Its records earn scooped and long-decay, measured against the
-        players who play none of it, and that is what moves the controls below off
-        the medians this instrument's presets sit at.
+      measured:
+        centroid: 119
+        decay: 0.41
+        dynamics: 6.5
+        harmonics: 0.11
+        high: 0
+        lean: 0.86
+        low: 0.99
+        mid: 0.01
+        transient: 0.69
+      note: Chosen by measurement rather than by anybody's say-so. MESA/Boogie Bass
+        400+ (channel 1) is the closest of the 27 bass amplifiers this device models
+        to grunge, sitting at 150 Hz against 140. Across 15 records from 5 players,
+        grunge earns scooped, dark and long-decay, measured against the players who
+        play none of it, and that is what moves the controls off the medians this
+        instrument's presets sit at.
     gear: MESA/Boogie Bass 400+ (channel 1)
     position: 1
     role: amp

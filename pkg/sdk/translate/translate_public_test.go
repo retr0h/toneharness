@@ -1656,3 +1656,135 @@ func (s *TranslatePublicTestSuite) TestNoMicdCabinetClaimsToBeALegacyModel() {
 
 	s.Require().Positive(mics, "the catalog carries mic'd cabinets at all")
 }
+
+// TestABlockChosenByMeasurementSaysWhy covers the evidence a measured choice
+// carries, which is the half that used to be written by hand.
+//
+// It was hand-written on all eleven genre rigs in the marketplace, and
+// rebuilding them dropped every one at once. Nothing but a test over the
+// shipped rigs said so, and a test catching it after the fact is not the same
+// as the build writing it down in the first place.
+//
+// Four answers, and two are states no shipped genre is in: the corpus behind
+// every aimable genre earns at least one word today, and no target arrives with
+// no figures. Both are the contract regardless of what today's data reaches.
+func (s *TranslatePublicTestSuite) TestABlockChosenByMeasurementSaysWhy() {
+	tests := []struct {
+		name     string
+		aim      translate.Aim
+		says     []string
+		omits    []string
+		figures  bool
+		caveated bool
+	}{
+		{
+			name: "a genre earning words names them and what stands behind it",
+			aim: translate.Aiming("grunge", 140, 15, 5,
+				[]string{"scooped", "dark", "long-decay"},
+				map[string]float64{"centroid": 119},
+				"the master of every one of them"),
+			says: []string{
+				"Chosen by measurement rather than by anybody's say-so",
+				"MESA/Boogie Bass 400+ is the closest of the 27 bass amplifiers",
+				"sitting at 150 Hz against 140",
+				"Across 15 records from 5 players, grunge earns scooped, dark " +
+					"and long-decay",
+				"players who play none of it",
+			},
+			figures:  true,
+			caveated: true,
+		},
+		{
+			name: "a genre earning nothing says so rather than going quiet",
+			aim: translate.Aiming("emo", 140, 9, 3, nil,
+				map[string]float64{"centroid": 119}, "a caveat"),
+			says: []string{
+				"Across 9 records from 3 players, emo earns no word",
+				"nothing moves the controls off the medians",
+			},
+			omits:    []string{"and that is what moves"},
+			figures:  true,
+			caveated: true,
+		},
+		{
+			name: "a recording names itself and counts nothing",
+			aim: translate.Aiming("/tmp/take.wav", 162, 0, 0, nil,
+				map[string]float64{"centroid": 162}, "carries the master"),
+			says: []string{
+				"closest of the 27 bass amplifiers this device models to " +
+					"/tmp/take.wav",
+			},
+			omits:    []string{"records from", "earns"},
+			figures:  true,
+			caveated: true,
+		},
+		{
+			name: "a target with no figures and no caveat carries neither",
+			aim:  translate.Aiming("grunge", 140, 0, 0, nil, nil, ""),
+			says: []string{"Chosen by measurement"},
+			// Absent rather than empty. A caveat reading "" asserts the source
+			// hides nothing, which is the opposite of saying nothing about it.
+			figures:  false,
+			caveated: false,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got := translate.Because(
+				tt.aim, "MESA/Boogie Bass 400+", 27, 150, "bass")
+
+			s.Require().Equal(tone.EvidenceAudio, got.Kind)
+			s.Require().NotNil(got.Note)
+
+			for _, want := range tt.says {
+				s.Require().Contains(*got.Note, want)
+			}
+
+			for _, never := range tt.omits {
+				s.Require().NotContains(*got.Note, never)
+			}
+
+			if tt.figures {
+				s.Require().NotNil(got.Measured)
+			} else {
+				s.Require().Nil(got.Measured)
+			}
+
+			if tt.caveated {
+				s.Require().NotNil(got.Caveat)
+			} else {
+				s.Require().Nil(got.Caveat)
+			}
+		})
+	}
+}
+
+// TestAListReadsAsASentence covers the join, because these notes are prose and
+// "scooped, dark, long-decay" is not a sentence.
+func (s *TranslatePublicTestSuite) TestAListReadsAsASentence() {
+	tests := []struct {
+		name  string
+		words []string
+		want  string
+	}{
+		{name: "nothing joins to nothing", words: nil, want: ""},
+		{name: "one word stands alone", words: []string{"dark"}, want: "dark"},
+		{
+			name:  "two words take and",
+			words: []string{"scooped", "dark"},
+			want:  "scooped and dark",
+		},
+		{
+			name:  "three take commas and one and",
+			words: []string{"scooped", "dark", "long-decay"},
+			want:  "scooped, dark and long-decay",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, translate.Said3(tt.words))
+		})
+	}
+}
