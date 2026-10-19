@@ -836,6 +836,49 @@ func (s *MoveTestSuite) TestTermsOf() {
 // A control's name is the catalog's rather than prose, so which one lands in
 // that sentence is not something the code chooses: `Octave` read as "a Octave"
 // the first time a vowel-initial control reached it.
+// TestPointsUp covers which way a word moves an axis.
+//
+// One method and one table, so a case is a row rather than a file. Two
+// answers, because "no opinion" and "down" are different and reading one as
+// the other turns a word that says nothing into a word that says the
+// opposite.
+func (s *MoveTestSuite) TestPointsUp() {
+	for _, tt := range []struct {
+		name  string
+		term  string
+		axis  string
+		up    bool
+		known bool
+	}{
+		{
+			name: "a word that raises its axis", term: "mid-forward", axis: "mids",
+			up: true, known: true,
+		},
+		{
+			name: "a word that lowers the same axis", term: "scooped", axis: "mids",
+			up: false, known: true,
+		},
+		{
+			// The word is in the vocabulary and says nothing about this axis.
+			name: "a word that says nothing about this axis", term: "mid-forward",
+			axis: "decay",
+		},
+		{
+			// And a word that is in no table at all, which answers the same
+			// way for a different reason: both are "no opinion" rather than
+			// "down".
+			name: "a word nothing defines", term: "nonesuch", axis: "mids",
+		},
+	} {
+		s.Run(tt.name, func() {
+			up, known := pointsUp(tt.term, tt.axis)
+
+			s.Require().Equal(tt.known, known, "whether the word speaks for the axis")
+			s.Require().Equal(tt.up, up)
+		})
+	}
+}
+
 func (s *MoveTestSuite) TestArticle() {
 	for _, tt := range []struct {
 		name string

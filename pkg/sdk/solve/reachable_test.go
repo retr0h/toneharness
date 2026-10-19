@@ -329,6 +329,73 @@ func knob(
 // with every axis solved together.
 //
 // One method and one table, so a case is a row rather than a file.
+// TestWorstFirst covers the order the axes are reported in.
+//
+// One method and one table, so a case is a row rather than a file. Out of
+// reach before merely far, because they are different answers: a wide gap the
+// controls can close is work, a narrow one they cannot is a wall, and reading
+// the wall first is what stops somebody tuning for an afternoon.
+func (s *ReachableTestSuite) TestWorstFirst() {
+	for _, tt := range []struct {
+		name string
+		of   []Verdict
+		want []audio.Figure
+	}{
+		{
+			// A wall behind a long walk. The second cannot be closed at all,
+			// so it is read first however small its gap.
+			name: "out of reach comes before merely far",
+			of: []Verdict{
+				{Figure: audio.KeyCentroid, Gap: 9, Within: true},
+				{Figure: audio.KeyMid, Gap: 1, Within: false},
+			},
+			want: []audio.Figure{audio.KeyMid, audio.KeyCentroid},
+		},
+		{
+			// The same pair the other way round, which is the comparison the
+			// one above cannot make: a sort asked to swap and a sort asked to
+			// leave alone take different branches.
+			name: "and stays before it when it is already first",
+			of: []Verdict{
+				{Figure: audio.KeyMid, Gap: 1, Within: false},
+				{Figure: audio.KeyCentroid, Gap: 9, Within: true},
+			},
+			want: []audio.Figure{audio.KeyMid, audio.KeyCentroid},
+		},
+		{
+			// Both reachable, so the furthest out is the most work.
+			name: "the furthest out first where both are reachable",
+			of: []Verdict{
+				{Figure: audio.KeyCentroid, Gap: 2, Within: true},
+				{Figure: audio.KeyMid, Gap: 7, Within: true},
+			},
+			want: []audio.Figure{audio.KeyMid, audio.KeyCentroid},
+		},
+		{
+			// Nothing to choose between them, so the name decides and the
+			// order is the same on every run. A report that shuffled between
+			// two runs of one rig would read as the rig having changed.
+			name: "the name breaks a tie",
+			of: []Verdict{
+				{Figure: audio.KeyMid, Gap: 3, Within: true},
+				{Figure: audio.KeyCentroid, Gap: 3, Within: true},
+			},
+			want: []audio.Figure{audio.KeyCentroid, audio.KeyMid},
+		},
+	} {
+		s.Run(tt.name, func() {
+			worstFirst(tt.of)
+
+			got := make([]audio.Figure, 0, len(tt.of))
+			for _, v := range tt.of {
+				got = append(got, v.Figure)
+			}
+
+			s.Require().Equal(tt.want, got)
+		})
+	}
+}
+
 func (s *ReachableTestSuite) TestBest() {
 	for _, tt := range []struct {
 		name string
