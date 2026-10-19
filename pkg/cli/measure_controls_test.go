@@ -494,6 +494,26 @@ func (s *ControlsRunTestSuite) TestControlsRefusesAModelNobodyHas() {
 	s.Require().ErrorContains(err, "the catalog has no")
 }
 
+// TestControlsRefusesAnOutItCannotMake covers the last step.
+//
+// An hour of readings is worth nothing if the file cannot be written, and the
+// directory is made rather than required, so a parent that is a file rather
+// than a directory is the one way that fails. Said with the path in it,
+// because the path is what somebody has to fix.
+func (s *ControlsRunTestSuite) TestControlsRefusesAnOutItCannotMake() {
+	s.ready()
+
+	// A file where the output's parent directory would go.
+	blocked := filepath.Join(s.T().TempDir(), "in-the-way")
+	s.Require().NoError(os.WriteFile(blocked, []byte("not a directory"), 0o600))
+
+	s.out = filepath.Join(blocked, "curves.json")
+
+	_, _, err := s.run("HD2_CabMicIr_2x15Brute", bench{})
+
+	s.Require().ErrorContains(err, "in-the-way")
+}
+
 // TestMeasureControls covers MeasureControls, which sweeps every control of
 // one block, alone, and writes what each of them does.
 //
