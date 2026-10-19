@@ -174,6 +174,170 @@ func (s *MadePublicTestSuite) TestPinned() {
 	}
 }
 
+// TestMeasured covers whether a measurement sized the move rather than the
+// word alone.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MadePublicTestSuite) TestMeasured() {
+	for _, tt := range []struct {
+		name string
+		of   result.Moved
+		want bool
+	}{
+		{
+			// A word earned by a narrow margin is worth part of a step, and
+			// the report says so, because the same word on the same chain
+			// moves a different distance depending on what was measured.
+			name: "part of a step",
+			of:   result.Moved{Param: "Mid", Weight: 0.6},
+			want: true,
+		},
+		{
+			// A whole step is the word alone, with no measurement sizing it.
+			name: "a whole step",
+			of:   result.Moved{Param: "Mid", Weight: 1},
+			want: false,
+		},
+		{
+			name: "no weight at all",
+			of:   result.Moved{Param: "Mid"},
+			want: false,
+		},
+		{
+			// A weight on a word that reached no control describes nothing.
+			name: "a word that moved nothing",
+			of:   result.Moved{Weight: 0.6},
+			want: false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, tt.of.Measured())
+		})
+	}
+}
+
+// TestContested covers whether another term spoke for the same axis.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MadePublicTestSuite) TestContested() {
+	for _, tt := range []struct {
+		name string
+		of   result.Moved
+		want bool
+	}{
+		{
+			// Two words from one axis are two answers to one question, so
+			// neither is applied: applying both lands back where it started
+			// and reads as though the rig said nothing.
+			name: "another word spoke for the axis",
+			of:   result.Moved{Term: "scooped", Against: "mid-forward"},
+			want: true,
+		},
+		{
+			name: "nothing contradicted it",
+			of:   result.Moved{Term: "scooped", Param: "Mid"},
+			want: false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, tt.of.Contested())
+		})
+	}
+}
+
+// TestYielded covers whether this word stood aside for one somebody wrote.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MadePublicTestSuite) TestYielded() {
+	for _, tt := range []struct {
+		name string
+		of   result.Moved
+		want bool
+	}{
+		{
+			// A different answer from Contested, and reported as one: that is
+			// a contradiction nothing can resolve, this is a word a genre
+			// earned meeting a word a person wrote, where the person's
+			// stands. They said it and a population did not.
+			name: "a person's word won the axis",
+			of:   result.Moved{Term: "scooped", YieldedTo: "mid-forward"},
+			want: true,
+		},
+		{
+			name: "nothing stood in its way",
+			of:   result.Moved{Term: "scooped", Param: "Mid"},
+			want: false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, tt.of.Yielded())
+		})
+	}
+}
+
+// TestUnanswered covers whether the chain, rather than this project, is why
+// the word moved nothing.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MadePublicTestSuite) TestUnanswered() {
+	for _, tt := range []struct {
+		name string
+		of   result.Moved
+		want bool
+	}{
+		{
+			// The chain cannot hear the word. A different answer from an
+			// empty Because, which says nobody has taught the project to
+			// listen for it at all.
+			name: "the chain is the reason",
+			of:   result.Moved{Term: "static", Because: "this chain has no filter"},
+			want: true,
+		},
+		{
+			name: "the word reached a control",
+			of:   result.Moved{Term: "scooped", Param: "Mid"},
+			want: false,
+		},
+		{
+			name: "nothing acts on the word at all",
+			of:   result.Moved{Term: "squelchy"},
+			want: false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, tt.of.Unanswered())
+		})
+	}
+}
+
+// TestHolds covers whether the chain already answers the word as built.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MadePublicTestSuite) TestHolds() {
+	for _, tt := range []struct {
+		name string
+		of   result.Moved
+		want bool
+	}{
+		{
+			// A rig asking for no room, in a chain holding no reverb, asked
+			// for something it already has.
+			name: "the chain answers it without a knob turning",
+			of:   result.Moved{Term: "dry", Already: "this chain has no reverb"},
+			want: true,
+		},
+		{
+			name: "a knob had to move",
+			of:   result.Moved{Term: "scooped", Param: "Mid"},
+			want: false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, tt.of.Holds())
+		})
+	}
+}
+
 func TestMadePublicTestSuite(
 	t *testing.T,
 ) {
