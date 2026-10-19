@@ -7,134 +7,128 @@
 # No cabinet named. The B-15N is a combo, so the amplifier's own pairing is
 # the cabinet it was built around rather than a claim about his.
 
+schema: ToneSpec
+version: 4.0.0
+id: robert-deleo
 ask:
-  aliases:
-  - stone-temple-pilots
-  - stp
   confidence: medium
+  aliases:
+    - stone-temple-pilots
+    - stp
   genre:
-  - alternative-rock
-  - hard-rock
+    - alternative-rock
+    - hard-rock
   instrument: bass
   subject:
-    band: Stone Temple Pilots
-    era: Stone Temple Pilots, the 2018 album
     kind: artist
     name: Robert DeLeo
+    band: Stone Temple Pilots
+    era: Stone Temple Pilots, the 2018 album
     years:
       from: 2018
       to: 2018
   words: []
-id: robert-deleo
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    capture: direct
-    confidence: medium
-    controls:
-      Bass: "0.67"
-      Bias: "0.66"
-      BiasX: "0.5"
-      ChVol: "1.0"
-      Drive: "0.7"
-      HighMid: "0.5"
-      Hum: "0.5"
-      LowMid: "0.65"
-      Master: "1.0"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.69"
-    evidence:
-    - caveat: 'Half the studio pair. The Ampeg VT-22 he used beside the B-15N is a
-        guitar combo and this device models nothing like it, so what is below is the
-        B-15N alone rather than the two together. The era is the point of this document
-        and worth stating plainly. He has been in the band since 1986 and nothing
-        found establishes what he used on Core in 1992: Guitar World on the making
-        of that record is said to put him on an Ampeg SVT with a Sennheiser 421 and
-        is paywalled, MusicRadar on his amplifiers is paywalled, and his own interview
-        on camera says only "I had an old Ampeg like this that I was going through"
-        while pointing at something off screen, with no model and no mention of Core,
-        Purple, SVT or B-15 anywhere in ten thousand words of it. A TalkBass poster
-        adds that from Tiny Music onward the studio rig was a Marshall tube head into
-        a Marshall 8x10 keyboard cabinet, which would not map either. So this is 2018
-        and says so. The grunge-era Stone Temple Pilots is still unwritten, and writing
-        it would mean citing a page nobody here could open. Bass Magazine separately
-        lists his rig as an Ampeg SVT into an SVT-810E in the gear box for Issue 11,
-        which covers his 2022 solo album Lessons Learned. That album was tracked "direct
-        with no amps and with the Ampeg plug-in", so it describes what he owns rather
-        than what printed, and it is a different era again.'
-      kind: cited
-      note: 'Premier Guitar on the pair of them, published 26 April 2018 alongside
-        the band''s self-titled album of that year, which is where these records come
-        from. It separates his studio amplifiers from his live ones, and the studio
-        list is two: a 1967 Ampeg B-15N and an Ampeg VT-22. Live he ran a QSC PLX1602
-        power amp into two Ampeg SVT-810E extension cabinets, which is a different
-        rig and not this one. The same piece lists the basses he tracked the album
-        with: a 1965 Fender Precision, a 1976 Rickenbacker 4001, a 1971 Rickenbacker
-        4001 in fireglo with flatwounds, a 1972 Fender Jazz and a 1974 Fender Telecaster
-        Bass.'
-      url: https://www.premierguitar.com/artists/stone-temple-pilots-dean-and-robert-deleo
-    gear: Ampeg B-15NF
-    position: 1
-    role: amp
-  - attrs:
-      '@position': "2"
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      HighCut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Legacy 1x15" Ampeg B-15
-    position: 2
-    role: cab
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg B-15NF
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: 'Half the studio pair. The Ampeg VT-22 he used beside the B-15N is a guitar combo and this device models nothing like it, so what is below is the B-15N alone rather than the two together. The era is the point of this document and worth stating plainly. He has been in the band since 1986 and nothing found establishes what he used on Core in 1992: Guitar World on the making of that record is said to put him on an Ampeg SVT with a Sennheiser 421 and is paywalled, MusicRadar on his amplifiers is paywalled, and his own interview on camera says only "I had an old Ampeg like this that I was going through" while pointing at something off screen, with no model and no mention of Core, Purple, SVT or B-15 anywhere in ten thousand words of it. A TalkBass poster adds that from Tiny Music onward the studio rig was a Marshall tube head into a Marshall 8x10 keyboard cabinet, which would not map either. So this is 2018 and says so. The grunge-era Stone Temple Pilots is still unwritten, and writing it would mean citing a page nobody here could open. Bass Magazine separately lists his rig as an Ampeg SVT into an SVT-810E in the gear box for Issue 11, which covers his 2022 solo album Lessons Learned. That album was tracked "direct with no amps and with the Ampeg plug-in", so it describes what he owns rather than what printed, and it is a different era again.'
+          note: 'Premier Guitar on the pair of them, published 26 April 2018 alongside the band''s self-titled album of that year, which is where these records come from. It separates his studio amplifiers from his live ones, and the studio list is two: a 1967 Ampeg B-15N and an Ampeg VT-22. Live he ran a QSC PLX1602 power amp into two Ampeg SVT-810E extension cabinets, which is a different rig and not this one. The same piece lists the basses he tracked the album with: a 1965 Fender Precision, a 1976 Rickenbacker 4001, a 1971 Rickenbacker 4001 in fireglo with flatwounds, a 1972 Fender Jazz and a 1974 Fender Telecaster Bass.'
+          url: https://www.premierguitar.com/artists/stone-temple-pilots-dean-and-robert-deleo
+    - role: cab
+      gear: Legacy 1x15" Ampeg B-15
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg B-15NF
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: 'Half the studio pair. The Ampeg VT-22 he used beside the B-15N is a guitar combo and this device models nothing like it, so what is below is the B-15N alone rather than the two together. The era is the point of this document and worth stating plainly. He has been in the band since 1986 and nothing found establishes what he used on Core in 1992: Guitar World on the making of that record is said to put him on an Ampeg SVT with a Sennheiser 421 and is paywalled, MusicRadar on his amplifiers is paywalled, and his own interview on camera says only "I had an old Ampeg like this that I was going through" while pointing at something off screen, with no model and no mention of Core, Purple, SVT or B-15 anywhere in ten thousand words of it. A TalkBass poster adds that from Tiny Music onward the studio rig was a Marshall tube head into a Marshall 8x10 keyboard cabinet, which would not map either. So this is 2018 and says so. The grunge-era Stone Temple Pilots is still unwritten, and writing it would mean citing a page nobody here could open. Bass Magazine separately lists his rig as an Ampeg SVT into an SVT-810E in the gear box for Issue 11, which covers his 2022 solo album Lessons Learned. That album was tracked "direct with no amps and with the Ampeg plug-in", so it describes what he owns rather than what printed, and it is a different era again.'
+          note: 'Premier Guitar on the pair of them, published 26 April 2018 alongside the band''s self-titled album of that year, which is where these records come from. It separates his studio amplifiers from his live ones, and the studio list is two: a 1967 Ampeg B-15N and an Ampeg VT-22. Live he ran a QSC PLX1602 power amp into two Ampeg SVT-810E extension cabinets, which is a different rig and not this one. The same piece lists the basses he tracked the album with: a 1965 Fender Precision, a 1976 Rickenbacker 4001, a 1971 Rickenbacker 4001 in fireglo with flatwounds, a 1972 Fender Jazz and a 1974 Fender Telecaster Bass.'
+          url: https://www.premierguitar.com/artists/stone-temple-pilots-dean-and-robert-deleo
+      controls:
+        Bass: "0.67"
+        Bias: "0.66"
+        BiasX: "0.5"
+        ChVol: "1.0"
+        Drive: "0.7"
+        HighMid: "0.5"
+        Hum: "0.5"
+        LowMid: "0.65"
+        Master: "1.0"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.69"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: Legacy 1x15" Ampeg B-15
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        HighCut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -142,31 +136,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -232,8 +230,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

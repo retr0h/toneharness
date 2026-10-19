@@ -5,7 +5,7 @@
 # first.
 
 schema: Setup
-version: "3.0.0"
+version: "4.0.0"
 
 device:
   model: HX Stomp

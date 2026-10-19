@@ -54,7 +54,9 @@ func (s *MoveTestSuite) blocks() []catalog.Block {
 	return []catalog.Block{
 		{
 			ID: "HD2_CompTest", Category: catalog.CategoryComp,
-			Params: map[string]catalog.Param{"Attack": knob},
+			// Mix as well as Attack, because the Deluxe Comp every built chain
+			// holds has both and decay now asks for the first of them.
+			Params: map[string]catalog.Param{"Attack": knob, "Mix": knob},
 		},
 		{
 			ID: "HD2_PitchTest", Category: catalog.CategoryPitch,
@@ -71,11 +73,35 @@ func (s *MoveTestSuite) blocks() []catalog.Block {
 // built is where the corpus and the catalog left every block, before a word.
 func (s *MoveTestSuite) built() plan.Plan {
 	return plan.Plan{Blocks: []plan.Block{
-		{Model: "HD2_CompTest", Params: plan.Params{"Attack": catalog.Float(0.5)}},
+		{Model: "HD2_CompTest", Params: plan.Params{
+			"Attack": catalog.Float(0.5), "Mix": catalog.Float(0.5),
+		}},
 		{Model: "HD2_PitchTest", Params: plan.Params{"Octave": catalog.Float(0.5)}},
 		{Model: "HD2_AmpTestBass", Params: s.params()},
 		{Model: "HD2_ReverbTest", Params: plan.Params{"Mix": catalog.Float(0.5)}},
 	}}
+}
+
+// paramOn reads one control off the block named, which is what tells a
+// compressor's Mix from a reverb's now that both are in the chain.
+func (s *MoveTestSuite) paramOn(
+	built plan.Plan,
+	model, key string,
+) float64 {
+	for _, b := range built.Blocks {
+		if string(b.Model) != model {
+			continue
+		}
+
+		v, ok := b.Params[key].Float()
+		s.Require().True(ok, model+" has no "+key)
+
+		return v
+	}
+
+	s.Require().Fail("no " + model + " in the chain")
+
+	return 0
 }
 
 // paramOf reads one control off whichever block holds it.
@@ -212,8 +238,11 @@ func (s *MoveTestSuite) TestMove() {
 							tests := []struct {
 								name  string
 								terms []string
-								// the parameter that must have moved, and where to.
+								// the parameter that must have moved, and where to. `on`
+								// names the block to read it from, for a control more
+								// than one of them has.
 								param string
+								on    string
 								want  float64
 								// the term must be recorded as having moved nothing.
 								inert     bool
@@ -273,12 +302,12 @@ func (s *MoveTestSuite) TestMove() {
 									// The reverb's question, not the amplifier's.
 									name:  "room around the part",
 									terms: []string{"roomy"},
-									param: "Mix", want: 0.6,
+									param: "Mix", on: "HD2_ReverbTest", want: 0.6,
 								},
 								{
 									name:  "none on it",
 									terms: []string{"dry"},
-									param: "Mix", want: 0.4,
+									param: "Mix", on: "HD2_ReverbTest", want: 0.4,
 								},
 								{
 									// A compressor's attack decides how much of the front of a note
@@ -308,10 +337,18 @@ func (s *MoveTestSuite) TestMove() {
 								},
 								{
 									// Its own words say the hands and the strings do this, and the
-									// rig has three plausible controls for it and no way to choose.
-									name:  "an axis nothing acts on yet",
+									// rig had three plausible controls and no way to choose. The
+									// committed sweep chooses: a Deluxe Comp's Mix moves measured
+									// decay 0.64s to 1.69s across its span while the level falls,
+									// which is the tail held up rather than everything lifted.
+									name:  "a note's tail, held up by the compressor",
 									terms: []string{"short-decay"},
-									inert: true,
+									param: "Mix", on: "HD2_CompTest", want: 0.4,
+								},
+								{
+									name:  "and the other way",
+									terms: []string{"long-decay"},
+									param: "Mix", on: "HD2_CompTest", want: 0.6,
 								},
 								{
 									// What the hands make is not something a knob answers for.
@@ -348,6 +385,13 @@ func (s *MoveTestSuite) TestMove() {
 										}
 									}
 
+									if tt.on != "" {
+										s.Require().InDelta(
+											tt.want, s.paramOn(built, tt.on, tt.param), 1e-9)
+
+										return
+									}
+
 									s.Require().InDelta(tt.want, s.paramOf(built, tt.param), 1e-9)
 								})
 							}
@@ -357,7 +401,11 @@ func (s *MoveTestSuite) TestMove() {
 						// A word asking for more than there is.
 						//
 						// A term is an opinion about direction, not a promise that the
-						// range is deep enough to hold it.
+						// range is deep enough to hold it. The value is left where the
+						// device's own range ends, and the word is reported as having
+						// moved nothing rather than as having acted: a knob already at
+						// the end it was asked towards leaves the preset no different,
+						// and a build reports what a word did.
 						name: "move clamps to what the device accepts",
 						then: func() {
 							tests := []struct {
@@ -380,7 +428,12 @@ func (s *MoveTestSuite) TestMove() {
 
 									got := move([]catalog.Block{s.amp()}, built, said(tt.term), s.stats())
 
-									s.Require().True(got[0].Acted())
+									s.Require().False(got[0].Acted(),
+										"the knob is where it was, so nothing was done to it")
+									s.Require().True(got[0].Unanswered(),
+										"and the report says which end it was already at")
+									s.Require().Contains(got[0].Because, "already at")
+									s.Require().Contains(got[0].Because, tt.term)
 									s.Require().InDelta(tt.want, s.paramOf(built, "Drive"), 1e-9)
 								})
 							}
@@ -448,7 +501,9 @@ func (s *MoveTestSuite) TestMove() {
 							s.Require().Len(got, 1)
 							s.Require().False(got[0].Holds())
 							s.Require().True(got[0].Acted())
-							s.Require().Less(s.paramOf(built, "Mix"), 0.5)
+							// Named, because the compressor in this chain carries a Mix
+							// too and `dry` is the reverb's question.
+							s.Require().Less(s.paramOn(built, "HD2_ReverbTest", "Mix"), 0.5)
 						},
 					},
 					{

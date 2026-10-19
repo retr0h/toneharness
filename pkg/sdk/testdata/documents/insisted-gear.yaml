@@ -10,7 +10,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: insisted-gear
 
 ask:

@@ -1,138 +1,166 @@
 # Mark Hoppus — blink-182
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+version: 4.0.0
+id: mark-hoppus
 ask:
   confidence: low
   genre:
-  - pop-punk
-  - punk
+    - pop-punk
+    - punk
   instrument: bass
   subject:
-    band: blink-182
-    era: Dude Ranch to the self-titled
     kind: artist
     name: Mark Hoppus
+    band: blink-182
+    era: Dude Ranch to the self-titled
     years:
       from: 1997
       to: 2003
-id: mark-hoppus
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    capture: direct
-    confidence: low
-    controls:
-      2kHz: "2.1"
-      5kHz: "0.0"
-      33Hz: "0.0"
-      80Hz: "0.0"
-      8kHz: "0.0"
-      150Hz: "1.6"
-      300Hz: "0.0"
-      600Hz: "0.0"
-      900Hz: "0.0"
-      Bass: "0.5"
-      Bright: "false"
-      ChVol: "0.75"
-      Drive: "0.5"
-      EQ: "false"
-      EQLevel: "0.0"
-      Master: "0.75"
-      Mid: "0.6"
-      MidFreq: "1"
-      Treble: "0.6"
-      UltraHi: "false"
-      UltraLo: "false"
-    evidence:
-    - caveat: |-
-        an audience's account of a stage, which is the weakest kind of first-hand there is: a rack seen from the crowd says which boxes were on it and nothing about what was recorded. No magazine, interview or technician is behind this.
-        The thread also carries the competing claim, and it is worth keeping because it is the one most repeated elsewhere: "Mark also uses a Mesa/Boogie 400+, so that might be what he used in the studio." The poster's own "might be" is the whole of its evidence, so it is recorded here and not acted on. Both cannot be the head on these records and nothing read here settles which.
-      kind: user
-      note: 'a thread opened while the rig was current, about the bass sound on "The
-        Rock Show", by somebody who had been to that year''s tour: "i remember back
-        to when i was the concert this year and it sounded pretty much the same".
-        He lists what he saw: "3 Ampeg SVT810e cabs -SVT4 pro", and answers a competing
-        suggestion later in the thread with "he actually uses ampeg heads and ampeg
-        cabs he uses the SVT-4pro".'
-      url: https://www.talkbass.com/threads/mark-hoppus-tones.19318/
-    gear: Ampeg SVT-4 Pro
-    position: 1
-    role: amp
-    substitute:
-      confidence: high
+    - role: comp
+      gear: Deluxe Comp
       evidence:
-      - caveat: |-
-          not a substitution in the usual sense: the gear is right and only the name is awkward. It sits here because a rig names real-world gear and this model has no real-world name recorded, so the cited name stays above and the one that resolves sits beneath it.
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg SVT-4 Pro
+      capture: direct
+      confidence: low
+      substitute:
+        gear: SVT-4 Pro
+        confidence: high
+        evidence:
+          - kind: store
+            caveat: |-
+              not a substitution in the usual sense: the gear is right and only the name is awkward. It sits here because a rig names real-world gear and this model has no real-world name recorded, so the cited name stays above and the one that resolves sits beneath it.
 
-          Worth removing if the gear map ever learns this model, which would be the better fix and is not one this file can make.
-        kind: store
-        note: the same amplifier, reached by the name the device gives it rather than
-          by the name a person would write. Line 6 publish no gear this model is based
-          on, so there is nothing for "Ampeg SVT-4 Pro" to match against.
-      gear: SVT-4 Pro
-  - attrs:
-      '@position': "2"
-    capture: direct
-    confidence: low
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      High Cut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - caveat: the same account and the same limits, and three eight-by-tens are a
-        stage wall rather than a session cabinet. A rig is one path, so this takes
-        one of them.
-      kind: user
-      note: 'the same list gives the cabinets: "3 Ampeg SVT810e cabs".'
-      url: https://www.talkbass.com/threads/mark-hoppus-tones.19318/
-    gear: Ampeg 8x10
-    position: 2
-    role: cab
+              Worth removing if the gear map ever learns this model, which would be the better fix and is not one this file can make.
+            note: the same amplifier, reached by the name the device gives it rather than by the name a person would write. Line 6 publish no gear this model is based on, so there is nothing for "Ampeg SVT-4 Pro" to match against.
+      evidence:
+        - kind: user
+          caveat: |-
+            an audience's account of a stage, which is the weakest kind of first-hand there is: a rack seen from the crowd says which boxes were on it and nothing about what was recorded. No magazine, interview or technician is behind this.
+            The thread also carries the competing claim, and it is worth keeping because it is the one most repeated elsewhere: "Mark also uses a Mesa/Boogie 400+, so that might be what he used in the studio." The poster's own "might be" is the whole of its evidence, so it is recorded here and not acted on. Both cannot be the head on these records and nothing read here settles which.
+          note: 'a thread opened while the rig was current, about the bass sound on "The Rock Show", by somebody who had been to that year''s tour: "i remember back to when i was the concert this year and it sounded pretty much the same". He lists what he saw: "3 Ampeg SVT810e cabs -SVT4 pro", and answers a competing suggestion later in the thread with "he actually uses ampeg heads and ampeg cabs he uses the SVT-4pro".'
+          url: https://www.talkbass.com/threads/mark-hoppus-tones.19318/
+    - role: cab
+      gear: Ampeg 8x10
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: user
+          caveat: the same account and the same limits, and three eight-by-tens are a stage wall rather than a session cabinet. A rig is one path, so this takes one of them.
+          note: 'the same list gives the cabinets: "3 Ampeg SVT810e cabs".'
+          url: https://www.talkbass.com/threads/mark-hoppus-tones.19318/
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg SVT-4 Pro
+      capture: direct
+      confidence: low
+      substitute:
+        gear: SVT-4 Pro
+        confidence: high
+        evidence:
+          - kind: store
+            caveat: |-
+              not a substitution in the usual sense: the gear is right and only the name is awkward. It sits here because a rig names real-world gear and this model has no real-world name recorded, so the cited name stays above and the one that resolves sits beneath it.
+
+              Worth removing if the gear map ever learns this model, which would be the better fix and is not one this file can make.
+            note: the same amplifier, reached by the name the device gives it rather than by the name a person would write. Line 6 publish no gear this model is based on, so there is nothing for "Ampeg SVT-4 Pro" to match against.
+      evidence:
+        - kind: user
+          caveat: |-
+            an audience's account of a stage, which is the weakest kind of first-hand there is: a rack seen from the crowd says which boxes were on it and nothing about what was recorded. No magazine, interview or technician is behind this.
+            The thread also carries the competing claim, and it is worth keeping because it is the one most repeated elsewhere: "Mark also uses a Mesa/Boogie 400+, so that might be what he used in the studio." The poster's own "might be" is the whole of its evidence, so it is recorded here and not acted on. Both cannot be the head on these records and nothing read here settles which.
+          note: 'a thread opened while the rig was current, about the bass sound on "The Rock Show", by somebody who had been to that year''s tour: "i remember back to when i was the concert this year and it sounded pretty much the same". He lists what he saw: "3 Ampeg SVT810e cabs -SVT4 pro", and answers a competing suggestion later in the thread with "he actually uses ampeg heads and ampeg cabs he uses the SVT-4pro".'
+          url: https://www.talkbass.com/threads/mark-hoppus-tones.19318/
+      controls:
+        150Hz: "1.6"
+        2kHz: "2.1"
+        300Hz: "0.0"
+        33Hz: "0.0"
+        5kHz: "0.0"
+        600Hz: "0.0"
+        80Hz: "0.0"
+        8kHz: "0.0"
+        900Hz: "0.0"
+        Bass: "0.5"
+        Bright: "false"
+        ChVol: "0.75"
+        Drive: "0.5"
+        EQ: "false"
+        EQLevel: "0.0"
+        Master: "0.75"
+        Mid: "0.6"
+        MidFreq: "1"
+        Treble: "0.6"
+        UltraHi: "false"
+        UltraLo: "false"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: Ampeg 8x10
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: user
+          caveat: the same account and the same limits, and three eight-by-tens are a stage wall rather than a session cabinet. A rig is one path, so this takes one of them.
+          note: 'the same list gives the cabinets: "3 Ampeg SVT810e cabs".'
+          url: https://www.talkbass.com/threads/mark-hoppus-tones.19318/
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        High Cut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -140,31 +168,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -230,8 +262,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

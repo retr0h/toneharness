@@ -507,6 +507,38 @@ type Ask struct {
 // A request about a bass player is about a bass whoever is holding it. A Setup naming an instrument still wins, because that is what the person actually has.
 type AskInstrument string
 
+// Built What the compiler worked out, which is replaced whole on every resolve.
+//
+// **Nothing here is edited.** Every value is derived from the two sections above plus the catalog and the corpus, so an edit here lasts until the next `rigs resolve` and no longer. The way to change one of these numbers is to pin it in `rig` as an override, where it is authored and survives.
+//
+// It is written down rather than recomputed on demand because a specification that says what the preset is beats one that says how to go looking for it: somebody can read the chain, diff two rigs, or check a control without a catalog, a corpus or this binary.
+//
+// Absent means nobody has resolved this document yet, which is the state `rigs new` leaves and a perfectly good one: the rig says what the gear is and nothing has computed the knobs.
+type Built struct {
+	// Catalog The release the catalog came from, such as "HX Edit 3.82". A chain below was resolved against this and a different release may name the same model differently.
+	Catalog *string `json:"catalog,omitempty"`
+
+	// Chain The signal path with every control at the value it resolved to, in the order the device lays it out.
+	//
+	// The same shape as `rig.chain` so the two can be read against each other, and fuller: this carries the blocks the corpus added, the positions the device numbered, and every control rather than the few somebody pinned.
+	Chain *[]ChainEntry `json:"chain,omitempty"`
+
+	// Device Which pedal it was resolved for, such as "HX Stomp". The block count, the path count and the routing indices all differ between models, so a resolved chain is for one of them.
+	Device *string `json:"device,omitempty"`
+
+	// Footswitches What each switch on the pedal does, one entry per assignment.
+	//
+	// Derived, which is why it is here rather than above: a switch is given to each block worth stomping, in chain order, capped by how many the device has. Nothing about it is a claim about the sound — it assigns no block and moves no control — so unlike the gear it needs no source.
+	//
+	// A rig that names its own switches outranks this entirely and this writes nothing. Somebody who wants FS1 on something else says so up there, the same way they pin a control.
+	Footswitches *[]Footswitch `json:"footswitches,omitempty"`
+
+	// Preset The device's own members, in full: the inputs, outputs, splits, joins, cabinets and global parameters the chain above resolved alongside.
+	//
+	// `rig.preset` is the sparse half of this, and it is an override: it states the few member fields somebody chose and this states all of them.
+	Preset *map[string]PresetMember `json:"preset,omitempty"`
+}
+
 // Capture How this reached the tape: down a cable, through a microphone, or both blended.
 //
 // A cabinet models the air in front of a speaker, and on most bass records there was none. Five of the nine rigs here measure a signal that went to the desk: Geddy Lee set the rule on Caress of Steel in 1975 and kept it, "Use the direct bass from the low-end pickup, and mike the amp for the high-end pickup"; Les Claypool put a microphone up and never used it; Mike Dirnt ran an Evil Twin direct box from Dookie on. Pino Palladino is the one who was only ever miked, and the engineer says so: "no di's whatsoever on the album". Jaco Pastorius took both at once, "a little bit of both, the highs and lows".
@@ -548,6 +580,8 @@ type ChainEntry struct {
 	// Written as strings so the kind survives. A document is read through a route that turns a float of 6.0 into the integer 6, and a device reads those as different settings, so `"6.0"` is a float and `"6"` an integer. Checked against the catalog, which knows all 5,602 controls and every range: a name that model does not have, or a value outside its range, is refused and named.
 	//
 	// Absent means nothing was specified, and the compiler answers from corpus medians the way it always has. Present and partial is partial on purpose: say the two controls you care about and let the rest be answered.
+	//
+	// **An override, and authored.** Whatever is here outranks what the compiler would have chosen and survives every resolve, which is why a resolve must never write its own answers into it: doing so made the compiler honour its own output as though a person had asked for it, and the documents stopped responding to the compiler being improved. What it resolved to is in `built.chain`.
 	Controls *map[string]catalog.Setting `json:"controls,omitempty"`
 
 	// Distance How far from the speaker the microphone sits, in inches, where the cabinet models one.
@@ -631,7 +665,7 @@ type Change struct {
 // Confidence How far a claim should be trusted. Set by a person, not derived. A claim asserting high confidence with no evidence behind it is worth showing as unverified whatever it says about itself.
 type Confidence string
 
-// ContractVersion Which version of this contract the document was written against, as `info.version` states it: "3.0.0".
+// ContractVersion Which version of this contract the document was written against, as `info.version` states it: "4.0.0".
 //
 // Required, so that a document always says. Without it a reader cannot tell a document that predates a field from one that leaves the field out, and both read as a document that is simply wrong. The major is what carries the warning: it moves when something that used to validate stops, so a document whose major is not the reader's is one the reader should refuse rather than guess at. A later minor or patch is accepted, because everything either adds or rewords.
 //
@@ -1099,13 +1133,6 @@ type Rig struct {
 	// So a preset lifted off a device and built again gains the few fields the blank template carries and the original did not. Five, on a real preset from the corpus: where the editing cursor sat, and whether three snapshots had been renamed. Nothing audible, and the alternative was making a rig state all 28 fields of `global` to change one.
 	Preset *map[string]PresetMember `json:"preset,omitempty"`
 
-	// Resolved Where the numbers in a plan were arrived at.
-	//
-	// A plan's, not a rig's, and it stays in this contract because the plan package reads the type from here.
-	//
-	// Advisory, never a restriction. A plan pinned to one device could not be read on another, which would cost the portability the rig above it exists for. This says "these numbers were tuned here", so somebody on other hardware knows to re-tune rather than trust.
-	Resolved *Target `json:"resolved,omitempty"`
-
 	// Sections The parts of a song this rig plays, each one a snapshot.
 	//
 	// The way to write snapshots by hand, and the one part of the arrangement that stays here: a section is what somebody plays rather than anything the device holds.
@@ -1232,7 +1259,7 @@ type Setup struct {
 	// The distinction is not pedantry. A pick puts high-frequency attack into every note that fingers do not, so a rig tuned from a picked recording sounds duller played fingered, and the fix is in the amp and the compressor rather than in the player. Stating both sides lets the difference be compensated rather than discovered, and that comparison needs both to be the same kind of value: two `attack` values can be held against each other, and two sentences cannot.
 	Technique *Technique `json:"technique,omitempty"`
 
-	// Version Which version of this contract the document was written against, as `info.version` states it: "3.0.0".
+	// Version Which version of this contract the document was written against, as `info.version` states it: "4.0.0".
 	//
 	// Required, so that a document always says. Without it a reader cannot tell a document that predates a field from one that leaves the field out, and both read as a document that is simply wrong. The major is what carries the warning: it moves when something that used to validate stops, so a document whose major is not the reader's is one the reader should refuse rather than guess at. A later minor or patch is accepted, because everything either adds or rewords.
 	//
@@ -1362,6 +1389,14 @@ type TechniqueMuting string
 type TechniquePosition string
 
 // ToneSpec One sound: the gear that makes it, and what somebody asked for.
+//
+// **Two halves, and which half a field is in says who may write it.** `ask` and `rig` are authored: somebody types them, `rigs new` scaffolds them, and no command here ever overwrites them. `built` is generated: `rigs resolve` replaces the whole of it every time it runs and nothing else writes it.
+//
+// That division is what makes a document safe to edit and a rebuild lossless, and it is positional rather than annotated: the top of the file is yours and the bottom is the machine's. Nothing has to be marked, and no skill has to tell anybody which command is safe to run.
+//
+// **To change something the compiler worked out, override it above rather than editing below.** A chain entry's `controls` and a rig's `preset` are sparse on purpose: name the two controls you care about and let the rest be answered. Those overrides are authored, so they survive every rebuild, and `built` shows what the answer came out as once they were applied.
+//
+// This was one section until version 4. A resolve wrote every control it computed into `rig.chain[].controls`, which is the field that means "a person pinned this", so the next resolve honoured its own output as though somebody had asked for it. The documents froze: eleven genre rigs went on reading as four presets after the compiler had been taught to tell them apart, and a rebuild from the ask threw away researched gear instead, replacing a cited Ampeg SVT with a measured MESA/Boogie.
 type ToneSpec struct {
 	// Ask A request for a sound, in whatever terms the person has.
 	//
@@ -1369,6 +1404,15 @@ type ToneSpec struct {
 	//
 	// It records what was said rather than instructing anything. `gear` and `like` are how a chain gets resolved while it is being resolved; once `rig` holds the answer they are provenance, and nothing re-reads them to overwrite a chain somebody edited by hand.
 	Ask *Ask `json:"ask,omitempty"`
+
+	// Built What the compiler worked out, which is replaced whole on every resolve.
+	//
+	// **Nothing here is edited.** Every value is derived from the two sections above plus the catalog and the corpus, so an edit here lasts until the next `rigs resolve` and no longer. The way to change one of these numbers is to pin it in `rig` as an override, where it is authored and survives.
+	//
+	// It is written down rather than recomputed on demand because a specification that says what the preset is beats one that says how to go looking for it: somebody can read the chain, diff two rigs, or check a control without a catalog, a corpus or this binary.
+	//
+	// Absent means nobody has resolved this document yet, which is the state `rigs new` leaves and a perfectly good one: the rig says what the gear is and nothing has computed the knobs.
+	Built *Built `json:"built,omitempty"`
 
 	// Id The identifier, and the filename stem.
 	//
@@ -1383,7 +1427,7 @@ type ToneSpec struct {
 	// Schema What this document is, so a file says so rather than being guessed at by its extension.
 	Schema ToneSpecSchema `json:"schema"`
 
-	// Version Which version of this contract the document was written against, as `info.version` states it: "3.0.0".
+	// Version Which version of this contract the document was written against, as `info.version` states it: "4.0.0".
 	//
 	// Required, so that a document always says. Without it a reader cannot tell a document that predates a field from one that leaves the field out, and both read as a document that is simply wrong. The major is what carries the warning: it moves when something that used to validate stops, so a document whose major is not the reader's is one the reader should refuse rather than guess at. A later minor or patch is accepted, because everything either adds or rewords.
 	//

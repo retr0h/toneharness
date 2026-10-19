@@ -87,7 +87,7 @@ func (s *TranslatePublicTestSuite) ask(
 	// The gear is required, so the document carries the least that will do. What
 	// a row says about a chain is in its ask, and Translate builds the rig.
 	spec, err := tone.Load(strings.NewReader(
-		"schema: ToneSpec\nversion: \"3.0.0\"\nid: an-ask\nask:\n" + nest(head+body) +
+		"schema: ToneSpec\nversion: \"4.0.0\"\nid: an-ask\nask:\n" + nest(head+body) +
 			"rig:\n  instrument: bass\n" +
 			"  chain:\n    - {role: amp, gear: Ampeg SVT}\n"))
 	s.Require().NoError(err)
@@ -114,7 +114,7 @@ func nest(
 func (s *TranslatePublicTestSuite) setup(
 	body string,
 ) tone.Setup {
-	out, err := tone.LoadSetup(strings.NewReader("schema: Setup\nversion: \"3.0.0\"\n" + body))
+	out, err := tone.LoadSetup(strings.NewReader("schema: Setup\nversion: \"4.0.0\"\n" + body))
 	s.Require().NoError(err)
 
 	return out

@@ -4,139 +4,167 @@
 # matt-freeman.yaml beside it.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+version: 4.0.0
+id: matt-freeman
 ask:
-  aliases:
-  - rancid
-  - freeman
   confidence: medium
+  aliases:
+    - rancid
+    - freeman
   genre:
-  - punk
+    - punk
   instrument: bass
   subject:
-    band: Rancid
-    era: '...And Out Come the Wolves'
     kind: artist
     name: Matt Freeman
+    band: Rancid
+    era: '...And Out Come the Wolves'
     years:
       from: 1995
       to: 1995
-id: matt-freeman
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    capture: direct
-    confidence: medium
-    controls:
-      Bass: "0.41"
-      Bias: "0.74"
-      BiasX: "0.5"
-      ChVol: "0.8"
-      Drive: "0.6"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.89"
-      MidFreq: "2"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.88"
-    evidence:
-    - caveat: |-
-        first-hand from him and second-hand to us. This is a forum transcription of a print magazine, not an archived copy: Bass Player's own site is gone and no capture of this interview was found. The poster dates it September 1996, while a back-issue listing puts a Flea cover with a Rancid feature in February 1996, so the month is unsettled. The year is not, and either way it is within a year of the record.
-        Worth naming what this is not: the Premier Guitar rig rundown for him is dated 16 October 2024 and puts him on two Fender Bassman 800 heads with matching 8x10 cabinets. That is his rig twenty-nine years later and says nothing about this one.
-      kind: user
-      note: |-
-        Freeman's own words about these sessions, in a Bass Player interview the poster Eerik transcribes at length: "So when we began recording, I didn't know what to get. Then I went next door where Jawbreaker was recording and asked their producer, Rob Cavallo - the guy who did Green Day - 'Dude, what did Mike Dirnt play on Dookie?' I really liked that sound, and Rob told me it was an Ampeg SVT-II Pro. I went right out and bought one!"
-        The same passage dates the change: it was bought to replace a rig that had worn out, "When his roadworn Acoustic 320 head and 4x15 cabinet finally needed rest, Matt found himself on the market for a new rig", and "when we began recording" ties the purchase to a session rather than to a tour.
-      url: https://www.talkbass.com/threads/does-anyone-know-matt-freemans-setup.39146/
-    - caveat: corroborates that Cavallo was recommending Ampeg heads in this period
-        and nothing more. Cavallo is talking about American Idiot in 2004, not about
-        Dookie, and Freeman's quote is what dates the advice he was given. Two people
-        describing the same habit from either side is worth having; it is not a second
-        source for this head.
-      kind: cited
-      note: the other side of the same conversation, from Cavallo. Asked in Guitar
-        World's Bass Guitar what was used on a Green Day record, he answers "Mike
-        and I talked about Boogie, Fender and Ampeg amps, and at the end we went with
-        an Ampeg SVT - it's hard to beat that."
-      url: https://web.archive.org/web/20060217083255im_/http://www.greendayauthority.com/TheBand/articles/bassmag/4.jpg
-    gear: Ampeg SVT-II Pro
-    position: 1
-    role: amp
-    substitute:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg SVT-II Pro
+      capture: direct
+      confidence: medium
+      substitute:
+        gear: Ampeg SVT
+        confidence: low
+        evidence:
+          - kind: llm
+            note: the device carries no SVT-II Pro. Of the two Ampeg heads it does carry, the SVT is an all-tube head of the same family and the SVT-4 Pro is a later one whose power section is not tube, so the SVT is the nearer of the two.
+      evidence:
+        - kind: user
+          caveat: |-
+            first-hand from him and second-hand to us. This is a forum transcription of a print magazine, not an archived copy: Bass Player's own site is gone and no capture of this interview was found. The poster dates it September 1996, while a back-issue listing puts a Flea cover with a Rancid feature in February 1996, so the month is unsettled. The year is not, and either way it is within a year of the record.
+            Worth naming what this is not: the Premier Guitar rig rundown for him is dated 16 October 2024 and puts him on two Fender Bassman 800 heads with matching 8x10 cabinets. That is his rig twenty-nine years later and says nothing about this one.
+          note: |-
+            Freeman's own words about these sessions, in a Bass Player interview the poster Eerik transcribes at length: "So when we began recording, I didn't know what to get. Then I went next door where Jawbreaker was recording and asked their producer, Rob Cavallo - the guy who did Green Day - 'Dude, what did Mike Dirnt play on Dookie?' I really liked that sound, and Rob told me it was an Ampeg SVT-II Pro. I went right out and bought one!"
+            The same passage dates the change: it was bought to replace a rig that had worn out, "When his roadworn Acoustic 320 head and 4x15 cabinet finally needed rest, Matt found himself on the market for a new rig", and "when we began recording" ties the purchase to a session rather than to a tour.
+          url: https://www.talkbass.com/threads/does-anyone-know-matt-freemans-setup.39146/
+        - kind: cited
+          caveat: corroborates that Cavallo was recommending Ampeg heads in this period and nothing more. Cavallo is talking about American Idiot in 2004, not about Dookie, and Freeman's quote is what dates the advice he was given. Two people describing the same habit from either side is worth having; it is not a second source for this head.
+          note: the other side of the same conversation, from Cavallo. Asked in Guitar World's Bass Guitar what was used on a Green Day record, he answers "Mike and I talked about Boogie, Fender and Ampeg amps, and at the end we went with an Ampeg SVT - it's hard to beat that."
+          url: https://web.archive.org/web/20060217083255im_/http://www.greendayauthority.com/TheBand/articles/bassmag/4.jpg
+    - role: cab
+      gear: Ampeg 8x10
+      capture: direct
       confidence: low
       evidence:
-      - kind: llm
-        note: the device carries no SVT-II Pro. Of the two Ampeg heads it does carry,
-          the SVT is an all-tube head of the same family and the SVT-4 Pro is a later
-          one whose power section is not tube, so the SVT is the nearer of the two.
-      gear: Ampeg SVT
-  - attrs:
-      '@position': "2"
-    capture: direct
-    confidence: low
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      High Cut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - caveat: |-
-        the same transcription as the head, so the two share a source and stand or fall together. "A single" is the writer counting cabinets rather than Freeman naming a model, so the size is established and the particular box is not.
-        His own words also say the cabinet is not always in the path at all: "I go direct at clubs" describes the stage. Nothing here says whether the record was miked, taken direct, or both.
-      kind: user
-      note: 'the sentence after the head, in the same transcribed interview: "The
-        big tube head powers a single Ampeg 8X10 cabinet, and Matt says that''s plenty."
-        Freeman on why one is enough: "In places with good PAs, you don''t really
-        need a ballbuster. This SVT pumps - plus I go direct at clubs. I mean, how
-        much amp do you want?"'
-      url: https://www.talkbass.com/threads/does-anyone-know-matt-freemans-setup.39146/
-    gear: Ampeg 8x10
-    position: 2
-    role: cab
+        - kind: user
+          caveat: |-
+            the same transcription as the head, so the two share a source and stand or fall together. "A single" is the writer counting cabinets rather than Freeman naming a model, so the size is established and the particular box is not.
+            His own words also say the cabinet is not always in the path at all: "I go direct at clubs" describes the stage. Nothing here says whether the record was miked, taken direct, or both.
+          note: 'the sentence after the head, in the same transcribed interview: "The big tube head powers a single Ampeg 8X10 cabinet, and Matt says that''s plenty." Freeman on why one is enough: "In places with good PAs, you don''t really need a ballbuster. This SVT pumps - plus I go direct at clubs. I mean, how much amp do you want?"'
+          url: https://www.talkbass.com/threads/does-anyone-know-matt-freemans-setup.39146/
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg SVT-II Pro
+      capture: direct
+      confidence: medium
+      substitute:
+        gear: Ampeg SVT
+        confidence: low
+        evidence:
+          - kind: llm
+            note: the device carries no SVT-II Pro. Of the two Ampeg heads it does carry, the SVT is an all-tube head of the same family and the SVT-4 Pro is a later one whose power section is not tube, so the SVT is the nearer of the two.
+      evidence:
+        - kind: user
+          caveat: |-
+            first-hand from him and second-hand to us. This is a forum transcription of a print magazine, not an archived copy: Bass Player's own site is gone and no capture of this interview was found. The poster dates it September 1996, while a back-issue listing puts a Flea cover with a Rancid feature in February 1996, so the month is unsettled. The year is not, and either way it is within a year of the record.
+            Worth naming what this is not: the Premier Guitar rig rundown for him is dated 16 October 2024 and puts him on two Fender Bassman 800 heads with matching 8x10 cabinets. That is his rig twenty-nine years later and says nothing about this one.
+          note: |-
+            Freeman's own words about these sessions, in a Bass Player interview the poster Eerik transcribes at length: "So when we began recording, I didn't know what to get. Then I went next door where Jawbreaker was recording and asked their producer, Rob Cavallo - the guy who did Green Day - 'Dude, what did Mike Dirnt play on Dookie?' I really liked that sound, and Rob told me it was an Ampeg SVT-II Pro. I went right out and bought one!"
+            The same passage dates the change: it was bought to replace a rig that had worn out, "When his roadworn Acoustic 320 head and 4x15 cabinet finally needed rest, Matt found himself on the market for a new rig", and "when we began recording" ties the purchase to a session rather than to a tour.
+          url: https://www.talkbass.com/threads/does-anyone-know-matt-freemans-setup.39146/
+        - kind: cited
+          caveat: corroborates that Cavallo was recommending Ampeg heads in this period and nothing more. Cavallo is talking about American Idiot in 2004, not about Dookie, and Freeman's quote is what dates the advice he was given. Two people describing the same habit from either side is worth having; it is not a second source for this head.
+          note: the other side of the same conversation, from Cavallo. Asked in Guitar World's Bass Guitar what was used on a Green Day record, he answers "Mike and I talked about Boogie, Fender and Ampeg amps, and at the end we went with an Ampeg SVT - it's hard to beat that."
+          url: https://web.archive.org/web/20060217083255im_/http://www.greendayauthority.com/TheBand/articles/bassmag/4.jpg
+      controls:
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.89"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.88"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: Ampeg 8x10
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: user
+          caveat: |-
+            the same transcription as the head, so the two share a source and stand or fall together. "A single" is the writer counting cabinets rather than Freeman naming a model, so the size is established and the particular box is not.
+            His own words also say the cabinet is not always in the path at all: "I go direct at clubs" describes the stage. Nothing here says whether the record was miked, taken direct, or both.
+          note: 'the sentence after the head, in the same transcribed interview: "The big tube head powers a single Ampeg 8X10 cabinet, and Matt says that''s plenty." Freeman on why one is enough: "In places with good PAs, you don''t really need a ballbuster. This SVT pumps - plus I go direct at clubs. I mean, how much amp do you want?"'
+          url: https://www.talkbass.com/threads/does-anyone-know-matt-freemans-setup.39146/
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        High Cut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -144,31 +172,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -234,8 +266,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

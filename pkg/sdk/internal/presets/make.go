@@ -189,6 +189,19 @@ func Make(
 
 	opts.compiler().Controllers(doc, spec, spec.Blocks, cat)
 
+	// A switch for each block worth stomping, where the rig named none itself.
+	// `plan.Footswitches` was only ever filled by a lift, so everything built
+	// here arrived with its switches unassigned: the blocks in the right order
+	// at the right values, and nothing on the pedal turning any of them off.
+	//
+	// Only where the rig said nothing. A rig that names its own switches has
+	// said something musical and this must not overwrite it, the same way a
+	// pinned control outranks a computed one.
+	if len(spec.Footswitches) == 0 {
+		spec.Footswitches = compile.Assign(
+			spec, cat, plan.LimitsFor(cat.Device).Switches)
+	}
+
 	opts.compiler().Footswitches(doc, spec, cat)
 
 	if err := write(opts.OutputPath, doc, opts.Existing); err != nil {

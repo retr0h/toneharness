@@ -3,7 +3,7 @@
 # produced one. A rig read off a device is this shape too.
 
 schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: gear-only
 
 rig:

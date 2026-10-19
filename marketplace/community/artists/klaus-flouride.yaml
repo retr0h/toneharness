@@ -26,137 +26,138 @@
 # claim, and no gear substituted by the gear map. See build-a-rig's
 # shipping.md, "Two bars for core, and where each one falls".
 
+schema: ToneSpec
+version: 4.0.0
+id: klaus-flouride
 ask:
-  aliases:
-  - flouride
-  - dead-kennedys
-  - dks
   confidence: low
+  aliases:
+    - flouride
+    - dead-kennedys
+    - dks
   genre:
-  - punk
+    - punk
   instrument: bass
   played:
-  - evidence:
-    - caveat: he is talking in 2015 about the instrument he had played since the early
-        days, and does not date it to these sessions. It establishes the Jazz Bass
-        as his instrument, not that it was the one on this record.
-      kind: cited
-      note: 'Flouride''s own words to Jay Stone, Dying Scene, 2015, about the Jazz
-        Bass he played for decades and lost in transit: "Yeah, it''s somewhere in
-        Brazil still, I''m guessing. And very probably in this Quonset hut storage
-        space with TAM Airlines." He describes the replica built from photographs:
-        "he''s got the chips on it, he''s done it mostly from photos. He wound the
-        pickups himself. The thing actually sounds and plays better than the original
-        one did."'
-      url: https://dyingscene.com/archive/ds-exclusive-klaus-flouride-on-2015-era-dead-kennedys-losing-his-iconic-j-bass-and-taylor-swift/
-    gear: Fender Jazz Bass
+    - gear: Fender Jazz Bass
+      evidence:
+        - kind: cited
+          caveat: he is talking in 2015 about the instrument he had played since the early days, and does not date it to these sessions. It establishes the Jazz Bass as his instrument, not that it was the one on this record.
+          note: 'Flouride''s own words to Jay Stone, Dying Scene, 2015, about the Jazz Bass he played for decades and lost in transit: "Yeah, it''s somewhere in Brazil still, I''m guessing. And very probably in this Quonset hut storage space with TAM Airlines." He describes the replica built from photographs: "he''s got the chips on it, he''s done it mostly from photos. He wound the pickups himself. The thing actually sounds and plays better than the original one did."'
+          url: https://dyingscene.com/archive/ds-exclusive-klaus-flouride-on-2015-era-dead-kennedys-losing-his-iconic-j-bass-and-taylor-swift/
   subject:
-    band: Dead Kennedys
-    era: Fresh Fruit for Rotting Vegetables
     kind: artist
     name: Klaus Flouride
+    band: Dead Kennedys
+    era: Fresh Fruit for Rotting Vegetables
     years:
       from: 1980
       to: 1980
-id: klaus-flouride
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    capture: direct
-    confidence: low
-    controls:
-      Bass: "0.41"
-      Bias: "0.74"
-      BiasX: "0.5"
-      ChVol: "0.8"
-      Drive: "0.6"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.89"
-      MidFreq: "2"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.88"
-    evidence:
-    - caveat: |-
-        **Not a claim about what he played.** This was an Ampeg SVT asserted by a model and confirmed by nobody until the research was done and found nothing; a measured amplifier is at least reproducible, and this is the only reason it is here rather than that one.
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg SVT (bright channel)
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: |-
+            **Not a claim about what he played.** This was an Ampeg SVT asserted by a model and confirmed by nobody until the research was done and found nothing; a measured amplifier is at least reproducible, and this is the only reason it is here rather than that one.
 
-        The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
-      kind: audio
-      note: Chosen by measurement rather than asserted. Ampeg SVT (bright channel)
-        was researched and bottomed out. An Acoustic 150B and an Acoustic 402 cabinet
-        are repeated for him everywhere and the trail ends in nothing. The sentence
-        is uncited on Wikipedia; its paragraph's only footnote is Joe Shooman's MusicRadar
-        interview of 7 December 2017, which names no amplifier anywhere in its body;
-        and the TalkBass thread that carries the same claim is quoting that Wikipedia
-        line, with the poster saying twice that he is assuming what "acoustic" means
-        in it. So the device's twenty-seven bass amplifiers were ranked against his
-        own separated bass stems, one record at a time, across California Uber Alles,
-        Holiday in Cambodia and Kill the Poor, and this is the one that came nearest
-        on two of the three. The vote, the margins and what is weak about them are
-        in the fresh-fruit-for-rotting-vegetables sound-alike beside this, which is
-        the document that answers for the sound rather than for him.
-    gear: Ampeg SVT (bright channel)
-    position: 1
-    role: amp
-  - attrs:
-      '@position': "2"
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      High Cut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: 8x10 Ampeg SVT-E
-    position: 2
-    role: cab
+            The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
+          note: Chosen by measurement rather than asserted. Ampeg SVT (bright channel) was researched and bottomed out. An Acoustic 150B and an Acoustic 402 cabinet are repeated for him everywhere and the trail ends in nothing. The sentence is uncited on Wikipedia; its paragraph's only footnote is Joe Shooman's MusicRadar interview of 7 December 2017, which names no amplifier anywhere in its body; and the TalkBass thread that carries the same claim is quoting that Wikipedia line, with the poster saying twice that he is assuming what "acoustic" means in it. So the device's twenty-seven bass amplifiers were ranked against his own separated bass stems, one record at a time, across California Uber Alles, Holiday in Cambodia and Kill the Poor, and this is the one that came nearest on two of the three. The vote, the margins and what is weak about them are in the fresh-fruit-for-rotting-vegetables sound-alike beside this, which is the document that answers for the sound rather than for him.
+    - role: cab
+      gear: 8x10 Ampeg SVT-E
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg SVT (bright channel)
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: |-
+            **Not a claim about what he played.** This was an Ampeg SVT asserted by a model and confirmed by nobody until the research was done and found nothing; a measured amplifier is at least reproducible, and this is the only reason it is here rather than that one.
+
+            The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
+          note: Chosen by measurement rather than asserted. Ampeg SVT (bright channel) was researched and bottomed out. An Acoustic 150B and an Acoustic 402 cabinet are repeated for him everywhere and the trail ends in nothing. The sentence is uncited on Wikipedia; its paragraph's only footnote is Joe Shooman's MusicRadar interview of 7 December 2017, which names no amplifier anywhere in its body; and the TalkBass thread that carries the same claim is quoting that Wikipedia line, with the poster saying twice that he is assuming what "acoustic" means in it. So the device's twenty-seven bass amplifiers were ranked against his own separated bass stems, one record at a time, across California Uber Alles, Holiday in Cambodia and Kill the Poor, and this is the one that came nearest on two of the three. The vote, the margins and what is weak about them are in the fresh-fruit-for-rotting-vegetables sound-alike beside this, which is the document that answers for the sound rather than for him.
+      controls:
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.89"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.88"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: 8x10 Ampeg SVT-E
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        High Cut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -164,31 +165,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -254,8 +259,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

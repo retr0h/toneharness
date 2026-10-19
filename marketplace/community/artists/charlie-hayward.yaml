@@ -19,133 +19,138 @@
 # claim, and no gear substituted by the gear map. See build-a-rig's
 # shipping.md, "Two bars for core, and where each one falls".
 
+schema: ToneSpec
+version: 4.0.0
+id: charlie-hayward
 ask:
-  aliases:
-  - hayward
-  - charlie-daniels
-  - cdb
   confidence: low
+  aliases:
+    - hayward
+    - charlie-daniels
+    - cdb
   genre:
-  - southern-rock
+    - southern-rock
   instrument: bass
   played:
-  - evidence:
-    - caveat: a '51-style Precision with a split coil is a hybrid rather than either
-        stock model, and the device models no instrument, so this says how to read
-        the recording and sets nothing. Four years before this record, and both accounts
-        are people watching a film.
-      kind: video
-      note: 'two posters describing the same footage, the Volunteer Jam 1975 DVD,
-        which is close in period to this record. The poster denton57: "lots of closeups
-        on Charlie with his ''51ish P with a split coil pickup". The poster SwitchGear,
-        who also saw the band live several times in the late seventies: "Interesting
-        ''51 style P he is playing equipped with split coil pups. Sounds good and
-        growly."'
-      url: https://www.talkbass.com/threads/charlie-hayward.382533/
-    gear: Fender Precision Bass
+    - gear: Fender Precision Bass
+      evidence:
+        - kind: video
+          caveat: a '51-style Precision with a split coil is a hybrid rather than either stock model, and the device models no instrument, so this says how to read the recording and sets nothing. Four years before this record, and both accounts are people watching a film.
+          note: 'two posters describing the same footage, the Volunteer Jam 1975 DVD, which is close in period to this record. The poster denton57: "lots of closeups on Charlie with his ''51ish P with a split coil pickup". The poster SwitchGear, who also saw the band live several times in the late seventies: "Interesting ''51 style P he is playing equipped with split coil pups. Sounds good and growly."'
+          url: https://www.talkbass.com/threads/charlie-hayward.382533/
   subject:
-    band: The Charlie Daniels Band
-    era: Million Mile Reflections
     kind: artist
     name: Charlie Hayward
+    band: The Charlie Daniels Band
+    era: Million Mile Reflections
     years:
       from: 1979
       to: 1979
-id: charlie-hayward
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    capture: direct
-    confidence: low
-    controls:
-      Bass: "0.67"
-      Bias: "0.66"
-      BiasX: "0.5"
-      ChVol: "1.0"
-      Drive: "0.7"
-      HighMid: "0.5"
-      Hum: "0.5"
-      LowMid: "0.65"
-      Master: "1.0"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.69"
-    evidence:
-    - caveat: |-
-        **Not a claim about what he played.** This was an Ampeg SVT asserted by a model and confirmed by nobody until the research was done and found nothing; a measured amplifier is at least reproducible, and this is the only reason it is here rather than that one.
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg B-15NF Portaflex
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: |-
+            **Not a claim about what he played.** This was an Ampeg SVT asserted by a model and confirmed by nobody until the research was done and found nothing; a measured amplifier is at least reproducible, and this is the only reason it is here rather than that one.
 
-        The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
-      kind: audio
-      note: Chosen by measurement rather than asserted. Ampeg B-15NF Portaflex was
-        researched and bottomed out. Nothing names his amplifier. What is written
-        about him is about his playing, and the gear pages that carry a figure for
-        him carry it with nothing underneath. So the device's twenty-seven bass amplifiers
-        were ranked against his own separated bass stems, one record at a time, across
-        Behind Your Eyes, Mississippi and Passing Lane, and this is the one that came
-        nearest on two of the three. The vote, the margins and what is weak about
-        them are in the million-mile-reflections sound-alike beside this, which is
-        the document that answers for the sound rather than for him.
-    gear: Ampeg B-15NF Portaflex
-    position: 1
-    role: amp
-  - attrs:
-      '@position': "2"
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      HighCut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Legacy 1x15" Ampeg B-15
-    position: 2
-    role: cab
+            The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
+          note: Chosen by measurement rather than asserted. Ampeg B-15NF Portaflex was researched and bottomed out. Nothing names his amplifier. What is written about him is about his playing, and the gear pages that carry a figure for him carry it with nothing underneath. So the device's twenty-seven bass amplifiers were ranked against his own separated bass stems, one record at a time, across Behind Your Eyes, Mississippi and Passing Lane, and this is the one that came nearest on two of the three. The vote, the margins and what is weak about them are in the million-mile-reflections sound-alike beside this, which is the document that answers for the sound rather than for him.
+    - role: cab
+      gear: Legacy 1x15" Ampeg B-15
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "0.9580645161290322"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg B-15NF Portaflex
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: |-
+            **Not a claim about what he played.** This was an Ampeg SVT asserted by a model and confirmed by nobody until the research was done and found nothing; a measured amplifier is at least reproducible, and this is the only reason it is here rather than that one.
+
+            The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
+          note: Chosen by measurement rather than asserted. Ampeg B-15NF Portaflex was researched and bottomed out. Nothing names his amplifier. What is written about him is about his playing, and the gear pages that carry a figure for him carry it with nothing underneath. So the device's twenty-seven bass amplifiers were ranked against his own separated bass stems, one record at a time, across Behind Your Eyes, Mississippi and Passing Lane, and this is the one that came nearest on two of the three. The vote, the margins and what is weak about them are in the million-mile-reflections sound-alike beside this, which is the document that answers for the sound rather than for him.
+      controls:
+        Bass: "0.67"
+        Bias: "0.66"
+        BiasX: "0.5"
+        ChVol: "1.0"
+        Drive: "0.7"
+        HighMid: "0.5"
+        Hum: "0.5"
+        LowMid: "0.65"
+        Master: "1.0"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.69"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: Legacy 1x15" Ampeg B-15
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        HighCut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -153,31 +158,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -243,8 +252,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

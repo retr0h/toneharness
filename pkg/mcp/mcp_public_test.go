@@ -190,7 +190,7 @@ func (s *MCPPublicTestSuite) TestServe() {
 				// about the gear that answered it.
 				s.Require().
 					NoError(os.WriteFile(filepath.Join(dir, "artists", "their-player.yaml"), []byte(`schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: their-player
 
 ask:

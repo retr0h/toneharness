@@ -39,63 +39,83 @@ rig:
   - capture: direct
     confidence: low
     evidence:
-    - caveat: 'Two things stop this being his rig for the records measured here,
-        and both matter.
+    - caveat: 'Two things stop this being his rig for the records measured here, and both
+        matter.
 
-        **It is the wrong era.** This is the 2015 touring rig and the three records
-        measured for him are Tres Hombres, 1973. Nothing found establishes what
-        he played through then, and the Marshall Super Lead this document used to
-        assert had no source at all: Premier Guitar''s ZZ Top gear gallery and their
-        obituary for him were both opened looking for it and neither carries it.
-        The guess landed in the right family by luck and nothing more.
+        **It is the wrong era.** This is the 2015 touring rig and the three records measured
+        for him are Tres Hombres, 1973. Nothing found establishes what he played through then,
+        and the Marshall Super Lead this document used to assert had no source at all: Premier
+        Guitar''s ZZ Top gear gallery and their obituary for him were both opened looking
+        for it and neither carries it. The guess landed in the right family by luck and nothing
+        more.
 
-        **And the device models neither box.** A Marshall JMP-1 is a rack preamp
-        and the Valvestate 8008 a hybrid power amp; this device''s Marshalls are
-        all guitar heads, a JCM-800, a JTM-45, a JTM-50 and a Super Lead. The JMP-1
-        was built to give JCM-800 voicings in a rack, so Brit 2203 is its nearest
-        relative here, and a relative is a substitution rather than a match.
+        **And the device models neither box.** A Marshall JMP-1 is a rack preamp and the Valvestate
+        8008 a hybrid power amp; this device''s Marshalls are all guitar heads, a JCM-800,
+        a JTM-45, a JTM-50 and a Super Lead. The JMP-1 was built to give JCM-800 voicings
+        in a rack, so Brit 2203 is its nearest relative here, and a relative is a substitution
+        rather than a match.
 
-        Worth somebody''s time: the octave is a word this vocabulary can express,
-        `sub-octave`, and the high-pass before it is why it tracks cleanly. A rig
-        aimed at his later sound could be built from that even though the amplifier
-        cannot.
+        Worth somebody''s time: the octave is a word this vocabulary can express, `sub-octave`,
+        and the high-pass before it is why it tracks cleanly. A rig aimed at his later sound
+        could be built from that even though the amplifier cannot.
 
-        Taken from the video''s own captions rather than from watching it, so the
-        spoken model numbers are as the automatic transcript renders them: "the
-        808s" for the 8008, and "Micro Thumpin" for the Micro Thumpinator.
+        Taken from the video''s own captions rather than from watching it, so the spoken model
+        numbers are as the automatic transcript renders them: "the 808s" for the 8008, and
+        "Micro Thumpin" for the Micro Thumpinator.
 
 
-        No preset can be built from this. Every Marshall this device models is a
-        guitar amplifier and none of them is a JMP-1, so a bass rig naming one resolves
-        to nothing and `rigs resolve` refuses it. This document had been resolved
-        before the shortlist was held to the instrument, and what it carried was
-        a jumped Marshall Super Lead''s controls: a guitar amplifier, in a bass
-        rig, with nothing in the file saying so. Those controls are gone rather
-        than corrected, because correcting them would mean choosing a stand-in nobody
-        has evidence for.'
+        No preset can be built from this. Every Marshall this device models is a guitar amplifier
+        and none of them is a JMP-1, so a bass rig naming one resolves to nothing and `rigs
+        resolve` refuses it. This document had been resolved before the shortlist was held
+        to the instrument, and what it carried was a jumped Marshall Super Lead''s controls:
+        a guitar amplifier, in a bass rig, with nothing in the file saying so. Those controls
+        are gone rather than corrected, because correcting them would mean choosing a stand-in
+        nobody has evidence for.'
       kind: cited
-      note: 'The one amplifier anybody has documented for him, and it is his tech
-        saying it on camera. Elwood Francis, who handled all of ZZ Top''s gear on
-        the 2015 tour, walking through Dusty''s rig in Premier Guitar''s rig rundown:
-        "this whole thing is Dusty''s rigs, the main and the spare. It''s really
-        simple. Just wireless into an amp splitter into a bunch of amps and a DI.
-        He uses the JMP-1s and the Marshall Valvestate, what are these, the 808s
-        I think." He runs one dirty channel and keeps the other two as spares.
+      note: 'The one amplifier anybody has documented for him, and it is his tech saying it
+        on camera. Elwood Francis, who handled all of ZZ Top''s gear on the 2015 tour, walking
+        through Dusty''s rig in Premier Guitar''s rig rundown: "this whole thing is Dusty''s
+        rigs, the main and the spare. It''s really simple. Just wireless into an amp splitter
+        into a bunch of amps and a DI. He uses the JMP-1s and the Marshall Valvestate, what
+        are these, the 808s I think." He runs one dirty channel and keeps the other two as
+        spares.
 
-        The rest of the chain, from the same walkthrough, because it explains the
-        sound better than the amplifier does: "a signal goes from the bass into
-        the splitter into the Marshall into a direct box and into this is an octave
-        down and this is a filter that takes everything from the low B down", a
-        Micro Thumpinator, "it filters off everything below B flat cause we want
-        the octave down effect on every note except B flat and lower". Three channels
-        are blended: "just clean clean DI, the octave DI, and a dirty amp", and
-        the amp goes "to an ISO cabinet and it''s miked in there". On how it reads
-        to anybody standing near it: "when I check Dusty''s bass I mean people look
-        around like man what''s going wrong because it''s really really big and
-        distorted".'
+        The rest of the chain, from the same walkthrough, because it explains the sound better
+        than the amplifier does: "a signal goes from the bass into the splitter into the Marshall
+        into a direct box and into this is an octave down and this is a filter that takes
+        everything from the low B down", a Micro Thumpinator, "it filters off everything below
+        B flat cause we want the octave down effect on every note except B flat and lower".
+        Three channels are blended: "just clean clean DI, the octave DI, and a dirty amp",
+        and the amp goes "to an ISO cabinet and it''s miked in there". On how it reads to
+        anybody standing near it: "when I check Dusty''s bass I mean people look around like
+        man what''s going wrong because it''s really really big and distorted".
+
+
+        The octave pedal the same sentence describes is not in the chain below. The
+        walkthrough establishes that one was there and never says which, and this device
+        carries three, so naming any of them would be choosing on his behalf. The filter
+        is below because that one he names.'
       url: https://www.youtube.com/watch?v=1x_kg6pOvGU
     gear: Marshall JMP-1
     role: amp
+  - role: eq
+    gear: Micro Thumpinator
+    confidence: medium
+    substitute:
+      gear: Low and High Cut
+      confidence: medium
+      evidence:
+        - kind: user
+          caveat: 'Stronger than most substitutions here and still one. The pedal is a fixed high-pass and this is an adjustable one, so what is swapped is the box rather than the job, and nothing establishes the exact corner frequency his was set to: "below B flat" is a note rather than a number, and B flat sits at 29.14Hz as an open fifth-string semitone and at 58.27Hz an octave up.'
+          note: 'Not an emulation. A Micro Thumpinator does one thing, which is to cut everything below a low note, and this device carries a high-pass that does that thing. The maker and the circuit are not reproduced and do not need to be: a high-pass at the same corner is the same filter.'
+    evidence:
+      - kind: cited
+        caveat: 'The walkthrough names the pedal and what it is for, and no frequency. Whoever sets this picks the corner, and the note above says which two candidates "below B flat" leaves.
+
+
+          It also sat on the octave channel rather than across the whole rig, which this chain cannot reproduce: his three channels were blended and an HX Stomp has one path. So this is his filter in a chain that is not his routing.'
+        note: 'His tech, on camera, in the same Premier Guitar walkthrough that names the amplifier: the signal goes "into this is an octave down and this is a filter that takes everything from the low B down", a Micro Thumpinator, "it filters off everything below B flat cause we want the octave down effect on every note except B flat and lower".'
+        url: https://www.youtube.com/watch?v=1x_kg6pOvGU
   instrument: bass
 schema: ToneSpec
-version: 3.0.0
+version: 4.0.0

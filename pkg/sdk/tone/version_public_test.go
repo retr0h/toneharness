@@ -43,8 +43,8 @@ import (
 // generator would move the hash on its own and the whole point is that
 // changing the contract costs a decision about which number moves.
 const (
-	contractVersion = "3.0.0"
-	contractSHA     = "6736b0185a55f7be6d5e1de6d0f4906712bd52bbf83df1e1e1c747945e3e94e0"
+	contractVersion = "4.0.0"
+	contractSHA     = "431d43cb133243826dc9247ceae9b968b4cdb1fd86318a463a0055b832abb7cb"
 )
 
 // semver is major.minor.patch and nothing else. No build metadata and no
@@ -249,7 +249,7 @@ rig:
 // does not say which version it is.
 //
 // Neither case is reachable through the embedded contract, which parses and
-// states 3.0.0. Both describe a binary built without it, and the answer that
+// states 4.0.0. Both describe a binary built without it, and the answer that
 // matters is that nothing guesses: a reader with no version of its own cannot
 // hold a document to one, so it refuses rather than reading the document
 // against a version nobody knows.
@@ -330,7 +330,7 @@ func (s *VersionPublicTestSuite) TestSameContractAndMajorAnswerWhatNoDocumentCan
 
 				s.Require().ErrorContains(
 					tone.SameContract(
-						map[string]any{"version": "3.0.0"}, "ToneSpec",
+						map[string]any{"version": "4.0.0"}, "ToneSpec",
 					),
 					"built without the contract",
 				)

@@ -7,129 +7,156 @@
 # is the one who played on the record this covers.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+version: 4.0.0
+id: glen-matlock
 ask:
-  aliases:
-  - matlock
-  - sex-pistols
-  - pistols
   confidence: low
+  aliases:
+    - matlock
+    - sex-pistols
+    - pistols
   genre:
-  - punk
+    - punk
   instrument: bass
   subject:
-    band: Sex Pistols
-    era: Never Mind the Bollocks
     kind: artist
     name: Glen Matlock
+    band: Sex Pistols
+    era: Never Mind the Bollocks
     years:
       from: 1977
       to: 1977
-id: glen-matlock
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    capture: direct
-    confidence: low
-    controls:
-      Bass: "0.51"
-      Bias: "0.73"
-      BiasX: "0.5"
-      ChVol: "0.62"
-      Drive: "0.59"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.7"
-      Presence: "0.34"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.5799999999999998"
-    evidence:
-    - caveat: |-
-        the stage, and a 2010 article about a 1977 album. It is also the thinnest of the three players this one piece covers: one clause, no model year, and no session named.
-        Who played what on this record is itself contested — Matlock had left before release and Sid Vicious is the credited bassist — so a rig attributing the amplifier to Matlock is resting on the same histories that attribute the playing to him.
-      kind: cited
-      note: 'Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks", Premier
-        Guitar, 18 May 2010: "Matlock played both a Rickenbacker 4001 and a sunburst
-        Fender Precision… used Fender Bassmans with 4x12 Fender cabinets."'
-      url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
-    gear: Fender Bassman
-    position: 1
-    role: amp
-  - attrs:
-      '@position': "2"
-    capture: direct
-    confidence: low
-    controls:
-      Angle: "0.0"
-      Distance: "1.0"
-      HighCut: "20100.0"
-      Level: "0.0"
-      LowCut: "19.9"
-      Mic: "2"
-      Position: "0.2"
-    evidence:
-    - caveat: the same source as the head, so the two share it and stand or fall together.
-      kind: cited
-      note: 'the same clause as the head: "used Fender Bassmans with 4x12 Fender cabinets."'
-      url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
-    gear: Fender Bassman 4x12
-    position: 2
-    role: cab
-    substitute:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Fender Bassman
+      capture: direct
       confidence: low
       evidence:
-      - caveat: asserted by a model and confirmed by nobody. Four twelves and four
-          tens are different cabinets, and the choice is a judgement about which Fender
-          box is nearer rather than a measurement. If you know which 4x12 he used,
-          please open a pull request.
-        kind: llm
-        note: the device models no Fender 4x12. The Bassman cabinets it carries are
-          a 4x10 of P10R speakers and a 2x15 with JBL D130s, and the 4x10 is the one
-          Fender built the Bassman around.
-      gear: Fender Bassman P10R 4x10
+        - kind: cited
+          caveat: |-
+            the stage, and a 2010 article about a 1977 album. It is also the thinnest of the three players this one piece covers: one clause, no model year, and no session named.
+            Who played what on this record is itself contested — Matlock had left before release and Sid Vicious is the credited bassist — so a rig attributing the amplifier to Matlock is resting on the same histories that attribute the playing to him.
+          note: 'Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks", Premier Guitar, 18 May 2010: "Matlock played both a Rickenbacker 4001 and a sunburst Fender Precision… used Fender Bassmans with 4x12 Fender cabinets."'
+          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+    - role: cab
+      gear: Fender Bassman 4x12
+      capture: direct
+      confidence: low
+      substitute:
+        gear: Fender Bassman P10R 4x10
+        confidence: low
+        evidence:
+          - kind: llm
+            caveat: asserted by a model and confirmed by nobody. Four twelves and four tens are different cabinets, and the choice is a judgement about which Fender box is nearer rather than a measurement. If you know which 4x12 he used, please open a pull request.
+            note: the device models no Fender 4x12. The Bassman cabinets it carries are a 4x10 of P10R speakers and a 2x15 with JBL D130s, and the 4x10 is the one Fender built the Bassman around.
+      evidence:
+        - kind: cited
+          caveat: the same source as the head, so the two share it and stand or fall together.
+          note: 'the same clause as the head: "used Fender Bassmans with 4x12 Fender cabinets."'
+          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Fender Bassman
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: cited
+          caveat: |-
+            the stage, and a 2010 article about a 1977 album. It is also the thinnest of the three players this one piece covers: one clause, no model year, and no session named.
+            Who played what on this record is itself contested — Matlock had left before release and Sid Vicious is the credited bassist — so a rig attributing the amplifier to Matlock is resting on the same histories that attribute the playing to him.
+          note: 'Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks", Premier Guitar, 18 May 2010: "Matlock played both a Rickenbacker 4001 and a sunburst Fender Precision… used Fender Bassmans with 4x12 Fender cabinets."'
+          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+      controls:
+        Bass: "0.51"
+        Bias: "0.73"
+        BiasX: "0.5"
+        ChVol: "0.62"
+        Drive: "0.59"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.7"
+        Presence: "0.34"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.5799999999999998"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: Fender Bassman 4x12
+      capture: direct
+      confidence: low
+      substitute:
+        gear: Fender Bassman P10R 4x10
+        confidence: low
+        evidence:
+          - kind: llm
+            caveat: asserted by a model and confirmed by nobody. Four twelves and four tens are different cabinets, and the choice is a judgement about which Fender box is nearer rather than a measurement. If you know which 4x12 he used, please open a pull request.
+            note: the device models no Fender 4x12. The Bassman cabinets it carries are a 4x10 of P10R speakers and a 2x15 with JBL D130s, and the 4x10 is the one Fender built the Bassman around.
+      evidence:
+        - kind: cited
+          caveat: the same source as the head, so the two share it and stand or fall together.
+          note: 'the same clause as the head: "used Fender Bassmans with 4x12 Fender cabinets."'
+          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+      controls:
+        Angle: "0.0"
+        Distance: "1.0"
+        HighCut: "20100.0"
+        Level: "0.0"
+        LowCut: "19.9"
+        Mic: "2"
+        Position: "0.2"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -137,31 +164,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -227,8 +258,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

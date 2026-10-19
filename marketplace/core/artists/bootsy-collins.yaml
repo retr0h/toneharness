@@ -2,206 +2,217 @@
 #
 # The ask: who he is, how he played, and what he played. The gear this
 # resolves to is in bootsy-collins.yaml beside it.
+
+schema: ToneSpec
+version: 4.0.0
+id: bootsy-collins
 ask:
-  aliases:
-  - bootsy
-  - william-collins
   confidence: low
+  aliases:
+    - bootsy
+    - william-collins
   genre:
-  - funk
+    - funk
   instrument: bass
   played:
-  - evidence:
-    - caveat: eighteen months after the second of these two records, and a statement
-        about what he uses rather than about a session. A scan rather than a transcription,
-        which is the one thing here that is better than usual.
-      kind: cited
-      note: 'International Musician, August 1978, page 79, "Bootsy''s Spaced-Out Bass",
-        a gear interview built around the instrument: "On his basses he used Rotosound
-        Swingbass strings." Swing Bass is a roundwound, and the same issue calls it
-        "probably the biggest selling string for bass guitar in the world". The piece
-        also gives the order of instruments: "He had been using both Fender Precision
-        and Jazz basses, but wanted something different."'
-      url: https://worldradiohistory.com/Archive-All-Music/International-Musician/70s/International-Musician-1978-08.pdf
-    - caveat: a sleeve transcription rather than a scan, though it is consistent across
-        independent pressings.
-      kind: cited
-      note: the Stretchin' Out sleeve credits "Bootsy Collins — Bass [Space Bass]"
-        and names who built it, "Sir Larry Pless" and "Gus Zuppi Music". The 1977
-        album's sleeve credits the Space Bass the same way.
-      url: https://www.discogs.com/release/570769
-    - caveat: the instrument on that sleeve photograph was an unplayable body, so
-        the cover is not evidence for the sessions. The album was cut across 1975
-        and 1976 and the credit above is.
-      kind: cited
-      note: 'the builder''s own account of the Stretchin'' Out cover shoot: "I had
-        the bass about half built ... The bass had a coat of white paint on it and
-        the pick-guard and thats about all."'
-      url: https://web.archive.org/web/20200726000028/http://www.angelfire.com/music2/pfunk/feat-spacebass.html
-    gear: Space Bass
-    strings: round
+    - gear: Space Bass
+      evidence:
+        - kind: cited
+          caveat: eighteen months after the second of these two records, and a statement about what he uses rather than about a session. A scan rather than a transcription, which is the one thing here that is better than usual.
+          note: 'International Musician, August 1978, page 79, "Bootsy''s Spaced-Out Bass", a gear interview built around the instrument: "On his basses he used Rotosound Swingbass strings." Swing Bass is a roundwound, and the same issue calls it "probably the biggest selling string for bass guitar in the world". The piece also gives the order of instruments: "He had been using both Fender Precision and Jazz basses, but wanted something different."'
+          url: https://worldradiohistory.com/Archive-All-Music/International-Musician/70s/International-Musician-1978-08.pdf
+        - kind: cited
+          caveat: a sleeve transcription rather than a scan, though it is consistent across independent pressings.
+          note: the Stretchin' Out sleeve credits "Bootsy Collins — Bass [Space Bass]" and names who built it, "Sir Larry Pless" and "Gus Zuppi Music". The 1977 album's sleeve credits the Space Bass the same way.
+          url: https://www.discogs.com/release/570769
+        - kind: cited
+          caveat: the instrument on that sleeve photograph was an unplayable body, so the cover is not evidence for the sessions. The album was cut across 1975 and 1976 and the credit above is.
+          note: 'the builder''s own account of the Stretchin'' Out cover shoot: "I had the bass about half built ... The bass had a coat of white paint on it and the pick-guard and thats about all."'
+          url: https://web.archive.org/web/20200726000028/http://www.angelfire.com/music2/pfunk/feat-spacebass.html
+      strings: round
   subject:
-    band: Parliament-Funkadelic
-    era: Stretchin' Out through Ahh... The Name Is Bootsy
     kind: artist
     name: Bootsy Collins
+    band: Parliament-Funkadelic
+    era: Stretchin' Out through Ahh... The Name Is Bootsy
     years:
       from: 1976
       to: 1977
   technique:
-    attack: slap
     evidence:
-    - caveat: which is the effect being described rather than his hands. Not a statement
-        about attack from anybody who watched him.
-      kind: cited
-      note: the filter described as used "when playing leads or slap"
-      url: https://mixdownmag.com.au/features/gear-rundown-bootsy-collins/
+      - kind: cited
+        caveat: which is the effect being described rather than his hands. Not a statement about attack from anybody who watched him.
+        note: the filter described as used "when playing leads or slap"
+        url: https://mixdownmag.com.au/features/gear-rundown-bootsy-collins/
+    attack: slap
   words:
-  - evidence:
-    - kind: cited
-      note: '"a squelchy, synth-like tone when playing leads or slap"'
-      url: https://mixdownmag.com.au/features/gear-rundown-bootsy-collins/
-    term: envelope-swept
-  - evidence:
-    - against:
-        mid: 0.04
-      caveat: 'measures the record rather than the player, and the envelope filter
-        this rig is mostly about is a mid-band effect: the figure describes the Mu-Tron
-        as much as the bass.'
-      kind: audio
-      measured:
-        mid: 0.23
-      note: 23% of his energy sits in the mid band across the four records, against
-        a middle of 5% across the sixteen players measured, clear by 8%. Earned against
-        every corpus this has been measured against.
-      spread:
-        mid: 0.09
-    term: mid-forward
-id: bootsy-collins
+    - evidence:
+        - kind: cited
+          note: '"a squelchy, synth-like tone when playing leads or slap"'
+          url: https://mixdownmag.com.au/features/gear-rundown-bootsy-collins/
+      term: envelope-swept
+    - evidence:
+        - kind: audio
+          against:
+            mid: 0.04
+          caveat: 'measures the record rather than the player, and the envelope filter this rig is mostly about is a mid-band effect: the figure describes the Mu-Tron as much as the bass.'
+          measured:
+            mid: 0.23
+          note: 23% of his energy sits in the mid band across the four records, against a middle of 5% across the sixteen players measured, clear by 8%. Earned against every corpus this has been measured against.
+          spread:
+            mid: 0.09
+      term: mid-forward
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Drive: "true"
-      Gain: "0.15"
-      Level: "1.0"
-      Mix: "1.0"
-      Mode: "1"
-      Peak: "0.8"
-      Range: "false"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Musitronics Mu-Tron III
-    position: 0
-    role: filter
-  - attrs:
-      '@position': "1"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 1
-    role: comp
-  - attrs:
-      '@position': "2"
-    confidence: medium
-    controls:
-      Bass: "0.67"
-      Bias: "0.66"
-      BiasX: "0.5"
-      ChVol: "1.0"
-      Drive: "0.7"
-      HighMid: "0.5"
-      Hum: "0.5"
-      LowMid: "0.65"
-      Master: "1.0"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.69"
-    evidence:
-    - caveat: nothing on this device emulates the F2-B, and the power amps and cabinets
-        are custom. What is here is the filter and something clean behind it.
-      kind: cited
-      note: an Alembic F2-B preamp into Crown power amps and eight custom Electro-Voice
-        cabinets
-      url: https://www.uberproaudio.com/who-plays-what/295-bootsy-collins-bass-rig-gear-and-equipment
-    gear: Alembic F2-B
-    position: 2
-    role: amp
-    substitute:
-      confidence: low
+    - role: filter
+      gear: Musitronics Mu-Tron III
       evidence:
-      - kind: llm
-        note: a model's guess at the nearest clean tube bass preamp this device carries.
-          Nobody has compared them.
-      gear: Ampeg B-15
-  - attrs:
-      '@position': "3"
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      HighCut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Legacy 1x15" Ampeg B-15
-    position: 3
-    role: cab
-  - attrs:
-      '@position': "4"
-    controls:
-      HighGain: "0.0"
-      Level: "0.0"
-      LowGain: "0.0"
-      MidFreq: "600.0"
-      MidGain: "1.6"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Simple EQ
-    position: 4
-    role: eq
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Alembic F2-B
+      confidence: medium
+      substitute:
+        gear: Ampeg B-15
+        confidence: low
+        evidence:
+          - kind: llm
+            note: a model's guess at the nearest clean tube bass preamp this device carries. Nobody has compared them.
+      evidence:
+        - kind: cited
+          caveat: nothing on this device emulates the F2-B, and the power amps and cabinets are custom. What is here is the filter and something clean behind it.
+          note: an Alembic F2-B preamp into Crown power amps and eight custom Electro-Voice cabinets
+          url: https://www.uberproaudio.com/who-plays-what/295-bootsy-collins-bass-rig-gear-and-equipment
+    - role: cab
+      gear: Legacy 1x15" Ampeg B-15
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: eq
+      gear: Simple EQ
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: filter
+      gear: Musitronics Mu-Tron III
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Drive: "true"
+        Gain: "0.15"
+        Level: "1.0"
+        Mix: "1.0"
+        Mode: "1"
+        Peak: "0.8"
+        Range: "false"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: amp
+      gear: Alembic F2-B
+      confidence: medium
+      substitute:
+        gear: Ampeg B-15
+        confidence: low
+        evidence:
+          - kind: llm
+            note: a model's guess at the nearest clean tube bass preamp this device carries. Nobody has compared them.
+      evidence:
+        - kind: cited
+          caveat: nothing on this device emulates the F2-B, and the power amps and cabinets are custom. What is here is the filter and something clean behind it.
+          note: an Alembic F2-B preamp into Crown power amps and eight custom Electro-Voice cabinets
+          url: https://www.uberproaudio.com/who-plays-what/295-bootsy-collins-bass-rig-gear-and-equipment
+      controls:
+        Bass: "0.67"
+        Bias: "0.66"
+        BiasX: "0.5"
+        ChVol: "1.0"
+        Drive: "0.7"
+        HighMid: "0.5"
+        Hum: "0.5"
+        LowMid: "0.65"
+        Master: "1.0"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.69"
+      attrs:
+        '@position': "2"
+      position: 2
+    - role: cab
+      gear: Legacy 1x15" Ampeg B-15
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        HighCut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "3"
+      position: 3
+    - role: eq
+      gear: Simple EQ
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        HighGain: "0.0"
+        Level: "0.0"
+        LowGain: "0.0"
+        MidFreq: "600.0"
+        MidGain: "1.6"
+      attrs:
+        '@position': "4"
+      position: 4
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -209,34 +220,52 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block0:
+              attrs:
+                '@fs_customcolor': "2"
+                '@fs_index': "1"
+                '@fs_label': Musitronics Mu-Tron III
+            block4:
+              attrs:
+                '@fs_customcolor': "7"
+                '@fs_index': "2"
+                '@fs_label': Simple EQ
     global:
       attrs:
         '@DtSelect': "2"
@@ -299,8 +328,12 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0
+  footswitches:
+    - block: 0
+      label: Musitronics Mu-Tron III
+      led: red
+      switch: 1
+    - block: 4
+      label: Simple EQ
+      led: turquoise
+      switch: 2

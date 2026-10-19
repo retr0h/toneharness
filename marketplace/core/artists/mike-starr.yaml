@@ -4,131 +4,133 @@
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
+schema: ToneSpec
+version: 4.0.0
+id: mike-starr
 ask:
-  aliases:
-  - alice-in-chains
   confidence: low
+  aliases:
+    - alice-in-chains
   genre:
-  - grunge
-  - alternative-metal
+    - grunge
+    - alternative-metal
   instrument: bass
   subject:
-    band: Alice in Chains
-    era: Facelift to Dirt
     kind: artist
     name: Mike Starr
+    band: Alice in Chains
+    era: Facelift to Dirt
     years:
       from: 1990
       to: 1992
   words: []
-id: mike-starr
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    capture: both
-    confidence: low
-    controls:
-      Bass: "0.41"
-      Bias: "0.74"
-      BiasX: "0.5"
-      ChVol: "0.8"
-      Drive: "0.6681818181818182"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.74"
-      MidFreq: "2"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.8382352941176471"
-    evidence:
-    - caveat: 'A forum post relaying somebody who was at the session, which is one
-        remove from first-hand and better than most of what exists for this era. Evan
-        has not been asked directly and the thread is the only place this appears.
-        Two things it does not settle. The SVT-2 is the valve reissue generation where
-        the model here is the original, so this is the same amplifier a generation
-        apart. And the quotation is about one song: Would? is on Dirt and the Singles
-        soundtrack, and whether Facelift two years earlier used the same rig is an
-        assumption rather than a finding. Worth knowing for anybody extending this:
-        the account has three bass tracks blended, and only the first is an amplifier.
-        The other two are an ART Nightbass preset straight to the desk and an acoustic
-        bass guitar, so a chain with one amplifier in it reproduces a third of what
-        was printed.'
-      kind: user
-      note: 'Opened, and it carries a named first-hand witness at one remove. Post
-        77 of the thread, from wolfkeller: "well, after speaking with Evan of Bass
-        Northwest in Seattle, who was there for the recording, here is how Would was
-        recorded. 3 tracks of bass. 1) Spector NS2 into Ampeg SVT 2 into 8x10 E. track
-        2) Spector into ART Nightbass on rickenfaker preset tweaked a bit into board.
-        track 3) Kramer Ferrington acoustic bass into board. Mixx the 3, that''s the
-        sound." Three other posters put him on the same gear without the detail. Mr.
-        Dead: "Mike Inez used the same bass/rig setup (Spector/Ampeg) as original
-        A.I.C. bassist Mike Starr". Angus, on the band''s bass sound: "Spector basses
-        and Ampeg amps."'
-      url: https://www.talkbass.com/threads/x.553451/
-    gear: Ampeg SVT
-    position: 1
-    role: amp
-  - attrs:
-      '@position': "2"
-    confidence: low
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      High Cut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - caveat: From the same relayed account, and the device models a legacy Ampeg
-        SVT-E rather than the 810E specifically.
-      kind: user
-      note: Named in the same sentence as the head, an Ampeg 8x10E.
-      url: https://www.talkbass.com/threads/x.553451/
-    gear: Ampeg 8x10
-    position: 2
-    role: cab
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg SVT
+      capture: both
+      confidence: low
+      evidence:
+        - kind: user
+          caveat: 'A forum post relaying somebody who was at the session, which is one remove from first-hand and better than most of what exists for this era. Evan has not been asked directly and the thread is the only place this appears. Two things it does not settle. The SVT-2 is the valve reissue generation where the model here is the original, so this is the same amplifier a generation apart. And the quotation is about one song: Would? is on Dirt and the Singles soundtrack, and whether Facelift two years earlier used the same rig is an assumption rather than a finding. Worth knowing for anybody extending this: the account has three bass tracks blended, and only the first is an amplifier. The other two are an ART Nightbass preset straight to the desk and an acoustic bass guitar, so a chain with one amplifier in it reproduces a third of what was printed.'
+          note: 'Opened, and it carries a named first-hand witness at one remove. Post 77 of the thread, from wolfkeller: "well, after speaking with Evan of Bass Northwest in Seattle, who was there for the recording, here is how Would was recorded. 3 tracks of bass. 1) Spector NS2 into Ampeg SVT 2 into 8x10 E. track 2) Spector into ART Nightbass on rickenfaker preset tweaked a bit into board. track 3) Kramer Ferrington acoustic bass into board. Mixx the 3, that''s the sound." Three other posters put him on the same gear without the detail. Mr. Dead: "Mike Inez used the same bass/rig setup (Spector/Ampeg) as original A.I.C. bassist Mike Starr". Angus, on the band''s bass sound: "Spector basses and Ampeg amps."'
+          url: https://www.talkbass.com/threads/x.553451/
+    - role: cab
+      gear: Ampeg 8x10
+      confidence: low
+      evidence:
+        - kind: user
+          caveat: From the same relayed account, and the device models a legacy Ampeg SVT-E rather than the 810E specifically.
+          note: Named in the same sentence as the head, an Ampeg 8x10E.
+          url: https://www.talkbass.com/threads/x.553451/
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg SVT
+      capture: both
+      confidence: low
+      evidence:
+        - kind: user
+          caveat: 'A forum post relaying somebody who was at the session, which is one remove from first-hand and better than most of what exists for this era. Evan has not been asked directly and the thread is the only place this appears. Two things it does not settle. The SVT-2 is the valve reissue generation where the model here is the original, so this is the same amplifier a generation apart. And the quotation is about one song: Would? is on Dirt and the Singles soundtrack, and whether Facelift two years earlier used the same rig is an assumption rather than a finding. Worth knowing for anybody extending this: the account has three bass tracks blended, and only the first is an amplifier. The other two are an ART Nightbass preset straight to the desk and an acoustic bass guitar, so a chain with one amplifier in it reproduces a third of what was printed.'
+          note: 'Opened, and it carries a named first-hand witness at one remove. Post 77 of the thread, from wolfkeller: "well, after speaking with Evan of Bass Northwest in Seattle, who was there for the recording, here is how Would was recorded. 3 tracks of bass. 1) Spector NS2 into Ampeg SVT 2 into 8x10 E. track 2) Spector into ART Nightbass on rickenfaker preset tweaked a bit into board. track 3) Kramer Ferrington acoustic bass into board. Mixx the 3, that''s the sound." Three other posters put him on the same gear without the detail. Mr. Dead: "Mike Inez used the same bass/rig setup (Spector/Ampeg) as original A.I.C. bassist Mike Starr". Angus, on the band''s bass sound: "Spector basses and Ampeg amps."'
+          url: https://www.talkbass.com/threads/x.553451/
+      controls:
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.79"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.85"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: Ampeg 8x10
+      confidence: low
+      evidence:
+        - kind: user
+          caveat: From the same relayed account, and the device models a legacy Ampeg SVT-E rather than the 810E specifically.
+          note: Named in the same sentence as the head, an Ampeg 8x10E.
+          url: https://www.talkbass.com/threads/x.553451/
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        High Cut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -136,31 +138,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -226,8 +232,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

@@ -9,120 +9,126 @@
 # and he was a collector who ran several at once, so claiming one would be
 # inventing it.
 
+schema: ToneSpec
+version: 4.0.0
+id: allen-woody
 ask:
-  aliases:
-  - govt-mule
-  - gov't-mule
   confidence: medium
+  aliases:
+    - govt-mule
+    - gov't-mule
   genre:
-  - southern-rock
-  - blues-rock
+    - southern-rock
+    - blues-rock
   instrument: bass
   subject:
-    band: Gov't Mule
-    era: Gov't Mule to Dose
     kind: artist
     name: Allen Woody
+    band: Gov't Mule
+    era: Gov't Mule to Dose
     years:
       from: 1995
       to: 1998
   words: []
-id: allen-woody
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    confidence: medium
-    controls:
-      Bass: "0.41"
-      Bias: "0.74"
-      BiasX: "0.5"
-      ChVol: "0.8"
-      Drive: "0.6"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.79"
-      MidFreq: "2"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.8594444444444445"
-    evidence:
-    - caveat: 'Part of a rig rather than the rig, and the SVT is the part this device
-        has. The Orange amplifiers he blends with it are modelled by nothing here,
-        and neither are the Crossroad stacks, so what is below is the Ampeg half of
-        a two-amplifier sound. He is explicit that the two bands were different rigs,
-        which is why the era above is Gov''t Mule rather than his Allman Brothers
-        years: with the Brothers the SVT was one cabinet for grit inside a high-fidelity
-        rack, and that is not what this chain would be.'
-      kind: cited
-      note: 'Vintage Guitar, in his own words, and he draws the line between his two
-        bands himself. On this one: "With Gov''t Mule, it''s all SVTs and Orange amps,
-        and I''ve also been using the reissue Crossroad stacks; Bud Ross of Kustom
-        fame made them; they''re even rolled and pleated." On the other: "My amp set-up
-        with the Brothers is geared toward a high fidelity sound; lots of power amps,
-        preamps, high-end cabinets, plus one SVT cabinet that we use just for ''dirt''",
-        and without it "the sound would be too clean".'
-      url: https://www.vintageguitar.com/2794/allen-woody/
-    gear: Ampeg SVT
-    position: 1
-    role: amp
-  - attrs:
-      '@position': "2"
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      High Cut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: 8x10 Ampeg SVT-E
-    position: 2
-    role: cab
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: 'Part of a rig rather than the rig, and the SVT is the part this device has. The Orange amplifiers he blends with it are modelled by nothing here, and neither are the Crossroad stacks, so what is below is the Ampeg half of a two-amplifier sound. He is explicit that the two bands were different rigs, which is why the era above is Gov''t Mule rather than his Allman Brothers years: with the Brothers the SVT was one cabinet for grit inside a high-fidelity rack, and that is not what this chain would be.'
+          note: 'Vintage Guitar, in his own words, and he draws the line between his two bands himself. On this one: "With Gov''t Mule, it''s all SVTs and Orange amps, and I''ve also been using the reissue Crossroad stacks; Bud Ross of Kustom fame made them; they''re even rolled and pleated." On the other: "My amp set-up with the Brothers is geared toward a high fidelity sound; lots of power amps, preamps, high-end cabinets, plus one SVT cabinet that we use just for ''dirt''", and without it "the sound would be too clean".'
+          url: https://www.vintageguitar.com/2794/allen-woody/
+    - role: cab
+      gear: 8x10 Ampeg SVT-E
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: 'Part of a rig rather than the rig, and the SVT is the part this device has. The Orange amplifiers he blends with it are modelled by nothing here, and neither are the Crossroad stacks, so what is below is the Ampeg half of a two-amplifier sound. He is explicit that the two bands were different rigs, which is why the era above is Gov''t Mule rather than his Allman Brothers years: with the Brothers the SVT was one cabinet for grit inside a high-fidelity rack, and that is not what this chain would be.'
+          note: 'Vintage Guitar, in his own words, and he draws the line between his two bands himself. On this one: "With Gov''t Mule, it''s all SVTs and Orange amps, and I''ve also been using the reissue Crossroad stacks; Bud Ross of Kustom fame made them; they''re even rolled and pleated." On the other: "My amp set-up with the Brothers is geared toward a high fidelity sound; lots of power amps, preamps, high-end cabinets, plus one SVT cabinet that we use just for ''dirt''", and without it "the sound would be too clean".'
+          url: https://www.vintageguitar.com/2794/allen-woody/
+      controls:
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.81"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.85"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: 8x10 Ampeg SVT-E
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        High Cut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -130,31 +136,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -220,8 +230,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0
