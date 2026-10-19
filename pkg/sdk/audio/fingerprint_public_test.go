@@ -22,6 +22,7 @@ package audio_test
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"testing"
 	"testing/fstest"
@@ -197,4 +198,47 @@ func (s *FingerprintPublicTestSuite) TestTheShippedFiguresNameTheCorpusTheyWereM
 
 func TestFingerprintPublicTestSuite(t *testing.T) {
 	suite.Run(t, new(FingerprintPublicTestSuite))
+}
+
+// unreadable lists a tree faithfully and refuses to open one file in it.
+//
+// Which is the state a manifest deleted between the walk and the read leaves
+// behind, and the one error [audio.CorpusSHA] reports that a well-formed tree
+// cannot produce.
+type unreadable struct {
+	fs.FS
+	at string
+}
+
+// Open refuses the one path, and answers for every other.
+func (u unreadable) Open(
+	name string,
+) (fs.File, error) {
+	if name == u.at {
+		return nil, fs.ErrPermission
+	}
+
+	return u.FS.Open(name)
+}
+
+// ReadDir delegates, so the walk still finds the file it cannot then read.
+//
+// Deliberately not a ReadFileFS: fs.ReadFile prefers that interface where a
+// filesystem offers one, and fstest.MapFS does, so the refusal above would
+// never be consulted.
+func (u unreadable) ReadDir(
+	name string,
+) ([]fs.DirEntry, error) {
+	return fs.ReadDir(u.FS, name)
+}
+
+// TestAManifestTheWalkFindsAndCannotRead is the second of the two errors.
+func (s *FingerprintPublicTestSuite) TestAManifestTheWalkFindsAndCannotRead() {
+	tree := fstest.MapFS{
+		"bass/dirnt/corpus.yaml": said(one("Mike Dirnt")),
+	}
+
+	_, err := audio.CorpusSHA(
+		unreadable{FS: tree, at: "bass/dirnt/corpus.yaml"}, ".")
+	s.Require().ErrorContains(err, "reading bass/dirnt/corpus.yaml")
 }
