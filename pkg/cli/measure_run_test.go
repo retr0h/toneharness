@@ -520,7 +520,9 @@ func (s *MeasureRunTestSuite) TestMeasureBlocks() {
 			then: func() {
 				s.compiles()
 
-				// The baseline, then one block, then the bench stops answering.
+				// The baseline, then one block, then the bench stops
+				// answering. Five readings, because the baseline is the
+				// middle of three takes and a block is two.
 				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 				var (
@@ -530,7 +532,7 @@ func (s *MeasureRunTestSuite) TestMeasureBlocks() {
 
 				err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
 					Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq", Seconds: 1,
-					Bench: stopping{after: 3, calls: &calls},
+					Bench: stopping{after: baselineTakes + 2, calls: &calls},
 				})
 
 				s.Require().Error(err)
