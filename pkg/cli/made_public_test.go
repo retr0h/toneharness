@@ -304,6 +304,42 @@ func (s *MadePublicTestSuite) TestMade() {
 						absent: []string{"of a step"},
 					},
 					{
+						// Why two genres asking for opposite things come out alike.
+						// Grunge's own Mid: a whole step is 0.040 where a control the
+						// corpus cannot measure moves 0.100, so `scooped` and
+						// `mid-forward` land 0.034 apart. Without this line the only
+						// evidence is two files that match, which reads as the words
+						// having said nothing rather than as the corpus having no
+						// opinion about the control they reach for.
+						name: "a knob the corpus pinned",
+						in: s.made(func(m *sdk.Made) {
+							m.Moved = []sdk.Moved{{
+								Term: "scooped", Param: "Mid", From: 0.56, To: 0.54,
+								Weight: 0.6, Step: 0.04, Default: 0.1,
+							}}
+						}),
+						want: []string{
+							"scooped — Mid 0.56 to 0.54",
+							"a whole step here is 0.040",
+							"one nobody has measured moves 0.100",
+						},
+					},
+					{
+						// A spread landing a hair under the default is float dust, and
+						// reporting it prints two numbers that round to each other.
+						// Grunge's own Treble measures 0.09999999999999998 against a
+						// default of 0.1.
+						name: "a knob the corpus barely narrowed",
+						in: s.made(func(m *sdk.Made) {
+							m.Moved = []sdk.Moved{{
+								Term: "dark", Param: "Treble", From: 0.50, To: 0.47,
+								Weight: 0.31, Step: 0.09999999999999998, Default: 0.1,
+							}}
+						}),
+						want:   []string{"dark — Treble 0.50 to 0.47"},
+						absent: []string{"a whole step here is"},
+					},
+					{
 						// Four of the ten axes describe the player and the instrument
 						// rather than the rig, so no control answers them. Saying so
 						// beats letting somebody believe the word did something.

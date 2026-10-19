@@ -180,6 +180,34 @@ type Moved struct {
 	// step. Less than that when the term's own evidence measured the gap
 	// that earned it against other players, and the gap is narrow.
 	Weight float64 `json:"weight"`
+	// Step is how far a whole step moved this control, and Default how far it
+	// would have moved one the corpus cannot measure at all.
+	//
+	// Step below Default is the corpus agreeing about a control rather than
+	// disagreeing, and it is how two genres asking for opposite things land
+	// in the same place. Carried so a build can say so: five shipped genre
+	// presets differ by 0.034 of Mid across all five, on a control running 0
+	// to 1, while the words behind them read `scooped` against `mid-forward`.
+	Step    float64 `json:"step,omitempty"`
+	Default float64 `json:"default,omitempty"`
+}
+
+// Pinned says whether the corpus agreed about this control so closely that a
+// whole step moves it less than half what it would move one nobody has
+// measured.
+//
+// The honest reading of two builds that match: not that the words said the
+// same thing, but that the population this project learns from has no opinion
+// about the control those words reach for.
+//
+// Half rather than any narrowing at all, which is a threshold for reporting
+// and not a claim about what anybody can hear. A spread that lands a hair
+// under the default is float dust, and saying so prints two numbers that
+// round to each other: grunge's Treble measures 0.09999999999999998 against a
+// default of 0.1. Below half, the corpus's agreement is the reason the knob
+// barely moved, which is worth a reader's attention.
+func (m Moved) Pinned() bool {
+	return m.Acted() && m.Default > 0 && m.Step < m.Default/2
 }
 
 // Measured says whether a measurement sized the move rather than the word

@@ -73,6 +73,18 @@ type Moved struct {
 	// not taken when it had.
 	Held       float64
 	Overridden bool
+	// Step is how far a whole step moved this control, and Default how far it
+	// would have moved one the corpus cannot measure at all.
+	//
+	// Step below Default is the corpus agreeing about a control rather than
+	// disagreeing, and it is how two genres asking for opposite things land in
+	// the same place: five of the shipped genre presets differ by 0.034 of Mid
+	// across all five, on a control that runs 0 to 1, while the words behind
+	// them read `scooped` against `mid-forward`. Reported rather than fixed
+	// here, because moving a knob further than the evidence supports is how a
+	// tune once came out sounding worse than the rig it started from.
+	Step    float64
+	Default float64
 }
 
 // Beaten says whether something wrote over what this word did.
@@ -494,7 +506,8 @@ func apply(
 		return Moved{Term: term, Because: "the " + b.Name + " has no " + key}
 	}
 
-	to := clamp(from+t.steps*h.weight*step(b, key, p, stats), p.Min, p.Max)
+	reach, loose := step(b, key, p, stats)
+	to := clamp(from+t.steps*h.weight*reach, p.Min, p.Max)
 
 	// A knob already at the end it was asked to move towards. The control is
 	// there, the word reached it, and the preset is no different for it, so
@@ -520,31 +533,42 @@ func apply(
 
 	return Moved{
 		At: at, Term: term, Param: key, From: from, To: to, Weight: h.weight,
+		Step: reach, Default: loose,
 	}
 }
 
-// step is how far one term moves this parameter.
+// step is how far one term moves this parameter, and how far it would move one
+// the corpus cannot measure.
 //
 // The corpus spread where there is one: a parameter every player sets the same
 // way is one nobody has an opinion about, and a term should barely move it. A
 // parameter players disagree about is one where an opinion is worth having.
 // Line 6's range would say the same thing about both. No step is wider than
 // maxStep of the range, however much players disagree.
+//
+// Both are returned because the first is only interesting against the second.
+// The corpus answers how far typical presets vary, which is a fact about what
+// people happen to have uploaded rather than about what the control can do or
+// about how far this genre sits from the others, so a word earned by a mile
+// and a word earned by a hair move a unanimous control by nearly the same
+// nothing. A build that reports the pair lets somebody see that rather than
+// infer it from two files that match.
 func step(
 	b catalog.Block,
 	key string,
 	p catalog.Param,
 	stats *corpus.Stats,
-) float64 {
+) (float64, float64) {
 	span := p.Max - p.Min
+	loose := span * fallbackStep
 
 	if stats != nil {
 		if d, ok := stats.Param(b.ID, key); ok && d.Spread() > 0 {
-			return math.Min(d.Spread(), span*maxStep)
+			return math.Min(d.Spread(), span*maxStep), loose
 		}
 	}
 
-	return span * fallbackStep
+	return loose, loose
 }
 
 // clamp keeps a value inside what the device accepts.
