@@ -48,9 +48,20 @@ var shipped []byte
 // writes an empty list rather than deleting the file. A caller asking for a
 // genre nothing measured gets nothing and should say so.
 var Shipped = sync.OnceValues(func() ([]Genre, error) {
-	got, err := unpackGenres(shipped)
+	got, err := packed()
 
 	return got.Genres, err
+})
+
+// packed is the embedded file parsed once, which both answers above it read.
+//
+// One parse rather than two. [ShippedCorpus] had its own, which gave it an
+// error to handle that nothing could reach: the committed file always parses,
+// and the embed directive refuses to compile without it, so the branch was dead
+// and counted against the coverage gate. Sharing the parse removes it rather
+// than testing a state that cannot happen.
+var packed = sync.OnceValues(func() (Packed, error) {
+	return unpackGenres(shipped)
 })
 
 // ShippedCorpus is the fingerprint of the manifests the shipped figures were
@@ -66,10 +77,12 @@ var Shipped = sync.OnceValues(func() ([]Genre, error) {
 // own tests, which is a check that needs no audio and therefore runs where the
 // audio never is.
 func ShippedCorpus() string {
-	got, err := unpackGenres(shipped)
-	if err != nil {
-		return ""
-	}
+	// The error is dropped rather than branched on, for the reason [Shipped]
+	// drops it: a Packed that failed to parse is the zero value and its Corpus
+	// is empty, which is the same answer a file predating the fingerprint
+	// gives. Both mean "this pack does not say", and a caller has one thing to
+	// check instead of two.
+	got, _ := packed()
 
 	return got.Corpus
 }
