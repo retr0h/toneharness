@@ -35,6 +35,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
@@ -67,7 +68,12 @@ func pack(
 		return nil
 	}
 
-	got, err := audio.GenresMeasured(os.DirFS(from), ".")
+	// `from` is the whole corpus, `resources/music`, so its base names no
+	// instrument and every player's is read from the directory above it. Passed
+	// anyway rather than left blank, because this generator would otherwise be
+	// the one caller that silently stops working if somebody pointed it at one
+	// instrument's tree.
+	got, err := audio.GenresMeasured(os.DirFS(from), ".", filepath.Base(from))
 	if err != nil {
 		return fmt.Errorf("measuring the genres: %w", err)
 	}
