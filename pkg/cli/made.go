@@ -237,6 +237,18 @@ func says(
 				line += fmt.Sprintf(" (%.0f%% of a step: what the records measured)",
 					m.Weight*100)
 			}
+
+			if m.Pinned() {
+				// The reason two genres asking for opposite things come out
+				// alike. Without this the only evidence is two files that
+				// match, which reads as the words having said nothing rather
+				// than as the corpus having no opinion about the control they
+				// reach for.
+				line += fmt.Sprintf(
+					" (a whole step here is %.3f, because the presets measured "+
+						"agree that closely; one nobody has measured moves %.3f)",
+					m.Step, m.Default)
+			}
 		case m.Unanswered():
 			line = fmt.Sprintf("%s — %s", m.Term, m.Because)
 		}

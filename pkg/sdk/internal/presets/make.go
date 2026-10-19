@@ -464,6 +464,8 @@ func movedFrom(
 			Weight:     m.Weight,
 			Held:       m.Held,
 			Overridden: m.Overridden,
+			Step:       m.Step,
+			Default:    m.Default,
 		})
 	}
 

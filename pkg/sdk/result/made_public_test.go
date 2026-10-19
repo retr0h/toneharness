@@ -117,6 +117,63 @@ func (s *MadePublicTestSuite) TestBeaten() {
 	}
 }
 
+// TestPinned covers whether the corpus is why a word barely moved a control.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MadePublicTestSuite) TestPinned() {
+	for _, tt := range []struct {
+		name string
+		of   result.Moved
+		want bool
+	}{
+		{
+			// grunge's Mid, which is the reading this exists for: five genre
+			// presets differ by 0.034 of it across all five while the words
+			// behind them read `scooped` against `mid-forward`.
+			name: "the corpus narrowed a whole step to well under the default",
+			of:   result.Moved{Param: "Mid", Step: 0.04, Default: 0.1},
+			want: true,
+		},
+		{
+			// grunge's Treble, to the digit. Technically narrower and not
+			// worth a word about, because saying so prints two numbers that
+			// round to each other.
+			name: "float dust is not a narrowing",
+			of:   result.Moved{Param: "Treble", Step: 0.09999999999999998, Default: 0.1},
+			want: false,
+		},
+		{
+			name: "exactly half is not under half",
+			of:   result.Moved{Param: "Mid", Step: 0.05, Default: 0.1},
+			want: false,
+		},
+		{
+			// The corpus had nothing to say, so the default is what moved it
+			// and there is nothing to report.
+			name: "a control the corpus cannot measure",
+			of:   result.Moved{Param: "Mix", Step: 0.1, Default: 0.1},
+			want: false,
+		},
+		{
+			// A word that reached no control has no step to describe, whatever
+			// the numbers happen to hold.
+			name: "a word that moved nothing",
+			of:   result.Moved{Step: 0.001, Default: 0.1},
+			want: false,
+		},
+		{
+			// Rather than dividing by zero and reporting every move.
+			name: "no default at all",
+			of:   result.Moved{Param: "Mid", Step: 0.04},
+			want: false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, tt.of.Pinned())
+		})
+	}
+}
+
 func TestMadePublicTestSuite(
 	t *testing.T,
 ) {

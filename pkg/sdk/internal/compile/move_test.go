@@ -153,6 +153,11 @@ func (s *MoveTestSuite) TestStep() {
 		p     catalog.Param
 		stats *corpus.Stats
 		want  float64
+		// loose is what a control the corpus cannot measure would move, which
+		// is only interesting beside want: a step well under it is the corpus
+		// agreeing about the control rather than disagreeing, and is why two
+		// genres asking for opposite things can land in the same place.
+		loose float64
 	}{
 		{
 			// Players mostly agree, so the spread is the step.
@@ -160,6 +165,7 @@ func (s *MoveTestSuite) TestStep() {
 			p:     knob,
 			stats: s.spread(0.46, 0.54),
 			want:  0.08,
+			loose: 0.1,
 		},
 		{
 			// Sag on the Cali 400 spreads across half its range. One word
@@ -168,27 +174,34 @@ func (s *MoveTestSuite) TestStep() {
 			p:     knob,
 			stats: s.spread(0.25, 0.75),
 			want:  0.25,
+			loose: 0.1,
 		},
 		{
 			name:  "a cap measured against the control's own range",
 			p:     wide,
 			stats: s.spread(1, 9),
 			want:  2.5,
+			loose: 1.0,
 		},
 		{
+			// A spread of zero is no opinion at all, so the default moves it
+			// and there is nothing narrower to report.
 			name:  "players who all set it the same way",
 			p:     knob,
 			stats: s.spread(0.5, 0.5),
 			want:  0.1,
+			loose: 0.1,
 		},
-		{name: "no statistics at all", p: knob, want: 0.1},
+		{name: "no statistics at all", p: knob, want: 0.1, loose: 0.1},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got := step(s.amp(), "Sag", tt.p, tt.stats)
+			got, loose := step(s.amp(), "Sag", tt.p, tt.stats)
 
 			s.Require().InDelta(tt.want, got, 1e-9)
+			s.Require().InDelta(tt.loose, loose, 1e-9,
+				"what a control the corpus cannot measure would move")
 		})
 	}
 }
