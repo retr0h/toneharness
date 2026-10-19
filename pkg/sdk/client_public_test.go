@@ -497,10 +497,19 @@ func (s *ClientPublicTestSuite) TestAResolvePreservesTheAuthoredHalf() {
 		{
 			name: "the citation on a named block survives",
 			then: func(s *ClientPublicTestSuite, _, now tonespec.Spec) {
-				s.Require().Len(now.Rig.Chain, 1)
-				s.Require().Equal("Aguilar DB51", now.Rig.Chain[0].Gear)
-				s.Require().NotNil(now.Rig.Chain[0].Evidence)
-				s.Require().Len(*now.Rig.Chain[0].Evidence, 1)
+				s.Require().Len(now.Rig.Chain, 2)
+				s.Require().Equal("Ampeg Scrambler", now.Rig.Chain[0].Gear)
+				s.Require().Equal("Aguilar DB51", now.Rig.Chain[1].Gear)
+
+				for _, e := range now.Rig.Chain {
+					s.Require().NotNil(e.Evidence)
+					s.Require().Len(*e.Evidence, 1)
+				}
+
+				// The drive is worth stomping, so the computed half carries a
+				// switch for it. An amplifier alone would carry none.
+				s.Require().NotNil(now.Built.Footswitches)
+				s.Require().NotEmpty(*now.Built.Footswitches)
 			},
 		},
 		{
@@ -509,8 +518,8 @@ func (s *ClientPublicTestSuite) TestAResolvePreservesTheAuthoredHalf() {
 			then: func(s *ClientPublicTestSuite, _, now tonespec.Spec) {
 				// Still in the authored half, because that is where it was
 				// written and nothing here may take it away.
-				s.Require().NotNil(now.Rig.Chain[0].Controls)
-				s.Require().Contains(*now.Rig.Chain[0].Controls, "Drive")
+				s.Require().NotNil(now.Rig.Chain[1].Controls)
+				s.Require().Contains(*now.Rig.Chain[1].Controls, "Drive")
 
 				// And the computed half agrees, which is what makes it an
 				// override rather than a note: the build used it.
@@ -607,6 +616,10 @@ rig:
   instrument: ` + instrument + `
 
   chain:
+    - role: drive
+      gear: Ampeg Scrambler
+      evidence:
+        - { kind: cited, note: "a test says so too" }
     - role: amp
       gear: Aguilar DB51
       evidence:

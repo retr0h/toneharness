@@ -88,10 +88,34 @@ rig:
         Three channels are blended: "just clean clean DI, the octave DI, and a dirty amp",
         and the amp goes "to an ISO cabinet and it''s miked in there". On how it reads to
         anybody standing near it: "when I check Dusty''s bass I mean people look around like
-        man what''s going wrong because it''s really really big and distorted".'
+        man what''s going wrong because it''s really really big and distorted".
+
+
+        The octave pedal the same sentence describes is not in the chain below. The
+        walkthrough establishes that one was there and never says which, and this device
+        carries three, so naming any of them would be choosing on his behalf. The filter
+        is below because that one he names.'
       url: https://www.youtube.com/watch?v=1x_kg6pOvGU
     gear: Marshall JMP-1
     role: amp
+  - role: eq
+    gear: Micro Thumpinator
+    confidence: medium
+    substitute:
+      gear: Low and High Cut
+      confidence: medium
+      evidence:
+        - kind: user
+          caveat: 'Stronger than most substitutions here and still one. The pedal is a fixed high-pass and this is an adjustable one, so what is swapped is the box rather than the job, and nothing establishes the exact corner frequency his was set to: "below B flat" is a note rather than a number, and B flat sits at 29.14Hz as an open fifth-string semitone and at 58.27Hz an octave up.'
+          note: 'Not an emulation. A Micro Thumpinator does one thing, which is to cut everything below a low note, and this device carries a high-pass that does that thing. The maker and the circuit are not reproduced and do not need to be: a high-pass at the same corner is the same filter.'
+    evidence:
+      - kind: cited
+        caveat: 'The walkthrough names the pedal and what it is for, and no frequency. Whoever sets this picks the corner, and the note above says which two candidates "below B flat" leaves.
+
+
+          It also sat on the octave channel rather than across the whole rig, which this chain cannot reproduce: his three channels were blended and an HX Stomp has one path. So this is his filter in a chain that is not his routing.'
+        note: 'His tech, on camera, in the same Premier Guitar walkthrough that names the amplifier: the signal goes "into this is an octave down and this is a filter that takes everything from the low B down", a Micro Thumpinator, "it filters off everything below B flat cause we want the octave down effect on every note except B flat and lower".'
+        url: https://www.youtube.com/watch?v=1x_kg6pOvGU
   instrument: bass
 schema: ToneSpec
 version: 4.0.0

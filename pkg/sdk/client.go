@@ -882,17 +882,13 @@ func built(
 	// Both off the catalog that answered, rather than copied from the document.
 	// A resolve says which catalog and which pedal answered this time, so a
 	// stale pair cannot survive by being repeated.
-	if cat != nil {
-		if cat.Device != "" {
-			device := cat.Device
-			out.Device = &device
-		}
-
-		if cat.Source != "" {
-			release := cat.Source
-			out.Catalog = &release
-		}
-	}
+	//
+	// Unguarded. The only caller takes this catalog from [Client.Catalog] and
+	// returns on its error, and every catalog carries both fields: the built-in
+	// ones are generated with them and a generated file without them is a
+	// broken catalog, which this would then say out loud rather than hide.
+	device, release := cat.Device, cat.Source
+	out.Device, out.Catalog = &device, &release
 
 	return &out
 }
