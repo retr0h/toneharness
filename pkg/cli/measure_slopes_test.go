@@ -50,6 +50,11 @@ type SlopesTestSuite struct {
 	ctrl  *gomock.Controller
 	pedal *mocks.MockTuner
 	dry   string
+	// catErr is what the device answers when asked which models it has. A
+	// field rather than a second expectation, because gomock takes the first
+	// matching one and SetupTest's is AnyTimes, so a later EXPECT would never
+	// be reached.
+	catErr error
 }
 
 func (s *SlopesTestSuite) SetupTest() {
@@ -58,8 +63,13 @@ func (s *SlopesTestSuite) SetupTest() {
 	// Every measuring command asks the client which models the attached
 	// device has, rather than reading the built-in HX Stomp catalog, so that
 	// --catalog and --device reach them.
+	s.catErr = nil
 	s.pedal.EXPECT().Catalog(gomock.Any()).
 		DoAndReturn(func(context.Context) (*catalog.Catalog, error) {
+			if s.catErr != nil {
+				return nil, s.catErr
+			}
+
 			return catalog.BuiltIn()
 		}).AnyTimes()
 	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di-short.wav")
@@ -114,6 +124,77 @@ func (s *SlopesTestSuite) TestSlopes() {
 		name string
 		then func()
 	}{
+		{
+			// Asked of the client rather than read from the built-in catalog,
+			// so --catalog and --device reach it, which means it can fail.
+			name: "a device that cannot say which models it has",
+			then: func() {
+				// The chain is built before the catalog is asked for, so the
+				// build has to succeed for this to be reached. Nothing after
+				// it runs, which is why the fuller scaffolding is not used.
+				s.pedal.EXPECT().
+					Make(gomock.Any(), gomock.Any()).
+					Return(sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{{
+						Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true,
+					}}}}, nil)
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+
+				s.catErr = errors.New("usb: gone")
+
+				s.Require().ErrorContains(
+					Slopes(context.Background(), buffer(), s.opts()), "usb: gone")
+			},
+		},
+		{
+			// The first reading is thrown away. A control moved live settles
+			// over a reading or two, and the discard is what stops the first
+			// figure of a run describing where the last one left the chain.
+			name: "a bench that will not answer the discarded reading",
+			then: func() {
+				s.built()
+
+				var calls int
+
+				opts := s.opts()
+				opts.Bench = stopping{after: 0, calls: &calls}
+
+				s.Require().ErrorContains(
+					Slopes(context.Background(), buffer(), opts), "stopped answering")
+			},
+		},
+		{
+			// And the one that is kept, which is a different line and a
+			// different failure: the discard worked and the reading did not.
+			name: "a bench that will not answer the reading it keeps",
+			then: func() {
+				s.built()
+
+				var calls int
+
+				opts := s.opts()
+				opts.Bench = stopping{after: 1, calls: &calls}
+
+				s.Require().ErrorContains(
+					Slopes(context.Background(), buffer(), opts), "stopped answering")
+			},
+		},
+		{
+			// A block nobody has swept. Skipped rather than refused, because
+			// the command's answer is the comparison it can make and a chain
+			// of five blocks where four are swept is still worth reading.
+			name: "a sweep directory holding nothing for this block",
+			then: func() {
+				s.built()
+
+				opts := s.opts()
+				opts.Sweeps = s.T().TempDir()
+
+				w := buffer()
+
+				s.Require().NoError(Slopes(context.Background(), w, opts))
+				s.Require().NotContains(w.String(), "HD2_AmpSVBeastBrt Treble")
+			},
+		},
 		{
 			// TestItPrintsTheLiveSlopeBesideTheCommittedOne is the whole
 			// point. TestSlopesRefusesAReferenceForTheOtherInstrument covers

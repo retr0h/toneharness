@@ -47,6 +47,8 @@ var (
 	WireOrder = wireOrder
 	// Changed is the parameters that differ between two readings.
 	Changed = changed
+	// Record appends a round of asking to a document's ask.
+	Record = record
 	// Short is the first line of an error.
 	Short = short
 	// Keep writes a library out.
