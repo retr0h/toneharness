@@ -49,6 +49,7 @@ type ControlsRunTestSuite struct {
 
 	ctrl  *gomock.Controller
 	pedal *mocks.MockPedal
+	cat   *catalog.Catalog
 	out   string
 	dry   string
 }
@@ -59,9 +60,16 @@ func (s *ControlsRunTestSuite) SetupTest() {
 	// Every measuring command asks the client which models the attached
 	// device has, rather than reading the built-in HX Stomp catalog, so that
 	// --catalog and --device reach them.
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	s.cat = cat
+
+	// The suite's own catalog rather than a second copy, so a case that needs
+	// a model the symbol table does not name can withhold one.
 	s.pedal.EXPECT().Catalog(gomock.Any()).
 		DoAndReturn(func(context.Context) (*catalog.Catalog, error) {
-			return catalog.BuiltIn()
+			return s.cat, nil
 		}).AnyTimes()
 	s.out = filepath.Join(s.T().TempDir(), "curves.json")
 	s.dry = filepath.Join("..", "..", "resources", "dry", "bass-di-short.wav")
@@ -73,6 +81,35 @@ func (s *ControlsRunTestSuite) SetupTest() {
 	s.pedal.EXPECT().
 		PresetFile(gomock.Any(), gomock.Any()).
 		Return(sdk.Reading{Plan: routed()}, nil).AnyTimes()
+}
+
+// forget swaps in a catalog whose symbol table does not name a model.
+//
+// Every block this device carries is named there, so a catalog that claims no
+// order for one cannot be had by choosing a model.
+//
+// A copy rather than an edit. `catalog.BuiltIn` decodes once and hands every
+// caller the same pointer, which is only safe while nothing writes to it, so
+// striking a symbol out of it here would take that model's order away from
+// every other test in the process.
+func (s *ControlsRunTestSuite) forget(
+	model string,
+) {
+	kept := make([]catalog.Symbol, 0, len(s.cat.Symbols))
+
+	for _, sym := range s.cat.Symbols {
+		switch string(sym.ID) {
+		case model, model + "Mono", model + "Stereo":
+			continue
+		}
+
+		kept = append(kept, sym)
+	}
+
+	without := *s.cat
+	without.Symbols = kept
+
+	s.cat = &without
 }
 
 // ready makes the pedal answer everything a sweep asks of it.
@@ -238,10 +275,10 @@ func (s *ControlsRunTestSuite) run(
 	return got, buf.String(), nil
 }
 
-// TestControlsAsksTheDeviceWhenTheCatalogClaimsNoOrder covers the equalisers.
+// TestControlsAsksTheDeviceWhenTheCatalogClaimsNoOrder covers a block the
+// catalog cannot name the indexes of.
 //
-// Line 6 ship no symbol list for one, so the catalog names no wire order and a
-// sweep used to refuse outright. That left the blocks whose fingerprints say
+// A sweep used to refuse outright, which left the blocks whose fingerprints say
 // nothing as the blocks nothing described at all: an equaliser measures as the
 // baseline at its defaults, because flat is what it ships at, so its curves are
 // the only thing that says what it does.
@@ -249,7 +286,13 @@ func (s *ControlsRunTestSuite) run(
 // Discovered rather than handed over on a flag. An order somebody types is an
 // order somebody can get wrong, and a curve filed under the wrong control is a
 // plausible number about a different knob.
+//
+// The symbol withheld deliberately rather than relying on a category Line 6
+// were believed to ship no symbols for. They ship one for every block; an
+// equaliser looked unclaimed because the table names it `…Mono` and the lookup
+// wanted the name as it stands.
 func (s *ControlsRunTestSuite) TestControlsAsksTheDeviceWhenTheCatalogClaimsNoOrder() {
+	s.forget("HD2_EQSimple3Band")
 	s.moves([]string{"LowGain", "MidFreq", "MidGain", "HighGain", "Level"})
 
 	got, said, err := s.run("HD2_EQSimple3Band", bench{})
@@ -363,15 +406,17 @@ func (s *ControlsRunTestSuite) TestControlsRecordsWhatClipped() {
 
 // TestControlsRefusesWhenTheDeviceNamesNothingEither covers the last resort.
 //
-// An equaliser has no symbol entry, so the catalog cannot say which index is
-// which and the device is asked instead. When the device answers nothing at any
-// index there is no third place to look, and a sweep that went ahead would file
-// every curve under a guess. That is the one case still refused.
+// With no symbol entry the catalog cannot say which index is which and the
+// device is asked instead. When the device answers nothing at any index there
+// is no third place to look, and a sweep that went ahead would file every
+// curve under a guess. That is the one case still refused.
 //
-// The refusal used to cover every unclaimed block, which left the equalisers
-// undescribed: one measures as the baseline at its defaults, because flat is
-// what it ships at, so its curves are the only thing that says what it does.
+// The refusal used to cover every unclaimed block, which left those blocks
+// undescribed: an equaliser measures as the baseline at its defaults, because
+// flat is what it ships at, so its curves are the only thing that says what it
+// does.
 func (s *ControlsRunTestSuite) TestControlsRefusesWhenTheDeviceNamesNothingEither() {
+	s.forget("HD2_EQSimple3Band")
 	s.ready()
 
 	_, _, err := s.run("HD2_EQSimple3Band", bench{})

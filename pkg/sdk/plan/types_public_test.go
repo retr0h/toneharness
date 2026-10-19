@@ -116,6 +116,52 @@ func (s *RigPublicTestSuite) TestHXStompLimitsAreTheDocumentedCeilings() {
 		"the ceiling is a percentage, matching how Line 6 states a block's cost")
 }
 
+// TestBlockStereo covers which of a model's two parameter orders addresses
+// this instance.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *RigPublicTestSuite) TestBlockStereo() {
+	for _, tt := range []struct {
+		name  string
+		attrs map[string]json.RawMessage
+		want  bool
+	}{
+		{
+			// What a device writes for a block it runs in stereo.
+			name:  "stereo when the preset says so",
+			attrs: map[string]json.RawMessage{"@stereo": json.RawMessage(`true`)},
+			want:  true,
+		},
+		{
+			name:  "mono when the preset says so",
+			attrs: map[string]json.RawMessage{"@stereo": json.RawMessage(`false`)},
+			want:  false,
+		},
+		{
+			// The common case, and the one that has to be mono: a device loads
+			// a block mono unless a preset asks otherwise, so an absent
+			// attribute is an answer rather than a gap.
+			name:  "mono when the preset says nothing",
+			attrs: nil,
+			want:  false,
+		},
+		{
+			// Rather than a panic or a true. A preset carrying something that
+			// is not a boolean here is a preset nothing can trust about
+			// stereo, and mono is what the device would have loaded.
+			name:  "mono when the attribute is not a boolean",
+			attrs: map[string]json.RawMessage{"@stereo": json.RawMessage(`"yes"`)},
+			want:  false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			got := plan.Block{Model: "HD2_Chorus", Attrs: tt.attrs}.Stereo()
+
+			s.Require().Equal(tt.want, got)
+		})
+	}
+}
+
 func TestRigPublicTestSuite(
 	t *testing.T,
 ) {

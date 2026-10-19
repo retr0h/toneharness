@@ -720,7 +720,7 @@ func knobsOf(
 			continue
 		}
 
-		order := wireOrder(cat, string(b.Model))
+		order := wireOrder(cat, string(b.Model), b.Stereo())
 
 		for index, name := range order {
 			spec, known := block.Params[name]

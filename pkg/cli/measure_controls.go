@@ -136,7 +136,9 @@ func MeasureControls(
 	// Discovered rather than typed in. An order handed over on a flag is an
 	// order somebody can get wrong, and a curve filed under the wrong control
 	// is a plausible number about a different knob.
-	order := wireOrder(cat, opts.Model)
+	// Mono, for the same reason: this builds its own preset holding this one
+	// block, and a device loads one mono unless a preset asks otherwise.
+	order := wireOrder(cat, opts.Model, false)
 	probed := len(order) == 0
 
 	if probed {
@@ -588,13 +590,36 @@ func discover(
 // values". The per-model map beside it is keyed by name and has no order at
 // all, and `catalog show` prints that one sorted, so counting down the
 // printout files every curve under the wrong control.
+//
+// The symbol table names a mono and a stereo instance of one model
+// separately, and the catalog names the model once, so matching the name as it
+// stands answered for every amplifier and cabinet, which are mono, and for
+// nothing in the categories that come in pairs: a chain's compressor,
+// equaliser, reverb and wah returned no order at all, so every control on them
+// was invisible to a sweep and to a solve. 192 of 661 blocks and 1,627
+// controls, which is the difference between tuning an amplifier and tuning a
+// chain.
+//
+// Which of the pair is asked for is the caller's to say, because the two are
+// not the same list. A stereo Chorus carries Spread at the index its mono
+// carries Mix, and 47 of the 152 paired models diverge like that, so reading
+// the wrong one files every control past the divergence under its neighbour's
+// name while the numbers stay entirely plausible.
 func wireOrder(
 	cat *catalog.Catalog,
 	model string,
+	stereo bool,
 ) []string {
-	for _, sym := range cat.Symbols {
-		if string(sym.ID) == model {
-			return sym.Params
+	want := []string{"", "Mono"}
+	if stereo {
+		want = []string{"", "Stereo"}
+	}
+
+	for _, suffix := range want {
+		for _, sym := range cat.Symbols {
+			if string(sym.ID) == model+suffix {
+				return sym.Params
+			}
 		}
 	}
 

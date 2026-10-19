@@ -51,15 +51,18 @@ func (s *NamesTestSuite) SetupTest() {
 	// Every measuring command asks the client which models the attached
 	// device has, rather than reading the built-in HX Stomp catalog, so that
 	// --catalog and --device reach them.
-	s.pedal.EXPECT().Catalog(gomock.Any()).
-		DoAndReturn(func(context.Context) (*catalog.Catalog, error) {
-			return catalog.BuiltIn()
-		}).AnyTimes()
-
 	cat, err := catalog.BuiltIn()
 	s.Require().NoError(err)
 
 	s.cat = cat
+
+	// The suite's own catalog rather than a second copy, so a case that needs
+	// a model the symbol table does not name can strip one and have the
+	// command see the same thing the assertions do.
+	s.pedal.EXPECT().Catalog(gomock.Any()).
+		DoAndReturn(func(context.Context) (*catalog.Catalog, error) {
+			return s.cat, nil
+		}).AnyTimes()
 
 	// The preset read back and rebuilt: every command here takes its chain off
 	// the measuring loop before playing it, sending the output to USB rather
@@ -68,6 +71,36 @@ func (s *NamesTestSuite) SetupTest() {
 	s.pedal.EXPECT().
 		PresetFile(gomock.Any(), gomock.Any()).
 		Return(sdk.Reading{Plan: routed()}, nil).AnyTimes()
+}
+
+// forget swaps in a catalog whose symbol table does not name a model.
+//
+// Every block this device carries is named there, so a catalog that claims no
+// order for one cannot be had by choosing a model. Both the mono and the
+// stereo entry go, because either would answer the lookup.
+//
+// A copy rather than an edit. `catalog.BuiltIn` decodes once and hands every
+// caller the same pointer, which is only safe while nothing writes to it, so
+// striking a symbol out of it here would take that model's order away from
+// every other test in the process.
+func (s *NamesTestSuite) forget(
+	model string,
+) {
+	kept := make([]catalog.Symbol, 0, len(s.cat.Symbols))
+
+	for _, sym := range s.cat.Symbols {
+		switch string(sym.ID) {
+		case model, model + "Mono", model + "Stereo":
+			continue
+		}
+
+		kept = append(kept, sym)
+	}
+
+	without := *s.cat
+	without.Symbols = kept
+
+	s.cat = &without
 }
 
 // device answers as a pedal whose wire order is the one given.
@@ -162,7 +195,7 @@ func (s *NamesTestSuite) TestWireOrder() {
 			name: "names agree with the catalog",
 			then: func() {
 				model := "HD2_AmpUSDripmanNorm"
-				s.device(WireOrder(s.cat, model))
+				s.device(WireOrder(s.cat, model, false))
 
 				said, err := s.run(model)
 
@@ -207,7 +240,7 @@ func (s *NamesTestSuite) TestWireOrder() {
 			name: "a switch is not a disagreement",
 			then: func() {
 				model := "HD2_AmpUSDripmanNorm"
-				order := WireOrder(s.cat, model)
+				order := WireOrder(s.cat, model, false)
 
 				// Bright, which the device will not take a float for.
 				s.refuse(order, "Bright")
@@ -225,17 +258,23 @@ func (s *NamesTestSuite) TestWireOrder() {
 			// The second regression of this
 			// shape, and the one that mattered for the equalisers.
 			//
-			// Line 6 ship no symbol list for an equaliser, so the catalog claims no order
-			// for one at all. Comparing an absent claim against the parameter that moved
-			// reported that they disagree and that every curve was misfiled, for a block
-			// the catalog had never made a claim about. The device is the only thing that
-			// knows the order, and discovering it is the whole point of running this.
+			// Comparing an absent claim against the parameter that moved reported that
+			// they disagree and that every curve was misfiled, for a block the catalog
+			// had never made a claim about. The device is the only thing that knows the
+			// order, and discovering it is the whole point of running this.
+			//
+			// The symbol stripped deliberately rather than relying on a category Line 6
+			// were believed to ship no symbols for. They ship one for every block; the
+			// equaliser looked unclaimed because the table names it `…Mono` and the
+			// lookup wanted the name as it stands, which is the bug below this case.
 			name: "an unclaimed order is not a disagreement",
 			then: func() {
 				model := "HD2_EQSimple3Band"
 
-				// A device that answers, against a catalog carrying no symbols: what the
-				// device moved is the only record there is.
+				s.forget(model)
+
+				// A device that answers, against a catalog carrying no symbol for this
+				// model: what the device moved is the only record there is.
 				s.device([]string{"LowGain", "MidFreq", "MidGain", "HighGain", "Level"})
 
 				said, err := s.run(model)
@@ -244,6 +283,32 @@ func (s *NamesTestSuite) TestWireOrder() {
 				s.Require().Contains(said, "claims no order for this block")
 				s.Require().Contains(said, "LowGain")
 				s.Require().NotContains(said, "they disagree")
+			},
+		},
+		{
+			// The bug the case above used to hide.
+			//
+			// Every block outside the amplifiers and cabinets is named `…Mono` and
+			// `…Stereo` in the symbol table and once in the catalog, so a lookup that
+			// wanted the name as it stands answered for 469 of 661 blocks and returned
+			// nothing for the other 192. A compressor, equaliser, reverb or wah in a
+			// chain had no order, so no sweep could address its controls and no solve
+			// could turn them: 1,627 controls that nothing here could reach.
+			name: "a block the table names Mono has a claimed order",
+			then: func() {
+				model := "HD2_EQSimple3Band"
+				order := WireOrder(s.cat, model, false)
+
+				s.Require().Equal(
+					[]string{"LowGain", "MidFreq", "MidGain", "HighGain", "Level"}, order)
+
+				s.device(order)
+
+				said, err := s.run(model)
+
+				s.Require().NoError(err)
+				s.Require().Contains(said, "agree on every index")
+				s.Require().NotContains(said, "claims no order for this block")
 			},
 		},
 		{
