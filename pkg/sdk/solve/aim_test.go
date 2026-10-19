@@ -20,9 +20,6 @@
 package solve
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -35,25 +32,19 @@ type AimTestSuite struct {
 	suite.Suite
 }
 
-// punk reads the genre this project models first, from the measurements that
+// popPunk reads the genre this project models first, from the measurements that
 // ship, rather than from numbers typed here.
+//
+// Through [audio.ShippedGenre] rather than by reading data/genres.json and
+// parsing it here. This knew the file's shape, which made it a second reader of
+// a format only the audio package should know: the file gained a field saying
+// which corpus it was measured over, became an object rather than a list, and
+// this broke while every test in that package passed.
 func (s *AimTestSuite) popPunk() audio.Across {
-	body, err := os.ReadFile(
-		filepath.Join("..", "audio", "data", "genres.json"))
-	s.Require().NoError(err)
+	got, ok := audio.ShippedGenre("pop-punk")
+	s.Require().True(ok, "pop-punk is not in the shipped genres")
 
-	var genres []audio.Genre
-	s.Require().NoError(json.Unmarshal(body, &genres))
-
-	for _, g := range genres {
-		if g.Slug == "pop-punk" {
-			return g.Across
-		}
-	}
-
-	s.Require().Fail("pop-punk is not in the shipped genres")
-
-	return audio.Across{}
+	return got.Across
 }
 
 // TestAims covers Aims, which turns what a body of records measures as into a

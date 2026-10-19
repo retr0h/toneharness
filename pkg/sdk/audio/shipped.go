@@ -48,8 +48,44 @@ var shipped []byte
 // writes an empty list rather than deleting the file. A caller asking for a
 // genre nothing measured gets nothing and should say so.
 var Shipped = sync.OnceValues(func() ([]Genre, error) {
-	return unpackGenres(shipped)
+	got, err := unpackGenres(shipped)
+
+	return got.Genres, err
 })
+
+// ShippedCorpus is the fingerprint of the manifests the shipped figures were
+// measured from, or empty where the file predates one.
+//
+// What it is for: the measurements are committed because nobody else can take
+// them again, and that leaves nothing able to say whether they describe the
+// records this checkout holds. A manifest edited without regenerating is
+// invisible otherwise, and the measuring commands keep printing the new numbers
+// while the embedded file holds the old ones.
+//
+// Compared against [CorpusSHA] over the committed manifests by this package's
+// own tests, which is a check that needs no audio and therefore runs where the
+// audio never is.
+func ShippedCorpus() string {
+	got, err := unpackGenres(shipped)
+	if err != nil {
+		return ""
+	}
+
+	return got.Corpus
+}
+
+// Packed is what data/genres.json holds: the measured genres, and the
+// fingerprint of the manifests they were measured from.
+//
+// A wrapper rather than a bare list, which is what the file was. The list alone
+// could not say what it was measured over, so a pack and a corpus that had
+// drifted apart agreed with each other perfectly and nothing could tell.
+type Packed struct {
+	// Corpus is [CorpusSHA] over the manifest tree at the time of packing.
+	Corpus string `json:"corpus"`
+	// Genres is what each genre measured as.
+	Genres []Genre `json:"genres"`
+}
 
 // unpackGenres reads the measured genres.
 //
@@ -58,10 +94,10 @@ var Shipped = sync.OnceValues(func() ([]Genre, error) {
 // reach this error.
 func unpackGenres(
 	body []byte,
-) ([]Genre, error) {
-	var out []Genre
+) (Packed, error) {
+	var out Packed
 	if err := json.Unmarshal(body, &out); err != nil {
-		return nil, fmt.Errorf("reading the measured genres: %w", err)
+		return Packed{}, fmt.Errorf("reading the measured genres: %w", err)
 	}
 
 	return out, nil

@@ -35,9 +35,28 @@ mise exec -- go run main.go measure genres  --corpus resources/music/bass
 mise exec -- just generate     # writes pkg/sdk/audio/data/genres.json
 ```
 
-Step 5 is the one that gets forgotten, and forgetting it is invisible: the
-measuring commands print the new numbers while the embedded file still holds the
-old ones, so a build aims where the corpus used to be.
+Step 5 is the one that gets forgotten, and the measuring commands give no hint:
+they print the new numbers while the embedded file still holds the old ones, so a
+build aims where the corpus used to be.
+
+**A test catches it now.** `data/genres.json` records a fingerprint of every
+manifest it was measured over, and
+`TestTheShippedFiguresNameTheCorpusTheyWereMeasuredFrom` compares that against
+the manifests in the checkout. It needs no audio, so it fails in continuous
+integration as well as locally, and it says what to do: run `just generate` on a
+machine holding the audio and commit what it writes.
+
+It is the only claim about the measurements anything can check. The recordings
+are not in the repository, so no test can re-derive a figure; what it can say is
+that the figures were taken over the records committed beside them.
+
+**It cannot tell you a branch is behind.** A branch missing a merge has a pack
+matching its own manifests, so this passes while the figures describe a record
+somebody has already removed. That is a fact about the branch rather than the
+tree, and only git knows it: fetch and branch from `origin/main` rather than from
+a local `main` nobody has pulled. One branch cut that way measured against a stem
+reading 947Hz when nothing else in the corpus reads above 264Hz, and every check
+agreed with it.
 
 ## What to re-run when something changes
 

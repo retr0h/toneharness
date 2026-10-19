@@ -68,3 +68,7 @@ func (s spectrum) Hz(
 }
 
 func (s spectrum) HzPerBin() float64 { return s.hzPerBin() }
+
+// CorpusRelative is the manifest tree as this package's tests reach it, so the
+// one place that knows where the corpus sits stays beside the embed.
+var CorpusRelative = corpusRelative
