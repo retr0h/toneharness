@@ -424,6 +424,69 @@ func (s *ControlsRunTestSuite) TestControlsRefusesWhenTheDeviceNamesNothingEithe
 	s.Require().ErrorContains(err, "named no parameter")
 }
 
+// TestControlsRefusesABlockTheDeviceDidNotLoad covers the pre-flight.
+//
+// One method and one table, so a case is a row rather than a file.
+//
+// The readings are the expensive part and they are worthless when the block is
+// not in the chain, so nothing may be measured before this passes. Each row
+// forbids Turn and Choose outright: a sweep that refused only afterwards is
+// the bug this exists for, and it cost four minutes forty-five seconds a
+// block while looking like a device fault.
+func (s *ControlsRunTestSuite) TestControlsRefusesABlockTheDeviceDidNotLoad() {
+	for _, tt := range []struct {
+		name    string
+		reading sdk.Reading
+		err     error
+		says    string
+	}{
+		{
+			// What an HX Stomp answers when asked to hold a dual cabinet.
+			name:    "an empty chain",
+			reading: sdk.Reading{},
+			says:    "chain of 0 blocks",
+		},
+		{
+			// Worse than empty, because the readings would be of real gear
+			// and would still be filed under the wrong name.
+			name:    "a chain holding something else",
+			reading: eqReading(nil),
+			says:    "chain of 1 blocks",
+		},
+		{
+			name: "a device that will not say what it is playing",
+			err:  errors.New("usb: gone"),
+			says: "usb: gone",
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+
+			s.pedal.EXPECT().
+				Compile(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
+					writeBlank(s.T(), in.Out)
+
+					return sdk.Built{}, nil
+				}).AnyTimes()
+			s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+			s.pedal.EXPECT().
+				Current(gomock.Any(), gomock.Any()).
+				Return(tt.reading, tt.err).AnyTimes()
+
+			// Nothing is measured, which is the assertion.
+			s.pedal.EXPECT().
+				Turn(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+			s.pedal.EXPECT().
+				Choose(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+			_, _, err := s.run("HD2_CabMicIr_2x15Brute", bench{})
+
+			s.Require().ErrorContains(err, tt.says)
+		})
+	}
+}
+
 // TestControlsRefusesAModelNobodyHas covers a name that is not a block.
 func (s *ControlsRunTestSuite) TestControlsRefusesAModelNobodyHas() {
 	_, _, err := s.run("nothing calls itself this", bench{})

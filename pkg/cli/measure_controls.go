@@ -128,10 +128,12 @@ func MeasureControls(
 	}
 
 	// The catalog's order where there is one, and the device's own where there
-	// is not. Line 6 ship no symbol list for an equaliser, so for those the
-	// hardware is the only thing that knows which index is which, and a sweep
-	// that refused would have left the blocks whose fingerprints say nothing
-	// as the blocks nothing describes at all.
+	// is not. Line 6 ship a symbol list for every block, so in practice this
+	// is the catalog's: the belief that equalisers had none was a lookup that
+	// wanted the model name as the catalog spells it, where the table spells
+	// it `…Mono`. Asking the device is kept for the case where a catalog
+	// genuinely claims no order, because a sweep that refused would leave the
+	// blocks whose fingerprints say nothing as the blocks nothing describes.
 	//
 	// Discovered rather than typed in. An order handed over on a flag is an
 	// order somebody can get wrong, and a curve filed under the wrong control
@@ -176,6 +178,10 @@ func MeasureControls(
 	preset, err := compile(ctx, opts.Client, entry, work, true, opts.Headroom)
 	if err != nil {
 		return fmt.Errorf("building a chain holding only %s: %w", opts.Model, err)
+	}
+
+	if err := seated(ctx, opts.Client, preset, opts.Model); err != nil {
+		return err
 	}
 
 	bench, release, err := benchFor(opts.Bench, opts.Hardware)
@@ -624,6 +630,55 @@ func wireOrder(
 	}
 
 	return nil
+}
+
+// seated refuses a sweep whose block the device did not load.
+//
+// Checked before anything is measured rather than after, which is the whole
+// point of it. A cabinet's `WithPan` variant is in the catalog, costs the same
+// 2.5% of the chip as the plain one, carries its own symbol entry, and an HX
+// Stomp answers with an empty chain when asked to hold one. The sweep that
+// followed measured the bare loop for four minutes and forty-five seconds and
+// filed the figures under the cabinet's name. Nothing in the sweep noticed:
+// what stopped those readings reaching a file was the document id coming back
+// empty two steps later, for an unrelated reason, by luck.
+//
+// A chain without the block in it is the one condition where every reading
+// below is a plausible number about nothing, so it is worth one round trip to
+// the device to rule out. The error says the catalog and the hardware
+// disagree, because that is the real finding and it is not this sweep's to
+// settle.
+func seated(
+	ctx context.Context,
+	client interface {
+		Plays
+		Reads
+	},
+	preset string,
+	model string,
+) error {
+	if err := client.Play(ctx, preset); err != nil {
+		return err
+	}
+
+	read, err := client.Current(ctx, sdk.FormatRig)
+	if err != nil {
+		return err
+	}
+
+	for _, b := range read.Plan.Blocks {
+		if string(b.Model) == model {
+			return nil
+		}
+	}
+
+	return fmt.Errorf(
+		"the device did not load %s: it is playing a chain of %d blocks and "+
+			"none of them is that model, so every reading would be of the "+
+			"measuring loop rather than of this block. The catalog carries "+
+			"the model and the hardware will not hold it, which is a question "+
+			"about the catalog rather than about this sweep",
+		model, len(read.Plan.Blocks))
 }
 
 // current is the chain the device is playing, as the rig it describes.
