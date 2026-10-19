@@ -2,158 +2,166 @@
 #
 # The ask: who he is, how he played, and what he played. The gear this
 # resolves to is in tim-commerford.yaml beside it.
+
+schema: ToneSpec
+version: 4.0.0
+id: tim-commerford
 ask:
-  aliases:
-  - commerford
-  - ratm
-  - timc
   confidence: medium
+  aliases:
+    - commerford
+    - ratm
+    - timc
   genre:
-  - alternative metal
-  - rap rock
+    - alternative metal
+    - rap rock
   instrument: bass
   played:
-  - evidence:
-    - caveat: the finish details people repeat with this, a blonde body and a removed
-        pickguard, are on no page anybody has opened. The model is sourced and the
-        rest is not.
-      kind: cited
-      note: 'his own words: "This is a bass that I fell in love with at a pawnshop
-        and used to play the first Rage record"'
-      url: https://www.musicradar.com/guitars/bass-guitars/ernie-ball-music-man-tim-commerford-ltd-edition-signature-stingray
-    gear: Ernie Ball Music Man StingRay
-    strings: unknown
+    - gear: Ernie Ball Music Man StingRay
+      evidence:
+        - kind: cited
+          caveat: the finish details people repeat with this, a blonde body and a removed pickguard, are on no page anybody has opened. The model is sourced and the rest is not.
+          note: 'his own words: "This is a bass that I fell in love with at a pawnshop and used to play the first Rage record"'
+          url: https://www.musicradar.com/guitars/bass-guitars/ernie-ball-music-man-tim-commerford-ltd-edition-signature-stingray
+      strings: unknown
   subject:
-    band: Rage Against the Machine
-    era: Rage Against the Machine
     kind: artist
     name: Tim Commerford
+    band: Rage Against the Machine
+    era: Rage Against the Machine
     years:
       from: 1992
       to: 1992
   technique:
-    attack: fingers
     evidence:
-    - caveat: a 2016 interview, and it dates itself to the Rage period rather than
-        to 1992 in particular. Two fingers rather than the three he came from is the
-        part this format cannot hold. Several readers put slapped playing on "Take
-        the Power Back"; none of them was there, and his own "everything with two
-        fingers" outranks them.
-      kind: cited
-      note: 'Premier Guitar, Freddy Villano, asked to describe his right hand: "I
-        grew up using three fingers ... Then when I got playing with Rage, I was more
-        diehard, I felt like it was more solid to play with two fingers. So with Rage
-        I did everything with two fingers."'
-      url: https://premierguitar.com/articles/24644-tim-commerford-wakrat-and-the-power-of-now?page=2
-id: tim-commerford
+      - kind: cited
+        caveat: a 2016 interview, and it dates itself to the Rage period rather than to 1992 in particular. Two fingers rather than the three he came from is the part this format cannot hold. Several readers put slapped playing on "Take the Power Back"; none of them was there, and his own "everything with two fingers" outranks them.
+        note: 'Premier Guitar, Freddy Villano, asked to describe his right hand: "I grew up using three fingers ... Then when I got playing with Rage, I was more diehard, I felt like it was more solid to play with two fingers. So with Rage I did everything with two fingers."'
+        url: https://premierguitar.com/articles/24644-tim-commerford-wakrat-and-the-power-of-now?page=2
+    attack: fingers
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    confidence: high
-    controls:
-      Bass: "0.41"
-      Bias: "0.74"
-      BiasX: "0.5"
-      ChVol: "0.8"
-      Drive: "0.6"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.79"
-      MidFreq: "2"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.85"
-    evidence:
-    - caveat: the 2PRO rather than the vintage SVT this device models, and he says
-        in the same piece that he is "a multiple amp kind of guy", one on all the
-        time and one for when he wants the sound different. A preset is one path,
-        so this is the one that is always on.
-      kind: cited
-      note: '"In Rage, I used two Ampeg SVT-2PRO heads and two Ampeg 8x10 cabinets"'
-      url: https://www.mixonline.com/the-wire/why-tim-commerford-will-never-give-his-ampeg-svts-430713
-    - caveat: which describes the room rather than the bass rig, and says the amplifier
-        was not the only thing making the sound in it. Nothing here names the amplifier
-        for the sessions; the quote above is him describing his Rage rig years later.
-      kind: cited
-      note: 'Garth Richardson, who produced the record, on how it was cut: "we had
-        brought in a big concert P.A. system and we had Brad Wilk sitting behind the
-        actual P.A. with his drums and we had Tom''s guitar, Tim''s bass and Zack''s
-        vocals coming though the P.A."'
-      url: https://tapeop.com/interviews/28/gggarth-richardson
-    - caveat: Evil Empire is 1996 and this rig is 1992, so this is the shape of his
-        recording rather than this record's. It does put the same two heads and two
-        8x10s in a studio, with a microphone and a DI on them at once.
-      kind: cited
-      note: 'the nearest thing to how he records, and it is the wrong album: "Commerford''s
-        favorite recorded sound with Rage Against The Machine was on the group''s
-        second album, Evil Empire, on which he used two SVT heads and two Classic
-        8x10 cabinets, both mic''d and direct." On direct generally: "I let producers
-        use as much DI as they want until I start noticing it."'
-      url: https://www.guitarworld.com/artists/bassists/tim-commerford-rage-against-the-machine-bass-tone
-    gear: Ampeg SVT
-    position: 1
-    role: amp
-    stage: true
-  - attrs:
-      '@position': "2"
-    confidence: high
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      High Cut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - kind: cited
-      note: two Ampeg 8x10 cabinets, in the same sentence
-      url: https://www.mixonline.com/the-wire/why-tim-commerford-will-never-give-his-ampeg-svts-430713
-    gear: Ampeg 8x10
-    position: 2
-    role: cab
-    stage: true
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg SVT
+      confidence: high
+      evidence:
+        - kind: cited
+          caveat: the 2PRO rather than the vintage SVT this device models, and he says in the same piece that he is "a multiple amp kind of guy", one on all the time and one for when he wants the sound different. A preset is one path, so this is the one that is always on.
+          note: '"In Rage, I used two Ampeg SVT-2PRO heads and two Ampeg 8x10 cabinets"'
+          url: https://www.mixonline.com/the-wire/why-tim-commerford-will-never-give-his-ampeg-svts-430713
+        - kind: cited
+          caveat: which describes the room rather than the bass rig, and says the amplifier was not the only thing making the sound in it. Nothing here names the amplifier for the sessions; the quote above is him describing his Rage rig years later.
+          note: 'Garth Richardson, who produced the record, on how it was cut: "we had brought in a big concert P.A. system and we had Brad Wilk sitting behind the actual P.A. with his drums and we had Tom''s guitar, Tim''s bass and Zack''s vocals coming though the P.A."'
+          url: https://tapeop.com/interviews/28/gggarth-richardson
+        - kind: cited
+          caveat: Evil Empire is 1996 and this rig is 1992, so this is the shape of his recording rather than this record's. It does put the same two heads and two 8x10s in a studio, with a microphone and a DI on them at once.
+          note: 'the nearest thing to how he records, and it is the wrong album: "Commerford''s favorite recorded sound with Rage Against The Machine was on the group''s second album, Evil Empire, on which he used two SVT heads and two Classic 8x10 cabinets, both mic''d and direct." On direct generally: "I let producers use as much DI as they want until I start noticing it."'
+          url: https://www.guitarworld.com/artists/bassists/tim-commerford-rage-against-the-machine-bass-tone
+      stage: true
+    - role: cab
+      gear: Ampeg 8x10
+      confidence: high
+      evidence:
+        - kind: cited
+          note: two Ampeg 8x10 cabinets, in the same sentence
+          url: https://www.mixonline.com/the-wire/why-tim-commerford-will-never-give-his-ampeg-svts-430713
+      stage: true
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "0.952"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg SVT
+      confidence: high
+      evidence:
+        - kind: cited
+          caveat: the 2PRO rather than the vintage SVT this device models, and he says in the same piece that he is "a multiple amp kind of guy", one on all the time and one for when he wants the sound different. A preset is one path, so this is the one that is always on.
+          note: '"In Rage, I used two Ampeg SVT-2PRO heads and two Ampeg 8x10 cabinets"'
+          url: https://www.mixonline.com/the-wire/why-tim-commerford-will-never-give-his-ampeg-svts-430713
+        - kind: cited
+          caveat: which describes the room rather than the bass rig, and says the amplifier was not the only thing making the sound in it. Nothing here names the amplifier for the sessions; the quote above is him describing his Rage rig years later.
+          note: 'Garth Richardson, who produced the record, on how it was cut: "we had brought in a big concert P.A. system and we had Brad Wilk sitting behind the actual P.A. with his drums and we had Tom''s guitar, Tim''s bass and Zack''s vocals coming though the P.A."'
+          url: https://tapeop.com/interviews/28/gggarth-richardson
+        - kind: cited
+          caveat: Evil Empire is 1996 and this rig is 1992, so this is the shape of his recording rather than this record's. It does put the same two heads and two 8x10s in a studio, with a microphone and a DI on them at once.
+          note: 'the nearest thing to how he records, and it is the wrong album: "Commerford''s favorite recorded sound with Rage Against The Machine was on the group''s second album, Evil Empire, on which he used two SVT heads and two Classic 8x10 cabinets, both mic''d and direct." On direct generally: "I let producers use as much DI as they want until I start noticing it."'
+          url: https://www.guitarworld.com/artists/bassists/tim-commerford-rage-against-the-machine-bass-tone
+      controls:
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.75"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.8346153846153845"
+      attrs:
+        '@position': "1"
+      position: 1
+      stage: true
+    - role: cab
+      gear: Ampeg 8x10
+      confidence: high
+      evidence:
+        - kind: cited
+          note: two Ampeg 8x10 cabinets, in the same sentence
+          url: https://www.mixonline.com/the-wire/why-tim-commerford-will-never-give-his-ampeg-svts-430713
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        High Cut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
+      stage: true
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -161,31 +169,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -251,8 +263,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

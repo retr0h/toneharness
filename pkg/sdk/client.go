@@ -766,7 +766,10 @@ func (c *Client) wroteSpec(
 	doc *preset.Document,
 	cat *catalog.Catalog,
 ) (string, error) {
-	_, lifted, _, err := compile.Lift(doc, cat)
+	// The plan as well as the chain: the chain says what the blocks are and the
+	// plan says what the switches do, and a document that dropped the second
+	// would describe a preset nobody can reach from the floor.
+	_, lifted, laid, err := compile.Lift(doc, cat)
 	if err != nil {
 		return "", fmt.Errorf("reading back %s: %w", in.RigID, err)
 	}
@@ -781,11 +784,23 @@ func (c *Client) wroteSpec(
 			"%w: %s ships in the binary, so name --out", ErrNoRigFile, in.RigID)
 	}
 
+	// The authored half goes back exactly as it arrived, and the computed half
+	// is replaced whole. That is the whole of the preservation: a resolve
+	// cannot lose a citation or a pinned control because it never writes where
+	// they live.
+	//
+	// It used to write `carry(found.Rig, lifted, cat)` into `rig`, which put
+	// every control it computed into the field that means "a person pinned
+	// this". The next resolve then honoured its own output as an override, so a
+	// document stopped answering to the compiler being improved: eleven genre
+	// rigs went on reading as four presets after the compiler had been taught
+	// to tell them apart.
 	out := tone.Spec{
 		Schema: tone.SchemaToneSpec,
 		Id:     found.ID,
 		Ask:    found.Ask,
-		Rig:    carry(found.Rig, lifted, cat),
+		Rig:    found.Rig,
+		Built:  built(found.Rig, lifted, laid, cat),
 	}
 
 	if err := writeSpec(where, out); err != nil {
@@ -842,6 +857,46 @@ func (c *Client) resolveFrom(
 	return Made{Plan: held, Path: where}, nil
 }
 
+// built is the computed half of a document: the chain as it resolved, the
+// device's own members in full, and which catalog and pedal answered.
+//
+// The chain still goes through [carry], because a computed chain that did not
+// say why each block is there would be a list of models: the citations are
+// copied onto it so it can be read on its own, and the authored copy above is
+// where they live.
+func built(
+	was rig.Spec,
+	lifted rig.Spec,
+	laid plan.Plan,
+	cat *catalog.Catalog,
+) *tone.Built {
+	with := carry(was, lifted)
+
+	out := tone.Built{Chain: &with.Chain, Preset: lifted.Preset}
+
+	if len(laid.Footswitches) > 0 {
+		switches := laid.Footswitches
+		out.Footswitches = &switches
+	}
+
+	// Both off the catalog that answered, rather than copied from the document.
+	// A resolve says which catalog and which pedal answered this time, so a
+	// stale pair cannot survive by being repeated.
+	if cat != nil {
+		if cat.Device != "" {
+			device := cat.Device
+			out.Device = &device
+		}
+
+		if cat.Source != "" {
+			release := cat.Source
+			out.Catalog = &release
+		}
+	}
+
+	return &out
+}
+
 // carry keeps what a person wrote about each block, on the chain that was built.
 //
 // The lifted chain is the authority on what the preset is: which blocks, in what
@@ -862,7 +917,6 @@ func (c *Client) resolveFrom(
 func carry(
 	was rig.Spec,
 	built rig.Spec,
-	cat *catalog.Catalog,
 ) rig.Spec {
 	taken := make([]bool, len(was.Chain))
 
@@ -912,26 +966,8 @@ func carry(
 	built.Evidence = was.Evidence
 	built.Sections = was.Sections
 	built.Moves = was.Moves
-	built.Resolved = resolvedOn(cat)
 
 	return built
-}
-
-// resolvedOn records which pedal and catalog produced the controls.
-//
-// Advisory, never a restriction. The gear names above are portable and resolve on
-// any Helix; the control names under them belong to the models this device's
-// catalog chose, so somebody on other hardware reads this to know whose numbers
-// they have rather than being refused for having the wrong pedal.
-//
-// Without it a resolved rig is silently geared to one machine: a control name
-// another catalog does not carry is refused with nothing saying why.
-func resolvedOn(
-	cat *catalog.Catalog,
-) *rig.Target {
-	device, source := cat.Device, cat.Source
-
-	return &rig.Target{Device: &device, Catalog: &source}
 }
 
 // writeSpec puts a document on disk.

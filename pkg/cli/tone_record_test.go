@@ -52,7 +52,7 @@ func (s *RecordTestSuite) SetupTest() {
 // document is the file a round is appended to: one document, with the ask a
 // round lands in and the gear the contract requires.
 const document = `schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: a-round
 ask:
   genre: [punk]
@@ -187,7 +187,7 @@ func (s *RecordTestSuite) TestRecord() {
 			// A file that will not load.
 			name: "an ask that is not a tone spec",
 			then: func() {
-				s.Require().NoError(os.WriteFile(s.ask, []byte("schema: Setup\nversion: \"3.0.0\"\n"), 0o600))
+				s.Require().NoError(os.WriteFile(s.ask, []byte("schema: Setup\nversion: \"4.0.0\"\n"), 0o600))
 
 				s.Require().Error(record(s.ask, "punk", nil, nil, true))
 			},

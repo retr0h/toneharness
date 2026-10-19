@@ -436,9 +436,15 @@ func (s *ShippedPublicTestSuite) TestEveryMarketplaceRigCarriesItsResolution() {
 			s.Require().NoError(f.Close())
 			s.Require().NoError(err)
 
-			// Whether the document says what it resolved to. The target is the
-			// field only a resolve writes, and the controls are what it wrote.
-			claims := spec.Rig.Resolved != nil
+			// Whether the document says what it resolved to. `built` is the
+			// section only a resolve writes, and since version 4 it is the
+			// whole of what a resolve wrote: the chain with its controls, the
+			// preset's members, the switches, and which catalog answered.
+			//
+			// It used to read `rig.resolved`, which is gone. That field sat in
+			// the authored half beside the gear a person typed, which is the
+			// conflation this split exists to end.
+			claims := spec.Built != nil
 
 			// No corpus, so nothing is filled from statistics and what comes
 			// back is this rig on this device.

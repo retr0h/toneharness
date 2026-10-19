@@ -212,20 +212,19 @@ func write(
 		return err
 	}
 
-	// sigs.k8s.io/yaml, which marshals through JSON, so the `json:omitempty` the
-	// generated types carry is honoured and an absent field is absent rather than
-	// `null`.
+	// Through JSON either way, so the `json:omitempty` the generated types carry
+	// is honoured and an absent field is absent rather than `null`.
 	//
-	// That sorts keys, and a document comes out ask, id, rig, schema. Field order
-	// was tried and is not available: go.yaml.in/yaml/v3 marshals in declaration
-	// order but reads `yaml:` tags, which these types do not have, so every
-	// optional field was written out as null. Giving them a second set of tags
-	// means teaching the generator to, which is a change to make on purpose
-	// rather than on the way past.
-	//
-	// Both documents hold only strings, numbers and booleans, so they always
-	// encode.
-	raw, _ := yaml.Marshal(of)
+	// [ordered] rather than a plain marshal, because a plain one sorts keys and
+	// a document came out ask, built, id, rig, schema: the computed half above
+	// the authored one, and what the file is below both. Declaration order was
+	// tried first and is not available, since go.yaml.in/yaml/v3 marshals in
+	// that order but reads `yaml:` tags these types do not have, and the
+	// generated order is alphabetical anyway.
+	raw, err := ordered(of)
+	if err != nil {
+		return fmt.Errorf("rendering the %s: %w", name, err)
+	}
 
 	if _, err := w.Write(raw); err != nil {
 		return fmt.Errorf("writing the %s: %w", name, err)

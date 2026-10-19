@@ -9,137 +9,166 @@
 # a different chain and is not what this is for: the records are what gets
 # measured.
 
+schema: ToneSpec
+version: 4.0.0
+id: chris-joannou
 ask:
-  aliases:
-  - silverchair
   confidence: medium
+  aliases:
+    - silverchair
   genre:
-  - grunge
-  - alternative-rock
+    - grunge
+    - alternative-rock
   instrument: bass
   subject:
-    band: Silverchair
-    era: Frogstomp to Neon Ballroom
     kind: artist
     name: Chris Joannou
+    band: Silverchair
+    era: Frogstomp to Neon Ballroom
     years:
       from: 1995
       to: 1999
   words: []
-id: chris-joannou
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    capture: direct
-    confidence: medium
-    controls:
-      Bass: "0.67"
-      Bias: "0.66"
-      BiasX: "0.5"
-      ChVol: "1.0"
-      Drive: "0.7"
-      HighMid: "0.5"
-      Hum: "0.5"
-      LowMid: "0.65"
-      Master: "1.0"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.69"
-    evidence:
-    - caveat: |-
-        Read from the automatic captions, which mangle model numbers in the usual way: the SVT-2 Pro he names for his live rig arrives as "the SPT" and the B-15s as "be fifteens".
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg B-15NF Portaflex
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: |-
+            Read from the automatic captions, which mangle model numbers in the usual way: the SVT-2 Pro he names for his live rig arrives as "the SPT" and the B-15s as "be fifteens".
 
-        The interview is 2010 and the records above end in 1999, so the sentence is him looking back. He says "every record" and names no album, so which flip top and which 8x10 on which session is not established, and neither is anything about the desk or the microphone those records went through.
-      kind: cited
-      note: |-
-        In his own words, in a gearwire interview filmed on 24 June 2010, about what is on the records rather than what was on stage that year: "the reason why I ended up with the set up I've got now is because on every record I've always used one flip top and an old 8 by 10 and generally that's everything and the only thing overused in the studio". A flip top is the Ampeg B-15 Portaflex, which is what the name describes.
+            The interview is 2010 and the records above end in 1999, so the sentence is him looking back. He says "every record" and names no album, so which flip top and which 8x10 on which session is not established, and neither is anything about the desk or the microphone those records went through.
+          note: |-
+            In his own words, in a gearwire interview filmed on 24 June 2010, about what is on the records rather than what was on stage that year: "the reason why I ended up with the set up I've got now is because on every record I've always used one flip top and an old 8 by 10 and generally that's everything and the only thing overused in the studio". A flip top is the Ampeg B-15 Portaflex, which is what the name describes.
 
-        He opens the same interview naming himself, "hi there my name's Chris I'll play bass in silver chair", and the only other voice in it is the interviewer asking him questions.
-      url: https://www.youtube.com/watch?v=b1egYvnHl9c
-    gear: Ampeg B-15NF Portaflex
-    position: 1
-    role: amp
-  - attrs:
-      '@position': "2"
-    capture: direct
-    confidence: medium
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      High Cut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - caveat: He says "an old 8 by 10" and names no model. Ampeg's 8x10 is the SVT
-        cabinet and that is what this resolves to, which is a reasonable reading of
-        an Ampeg player saying it and still a reading.
-      kind: cited
-      note: 'The same sentence: "on every record I''ve always used one flip top and
-        an old 8 by 10". The cabinet is cited rather than taken from the amplifier''s
-        usual pairing, and it is the half he is most specific about, since he repeats
-        it for the live rig as well: "live is an 8 by 10 powered by an SVT 2 pro".'
-      url: https://www.youtube.com/watch?v=b1egYvnHl9c
-    gear: Ampeg SVT 8x10
-    position: 2
-    role: cab
-  - attrs:
-      '@position': "3"
-    controls:
-      HighGain: "0.0"
-      Level: "0.0"
-      LowGain: "0.0"
-      MidFreq: "600.0"
-      MidGain: "-0.96"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Simple EQ
-    position: 3
-    role: eq
+            He opens the same interview naming himself, "hi there my name's Chris I'll play bass in silver chair", and the only other voice in it is the interviewer asking him questions.
+          url: https://www.youtube.com/watch?v=b1egYvnHl9c
+    - role: cab
+      gear: Ampeg SVT 8x10
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: He says "an old 8 by 10" and names no model. Ampeg's 8x10 is the SVT cabinet and that is what this resolves to, which is a reasonable reading of an Ampeg player saying it and still a reading.
+          note: 'The same sentence: "on every record I''ve always used one flip top and an old 8 by 10". The cabinet is cited rather than taken from the amplifier''s usual pairing, and it is the half he is most specific about, since he repeats it for the live rig as well: "live is an 8 by 10 powered by an SVT 2 pro".'
+          url: https://www.youtube.com/watch?v=b1egYvnHl9c
+    - role: eq
+      gear: Simple EQ
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg B-15NF Portaflex
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: |-
+            Read from the automatic captions, which mangle model numbers in the usual way: the SVT-2 Pro he names for his live rig arrives as "the SPT" and the B-15s as "be fifteens".
+
+            The interview is 2010 and the records above end in 1999, so the sentence is him looking back. He says "every record" and names no album, so which flip top and which 8x10 on which session is not established, and neither is anything about the desk or the microphone those records went through.
+          note: |-
+            In his own words, in a gearwire interview filmed on 24 June 2010, about what is on the records rather than what was on stage that year: "the reason why I ended up with the set up I've got now is because on every record I've always used one flip top and an old 8 by 10 and generally that's everything and the only thing overused in the studio". A flip top is the Ampeg B-15 Portaflex, which is what the name describes.
+
+            He opens the same interview naming himself, "hi there my name's Chris I'll play bass in silver chair", and the only other voice in it is the interviewer asking him questions.
+          url: https://www.youtube.com/watch?v=b1egYvnHl9c
+      controls:
+        Bass: "0.67"
+        Bias: "0.66"
+        BiasX: "0.5"
+        ChVol: "1.0"
+        Drive: "0.7"
+        HighMid: "0.5"
+        Hum: "0.5"
+        LowMid: "0.65"
+        Master: "1.0"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.64625"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: Ampeg SVT 8x10
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: He says "an old 8 by 10" and names no model. Ampeg's 8x10 is the SVT cabinet and that is what this resolves to, which is a reasonable reading of an Ampeg player saying it and still a reading.
+          note: 'The same sentence: "on every record I''ve always used one flip top and an old 8 by 10". The cabinet is cited rather than taken from the amplifier''s usual pairing, and it is the half he is most specific about, since he repeats it for the live rig as well: "live is an 8 by 10 powered by an SVT 2 pro".'
+          url: https://www.youtube.com/watch?v=b1egYvnHl9c
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        High Cut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
+    - role: eq
+      gear: Simple EQ
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        HighGain: "0.0"
+        Level: "0.0"
+        LowGain: "0.0"
+        MidFreq: "600.0"
+        MidGain: "-0.96"
+      attrs:
+        '@position': "3"
+      position: 3
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -147,34 +176,47 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block3:
+              attrs:
+                '@fs_customcolor': "2"
+                '@fs_index': "1"
+                '@fs_label': Simple EQ
     global:
       attrs:
         '@DtSelect': "2"
@@ -237,8 +279,8 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0
+  footswitches:
+    - block: 3
+      label: Simple EQ
+      led: red
+      switch: 1

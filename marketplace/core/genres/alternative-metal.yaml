@@ -10,122 +10,141 @@
 # same corpus.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+version: 4.0.0
+id: alternative-metal
 ask:
-  aliases:
-  - alt-metal
-  - alternative-metal-sound
   confidence: low
+  aliases:
+    - alt-metal
+    - alternative-metal-sound
   genre:
-  - alternative-metal
+    - alternative-metal
   instrument: bass
   subject:
     kind: genre
     name: Alternative metal
   words: []
-id: alternative-metal
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "0.952"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    capture: direct
-    confidence: low
-    controls:
-      Bass: "0.5"
-      Bias: "0.55"
-      BiasX: "0.9"
-      ChVol: "0.74"
-      Drive: "0.62"
-      HighMid: "0.5"
-      Hum: "0.5"
-      Master: "0.6"
-      Mid: "0.544"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.44871794871794873"
-    evidence:
-    - caveat: 'A genre measured off finished records, so the figures carry the amplifier,
-        the microphone, the desk and the master of every one of them. This block is
-        what sits nearest those figures, not one anybody is known to have used. It
-        also moves: a genre is measured against the players who play none of it, so
-        this answer changes when the corpus gains players, and it is worth rebuilding
-        rather than trusting indefinitely.'
-      kind: audio
-      measured:
-        centroid: 114
-        decay: 0.23
-        dynamics: 8.5
-        harmonics: 0.17
-        high: 0
-        lean: 0.86
-        low: 0.99
-        mid: 0.01
-        transient: 0.71
-      note: Chosen by measurement rather than by anybody's say-so. MESA/Boogie Bass
-        400+ (channel 1) is the closest of the 27 bass amplifiers this device models
-        to alternative-metal, sitting at 150 Hz against 135. Across 19 records from
-        6 players, alternative-metal earns scooped, dark and short-decay, measured
-        against the players who play none of it, and that is what moves the controls
-        off the medians this instrument's presets sit at.
-    gear: MESA/Boogie Bass 400+ (channel 1)
-    position: 1
-    role: amp
-  - attrs:
-      '@position': "2"
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      HighCut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Legacy 6x10" MESA/Boogie Power House
-    position: 2
-    role: cab
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: MESA/Boogie Bass 400+ (channel 1)
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
+          measured:
+            centroid: 114
+            decay: 0.23
+            dynamics: 8.5
+            harmonics: 0.17
+            high: 0
+            lean: 0.86
+            low: 0.99
+            mid: 0.01
+            transient: 0.71
+          note: Chosen by measurement rather than by anybody's say-so. MESA/Boogie Bass 400+ (channel 1) is the closest of the 27 bass amplifiers this device models to alternative-metal, sitting at 150 Hz against 135. Across 19 records from 6 players, alternative-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+    - role: cab
+      gear: Legacy 6x10" MESA/Boogie Power House
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "0.952"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: MESA/Boogie Bass 400+ (channel 1)
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
+          measured:
+            centroid: 114
+            decay: 0.23
+            dynamics: 8.5
+            harmonics: 0.17
+            high: 0
+            lean: 0.86
+            low: 0.99
+            mid: 0.01
+            transient: 0.71
+          note: Chosen by measurement rather than by anybody's say-so. MESA/Boogie Bass 400+ (channel 1) is the closest of the 27 bass amplifiers this device models to alternative-metal, sitting at 150 Hz against 135. Across 19 records from 6 players, alternative-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        Bass: "0.5"
+        Bias: "0.55"
+        BiasX: "0.9"
+        ChVol: "0.74"
+        Drive: "0.62"
+        HighMid: "0.5"
+        Hum: "0.5"
+        Master: "0.6"
+        Mid: "0.544"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.44871794871794873"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: Legacy 6x10" MESA/Boogie Power House
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        HighCut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -133,31 +152,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -223,8 +246,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

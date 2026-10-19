@@ -82,7 +82,7 @@ func (s *CompilePublicTestSuite) handWritten(
 	out := filepath.Join(dir, "typed.yaml")
 
 	s.Require().NoError(os.WriteFile(out, []byte(`schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: typed
 rig:
   instrument: bass
@@ -105,7 +105,7 @@ func (s *CompilePublicTestSuite) withAnAsk(
 	out := filepath.Join(dir, "asked.yaml")
 
 	s.Require().NoError(os.WriteFile(out, []byte(`schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: asked
 ask:
   genre: [punk]
@@ -133,7 +133,7 @@ func (s *CompilePublicTestSuite) badMove(
 	out := filepath.Join(dir, "badmove.yaml")
 
 	s.Require().NoError(os.WriteFile(out, []byte(`schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: badmove
 rig:
   instrument: bass
@@ -187,7 +187,7 @@ func (s *CompilePublicTestSuite) unknownGear(
 ) string {
 	path := filepath.Join(dir, "unknown.yaml")
 	s.Require().NoError(os.WriteFile(path, []byte(
-		"schema: ToneSpec\nversion: \"3.0.0\"\nid: unknown\nrig:\n"+
+		"schema: ToneSpec\nversion: \"4.0.0\"\nid: unknown\nrig:\n"+
 			"  instrument: guitar\n  chain:\n    - {role: amp, gear: Nonesuch 900}\n"),
 		0o600))
 
@@ -205,7 +205,7 @@ func (s *CompilePublicTestSuite) nameless(
 ) string {
 	path := filepath.Join(dir, "bad.yaml")
 	s.Require().NoError(os.WriteFile(path, []byte(
-		"schema: ToneSpec\nversion: \"3.0.0\"\nid: x\nrig:\n"+
+		"schema: ToneSpec\nversion: \"4.0.0\"\nid: x\nrig:\n"+
 			"  instrument: bass\n  chain:\n    - role: amp\n      gear: \"\"\n"), 0o600))
 
 	return path
@@ -222,7 +222,7 @@ func (s *CompilePublicTestSuite) pastItsRange(
 ) string {
 	path := filepath.Join(dir, "past.yaml")
 	s.Require().NoError(os.WriteFile(path, []byte(
-		"schema: ToneSpec\nversion: \"3.0.0\"\nid: past\nrig:\n"+
+		"schema: ToneSpec\nversion: \"4.0.0\"\nid: past\nrig:\n"+
 			"  instrument: bass\n  chain:\n    - role: amp\n"+
 			"      gear: Ampeg SVT\n      controls: {Drive: \"8.0\"}\n"), 0o600))
 

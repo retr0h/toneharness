@@ -208,7 +208,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			then: func() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
 					Spec: s.file("insisted.yaml", `schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: insisted
 ask:
   genre: [rock]

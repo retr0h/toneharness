@@ -4,151 +4,160 @@
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
+schema: ToneSpec
+version: 4.0.0
+id: rick-danko
 ask:
-  aliases:
-  - the-band
   confidence: medium
+  aliases:
+    - the-band
   genre:
-  - southern-rock
-  - rock
+    - southern-rock
+    - rock
   instrument: bass
   subject:
-    band: The Band
-    era: the Ampeg years, Stage Fright to The Last Waltz
     kind: artist
     name: Rick Danko
+    band: The Band
+    era: the Ampeg years, Stage Fright to The Last Waltz
     years:
       from: 1970
       to: 1976
   words:
-  - evidence:
-    - against:
-        mid: 0.03
-      caveat: 'It measures the records rather than the player, and these three are
-        mixes by three different engineers across five years. Nobody wrote this word
-        down before the records were measured, and no citation here argues for it:
-        the 1976 interview is about his basses and his amplifier, not about how the
-        records sound.'
-      kind: audio
-      measured:
-        mid: 0.09
-      note: 9% of his energy sits in the mid band across Stage Fright, Life Is a Carnival
-        and Ophelia, against a middle of 3% across the forty other players measured.
-        Clear by 4.5%, which is 90% of the width of their middle half, and the only
-        word these three records earn. Reproduce with `go run main.go measure players
-        --corpus resources/music/bass`.
-      spread:
-        mid: 0.05
-    term: mid-forward
-id: rick-danko
+    - evidence:
+        - kind: audio
+          against:
+            mid: 0.03
+          caveat: 'It measures the records rather than the player, and these three are mixes by three different engineers across five years. Nobody wrote this word down before the records were measured, and no citation here argues for it: the 1976 interview is about his basses and his amplifier, not about how the records sound.'
+          measured:
+            mid: 0.09
+          note: 9% of his energy sits in the mid band across Stage Fright, Life Is a Carnival and Ophelia, against a middle of 3% across the forty other players measured. Clear by 4.5%, which is 90% of the width of their middle half, and the only word these three records earn. Reproduce with `go run main.go measure players --corpus resources/music/bass`.
+          spread:
+            mid: 0.05
+      term: mid-forward
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    confidence: medium
-    controls:
-      Bass: "0.41"
-      Bias: "0.74"
-      BiasX: "0.5"
-      ChVol: "0.8"
-      Drive: "0.6"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.79"
-      MidFreq: "2"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.85"
-    evidence:
-    - caveat: |-
-        The transcript reads "SBT", and it is quoted here as it renders. No Ampeg amplifier of that name exists, and the sentence beside it names eight 10" speakers, which is the SVT and nothing else Ampeg built. Bass Player's 1994 piece says SVT in full.
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: |-
+            The transcript reads "SBT", and it is quoted here as it renders. No Ampeg amplifier of that name exists, and the sentence beside it names eight 10" speakers, which is the SVT and nothing else Ampeg built. Bass Player's 1994 piece says SVT in full.
 
-        Two amplifiers rather than one, in his own words, and a chain models one. Nothing here says how he ran the pair.
+            Two amplifiers rather than one, in his own words, and a chain models one. Nothing here says how he ran the pair.
 
-        1970 is the earliest the amplifier reached players rather than a date anybody stated. The interview is 1976 and present tense, and he says Traynor came before without saying when it stopped, so Music from Big Pink and The Band are outside this window: the SVT did not exist in 1968.
-      kind: cited
-      note: 'Guitar Player, December 1976, by Steve Caraway, in his own words and
-        in the present tense: "I have two Ampeg SBT bass amps, and they''re great.
-        They have eight 10" speakers." And on why: "Usually bass amps just come apart,
-        but these are really tough. The eight 10" speakers are nice, because those
-        15" ones give you too much flop." He dates the switch himself without giving
-        a year: "I used Traynor amps until Ampeg gave us a bunch of stuff."'
-      url: http://theband.hiof.no/articles/gpm_rr_rd_dec_76.html
-    - caveat: The author's characterisation, not Danko's words, and it covers the
-        1990s reunion rather than the era above. It is here because it corroborates
-        the amplifier across two decades, not to date this rig.
-      kind: cited
-      note: 'Bass Player, Jan/Feb 1994, by Chris Jisi, describing rather than quoting
-        him: "Long an Ampeg SVT user, he had his SVT 8x10 cabinet divided into two
-        4x10s." Eighteen years after the Guitar Player interview and agreeing with
-        it on the amplifier and the cabinet.'
-      url: https://theband.hiof.no/articles/rd_bass_player_94_mb.html
-    gear: Ampeg SVT
-    position: 1
-    role: amp
-  - attrs:
-      '@position': "2"
-    confidence: medium
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      High Cut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - caveat: His was the original SVT cabinet, and what this resolves to is the model
-        this device carries of an 8x10 Ampeg. He also had one sawn into two 4x10 boxes
-        by 1994, per Bass Player above, and nothing here models half a cabinet.
-      kind: cited
-      note: 'The same sentence as the amplifier: "They have eight 10" speakers", and
-        he says what he chose it over, which is a 15" cabinet giving "too much flop".
-        So the cabinet is cited rather than taken from the amplifier''s usual pairing.'
-      url: http://theband.hiof.no/articles/gpm_rr_rd_dec_76.html
-    gear: Ampeg SVT 8x10
-    position: 2
-    role: cab
+            1970 is the earliest the amplifier reached players rather than a date anybody stated. The interview is 1976 and present tense, and he says Traynor came before without saying when it stopped, so Music from Big Pink and The Band are outside this window: the SVT did not exist in 1968.
+          note: 'Guitar Player, December 1976, by Steve Caraway, in his own words and in the present tense: "I have two Ampeg SBT bass amps, and they''re great. They have eight 10" speakers." And on why: "Usually bass amps just come apart, but these are really tough. The eight 10" speakers are nice, because those 15" ones give you too much flop." He dates the switch himself without giving a year: "I used Traynor amps until Ampeg gave us a bunch of stuff."'
+          url: http://theband.hiof.no/articles/gpm_rr_rd_dec_76.html
+        - kind: cited
+          caveat: The author's characterisation, not Danko's words, and it covers the 1990s reunion rather than the era above. It is here because it corroborates the amplifier across two decades, not to date this rig.
+          note: 'Bass Player, Jan/Feb 1994, by Chris Jisi, describing rather than quoting him: "Long an Ampeg SVT user, he had his SVT 8x10 cabinet divided into two 4x10s." Eighteen years after the Guitar Player interview and agreeing with it on the amplifier and the cabinet.'
+          url: https://theband.hiof.no/articles/rd_bass_player_94_mb.html
+    - role: cab
+      gear: Ampeg SVT 8x10
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: His was the original SVT cabinet, and what this resolves to is the model this device carries of an 8x10 Ampeg. He also had one sawn into two 4x10 boxes by 1994, per Bass Player above, and nothing here models half a cabinet.
+          note: 'The same sentence as the amplifier: "They have eight 10" speakers", and he says what he chose it over, which is a 15" cabinet giving "too much flop". So the cabinet is cited rather than taken from the amplifier''s usual pairing.'
+          url: http://theband.hiof.no/articles/gpm_rr_rd_dec_76.html
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: |-
+            The transcript reads "SBT", and it is quoted here as it renders. No Ampeg amplifier of that name exists, and the sentence beside it names eight 10" speakers, which is the SVT and nothing else Ampeg built. Bass Player's 1994 piece says SVT in full.
+
+            Two amplifiers rather than one, in his own words, and a chain models one. Nothing here says how he ran the pair.
+
+            1970 is the earliest the amplifier reached players rather than a date anybody stated. The interview is 1976 and present tense, and he says Traynor came before without saying when it stopped, so Music from Big Pink and The Band are outside this window: the SVT did not exist in 1968.
+          note: 'Guitar Player, December 1976, by Steve Caraway, in his own words and in the present tense: "I have two Ampeg SBT bass amps, and they''re great. They have eight 10" speakers." And on why: "Usually bass amps just come apart, but these are really tough. The eight 10" speakers are nice, because those 15" ones give you too much flop." He dates the switch himself without giving a year: "I used Traynor amps until Ampeg gave us a bunch of stuff."'
+          url: http://theband.hiof.no/articles/gpm_rr_rd_dec_76.html
+        - kind: cited
+          caveat: The author's characterisation, not Danko's words, and it covers the 1990s reunion rather than the era above. It is here because it corroborates the amplifier across two decades, not to date this rig.
+          note: 'Bass Player, Jan/Feb 1994, by Chris Jisi, describing rather than quoting him: "Long an Ampeg SVT user, he had his SVT 8x10 cabinet divided into two 4x10s." Eighteen years after the Guitar Player interview and agreeing with it on the amplifier and the cabinet.'
+          url: https://theband.hiof.no/articles/rd_bass_player_94_mb.html
+      controls:
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.89"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.85"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: Ampeg SVT 8x10
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: His was the original SVT cabinet, and what this resolves to is the model this device carries of an 8x10 Ampeg. He also had one sawn into two 4x10 boxes by 1994, per Bass Player above, and nothing here models half a cabinet.
+          note: 'The same sentence as the amplifier: "They have eight 10" speakers", and he says what he chose it over, which is a 15" cabinet giving "too much flop". So the cabinet is cited rather than taken from the amplifier''s usual pairing.'
+          url: http://theband.hiof.no/articles/gpm_rr_rd_dec_76.html
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        High Cut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -156,31 +165,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -246,8 +259,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

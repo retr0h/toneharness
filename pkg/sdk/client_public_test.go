@@ -31,6 +31,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
@@ -392,7 +393,7 @@ func (s *ClientPublicTestSuite) TestWithSweeps() {
 	at := filepath.Join(s.T().TempDir(), "setup.yaml")
 
 	s.Require().NoError(os.WriteFile(at,
-		[]byte("schema: Setup\nversion: \"3.0.0\"\nmatch_loudness: punk\n"), 0o600))
+		[]byte("schema: Setup\nversion: \"4.0.0\"\nmatch_loudness: punk\n"), 0o600))
 
 	for _, tt := range []struct {
 		name   string
@@ -463,6 +464,127 @@ func (s *ClientPublicTestSuite) TestWithRigs() {
 
 // ownRig is a document of somebody's own, about "Their Player". extra is a line
 // for the ask, such as aliases or extends, or empty.
+// TestAResolvePreservesTheAuthoredHalf is the whole bargain of the two
+// sections, and the three things it has to guarantee.
+//
+// A document is authored at the top and generated at the bottom: `ask` and
+// `rig` are typed by a person and `built` is replaced whole by every resolve.
+// Which half a field is in is what says who may write it, so a rebuild cannot
+// lose a citation or a pinned control: it never writes where they live.
+//
+// It was one section until version 4. A resolve wrote every control it computed
+// into `rig.chain[].controls`, which is the field that means "a person pinned
+// this", so the next resolve honoured its own output as an override. Documents
+// stopped answering to the compiler: eleven genre rigs went on reading as four
+// presets after it had been taught to tell them apart. Rebuilding from the ask
+// instead threw away the research, replacing a cited Ampeg SVT with a measured
+// MESA/Boogie and three citations with one note.
+func (s *ClientPublicTestSuite) TestAResolvePreservesTheAuthoredHalf() {
+	tests := []struct {
+		name string
+		// pin writes an override into the authored half before resolving.
+		pin  bool
+		then func(s *ClientPublicTestSuite, was, now tonespec.Spec)
+	}{
+		{
+			name: "the authored half comes back exactly as it went in",
+			then: func(s *ClientPublicTestSuite, was, now tonespec.Spec) {
+				s.Require().Equal(was.Ask, now.Ask)
+				s.Require().Equal(was.Rig, now.Rig)
+				s.Require().NotNil(now.Built, "and the computed half is there")
+			},
+		},
+		{
+			name: "the citation on a named block survives",
+			then: func(s *ClientPublicTestSuite, _, now tonespec.Spec) {
+				s.Require().Len(now.Rig.Chain, 1)
+				s.Require().Equal("Aguilar DB51", now.Rig.Chain[0].Gear)
+				s.Require().NotNil(now.Rig.Chain[0].Evidence)
+				s.Require().Len(*now.Rig.Chain[0].Evidence, 1)
+			},
+		},
+		{
+			name: "an override is kept and is what the build used",
+			pin:  true,
+			then: func(s *ClientPublicTestSuite, _, now tonespec.Spec) {
+				// Still in the authored half, because that is where it was
+				// written and nothing here may take it away.
+				s.Require().NotNil(now.Rig.Chain[0].Controls)
+				s.Require().Contains(*now.Rig.Chain[0].Controls, "Drive")
+
+				// And the computed half agrees, which is what makes it an
+				// override rather than a note: the build used it.
+				s.Require().NotNil(now.Built.Chain)
+
+				for _, e := range *now.Built.Chain {
+					if e.Role != "amp" || e.Controls == nil {
+						continue
+					}
+
+					got, held := (*e.Controls)["Drive"]
+					s.Require().True(held, "the built amp has a Drive")
+
+					was, ok := got.Float()
+					s.Require().True(ok, "and it is a number")
+					s.Require().InDelta(0.9, was, 1e-9)
+
+					return
+				}
+
+				s.Require().Fail("no amp in the built chain")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			files := ownRig("their-player", "their-player", "", "bass")
+
+			if tt.pin {
+				files["their-player.yaml"] = strings.Replace(
+					files["their-player.yaml"],
+					"      confidence: high\n",
+					"      confidence: high\n      controls:\n        Drive: \"0.9\"\n",
+					1)
+			}
+
+			dir := s.rigsDir(files)
+			at := filepath.Join(dir, "artists", "their-player.yaml")
+			was := readSpec(s.T(), at)
+
+			// Twice, because the second is the one that used to go wrong: the
+			// first wrote controls into the authored half and the second then
+			// read them as somebody's own.
+			for range 2 {
+				_, err := sdk.New(sdk.WithRigs(dir)).Resolve(
+					context.Background(), sdk.Resolve{RigID: "their-player"})
+				s.Require().NoError(err)
+			}
+
+			tt.then(s, was, readSpec(s.T(), at))
+		})
+	}
+}
+
+// readSpec reads a document back off disk, for a test about what a resolve
+// wrote rather than about what it returned.
+func readSpec(
+	t *testing.T,
+	at string,
+) tonespec.Spec {
+	t.Helper()
+
+	f, err := os.Open(at) //nolint:gosec // a path this test wrote
+	require.NoError(t, err)
+
+	defer func() { require.NoError(t, f.Close()) }()
+
+	got, err := tonespec.Load(f)
+	require.NoError(t, err)
+
+	return got
+}
+
 func ownRig(
 	stem string,
 	id string,
@@ -470,7 +592,7 @@ func ownRig(
 	instrument string,
 ) map[string]string {
 	return map[string]string{
-		stem + ".yaml": "schema: ToneSpec\nversion: \"3.0.0\"\nid: " + id + `
+		stem + ".yaml": "schema: ToneSpec\nversion: \"4.0.0\"\nid: " + id + `
 
 ask:
   genre: [rock]
@@ -644,7 +766,9 @@ func (s *ClientPublicTestSuite) TestResolve() {
 			own:  true,
 			id:   "their-player",
 			want: []string{
-				"controls:", "resolved:", "device: HX Stomp",
+				// Under `built`, which is the section a resolve owns. It used
+				// to write them into `rig`, where a pinned control lives.
+				"built:", "controls:", "device: HX Stomp",
 				"catalog: HX Edit 3.82",
 			},
 		},
@@ -979,14 +1103,14 @@ func (s *ClientPublicTestSuite) TestWithUserRigs() {
 					},
 					{
 						name:    "a file of theirs that is not a rig",
-						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nversion: \"3.0.0\"\nid: broken\n"},
+						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nversion: \"4.0.0\"\nid: broken\n"},
 						id:      "mike-dirnt",
 						want:    "Mike Dirnt",
 						listErr: "broken.yaml",
 					},
 					{
 						name:    "a file of theirs that is not a rig, named for the one asked for",
-						files:   map[string]string{"mike-dirnt.yaml": "schema: Setup\nversion: \"3.0.0\"\n"},
+						files:   map[string]string{"mike-dirnt.yaml": "schema: Setup\nversion: \"4.0.0\"\n"},
 						id:      "mike-dirnt",
 						listErr: "mike-dirnt.yaml",
 						findErr: "mike-dirnt.yaml",
@@ -1644,7 +1768,7 @@ func (s *ClientPublicTestSuite) TestTone() {
 			// until his was written.
 			name: "a request naming a player nobody has researched",
 			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: nobody-researched
 ask:
   genre: [not-a-measured-genre]
@@ -1664,7 +1788,7 @@ rig:
 			// chosen at all.
 			name: "a player nobody has researched, in a measured genre",
 			in: sdk.Ask{Spec: s.spec(`schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: cone-mccaslin
 ask:
   genre: [pop-punk]
@@ -2153,7 +2277,7 @@ func TestClientPublicTestSuite(
 // "no rig" is exactly the answer somebody is looking for.
 func (s *ClientPublicTestSuite) TestMusicNeedsTheRigsToAnswerWhoHasNone() {
 	c := sdk.New(sdk.WithRigs(s.rigsDir(
-		map[string]string{"broken.yaml": "schema: ToneSpec\nversion: \"3.0.0\"\nid: broken\n"})))
+		map[string]string{"broken.yaml": "schema: ToneSpec\nversion: \"4.0.0\"\nid: broken\n"})))
 
 	corpus := s.T().TempDir()
 

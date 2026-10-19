@@ -139,7 +139,7 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 
 				s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
 					Ask: s.file("ask.yaml", `schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: an-ask
 ask:
   genre: [punk]
@@ -179,7 +179,7 @@ rig:
 				var buf bytes.Buffer
 
 				err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
-					Ask: s.file("ask.yaml", "schema: ToneSpec\nversion: \"3.0.0\"\nid: an-ask\n"+
+					Ask: s.file("ask.yaml", "schema: ToneSpec\nversion: \"4.0.0\"\nid: an-ask\n"+
 						"ask:\n  genre: [not-a-measured-genre]\n  words:\n    - term: dark\n"+
 						"rig:\n  instrument: bass\n"+
 						"  chain:\n    - {role: amp, gear: Ampeg SVT}\n"),
@@ -200,7 +200,7 @@ rig:
 				var buf bytes.Buffer
 
 				err := cli.ToneBuild(&buf, cli.ToneBuildOptions{
-					Ask: s.file("ask.yaml", "schema: ToneSpec\nversion: \"3.0.0\"\nid: an-ask\n"+
+					Ask: s.file("ask.yaml", "schema: ToneSpec\nversion: \"4.0.0\"\nid: an-ask\n"+
 						"ask:\n  genre: [not-a-measured-genre]\n  words:\n    - term: dark\n"+
 						"rig:\n  instrument: bass\n"+
 						"  chain:\n    - {role: amp, gear: Ampeg SVT}\n"),
@@ -229,7 +229,7 @@ rig:
 					{
 						name: "an ask that is not a ToneSpec",
 						opts: cli.ToneBuildOptions{
-							Ask: s.file("ask.yaml", "schema: Setup\nversion: \"3.0.0\"\n"),
+							Ask: s.file("ask.yaml", "schema: Setup\nversion: \"4.0.0\"\n"),
 						},
 						want: "this is not a ToneSpec",
 					},

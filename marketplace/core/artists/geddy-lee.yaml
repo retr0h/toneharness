@@ -2,242 +2,209 @@
 #
 # The ask: who he is, how he played, and what he played. The gear this
 # resolves to is in geddy-lee.yaml beside it.
+
+schema: ToneSpec
+version: 4.0.0
+id: geddy-lee
 ask:
-  aliases:
-  - geddy
-  - rush
   confidence: low
+  aliases:
+    - geddy
+    - rush
   genre:
-  - progressive rock
+    - progressive rock
   instrument: bass
   played:
-  - evidence:
-    - caveat: 'told in 2011 about 1974. The period source is Guitar Player, June 1980,
-        which settles the model and puts it on the record: "When we got our first
-        advance, the first thing I did was run out and buy a Rickenbacker 400 I",
-        the transcription''s error for 4001, which its own writer spells correctly
-        as "his black Rickenbacker 4001 bass". Asked what he used on Fly By Night:
-        "I used the Rickenbacker on every track." The scan settles the model outright
-        where the transcription garbled it: the magazine''s own intro reads "his black
-        Rickenbacker 4001 bass".'
-      kind: cited
-      note: 'Bass Guitar UK, April 2011, Joel McIver: "When we signed our first record
-        deal in 1974, I got my share of our small advance and the first thing I did
-        was buy a Rickenbacker. I think I paid about $400 for it." He bought it for
-        a sound he never got: "Much to my dismay, when I plugged it in, it didn''t
-        sound like Chris Squire."'
-      url: http://www.2112.net/powerwindows/transcripts/20110400bassguitaruk.htm
-    - caveat: 'which is the instrument''s own explanation for the split chain. The
-        trebly half he describes is the one this file does not model. Two things this
-        field cannot hold: the By-Tor growl on Fly By Night is a Fender through a
-        fuzz into the board rather than this bass, and from A Farewell to Kings he
-        also plays a double-neck whose bass he says "has a better low-end response
-        than the standard 4001", which covers two of the four records measured here.'
-      kind: cited
-      note: 'the same interview, on why this rig is one half of a pair: "it had a
-        great trebly sound, but I had a hard time getting the right amount of bottom
-        end out of it unless I used the Rick-O-Sound feature ... I used to send the
-        bass pickup to a bass amp and the treble pickup to an amp that was set up
-        for that twangy sound."'
-      url: http://www.2112.net/powerwindows/transcripts/20110400bassguitaruk.htm
-    - caveat: 'a fan archive''s transcription of a print article rather than a scan,
-        and the 1980 answer is his touring habit. Do not let Rotosound''s own history
-        page unsettle this: its 1985 entry has him "starts using the new Funkmaster
-        strings", which dates a later endorsement on the Wal and reads like a first-contact
-        date. He is on record five years earlier. No gauge, because the figure everybody
-        repeats traces to one forum post recalling a conversation.'
-      kind: cited
-      note: 'Guitar Player, June 1980, asked what bass strings he uses: "Rotosound
-        Swing Bass, long-scale. I change them every four dates." He dates the switch
-        himself, talking about his pre-Rush Precision: "I was using LaBella flat-wounds
-        for a few years. Then around 1972 there was a big turning point for my sound
-        when I discovered Rotosound round-wounds." He changed in 1972 and got the
-        Rickenbacker in 1974, so there is no window in which this instrument had anything
-        else on it.'
-      url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
-    gear: Rickenbacker 4001
-    strings: round
+    - gear: Rickenbacker 4001
+      evidence:
+        - kind: cited
+          caveat: 'told in 2011 about 1974. The period source is Guitar Player, June 1980, which settles the model and puts it on the record: "When we got our first advance, the first thing I did was run out and buy a Rickenbacker 400 I", the transcription''s error for 4001, which its own writer spells correctly as "his black Rickenbacker 4001 bass". Asked what he used on Fly By Night: "I used the Rickenbacker on every track." The scan settles the model outright where the transcription garbled it: the magazine''s own intro reads "his black Rickenbacker 4001 bass".'
+          note: 'Bass Guitar UK, April 2011, Joel McIver: "When we signed our first record deal in 1974, I got my share of our small advance and the first thing I did was buy a Rickenbacker. I think I paid about $400 for it." He bought it for a sound he never got: "Much to my dismay, when I plugged it in, it didn''t sound like Chris Squire."'
+          url: http://www.2112.net/powerwindows/transcripts/20110400bassguitaruk.htm
+        - kind: cited
+          caveat: 'which is the instrument''s own explanation for the split chain. The trebly half he describes is the one this file does not model. Two things this field cannot hold: the By-Tor growl on Fly By Night is a Fender through a fuzz into the board rather than this bass, and from A Farewell to Kings he also plays a double-neck whose bass he says "has a better low-end response than the standard 4001", which covers two of the four records measured here.'
+          note: 'the same interview, on why this rig is one half of a pair: "it had a great trebly sound, but I had a hard time getting the right amount of bottom end out of it unless I used the Rick-O-Sound feature ... I used to send the bass pickup to a bass amp and the treble pickup to an amp that was set up for that twangy sound."'
+          url: http://www.2112.net/powerwindows/transcripts/20110400bassguitaruk.htm
+        - kind: cited
+          caveat: 'a fan archive''s transcription of a print article rather than a scan, and the 1980 answer is his touring habit. Do not let Rotosound''s own history page unsettle this: its 1985 entry has him "starts using the new Funkmaster strings", which dates a later endorsement on the Wal and reads like a first-contact date. He is on record five years earlier. No gauge, because the figure everybody repeats traces to one forum post recalling a conversation.'
+          note: 'Guitar Player, June 1980, asked what bass strings he uses: "Rotosound Swing Bass, long-scale. I change them every four dates." He dates the switch himself, talking about his pre-Rush Precision: "I was using LaBella flat-wounds for a few years. Then around 1972 there was a big turning point for my sound when I discovered Rotosound round-wounds." He changed in 1972 and got the Rickenbacker in 1974, so there is no window in which this instrument had anything else on it.'
+          url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+      strings: round
   subject:
-    band: Rush
-    era: Fly by Night through Hemispheres
     kind: artist
     name: Geddy Lee
+    band: Rush
+    era: Fly by Night through Hemispheres
     years:
       from: 1975
       to: 1978
   technique:
-    attack: fingers
     evidence:
-    - caveat: '`fingers` understates it and this format has no better word. He also
-        plays with his nails: "I sometimes rest my hand on the E string and pick with
-        my nails. I use them a lot, in fact ... so if I want a pick-like attack, I
-        can get it with my nails, rather than having to use a pick." A rig tuned for
-        flesh will read duller than the records.'
-      kind: cited
-      note: 'Guitar Player, June 1980, in his own words. On the attack: "I never used
-        a pick. In fact, I can''t even play guitar very well with a pick." On where:
-        "I usually rest my hand towards the back, and place my fingers between the
-        bridge and the treble pickup."'
-      url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+      - kind: cited
+        caveat: '`fingers` understates it and this format has no better word. He also plays with his nails: "I sometimes rest my hand on the E string and pick with my nails. I use them a lot, in fact ... so if I want a pick-like attack, I can get it with my nails, rather than having to use a pick." A rig tuned for flesh will read duller than the records.'
+        note: 'Guitar Player, June 1980, in his own words. On the attack: "I never used a pick. In fact, I can''t even play guitar very well with a pick." On where: "I usually rest my hand towards the back, and place my fingers between the bridge and the treble pickup."'
+        url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+    attack: fingers
     position: bridge
-id: geddy-lee
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    capture: direct
-    confidence: medium
-    controls:
-      Bass: "0.41"
-      Bias: "0.74"
-      BiasX: "0.5"
-      ChVol: "0.8"
-      Drive: "0.6"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.79"
-      MidFreq: "2"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.85"
-    evidence:
-    - caveat: 'checked against a scan of the issue itself, at cygnus-x1.net/links/rush/images/scans/Guitar_Player_06.1980-Geddy_Lee.pdf,
-        so this is the magazine rather than somebody''s retyping of it. Dated from
-        inside the interview rather than by its cover: the passage sits directly after
-        Neil Peart joining and the first American tour, and the Rickenbacker was bought
-        with that first advance, which puts this setup at the front of this rig''s
-        years. Two amplifiers split by frequency, and a rig is one path, so this is
-        the low half.'
-      kind: cited
-      note: 'Guitar Player, June 1980, in his own words, describing the rig he built
-        when he bought the Rickenbacker: "I decided to go stereo onstage, so I bought
-        an extra bass setup: 2 Ampeg V-4B bottoms, and an SVT head. For my low end,
-        I would run the bass pickup through the Ampegs, and the treble went to the
-        Sunn."'
-      url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
-    - caveat: which means the half this rig models went to the desk rather than through
-        a microphone, on the records as well as live. The cabinet below was only ever
-        in the treble path. Kept because a preset with no cab into a PA is not the
-        sound either. Verified word for word against the scan of the issue, since
-        this one sentence is what puts four of the nine rigs here on a direct signal.
-      kind: cited
-      note: 'the same interview, on how the records were cut, dated by him to Caress
-        of Steel in 1975: "That''s when I discovered that the best way for me to record
-        my bass was to approach it as if I were playing onstage: Use the direct bass
-        from the low-end pickup, and mike the amp for the high-end pickup. I''ve just
-        been refining that ever since." So the studio split and the stage split are
-        the same split, by his own rule, across every record this rig covers.'
-      url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
-    - caveat: a recollection, and it has the Sunn arriving by Permanent Waves when
-        Geddy says above he had it from about 1972 and ran both at once. It says SVT
-        amps, heads, and this rig used to cite it for an SVT-810 cabinet, which is
-        not what it says and not what he played.
-      kind: user
-      note: 'read with `just forum`, and one post of the ten carries anything: "Geddy
-        did use Ampeg on the first album up to about Hemispheres ... If you look very
-        closely at the beginning of the Fly By Night video, you can see a bunch of
-        Ampeg SVT amps." That is the era this rig claims, from somebody who went and
-        looked at the film.'
-      url: https://www.talkbass.com/threads/geddy-lee-amps.847050/
-    - caveat: which says this head is the front of the era and not all of it. The
-        SVT is dated by his own account to when he bought the Rickenbacker around
-        1975, and by the Hemispheres tour in June 1979 the same publication has power
-        amplifiers and preamps driving the same cabinets. The name here stays because
-        a BGW and an Ashly are not modelled by anything and an SVT is, and because
-        two of the four records measured sit in the earlier half. It is a stand-in
-        for the later ones rather than a claim about them.
-      kind: cited
-      note: 'the same sentence the cabinet below is taken from, read whole: "The bass
-        part of his system is run stereo through two BGW 750-B amplifiers via two
-        Ashley Audio pre-amplifiers ... The low end is run through two Ampeg V4-B
-        cabinets with four JBL 140 speakers."'
-      url: http://www.2112.net/powerwindows/transcripts/19790600canadianmusician.htm
-    gear: Ampeg SVT
-    position: 1
-    role: amp
-  - attrs:
-      '@position': "2"
-    capture: direct
-    confidence: high
-    controls:
-      Angle: "45.0"
-      Distance: "4.25"
-      HighCut: "11500.0"
-      Level: "0.0"
-      LowCut: "25.0"
-      Mic: "6"
-      Position: "0.09"
-    evidence:
-    - kind: cited
-      note: 'Canadian Musician, June 1979, on the Hemispheres tour: "The low end is
-        run through two Ampeg V4-B cabinets with four JBL 140 speakers." Four speakers
-        across two cabinets is two apiece, so the article settles the configuration
-        from inside itself.'
-      url: http://www.2112.net/powerwindows/transcripts/19790600canadianmusician.htm
-    - kind: cited
-      note: 'Canadian Musician, December 1981, in his own words: "The low-end pickup
-        goes through a similar amplification system, then to Ampeg V4B cabinets with
-        15\" J8L speakers", the transcription''s typo for JBL.'
-      url: http://www.2112.net/powerwindows/transcripts/19811200canadianmusician.htm
-    - caveat: an 8x10 stood here on a thread nobody opened, citing footage nobody
-        watched. Every period source found says V-4B and none says 8x10.
-      kind: cited
-      note: 'Guitar Player, June 1980, current tense: "For the low end, I still use
-        two Ampeg V-4B speaker cabinets."'
-      url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
-    gear: Ampeg V-4B
-    position: 2
-    role: cab
-    substitute:
-      confidence: low
+    - role: comp
+      gear: Deluxe Comp
       evidence:
-      - kind: llm
-        note: the only 2x15 this device carries. Both cabinets were reloaded with
-          fifteens that were not the factory ones, JBL 140s here and Electro-Voice
-          in the model, which makes the size right and the voicing a guess.
-      gear: Mesa/Boogie 2x15
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg SVT
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: 'checked against a scan of the issue itself, at cygnus-x1.net/links/rush/images/scans/Guitar_Player_06.1980-Geddy_Lee.pdf, so this is the magazine rather than somebody''s retyping of it. Dated from inside the interview rather than by its cover: the passage sits directly after Neil Peart joining and the first American tour, and the Rickenbacker was bought with that first advance, which puts this setup at the front of this rig''s years. Two amplifiers split by frequency, and a rig is one path, so this is the low half.'
+          note: 'Guitar Player, June 1980, in his own words, describing the rig he built when he bought the Rickenbacker: "I decided to go stereo onstage, so I bought an extra bass setup: 2 Ampeg V-4B bottoms, and an SVT head. For my low end, I would run the bass pickup through the Ampegs, and the treble went to the Sunn."'
+          url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+        - kind: cited
+          caveat: which means the half this rig models went to the desk rather than through a microphone, on the records as well as live. The cabinet below was only ever in the treble path. Kept because a preset with no cab into a PA is not the sound either. Verified word for word against the scan of the issue, since this one sentence is what puts four of the nine rigs here on a direct signal.
+          note: 'the same interview, on how the records were cut, dated by him to Caress of Steel in 1975: "That''s when I discovered that the best way for me to record my bass was to approach it as if I were playing onstage: Use the direct bass from the low-end pickup, and mike the amp for the high-end pickup. I''ve just been refining that ever since." So the studio split and the stage split are the same split, by his own rule, across every record this rig covers.'
+          url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+        - kind: user
+          caveat: a recollection, and it has the Sunn arriving by Permanent Waves when Geddy says above he had it from about 1972 and ran both at once. It says SVT amps, heads, and this rig used to cite it for an SVT-810 cabinet, which is not what it says and not what he played.
+          note: 'read with `just forum`, and one post of the ten carries anything: "Geddy did use Ampeg on the first album up to about Hemispheres ... If you look very closely at the beginning of the Fly By Night video, you can see a bunch of Ampeg SVT amps." That is the era this rig claims, from somebody who went and looked at the film.'
+          url: https://www.talkbass.com/threads/geddy-lee-amps.847050/
+        - kind: cited
+          caveat: which says this head is the front of the era and not all of it. The SVT is dated by his own account to when he bought the Rickenbacker around 1975, and by the Hemispheres tour in June 1979 the same publication has power amplifiers and preamps driving the same cabinets. The name here stays because a BGW and an Ashly are not modelled by anything and an SVT is, and because two of the four records measured sit in the earlier half. It is a stand-in for the later ones rather than a claim about them.
+          note: 'the same sentence the cabinet below is taken from, read whole: "The bass part of his system is run stereo through two BGW 750-B amplifiers via two Ashley Audio pre-amplifiers ... The low end is run through two Ampeg V4-B cabinets with four JBL 140 speakers."'
+          url: http://www.2112.net/powerwindows/transcripts/19790600canadianmusician.htm
+    - role: cab
+      gear: Ampeg V-4B
+      capture: direct
+      confidence: high
+      substitute:
+        gear: Mesa/Boogie 2x15
+        confidence: low
+        evidence:
+          - kind: llm
+            note: the only 2x15 this device carries. Both cabinets were reloaded with fifteens that were not the factory ones, JBL 140s here and Electro-Voice in the model, which makes the size right and the voicing a guess.
+      evidence:
+        - kind: cited
+          note: 'Canadian Musician, June 1979, on the Hemispheres tour: "The low end is run through two Ampeg V4-B cabinets with four JBL 140 speakers." Four speakers across two cabinets is two apiece, so the article settles the configuration from inside itself.'
+          url: http://www.2112.net/powerwindows/transcripts/19790600canadianmusician.htm
+        - kind: cited
+          note: 'Canadian Musician, December 1981, in his own words: "The low-end pickup goes through a similar amplification system, then to Ampeg V4B cabinets with 15\" J8L speakers", the transcription''s typo for JBL.'
+          url: http://www.2112.net/powerwindows/transcripts/19811200canadianmusician.htm
+        - kind: cited
+          caveat: an 8x10 stood here on a thread nobody opened, citing footage nobody watched. Every period source found says V-4B and none says 8x10.
+          note: 'Guitar Player, June 1980, current tense: "For the low end, I still use two Ampeg V-4B speaker cabinets."'
+          url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg SVT
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: 'checked against a scan of the issue itself, at cygnus-x1.net/links/rush/images/scans/Guitar_Player_06.1980-Geddy_Lee.pdf, so this is the magazine rather than somebody''s retyping of it. Dated from inside the interview rather than by its cover: the passage sits directly after Neil Peart joining and the first American tour, and the Rickenbacker was bought with that first advance, which puts this setup at the front of this rig''s years. Two amplifiers split by frequency, and a rig is one path, so this is the low half.'
+          note: 'Guitar Player, June 1980, in his own words, describing the rig he built when he bought the Rickenbacker: "I decided to go stereo onstage, so I bought an extra bass setup: 2 Ampeg V-4B bottoms, and an SVT head. For my low end, I would run the bass pickup through the Ampegs, and the treble went to the Sunn."'
+          url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+        - kind: cited
+          caveat: which means the half this rig models went to the desk rather than through a microphone, on the records as well as live. The cabinet below was only ever in the treble path. Kept because a preset with no cab into a PA is not the sound either. Verified word for word against the scan of the issue, since this one sentence is what puts four of the nine rigs here on a direct signal.
+          note: 'the same interview, on how the records were cut, dated by him to Caress of Steel in 1975: "That''s when I discovered that the best way for me to record my bass was to approach it as if I were playing onstage: Use the direct bass from the low-end pickup, and mike the amp for the high-end pickup. I''ve just been refining that ever since." So the studio split and the stage split are the same split, by his own rule, across every record this rig covers.'
+          url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+        - kind: user
+          caveat: a recollection, and it has the Sunn arriving by Permanent Waves when Geddy says above he had it from about 1972 and ran both at once. It says SVT amps, heads, and this rig used to cite it for an SVT-810 cabinet, which is not what it says and not what he played.
+          note: 'read with `just forum`, and one post of the ten carries anything: "Geddy did use Ampeg on the first album up to about Hemispheres ... If you look very closely at the beginning of the Fly By Night video, you can see a bunch of Ampeg SVT amps." That is the era this rig claims, from somebody who went and looked at the film.'
+          url: https://www.talkbass.com/threads/geddy-lee-amps.847050/
+        - kind: cited
+          caveat: which says this head is the front of the era and not all of it. The SVT is dated by his own account to when he bought the Rickenbacker around 1975, and by the Hemispheres tour in June 1979 the same publication has power amplifiers and preamps driving the same cabinets. The name here stays because a BGW and an Ashly are not modelled by anything and an SVT is, and because two of the four records measured sit in the earlier half. It is a stand-in for the later ones rather than a claim about them.
+          note: 'the same sentence the cabinet below is taken from, read whole: "The bass part of his system is run stereo through two BGW 750-B amplifiers via two Ashley Audio pre-amplifiers ... The low end is run through two Ampeg V4-B cabinets with four JBL 140 speakers."'
+          url: http://www.2112.net/powerwindows/transcripts/19790600canadianmusician.htm
+      controls:
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.79"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.85"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: Ampeg V-4B
+      capture: direct
+      confidence: high
+      substitute:
+        gear: Mesa/Boogie 2x15
+        confidence: low
+        evidence:
+          - kind: llm
+            note: the only 2x15 this device carries. Both cabinets were reloaded with fifteens that were not the factory ones, JBL 140s here and Electro-Voice in the model, which makes the size right and the voicing a guess.
+      evidence:
+        - kind: cited
+          note: 'Canadian Musician, June 1979, on the Hemispheres tour: "The low end is run through two Ampeg V4-B cabinets with four JBL 140 speakers." Four speakers across two cabinets is two apiece, so the article settles the configuration from inside itself.'
+          url: http://www.2112.net/powerwindows/transcripts/19790600canadianmusician.htm
+        - kind: cited
+          note: 'Canadian Musician, December 1981, in his own words: "The low-end pickup goes through a similar amplification system, then to Ampeg V4B cabinets with 15\" J8L speakers", the transcription''s typo for JBL.'
+          url: http://www.2112.net/powerwindows/transcripts/19811200canadianmusician.htm
+        - kind: cited
+          caveat: an 8x10 stood here on a thread nobody opened, citing footage nobody watched. Every period source found says V-4B and none says 8x10.
+          note: 'Guitar Player, June 1980, current tense: "For the low end, I still use two Ampeg V-4B speaker cabinets."'
+          url: http://www.2112.net/powerwindows/transcripts/19800600guitarplayer.htm
+      controls:
+        Angle: "45.0"
+        Distance: "4.25"
+        HighCut: "11500.0"
+        Level: "0.0"
+        LowCut: "25.0"
+        Mic: "6"
+        Position: "0.09"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -245,31 +212,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -335,8 +306,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

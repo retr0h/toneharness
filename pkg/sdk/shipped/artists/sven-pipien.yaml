@@ -4,121 +4,132 @@
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
+schema: ToneSpec
+version: 4.0.0
+id: sven-pipien
 ask:
-  aliases:
-  - black-crowes
-  - the-black-crowes
   confidence: low
+  aliases:
+    - black-crowes
+    - the-black-crowes
   genre:
-  - southern-rock
-  - hard-rock
+    - southern-rock
+    - hard-rock
   instrument: bass
   subject:
-    band: The Black Crowes
-    era: By Your Side to Lions
     kind: artist
     name: Sven Pipien
+    band: The Black Crowes
+    era: By Your Side to Lions
     years:
       from: 1998
       to: 2001
   words: []
-id: sven-pipien
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    confidence: low
-    controls:
-      Bass: "0.41"
-      Bias: "0.74"
-      BiasX: "0.5"
-      ChVol: "0.8"
-      Drive: "0.6"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.79"
-      MidFreq: "2"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.85"
-    evidence:
-    - caveat: 'A forum account rather than a citation, and it hedges in the right
-        place: the SVT-6 is stated flatly and what he moved to is not. The SVT-6 is
-        a hybrid with a valve preamp and a solid-state output section, where the model
-        here is the original all-valve SVT, so this is the same family and not the
-        same amplifier. A second thread was opened and adds only a first- hand sighting
-        of the Aguilar cabinet at a later show, which is why the era above stops before
-        it.'
-      kind: user
-      note: 'Opened. The one post carrying gear is ETEcarmine, who has seen the band
-        repeatedly: "He used to use 2 Ampeg SVT 6 and either an Ampeg 8x10 or a 4x10
-        w/ a 1x15, depending on the show. Now he uses the chocolate thunder Aguilar
-        DB 8x10, but I don''t know if he switched amps."'
-      url: https://www.talkbass.com/threads/x.303485/
-    gear: Ampeg SVT
-    position: 1
-    role: amp
-  - attrs:
-      '@position': "2"
-    confidence: low
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      High Cut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - caveat: Which of the two he used on any given night is not established, and
-        neither is which 8x10. The device models a legacy Ampeg SVT-E.
-      kind: user
-      note: 'Named in the same sentence as the head, as one of two he chose between
-        by the size of the room: "either an Ampeg 8x10 or a 4x10 w/ a 1x15".'
-      url: https://www.talkbass.com/threads/x.303485/
-    gear: Ampeg 8x10
-    position: 2
-    role: cab
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Ampeg SVT
+      confidence: low
+      evidence:
+        - kind: user
+          caveat: 'A forum account rather than a citation, and it hedges in the right place: the SVT-6 is stated flatly and what he moved to is not. The SVT-6 is a hybrid with a valve preamp and a solid-state output section, where the model here is the original all-valve SVT, so this is the same family and not the same amplifier. A second thread was opened and adds only a first- hand sighting of the Aguilar cabinet at a later show, which is why the era above stops before it.'
+          note: 'Opened. The one post carrying gear is ETEcarmine, who has seen the band repeatedly: "He used to use 2 Ampeg SVT 6 and either an Ampeg 8x10 or a 4x10 w/ a 1x15, depending on the show. Now he uses the chocolate thunder Aguilar DB 8x10, but I don''t know if he switched amps."'
+          url: https://www.talkbass.com/threads/x.303485/
+    - role: cab
+      gear: Ampeg 8x10
+      confidence: low
+      evidence:
+        - kind: user
+          caveat: Which of the two he used on any given night is not established, and neither is which 8x10. The device models a legacy Ampeg SVT-E.
+          note: 'Named in the same sentence as the head, as one of two he chose between by the size of the room: "either an Ampeg 8x10 or a 4x10 w/ a 1x15".'
+          url: https://www.talkbass.com/threads/x.303485/
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Ampeg SVT
+      confidence: low
+      evidence:
+        - kind: user
+          caveat: 'A forum account rather than a citation, and it hedges in the right place: the SVT-6 is stated flatly and what he moved to is not. The SVT-6 is a hybrid with a valve preamp and a solid-state output section, where the model here is the original all-valve SVT, so this is the same family and not the same amplifier. A second thread was opened and adds only a first- hand sighting of the Aguilar cabinet at a later show, which is why the era above stops before it.'
+          note: 'Opened. The one post carrying gear is ETEcarmine, who has seen the band repeatedly: "He used to use 2 Ampeg SVT 6 and either an Ampeg 8x10 or a 4x10 w/ a 1x15, depending on the show. Now he uses the chocolate thunder Aguilar DB 8x10, but I don''t know if he switched amps."'
+          url: https://www.talkbass.com/threads/x.303485/
+      controls:
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.79"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.85"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: Ampeg 8x10
+      confidence: low
+      evidence:
+        - kind: user
+          caveat: Which of the two he used on any given night is not established, and neither is which 8x10. The device models a legacy Ampeg SVT-E.
+          note: 'Named in the same sentence as the head, as one of two he chose between by the size of the room: "either an Ampeg 8x10 or a 4x10 w/ a 1x15".'
+          url: https://www.talkbass.com/threads/x.303485/
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        High Cut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -126,31 +137,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -216,8 +231,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

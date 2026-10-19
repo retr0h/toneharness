@@ -168,4 +168,12 @@ type Limits struct {
 	// It sits below 100 deliberately. A chain that exactly fills a processor
 	// in theory is a chain that fails to load in practice.
 	ChipCeiling float64
+	// Switches is how many footswitches the device has for a player to stomp.
+	//
+	// From the hardware rather than from the preset corpus, unlike every other
+	// figure here: a preset says nothing about how many switches the box it was
+	// written on carries. It varies most of all the figures in this table, an
+	// HX Stomp having three and a Helix Floor ten, so a build that assigned a
+	// fourth switch would write something no Stomp can reach.
+	Switches int
 }

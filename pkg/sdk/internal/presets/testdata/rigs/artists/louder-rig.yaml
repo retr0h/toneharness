@@ -4,7 +4,7 @@
 # that was found by playing a pair of real presets and hearing one as quiet.
 
 schema: ToneSpec
-version: "3.0.0"
+version: "4.0.0"
 id: louder-rig
 
 rig:

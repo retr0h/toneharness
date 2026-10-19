@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: ToneSpec
-  version: "3.0.0"
+  version: "4.0.0"
   description: >
     What somebody wants to sound like, and the gear that answers it.
 
@@ -54,6 +54,36 @@ components:
       additionalProperties: false
       description: >
         One sound: the gear that makes it, and what somebody asked for.
+
+
+        **Two halves, and which half a field is in says who may write it.**
+        `ask` and `rig` are authored: somebody types them, `rigs new` scaffolds
+        them, and no command here ever overwrites them. `built` is generated:
+        `rigs resolve` replaces the whole of it every time it runs and nothing
+        else writes it.
+
+
+        That division is what makes a document safe to edit and a rebuild
+        lossless, and it is positional rather than annotated: the top of the
+        file is yours and the bottom is the machine's. Nothing has to be marked,
+        and no skill has to tell anybody which command is safe to run.
+
+
+        **To change something the compiler worked out, override it above rather
+        than editing below.** A chain entry's `controls` and a rig's `preset`
+        are sparse on purpose: name the two controls you care about and let the
+        rest be answered. Those overrides are authored, so they survive every
+        rebuild, and `built` shows what the answer came out as once they were
+        applied.
+
+
+        This was one section until version 4. A resolve wrote every control it
+        computed into `rig.chain[].controls`, which is the field that means "a
+        person pinned this", so the next resolve honoured its own output as
+        though somebody had asked for it. The documents froze: eleven genre rigs
+        went on reading as four presets after the compiler had been taught to
+        tell them apart, and a rebuild from the ask threw away researched gear
+        instead, replacing a cited Ampeg SVT with a measured MESA/Boogie.
       required: [schema, version, id, rig]
       properties:
         schema:
@@ -79,12 +109,94 @@ components:
           $ref: "#/components/schemas/Ask"
         rig:
           $ref: "#/components/schemas/Rig"
+        built:
+          $ref: "#/components/schemas/Built"
+    Built:
+      type: object
+      additionalProperties: false
+      description: >
+        What the compiler worked out, which is replaced whole on every resolve.
+
+
+        **Nothing here is edited.** Every value is derived from the two sections
+        above plus the catalog and the corpus, so an edit here lasts until the
+        next `rigs resolve` and no longer. The way to change one of these
+        numbers is to pin it in `rig` as an override, where it is authored and
+        survives.
+
+
+        It is written down rather than recomputed on demand because a
+        specification that says what the preset is beats one that says how to go
+        looking for it: somebody can read the chain, diff two rigs, or check a
+        control without a catalog, a corpus or this binary.
+
+
+        Absent means nobody has resolved this document yet, which is the state
+        `rigs new` leaves and a perfectly good one: the rig says what the gear
+        is and nothing has computed the knobs.
+      properties:
+        catalog:
+          type: string
+          minLength: 1
+          description: >
+            The release the catalog came from, such as "HX Edit 3.82". A chain
+            below was resolved against this and a different release may name the
+            same model differently.
+        device:
+          type: string
+          minLength: 1
+          description: >
+            Which pedal it was resolved for, such as "HX Stomp". The block
+            count, the path count and the routing indices all differ between
+            models, so a resolved chain is for one of them.
+        chain:
+          type: array
+          items: { $ref: "#/components/schemas/ChainEntry" }
+          description: >
+            The signal path with every control at the value it resolved to, in
+            the order the device lays it out.
+
+
+            The same shape as `rig.chain` so the two can be read against each
+            other, and fuller: this carries the blocks the corpus added, the
+            positions the device numbered, and every control rather than the
+            few somebody pinned.
+        preset:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/PresetMember"
+          description: >
+            The device's own members, in full: the inputs, outputs, splits,
+            joins, cabinets and global parameters the chain above resolved
+            alongside.
+
+
+            `rig.preset` is the sparse half of this, and it is an override: it
+            states the few member fields somebody chose and this states all of
+            them.
+        footswitches:
+          type: array
+          items: { $ref: "#/components/schemas/Footswitch" }
+          description: >
+            What each switch on the pedal does, one entry per assignment.
+
+
+            Derived, which is why it is here rather than above: a switch is
+            given to each block worth stomping, in chain order, capped by how
+            many the device has. Nothing about it is a claim about the sound —
+            it assigns no block and moves no control — so unlike the gear it
+            needs no source.
+
+
+            A rig that names its own switches outranks this entirely and this
+            writes nothing. Somebody who wants FS1 on something else says so up
+            there, the same way they pin a control.
     ContractVersion:
       type: string
       pattern: "^\\d+\\.\\d+\\.\\d+$"
       description: >
         Which version of this contract the document was written against, as
-        `info.version` states it: "3.0.0".
+        `info.version` states it: "4.0.0".
 
 
         Required, so that a document always says. Without it a reader cannot
@@ -368,8 +480,6 @@ components:
             from the corpus: where the editing cursor sat, and whether three
             snapshots had been renamed. Nothing audible, and the alternative was
             making a rig state all 28 fields of `global` to change one.
-        resolved:
-          $ref: "#/components/schemas/Target"
         moves:
           type: array
           items: { $ref: "#/components/schemas/Move" }
@@ -1455,6 +1565,14 @@ components:
             corpus medians the way it always has. Present and partial is partial
             on purpose: say the two controls you care about and let the rest be
             answered.
+
+
+            **An override, and authored.** Whatever is here outranks what the
+            compiler would have chosen and survives every resolve, which is why
+            a resolve must never write its own answers into it: doing so made
+            the compiler honour its own output as though a person had asked for
+            it, and the documents stopped responding to the compiler being
+            improved. What it resolved to is in `built.chain`.
         mic:
           type: integer
           minimum: 0

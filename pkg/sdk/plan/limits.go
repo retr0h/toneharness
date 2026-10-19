@@ -56,6 +56,10 @@ type deviceLimits struct {
 
 // limits is what each device in the corpus holds.
 //
+// Every figure but one is counted off the presets. Switches is the exception
+// and says so on the field: a preset cannot report how many switches the box
+// it was written on has, so those four counts are the hardware's.
+//
 // Counted over 4,426 presets: the largest chain each device wrote, and
 // whether any of its presets used a second processor. A ceiling taken from a
 // handful of presets would be a ceiling on what people happened to upload, so
@@ -66,20 +70,20 @@ var limits = []deviceLimits{
 		// 721 presets, the largest holding eight blocks, and not one of them
 		// on a second processor.
 		device: "HX Stomp",
-		Limits: Limits{MaxBlocks: 8, Paths: 1, ChipCeiling: 95.0},
+		Limits: Limits{MaxBlocks: 8, Paths: 1, ChipCeiling: 95.0, Switches: 3},
 	},
 	{
 		// The same processing in a bigger box: more footswitches, the same
 		// two chips. Only 12 of its presets are in the corpus and the largest
 		// holds eight blocks, which agrees.
 		device: "HX Stomp XL",
-		Limits: Limits{MaxBlocks: 8, Paths: 1, ChipCeiling: 95.0},
+		Limits: Limits{MaxBlocks: 8, Paths: 1, ChipCeiling: 95.0, Switches: 8},
 	},
 	{
 		// 1,698 presets. The largest holds 29 blocks, 1,219 of them use the
 		// second processor, and no single processor holds more than 16.
 		device: "Helix Floor",
-		Limits: Limits{MaxBlocks: 29, Paths: 2, ChipCeiling: 95.0},
+		Limits: Limits{MaxBlocks: 29, Paths: 2, ChipCeiling: 95.0, Switches: 10},
 	},
 	{
 		// The Helix Floor's processing in a smaller box, so it takes the
@@ -87,7 +91,7 @@ var limits = []deviceLimits{
 		// processors, which is a ceiling on what people uploaded rather than
 		// on what the device holds.
 		device: "Helix LT",
-		Limits: Limits{MaxBlocks: 29, Paths: 2, ChipCeiling: 95.0},
+		Limits: Limits{MaxBlocks: 29, Paths: 2, ChipCeiling: 95.0, Switches: 10},
 	},
 }
 

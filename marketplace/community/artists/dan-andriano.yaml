@@ -12,138 +12,156 @@
 # Dan Andriano — Alkaline Trio
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
+
+schema: ToneSpec
+version: 4.0.0
+id: dan-andriano
 ask:
   confidence: medium
   genre:
-  - pop-punk
-  - punk
+    - pop-punk
+    - punk
   instrument: bass
   played:
-  - evidence:
-    - caveat: |-
-        the same gear box names four other instruments, a GPC signature bass and Fender Jazz reissues among them, and he does not say which is on which song. This takes the one he accounts for in his own words and dates to five years before these records.
-        Strings are left out rather than guessed. The box says "Ernie Ball" and that brand makes both, so nothing read here says round or flat.
-      kind: cited
-      note: 'he says how he came to them, and that they are what he plays now: "When
-        we worked with producer Jerry Finn on Crimson [Vagrant, 2005], I played his
-        ''62 Fender P-Bass, which was the nicest bass I''ve ever played... As soon
-        as we finished making that record, I bought two Fender ''62 Reissue Precision
-        Basses and sanded the finish off the necks to give them a wornin feel. Now
-        I do that to all my basses."'
-      url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
-    gear: Fender '62 Reissue Precision Bass
+    - gear: Fender '62 Reissue Precision Bass
+      evidence:
+        - kind: cited
+          caveat: |-
+            the same gear box names four other instruments, a GPC signature bass and Fender Jazz reissues among them, and he does not say which is on which song. This takes the one he accounts for in his own words and dates to five years before these records.
+            Strings are left out rather than guessed. The box says "Ernie Ball" and that brand makes both, so nothing read here says round or flat.
+          note: 'he says how he came to them, and that they are what he plays now: "When we worked with producer Jerry Finn on Crimson [Vagrant, 2005], I played his ''62 Fender P-Bass, which was the nicest bass I''ve ever played... As soon as we finished making that record, I bought two Fender ''62 Reissue Precision Basses and sanded the finish off the necks to give them a wornin feel. Now I do that to all my basses."'
+          url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
   subject:
-    band: Alkaline Trio
-    era: This Addiction
     kind: artist
     name: Dan Andriano
+    band: Alkaline Trio
+    era: This Addiction
     years:
       from: 2010
       to: 2010
-id: dan-andriano
 rig:
   chain:
-  - attrs:
-      '@position': "0"
-    controls:
-      Attack: "0.035"
-      Knee: "6.0"
-      Level: "5.2"
-      Mix: "1.0"
-      Ratio: "3"
-      Release: "0.2"
-      Threshold: "-37.1"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: Deluxe Comp
-    position: 0
-    role: comp
-  - attrs:
-      '@position': "1"
-    confidence: medium
-    controls:
-      Bass: "0.41"
-      Bias: "0.74"
-      BiasX: "0.5"
-      ChVol: "0.8"
-      Drive: "0.6"
-      Hum: "0.5"
-      Master: "1.0"
-      Mid: "0.89"
-      MidFreq: "2"
-      Ripple: "0.5"
-      Sag: "0.5"
-      Treble: "0.88"
-    evidence:
-    - caveat: |-
-        he names it as what he records with rather than as what is on this record. The interview is dated 30 April 2010 and This Addiction came out that February, so the statement is present tense either side of it, and the article's own gear box lists the Major among his rig. That is as close as anything read here gets, and it is not the same as him saying he used it on these three songs.
-        The Orange AD-200B in the same box is the live rig by his own sentence, so it is not here.
-      kind: cited
-      note: 'asked what he had learned about getting the most from his gear, he separates
-        the stage from the tape himself: "Live, I play though an Orange rig, but the
-        amp I like to record with is a 1971 Marshall Major head. It''s the best sounding
-        amp I''ve ever played through." He says what it does: "It''s a 200-watt head...
-        with bass it sounds perfect. It gets pretty gnarly, but it stays smooth. It''s
-        almost like naturally compressed sound."'
-      url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
-    gear: Marshall Major
-    position: 1
-    role: amp
-    substitute:
-      confidence: low
+    - role: comp
+      gear: Deluxe Comp
       evidence:
-      - caveat: |-
-          this is a device limit, not a claim that the two amplifiers sound alike. Line 6 model no Marshall Major, and the ones they do model are all guitar amps, which this tool will not put in a bass chain. Of the bass amplifiers it has, the SVT is the only one he is known to have owned.
-          He says the Major is what he records with and does not say that of the SVT, so this stands in for the recorded sound with something from the right rig rather than the right room.
-        kind: cited
-        note: the same article's gear box lists his rig as "Orange AD-200B with Orange
-          4x10 cabs; Ampeg SVT; '71 Marshal Major", so the SVT is an amplifier he
-          is documented as owning alongside the Major rather than one picked for sounding
-          like it.
-        url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
-      gear: Ampeg SVT
-  - attrs:
-      '@position': "2"
-    controls:
-      Distance: "1.0"
-      EarlyReflections: "0.0"
-      High Cut: "8000.0"
-      Level: "0.0"
-      LowCut: "19.9"
-    evidence:
-    - kind: corpus
-      note: 'added by the compiler rather than named in the rig: a chain of this kind
-        almost always holds one, and the corpus statistics are what put it here.'
-    gear: 8x10 Ampeg SVT-E
-    position: 2
-    role: cab
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: amp
+      gear: Marshall Major
+      confidence: medium
+      substitute:
+        gear: Ampeg SVT
+        confidence: low
+        evidence:
+          - kind: cited
+            caveat: |-
+              this is a device limit, not a claim that the two amplifiers sound alike. Line 6 model no Marshall Major, and the ones they do model are all guitar amps, which this tool will not put in a bass chain. Of the bass amplifiers it has, the SVT is the only one he is known to have owned.
+              He says the Major is what he records with and does not say that of the SVT, so this stands in for the recorded sound with something from the right rig rather than the right room.
+            note: the same article's gear box lists his rig as "Orange AD-200B with Orange 4x10 cabs; Ampeg SVT; '71 Marshal Major", so the SVT is an amplifier he is documented as owning alongside the Major rather than one picked for sounding like it.
+            url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
+      evidence:
+        - kind: cited
+          caveat: |-
+            he names it as what he records with rather than as what is on this record. The interview is dated 30 April 2010 and This Addiction came out that February, so the statement is present tense either side of it, and the article's own gear box lists the Major among his rig. That is as close as anything read here gets, and it is not the same as him saying he used it on these three songs.
+            The Orange AD-200B in the same box is the live rig by his own sentence, so it is not here.
+          note: 'asked what he had learned about getting the most from his gear, he separates the stage from the tape himself: "Live, I play though an Orange rig, but the amp I like to record with is a 1971 Marshall Major head. It''s the best sounding amp I''ve ever played through." He says what it does: "It''s a 200-watt head... with bass it sounds perfect. It gets pretty gnarly, but it stays smooth. It''s almost like naturally compressed sound."'
+          url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
+    - role: cab
+      gear: 8x10 Ampeg SVT-E
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
   instrument: bass
+built:
+  catalog: HX Edit 3.82
+  device: HX Stomp
+  chain:
+    - role: comp
+      gear: Deluxe Comp
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Attack: "0.035"
+        Knee: "6.0"
+        Level: "5.2"
+        Mix: "1.0"
+        Ratio: "3"
+        Release: "0.2"
+        Threshold: "-37.1"
+      attrs:
+        '@position': "0"
+      position: 0
+    - role: amp
+      gear: Marshall Major
+      confidence: medium
+      substitute:
+        gear: Ampeg SVT
+        confidence: low
+        evidence:
+          - kind: cited
+            caveat: |-
+              this is a device limit, not a claim that the two amplifiers sound alike. Line 6 model no Marshall Major, and the ones they do model are all guitar amps, which this tool will not put in a bass chain. Of the bass amplifiers it has, the SVT is the only one he is known to have owned.
+              He says the Major is what he records with and does not say that of the SVT, so this stands in for the recorded sound with something from the right rig rather than the right room.
+            note: the same article's gear box lists his rig as "Orange AD-200B with Orange 4x10 cabs; Ampeg SVT; '71 Marshal Major", so the SVT is an amplifier he is documented as owning alongside the Major rather than one picked for sounding like it.
+            url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
+      evidence:
+        - kind: cited
+          caveat: |-
+            he names it as what he records with rather than as what is on this record. The interview is dated 30 April 2010 and This Addiction came out that February, so the statement is present tense either side of it, and the article's own gear box lists the Major among his rig. That is as close as anything read here gets, and it is not the same as him saying he used it on these three songs.
+            The Orange AD-200B in the same box is the live rig by his own sentence, so it is not here.
+          note: 'asked what he had learned about getting the most from his gear, he separates the stage from the tape himself: "Live, I play though an Orange rig, but the amp I like to record with is a 1971 Marshall Major head. It''s the best sounding amp I''ve ever played through." He says what it does: "It''s a 200-watt head... with bass it sounds perfect. It gets pretty gnarly, but it stays smooth. It''s almost like naturally compressed sound."'
+          url: http://web.archive.org/web/20191121043100/https://www.bassplayer.com/artists/alkaline-trio39s-dan-andriano-on-punk-production
+      controls:
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.89"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.88"
+      attrs:
+        '@position': "1"
+      position: 1
+    - role: cab
+      gear: 8x10 Ampeg SVT-E
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Distance: "1.0"
+        EarlyReflections: "0.0"
+        High Cut: "8000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+      attrs:
+        '@position': "2"
+      position: 2
   preset:
     dsp0:
       members:
         inputA:
+          controls:
+            decay: "0.5"
+            noiseGate: "false"
+            threshold: "-48"
           attrs:
             '@input': "1"
-          controls:
-            decay: "0.5"
-            noiseGate: "false"
-            threshold: "-48"
           model: HelixStomp_AppDSPFlowInput
         inputB:
-          attrs:
-            '@input': "0"
           controls:
             decay: "0.5"
             noiseGate: "false"
             threshold: "-48"
+          attrs:
+            '@input': "0"
           model: HelixStomp_AppDSPFlowInput
         join:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "8"
           controls:
             A Level: "0"
             A Pan: "0.5"
@@ -151,31 +169,35 @@ rig:
             B Pan: "0.5"
             B Polarity: "false"
             Level: "0"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "8"
           model: HD2_AppDSPFlowJoin
         outputA:
-          attrs:
-            '@output': "1"
           controls:
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "1"
           model: HelixStomp_AppDSPFlowOutputMain
         outputB:
-          attrs:
-            '@output': "0"
           controls:
             Type: "true"
             gain: "0"
             pan: "0.5"
+          attrs:
+            '@output': "0"
           model: HelixStomp_AppDSPFlowOutputSend
         split:
-          attrs:
-            '@enabled': "true"
-            '@no_snapshot_bypass': "false"
-            '@position': "0"
           controls:
             BalanceA: "0.5"
             BalanceB: "0.5"
             bypass: "false"
+          attrs:
+            '@enabled': "true"
+            '@no_snapshot_bypass': "false"
+            '@position': "0"
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
@@ -241,8 +263,3 @@ rig:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
-  resolved:
-    catalog: HX Edit 3.82
-    device: HX Stomp
-schema: ToneSpec
-version: 3.0.0

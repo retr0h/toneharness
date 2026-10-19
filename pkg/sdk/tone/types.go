@@ -37,6 +37,10 @@ type (
 	// not, because a sound nobody can name the gear for is a sound nothing can
 	// model, which is what the solver always said.
 	Spec = gen.ToneSpec
+	// Built is what a resolve worked out, which it replaces whole each time it
+	// runs. Never authored: the way to change one of its numbers is to pin
+	// that control as an override in the Rig above it.
+	Built = gen.Built
 	// SpecSchema is what a document says it is, so a writer states it rather
 	// than spelling the string.
 	SpecSchema = gen.ToneSpecSchema

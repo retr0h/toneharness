@@ -435,7 +435,7 @@ func (s *RigsPublicTestSuite) TestShow() {
 func document(
 	id string,
 ) string {
-	return "schema: ToneSpec\nversion: \"3.0.0\"\nid: " + id + "\nrig:\n  instrument: bass\n" +
+	return "schema: ToneSpec\nversion: \"4.0.0\"\nid: " + id + "\nrig:\n  instrument: bass\n" +
 		"  chain:\n    - {role: amp, gear: Ampeg SVT}\n"
 }
 
