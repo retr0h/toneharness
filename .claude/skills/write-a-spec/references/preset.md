@@ -1,7 +1,20 @@
 # What a preset holds beside its chain
 
 A chain is the signal path. A preset holds eighteen other kinds of member beside
-it, and `rig.preset` is where they go.
+it, and there are two places they live.
+
+**`rig.preset` is the authored one and it is sparse.** State the few member
+fields somebody chose and let the rest be answered, the same bargain a chain
+entry's `controls:` makes. Whatever is here outranks what a build would have
+chosen and survives every resolve.
+
+**`built.preset` is the generated one and it is complete.** Every member the
+chain resolved alongside, written by `rigs resolve` and replaced whole each time
+it runs. Editing it lasts until the next resolve and no longer; to change one of
+its values, state that field above.
+
+Both halves merge the same way, down to the field, which is one of the rules
+below.
 
 Ask the contract for the fields, as always:
 `pkg/sdk/tone/data/tonespec.openapi.yaml`, schema `PresetMember`. This page says

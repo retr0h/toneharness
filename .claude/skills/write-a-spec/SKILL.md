@@ -14,7 +14,8 @@ metadata:
 
 One hand-authored contract, embedded in the package that reads it:
 `pkg/sdk/tone/data/tonespec.openapi.yaml`. A document's `ask:` is what somebody
-may ask for and its `rig:` is the gear that answers it, with the rig required.
+may ask for, its `rig:` is the gear that answers it, with the rig required, and
+its `built:` is what a resolve worked that rig out to.
 
 **Read it.** Its `description:` fields are the grammar, they list every field and
 its allowed values, and the tool refuses a document that breaks them. Nothing
@@ -33,17 +34,44 @@ mise exec -- go run main.go rigs show --id mike-dirnt --json
 mise exec -- go run main.go tone build --ask request.yaml --json
 ```
 
-## 2. Three layers, two documents, one contract
+## 2. Four layers, two documents, one contract
 
-|            | holds                                        | written by                   |
-| ---------- | -------------------------------------------- | ---------------------------- |
-| **`ask:`** | what somebody means, and why it is believed  | a person                     |
-| **`rig:`** | gear in signal order, named as a person does | a person, or the tool        |
-| **Plan**   | that rig realised on one device              | the compiler, never a person |
+|              | holds                                        | written by                   |
+| ------------ | -------------------------------------------- | ---------------------------- |
+| **`ask:`**   | what somebody means, and why it is believed  | a person                     |
+| **`rig:`**   | gear in signal order, named as a person does | a person                     |
+| **`built:`** | that rig resolved: every control, the preset's members, the switches | `rigs resolve`, never a person |
+| **Plan**     | that rig realised on one device              | the compiler, never a person |
 
-The first two are sections of one ToneSpec. A Plan is a document of its own and
-has no contract, which is the rule behind the split: **becoming a file is not
-what earns a contract. Being typed by somebody is.**
+The first three are sections of one ToneSpec. A Plan is a document of its own
+and has no contract, which is the rule behind the split: **becoming a file is
+not what earns a contract. Being typed by somebody is.**
+
+### Which half a field is in says who may write it
+
+**The top of the file is yours and the bottom is the machine's.** `ask:` and
+`rig:` are authored, `rigs new` scaffolds them, and no command overwrites them.
+`built:` is replaced whole by every resolve and nothing else writes it.
+
+That division is positional rather than annotated, which is the point: nothing
+is marked, no receipt is kept by hand, and this skill does not have to tell
+anybody which command is safe to run. A rebuild cannot lose a citation because
+it never writes where citations live.
+
+**To change something the compiler worked out, override it above rather than
+editing below.** A chain entry's `controls:` and a rig's `preset:` are sparse on
+purpose — name the two controls you care about and let the rest be answered —
+and whatever is there outranks what the compiler would have chosen. `built:`
+then shows what the answer came out as once the override was applied. Anything
+edited inside `built:` lasts until the next resolve and no longer.
+
+This was one section until 4.0.0, and it is worth knowing why it moved. A
+resolve wrote every control it computed into `rig.chain[].controls`, which is
+the field that means "a person pinned this", so the next resolve honoured its
+own output as an override. Documents stopped answering to the compiler being
+improved: eleven genre rigs went on reading as four presets after it had been
+taught to tell them apart. Rebuilding from the ask instead threw the research
+away, replacing a cited Ampeg SVT with a measured MESA/Boogie.
 
 ## Two surfaces, one SDK
 

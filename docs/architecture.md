@@ -58,19 +58,28 @@ built or partly built updates the line in the same pull request and says so in
 its description. This table fell three features behind when nobody did, and it
 is how the next session learns what exists.
 
-## Three layers, two documents
+## Four layers, two documents
 
-|            | holds                                        | written by                   |
-| ---------- | -------------------------------------------- | ---------------------------- |
-| **`ask:`** | what somebody means, and why it is believed  | a person                     |
-| **`rig:`** | gear in signal order, named as a person does | a person, or `tone build`    |
-| **Plan**   | that rig realised on one device              | the compiler, never a person |
+|              | holds                                        | written by                     |
+| ------------ | -------------------------------------------- | ------------------------------ |
+| **`ask:`**   | what somebody means, and why it is believed  | a person                       |
+| **`rig:`**   | gear in signal order, named as a person does | a person                       |
+| **`built:`** | that rig resolved, on one pedal              | `rigs resolve`, never a person |
+| **Plan**     | that rig realised on one device              | the compiler, never a person   |
 
-The first two are sections of one ToneSpec, with the rig required. The Plan is a
-document of its own. A rig is portable because there is nowhere in it to put a
-Helix answer: the resolved model per block, the position, the snapshots and
-footswitches, and the device state a lifted preset arrived with all live on the
-Plan.
+The first three are sections of one ToneSpec, with the rig required. The Plan is
+a document of its own.
+
+**`ask:` and `rig:` are authored and `built:` is generated**, which is what lets
+a document be regenerated without losing anything: a resolve replaces the whole
+of `built:` and never writes where the gear and the citations live. To change a
+number the compiler worked out, pin it as an override in `rig:`, where it is
+authored and survives.
+
+A rig stays portable because there is still nowhere in it to put a Helix answer.
+The resolved model per block, the position, the snapshots and footswitches, and
+the device state a lifted preset arrived with live on the Plan and in `built:`,
+which names the pedal and catalog that produced them.
 
 Only the ToneSpec has a contract, and the rule is worth stating: **becoming a
 file is not what earns a contract. Being typed by somebody is.**
@@ -331,13 +340,13 @@ That is what redistribution means here: a diff that says which controls moved,
 so the next person gets the change and the reason for it. Before this the export
 dropped every value, and the work was gone with nothing saying so.
 
-`rigs resolve` writes a rig out in that form, and records which pedal and
+`rigs resolve` writes that form into `built:`, and records which pedal and
 catalog produced the numbers. Advisory, never a restriction: gear names resolve
 on any Helix, and somebody on other hardware reads it to know whose numbers they
 have.
 
-**A rig says the whole preset, not only its chain.** `rig.preset` carries every
-member beside it: the global settings, the snapshots, the footswitch and
+**A rig says the whole preset, not only its chain.** `built.preset` carries
+every member beside it: the global settings, the snapshots, the footswitch and
 expression pedal assignments, each processor's routing, the cabinets a dual
 block points at, the DT and Powercab members, the MIDI commands and the impulse
 response table. 18 member kinds and 335 field names across the preset corpus,

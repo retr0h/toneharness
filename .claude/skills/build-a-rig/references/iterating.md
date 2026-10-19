@@ -55,8 +55,12 @@ Everything up to "keep it" leaves the device as it was.
 ## Resolve first, always
 
 `rigs resolve` is what makes the rest work. It builds the rig and writes the
-chain back with every control at the value it was given, so the document says
-what the preset is.
+chain into the document's `built:` section with every control at the value it was
+given, so the document says what the preset is.
+
+It writes nothing else. `ask:` and `rig:` are yours and a resolve never touches
+them, so running it again is safe however often: it replaces its own section and
+leaves the gear, the citations and any control you pinned exactly as they were.
 
 Without it a rig names gear and seven musical words, the compiler answers the
 other six hundred controls from corpus medians, and nothing records what they
