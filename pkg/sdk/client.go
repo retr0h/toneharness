@@ -1156,7 +1156,15 @@ func (c *Client) MeasuredGenres(
 		return nil, err
 	}
 
-	return audio.GenresMeasured(os.DirFS(corpus), ".")
+	// The corpus path names the instrument, and the filesystem handed over
+	// cannot: rooting it at the corpus is what drops the root's own name. Where
+	// the tree is one instrument's, this is the only place that still knows
+	// which, so it is passed rather than re-derived downstream.
+	//
+	// Pointed at the whole corpus the base is `music`, which names no
+	// instrument. Nothing comes of that: the tree nests, every player's
+	// instrument is read from the directory above it, and the name is unused.
+	return audio.GenresMeasured(os.DirFS(corpus), ".", filepath.Base(corpus))
 }
 
 // MeasuredPlayers is what each player's records measure as, and the words that

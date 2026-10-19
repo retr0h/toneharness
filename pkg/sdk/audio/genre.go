@@ -22,7 +22,6 @@ package audio
 
 import (
 	"io/fs"
-	"path"
 	"sort"
 
 	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
@@ -111,13 +110,34 @@ type Genre struct {
 func GenresMeasured(
 	fsys fs.FS,
 	root string,
+	instrument string,
 ) ([]Genre, error) {
 	held, err := Manifests(fsys, root)
 	if err != nil {
 		return nil, err
 	}
 
-	byPlayer, tagged, err := profilesByGenre(fsys, root, held)
+	// The tree's own name is not in the tree. The corpus is read through
+	// `os.DirFS(corpus)` with a root of ".", so pointed at
+	// `resources/music/bass` the walk sees `mike-dirnt` and the word `bass` is
+	// nowhere in the filesystem. Every player reads with no instrument, every
+	// genre reads as pooled across instruments, and Usable refuses the lot:
+	// this command reported twenty-one genres and not one that could be aimed
+	// at, on the root it is documented to be pointed at, while
+	// `corpus music genres` on the same tree reported eleven.
+	//
+	// So the caller names it, and it is applied only where nothing in the tree
+	// names an instrument. That test is the tree's shape: where any player sits
+	// under an instrument directory, an empty answer belongs to a player sitting
+	// beside those directories rather than under one, and it has to stay empty.
+	// Naming that player after the root would classify a stray as bass.
+	if instrument != "" && unsaid(held) {
+		for i := range held {
+			held[i].Instrument = instrument
+		}
+	}
+
+	byPlayer, tagged, err := profilesByGenre(fsys, held)
 	if err != nil {
 		return nil, err
 	}
@@ -227,22 +247,49 @@ func (c *carried) played(
 	}
 }
 
+// unsaid reports whether nothing in this tree names an instrument, which is how
+// one instrument's own tree is told from the whole corpus.
+//
+// `resources/music` holds `bass/mike-dirnt`, so that player's instrument is read
+// from the directory above it and this answers false. `resources/music/bass`
+// holds `mike-dirnt` directly and nothing above it to read, so this answers true
+// and the caller's name is what classifies them.
+//
+// An empty tree answers true and nothing comes of it: there are no players to
+// classify.
+func unsaid(
+	held []Held,
+) bool {
+	for _, p := range held {
+		if p.Instrument != "" {
+			return false
+		}
+	}
+
+	return true
+}
+
 // profilesByGenre measures every player and files each record under the genres
 // it names.
 //
 // Two answers from one walk: what each player measures as, which is what a
 // genre stands against, and which profiles carry each genre, which is what it
 // is made of. Measuring is the slow half, so doing it once matters.
+//
+// No root. Each player carries the directory it was walked from, so nothing here
+// rebuilds that path out of a root and a classification: doing so is what made a
+// player under `resources/music/bass` measure at
+// `resources/music/bass/bass/<player>` the first time the instrument started
+// answering for a flat tree.
 func profilesByGenre(
 	fsys fs.FS,
-	root string,
 	held []Held,
 ) (map[string]Across, map[string]*carried, error) {
 	byPlayer := map[string]Across{}
 	tagged := map[string]*carried{}
 
 	for _, p := range held {
-		got, err := MeasureAll(fsys, path.Join(root, p.Instrument, p.ID))
+		got, err := MeasureAll(fsys, p.At)
 		if err != nil {
 			return nil, nil, err
 		}

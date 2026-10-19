@@ -391,7 +391,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 					s.player(id, "", 200+float64(i)*20, "t1", "t2", "t3")
 				}
 
-				got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+				got, err := audio.GenresMeasured(os.DirFS(s.root), ".", "")
 				s.Require().NoError(err)
 				s.Require().Len(got, 1)
 
@@ -429,7 +429,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 					s.player(id, "", 200+float64(i)*20, "t1")
 				}
 
-				got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+				got, err := audio.GenresMeasured(os.DirFS(s.root), ".", "")
 				s.Require().NoError(err)
 				s.Require().Len(got, 1)
 
@@ -454,7 +454,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 					s.player(id, "", 200+float64(i)*20, "t1")
 				}
 
-				got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+				got, err := audio.GenresMeasured(os.DirFS(s.root), ".", "")
 				s.Require().NoError(err)
 				s.Require().Len(got, 1)
 
@@ -489,7 +489,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 					s.player(id, "", 200+float64(i)*20, "t1")
 				}
 
-				got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+				got, err := audio.GenresMeasured(os.DirFS(s.root), ".", "")
 				s.Require().NoError(err)
 
 				var punk audio.Genre
@@ -521,7 +521,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 					s.player(id, "", 200+float64(i)*20, "t1")
 				}
 
-				got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+				got, err := audio.GenresMeasured(os.DirFS(s.root), ".", "")
 				s.Require().NoError(err)
 				s.Require().Len(got, 1)
 
@@ -550,7 +550,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 					s.player(id, "", 200, "t1")
 				}
 
-				got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+				got, err := audio.GenresMeasured(os.DirFS(s.root), ".", "")
 				s.Require().NoError(err)
 				s.Require().Len(got, 1)
 				s.Require().Equal(2, got[0].Records, "the stray is not one of them")
@@ -562,7 +562,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 			then: func() {
 				s.player("a", "", 200, "t1")
 
-				got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+				got, err := audio.GenresMeasured(os.DirFS(s.root), ".", "")
 				s.Require().NoError(err)
 				s.Require().Empty(got)
 			},
@@ -576,7 +576,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 				at := filepath.Join(s.root, "bass", "a", "stems", "htdemucs", "t1", "bass.wav")
 				s.Require().NoError(os.WriteFile(at, []byte("not a wav"), 0o600))
 
-				_, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+				_, err := audio.GenresMeasured(os.DirFS(s.root), ".", "")
 				s.Require().Error(err)
 			},
 		},
@@ -584,7 +584,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 			// The walk finding nothing to measure.
 			name: "a tree with no manifests",
 			then: func() {
-				_, err := audio.GenresMeasured(os.DirFS(s.root), "nowhere")
+				_, err := audio.GenresMeasured(os.DirFS(s.root), "nowhere", "")
 				s.Require().Error(err)
 			},
 		},
@@ -599,7 +599,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 					s.player(id, "", 200, "t1")
 				}
 
-				got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+				got, err := audio.GenresMeasured(os.DirFS(s.root), ".", "")
 				s.Require().NoError(err)
 				s.Require().Len(got, 2)
 				s.Require().Equal("grunge", got[0].Slug)
@@ -628,7 +628,7 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 					[]byte("artist: Waiting\ntracks:\n  - track: soon\n"+
 						"    url: https://open.spotify.com/track/x\n    year: 1994\n    seconds: 180\n"), 0o600))
 
-				got, err := audio.GenresMeasured(os.DirFS(s.root), ".")
+				got, err := audio.GenresMeasured(os.DirFS(s.root), ".", "")
 				s.Require().NoError(err)
 				s.Require().Len(got, 1)
 				s.Require().Equal(2, got[0].Against, "the two measured, not the one waiting")
@@ -651,6 +651,142 @@ func (s *MeasuredGenresPublicTestSuite) TestGenresMeasured() {
 // generated before the field existed would read as the second. That turns a
 // stale file into a wrong refusal with a confident explanation, so this fails
 // instead: regenerate with `go generate ./pkg/sdk/audio`.
+// playerFlat writes one player's manifest directly under the root, with no
+// instrument directory above it.
+//
+// This is the shape `measure genres --corpus resources/music/bass` reads and the
+// one no fixture here built, which is why every test passed while that command
+// reported nothing could be aimed at. The tree does not name the instrument in
+// this shape: the corpus is opened with `os.DirFS(corpus)` and walked from ".",
+// so the word `bass` is not in the filesystem at all.
+func (s *MeasuredGenresPublicTestSuite) playerFlat(
+	id, genres string,
+	hz float64,
+	tracks ...string,
+) {
+	s.playerOn("", id, genres, hz, tracks...)
+}
+
+// TestOneInstrumentsOwnTreeIsAimableTooCoversTheRootThatLied is the bug.
+//
+// Measured at `resources/music` eleven genres read "a genre"; measured at
+// `resources/music/bass`, which is the root this command is documented to be
+// pointed at, all twenty-one read "not a genre yet" and nothing said why. The
+// instrument is read from the directory above a player, there is none in that
+// shape, and an empty answer counts as a disagreement, so every genre came back
+// pooled across instruments.
+func (s *MeasuredGenresPublicTestSuite) TestOneInstrumentsOwnTreeIsAimableToo() {
+	tests := []struct {
+		name       string
+		instrument string
+		usable     bool
+		reads      string
+	}{
+		{
+			name:       "the caller names the instrument and the genre is aimable",
+			instrument: "bass",
+			usable:     true,
+			reads:      "bass",
+		},
+		{
+			// What the bug did. Kept as a case because it is also the right
+			// answer for a tree nobody can name: not knowing is not agreeing.
+			name:       "nobody names it and nothing may aim at it",
+			instrument: "",
+			usable:     false,
+			reads:      "",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+
+			s.playerFlat("a", "punk", 3000, "t1", "t2", "t3")
+			s.playerFlat("b", "punk", 3100, "t1", "t2", "t3")
+			s.playerFlat("c", "punk", 3200, "t1", "t2", "t3")
+
+			for i, id := range []string{"w", "x", "y", "z"} {
+				s.playerFlat(id, "", 200+float64(i)*20, "t1", "t2", "t3")
+			}
+
+			got, err := audio.GenresMeasured(os.DirFS(s.root), ".", tt.instrument)
+			s.Require().NoError(err)
+			s.Require().Len(got, 1)
+
+			s.Require().Equal(9, got[0].Records, "the records are found either way")
+			s.Require().Equal(tt.reads, got[0].Instrument)
+			s.Require().Equal(tt.usable, got[0].Usable)
+		})
+	}
+}
+
+// TestBothRootsAgree is the invariant the bug broke, and the one nothing
+// asserted.
+//
+// The same records, measured at the corpus root and at the one instrument's tree
+// inside it, have to answer the same way about every genre. They did not: one
+// said eleven genres could be aimed at and the other said none, on the same
+// files.
+func (s *MeasuredGenresPublicTestSuite) TestBothRootsAgree() {
+	s.player("a", "punk", 3000, "t1", "t2", "t3")
+	s.player("b", "punk", 3100, "t1", "t2", "t3")
+	s.player("c", "punk", 3200, "t1", "t2", "t3")
+
+	for i, id := range []string{"w", "x", "y", "z"} {
+		s.player(id, "", 200+float64(i)*20, "t1", "t2", "t3")
+	}
+
+	// The corpus root, where the instrument is the directory above each player.
+	whole, err := audio.GenresMeasured(os.DirFS(s.root), ".", "music")
+	s.Require().NoError(err)
+
+	// The instrument's own tree, where nothing above a player names it and the
+	// caller has to.
+	one, err := audio.GenresMeasured(
+		os.DirFS(filepath.Join(s.root, "bass")), ".", "bass")
+	s.Require().NoError(err)
+
+	s.Require().Len(whole, 1)
+	s.Require().Len(one, 1)
+
+	for i := range whole {
+		s.Require().Equal(whole[i].Slug, one[i].Slug)
+		s.Require().Equal(whole[i].Instrument, one[i].Instrument)
+		s.Require().Equal(whole[i].Records, one[i].Records)
+		s.Require().Equal(whole[i].Players, one[i].Players)
+		s.Require().Equal(whole[i].Usable, one[i].Usable,
+			"%s is aimable at one root and not the other", whole[i].Slug)
+	}
+}
+
+// TestAStrayPlayerBesideTheInstrumentsIsStillUnclassified is the case the empty
+// answer exists for, and the one a fix must not break.
+//
+// A player directory sitting beside `bass/` rather than under it has no
+// instrument, and naming it after the root would classify it as `music`. So the
+// caller's name is used only where nothing in the tree names an instrument: as
+// soon as anything nests, an empty answer is a stray and stays empty.
+func (s *MeasuredGenresPublicTestSuite) TestAStrayPlayerBesideTheInstrumentsIsStillUnclassified() {
+	s.player("a", "punk", 3000, "t1", "t2", "t3")
+	s.player("b", "punk", 3100, "t1", "t2", "t3")
+	s.playerFlat("c", "punk", 3200, "t1", "t2", "t3")
+
+	for i, id := range []string{"w", "x", "y", "z"} {
+		s.player(id, "", 200+float64(i)*20, "t1", "t2", "t3")
+	}
+
+	got, err := audio.GenresMeasured(os.DirFS(s.root), ".", "music")
+	s.Require().NoError(err)
+	s.Require().Len(got, 1)
+
+	s.Require().Equal(9, got[0].Records, "the stray's records still count")
+	s.Require().Empty(got[0].Instrument,
+		"a genre one of whose players is unclassified names no instrument")
+	s.Require().False(got[0].Usable,
+		"and nothing may aim at it, which is what not knowing buys")
+}
+
 func (s *MeasuredGenresPublicTestSuite) TestEveryShippedGenreNamesItsInstrument() {
 	all, err := audio.Shipped()
 	s.Require().NoError(err)

@@ -82,8 +82,14 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 				s.Require().Equal("Mike Dirnt", got[0].Artist)
 				s.Require().Len(got[0].Tracks, 1)
 
+				// Where the files are, as walked. Never rebuilt from the root
+				// and the instrument: that join is what measured a player under
+				// `bass` at `bass/bass/<player>`.
+				s.Require().Equal("bass/mike-dirnt", got[0].At)
+
 				s.Require().Equal("guitar", got[1].Instrument)
 				s.Require().Equal("somebody", got[1].ID)
+				s.Require().Equal("guitar/somebody", got[1].At)
 			},
 		},
 		{
@@ -91,7 +97,14 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 			//
 			// The instrument is empty rather than guessed: the directory
 			// above the player is the root itself, and nothing in the tree
-			// says what it holds.
+			// says what it holds. The root's own name is not in the tree
+			// either, because the corpus is opened with `os.DirFS(corpus)`
+			// and walked from ".", so `bass` is nowhere to be read.
+			//
+			// Whoever knows the name supplies it. [audio.GenresMeasured] takes
+			// it, because it is what gates whether a genre may be aimed at, and
+			// it reported twenty-one genres and none aimable on this shape
+			// until it did.
 			name: "manifests pointed at one instrument",
 			then: func() {
 				fsys := tree(map[string]string{
@@ -104,6 +117,8 @@ func (s *ManifestsPublicTestSuite) TestManifests() {
 				s.Require().Len(got, 1)
 				s.Require().Empty(got[0].Instrument)
 				s.Require().Equal("mike-dirnt", got[0].ID)
+				s.Require().Equal("mike-dirnt", got[0].At,
+					"the player's directory, whatever the tree's shape")
 			},
 		},
 		{

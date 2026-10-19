@@ -40,12 +40,23 @@ const manifestName = "corpus.yaml"
 // joins a corpus to a rig: a rig is measured by the directory named for it, and
 // a directory spelled any other way is measured by nobody.
 type Held struct {
-	// Instrument is the directory above the player, where there is one. A
-	// comparison is only meaningful within one of these: a word is earned by
-	// sitting clear of the other players, and a guitar's centre of gravity sits
-	// an octave above a bass guitar's.
+	// Instrument is what the player's records were played on. A comparison is
+	// only meaningful within one of these: a word is earned by sitting clear of
+	// the other players, and a guitar's centre of gravity sits an octave above a
+	// bass guitar's. Empty where the tree does not say, which counts as a
+	// disagreement rather than as "nothing yet".
+	//
+	// A classification and never a path segment. It was both, and the two came
+	// apart the moment it started answering for a flat tree: "bass" is the right
+	// classification for a player under `resources/music/bass` and joining it
+	// back onto the root makes that path `resources/music/bass/bass/<player>`.
+	// Use At for where the files are.
 	Instrument string `json:"instrument"`
-	// ID is the directory, which is the rig's identifier.
+	// At is the player's directory as it was walked, which is where the audio
+	// and the stems are. The one answer to where this player's files are, so
+	// nothing rebuilds it from the pieces and gets a different answer.
+	At string `json:"at"`
+	// ID is the directory's own name, which is the rig's identifier.
 	ID string `json:"id"`
 	// Artist is the name the manifest gives, which is for reading.
 	Artist string `json:"artist"`
@@ -91,6 +102,7 @@ func Manifests(
 
 		out = append(out, Held{
 			Instrument: instrumentDir(dir, player),
+			At:         player,
 			ID:         path.Base(player),
 			Artist:     m.Artist,
 			Tracks:     m.Tracks,
@@ -113,8 +125,23 @@ func Manifests(
 	return out, nil
 }
 
-// instrumentDir names the directory between the root and the player, or nothing
-// where the root is the instrument's own tree.
+// instrumentDir names the directory between the root and the player.
+//
+// Empty where the player sits directly under the root, and that is the honest
+// answer rather than a gap: the root's own name is not in the tree. The corpus
+// is read through `os.DirFS(corpus)` with a root of ".", so pointed at
+// `resources/music/bass` this sees `mike-dirnt` and the word `bass` is nowhere
+// in the filesystem to be read.
+//
+// An empty answer therefore means "this tree does not say", and
+// [Grouped.played] counts it as a disagreement rather than as "nothing yet",
+// which is deliberate: a player sitting beside the instrument directories rather
+// than under one is unclassified, and a genre half made of unclassified records
+// must not read as pure bass.
+//
+// Whoever knows the tree's name has to supply it. [GenresMeasured] is the one
+// caller that needs a non-empty answer, because it gates what may be aimed at,
+// and it takes the name from its own caller.
 func instrumentDir(
 	root, player string,
 ) string {
