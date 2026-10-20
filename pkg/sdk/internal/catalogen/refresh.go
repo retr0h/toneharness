@@ -42,6 +42,13 @@ type Refreshed struct {
 	Blocks int
 	// Named is how many of those map to real-world gear.
 	Named int
+	// Renamed are the models Line 6's two files do not agree about, where the
+	// name the app shows was taken over the one beside the model definition.
+	//
+	// Reported rather than kept quiet. A release can introduce a disagreement
+	// in either direction, and the ones already in this data went unnoticed
+	// until a sweep printed a cabinet under another cabinet's name.
+	Renamed []Renamed
 }
 
 // Refresh builds the catalog and writes it only when it differs from the one
@@ -67,7 +74,7 @@ func Refresh(
 		opts.SourceName = defaultSourceName
 	}
 
-	c, err := Build(opts)
+	c, renamed, err := Build(opts)
 	if err != nil {
 		return Refreshed{}, err
 	}
@@ -77,7 +84,10 @@ func Refresh(
 	raw, _ := json.Marshal(c)
 	body := packed.Bytes(raw)
 
-	out := Refreshed{Path: opts.OutputPath, Source: c.Source, Blocks: len(c.Blocks)}
+	out := Refreshed{
+		Path: opts.OutputPath, Source: c.Source,
+		Blocks: len(c.Blocks), Renamed: renamed,
+	}
 
 	for _, b := range c.Blocks {
 		if b.BasedOn != "" {

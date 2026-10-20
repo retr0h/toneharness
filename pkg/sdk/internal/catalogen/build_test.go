@@ -196,7 +196,7 @@ func (s *BuildTestSuite) TestBuild() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						got, err := Build(s.opts())
+						got, _, err := Build(s.opts())
 
 						s.Require().NoError(err)
 						tt.check(got)
@@ -216,7 +216,7 @@ func (s *BuildTestSuite) TestBuild() {
 				o := s.opts()
 				o.GearMapPath = ""
 
-				got, err := Build(o)
+				got, _, err := Build(o)
 				s.Require().NoError(err)
 
 				b, ok := got.Block("HD2_AmpTestBass")
@@ -310,7 +310,7 @@ func (s *BuildTestSuite) TestBuild() {
 							o.GearMapPath = tt.gearMap
 						}
 
-						_, err := Build(o)
+						_, _, err := Build(o)
 
 						s.Require().Error(err)
 

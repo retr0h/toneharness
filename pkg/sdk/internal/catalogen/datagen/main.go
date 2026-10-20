@@ -101,5 +101,18 @@ func main() {
 			fmt.Printf("catalog %s: wrote %d blocks from %s, %d mapped to real gear\n",
 				d.name, r.Blocks, r.Source, r.Named)
 		}
+
+		// Said every run, including the runs that changed nothing, because a
+		// disagreement is about the data rather than about this build and a
+		// reader who only sees it once will not see it at all.
+		for _, was := range r.Renamed {
+			kept := "kept the first, because a rename changes what a gear name matches"
+			if was.Took {
+				kept = "took the second, because the first is wrong about the gear"
+			}
+
+			fmt.Printf("  %s: Line 6 call it %q beside the model and %q in the app, %s\n",
+				was.Model, was.Was, was.Now, kept)
+		}
 	}
 }
