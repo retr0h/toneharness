@@ -127,11 +127,13 @@ built:
           note: 'The same sentence: "on every record I''ve always used one flip top and an old 8 by 10". The cabinet is cited rather than taken from the amplifier''s usual pairing, and it is the half he is most specific about, since he repeats it for the live rig as well: "live is an 8 by 10 powered by an SVT 2 pro".'
           url: https://www.youtube.com/watch?v=b1egYvnHl9c
       controls:
-        Distance: "1.0"
-        EarlyReflections: "0.0"
-        High Cut: "8000.0"
+        Angle: "45.0"
+        Distance: "5.0"
+        HighCut: "8000.0"
         Level: "0.0"
-        LowCut: "19.9"
+        LowCut: "37.0"
+        Mic: "3"
+        Position: "0.0"
       attrs:
         '@position': "2"
       position: 2

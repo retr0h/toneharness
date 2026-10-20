@@ -482,6 +482,26 @@ func countOf(
 func closer(
 	a, b catalog.Block,
 ) bool {
+	// A block naming no real gear sorts last, before any of that is weighed.
+	// An empty BasedOn is not the shortest description of a real thing, it is
+	// no description: the gear map knows of nothing this model imitates, so it
+	// was matched on Line 6's own name alone.
+	//
+	// Shorter-wins read that as the closest answer and gave it every contest.
+	// `Ampeg 8x10` reaches three cabinets and got HD2_Cab8x10SVBeast, whose
+	// BasedOn is empty, over HD2_CabMicIr_8x10SVTAV which the gear map holds
+	// as an `8x10" Ampeg SVT-810AV`. Twenty-one characters of knowing what the
+	// thing is, losing to none of them. The mic'd cabinet carries Mic,
+	// Position and Angle and costs 2.5% of the chip against 7.2%, and the
+	// microphone alone moves the centroid further than the choice of
+	// amplifier does, so what this lost was the largest lever on the device.
+	//
+	// A document naming Line 6's own spelling still gets that model, because
+	// nothing else matches it.
+	if (a.BasedOn == "") != (b.BasedOn == "") {
+		return b.BasedOn == ""
+	}
+
 	if len(a.BasedOn) != len(b.BasedOn) {
 		return len(a.BasedOn) < len(b.BasedOn)
 	}
