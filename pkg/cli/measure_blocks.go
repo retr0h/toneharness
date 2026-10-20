@@ -214,17 +214,30 @@ func MeasureBlocks(
 // not available here because headroom is already in decibels, so it steps.
 func one(
 	ctx context.Context,
-	client Plays,
+	client interface {
+		Plays
+		Reads
+	},
 	bench sdk.Bench,
 	signal []float32,
 	lib *measured.Library,
 	block measured.Block,
 	at string,
 ) error {
+	// Played and then read back, because the device accepting a chain is not
+	// the device holding the block. The same guard the control sweeps got, and
+	// for the same reason: a reading taken of a slot the block never seated in
+	// is a reading of the measuring loop, and it looks exactly like a reading.
+	//
+	// 46 cabinets shipped that way. All of them read level -56.56dB with 93.7%
+	// of their energy low, which is what the loop reads with a Mixer in the
+	// slot, while their mono twins spread across 93Hz. A cabinet is never
+	// transparent, and nothing noticed for want of this call.
+	//
 	// A session of its own, which is not an optimisation to remove. One held
 	// open across many blocks takes the first live replace and refuses every
 	// one after it.
-	if err := client.Play(ctx, at); err != nil {
+	if err := seated(ctx, client, at, string(block.ID)); err != nil {
 		lib.Blocks[block.ID] = measured.Block{
 			ID: block.ID, Name: block.Name,
 			Category: block.Category, Refused: short(err),

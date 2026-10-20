@@ -45,7 +45,21 @@ type Renamed struct {
 	Took bool
 }
 
-// readShownNames reads the name Line 6's own app puts on each model.
+// shown is what Line 6's own app says about a model, beside what the model
+// definition says.
+//
+// Two facts so far, and they are here together because they come out of one
+// read of one file. A third would too.
+type shown struct {
+	// Name is what the app puts in front of a person.
+	Name string
+	// Bass is whether the app marks this model as one for bass. Stated here
+	// and nowhere else: the model definitions carry no such field, so a
+	// cabinet's instrument is knowable only from this file.
+	Bass bool
+}
+
+// readShown reads what Line 6's own app says about each model.
 //
 // Line 6 ship every name twice. The `.models` files carry one and this file
 // carries another, and for 24 of the 654 models in both they disagree. Twenty
@@ -70,12 +84,17 @@ type Renamed struct {
 // The rest are reported instead. A disagreement nobody can see is how
 // twenty-five of them survived into the shipped catalog.
 //
+// The same file is the only statement of which models are for bass, which is
+// read here rather than in a second pass over the same tree. See [shown.Bass].
+//
 // Absent on an installation too old to have it, which is not fatal: the
 // `.models` names are what this used to ship and they are wrong in four
-// places rather than useless.
-func readShownNames(
+// places rather than useless. A catalog built without it marks nothing for
+// bass, so a ranking that filters on it has nothing to filter by and keeps
+// everything, which is the behaviour that shipped before the field existed.
+func readShown(
 	dir string,
-) (map[catalog.ModelID]string, error) {
+) (map[catalog.ModelID]shown, error) {
 	body, err := os.ReadFile(
 		filepath.Join(dir, shownFile),
 	) //nolint:gosec // the app's own directory
@@ -92,7 +111,7 @@ func readShownNames(
 		return nil, fmt.Errorf("decoding %s: %w", shownFile, err)
 	}
 
-	out := map[catalog.ModelID]string{}
+	out := map[catalog.ModelID]shown{}
 	collect(tree, out)
 
 	return out, nil
@@ -129,7 +148,7 @@ var wrong = map[catalog.ModelID]bool{
 // one nearest the top of the file.
 func collect(
 	of any,
-	into map[catalog.ModelID]string,
+	into map[catalog.ModelID]shown,
 ) {
 	switch v := of.(type) {
 	case map[string]any:
@@ -138,7 +157,8 @@ func collect(
 
 		if okID && okName && id != "" && name != "" {
 			if _, held := into[catalog.ModelID(id)]; !held {
-				into[catalog.ModelID(id)] = name
+				bass, _ := v["bass"].(bool)
+				into[catalog.ModelID(id)] = shown{Name: name, Bass: bass}
 			}
 		}
 

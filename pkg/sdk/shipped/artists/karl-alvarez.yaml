@@ -54,7 +54,7 @@ rig:
           note: 'the poster Dave Siff, who says elsewhere in these threads that he has flown to Los Angeles to see the band, on what he has watched across several shows: "I''ve seen him play several different Fender basses as well as a Music Man, always through an SVT, and it always sounds like Karl."'
           url: https://www.talkbass.com/threads/karl-alvarez-tone.754486/
     - role: cab
-      gear: 8x10 Ampeg SVT-E
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -108,16 +108,18 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: 8x10 Ampeg SVT-E
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        Distance: "1.0"
-        EarlyReflections: "0.0"
-        High Cut: "8000.0"
+        Angle: "45.0"
+        Distance: "5.0"
+        HighCut: "8000.0"
         Level: "0.0"
-        LowCut: "19.9"
+        LowCut: "37.0"
+        Mic: "3"
+        Position: "0.0"
       attrs:
         '@position': "2"
       position: 2

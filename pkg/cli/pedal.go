@@ -99,13 +99,21 @@ type (
 	}
 )
 
-// Loader is what measuring every block needs: build a chain, play it, and
-// know which models the attached device has.
+// Loader is what measuring every block needs: build a chain, play it, read
+// back what the device is actually playing, and know which models the attached
+// device has.
+//
+// Reads is in it because playing a chain is not the device holding it. 46 of
+// the committed cabinet readings were taken of a slot the block never seated
+// in, and every one of them reads as a chain that changed nothing: a cabinet
+// measuring identically to a Mixer. Nothing could tell, because nothing asked
+// the device what it had.
 type Loader interface {
 	Compiles
 	ReadsFiles
 	Plays
 	Names
+	Reads
 }
 
 // Prober is what checking parameter names needs, which is a Loader that can

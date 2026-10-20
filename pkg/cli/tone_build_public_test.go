@@ -105,11 +105,14 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 				// one document means: the request and the answer travel together.
 				s.Require().NotNil(doc.Ask)
 
-				// The comp it named, and an amplifier nobody named.
+				// The comp it named, and an amplifier nobody named. No
+				// cabinet: the amplifier states the one Line 6 voiced it with
+				// and the compiler reads that, so measuring for one would be
+				// overruling better evidence with a weaker reading.
 				s.Require().Len(doc.Rig.Chain, 2)
 				s.Require().Equal(rig.RoleAmp, doc.Rig.Chain[1].Role)
 
-				s.Require().Contains(buf.String(), "closest of 27 measured")
+				s.Require().Contains(buf.String(), "closest of 15 measured")
 			},
 		},
 		{

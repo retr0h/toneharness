@@ -31,4 +31,10 @@ var (
 	Check    = check
 	Gear     = gear
 	SetKnobs = setKnobs
+	// Suits is whether a block is eligible for an instrument, which Line 6
+	// state two ways: a subcategory on an amplifier and a mark on a cabinet.
+	Suits = suits
+	// AsNamed is the copy of a block a document naming it would get back,
+	// which is what keeps the corpus's pick and the document's text agreeing.
+	AsNamed = asNamed
 )

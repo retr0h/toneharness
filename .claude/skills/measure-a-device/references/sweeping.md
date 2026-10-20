@@ -62,3 +62,28 @@ finding.
 **A control's range comes from the catalog**, which is not a nicety: 1,452 of the
 device's 4,835 float controls do not run zero to one, and a Simple EQ's Mid Freq
 swept 0..1 never leaves its bottom stop and reports as inert.
+
+## A reading of a block the device never loaded looks exactly like a reading
+
+Playing a chain is not the device holding it. The pedal accepts a preset, draws
+something else, and the loop measures whatever is actually in the slot, so what
+comes back is a number with the right shape and the wrong subject.
+
+The committed library shipped 46 cabinets that way, every mic'd cabinet with a
+Pan control. All 46 read within 0.4Hz of each other, with identical band shares
+and a level identical to two decimal places, while the 87 plain cabinets spread
+across 92.8Hz. They were not readings of 46 cabinets: they were 46 readings of
+the chain with nothing in the slot, which on this rig is -56.56dB with 93.7% of
+its energy low.
+
+What makes it findable is that the same reading is correct for a block that
+really is transparent. 34 others share it — the mixers, the splits, the sends
+and returns, an equaliser at its flat defaults, Volume and Gain at unity, a
+Pitch Wham heel down — and for those it is the truth. **A cabinet is never
+transparent.** A cabinet measuring identically to a Mixer did not render.
+
+Both sweep commands now play the chain and read it back before trusting a
+figure, and record a refusal naming the model where the device is holding
+something else. A figure taken before that guard existed is a figure to check
+against its own neighbours: if several different blocks agree to two decimal
+places, they are one reading.

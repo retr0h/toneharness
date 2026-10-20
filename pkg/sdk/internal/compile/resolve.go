@@ -121,7 +121,7 @@ func Resolve(
 
 	// A rig naming an amplifier and no cabinet gets the one Line 6 voiced it
 	// with, which is a better answer than picking arbitrarily.
-	if cab := impliedCab(cat, blocks); cab != nil {
+	if cab := impliedCab(cat, blocks, instrument); cab != nil {
 		if missed != "" {
 			sub = append(sub, Added{
 				Block: *cab,
@@ -244,6 +244,7 @@ func categoryFor(
 func impliedCab(
 	cat *catalog.Catalog,
 	blocks []catalog.Block,
+	instrument string,
 ) *catalog.Block {
 	for _, b := range blocks {
 		if b.Category == catalog.CategoryCab {
@@ -257,7 +258,14 @@ func impliedCab(
 		}
 
 		if cab, ok := cat.Block(b.CabLink); ok {
-			return &cab
+			// Through the same round-trip the corpus fill takes. Line 6 pair
+			// the SVT with the legacy HD2_Cab8x10SVBeast, and they document
+			// that cabinet as emulating an unqualified 8x10 Ampeg SVT, which
+			// resolves to the mic'd 810AV: so a document recording the pairing
+			// named a cabinet its own text does not resolve to. See asNamed.
+			as := asNamed(cat, cab, catalog.CategoryCab, instrument)
+
+			return &as
 		}
 	}
 
@@ -555,8 +563,16 @@ func eligible(
 func isInstrumentTag(
 	sub string,
 ) bool {
-	return strings.EqualFold(sub, "guitar") || strings.EqualFold(sub, "bass")
+	return strings.EqualFold(sub, guitar) || strings.EqualFold(sub, bass)
 }
+
+// The two instruments, as Line 6 spell them in a subcategory and the contract
+// spells them in a field. Named because three places compare against them and
+// a cabinet's mark is read against the same two.
+const (
+	guitar = "guitar"
+	bass   = "bass"
+)
 
 // kindOf names a category for an error message.
 func kindOf(

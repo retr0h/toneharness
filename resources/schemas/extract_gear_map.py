@@ -56,21 +56,68 @@ SUBCATEGORY = re.compile(
 )
 
 
+def shown_names(resources: str) -> dict[str, str]:
+    """Map each symbolic ID to the name HX Edit shows a person.
+
+    Line 6 ship every name twice and the copies disagree for 25 of the 654
+    models in both files. The guide is written against this one: it prints
+    "8x10 Ampeg SVT E" where the .models file says "8x10 Ampeg SVT-E", so a
+    join on the .models name alone misses the row.
+    """
+    path = os.path.join(resources, "HX_ModelCatalog.json")
+    if not os.path.exists(path):
+        return {}
+
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        tree = json.load(fh)
+
+    out: dict[str, str] = {}
+
+    def walk(node):
+        if isinstance(node, dict):
+            model_id, name = node.get("id"), node.get("name")
+            if isinstance(model_id, str) and isinstance(name, str) and model_id and name:
+                out.setdefault(model_id, name)
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(tree)
+    return out
+
+
 def model_names(resources: str) -> dict[str, list[tuple[str, str]]]:
     """Map each model's display name to every symbolic ID that carries it.
 
     A name is not unique: the same amp ships as a full amp and as a preamp, so
     "Ampeg SVT Nrm" is both HD2_AmpSVBeastNrm and HD2_PreampSVBeastNrm. Both
     are real models and both need the mapping.
+
+    Indexed under both of Line 6's spellings where they differ, because the
+    guide follows the app's and this used to follow the model file's. 17 models
+    carried no real-world gear for that reason alone, among them the 8x10
+    Ampeg the guide documents on page 69 as a `Legacy 8x10" Ampeg SVT`. A model
+    with no gear is a model nothing can ask for by the name of the thing it is.
+
+    Both rather than only the app's, because the app's is the one that moved: a
+    guide printed against an older release still matches the model file.
     """
+    shown = shown_names(resources)
     by_name: dict[str, list[tuple[str, str]]] = collections.defaultdict(list)
+
     for path in sorted(glob.glob(os.path.join(resources, "*.models"))):
         family = os.path.basename(path).replace(".models", "")
         with open(path, encoding="utf-8", errors="replace") as fh:
             for model in json.load(fh):
-                name = (model.get("name") or "").strip()
-                if name:
-                    by_name[name].append((model["symbolicID"], family))
+                model_id = model["symbolicID"]
+                names = {(model.get("name") or "").strip(), shown.get(model_id, "").strip()}
+
+                for name in sorted(names):
+                    if name:
+                        by_name[name].append((model_id, family))
+
     return by_name
 
 

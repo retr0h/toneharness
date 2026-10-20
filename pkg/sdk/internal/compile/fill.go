@@ -307,17 +307,81 @@ func commonest(
 		}
 	}
 
-	return best, set
+	if !set {
+		return best, false
+	}
+
+	return asNamed(cat, best, c, instrument), true
+}
+
+// asNamed is the copy of a block that a document naming it would get back.
+//
+// The corpus counts models and a document names gear, and the two do not have
+// to agree: the commonest 8x10 in bass chains is the legacy HD2_Cab8x10SVBeast,
+// Line 6 document it as emulating an unqualified 8x10" Ampeg SVT, and that name
+// resolves to the mic'd HD2_CabMicIr_8x10SVTAV because it is also the front of
+// that cabinet's name and [catalog.Block.Preferred] puts the mic'd one first.
+// So eight shipped rigs recorded a cabinet their own text does not resolve to,
+// and a document that does not describe the preset it came from is the one
+// thing a resolved rig is for.
+//
+// Resolved through the same function a document's name goes through, rather
+// than by comparing families here, so agreeing is what the code does rather
+// than something it is checked for.
+//
+// It is also the better cabinet to land on. 86 of the 89 cabinets in this
+// instrument's corpus chains are legacy models, so popularity here is a vote
+// about what people clicked years ago rather than about what the device offers:
+// the mic'd copy costs a third of the DSP and carries Mic, Position, Distance
+// and Angle, and the microphone alone moves a cabinet's centroid between 21 and
+// 48Hz.
+//
+// The block itself where its own name does not resolve, which is a name nothing
+// can ask for rather than a reason to drop the block.
+func asNamed(
+	cat *catalog.Catalog,
+	best catalog.Block,
+	c catalog.Category,
+	instrument string,
+) catalog.Block {
+	name := best.Gear()
+	if name == "" {
+		return best
+	}
+
+	as, err := findGear(cat, name, c, instrument, nil)
+	if err != nil {
+		return best
+	}
+
+	return as
 }
 
 // suits reports whether a block is eligible for an instrument.
 //
-// Line 6 tags amps and cabinets Guitar or Bass; everything else is untagged
-// and available to either.
+// Line 6 say it two ways and this reads both. Amplifiers carry a subcategory of
+// "Guitar" or "Bass". Cabinets carry "Single, Dual", which counts microphones
+// and says nothing about the instrument, and their instrument is a separate
+// mark in the app's own catalog: see [catalog.Block.Bass].
+//
+// Unread until 2026-10-19, so this said yes to every cabinet on the device for
+// every instrument. What saved it was the corpus itself, which is thin here:
+// three cabinets across this instrument's bass chains, all of them Ampegs. A
+// fourth would have been enough to put a 4x12 guitar cabinet in a bass rig.
+//
+// Everything else is untagged and unmarked, and available to either, which is
+// the right answer for a reverb.
 func suits(
 	b catalog.Block,
 	instrument string,
 ) bool {
+	// A cabinet is for bass exactly when Line 6 mark it so. Two-valued because
+	// every cabinet on the device is for one instrument or the other, and 16 of
+	// the 133 carry the mark.
+	if b.Category == catalog.CategoryCab {
+		return b.Bass == strings.EqualFold(instrument, bass)
+	}
+
 	if b.Subcategory == "" || !isInstrumentTag(b.Subcategory) {
 		return true
 	}

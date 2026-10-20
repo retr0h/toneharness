@@ -128,6 +128,22 @@ type Block struct {
 	// Subcategory is Line 6's own grouping — "Guitar", "Bass". It decides
 	// which half of the catalog a request is allowed to draw from.
 	Subcategory string `json:"subcategory,omitempty"`
+	// Bass is Line 6's own mark for a model made for bass, which they keep in
+	// the app's catalog rather than beside the model definition.
+	//
+	// Separate from Subcategory because the two answer different questions and
+	// a cabinet needs both. Amplifiers are grouped "Guitar" and "Bass" and
+	// cabinets are grouped "Single, Dual", by how many microphones they offer,
+	// so a cabinet's subcategory says nothing about what it is for. This is
+	// where that is stated: Line 6 mark 16 of the 133 cabinets for bass, 8 of
+	// them with a microphone.
+	//
+	// Unread until 2026-10-19, and the cost was a bass rig ranking all 133
+	// cabinets by spectrum and picking a 1x12 Fender tweed guitar combo for
+	// punk. False therefore means "not marked", which inside a category Line 6
+	// marks at all is the other instrument, and outside one means nothing: a
+	// reverb is not a guitar reverb.
+	Bass bool `json:"bass,omitempty"`
 	// Family is the model list this block came from, which on this device is
 	// a filename: "amp", "cab", "cabmicirs".
 	//

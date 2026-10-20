@@ -303,6 +303,26 @@ chain:
   - gear: Legacy 1x15" Ampeg B-15  # the older one, 7.2 DSP, floats only
 ```
 
+**Which instrument a cabinet is for is a separate fact, and not in its
+subcategory.** Line 6 group amplifiers "Guitar" and "Bass", and cabinets
+"Single, Dual", which counts microphones. The instrument is a mark in the app's
+own catalog instead, and 16 of the 133 cabinets carry it, 8 of them with a
+microphone. A ranking that reads the subcategory and stops has no way to tell a
+bass cabinet from a guitar one: aimed at punk on bass across all 133, the
+nearest by spectrum was a 1x12 Fender tweed guitar combo.
+
+**Where nothing names a cabinet, the one chosen for you is the mic'd copy.** A
+chain that reaches the end without one gets the cabinet Line 6 voiced its
+amplifier with, and that pairing names the legacy model. The copy a document's
+own text resolves to is taken instead, which is the mic'd one: eight shipped
+rigs recorded a cabinet their own `gear:` line did not resolve to, because Line
+6 document the legacy 8x10 as an unqualified `8x10" Ampeg SVT` and that name is
+also the front of the mic'd 810AV's. Two more controls on every one of them, and
+a document that describes the preset it came from.
+
+It is a different cabinet, not the same one mic'd: the SVT-810E and the 810AV
+are two boxes. Say which, where it matters.
+
 **A rig cannot name a model and is not meant to.** It names gear a person
 recognises, which is what makes it portable, and the above is how that resolves.
 A plan names the model outright, which is what `presets compile --plan` takes and

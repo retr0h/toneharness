@@ -38,10 +38,13 @@ var GenreNote = genreNote
 var (
 	// Playable is whether a block is for the instrument in hand.
 	Playable = playable
-	// SplitsByInstrument is whether a category is grouped by what it is played
-	// with at all. Only amplifiers reach it today, and they always are, so the
-	// cabinet answer is read here rather than through a build.
-	SplitsByInstrument = splitsByInstrument
+	// GroupedBy is the test for whether a block is for the instrument in hand,
+	// or nil where its category is not grouped by instrument at all. Read here
+	// rather than through a build because a build reaches one grouping and
+	// there are two: amplifiers carry a subcategory and cabinets carry a mark.
+	GroupedBy = groupedBy
+	// Wanted narrows a ranking to the models that are the best of their gear.
+	Wanted = wanted
 	// DisplacedTo turns a genre into a target a block can be ranked against.
 	DisplacedTo = displacedTo
 	// Named is the gear a chosen block is written down as, which is never the

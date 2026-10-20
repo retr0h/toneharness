@@ -37,7 +37,7 @@ rig:
           note: 'His own words on when the amplifier arrives, which is what dates every record here: "I don''t think I got my SVT until the first official Pantera record. But once I got my SVT stacks, that changed everything." The first official Pantera record is Cowboys from Hell, 1990, so no record earlier than that is measured.'
           url: https://www.yahoo.com/entertainment/music/articles/dimebag-darrell-pushed-pantera-bassist-135400189.html
     - role: cab
-      gear: 8x10 Ampeg SVT-E
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -87,16 +87,18 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: 8x10 Ampeg SVT-E
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        Distance: "1.0"
-        EarlyReflections: "0.0"
-        High Cut: "8000.0"
+        Angle: "45.0"
+        Distance: "5.0"
+        HighCut: "8000.0"
         Level: "0.0"
-        LowCut: "19.9"
+        LowCut: "37.0"
+        Mic: "3"
+        Position: "0.0"
       attrs:
         '@position': "2"
       position: 2

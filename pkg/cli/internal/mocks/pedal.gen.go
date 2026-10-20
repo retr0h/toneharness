@@ -380,6 +380,21 @@ func (mr *MockLoaderMockRecorder) Compile(ctx, in any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compile", reflect.TypeOf((*MockLoader)(nil).Compile), ctx, in)
 }
 
+// Current mocks base method.
+func (m *MockLoader) Current(ctx context.Context, as sdk.Format) (sdk.Reading, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Current", ctx, as)
+	ret0, _ := ret[0].(sdk.Reading)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Current indicates an expected call of Current.
+func (mr *MockLoaderMockRecorder) Current(ctx, as any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Current", reflect.TypeOf((*MockLoader)(nil).Current), ctx, as)
+}
+
 // Play mocks base method.
 func (m *MockLoader) Play(ctx context.Context, file string) error {
 	m.ctrl.T.Helper()
