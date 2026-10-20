@@ -55,6 +55,9 @@ func (s *RecordPublicTestSuite) document(
 	return at
 }
 
+// none is a round aimed at a player rather than a genre.
+var none = ""
+
 // a rig with an ask already on it, which is the ordinary case.
 const asked = `schema: ToneSpec
 version: 4.0.0
@@ -79,16 +82,17 @@ rig:
 // measurement or an assertion, and this is the record of somebody asking for
 // something and something moving in answer.
 //
-// No row for a document with no ask at all, which is the branch that makes the
-// section. It writes a document the contract then refuses, because an absent
-// genre serialises as a present null, and a row asserting that would lock the
-// bug in. The fixture below carries a genre for the same reason.
+// The fixture carries a genre because an ask requires one: it is the only
+// field on an ask the contract does not make optional.
 func (s *RecordPublicTestSuite) TestRecord() {
 	for _, tt := range []struct {
 		name string
 		at   func() string
-		says string
-		then func(at string)
+		// aimed is the genre the round was aimed at, empty where it was aimed
+		// at a player instead.
+		aimed *string
+		says  string
+		then  func(at string)
 	}{
 		{
 			// The round lands on the ask, which is where a round of asking
@@ -133,6 +137,38 @@ func (s *RecordPublicTestSuite) TestRecord() {
 			},
 		},
 		{
+			// A document nobody wrote an ask onto is a rig somebody wrote and
+			// never said why, and a round of tuning is the first thing that
+			// says why. So the section is made, with the genre in it, because
+			// an ask without one fails validation on the way back out.
+			name: "a document with no ask at all",
+			at: func() string {
+				return s.document(`schema: ToneSpec
+version: 4.0.0
+id: test-rig
+rig:
+  instrument: bass
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+`)
+			},
+			then: func(at string) {
+				f, err := os.Open(at)
+				s.Require().NoError(err)
+
+				defer func() { _ = f.Close() }()
+
+				got, err := tone.Load(f)
+				s.Require().NoError(err)
+				s.Require().NotNil(got.Ask)
+				s.Require().Equal([]string{"grunge"}, got.Ask.Genre,
+					"the round's own genre, which is the only thing there is "+
+						"to make a valid ask from")
+				s.Require().Len(*got.Ask.Corrections, 1)
+			},
+		},
+		{
 			// The document is read and then rewritten in place, so a file
 			// that opens and will not reopen for writing is the one failure
 			// between the two. The round is lost and the document is left as
@@ -145,6 +181,26 @@ func (s *RecordPublicTestSuite) TestRecord() {
 				return at
 			},
 			says: "rig.yaml",
+		},
+		{
+			// Tuning aims at a genre or at a player, so a round can arrive
+			// with no genre on it. There is then nothing to make a valid ask
+			// from, and saying which flag fixes it beats writing a document
+			// that will not load.
+			name: "a document with no ask, tuned at a player",
+			at: func() string {
+				return s.document(`schema: ToneSpec
+version: 4.0.0
+id: test-rig
+rig:
+  instrument: bass
+  chain:
+    - role: amp
+      gear: Ampeg SVT
+`)
+			},
+			aimed: &none,
+			says:  "an ask requires a genre",
 		},
 		{
 			name: "a path that is not a file",
@@ -168,7 +224,12 @@ func (s *RecordPublicTestSuite) TestRecord() {
 			// A path into a plan has a grammar the contract enforces:
 			// "blocks[1].params.Bass" parses and a knob with no Setting
 			// produces one that does not.
-			err := Record(at, "grunge",
+			aimed := "grunge"
+			if tt.aimed != nil {
+				aimed = *tt.aimed
+			}
+
+			err := Record(at, aimed,
 				[]solve.Step{{
 					Knob: solve.Knob{Block: 1, Param: 1, Setting: "Bass"},
 					By:   0.1, To: 0.6,
