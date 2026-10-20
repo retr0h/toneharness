@@ -156,6 +156,9 @@ func MeasureControls(
 	// Pinned first, because every reading below depends on it and a level
 	// somebody left somewhere else is a different measurement.
 	level := levelled(w, opts.Volume, reamp.Held)
+	if err := pinned(opts.Volume, level); err != nil {
+		return err
+	}
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 	cat, err := opts.Client.Catalog(ctx)
 	if err != nil {
