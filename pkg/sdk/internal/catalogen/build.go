@@ -198,7 +198,11 @@ func Build(
 	}
 
 	if len(out.Blocks) == 0 {
-		return nil, nil, fmt.Errorf("%w: no models support device %d", ErrNoResources, opts.DeviceID)
+		return nil, nil, fmt.Errorf(
+			"%w: no models support device %d",
+			ErrNoResources,
+			opts.DeviceID,
+		)
 	}
 
 	return out, renamed, nil

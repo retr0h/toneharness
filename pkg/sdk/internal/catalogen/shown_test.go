@@ -62,6 +62,9 @@ func (s *ShownTestSuite) TestReadShownNames() {
 	for _, tt := range []struct {
 		name string
 		app  string
+		// dir writes the app catalog as a directory, which fails the read
+		// without the file being missing.
+		dir  bool
 		then func(got map[string]string, err error)
 	}{
 		{
@@ -98,6 +101,16 @@ func (s *ShownTestSuite) TestReadShownNames() {
 			},
 		},
 		{
+			// Absent is not the same as unreadable. A directory where the file
+			// should be fails the read without being missing, and that is a
+			// broken installation rather than an old one, so it is said.
+			name: "an app catalog that cannot be read",
+			dir:  true,
+			then: func(_ map[string]string, err error) {
+				s.Require().ErrorContains(err, shownFile)
+			},
+		},
+		{
 			name: "an app catalog that is not JSON",
 			app:  "{",
 			then: func(_ map[string]string, err error) {
@@ -118,6 +131,10 @@ func (s *ShownTestSuite) TestReadShownNames() {
 	} {
 		s.Run(tt.name, func() {
 			dir := s.shows(`[{"symbolicID":"HD2_CabTest","name":"Beside"}]`, tt.app)
+
+			if tt.dir {
+				s.Require().NoError(os.Mkdir(filepath.Join(dir, shownFile), 0o750))
+			}
 
 			got, err := readShownNames(dir)
 
@@ -190,6 +207,56 @@ func (s *ShownTestSuite) TestBuildTakesTheAppsNameOnlyWhereTheOtherIsWrong() {
 			s.Require().Equal(tt.app, renamed[0].Now)
 		})
 	}
+}
+
+// TestBuildRefusesAnAppCatalogItCannotRead covers the read failing rather
+// than the file being absent.
+//
+// Absent is an installation too old to carry it and is not fatal. Unreadable
+// is a broken installation, and building a catalog from the names that are
+// left would ship four wrong ones without saying so.
+func (s *ShownTestSuite) TestBuildRefusesAnAppCatalogItCannotRead() {
+	dir := s.T().TempDir()
+
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(dir, "cab.models"),
+		[]byte(`[{"symbolicID":"HD2_CabTest","name":"Beside"}]`), 0o600))
+	s.Require().NoError(os.Mkdir(filepath.Join(dir, shownFile), 0o750))
+
+	_, _, err := Build(Options{
+		ResourcesDir: dir, DeviceID: 2162694, DeviceName: "HX Stomp",
+	})
+
+	s.Require().ErrorContains(err, shownFile)
+}
+
+// TestBuildReportsRenamesInOneOrder covers the order they are reported in.
+//
+// Sorted on the identifier, so two runs of one release report the same list.
+// A list that shuffled would read as the data having changed.
+func (s *ShownTestSuite) TestBuildReportsRenamesInOneOrder() {
+	dir := s.T().TempDir()
+
+	// Written with the later identifier first, so the sort has something to do.
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(dir, "cab.models"), []byte(`[
+			{"symbolicID":"HD2_PreampAguaSledge","name":"Aqua Sledge"},
+			{"symbolicID":"HD2_AmpLine6Kinetic","name":"Line 6 Kinectic"}
+		]`), 0o600))
+	s.Require().NoError(os.WriteFile(
+		filepath.Join(dir, shownFile), []byte(`{"models":[
+			{"id":"HD2_PreampAguaSledge","name":"Agua Sledge"},
+			{"id":"HD2_AmpLine6Kinetic","name":"Line 6 Kinetic"}
+		]}`), 0o600))
+
+	_, renamed, err := Build(Options{
+		ResourcesDir: dir, DeviceID: 2162694, DeviceName: "HX Stomp",
+	})
+
+	s.Require().NoError(err)
+	s.Require().Len(renamed, 2)
+	s.Require().Equal(catalog.ModelID("HD2_AmpLine6Kinetic"), renamed[0].Model)
+	s.Require().Equal(catalog.ModelID("HD2_PreampAguaSledge"), renamed[1].Model)
 }
 
 func TestShownTestSuite(
