@@ -67,8 +67,25 @@ func record(
 	// Onto the ask, which is where a round of asking belongs. The document holds
 	// it as a section since version 2, and a document without one is a rig
 	// somebody wrote and never said why.
+	//
+	// Made with the genre in it, because an ask requires one. The contract
+	// says why in its own words: a request nobody can place in any company is
+	// a request nothing can be compared against, and genre is the only field
+	// on an ask that is not optional. An empty one fails validation on the way
+	// out, so a round of tuning against a document with no ask used to read
+	// the file, build the round, and lose it to `ask.genre Value is not
+	// nullable`.
 	if spec.Ask == nil {
-		spec.Ask = &tone.Ask{}
+		if asked == "" {
+			return fmt.Errorf(
+				"%s has no ask to append a round to, and this round was aimed "+
+					"at a player rather than a genre, so there is nothing to "+
+					"make one from: an ask requires a genre. Add an `ask:` "+
+					"with the genre this rig belongs to, or tune it with "+
+					"--genre", at)
+		}
+
+		spec.Ask = &tone.Ask{Genre: []string{asked}}
 	}
 
 	was := []tone.Correction(nil)
