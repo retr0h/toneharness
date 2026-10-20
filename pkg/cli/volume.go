@@ -105,6 +105,42 @@ func levelled(
 	return at
 }
 
+// pinned refuses a campaign whose output level is not the one it asked for.
+//
+// `levelled` says what the level reached and records it, which is right: the
+// figures belong to the level they were taken at rather than to the one that
+// was requested. What nothing did was stop.
+//
+// `FM4 Throbber` was swept that way. The level was asked for 38, `reamp.Held`
+// set it, read it back as 0 and said so — "the computer's output level moved to
+// 0, for a consistent rig" — and eight controls were then measured through a
+// muted output, reading -122dB with centroids between 1630 and 2390Hz. Hiss,
+// recorded as a filter.
+//
+// The read-back is what makes this catchable and it already existed. A level
+// that came back as something else is a signal path that is not the one the
+// campaign is filing its readings under, which is not a warning, it is a stop.
+//
+// A platform that will not say is let through, because nothing can be checked
+// there and `unknownVolume` is what the file records instead.
+func pinned(
+	want, reached int,
+) error {
+	if reached == unknownVolume || reached == want {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"%w: it was asked for %d and came back at %d. Every figure moves with "+
+			"this, so readings taken here cannot be filed beside readings taken "+
+			"at %d: a muted output reads as hiss, which is broadband and looks "+
+			"like a control doing a great deal",
+		errNotPinned, want, reached, want)
+}
+
+// errNotPinned reports an output level that is not the one a campaign asked for.
+var errNotPinned = errors.New("the computer's output level is not pinned")
+
 // plays is how the computer's output device is set, so a test stands its own
 // function here. reamp.PlaysThrough is what every caller passes.
 type plays func(want string) (string, bool, error)

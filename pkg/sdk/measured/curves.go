@@ -76,7 +76,7 @@ type Curves struct {
 	// of. It is a tone control rather than a level control, because an
 	// amplifier's distortion depends on how hard it is driven, so a sweep at
 	// another level is a sweep of a different amplifier.
-	Volume   int     `json:"volume,omitempty"`
+	Volume   int     `json:"volume"`
 	Headroom float64 `json:"headroom,omitempty"`
 	// Rig is the audio devices the reference went out of and came back in on,
 	// as `--hardware` received them, and Open says the two were different so

@@ -198,7 +198,7 @@ type Library struct {
 	// Not comparable between machines: the scale is the slider's, not decibels,
 	// and two laptops at 38 put out different levels. Baseline is what makes
 	// two libraries comparable. This is what makes one reproducible.
-	Volume int `json:"volume,omitempty"`
+	Volume int `json:"volume"`
 	// Rig is the audio devices the reference went out of and came back in on,
 	// as `--hardware` received them, and Open says the two were different so
 	// the chain could not hear itself.
