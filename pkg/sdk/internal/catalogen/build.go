@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
@@ -97,20 +98,34 @@ const (
 // how their own data reads.
 func Build(
 	opts Options,
-) (*catalog.Catalog, error) {
+) (*catalog.Catalog, []Renamed, error) {
 	paths, err := filepath.Glob(filepath.Join(opts.ResourcesDir, "*.models"))
 	if err != nil {
-		return nil, fmt.Errorf("globbing model definitions: %w", err)
+		return nil, nil, fmt.Errorf("globbing model definitions: %w", err)
 	}
 
 	if len(paths) == 0 {
-		return nil, fmt.Errorf("%w: %s", ErrNoResources, opts.ResourcesDir)
+		return nil, nil, fmt.Errorf("%w: %s", ErrNoResources, opts.ResourcesDir)
 	}
 
 	gear, err := loadGearMap(opts.GearMapPath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+
+	// The name a person sees in the app, which beats the one beside the model
+	// definition wherever the two disagree. See readShownNames: Line 6 ship
+	// every name twice and four of the disagreements are wrong rather than
+	// cosmetic, one of them naming a cabinet after a different cabinet.
+	shown, err := readShownNames(opts.ResourcesDir)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Collected rather than silently applied. A firmware release can introduce
+	// a disagreement in either direction, and the 24 already in this data went
+	// unnoticed until a sweep printed one of them.
+	var renamed []Renamed
 
 	out := &catalog.Catalog{
 		Device:        opts.DeviceName,
@@ -123,7 +138,7 @@ func Build(
 	for _, path := range paths {
 		models, err := readModels(path)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if flow := flowFor(models, opts.DeviceID); flow != (catalog.Flow{}) {
@@ -146,29 +161,51 @@ func Build(
 				continue
 			}
 
-			out.Blocks[catalog.ModelID(m.SymbolicID)] = block(m, family, gear[m.SymbolicID])
+			id := catalog.ModelID(m.SymbolicID)
+
+			if name, ok := shown[id]; ok && name != m.Name {
+				// Every disagreement is reported and only the ones in `wrong`
+				// are taken, because a rename changes what a gear name
+				// matches and most of these are a space.
+				took := wrong[id]
+				renamed = append(renamed, Renamed{
+					Model: id, Was: m.Name, Now: name, Took: took,
+				})
+
+				if took {
+					m.Name = name
+				}
+			}
+
+			out.Blocks[id] = block(m, family, gear[m.SymbolicID])
 		}
 	}
 
+	sort.Slice(renamed, func(i, j int) bool { return renamed[i].Model < renamed[j].Model })
+
 	if out.Symbols, err = readSymbols(opts.ResourcesDir); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if out.LEDColours, err = readLEDColours(opts.ResourcesDir); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if out.Sources, out.Destinations, err = readRouting(
 		opts.ResourcesDir, opts.DeviceID,
 	); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if len(out.Blocks) == 0 {
-		return nil, fmt.Errorf("%w: no models support device %d", ErrNoResources, opts.DeviceID)
+		return nil, nil, fmt.Errorf(
+			"%w: no models support device %d",
+			ErrNoResources,
+			opts.DeviceID,
+		)
 	}
 
-	return out, nil
+	return out, renamed, nil
 }
 
 // readModels decodes one .models file.

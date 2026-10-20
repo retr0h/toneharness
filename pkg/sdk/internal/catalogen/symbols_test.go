@@ -232,7 +232,7 @@ func (s *SymbolsTestSuite) TestBuildReportsAnInstallationItCannotRead() {
 					filepath.Join(dir, controlsFile), []byte(tt.controls), 0o600))
 			}
 
-			_, err := Build(Options{ResourcesDir: dir, DeviceID: 1})
+			_, _, err := Build(Options{ResourcesDir: dir, DeviceID: 1})
 
 			s.Require().Error(err)
 			s.Require().Contains(err.Error(), tt.errText)

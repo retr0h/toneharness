@@ -138,7 +138,7 @@ func (s *BlockTestSuite) TestDefaultValue() {
 
 // TestBuild carries a family through to the catalog it writes.
 func (s *BlockTestSuite) TestBuild() {
-	c, err := Build(Options{
+	c, _, err := Build(Options{
 		ResourcesDir: filepath.Join("testdata", "families"),
 		DeviceID:     2162694,
 		DeviceName:   "HX Stomp",
