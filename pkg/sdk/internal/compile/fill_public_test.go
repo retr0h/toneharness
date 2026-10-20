@@ -672,6 +672,9 @@ func (s *FillPublicTestSuite) TestAsNamedKeepsTheBlock() {
 	for _, tt := range []struct {
 		name  string
 		block catalog.Block
+		// asking is the category to resolve the name in, where that is not the
+		// block's own. Empty means its own, which is what both callers pass.
+		asking catalog.Category
 	}{
 		{
 			// Nothing to resolve. A block with neither gear nor a name has no
@@ -681,15 +684,22 @@ func (s *FillPublicTestSuite) TestAsNamedKeepsTheBlock() {
 			block: catalog.Block{ID: "only", Category: catalog.CategoryCab},
 		},
 		{
-			// A name that resolves to nothing, because the instrument filter
-			// turns the one candidate away.
-			name: "a name no model answers",
+			// A name no model of the category answers. The fallback cannot
+			// fire from either caller — the corpus fill and the amplifier's
+			// own pairing both ask about a block's own category, and
+			// `anyInstrument` ends in an unfiltered search, so a block in the
+			// catalog always resolves to itself. It is here so that a caller
+			// who asks a different question gets the block back rather than a
+			// zero one, which would reach the device as a chain entry naming
+			// nothing.
+			name: "a name no model of that category answers",
 			block: catalog.Block{
 				ID:       "only",
 				Name:     "Only",
 				Category: catalog.CategoryCab,
 				BasedOn:  "a cabinet nothing in this catalog emulates",
 			},
+			asking: catalog.CategoryAmp,
 		},
 	} {
 		s.Run(tt.name, func() {
@@ -698,7 +708,12 @@ func (s *FillPublicTestSuite) TestAsNamedKeepsTheBlock() {
 				Blocks: map[catalog.ModelID]catalog.Block{tt.block.ID: tt.block},
 			}
 
-			got := compile.AsNamed(cat, tt.block, catalog.CategoryCab, "bass")
+			asking := tt.asking
+			if asking == "" {
+				asking = tt.block.Category
+			}
+
+			got := compile.AsNamed(cat, tt.block, asking, "bass")
 			s.Require().Equal(catalog.ModelID("only"), got.ID)
 		})
 	}
