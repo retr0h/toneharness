@@ -137,11 +137,13 @@ built:
           note: 'the sentence after the head, in the same transcribed interview: "The big tube head powers a single Ampeg 8X10 cabinet, and Matt says that''s plenty." Freeman on why one is enough: "In places with good PAs, you don''t really need a ballbuster. This SVT pumps - plus I go direct at clubs. I mean, how much amp do you want?"'
           url: https://www.talkbass.com/threads/does-anyone-know-matt-freemans-setup.39146/
       controls:
-        Distance: "1.0"
-        EarlyReflections: "0.0"
-        High Cut: "8000.0"
+        Angle: "45.0"
+        Distance: "5.0"
+        HighCut: "8000.0"
         Level: "0.0"
-        LowCut: "19.9"
+        LowCut: "37.0"
+        Mic: "3"
+        Position: "0.0"
       attrs:
         '@position': "2"
       position: 2

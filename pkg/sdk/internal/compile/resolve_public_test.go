@@ -439,8 +439,33 @@ func (s *ResolvePublicTestSuite) TestGear() {
 			// The role is half the question: this catalog holds a cabinet
 			// whose name matches an amplifier's, and asking for one must not
 			// answer with the other.
-			name:       "a cabinet by the name it shares",
+			//
+			// Which cabinet is the second half, and it is the one the gear map
+			// describes. Two answer here: HD2_CabNamed, which the map holds as
+			// an `Ampeg SVT 410HLF`, and HD2_Cab8x10SVBeast, which it holds as
+			// nothing and which matches on Line 6's own name alone. A model
+			// nothing is known about is not the closest description of an
+			// Ampeg SVT, so it sorts last.
+			//
+			// This fixture's only described cabinet is a 4x10, which is why
+			// that is the answer here. On the device it is the mic'd 8x10,
+			// described as an `8x10" Ampeg SVT-810AV`, and that is the point
+			// of the rule: it carries Mic, Position and Angle, costs 2.5% of
+			// the chip against 7.2%, and was unreachable by any name a person
+			// would type.
+			name:       "a cabinet the gear map describes, over one it does not",
 			gear:       "Ampeg SVT",
+			role:       rig.RoleCab,
+			instrument: "bass",
+			want:       "HD2_CabNamed",
+		},
+		{
+			// Line 6's own spelling still reaches their own model. Nothing
+			// else matches it, so the rule above never gets a say, which is
+			// what keeps a document naming a Line 6 block from being quietly
+			// moved to another one.
+			name:       "a cabinet by the name only Line 6 use",
+			gear:       "8x10 Ampeg SVT-E",
 			role:       rig.RoleCab,
 			instrument: "bass",
 			want:       "HD2_Cab8x10SVBeast",
