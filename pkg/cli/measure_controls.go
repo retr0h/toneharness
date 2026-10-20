@@ -71,6 +71,15 @@ type ControlsOptions struct {
 	Points   int
 	Takes    int
 	Hardware string
+	// Level is how the computer's own output level is pinned, so a test can
+	// stand its own in place of the platform's.
+	//
+	// The seam was already here — `levelled` takes the function rather than
+	// calling `reamp.Held` itself, and says in its own comment that this is so
+	// a test can supply one — and every caller passed the real one, so the
+	// refusal below could not be reached from a test. `reamp.Held` where
+	// nothing names one.
+	Level holds
 	// Bench is somewhere to push the signal through, as it is for measuring
 	// blocks. Left unset, the named hardware is opened.
 	Bench sdk.Bench
@@ -155,7 +164,12 @@ func MeasureControls(
 ) error {
 	// Pinned first, because every reading below depends on it and a level
 	// somebody left somewhere else is a different measurement.
-	level := levelled(w, opts.Volume, reamp.Held)
+	hold := opts.Level
+	if hold == nil {
+		hold = reamp.Held
+	}
+
+	level := levelled(w, opts.Volume, hold)
 	if err := pinned(opts.Volume, level); err != nil {
 		return err
 	}

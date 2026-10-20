@@ -433,6 +433,33 @@ func (s *ControlsRunTestSuite) TestControlsRefusesWhenTheDeviceNamesNothingEithe
 // forbids Turn and Choose outright: a sweep that refused only afterwards is
 // the bug this exists for, and it cost four minutes forty-five seconds a
 // block while looking like a device fault.
+// TestControlsRefusesALevelItCouldNotPin covers the sweep stopping when the
+// computer's output level is not the one it asked for.
+//
+// `FM4 Throbber` was swept at 0 after asking for 38. The platform said so and
+// nothing stopped, so eight controls were measured through a muted output:
+// -122dB with centroids between 1630 and 2390Hz, hiss recorded as a filter.
+func (s *ControlsRunTestSuite) TestControlsRefusesALevelItCouldNotPin() {
+	var buf bytes.Buffer
+
+	err := MeasureControls(context.Background(), &buf, ControlsOptions{
+		Client: s.pedal, Model: "HD2_CabMicIr_2x15Brute", Dry: s.dry,
+		Out: s.out, Seconds: 1, Points: 3, Takes: 2, Bench: bench{},
+		Volume: 38,
+		// What macOS did: it took the instruction, and the read-back came
+		// back somewhere else entirely.
+		Level: func(int) (int, bool, error) { return 0, true, nil },
+	})
+
+	s.Require().Error(err)
+	s.Require().ErrorIs(err, errNotPinned)
+	s.Require().ErrorContains(err, "asked for 38 and came back at 0")
+
+	// Said before it stopped, because the level it reached is the thing worth
+	// knowing and a refusal that hides it is one nobody can act on.
+	s.Require().Contains(buf.String(), "moved to 0")
+}
+
 // TestControlsRefusesAChainThatDiesMidSweep covers the sweep stopping when the
 // chain stops, rather than carrying on and measuring the converters.
 //
