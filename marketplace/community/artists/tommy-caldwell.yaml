@@ -77,7 +77,7 @@ rig:
             The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
           note: 'Chosen by measurement rather than asserted. Acoustic 360 was researched and bottomed out. One Guitar Player interview with him exists and JTE, who read it, reports that it barely touched on gear. A TalkBass thread of eleven posts about his tone names no amplifier in any of them: they are about his thumb, his DiMarzio pickup and a hunk of plastic he palmed to fortify his thumbnail. So the device''s twenty-seven bass amplifiers were ranked against his own separated bass stems, one record at a time, across Fire on the Mountain, Searchin'' for a Rainbow and Bob Away My Blues, and this is the one that came nearest on two of the three. The vote, the margins and what is weak about them are in the marshall-tucker-mid-seventies sound-alike beside this, which is the document that answers for the sound rather than for him.'
     - role: cab
-      gear: Legacy 1x18" Acoustic 360
+      gear: 1x18" Acoustic 360
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -130,7 +130,7 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: Legacy 1x18" Acoustic 360
+      gear: 1x18" Acoustic 360
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'

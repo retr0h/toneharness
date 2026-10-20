@@ -74,8 +74,17 @@ func holds(
 
 // noise is the punctuation that appears in a manufacturer's own spelling and
 // in nobody's typing.
+//
+// The inch marks are here because Line 6 do not agree with themselves about
+// which one to use, and the disagreement decided which cabinet a rig got. A
+// legacy 6x10 is a `6x10" MESA/Boogie Power House` with a straight quote and
+// the mic'd one is a `6x10” MESA/Boogie PowerHouse®` with a curly one, so a
+// document carrying either spelling reached exactly one of the two models
+// and could not reach the other. Dropped rather than unified, because
+// nobody types an inch mark at all.
 var noise = strings.NewReplacer(
 	"®", "", "™", "", "©", "", " ", " ",
+	`"`, "", "”", "", "“", "", "″", "",
 )
 
 // normalize reduces a gear name to what two people would agree it says.

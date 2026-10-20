@@ -45,7 +45,7 @@ rig:
           note: 'Opened, and it is weaker than it looks. Eleven posts, most of them hedged: "I think for a lot of it it was an Acoustic 360 rig with folded a 18 cabinet". One post is first-hand and contradicts the rest for the earliest tour — chadds, who saw them open for The Who on the first album tour: "JPJ had 4 trapezoid shaped 2x15 Rickenbacker cabs each with a Hiwatt 100 head". That is before the spring 1969 purchase the auction lot dates, so the two agree rather than conflict, and it is the reason no record here predates mid-1969.'
           url: https://www.talkbass.com/threads/john-paul-jones-rig.259308/
     - role: cab
-      gear: Legacy 1x18" Acoustic 360
+      gear: 1x18" Acoustic 360
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -99,7 +99,7 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: Legacy 1x18" Acoustic 360
+      gear: 1x18" Acoustic 360
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'

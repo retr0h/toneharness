@@ -39,7 +39,7 @@ rig:
           caveat: '**This is not a claim about what Tommy Caldwell played.** His amplifier is not established, and the primary source was opened and settles it negatively. One Guitar Player interview with him exists, and JTE, who read it, reports: "I have no idea about amps. Partly because I just didn''t pay much attention to that at the time, and partly because the interview barely touched on gear." So this document is attributed to a sound rather than to him: it is the amplifier nearest these 3 records, and nothing more. Two things make it weak even as that. The records disagree, and the caveat above says how. And the winners of this comparison cluster at the dark end of what the device has: the Acoustic 360 reads 91 Hz and the Sunn Coliseum 300 reads 98 Hz, the two darkest bass amplifiers it models, and every record here sits below most of the candidates. That is the pathology the measured library''s own notes record, where every candidate is out of range and the nearest is whichever is darkest. It is here because it is buildable and honest, not because it is settled. A cited amplifier for Tommy Caldwell would replace it, and a model of the Fender and Peavey amplifiers this era actually ran would make the comparison worth more.'
           note: Chosen by measurement rather than by anybody's say-so. The device's twenty-seven bass amplifiers were ranked against Tommy Caldwell's own separated bass stems, one record at a time, and the Acoustic 360 came nearest on two of the three; the third picked an Aguilar DB51. It reads 91 Hz against 112 on one record and 128 on the other. Run it again on the same stems and it answers the same way.
     - role: cab
-      gear: Legacy 1x18" Acoustic 360
+      gear: 1x18" Acoustic 360
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -89,7 +89,7 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: Legacy 1x18" Acoustic 360
+      gear: 1x18" Acoustic 360
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
