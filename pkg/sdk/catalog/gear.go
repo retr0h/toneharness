@@ -35,11 +35,35 @@ const lineSixOriginal = "Line 6 Original"
 // which is why the contract's `gear` field refuses one.
 func (b Block) Gear() string {
 	if b.BasedOn != "" && b.BasedOn != lineSixOriginal {
-		return said(b.BasedOn)
+		return said(withoutCollection(b.BasedOn))
 	}
 
 	return said(b.Name)
 }
+
+// withoutCollection drops Line 6's own shelf label from the front of a gear
+// name.
+//
+// "Legacy" is where Line 6 keep an older port of a model, not something a
+// maker ever put on a cabinet, and it has no business in a document's `gear`.
+// It also pinned every rig that carried it: a name beginning with it reaches
+// the legacy model and nothing else, so a derived document naming a
+// `Legacy 6x10" MESA/Boogie Power House` could never resolve to the mic'd
+// 6x10 of the same cabinet, which carries Mic, Position and Angle and costs
+// 2.5% of the chip against 7.2%.
+//
+// Only off the front, and only this word. A document somebody wrote naming
+// the collection still means it and still gets that model: this changes what
+// a derived document says the gear is, not what an existing one asks for.
+func withoutCollection(
+	s string,
+) string {
+	return strings.TrimPrefix(s, collection+" ")
+}
+
+// collection is Line 6's grouping for a model kept for compatibility rather
+// than because it is the best one of its gear on the device.
+const collection = "Legacy"
 
 // said is the spelling without the marks a manufacturer puts in and nobody
 // says out loud.

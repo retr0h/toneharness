@@ -39,7 +39,7 @@ rig:
           caveat: '**This is not a claim about what Cone McCaslin played.** His amplifier is not established. An Ampeg SVT-CL and an SVT-1000 are widely listed for him and trace only to equipboard and uberproaudio, he is not on Ampeg''s own artist roster, and the Montreal Rocks interview was opened and says nothing about amplifiers at all. So this document is attributed to a sound rather than to him: it is the amplifier nearest these 3 records, and nothing more. Two things make it weak even as that. The records disagree, and the caveat above says how. And the winners of this comparison cluster at the dark end of what the device has: the Acoustic 360 reads 91 Hz and the Sunn Coliseum 300 reads 98 Hz, the two darkest bass amplifiers it models, and every record here sits below most of the candidates. That is the pathology the measured library''s own notes record, where every candidate is out of range and the nearest is whichever is darkest. It is here because it is buildable and honest, not because it is settled. A cited amplifier for Cone McCaslin would replace it, and a model of the Fender and Peavey amplifiers this era actually ran would make the comparison worth more.'
           note: Chosen by measurement rather than by anybody's say-so. The device's twenty-seven bass amplifiers were ranked against Cone McCaslin's own separated bass stems, one record at a time, and the Sunn Coliseum 300 came nearest on two of the three; the third picked a Gallien-Krueger GK 800RB. It reads 98 Hz against 116 on one record and 106 on the other. Run it again on the same stems and it answers the same way.
     - role: cab
-      gear: Legacy 1x18" Sunn Coliseum
+      gear: 1x18" Sunn Coliseum
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -89,7 +89,7 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: Legacy 1x18" Sunn Coliseum
+      gear: 1x18" Sunn Coliseum
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'

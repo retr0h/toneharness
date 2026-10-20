@@ -42,7 +42,7 @@ rig:
             It is weak even as a sound-alike, for two reasons. The records disagree, and the note says how. And the margin runs the wrong way: these records sit at 144 and 151 Hz while the amplifier that won reads 105, so what the comparison found is the nearest of a field that is entirely darker than the records rather than a match. That is the pathology the measured library's own notes record. A cited amplifier would replace this outright.
           note: Chosen by measurement rather than by anybody's say-so. The device's twenty-seven bass amplifiers were ranked against Charlie Hayward's own separated bass stems, one record at a time, and the Ampeg B-15NF came nearest on two of the three, Behind Your Eyes and Mississippi; the third, Passing Lane, picked a MESA/Boogie Bass 400+. It reads 105 Hz against 151 on one and 144 on the other. Run it again on the same stems and it answers the same way.
     - role: cab
-      gear: Legacy 1x15" Ampeg B-15
+      gear: 1x15" Ampeg B-15
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -95,7 +95,7 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: Legacy 1x15" Ampeg B-15
+      gear: 1x15" Ampeg B-15
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'

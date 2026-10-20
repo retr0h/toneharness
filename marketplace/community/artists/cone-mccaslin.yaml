@@ -58,7 +58,7 @@ rig:
             The records disagree, one of three picking something else, and the field they were ranked against is mostly darker than they are. The sound-alike says how. A cited amplifier would replace this outright, and this document stays in community until one exists.
           note: Chosen by measurement rather than asserted. Sunn Coliseum 300 was researched and bottomed out. The Sum 41 gear rundown covers the guitarists' Soldano and Marshalls and mentions him only to say which bass he swaps to. The Ampeg SVT repeated on gear pages for him rests on nothing those pages name. So the device's twenty-seven bass amplifiers were ranked against his own separated bass stems, one record at a time, across Fat Lip, In Too Deep and Motivation, and this is the one that came nearest on two of the three. The vote, the margins and what is weak about them are in the all-killer-no-filler sound-alike beside this, which is the document that answers for the sound rather than for him.
     - role: cab
-      gear: Legacy 1x18" Sunn Coliseum
+      gear: 1x18" Sunn Coliseum
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -111,7 +111,7 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: Legacy 1x18" Sunn Coliseum
+      gear: 1x18" Sunn Coliseum
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'

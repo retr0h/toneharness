@@ -80,7 +80,7 @@ rig:
           note: 'Bass Player, April 1998, "Playin'' In A Traveling Band" by Ed Friedland, in his own words: "When Creedence got some money, we all went out and bought a bunch of Kustom amps, the tuck and roll stuff. I had a couple of 400 watt heads and 4 Sunn 2000S cabinets, I had a lot of noise behind me." Friedland dates what came before it himself: Cook "played many of his pre-fame gigs on a Fender Showman head through a Dual Showman cabinet with 2 15\" speakers".'
           url: http://web.archive.org/web/20260411181704/https://riverising.tripod.com/stu/bassplayer.htm
     - role: cab
-      gear: Legacy 1x18" Sunn Coliseum
+      gear: 1x18" Sunn Coliseum
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -145,7 +145,7 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: Legacy 1x18" Sunn Coliseum
+      gear: 1x18" Sunn Coliseum
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'

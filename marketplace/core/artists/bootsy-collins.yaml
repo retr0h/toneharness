@@ -89,7 +89,7 @@ rig:
           note: an Alembic F2-B preamp into Crown power amps and eight custom Electro-Voice cabinets
           url: https://www.uberproaudio.com/who-plays-what/295-bootsy-collins-bass-rig-gear-and-equipment
     - role: cab
-      gear: Legacy 1x15" Ampeg B-15
+      gear: 1x15" Ampeg B-15
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -166,16 +166,18 @@ built:
         '@position': "2"
       position: 2
     - role: cab
-      gear: Legacy 1x15" Ampeg B-15
+      gear: 1x15" Ampeg B-15
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        Distance: "1.0"
-        EarlyReflections: "0.0"
-        HighCut: "8000.0"
+        Angle: "45.0"
+        Distance: "9.0"
+        HighCut: "20100.0"
         Level: "0.0"
         LowCut: "19.9"
+        Mic: "10"
+        Position: "0.75"
       attrs:
         '@position': "3"
       position: 3
