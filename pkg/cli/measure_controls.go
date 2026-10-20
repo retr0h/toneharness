@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -81,6 +82,45 @@ type ControlsOptions struct {
 // A block's slot is its position plus one, and a chain holding one block puts
 // it at position zero.
 const alone = 1
+
+// working refuses a control whose chain has gone quiet since the first one.
+//
+// The silence floor is derived from what the chain settles at, and that was
+// read again before every control. So a chain that dies partway through a
+// sweep takes the floor down with it, and every reading afterwards clears a
+// floor that is itself silence.
+//
+// `6x10 Cali Power` shipped that way. Its Mic settled at -54.08dB and read 105
+// to 134Hz, which is a cabinet. The chain then died, and Position, Distance,
+// Angle, LowCut, HighCut and Level each settled around -130dB and were held to
+// a floor of -160: six controls of hiss, recorded as centroids between 908 and
+// 3083Hz with up to 77% of their energy high, on a bass cabinet. Every one of
+// them cleared its own floor by thirty decibels.
+//
+// Held to the first control instead, because that one is measured on a chain
+// the pre-flight has just seen load. Refused rather than noted: there is
+// nothing to learn from the rest of a sweep whose chain has stopped, and the
+// block is worth retrying whole.
+func working(
+	control string,
+	settled, anchor float64,
+) error {
+	if anchor == 0 || settled >= anchor-silent {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"%w: the chain settled at %.2fdB before %s, which is %.0fdB under the "+
+			"%.2fdB it settled at before the first control. It has gone quiet "+
+			"partway through, so every reading from here would be of the "+
+			"converters: a centroid of hiss is broadband and reads high, which "+
+			"looks like a control that does a great deal",
+		errChainDied, settled, control, anchor-settled, anchor)
+}
+
+// errChainDied reports a chain that stopped passing signal partway through a
+// sweep.
+var errChainDied = errors.New("the chain went quiet mid-sweep")
 
 // silent is how far under the settled level a reading may sit and still be a
 // reading.
@@ -212,15 +252,25 @@ func MeasureControls(
 	_, _ = fmt.Fprintf(w, "\n  %s (%s), %d controls through %s\n\n",
 		block.Name, block.ID, len(want), bench.Name())
 
-	for _, c := range want {
-		curve, err := sweep(ctx, w, opts, bench, signal, preset, c)
+	// What the chain settles at before the first control is swept, which every
+	// control after it is held to. See [working].
+	anchor := 0.0
+
+	for at, c := range want {
+		curve, err := sweep(ctx, w, opts, bench, signal, preset, c, anchor)
 		if err != nil {
 			return err
 		}
 
-		if curve != nil {
-			out.Controls[c.name] = *curve
+		if curve == nil {
+			continue
 		}
+
+		if at == 0 {
+			anchor = curve.Settled
+		}
+
+		out.Controls[c.name] = *curve
 	}
 
 	// The chain as the device reported it, read after the sweeps and with the
@@ -298,6 +348,7 @@ func sweep(
 	signal []float32,
 	preset string,
 	c control,
+	anchor float64,
 ) (*measured.Curve, error) {
 	// The chain put back before every control, because a live edit writes
 	// nothing back: a control stays wherever the last sweep left it, at the
@@ -309,6 +360,10 @@ func sweep(
 
 	noise, at, err := steady(ctx, bench, signal, opts.Takes)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := working(c.name, at.Level, anchor); err != nil {
 		return nil, err
 	}
 
