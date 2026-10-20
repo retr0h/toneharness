@@ -49,7 +49,7 @@ rig:
           note: 'Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks", Premier Guitar, 18 May 2010, which puts Simonon on "a white Fender Precision and an Ampeg SVT" in 1979.'
           url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
     - role: cab
-      gear: 8x10 Ampeg SVT-E
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -102,16 +102,18 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: 8x10 Ampeg SVT-E
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        Distance: "1.0"
-        EarlyReflections: "0.0"
-        High Cut: "8000.0"
+        Angle: "45.0"
+        Distance: "5.0"
+        HighCut: "8000.0"
         Level: "0.0"
-        LowCut: "19.9"
+        LowCut: "37.0"
+        Mic: "3"
+        Position: "0.0"
       attrs:
         '@position': "2"
       position: 2

@@ -689,9 +689,9 @@ func nearestTo(
 		wants = string(instrumentFor(setup, &quiet))
 	}
 
-	ranked := reachable(
+	ranked := wanted(deps.Catalog, reachable(
 		deps.Measured.Nearest(category, want, measured.Spectral()),
-		setup, deps.Catalog, wants)
+		setup, deps.Catalog, wants))
 	if len(ranked) == 0 {
 		*notes = append(*notes, Note{
 			About: string(category),
@@ -764,6 +764,120 @@ func named(
 	return match.Name
 }
 
+// wanted narrows the candidates to the copies worth ranking.
+//
+// Line 6 ship the same gear several times and the copies are not equals. An
+// amplifier also ships as a preamp with the power stage gone. A cabinet ships
+// three times: a legacy impulse response carrying Low Cut, High Cut and Level,
+// a mic'd one carrying Mic, Position, Distance and Angle as well, and the mic'd
+// one again with a stereo Pan. [catalog.Block.Preferred] is where that order is
+// written down, because the gear resolver and the compiler both sort on it.
+// This is the third caller and it was ranking without it.
+//
+// Two rules, and they are separate because one is about copies of one piece of
+// gear and the other is about the pool.
+//
+// A better copy of the same gear wins. Per gear rather than across the pool: 15
+// of the 29 bass amplifiers are preamps or legacy ports, and dropping all of
+// them lost the Fender Bassman (Silverface) altogether, which this device
+// models only as a preamp. A copy with nothing better beside it is the best
+// copy there is.
+//
+// A cabinet with a microphone beats one without. Across the pool, because the
+// two are rarely the same cabinet: the nearest cabinet to punk of the 16 this
+// device offers for bass was the legacy 1x12 Del Sol, which has no mic'd
+// counterpart at all, so no per-gear rule would ever have reached it. It sat
+// 86.8 from the target against the 93.9 of the mic'd 1x15 Ampeg B-15, and
+// seven units nearer with nothing on it to aim. The microphone list moves a
+// cabinet's centroid between 21 and 48Hz on the eight measured for bass,
+// against a noise floor of 0.20Hz and the 71.8Hz the whole field spans. The
+// cabinet that reads further out is the one that can be brought in.
+//
+// Asked of the parameters rather than the family, so it is the device's own
+// answer to what a block offers. Nothing outside a cabinet carries a Mic, so
+// it is no rule at all for an amplifier.
+//
+// Gear a request names by hand does not come through here. Somebody asking for
+// a legacy Ampeg by name has made a decision, and this is not one.
+func wanted(
+	cat *catalog.Catalog,
+	ranked []measured.Match,
+) []measured.Match {
+	if cat == nil {
+		return ranked
+	}
+
+	// The best copy of each piece of gear, keyed by the gear rather than the
+	// model. Keyed by name where Line 6 state no gear, which is every utility
+	// block and no amplifier or cabinet.
+	best := map[string]int{}
+	offered := false
+
+	for _, match := range ranked {
+		block, held := cat.Block(catalog.ModelID(match.ID))
+		if !held {
+			continue
+		}
+
+		if _, has := block.Params[micControl]; has {
+			offered = true
+		}
+
+		at := block.Preferred()
+		if was, seen := best[gearOf(block)]; !seen || at < was {
+			best[gearOf(block)] = at
+		}
+	}
+
+	out := make([]measured.Match, 0, len(ranked))
+
+	for _, match := range ranked {
+		block, held := cat.Block(catalog.ModelID(match.ID))
+		if !held {
+			// Measured and not in the catalog, as everywhere else here: kept,
+			// so the drift shows up as a block rather than as an absence.
+			out = append(out, match)
+
+			continue
+		}
+
+		if block.Preferred() != best[gearOf(block)] {
+			continue
+		}
+
+		if _, has := block.Params[micControl]; offered && !has {
+			continue
+		}
+
+		out = append(out, match)
+	}
+
+	return out
+}
+
+// micControl is the microphone list on a mic'd cabinet.
+//
+// The control this device offers that moves a block furthest: twelve
+// microphones, 21 to 48Hz of centroid across the eight cabinets measured for
+// bass. The 14Hz that chose punk's amplifier is less than any of them.
+const micControl = "Mic"
+
+// gearOf is what identifies the gear a block is a copy of.
+//
+// The real gear where Line 6 say it, because that is what makes two models
+// copies of one thing rather than two things: HD2_AmpSVBeastNrm and
+// HD2_PreampSVBeastNrm are both an Ampeg SVT. The name otherwise, which is what
+// the utility blocks have and no amplifier or cabinet needs.
+func gearOf(
+	block catalog.Block,
+) string {
+	if block.BasedOn != "" {
+		return block.BasedOn
+	}
+
+	return block.Name
+}
+
 // reachable is the blocks somebody could actually play.
 //
 // An impulse response block carries an index rather than any audio: what is
@@ -812,14 +926,15 @@ func reachable(
 		}
 	}
 
-	// Whether to filter by instrument at all, asked of the blocks rather than
-	// hardcoded: amps are grouped by it and cabs are not, and a device that
-	// groups something else tomorrow is answered by the same question.
+	// Whether to filter by instrument at all, and on which of the two things
+	// Line 6 say it with. Asked of the blocks rather than hardcoded: amps carry
+	// a subcategory and cabinets carry a mark, and a device that says it a third
+	// way tomorrow is answered by the same question.
 	//
-	// Decided once, outside the loop, so playable is only ever called where the
+	// Decided once, outside the loop, so the test is only ever run where the
 	// answer can be no. A nil catalog and an unstated instrument both land here
 	// rather than in the test for each block.
-	split := instrument != "" && splitsByInstrument(cat, ranked)
+	fits := groupedBy(cat, ranked, instrument)
 
 	out := make([]measured.Match, 0, len(ranked))
 
@@ -829,7 +944,7 @@ func reachable(
 			continue
 		}
 
-		if split && !playable(cat, match.ID, instrument) {
+		if fits != nil && !fits(match.ID) {
 			continue
 		}
 
@@ -839,12 +954,16 @@ func reachable(
 	return out
 }
 
-// playable reports whether a block is for the instrument in hand.
+// playable reports whether a block's subcategory is the instrument in hand.
 //
-// False only where the catalog says the other one. A block the catalog does not
-// hold, or holds without a subcategory, is kept: this is a filter on what Line 6
-// grouped rather than a claim about what sounds right, and refusing a model
-// because a field is empty would be refusing it for no reason.
+// A positive match is required, so a block Line 6 grouped neither way is
+// excluded. That is the strict reading argued for in [reachable]: 23 of the
+// amplifiers carry no subcategory, some of them bass models and some not, and
+// letting an unplaceable one win a bass build is this tool guessing.
+//
+// A block the catalog does not hold at all is kept, which is a different case:
+// that is the catalog and the measured library drifting apart, and a shorter
+// chain would hide the drift rather than report it.
 //
 // Case-insensitive, because an instrument arrives from a document somebody wrote
 // and a subcategory from a file Line 6 wrote.
@@ -866,21 +985,40 @@ func playable(
 	return strings.EqualFold(block.Subcategory, instrument)
 }
 
-// splitsByInstrument reports whether these blocks are grouped by what they are
-// played with.
+// groupedBy is the test for whether a block is for the instrument in hand, or
+// nil where these blocks are not grouped by instrument at all.
 //
-// Asked of the candidates rather than stated, because the answer differs by
-// category and a list written here would be a list to keep in step with a file
-// Line 6 writes. One block claiming an instrument is enough: a category where
-// any model says "Bass" is one where the grouping means that, and a model in it
-// saying nothing is a gap rather than a different kind of thing.
-func splitsByInstrument(
+// Asked of the candidates rather than stated, because Line 6 say it two
+// different ways and which one applies depends on the category. Amplifiers
+// carry a subcategory of "Guitar" or "Bass". Cabinets carry "Single, Dual",
+// which counts microphones, and their instrument is a separate mark in the
+// app's own catalog. A list written here would be a list to keep in step with
+// files Line 6 write.
+//
+// One block is enough to establish either grouping. A category where any model
+// says "Bass" is one where the subcategory means that, and a model in it saying
+// nothing is a gap. A category where any model is marked for bass is one where
+// the mark is maintained, and an unmarked model in it is for the other
+// instrument rather than unplaceable: every cabinet is for one or the other,
+// and Line 6 mark the 16 that are for bass.
+//
+// The subcategory wins where both are present, because it is the grouping the
+// strict reading in [reachable] was argued on. Nothing on this device carries
+// both.
+//
+// Without this, a bass build ranked all 133 cabinets and chose a 1x12 Fender
+// tweed guitar combo for punk, on 167 Hz against the target's 203. The reading
+// was right and the pool was wrong.
+func groupedBy(
 	cat *catalog.Catalog,
 	ranked []measured.Match,
-) bool {
-	if cat == nil {
-		return false
+	instrument string,
+) func(id string) bool {
+	if cat == nil || instrument == "" {
+		return nil
 	}
+
+	var named, marked bool
 
 	for _, match := range ranked {
 		block, held := cat.Block(catalog.ModelID(match.ID))
@@ -888,14 +1026,39 @@ func splitsByInstrument(
 			continue
 		}
 
-		for _, named := range []string{"guitar", "bass"} {
-			if strings.EqualFold(block.Subcategory, named) {
-				return true
+		for _, is := range []string{"guitar", "bass"} {
+			if strings.EqualFold(block.Subcategory, is) {
+				named = true
 			}
+		}
+
+		if block.Bass {
+			marked = true
 		}
 	}
 
-	return false
+	switch {
+	case named:
+		return func(id string) bool {
+			return playable(cat, id, instrument)
+		}
+	case marked:
+		wants := strings.EqualFold(instrument, string(tone.InstrumentBass))
+
+		return func(id string) bool {
+			block, held := cat.Block(catalog.ModelID(id))
+			if !held {
+				// Measured and not in the catalog, as in [playable]: the two
+				// drifting apart, reported as a block in the chain rather than
+				// hidden as a block missing from it.
+				return true
+			}
+
+			return block.Bass == wants
+		}
+	}
+
+	return nil
 }
 
 // aim is what a request is aiming at, and enough about where that came from to

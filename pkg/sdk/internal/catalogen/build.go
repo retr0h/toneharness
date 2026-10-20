@@ -113,11 +113,13 @@ func Build(
 		return nil, nil, err
 	}
 
-	// The name a person sees in the app, which beats the one beside the model
-	// definition wherever the two disagree. See readShownNames: Line 6 ship
-	// every name twice and four of the disagreements are wrong rather than
-	// cosmetic, one of them naming a cabinet after a different cabinet.
-	shown, err := readShownNames(opts.ResourcesDir)
+	// What the app says about each model, which is two things. The name a
+	// person sees, which beats the one beside the model definition wherever
+	// the two disagree: Line 6 ship every name twice and four of the
+	// disagreements are wrong rather than cosmetic, one of them naming a
+	// cabinet after a different cabinet. And which models are for bass, which
+	// this file alone states. See readShown.
+	app, err := readShown(opts.ResourcesDir)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -163,21 +165,23 @@ func Build(
 
 			id := catalog.ModelID(m.SymbolicID)
 
-			if name, ok := shown[id]; ok && name != m.Name {
+			said := app[id]
+
+			if said.Name != "" && said.Name != m.Name {
 				// Every disagreement is reported and only the ones in `wrong`
 				// are taken, because a rename changes what a gear name
 				// matches and most of these are a space.
 				took := wrong[id]
 				renamed = append(renamed, Renamed{
-					Model: id, Was: m.Name, Now: name, Took: took,
+					Model: id, Was: m.Name, Now: said.Name, Took: took,
 				})
 
 				if took {
-					m.Name = name
+					m.Name = said.Name
 				}
 			}
 
-			out.Blocks[id] = block(m, family, gear[m.SymbolicID])
+			out.Blocks[id] = block(m, family, gear[m.SymbolicID], said.Bass)
 		}
 	}
 

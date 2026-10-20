@@ -387,13 +387,20 @@ func (s *ClientPublicTestSuite) TestWithSetup() {
 // A client option beside WithSetup, because what it serves changes on that
 // clock. Asserted end to end rather than on the option, because the figure it
 // produces is the point: Krist Novoselic's rig ends in a `2x15 Brute` at
-// -59.62dB and punk's in an `8x10 Ampeg SVT-E` at -56.76dB, which is the 2.9dB
-// gap that was found by playing the two and hearing one as quiet.
+// -59.62dB and Paul McCartney's in a `1x18 Woody Blue` at -57.61dB, a 2dB gap
+// the level control has to close.
+//
+// It was punk against Novoselic, at 2.9dB, which is the gap that was found by
+// playing the two and hearing one as quiet. Punk ended in the legacy `8x10
+// Ampeg SVT-E` then and names the mic'd 810AV now, 0.37dB away, so the leveller
+// correctly moves nothing and the case stopped covering the thing it is for.
+// The pair changed rather than the threshold.
 func (s *ClientPublicTestSuite) TestWithSweeps() {
 	at := filepath.Join(s.T().TempDir(), "setup.yaml")
 
 	s.Require().NoError(os.WriteFile(at,
-		[]byte("schema: Setup\nversion: \"4.0.0\"\nmatch_loudness: punk\n"), 0o600))
+		[]byte("schema: Setup\nversion: \"4.0.0\"\nmatch_loudness: paul-mccartney\n"),
+		0o600))
 
 	for _, tt := range []struct {
 		name   string
@@ -429,11 +436,11 @@ func (s *ClientPublicTestSuite) TestWithSweeps() {
 
 			s.Require().NoError(err)
 			s.Require().True(got.Levelled.Asked())
-			s.Require().Equal("punk", got.Levelled.Rig)
+			s.Require().Equal("paul-mccartney", got.Levelled.Rig)
 			// The two cabinet readings, to the precision this comment and the
 			// contract quote them at. An exact literal here would be a test
 			// about how many decimals the library happens to hold.
-			s.Require().InDelta(-56.76, got.Levelled.Wanted, 0.01)
+			s.Require().InDelta(-57.61, got.Levelled.Wanted, 0.01)
 			s.Require().InDelta(-59.62, got.Levelled.Was, 0.01)
 
 			if !tt.moved {

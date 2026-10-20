@@ -558,6 +558,152 @@ func (s *FillPublicTestSuite) indexOfModel(
 	return -1
 }
 
+// TestSuits covers which blocks are eligible for an instrument, which Line 6
+// say two different ways.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *FillPublicTestSuite) TestSuits() {
+	for _, tt := range []struct {
+		name       string
+		block      catalog.Block
+		instrument string
+		want       bool
+	}{
+		{
+			// A cabinet carries "Single, Dual", which counts microphones, so
+			// the mark is the only thing that places it. The reading this
+			// exists for: unread, this said yes to all 133 cabinets for every
+			// instrument, and what saved it was a corpus too thin to notice.
+			name:       "a cabinet marked for bass, asked for bass",
+			block:      catalog.Block{Category: catalog.CategoryCab, Subcategory: "Single, Dual", Bass: true},
+			instrument: "bass",
+			want:       true,
+		},
+		{
+			name:       "a cabinet marked for bass, asked for guitar",
+			block:      catalog.Block{Category: catalog.CategoryCab, Subcategory: "Single, Dual", Bass: true},
+			instrument: "guitar",
+		},
+		{
+			// Unmarked means the other instrument rather than unplaceable:
+			// every cabinet on the device is for one or the other.
+			name:       "an unmarked cabinet, asked for guitar",
+			block:      catalog.Block{Category: catalog.CategoryCab, Subcategory: "Single, Dual"},
+			instrument: "guitar",
+			want:       true,
+		},
+		{
+			name:       "an unmarked cabinet, asked for bass",
+			block:      catalog.Block{Category: catalog.CategoryCab, Subcategory: "Single, Dual"},
+			instrument: "bass",
+		},
+		{
+			// Amplifiers, which Line 6 do group by instrument.
+			name:       "an amplifier whose subcategory agrees",
+			block:      catalog.Block{Category: catalog.CategoryAmp, Subcategory: "Bass"},
+			instrument: "bass",
+			want:       true,
+		},
+		{
+			name:       "an amplifier whose subcategory does not",
+			block:      catalog.Block{Category: catalog.CategoryAmp, Subcategory: "Guitar"},
+			instrument: "bass",
+		},
+		{
+			// Everything else is available to either, which is the right
+			// answer for a reverb.
+			name:       "a block grouped by neither",
+			block:      catalog.Block{Category: catalog.CategoryReverb},
+			instrument: "bass",
+			want:       true,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, compile.Suits(tt.block, tt.instrument))
+		})
+	}
+}
+
+// TestAsNamed covers the copy of a block a document naming it would get back.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *FillPublicTestSuite) TestAsNamed() {
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	for _, tt := range []struct {
+		name  string
+		block catalog.ModelID
+		want  catalog.ModelID
+	}{
+		{
+			// The reading this exists for. The commonest 8x10 in this
+			// instrument's corpus chains is the legacy model, Line 6 document
+			// it as an unqualified 8x10" Ampeg SVT, and that name is also the
+			// front of the mic'd 810AV's, which wins on Preferred. Eight
+			// shipped rigs recorded a cabinet their own text does not resolve
+			// to.
+			name:  "a legacy cabinet whose name reaches the mic'd one",
+			block: "HD2_Cab8x10SVBeast",
+			want:  "HD2_CabMicIr_8x10SVTAV",
+		},
+		{
+			// Already the copy its name resolves to, so nothing moves.
+			name:  "a block its own name already reaches",
+			block: "HD2_CabMicIr_8x10SVTAV",
+			want:  "HD2_CabMicIr_8x10SVTAV",
+		},
+	} {
+		s.Run(tt.name, func() {
+			held, ok := cat.Block(tt.block)
+			s.Require().True(ok, tt.block)
+
+			got := compile.AsNamed(cat, held, held.Category, "bass")
+			s.Require().Equal(tt.want, got.ID)
+		})
+	}
+}
+
+// TestAsNamedKeepsTheBlock covers the two ways a block's own name answers
+// nothing, both of which keep the block rather than dropping it.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *FillPublicTestSuite) TestAsNamedKeepsTheBlock() {
+	for _, tt := range []struct {
+		name  string
+		block catalog.Block
+	}{
+		{
+			// Nothing to resolve. A block with neither gear nor a name has no
+			// text a document could carry, which is a name nothing can ask for
+			// rather than a reason to drop the block.
+			name:  "a block with no name at all",
+			block: catalog.Block{ID: "only", Category: catalog.CategoryCab},
+		},
+		{
+			// A name that resolves to nothing, because the instrument filter
+			// turns the one candidate away.
+			name: "a name no model answers",
+			block: catalog.Block{
+				ID:       "only",
+				Name:     "Only",
+				Category: catalog.CategoryCab,
+				BasedOn:  "a cabinet nothing in this catalog emulates",
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			cat := &catalog.Catalog{
+				Device: "HX Stomp",
+				Blocks: map[catalog.ModelID]catalog.Block{tt.block.ID: tt.block},
+			}
+
+			got := compile.AsNamed(cat, tt.block, catalog.CategoryCab, "bass")
+			s.Require().Equal(catalog.ModelID("only"), got.ID)
+		})
+	}
+}
+
 func TestFillPublicTestSuite(
 	t *testing.T,
 ) {

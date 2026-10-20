@@ -31,6 +31,7 @@ func block(
 	m wireModel,
 	family string,
 	gear gearEntry,
+	bass bool,
 ) catalog.Block {
 	b := catalog.Block{
 		ID:          catalog.ModelID(m.SymbolicID),
@@ -38,6 +39,7 @@ func block(
 		Category:    category(family),
 		BasedOn:     gear.BasedOn,
 		Subcategory: gear.Subcategory,
+		Bass:        bass,
 		Family:      family,
 		CabLink:     catalog.ModelID(m.CabLink),
 		Params:      make(map[string]catalog.Param, len(m.Params)),

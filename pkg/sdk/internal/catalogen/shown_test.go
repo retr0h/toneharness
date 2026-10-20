@@ -136,11 +136,11 @@ func (s *ShownTestSuite) TestReadShownNames() {
 				s.Require().NoError(os.Mkdir(filepath.Join(dir, shownFile), 0o750))
 			}
 
-			got, err := readShownNames(dir)
+			got, err := readShown(dir)
 
 			as := map[string]string{}
 			for k, v := range got {
-				as[string(k)] = v
+				as[string(k)] = v.Name
 			}
 
 			tt.then(as, err)

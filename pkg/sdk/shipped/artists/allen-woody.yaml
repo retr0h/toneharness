@@ -46,7 +46,7 @@ rig:
           note: 'Vintage Guitar, in his own words, and he draws the line between his two bands himself. On this one: "With Gov''t Mule, it''s all SVTs and Orange amps, and I''ve also been using the reissue Crossroad stacks; Bud Ross of Kustom fame made them; they''re even rolled and pleated." On the other: "My amp set-up with the Brothers is geared toward a high fidelity sound; lots of power amps, preamps, high-end cabinets, plus one SVT cabinet that we use just for ''dirt''", and without it "the sound would be too clean".'
           url: https://www.vintageguitar.com/2794/allen-woody/
     - role: cab
-      gear: 8x10 Ampeg SVT-E
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -96,16 +96,18 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: 8x10 Ampeg SVT-E
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        Distance: "1.0"
-        EarlyReflections: "0.0"
-        High Cut: "8000.0"
+        Angle: "45.0"
+        Distance: "5.0"
+        HighCut: "8000.0"
         Level: "0.0"
-        LowCut: "19.9"
+        LowCut: "37.0"
+        Mic: "3"
+        Position: "0.0"
       attrs:
         '@position': "2"
       position: 2

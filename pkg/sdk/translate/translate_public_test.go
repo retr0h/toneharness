@@ -267,6 +267,11 @@ func (s *TranslatePublicTestSuite) TestTranslate() {
 
 				s.Require().NoError(err)
 				s.Require().NoError(rig.Validate(got))
+
+				// The amplifier alone. A cabinet is measured the same way and
+				// could be chosen the same way, and is not: an amplifier states
+				// the cabinet Line 6 voiced it with, which is better evidence
+				// than the nearest of eight that are all darker than the target.
 				s.Require().Len(got.Chain, 1)
 				s.Require().Equal(rig.RoleAmp, got.Chain[0].Role)
 				s.Require().NotEmpty(got.Chain[0].Gear)
@@ -278,10 +283,12 @@ func (s *TranslatePublicTestSuite) TestTranslate() {
 					}
 				}
 
-				// 29 rather than 27 since the gear map learned that a US
-				// Dripman is a Fender Bassman, which is a bass amplifier, so
-				// the amp and its preamp became reachable by a bass build.
-				s.Require().Contains(said, "closest of 29 measured",
+				// 15 of the 29 bass amplifiers, because a preamp is the same
+				// amplifier with the power stage gone and loses to it. The
+				// Fender Bassman (Silverface) survives as a preamp: this
+				// device models it as nothing else, and a copy with nothing
+				// better beside it is the best copy there is.
+				s.Require().Contains(said, "closest of 15 measured",
 					"the note says what it chose from and why")
 			},
 		},
@@ -1135,7 +1142,7 @@ words:
 			ask: "genre: [pop-punk]\ninstrument: bass\nlike:\n  recording: " +
 				s.recording() + "\n",
 			said:   []string{s.recording()},
-			absent: []string{"closest of 29 measured to punk"},
+			absent: []string{"closest of 15 measured to punk"},
 		},
 		{
 			// Punk is measured on bass. Aiming a guitar build with it would rank
@@ -1156,12 +1163,13 @@ words:
 			said: []string{"to pop-punk"},
 		},
 		{
-			// Only the 27 amplifiers Line 6 calls bass models, where the pool
-			// was all 224. A bass build used to rank 173 guitar amplifiers and
-			// pick whichever sat nearest by spectrum.
+			// Only the amplifiers Line 6 calls bass models, where the pool was
+			// all 224. A bass build used to rank 173 guitar amplifiers and pick
+			// whichever sat nearest by spectrum. 15 of the 29 rather than all
+			// of them, because a preamp loses to the amplifier it is half of.
 			name: "the pool is the instrument's own amplifiers",
 			ask:  "genre: [pop-punk]\ninstrument: bass\n",
-			said: []string{"closest of 29 measured"},
+			said: []string{"closest of 15 measured"},
 		},
 	} {
 		s.Run(tt.name, func() {

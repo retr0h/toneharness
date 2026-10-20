@@ -110,44 +110,109 @@ func (s *GearPublicTestSuite) TestPlayable() {
 	}
 }
 
-// TestSplitsByInstrument covers whether a category is grouped by what it is
-// played with.
-func (s *GearPublicTestSuite) TestSplitsByInstrument() {
+// TestGroupedBy covers which of the two things Line 6 group blocks by, and
+// what each grouping then admits.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *GearPublicTestSuite) TestGroupedBy() {
 	for _, tt := range []struct {
-		name   string
-		blocks map[catalog.ModelID]catalog.Block
-		ids    []string
-		want   bool
+		name       string
+		blocks     map[catalog.ModelID]catalog.Block
+		ids        []string
+		instrument string
+		// grouped is whether these blocks are grouped by instrument at all.
+		grouped bool
+		// admits is what the test says of each id, where there is one.
+		admits map[string]bool
 	}{
 		{
-			// Amplifiers, which Line 6 groups "Guitar" and "Bass".
-			name: "a category that names an instrument",
+			// Amplifiers, which Line 6 group "Guitar" and "Bass".
+			name: "a subcategory that names an instrument",
 			blocks: map[catalog.ModelID]catalog.Block{
-				"a": {Subcategory: "Guitar"}, "b": {},
+				"a": {Subcategory: "Guitar"}, "b": {Subcategory: "Bass"},
 			},
-			ids:  []string{"a", "b"},
-			want: true,
+			ids:        []string{"a", "b"},
+			instrument: "bass",
+			grouped:    true,
+			admits:     map[string]bool{"a": false, "b": true},
 		},
 		{
-			// Cabinets, which it groups "Single, Dual", by how many microphones
-			// they offer. Requiring a match here excluded every cabinet on the
-			// device, because none claims to be for an instrument.
-			name: "a category that names something else",
+			// The strict reading. 23 amplifiers carry no subcategory, some of
+			// them bass models and some not, so an unmarked one is a block
+			// nobody can place and it loses rather than wins.
+			name: "a block the subcategory does not place",
+			blocks: map[catalog.ModelID]catalog.Block{
+				"a": {Subcategory: "Bass"}, "b": {},
+			},
+			ids:        []string{"a", "b"},
+			instrument: "bass",
+			grouped:    true,
+			admits:     map[string]bool{"a": true, "b": false},
+		},
+		{
+			// Cabinets. Their subcategory counts microphones and says nothing
+			// about the instrument, so the mark is what places them. Unmarked
+			// means the other instrument here rather than unplaceable: every
+			// cabinet is for one or the other.
+			name: "a mark where the subcategory names something else",
+			blocks: map[catalog.ModelID]catalog.Block{
+				"a": {Subcategory: "Single, Dual", Bass: true},
+				"b": {Subcategory: "Single, Dual"},
+			},
+			ids:        []string{"a", "b"},
+			instrument: "bass",
+			grouped:    true,
+			admits:     map[string]bool{"a": true, "b": false},
+		},
+		{
+			// And the same pool the other way up, which is the case that would
+			// have emptied it: nothing is marked for guitar, so a guitar build
+			// takes what is not marked for bass.
+			name: "the marked pool asked for the other instrument",
+			blocks: map[catalog.ModelID]catalog.Block{
+				"a": {Subcategory: "Single, Dual", Bass: true},
+				"b": {Subcategory: "Single, Dual"},
+			},
+			ids:        []string{"a", "b"},
+			instrument: "guitar",
+			grouped:    true,
+			admits:     map[string]bool{"a": false, "b": true},
+		},
+		{
+			// Neither said, which is every other category: a reverb is not a
+			// guitar reverb, and nothing should be filtered out of one.
+			name: "blocks grouped by neither",
 			blocks: map[catalog.ModelID]catalog.Block{
 				"a": {Subcategory: "Single, Dual"},
 			},
-			ids: []string{"a"},
+			ids:        []string{"a"},
+			instrument: "bass",
 		},
 		{
+			// Measured and not in the catalog, which is the two drifting
+			// apart. Kept, so the drift shows up as a block in the chain
+			// rather than as a chain that is merely shorter.
 			name: "a shortlist the catalog does not hold",
+			blocks: map[catalog.ModelID]catalog.Block{
+				"a": {Subcategory: "Single, Dual", Bass: true},
+			},
+			ids:        []string{"a", "nowhere"},
+			instrument: "bass",
+			grouped:    true,
+			admits:     map[string]bool{"a": true, "nowhere": true},
+		},
+		{
+			name:       "no catalog at all",
+			ids:        []string{"a"},
+			instrument: "bass",
+		},
+		{
+			// An unstated instrument is nothing to filter against.
+			name: "no instrument stated",
 			blocks: map[catalog.ModelID]catalog.Block{
 				"a": {Subcategory: "Bass"},
 			},
-			ids: []string{"nowhere"},
-		},
-		{
-			name: "no catalog at all",
-			ids:  []string{"a"},
+			ids: []string{"a"},
 		},
 	} {
 		s.Run(tt.name, func() {
@@ -156,8 +221,146 @@ func (s *GearPublicTestSuite) TestSplitsByInstrument() {
 				held = s.built(tt.blocks)
 			}
 
-			s.Require().Equal(tt.want,
-				translate.SplitsByInstrument(held, s.ranked(tt.ids...)))
+			fits := translate.GroupedBy(held, s.ranked(tt.ids...), tt.instrument)
+
+			if !tt.grouped {
+				s.Require().Nil(fits)
+
+				return
+			}
+
+			s.Require().NotNil(fits)
+
+			for id, want := range tt.admits {
+				s.Require().Equal(want, fits(id), id)
+			}
+		})
+	}
+}
+
+// TestWanted covers narrowing a ranking to the models that are the best of
+// their gear, which is the order catalog.Block.Preferred states.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *GearPublicTestSuite) TestWanted() {
+	for _, tt := range []struct {
+		name   string
+		blocks map[catalog.ModelID]catalog.Block
+		ids    []string
+		want   []string
+	}{
+		{
+			// The reading this exists for. A bass rig aimed at punk took the
+			// legacy cabinet, which carries nothing to tune, over the mic'd one
+			// seven units further out that carries a twelve-microphone list.
+			name: "a mic'd cabinet beats a legacy one",
+			blocks: map[catalog.ModelID]catalog.Block{
+				"legacy": {Family: "cab", BasedOn: "one cabinet"},
+				"mic":    {Family: "cabmicirs", BasedOn: "one cabinet"},
+			},
+			ids:  []string{"legacy", "mic"},
+			want: []string{"mic"},
+		},
+		{
+			// An amplifier before a preamp, which is the same list's first
+			// rule: the preamp is the same gear with the power stage gone.
+			name: "an amplifier beats its preamp",
+			blocks: map[catalog.ModelID]catalog.Block{
+				"pre": {Family: "preamp", BasedOn: "one amplifier"},
+				"amp": {Family: "amp", BasedOn: "one amplifier"},
+			},
+			ids:  []string{"pre", "amp"},
+			want: []string{"amp"},
+		},
+		{
+			// The pan variant sits behind the plain one: pan is a stereo
+			// placement control and a bass rig has no use for it.
+			name: "the plain mic'd cabinet beats the pan variant",
+			blocks: map[catalog.ModelID]catalog.Block{
+				"pan": {
+					Family:  "cabmicirswithpan",
+					BasedOn: "one cabinet",
+					Params:  map[string]catalog.Param{"Mic": {}},
+				},
+				"plain": {
+					Family:  "cabmicirs",
+					BasedOn: "one cabinet",
+					Params:  map[string]catalog.Param{"Mic": {}},
+				},
+			},
+			ids:  []string{"pan", "plain"},
+			want: []string{"plain"},
+		},
+		{
+			// The microphone rule, which is about the pool rather than about
+			// copies of one cabinet: these two are different gear, and the
+			// legacy one has no mic'd counterpart at all, so no per-gear rule
+			// would reach it. It is the case the bass rig aimed at punk hit.
+			name: "a cabinet offering a microphone beats one that does not",
+			blocks: map[catalog.ModelID]catalog.Block{
+				"legacy": {Family: "cab", BasedOn: "a 1x12"},
+				"mic": {
+					Family:  "cabmicirs",
+					BasedOn: "a 1x15",
+					Params:  map[string]catalog.Param{"Mic": {}},
+				},
+			},
+			ids:  []string{"legacy", "mic"},
+			want: []string{"mic"},
+		},
+		{
+			// And where none is offered, nothing is dropped for want of one.
+			// An amplifier carries no Mic, so this is no rule at all for one.
+			name: "no microphone offered is no rule",
+			blocks: map[catalog.ModelID]catalog.Block{
+				"a": {Family: "amp", BasedOn: "one amp"},
+				"b": {Family: "amp", BasedOn: "another amp"},
+			},
+			ids:  []string{"a", "b"},
+			want: []string{"a", "b"},
+		},
+		{
+			// Nothing is excluded for being the only thing there is. A tier
+			// rather than a sort means the best tier present wins, and a pool
+			// of legacy cabinets is still a pool.
+			name: "the only tier there is survives",
+			blocks: map[catalog.ModelID]catalog.Block{
+				"a": {Family: "cab", BasedOn: "one cabinet"},
+				"b": {Family: "cab", BasedOn: "another cabinet"},
+			},
+			ids:  []string{"a", "b"},
+			want: []string{"a", "b"},
+		},
+		{
+			// Measured and not in the catalog, kept for the same reason it is
+			// kept everywhere else here.
+			name: "a block the catalog does not hold",
+			blocks: map[catalog.ModelID]catalog.Block{
+				"mic": {Family: "cabmicirs", BasedOn: "one cabinet"},
+			},
+			ids:  []string{"mic", "nowhere"},
+			want: []string{"mic", "nowhere"},
+		},
+		{
+			name: "no catalog at all",
+			ids:  []string{"a"},
+			want: []string{"a"},
+		},
+	} {
+		s.Run(tt.name, func() {
+			var held *catalog.Catalog
+			if tt.blocks != nil {
+				held = s.built(tt.blocks)
+			}
+
+			kept := translate.Wanted(held, s.ranked(tt.ids...))
+
+			got := make([]string, 0, len(kept))
+			for _, m := range kept {
+				got = append(got, m.ID)
+			}
+
+			s.Require().ElementsMatch(tt.want, got)
 		})
 	}
 }

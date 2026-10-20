@@ -41,7 +41,7 @@ rig:
           note: 'A Premier Guitar rig rundown: "Following Horton''s reduction motif, Esperance is only bringing out two rackmounted Ampegs amps. His main stage head is a SVT-4 Pro and the backup is a BR5." It also has him on custom Lakland 44-94 four-strings, D''Addario .050-.120 strings, and fingers rather than a pick.'
           url: https://www.premierguitar.com/gear/rig-rundown-papa-roachs-jerry-horton-tobin-esperance
     - role: cab
-      gear: 8x10 Ampeg SVT-E
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
@@ -91,16 +91,18 @@ built:
         '@position': "1"
       position: 1
     - role: cab
-      gear: 8x10 Ampeg SVT-E
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        Distance: "1.0"
-        EarlyReflections: "0.0"
-        High Cut: "8000.0"
+        Angle: "45.0"
+        Distance: "5.0"
+        HighCut: "8000.0"
         Level: "0.0"
-        LowCut: "19.9"
+        LowCut: "37.0"
+        Mic: "3"
+        Position: "0.0"
       attrs:
         '@position': "2"
       position: 2

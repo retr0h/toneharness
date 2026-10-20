@@ -50,6 +50,10 @@ type MeasureRunTestSuite struct {
 	pedal *mocks.MockPedal
 	out   string
 	dry   string
+	// playing is what the device answers that it is holding. Every model the
+	// catalog carries, so the seated check passes whichever block a case
+	// measures, and a case stays about what it was written for.
+	playing plan.Plan
 }
 
 func (s *MeasureRunTestSuite) SetupTest() {
@@ -72,6 +76,26 @@ func (s *MeasureRunTestSuite) SetupTest() {
 	s.pedal.EXPECT().
 		PresetFile(gomock.Any(), gomock.Any()).
 		Return(sdk.Reading{Plan: routed()}, nil).AnyTimes()
+
+	// What the device says it is playing, which every reading is now checked
+	// against: a block the device did not seat measures the loop rather than
+	// the block, and the committed library shipped 46 cabinets that way. The
+	// chain here holds whatever was asked for, so the check passes and the
+	// cases below stay about what they were written for. seated's own refusal
+	// is covered where that function lives.
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	s.playing = plan.Plan{Name: "measuring"}
+	for id := range cat.Blocks {
+		s.playing.Blocks = append(s.playing.Blocks,
+			plan.Block{Model: catalog.ModelID(id), Enabled: true})
+	}
+
+	s.pedal.EXPECT().Current(gomock.Any(), sdk.FormatRig).
+		DoAndReturn(func(context.Context, sdk.Format) (sdk.Reading, error) {
+			return sdk.Reading{Plan: s.playing}, nil
+		}).AnyTimes()
 }
 
 // bench hands back a tone loud enough to measure.
