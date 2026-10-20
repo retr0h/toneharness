@@ -136,6 +136,22 @@ func (b bench) Through(
 
 func (bench) Name() string { return "a bench" }
 
+// quietly is the same tone at the amplitude a chain that has stopped reads at.
+//
+// Not zero. A dead chain is the converters rather than silence, and that is the
+// whole difficulty: two takes of it agree to the last digit, so it clears a
+// noise floor more convincingly than music does.
+func (bench) quietly(
+	signal []float32,
+) []float32 {
+	out := make([]float32, len(signal))
+	for i := range out {
+		out[i] = float32(0.0000002 * math.Sin(2*math.Pi*110*float64(i)/sdk.Rate))
+	}
+
+	return out
+}
+
 // quits is a bench that answers a few times and then stops.
 //
 // The failure the plain one cannot produce. `steady` throws its first reading away,
@@ -170,6 +186,37 @@ func (q *quits) Through(
 	}
 
 	return q.bench.Through(ctx, signal)
+}
+
+// dies is a bench that answers at a working level and then goes quiet for good.
+//
+// The fault `6x10 Cali Power` shipped with. Its Mic swept on a chain settling
+// at -54dB and the chain then stopped, so Position, Distance, Angle, LowCut,
+// HighCut and Level each settled near -130 and were each held to a floor of
+// -160: six sweeps of hiss that cleared their own floor by thirty decibels.
+//
+// A pointer receiver for the reason `quits` has one: it counts.
+type dies struct {
+	bench
+
+	// after is how many readings it answers at a working level before the
+	// chain stops. Everything after that comes back at the amplitude a dead
+	// chain has, which is not silence but the converters.
+	after int
+	seen  int
+}
+
+func (d *dies) Through(
+	ctx context.Context,
+	signal []float32,
+) ([]float32, error) {
+	d.seen++
+
+	if d.seen > d.after {
+		return d.quietly(signal), nil
+	}
+
+	return d.bench.Through(ctx, signal)
 }
 
 // squealing is a loop oscillating: it answers with the same high tone whatever

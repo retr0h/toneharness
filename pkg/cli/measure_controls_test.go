@@ -433,6 +433,28 @@ func (s *ControlsRunTestSuite) TestControlsRefusesWhenTheDeviceNamesNothingEithe
 // forbids Turn and Choose outright: a sweep that refused only afterwards is
 // the bug this exists for, and it cost four minutes forty-five seconds a
 // block while looking like a device fault.
+// TestControlsRefusesAChainThatDiesMidSweep covers the sweep stopping when the
+// chain stops, rather than carrying on and measuring the converters.
+//
+// The silence floor is thirty decibels under what the chain settles at, and
+// that was read again before every control, so a chain that dies drags the
+// floor after it. `6x10 Cali Power` shipped with six controls of hiss recorded
+// that way, each clearing its own floor by thirty decibels, reading centroids
+// between 908 and 3083Hz on a bass cabinet.
+func (s *ControlsRunTestSuite) TestControlsRefusesAChainThatDiesMidSweep() {
+	s.ready()
+
+	// Enough readings for the first control and then nothing, which is the
+	// shape of the fault: the block that was swept first is fine and every
+	// one after it is the converters.
+	_, said, err := s.run("HD2_CabMicIr_2x15Brute", &dies{after: 24})
+
+	s.Require().Error(err)
+	s.Require().ErrorIs(err, errChainDied)
+	s.Require().Contains(err.Error(), "gone quiet partway through")
+	s.Require().NotEmpty(said)
+}
+
 func (s *ControlsRunTestSuite) TestControlsRefusesABlockTheDeviceDidNotLoad() {
 	for _, tt := range []struct {
 		name    string
