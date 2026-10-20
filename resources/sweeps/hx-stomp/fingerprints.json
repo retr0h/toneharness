@@ -3761,23 +3761,6 @@
    "clipped": false,
    "refused": ""
   },
-  "HD2_CompressorTransientShaper": {
-   "centroid": 124.1127399114236,
-   "level": -56.55840325413938,
-   "low": 93.69480438201246,
-   "mid": 6.290559224531115,
-   "high": 0.014636393456407437,
-   "transient": 0.6406065455192,
-   "decay": 0.22,
-   "dynamics": 4.9279148002048085,
-   "harmonics": 38.13096583139188,
-   "lean": 0.1566644947668954,
-   "id": "HD2_CompressorTransientShaper",
-   "name": "Transient Shaper",
-   "category": "comp",
-   "clipped": false,
-   "refused": ""
-  },
   "HD2_DL4AnalogDelayStereo": {
    "centroid": 122.87843251922293,
    "level": -56.42668334872567,

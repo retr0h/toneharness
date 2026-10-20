@@ -1,0 +1,536 @@
+{
+ "device": "HX Stomp",
+ "gear": "Red Squeeze",
+ "block": "HD2_CompressorRedSqueeze",
+ "slot": 1,
+ "isolated": true,
+ "chain": "schema: ToneSpec\nversion: 4.0.0\nid: slot-01a\nrig:\n  chain:\n    - role: comp\n      gear: MXR Dyna Comp\n      controls:\n        Level: \"5.400000095367432\"\n        Mix: \"1.0\"\n        Sensitivity: \"0.4399999976158142\"\n      attrs:\n        '@position': \"0\"\n        '@type': \"0\"\n      position: 0\n  preset:\n    dsp0:\n      members:\n        inputA:\n          controls:\n            decay: \"0.5\"\n            noiseGate: \"false\"\n            threshold: \"-48\"\n          attrs:\n            '@input': \"1\"\n          model: HelixStomp_AppDSPFlowInput\n        inputB:\n          attrs:\n            '@input': \"0\"\n          model: HelixStomp_AppDSPFlowInput\n        join:\n          controls:\n            A Level: \"0\"\n            A Pan: \"0.5\"\n            B Level: \"0\"\n            B Pan: \"0.5\"\n            B Polarity: \"false\"\n            Level: \"0\"\n          attrs:\n            '@enabled': \"true\"\n            '@position': \"0\"\n          model: HD2_AppDSPFlowJoin\n        outputA:\n          controls:\n            gain: \"0\"\n            pan: \"0.5\"\n          attrs:\n            '@output': \"1\"\n          model: HelixStomp_AppDSPFlowOutputMain\n        outputB:\n          attrs:\n            '@output': \"0\"\n          model: HelixStomp_AppDSPFlowOutputSend\n        split:\n          controls:\n            BalanceA: \"0.5\"\n            BalanceB: \"0.5\"\n            bypass: \"false\"\n          attrs:\n            '@enabled': \"true\"\n            '@position': \"0\"\n          model: HD2_AppDSPFlowSplitY\n    dsp1:\n      members: {}\n    global:\n      attrs:\n        '@DtSelect': \"2\"\n        '@PowercabMode': \"0\"\n        '@PowercabSelect': \"2\"\n        '@PowercabVoicing': \"0\"\n        '@current_snapshot': \"0\"\n        '@cursor_dsp': \"0\"\n        '@cursor_group': \"\"\n        '@cursor_path': \"0\"\n        '@cursor_position': \"0\"\n        '@guitarinputZ': \"0\"\n        '@guitarpad': \"0\"\n        '@pedalstate': \"2\"\n        '@tempo': \"120\"\n        '@topology0': A\n        '@topology1': \"0\"\n      model: '@global_params'\n    snapshot0:\n      attrs:\n        '@custom_name': \"false\"\n        '@ledcolor': \"0\"\n        '@name': SNAPSHOT 1\n        '@pedalstate': \"0\"\n        '@tempo': \"120\"\n        '@valid': \"true\"\n      members:\n        blocks:\n          members:\n            dsp0:\n              controls:\n                block0: \"true\"\n    snapshot1:\n      attrs:\n        '@custom_name': \"false\"\n        '@ledcolor': \"0\"\n        '@name': SNAPSHOT 2\n        '@pedalstate': \"0\"\n        '@tempo': \"120\"\n        '@valid': \"true\"\n      members:\n        blocks:\n          members:\n            dsp0:\n              controls:\n                block0: \"true\"\n    snapshot2:\n      attrs:\n        '@custom_name': \"false\"\n        '@ledcolor': \"0\"\n        '@name': SNAPSHOT 3\n        '@pedalstate': \"0\"\n        '@tempo': \"120\"\n        '@valid': \"true\"\n      members:\n        blocks:\n          members:\n            dsp0:\n              controls:\n                block0: \"true\"\n    variax:\n      attrs:\n        '@variax_customtuning': \"true\"\n        '@variax_lockctrls': \"0\"\n        '@variax_magmode': \"false\"\n        '@variax_model': \"0\"\n        '@variax_str1level': \"1\"\n        '@variax_str1tuning': \"0\"\n        '@variax_str2level': \"1\"\n        '@variax_str2tuning': \"0\"\n        '@variax_str3level': \"1\"\n        '@variax_str3tuning': \"0\"\n        '@variax_str4level': \"1\"\n        '@variax_str4tuning': \"0\"\n        '@variax_str5level': \"1\"\n        '@variax_str5tuning': \"0\"\n        '@variax_str6level': \"1\"\n        '@variax_str6tuning': \"0\"\n        '@variax_toneknob': \"-0.10000002384185791\"\n        '@variax_volumeknob': \"-0.10000002384185791\"\n  instrument: guitar\n",
+ "reference": {
+  "file": "resources/dry/bass-di.wav",
+  "sha256": "859209f091f1e92db2ffdfccf9b586e348005aafcf7c7ed8eee08f235087af4b",
+  "seconds": 4
+ },
+ "instrument": "bass",
+ "volume": 38,
+ "rig": [
+  "External Headphones",
+  "HX Stomp"
+ ],
+ "open": true,
+ "pinned_on": "External Headphones",
+ "controls": {
+  "Level": {
+   "index": 2,
+   "kind": "float",
+   "control": "Level",
+   "span": {
+    "low": -60,
+    "high": 12,
+    "fromCatalog": true
+   },
+   "noise": {
+    "centroid": 0.2,
+    "decay": 0.020000000000000018,
+    "dynamics": 0.05,
+    "harmonics": 0.05,
+    "high": 0.005,
+    "lean": 0.005,
+    "level": 0.05,
+    "low": 0.02,
+    "mid": 0.02,
+    "transient": 0.022213187393490985
+   },
+   "settled": -40.009395169630714,
+   "silentBelow": -70.00939516963072,
+   "mutedAt": [
+    -51,
+    -42,
+    -33
+   ],
+   "clippedAt": null,
+   "points": [
+    {
+     "value": -24,
+     "centroid": 128.58058101304016,
+     "level": -69.38904639130547,
+     "low": 95.55668318209437,
+     "mid": 4.435551062143043,
+     "high": 0.007765755762578932,
+     "transient": 0.82631069254587,
+     "decay": 0.46,
+     "dynamics": 5.147959788488575,
+     "harmonics": 25.276726726645403,
+     "lean": -0.14452693842725906
+    },
+    {
+     "value": -15,
+     "centroid": 128.5764229118393,
+     "level": -60.38905410896615,
+     "low": 95.5573225262264,
+     "mid": 4.434871147035341,
+     "high": 0.007806326738268258,
+     "transient": 0.6793210706142878,
+     "decay": 0.71,
+     "dynamics": 4.911096331096337,
+     "harmonics": 25.283544482853745,
+     "lean": -0.15843531822050475
+    },
+    {
+     "value": -6,
+     "centroid": 128.57325222651107,
+     "level": -51.38888483682116,
+     "low": 95.55792425674613,
+     "mid": 4.434270047586854,
+     "high": 0.0078056956670127355,
+     "transient": 0.6763046419256339,
+     "decay": 0.71,
+     "dynamics": 4.9136426221998315,
+     "harmonics": 25.283742862691025,
+     "lean": -0.15849656887546104
+    },
+    {
+     "value": 3,
+     "centroid": 128.57668701971576,
+     "level": -42.386792208785536,
+     "low": 95.55692421277733,
+     "mid": 4.435274466235539,
+     "high": 0.0078013209871320545,
+     "transient": 0.6251241526997123,
+     "decay": 0.37,
+     "dynamics": 5.066468104372989,
+     "harmonics": 25.342956025508915,
+     "lean": -0.14583858841112418
+    },
+    {
+     "value": 12,
+     "centroid": 128.5796690687701,
+     "level": -33.38614562442247,
+     "low": 95.55696356203481,
+     "mid": 4.435278349015195,
+     "high": 0.007758088949996517,
+     "transient": 0.7576710692796159,
+     "decay": 0.52,
+     "dynamics": 5.168606784848171,
+     "harmonics": 25.276153896593552,
+     "lean": -0.14410672197832206
+    }
+   ],
+   "fits": {
+    "centroid": {
+     "perTurn": -0.00001733089626283244,
+     "straight": 0.007175787344736895
+    },
+    "decay": {
+     "perTurn": -0.002444444444444444,
+     "straight": 0.0523130134025076
+    },
+    "dynamics": {
+     "perTurn": 0.0021851751777315995,
+     "straight": 0.06292507262125113
+    },
+    "harmonics": {
+     "perTurn": 0.0006473986950163004,
+     "straight": 0.10547752909349506
+    },
+    "high": {
+     "perTurn": -2.2599307001148923e-7,
+     "straight": 0.018682239376602183
+    },
+    "lean": {
+     "perTurn": 0.00014930180785838404,
+     "straight": 0.08026396286012583
+    },
+    "level": {
+     "perTurn": 1.000089593710518,
+     "straight": 0.9999999982923952
+    },
+    "low": {
+     "perTurn": 0.0000018049603533477743,
+     "straight": 0.0028314847236668994
+    },
+    "mid": {
+     "perTurn": -0.000001578967283312317,
+     "straight": 0.0020318338243681122
+    },
+    "transient": {
+     "perTurn": -0.002127512938300929,
+     "straight": 0.146431157277087
+    }
+   }
+  },
+  "Mix": {
+   "index": 1,
+   "kind": "float",
+   "control": "Mix",
+   "span": {
+    "low": 0,
+    "high": 1,
+    "fromCatalog": true
+   },
+   "noise": {
+    "centroid": 0.2,
+    "decay": 0.07999999999999996,
+    "dynamics": 0.05,
+    "harmonics": 0.05,
+    "high": 0.005,
+    "lean": 0.005,
+    "level": 0.05,
+    "low": 0.02,
+    "mid": 0.02,
+    "transient": 0.018332714638470637
+   },
+   "settled": -40.00765675961301,
+   "silentBelow": -70.00765675961301,
+   "mutedAt": null,
+   "clippedAt": null,
+   "points": [
+    {
+     "value": 0,
+     "centroid": 113.38653276576872,
+     "level": -51.03259276003766,
+     "low": 97.09346524310456,
+     "mid": 2.901332766351457,
+     "high": 0.005201990543981668,
+     "transient": 0.7266524785160993,
+     "decay": 0.47,
+     "dynamics": 4.923352632648827,
+     "harmonics": 36.72547554544575,
+     "lean": 0.2477850236347783
+    },
+    {
+     "value": 0.125,
+     "centroid": 123.69298882651596,
+     "level": -49.48450007348622,
+     "low": 96.10350817187704,
+     "mid": 3.889507006966314,
+     "high": 0.006984821156652757,
+     "transient": 0.7427544310838851,
+     "decay": 0.52,
+     "dynamics": 4.481283635396002,
+     "harmonics": 28.376106428342712,
+     "lean": -0.010628119252386567
+    },
+    {
+     "value": 0.25,
+     "centroid": 131.50054027345416,
+     "level": -46.67888900764699,
+     "low": 95.33901030420559,
+     "mid": 4.6526563142471655,
+     "high": 0.0083333815472517,
+     "transient": 0.8201417423806068,
+     "decay": 0.92,
+     "dynamics": 4.296060847498711,
+     "harmonics": 18.228660209736777,
+     "lean": -0.2205348018336513
+    },
+    {
+     "value": 0.375,
+     "centroid": 133.7179535183745,
+     "level": -43.22682363305287,
+     "low": 95.1064336829353,
+     "mid": 4.884868938495354,
+     "high": 0.008697378569355077,
+     "transient": 0.7806331825739966,
+     "decay": 0.92,
+     "dynamics": 4.732479661549626,
+     "harmonics": 16.912653377169253,
+     "lean": -0.2783960659288639
+    },
+    {
+     "value": 0.5,
+     "centroid": 133.00712750057392,
+     "level": -41.62945039074421,
+     "low": 95.15677444815067,
+     "mid": 4.83471525430625,
+     "high": 0.008510297543072448,
+     "transient": 0.7528330572724465,
+     "decay": 0.74,
+     "dynamics": 5.086194696807454,
+     "harmonics": 18.1526812633659,
+     "lean": -0.22316962289743025
+    },
+    {
+     "value": 0.625,
+     "centroid": 131.44192344387199,
+     "level": -39.32773080051988,
+     "low": 95.2950961964142,
+     "mid": 4.696588687775847,
+     "high": 0.008315115809942498,
+     "transient": 0.7562146022554307,
+     "decay": 0.47,
+     "dynamics": 4.701078262244215,
+     "harmonics": 17.806835017968684,
+     "lean": -0.21986487277936248
+    },
+    {
+     "value": 0.75,
+     "centroid": 130.19640056946767,
+     "level": -39.66435014502625,
+     "low": 95.40884411013528,
+     "mid": 4.583082754365532,
+     "high": 0.008073135499199354,
+     "transient": 0.6766395635589828,
+     "decay": 0.55,
+     "dynamics": 5.091068723587351,
+     "harmonics": 20.095189918192748,
+     "lean": -0.15841415934022654
+    },
+    {
+     "value": 0.875,
+     "centroid": 129.1904587256572,
+     "level": -39.872999965940835,
+     "low": 95.50191194937106,
+     "mid": 4.4901634895826605,
+     "high": 0.007924561046265098,
+     "transient": 0.7540161192553707,
+     "decay": 0.47,
+     "dynamics": 4.750184342704589,
+     "harmonics": 25.614131345177864,
+     "lean": -0.15878977813644382
+    },
+    {
+     "value": 1,
+     "centroid": 128.57128559724754,
+     "level": -39.98591643456785,
+     "low": 95.55857521113731,
+     "mid": 4.433605885175853,
+     "high": 0.007818903686837254,
+     "transient": 0.749147213885466,
+     "decay": 0.47,
+     "dynamics": 4.736742881889601,
+     "harmonics": 25.28690881799368,
+     "lean": -0.15868674871246655
+    }
+   ],
+   "fits": {
+    "centroid": {
+     "perTurn": 9.646281538781805,
+     "straight": 0.2728438208374643
+    },
+    "decay": {
+     "perTurn": -0.1786666666666667,
+     "straight": 0.10008174791914382
+    },
+    "dynamics": {
+     "perTurn": 0.21585032956809666,
+     "straight": 0.08084430527386632
+    },
+    "harmonics": {
+     "perTurn": -6.588393480212192,
+     "straight": 0.11691147009108882
+    },
+    "high": {
+     "perTurn": 0.0016512156512989466,
+     "straight": 0.27333879213214207
+    },
+    "lean": {
+     "perTurn": -0.25167994505397334,
+     "straight": 0.28772396161847313
+    },
+    "level": {
+     "perTurn": 12.12658349097198,
+     "straight": 0.841565482237294
+    },
+    "low": {
+     "perTurn": -1.0154691560064861,
+     "straight": 0.308859035663559
+    },
+    "mid": {
+     "perTurn": 1.0138179403551797,
+     "straight": 0.3089211011059504
+    },
+    "transient": {
+     "perTurn": -0.025021190929318655,
+     "straight": 0.04935491082747312
+    }
+   }
+  },
+  "Sensitivity": {
+   "index": 0,
+   "kind": "float",
+   "control": "Sensitivity",
+   "span": {
+    "low": 0,
+    "high": 1,
+    "fromCatalog": true
+   },
+   "noise": {
+    "centroid": 0.2,
+    "decay": 0.06999999999999995,
+    "dynamics": 0.05,
+    "harmonics": 0.05,
+    "high": 0.005,
+    "lean": 0.005,
+    "level": 0.05,
+    "low": 0.02,
+    "mid": 0.02,
+    "transient": 0.044937848672763514
+   },
+   "settled": -40.01101112058214,
+   "silentBelow": -70.01101112058214,
+   "mutedAt": null,
+   "clippedAt": null,
+   "points": [
+    {
+     "value": 0,
+     "centroid": 127.63938158854573,
+     "level": -49.732726819619074,
+     "low": 95.83356816341536,
+     "mid": 4.158968980134586,
+     "high": 0.007462856450055043,
+     "transient": 0.751351058124909,
+     "decay": 0.37,
+     "dynamics": 4.157375061418349,
+     "harmonics": 25.27442815082841,
+     "lean": -0.14532618063863775
+    },
+    {
+     "value": 0.125,
+     "centroid": 127.8250039495549,
+     "level": -46.072111065284524,
+     "low": 95.78450138580078,
+     "mid": 4.208001951629368,
+     "high": 0.007496662569852877,
+     "transient": 0.7268626853797769,
+     "decay": 0.47,
+     "dynamics": 3.92715751250093,
+     "harmonics": 25.469652666098426,
+     "lean": -0.14606064501424518
+    },
+    {
+     "value": 0.25,
+     "centroid": 127.84072731387715,
+     "level": -42.75254000511036,
+     "low": 95.77979786658094,
+     "mid": 4.212704658677754,
+     "high": 0.007497474741325857,
+     "transient": 0.7110572070696136,
+     "decay": 0.47,
+     "dynamics": 3.9672024961670593,
+     "harmonics": 25.3833921933484,
+     "lean": -0.14590982125962337
+    },
+    {
+     "value": 0.375,
+     "centroid": 128.19687708166606,
+     "level": -40.52227996356028,
+     "low": 95.65979659369597,
+     "mid": 4.332561461011198,
+     "high": 0.0076419452928428435,
+     "transient": 0.8222987033056065,
+     "decay": 0.45,
+     "dynamics": 4.991865923212416,
+     "harmonics": 25.274824775085147,
+     "lean": -0.14498139017326048
+    },
+    {
+     "value": 0.5,
+     "centroid": 129.52233202119592,
+     "level": -39.54770556222093,
+     "low": 95.2854647172194,
+     "mid": 4.706293956314684,
+     "high": 0.008241326465909847,
+     "transient": 0.6278851693689486,
+     "decay": 0.55,
+     "dynamics": 4.923562513049963,
+     "harmonics": 25.312692739371045,
+     "lean": -0.14591746628107802
+    },
+    {
+     "value": 0.625,
+     "centroid": 130.4038777546006,
+     "level": -38.95346738821721,
+     "low": 95.10821296139294,
+     "mid": 4.882535381061682,
+     "high": 0.0092516575453727,
+     "transient": 0.6462120998764225,
+     "decay": 0.37,
+     "dynamics": 4.504310510162625,
+     "harmonics": 25.29424157720916,
+     "lean": -0.14588690534922713
+    },
+    {
+     "value": 0.75,
+     "centroid": 131.46751514180423,
+     "level": -38.276705959262586,
+     "low": 94.91081610500699,
+     "mid": 5.078439785257511,
+     "high": 0.010744109735501597,
+     "transient": 0.6436530047921954,
+     "decay": 0.58,
+     "dynamics": 6.467337720307633,
+     "harmonics": 25.403008011994725,
+     "lean": -0.14627278958709558
+    },
+    {
+     "value": 0.875,
+     "centroid": 132.40023946827424,
+     "level": -37.74061636621316,
+     "low": 94.74116207566594,
+     "mid": 5.246866629042835,
+     "high": 0.011971295291227063,
+     "transient": 0.7351242239464121,
+     "decay": 0.38,
+     "dynamics": 7.8691591018775995,
+     "harmonics": 25.25691028530346,
+     "lean": -0.14575387028925338
+    },
+    {
+     "value": 1,
+     "centroid": 133.57803042192967,
+     "level": -37.30471311724539,
+     "low": 94.52159137008152,
+     "mid": 5.46473153522403,
+     "high": 0.013677094694437904,
+     "transient": 0.6152886349567814,
+     "decay": 0.5,
+     "dynamics": 9.296440425335136,
+     "harmonics": 25.330599854361196,
+     "lean": -0.1592244348339671
+    }
+   ],
+   "fits": {
+    "centroid": {
+     "perTurn": 6.258783762464325,
+     "straight": 0.9372147944590329
+    },
+    "decay": {
+     "perTurn": 0.05200000000000001,
+     "straight": 0.0539361702127662
+    },
+    "dynamics": {
+     "perTurn": 4.919330834537135,
+     "straight": 0.778861124731081
+    },
+    "harmonics": {
+     "perTurn": -0.04731891851161218,
+     "straight": 0.05165374849340065
+    },
+    "high": {
+     "perTurn": 0.006184511117671378,
+     "straight": 0.8513270247445647
+    },
+    "lean": {
+     "perTurn": -0.007507219258300402,
+     "straight": 0.3256018244726444
+    },
+    "level": {
+     "perTurn": 11.363602609832991,
+     "straight": 0.8473096458756645
+    },
+    "low": {
+     "perTurn": -1.4223296345587755,
+     "straight": 0.9553864775614505
+    },
+    "mid": {
+     "perTurn": 1.4161451234410904,
+     "straight": 0.9554994415551503
+    },
+    "transient": {
+     "perTurn": -0.11071467799421669,
+     "straight": 0.30185111871534276
+    }
+   }
+  }
+ }
+}
