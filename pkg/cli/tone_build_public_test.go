@@ -109,7 +109,7 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 				s.Require().Len(doc.Rig.Chain, 2)
 				s.Require().Equal(rig.RoleAmp, doc.Rig.Chain[1].Role)
 
-				s.Require().Contains(buf.String(), "closest of 27 measured")
+				s.Require().Contains(buf.String(), "closest of 29 measured")
 			},
 		},
 		{

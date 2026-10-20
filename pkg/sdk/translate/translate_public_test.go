@@ -278,7 +278,10 @@ func (s *TranslatePublicTestSuite) TestTranslate() {
 					}
 				}
 
-				s.Require().Contains(said, "closest of 27 measured",
+				// 29 rather than 27 since the gear map learned that a US
+				// Dripman is a Fender Bassman, which is a bass amplifier, so
+				// the amp and its preamp became reachable by a bass build.
+				s.Require().Contains(said, "closest of 29 measured",
 					"the note says what it chose from and why")
 			},
 		},
@@ -1132,7 +1135,7 @@ words:
 			ask: "genre: [pop-punk]\ninstrument: bass\nlike:\n  recording: " +
 				s.recording() + "\n",
 			said:   []string{s.recording()},
-			absent: []string{"closest of 27 measured to punk"},
+			absent: []string{"closest of 29 measured to punk"},
 		},
 		{
 			// Punk is measured on bass. Aiming a guitar build with it would rank
@@ -1158,7 +1161,7 @@ words:
 			// pick whichever sat nearest by spectrum.
 			name: "the pool is the instrument's own amplifiers",
 			ask:  "genre: [pop-punk]\ninstrument: bass\n",
-			said: []string{"closest of 27 measured"},
+			said: []string{"closest of 29 measured"},
 		},
 	} {
 		s.Run(tt.name, func() {

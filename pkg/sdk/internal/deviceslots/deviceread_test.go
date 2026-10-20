@@ -164,7 +164,12 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 							// The slot is a factory preset, so what it holds is known
 							// before it is decoded.
 							"gear: Ampeg SVT (normal channel)",
-							"gear: 8x10 Ampeg SVT-E",
+							// The gear, not Line 6's label for their model
+							// of it. The guide documents this cabinet as a
+							// `Legacy 8x10" Ampeg SVT` and the gear map now
+							// carries that, so a preset read off the device
+							// names the thing rather than the product.
+							"gear: 8x10 Ampeg SVT",
 							"role: amp",
 						},
 						plan: []string{
