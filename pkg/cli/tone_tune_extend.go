@@ -97,6 +97,20 @@ func extend(
 		return nil
 	}
 
+	// Said apart from the shortlist coming back empty, because they are
+	// different answers and only one of them is about the sound. A chain that
+	// has filled the device has somewhere to go on another pedal; a chain
+	// nothing measured can help does not.
+	if lim := plan.LimitsFor(cat.Device); len(made.Blocks) >= lim.MaxBlocks {
+		_, _ = fmt.Fprintf(w,
+			"  the chain holds %d blocks, which is all a %s has room for, so "+
+				"there is\n  no block to add. What is still missing needs a "+
+				"different chain rather than\n  a longer one.\n",
+			len(made.Blocks), cat.Device)
+
+		return nil
+	}
+
 	// Once, here, rather than per candidate inside the ranking. Every other
 	// consumer of the statistics in this tree is handed them, and the call
 	// gunzips and parses 33KB, which the shortlist loop was doing per block it
@@ -228,12 +242,93 @@ func ranked(
 	runs := inSeries(made, cat)
 
 	for _, one := range got {
-		if room(g, runs, one.Block.Category) {
+		if room(g, runs, one.Block.Category) &&
+			fits(made, cat, catalog.ModelID(one.Block.ID)) {
 			return one, true
 		}
 	}
 
 	return measured.Suggestion{}, false
+}
+
+// fits says the device will hold one more block, this one.
+//
+// Two ceilings, and neither was asked before. `plan.LimitsFor` keys them off
+// the catalog's own device name, because none of this is one pedal: an HX
+// Stomp holds 8 blocks on one processor and a Helix Floor 29 across two.
+//
+// Without it the proposal is made and the refusal arrives later, out of
+// `presets compile`, about a document somebody has already been told to build
+// and tune. The ceiling is a fact about the device and belongs where the
+// choice is made.
+//
+// Asked of the candidate rather than of the chain, because the block count and
+// the processor budget are different questions and a block can pass one while
+// failing the other. An Ampeg SVT costs 26.6% of a processor, so four of them
+// break the budget on a device with room for eight blocks.
+//
+// Fits on any processor is the test, not fits on a particular one. Which one a
+// block lands on is `Make`'s to decide from the document, and that has not run
+// yet; on a one-path device the question does not arise.
+//
+// A cost the catalog only guessed is not a cost. `ProvAssumed` must not reach a
+// user, which `plan` enforces at build time, so a block carrying one is refused
+// here rather than proposed and refused later. That holds for the blocks
+// already in the chain as well as for the candidate: a sum with a hole in it
+// is not a budget.
+func fits(
+	made plan.Plan,
+	cat *catalog.Catalog,
+	add catalog.ModelID,
+) bool {
+	lim := plan.LimitsFor(cat.Device)
+
+	if len(made.Blocks)+1 > lim.MaxBlocks {
+		return false
+	}
+
+	blk, known := cat.Blocks[add]
+	if !known || !blk.DSP.Prov.Trusted() {
+		return false
+	}
+
+	costs := make(map[int]float64, lim.Paths)
+
+	// A block in the chain the catalog cannot price makes the whole budget
+	// unknowable, so nothing is proposed. Skipping it would leave the sum
+	// short and answer "it fits" about a chain nobody can add up, which is the
+	// wrong way round for a check whose only job is to refuse.
+	for _, b := range made.Blocks {
+		held, known := cat.Blocks[b.Model]
+		if !known || !held.DSP.Prov.Trusted() {
+			return false
+		}
+
+		costs[b.DSP] += costOf(held)
+	}
+
+	want := costOf(blk)
+
+	for chip := range lim.Paths {
+		if costs[chip]+want <= lim.ChipCeiling {
+			return true
+		}
+	}
+
+	return false
+}
+
+// costOf is a block's share of one processor, in the units the catalog states
+// it: percent. A stereo instance costs more than a mono one, which is why
+// there are two figures rather than one.
+func costOf(
+	blk catalog.Block,
+) float64 {
+	if blk.Stereo {
+		return blk.DSP.Stereo
+	}
+
+	return blk.DSP.Mono
 }
 
 // repeatable is how often a kind has to be doubled in the corpus before this
