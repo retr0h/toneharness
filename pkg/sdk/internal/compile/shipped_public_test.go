@@ -32,6 +32,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/shipped"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
@@ -298,6 +299,65 @@ func (s *ShippedPublicTestSuite) TestEveryShippedGearClaimHasASource() {
 // says so: Geddy Lee's Ampeg V-4B cabinets are cited from three print sources
 // in his own words and nothing here models one, and deleting that would throw
 // away the research without making the rig any more accurate.
+// TestEveryBlockAShippedRigHoldsIsSwept covers the gap between what a build may
+// choose and what the shipped rigs actually hold.
+//
+// Task 245's campaign built its queue from what a bass build can choose, which
+// is the catalog filtered by instrument. The rigs are not that set. They also
+// hold whatever somebody named by hand, and `namedGear` rightly lets a named
+// block through a filter that would never have chosen it — so the blocks a
+// person researched are exactly the ones a choose-shaped queue misses.
+//
+// Two did. `HD2_AmpSVT4Pro` is an Ampeg SVT-4 Pro with 21 controls, named in
+// Mark Hoppus's rig, and it carries no subcategory at all: it is one of the 23
+// amplifiers `reachable` declines to let a bass build choose, because an
+// unplaceable model should not win on missing metadata. `HD2_CabMicIr_4x10TweedP10R`
+// is the same shape in Glen Matlock's.
+//
+// A rig whose blocks are unswept is a rig nothing can tune on evidence, which
+// is what the campaign was for, so this is the set worth holding to rather than
+// the catalog.
+func (s *ShippedPublicTestSuite) TestEveryBlockAShippedRigHoldsIsSwept() {
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	// Where the curves live, from this package rather than from a flag: the
+	// question is about the tree as committed.
+	const swept = "../../../../resources/sweeps/hx-stomp"
+
+	held := map[catalog.ModelID]string{}
+
+	for name, spec := range s.specs() {
+		got, _, _, _, err := compile.Resolve(
+			spec.Id, spec.Rig, compile.Intent{}, cat, nil,
+		)
+		s.Require().NoError(err, name)
+
+		for _, b := range got.Blocks {
+			held[b.Model] = name
+		}
+	}
+
+	s.Require().NotEmpty(held, "no shipped rig resolved to anything")
+
+	for model, rig := range held {
+		s.Run(string(model), func() {
+			at := filepath.Join(swept, string(model)+".json")
+
+			f, err := os.Open(at) //nolint:gosec // a path built from the catalog
+			s.Require().NoError(err,
+				"%s holds %s and nothing has swept it, so nothing in that rig "+
+					"can be tuned on evidence", rig, model)
+
+			defer func() { _ = f.Close() }()
+
+			curves, err := measured.LoadCurves(f)
+			s.Require().NoError(err, at)
+			s.Require().NotEmpty(curves.Controls, at)
+		})
+	}
+}
+
 func (s *ShippedPublicTestSuite) TestEveryShippedAmplifierResolvesToItself() {
 	cat, err := catalog.BuiltIn()
 	s.Require().NoError(err)
