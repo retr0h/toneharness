@@ -190,6 +190,45 @@ func (s *ExtendTestSuite) TestExtend() {
 		then func()
 	}{
 		{
+			// The device, said apart from the sound.
+			//
+			// A chain that has filled the pedal has somewhere to go on a
+			// bigger one, and a chain nothing measured can help does not, so
+			// reporting the first as the second would send somebody looking
+			// for a block instead of a Helix. Said before the rig is fetched,
+			// which is why nothing is expected of the client.
+			name: "a chain that has filled the device says so, not that nothing helps",
+			then: func() {
+				at := filepath.Join(s.T().TempDir(), "extended.yaml")
+
+				eight := plan.Plan{}
+				for i := range 8 {
+					eight.Blocks = append(eight.Blocks, plan.Block{
+						Model: catalog.ModelID("HD2_CompressorDeluxeComp"),
+						Pos:   i, Enabled: true,
+					})
+				}
+
+				opts := TuneOptions{
+					Client: s.pedal, ID: "matt-freeman", Genre: "punk", Extend: at,
+				}
+
+				w := buffer()
+
+				s.Require().NoError(extend(context.Background(), w, opts,
+					eight, aims, now, s.cat()))
+
+				s.Require().Contains(w.String(), "8 blocks")
+				s.Require().Contains(w.String(), "HX Stomp")
+				s.Require().Contains(w.String(), "a different chain")
+				s.Require().NotContains(w.String(), "nothing measured moves")
+
+				_, err := os.Stat(at)
+				s.Require().ErrorIs(err, os.ErrNotExist,
+					"and nothing is written, because nothing was added")
+			},
+		},
+		{
 			// Off unless asked for, because a run that writes files nobody
 			// asked for is a run somebody stops using.
 			name: "no file named writes nothing and asks the client nothing",
@@ -443,6 +482,93 @@ func (s *ExtendTestSuite) TestRoom() {
 // Per run, because that is how the corpus counts: two of a kind either side of
 // a parallel split is not two in series, and reading it as such put bass cab at
 // 16.3% where the real figure is zero.
+// TestFits covers fits, which asks the device rather than the corpus.
+//
+// Against the built-in catalog's real costs, because the point of the check is
+// that the figures are Line 6's and not this tool's.
+func (s *ExtendTestSuite) TestFits() {
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	// 26.6% of one processor each, officially, so three fit under the 95%
+	// ceiling an HX Stomp has and four do not.
+	svt := catalog.ModelID("HD2_AmpSVBeastBrt")
+
+	full := func(n int) plan.Plan {
+		made := plan.Plan{}
+		for i := range n {
+			made.Blocks = append(made.Blocks,
+				plan.Block{Model: svt, Pos: i, DSP: 0})
+		}
+
+		return made
+	}
+
+	for _, tt := range []struct {
+		name string
+		made plan.Plan
+		add  catalog.ModelID
+		want bool
+	}{
+		{
+			// Room on both counts.
+			name: "an empty chain holds anything the catalog carries",
+			made: plan.Plan{},
+			add:  svt,
+			want: true,
+		},
+		{
+			// The block count. An HX Stomp holds 8, so a chain of 8 holds no
+			// more however cheap the next one is.
+			name: "a chain at the device's block count holds nothing further",
+			made: full(8),
+			add:  "HD2_CompressorDeluxeComp",
+			want: false,
+		},
+		{
+			// The processor budget, which bites first here. Three SVTs are
+			// 79.8% and a fourth would be 106.4% against a ceiling of 95, on a
+			// device with room for eight blocks.
+			name: "a chain inside the block count can still be over budget",
+			made: full(3),
+			add:  svt,
+			want: false,
+		},
+		{
+			// And two of them leave room for a third.
+			name: "two of them leave room for one more",
+			made: full(2),
+			add:  svt,
+			want: true,
+		},
+		{
+			// A model the catalog does not carry has no cost to add, and a
+			// guess is not a cost: plan refuses an assumed one at build time,
+			// so proposing it here would only move the refusal later.
+			name: "a model the catalog does not carry does not fit",
+			made: plan.Plan{},
+			add:  "HD2_NoSuchBlock",
+			want: false,
+		},
+		{
+			// The same, one step back. A chain holding something the catalog
+			// cannot price has no budget to compare against, and leaving it
+			// out of the sum would answer "it fits" about a chain nobody can
+			// add up.
+			name: "a chain holding a block the catalog cannot price fits nothing",
+			made: plan.Plan{Blocks: []plan.Block{
+				{Model: "HD2_NoSuchBlock", Pos: 0},
+			}},
+			add:  "HD2_CompressorDeluxeComp",
+			want: false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, fits(tt.made, cat, tt.add))
+		})
+	}
+}
+
 func (s *ExtendTestSuite) TestInSeries() {
 	drive := catalog.ModelID("HD2_DistObsidian7000")
 	amp := catalog.ModelID("HD2_AmpSVBeastBrt")
