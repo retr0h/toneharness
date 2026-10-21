@@ -23,8 +23,10 @@ package catalogen
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
@@ -162,8 +164,17 @@ func collect(
 			}
 		}
 
-		for _, each := range v {
-			collect(each, into)
+		// In key order, because Go's decoder throws an object's own order
+		// away and map iteration is deliberately random. The rule above is
+		// first wins, so without this the name a duplicated id gets is a
+		// coin flip and two runs of `just generate` write two catalogs.
+		//
+		// Line 6 spell four model names wrong and #249 chose between the two
+		// spellings deliberately; a random walk would undo that choice at
+		// random. Arrays keep the file's own order, which is why only this
+		// branch sorts.
+		for _, key := range slices.Sorted(maps.Keys(v)) {
+			collect(v[key], into)
 		}
 	case []any:
 		for _, each := range v {

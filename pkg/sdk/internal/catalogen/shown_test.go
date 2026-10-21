@@ -64,8 +64,11 @@ func (s *ShownTestSuite) TestReadShownNames() {
 		app  string
 		// dir writes the app catalog as a directory, which fails the read
 		// without the file being missing.
-		dir  bool
-		then func(got map[string]string, err error)
+		dir bool
+		// times is how many reads the row asserts over, for a row about an
+		// answer being the same one twice. Zero means once.
+		times int
+		then  func(got map[string]string, err error)
 	}{
 		{
 			// The nesting is Line 6's to change, so this looks for an object
@@ -80,7 +83,10 @@ func (s *ShownTestSuite) TestReadShownNames() {
 			},
 		},
 		{
-			// The first wins, which is the one nearest the top of the file.
+			// The first wins. Within an array that is the one nearest the top
+			// of the file; across an object's keys it is the first key in
+			// order, because Go's decoder throws an object's own order away
+			// and there is nothing else to be first by.
 			name: "a model named twice",
 			app: `{"a":[{"id":"HD2_CabTest","name":"First"}],
 			       "b":[{"id":"HD2_CabTest","name":"Second"}]}`,
@@ -88,6 +94,29 @@ func (s *ShownTestSuite) TestReadShownNames() {
 				s.Require().NoError(err)
 				s.Require().Equal("First", got["HD2_CabTest"])
 			},
+		},
+		{
+			// And it is the same answer every time.
+			//
+			// This row is the one that matters, because the row above passed
+			// for as long as the walk was random: map iteration order is
+			// randomised per range statement, so a coin flip comes up the same
+			// way often enough to look like a rule. It failed in continuous
+			// integration and nowhere else.
+			//
+			// Twenty reads rather than one. Each is an independent flip, so an
+			// unsorted walk survives this with a probability of about one in a
+			// million.
+			name: "and the name a duplicate gets does not move between reads",
+			app: `{"a":[{"id":"HD2_CabTest","name":"First"}],
+			       "b":[{"id":"HD2_CabTest","name":"Second"}],
+			       "c":[{"id":"HD2_CabTest","name":"Third"}],
+			       "d":[{"id":"HD2_CabTest","name":"Fourth"}]}`,
+			then: func(got map[string]string, err error) {
+				s.Require().NoError(err)
+				s.Require().Equal("First", got["HD2_CabTest"])
+			},
+			times: 20,
 		},
 		{
 			// An installation too old to carry the file. Not fatal: the
@@ -136,14 +165,16 @@ func (s *ShownTestSuite) TestReadShownNames() {
 				s.Require().NoError(os.Mkdir(filepath.Join(dir, shownFile), 0o750))
 			}
 
-			got, err := readShown(dir)
+			for range max(tt.times, 1) {
+				got, err := readShown(dir)
 
-			as := map[string]string{}
-			for k, v := range got {
-				as[string(k)] = v.Name
+				as := map[string]string{}
+				for k, v := range got {
+					as[string(k)] = v.Name
+				}
+
+				tt.then(as, err)
 			}
-
-			tt.then(as, err)
 		})
 	}
 }
