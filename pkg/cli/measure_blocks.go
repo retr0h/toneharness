@@ -168,6 +168,11 @@ func MeasureBlocks(
 	//
 	// The other four measuring commands pin first and say so. This was the one
 	// that did not.
+	// The device before the level, for the reason `playsThrough` gives: a level
+	// pinned while the default output is some other device is a number about a
+	// device that is not in the signal path.
+	playsThrough(w, TuneOptions{Hardware: opts.Hardware}, reamp.PlaysThrough)
+
 	lib.Volume = levelled(w, opts.Volume, reamp.Held)
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 	lib.Headroom = opts.Headroom

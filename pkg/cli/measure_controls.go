@@ -164,6 +164,17 @@ func MeasureControls(
 ) error {
 	// Pinned first, because every reading below depends on it and a level
 	// somebody left somewhere else is a different measurement.
+	// The device first, then the level on it. `playsThrough` says why that
+	// order: the level belongs to a device, so pinning it while the platform's
+	// default is some other one sets a number about a device that is not in
+	// the signal path.
+	//
+	// It was only wired into `tone tune`, and the cost showed in a campaign:
+	// a pair of AirPods connected partway through, became the default output,
+	// and seven blocks were then refused because the level came back at 50 —
+	// the AirPods' level, while the pedal was fed from the headphone jack.
+	playsThrough(w, TuneOptions{Hardware: opts.Hardware}, reamp.PlaysThrough)
+
 	hold := opts.Level
 	if hold == nil {
 		hold = reamp.Held
