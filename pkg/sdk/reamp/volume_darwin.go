@@ -66,10 +66,25 @@ func volume() (int, error) {
 }
 
 // setVolume puts the output level where a measurement wants it.
+//
+// Unmuted first, because mute is a separate flag from the level and setting one
+// does not clear the other. A muted output takes the instruction, reports the
+// level it was given, and then reads back zero — which is how `FM4 Throbber`
+// came to be swept through silence and recorded as a filter, eight controls of
+// hiss at -122dB with centroids between 1630 and 2390Hz.
+//
+// The guard in `pinned` catches the reading afterwards and refuses it. This is
+// the half that stops it happening: a campaign that asks for a level is asking
+// to be heard, and a muted Mac is not a level anybody chose.
+//
+// Both in one call rather than two, so a run that dies between them cannot
+// leave the level set on an output nobody can hear.
 func setVolume(
 	to int,
 ) error {
-	if _, err := asks("set volume output volume " + strconv.Itoa(to)); err != nil {
+	if _, err := asks(
+		"set volume without output muted output volume " + strconv.Itoa(to),
+	); err != nil {
 		return &VolumeError{Doing: "setting", Said: err}
 	}
 

@@ -119,7 +119,11 @@ func (s *VolumeDarwinTestSuite) TestSetVolume() {
 		then func()
 	}{
 		{
-			name: "set volume says the level it was given",
+			// And unmutes, in the same call. Mute is a separate flag from the
+			// level, so a muted output takes the instruction, reports the level
+			// it was given, and reads back zero. `FM4 Throbber` was swept
+			// through silence that way and recorded as a filter.
+			name: "set volume unmutes and says the level it was given",
 			then: func() {
 				var said string
 
@@ -130,7 +134,9 @@ func (s *VolumeDarwinTestSuite) TestSetVolume() {
 				}
 
 				s.Require().NoError(setVolume(38))
-				s.Require().Equal("set volume output volume "+strconv.Itoa(38), said)
+				s.Require().Equal(
+					"set volume without output muted output volume "+
+						strconv.Itoa(38), said)
 			},
 		},
 		{
