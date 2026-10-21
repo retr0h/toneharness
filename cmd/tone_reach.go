@@ -38,6 +38,7 @@ var (
 	toneReachHeadroom float64
 	toneReachVolume   int
 	toneReachRigs     string
+	toneReachSweeps   string
 	toneReachClient   clientFlags
 )
 
@@ -91,6 +92,7 @@ and the second is the one that saves the afternoon.`,
 			ID:           toneReachID,
 			Genre:        toneReachGenre,
 			Corpus:       toneReachCorpus,
+			Sweeps:       toneReachSweeps,
 			Dry:          toneReachDry,
 			Hardware:     toneReachHardware,
 			Seconds:      toneReachSeconds,
@@ -127,6 +129,11 @@ func init() {
 		"",
 		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted",
 	)
+	f.StringVar(&toneReachSweeps, "sweeps", "resources/sweeps/hx-stomp",
+		"the committed curves the squeal guard reads to work out how much of "+
+			"the high band the chain's own blocks account for. Only the "+
+			"fingerprints are packed into the binary, so a release has none of "+
+			"these and a chain holding a drive is refused as a squeal")
 	f.StringVar(&toneReachRigs, "rigs", "",
 		"a directory of rigs to use instead of yours, beside the built-in ones")
 	f.Float64Var(

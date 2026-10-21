@@ -384,7 +384,11 @@ func suspect(
 ) (bool, error) {
 	now := figuresOf(got.Figures)
 
-	if _, bad := Squealing(now, dry, nil, blockIsACab(block)); bad {
+	// Nothing justified, because the subject here is one block on its own and
+	// its own curves are what this sweep is producing. Letting a block vouch
+	// for its own brightness would be the guard agreeing with whatever it was
+	// handed.
+	if _, bad := Squealing(now, dry, nil, blockIsACab(block), 0); bad {
 		return true, nil
 	}
 
