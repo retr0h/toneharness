@@ -146,8 +146,19 @@ Four things, and each caught something the others did not:
 | every control holds readings | a sweep that stopped early |
 | `instrument`, `volume`, `isolated` are set | a reading from another rig |
 | every control settled within 30dB of the first | a chain that died midway |
-| no two blocks share a reading | a block that never rendered |
+| blocks of different gear share a reading | a block that never rendered |
 
 Run all four before committing a batch. On this campaign the third rejected a
 filter the first two passed, and the fourth is what found the 46 cabinets whose
 readings were of an empty slot.
+
+**The fourth needs stating carefully, because two models of one pedal are
+supposed to read alike.** `HD2_AmpAguaSledge` and `HD2_PreampAguaSledge` are the
+amplifier and the preamplifier of one Aguilar Tone Hammer, and they agree to
+within 0.01Hz on every control, which is correct and not a fault. Rounding the
+comparison to two decimals calls them identical and flags them.
+
+What the signature actually is: **many blocks of unrelated gear agreeing**. The
+46 cabinets spanned 0.4Hz where their mono twins spanned 92.8Hz, and 80 blocks
+across six categories shared one reading. Two models of one pedal agreeing in
+the third decimal is the device being consistent.
