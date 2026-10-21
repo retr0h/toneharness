@@ -162,6 +162,18 @@ type TuneOptions struct {
 	// start a proposed block's controls. Empty reads none, and the block
 	// arrives at the catalog's defaults.
 	Sweeps string
+	// Grow is how many blocks the loop may add to the chain, one per round.
+	//
+	// Zero is one chain, which is what this always did. Each block is kept only
+	// if the chain holding it measures nearer the target than the chain without
+	// it, so the budget is a ceiling on the rounds rather than a number of
+	// blocks to reach: a run with `--grow 4` stops at the first block that does
+	// not earn its place.
+	//
+	// Every round is a whole tuning run, so the cost is linear in this and the
+	// rounds get slower as the chain gets longer. Four on a three-block rig is
+	// most of half an hour of a pedal playing.
+	Grow int
 	// Keep is a directory to write what the chain played into, as WAVs somebody
 	// can listen to. Empty keeps none of it, which is the default.
 	//
@@ -229,39 +241,17 @@ func Tune(
 		return err
 	}
 
-	aims := solve.Aims(target, nil)
-	if len(aims) == 0 {
+	// Checked before a chain is built, because a target that measures as
+	// nothing is the caller's mistake rather than the chain's, and building one
+	// to find that out costs a round trip to the device.
+	if len(solve.Aims(target, nil)) == 0 {
 		return fmt.Errorf("%w: %q measures as nothing", ErrNoTarget, solvingFor(opts))
-	}
-
-	made, preset, asBuilt, err := built(ctx, opts)
-	if err != nil {
-		return err
 	}
 
 	cat, err := opts.Client.Catalog(ctx)
 	if err != nil {
 		return err
 	}
-
-	// The rig's own instrument beats the amplifier's, for the reason
-	// chainIsFor gives: a bass player through a guitar head is playing bass,
-	// and this guard refused Dusty Hill's bass rig a bass recording.
-	declared := ""
-	if doc, err := opts.Client.Rig(ctx, opts.ID); err == nil {
-		declared = string(doc.Rig.Instrument)
-	}
-
-	if err := sameInstrument(made.Plan, cat, opts.Dry, declared); err != nil {
-		return err
-	}
-
-	knobs := knobsOf(made.Plan, cat)
-	if len(knobs) == 0 {
-		return fmt.Errorf("%w: the chain has no dial to turn", solve.ErrNoKnobs)
-	}
-
-	lists := listsOf(made.Plan, cat)
 
 	signal, err := reference(opts.Dry, opts.Seconds)
 	if err != nil {
@@ -279,6 +269,266 @@ func Tune(
 
 	defer release()
 
+	best, err := grown(ctx, w, opts, cat, bench, signal, target, elsewhere)
+	if err != nil {
+		return err
+	}
+
+	// Which block would close it, once the dials have stopped being the answer.
+	// After the run rather than inside a pass, because "the chain is wrong" is a
+	// conclusion about the run and one pass cannot reach it.
+	if !best.did.arrived {
+		missing(w, best.made.Plan, best.aims, best.did.read)
+
+		if err := extend(ctx, w, opts, best.made.Plan, best.aims, best.did.read, cat); err != nil {
+			return err
+		}
+	}
+
+	// Before the plan is written, so a run that cannot keep the audio says so
+	// rather than reporting a tuned chain and failing afterwards.
+	if err := keepPlayed(ctx, w, opts, bench, signal); err != nil {
+		return err
+	}
+
+	if err := keepTuned(ctx, w, opts, best.asBuilt); err != nil {
+		return err
+	}
+
+	return written(w, opts, best.did)
+}
+
+// attempted is one chain tried end to end: built, guarded and solved.
+//
+// Carried whole because the loop has to be able to put a chain back. When a
+// longer chain measures worse than the one before it the answer is the earlier
+// chain, and restoring it is replaying its preset and reapplying the controls
+// it solved to rather than measuring it again.
+type attempted struct {
+	made    sdk.Made
+	preset  string
+	asBuilt string
+	knobs   []solve.Knob
+	aims    map[audio.Figure]solve.Aim
+	did     round
+	// out is the worst axis in tolerances: the one number two chains are
+	// compared on, and the one every pass prints.
+	out float64
+}
+
+// grown tunes the rig, and then tunes it again with a block added for as long
+// as adding one measures nearer the target.
+//
+// Without `--grow` this is one chain and the behaviour it always had.
+//
+// What makes it honest is that a block is kept on a reading rather than on a
+// prediction. The shortlist ranks a block by what it did measured on its own,
+// and a block measured alone is not that block in a chain: the same control
+// reads differently with a cabinet in front of it. So the loop does not trust
+// the ranking. It builds the longer chain, solves it, and keeps the block only
+// if the chain with it got nearer than the chain without.
+//
+// That is why the file this calls says the loop proposes and a person decides.
+// It still does, for one block. What this adds is the measurement that settles
+// whether the proposal was right, which is the step a person was doing by hand:
+// aimed at matt-freeman, punk reads 5.2 tolerances out and punk with the fuzz
+// the shortlist proposed reaches 2.4, and nothing short of building both says so.
+//
+// It stops on whichever comes first: the target met, the budget of blocks spent,
+// nothing left that moves what is missing, the device full, or a longer chain
+// that measured worse. The last is the only one that costs a round to discover,
+// and it is the one worth paying for.
+func grown(
+	ctx context.Context,
+	w io.Writer,
+	opts TuneOptions,
+	cat *catalog.Catalog,
+	bench sdk.Bench,
+	signal []float32,
+	target audio.Across,
+	elsewhere map[audio.Figure]float64,
+) (attempted, error) {
+	// The document the next round builds from. Empty is the rig's own
+	// identifier, which is the first round and every round of a run that is
+	// not growing.
+	from := ""
+
+	var best attempted
+
+	for added := 0; ; added++ {
+		got, err := tuned(ctx, w, opts, cat, bench, signal, target, elsewhere, from)
+
+		// A longer chain that oscillates is the block's doing rather than the
+		// run's. The guard already allows a chain the brightness its own blocks
+		// account for, so a squeal here is a real one: the block it was handed
+		// makes this chain feed itself. That is a block which does not work,
+		// which is what the round was measuring, so it is dropped like any
+		// other that failed to earn its place.
+		//
+		// Only once a chain has been grown. On the first round there is nothing
+		// to fall back to and the rig itself squeals, which is the caller's to
+		// fix.
+		if err != nil && added > 0 && errors.Is(err, ErrSquealing) {
+			_, _ = fmt.Fprintf(w,
+				"\n  the added block made the chain oscillate, so it is dropped "+
+					"and the\n  shorter chain is the answer.\n")
+
+			return restored(ctx, w, opts, best)
+		}
+
+		if err != nil {
+			return attempted{}, err
+		}
+
+		// Worse than the chain before it, so the block that was added did not
+		// earn its place and the answer is the chain without it.
+		if added > 0 && got.out >= best.out {
+			_, _ = fmt.Fprintf(w,
+				"\n  the added block left it %.1f tolerances out against %.1f "+
+					"without it,\n  so it is dropped and the shorter chain is "+
+					"the answer.\n", got.out, best.out)
+
+			return restored(ctx, w, opts, best)
+		}
+
+		best = got
+
+		if got.did.arrived || added >= opts.Grow {
+			return best, nil
+		}
+
+		// Proposed into a document this loop owns rather than over `--extend`,
+		// which is the caller's file and is written once at the end with
+		// whatever the run settled on.
+		next, ok, err := proposed(ctx, w, opts, got, cat, added)
+		if err != nil || !ok {
+			return best, err
+		}
+
+		from = next
+	}
+}
+
+// restored puts a chain back without measuring it again.
+//
+// A preset selected and its solved controls written, which is what the loop
+// did the first time and costs no readings. The figures already in hand
+// describe this chain, so nothing is re-read: what is reported is the round
+// that produced them.
+//
+// It matters because the device is left holding whatever the last round played.
+// A loop that found the shorter chain better and walked away would leave the
+// pedal on the longer one, and every claim in the answer would be about a chain
+// the hardware is not playing.
+func restored(
+	ctx context.Context,
+	w io.Writer,
+	opts TuneOptions,
+	best attempted,
+) (attempted, error) {
+	if err := opts.Client.Play(ctx, best.preset); err != nil {
+		return attempted{}, err
+	}
+
+	if err := apply(ctx, opts, best.knobs, best.did.steps); err != nil {
+		return attempted{}, err
+	}
+
+	_, _ = fmt.Fprintf(w, "  the chain is back to %d blocks, as it was solved\n",
+		len(best.made.Plan.Blocks))
+
+	return best, nil
+}
+
+// proposed writes the chain with one more block in it, for the next round to
+// build.
+//
+// Into the scratch directory rather than over `--extend`: that file is the
+// caller's and says what the run settled on, so a round that is about to be
+// judged and possibly thrown away must not be what lands in it.
+func proposed(
+	ctx context.Context,
+	w io.Writer,
+	opts TuneOptions,
+	got attempted,
+	cat *catalog.Catalog,
+	added int,
+) (string, bool, error) {
+	at := filepath.Join(os.TempDir(),
+		fmt.Sprintf("%s.grow-%d.yaml", opts.ID, added))
+
+	// extend writes only where it is told to, so this borrows the option the
+	// caller's own --extend uses and points it somewhere private.
+	asked := opts
+	asked.Extend = at
+
+	// Cleared first, because the test below is whether this round wrote a
+	// document and the only evidence is the file being there. The name is
+	// built from the rig and the round, so a run of the same rig leaves one
+	// behind that the next would read as its own proposal: a chain that has
+	// filled the device would be told there was nothing to add and then be
+	// handed a stale block anyway.
+	if err := os.Remove(at); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return "", false, fmt.Errorf("clearing %s: %w", at, err)
+	}
+
+	missing(w, got.made.Plan, got.aims, got.did.read)
+
+	if err := extend(
+		ctx, w, asked, got.made.Plan, got.aims, got.did.read, cat); err != nil {
+		return "", false, err
+	}
+
+	// Nothing written is extend saying there was nothing to add: the device is
+	// full, or nothing measured moves what is missing. Both are said already.
+	if _, err := os.Stat(at); err != nil {
+		return "", false, nil
+	}
+
+	return at, true, nil
+}
+
+// tuned builds one chain, guards the reading, and solves what it can.
+//
+// From a document when one is named and from the rig's own identifier
+// otherwise, which is how the loop tunes a chain it has just extended without
+// writing it anywhere the caller can see.
+func tuned(
+	ctx context.Context,
+	w io.Writer,
+	opts TuneOptions,
+	cat *catalog.Catalog,
+	bench sdk.Bench,
+	signal []float32,
+	target audio.Across,
+	elsewhere map[audio.Figure]float64,
+	from string,
+) (attempted, error) {
+	made, preset, asBuilt, err := built(ctx, opts, from)
+	if err != nil {
+		return attempted{}, err
+	}
+
+	// The rig's own instrument beats the amplifier's, for the reason
+	// chainIsFor gives: a bass player through a guitar head is playing bass,
+	// and this guard refused Dusty Hill's bass rig a bass recording.
+	declared := ""
+	if doc, err := opts.Client.Rig(ctx, opts.ID); err == nil {
+		declared = string(doc.Rig.Instrument)
+	}
+
+	if err := sameInstrument(made.Plan, cat, opts.Dry, declared); err != nil {
+		return attempted{}, err
+	}
+
+	knobs := knobsOf(made.Plan, cat)
+	if len(knobs) == 0 {
+		return attempted{}, fmt.Errorf(
+			"%w: the chain has no dial to turn", solve.ErrNoKnobs)
+	}
+
+	lists := listsOf(made.Plan, cat)
+
 	_, _ = fmt.Fprintf(w, "\n  %s aimed at %s, %d dials and %d lists through %s\n",
 		opts.ID, solvingFor(opts), len(knobs), len(lists), bench.Name())
 
@@ -289,7 +539,7 @@ func Tune(
 	// tolerances out and spent every control on it.
 	floor, at, err := steady(ctx, bench, signal, opts.Takes)
 	if err != nil {
-		return err
+		return attempted{}, err
 	}
 
 	// The target as a distance from where the chain already is, not as the
@@ -298,7 +548,7 @@ func Tune(
 	// centroid of 126Hz asks for a darkness the signal does not hold, and the
 	// control with the most authority over the centroid on this amplifier carries
 	// +27.6dB of level with it. That is why a tuned preset came back thin.
-	aims = solve.Aims(solve.Displaced(target, elsewhere, figuresOf(at)),
+	aims := solve.Aims(solve.Displaced(target, elsewhere, figuresOf(at)),
 		inCorpusScale(floor))
 
 	// Level is a guard rather than a goal, and `drift` is already wide enough to
@@ -321,7 +571,7 @@ func Tune(
 	// tolerance is not known until the loop's own wander is.
 	aims, err = nudged(w, opts, aims)
 	if err != nil {
-		return err
+		return attempted{}, err
 	}
 
 	_, _ = fmt.Fprintf(w, "  the loop wanders %.4f of a band and %.1fHz\n",
@@ -337,7 +587,7 @@ func Tune(
 	// below refuses on.
 	read, back, err := sdk.Hear(ctx, bench, signal)
 	if err != nil {
-		return err
+		return attempted{}, err
 	}
 
 	first := sdk.Figures(read, sdk.Level(back))
@@ -345,7 +595,7 @@ func Tune(
 	// Whether anything came back at all, before any figure is read as a fact
 	// about the chain.
 	if say, dead := Returned(sdk.Level(signal), sdk.Level(back)); dead {
-		return deadLoop(w, opts, signal, back, say)
+		return attempted{}, deadLoop(w, opts, signal, back, say)
 	}
 
 	// Before a single control is moved. This loop applies what it solves for,
@@ -359,40 +609,23 @@ func Tune(
 		// only thing that says what it sounds like, which is how a cable, a
 		// routing and a preset on the wrong output are told apart.
 		if err := keepTakes(w, opts, signal, back); err != nil {
-			return err
+			return attempted{}, err
 		}
 
-		return fmt.Errorf("%w: %s", ErrSquealing, say)
+		return attempted{}, fmt.Errorf("%w: %s", ErrSquealing, say)
 	}
 
 	did, err := attempt(
 		ctx, w, opts, bench, signal, preset, knobs, lists, aims, at.Level)
 	if err != nil {
-		return err
+		return attempted{}, err
 	}
 
-	// Which block would close it, once the dials have stopped being the answer.
-	// After the run rather than inside a pass, because "the chain is wrong" is a
-	// conclusion about the run and one pass cannot reach it.
-	if !did.arrived {
-		missing(w, made.Plan, aims, did.read)
-
-		if err := extend(ctx, w, opts, made.Plan, aims, did.read, cat); err != nil {
-			return err
-		}
-	}
-
-	// Before the plan is written, so a run that cannot keep the audio says so
-	// rather than reporting a tuned chain and failing afterwards.
-	if err := keepPlayed(ctx, w, opts, bench, signal); err != nil {
-		return err
-	}
-
-	if err := keepTuned(ctx, w, opts, asBuilt); err != nil {
-		return err
-	}
-
-	return written(w, opts, did)
+	return attempted{
+		made: made, preset: preset, asBuilt: asBuilt,
+		knobs: knobs, aims: aims, did: did,
+		out: solve.Worst(did.residual),
+	}, nil
 }
 
 // written appends this round to the ask, so what was asked for outlives the
@@ -678,10 +911,19 @@ func inCorpusScale(
 func built(
 	ctx context.Context,
 	opts TuneOptions,
+	from string,
 ) (sdk.Made, string, string, error) {
 	out := filepath.Join(os.TempDir(), opts.ID+".tune.hlx")
 
-	made, err := opts.Client.Make(ctx, sdk.Build{RigID: opts.ID, Out: out})
+	// A document when the loop has one in hand, the rig's own identifier
+	// otherwise. The two are the same build: `sdk.Build` already takes either,
+	// because `tone build` writes a rig somebody may hand straight back.
+	ask := sdk.Build{RigID: opts.ID, Out: out}
+	if from != "" {
+		ask = sdk.Build{Rig: from, Out: out}
+	}
+
+	made, err := opts.Client.Make(ctx, ask)
 	if err != nil {
 		return sdk.Made{}, "", "", err
 	}

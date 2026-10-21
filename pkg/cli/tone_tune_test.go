@@ -37,6 +37,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
@@ -85,9 +86,14 @@ func (s *TuneTestSuite) SetupTest() {
 	// The rig, for its own `instrument:`. The guard comparing the chain
 	// against the reference asks the document before the amplifier, because a
 	// bass player through a guitar head is still playing bass.
+	//
+	// With its identifier, because a document always has one and `--extend`
+	// writes it back out: a rig with no id produced a ToneSpec the contract
+	// refuses, which is a fault in the fixture rather than in the code.
 	s.pedal.EXPECT().
 		Rig(gomock.Any(), gomock.Any()).
 		Return(sdk.Rig{Known: sdk.Known{
+			ID:  "matt-freeman",
 			Rig: rig.Spec{Instrument: rig.InstrumentBass},
 		}}, nil).AnyTimes()
 }
@@ -205,6 +211,40 @@ func (squeals) Through(
 }
 
 func (squeals) Name() string { return "a bench that squeals" }
+
+// squealsOnceGrown is clean until a chain has been built twice, then squeals.
+//
+// Which is how a block that makes a chain feed itself is told from a rig that
+// squeals on its own: the first is the loop's to drop and the second is the
+// caller's to fix. The count is of readings rather than rounds, so the number
+// below is "after the first chain has been measured".
+type squealsOnceGrown struct {
+	reads int
+	// drifting answers a little differently each call, so the first round has
+	// real slopes to solve. A bench that repeats itself refuses for want of a
+	// slope long before it reaches a second chain.
+	drifting sloping
+	// after is how many readings the first round takes. The round's own
+	// readings are one to settle, one baseline, one per list setting and one
+	// per dial, which is more than a round number, so it is counted rather
+	// than worked out.
+	after int
+}
+
+func (b *squealsOnceGrown) Through(
+	ctx context.Context,
+	signal []float32,
+) ([]float32, error) {
+	b.reads++
+
+	if b.reads > b.after {
+		return squeals{}.Through(ctx, signal)
+	}
+
+	return b.drifting.Through(ctx, signal)
+}
+
+func (*squealsOnceGrown) Name() string { return "a bench that squeals once grown" }
 
 // TestTune covers Tune, which solves a chain's controls for a target and says
 // how close it got.
@@ -865,6 +905,227 @@ func (s *TuneTestSuite) TestTune() {
 				s.Require().Error(Tune(context.Background(), buffer(), opts))
 			},
 		},
+		{
+			// Growing, and the round being spent.
+			//
+			// The dials run out, the shortlist proposes a block, a document is
+			// written for it and a second round is tuned from that document.
+			// What is asserted is the loop running at all: the shortlist's own
+			// sentence, then a second chain measured.
+			name: "growing tunes a second chain from the block it proposed",
+			then: func() {
+				s.ready()
+				// Far enough out that the dials cannot close it, while the
+				// bench below still answers differently each call so the
+				// slopes are real. Both are needed: a target it reaches ends
+				// the loop on the first round, and slopes of zero refuse
+				// before the loop compares anything.
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).
+					Return([]audio.Genre{{
+						Name: "punk", Slug: "punk",
+						Across: audio.Across{
+							Tracks:   12,
+							Centroid: audio.Spread{Low: 8800, Mid: 9000, High: 9200},
+						},
+					}}, nil)
+				opts := s.opts()
+				opts.Grow = 1
+				// A bench that answers differently each call, so the slopes
+				// are not all zero and the solve has something to do.
+				opts.Bench = &sloping{}
+
+				var buf bytes.Buffer
+				s.Require().NoError(Tune(context.Background(), &buf, opts))
+
+				// The proposal, written where only the loop can see it.
+				s.Require().Contains(buf.String(), "grow-0.yaml")
+				s.Require().Contains(buf.String(), "Build it and tune it again")
+
+				// And a second chain measured, which is the round being spent
+				// rather than the shortlist being printed and abandoned.
+				s.Require().Equal(2,
+					strings.Count(buf.String(), "aimed at punk"),
+					"two rounds, so the proposed block was actually tuned")
+			},
+		},
+		{
+			// Growing, and the block making it worse.
+			//
+			// The bench drifts further from this target on every reading, so
+			// the second chain measures worse than the first however the
+			// block was ranked. That is the rule the loop rests on: a block is
+			// kept on a reading of the chain holding it, not on what it did
+			// measured alone.
+			name: "a block that measures worse is dropped and the chain put back",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).
+					Return([]audio.Genre{{
+						Name: "punk", Slug: "punk",
+						Across: audio.Across{
+							Tracks:   12,
+							Centroid: audio.Spread{Low: 40, Mid: 50, High: 60},
+						},
+					}}, nil)
+
+				opts := s.opts()
+				opts.Grow = 1
+				opts.Bench = &sloping{}
+
+				var buf bytes.Buffer
+				s.Require().NoError(Tune(context.Background(), &buf, opts))
+
+				s.Require().Contains(buf.String(), "so it is dropped")
+				s.Require().Contains(buf.String(), "the chain is back to")
+			},
+		},
+		{
+			// Growing, and the block making the chain oscillate.
+			//
+			// A squeal on a grown chain is the block's doing: the guard allows
+			// a chain the brightness its own blocks account for, so what is
+			// left is the chain feeding itself. Dropped like any other block
+			// that failed to earn its place, rather than ending the run.
+			name: "a block that makes the chain oscillate is dropped",
+			then: func() {
+				s.readyEndingInACab()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).
+					Return(s.aimedHigh(), nil)
+
+				opts := s.opts()
+				opts.Grow = 1
+				// Clean for the whole of the first round and squealing on the
+				// second chain, which is the guard's own order: it refuses
+				// before a dial is moved.
+				//
+				// 25 is how many readings the first round takes here. If that
+				// changes the assertion below fails rather than the row
+				// quietly passing for another reason, which is what keeps the
+				// number honest.
+				opts.Bench = &squealsOnceGrown{after: 25}
+
+				var buf bytes.Buffer
+				s.Require().NoError(Tune(context.Background(), &buf, opts))
+
+				s.Require().Contains(buf.String(), "made the chain oscillate")
+				s.Require().Contains(buf.String(), "the chain is back to")
+			},
+		},
+		{
+			// The statistics the shortlist needs.
+			//
+			// Reported rather than quietly ending the growing, because a run
+			// that cannot read them did not establish that there was nothing
+			// to add.
+			name: "statistics the shortlist cannot read stop the run",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).
+					Return([]audio.Genre{{
+						Name: "punk", Slug: "punk",
+						Across: audio.Across{
+							Tracks:   12,
+							Centroid: audio.Spread{Low: 8800, Mid: 9000, High: 9200},
+						},
+					}}, nil)
+
+				was := grammarOf
+				grammarOf = func() (*corpus.Stats, error) {
+					return nil, errors.New("the packed statistics are truncated")
+				}
+
+				defer func() { grammarOf = was }()
+
+				opts := s.opts()
+				opts.Grow = 1
+				opts.Bench = &sloping{}
+
+				err := Tune(context.Background(), buffer(), opts)
+				s.Require().ErrorContains(err, "truncated")
+			},
+		},
+		{
+			// The clearing that keeps a stale proposal out.
+			//
+			// The document's name is built from the rig and the round, so it
+			// is the same path every run and is cleared before the round that
+			// writes it. A directory in its place cannot be cleared, and that
+			// is said rather than passed over: the test for "did this round
+			// propose a block" is the file being there, so a clearing that
+			// failed would read a leftover as this run's answer.
+			name: "a proposal that cannot be cleared is reported",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).
+					Return([]audio.Genre{{
+						Name: "punk", Slug: "punk",
+						Across: audio.Across{
+							Tracks:   12,
+							Centroid: audio.Spread{Low: 8800, Mid: 9000, High: 9200},
+						},
+					}}, nil)
+
+				// Not empty, so Remove refuses it.
+				at := filepath.Join(os.TempDir(), "matt-freeman.grow-0.yaml")
+				s.Require().NoError(os.RemoveAll(at))
+				s.Require().NoError(os.MkdirAll(filepath.Join(at, "held"), 0o750))
+
+				defer func() { _ = os.RemoveAll(at) }()
+
+				opts := s.opts()
+				opts.Grow = 1
+				opts.Bench = &sloping{}
+
+				err := Tune(context.Background(), buffer(), opts)
+				s.Require().ErrorContains(err, "clearing")
+			},
+		},
+		{
+			// Growing, with nowhere to grow into.
+			//
+			// A chain that has filled the device is extend's answer rather than
+			// this loop's, and it writes no document, so the round that would
+			// have been spent building one is not spent.
+			name: "a chain that has filled the device stops the loop",
+			then: func() {
+				full := make([]plan.Block, 0, 8)
+				for i := range 8 {
+					full = append(full, plan.Block{
+						Model:   catalog.ModelID("HD2_AmpSVBeastBrt"),
+						Pos:     i,
+						Enabled: true,
+					})
+				}
+
+				s.pedal.EXPECT().
+					Make(gomock.Any(), gomock.Any()).
+					Return(sdk.Made{Plan: plan.Plan{Blocks: full}}, nil).AnyTimes()
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
+				s.pedal.EXPECT().Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
+				s.pedal.EXPECT().Choose(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).
+					Return(s.aimedHigh(), nil)
+
+				opts := s.opts()
+				opts.Grow = 2
+				opts.Bench = &sloping{}
+
+				var buf bytes.Buffer
+				s.Require().NoError(Tune(context.Background(), &buf, opts))
+
+				s.Require().Contains(buf.String(), "all a HX Stomp has room for")
+				s.Require().NotContains(buf.String(), "so it is dropped")
+			},
+		},
 	} {
 		s.Run(tt.name, func() {
 			// A row gets the same fresh state a method used to get.
@@ -916,6 +1177,101 @@ func (b *sloping) Through(
 }
 
 func (*sloping) Name() string { return "a bench that answers differently" }
+
+// TestRestored covers restored, which puts a chain back without measuring it
+// again.
+//
+// Its own method because the loop only reaches it when a longer chain measured
+// worse, and that depends on what a bench answers. What matters here is what it
+// does to the device, which does not.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *TuneTestSuite) TestRestored() {
+	best := func() attempted {
+		knob := solve.Knob{
+			Block: 0, Param: 1, Control: "HD2_AmpSVBeastBrt Drive",
+			Setting: "Drive", Low: 0, High: 1,
+		}
+
+		return attempted{
+			preset: "the-shorter-chain.hlx",
+			knobs:  []solve.Knob{knob},
+			made: sdk.Made{Plan: plan.Plan{Blocks: []plan.Block{
+				{Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0},
+				{Model: catalog.ModelID("HD2_Cab8x10SVBeast"), Pos: 1},
+			}}},
+			did: round{steps: []solve.Step{{Knob: knob, To: 0.42}}},
+			out: 2.4,
+		}
+	}
+
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The point of it.
+			//
+			// The device is left holding whatever the last round played, so a
+			// loop that preferred the shorter chain and walked away would
+			// leave the pedal on the longer one and every claim in the answer
+			// would be about a chain the hardware is not playing.
+			name: "the chain it kept is selected and its controls written again",
+			then: func() {
+				s.pedal.EXPECT().Play(gomock.Any(), "the-shorter-chain.hlx").
+					Return(nil)
+				s.pedal.EXPECT().
+					Turn(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+				var buf bytes.Buffer
+
+				got, err := restored(
+					context.Background(), &buf, s.opts(), best())
+
+				s.Require().NoError(err)
+				s.Require().Equal(2.4, got.out, "the reading it already had")
+				s.Require().Contains(buf.String(), "back to 2 blocks")
+			},
+		},
+		{
+			// A preset the device will not select.
+			name: "a device that will not play it is reported",
+			then: func() {
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).
+					Return(errors.New("no reply to opcode 17 within 6s"))
+
+				_, err := restored(
+					context.Background(), buffer(), s.opts(), best())
+
+				s.Require().ErrorContains(err, "opcode 17")
+			},
+		},
+		{
+			// A dial it will not move.
+			//
+			// Reported rather than passed over, because a chain put back with
+			// one control missing is not the chain that was measured.
+			name: "a dial that will not move is reported",
+			then: func() {
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil)
+				s.pedal.EXPECT().
+					Turn(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(errors.New("no reply to opcode 30 within 6s"))
+
+				_, err := restored(
+					context.Background(), buffer(), s.opts(), best())
+
+				s.Require().ErrorContains(err, "opcode 30")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+
+			tt.then()
+		})
+	}
+}
 
 // TestLand covers land, which applies a pass's moves and backs off if they
 // muted the chain.
