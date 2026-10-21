@@ -87,3 +87,67 @@ figure, and record a refusal naming the model where the device is holding
 something else. A figure taken before that guard existed is a figure to check
 against its own neighbours: if several different blocks agree to two decimal
 places, they are one reading.
+
+## A chain that dies partway through takes the silence floor with it
+
+The floor under which a reading is hiss rather than signal is thirty decibels
+below what the chain settles at, and that settled level is read again before
+every control. So a chain that stops passing signal midway drags the floor down
+after it, and every reading from then on clears a floor that is itself silence.
+
+`6x10 Cali Power` shipped that way. Its Mic swept first, settled at -54.08dB and
+read 105 to 134Hz, which is a cabinet. Then:
+
+    control    settled   its floor   lowest reading   centroid
+    Mic         -54.08      -84.08           -54.09   105..134
+    Position   -129.20     -159.20          -131.63   908..1891
+    LowCut     -130.82     -160.82          -133.42  1862..3083
+    Level      -130.86     -160.86          -157.82  1814..1849
+
+Six controls of hiss on a bass cabinet, up to 77% of their energy above 2kHz,
+every one clearing its own floor by thirty decibels.
+
+Each control is now held to what the chain settled at before the **first** one,
+which is the chain the seated pre-flight has just watched load. A later control
+settling further under that is refused, not noted: there is nothing to learn
+from the rest of a sweep whose chain has stopped, and the block is worth
+retrying whole.
+
+**Half of the `FM4` models do this.** Seven of the fourteen, across the filter
+and pitch categories, against one block in roughly a hundred everywhere else.
+It is not deterministic — five different controls on five blocks, every one
+clean on the next attempt — so **retry is the remedy and a campaign should give
+that family extra attempts** rather than treating a first failure as a block
+that cannot be measured.
+
+## A level that came back wrong is a different rig
+
+`--volume` pins the computer's own output before anything is measured, and it is
+a tone control rather than a level control: an amplifier's distortion depends on
+how hard it is driven, so two runs at different levels measure two different
+amplifiers.
+
+It is set and then read back, because macOS takes the instruction and rounds it
+on some hardware. Twice in about 130 sweeps it came back at **0** — the output
+muted — and the figures that followed read -122dB with centroids between 1630
+and 2390Hz. Hiss, recorded as a filter.
+
+A level that comes back as something other than the one asked for is a signal
+path that is not the one the campaign is filing its readings under, so the sweep
+stops. A platform that will not say what its level is carries on, because
+nothing can be checked there and the file records that rather than a number.
+
+## What a sweep's own file lets you check afterwards
+
+Four things, and each caught something the others did not:
+
+| check | what it catches |
+| --- | --- |
+| every control holds readings | a sweep that stopped early |
+| `instrument`, `volume`, `isolated` are set | a reading from another rig |
+| every control settled within 30dB of the first | a chain that died midway |
+| no two blocks share a reading | a block that never rendered |
+
+Run all four before committing a batch. On this campaign the third rejected a
+filter the first two passed, and the fourth is what found the 46 cabinets whose
+readings were of an empty slot.
