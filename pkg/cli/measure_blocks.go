@@ -25,6 +25,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -134,7 +135,9 @@ func MeasureBlocks(
 	}
 
 	if opts.Resume {
-		resume(&lib, opts)
+		if err := resume(&lib, opts); err != nil {
+			return err
+		}
 	}
 
 	want := wanted(cat, opts.Category, lib.Blocks)
@@ -723,17 +726,21 @@ func wanted(
 func resume(
 	lib *measured.Library,
 	opts MeasureOptions,
-) {
+) error {
 	f, err := os.Open(opts.Out) //nolint:gosec // the path is the operator's own
 	if err != nil {
-		return
+		return nil
 	}
 
 	defer func() { _ = f.Close() }()
 
 	had, err := measured.Load(f)
 	if err != nil {
-		return
+		return nil
+	}
+
+	if err := sameRig(lib, had); err != nil {
+		return err
 	}
 
 	lib.Baseline = had.Baseline
@@ -749,7 +756,87 @@ func resume(
 
 		lib.Blocks[id] = block
 	}
+
+	return nil
 }
+
+// sameRig refuses to resume a library that was taken on another rig.
+//
+// `resume` carries the earlier run's blocks and its baseline into a header this
+// run has just built, so without this a library comes out a mixture: one run's
+// baseline beside another run's rig, and every carried block relabelled with
+// hardware it was never measured through.
+//
+// The fields are per-library rather than per-block, which is what makes the
+// relabelling silent. A figure measured on one rig is a figure about that rig,
+// and `measured.Reach.Alone` is the standing demonstration of what forgetting
+// that costs: an isolated amplifier's Treble moves the centroid 12,763Hz per
+// turn against 3,250 in a real chain, with four of eleven controls changing
+// sign.
+//
+// Volume is not compared, because it is pinned after this runs and is not known
+// yet. The rig it was pinned on is, and that is the part that decides whether
+// two levels mean the same thing: a Mac with its default on Bluetooth
+// headphones pinned those to 38 while the jack feeding the pedal sat wherever
+// it was left, and the loop read 66dB of loss.
+//
+// A library with nothing to say about its own rig is let through. 614 readings
+// were taken before these fields existed, and refusing to add to them would
+// refuse the only library there is.
+func sameRig(
+	lib *measured.Library,
+	had measured.Library,
+) error {
+	for _, d := range []struct {
+		what      string
+		was, want string
+	}{
+		{"instrument", had.Instrument, lib.Instrument},
+		{"the device the level was pinned on", had.PinnedOn, lib.PinnedOn},
+		{"the reference signal", had.Reference.SHA256, lib.Reference.SHA256},
+	} {
+		if d.was == "" || d.was == d.want {
+			continue
+		}
+
+		return fmt.Errorf(
+			"%w: it was taken with %s %q and this run has %q. Resuming would "+
+				"carry those readings into a file saying they were taken on "+
+				"this rig, and a figure measured on one rig is a figure about "+
+				"that rig",
+			errAnotherRig, d.what, d.was, d.want)
+	}
+
+	// Only where the library says anything about its rig at all. `Open` is a
+	// bool, so it cannot tell "the loop was closed" from "nobody recorded it",
+	// which is the same trap `unknownVolume` exists for: 614 readings predate
+	// these fields and a false here is their silence rather than a closed loop.
+	silent := had.Instrument == "" && had.PinnedOn == "" && had.Reference.SHA256 == ""
+
+	if !silent && had.Open != lib.Open {
+		return fmt.Errorf(
+			"%w: it was taken with the measuring loop %s and this run has it "+
+				"%s, which is the difference that reads an Ampeg SVT at 12.7%% "+
+				"of its energy in the mids on one and 4.0%% on the other",
+			errAnotherRig, openAs(had.Open), openAs(lib.Open))
+	}
+
+	return nil
+}
+
+// openAs names whether the measuring loop was open, for a refusal to read in.
+func openAs(
+	open bool,
+) string {
+	if open {
+		return "open"
+	}
+
+	return "closed"
+}
+
+// errAnotherRig reports a library whose readings were taken on other hardware.
+var errAnotherRig = errors.New("that library was measured on another rig")
 
 // reference reads the signal every block is measured against.
 func reference(

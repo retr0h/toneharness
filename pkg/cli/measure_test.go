@@ -241,7 +241,7 @@ func (s *MeasureTestSuite) TestResume() {
 		    "B":{"id":"B","category":"amp","refused":"the device said no"}}}`)
 
 				lib := measured.Library{Blocks: map[string]measured.Block{}}
-				Resume(&lib, MeasureOptions{Out: at})
+				s.Require().NoError(Resume(&lib, MeasureOptions{Out: at}))
 
 				s.Require().Len(lib.Blocks, 2)
 				s.Require().InDelta(94.8, lib.Baseline.Centroid, 0.01,
@@ -263,7 +263,7 @@ func (s *MeasureTestSuite) TestResume() {
 		    "B":{"id":"B","category":"amp","refused":"the device said no"}}}`)
 
 				lib := measured.Library{Blocks: map[string]measured.Block{}}
-				Resume(&lib, MeasureOptions{Out: at, Retry: true})
+				s.Require().NoError(Resume(&lib, MeasureOptions{Out: at, Retry: true}))
 
 				s.Require().Len(lib.Blocks, 1)
 				s.Require().Contains(lib.Blocks, "A")
@@ -285,7 +285,8 @@ func (s *MeasureTestSuite) TestResume() {
 						}
 
 						lib := measured.Library{Blocks: map[string]measured.Block{}}
-						Resume(&lib, MeasureOptions{Out: at})
+						s.Require().NoError(
+							Resume(&lib, MeasureOptions{Out: at}))
 
 						s.Require().Empty(lib.Blocks)
 					})
