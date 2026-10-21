@@ -241,7 +241,7 @@ func (s *MeasureTestSuite) TestResume() {
 		    "B":{"id":"B","category":"amp","refused":"the device said no"}}}`)
 
 				lib := measured.Library{Blocks: map[string]measured.Block{}}
-				Resume(&lib, MeasureOptions{Out: at})
+				s.Require().NoError(Resume(&lib, MeasureOptions{Out: at}))
 
 				s.Require().Len(lib.Blocks, 2)
 				s.Require().InDelta(94.8, lib.Baseline.Centroid, 0.01,
@@ -263,11 +263,31 @@ func (s *MeasureTestSuite) TestResume() {
 		    "B":{"id":"B","category":"amp","refused":"the device said no"}}}`)
 
 				lib := measured.Library{Blocks: map[string]measured.Block{}}
-				Resume(&lib, MeasureOptions{Out: at, Retry: true})
+				s.Require().NoError(Resume(&lib, MeasureOptions{Out: at, Retry: true}))
 
 				s.Require().Len(lib.Blocks, 1)
 				s.Require().Contains(lib.Blocks, "A")
 				s.Require().NotContains(lib.Blocks, "B", "the refusal is tried again")
+			},
+		},
+		{
+			// A library taken on other hardware. `resume` carries its blocks
+			// and its baseline into a header this run has just built, so
+			// without the refusal the file comes out a mixture and every
+			// carried block is relabelled with a rig it never saw.
+			name: "refuses a library taken on another rig",
+			then: func() {
+				at := s.libraryFile(`{"device":"HX Stomp","isolated":true,
+		  "instrument":"guitar","volume":38,"pinned_on":"External Headphones",
+		  "blocks":{"A":{"id":"A","category":"amp","centroid":300}}}`)
+
+				lib := measured.Library{Blocks: map[string]measured.Block{}}
+				err := Resume(&lib, MeasureOptions{Out: at})
+
+				s.Require().Error(err)
+				s.Require().ErrorContains(err, `instrument "guitar"`)
+				s.Require().Empty(lib.Blocks,
+					"nothing is carried from a library this run cannot claim")
 			},
 		},
 		{
@@ -285,7 +305,8 @@ func (s *MeasureTestSuite) TestResume() {
 						}
 
 						lib := measured.Library{Blocks: map[string]measured.Block{}}
-						Resume(&lib, MeasureOptions{Out: at})
+						s.Require().NoError(
+							Resume(&lib, MeasureOptions{Out: at}))
 
 						s.Require().Empty(lib.Blocks)
 					})
