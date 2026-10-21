@@ -197,8 +197,8 @@ func against(
 
 	for _, figure := range figures {
 		_, _ = fmt.Fprintf(w, "\n  %s\n", figure)
-		_, _ = fmt.Fprintf(w, "    %-34s %12s %12s %9s\n",
-			"CONTROL", "LIVE", "COMMITTED", "RATIO")
+		_, _ = fmt.Fprintf(w, "    %-34s %12s %12s %9s %9s\n",
+			"CONTROL", "LIVE", "COMMITTED", "RATIO", "STRAIGHT")
 
 		rows := 0
 
@@ -211,8 +211,9 @@ func against(
 			is := k.Slope[figure]
 			rows++
 
-			_, _ = fmt.Fprintf(w, "    %-34s %12.4f %12.4f %9s\n",
-				k.Control, is, was, ratio(is, was))
+			_, _ = fmt.Fprintf(w, "    %-34s %12.4f %12.4f %9s %9s\n",
+				k.Control, is, was.PerTurn, ratio(is, was.PerTurn),
+				describes(was.Straight))
 		}
 
 		if rows == 0 {
@@ -221,6 +222,35 @@ func against(
 	}
 
 	return nil
+}
+
+// describes says whether the committed slope describes its own curve.
+//
+// A ratio has two explanations and nothing here could tell them apart. Either
+// the rig changed, which is what this command is for, or the committed figure
+// is a line fitted through a curve that is not one, in which case the live
+// reading is not disagreeing with anything.
+//
+// The second is the common case. Across the swept library, 59% of the fits
+// account for less than 0.8 of their figure's movement, and the controls worth
+// using are the worst of them: `Mid Freq` on an amplifier reads 0.02, a filter's
+// `Envelope` 0.05, and the lists read 0.00 by construction because a list has no
+// order for a line to run through.
+//
+// Said rather than hidden, and said rather than acted on: this command reports
+// and changes nothing, which is the right place for a figure nobody should trust
+// silently. See task 253.
+func describes(
+	straight float64,
+) string {
+	switch {
+	case straight >= 0.8:
+		return fmt.Sprintf("%.2f", straight)
+	case straight <= 0.05:
+		return fmt.Sprintf("%.2f NONE", straight)
+	}
+
+	return fmt.Sprintf("%.2f poor", straight)
 }
 
 // ratio is how far the live slope sits from the committed one.
@@ -257,8 +287,8 @@ func committedSlopes(
 	dir string,
 	reference string,
 	w io.Writer,
-) (map[solve.Where]map[audio.Figure]float64, error) {
-	out := map[solve.Where]map[audio.Figure]float64{}
+) (map[solve.Where]map[audio.Figure]measured.Fit, error) {
+	out := map[solve.Where]map[audio.Figure]measured.Fit{}
 
 	// Which committed sweeps say nothing about the instrument they were taken
 	// with. Said rather than refused: the comparison is still the only way to
@@ -300,10 +330,13 @@ func committedSlopes(
 				continue
 			}
 
-			slope := map[audio.Figure]float64{}
+			slope := map[audio.Figure]measured.Fit{}
 			for key, fit := range curve.Fits {
-				slope[key] = inCorpusScale(
-					map[audio.Figure]float64{key: fit.PerTurn})[key]
+				slope[key] = measured.Fit{
+					PerTurn: inCorpusScale(
+						map[audio.Figure]float64{key: fit.PerTurn})[key],
+					Straight: fit.Straight,
+				}
 			}
 
 			out[solve.Where{Block: b.Pos, Param: index}] = slope
