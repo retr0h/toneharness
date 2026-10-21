@@ -40,6 +40,7 @@ var (
 	toneTuneKeep     string
 	toneTuneExtend   string
 	toneTuneSweeps   string
+	toneTuneRigs     string
 	toneTuneAsk      string
 	toneTuneHardware string
 	toneTuneHeadroom float64
@@ -106,7 +107,7 @@ wrong for the sound is a real answer to somebody who owns that gear.`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		pedal.claim()
 
-		client := toneTuneClient.client()
+		client := toneTuneClient.client(ownRigs(toneTuneRigs))
 
 		return cli.Tune(cmd.Context(), cmd.OutOrStdout(), cli.TuneOptions{
 			Client:       client,
@@ -172,6 +173,8 @@ func init() {
 		"",
 		"where to write this rig with one more block in it, when the dials run out. The loop already names the blocks whose own readings move what is missing; this writes the best of them into the chain, on the side of the amplifier the corpus puts that kind, with evidence saying it arrived by measurement. Nothing is built and nothing is overwritten: read it, keep or drop the block, and tune it again",
 	)
+	f.StringVar(&toneTuneRigs, "rigs", "",
+		"a directory of rigs to use instead of yours, beside the built-in ones")
 	f.StringVar(&toneTuneSweeps, "sweeps", "resources/sweeps/hx-stomp",
 		"the committed curves --extend reads to decide where a proposed block's "+
 			"controls start. Only the fingerprints are packed into the binary, so "+
