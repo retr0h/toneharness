@@ -162,3 +162,48 @@ What the signature actually is: **many blocks of unrelated gear agreeing**. The
 46 cabinets spanned 0.4Hz where their mono twins spanned 92.8Hz, and 80 blocks
 across six categories shared one reading. Two models of one pedal agreeing in
 the third decimal is the device being consistent.
+
+## A control cannot be guessed from its name, and triage saves nothing
+
+The question a campaign asks when a firmware release adds models: now that so
+much is swept, can the new blocks be predicted rather than measured?
+
+No. Tested by leave-one-out across the 55 control names appearing on four or
+more swept blocks — predict each block's control from the median of the others:
+
+| control | blocks | span across them | a guess is off by |
+| --- | --- | --- | --- |
+| `Drive` | 49 | 0.1–352 Hz | 78% |
+| `Gain` | 27 | 0.0–254 Hz | 76% |
+| `Mix` | 21 | 2.4–8292 Hz | 71% |
+| `Treble` | 42 | 0.7–593 Hz | 61% |
+| `Mid` | 24 | 3.9–269 Hz | 60% |
+
+Eighteen of the 55 predict within 25%, and that number flatters the method:
+most of those are controls whose median span is **0.0 Hz**, so what is being
+predicted correctly is that the control does nothing.
+
+**That is a trap rather than a shortcut.** `Level` reads a median of 0.0 Hz
+across 76 blocks and seven of them move it as far as 774 Hz. `Output` has one at
+221 Hz among seventeen. Nothing in the name says which block is the exception,
+so a guess is right until it is badly wrong, and the blocks it is wrong about
+are the interesting ones.
+
+The only non-zero controls that predict well are the `Ch1 *` family at 3 to 10%,
+and all four of those come from one amplifier's channels. That is four readings
+of related gear, not four independent ones.
+
+**And a cheap triage pass is not worth running.** Three points over everything,
+then nine on whatever moved, costs 16.5 hours against 17.0 for nine points on
+everything — a 3% saving — because **64% of controls (510 of 800) move the
+centroid by more than ten times the noise floor.** Most of the device is a lever,
+so the pass that finds the levers nearly measures everything anyway.
+
+**So sweep new blocks, at nine points.** It is cheap per block: a five-control
+synth is about seven minutes.
+
+What the library does buy is knowing **which** blocks are worth sweeping, and
+that is where the saving is. A bass build can reach 293 of the device's 661
+blocks, but the 43 shipped rigs between them hold only **21 distinct blocks**,
+and sweeping those 21 covers 87% of the controls in every shipped chain. Sweep
+what the rigs hold before sweeping what a build could choose.
