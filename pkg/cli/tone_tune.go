@@ -352,7 +352,8 @@ func Tune(
 	// so a reading of the loop rather than of the chain does not produce a
 	// wrong answer, it produces a chain turned to match one.
 	if say, bad := Squealing(figuresOf(first), figuresOfDry(signal),
-		inCorpusScale(floor), chainEndsInACab(made.Plan, cat)); bad {
+		inCorpusScale(floor), chainEndsInACab(made.Plan, cat),
+		justifiedBy(made.Plan, cat, opts.Sweeps)); bad {
 		// Kept before the refusal, because a refusal is when somebody most wants
 		// to listen. The figures name an oscillation and the recording is the
 		// only thing that says what it sounds like, which is how a cable, a

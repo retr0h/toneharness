@@ -24,12 +24,15 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
 // ChainOptions is what reading the loaded chain needs.
@@ -105,8 +108,13 @@ func Chain(
 		now[audio.KeyLow]*perCent, now[audio.KeyMid]*perCent,
 		now[audio.KeyHigh]*perCent, now[audio.KeyCentroid], at.Level)
 
+	// Nothing justified. This reads whatever the pedal is playing and is handed
+	// `--cab` by a person rather than a chain it can inspect, so it has no list
+	// of blocks to sum. That leaves it on the bare invariant, which will call a
+	// drive a squeal; it says so as a warning rather than refusing, and `tone
+	// tune` is the path that knows what the chain holds.
 	if say, bad := Squealing(
-		now, figuresOfDry(signal), inCorpusScale(floor), opts.EndsInACab); bad {
+		now, figuresOfDry(signal), inCorpusScale(floor), opts.EndsInACab, 0); bad {
 		_, _ = fmt.Fprintf(w, "\n    [!] %s\n", say)
 	}
 
@@ -136,6 +144,22 @@ func figuresOfDry(
 	}
 }
 
+// apart is how much more of the high band a chain may give back than its own
+// blocks account for before the reading is of the loop rather than of the
+// chain.
+//
+// A separator between two measured populations rather than a physical limit.
+// Sweeping the headroom on matt-freeman, the readings are 73.9% above 2kHz at
+// -15dB, 39.1% at -20, and 0.1% at -25 and everywhere below. Clean readings
+// sit between 0.0% and 0.1% and squealing ones between 39% and 84%, which is a
+// factor of four hundred with nothing in between.
+//
+// Five points: fifty times above what a clean reading carries and eight times
+// below the quietest squeal. The invariant is exact and the measurement is
+// not, and this is the width of that gap rather than a claim about
+// loudspeakers.
+const apart = 0.05
+
 // Squealing says the chain gave back more high end than was put in.
 //
 // A cabinet is a loudspeaker and a loudspeaker is a low pass. A chain ending
@@ -158,25 +182,33 @@ func figuresOfDry(
 // an amplifier's gain rises with what is put into it.
 //
 // Only for a chain that ends in a cabinet. Anything else may legitimately be
-// brighter than what it was given, and a drive certainly is.
-// apart is how much more of the high band a chain may give back than it was
-// handed before the reading is of the loop rather than of the chain.
+// brighter than what it was given.
 //
-// A separator between two measured populations rather than a physical limit.
-// Sweeping the headroom on matt-freeman, the readings are 73.9% above 2kHz at
-// -15dB, 39.1% at -20, and 0.1% at -25 and everywhere below. Clean readings
-// sit between 0.0% and 0.1% and squealing ones between 39% and 84%, which is a
-// factor of four hundred with nothing in between.
+// A chain that ends in a cabinet may still hold something that brightens, and
+// justified is how much its own blocks account for. A drive is the case: an
+// Arbiter Fuzz Face into an Ampeg SVT into an 8x10 read 6.5% above 2kHz
+// through the open loop, which is not oscillation and was refused as it for
+// as long as the comparison was against a constant.
 //
-// Five points: fifty times above what a clean reading carries and eight times
-// below the quietest squeal. The invariant is exact and the measurement is
-// not, and this is the width of that gap rather than a claim about
-// loudspeakers.
-const apart = 0.05
-
+// Widening apart cannot answer it. Of the 67 drives this device models, a
+// Xenomorph Fuzz reaches 34.2% of its energy above 2kHz in its own sweep and a
+// Line 6 Distortion 33.6%, while the quietest squeal anybody has recorded here
+// is 39%. There is no number between those two populations any more, which is
+// what apart used to sit in.
+//
+// So the ceiling is what the chain's blocks were separately measured reaching,
+// which the caller sums from the committed curves. On that fuzz chain the sum
+// is 6.437% against the 6.5% the chain read, which is the agreement this rule
+// rests on.
+//
+// It loses its power at the bright end, and says so rather than pretending.
+// A chain built on a Xenomorph justifies around 39%, which is the quietest
+// squeal, so for the brightest drives this invariant cannot tell the two
+// apart. What it must not do is refuse a chain it has no case against.
 func Squealing(
 	now, dry, wander map[audio.Figure]float64,
 	endsInACab bool,
+	justified float64,
 ) (string, bool) {
 	if !endsInACab {
 		return "", false
@@ -189,16 +221,106 @@ func Squealing(
 	// measurements rather than two numbers and a quiet reading carries the
 	// converter's own broadband floor. A chain with 25dB of headroom reads
 	// 0.1% above 2kHz against the reference's 0.01%, at a level of -55dB.
-	if !in || !out || is <= was+apart+wander[audio.KeyHigh] {
+	if !in || !out || is <= was+justified+apart+wander[audio.KeyHigh] {
 		return "", false
 	}
 
 	return fmt.Sprintf(
 		"this chain ends in a cabinet and gave back %.1f%% of its energy above "+
-			"2kHz\n      against %.2f%% in the reference. A loudspeaker cannot add "+
-			"that.\n      The loop is oscillating: turn the amplifier's output down "+
+			"2kHz\n      against %.2f%% in the reference and %.1f%% its own blocks "+
+			"account for.\n      A loudspeaker cannot add that."+
+			"\n      The loop is oscillating: turn the amplifier's output down "+
 			"and read it again.",
-		is*perCent, was*perCent), true
+		is*perCent, was*perCent, justified*perCent), true
+}
+
+// justifiedBy is how much of the high band a chain's own blocks account for.
+//
+// The sum of what each block in the chain was separately measured reaching
+// above 2kHz, read from the committed curves. It is the ceiling Squealing
+// compares a reading against, because a constant cannot separate a drive from
+// a squeal any more: see the note on Squealing for the two populations that
+// now overlap.
+//
+// Summed rather than maxed, on the evidence. For the chain `--extend` proposed
+// for matt-freeman, a Deluxe Comp into an Arbiter Fuzz Face into an Ampeg SVT
+// into an 8x10:
+//
+//	HD2_CompressorDeluxeComp   0.010%
+//	HD2_DistArbitratorFuzz     1.385%
+//	HD2_AmpSVBeastBrt          4.941%
+//	HD2_CabMicIr_8x10SVTAV     0.101%
+//	                           ------
+//	sum                        6.437%
+//
+// The chain read 6.5%. The maximum is 4.941% and would have refused it, so the
+// blocks compound rather than one of them dominating.
+//
+// Zero where there are no curves, which is every installed release: the sweeps
+// live under resources/sweeps/ and `just pack-measured` embeds only the
+// fingerprints. That leaves the exact invariant in place, which is the right
+// way to be wrong, because it refuses a chain rather than trusting one.
+//
+// Zero for a block nothing has swept, too. A block with no curves cannot
+// justify its own brightness, and guessing a figure for it would be the one
+// thing this whole library exists to stop.
+func justifiedBy(
+	made plan.Plan,
+	cat *catalog.Catalog,
+	sweeps string,
+) float64 {
+	if sweeps == "" {
+		return 0
+	}
+
+	var out float64
+
+	// By model rather than by position, because a chain may hold two of a kind
+	// and each of them brightens.
+	for _, b := range made.Blocks {
+		if _, known := cat.Blocks[b.Model]; !known {
+			continue
+		}
+
+		out += brightest(filepath.Join(sweeps, string(b.Model)+".json"))
+	}
+
+	return out / perCent
+}
+
+// brightest is the most of the high band one block's own sweep ever read.
+//
+// Across every control and every position of it, because a control is swept
+// through its range and the chain is at whatever the solve put it at. The
+// ceiling is what the block can do, not what it does at its defaults.
+//
+// A file that is not there, or will not parse, is zero rather than an error.
+// This is a guard's input: a missing sweep should leave the guard stricter,
+// never stop the run that was about to measure something.
+func brightest(
+	at string,
+) float64 {
+	f, err := os.Open(at) //nolint:gosec // a path built from the catalog
+	if err != nil {
+		return 0
+	}
+
+	defer func() { _ = f.Close() }()
+
+	curves, err := measured.LoadCurves(f)
+	if err != nil {
+		return 0
+	}
+
+	var out float64
+
+	for _, c := range curves.Controls {
+		for _, p := range c.Points {
+			out = max(out, p.High)
+		}
+	}
+
+	return out
 }
 
 // referenceIsFor is what a reference recording was played on.

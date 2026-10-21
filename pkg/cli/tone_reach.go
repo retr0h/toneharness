@@ -82,6 +82,10 @@ type ReachOptions struct {
 	// Corpus is the tree the target is measured from. Empty reads the figures
 	// shipped with this binary.
 	Corpus string
+	// Sweeps is the committed curves the squeal guard reads to work out how
+	// much of the high band the chain's own blocks account for. Empty leaves
+	// it on the bare invariant, which refuses a chain holding a drive.
+	Sweeps string
 	// Nudge is how far a control moves to read its slope, as a fraction of
 	// its range.
 	Nudge float64
@@ -120,6 +124,12 @@ type ReachOptions struct {
 // minutes for the tuning run it decides whether to spend. Cheaper than the
 // thing it precedes rather than free, and every number about the chain in
 // hand.
+//
+// One thing is read out of resources/sweeps/, and it is not a slope. The
+// squeal guard needs to know how much of the high band the chain's own blocks
+// account for, because a drive legitimately brightens and a constant can no
+// longer separate one from oscillation. That is a ceiling on a refusal rather
+// than a figure about the chain, so it does not reach the answer.
 //
 // Nothing is applied. The chain is left where the compiler put it, and what
 // comes back is the model's own answer about what could be done from there.
@@ -211,7 +221,8 @@ func Reach(
 	// reading, and a chain giving back more high end than went in is not a
 	// chain being read at all.
 	if say, bad := Squealing(from, figuresOfDry(signal), inCorpusScale(floor),
-		chainEndsInACab(made.Plan, cat)); bad {
+		chainEndsInACab(made.Plan, cat),
+		justifiedBy(made.Plan, cat, opts.Sweeps)); bad {
 		return fmt.Errorf("%w: %s", ErrSquealing, say)
 	}
 
