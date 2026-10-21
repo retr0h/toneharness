@@ -36,6 +36,7 @@ var (
 	measureSlopesNudge    float64
 	measureSlopesHeadroom float64
 	measureSlopesVolume   int
+	measureSlopesRigs     string
 	measureSlopesClient   clientFlags
 )
 
@@ -67,7 +68,7 @@ dials is about a minute and a half, and it holds the pedal throughout.`,
 		pedal.claim()
 
 		return cli.Slopes(cmd.Context(), cmd.OutOrStdout(), cli.SlopesOptions{
-			Client:       measureSlopesClient.client(),
+			Client:       measureSlopesClient.client(ownRigs(measureSlopesRigs)),
 			ID:           measureSlopesID,
 			Sweeps:       measureSlopesSweeps,
 			Dry:          measureSlopesDry,
@@ -113,6 +114,8 @@ func init() {
 		"where to put the computer's own output level before measuring, 0 to 100; "+
 			"it is a tone control rather than a level control, because an "+
 			"amplifier's distortion depends on how hard it is driven")
+	f.StringVar(&measureSlopesRigs, "rigs", "",
+		"a directory of rigs to use instead of yours, beside the built-in ones")
 	f.StringVar(&measureSlopesClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&measureSlopesClient.device, "device", "", deviceUsage)

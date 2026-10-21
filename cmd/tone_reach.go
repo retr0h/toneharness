@@ -37,6 +37,7 @@ var (
 	toneReachNudge    float64
 	toneReachHeadroom float64
 	toneReachVolume   int
+	toneReachRigs     string
 	toneReachClient   clientFlags
 )
 
@@ -82,7 +83,7 @@ and the second is the one that saves the afternoon.`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		pedal.claim()
 
-		client := toneReachClient.client()
+		client := toneReachClient.client(ownRigs(toneReachRigs))
 
 		return cli.Reach(cmd.Context(), cmd.OutOrStdout(), cli.ReachOptions{
 			Client:       client,
@@ -126,7 +127,7 @@ func init() {
 		"",
 		"which attached audio device to push the signal through; two names separated by a comma play through the first and record from the second, which is how the measuring loop is opened rather than quieted",
 	)
-	f.StringVar(&toneReachClient.rigs, "rigs", "",
+	f.StringVar(&toneReachRigs, "rigs", "",
 		"a directory of rigs to use instead of yours, beside the built-in ones")
 	f.Float64Var(
 		&toneReachHeadroom,
