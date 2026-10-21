@@ -271,6 +271,26 @@ func (s *MeasureTestSuite) TestResume() {
 			},
 		},
 		{
+			// A library taken on other hardware. `resume` carries its blocks
+			// and its baseline into a header this run has just built, so
+			// without the refusal the file comes out a mixture and every
+			// carried block is relabelled with a rig it never saw.
+			name: "refuses a library taken on another rig",
+			then: func() {
+				at := s.libraryFile(`{"device":"HX Stomp","isolated":true,
+		  "instrument":"guitar","volume":38,"pinned_on":"External Headphones",
+		  "blocks":{"A":{"id":"A","category":"amp","centroid":300}}}`)
+
+				lib := measured.Library{Blocks: map[string]measured.Block{}}
+				err := Resume(&lib, MeasureOptions{Out: at})
+
+				s.Require().Error(err)
+				s.Require().ErrorContains(err, `instrument "guitar"`)
+				s.Require().Empty(lib.Blocks,
+					"nothing is carried from a library this run cannot claim")
+			},
+		},
+		{
 			// The first run.
 			name: "on nothing to resume from",
 			then: func() {

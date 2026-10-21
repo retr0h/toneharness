@@ -723,6 +723,33 @@ func (s *MeasureRunTestSuite) TestMeasureBlocks() {
 			// The baseline comes back with it: a second baseline taken an
 			// hour later is a different loop, and every block already in the
 			// file was measured against the first one.
+			// The refusal, end to end: a library this run cannot claim stops the
+			// campaign rather than being added to. `resume` carries an earlier
+			// run's blocks and baseline into a header this run just built, so
+			// carrying on would file those readings under a rig they were never
+			// measured through.
+			name: "blocks refuses to resume another rig's library",
+			then: func() {
+				s.compiles()
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+				s.Require().NoError(os.WriteFile(s.out, []byte(
+					`{"device":"HX Stomp","isolated":true,"instrument":"guitar",`+
+						`"volume":38,"blocks":{"A":{"id":"A","category":"eq",`+
+						`"centroid":300}}}`), 0o600))
+
+				var buf bytes.Buffer
+
+				err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
+					Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
+					Seconds: 1, Bench: bench{}, Resume: true,
+				})
+
+				s.Require().Error(err)
+				s.Require().ErrorContains(err, `instrument "guitar"`)
+			},
+		},
+		{
 			name: "blocks resumes from what is already there",
 			then: func() {
 				s.compiles()
