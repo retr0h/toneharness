@@ -21,7 +21,10 @@
 package translate
 
 import (
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
@@ -90,9 +93,64 @@ func Because(
 	ranked int,
 	sat float64,
 	instrument string,
+	kind catalog.Category,
 ) tone.Evidence {
-	return a.because(gear, ranked, sat, instrument)
+	return a.because(gear, ranked, sat, instrument, kind)
 }
 
 // Said3 is a list the way a sentence says one.
 var Said3 = said3
+
+// ModelsFor is every model of one kind a gear name reaches.
+func ModelsFor(
+	cat *catalog.Catalog,
+	gear string,
+	kind catalog.Category,
+) map[string]bool {
+	return modelsFor(cat, gear, kind)
+}
+
+// Commonest is the one piece of gear most of these name.
+func Commonest(
+	cat *catalog.Catalog,
+	said []rig.ChainEntry,
+	kind catalog.Category,
+) (rig.ChainEntry, int, bool) {
+	return commonest(cat, said, kind)
+}
+
+// StompedFor is the effects a genre gets, switched off and tuned.
+func StompedFor(
+	spec tone.Ask,
+	setup tone.Setup,
+	deps Deps,
+	notes *Notes,
+) []rig.ChainEntry {
+	said := stompedFor(spec, setup, deps, notes)
+	out := make([]rig.ChainEntry, 0, len(said))
+
+	for _, p := range said {
+		out = append(out, p.entry)
+	}
+
+	return out
+}
+
+// Tuned sets a block's controls from its sweep.
+func Tuned(
+	entry *rig.ChainEntry,
+	model catalog.ModelID,
+	spec tone.Ask,
+	deps Deps,
+	notes *Notes,
+) {
+	tuned(entry, model, spec, deps, notes)
+}
+
+// DisplacedToward is where a genre aims, as a displacement from a baseline.
+func DisplacedToward(
+	got audio.Genre,
+	baseline measured.Figures,
+) measured.Figures {
+	return displacedTo(got, baseline)
+}

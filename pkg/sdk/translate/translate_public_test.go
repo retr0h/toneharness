@@ -1743,7 +1743,8 @@ func (s *TranslatePublicTestSuite) TestABlockChosenByMeasurementSaysWhy() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			got := translate.Because(
-				tt.aim, "MESA/Boogie Bass 400+", 27, 150, "bass")
+				tt.aim, "MESA/Boogie Bass 400+", 27, 150, "bass",
+				catalog.CategoryAmp)
 
 			s.Require().Equal(tone.EvidenceAudio, got.Kind)
 			s.Require().NotNil(got.Note)

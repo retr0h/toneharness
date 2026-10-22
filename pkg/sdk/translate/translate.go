@@ -43,7 +43,9 @@ package translate
 
 import (
 	"fmt"
+	"maps"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -51,6 +53,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
@@ -80,6 +83,14 @@ type Deps struct {
 	// nothing is looked up, so an ask naming a player resolves nothing, which is
 	// what a caller wanting only its own gear resolved gets.
 	RigNamed func(name string) (rig.Spec, bool)
+	// CurvesFor is what every control of one block does, measured, and
+	// whether that block has been swept.
+	//
+	// Handed in for the reason RigNamed is: the sweeps are a directory of
+	// readings and translate sits upstream of whatever reads it. Nil means
+	// nothing is looked up, and a block added to a chain then arrives at the
+	// catalog's defaults, which is what every added block used to do.
+	CurvesFor func(model catalog.ModelID) (measured.Curves, bool)
 }
 
 // UnknownWord is a word somebody used that nothing defines, and the nearest
@@ -427,11 +438,35 @@ func chainFor(
 		}
 	}
 
+	// And a genre is the same evidence one step wider. Its players each have a
+	// researched rig, so what the genre used is what most of them used, which
+	// is a fact about the records rather than a figure fitted to them.
+	//
+	// Above measurement for the reason a named player's rig is: 9 of the 11
+	// genres this corpus can aim at were given a MESA/Boogie Bass 400+ by
+	// ranking blocks against their figures, and four of punk's seven players
+	// resolve to an Ampeg SVT into an 8x10. Improving the figures does not fix
+	// that. Aiming punk at the edge of its own range rather than its middle
+	// moved its amplifier from the Ampeg its players used to a Pearce BC-1
+	// preamp, which is a better fit to a number and a worse answer.
 	if !holds(named, rig.RoleAmp) {
-		if amp, ok := nearestTo(spec, setup, deps, "amp", notes); ok {
+		if from, ok := likeTheirGenre(spec, deps, notes); ok {
+			named = append(from, named...)
+		}
+	}
+
+	if !holds(named, rig.RoleAmp) {
+		if amp, _, ok := nearestTo(spec, setup, deps, "amp", notes); ok {
 			named = append([]placed{{entry: amp}}, named...)
 		}
 	}
+
+	// And what a foot reaches for. A genre's records cover a range no single
+	// setting reaches, so the range goes to somebody's feet rather than being
+	// averaged into one point: the blocks that carry the chain further into
+	// the genre arrive switched off, each on its own switch, and the base
+	// sound is the amplifier until one is stepped on.
+	named = append(named, stompedFor(spec, setup, deps, notes)...)
 
 	if len(named) == 0 {
 		return nil, ErrNothingToBuildFrom
@@ -527,6 +562,235 @@ func likeTheirRig(
 	return out, len(out) > 0
 }
 
+// likeTheirGenre is the gear most of a genre's players used.
+//
+// A genre names its players and each of them may have a researched rig, so the
+// gear a genre used is answerable from documents rather than fitted to a
+// figure. Task 244 established the answer is a real mode and not an average:
+// three of punk's five resolved players name an Ampeg SVT, and a fourth names
+// an Ampeg SVT-II Pro.
+//
+// Only the amplifier and the cabinet, and deliberately. Those are the two a
+// genre's players really did share, and everything else they held is one
+// person's pedal rather than the genre's: taking the mode of a drive across
+// seven punk bassists would invent a pedalboard nobody owned. What goes in
+// front is the character's to decide, which is the rest of the rule in
+// build-a-rig's measuring.md.
+//
+// Counted per role rather than as an amplifier-and-cabinet pair. Pairing reads
+// better, because a head and the cabinet behind it are one decision, and it
+// throws the answer away: punk's five resolved players name three Ampeg SVTs
+// behind two different spellings of an 8x10, so the amplifier has a majority
+// of three and no pair has more than two.
+//
+// A role whose players reach no majority gets nothing from here and falls
+// through to the measurements, which is the honest answer rather than a mode of
+// one. `RigNamed` reaches the rigs that ship and the ones somebody wrote, so a
+// player with no document is not counted, and the note says how many were.
+func likeTheirGenre(
+	spec tone.Ask,
+	deps Deps,
+	notes *Notes,
+) ([]placed, bool) {
+	if deps.RigNamed == nil || len(spec.Genre) == 0 {
+		return nil, false
+	}
+
+	got, ok := audio.ShippedGenre(string(spec.Genre[0]))
+	if !ok || !got.Usable || len(got.Who) == 0 {
+		return nil, false
+	}
+
+	// Collected per role before anything is counted, because deciding which
+	// two names mean one box needs all of them.
+	said := map[rig.Role][]rig.ChainEntry{}
+	resolved := 0
+
+	for _, who := range got.Who {
+		found, has := deps.RigNamed(who)
+		if !has {
+			continue
+		}
+
+		// Counted once per player per role, so a rig naming two amplifiers
+		// does not outvote a rig naming one.
+		anything := false
+
+		for _, role := range []rig.Role{rig.RoleAmp, rig.RoleCab} {
+			for _, entry := range found.Chain {
+				if entry.Role != role || entry.Gear == "" {
+					continue
+				}
+
+				said[role] = append(said[role], entry)
+				anything = true
+
+				break
+			}
+		}
+
+		if anything {
+			resolved++
+		}
+	}
+
+	out := []placed(nil)
+	took := map[rig.Role]string{}
+
+	for _, role := range []rig.Role{rig.RoleAmp, rig.RoleCab} {
+		entry, count, ok := commonest(deps.Catalog, said[role], catalog.Category(role))
+
+		// A majority rather than a plurality. Two players out of seven
+		// agreeing is not what a genre used, and the measurements are a
+		// better answer than a mode nobody holds.
+		if !ok || count*2 <= resolved {
+			continue
+		}
+
+		out = append(out, placed{entry: entry})
+		took[role] = fmt.Sprintf("%s in %d of %d", entry.Gear, count, resolved)
+	}
+
+	if len(out) == 0 {
+		*notes = append(*notes, Note{
+			About: string(spec.Genre[0]),
+			Said: fmt.Sprintf(
+				"%d of its %d players have a researched rig and no amplifier or "+
+					"cabinet is in most of them, so the gear was measured for instead",
+				resolved, len(got.Who)),
+		})
+
+		return nil, false
+	}
+
+	for _, role := range []rig.Role{rig.RoleAmp, rig.RoleCab} {
+		said, chose := took[role]
+		if !chose {
+			continue
+		}
+
+		*notes = append(*notes, Note{
+			About:    string(spec.Genre[0]),
+			Said:     said + " of its players with a researched rig, so it was taken rather than measured for",
+			Honoured: true,
+		})
+	}
+
+	return out, true
+}
+
+// commonest is the one piece of gear most of these name, counting two
+// spellings of one box once.
+//
+// Players write gear the way they say it, so one box arrives under several
+// names: punk's five researched rigs name "Ampeg 8x10" twice and "8x10 Ampeg
+// SVT-810AV" twice, which is four players on one cabinet and counted as two on
+// each. Task 244 found the same in the amplifiers, where "Ampeg SVT" and
+// "Ampeg SVT-II Pro" are one model.
+//
+// Grouped by whether two names reach any model in common rather than by
+// resolving each to one. Resolving picks a representative and the pick is not
+// stable across spellings: "Ampeg 8x10" reaches three cabinets and "8x10 Ampeg
+// SVT-810AV" reaches two of those three, so taking the first of each counts
+// them apart while the catalog says they overlap.
+//
+// A name the catalog places nowhere is its own group, which is the honest
+// failure: nothing here can tell two unplaceable spellings of one box apart.
+func commonest(
+	cat *catalog.Catalog,
+	said []rig.ChainEntry,
+	kind catalog.Category,
+) (rig.ChainEntry, int, bool) {
+	type group struct {
+		models map[string]bool
+		entry  rig.ChainEntry
+		count  int
+	}
+
+	var groups []*group
+
+	for _, entry := range said {
+		fits := modelsFor(cat, entry.Gear, kind)
+
+		// The first group sharing a model with this name, and the groups are
+		// walked in the order the names arrived so a tie keeps the spelling
+		// the earliest player used.
+		var found *group
+
+		for _, g := range groups {
+			for m := range fits {
+				if g.models[m] {
+					found = g
+
+					break
+				}
+			}
+
+			if found != nil {
+				break
+			}
+		}
+
+		if found == nil {
+			groups = append(groups, &group{models: fits, entry: entry, count: 1})
+
+			continue
+		}
+
+		for m := range fits {
+			found.models[m] = true
+		}
+
+		found.count++
+	}
+
+	best := -1
+	for i, g := range groups {
+		if best < 0 || g.count > groups[best].count {
+			best = i
+		}
+	}
+
+	if best < 0 {
+		return rig.ChainEntry{}, 0, false
+	}
+
+	return groups[best].entry, groups[best].count, true
+}
+
+// modelsFor is every model of one kind a gear name reaches.
+//
+// The whole set rather than the nearest, because what [commonest] asks is
+// whether two names could mean one box and a single answer cannot say that.
+// A name the catalog places nowhere answers with itself, so it groups by
+// spelling instead of merging with everything.
+func modelsFor(
+	cat *catalog.Catalog,
+	gear string,
+	kind catalog.Category,
+) map[string]bool {
+	out := map[string]bool{}
+
+	if cat == nil {
+		return map[string]bool{gear: true}
+	}
+
+	// Sorted so a run answers the same way twice. An unsorted walk over the
+	// app catalog's duplicate names was a coin flip once already.
+	for _, id := range slices.Sorted(maps.Keys(cat.Blocks)) {
+		b := cat.Blocks[id]
+		if b.Category == kind && b.Matches(gear) {
+			out[string(id)] = true
+		}
+	}
+
+	if len(out) == 0 {
+		return map[string]bool{gear: true}
+	}
+
+	return out
+}
+
 // namedSubject is who a request says to sound like, and what kind of thing they
 // are.
 //
@@ -559,6 +823,162 @@ type placed struct {
 	entry rig.ChainEntry
 	// after is the role this was asked to sit behind, where one was named.
 	after *rig.Role
+}
+
+// stompedFor is the effects a genre gets, switched off, tuned rather than
+// defaulted.
+//
+// A genre rig carried an amplifier, a cabinet and whatever the corpus added on
+// a statistic, which for every one of the eleven genres this corpus can aim at
+// was a compressor and nothing else. No drive, no equaliser, nothing to step
+// on. The records a genre is measured from span a range far wider than one
+// setting reaches, so this puts the far end of that range under a switch
+// instead of throwing it away: punk's records span the mid band from 0.013 to
+// 0.237, and an amplifier set to one of those is not the other.
+//
+// **Switched off, and that is the point.** The chain somebody hears when they
+// load the preset is the amplifier and the cabinet, which is the genre's own
+// gear at the genre's own settings. What a switch adds is a further, dirtier
+// reading of the same genre, and nobody gets surprised by three drives at once.
+//
+// **Tuned from the sweeps rather than left at the factory default.** Every
+// position of every control was measured, so the value that moves a block
+// toward the genre is a reading. A block arriving at its defaults is a block
+// nobody set, and the defaults are not the genre's: see [measured.Curves.Toward],
+// which also states what it cannot do, and task 254.
+//
+// One of each kind, because two drives chosen the same way against the same
+// target are the same block twice. Capped by what the device has switches for,
+// from [plan.LimitsFor], since a block past the last switch is a block nobody
+// can reach with a foot and the whole reason for it was the foot.
+func stompedFor(
+	spec tone.Ask,
+	setup tone.Setup,
+	deps Deps,
+	notes *Notes,
+) []placed {
+	// A genre the corpus can aim at, and nothing else. Every ask carries a
+	// genre field, and `nearestTo` falls back to a recording where one is
+	// named, so without this a request pointing at a record gained a drive
+	// and an equaliser nobody asked for: the rule is about building a genre
+	// from what its players did, and a recording is one performance measured
+	// exactly.
+	if len(spec.Genre) == 0 {
+		return nil
+	}
+
+	if got, ok := audio.ShippedGenre(spec.Genre[0]); !ok || !got.Usable {
+		return nil
+	}
+
+	// The kinds worth a switch, in the order a chain holds them. An amplifier
+	// and a cabinet are the sound rather than an effect on it, and a
+	// compressor on a bass is set once and left, which is why neither is here
+	// and why `compile.Assign` leaves both unassigned.
+	kinds := []catalog.Category{catalog.CategoryDrive, catalog.CategoryEQ}
+
+	out := []placed(nil)
+
+	for _, kind := range kinds {
+		if len(out) >= plan.LimitsFor(deps.Catalog.Device).Switches {
+			break
+		}
+
+		entry, model, ok := nearestTo(spec, setup, deps, kind, notes)
+		if !ok {
+			continue
+		}
+
+		// Off, whatever the catalog or the corpus would have said.
+		off := false
+		entry.Enabled = &off
+
+		tuned(&entry, model, spec, deps, notes)
+
+		out = append(out, placed{entry: entry})
+	}
+
+	return out
+}
+
+// tuned sets a block's controls from its sweep rather than leaving the
+// catalog's defaults on it.
+//
+// A block nobody named arrived at whatever the model ships with, which is a
+// value nobody chose for this chain and in most cases not the one the genre
+// wants. Every position of every control on 179 of this device's blocks was
+// measured, so the value that moves a block toward what is being aimed at is
+// a reading.
+//
+// Silent where there is no sweep for the block, where no sweeps were offered
+// at all, or where a control's whole range moved every weighed figure less
+// than that figure's own noise. In each case the defaults stand, and the note
+// says which happened rather than leaving somebody to wonder why a block
+// arrived untouched.
+func tuned(
+	entry *rig.ChainEntry,
+	model catalog.ModelID,
+	spec tone.Ask,
+	deps Deps,
+	notes *Notes,
+) {
+	if deps.CurvesFor == nil {
+		return
+	}
+
+	at, ok := target(spec, deps, notes)
+	if !ok {
+		return
+	}
+
+	curves, swept := deps.CurvesFor(model)
+	if !swept {
+		*notes = append(*notes, Note{
+			About: entry.Gear,
+			Said: "no sweep for it, so its controls are the catalog's defaults " +
+				"rather than set for this",
+		})
+
+		return
+	}
+
+	wants := ""
+	if spec.Instrument != nil {
+		wants = string(*spec.Instrument)
+	}
+
+	toward := curves.Toward(at.figures, measured.SpectralFor(wants))
+	if len(toward) == 0 {
+		return
+	}
+
+	held := map[string]catalog.Setting{}
+	if entry.Controls != nil {
+		held = *entry.Controls
+	}
+
+	for name, at := range toward {
+		// In the control's own kind. A sweep records it, and writing a float
+		// where the contract wants a boolean is refused: the Kinky Boost's
+		// `Bright` is a boolean and a preset carrying 1.0 on it would not
+		// load, which is how four of the eleven genres failed to compile.
+		switch at.Kind {
+		case "bool":
+			held[name] = catalog.Set(catalog.Bool(at.Value != 0))
+		case "int":
+			held[name] = catalog.Set(catalog.Int(int64(at.Value)))
+		default:
+			held[name] = catalog.Set(catalog.Float(at.Value))
+		}
+	}
+
+	entry.Controls = &held
+
+	*notes = append(*notes, Note{
+		About:    entry.Gear,
+		Said:     fmt.Sprintf("%d of its controls set from its sweep", len(toward)),
+		Honoured: true,
+	})
 }
 
 // namedGear is the blocks a request asked for by name.
@@ -663,10 +1083,10 @@ func nearestTo(
 	deps Deps,
 	category catalog.Category,
 	notes *Notes,
-) (rig.ChainEntry, bool) {
+) (rig.ChainEntry, catalog.ModelID, bool) {
 	at, ok := target(spec, deps, notes)
 	if !ok {
-		return rig.ChainEntry{}, false
+		return rig.ChainEntry{}, "", false
 	}
 
 	want, from := at.figures, at.named
@@ -690,7 +1110,7 @@ func nearestTo(
 	}
 
 	ranked := wanted(deps.Catalog, reachable(
-		deps.Measured.Nearest(category, want, measured.Spectral()),
+		deps.Measured.Nearest(category, want, measured.SpectralFor(wants)),
 		setup, deps.Catalog, wants))
 	if len(ranked) == 0 {
 		*notes = append(*notes, Note{
@@ -698,7 +1118,7 @@ func nearestTo(
 			Said:  "nothing of that kind has been measured, so none could be chosen",
 		})
 
-		return rig.ChainEntry{}, false
+		return rig.ChainEntry{}, "", false
 	}
 
 	best := ranked[0]
@@ -720,7 +1140,7 @@ func nearestTo(
 	// It was hand-written before, on every genre rig in the marketplace, and
 	// rebuilding them dropped all eleven at once. Nothing but
 	// TestEveryShippedGearClaimHasASource said so.
-	held := at.because(gear, len(ranked), best.Centroid, wants)
+	held := at.because(gear, len(ranked), best.Centroid, wants, category)
 
 	// A measurement off a finished record carries whatever microphone was in
 	// front of whatever cabinet, and this block was picked to sit near that
@@ -734,9 +1154,10 @@ func nearestTo(
 		Evidence:   &[]tone.Evidence{held},
 		Capture:    &down,
 		Confidence: &weak,
-	}, true
-} // named is the block the way a rig has to say it: the gear it emulates, which
+	}, catalog.ModelID(best.ID), true
+}
 
+// named is the block the way a rig has to say it: the gear it emulates, which
 // the measured library does not carry and the catalog does.
 //
 // The library knows a block by Line 6's name for it, because that is what a
@@ -1095,17 +1516,51 @@ type aim struct {
 // Assembled from both halves and neither alone: this value knows what was aimed
 // at and [nearestTo] knows what came nearest, so the sentence is built where the
 // second half arrives.
+// plural is what several blocks of one kind are called, as a sentence says it.
+//
+// The sentence said "amplifiers" whatever the block was, which was true while
+// only an amplifier was chosen by measurement. A genre rig now carries a drive
+// and an equaliser picked the same way, and both arrived claiming to be the
+// closest of the 57 and the 8 bass amplifiers this device models.
+//
+// A kind not named here keeps its own word with nothing added. That reads a
+// little flatly for a category nobody has thought about yet, and it is better
+// than a sentence confidently calling a reverb an amplifier.
+func plural(
+	kind catalog.Category,
+) string {
+	switch kind {
+	case catalog.CategoryAmp:
+		return "amplifiers"
+	case catalog.CategoryCab:
+		return "cabinets"
+	case catalog.CategoryDrive:
+		return "drives"
+	case catalog.CategoryEQ:
+		return "equalisers"
+	case catalog.CategoryComp:
+		return "compressors"
+	}
+
+	return string(kind)
+}
+
 func (a aim) because(
 	gear string,
 	ranked int,
 	sat float64,
 	instrument string,
+	kind catalog.Category,
 ) tone.Evidence {
+	// The kind of block rather than the word "amplifiers", which this said for
+	// every one of them. A genre rig now carries a drive and an equaliser
+	// chosen the same way, and both arrived claiming to be the closest of the
+	// 57 and the 8 bass amplifiers this device models.
 	said := fmt.Sprintf(
 		"Chosen by measurement rather than by anybody's say-so. %s is the "+
-			"closest of the %d %s amplifiers this device models to %s, sitting "+
+			"closest of the %d %s %s this device models to %s, sitting "+
 			"at %.0f Hz against %.0f.",
-		gear, ranked, instrument, a.named, sat, a.figures.Centroid)
+		gear, ranked, instrument, plural(kind), a.named, sat, a.figures.Centroid)
 
 	if a.records > 0 {
 		// Counted straight, with no pluraliser. The only target that fills these
@@ -1329,6 +1784,20 @@ func displacedTo(
 	baseline measured.Figures,
 ) measured.Figures {
 	at := got.Across.Measured()
+	wide := got.Across.Spreads()
+
+	// Which way each word the genre earns points, by figure. `Mine` above
+	// `Others` is a word for more of something and below it is a word for
+	// less, which is the same comparison the word was earned by.
+	toward := map[audio.Figure]float64{}
+
+	for _, term := range got.Terms {
+		if term.Mine > term.Others {
+			toward[term.Key] = 1
+		} else if term.Mine < term.Others {
+			toward[term.Key] = -1
+		}
+	}
 
 	shift := func(key audio.Figure, scale float64) (float64, bool) {
 		mine, held := at[string(key)]
@@ -1336,6 +1805,34 @@ func displacedTo(
 
 		if !held || !also {
 			return 0, false
+		}
+
+		// The edge of the genre's own range rather than its middle, on a
+		// figure a word points at.
+		//
+		// The middle is what every genre shares. Totalled over the three band
+		// shares, ten of the eleven genres this corpus can aim at displace
+		// between 0.2 and 6.4 points from one baseline, where the blocks they
+		// are ranked against span 50, so ten of eleven targets are the same
+		// point and 9 of the 11 rigs built from them carried one amplifier.
+		//
+		// A percentile of the genre's own records is still one of its records,
+		// the one that sounds most like the word, so this aims at the most
+		// mid-forward punk rather than at the average of all punk. It stays a
+		// displacement from the records elsewhere, which is the only thing
+		// that makes a genre and a block comparable at all, and the reasoning
+		// above this function for that is unchanged.
+		//
+		// A figure no word points at keeps the middle. Nothing says which end
+		// of it would be more like the genre.
+		if way, pointed := toward[key]; pointed {
+			if spread, ranged := wide[string(key)]; ranged {
+				if way > 0 {
+					mine = spread.High
+				} else {
+					mine = spread.Low
+				}
+			}
 		}
 
 		return scale * (mine - theirs), true
