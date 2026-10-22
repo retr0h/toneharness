@@ -126,12 +126,32 @@ func Assign(
 		// only the tenth ever repeats, and it repeats the one furthest from it.
 		colour := palette[len(out)%len(palette)]
 
+		// The three a device writes on every assignment and this did not.
+		//
+		// `fieldsOf` has always rendered them and they were never set, so each
+		// switch reached the pedal carrying an index, a label and a colour and
+		// none of `@fs_primary`, `@fs_enabled` or `@fs_momentary`. A preset
+		// HX Edit writes carries all three on all of its assignments, and
+		// without them the device stored the section and the switch did
+		// nothing.
+		//
+		// Primary is what the switch shows when more than one block sits on
+		// it, and with one block each it is simply true. Enabled is whether
+		// the switch acts on the block, which an untouched assignment leaves
+		// false the way the pedal does. Momentary latches rather than holding
+		// while pressed, which is what a player expects of a pedal they step
+		// off.
+		primary, enabled, momentary := true, false, false
+
 		out = append(out, rig.Footswitch{
-			Switch: &at,
-			Block:  &on,
-			Label:  &name,
-			Gear:   &name,
-			Led:    &colour,
+			Switch:    &at,
+			Block:     &on,
+			Label:     &name,
+			Gear:      &name,
+			Led:       &colour,
+			Primary:   &primary,
+			Enabled:   &enabled,
+			Momentary: &momentary,
 		})
 	}
 
