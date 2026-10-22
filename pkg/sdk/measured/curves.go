@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"slices"
 	"sort"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
@@ -623,4 +624,138 @@ func (curve Curve) moves(
 	}
 
 	return false
+}
+
+// TowardFrom is the position of one control whose own deviation best matches a
+// deviation asked for.
+//
+// The other way of reading a sweep, and the one a list needs. [Curves.Toward]
+// compares each position's figures to a target directly, which works while
+// both sides were measured the same way and fails where they were not: a
+// genre's figures come off finished records and a block's off a dry signal
+// through one block, so the nearest position is whichever end of the control
+// is closest rather than a setting anybody would choose. Choosing a cabinet's
+// microphone that way sent every one of eleven genres to the same microphone,
+// and letting it choose the rest of the cabinet sent Distance to its maximum
+// and LowCut to 79.9Hz, which on a bass cuts the fundamentals.
+//
+// So both sides become "how far from its own normal", which is the comparison
+// the genre figures already earn their words from. Each position is read as
+// its distance from the median across the control's own positions, and the
+// target as the displacement it was given. A microphone 11Hz brighter than the
+// others on this cabinet then answers a genre 20Hz brighter than the other
+// genres, and a darker one answers a darker genre.
+//
+// The direction is what carries the information and the size is not
+// comparable: a genre's centroid displacement runs to 126Hz where a
+// microphone's runs to 12, because one is a population of records and the
+// other is one box. So each axis is scaled by the spread of its own side
+// before the two are compared, which leaves the sign and the relative
+// magnitude and drops the units.
+//
+// Answers false for a control with fewer than two positions, or one whose
+// positions all read alike, because neither offers a choice.
+func (c Curves) TowardFrom(
+	control string,
+	want Figures,
+	by Weights,
+) (float64, bool) {
+	curve, swept := c.Controls[control]
+	if !swept || len(curve.Points) < 2 {
+		return 0, false
+	}
+
+	axes := []struct {
+		weight float64
+		of     func(Figures) float64
+		asked  float64
+	}{
+		{by.Centroid, func(f Figures) float64 { return f.Centroid }, want.Centroid},
+		{by.Low, func(f Figures) float64 { return f.Low }, want.Low},
+		{by.Mid, func(f Figures) float64 { return f.Mid }, want.Mid},
+		{by.High, func(f Figures) float64 { return f.High }, want.High},
+	}
+
+	// Only the positions that leave the block at working level, for the reason
+	// Toward states: a quieter block reads as a close match to anything.
+	at := make([]Point, 0, len(curve.Points))
+
+	for _, p := range curve.Points {
+		if math.Abs(p.Level-curve.Settled) <= atLevel {
+			at = append(at, p)
+		}
+	}
+
+	if len(at) < 2 {
+		return 0, false
+	}
+
+	best, found := 0.0, false
+	score := math.Inf(1)
+
+	// Each axis normalised by its own side's spread, so a sign and a
+	// proportion survive and the units do not.
+	for _, a := range axes {
+		if a.weight == 0 {
+			continue
+		}
+
+		mid := middle(at, a.of)
+
+		wide := 0.0
+		for _, p := range at {
+			wide = max(wide, math.Abs(a.of(p.Figures)-mid))
+		}
+
+		if wide == 0 || a.asked == 0 {
+			continue
+		}
+
+		for i, p := range at {
+			// Positive where the position and the genre both lean the same
+			// way, and the best score is the smallest difference between the
+			// two leans.
+			d := math.Abs((a.of(p.Figures)-mid)/wide - sign(a.asked))
+
+			if !found || d < score {
+				best, score, found = at[i].Value, d, true
+			}
+		}
+	}
+
+	return best, found
+}
+
+// middle is the median of one figure across the positions given.
+func middle(
+	at []Point,
+	of func(Figures) float64,
+) float64 {
+	all := make([]float64, 0, len(at))
+	for _, p := range at {
+		all = append(all, of(p.Figures))
+	}
+
+	slices.Sort(all)
+
+	if n := len(all); n%2 == 1 {
+		return all[n/2]
+	}
+
+	return (all[len(all)/2-1] + all[len(all)/2]) / 2
+}
+
+// sign is which way a displacement leans, as one or minus one.
+//
+// The lean rather than the size, because the two sides are not comparable: a
+// genre's centroid displacement runs to 126Hz across its records where a
+// microphone's runs to 12 across one cabinet.
+func sign(
+	of float64,
+) float64 {
+	if of < 0 {
+		return -1
+	}
+
+	return 1
 }

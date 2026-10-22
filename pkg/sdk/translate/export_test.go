@@ -154,3 +154,13 @@ func DisplacedToward(
 ) measured.Figures {
 	return displacedTo(got, baseline)
 }
+
+// Chose picks the cabinet's microphone.
+func Chose(
+	entry *rig.ChainEntry,
+	spec tone.Ask,
+	deps Deps,
+	notes *Notes,
+) {
+	chose(entry, spec, deps, notes)
+}
