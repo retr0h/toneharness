@@ -75,6 +75,76 @@ rather than a worse answer.
 A recording still wins where both are named. One performance measured exactly
 beats the middle of a population.
 
+## A genre is a region, and its middle is what every genre shares
+
+The displacement above is right in principle and far too small in practice.
+Totalled across the three band shares, for all 11 genres the bass corpus can
+aim at:
+
+    punk                 18.90
+    nu-metal              6.40
+    metal                 5.30
+    alternative-metal     4.20
+    grunge                4.20
+    blues-rock            2.40
+    rock                  2.40
+    pop-punk              2.00
+    hard-rock             0.90
+    southern-rock         0.90
+    alternative-rock      0.20
+
+On the same scale the amp fingerprints span mid 0.5 to 50.4. So ten of the
+eleven targets sit within 6 points of one baseline inside a field 50 points
+wide, and 9 of the 11 shipped genre rigs carry a MESA/Boogie Bass 400+ into a
+6x10 Power House. Across the five that share identical gear, 3 of 35 controls
+move at all, the largest difference being Treble 0.439 against 0.500. Six
+hundredths of travel is not a sound anybody can tell from another.
+
+Punk is the exception on that table and the exception everywhere else: the one
+genre with its own chain, the one whose knobs moved, and the one that has been
+played and liked. What made it good was that its aim was decisive.
+
+`high` displaces by exactly 0.00 for every genre, because a bass stem holds
+almost nothing above 2kHz. That axis cannot separate anything and should carry
+no weight for bass.
+
+So aim at the edge of the genre's own range rather than its middle:
+
+**Gear comes from the players.** Punk means an Ampeg SVT into an 8x10 because
+four of its seven documented bassists resolve to exactly that. Nearest
+fingerprint is the wrong instrument for this question and it is what gives nine
+genres one amplifier.
+
+**Settings go to the edge of the range, in the direction of the words the
+records earn.** `measure genres --json` already publishes the range: every
+figure under `across` carries a `low`, `mid` and `high`, so this needs no new
+measurement. Punk earns mid-forward and bright, and its own records span mid
+0.013 to 0.237 and centroid 109Hz to 252Hz. Aim at 0.237 and 252, not at the
+0.114 and 174Hz in the middle. That is still a real record of that genre, the
+most genre-sounding one on that axis, rather than an average of all of them.
+
+**Read the sweeps for which control gets there**, because the obvious one often
+does not. On an Ampeg SVT it is `Bass` that raises the mid share, reaching 24.2
+at its minimum against punk's range top of 23.7, while `Mid` is what moves the
+centroid, 128Hz to 353Hz. So a mid-forward aim cuts the bass, which is the
+opposite of what the name suggests and the opposite of where a median target
+lands.
+
+**The chain follows the character, not the corpus's habits.** Every shipped
+genre rig carries a compressor justified by "a chain of this kind almost always
+holds one, and the corpus statistics are what put it here". Punk's transient
+range is 0.664 to 0.839, which is high, and a compressor lowers transient. The
+statistics are not evidence about the genre.
+
+**Extra blocks arrive bypassed, each on its own switch.** A genre's records
+cover a range no single setting reaches, so give the range to the player's feet
+instead of picking one point in it: the base sound is the amplifier, and the
+blocks that reach further into the genre sit switched off until somebody steps
+on one. `compile.Assign` does the assigning and the colours.
+
+The corpus is reference material for understanding a genre, not a population to
+average. Averaging is what produces one preset eleven times.
+
 ## Or name the player, and get the rig somebody researched
 
 ```yaml
