@@ -28,6 +28,7 @@ import (
 	"os"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
@@ -101,6 +102,24 @@ func Compile(
 	// the one name it has. Lower says the same thing again from the plan it is
 	// handed, and a device label on that plan beats both.
 	doc.Data.Meta.Name = name
+
+	// A switch for each block worth stomping, the same as Make gives one.
+	//
+	// `compile.Assign` had a single caller and this was not it, so every preset
+	// that reached a device down this path arrived with its switches
+	// unassigned: the blocks in the right order at the right values, and
+	// nothing on the pedal turning any of them off. `Lower` has always written
+	// `plan.Footswitches` through; what it was handed was empty, because that
+	// field was only ever filled by a lift.
+	//
+	// Only where nothing has said otherwise. A plan read off a device carries
+	// the assignments it was set up with, and a rig that names its own switches
+	// has said something musical, so neither is overwritten — the same rule
+	// Make states and the same one the contract states for the derived half.
+	if len(made.Footswitches) == 0 {
+		made.Footswitches = compile.Assign(
+			made, cat, plan.LimitsFor(cat.Device).Switches)
+	}
 
 	if err := opts.compiler().Lower(doc, made, cat); err != nil {
 		return result.Built{}, err

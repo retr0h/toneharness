@@ -22,10 +22,13 @@ package deviceslots
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
@@ -201,6 +204,23 @@ func (f *Flows) documentFor(
 		return nil, err
 	}
 
+	// And the switches, which nothing wrote until now. `footswitchesOf` has
+	// always read them back, so a preset this tool put on a pedal listed its
+	// blocks, played them, and left every switch doing nothing.
+	//
+	// From the document rather than from the placements. Both were written and
+	// both ran: one walked the chain assigning a switch to every block that
+	// was not an amp or a cabinet, carrying no name and no colour, and the
+	// other read what the document said and overwrote the first switch only.
+	// A chain of compressor, drive, amp and cabinet reached the pedal with the
+	// drive named on FS1 and a nameless FS2, and stepping on one moved the
+	// other, because both pointed at the same block.
+	//
+	// The document is the one that knows: it carries the label the pedal
+	// prints, the colour somebody chose, and which blocks are worth a switch
+	// at all, none of which a walk over the placements can tell.
+	wire.PlaceFootswitches(out, switchesOf(doc, blocks))
+
 	// And the routing, for the same reason. A chain is written into the
 	// sixteen positions a device gives it and never into the four its input,
 	// split, join and output sit on, so without this a preset keeps the
@@ -214,3 +234,81 @@ func (f *Flows) documentFor(
 
 	return out.Encode(), nil
 }
+
+// switchesOf turns the assignments a document carries into the ones a device
+// stores.
+//
+// The document already says which block each switch works on and what the
+// pedal prints under it: `compile.Footswitches` wrote that, and a rig naming
+// its own switches is in there too. The one thing it cannot say is the number
+// the wire names a block by.
+//
+// **A document counts blocks along the chain and the wire counts them across
+// the grid.** HX Edit's own file for one of this pedal's presets calls them
+// `block0`, `block1` and `block5` for a chain of six, and the wire for that
+// same preset says 1, 3 and 14. So the chain index is the key here and the
+// position is what goes out.
+//
+// An assignment naming a block the chain does not hold is dropped. That is a
+// document describing a chain it no longer has, and a switch pointed at
+// nothing is worse than no switch.
+func switchesOf(
+	doc *preset.Document,
+	placed []wire.Placement,
+) []wire.DeviceFootswitch {
+	if doc == nil {
+		return nil
+	}
+
+	held, ok := doc.Data.Tone[footswitchKey]
+	if !ok {
+		return nil
+	}
+
+	out := []wire.DeviceFootswitch(nil)
+
+	for _, raw := range held {
+		var blocks map[string]map[string]any
+		if err := json.Unmarshal(raw, &blocks); err != nil {
+			continue
+		}
+
+		for key, fields := range blocks {
+			at, err := strconv.Atoi(strings.TrimPrefix(key, blockPrefix))
+			if err != nil || at < 0 || at >= len(placed) {
+				continue
+			}
+
+			index, _ := fields[fsIndex].(float64)
+			label, _ := fields[fsLabel].(string)
+			colour, _ := fields[fsChosen].(float64)
+
+			out = append(out, wire.DeviceFootswitch{
+				Switch: int(index),
+				// A document counts blocks from zero along the chain and the
+				// device counts across a grid that also holds the input, so
+				// the two differ by [wire.GridOffset]. Every switch written
+				// without it named the block to its left: on a chain of
+				// drive, amp and cab the drive asked for position 0, which no
+				// block occupies, and the switch lit and did nothing. Put a
+				// compressor in front and it named the compressor instead.
+				Block: placed[at].Position + wire.GridOffset,
+				Gear:  label,
+				Label: label,
+				LED:   int(colour),
+			})
+		}
+	}
+
+	return out
+}
+
+// What a preset calls the things above. A device owns these names and the
+// compiler writes them; this reads the same ones back.
+const (
+	footswitchKey = "footswitch"
+	blockPrefix   = "block"
+	fsIndex       = "@fs_index"
+	fsLabel       = "@fs_label"
+	fsChosen      = "@fs_customcolor"
+)
