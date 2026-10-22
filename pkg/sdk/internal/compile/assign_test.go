@@ -84,7 +84,7 @@ func (s *AssignTestSuite) TestAssign() {
 			models:   []catalog.ModelID{"comp", "drive", "amp", "cab", "eq"},
 			switches: 3,
 			labels:   []string{"A Drive", "An EQ"},
-			leds:     []string{"red", "turquoise"},
+			leds:     []string{"red", "green"},
 		},
 		{
 			// More to stomp than the pedal has switches. The blocks still work
@@ -93,16 +93,38 @@ func (s *AssignTestSuite) TestAssign() {
 			models:   []catalog.ModelID{"drive", "eq", "verb", "mod"},
 			switches: 2,
 			labels:   []string{"A Drive", "An EQ"},
-			leds:     []string{"red", "turquoise"},
+			leds:     []string{"red", "green"},
 		},
 		{
-			// Colours walk the hue circle rather than sitting beside each
-			// other, so four switches are four plainly different lights.
+			// Every switch a colour no other switch has, and none of them a
+			// shade of its neighbour: the closest pair here is 100 degrees of
+			// hue apart. See [palette].
 			name:     "each switch is a colour no other switch has",
 			models:   []catalog.ModelID{"drive", "eq", "verb", "mod"},
 			switches: 4,
 			labels:   []string{"A Drive", "An EQ", "A Reverb", "A Mod"},
-			leds:     []string{"red", "turquoise", "violet", "yellow"},
+			leds:     []string{"red", "green", "blue", "light orange"},
+		},
+		{
+			// The whole palette on one board, which is the only way to see
+			// that it does what it claims: eight switches, eight colours, and
+			// the closest pair of them 100 degrees of hue apart. The old
+			// order put light orange and dark orange side by side here, 15
+			// degrees apart and indistinguishable on the pedal.
+			name: "every colour in the palette, none a shade of its neighbour",
+			models: []catalog.ModelID{
+				"drive", "eq", "verb", "mod",
+				"drive", "eq", "verb", "mod",
+			},
+			switches: 8,
+			labels: []string{
+				"A Drive", "An EQ", "A Reverb", "A Mod",
+				"A Drive", "An EQ", "A Reverb", "A Mod",
+			},
+			leds: []string{
+				"red", "green", "blue", "light orange",
+				"violet", "yellow", "turquoise", "pink",
+			},
 		},
 		{
 			// A device reporting none, which is every device the limits table
