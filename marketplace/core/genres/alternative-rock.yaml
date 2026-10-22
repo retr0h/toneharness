@@ -4,10 +4,15 @@
 # artists under ../artists/ are people; this is what the records of a genre
 # measure as, resolved to gear.
 #
-# Built rather than researched, then resolved: `tone build` ranked the device's
-# bass amplifiers against what alternative rock measures as and took the
-# nearest, and `rigs resolve` wrote every control that came out. Both are
-# reproducible on the same corpus.
+# Built rather than researched, then resolved, and reproducible on the same
+# corpus. `tone build` took the amplifier and the cabinet most of alternative rock's
+# documented players used, aimed their controls at the edge of alternative rock's own
+# measured range rather than its middle, and put a drive and an equaliser
+# behind a footswitch, switched off, set from their sweeps.
+#
+# The rule and the measurements behind it are in build-a-rig's measuring.md.
+# The short of it: the middle of a genre is what every genre shares, so aiming
+# there gave nine of these eleven the same amplifier.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
@@ -27,13 +32,8 @@ ask:
   words: []
 rig:
   chain:
-    - role: comp
-      gear: Deluxe Comp
-      evidence:
-        - kind: corpus
-          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
-    - role: amp
-      gear: MESA/Boogie Bass 400+ (channel 2)
+    - role: drive
+      gear: DOD Overdrive/Preamp 250
       capture: direct
       confidence: low
       evidence:
@@ -49,17 +49,82 @@ rig:
             low: 0.97
             mid: 0.03
             transient: 0.71
-          note: Chosen by measurement rather than by anybody's say-so. MESA/Boogie Bass 400+ (channel 2) is the closest of the 27 bass amplifiers this device models to alternative-rock, sitting at 159 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
-    - role: cab
-      gear: 6x10" MESA/Boogie Power House
+          note: Chosen by measurement rather than by anybody's say-so. DOD Overdrive/Preamp 250 is the closest of the 57 bass drives this device models to alternative-rock, sitting at 149 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        Bass: "0.5"
+        Drive: "0.5"
+        Mid: "0.625"
+        Treble: "1.0"
+      enabled: false
+    - role: amp
+      gear: Ampeg B-15NF Portaflex
+      capture: direct
+      confidence: medium
       evidence:
-        - kind: corpus
-          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+        - kind: cited
+          caveat: |-
+            Read from the automatic captions, which mangle model numbers in the usual way: the SVT-2 Pro he names for his live rig arrives as "the SPT" and the B-15s as "be fifteens".
+
+            The interview is 2010 and the records above end in 1999, so the sentence is him looking back. He says "every record" and names no album, so which flip top and which 8x10 on which session is not established, and neither is anything about the desk or the microphone those records went through.
+          note: |-
+            In his own words, in a gearwire interview filmed on 24 June 2010, about what is on the records rather than what was on stage that year: "the reason why I ended up with the set up I've got now is because on every record I've always used one flip top and an old 8 by 10 and generally that's everything and the only thing overused in the studio". A flip top is the Ampeg B-15 Portaflex, which is what the name describes.
+
+            He opens the same interview naming himself, "hi there my name's Chris I'll play bass in silver chair", and the only other voice in it is the interviewer asking him questions.
+          url: https://www.youtube.com/watch?v=b1egYvnHl9c
+    - role: eq
+      gear: Simple Tilt
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
+          measured:
+            centroid: 123
+            decay: 0.45
+            dynamics: 6.7
+            harmonics: 0.16
+            high: 0
+            lean: 0.86
+            low: 0.97
+            mid: 0.03
+            transient: 0.71
+          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to alternative-rock, sitting at 124 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        Tilt: "0.75"
+      enabled: false
   instrument: bass
 built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: drive
+      gear: DOD Overdrive/Preamp 250
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
+          measured:
+            centroid: 123
+            decay: 0.45
+            dynamics: 6.7
+            harmonics: 0.16
+            high: 0
+            lean: 0.86
+            low: 0.97
+            mid: 0.03
+            transient: 0.71
+          note: Chosen by measurement rather than by anybody's say-so. DOD Overdrive/Preamp 250 is the closest of the 57 bass drives this device models to alternative-rock, sitting at 149 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        Bass: "0.5"
+        Drive: "0.5"
+        Mid: "0.625"
+        Output: "0.65"
+        Treble: "1.0"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -74,10 +139,41 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
+        '@position': "1"
+      position: 1
     - role: amp
-      gear: MESA/Boogie Bass 400+ (channel 2)
+      gear: Ampeg B-15NF Portaflex
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: |-
+            Read from the automatic captions, which mangle model numbers in the usual way: the SVT-2 Pro he names for his live rig arrives as "the SPT" and the B-15s as "be fifteens".
+
+            The interview is 2010 and the records above end in 1999, so the sentence is him looking back. He says "every record" and names no album, so which flip top and which 8x10 on which session is not established, and neither is anything about the desk or the microphone those records went through.
+          note: |-
+            In his own words, in a gearwire interview filmed on 24 June 2010, about what is on the records rather than what was on stage that year: "the reason why I ended up with the set up I've got now is because on every record I've always used one flip top and an old 8 by 10 and generally that's everything and the only thing overused in the studio". A flip top is the Ampeg B-15 Portaflex, which is what the name describes.
+
+            He opens the same interview naming himself, "hi there my name's Chris I'll play bass in silver chair", and the only other voice in it is the interviewer asking him questions.
+          url: https://www.youtube.com/watch?v=b1egYvnHl9c
+      controls:
+        Bass: "0.67"
+        Bias: "0.66"
+        BiasX: "0.5"
+        ChVol: "1.0"
+        Drive: "0.7"
+        HighMid: "0.5"
+        Hum: "0.5"
+        LowMid: "0.65"
+        Master: "1.0"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.69"
+      attrs:
+        '@position': "2"
+      position: 2
+    - role: eq
+      gear: Simple Tilt
       capture: direct
       confidence: low
       evidence:
@@ -93,39 +189,31 @@ built:
             low: 0.97
             mid: 0.03
             transient: 0.71
-          note: Chosen by measurement rather than by anybody's say-so. MESA/Boogie Bass 400+ (channel 2) is the closest of the 27 bass amplifiers this device models to alternative-rock, sitting at 159 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to alternative-rock, sitting at 124 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Bass: "0.49"
-        Bias: "0.5"
-        BiasX: "0.6"
-        ChVol: "0.6"
-        Drive: "0.55"
-        HighMid: "0.62"
-        Hum: "0.5"
-        Master: "0.55"
-        Mid: "0.52"
-        Ripple: "0.5"
-        Sag: "0.72"
-        Treble: "0.87"
+        CenterFreq: "1000.0"
+        Level: "0.0"
+        Tilt: "0.75"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "3"
+      enabled: false
+      position: 3
     - role: cab
-      gear: 6x10" MESA/Boogie Power House
+      gear: 1x15 Ampeg B-15
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        Angle: "0.0"
-        Distance: "3.25"
+        Angle: "45.0"
+        Distance: "9.0"
         HighCut: "20100.0"
         Level: "0.0"
         LowCut: "19.9"
-        Mic: "0"
-        Position: "0.0"
+        Mic: "10"
+        Position: "0.75"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "4"
+      position: 4
   preset:
     dsp0:
       members:
@@ -185,6 +273,26 @@ built:
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block0:
+              attrs:
+                '@fs_customcolor': "2"
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': DOD Overdrive/Preamp 250
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block3:
+              attrs:
+                '@fs_customcolor': "6"
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': Simple Tilt
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -247,3 +355,18 @@ built:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
+  footswitches:
+    - block: 0
+      enabled: false
+      label: DOD Overdrive/Preamp 250
+      led: red
+      momentary: false
+      primary: true
+      switch: 1
+    - block: 3
+      enabled: false
+      label: Simple Tilt
+      led: green
+      momentary: false
+      primary: true
+      switch: 2

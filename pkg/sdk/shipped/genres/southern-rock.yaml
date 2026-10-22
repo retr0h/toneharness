@@ -4,10 +4,15 @@
 # artists under ../artists/ are people; this is what the records of a genre
 # measure as, resolved to gear.
 #
-# Built rather than researched, then resolved: `tone build` ranked the device's
-# bass amplifiers against what southern-rock measures as and took the nearest, and
-# `rigs resolve` wrote every control that came out. Both are reproducible on the
-# same corpus.
+# Built rather than researched, then resolved, and reproducible on the same
+# corpus. `tone build` took the amplifier and the cabinet most of southern rock's
+# documented players used, aimed their controls at the edge of southern rock's own
+# measured range rather than its middle, and put a drive and an equaliser
+# behind a footswitch, switched off, set from their sweeps.
+#
+# The rule and the measurements behind it are in build-a-rig's measuring.md.
+# The short of it: the middle of a genre is what every genre shares, so aiming
+# there gave nine of these eleven the same amplifier.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
@@ -27,13 +32,8 @@ ask:
   words: []
 rig:
   chain:
-    - role: comp
-      gear: Deluxe Comp
-      evidence:
-        - kind: corpus
-          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
-    - role: amp
-      gear: MESA/Boogie Bass 400+ (channel 2)
+    - role: drive
+      gear: DOD Overdrive/Preamp 250
       capture: direct
       confidence: low
       evidence:
@@ -49,17 +49,80 @@ rig:
             low: 0.98
             mid: 0.03
             transient: 0.71
-          note: Chosen by measurement rather than by anybody's say-so. MESA/Boogie Bass 400+ (channel 2) is the closest of the 27 bass amplifiers this device models to southern-rock, sitting at 159 Hz against 162. Across 30 records from 10 players, southern-rock earns short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. DOD Overdrive/Preamp 250 is the closest of the 57 bass drives this device models to southern-rock, sitting at 149 Hz against 162. Across 30 records from 10 players, southern-rock earns short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        Bass: "0.5"
+        Drive: "0.5"
+        Mid: "0.625"
+        Treble: "1.0"
+      enabled: false
+    - role: amp
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: 'Part of a rig rather than the rig, and the SVT is the part this device has. The Orange amplifiers he blends with it are modelled by nothing here, and neither are the Crossroad stacks, so what is below is the Ampeg half of a two-amplifier sound. He is explicit that the two bands were different rigs, which is why the era above is Gov''t Mule rather than his Allman Brothers years: with the Brothers the SVT was one cabinet for grit inside a high-fidelity rack, and that is not what this chain would be.'
+          note: 'Vintage Guitar, in his own words, and he draws the line between his two bands himself. On this one: "With Gov''t Mule, it''s all SVTs and Orange amps, and I''ve also been using the reissue Crossroad stacks; Bud Ross of Kustom fame made them; they''re even rolled and pleated." On the other: "My amp set-up with the Brothers is geared toward a high fidelity sound; lots of power amps, preamps, high-end cabinets, plus one SVT cabinet that we use just for ''dirt''", and without it "the sound would be too clean".'
+          url: https://www.vintageguitar.com/2794/allen-woody/
     - role: cab
-      gear: 6x10" MESA/Boogie Power House
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: eq
+      gear: Simple Tilt
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
+          measured:
+            centroid: 131
+            decay: 0.24
+            dynamics: 8.1
+            harmonics: 0.16
+            high: 0
+            lean: 0.89
+            low: 0.98
+            mid: 0.03
+            transient: 0.71
+          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to southern-rock, sitting at 124 Hz against 162. Across 30 records from 10 players, southern-rock earns short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        Tilt: "0.75"
+      enabled: false
   instrument: bass
 built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: drive
+      gear: DOD Overdrive/Preamp 250
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
+          measured:
+            centroid: 131
+            decay: 0.24
+            dynamics: 8.1
+            harmonics: 0.16
+            high: 0
+            lean: 0.89
+            low: 0.98
+            mid: 0.03
+            transient: 0.71
+          note: Chosen by measurement rather than by anybody's say-so. DOD Overdrive/Preamp 250 is the closest of the 57 bass drives this device models to southern-rock, sitting at 149 Hz against 162. Across 30 records from 10 players, southern-rock earns short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        Bass: "0.5"
+        Drive: "0.5"
+        Mid: "0.625"
+        Output: "0.65"
+        Treble: "1.0"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -74,10 +137,50 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
+        '@position': "1"
+      position: 1
     - role: amp
-      gear: MESA/Boogie Bass 400+ (channel 2)
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: 'Part of a rig rather than the rig, and the SVT is the part this device has. The Orange amplifiers he blends with it are modelled by nothing here, and neither are the Crossroad stacks, so what is below is the Ampeg half of a two-amplifier sound. He is explicit that the two bands were different rigs, which is why the era above is Gov''t Mule rather than his Allman Brothers years: with the Brothers the SVT was one cabinet for grit inside a high-fidelity rack, and that is not what this chain would be.'
+          note: 'Vintage Guitar, in his own words, and he draws the line between his two bands himself. On this one: "With Gov''t Mule, it''s all SVTs and Orange amps, and I''ve also been using the reissue Crossroad stacks; Bud Ross of Kustom fame made them; they''re even rolled and pleated." On the other: "My amp set-up with the Brothers is geared toward a high fidelity sound; lots of power amps, preamps, high-end cabinets, plus one SVT cabinet that we use just for ''dirt''", and without it "the sound would be too clean".'
+          url: https://www.vintageguitar.com/2794/allen-woody/
+      controls:
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.79"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.85"
+      attrs:
+        '@position': "2"
+      position: 2
+    - role: cab
+      gear: 8x10 Ampeg SVT-810AV
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Angle: "45.0"
+        Distance: "5.0"
+        HighCut: "8000.0"
+        Level: "0.0"
+        LowCut: "37.0"
+        Mic: "3"
+        Position: "0.0"
+      attrs:
+        '@position': "3"
+      position: 3
+    - role: eq
+      gear: Simple Tilt
       capture: direct
       confidence: low
       evidence:
@@ -93,39 +196,15 @@ built:
             low: 0.98
             mid: 0.03
             transient: 0.71
-          note: Chosen by measurement rather than by anybody's say-so. MESA/Boogie Bass 400+ (channel 2) is the closest of the 27 bass amplifiers this device models to southern-rock, sitting at 159 Hz against 162. Across 30 records from 10 players, southern-rock earns short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to southern-rock, sitting at 124 Hz against 162. Across 30 records from 10 players, southern-rock earns short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Bass: "0.49"
-        Bias: "0.5"
-        BiasX: "0.6"
-        ChVol: "0.6"
-        Drive: "0.55"
-        HighMid: "0.62"
-        Hum: "0.5"
-        Master: "0.55"
-        Mid: "0.52"
-        Ripple: "0.5"
-        Sag: "0.72"
-        Treble: "0.87"
-      attrs:
-        '@position': "1"
-      position: 1
-    - role: cab
-      gear: 6x10" MESA/Boogie Power House
-      evidence:
-        - kind: corpus
-          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
-      controls:
-        Angle: "0.0"
-        Distance: "3.25"
-        HighCut: "20100.0"
+        CenterFreq: "1000.0"
         Level: "0.0"
-        LowCut: "19.9"
-        Mic: "0"
-        Position: "0.0"
+        Tilt: "0.75"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "4"
+      enabled: false
+      position: 4
   preset:
     dsp0:
       members:
@@ -185,6 +264,26 @@ built:
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block0:
+              attrs:
+                '@fs_customcolor': "2"
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': DOD Overdrive/Preamp 250
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block4:
+              attrs:
+                '@fs_customcolor': "6"
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': Simple Tilt
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -247,3 +346,18 @@ built:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
+  footswitches:
+    - block: 0
+      enabled: false
+      label: DOD Overdrive/Preamp 250
+      led: red
+      momentary: false
+      primary: true
+      switch: 1
+    - block: 4
+      enabled: false
+      label: Simple Tilt
+      led: green
+      momentary: false
+      primary: true
+      switch: 2

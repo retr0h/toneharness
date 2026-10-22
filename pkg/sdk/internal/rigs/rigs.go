@@ -133,6 +133,31 @@ func readFS(
 	out := make([]stored, 0, len(paths))
 	broken := []brokenFile(nil)
 
+	// A rig sitting flat in the directory, which the glob above cannot see.
+	//
+	// Reported rather than ignored, because the silence is what costs the
+	// time. A directory of eleven rigs written flat answered every lookup
+	// from the shipped rigs instead, with no error and no note, and a rig
+	// whose id collides with a shipped one answered as the shipped one: the
+	// only symptom was gear nobody asked for, which reads as a derivation
+	// bug rather than as a file in the wrong place.
+	//
+	// Not moved or read from where it is. Which tier a rig belongs in is a
+	// claim about what it describes, and a person is never filed under a
+	// genre.
+	flat, _ := fs.Glob(fsys, "*.yaml")
+
+	for _, p := range flat {
+		broken = append(broken, brokenFile{
+			names: claimed(p, nil),
+			err: fmt.Errorf(
+				"%s sits flat in %s, and a rig is read one level down: move "+
+					"it into artists/ if it is a person or genres/ if it is "+
+					"the sound of a genre",
+				path.Base(p), name),
+		})
+	}
+
 	// One document per file, and the identifier it states is its name.
 	//
 	// There is no pairing by filename stem any more. A rig and the ask beside it
