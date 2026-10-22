@@ -1044,22 +1044,19 @@ func done(
 		}
 	}
 
+	// One write rather than three, so there is one error to report. Splitting
+	// it to slot the runs remark in between gave this a branch for an Fprintf
+	// that cannot fail against anything that calls it.
 	_, err := fmt.Fprintf(w,
 		"\n  %d measured, %d refused, %d clipped, in %.0f minutes\n"+
-			"  wrote %s\n",
-		read, refused, clip, took.Minutes(), out)
-	if err != nil {
-		return err
-	}
-
-	runs(w, lib)
-
-	_, err = fmt.Fprint(w, "\n")
+			"  wrote %s\n%s\n",
+		read, refused, clip, took.Minutes(), out, runs(lib))
 
 	return err
 }
 
-// runs says how many measuring sessions the file now holds readings from.
+// runs is what to say about how many measuring sessions the file now holds
+// readings from, and empty where there is nothing to remark on.
 //
 // Said because it decides what may be compared with what, and because the way
 // a library comes to hold more than one is `--resume`, which looks like
@@ -1071,19 +1068,18 @@ func done(
 // a file whose readings name no run at all, which is a library written before
 // this was recorded rather than a library from one session.
 func runs(
-	w io.Writer,
 	lib measured.Library,
-) {
+) string {
 	held := map[string]int{}
 	for _, block := range lib.Blocks {
 		held[block.Run]++
 	}
 
 	if len(held) < 2 {
-		return
+		return ""
 	}
 
-	_, _ = fmt.Fprintf(w,
+	out := fmt.Sprintf(
 		"  this file now holds readings from %d runs, so not every block in "+
 			"it\n  may be ranked against every other:\n", len(held))
 
@@ -1093,9 +1089,11 @@ func runs(
 			name = "(unrecorded)"
 		}
 
-		_, _ = fmt.Fprintf(w, "    %-14s %4d blocks   volume %d, %s\n",
+		out += fmt.Sprintf("    %-14s %4d blocks   volume %d, %s\n",
 			name, held[id], what.Volume, openAs(what.Open))
 	}
+
+	return out
 }
 
 // short is the first line of an error, for a table that has one column for it.

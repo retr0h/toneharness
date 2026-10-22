@@ -21,7 +21,6 @@
 package cli
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -261,17 +260,14 @@ func (s *SameRigTestSuite) TestRunsSaysWhenAFileHoldsMoreThanOne() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			var buf bytes.Buffer
-
-			runs(&buf, tt.lib)
+			out := runs(tt.lib)
 
 			if !tt.said {
-				s.Require().Empty(buf.String())
+				s.Require().Empty(out)
 
 				return
 			}
 
-			out := buf.String()
 			s.Require().Contains(out, "may be ranked against every other")
 			s.Require().Contains(out, "blocks")
 		})
