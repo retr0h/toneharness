@@ -6,6 +6,14 @@
       "slug": "alternative-metal",
       "records": 19,
       "players": 6,
+      "who": [
+        "chi-cheng",
+        "les-claypool",
+        "mike-starr",
+        "ryan-martinie",
+        "tim-commerford",
+        "tobin-esperance"
+      ],
       "against": 37,
       "across": {
         "tracks": 19,
@@ -120,6 +128,11 @@
       "slug": "alternative-rock",
       "records": 9,
       "players": 3,
+      "who": [
+        "chris-joannou",
+        "flea",
+        "robert-deleo"
+      ],
       "against": 40,
       "across": {
         "tracks": 9,
@@ -206,6 +219,11 @@
       "slug": "blues-rock",
       "records": 9,
       "players": 3,
+      "who": [
+        "allen-woody",
+        "dusty-hill",
+        "john-paul-jones"
+      ],
       "against": 40,
       "across": {
         "tracks": 9,
@@ -306,6 +324,9 @@
       "slug": "funk",
       "records": 4,
       "players": 1,
+      "who": [
+        "bootsy-collins"
+      ],
       "against": 42,
       "across": {
         "tracks": 4,
@@ -434,6 +455,9 @@
       "slug": "funk-metal",
       "records": 4,
       "players": 1,
+      "who": [
+        "les-claypool"
+      ],
       "against": 42,
       "across": {
         "tracks": 4,
@@ -562,6 +586,9 @@
       "slug": "funk-rock",
       "records": 3,
       "players": 1,
+      "who": [
+        "flea"
+      ],
       "against": 42,
       "across": {
         "tracks": 3,
@@ -662,6 +689,13 @@
       "slug": "grunge",
       "records": 15,
       "players": 5,
+      "who": [
+        "ben-shepherd",
+        "chris-joannou",
+        "jeff-ament",
+        "krist-novoselic",
+        "mike-starr"
+      ],
       "against": 38,
       "across": {
         "tracks": 15,
@@ -776,6 +810,13 @@
       "slug": "hard-rock",
       "records": 16,
       "players": 5,
+      "who": [
+        "cliff-williams",
+        "geddy-lee",
+        "john-paul-jones",
+        "robert-deleo",
+        "sven-pipien"
+      ],
       "against": 38,
       "across": {
         "tracks": 16,
@@ -862,6 +903,9 @@
       "slug": "jazz-fusion",
       "records": 4,
       "players": 1,
+      "who": [
+        "jaco-pastorius"
+      ],
       "against": 42,
       "across": {
         "tracks": 4,
@@ -990,6 +1034,11 @@
       "slug": "metal",
       "records": 10,
       "players": 3,
+      "who": [
+        "rex-brown",
+        "tom-araya",
+        "troy-sanders"
+      ],
       "against": 40,
       "across": {
         "tracks": 10,
@@ -1104,6 +1153,9 @@
       "slug": "neo-soul",
       "records": 3,
       "players": 1,
+      "who": [
+        "pino-palladino"
+      ],
       "against": 42,
       "across": {
         "tracks": 3,
@@ -1218,6 +1270,11 @@
       "slug": "nu-metal",
       "records": 9,
       "players": 3,
+      "who": [
+        "chi-cheng",
+        "ryan-martinie",
+        "tobin-esperance"
+      ],
       "against": 40,
       "across": {
         "tracks": 9,
@@ -1332,6 +1389,9 @@
       "slug": "p-funk",
       "records": 4,
       "players": 1,
+      "who": [
+        "bootsy-collins"
+      ],
       "against": 42,
       "across": {
         "tracks": 4,
@@ -1460,6 +1520,9 @@
       "slug": "pop",
       "records": 3,
       "players": 1,
+      "who": [
+        "paul-mccartney"
+      ],
       "against": 42,
       "across": {
         "tracks": 3,
@@ -1574,6 +1637,12 @@
       "slug": "pop-punk",
       "records": 12,
       "players": 4,
+      "who": [
+        "cone-mccaslin",
+        "dan-andriano",
+        "mark-hoppus",
+        "mike-dirnt"
+      ],
       "against": 39,
       "across": {
         "tracks": 12,
@@ -1660,6 +1729,9 @@
       "slug": "prog-rock",
       "records": 4,
       "players": 1,
+      "who": [
+        "geddy-lee"
+      ],
       "against": 42,
       "across": {
         "tracks": 4,
@@ -1788,6 +1860,15 @@
       "slug": "punk",
       "records": 21,
       "players": 7,
+      "who": [
+        "chuck-dukowski",
+        "dee-dee-ramone",
+        "glen-matlock",
+        "karl-alvarez",
+        "klaus-flouride",
+        "matt-freeman",
+        "paul-simonon"
+      ],
       "against": 36,
       "across": {
         "tracks": 21,
@@ -1902,6 +1983,9 @@
       "slug": "r-and-b",
       "records": 3,
       "players": 1,
+      "who": [
+        "pino-palladino"
+      ],
       "against": 42,
       "across": {
         "tracks": 3,
@@ -2016,6 +2100,9 @@
       "slug": "rap-metal",
       "records": 3,
       "players": 1,
+      "who": [
+        "tim-commerford"
+      ],
       "against": 42,
       "across": {
         "tracks": 3,
@@ -2130,6 +2217,13 @@
       "slug": "rock",
       "records": 15,
       "players": 5,
+      "who": [
+        "cliff-williams",
+        "john-paul-jones",
+        "paul-mccartney",
+        "rick-danko",
+        "stu-cook"
+      ],
       "against": 38,
       "across": {
         "tracks": 15,
@@ -2230,6 +2324,18 @@
       "slug": "southern-rock",
       "records": 30,
       "players": 10,
+      "who": [
+        "allen-woody",
+        "berry-oakley",
+        "charlie-hayward",
+        "dusty-hill",
+        "greg-t-walker",
+        "leon-wilkeson",
+        "rick-danko",
+        "stu-cook",
+        "sven-pipien",
+        "tommy-caldwell"
+      ],
       "against": 33,
       "across": {
         "tracks": 30,

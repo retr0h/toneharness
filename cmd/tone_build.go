@@ -76,6 +76,13 @@ func init() {
 		"the Setup to read; without one the rig is for a bass")
 	f.StringVar(&toneBuildOut, "out", "",
 		"where the rig goes; standard output without it")
+	f.StringVar(&toneBuildClient.sweeps, "sweeps", "resources/sweeps/hx-stomp",
+		"the committed curves, which say what each position of each control "+
+			"measured. They are what sets a block this adds: without them an "+
+			"added drive arrives at the catalog's default, which is a value "+
+			"nobody chose for this chain. Only the fingerprints are packed into "+
+			"the binary, so a build from a release has none and reports that "+
+			"rather than setting anything")
 
 	// Fails only for a flag that does not exist, and it is defined above.
 	_ = toneBuildCmd.MarkFlagRequired("ask")

@@ -499,3 +499,128 @@ func spread(
 
 	return high - low
 }
+
+// Setting is a swept position, and what kind of control it belongs to.
+//
+// The kind travels with the value because a control is not always a number a
+// document may write as one: of the swept drives, 163 controls are floats, 20
+// are integers and 16 are booleans, and writing a float where the contract
+// wants a boolean is refused. The Kinky Boost's `Bright` is one of the
+// sixteen, and a preset built with 1.0 on it would not load.
+type Setting struct {
+	// Value is the position, as the sweep recorded it.
+	Value float64
+	// Kind is what the catalog calls that control's type: float, int or bool.
+	Kind string
+}
+
+// atLevel is how far a swept position may sit from where its block settles
+// and still be read as the same block, in decibels.
+const atLevel = 3.0
+
+// Toward is the value of each control that brings a block nearest a target.
+//
+// What a sweep is for. A fingerprint picks the block and this sets it: every
+// position of every control was measured, so the value that moves a figure
+// where somebody is aiming is a reading rather than a guess, and a block added
+// to a chain no longer has to arrive at the factory default nobody chose.
+//
+// One control at a time, each against the target independently, and that is a
+// real limitation rather than an oversight. A sweep moves one control and
+// leaves the rest where they sat, so these answers do not compose: two
+// controls that each reach the target alone may overshoot it together. See
+// task 254, where every sweep being of a block alone is the wider version of
+// the same problem. It is still the best answer available without putting the
+// chain on hardware, and it beats a default by the width of the whole range.
+//
+// A control whose whole sweep moves a figure less than that figure wandered
+// between repeat takes is left out. Setting one of those is spending a control
+// on noise, and `Noise` is what the sweep recorded it as.
+//
+// A list control is included and answered the same way: its positions are
+// numbers on the wire and the nearest reading wins, which is the only thing
+// that can be said about a list nobody can interpolate across.
+func (c Curves) Toward(
+	want Figures,
+	by Weights,
+) map[string]Setting {
+	out := map[string]Setting{}
+
+	for name, curve := range c.Controls {
+		best, at, found := 0.0, 0.0, false
+
+		for _, p := range curve.Points {
+			// Only positions that leave the block at working level.
+			//
+			// Matching figures cannot tell a quieter block from a differently
+			// voiced one. The band shares are normalised and the noise floor
+			// is not, so turning a block down moves its shares toward the
+			// converters' and that reads as a close match to almost any
+			// target. The first run of this pinned an equaliser's `Level` at
+			// -60dB, which is 16dB below where that block settles and would
+			// have silenced the chain the moment somebody stepped on it.
+			//
+			// `Settled` is the level the sweep recorded the block working at,
+			// so the window is the sweep's own answer about this block rather
+			// than a figure chosen here. The width is not: 3dB is the
+			// smallest level difference worth calling one, and anything
+			// further is a loudness change wearing a tone control's name.
+			// Level-matching before comparing is the same rule task 222 put
+			// on comparing two rigs by ear.
+			if math.Abs(p.Level-curve.Settled) > atLevel {
+				continue
+			}
+
+			d := by.between(p.Figures, want)
+			if !found || d < best {
+				best, at, found = d, p.Value, true
+			}
+		}
+
+		if !found || !curve.moves(by) {
+			continue
+		}
+
+		out[name] = Setting{Value: at, Kind: curve.Kind}
+	}
+
+	return out
+}
+
+// moves says whether a control changed any weighed figure by more than that
+// figure's own noise.
+//
+// Read off the sweep rather than assumed. A control that moved nothing is one
+// the readings cannot tell from the converters, and 59% of the fits in this
+// library account for less than 0.8 of their figure's movement.
+func (curve Curve) moves(
+	by Weights,
+) bool {
+	for _, each := range []struct {
+		key    audio.Figure
+		weight float64
+		of     func(Figures) float64
+	}{
+		{audio.KeyCentroid, by.Centroid, func(f Figures) float64 { return f.Centroid }},
+		{audio.KeyLow, by.Low, func(f Figures) float64 { return f.Low }},
+		{audio.KeyMid, by.Mid, func(f Figures) float64 { return f.Mid }},
+		{audio.KeyHigh, by.High, func(f Figures) float64 { return f.High }},
+	} {
+		if each.weight == 0 || len(curve.Points) == 0 {
+			continue
+		}
+
+		low, high := each.of(curve.Points[0].Figures), each.of(curve.Points[0].Figures)
+
+		for _, p := range curve.Points {
+			v := each.of(p.Figures)
+			low, high = min(low, v), max(high, v)
+		}
+
+		if high-low > curve.Noise[each.key] {
+			return true
+		}
+	}
+
+	return false
+}

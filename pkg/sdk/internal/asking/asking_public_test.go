@@ -117,7 +117,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
 					Spec:  s.at("like-a-record.yaml"),
 					Setup: s.at("mine.setup.yaml"),
-				}, s.cat, s.lib, s.rigNamed)
+				}, s.cat, s.lib, s.rigNamed, "")
 
 				s.Require().NoError(err)
 				s.Require().NotEmpty(got.Rig.Chain)
@@ -134,7 +134,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			then: func() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
 					Spec: s.at("like-a-record.yaml"),
-				}, s.cat, s.lib, s.rigNamed)
+				}, s.cat, s.lib, s.rigNamed, "")
 
 				s.Require().NoError(err)
 				s.Require().NotEmpty(got.Rig.Chain)
@@ -159,7 +159,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib, s.rigNamed)
+						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib, s.rigNamed, "")
 
 						s.Require().Error(err)
 						s.Require().ErrorContains(err, absent,
@@ -191,7 +191,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib, s.rigNamed)
+						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib, s.rigNamed, "")
 
 						s.Require().Error(err)
 					})
@@ -221,7 +221,7 @@ rig:
   chain:
     - {role: amp, gear: Ampeg SVT}
 `),
-				}, s.cat, s.lib, s.rigNamed)
+				}, s.cat, s.lib, s.rigNamed, "")
 
 				s.Require().Error(err, "a request that insisted on gear the device has not")
 				s.Require().NotEmpty(got.Notes, "and the notes say which gear, and why")
@@ -236,7 +236,7 @@ rig:
 
 				_, err := asking.Resolve(ctx, asking.Ask{
 					Spec: s.at("like-a-record.yaml"),
-				}, s.cat, s.lib, s.rigNamed)
+				}, s.cat, s.lib, s.rigNamed, "")
 
 				s.Require().ErrorIs(err, context.Canceled)
 			},

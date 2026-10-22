@@ -35,6 +35,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
@@ -64,6 +65,10 @@ func Resolve(
 	cat *catalog.Catalog,
 	lib measured.Library,
 	rigNamed func(name string) (rig.Spec, bool),
+	// sweeps is the tree of committed curves, which say what each control of
+	// a block does. Empty means none were read, and a block added to a chain
+	// then arrives at the catalog's defaults.
+	sweeps string,
 ) (result.Resolved, error) {
 	if err := ctx.Err(); err != nil {
 		return result.Resolved{}, err
@@ -102,6 +107,10 @@ func Resolve(
 		// reads a directory and the shipped knowledge, and translate is what
 		// produces a rig rather than what reads one.
 		RigNamed: rigNamed,
+		// And the sweeps, so a block this adds arrives set rather than at
+		// whatever the catalog ships as a default. Nil when nobody named a
+		// sweeps tree, which a release has not.
+		CurvesFor: curvesIn(sweeps),
 	})
 
 	return result.Resolved{ID: spec.Id, Ask: spec.Ask, Rig: built, Notes: notes}, err
@@ -146,3 +155,46 @@ func unknownWords(
 
 	return out
 }
+
+// curvesIn reads one block's swept curves out of a tree of them.
+//
+// By model identifier, which is what the files are named after. A block the
+// campaign never reached has no file and answers false, which is an ordinary
+// answer: 179 of the device's 614 blocks are swept.
+//
+// Nil for an empty path rather than a function that always fails, so the
+// caller can tell "no sweeps were offered" from "that block is not in them".
+func curvesIn(
+	dir string,
+) func(catalog.ModelID) (measured.Curves, bool) {
+	if dir == "" {
+		return nil
+	}
+
+	return func(model catalog.ModelID) (measured.Curves, bool) {
+		f, err := os.Open(filepath.Join(dir, string(model)+".json"))
+		if err != nil {
+			return measured.Curves{}, false
+		}
+
+		defer func() { _ = f.Close() }()
+
+		got, err := measured.LoadCurves(f)
+		if err != nil {
+			return measured.Curves{}, false
+		}
+
+		return got, true
+	}
+}
+
+// CurvesIn is [curvesIn], for the test that covers it.
+//
+// Exported here rather than through an export_test.go because this package
+// already answers across the file boundary and one more name is cheaper than a
+// second shim.
+var CurvesIn = curvesIn
+
+// ModelID is the identifier a sweep is filed under, re-exported so a test in
+// this package's own test package can name one without importing the catalog.
+type ModelID = catalog.ModelID

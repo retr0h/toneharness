@@ -40,6 +40,7 @@ import (
 	"io"
 	"math"
 	"sort"
+	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
@@ -354,6 +355,40 @@ type Weights struct {
 // band share rather than swamping all three of them.
 func Spectral() Weights {
 	return Weights{Centroid: 1.0 / 1000.0, Low: 1, Mid: 1, High: 1}
+}
+
+// SpectralFor is [Spectral] with the axes an instrument cannot use dropped.
+//
+// A bass stem holds almost nothing above 2kHz, which is where the high band
+// begins. Across the eleven genres this corpus can aim at, the high band
+// displaces by exactly 0.00 for every one of them, so weighing it ranks
+// candidates on a figure none of them differ by and spends a quarter of the
+// distance on noise.
+//
+// The low band goes with it, for arithmetic rather than for measurement: the
+// three shares sum to one, so with the high band dead the low band carries
+// nothing the mid band has not already said, and counting both weighs the same
+// difference twice.
+//
+// So a bass is ranked on its centroid and its midrange, which are the two
+// figures its records actually differ by: across those eleven genres the
+// centroid spans 109Hz to 174Hz and the mid band 0.00 to 0.11, and every other
+// axis is flat.
+//
+// An instrument this does not know gets [Spectral]. Only the bass corpus has
+// been measured, so only the bass case is a reading rather than a guess, and
+// guessing that a guitar's high band is dead would be wrong: a guitar's centre
+// of gravity sits an octave up.
+func SpectralFor(
+	instrument string,
+) Weights {
+	out := Spectral()
+
+	if strings.EqualFold(instrument, "bass") {
+		out.Low, out.High = 0, 0
+	}
+
+	return out
 }
 
 // between is the weighted distance from one set of figures to another.

@@ -105,12 +105,35 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 				// one document means: the request and the answer travel together.
 				s.Require().NotNil(doc.Ask)
 
-				// The comp it named, and an amplifier nobody named. No
-				// cabinet: the amplifier states the one Line 6 voiced it with
-				// and the compiler reads that, so measuring for one would be
+				// The comp it named, an amplifier nobody named, and a drive
+				// and an equaliser behind a footswitch. No cabinet: the
+				// amplifier states the one Line 6 voiced it with and the
+				// compiler reads that, so measuring for one would be
 				// overruling better evidence with a weaker reading.
-				s.Require().Len(doc.Rig.Chain, 2)
-				s.Require().Equal(rig.RoleAmp, doc.Rig.Chain[1].Role)
+				//
+				// The drive and the equaliser arrive because the ask names a
+				// genre, and a genre's records cover a range no single
+				// setting reaches: the far end of it goes under a switch
+				// rather than being averaged away. Both arrive switched off,
+				// so what plays when the preset loads is still the
+				// compressor into the amplifier.
+				s.Require().Len(doc.Rig.Chain, 4)
+
+				off := map[rig.Role]bool{}
+
+				for _, e := range doc.Rig.Chain {
+					switch e.Role {
+					case rig.RoleDrive, rig.RoleEQ:
+					default:
+						continue
+					}
+
+					s.Require().NotNil(e.Enabled, "%s", e.Gear)
+					off[e.Role] = !*e.Enabled
+				}
+
+				s.Require().True(off[rig.RoleDrive], "the drive arrived on")
+				s.Require().True(off[rig.RoleEQ], "the equaliser arrived on")
 
 				s.Require().Contains(buf.String(), "closest of 15 measured")
 			},

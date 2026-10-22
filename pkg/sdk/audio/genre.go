@@ -22,6 +22,8 @@ package audio
 
 import (
 	"io/fs"
+	"maps"
+	"slices"
 	"sort"
 
 	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
@@ -49,6 +51,19 @@ type Genre struct {
 	// players those come from.
 	Records int `json:"records"`
 	Players int `json:"players"`
+	// Who is those players, by the slug their directory carries, sorted.
+	//
+	// The count alone was all this held, which left the gear a genre used
+	// unknowable from the pack: a genre rig's amplifier was chosen by ranking
+	// every block against the genre's figures, and that put the same
+	// MESA/Boogie under 9 of the 11 genres this corpus can aim at. Four of
+	// punk's seven players resolve to an Ampeg SVT into an 8x10, which is what
+	// punk actually used, and nothing downstream could see that without the
+	// names.
+	//
+	// Slugs rather than display names, because a rig is looked up by the same
+	// slug and a display name is a second spelling to get wrong.
+	Who []string `json:"who,omitempty"`
 	// Against is how many players had none of it, which is what the comparison
 	// stood on. Fewer than two and nothing can be earned.
 	Against int `json:"against"`
@@ -170,6 +185,7 @@ func GenresMeasured(
 		out = append(out, Genre{
 			Name: in.name, Slug: key,
 			Records: len(in.profiles), Players: len(in.players),
+			Who:        slices.Sorted(maps.Keys(in.players)),
 			Against:    len(others),
 			Across:     across,
 			Elsewhere:  rest,
