@@ -61,8 +61,13 @@ func (s *KeepTestSuite) answer() []byte {
 // TestHolds covers reading a slot that may hold nothing.
 func (s *KeepTestSuite) TestHolds() {
 	tests := []struct {
-		name    string
-		at      slotpkg.Address
+		name string
+		at   slotpkg.Address
+		// held is what the slot is called, which decides whether it is read
+		// at all: a slot still carrying the name a device ships with holds
+		// nothing worth keeping, and reading one costs a call that has
+		// stalled the endpoint.
+		held    string
 		body    []byte
 		err     error
 		errText string
@@ -80,14 +85,24 @@ func (s *KeepTestSuite) TestHolds() {
 			err:     errors.New("boom"),
 			errText: "reading slot 01A before replacing it",
 		},
+		{
+			// Never read, so never kept: there is nothing in an untouched
+			// slot to lose.
+			name: "a slot nobody has written",
+			held: backup.Untouched,
+		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			dev := mocks.NewMockEditor(s.ctrl)
-			dev.EXPECT().ReadPreset(gomock.Any(), tt.at.Setlist, tt.at.Slot).Return(tt.body, tt.err)
+			if tt.held != backup.Untouched {
+				dev.EXPECT().
+					ReadPreset(gomock.Any(), tt.at.Setlist, tt.at.Slot).
+					Return(tt.body, tt.err)
+			}
 
-			got, err := holds(context.Background(), dev, tt.at)
+			got, err := holds(context.Background(), dev, tt.at, tt.held)
 
 			if tt.errText != "" {
 				s.Require().ErrorContains(err, tt.errText)

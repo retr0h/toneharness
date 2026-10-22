@@ -66,7 +66,7 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 | The user asks                                                        | Read                                                       |
 | -------------------------------------------------------------------- | ---------------------------------------------------------- |
 | what is on the pedal, what a slot holds, whether a slot is empty      | [references/reading.md](references/reading.md)             |
-| to get a preset onto the device, to try one, to put a backup back     | [references/writing.md](references/writing.md)             |
+| to get a preset onto the device, to try one, to put a backup back     | [references/writing.md](references/writing.md), **before the first write, not after it fails** |
 | to load, copy, swap or move a preset between slots                    | [references/rearranging.md](references/rearranging.md)     |
 | why the front panel is dead, why the pedal stopped answering          | [references/session.md](references/session.md)             |
 | what a `.hlx`, `.hls`, `.hlb` or `.bin` is, and what converting loses | [references/formats.md](references/formats.md)             |
@@ -92,6 +92,24 @@ reading the screen can see that the slot they are on is the disposable one.
 
 Rename it back to `SCRATCH` when a run is finished, whatever was being worked on.
 A slot left called "SCRATCH dirnt" is one the next session has to think about.
+
+## Writing a slot has four rules and each one has cost a session
+
+Read [references/writing.md](references/writing.md) before the first write.
+These are the four it opens with, because each was learned by breaking
+something:
+
+1. **`presets compile`, not `presets make`.** A device refuses make's output
+   with `opcode 8, error -3`, which reads like a broken slot and is not one.
+2. **Pick a slot that has taken a write before.** `ls -t
+   ~/.local/state/toneharness/presets/` is the record of which have.
+3. **Read the slot back.** `[ok] written` has been seen on a write that stored
+   the name and no chain, so the pedal lists a preset and plays nothing.
+4. **Never retry a slot call that timed out.** The second attempt stalls the
+   endpoint until the pedal is power cycled.
+
+A session that guessed instead spent four power cycles and left two slots
+holding a name with no chain, which this tool cannot then clear.
 
 ## 3. Never write a slot nobody offered
 

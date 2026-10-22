@@ -39,7 +39,32 @@ func holds(
 	ctx context.Context,
 	s device.Editor,
 	at slotpkg.Address,
+	name string,
 ) ([]byte, error) {
+	// A slot nobody has written is not read at all.
+	//
+	// The comment above is the rule and this is what the device does with it.
+	// `ReadPreset`'s contract says no bytes and no error means a slot holding
+	// nothing; an HX Stomp asked for a slot it has never held a preset in does
+	// not answer, the read times out after six seconds, and a second attempt
+	// stalls the endpoint so the interface cannot be claimed again until the
+	// pedal is power cycled. So a write into an unused slot could not be done,
+	// which is every slot somebody would keep for trying things: 107 of the
+	// 126 on the device this was found on.
+	//
+	// Safe to skip because the backup is all the read is for. `Import` builds
+	// the preset from `wire.Blank`, an unused slot the device wrote that is
+	// embedded in this binary, so nothing in the write comes from the
+	// destination and a slot with nothing in it has nothing to lose.
+	//
+	// The name is the device's own, from the listing the caller already has.
+	// It is the only way to tell an unused slot from one somebody emptied and
+	// named, and the second still gets read: a name is somebody's work even
+	// when no blocks are left.
+	if name == backup.Untouched {
+		return nil, nil
+	}
+
 	body, err := s.ReadPreset(ctx, at.Setlist, at.Slot)
 	if err != nil {
 		return nil, fmt.Errorf("reading slot %s before replacing it: %w",
@@ -61,9 +86,15 @@ func (f *Flows) replacing(
 	at slotpkg.Address,
 	name string,
 ) ([]string, error) {
-	body, err := holds(ctx, s, at)
+	body, err := holds(ctx, s, at, name)
 	if err != nil {
 		return nil, err
+	}
+
+	// Nothing held, so nothing kept and no paths to report. A backup of an
+	// unused slot would be a file whose only use is restoring an unused slot.
+	if body == nil {
+		return nil, nil
 	}
 
 	return f.backups().Keep(ctx, backup.Held{At: at, Name: name, Body: body})

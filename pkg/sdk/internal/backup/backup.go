@@ -55,8 +55,12 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
 
-// untouched is what a device calls a slot nobody has named.
-const untouched = "New Preset"
+// Untouched is what a device calls a slot nobody has named.
+//
+// Exported because the write path needs it: a slot still carrying this name
+// has never held a preset, and asking an HX Stomp to read one does not return.
+// One constant rather than the same string in two packages.
+const Untouched = "New Preset"
 
 // Keeper writes what slots held to a directory, by the policy above.
 type Keeper struct {
@@ -190,7 +194,7 @@ func (k *Keeper) contents(
 	}
 
 	// No blocks and the name it shipped with: a blank slot nobody has used.
-	if doc == nil && h.Name == untouched {
+	if doc == nil && h.Name == Untouched {
 		return nil, "", nil
 	}
 
