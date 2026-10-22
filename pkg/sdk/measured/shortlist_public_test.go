@@ -314,6 +314,48 @@ func (s *ShortlistPublicTestSuite) TestShortlist() {
 	}
 }
 
+// TestShortlistReadsEachBlockAgainstItsOwnBaseline covers task 257.
+//
+// A figure says nothing without the empty loop it was read against, and a
+// library assembled over several runs holds more than one. This used to read
+// every block against the file's own baseline, so a reading carried in by
+// `--resume` was scored against an empty loop it had never been measured
+// against: the two runs in this campaign disagree about the same block by a
+// median 20.6Hz of centroid.
+func (s *ShortlistPublicTestSuite) TestShortlistReadsEachBlockAgainstItsOwnBaseline() {
+	none := 0.0
+
+	// An earlier run whose empty loop sat 200Hz higher than this file's, so a
+	// block reading 300Hz is 100Hz brighter than its own baseline and 200Hz
+	// brighter than the header's.
+	earlier := measured.Run{Baseline: measured.Figures{
+		Centroid: 200, Harmonics: &none,
+	}}
+
+	lib := library(reading("HD2_DistOne", catalog.CategoryDrive, 300, 5))
+	lib.Runs = map[string]measured.Run{earlier.Key(): earlier}
+
+	want := []measured.Want{
+		{Figure: audio.KeyCentroid, Need: 50, Tol: 10},
+	}
+
+	// Read against the header, as every one of the 614 committed readings
+	// still is, the block is 200Hz brighter than the empty loop.
+	loose := measured.Shortlist(lib, want, nil, 3)
+	s.Require().Len(loose, 1)
+	s.Require().InDelta(200, loose[0].Moves[audio.KeyCentroid], 0.01)
+
+	// Stamped with the run that took it, it is the 100Hz it actually moved.
+	block := lib.Blocks["HD2_DistOne"]
+	block.Run = earlier.Key()
+	lib.Blocks["HD2_DistOne"] = block
+
+	tight := measured.Shortlist(lib, want, nil, 3)
+	s.Require().Len(tight, 1)
+	s.Require().InDelta(100, tight[0].Moves[audio.KeyCentroid], 0.01,
+		"it was scored against an empty loop it was never measured against")
+}
+
 // TestCategoriesNarrowsToWhatIsWorthAdding covers the caller's own question.
 //
 // Which kinds are eligible is not this package's business. A chain missing

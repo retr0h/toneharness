@@ -117,6 +117,163 @@ func (s *SameRigTestSuite) TestSameRig() {
 	}
 }
 
+// TestTakenStampsEachReadingWithItsRun covers task 257: filing a reading under
+// the session that took it.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *SameRigTestSuite) TestTakenStampsEachReadingWithItsRun() {
+	lib := func() measured.Library {
+		return measured.Library{
+			Volume:   38,
+			Baseline: measured.Figures{Centroid: 155.27},
+			Blocks:   map[string]measured.Block{},
+		}
+	}
+
+	tests := []struct {
+		name string
+		then func()
+	}{
+		{
+			// The whole point. A reading says which run took it, and the run
+			// is in the file beside it.
+			name: "a reading is stamped and its run recorded",
+			then: func() {
+				got := lib()
+
+				taken(&got, measured.Block{ID: "HD2_DistOne"})
+
+				block := got.Blocks["HD2_DistOne"]
+				s.Require().Equal(got.Header().Key(), block.Run)
+
+				run, named := got.RunOf(block)
+				s.Require().True(named, "the run came from the file")
+				s.Require().Equal(38, run.Volume)
+			},
+		},
+		{
+			// Every write site calls this and none of them tracks whether the
+			// run is registered yet.
+			name: "two readings from one run share its entry",
+			then: func() {
+				got := lib()
+
+				taken(&got, measured.Block{ID: "HD2_DistOne"})
+				taken(&got, measured.Block{ID: "HD2_DistTwo"})
+
+				s.Require().Len(got.Runs, 1)
+				s.Require().Equal(
+					got.Blocks["HD2_DistOne"].Run,
+					got.Blocks["HD2_DistTwo"].Run)
+			},
+		},
+		{
+			// A header that moves mid-run is a different run, which is what
+			// the digest is for: this is how a resumed file comes to hold two.
+			name: "a reading taken at another volume is another run",
+			then: func() {
+				got := lib()
+
+				taken(&got, measured.Block{ID: "HD2_DistOne"})
+
+				got.Volume = 50
+				taken(&got, measured.Block{ID: "HD2_DistTwo"})
+
+				s.Require().Len(got.Runs, 2)
+				s.Require().NotEqual(
+					got.Blocks["HD2_DistOne"].Run,
+					got.Blocks["HD2_DistTwo"].Run)
+
+				at, _ := got.RunOf(got.Blocks["HD2_DistOne"])
+				s.Require().Equal(38, at.Volume,
+					"the earlier reading was relabelled")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
+}
+
+// TestRunsSaysWhenAFileHoldsMoreThanOne covers reporting a mixed library.
+//
+// Said because the way a library comes to hold more than one run is `--resume`,
+// which looks like carrying on rather than like mixing two runs.
+func (s *SameRigTestSuite) TestRunsSaysWhenAFileHoldsMoreThanOne() {
+	earlier := measured.Run{Volume: 20}
+	later := measured.Run{Volume: 38, Open: true}
+
+	tests := []struct {
+		name string
+		lib  measured.Library
+		// said is whether the remark is printed.
+		said bool
+	}{
+		{
+			// The ordinary case, which needs no remark.
+			name: "one run says nothing",
+			lib: measured.Library{
+				Runs: map[string]measured.Run{later.Key(): later},
+				Blocks: map[string]measured.Block{
+					"a": {Run: later.Key()}, "b": {Run: later.Key()},
+				},
+			},
+		},
+		{
+			// A library written before runs were recorded, which is not the
+			// same as a library from one session: it is a file that cannot
+			// say.
+			name: "readings naming no run say nothing either",
+			lib: measured.Library{
+				Blocks: map[string]measured.Block{"a": {}, "b": {}},
+			},
+		},
+		{
+			name: "two runs are said, with how many blocks each",
+			lib: measured.Library{
+				Runs: map[string]measured.Run{
+					earlier.Key(): earlier, later.Key(): later,
+				},
+				Blocks: map[string]measured.Block{
+					"a": {Run: earlier.Key()},
+					"b": {Run: later.Key()},
+					"c": {Run: later.Key()},
+				},
+			},
+			said: true,
+		},
+		{
+			// What resuming the committed library produces: 614 readings that
+			// named no run, frozen under the header they were taken with, and
+			// this run's beside them.
+			name: "carried readings and this run's are two runs",
+			lib: measured.Library{
+				Runs:   map[string]measured.Run{later.Key(): later},
+				Blocks: map[string]measured.Block{"a": {}, "b": {Run: later.Key()}},
+			},
+			said: true,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			out := runs(tt.lib)
+
+			if !tt.said {
+				s.Require().Empty(out)
+
+				return
+			}
+
+			s.Require().Contains(out, "may be ranked against every other")
+			s.Require().Contains(out, "blocks")
+		})
+	}
+}
+
 func TestSameRigTestSuite(
 	t *testing.T,
 ) {

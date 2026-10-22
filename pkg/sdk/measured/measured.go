@@ -35,6 +35,8 @@
 package measured
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -113,6 +115,28 @@ type Block struct {
 	// Refused says why a block has no reading, for the ones that will not
 	// load alone. Some of what the catalog lists means nothing on its own.
 	Refused string `json:"refused"`
+	// Run names the measuring session this reading came out of, as a key into
+	// [Library.Runs].
+	//
+	// **What stops a resumed run relabelling earlier readings.** Everything
+	// that decides what a figure is of — the rig, the volume, the device the
+	// level was pinned on, the baseline it is read against — used to live on
+	// the library and nowhere else, and `measure blocks --resume` carries
+	// earlier blocks into a header this run has just built. So a library
+	// assembled over several runs described every block in it with the last
+	// run's settings, including blocks measured at another volume or through
+	// another device.
+	//
+	// The campaign's own history is the argument. 19 of the committed curve
+	// files predate `instrument` and `volume` entirely and read as unknown,
+	// which is honest; a fingerprint taken in an earlier run read as whatever
+	// the latest run claimed, which is not.
+	//
+	// Empty for a reading taken before this was recorded, which is all 614 in
+	// the committed library. [Library.RunOf] answers for those from the
+	// header, because that is what they were always implicitly claiming, and
+	// a caller that needs to know the difference reads this field.
+	Run string `json:"run,omitempty"`
 }
 
 // Measured returns whether this block has a reading worth using.
@@ -237,8 +261,117 @@ type Library struct {
 	// Isolated says every reading was taken with one block in the chain.
 	// Nothing measured in a chain may be compared with these.
 	Isolated bool `json:"isolated"`
+	// Runs is every measuring session this file holds readings from, keyed by
+	// [Run.Key].
+	//
+	// The header above describes the run that wrote the file last, which is
+	// what it has always described and what nothing used to say. This is the
+	// rest of them. A library assembled in one run holds one entry and every
+	// block points at it; one assembled over several holds several, and a
+	// reader can tell which readings may be compared with which.
+	//
+	// Absent in a library written before this was recorded, which is not the
+	// same as a library from one run: it is a file that cannot say.
+	Runs map[string]Run `json:"runs,omitempty"`
 	// Blocks is the readings, by model identifier.
 	Blocks map[string]Block `json:"blocks"`
+}
+
+// Run is one measuring session: the rig it was taken on, and the settings that
+// decide what its readings are of.
+//
+// Every field here is one a figure is only a figure under. The device the level
+// was pinned on is the one that silently invalidates the rest: a Mac with its
+// default output on Bluetooth headphones pins those while the jack feeding the
+// pedal sits wherever it was left, and a run came to read 66dB of loss with the
+// cabling correct.
+//
+// Not the device or whether the readings were isolated. Both are refused at
+// resume rather than recorded per run, because a library mixing two pedals or
+// mixing isolated with in-chain readings is one nothing may rank inside at all.
+type Run struct {
+	// Reference identifies the signal every reading in this run was taken
+	// against. A different one invalidates the lot.
+	Reference Reference `json:"reference"`
+	// Instrument is what was played through it, as the corpus names one.
+	Instrument string `json:"instrument,omitempty"`
+	// Headroom is how far the chain's own output was turned down, in decibels,
+	// and Volume the computer's own output level on the platform's 0 to 100
+	// scale.
+	Headroom float64 `json:"headroom,omitempty"`
+	Volume   int     `json:"volume"`
+	// Rig is the audio devices the reference went out of and came back in on,
+	// Open says the two were different so the chain could not hear itself, and
+	// PinnedOn is the output device the level was pinned on.
+	Rig      []string `json:"rig,omitempty"`
+	Open     bool     `json:"open,omitempty"`
+	PinnedOn string   `json:"pinned_on,omitempty"`
+	// Baseline is the empty loop, measured first. Every figure in this run is
+	// read against this one and against no other run's.
+	Baseline Figures `json:"baseline"`
+}
+
+// Key identifies a run by what makes its readings comparable.
+//
+// A digest of the run's own fields rather than a clock or a counter, so two
+// sessions taken on the same rig at the same settings against the same baseline
+// collapse into one entry. That is the right answer: as far as anything
+// downstream is concerned they are one run, and a timestamp would split them
+// into two the reader then has to decide are equivalent.
+//
+// Twelve hex characters, which is plenty for the handful of runs a library ever
+// holds and short enough to read in a file.
+func (r Run) Key() string {
+	// Through the same encoder the file uses, so two runs that serialise alike
+	// key alike and a field added to Run reaches the key without being added
+	// here too.
+	//
+	// The error is dropped because Run holds strings, numbers and a []string
+	// and none of them can fail to encode. A branch for it would be one
+	// nothing can reach and nobody has checked.
+	raw, _ := json.Marshal(r)
+
+	sum := sha256.Sum256(raw)
+
+	return hex.EncodeToString(sum[:])[:runKey]
+}
+
+// runKey is how many hex characters of the digest a run is named by.
+const runKey = 12
+
+// RunOf is the measuring session one reading came out of.
+//
+// From the header where the block names no run, because that is what such a
+// reading was always implicitly claiming and the committed library is 614 of
+// them. False says the claim came from the header rather than from the reading,
+// so a caller reporting which rig a figure is about can say which it has.
+func (l Library) RunOf(
+	block Block,
+) (Run, bool) {
+	if got, ok := l.Runs[block.Run]; ok && block.Run != "" {
+		return got, true
+	}
+
+	return Run{
+		Reference:  l.Reference,
+		Instrument: l.Instrument,
+		Headroom:   l.Headroom,
+		Volume:     l.Volume,
+		Rig:        l.Rig,
+		Open:       l.Open,
+		PinnedOn:   l.PinnedOn,
+		Baseline:   l.Baseline,
+	}, false
+}
+
+// Header is the library's own fields read as the run that wrote it last.
+//
+// What `measure blocks` stamps the readings it takes, so the header and the run
+// entry cannot describe different things.
+func (l Library) Header() Run {
+	got, _ := l.RunOf(Block{})
+
+	return got
 }
 
 // Reference is the signal every reading was taken against.

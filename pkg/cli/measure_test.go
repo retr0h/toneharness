@@ -276,9 +276,47 @@ func (s *MeasureTestSuite) TestResume() {
 				s.Require().NoError(Resume(&lib, MeasureOptions{Out: at}))
 
 				s.Require().Len(lib.Blocks, 2)
-				s.Require().InDelta(94.8, lib.Baseline.Centroid, 0.01,
-					"the baseline is resumed too, or every later block is a difference "+
-						"from nothing")
+			},
+		},
+		{
+			// Task 257. Every carried reading is still read against the empty
+			// loop it was measured against, which is what matters and is not
+			// what used to happen.
+			//
+			// `resume` set `lib.Baseline = had.Baseline` for this, and that
+			// line was dead: `baseline` runs afterwards and re-measures,
+			// overwriting it every time. So each carried block was scored
+			// against an empty loop it had never seen. Now the earlier
+			// header is frozen onto them as a run, and the baseline travels
+			// with it.
+			name: "freezes the earlier header onto what it carries",
+			then: func() {
+				at := s.libraryFile(`{"device":"HX Stomp","isolated":true,
+		  "volume":20,"baseline":{"centroid":94.8},
+		  "blocks":{"A":{"id":"A","category":"amp","centroid":300}}}`)
+
+				// A header this run has already built, the way `run` builds
+				// one before resuming into it.
+				lib := measured.Library{
+					Volume:   38,
+					Baseline: measured.Figures{Centroid: 155.27},
+					Blocks:   map[string]measured.Block{},
+				}
+				s.Require().NoError(Resume(&lib, MeasureOptions{Out: at}))
+
+				carried := lib.Blocks["A"]
+				s.Require().NotEmpty(carried.Run,
+					"a carried reading has to say which run took it")
+
+				was, named := lib.RunOf(carried)
+				s.Require().True(named, "its run has to be in the file")
+				s.Require().InDelta(94.8, was.Baseline.Centroid, 0.01,
+					"it was relabelled with a baseline it never saw")
+				s.Require().Equal(20, was.Volume)
+
+				// And this run's own header is untouched by the carry.
+				s.Require().InDelta(155.27, lib.Baseline.Centroid, 0.01)
+				s.Require().Equal(38, lib.Volume)
 			},
 		},
 		{
