@@ -2131,16 +2131,10 @@ func playerTarget(
 		earned = append(earned, term.Term)
 	}
 
+	figures, _ := AimAtPlayer(who, deps.Measured.Baseline)
+
 	return aim{
-		// No terms, deliberately, which is what makes `displacedTo` take the
-		// middle of their records rather than the edge. A genre aims at its
-		// edge because the middle is what every genre shares; one player's
-		// records describe one person and their middle is the thing being
-		// aimed at.
-		figures: displacedTo(audio.Genre{
-			Across:    got.Across,
-			Elsewhere: got.Elsewhere,
-		}, deps.Measured.Baseline),
+		figures: figures,
 		named:   who,
 		read:    got.Across.Measured(),
 		records: got.Records,
@@ -2152,6 +2146,45 @@ func playerTarget(
 			"they played and is not moved by this; only the controls on it are " +
 			"set, and they are set to what those records measure as.",
 	}, true
+}
+
+// AimAtPlayer is what one player's own records measure as, as a displacement
+// a block can be ranked against.
+//
+// A displacement, like a genre's and for the same reason: a player's figures
+// come off finished records and a block's off a dry signal through one block,
+// so the only comparable thing is how far each sits from its own normal.
+// [audio.Player.Elsewhere] is what the other players measure as and is packed
+// beside the figures for this.
+//
+// **The middle of their records rather than an edge of them, which is the
+// opposite of a genre.** It passes no terms to `displacedTo`, and that is what
+// makes it take the middle: a genre aims at its edge because the middle is
+// what every genre shares and ten of the eleven displace less than 6.4 points
+// from one baseline, while one player's records describe one person.
+//
+// Exported because two paths need the same answer and the arithmetic has one
+// owner. An ask saying `like: <artist>` arrives through `playerTarget`; an
+// artist rig's gear is authored, so its resolve never reaches that and asks
+// from the resolve path instead, where the document's own identifier says who
+// it is for.
+//
+// False where the pack carries nobody by that name, and the caller then keeps
+// whatever the rig's sources justify. The name is slugged, because the pack
+// files a player under the directory their records sit in.
+func AimAtPlayer(
+	who string,
+	baseline measured.Figures,
+) (measured.Figures, bool) {
+	got, ok := audio.ShippedPlayer(slug.Of(who))
+	if !ok {
+		return measured.Figures{}, false
+	}
+
+	return displacedTo(audio.Genre{
+		Across:    got.Across,
+		Elsewhere: got.Elsewhere,
+	}, baseline), true
 }
 
 // genreNote says what is known about a genre somebody asked for.

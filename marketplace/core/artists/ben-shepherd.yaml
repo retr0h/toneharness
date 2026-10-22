@@ -65,12 +65,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -94,18 +94,18 @@ built:
             He had the issue in hand rather than the headline: he names its author, the three other bassists profiled in the same piece, and the editorial decision to put it on the cover over a Ray Brown article. That is the kind of detail nobody reproduces from a search result.
           url: https://www.talkbass.com/threads/ben-shepherd-soundgarden-what-bass-rig-did-he-play-on-badmotorfinger-album.298516/
       controls:
-        Bass: "0.5"
-        Bias: "0.55"
-        BiasX: "0.9"
-        ChVol: "0.74"
-        Drive: "0.62"
-        HighMid: "0.5"
-        Hum: "0.5"
-        Master: "0.6"
-        Mid: "0.5360000000000001"
-        Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.46875"
+        Bass: "0.375"
+        Bias: "1.0"
+        BiasX: "0.25"
+        ChVol: "0.75"
+        Drive: "0.625"
+        HighMid: "0.875"
+        Hum: "0.375"
+        Master: "0.625"
+        Mid: "0.9760000000000001"
+        Ripple: "0.875"
+        Sag: "0.75"
+        Treble: "0.84375"
       attrs:
         '@position': "1"
       position: 1

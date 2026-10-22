@@ -40,6 +40,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
 // MakeOptions says what to build and where to put it.
@@ -106,6 +107,24 @@ func Make(
 	}
 
 	rec, intent := known.Rig, intentOf(known.Ask, held)
+
+	// What the records of whoever this rig is for measure as, and the sweeps
+	// to reach it with.
+	//
+	// Resolved here rather than in the compiler, for the reason
+	// `Intent.Loudness` is: that package builds a chain and has no business
+	// deciding who a rig is for or reading a corpus to find out. The rig's own
+	// identifier is who it is for, which is what makes this reach an artist
+	// rig at all: a document carries `subject` and no `like`, and reading the
+	// subject as a target in `translate` was tried and reverted because a
+	// subject-only ask is meant to refuse and name `like` instead.
+	aim, err := opts.aimOf(known.ID)
+	if err != nil {
+		return result.Made{}, err
+	}
+
+	intent.Aim = aim
+	intent.Curves = sweptIn(opts.SweepsDir)
 
 	cat, err := opts.catalog(ctx)
 	if err != nil {
@@ -559,6 +578,7 @@ func curvesIn(
 		return nil
 	}
 
+	read := sweptIn(dir)
 	out := map[catalog.ModelID]measured.Curves{}
 
 	for _, b := range spec.Blocks {
@@ -567,18 +587,8 @@ func curvesIn(
 			continue
 		}
 
-		f, err := os.Open(
-			filepath.Join(dir, string(b.Model)+".json"),
-		) //nolint:gosec // a path built from the catalog
-		if err != nil {
-			continue
-		}
-
-		got, err := measured.LoadCurves(f)
-
-		_ = f.Close()
-
-		if err != nil {
+		got, swept := read(b.Model)
+		if !swept {
 			continue
 		}
 
@@ -672,4 +682,64 @@ func (o MakeOptions) loudnessOf(
 	return 0, fmt.Errorf(
 		"%w: the Setup says to come out as loud as %q, and nothing in that "+
 			"rig's chain has a measured cabinet", ErrNoLoudness, id)
+}
+
+// aimOf is what the records of whoever a rig is for measure as.
+//
+// The rig's own identifier is who it is for, and it is also the directory the
+// corpus files their records under, which is what makes this answerable from
+// here at all. An artist rig's gear is authored, so its resolve never passes
+// through the gear-choosing path where an ask's `like` is read; and `subject`
+// is deliberately not read there, because a rig resolving itself from the rig
+// researched for the same person is circular.
+//
+// Nil for a rig nobody has records for, which is most of them and not an
+// error: those keep the controls their sources justify.
+//
+// Resolved here rather than in the compiler, for the reason `Intent.Loudness`
+// is: that package builds a chain and has no business reading a corpus.
+func (o MakeOptions) aimOf(
+	id string,
+) (*measured.Figures, error) {
+	lib, err := o.library()
+	if err != nil {
+		return nil, err
+	}
+
+	got, ok := translate.AimAtPlayer(id, lib.Baseline)
+	if !ok {
+		return nil, nil
+	}
+
+	return &got, nil
+}
+
+// sweptIn reads one block's committed curves out of a tree of them.
+//
+// Nil for an empty path rather than a reader that always fails, so the
+// compiler can tell "no sweeps were offered" from "that block is not in them".
+func sweptIn(
+	dir string,
+) func(catalog.ModelID) (measured.Curves, bool) {
+	if dir == "" {
+		return nil
+	}
+
+	return func(model catalog.ModelID) (measured.Curves, bool) {
+		f, err := os.Open(
+			filepath.Join(dir, string(model)+".json"),
+		) //nolint:gosec // a path built from the catalog
+		if err != nil {
+			return measured.Curves{}, false
+		}
+
+		defer func() { _ = f.Close() }()
+
+		got, err := measured.LoadCurves(f)
+		if err != nil {
+			return measured.Curves{}, false
+		}
+
+		return got, true
+	}
 }

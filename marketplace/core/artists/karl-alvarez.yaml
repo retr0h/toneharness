@@ -70,12 +70,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -92,18 +92,18 @@ built:
           note: 'the poster Dave Siff, who says elsewhere in these threads that he has flown to Los Angeles to see the band, on what he has watched across several shows: "I''ve seen him play several different Fender basses as well as a Music Man, always through an SVT, and it always sounds like Karl."'
           url: https://www.talkbass.com/threads/karl-alvarez-tone.754486/
       controls:
-        Bass: "0.41"
-        Bias: "0.74"
-        BiasX: "0.5"
+        Bass: "0.375"
+        Bias: "0.625"
+        BiasX: "1.0"
         ChVol: "0.8"
-        Drive: "0.6"
-        Hum: "0.5"
-        Master: "1.0"
-        Mid: "0.89"
-        MidFreq: "2"
+        Drive: "0.5"
+        Hum: "0.625"
+        Master: "0.875"
+        Mid: "1.0"
+        MidFreq: "0"
         Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.88"
+        Sag: "1.0"
+        Treble: "1.0"
       attrs:
         '@position': "1"
       position: 1

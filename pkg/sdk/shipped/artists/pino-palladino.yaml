@@ -116,12 +116,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "0.9"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -142,18 +142,18 @@ built:
           note: 'Russell Elevado, who engineered the album, in a Q&A quoted by the poster rochishin: "for amps we used an Ampeg B15, B18 and an old solid state amp in a big cabinet that''s at electric lady ... mics were fet47 ... and usually a pre or focusrite isa115 ... everything went to tape and no di''s whatsoever on the album."'
           url: https://www.talkbass.com/threads/dangelo-voodoo.146620/
       controls:
-        Bass: "0.67"
-        Bias: "0.66"
+        Bass: "0.5"
+        Bias: "0.625"
         BiasX: "0.5"
         ChVol: "1.0"
-        Drive: "0.7"
-        HighMid: "0.5"
-        Hum: "0.5"
-        LowMid: "0.65"
+        Drive: "0.375"
+        HighMid: "1.0"
+        Hum: "0.625"
+        LowMid: "0.875"
         Master: "1.0"
         Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.643986013986014"
+        Sag: "0.0"
+        Treble: "0.828986013986014"
       attrs:
         '@position': "1"
       position: 1

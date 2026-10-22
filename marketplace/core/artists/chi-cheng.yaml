@@ -75,12 +75,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -103,12 +103,12 @@ built:
           note: 'Premier Guitar''s remembrance of him, which states the rig in one sentence: "Cheng held the fort down with 4-string Fender P basses played with his fingers—occasionally using fretless models on White Pony—through Ampeg SVT-2 Pro heads and really only used a Tech 21 SansAmp GT2 for extra balls."'
           url: https://www.premierguitar.com/articles/In_Remembrance_Chi_Chengs_Low_End_Legacy
       controls:
-        Bass: "0.59"
-        Blend: "0.4"
-        Drive: "0.65"
-        Level: "0.48"
-        Presence: "0.5"
-        Treble: "0.3"
+        Bass: "0.5"
+        Blend: "0.0"
+        Drive: "0.625"
+        Level: "0.5"
+        Presence: "1.0"
+        Treble: "1.0"
       attrs:
         '@position': "1"
       position: 1
@@ -121,18 +121,18 @@ built:
           note: 'Premier Guitar''s remembrance of him, which states the rig in one sentence: "Cheng held the fort down with 4-string Fender P basses played with his fingers—occasionally using fretless models on White Pony—through Ampeg SVT-2 Pro heads and really only used a Tech 21 SansAmp GT2 for extra balls."'
           url: https://www.premierguitar.com/articles/In_Remembrance_Chi_Chengs_Low_End_Legacy
       controls:
-        Bass: "0.41"
-        Bias: "0.74"
-        BiasX: "0.5"
+        Bass: "0.625"
+        Bias: "0.75"
+        BiasX: "0.0"
         ChVol: "0.8"
-        Drive: "0.6"
-        Hum: "0.5"
+        Drive: "0.875"
+        Hum: "0.875"
         Master: "1.0"
-        Mid: "0.79"
-        MidFreq: "2"
+        Mid: "0.125"
+        MidFreq: "1"
         Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.85"
+        Sag: "0.625"
+        Treble: "0.625"
       attrs:
         '@position': "2"
       position: 2
@@ -218,8 +218,11 @@ built:
             block1:
               attrs:
                 '@fs_customcolor': "2"
+                '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Tech 21 SansAmp Bass Driver DI V1
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -284,6 +287,9 @@ built:
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
     - block: 1
+      enabled: false
       label: Tech 21 SansAmp Bass Driver DI V1
       led: red
+      momentary: false
+      primary: true
       switch: 1

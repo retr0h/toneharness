@@ -68,12 +68,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -108,17 +108,17 @@ built:
         80Hz: "0.0"
         8kHz: "0.0"
         900Hz: "0.0"
-        Bass: "0.5"
-        Bright: "false"
+        Bass: "0.25"
+        Bright: "true"
         ChVol: "0.75"
         Drive: "0.5"
         EQ: "false"
         EQLevel: "0.0"
         Master: "0.75"
-        Mid: "0.6"
+        Mid: "0.975"
         MidFreq: "1"
-        Treble: "0.6"
-        UltraHi: "false"
+        Treble: "1.0"
+        UltraHi: "true"
         UltraLo: "false"
       attrs:
         '@position': "1"

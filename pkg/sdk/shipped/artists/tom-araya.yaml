@@ -60,12 +60,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "0.95"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -82,18 +82,18 @@ built:
           note: 'Opened, and it establishes nothing. Every post about the amplifier is hedged opinion — "I''m almost certain that it is the Ampegs", "I''d be willing to bet that''s what it came from" — and post 113 has him on a later rig entirely: "now Tom Araya uses a custom marshall head and custom marshall 8x10''s".'
           url: https://www.talkbass.com/threads/tom-arayas-gear-setup.164746/
       controls:
-        Bass: "0.41"
-        Bias: "0.74"
-        BiasX: "0.5"
+        Bass: "0.5"
+        Bias: "0.75"
+        BiasX: "0.0"
         ChVol: "0.8"
-        Drive: "0.6"
-        Hum: "0.5"
+        Drive: "0.875"
+        Hum: "0.875"
         Master: "1.0"
-        Mid: "0.75"
-        MidFreq: "2"
+        Mid: "0.46"
+        MidFreq: "1"
         Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.8317073170731707"
+        Sag: "0.625"
+        Treble: "0.7317073170731707"
       attrs:
         '@position': "1"
       position: 1

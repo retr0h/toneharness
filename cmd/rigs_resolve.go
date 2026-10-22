@@ -26,7 +26,10 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
-var rigsResolveOptions sdk.Resolve
+var (
+	rigsResolveOptions sdk.Resolve
+	rigsResolveClient  clientFlags
+)
 
 // rigsResolveCmd represents the rigs resolve command.
 var rigsResolveCmd = &cobra.Command{
@@ -54,7 +57,8 @@ Writes over the file the rig came from unless --out names somewhere else. A rig
 that ships in the binary has no file, so that one needs --out.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		made, err := newClient(ownRigs(rigsDir)).Resolve(cmd.Context(), rigsResolveOptions)
+		made, err := rigsResolveClient.client(ownRigs(rigsDir)).
+			Resolve(cmd.Context(), rigsResolveOptions)
 		if err != nil {
 			return err
 		}
@@ -75,6 +79,15 @@ func init() {
 		&rigsResolveOptions.From, "from", "",
 		"a plan to take the controls from, such as what tone tune wrote, "+
 			"instead of building the rig again")
+
+	rigsResolveCmd.Flags().StringVar(
+		&rigsResolveClient.sweeps, "sweeps", "resources/sweeps/hx-stomp",
+		"the committed curves the controls are set from. They say what every "+
+			"position of every control of a block did, which is how a rig for "+
+			"somebody whose records are measured gets its knobs set to those "+
+			"records rather than to the catalog's defaults. Only the "+
+			"fingerprints are packed into the binary, so a release has none of "+
+			"these and the controls stay where the corpus medians put them")
 
 	_ = rigsResolveCmd.MarkFlagRequired("id")
 }

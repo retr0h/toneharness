@@ -164,18 +164,18 @@ built:
           note: 'Bass Player, September 2004, the month of the album, and the only contemporaneous interview anybody here has read. It puts him on Fender: "a Bassman 1200 Pro head with the EQ essentially flat ... Each amp is connected to a Bassman 810 Pro 8x10 cabinet with the tweeter turned off", and "I just switched back to 8x10s".'
           url: https://web.archive.org/web/20040908171044/http://www.bassplayer.com/archive/0904/0904_Features1.htm
       controls:
-        Bass: "0.41"
-        Bias: "0.74"
-        BiasX: "0.5"
+        Bass: "0.5"
+        Bias: "0.75"
+        BiasX: "0.0"
         ChVol: "0.8"
-        Drive: "0.6"
-        Hum: "0.5"
+        Drive: "0.875"
+        Hum: "0.875"
         Master: "1.0"
-        Mid: "0.89"
-        MidFreq: "2"
+        Mid: "0.35"
+        MidFreq: "1"
         Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.88"
+        Sag: "0.625"
+        Treble: "0.78"
       attrs:
         '@position': "1"
       position: 1

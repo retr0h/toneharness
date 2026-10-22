@@ -77,12 +77,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -102,18 +102,18 @@ built:
             He opens the same interview naming himself, "hi there my name's Chris I'll play bass in silver chair", and the only other voice in it is the interviewer asking him questions.
           url: https://www.youtube.com/watch?v=b1egYvnHl9c
       controls:
-        Bass: "0.67"
-        Bias: "0.66"
+        Bass: "0.5"
+        Bias: "0.625"
         BiasX: "0.5"
         ChVol: "1.0"
-        Drive: "0.7"
-        HighMid: "0.5"
-        Hum: "0.5"
-        LowMid: "0.65"
+        Drive: "0.375"
+        HighMid: "1.0"
+        Hum: "0.625"
+        LowMid: "0.875"
         Master: "1.0"
         Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.64625"
+        Sag: "0.0"
+        Treble: "0.83125"
       attrs:
         '@position': "1"
       position: 1
@@ -143,11 +143,11 @@ built:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        HighGain: "0.0"
+        HighGain: "9.0"
         Level: "0.0"
-        LowGain: "0.0"
+        LowGain: "-3.0"
         MidFreq: "600.0"
-        MidGain: "-0.96"
+        MidGain: "5.04"
       attrs:
         '@position': "3"
       position: 3
@@ -217,8 +217,11 @@ built:
             block3:
               attrs:
                 '@fs_customcolor': "2"
+                '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Simple EQ
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -283,6 +286,9 @@ built:
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
     - block: 3
+      enabled: false
       label: Simple EQ
       led: red
+      momentary: false
+      primary: true
       switch: 1

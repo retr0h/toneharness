@@ -23,10 +23,12 @@ package compile
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
@@ -157,6 +159,17 @@ func Resolve(
 	added = append(added, asked...)
 
 	built := specFor(id, intent, blocks, wants, stats)
+
+	// What the records of whoever this rig is for measure as, over the corpus
+	// medians and under everything a person wrote.
+	//
+	// Above the medians because a median is what this instrument's presets
+	// happen to sit at and these are the records somebody actually made.
+	// Below the words, the numbers and the stated controls, because all three
+	// of those are somebody saying what they meant: an artist rig's sources
+	// name the amplifier and this sets the knobs on it, and a value written
+	// into the document still wins.
+	aimed(intent, blocks, built, instrument)
 
 	// After the corpus has had its say, because a term is an opinion about
 	// where players land rather than a replacement for knowing.
@@ -958,5 +971,109 @@ func outlived(
 
 		moved[i].Held = held
 		moved[i].Overridden = true
+	}
+}
+
+// aimed sets each block's controls to what the records of whoever this rig is
+// for measure as.
+//
+// The sweep says what every position of every control did, so the value that
+// moves a block toward those records is a reading rather than a guess. A block
+// with no sweep, or a rig nobody has records for, is left where the corpus
+// medians put it.
+//
+// One control at a time against the target, which is the limitation
+// [measured.Curves.Toward] states and task 254 is the wider version of: a sweep
+// moves one control and leaves the rest where they sat, so these answers do not
+// compose. It is still the best answer available without putting the chain on
+// hardware, and it beats a factory default by the width of the whole range.
+//
+// Silent. Nothing here can fail: a control the model does not carry is not
+// written, and `plan.Params` refuses a value of the wrong kind at the point it
+// is set rather than here.
+func aimed(
+	intent Intent,
+	blocks []catalog.Block,
+	built plan.Plan,
+	instrument string,
+) {
+	if intent.Aim == nil || intent.Curves == nil {
+		return
+	}
+
+	for i, blk := range blocks {
+		if i >= len(built.Blocks) {
+			break
+		}
+
+		// Not the cabinet. A cabinet's LowCut and HighCut move a band share
+		// further than anything else on the device, and a sweep read one
+		// control at a time cannot see that the cut taking the most energy out
+		// of the low band is also the one taking the signal with it: letting
+		// this set a whole cabinet sent LowCut to 79.9Hz, which is above the
+		// fundamental of a bass's open E. Task 255 is that exploit and task
+		// 242 is choosing a cabinet properly. Until then the cabinet is the
+		// one its sources or its amplifier's own pairing name, at the
+		// catalog's figures.
+		if blk.Category == catalog.CategoryCab {
+			continue
+		}
+
+		curves, swept := intent.Curves(blk.ID)
+		if !swept {
+			continue
+		}
+
+		// The chain's instrument rather than the block's own subcategory. A
+		// subcategory says "Bass" on an amplifier and "Mono, Stereo" on a
+		// drive, so reading it per block would weigh the amplifier on the two
+		// figures a bass record differs by and the drive in front of it on
+		// four, two of which are flat for every bass in the corpus.
+		toward := curves.Toward(*intent.Aim, measured.SpectralFor(instrument))
+
+		for name, at := range toward {
+			set(built.Blocks[i].Params, blk, name, at)
+		}
+	}
+}
+
+// swept is how fine a figure read off a sweep is kept: a thousandth of a
+// control's travel, which is finer than the eight positions it was read at and
+// coarser than the noise of interpolating between them.
+const swept = 1000
+
+// set writes one swept position onto a block, in the control's own kind.
+//
+// A sweep records the kind because a control is not always a number a document
+// may write as one: of the swept drives, 163 controls are floats, 20 integers
+// and 16 booleans. The Kinky Boost's `Bright` is one of the sixteen and a
+// preset carrying 1.0 on it will not load.
+func set(
+	params plan.Params,
+	blk catalog.Block,
+	name string,
+	at measured.Setting,
+) {
+	// Only a control the model carries. A sweep is of one model and a chain
+	// may hold another of the same gear, so a name that is not here is a
+	// reading about a block this is not.
+	if _, has := blk.Params[name]; !has {
+		return
+	}
+
+	switch at.Kind {
+	case "bool":
+		params[name] = catalog.Bool(at.Value != 0)
+	case "int":
+		params[name] = catalog.Int(int64(at.Value))
+	default:
+		// Rounded, because the digits past this are not a measurement. A
+		// sweep reads eight positions of a control and the value between two
+		// of them is interpolated, so a reading of 0.828986013986014 claims a
+		// precision a hundred thousand times finer than anything that was
+		// measured, and a document full of those is unreadable beside the
+		// catalog's own two digits.
+		params[name] = catalog.Float(
+			math.Round(at.Value*swept) / swept)
 	}
 }

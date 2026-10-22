@@ -65,12 +65,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -86,18 +86,18 @@ built:
           note: 'Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks", Premier Guitar, 18 May 2010, which puts Simonon on "a white Fender Precision and an Ampeg SVT" in 1979.'
           url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
       controls:
-        Bass: "0.41"
-        Bias: "0.74"
-        BiasX: "0.5"
+        Bass: "0.625"
+        Bias: "0.75"
+        BiasX: "0.0"
         ChVol: "0.8"
-        Drive: "0.6"
-        Hum: "0.5"
+        Drive: "0.875"
+        Hum: "0.875"
         Master: "1.0"
-        Mid: "0.89"
-        MidFreq: "2"
+        Mid: "0.225"
+        MidFreq: "1"
         Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.88"
+        Sag: "0.625"
+        Treble: "0.655"
       attrs:
         '@position': "1"
       position: 1

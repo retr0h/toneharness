@@ -74,12 +74,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -95,18 +95,15 @@ built:
           note: 'Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks", Premier Guitar, 18 May 2010: "Matlock played both a Rickenbacker 4001 and a sunburst Fender Precision… used Fender Bassmans with 4x12 Fender cabinets."'
           url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
       controls:
-        Bass: "0.51"
-        Bias: "0.73"
-        BiasX: "0.5"
-        ChVol: "0.62"
-        Drive: "0.59"
-        Hum: "0.5"
+        Bass: "0.375"
+        Bright: "true"
+        ChVol: "0.7"
+        Hum: "0.0"
         Master: "1.0"
-        Mid: "0.7"
-        Presence: "0.34"
-        Ripple: "0.5"
+        Mid: "1.0"
+        Norm Drive: "0.25"
         Sag: "0.5"
-        Treble: "0.5799999999999998"
+        Treble: "1.0"
       attrs:
         '@position': "1"
       position: 1

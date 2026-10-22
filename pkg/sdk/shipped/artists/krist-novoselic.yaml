@@ -62,12 +62,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -88,18 +88,18 @@ built:
           caveat: not sourced to anything anybody opened beyond the page above, and recorded here only so the next person does not fold two eras into one amplifier. The corpus reads two Nevermind tracks and one In Utero track for him, so this rig is right for two of the three.
           note: worth knowing what this rig is not. The same page puts him on Hiwatt DR103s and a converted Marshall plexi for In Utero, so a rig covering 1993 is a different rig from this one, and the device models the Hiwatt as well.
       controls:
-        Bass: "0.41"
-        Bias: "0.74"
-        BiasX: "0.5"
+        Bass: "0.5"
+        Bias: "0.75"
+        BiasX: "0.0"
         ChVol: "0.8"
-        Drive: "0.6"
-        Hum: "0.5"
+        Drive: "0.875"
+        Hum: "0.875"
         Master: "1.0"
-        Mid: "0.73"
-        MidFreq: "2"
+        Mid: "0.19"
+        MidFreq: "1"
         Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.840625"
+        Sag: "0.625"
+        Treble: "0.740625"
       attrs:
         '@position': "1"
       position: 1
