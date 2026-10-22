@@ -49,27 +49,47 @@ var stomped = map[catalog.Category]bool{
 
 // palette is the colours a switch is given, in the order they are handed out.
 //
-// Unique per switch rather than per kind of block, and ordered so that two
-// switches next to each other are never a shade apart. The device offers
-// twelve: `auto color`, white, red, dark orange, light orange, yellow, green,
-// turquoise, blue, violet, pink and off. Three of those are not colours — auto
-// follows the block, and off and white carry no hue — so the eight that do are
-// ordered by stepping as far around the hue circle as the remaining choices
-// allow, farthest-first: red, turquoise, violet, yellow, green, blue, pink,
-// and the oranges last because each sits beside red or yellow.
+// Unique per switch rather than per kind of block, so a board where every
+// switch is on is a board where no two lights look alike.
 //
-// **This is a visual choice and nothing measured it.** It is not a claim about
-// the sound, and anybody who dislikes it can say so in the rig, where a
-// footswitch somebody wrote outranks this entirely.
+// The device names twelve and the catalog reads them off it in the order it
+// numbers them, which is where `auto color` being 0, red 2 and off 11 come
+// from. Three carry no hue: `auto` follows the block, and white and off are
+// not colours to tell apart. Of the nine that remain, dark orange and light
+// orange sit 15 degrees apart on the hue circle and no player can tell them
+// from each other, so one of them is dropped. Two colours that look the same
+// cannot both be distinct, and keeping both only guarantees a board that has
+// a pair of them somewhere.
 //
-// What it gives up is worth naming: `auto` lights by what the block is, so an
+// The eight left are ordered to make the worst pair as good as possible rather
+// than by stepping the circle greedily. Stepping it farthest-first reads well
+// and ends badly: it spends the far colours early and leaves the neighbours to
+// collide at the end, which is how the old order put light orange next to dark
+// orange on switches 8 and 9, 15 degrees apart.
+//
+// Ordered this way, measured in degrees of hue:
+//
+//	the closest pair among the first three  100   an HX Stomp shows three
+//	the closest pair among all eight         20   and they are five apart
+//	the closest pair on adjacent switches   100
+//
+// Red stays first because it is the one somebody expects on FS1, and it costs
+// 5 degrees against the best order that does not: red, green and blue are the
+// three an HX Stomp shows, which is as legible as three lights get.
+//
+// **This is a visual choice. The hue figures are read off a colour wheel and
+// not off the pedal**, so they rank the orderings against each other rather
+// than describing what the LEDs emit. Anybody who dislikes the result says so
+// in the rig, where a footswitch somebody wrote outranks this entirely.
+//
+// What it gives up is worth naming. `auto` lights by what the block is, so an
 // untouched preset shows red for an amp, amber for drive and blue for
-// modulation, and a player learns the mapping across every preset they own.
-// This trades that for a board where no two switches look alike, which is the
-// thing to want when the switches are three feet away and all of them are on.
+// modulation, and a player learns that one mapping across every preset they
+// own. This trades it for a board legible at arm's length, which is the thing
+// to want when the switches are three feet away and all of them are lit.
 var palette = []string{
-	"red", "turquoise", "violet", "yellow",
-	"green", "blue", "pink", "light orange", "dark orange",
+	"red", "green", "blue", "light orange",
+	"violet", "yellow", "turquoise", "pink",
 }
 
 // Assign gives a switch to each block worth stomping, in chain order.
@@ -122,8 +142,10 @@ func Assign(
 
 		// Round the palette rather than stopping at its end, so a board with
 		// more switches than colours repeats the sequence instead of leaving
-		// the rest dark. Nine colours against a Helix Floor's ten switches, so
-		// only the tenth ever repeats, and it repeats the one furthest from it.
+		// the rest dark. Eight colours against a Helix Floor's ten switches,
+		// so the ninth and tenth repeat the first two: a repeat between
+		// switches that far apart is worth less than a pair of oranges
+		// nobody can tell apart, which is what carrying a ninth colour cost.
 		colour := palette[len(out)%len(palette)]
 
 		// The three a device writes on every assignment and this did not.
