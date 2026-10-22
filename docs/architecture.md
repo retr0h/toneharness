@@ -32,16 +32,16 @@ The goal is a system that knows *how a chain is built*. That decomposes into six
 problems with six different sources, and conflating them is why generated tones
 come out generic.
 
-| Problem                   | Source                                             | State                                                  |
-| ------------------------- | -------------------------------------------------- | ------------------------------------------------------ |
-| Who plays what            | `pkg/sdk/shipped/`, one hand-written document each | thin, grows by correction                              |
-| Gear to model ID          | `resources/schemas/gear-map.json`                  | 575 models                                             |
-| What order blocks go in   | statistics over `resources/schemas/corpus/`        | added blocks placed; a rig's own order kept            |
-| Which blocks are in it    | the gear a rig names, plus the grammar             | shortlisted by measurement when a solve stalls         |
-| Which way a knob moves    | swept on the device, in `resources/sweeps/`        | 19 blocks measured and shipped, on bass                |
-| What values to set        | the sweeps, then corpus medians, then intent       | aimed at a player's records; six word axes of ten      |
-| What a genre sounds like  | displacement over `resources/music/`               | 21 tagged, all 21 earning a word, 11 aimable, all bass |
-| What a player sounds like | measured over `resources/music/bass/`              | 43 players, 134 records, 33 earning a word             |
+| Problem                   | Source                                             | State                                                                                                                 |
+| ------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Who plays what            | `pkg/sdk/shipped/`, one hand-written document each | thin, grows by correction                                                                                             |
+| Gear to model ID          | `resources/schemas/gear-map.json`                  | 575 models                                                                                                            |
+| What order blocks go in   | statistics over `resources/schemas/corpus/`        | added blocks placed; a rig's own order kept                                                                           |
+| Which blocks are in it    | the gear a rig names, plus the grammar             | shortlisted by measurement when a solve stalls                                                                        |
+| Which way a knob moves    | swept on the device, in `resources/sweeps/`        | 178 blocks and 1,198 controls, on bass; a solve may not move a dial further than its own curve says the slope carries |
+| What values to set        | the sweeps, then corpus medians, then intent       | aimed at a player's records; six word axes of ten                                                                     |
+| What a genre sounds like  | displacement over `resources/music/`               | 21 tagged, all 21 earning a word, 11 aimable, all bass                                                                |
+| What a player sounds like | measured over `resources/music/bass/`              | 43 players, 134 records, 33 earning a word                                                                            |
 
 **Every measurement here is of a bass, and that is a limit rather than a
 default.** The corpus tree holds `bass/` and nothing else, so each genre's

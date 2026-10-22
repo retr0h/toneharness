@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -615,6 +616,10 @@ func tuned(
 		return attempted{}, fmt.Errorf("%w: %s", ErrSquealing, say)
 	}
 
+	// After the aims, because how far a slope carries is a question about the
+	// axes being solved. See carrying.
+	knobs = carrying(knobs, made.Plan, opts.Sweeps, opts.Nudge, aims)
+
 	did, err := attempt(
 		ctx, w, opts, bench, signal, preset, knobs, lists, aims, at.Level)
 	if err != nil {
@@ -951,6 +956,10 @@ func built(
 // microphone has no position between the third and the fourth, so it has no
 // slope and cannot be solved for. It needs choosing instead, which is its own
 // piece of work.
+//
+// Every dial arrives with no carry, so nothing caps how far a slope is taken.
+// [carrying] is what adds one, and only the tuning loop calls it: see there
+// for why a caller that reads its slopes once must not.
 func knobsOf(
 	made plan.Plan,
 	cat *catalog.Catalog,
@@ -990,6 +999,135 @@ func knobsOf(
 	}
 
 	return out
+}
+
+// carrying tells each dial how far one reading of its slope may be taken.
+//
+// The fix for task 253. A slope here is a two-point derivative read at one
+// position over one nudge, and on a control that is not a line it stops being
+// true at once: measured over the committed sweeps it is a median 64% wrong one
+// step past where it was read, 77% two steps on and 86% three. Least squares
+// does not know that and answers with whatever move closes the gap, which on
+// such a control is a swing from stop to stop taken on a number that had
+// already stopped describing anything. That composition, rather than any
+// account of the step cap, is the best explanation of task 217: a tune that
+// optimised the figures and sounded worse than the rig it started from.
+//
+// **Over the axes being solved, which is why this runs after the aims exist
+// and not inside [knobsOf].** Which axes they are changes the answer more than
+// anything else: see [measured.Curve.Carries] for the three distributions.
+//
+// **Only the tuning loop may do this.** A cap costs passes rather than reach
+// precisely because that loop reads its slopes again from wherever each pass
+// landed, so it trades one wrong leap for several measured steps toward the
+// same place. `tone reach` and `measure slopes` read their slopes once and work
+// from them fixed, so a cap there would shorten the answer instead of taking it
+// in steps and would report a chain as unable to reach a target it reaches in
+// three passes.
+//
+// A block nobody swept keeps no cap, which leaves its move uncapped. Looser
+// rather than stricter, and deliberately: 436 of this device's 614 blocks have
+// never been swept and a release packs only the fingerprints, so without a
+// sweep there is nothing that says how far a slope carries, and inventing a
+// cap would be this file holding an opinion the readings do not support.
+// Naming `--sweeps` is what buys the cap.
+func carrying(
+	knobs []solve.Knob,
+	made plan.Plan,
+	sweeps string,
+	nudge float64,
+	aims map[audio.Figure]solve.Aim,
+) []solve.Knob {
+	if sweeps == "" {
+		return knobs
+	}
+
+	rows := make([]audio.Figure, 0, len(aims))
+	for key := range aims {
+		rows = append(rows, key)
+	}
+
+	// Once per model rather than once per control, because a sweep is one file
+	// holding every control of one block. Keyed by model rather than by
+	// position because a chain may hold two of a kind, and read by position
+	// because that is what a knob names.
+	swept := map[catalog.ModelID]measured.Curves{}
+	at := make(map[int]catalog.ModelID, len(made.Blocks))
+
+	for _, b := range made.Blocks {
+		if _, read := swept[b.Model]; !read {
+			swept[b.Model] = sweptCurves(sweeps, b.Model)
+		}
+
+		at[b.Pos] = b.Model
+	}
+
+	out := make([]solve.Knob, 0, len(knobs))
+
+	for _, k := range knobs {
+		k.Carry = carries(swept[at[k.Block]], k.Setting, k.High-k.Low, nudge, rows)
+		out = append(out, k)
+	}
+
+	return out
+}
+
+// sweptCurves is one block's committed curves, or nothing.
+//
+// A file that is not there, or will not parse, is nothing rather than an error.
+// An absent sweep is the ordinary case and must not stop a run that was about
+// to measure something. What it costs is stated at [carrying].
+func sweptCurves(
+	sweeps string,
+	model catalog.ModelID,
+) measured.Curves {
+	f, err := os.Open(
+		filepath.Join(sweeps, string(model)+".json"),
+	) //nolint:gosec // a path built from the catalog
+	if err != nil {
+		return measured.Curves{}
+	}
+
+	defer func() { _ = f.Close() }()
+
+	got, err := measured.LoadCurves(f)
+	if err != nil {
+		return measured.Curves{}
+	}
+
+	return got
+}
+
+// carries is how far one control may be moved on one reading of its slope.
+//
+// Floored at one nudge, because that is the distance the slope was actually
+// read over: the swept Ampeg SVT Brt's Master reads 0.063 straight against the
+// centroid and the band shares, and capping it at 6.3% of its range would be a
+// cap shorter than the step that measured the slope, which is tighter than the
+// evidence. 31% of the committed curves read under 0.1 against those axes, so
+// the floor is doing real work rather than rounding an edge case.
+//
+// Zero where this block was never swept or the control has no fit for any axis
+// being solved, which leaves the move uncapped. See [carrying] for why that is
+// the honest direction to fail in.
+func carries(
+	swept measured.Curves,
+	name string,
+	travel float64,
+	nudge float64,
+	rows []audio.Figure,
+) float64 {
+	curve, ok := swept.Controls[name]
+	if !ok {
+		return 0
+	}
+
+	straight, fitted := curve.Carries(rows...)
+	if !fitted {
+		return 0
+	}
+
+	return math.Max(straight, nudge) * travel
 }
 
 // valveGuts are the controls a solve may not turn.
@@ -1461,8 +1599,16 @@ func aimed(
 	}
 
 	for _, s := range step.Steps {
-		_, _ = fmt.Fprintf(w, "       %-34s %8.3f to %8.3f\n",
-			s.Control, s.At, s.To)
+		// A capped move is said rather than left looking like the whole
+		// answer: it is as far as that control's slope carries, and the rest
+		// of the distance is for the next pass to re-measure.
+		note := ""
+		if s.Capped {
+			note = "  as far as its slope carries"
+		}
+
+		_, _ = fmt.Fprintf(w, "       %-34s %8.3f to %8.3f%s\n",
+			s.Control, s.At, s.To, note)
 	}
 }
 

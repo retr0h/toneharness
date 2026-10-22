@@ -420,6 +420,114 @@ func (s *SolveTestSuite) TestToward() {
 				s.Require().Equal("Treble", got.Steps[0].Control)
 			},
 		},
+		{
+			// Task 253. A slope read at one position over one small step stops
+			// being true almost immediately on a control that is not a line,
+			// and least squares is free to answer with a swing from stop to
+			// stop on it.
+			name: "a move is no longer than the slope carries",
+			then: func() {
+				k := s.treble()
+				k.Carry = 0.2
+
+				got, err := Toward(
+					[]Knob{k},
+					map[audio.Figure]Aim{centroid: {Want: 1000, Tol: 10}},
+					map[audio.Figure]float64{centroid: 550},
+				)
+
+				s.Require().NoError(err)
+				s.Require().Len(got.Steps, 1)
+				s.Require().InDelta(0.2, got.Steps[0].By, 0.001,
+					"half a turn was asked for and a fifth is what carries")
+				s.Require().True(got.Steps[0].Capped,
+					"a shortened move has to say so")
+
+				// And the prediction is of the move that will be made rather
+				// than the one asked for, so the pass does not report arriving
+				// somewhere it stopped short of.
+				s.Require().False(got.Arrived)
+				s.Require().Greater(got.Residual[centroid], 1.0)
+			},
+		},
+		{
+			// The ordinary case, and what every caller that says nothing gets.
+			// 436 of this device's 614 blocks have never been swept, so there
+			// is nothing to say how far their slopes carry.
+			name: "no carry stated caps nothing",
+			then: func() {
+				got, err := Toward(
+					[]Knob{s.treble()},
+					map[audio.Figure]Aim{centroid: {Want: 1000, Tol: 10}},
+					map[audio.Figure]float64{centroid: 550},
+				)
+
+				s.Require().NoError(err)
+				s.Require().Len(got.Steps, 1)
+				s.Require().InDelta(0.5, got.Steps[0].By, 0.01)
+				s.Require().False(got.Steps[0].Capped)
+			},
+		},
+		{
+			// A carry longer than the move, which must not mark a step capped
+			// and must not round it.
+			name: "a carry the move is inside of changes nothing",
+			then: func() {
+				k := s.treble()
+				k.Carry = 0.9
+
+				got, err := Toward(
+					[]Knob{k},
+					map[audio.Figure]Aim{centroid: {Want: 1000, Tol: 10}},
+					map[audio.Figure]float64{centroid: 550},
+				)
+
+				s.Require().NoError(err)
+				s.Require().Len(got.Steps, 1)
+				s.Require().InDelta(0.5, got.Steps[0].By, 0.01)
+				s.Require().False(got.Steps[0].Capped)
+			},
+		},
+		{
+			// The other direction, because a cap is a distance rather than a
+			// ceiling and a control coming down has to be shortened too.
+			name: "a move downward is capped the same way",
+			then: func() {
+				k := s.treble()
+				k.Carry = 0.1
+
+				got, err := Toward(
+					[]Knob{k},
+					map[audio.Figure]Aim{centroid: {Want: 100, Tol: 10}},
+					map[audio.Figure]float64{centroid: 550},
+				)
+
+				s.Require().NoError(err)
+				s.Require().Len(got.Steps, 1)
+				s.Require().InDelta(-0.1, got.Steps[0].By, 0.001)
+				s.Require().True(got.Steps[0].Capped)
+			},
+		},
+		{
+			// A cap shorter than the smallest move worth making drops the step
+			// rather than sending the pedal a message that cannot change a
+			// reading. Every step is a message, and a chain of sixteen of them
+			// back to back is what stopped the device replying.
+			name: "a carry under the least move drops the step",
+			then: func() {
+				k := s.treble()
+				k.Carry = Least / 2
+
+				got, err := Toward(
+					[]Knob{k},
+					map[audio.Figure]Aim{centroid: {Want: 1000, Tol: 10}},
+					map[audio.Figure]float64{centroid: 550},
+				)
+
+				s.Require().NoError(err)
+				s.Require().Empty(got.Steps)
+			},
+		},
 	} {
 		s.Run(tt.name, func() {
 			tt.then()

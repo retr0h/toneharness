@@ -275,6 +275,41 @@ axis that mattered. Scaled, a residual of 2.4 means the same thing on every axis
 was read and drifts away from it. The answer is another pass from wherever the
 last one landed, not a better model. Three to five passes is usual.
 
+**And no move goes further than its slope describes.** Least squares is free to
+answer with a swing from stop to stop, and on a control that is not a line that
+is a leap taken on a number which stopped being true immediately. So each dial
+carries a distance, read off the committed sweeps, and a move longer than it is
+shortened and says so: `as far as its slope carries`.
+
+Where the distance comes from: `Straight` is the fraction of a figure's
+movement one line accounts for, and it is the question exactly. Naming
+`--sweeps` is what buys the cap, and a block nobody swept keeps none, because
+without a sweep nothing says how far its slope carries.
+
+It costs passes rather than reach. The loop re-reads its slopes from wherever
+each pass landed, so a capped move is the same distance taken in steps that
+were each measured. `tone reach` and `measure slopes` read their slopes once
+and work from them fixed, so neither caps: a cap there would shorten the answer
+instead of taking it in steps, and would call a chain unable to reach a target
+it reaches in three passes.
+
+**The controls a solve models best are the ones that reach a figure by removing
+signal, and the ones that matter musically are the ones it models worst.** The
+filters are nearly perfect lines: a drive's MinFreq reads 0.99 straight over
+2,399Hz, a cabinet's LowCut 0.97 over 235Hz. The voicing controls collapse: an
+equaliser's Mode reads 0.00 over 1,463Hz, a filter's Start 0.00 over 1,436Hz,
+an amplifier's Ch1 Mid Freq 0.02 over 429Hz. That composition is the best
+account of a tune that optimised every figure and sounded worse than the rig it
+started from.
+
+**Which axes the target names changes the cap more than anything else does.**
+Over the 1,001 committed float curves, the worst of the centroid and the three
+band shares is a median 0.377, so a typical dial carries about a third of its
+range and 31% carry a nudge. Add the dynamics, the harmonics and the lean that
+a corpus also states and it is a median 0.058 with 59% at the floor. A target
+naming harmonics is asking for a figure almost nothing moves in a straight
+line, and the tight cap is the finding rather than a fault.
+
 **A control that is a list has no slope at all.** A cabinet's twelve microphones
 do not lie on a line, and the fourth does not sit between the third and the
 fifth in any sense a slope describes. Those are compared rather than solved, and
