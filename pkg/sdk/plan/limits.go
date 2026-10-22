@@ -20,7 +20,11 @@
 
 package plan
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+)
 
 // LimitsFor returns the ceilings for a device, by the name the catalog gives
 // it.
@@ -69,13 +73,31 @@ var limits = []deviceLimits{
 	{
 		// 721 presets, the largest holding eight blocks, and not one of them
 		// on a second processor.
+		//
+		// The only device anybody has asked which blocks it will hold. The 46
+		// pan cabinets and the Transient Shaper are refused: the device plays
+		// a chain of no blocks and a sweep of one reads an empty slot, which
+		// is how 47 readings came to be committed and removed again.
+		//
+		// Pan is a stereo placement control and this device has one processor,
+		// which is the obvious reason, and not one this has established.
 		device: "HX Stomp",
-		Limits: Limits{MaxBlocks: 8, Paths: 1, ChipCeiling: 95.0, Switches: 3},
+		Limits: Limits{
+			MaxBlocks: 8, Paths: 1, ChipCeiling: 95.0, Switches: 3,
+			Refuses: map[string]bool{"cabmicirswithpan": true},
+			RefusesModel: map[catalog.ModelID]bool{
+				"HD2_CompressorTransientShaper": true,
+			},
+		},
 	},
 	{
 		// The same processing in a bigger box: more footswitches, the same
 		// two chips. Only 12 of its presets are in the corpus and the largest
 		// holds eight blocks, which agrees.
+		// Nothing about which blocks it holds: it shares the Stomp's single
+		// processor, so it probably refuses the same ones, and probably is not
+		// a measurement. Left empty rather than guessed, because a refusal
+		// nobody measured would stop a rig that works.
 		device: "HX Stomp XL",
 		Limits: Limits{MaxBlocks: 8, Paths: 1, ChipCeiling: 95.0, Switches: 8},
 	},

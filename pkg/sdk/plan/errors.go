@@ -48,6 +48,30 @@ func (e *UnknownBlockError) Error() string {
 // Unwrap returns ErrUnknownBlock so callers can match with errors.Is.
 func (*UnknownBlockError) Unwrap() error { return ErrUnknownBlock }
 
+// ErrRefusedBlock is a block the device will not load.
+var ErrRefusedBlock = errors.New("the device will not load this block")
+
+// RefusedBlockError names the model the hardware refuses.
+type RefusedBlockError struct {
+	Model string
+}
+
+// Error implements the error interface.
+//
+// Says what happens rather than only what is wrong, because the failure this
+// prevents is silent: the preset writes, the device accepts it, and the chain
+// plays without the block in it.
+func (e *RefusedBlockError) Error() string {
+	return fmt.Sprintf(
+		"%s: %s. The catalog offers it because Line 6's files do, and the "+
+			"hardware answers a request to load it with a chain it is not in, "+
+			"so a preset holding it writes and plays without it",
+		ErrRefusedBlock, e.Model)
+}
+
+// Unwrap returns ErrRefusedBlock so callers can match with errors.Is.
+func (*RefusedBlockError) Unwrap() error { return ErrRefusedBlock }
+
 // OverBudgetError names the chip that overflowed and by how much.
 type OverBudgetError struct {
 	Chip    int

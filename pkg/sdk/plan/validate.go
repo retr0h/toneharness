@@ -43,6 +43,10 @@ func Validate(
 		return err
 	}
 
+	if err := ValidateHolds(l, s, lim); err != nil {
+		return err
+	}
+
 	if err := ValidateTopology(s, lim); err != nil {
 		return err
 	}

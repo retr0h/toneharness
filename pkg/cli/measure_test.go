@@ -73,11 +73,43 @@ func (s *MeasureTestSuite) TestWanted() {
 					s.Require().NotContains(block.ID, "@")
 				}
 
-				// Every block, because the catalog no longer holds anything that is not
-				// one. The four device attributes are dropped where they are read rather
-				// than here, so this counts what the catalog has instead of subtracting
-				// them again.
-				s.Require().Len(got, len(s.cat.Blocks))
+				// Every block the device will hold. The catalog no longer carries
+				// anything that is not a block, so the only subtraction is the
+				// ones the hardware refuses, and that is counted from the same
+				// limits the queue reads rather than written down here.
+				lim := plan.LimitsFor(s.cat.Device)
+
+				refused := 0
+				for _, b := range s.cat.Blocks {
+					if lim.Refuses[b.Family] || lim.RefusesModel[b.ID] {
+						refused++
+					}
+				}
+
+				s.Require().Positive(refused,
+					"this device refuses some, or the row below proves nothing")
+				s.Require().Len(got, len(s.cat.Blocks)-refused)
+			},
+		},
+		{
+			// What the device will not hold.
+			//
+			// Kept out of the queue rather than refused once it is reached.
+			// A pan cabinet asked for is five minutes of the bare loop
+			// measured and filed under the cabinet's name, which is how 47
+			// readings came to be committed and taken out again.
+			name: "skips the blocks the device refuses",
+			then: func() {
+				lim := plan.LimitsFor(s.cat.Device)
+
+				for _, block := range Wanted(s.cat, "", nil) {
+					blk, ok := s.cat.Blocks[catalog.ModelID(block.ID)]
+					s.Require().True(ok)
+					s.Require().Falsef(lim.Refuses[blk.Family],
+						"%s is in a family the device refuses", block.ID)
+					s.Require().Falsef(lim.RefusesModel[blk.ID],
+						"%s is a model the device refuses", block.ID)
+				}
 			},
 		},
 		{

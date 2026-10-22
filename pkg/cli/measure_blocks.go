@@ -689,15 +689,27 @@ func planFor(
 }
 
 // wanted is every block worth trying, in a stable order.
+//
+// A block the device refuses is not worth trying, and that is where the 47
+// committed readings of an empty slot came from: the queue asked for a pan
+// cabinet, the pedal played a chain it was not in, and the sweep measured the
+// bare loop for five minutes and filed the figures under the cabinet's name.
+// `seated` catches it now, after those five minutes. This keeps it out of the
+// queue, which is the same saving without the device time.
 func wanted(
 	cat *catalog.Catalog,
 	category catalog.Category,
 	done map[string]measured.Block,
 ) []measured.Block {
 	out := make([]measured.Block, 0, len(cat.Blocks))
+	lim := plan.LimitsFor(cat.Device)
 
 	for _, block := range cat.Blocks {
 		if category != "" && block.Category != category {
+			continue
+		}
+
+		if lim.Refuses[block.Family] || lim.RefusesModel[block.ID] {
 			continue
 		}
 
