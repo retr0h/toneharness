@@ -246,6 +246,31 @@ func (b *squealsOnceGrown) Through(
 
 func (*squealsOnceGrown) Name() string { return "a bench that squeals once grown" }
 
+// failsAfter answers a few readings and then refuses.
+//
+// A converter that stops mid-run rather than one that was never there, which
+// is the case a run cannot tell from a chain giving nothing back unless the
+// error is carried rather than swallowed.
+type failsAfter struct {
+	reads int
+	after int
+}
+
+func (b *failsAfter) Through(
+	ctx context.Context,
+	signal []float32,
+) ([]float32, error) {
+	b.reads++
+
+	if b.reads > b.after {
+		return nil, errors.New("the converter stopped answering")
+	}
+
+	return bench{}.Through(ctx, signal)
+}
+
+func (*failsAfter) Name() string { return "a bench that stops answering" }
+
 // TestTune covers Tune, which solves a chain's controls for a target and says
 // how close it got.
 //
@@ -1043,6 +1068,81 @@ func (s *TuneTestSuite) TestTune() {
 				opts := s.opts()
 				opts.Grow = 1
 				opts.Bench = &sloping{}
+
+				err := Tune(context.Background(), buffer(), opts)
+				s.Require().ErrorContains(err, "truncated")
+			},
+		},
+		{
+			// No bench and no hardware to open one on.
+			//
+			// Opened once for the whole run rather than per chain, since which
+			// device plays the reference does not change between rounds, so a
+			// run that cannot open one says so before it builds anything.
+			name: "hardware that cannot be opened is reported",
+			then: func() {
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				opts := s.opts()
+				opts.Bench = nil
+				opts.Hardware = "no audio device is called this"
+
+				s.Require().Error(Tune(context.Background(), buffer(), opts))
+			},
+		},
+		{
+			// The first reading of a chain.
+			//
+			// Before any guard and before a dial moves, so a bench that will
+			// not answer ends the round rather than being read as a chain that
+			// gave nothing back.
+			name: "a bench that errors on the first reading is reported",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).Return(s.punk(), nil)
+
+				opts := s.opts()
+				// Past the noise floor's own takes, so the failure lands on
+				// the reading the guards are built on.
+				opts.Bench = &failsAfter{after: opts.Takes + 1}
+
+				err := Tune(context.Background(), buffer(), opts)
+				s.Require().ErrorContains(err, "the converter stopped")
+			},
+		},
+		{
+			// The shortlist at the end of a run that did not grow.
+			//
+			// Without --grow the loop runs one chain and `--extend` is written
+			// from whatever it settled on, so the statistics are read there
+			// instead of inside the loop. Reported rather than passed over: a
+			// run that could not read them did not establish there was nothing
+			// to add.
+			name: "statistics the final shortlist cannot read stop the run",
+			then: func() {
+				s.ready()
+				s.genre.EXPECT().
+					MeasuredGenres(gomock.Any(), gomock.Any()).
+					Return([]audio.Genre{{
+						Name: "punk", Slug: "punk",
+						Across: audio.Across{
+							Tracks:   12,
+							Centroid: audio.Spread{Low: 8800, Mid: 9000, High: 9200},
+						},
+					}}, nil)
+
+				was := grammarOf
+				grammarOf = func() (*corpus.Stats, error) {
+					return nil, errors.New("the packed statistics are truncated")
+				}
+
+				defer func() { grammarOf = was }()
+
+				opts := s.opts()
+				opts.Bench = &sloping{}
+				opts.Extend = filepath.Join(s.T().TempDir(), "extended.yaml")
 
 				err := Tune(context.Background(), buffer(), opts)
 				s.Require().ErrorContains(err, "truncated")
