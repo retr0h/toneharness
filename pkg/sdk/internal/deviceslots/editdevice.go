@@ -117,6 +117,10 @@ type edited struct {
 	action result.Action
 	// kept are the backups written before anything was overwritten.
 	kept []string
+	// nothing says the destination held no preset, so there was no backup to
+	// take. See [result.Change.HeldNothing] for why it is said rather than
+	// left to the empty list.
+	nothing bool
 }
 
 // Copy puts what one slot holds into another, on the given session.
@@ -172,11 +176,12 @@ func edit(
 	}
 
 	return result.Change{
-		Action:   action,
-		From:     &result.At{Slot: from.Slot, Name: did.from},
-		To:       result.At{Slot: to.Slot, Name: did.to},
-		Replaced: did.replaced,
-		Kept:     did.kept,
+		Action:      action,
+		From:        &result.At{Slot: from.Slot, Name: did.from},
+		To:          result.At{Slot: to.Slot, Name: did.to},
+		Replaced:    did.replaced,
+		Kept:        did.kept,
+		HeldNothing: did.nothing,
 	}, nil
 }
 
@@ -206,7 +211,7 @@ func (f *Flows) copyOne(
 
 	// The destination is about to stop being what it was, and unlike the
 	// source nobody has read it yet.
-	kept, err := f.replacing(ctx, s, to, toName)
+	kept, nothing, err := f.replacing(ctx, s, to, toName)
 	if err != nil {
 		return edited{}, err
 	}
@@ -219,7 +224,10 @@ func (f *Flows) copyOne(
 			slotpkg.Label(to.Slot), err), kept)
 	}
 
-	return edited{from: fromName, to: toName, replaced: toName, kept: kept}, nil
+	return edited{
+		from: fromName, to: toName, replaced: toName,
+		kept: kept, nothing: nothing,
+	}, nil
 }
 
 // swapTwo exchanges what two slots hold.

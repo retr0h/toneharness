@@ -212,7 +212,7 @@ func (s *session) commit(
 	if _, err := s.awaitReply(
 		context.WithoutCancel(ctx), c, txn, opcode, s.budgets.commit); err != nil {
 		// Detached from the caller, so silence here is the budget running out.
-		if errors.Is(err, errNoReply) {
+		if errors.Is(err, ErrNoReply) {
 			return fmt.Errorf("%w, the commit budget: %w", err, context.DeadlineExceeded)
 		}
 

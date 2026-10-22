@@ -256,7 +256,7 @@ func (s *session) call(
 			return resp, nil
 		}
 
-		if !errors.Is(err, errNoReply) {
+		if !errors.Is(err, ErrNoReply) {
 			return wire.Response{}, err
 		}
 	}
@@ -327,7 +327,7 @@ func (s *session) awaitReply(
 		case <-timer.C:
 			return wire.Response{}, fmt.Errorf(
 				"%w to opcode %d within %s%s",
-				errNoReply, opcode, budget, s.sinceOpened())
+				ErrNoReply, opcode, budget, s.sinceOpened())
 		}
 	}
 }
@@ -364,11 +364,18 @@ func (s *session) reply(
 	return wire.Response{}, false, c.owed(), nil
 }
 
-// errNoReply is a device that stayed silent for the whole of its budget.
+// ErrNoReply is a device that stayed silent for the whole of its budget.
 //
 // Told apart from a bus that failed, because a device busy switching presets
 // goes quiet too, and that is worth asking again.
-var errNoReply = errors.New("no reply")
+//
+// Exported because what silence means depends on what was asked, and only the
+// caller knows. `awaitLoaded` polls through it, because a pedal mid-switch is
+// expected to go quiet. A slot read is the opposite: an HX Stomp asked for a
+// slot it has never held a preset in never answers, and the call after that
+// one stalls the endpoint until the pedal is power cycled. See
+// `deviceslots.unanswered`.
+var ErrNoReply = errors.New("no reply")
 
 // Presets lists what the device holds.
 func (s *session) Presets(
