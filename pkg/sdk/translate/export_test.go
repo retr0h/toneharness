@@ -164,3 +164,15 @@ func Chose(
 ) {
 	chose(entry, spec, deps, notes)
 }
+
+// PlayerAim is the figures a player's own records measure as.
+func PlayerAim(
+	spec tone.Ask,
+	deps Deps,
+) (map[string]float64, bool) {
+	notes := Notes{}
+
+	at, ok := playerTarget(spec, deps, &notes)
+
+	return at.read, ok
+}

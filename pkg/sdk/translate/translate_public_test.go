@@ -1019,10 +1019,18 @@ func (s *TranslatePublicTestSuite) TestAnAskMayNameAPlayer() {
 		{
 			// A song is one recording and an artist is a body of work, so the
 			// narrower claim is the one the request was most specific about.
+			// The song is what the rig lookup is tried on and there is no rig
+			// for one, which the note still says. The build no longer fails,
+			// because the artist beside it is measured: a player's own records
+			// name a target where before only a recording or a genre could, so
+			// an amplifier is chosen by measurement rather than nothing being
+			// chosen at all.
 			name: "a song named beside an artist wins",
 			ask:  "like:\n  artist: Mike Dirnt\n  song: Longview\n",
-			said: []string{"no rig has been researched for that song"},
-			err:  translate.ErrNothingToBuildFrom,
+			said: []string{
+				"no rig has been researched for that song",
+				"is the closest of",
+			},
 		},
 		{
 			// A band is several people's work, so it is the widest of the three
@@ -1049,13 +1057,18 @@ func (s *TranslatePublicTestSuite) TestAnAskMayNameAPlayer() {
 			err:  translate.ErrNothingToBuildFrom,
 		},
 		{
-			// Nothing looks anything up, which is a caller resolving its own
-			// gear and wanting no knowledge beside it.
-			name:     "no lookup handed in",
+			// No rig lookup, which is a caller resolving its own gear and
+			// wanting no researched knowledge beside it. The measurements are
+			// still handed in, and `noLookup` nils only `RigNamed`, so a
+			// player this corpus has measured still names a target and an
+			// amplifier is still chosen for it.
+			//
+			// A caller wanting neither hands in neither.
+			name:     "no rig lookup handed in",
 			ask:      "like:\n  artist: Mike Dirnt\n",
 			noLookup: true,
 			absent:   []string{"came from the rig researched for them"},
-			err:      translate.ErrNothingToBuildFrom,
+			said:     []string{"is the closest of"},
 		},
 	} {
 		s.Run(tt.name, func() {

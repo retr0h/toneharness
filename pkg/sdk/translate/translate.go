@@ -1793,6 +1793,23 @@ func target(
 	notes *Notes,
 ) (aim, bool) {
 	if spec.Like == nil || spec.Like.Recording == nil {
+		// A player, where one is named and their records are measured.
+		//
+		// Narrower than a genre and wider than a recording, which is the order
+		// these three sit in: one performance measured exactly, then one
+		// player's body of work, then the middle of a population. So it
+		// answers where a recording does not and before a genre does.
+		//
+		// This is what an artist rig was missing. All 32 named the amplifier a
+		// source puts somebody on and then carried the catalog's defaults on
+		// every control: `dee-dee-ramone` sat at Bass 0.41, Bias 0.74, ChVol
+		// 0.8 and Drive 0.6, which is the factory setting to the digit. The
+		// records are listed on the document for exactly this and nothing read
+		// them.
+		if at, ok := playerTarget(spec, deps, notes); ok {
+			return at, true
+		}
+
 		// A genre is the weaker target and the one almost every ask carries, so
 		// it answers where a recording does not rather than instead of one. A
 		// record is one performance measured exactly; a genre is the middle of a
@@ -2028,6 +2045,113 @@ func displacedTo(
 	}
 
 	return out
+}
+
+// playerTarget is what one player's own records measure as.
+//
+// A displacement, like a genre's and for the same reason: a player's figures
+// come off finished records and a block's off a dry signal through one block,
+// so the only comparable thing is how far each sits from its own normal.
+// `Player.Elsewhere` is what the other players measure as and is packed
+// beside the figures for this.
+//
+// **The median rather than the edge of their range, which is the opposite of a
+// genre.** A genre aims at its edge because the middle is what every genre
+// shares, and ten of the eleven displace less than 6.4 points from one
+// baseline. One player's records are a much tighter distribution describing one
+// person, so their middle is the thing being aimed at rather than the thing
+// that hides them. Where a player's own records disagree more than players
+// disagree with each other, `Scattered` says so and the figures describe none
+// of their sounds; that is reported rather than aimed at.
+//
+// Answers false where nobody is named, where the name is not a player, or
+// where the pack does not carry them, and the caller then falls through to the
+// genre. A rig for somebody nobody has measured keeps the controls its sources
+// justify, which is the honest answer.
+func playerTarget(
+	spec tone.Ask,
+	deps Deps,
+	notes *Notes,
+) (aim, bool) {
+	// The person the ask says to sound like, and only that.
+	//
+	// **Not `subject`**, which says who the ask is *for*. A subject-only ask
+	// refuses and names `like` instead, deliberately: a rig for Mike Dirnt
+	// resolving itself from the rig researched for Mike Dirnt is circular, and
+	// `TestAnAskMayNameAPlayer` holds that refusal with the note that explains
+	// which field somebody wanted.
+	//
+	// Reading a subject here broke that: a target made the measurements
+	// answer, so a refusal became a build. The two are separable in principle,
+	// since a rig for somebody aiming at their own records is not circular, and
+	// separating them means changing where the refusal is decided rather than
+	// quietly removing it.
+	//
+	// So an artist rig's own records are not reached from here. The gear in one
+	// is authored and the resolve never passes through `chainFor`, so the
+	// target it needs belongs on the resolve path where the document's own
+	// identifier is known. Task 268 carries that.
+	if spec.Like == nil || spec.Like.Artist == nil || *spec.Like.Artist == "" {
+		return aim{}, false
+	}
+
+	who := slug.Of(*spec.Like.Artist)
+
+	got, ok := audio.ShippedPlayer(who)
+	if !ok {
+		*notes = append(*notes, Note{
+			About: who,
+			Said: "no records of theirs are measured, so their controls are " +
+				"whatever their sources justify rather than aimed at anything",
+		})
+
+		return aim{}, false
+	}
+
+	// No guard on `Elsewhere` being absent. `Corpus` fills it from the other
+	// players and all 43 in this corpus carry it, so a branch for one player
+	// alone is one nothing can reach and nobody has checked. `displacedTo`
+	// already answers that case by leaving the baseline where it is, which is
+	// the right answer: there is nothing to read them against.
+
+	// Their records' own scatter, said rather than hidden. A player whose
+	// records are several different sounds has figures describing none of them.
+	for _, at := range got.Scattered {
+		*notes = append(*notes, Note{
+			About: who,
+			Said: fmt.Sprintf(
+				"their own records disagree about %s more than players disagree "+
+					"with each other, so that figure describes none of their "+
+					"sounds", at.Key),
+		})
+	}
+
+	earned := make([]string, 0, len(got.Terms))
+	for _, term := range got.Terms {
+		earned = append(earned, term.Term)
+	}
+
+	return aim{
+		// No terms, deliberately, which is what makes `displacedTo` take the
+		// middle of their records rather than the edge. A genre aims at its
+		// edge because the middle is what every genre shares; one player's
+		// records describe one person and their middle is the thing being
+		// aimed at.
+		figures: displacedTo(audio.Genre{
+			Across:    got.Across,
+			Elsewhere: got.Elsewhere,
+		}, deps.Measured.Baseline),
+		named:   who,
+		read:    got.Across.Measured(),
+		records: got.Records,
+		players: 1,
+		earned:  earned,
+		caveat: "A player measured off their own finished records, so the " +
+			"figures carry the amplifier, the microphone, the desk and the " +
+			"master of every one of them. The gear is what their sources say " +
+			"they played and is not moved by this; only the controls on it are " +
+			"set, and they are set to what those records measure as.",
+	}, true
 }
 
 // genreNote says what is known about a genre somebody asked for.
