@@ -854,6 +854,68 @@ func (s *ControlsRunTestSuite) TestTheFirstReadingAfterABenchOpensIsThrownAway()
 		"the kept takes agree, so the centre wanders by its floor and no more")
 }
 
+// TestAlongside covers saying what a sweep of an amplifier with no cabinet is
+// worth, before the run that costs most of an hour.
+//
+// Task 254. Every sweep this command takes is of one block and nothing else,
+// which for most kinds of block is a caveat and for an amplifier decides the
+// readings: 43 of the 121 usable curves in the committed library hold a
+// position reading more than half its energy above 2kHz, and all 43 are
+// amplifiers.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ControlsRunTestSuite) TestAlongside() {
+	tests := []struct {
+		name string
+		of   catalog.Category
+		// said is whether the caveat is printed.
+		said bool
+	}{
+		{
+			name: "an amplifier is warned about",
+			of:   catalog.CategoryAmp, said: true,
+		},
+		{
+			// Nothing else. A drive or a compressor swept alone is a caveat
+			// rather than a different reading: the inverted curves are all
+			// amplifiers.
+			name: "a drive is not",
+			of:   catalog.CategoryDrive, said: false,
+		},
+		{
+			name: "nor is a cabinet",
+			of:   catalog.CategoryCab, said: false,
+		},
+		{
+			name: "nor a block whose category nothing says",
+			of:   "", said: false,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			var buf bytes.Buffer
+
+			alongside(&buf, tt.of)
+
+			if !tt.said {
+				s.Require().Empty(buf.String())
+
+				return
+			}
+
+			out := buf.String()
+
+			// The measurement rather than an adjective, and the field a reader
+			// downstream keys on.
+			s.Require().Contains(out, "no cabinet")
+			s.Require().Contains(out, "3,250Hz")
+			s.Require().Contains(out, "12,763")
+			s.Require().Contains(out, "isolated: true")
+		})
+	}
+}
+
 func TestControlsRunTestSuite(
 	t *testing.T,
 ) {

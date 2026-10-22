@@ -108,6 +108,34 @@ So the committed sweeps say **which controls are worth putting in a matrix**,
 and nothing more. `measure slopes --id <rig>` prints live beside committed for
 any chain, which is how that was found.
 
+### Which means nothing sets an amplifier's controls from them
+
+Two readers of the curves refuse an isolated amplifier outright, and the table
+above is why: a displacement keeps a sign and drops the units, so a reading
+whose sign is wrong a third of the time is not rescued by reading it as a lean.
+
+`measured.StartAt` has always refused one. `measured.Curves.Toward` now does
+too, which is what `rigs resolve` uses to set an artist rig's controls from its
+player's records. So an artist rig's amplifier arrives at corpus medians and its
+compressor and drive are set from their sweeps, and the report says which
+happened. Everything else is read: the inverted curves are all amplifiers, and
+no drive, compressor or equaliser swept alone reads upside down.
+
+`measure controls` says so at the top of an amplifier run, before the hour it
+costs, so somebody can decide to sweep it through a cabinet instead. That
+campaign does not exist yet and it is what would let an amplifier be tuned.
+
+**And a reading is only comparable with another from the same run.** `Toward`
+used to score a swept position's own figures against the target directly, which
+is sound only while both sides came out of one run. They did not: the target is
+built over the fingerprint run's baseline and the points come from the block's
+own sweep. Across the 178 blocks in both files, the same block reads a median
+20.6Hz of centroid, 5.5dB of level and 4.59 points of the low band apart —
+against punk's own centroid displacement of 9.6Hz and the eleven genres' band
+shares displacing 0.2 to 18.9 points. The offset between the runs was larger
+than the signal. Every control is now answered by its distance from its own
+median instead, which is the comparison a genre's words are already earned by.
+
 ### The loop oscillates, and it takes both the destination and the headroom
 
 The cable rig sends the pedal's output back into its own input. A preset

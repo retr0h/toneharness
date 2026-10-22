@@ -27,6 +27,7 @@ import (
 	"math"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 )
@@ -588,65 +589,71 @@ type Setting struct {
 // and still be read as the same block, in decibels.
 const atLevel = 3.0
 
-// Toward is the value of each control that brings a block nearest a target.
+// Toward is the value of each control that leans a block the way a target asks.
 //
 // What a sweep is for. A fingerprint picks the block and this sets it: every
 // position of every control was measured, so the value that moves a figure
 // where somebody is aiming is a reading rather than a guess, and a block added
 // to a chain no longer has to arrive at the factory default nobody chose.
 //
+// **Displacements, not positions, and that is task 254's correction.** This
+// used to score each swept position's own figures against `want` directly,
+// which is only sound while both sides came out of the same run. They do not.
+// `want` is built over [Library.Baseline], which is the empty loop measured
+// during the fingerprint run, and the points come from this block's own sweep.
+// Across the 178 blocks that appear in both, the same block read in the two
+// runs differs by a median 20.6Hz of centroid, 5.5dB of level and 4.59 points
+// of the low band, where punk's own centroid displacement is 9.6Hz and the
+// eleven aimable genres' band shares displace 0.2 to 18.9 points. The offset
+// between the runs was larger than the signal being aimed at. [StartAt]'s
+// header states the same constraint from the other end: a Deluxe Comp reads
+// -49.56dB in the fingerprints and -31.34dB across its own sweep.
+//
+// So each control is answered by [Curves.TowardFrom], which reads a position
+// as its distance from the median across that control's own positions and the
+// target as the lean it was given. Both sides become "how far from its own
+// normal", the comparison a genre's words are already earned by, and nothing
+// is subtracted across two runs.
+//
 // One control at a time, each against the target independently, and that is a
 // real limitation rather than an oversight. A sweep moves one control and
 // leaves the rest where they sat, so these answers do not compose: two
-// controls that each reach the target alone may overshoot it together. See
-// task 254, where every sweep being of a block alone is the wider version of
-// the same problem. It is still the best answer available without putting the
-// chain on hardware, and it beats a default by the width of the whole range.
+// controls that each lean the right way alone may overshoot together.
 //
-// A control whose whole sweep moves a figure less than that figure wandered
-// between repeat takes is left out. Setting one of those is spending a control
-// on noise, and `Noise` is what the sweep recorded it as.
+// **An isolated amplifier is refused, which [StartAt] has always done.** A
+// sweep of an amplifier alone has no cabinet in front of it and so no speaker
+// rolloff, and what comes back is the buzz a cabinet exists to absorb: 43 of
+// the 121 usable curves hold a position reading more than half its energy
+// above 2kHz and all 43 are amplifiers. It is not a difference of degree.
+// [Reach.Alone] records the size of it: an amplifier swept alone moved the
+// centroid 12,763Hz per turn of Treble where the same control in a chain moves
+// it 3,250, its Mid moved the centroid the other way entirely, and **four of
+// eleven controls changed sign.** A displacement keeps the sign and drops the
+// units, so a reading whose sign is wrong a third of the time is not rescued
+// by reading it as a lean. An amplifier's controls stay where the corpus
+// medians put them until a sweep exists that was taken through a cabinet,
+// which is task 271.
 //
-// A list control is included and answered the same way: its positions are
-// numbers on the wire and the nearest reading wins, which is the only thing
-// that can be said about a list nobody can interpolate across.
+// Nothing else is refused, and that is the evidence rather than a line drawn
+// for tidiness: the inverted curves are all amplifiers, and no drive,
+// compressor or equaliser swept alone reads upside down.
+//
+// A list control is included and answered the same way, which is the reading
+// [Curves.TowardFrom] was written for: its positions are numbers on the wire
+// with no order to run along, so a lean between twelve measured sounds is the
+// only thing that can be said about one.
 func (c Curves) Toward(
 	want Figures,
 	by Weights,
 ) map[string]Setting {
+	if c.Isolated && c.amplifier() {
+		return nil
+	}
+
 	out := map[string]Setting{}
 
 	for name, curve := range c.Controls {
-		best, at, found := 0.0, 0.0, false
-
-		for _, p := range curve.Points {
-			// Only positions that leave the block at working level.
-			//
-			// Matching figures cannot tell a quieter block from a differently
-			// voiced one. The band shares are normalised and the noise floor
-			// is not, so turning a block down moves its shares toward the
-			// converters' and that reads as a close match to almost any
-			// target. The first run of this pinned an equaliser's `Level` at
-			// -60dB, which is 16dB below where that block settles and would
-			// have silenced the chain the moment somebody stepped on it.
-			//
-			// `Settled` is the level the sweep recorded the block working at,
-			// so the window is the sweep's own answer about this block rather
-			// than a figure chosen here. The width is not: 3dB is the
-			// smallest level difference worth calling one, and anything
-			// further is a loudness change wearing a tone control's name.
-			// Level-matching before comparing is the same rule task 222 put
-			// on comparing two rigs by ear.
-			if math.Abs(p.Level-curve.Settled) > atLevel {
-				continue
-			}
-
-			d := by.between(p.Figures, want)
-			if !found || d < best {
-				best, at, found = d, p.Value, true
-			}
-		}
-
+		at, found := c.TowardFrom(name, want, by)
 		if !found || !curve.moves(by) {
 			continue
 		}
@@ -655,6 +662,22 @@ func (c Curves) Toward(
 	}
 
 	return out
+}
+
+// amplifier says whether these readings are of an amplifier.
+//
+// From the model identifier, because a sweep records which block it swept and
+// not which category the catalog files it under. Every amplifier on this
+// device is `HD2_Amp...` and every preamp `HD2_Preamp...`; a preamp is the same
+// hazard for the same reason, being the front half of an amplifier with no
+// cabinet after it.
+//
+// By prefix rather than by asking the catalog, so this package needs no
+// catalog: it reads measurements and a dependency on the model list to answer
+// a question about its own files would be the wrong way round.
+func (c Curves) amplifier() bool {
+	return strings.HasPrefix(c.Block, "HD2_Amp") ||
+		strings.HasPrefix(c.Block, "HD2_Preamp")
 }
 
 // moves says whether a control changed any weighed figure by more than that

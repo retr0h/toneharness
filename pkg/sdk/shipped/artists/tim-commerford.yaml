@@ -109,18 +109,18 @@ built:
           note: 'the nearest thing to how he records, and it is the wrong album: "Commerford''s favorite recorded sound with Rage Against The Machine was on the group''s second album, Evil Empire, on which he used two SVT heads and two Classic 8x10 cabinets, both mic''d and direct." On direct generally: "I let producers use as much DI as they want until I start noticing it."'
           url: https://www.guitarworld.com/artists/bassists/tim-commerford-rage-against-the-machine-bass-tone
       controls:
-        Bass: "0.375"
-        Bias: "0.625"
-        BiasX: "1.0"
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
         ChVol: "0.8"
-        Drive: "0.5"
-        Hum: "0.625"
-        Master: "0.875"
-        Mid: "0.835"
-        MidFreq: "0"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.75"
+        MidFreq: "2"
         Ripple: "0.5"
-        Sag: "1.0"
-        Treble: "0.7346153846153846"
+        Sag: "0.5"
+        Treble: "0.8346153846153845"
       attrs:
         '@position': "1"
       position: 1

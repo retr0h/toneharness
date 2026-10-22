@@ -136,18 +136,18 @@ built:
           note: '"But the ''75/''76 world tour was another matter. He had a pretty sizeable rig there, with two Crown 300A amps and an Audio Master preamp, and these drove a set of JBL speakers, a Roy Clare 2x12 midrange bin and JBL horns." John Hammel, McCartney''s assistant since the Beatles split, to Mark Cunningham, published September 1993 and put online in 2019. The same passage puts the Acoustic 360 on the 1972 and 1973 tours rather than this one, and ends the era this rig covers on something else again: "for the last UK tour in 1979, Paul switched to using 120-watt Fender Bassmans and three 4x12 cabinets with angled speakers."'
           url: https://guitar.com/features/interviews/paul-mccartney-beatles-wings/
       controls:
-        Bass: "0.125"
-        Bright: "true"
+        Bass: "0.684"
+        Bright: "false"
         ChVol: "0.7"
         Drive: "0.45"
-        Effect: "1.0"
-        Hum: "0.125"
+        Effect: "0.332"
+        Hum: "0.274"
         Master: "1.0"
         TFCoarse: "0.472"
         TFFine: "0.308"
-        Treble: "1.0"
+        Treble: "0.616"
         TuningFork: "0.0"
-        Variamp: "4"
+        Variamp: "2"
       attrs:
         '@position': "1"
       position: 1

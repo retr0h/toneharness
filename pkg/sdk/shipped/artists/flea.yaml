@@ -153,15 +153,15 @@ built:
           note: headlined as him switching to Ampeg from Gallien-Krueger for Unlimited Love, which dates this rig to before that
           url: https://www.guitarworld.com/news/flea-red-hot-chili-peppers-unlimited-love-new-bass-amp-setup
       controls:
-        Bass: "0.375"
-        Boost: "0.625"
+        Bass: "0.5"
+        Boost: "0.5"
         ChVol: "0.8"
-        Contour: "false"
-        Drive: "0.25"
-        HighMid: "1.0"
-        LowMid: "0.375"
+        Contour: "true"
+        Drive: "0.26"
+        HighMid: "0.78"
+        LowMid: "0.4"
         Master: "1.0"
-        Treble: "1.0"
+        Treble: "0.66"
       attrs:
         '@position': "1"
       position: 1
