@@ -536,6 +536,48 @@ measured, and not a fraction anybody chose.
 It is also the unit the loop already reports in, so "2.4 tolerances out" and
 "nudged by one" are the same measure.
 
+## A satisfied axis is a constraint, not a finished job
+
+The matrix is the only thing that tells the solve what a move costs, and it is
+built from the axes that are out of tolerance. So an axis sitting comfortably
+inside its tolerance used to drop out, and the solve would spend it without
+knowing it had anything to spend.
+
+**The three band shares are therefore held in the matrix whether they are out
+or not.** `LowCut` is why. It is the largest lever a mic'd cabinet has, a median
+190Hz of centroid against the microphone's 29, six and a half times as much, and
+it is one of the straightest things on the device at 0.92 to 0.97. It gets there
+by removing the bottom. Seven of the fourteen swept cabinets, worst first:
+
+    cabinet            LowCut 19.9Hz          LowCut 500Hz
+    4x10 Tweed P10R    124Hz, 95.4% low   ->  484Hz, 18.5% low
+    2x15 US Dripman    128Hz, 98.5% low   ->  464Hz, 42.1% low
+    1x15 Ampeg B-15    131Hz, 97.1% low   ->  420Hz, 32.2% low
+    4x10 Garden        137Hz, 97.1% low   ->  383Hz, 37.7% low
+    1x12 Epicenter     106Hz, 99.4% low   ->  329Hz, 63.2% low
+    8x10 SVT AV        124Hz, 98.5% low   ->  262Hz, 58.3% low
+    4x10 Ampeg Pro     102Hz, 99.8% low   ->  230Hz, 82.3% low
+
+Mean across all fourteen: +208Hz of centroid for -43.9 points of the energy
+below 250Hz, and on a bass that band is the fundamental.
+
+Asked for 72Hz brighter on the 1x15 and told to keep its low band, the unheld
+solve answered with LowCut at 131Hz, which by that cabinet's own slope leaves
+the band at 79.9% where the target said 97.1%. Held, it answers with LowCut at
+32Hz and the band stays put, so the loop takes another pass instead of a chain
+with no bottom.
+
+Three rows against the dozen-plus controls a chain has, and a satisfied row asks
+for a move of nearly zero, which the loop drops. Not the centroid, because that
+is usually the goal and holding it would hold the goal still; not the dynamics,
+harmonics or lean, which are the figures almost nothing moves in a straight line.
+
+**And a pass predicts every axis the target names, not only the rows.** It used
+to report an axis outside the matrix at where it was before the pass, so a pass
+that broke a satisfied axis said it had arrived, and arriving ends the loop. The
+same 1x15 run reported the low band at 0.00 tolerances out while its own moves
+put it 6.9 out.
+
 ## Level is a target like any other
 
 The loop constrains how loud the chain is, anchored at what it measured before

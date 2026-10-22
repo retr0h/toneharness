@@ -276,7 +276,7 @@ func Toward(
 	}
 
 	out.Steps = stepsOf(knobs, move)
-	out.Residual = after(rows, aims, got, knobs, out.Steps)
+	out.Residual = after(aims, got, knobs, out.Steps)
 	out.Arrived = arrived(out.Residual)
 
 	return out, nil
@@ -389,8 +389,24 @@ func stepsOf(
 // The model's own prediction rather than a measurement, and the difference
 // matters: this says whether the arithmetic thinks it has arrived, and only
 // pushing the signal through the device says whether it has.
+//
+// **Every axis the target names, not only the ones in the matrix.** It used to
+// seed each aim with its reading and then predict the rows alone, which left
+// an axis outside the matrix reported at where it was before the pass rather
+// than where the pass put it. That is a pass describing a chain it has just
+// changed, and because `arrived` reads this map it is a pass reporting that it
+// arrived on an axis its own moves had broken.
+//
+// Measured on the one mic'd cabinet whose LowCut is swept: a chain reading
+// 131.2Hz at 97.09% low, asked for 203Hz and to keep the low band where it
+// was, answered with LowCut at 131.1Hz. By its own slope that leaves the low
+// band at 79.85%, which is 6.9 tolerances out, and the pass reported it at
+// 0.00 and arrived. `Arrived` ends the loop, so nothing came back for it.
+//
+// A control moves what it moves whether or not a row asked it to, so the only
+// axis a pass may report unchanged is one nothing moved, and the arithmetic
+// says which those are.
 func after(
-	rows []audio.Figure,
 	aims map[audio.Figure]Aim,
 	got map[audio.Figure]float64,
 	knobs []Knob,
@@ -413,16 +429,12 @@ func after(
 			continue
 		}
 
-		out[r] = math.Abs(aim.Want-got[r]) / aim.Tol
-	}
-
-	for _, r := range rows {
 		moved := got[r]
 		for _, k := range knobs {
 			moved += k.Slope[r] * by[k.Where()]
 		}
 
-		out[r] = math.Abs(aims[r].Want-moved) / aims[r].Tol
+		out[r] = math.Abs(aim.Want-moved) / aim.Tol
 	}
 
 	return out

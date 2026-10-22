@@ -79,10 +79,69 @@ func Aims(
 			continue
 		}
 
-		out[key] = Aim{Want: want, Tol: tol}
+		out[key] = Aim{Want: want, Tol: tol, Hold: alwaysHeld(key)}
 	}
 
 	return out
+}
+
+// alwaysHeld is whether an axis stays in the matrix while it is already
+// satisfied.
+//
+// The three band shares, and the reason is the biggest lever a mic'd cabinet
+// has. `LowCut` moves a median 190Hz of centroid against the microphone's 29,
+// six and a half times as much, and it is far straighter: 0.92 to 0.97 where
+// the microphone reads 0.00. **It reaches the centroid by removing the
+// bottom.** Taken from 19.9Hz to 500Hz across the fourteen swept cabinets that
+// carry one it averages +208Hz of centroid for -43.9 points of the energy
+// below 250Hz; a 1x15 Ampeg B-15 goes from 131Hz at 97.09% low to 420Hz at
+// 32.18%, and a 4x10 Tweed P10R from 124Hz at 95.41% to 484Hz at 18.49%. On a
+// bass that band is the fundamental.
+//
+// `wanted` builds the matrix from `off > 1 || Hold`, and as its own comment
+// says the matrix is the only thing that tells the solve what a move costs. So
+// while the low band sat inside its tolerance the solve did not know that
+// reaching the centroid spent it, and it spent all of it: asked for 72Hz
+// brighter on that 1x15 and told to keep the band where it was, it answered
+// with LowCut at 131Hz, which by the cabinet's own slope leaves the band at
+// 79.85% against the 97.09% it was given. Held, the same request answers with
+// LowCut at 32Hz and the band stays inside its tolerance.
+//
+// Nor was a later pass going to pull it back. `after` reported every axis
+// outside the matrix at its pre-move reading, so that pass said the low band
+// was 0.00 tolerances out while its own moves had put it 6.9 out, and
+// `Arrived` ends the loop. Both halves are fixed, and they do different jobs:
+// `after` makes the damage visible, this stops it being done. A pass applies
+// its steps before anything reads `Arrived`, so the hold is the half the
+// hardware cares about.
+//
+// Held rather than weighted, which is the same decision [Aim.Hold] records for
+// level and for the same reason: a figure inside tolerance has nothing to ask
+// for and everything to lose. These are axes the target does name, so holding
+// one is keeping a constraint that is already satisfied rather than defending
+// a figure nobody asked about.
+//
+// All three rather than the low band alone. Holding only `low` would be right
+// about this cabinet and wrong about the next instrument: which band a cut
+// spends is a fact about where the signal sits, and a guitar's fundamentals
+// are not under 250Hz. Three rows against the dozen-plus controls a chain
+// carries is cheap, and a satisfied row asks for a move of nearly zero, which
+// `stepsOf` drops.
+//
+// Not the centroid, and not the dynamics, harmonics or lean. The centroid is
+// what a target is usually reaching for, so holding it would hold the goal
+// still. The other three are figures almost nothing moves in a straight line
+// (see `measured.Curve.Carries`), and pinning them would spend the chain
+// defending readings a slope cannot describe.
+func alwaysHeld(
+	key audio.Figure,
+) bool {
+	switch key {
+	case audio.KeyLow, audio.KeyMid, audio.KeyHigh:
+		return true
+	default:
+		return false
+	}
 }
 
 // Only keeps the axes named, and drops the rest.
