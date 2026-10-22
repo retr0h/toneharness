@@ -40,6 +40,17 @@ type Change struct {
 	// in the order they were made. Empty when there was nothing to keep,
 	// which is what an untouched slot answers with.
 	Kept []string `json:"kept"`
+	// HeldNothing says the destination had no preset in it, so there was no
+	// backup to take.
+	//
+	// Said rather than left to the absence of a `kept` line, because the two
+	// read alike and mean opposite things: a device has no undo, so somebody
+	// looking for the way back to what a slot held needs to know the
+	// difference between "there was nothing" and "the backup did not happen".
+	// AGENTS.md puts naming where a backup went among the four things a write
+	// always reports, and this is that obligation where there is no path to
+	// name.
+	HeldNothing bool `json:"held_nothing"`
 	// Mismatch says the preset was made for a different device, so it may
 	// not load. Written anyway: the device identifier is not a reliable
 	// refusal, and somebody who moved a preset on purpose is owed the

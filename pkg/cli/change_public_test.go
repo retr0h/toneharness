@@ -59,7 +59,9 @@ func (s *ChangePublicTestSuite) TestChange() {
 		in   sdk.Change
 		to   io.Writer
 		want []string
-		err  bool
+		// missing is what must not be said.
+		missing []string
+		err     bool
 	}{
 		{
 			// A file says where it was written, because there is somewhere
@@ -108,6 +110,34 @@ func (s *ChangePublicTestSuite) TestChange() {
 				Kept:   []string{"/tmp/07A.hlx"},
 			},
 			want: []string{"kept", "Mike Dirnt", "03A", "written"},
+		},
+		{
+			// Task 260. An absent `kept` line reads the same as a backup that
+			// did not happen, and a device has no undo, so a write into a
+			// slot that held nothing says which it was.
+			//
+			// 107 of the 126 slots on the device this was found on are in
+			// that state, so it is the ordinary answer rather than a corner.
+			name: "a preset written into a slot that held nothing",
+			in: sdk.Change{
+				Action:      sdk.Imported,
+				To:          sdk.At{Slot: 6, Name: "Mike Dirnt"},
+				HeldNothing: true,
+			},
+			want: []string{
+				"kept nothing, the slot held no preset", "Mike Dirnt", "written",
+			},
+		},
+		{
+			// And a write that did keep something says only that. Both lines
+			// would read as a backup somebody then cannot find.
+			name: "a write that kept something does not also say it kept nothing",
+			in: sdk.Change{
+				Action: sdk.Imported,
+				To:     sdk.At{Slot: 6, Name: "Mike Dirnt"},
+				Kept:   []string{"/tmp/07A.hlx"},
+			},
+			missing: []string{"kept nothing"},
 		},
 		{
 			name: "a preset written into a slot in a file",
@@ -167,6 +197,18 @@ func (s *ChangePublicTestSuite) TestChange() {
 				Action: sdk.Copied,
 				From:   &from,
 				To:     sdk.At{Slot: 1, Name: "Second"},
+			},
+			to:  &brokenWriter{},
+			err: true,
+		},
+		{
+			// The line saying there was nothing to keep is what fails, before
+			// anything else has been said.
+			name: "nowhere to say the slot held nothing",
+			in: sdk.Change{
+				Action:      sdk.Imported,
+				To:          sdk.At{Slot: 1, Name: "Mike Dirnt"},
+				HeldNothing: true,
 			},
 			to:  &brokenWriter{},
 			err: true,
@@ -248,6 +290,10 @@ func (s *ChangePublicTestSuite) TestChange() {
 
 			for _, want := range tt.want {
 				s.Require().Contains(buf.String(), want)
+			}
+
+			for _, no := range tt.missing {
+				s.Require().NotContains(buf.String(), no)
 			}
 		})
 	}

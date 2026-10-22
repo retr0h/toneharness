@@ -62,6 +62,31 @@ import (
 // One constant rather than the same string in two packages.
 const Untouched = "New Preset"
 
+// Unwritten says a slot has never had a preset put in it, from the name the
+// device's own listing gives it.
+//
+// **A slot nobody has written is not read at all.** `ReadPreset`'s contract
+// says no bytes and no error means a slot holding nothing, and an HX Stomp
+// asked for a slot it has never held a preset in does not answer: the read
+// times out after six seconds, and a call after that stalls the endpoint so
+// the interface cannot be claimed again until the pedal is power cycled. 107
+// of the 126 slots on the device this was found on are in that state, which is
+// every slot somebody would keep for trying things.
+//
+// Here rather than beside either reader, because there are two and they used
+// to disagree. `deviceslots.holds` skipped the read for a write's backup and
+// `deviceslots.read` did not, so an export or a show of the same slot still
+// reached for it. One rule, one place.
+//
+// The name is the only way to tell an unwritten slot from one somebody emptied
+// and named, and the second still gets read: a name is somebody's work even
+// when no blocks are left.
+func Unwritten(
+	name string,
+) bool {
+	return name == Untouched
+}
+
 // Keeper writes what slots held to a directory, by the policy above.
 type Keeper struct {
 	dir     string
@@ -194,7 +219,7 @@ func (k *Keeper) contents(
 	}
 
 	// No blocks and the name it shipped with: a blank slot nobody has used.
-	if doc == nil && h.Name == Untouched {
+	if doc == nil && Unwritten(h.Name) {
 		return nil, "", nil
 	}
 

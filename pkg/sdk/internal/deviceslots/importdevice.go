@@ -101,7 +101,7 @@ func (f *Flows) Import(
 	}
 
 	// What the slot holds now, before it stops holding it.
-	kept, err := f.replacing(ctx, s, at, nameOf(found, at.Slot))
+	kept, nothing, err := f.replacing(ctx, s, at, nameOf(found, at.Slot))
 	if err != nil {
 		return result.Change{}, err
 	}
@@ -118,9 +118,10 @@ func (f *Flows) Import(
 	}
 
 	return result.Change{
-		Action: result.Imported,
-		To:     result.At{Slot: at.Slot, Name: name},
-		Kept:   kept,
+		Action:      result.Imported,
+		To:          result.At{Slot: at.Slot, Name: name},
+		Kept:        kept,
+		HeldNothing: nothing,
 	}, nil
 }
 

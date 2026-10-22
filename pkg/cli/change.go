@@ -44,6 +44,16 @@ func Change(
 		return err
 	}
 
+	// Where there was nothing to keep, say so. The absence of a `kept` line
+	// reads the same as a backup that did not happen, and a device has no
+	// undo: see result.Change.HeldNothing.
+	if c.HeldNothing {
+		if _, err := fmt.Fprintf(w, "\n%s%s", paint.Indent, paint.Mute(w,
+			"kept nothing, the slot held no preset")); err != nil {
+			return err
+		}
+	}
+
 	if c.Mismatch {
 		_, err := fmt.Fprintf(w, "\n%s%s\n", paint.Indent, paint.Info(w,
 			"this preset was made for a different device; it may not load"))

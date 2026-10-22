@@ -96,6 +96,28 @@ and from then on every call including `slots list` returns
 `kIOUSBTransactionTimeout` until the pedal is powered off and on. One timeout is
 recoverable and two is not, so read `slots list` instead of trying again.
 
+The tool no longer walks into it on the common path. A write asks the listing
+what the slot is called and does not read a slot the device still calls
+`New Preset`, which is 107 of the 126 on an HX Stomp: there is nothing there to
+back up, and the preset being written comes from an embedded blank rather than
+from the destination. The slot that still times out is one the listing does not
+mention, and the timeout now says what silence means and what the next call
+costs instead of leaving the opcode to speak for itself.
+
+Those two are not the same claim and the name cannot tell them apart. A slot
+somebody wrote in HX Edit and never renamed is also called `New Preset`, and it
+holds a real preset. **So a write into a slot by that name keeps no backup**,
+which is the trade: losing an unnamed preset against a dead interface. An export
+or a show of one is still attempted, because there is no write to protect and
+refusing would make an exportable preset unreachable.
+
+### A write says when there was nothing to keep
+
+`kept nothing, the slot held no preset`, rather than leaving the absent `kept`
+line to speak. The two read alike and mean opposite things, and a device has no
+undo: somebody looking for the way back to what a slot held needs to know
+whether there was anything or whether the backup did not happen.
+
 ### Clearing a slot is not something this tool can do
 
 Three commands and none of them clears one:

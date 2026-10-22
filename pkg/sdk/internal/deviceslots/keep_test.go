@@ -23,6 +23,7 @@ package deviceslots
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,6 +32,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/retr0h/toneharness/pkg/sdk/internal/backup"
+	"github.com/retr0h/toneharness/pkg/sdk/internal/device"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/device/mocks"
 	slotpkg "github.com/retr0h/toneharness/pkg/sdk/slot"
 )
@@ -126,10 +128,14 @@ func (s *KeepTestSuite) TestReplacing() {
 		// no Backups on the flows, so the default keeper is the one used.
 		defaults bool
 		kept     int
-		errText  string
+		// nothing is whether the slot is reported as having held no preset,
+		// which is what tells "there was nothing to keep" from "nothing was
+		// kept".
+		nothing bool
+		errText string
 	}{
 		{name: "a slot with a preset in it", body: s.answer(), kept: 1},
-		{name: "a slot with nothing in it"},
+		{name: "a slot with nothing in it", nothing: true},
 		{
 			// Nobody configured a keeper, so the flows keep one of their own
 			// in the state directory.
@@ -169,7 +175,7 @@ func (s *KeepTestSuite) TestReplacing() {
 				f.Backups = backup.New(dir, NewDecoder(f))
 			}
 
-			got, err := f.replacing(
+			got, nothing, err := f.replacing(
 				context.Background(), dev, slotpkg.Address{Slot: 3}, "Black Rusty")
 
 			if tt.errText != "" {
@@ -180,10 +186,78 @@ func (s *KeepTestSuite) TestReplacing() {
 
 			s.Require().NoError(err)
 			s.Require().Len(got, tt.kept)
+			s.Require().Equal(tt.nothing, nothing)
 
 			for _, path := range got {
 				s.Require().FileExists(path)
 				s.Require().Contains(path, dir)
+			}
+		})
+	}
+}
+
+// TestUnanswered covers saying what a slot read's silence means.
+//
+// Task 260. `ReadPreset`'s contract is that no bytes and no error means a slot
+// holding nothing, and an HX Stomp asked for a slot it has never held a preset
+// in does not take that route: it says nothing, the read times out after six
+// seconds, and **the next call on the interface stalls** until the pedal is
+// powered off and on. A bare `no reply to opcode 4 within 6s` leaves somebody
+// with a dead interface and no idea why.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *KeepTestSuite) TestUnanswered() {
+	tests := []struct {
+		name string
+		err  error
+		// says is what the answer has to carry, and bare whether nothing was
+		// added to it.
+		says []string
+		bare bool
+	}{
+		{
+			// The failure this exists for.
+			name: "silence says what it means and what it costs",
+			err:  fmt.Errorf("%w to opcode 4 within 6s", device.ErrNoReply),
+			says: []string{
+				// Added to rather than replaced: the opcode and the budget
+				// are what somebody greps for.
+				"opcode 4 within 6s",
+				"never held a preset",
+				"powered off and on",
+				"slots list",
+			},
+		},
+		{
+			// A refusal is the device answering, so there is nothing to
+			// explain and the device's own words are better than any gloss.
+			name: "a refusal is left as it is",
+			err:  errors.New("the device refused opcode 4"),
+			bare: true,
+		},
+		{
+			// A bus that ended says so already, and a session that returned
+			// it is finished rather than stalled.
+			name: "a bus that ended is left as it is",
+			err:  device.ErrBus,
+			bare: true,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got := unanswered(tt.err)
+
+			s.Require().ErrorIs(got, tt.err, "the failure has to travel with it")
+
+			if tt.bare {
+				s.Require().Equal(tt.err.Error(), got.Error())
+
+				return
+			}
+
+			for _, want := range tt.says {
+				s.Require().ErrorContains(got, want)
 			}
 		})
 	}

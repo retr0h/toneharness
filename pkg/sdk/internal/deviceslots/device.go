@@ -116,7 +116,7 @@ func (f *Flows) read(
 
 	if err != nil {
 		return result.Reading{}, fmt.Errorf(
-			"reading slot %s: %w", slotpkg.Label(at.Slot), err)
+			"reading slot %s: %w", slotpkg.Label(at.Slot), unanswered(err))
 	}
 
 	if err := dump(f.Capture, body); err != nil {

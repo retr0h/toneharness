@@ -106,7 +106,7 @@ func (s *session) awaitLoaded(
 			if got.Setlist == setlist && got.Slot == slot {
 				return nil
 			}
-		case errors.Is(err, errNoReply),
+		case errors.Is(err, ErrNoReply),
 			errors.Is(err, wire.ErrRefused),
 			errors.Is(err, wire.ErrNotAPreset):
 		default:
