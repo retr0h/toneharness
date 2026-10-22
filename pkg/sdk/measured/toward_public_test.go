@@ -62,7 +62,15 @@ func (s *TowardPublicTestSuite) curve(
 	}
 }
 
-// TestToward reads the value of each control that lands nearest a target.
+// TestToward reads the value of each control that leans the way a target asks.
+//
+// **A lean rather than a position, which is task 254's correction.** Scoring a
+// swept position's own figures against the target directly is only sound while
+// both sides came out of the same run, and they do not: the target is built
+// over the fingerprint run's baseline and the points come from this block's own
+// sweep, two runs that differ by a median 20.6Hz of centroid and 5.5dB of level
+// for the same block. So each control is answered by its distance from its own
+// median instead.
 func (s *TowardPublicTestSuite) TestToward() {
 	tests := []struct {
 		name   string
@@ -73,7 +81,10 @@ func (s *TowardPublicTestSuite) TestToward() {
 		set map[string]float64
 	}{
 		{
-			name: "the nearest position wins",
+			// A target asking for more mid reaches the end of the control
+			// that has more of it, whatever number the target names: the sign
+			// carries the information and the units do not survive.
+			name: "a target leaning up reaches the top of the control",
 			curves: s.curve("Tone", 0.1,
 				measured.Point{Value: 0, Figures: measured.Figures{Mid: 1}},
 				measured.Point{Value: 0.5, Figures: measured.Figures{Mid: 10}},
@@ -81,14 +92,31 @@ func (s *TowardPublicTestSuite) TestToward() {
 			),
 			want: measured.Figures{Mid: 9},
 			by:   measured.Weights{Mid: 1},
-			set:  map[string]float64{"Tone": 0.5},
+			set:  map[string]float64{"Tone": 1},
 		},
 		{
-			// The bug this guards. Matching figures cannot tell a quieter
-			// block from a differently voiced one, and the first run of this
-			// pinned an equaliser's Level at -60dB against a block that
-			// settles at -21dB, which would have silenced the chain the moment
-			// somebody stepped on it.
+			// And the other way, which is what makes this a reading of the
+			// target rather than of the control's range.
+			name: "a target leaning down reaches the bottom",
+			curves: s.curve("Tone", 0.1,
+				measured.Point{Value: 0, Figures: measured.Figures{Mid: 1}},
+				measured.Point{Value: 0.5, Figures: measured.Figures{Mid: 10}},
+				measured.Point{Value: 1, Figures: measured.Figures{Mid: 20}},
+			),
+			want: measured.Figures{Mid: -9},
+			by:   measured.Weights{Mid: 1},
+			set:  map[string]float64{"Tone": 0},
+		},
+		{
+			// The bug the level window guards. Matching figures cannot tell a
+			// quieter block from a differently voiced one, and the first run
+			// of this pinned an equaliser's Level at -60dB against a block
+			// that settles at -21dB, which would have silenced the chain the
+			// moment somebody stepped on it.
+			//
+			// With one position left inside the window there is no lean to
+			// read, so the control is left where the corpus put it rather
+			// than set from the one reading that survived.
 			name: "a position far below where the block settles is not offered",
 			curves: s.curve("Level", 0.1,
 				measured.Point{
@@ -102,7 +130,7 @@ func (s *TowardPublicTestSuite) TestToward() {
 			),
 			want: measured.Figures{Mid: 9},
 			by:   measured.Weights{Mid: 1},
-			set:  map[string]float64{"Level": 0},
+			set:  map[string]float64{},
 		},
 		{
 			// A control whose whole range moved the figure less than that
@@ -128,6 +156,18 @@ func (s *TowardPublicTestSuite) TestToward() {
 			set:  map[string]float64{},
 		},
 		{
+			// A target that leans nowhere on the axis being weighed. Nothing
+			// says which end of the control would be more like it.
+			name: "a target asking for no displacement decides nothing",
+			curves: s.curve("Tone", 0.1,
+				measured.Point{Value: 0, Figures: measured.Figures{Mid: 10}},
+				measured.Point{Value: 1, Figures: measured.Figures{Mid: 20}},
+			),
+			want: measured.Figures{},
+			by:   measured.Weights{Mid: 1},
+			set:  map[string]float64{},
+		},
+		{
 			name:   "a block with nothing swept sets nothing",
 			curves: measured.Curves{},
 			want:   measured.Figures{Mid: 9},
@@ -145,6 +185,81 @@ func (s *TowardPublicTestSuite) TestToward() {
 			for name, want := range tt.set {
 				s.Require().InDelta(want, got[name].Value, 1e-9, name)
 			}
+		})
+	}
+}
+
+// TestTowardRefusesAnIsolatedAmplifier covers the other half of task 254.
+//
+// A sweep of an amplifier alone has no cabinet in front of it and so no
+// speaker rolloff, and what comes back is the buzz a cabinet exists to absorb:
+// 43 of the 121 usable curves hold a position reading more than half its energy
+// above 2kHz and all 43 are amplifiers. `Reach.Alone` records the size of it,
+// and the part a lean cannot survive is that **four of eleven controls changed
+// sign** in a real chain. `StartAt` has always refused one; this is the same
+// refusal in the same package, which until now disagreed with itself.
+func (s *TowardPublicTestSuite) TestTowardRefusesAnIsolatedAmplifier() {
+	tests := []struct {
+		name     string
+		block    string
+		isolated bool
+		// set is whether any control comes back.
+		set bool
+	}{
+		{
+			name:  "an amplifier swept alone sets nothing",
+			block: "HD2_AmpSVBeastBrt", isolated: true, set: false,
+		},
+		{
+			// The front half of an amplifier with no cabinet after it, which
+			// is the same hazard for the same reason.
+			name:  "a preamp swept alone sets nothing either",
+			block: "HD2_PreampSVT4Pro", isolated: true, set: false,
+		},
+		{
+			// What task 271 would produce. A reading taken through a cabinet
+			// describes a chain, and the refusal is about the isolation
+			// rather than about the kind of block.
+			name:  "an amplifier swept through a cabinet is read",
+			block: "HD2_AmpSVBeastBrt", isolated: false, set: true,
+		},
+		{
+			// Everything else, and that is the evidence rather than a line
+			// drawn for tidiness: the inverted curves are all amplifiers, and
+			// no drive, compressor or equaliser swept alone reads upside
+			// down.
+			name:  "a drive swept alone is read",
+			block: "HD2_DistKinkyBoost", isolated: true, set: true,
+		},
+		{
+			// A file written before the block identifier was recorded says
+			// nothing about what it swept, and a prefix nothing matches is
+			// not an amplifier.
+			name:  "a sweep that does not say what it swept is read",
+			block: "", isolated: true, set: true,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			curves := s.curve("Tone", 0.1,
+				measured.Point{Value: 0, Figures: measured.Figures{Mid: 1}},
+				measured.Point{Value: 1, Figures: measured.Figures{Mid: 20}},
+			)
+			curves.Block, curves.Isolated = tt.block, tt.isolated
+
+			got := curves.Toward(
+				measured.Figures{Mid: 9}, measured.Weights{Mid: 1})
+
+			if !tt.set {
+				s.Require().Empty(got,
+					"an amplifier's controls have to stay where the corpus "+
+						"medians put them")
+
+				return
+			}
+
+			s.Require().Len(got, 1)
 		})
 	}
 }
@@ -215,6 +330,7 @@ func (s *TowardPublicTestSuite) TestTowardAcrossEveryWeighedAxis() {
 		name string
 		at   []measured.Point
 		by   measured.Weights
+		want measured.Figures
 		set  bool
 	}{
 		{
@@ -223,8 +339,9 @@ func (s *TowardPublicTestSuite) TestTowardAcrossEveryWeighedAxis() {
 				{Value: 0, Figures: measured.Figures{Centroid: 100, Level: -20}},
 				{Value: 1, Figures: measured.Figures{Centroid: 400, Level: -20}},
 			},
-			by:  measured.Weights{Centroid: 1.0 / 1000.0},
-			set: true,
+			by:   measured.Weights{Centroid: 1.0 / 1000.0},
+			want: measured.Figures{Centroid: 50},
+			set:  true,
 		},
 		{
 			name: "a control that only moves the low band",
@@ -232,8 +349,9 @@ func (s *TowardPublicTestSuite) TestTowardAcrossEveryWeighedAxis() {
 				{Value: 0, Figures: measured.Figures{Low: 90, Level: -20}},
 				{Value: 1, Figures: measured.Figures{Low: 70, Level: -20}},
 			},
-			by:  measured.Weights{Low: 1},
-			set: true,
+			by:   measured.Weights{Low: 1},
+			want: measured.Figures{Low: -5},
+			set:  true,
 		},
 		{
 			name: "a control that only moves the high band",
@@ -241,8 +359,9 @@ func (s *TowardPublicTestSuite) TestTowardAcrossEveryWeighedAxis() {
 				{Value: 0, Figures: measured.Figures{High: 1, Level: -20}},
 				{Value: 1, Figures: measured.Figures{High: 9, Level: -20}},
 			},
-			by:  measured.Weights{High: 1},
-			set: true,
+			by:   measured.Weights{High: 1},
+			want: measured.Figures{High: 2},
+			set:  true,
 		},
 		{
 			// Every position below where the block settles, so there is
@@ -252,8 +371,9 @@ func (s *TowardPublicTestSuite) TestTowardAcrossEveryWeighedAxis() {
 				{Value: 0, Figures: measured.Figures{Mid: 10, Level: -60}},
 				{Value: 1, Figures: measured.Figures{Mid: 20, Level: -55}},
 			},
-			by:  measured.Weights{Mid: 1},
-			set: false,
+			by:   measured.Weights{Mid: 1},
+			want: measured.Figures{Mid: 5},
+			set:  false,
 		},
 	} {
 		s.Run(tt.name, func() {
@@ -261,7 +381,7 @@ func (s *TowardPublicTestSuite) TestTowardAcrossEveryWeighedAxis() {
 				Controls: map[string]measured.Curve{
 					"It": {Control: "It", Settled: -20, SilentBelow: -50, Points: tt.at},
 				},
-			}.Toward(measured.Figures{}, tt.by)
+			}.Toward(tt.want, tt.by)
 
 			if !tt.set {
 				s.Require().Empty(got)

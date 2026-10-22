@@ -104,11 +104,11 @@ built:
           url: https://www.premierguitar.com/articles/In_Remembrance_Chi_Chengs_Low_End_Legacy
       controls:
         Bass: "0.5"
-        Blend: "0.0"
-        Drive: "0.625"
-        Level: "0.5"
+        Blend: "0.5"
+        Drive: "0.65"
+        Level: "0.48"
         Presence: "1.0"
-        Treble: "1.0"
+        Treble: "0.875"
       attrs:
         '@position': "1"
       position: 1
@@ -121,18 +121,18 @@ built:
           note: 'Premier Guitar''s remembrance of him, which states the rig in one sentence: "Cheng held the fort down with 4-string Fender P basses played with his fingers—occasionally using fretless models on White Pony—through Ampeg SVT-2 Pro heads and really only used a Tech 21 SansAmp GT2 for extra balls."'
           url: https://www.premierguitar.com/articles/In_Remembrance_Chi_Chengs_Low_End_Legacy
       controls:
-        Bass: "0.625"
-        Bias: "0.75"
-        BiasX: "0.0"
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
         ChVol: "0.8"
-        Drive: "0.875"
-        Hum: "0.875"
+        Drive: "0.6"
+        Hum: "0.5"
         Master: "1.0"
-        Mid: "0.125"
-        MidFreq: "1"
+        Mid: "0.79"
+        MidFreq: "2"
         Ripple: "0.5"
-        Sag: "0.625"
-        Treble: "0.625"
+        Sag: "0.5"
+        Treble: "0.85"
       attrs:
         '@position': "2"
       position: 2

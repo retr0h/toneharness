@@ -85,6 +85,45 @@ type ControlsOptions struct {
 	Bench sdk.Bench
 }
 
+// alongside says what a sweep of an amplifier with no cabinet is worth.
+//
+// Task 254. Every sweep this command takes is of one block and nothing else,
+// which for most kinds of block is a caveat. For an amplifier it decides the
+// readings: nothing is lowpassing it, so what comes back is the buzz a cabinet
+// exists to absorb. 43 of the 121 usable curves in the committed library hold
+// a position reading more than half its energy above 2kHz, and all 43 are
+// amplifiers.
+//
+// Not a refusal. A control's own behaviour is a per-block fact and this is how
+// it is measured, which is the campaign somebody asked for. What may not happen
+// is a figure from it being read as what the control does in a chain, and two
+// readers now refuse to: `measured.StartAt` and `measured.Curves.Toward` both
+// leave an isolated amplifier's controls where the corpus medians put them.
+//
+// So this is said at the top of a run that costs most of an hour, where
+// somebody can still decide to sweep it through a cabinet instead. Task 271 is
+// what would make that possible.
+func alongside(
+	w io.Writer,
+	of catalog.Category,
+) {
+	// One category covers both halves: the catalog files all 113 `HD2_Preamp`
+	// models as `amp`, and a preamp is the same hazard for the same reason,
+	// being the front of an amplifier with no cabinet after it.
+	if of != catalog.CategoryAmp {
+		return
+	}
+
+	_, _ = fmt.Fprint(w, "  this is a sweep of an amplifier with no cabinet "+
+		"after it, so nothing is\n  lowpassing it and what comes back is the "+
+		"buzz a cabinet absorbs. Readings\n  taken this way describe the "+
+		"block and not a chain: in a real chain one of\n  these amplifiers "+
+		"moved the centroid 3,250Hz per turn of Treble against the\n  12,763 "+
+		"it reads alone, and four of its eleven controls moved the other\n  "+
+		"way. The file records isolated: true, and what reads it will not set "+
+		"an\n  amplifier's controls from it.\n\n")
+}
+
 // alone is where a block sits on the grid when it is the only thing in the
 // chain: 1, because the grid keeps the input at 0.
 //
@@ -279,6 +318,10 @@ func MeasureControls(
 
 	_, _ = fmt.Fprintf(w, "\n  %s (%s), %d controls through %s\n\n",
 		block.Name, block.ID, len(want), bench.Name())
+
+	// Said before the sweep rather than after it, because it is the case where
+	// the reading differs most from use and the run costs most of an hour.
+	alongside(w, block.Category)
 
 	// What the chain settles at before the first control is swept, which every
 	// control after it is held to. See [working].

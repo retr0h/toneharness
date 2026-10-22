@@ -102,18 +102,18 @@ built:
             He opens the same interview naming himself, "hi there my name's Chris I'll play bass in silver chair", and the only other voice in it is the interviewer asking him questions.
           url: https://www.youtube.com/watch?v=b1egYvnHl9c
       controls:
-        Bass: "0.5"
-        Bias: "0.625"
+        Bass: "0.67"
+        Bias: "0.66"
         BiasX: "0.5"
         ChVol: "1.0"
-        Drive: "0.375"
-        HighMid: "1.0"
-        Hum: "0.625"
-        LowMid: "0.875"
+        Drive: "0.7"
+        HighMid: "0.5"
+        Hum: "0.5"
+        LowMid: "0.65"
         Master: "1.0"
         Ripple: "0.5"
-        Sag: "0.0"
-        Treble: "0.83125"
+        Sag: "0.5"
+        Treble: "0.64625"
       attrs:
         '@position': "1"
       position: 1
@@ -147,7 +147,7 @@ built:
         Level: "0.0"
         LowGain: "-3.0"
         MidFreq: "600.0"
-        MidGain: "5.04"
+        MidGain: "11.04"
       attrs:
         '@position': "3"
       position: 3

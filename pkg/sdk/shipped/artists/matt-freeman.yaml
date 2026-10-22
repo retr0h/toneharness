@@ -110,18 +110,18 @@ built:
           note: the other side of the same conversation, from Cavallo. Asked in Guitar World's Bass Guitar what was used on a Green Day record, he answers "Mike and I talked about Boogie, Fender and Ampeg amps, and at the end we went with an Ampeg SVT - it's hard to beat that."
           url: https://web.archive.org/web/20060217083255im_/http://www.greendayauthority.com/TheBand/articles/bassmag/4.jpg
       controls:
-        Bass: "0.375"
-        Bias: "0.625"
-        BiasX: "1.0"
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
         ChVol: "0.8"
-        Drive: "0.5"
-        Hum: "0.625"
-        Master: "0.875"
-        Mid: "1.0"
-        MidFreq: "0"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.89"
+        MidFreq: "2"
         Ripple: "0.5"
-        Sag: "1.0"
-        Treble: "1.0"
+        Sag: "0.5"
+        Treble: "0.88"
       attrs:
         '@position': "1"
       position: 1

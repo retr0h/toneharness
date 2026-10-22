@@ -71,18 +71,18 @@ built:
           note: 'His own words on when the amplifier arrives, which is what dates every record here: "I don''t think I got my SVT until the first official Pantera record. But once I got my SVT stacks, that changed everything." The first official Pantera record is Cowboys from Hell, 1990, so no record earlier than that is measured.'
           url: https://www.yahoo.com/entertainment/music/articles/dimebag-darrell-pushed-pantera-bassist-135400189.html
       controls:
-        Bass: "0.625"
-        Bias: "0.75"
-        BiasX: "0.0"
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
         ChVol: "0.8"
-        Drive: "0.875"
-        Hum: "0.875"
+        Drive: "0.6"
+        Hum: "0.5"
         Master: "1.0"
-        Mid: "0.085"
-        MidFreq: "1"
+        Mid: "0.75"
+        MidFreq: "2"
         Ripple: "0.5"
-        Sag: "0.625"
-        Treble: "0.6067073170731707"
+        Sag: "0.5"
+        Treble: "0.8317073170731707"
       attrs:
         '@position': "1"
       position: 1

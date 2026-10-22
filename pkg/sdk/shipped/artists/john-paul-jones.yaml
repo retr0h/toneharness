@@ -83,18 +83,18 @@ built:
           note: 'Opened, and it is weaker than it looks. Eleven posts, most of them hedged: "I think for a lot of it it was an Acoustic 360 rig with folded a 18 cabinet". One post is first-hand and contradicts the rest for the earliest tour — chadds, who saw them open for The Who on the first album tour: "JPJ had 4 trapezoid shaped 2x15 Rickenbacker cabs each with a Hiwatt 100 head". That is before the spring 1969 purchase the auction lot dates, so the two agree rather than conflict, and it is the reason no record here predates mid-1969.'
           url: https://www.talkbass.com/threads/john-paul-jones-rig.259308/
       controls:
-        Bass: "0.125"
-        Bright: "true"
+        Bass: "0.684"
+        Bright: "false"
         ChVol: "0.7"
         Drive: "0.45"
-        Effect: "1.0"
-        Hum: "0.125"
+        Effect: "0.332"
+        Hum: "0.274"
         Master: "1.0"
         TFCoarse: "0.472"
         TFFine: "0.308"
-        Treble: "1.0"
+        Treble: "0.616"
         TuningFork: "0.0"
-        Variamp: "4"
+        Variamp: "2"
       attrs:
         '@position': "1"
       position: 1
@@ -122,7 +122,7 @@ built:
         Level: "0.0"
         LowGain: "-3.0"
         MidFreq: "600.0"
-        MidGain: "9.4"
+        MidGain: "12.0"
       attrs:
         '@position': "3"
       position: 3

@@ -75,18 +75,18 @@ built:
           note: 'A Premier Guitar rig rundown: "Following Horton''s reduction motif, Esperance is only bringing out two rackmounted Ampegs amps. His main stage head is a SVT-4 Pro and the backup is a BR5." It also has him on custom Lakland 44-94 four-strings, D''Addario .050-.120 strings, and fingers rather than a pick.'
           url: https://www.premierguitar.com/gear/rig-rundown-papa-roachs-jerry-horton-tobin-esperance
       controls:
-        Bass: "0.5"
-        Bias: "0.75"
-        BiasX: "0.0"
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
         ChVol: "0.8"
-        Drive: "0.875"
-        Hum: "0.875"
+        Drive: "0.6"
+        Hum: "0.5"
         Master: "1.0"
-        Mid: "0.25"
-        MidFreq: "1"
+        Mid: "0.79"
+        MidFreq: "2"
         Ripple: "0.5"
-        Sag: "0.625"
-        Treble: "0.75"
+        Sag: "0.5"
+        Treble: "0.85"
       attrs:
         '@position': "1"
       position: 1

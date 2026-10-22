@@ -79,18 +79,18 @@ built:
           note: 'Opened, and it carries a named first-hand witness at one remove. Post 77 of the thread, from wolfkeller: "well, after speaking with Evan of Bass Northwest in Seattle, who was there for the recording, here is how Would was recorded. 3 tracks of bass. 1) Spector NS2 into Ampeg SVT 2 into 8x10 E. track 2) Spector into ART Nightbass on rickenfaker preset tweaked a bit into board. track 3) Kramer Ferrington acoustic bass into board. Mixx the 3, that''s the sound." Three other posters put him on the same gear without the detail. Mr. Dead: "Mike Inez used the same bass/rig setup (Spector/Ampeg) as original A.I.C. bassist Mike Starr". Angus, on the band''s bass sound: "Spector basses and Ampeg amps."'
           url: https://www.talkbass.com/threads/x.553451/
       controls:
-        Bass: "0.625"
-        Bias: "0.75"
-        BiasX: "0.0"
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
         ChVol: "0.8"
-        Drive: "0.875"
-        Hum: "0.875"
+        Drive: "0.6"
+        Hum: "0.5"
         Master: "1.0"
-        Mid: "0.125"
-        MidFreq: "1"
+        Mid: "0.79"
+        MidFreq: "2"
         Ripple: "0.5"
-        Sag: "0.625"
-        Treble: "0.625"
+        Sag: "0.5"
+        Treble: "0.85"
       attrs:
         '@position': "1"
       position: 1

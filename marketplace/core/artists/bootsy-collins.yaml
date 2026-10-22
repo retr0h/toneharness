@@ -150,18 +150,18 @@ built:
           note: an Alembic F2-B preamp into Crown power amps and eight custom Electro-Voice cabinets
           url: https://www.uberproaudio.com/who-plays-what/295-bootsy-collins-bass-rig-gear-and-equipment
       controls:
-        Bass: "0.5"
-        Bias: "0.625"
+        Bass: "0.67"
+        Bias: "0.66"
         BiasX: "0.5"
         ChVol: "1.0"
-        Drive: "0.375"
-        HighMid: "1.0"
-        Hum: "0.625"
-        LowMid: "0.875"
+        Drive: "0.7"
+        HighMid: "0.5"
+        Hum: "0.5"
+        LowMid: "0.65"
         Master: "1.0"
         Ripple: "0.5"
-        Sag: "0.0"
-        Treble: "0.875"
+        Sag: "0.5"
+        Treble: "0.69"
       attrs:
         '@position': "2"
       position: 2

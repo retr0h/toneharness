@@ -138,18 +138,18 @@ built:
           note: 'the same sentence the cabinet below is taken from, read whole: "The bass part of his system is run stereo through two BGW 750-B amplifiers via two Ashley Audio pre-amplifiers ... The low end is run through two Ampeg V4-B cabinets with four JBL 140 speakers."'
           url: http://www.2112.net/powerwindows/transcripts/19790600canadianmusician.htm
       controls:
-        Bass: "0.375"
-        Bias: "0.625"
-        BiasX: "1.0"
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
         ChVol: "0.8"
-        Drive: "0.5"
-        Hum: "0.625"
-        Master: "0.875"
-        Mid: "1.0"
-        MidFreq: "0"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.79"
+        MidFreq: "2"
         Ripple: "0.5"
-        Sag: "1.0"
-        Treble: "1.0"
+        Sag: "0.5"
+        Treble: "0.85"
       attrs:
         '@position': "1"
       position: 1
