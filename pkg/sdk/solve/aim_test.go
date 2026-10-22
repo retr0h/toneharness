@@ -164,6 +164,41 @@ func (s *AimTestSuite) TestAims() {
 				s.Require().NotContains(got, audio.KeyLean)
 			},
 		},
+		{
+			// Task 255. A band share inside its tolerance is a constraint that
+			// is already satisfied, and it has to be in the matrix while it
+			// still is, because the matrix is the only thing that tells the
+			// solve what a move costs.
+			name: "the band shares are held and nothing else is",
+			then: func() {
+				got := Aims(s.popPunk(), map[audio.Figure]float64{
+					audio.KeyDynamics:  0.5,
+					audio.KeyHarmonics: 0.05,
+					audio.KeyLean:      0.01,
+				})
+
+				for _, key := range []audio.Figure{
+					audio.KeyLow, audio.KeyMid, audio.KeyHigh,
+				} {
+					at, ok := got[key]
+					s.Require().True(ok, "%s is not a target", key)
+					s.Require().True(at.Hold, "%s is not held", key)
+				}
+
+				// Not the centroid, which is what a target is usually
+				// reaching for: holding it would hold the goal still.
+				s.Require().Contains(got, audio.KeyCentroid)
+				s.Require().False(got[audio.KeyCentroid].Hold)
+
+				// And not the figures almost nothing moves in a straight
+				// line, which pinning would spend the chain defending.
+				for _, key := range []audio.Figure{
+					audio.KeyDynamics, audio.KeyHarmonics, audio.KeyLean,
+				} {
+					s.Require().False(got[key].Hold, "%s is held", key)
+				}
+			},
+		},
 	} {
 		s.Run(tt.name, func() {
 			tt.then()

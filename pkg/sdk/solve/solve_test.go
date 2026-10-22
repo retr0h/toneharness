@@ -40,6 +40,7 @@ type SolveTestSuite struct {
 const (
 	centroid = audio.Figure("centroid")
 	low      = audio.Figure("low")
+	mid      = audio.Figure("mid")
 	high     = audio.Figure("high")
 )
 
@@ -57,6 +58,115 @@ func (s *SolveTestSuite) treble() Knob {
 		Block: 1, Param: 1, Control: "Treble", At: 0.5, Low: 0, High: 1,
 		Slope: map[audio.Figure]float64{high: 15, centroid: 900},
 	}
+}
+
+// lowCut is the largest lever a mic'd cabinet has, with its slopes read off the
+// one committed sweep that holds it, `HD2_CabMicIr_1x15AmpegB15`.
+//
+// Task 255. It moves a median 190Hz of centroid against the microphone's 29,
+// six and a half times as much, and it is far straighter: 0.92 to 0.97 where
+// the microphone reads 0.00. **It reaches the centroid by removing the
+// bottom.** Taken from 19.9Hz to 500Hz this cabinet goes from 131Hz at 97.09%
+// of its energy below 250Hz to 420Hz at 32.18%, and on a bass that band is the
+// fundamental.
+func (s *SolveTestSuite) lowCut() Knob {
+	return Knob{
+		Block: 0, Param: 0, Control: "LowCut", Setting: "LowCut",
+		At: 19.9, Low: 19.9, High: 500,
+		Slope: map[audio.Figure]float64{
+			centroid: 0.645, low: -0.155, mid: 0.154,
+		},
+	}
+}
+
+// micPosition is the same cabinet's Position, which is what a solve would
+// rather be spending and cannot: across its whole travel it moves the centroid
+// 2.3Hz where LowCut moves it 289.
+func (s *SolveTestSuite) micPosition() Knob {
+	return Knob{
+		Block: 0, Param: 1, Control: "Position", Setting: "Position",
+		At: 0.5, Low: 0, High: 1,
+		Slope: map[audio.Figure]float64{
+			centroid: -2.31, low: 0.536, mid: -0.524,
+		},
+	}
+}
+
+// atTheCabinet is what that cabinet reads with LowCut at its bottom stop.
+func (s *SolveTestSuite) atTheCabinet() map[audio.Figure]float64 {
+	return map[audio.Figure]float64{centroid: 131.2, low: 97.09, mid: 2.90}
+}
+
+// TestABandShareIsHeldRatherThanDiscovered covers task 255: what it costs to
+// leave a satisfied band share out of the matrix.
+//
+// The chain is one mic'd cabinet with real slopes, aimed 72Hz brighter than it
+// sits and told to keep its low band where it is.
+//
+// Both halves of the fix are under test here, and they do different jobs.
+// `after` predicting every named axis is what makes the damage visible; the
+// hold is what stops it being done, and that is the half the hardware cares
+// about. A pass applies its steps before anything reads `Arrived`, so without
+// the hold LowCut is taken to 131Hz on the pedal and the report says afterwards
+// that the bottom went with it.
+func (s *SolveTestSuite) TestABandShareIsHeldRatherThanDiscovered() {
+	aims := func(hold bool) map[audio.Figure]Aim {
+		return map[audio.Figure]Aim{
+			centroid: {Want: 203, Tol: 21},
+			low:      {Want: 97.09, Tol: 2.5, Hold: hold},
+			mid:      {Want: 2.90, Tol: 2.5, Hold: hold},
+		}
+	}
+
+	knobs := []Knob{s.lowCut(), s.micPosition()}
+
+	cutTo := func(got Result) float64 {
+		for _, step := range got.Steps {
+			if step.Setting == "LowCut" {
+				return step.To
+			}
+		}
+
+		s.Require().Fail("nothing moved LowCut")
+
+		return 0
+	}
+
+	// Unheld, the solve reaches the centroid exactly and spends the whole low
+	// band doing it: LowCut goes to its slope's limit and, by that same slope,
+	// leaves the band at 79.85% where the target said 97.09%.
+	loose, err := Toward(knobs, aims(false), s.atTheCabinet())
+	s.Require().NoError(err)
+	s.Require().InDelta(131.1, cutTo(loose), 0.5)
+	s.Require().InDelta(0, loose.Residual[centroid], 0.01, "it reached the centroid")
+	s.Require().Greater(loose.Residual[low], 6.0,
+		"and the pass has to report what that cost")
+	s.Require().False(loose.Arrived,
+		"a pass may not report arriving on an axis its own moves broke")
+
+	// Held, the cost is in the matrix from the first pass. LowCut moves a
+	// quarter as far, the band stays inside its tolerance, and the centroid is
+	// still out, so the loop takes another pass from where this one landed
+	// rather than stopping on a chain with no bottom.
+	tight, err := Toward(knobs, aims(true), s.atTheCabinet())
+	s.Require().NoError(err)
+	s.Require().Less(cutTo(tight), cutTo(loose)/2,
+		"holding the band did not shorten the move")
+	s.Require().Less(tight.Residual[low], 1.0, "the band is still where it was")
+	s.Require().Greater(tight.Residual[centroid], 1.0)
+	s.Require().False(tight.Arrived)
+
+	// And over six passes with every control pulling together it still does
+	// not get both, which is the honest answer and the one the unheld run
+	// skipped past: this cabinet cannot be taken 72Hz brighter and keep its
+	// bottom, because LowCut is the only control with any centroid authority
+	// and the bottom is what it spends. It stalls 2.7 tolerances out on the
+	// centroid rather than claiming to have arrived.
+	best, err := Best(knobs, aims(true), s.atTheCabinet(), 6)
+	s.Require().NoError(err)
+	s.Require().False(best.Arrived)
+	s.Require().Greater(best.Residual[centroid], 1.0,
+		"it claimed a centroid this chain cannot reach")
 }
 
 // TestToward covers Toward, which answers one pass: the moves that close the
