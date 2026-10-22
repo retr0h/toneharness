@@ -24,6 +24,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -98,6 +99,19 @@ type Packed struct {
 	Corpus string `json:"corpus"`
 	// Genres is what each genre measured as.
 	Genres []Genre `json:"genres"`
+	// Players is what each player's own records measured as.
+	//
+	// Packed beside the genres because a rig aimed at one player needs the
+	// same two halves a genre needs: what their records measure as together,
+	// and what the other players measure as, so a figure here is a
+	// displacement rather than a position.
+	//
+	// Without it an artist rig could name the amplifier a source puts somebody
+	// on and then set every control to the catalog's default, which is what all
+	// 32 of them did: `dee-dee-ramone` carried an Ampeg SVT at Bass 0.41, Bias
+	// 0.74, ChVol 0.8 and Drive 0.6, which is the factory setting to the digit.
+	// The records are listed on the document for exactly this.
+	Players []Player `json:"players,omitempty"`
 }
 
 // unpackGenres reads the measured genres.
@@ -122,6 +136,27 @@ func unpackGenres(
 // own test, so parsing it cannot fail here, the same way reading the blank
 // preset cannot. Absent is said with the bool: a request may name any word, and
 // nothing measured is an answer rather than a fault.
+// ShippedPlayer is what one player's records measured as, by the identifier
+// their directory carries, which is also their rig's.
+//
+// Absent for a player the pack was written before, and for anybody with no
+// records in the corpus at all. Both answer false, which a caller reads as
+// "nothing to aim at" rather than as an error: a rig for somebody nobody has
+// measured is still a rig, it just keeps the controls its sources justify.
+func ShippedPlayer(
+	id string,
+) (Player, bool) {
+	all, _ := packed()
+
+	for _, p := range all.Players {
+		if strings.EqualFold(p.ID, id) {
+			return p, true
+		}
+	}
+
+	return Player{}, false
+}
+
 func ShippedGenre(
 	slug string,
 ) (Genre, bool) {

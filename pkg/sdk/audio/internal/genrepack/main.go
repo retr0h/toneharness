@@ -84,6 +84,35 @@ func pack(
 		return nil
 	}
 
+	// And every player, measured the same way and over the same tree.
+	//
+	// Beside the genres rather than in their own pack: both are the same
+	// recordings read two ways, so a pack holding one without the other could
+	// describe a corpus that no longer exists on one half and not the other.
+	// One instrument's tree at a time, because a player is a directory inside
+	// one and `from` is the corpus above them all: pointed at the corpus it
+	// reads `bass` as a player with 425 records. The genres generator above
+	// takes the whole tree because a genre pools across it.
+	tops, err := os.ReadDir(from)
+	if err != nil {
+		return fmt.Errorf("reading %s: %w", from, err)
+	}
+
+	who := []audio.Player(nil)
+
+	for _, e := range tops {
+		if !e.IsDir() {
+			continue
+		}
+
+		some, err := audio.Corpus(os.DirFS(from), e.Name())
+		if err != nil {
+			return fmt.Errorf("measuring the players in %s: %w", e.Name(), err)
+		}
+
+		who = append(who, some...)
+	}
+
 	// Which corpus these figures were measured over, recorded beside them.
 	// The audio cannot ship so no test can re-derive a figure, and without
 	// this the pack could not even say which records it was taken across: a
@@ -95,7 +124,7 @@ func pack(
 	}
 
 	body, err := json.MarshalIndent(
-		audio.Packed{Corpus: sha, Genres: got}, "", "  ")
+		audio.Packed{Corpus: sha, Genres: got, Players: who}, "", "  ")
 	if err != nil {
 		return fmt.Errorf("writing the genres: %w", err)
 	}

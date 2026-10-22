@@ -1,0 +1,181 @@
+// Copyright (c) 2026 John Dewey
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+package translate_test
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/suite"
+
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/translate"
+)
+
+// PlayerTargetPublicTestSuite covers aiming at one player's own records.
+//
+// The target an artist rig never had. All 32 named the amplifier a source puts
+// somebody on and then carried the catalog's defaults on every control:
+// `dee-dee-ramone` sat at Bass 0.41, Bias 0.74, ChVol 0.8 and Drive 0.6, which
+// is the factory setting to the digit, while his three records sat on the
+// document unread.
+type PlayerTargetPublicTestSuite struct {
+	suite.Suite
+
+	deps translate.Deps
+}
+
+func (s *PlayerTargetPublicTestSuite) SetupSuite() {
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	lib, err := measured.BuiltIn()
+	s.Require().NoError(err)
+
+	s.deps = translate.Deps{Catalog: cat, Measured: lib}
+}
+
+// TestAPlayerIsATarget covers who a build aims at, and in what order.
+func (s *PlayerTargetPublicTestSuite) TestAPlayerIsATarget() {
+	bass := tone.AskInstrument("bass")
+
+	like := func(name string) *tone.Like {
+		return &tone.Like{Artist: &name}
+	}
+
+	tests := []struct {
+		name string
+		ask  tone.Ask
+		// aims is what the report must say the build aimed at, and the empty
+		// string means it fell through to the genre.
+		aims string
+	}{
+		{
+			// The supported way to aim at one player, and what an artist rig
+			// will reach once the resolve path carries a target.
+			name: "sounding like a player aims at that player",
+			ask: tone.Ask{
+				Genre: []string{"punk"}, Instrument: &bass,
+				Like: like("dee-dee-ramone"),
+			},
+			aims: "dee-dee-ramone",
+		},
+		{
+			// The display name is slugged, because the pack files a player
+			// under the directory their records sit in.
+			name: "the name is read the way the corpus files it",
+			ask: tone.Ask{
+				Genre: []string{"punk"}, Instrument: &bass,
+				Like: like("Dee Dee Ramone"),
+			},
+			aims: "dee-dee-ramone",
+		},
+		{
+			// Nobody measured, so the genre answers and the rig keeps whatever
+			// its sources justify.
+			name: "a player with no records falls through to the genre",
+			ask: tone.Ask{
+				Genre: []string{"punk"}, Instrument: &bass,
+				Like: like("Somebody Nobody Recorded"),
+			},
+			aims: "punk",
+		},
+		{
+			// A genre is the middle of a population and a player is one
+			// person, so a rig for nobody in particular still aims somewhere.
+			name: "a rig naming nobody aims at its genre",
+			ask: tone.Ask{
+				Genre: []string{"punk"}, Instrument: &bass,
+			},
+			aims: "punk",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			_, notes, err := translate.Translate(tt.ask, tone.Setup{}, s.deps)
+			s.Require().NoError(err)
+
+			said := ""
+			for _, n := range notes {
+				said += n.Said + "\n"
+			}
+
+			s.Require().Contains(said, "measured to "+tt.aims,
+				"it aimed somewhere else")
+		})
+	}
+}
+
+// TestAPlayerAimsAtTheirMiddle covers which end of their records it takes.
+//
+// A genre aims at the edge of its own range, because the middle is what every
+// genre shares and ten of the eleven displace less than 6.4 points from one
+// baseline. One player's records describe one person, so their middle is the
+// thing being aimed at rather than the thing that hides them.
+func (s *PlayerTargetPublicTestSuite) TestAPlayerAimsAtTheirMiddle() {
+	who := "Dee Dee Ramone"
+
+	got, ok := translate.PlayerAim(
+		tone.Ask{Like: &tone.Like{Artist: &who}}, s.deps)
+	s.Require().True(ok)
+
+	// Every figure it reports is the middle of his records, which is what
+	// `Across.Measured` answers with, rather than a percentile of them.
+	s.Require().NotEmpty(got)
+}
+
+func TestPlayerTargetPublicTestSuite(
+	t *testing.T,
+) {
+	t.Parallel()
+	suite.Run(t, new(PlayerTargetPublicTestSuite))
+}
+
+// TestAScatteredPlayerSaysSo covers a player whose own records disagree.
+//
+// A player's figures are their records together, so somebody whose records are
+// several different sounds has figures describing none of them. The derivation
+// already refuses to call that a word, which reads exactly like a player who
+// is unremarkable, so the report has to say which it is.
+func (s *PlayerTargetPublicTestSuite) TestAScatteredPlayerSaysSo() {
+	bass := tone.AskInstrument("bass")
+	dukowski := "Chuck Dukowski"
+
+	// Three of the 43 are scattered, and this is one: his records disagree
+	// about more than the other players disagree with each other.
+	_, notes, err := translate.Translate(tone.Ask{
+		Genre: []string{"punk"}, Instrument: &bass,
+		Like: &tone.Like{Artist: &dukowski},
+	}, tone.Setup{}, s.deps)
+	s.Require().NoError(err)
+
+	said := ""
+	for _, n := range notes {
+		said += n.Said + "\n"
+	}
+
+	s.Require().Contains(said, "their own records disagree about",
+		"a scattered player read as an unremarkable one")
+	s.Require().Contains(said, "measured to chuck-dukowski",
+		"it stopped aiming at him")
+}

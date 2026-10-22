@@ -848,6 +848,72 @@ func (s *ShippedPublicTestSuite) TestShippedParses() {
 	}
 }
 
+// TestShippedPlayerFindsOneByID covers looking a shipped player up.
+//
+// Packed beside the genres because a rig aimed at one player needs the same
+// two halves a genre needs: what their records measure as, and what the other
+// players measure as, so a figure is a displacement rather than a position.
+// Without it an artist rig could name the amplifier a source puts somebody on
+// and then set every control to the catalog's default, which is what all 32 of
+// them did.
+func (s *ShippedPublicTestSuite) TestShippedPlayerFindsOneByID() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			name: "shipped player finds one by identifier",
+			then: func() {
+				all, err := audio.Shipped()
+				s.Require().NoError(err)
+
+				if len(all) == 0 {
+					s.T().Skip("no corpus measured into this binary")
+				}
+
+				// Somebody with records, read back under the identifier their
+				// directory carries, which is also their rig's.
+				got, ok := audio.ShippedPlayer("dee-dee-ramone")
+				if !ok {
+					s.T().Skip("that player is not in this binary's corpus")
+				}
+
+				s.Require().Equal("dee-dee-ramone", got.ID)
+				s.Require().Positive(got.Records)
+
+				// And the half that makes a figure comparable with a block's.
+				s.Require().NotEmpty(got.Elsewhere)
+			},
+		},
+		{
+			// Case is not what files a player; the slug is.
+			name: "the identifier is read whatever its case",
+			then: func() {
+				got, ok := audio.ShippedPlayer("DEE-DEE-RAMONE")
+				if !ok {
+					s.T().Skip("that player is not in this binary's corpus")
+				}
+
+				s.Require().Equal("dee-dee-ramone", got.ID)
+			},
+		},
+		{
+			// Not an error. A rig for somebody nobody has measured is still a
+			// rig; it keeps the controls its sources justify.
+			name: "a player nobody measured",
+			then: func() {
+				got, ok := audio.ShippedPlayer("no-such-player")
+				s.Require().False(ok)
+				s.Require().Zero(got.Records)
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
+}
+
 // TestShippedGenreFindsOneBySlug covers looking a shipped genre up, and the
 // slug nothing measured.
 //
