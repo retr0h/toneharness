@@ -273,3 +273,159 @@ func (s *TowardPublicTestSuite) TestTowardAcrossEveryWeighedAxis() {
 		})
 	}
 }
+
+// TestTowardFrom covers choosing a position by what it moves rather than by
+// where it sits.
+//
+// The failure it exists for: a genre is measured off finished records and a
+// cabinet off a dry signal through one block, so comparing the two directly
+// sends every genre to whichever end of the control is closest. Eleven genres
+// all chose the same microphone that way, and letting the same reading set the
+// rest of the cabinet sent Distance to its maximum and LowCut to 79.9Hz.
+func (s *TowardPublicTestSuite) TestTowardFrom() {
+	// Three positions: one below the median on the centroid, one at it, one
+	// above. A genre leaning either way should reach the matching end.
+	twelve := measured.Curves{
+		Controls: map[string]measured.Curve{
+			"Mic": {
+				Control: "Mic", Kind: "int", Settled: -20, SilentBelow: -50,
+				Points: []measured.Point{
+					{Value: 0, Figures: measured.Figures{
+						Centroid: 90, Low: 97, High: 0.1, Level: -20,
+					}},
+					{Value: 1, Figures: measured.Figures{
+						Centroid: 118, Low: 95, High: 0.4, Level: -20,
+					}},
+					{Value: 2, Figures: measured.Figures{
+						Centroid: 140, Low: 91, High: 0.9, Level: -20,
+					}},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name string
+		// asked is the displacement the genre was given, and by the weights
+		// it is read under. Empty weights read the centroid alone.
+		asked measured.Figures
+		by    measured.Weights
+		want  float64
+		ok    bool
+	}{
+		{
+			// A genre brighter than the other genres reaches the microphone
+			// brighter than the others on its cabinet. The sizes are not
+			// comparable and are not compared: 126Hz across a population of
+			// records against 22Hz across one box.
+			name:  "a brighter genre reaches a brighter microphone",
+			asked: measured.Figures{Centroid: 126},
+			want:  2, ok: true,
+		},
+		{
+			name:  "and a darker one a darker microphone",
+			asked: measured.Figures{Centroid: -25},
+			want:  0, ok: true,
+		},
+		{
+			// Nothing asked for on a weighed axis, so there is nothing to lean
+			// toward and the default stands.
+			name:  "a genre asking for nothing chooses nothing",
+			asked: measured.Figures{},
+			ok:    false,
+		},
+		{
+			// The low and high bands, read the same way, so each axis the
+			// weights carry is exercised rather than only the centroid.
+			name:  "the low band leans the other way from the centroid",
+			asked: measured.Figures{Low: -9},
+			by:    measured.Weights{Low: 1},
+			want:  2, ok: true,
+		},
+		{
+			name:  "and the high band",
+			asked: measured.Figures{High: 4},
+			by:    measured.Weights{High: 1},
+			want:  2, ok: true,
+		},
+		{
+			// A figure the weights carry but the sweep does not move. Every
+			// position reads the same mid, so that axis offers no lean and the
+			// centroid decides alone.
+			name:  "an axis the positions do not move is passed over",
+			asked: measured.Figures{Centroid: 126, Mid: 9},
+			by:    measured.Weights{Centroid: 1.0 / 1000.0, Mid: 1},
+			want:  2, ok: true,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			by := tt.by
+			if by == (measured.Weights{}) {
+				by = measured.Weights{Centroid: 1.0 / 1000.0}
+			}
+
+			got, ok := twelve.TowardFrom("Mic", tt.asked, by)
+
+			s.Require().Equal(tt.ok, ok)
+
+			if tt.ok {
+				s.Require().InDelta(tt.want, got, 1e-9)
+			}
+		})
+	}
+}
+
+// TestTowardFromRefuses covers the sweeps that offer no choice.
+func (s *TowardPublicTestSuite) TestTowardFromRefuses() {
+	at := func(points ...measured.Point) measured.Curves {
+		return measured.Curves{Controls: map[string]measured.Curve{
+			"Mic": {
+				Control: "Mic", Settled: -20, SilentBelow: -50, Points: points,
+			},
+		}}
+	}
+
+	by := measured.Weights{Centroid: 1.0 / 1000.0}
+	asked := measured.Figures{Centroid: 50}
+
+	for _, tt := range []struct {
+		name   string
+		curves measured.Curves
+		on     string
+	}{
+		{name: "a control nobody swept", curves: at(), on: "Mic"},
+		{
+			name:   "a control with one position",
+			curves: at(measured.Point{Value: 0, Figures: measured.Figures{Centroid: 90, Level: -20}}),
+			on:     "Mic",
+		},
+		{
+			// Every position below working level, so there is nothing to
+			// choose between: a quieter block reads as a close match to
+			// anything.
+			name: "positions all below working level",
+			curves: at(
+				measured.Point{Value: 0, Figures: measured.Figures{Centroid: 90, Level: -60}},
+				measured.Point{Value: 1, Figures: measured.Figures{Centroid: 140, Level: -55}},
+			),
+			on: "Mic",
+		},
+		{
+			// Every position reading alike offers no choice either.
+			name: "positions that all read the same",
+			curves: at(
+				measured.Point{Value: 0, Figures: measured.Figures{Centroid: 118, Level: -20}},
+				measured.Point{Value: 1, Figures: measured.Figures{Centroid: 118, Level: -20}},
+			),
+			on: "Mic",
+		},
+		{name: "a control the block does not have", curves: at(), on: "Distance"},
+	} {
+		s.Run(tt.name, func() {
+			_, ok := tt.curves.TowardFrom(tt.on, asked, by)
+			s.Require().False(ok)
+		})
+	}
+}
