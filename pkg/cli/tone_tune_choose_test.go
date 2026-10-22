@@ -118,6 +118,127 @@ const svt = catalog.ModelID("HD2_AmpSVBeastBrt")
 // sweeps is the committed curves, which say how far a slope carries.
 const sweeps = "../../resources/sweeps/hx-stomp"
 
+// TestBounded covers keeping a cut inside the range the instrument needs.
+//
+// Task 252. `LowCut` is the largest lever a mic'd cabinet appears to have, a
+// median 190Hz of centroid across the fourteen swept, and every one of those
+// hertz is above the lowest note a bass plays: the sweeps step 19.9, 79.9,
+// 139.9 and on, so only the bottom stop sits where the instrument does.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ChooseTestSuite) TestBounded() {
+	// The 1x15 whose LowCut the sweeps hold, and whose own readings run from
+	// 131Hz at 97.09% of its energy low to 420Hz at 32.18%.
+	const ampegB15 = catalog.ModelID("HD2_CabMicIr_1x15AmpegB15")
+
+	chain := func(cut float64) plan.Plan {
+		return plan.Plan{Blocks: []plan.Block{{
+			Model: ampegB15, Pos: 0, Enabled: true,
+			Params: plan.Params{
+				"LowCut":  catalog.Float(cut),
+				"HighCut": catalog.Float(8000),
+			},
+		}}}
+	}
+
+	rangeOf := func(made plan.Plan, instrument, name string) (float64, float64) {
+		for _, k := range knobsOf(made, s.catalog(), instrument) {
+			if k.Setting == name {
+				return k.Low, k.High
+			}
+		}
+
+		s.Require().Fail("no " + name + " among the dials")
+
+		return 0, 0
+	}
+
+	tests := []struct {
+		name string
+		then func()
+	}{
+		{
+			// The catalog gives this cut 19.9Hz to 500. A bass needs
+			// everything down to a five-string's open B at 30.87Hz, and the
+			// chain sits at 37, so 37 is as high as a solve may take it: 17Hz
+			// of travel against the 480 it had.
+			name: "a bass keeps its bottom",
+			then: func() {
+				low, high := rangeOf(chain(37), "bass", "LowCut")
+
+				s.Require().InDelta(19.9, low, 0.01, "a cut may always open up")
+				s.Require().InDelta(37, high, 0.01)
+			},
+		},
+		{
+			// A guitar's lowest note is an octave up, so the same cabinet's
+			// cut has more room. Not a figure anything here has measured: no
+			// guitar has been swept and no guitar records are in the corpus,
+			// so this is the bound arithmetic rather than a reading.
+			name: "a guitar has more room than a bass",
+			then: func() {
+				_, high := rangeOf(chain(37), "guitar", "LowCut")
+				s.Require().InDelta(61.74, high, 0.01)
+			},
+		},
+		{
+			// Never below where the document already put it. A rig may say
+			// 120Hz because somebody wanted the mud gone, and dragging that
+			// back would be the loop overruling a decision somebody made.
+			name: "a document's own setting is kept",
+			then: func() {
+				_, high := rangeOf(chain(120), "bass", "LowCut")
+				s.Require().InDelta(120, high, 0.01,
+					"it overruled a setting somebody chose")
+			},
+		},
+		{
+			// A chain with no amplifier names no instrument, and inventing
+			// one would cut notes on the strength of a guess.
+			name: "no instrument bounds nothing",
+			then: func() {
+				_, high := rangeOf(chain(37), "", "LowCut")
+				s.Require().InDelta(500, high, 0.01, "the catalog's own top")
+			},
+		},
+		{
+			// A high cut removes brightness rather than fundamentals, and
+			// across those same cabinets it moves the centroid 0.3 to 7.4Hz,
+			// so it is not a lever on a bass and needs no rule. Stated as a
+			// test because an omission and a measurement read alike.
+			name: "a high cut is not bounded",
+			then: func() {
+				low, high := rangeOf(chain(37), "bass", "HighCut")
+				s.Require().InDelta(500, low, 0.01)
+				s.Require().InDelta(20100, high, 0.01)
+			},
+		},
+		{
+			// Inside the bound the control has nothing to offer, which is the
+			// whole finding: a chain aiming 72Hz brighter cannot get there
+			// with it. 17Hz of travel at this cabinet's measured 0.601Hz of
+			// centroid per hertz of cut is about 10Hz of centroid, which is
+			// inside punk's own tolerance.
+			name: "what is left is not a lever",
+			then: func() {
+				low, high := rangeOf(chain(37), "bass", "LowCut")
+
+				// 288.5Hz of centroid over the 480.1Hz the sweep covered.
+				const perHz = 288.5 / (500 - 19.9)
+
+				s.Require().Less((high-low)*perHz, 21.0,
+					"a solve could still reach a genre's tolerance with it")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
+}
+
 // TestCarrying covers how far each dial may be moved on one reading of its
 // slope.
 //
@@ -137,7 +258,7 @@ func (s *ChooseTestSuite) TestCarrying() {
 	carryOf := func(made plan.Plan, name string, aims map[audio.Figure]solve.Aim,
 		dir string, nudge float64,
 	) float64 {
-		knobs := carrying(knobsOf(made, s.catalog()), made, dir, nudge, aims)
+		knobs := carrying(knobsOf(made, s.catalog(), "bass"), made, dir, nudge, aims)
 
 		for _, k := range knobs {
 			if k.Setting == name {
@@ -181,7 +302,7 @@ func (s *ChooseTestSuite) TestCarrying() {
 				made := chain("HD2_AmpArchetype")
 
 				for _, k := range carrying(
-					knobsOf(made, s.catalog()), made, sweeps, 0.1, spectral) {
+					knobsOf(made, s.catalog(), "bass"), made, sweeps, 0.1, spectral) {
 					s.Require().Zero(k.Carry, k.Setting)
 				}
 			},
@@ -267,7 +388,7 @@ func (s *ChooseTestSuite) TestCarrying() {
 				})
 
 				knobs := carrying(
-					knobsOf(twice, s.catalog()), twice, sweeps, 0.1, spectral)
+					knobsOf(twice, s.catalog(), "bass"), twice, sweeps, 0.1, spectral)
 
 				seen := 0
 
@@ -299,7 +420,7 @@ func (s *ChooseTestSuite) TestCarrying() {
 				made := chain(svt)
 
 				for _, k := range carrying(
-					knobsOf(made, s.catalog()), made, dir, 0.1, spectral) {
+					knobsOf(made, s.catalog(), "bass"), made, dir, 0.1, spectral) {
 					s.Require().Zero(k.Carry, k.Setting)
 				}
 			},
@@ -310,7 +431,7 @@ func (s *ChooseTestSuite) TestCarrying() {
 			then: func() {
 				made := chain(svt)
 
-				for _, k := range carrying(knobsOf(made, s.catalog()), made,
+				for _, k := range carrying(knobsOf(made, s.catalog(), "bass"), made,
 					s.T().TempDir(), 0.1, spectral) {
 					s.Require().Zero(k.Carry, k.Setting)
 				}
@@ -359,7 +480,7 @@ func (s *ChooseTestSuite) TestListsOf() {
 				s.Require().Equal(0, one.Options[0])
 				s.Require().Equal(11, one.Options[11])
 
-				for _, k := range knobsOf(made, s.catalog()) {
+				for _, k := range knobsOf(made, s.catalog(), "bass") {
 					s.Require().NotEqual("Mic", k.Setting,
 						"a list has no slope, so the solver may not be handed one")
 				}
@@ -386,7 +507,7 @@ func (s *ChooseTestSuite) TestListsOf() {
 				}}}
 
 				got := map[string]bool{}
-				for _, k := range knobsOf(made, s.catalog()) {
+				for _, k := range knobsOf(made, s.catalog(), "bass") {
 					got[k.Setting] = true
 				}
 
@@ -437,7 +558,7 @@ func (s *ChooseTestSuite) TestListsOf() {
 					"off and on, because false and true is not a range to step through")
 				s.Require().Equal(1, bright.At, "where the compiler left it")
 
-				for _, k := range knobsOf(made, s.catalog()) {
+				for _, k := range knobsOf(made, s.catalog(), "bass") {
 					s.Require().NotEqual("Bright", k.Setting,
 						"a switch has no slope, so the solver may not be handed one")
 				}

@@ -522,7 +522,7 @@ func tuned(
 		return attempted{}, err
 	}
 
-	knobs := knobsOf(made.Plan, cat)
+	knobs := knobsOf(made.Plan, cat, chainIsFor(made.Plan, cat, declared))
 	if len(knobs) == 0 {
 		return attempted{}, fmt.Errorf(
 			"%w: the chain has no dial to turn", solve.ErrNoKnobs)
@@ -957,12 +957,17 @@ func built(
 // slope and cannot be solved for. It needs choosing instead, which is its own
 // piece of work.
 //
+// A low cut arrives with its range bounded by the instrument, which is what
+// `instrument` is for: see [bounded]. An empty one bounds nothing, because
+// nothing says which notes the chain has to keep.
+//
 // Every dial arrives with no carry, so nothing caps how far a slope is taken.
 // [carrying] is what adds one, and only the tuning loop calls it: see there
 // for why a caller that reads its slopes once must not.
 func knobsOf(
 	made plan.Plan,
 	cat *catalog.Catalog,
+	instrument string,
 ) []solve.Knob {
 	var out []solve.Knob
 
@@ -986,7 +991,7 @@ func knobsOf(
 
 			at, _ := b.Params[name].Float()
 
-			out = append(out, solve.Knob{
+			out = append(out, bounded(solve.Knob{
 				Block:   b.Pos,
 				Param:   index,
 				Control: fmt.Sprintf("%s %s", b.Model, name),
@@ -994,11 +999,83 @@ func knobsOf(
 				At:      at,
 				Low:     spec.Min,
 				High:    spec.Max,
-			})
+			}, instrument))
 		}
 	}
 
 	return out
+}
+
+// lowCuts are the controls that reach a brighter figure by removing the bottom
+// of the signal.
+//
+// A named set because nothing the catalog says marks one, which is the same
+// reason [valveGuts] is a named set. Line 6 give a cabinet's high-pass a range
+// in hertz and a type of `generic_knob`, so a cut is indistinguishable from a
+// tone control by anything the device reports.
+//
+// `LowCut` is the one name, and it is 18 of the committed sweeps: fifteen
+// running 19.9Hz to 500 and three to 1000. Two more controls in that class are
+// out of reach of a rule written in hertz and are left alone rather than
+// guessed at. A Regal Bass DI's `Low Cut` runs 0 to 1 with no frequency
+// anywhere, so there is no bound to apply. A Xenomorph Fuzz's `MinFreq` runs 0
+// to 6000Hz and is the frequency that filter exists to sweep, which is the
+// effect rather than a cut taken out of the chain on the way past.
+var lowCuts = map[string]bool{"LowCut": true}
+
+// bounded keeps a cut inside the range the instrument needs.
+//
+// The answer to task 252, and it reverses what that task set out to ask. A
+// high-pass is the largest lever a mic'd cabinet appears to have: across the
+// fourteen swept, taking `LowCut` from 19.9Hz to its top moves the centroid a
+// median 190Hz, more than six times what choosing a different microphone does,
+// and it is one of the straightest things on the device at 0.94 to 0.99.
+//
+// **Every one of those hertz is above the lowest note a bass plays.** The
+// sweeps step 19.9, 79.9, 139.9 and on, so the second position is already
+// above a four-string's open E, and within the range the instrument needs the
+// readings say a low cut moves the centroid 0.0Hz. It only looked like a lever
+// because it was measured over a range nobody would use. So the question that
+// task asked, whether a solve may use a control that reaches a figure by
+// throwing signal away, is not a judgement after all: there is no evidence it
+// reaches anything inside the range it may use, and the clamp is what says so.
+//
+// The other two controls in that class need no rule, which is a measurement
+// rather than an omission. `HighCut` removes brightness and not fundamentals,
+// and across those same cabinets it moves the centroid 0.3 to 7.4Hz, so it is
+// not a lever on a bass at all. A cabinet's `Level` moves the centroid 0.0Hz
+// for 33 to 51dB, so it is purely a level control and the level aim and the
+// pass's own line search already hold it.
+//
+// **Never below where the document already put it.** A rig may say `LowCut:
+// 100` because somebody wanted the mud gone, and a clamp that dragged it back
+// to 30.87Hz would be this loop overruling a decision somebody made, which is
+// not what a bound on a solve is for. So a cut may always be opened and may
+// never be raised past the higher of the instrument's lowest note and where it
+// already sits, exactly as `valveGuts` leaves a document's Sag alone and only
+// refuses to turn it.
+//
+// Unbounded where nothing says which instrument the chain is for. A chain with
+// no amplifier names none and a run with no declared instrument has none to
+// read, and inventing one would cut notes on the strength of a guess.
+func bounded(
+	k solve.Knob,
+	instrument string,
+) solve.Knob {
+	if !lowCuts[k.Setting] {
+		return k
+	}
+
+	lowest, known := audio.Lowest(instrument)
+	if !known {
+		return k
+	}
+
+	if top := math.Max(lowest, k.At); top < k.High {
+		k.High = top
+	}
+
+	return k
 }
 
 // carrying tells each dial how far one reading of its slope may be taken.

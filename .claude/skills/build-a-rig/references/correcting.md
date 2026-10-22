@@ -578,6 +578,48 @@ that broke a satisfied axis said it had arrived, and arriving ends the loop. The
 same 1x15 run reported the low band at 0.00 tolerances out while its own moves
 put it 6.9 out.
 
+## A cut is bounded by the instrument, which leaves it no lever
+
+The section above prices what a high-pass spends. This is the other half, and it
+turns out to be the simpler answer: **inside the range the instrument needs, the
+readings say a low cut does nothing at all.**
+
+The sweeps step `LowCut` at 19.9, 79.9, 139.9Hz and on. A four-string bass's
+open E is 41.2Hz and a five-string's open B is 30.9Hz, so **the second swept
+position is already above the lowest note on the instrument**, and the whole
+190Hz median of centroid lives above it. Measured between the bottom stop and
+41.2Hz, across all fourteen cabinets, a low cut moves the centroid 0.0Hz and
+the low band 0.00 points. It looked like the biggest lever on a cabinet because
+it was measured over a range nobody would use.
+
+So a low cut's range is clamped to the lowest note the instrument sounds, taking
+the extended-range tuning because a solve may not assume which instrument is
+plugged in. On the swept 1x15 that leaves 17Hz of travel against the 480 the
+catalog gives it, worth about 10Hz of centroid, which is inside a genre's own
+tolerance — so the solve drops the control as unable to reach anything, which is
+the truth.
+
+**A document's own setting is never overruled.** A rig may say `LowCut: 120`
+because somebody wanted the mud gone. A cut may always be opened and may never
+be raised past the higher of the instrument's lowest note and where it already
+sits, the same way a document's `Sag` is left alone and only the solve is
+refused.
+
+**Nothing is bounded where no instrument is named.** A chain with no amplifier
+names none, and cutting notes on a guess is worse than not cutting.
+
+The other two controls that reach a figure by throwing signal away need no rule,
+and that is a measurement rather than an omission. A `HighCut` removes
+brightness and not fundamentals, and across those same cabinets it moves the
+centroid 0.3 to 7.4Hz, so it is not a lever on a bass at all. A cabinet's
+`Level` moves the centroid 0.0Hz for 33 to 51dB, so it is purely a level control
+and the level aim plus the pass's own line search already hold it.
+
+Two more controls in that class are out of reach of a rule written in hertz and
+are left alone rather than guessed at: a Regal Bass DI's `Low Cut` runs 0 to 1
+with no frequency anywhere, and a Xenomorph Fuzz's `MinFreq` runs 0 to 6,000Hz
+and is the frequency that filter exists to sweep.
+
 ## Level is a target like any other
 
 The loop constrains how loud the chain is, anchored at what it measured before
