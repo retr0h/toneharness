@@ -164,12 +164,58 @@ would.
 
 It needs somebody to have done the research. A player with records in the corpus
 and no rig is refused with `no rig has been researched for that player`, naming
-them, and `rigs list` says who does. Measuring a named player's records is not
-built; a recording is the route when nobody has written their rig.
+them, and `rigs list` says who does. Where their records are measured, those
+figures are what the controls on that chain are set to, so the gear is cited and
+the knobs are a reading.
 
 **`subject:` resolves nothing, on purpose.** It says who the ask is for and
 `like:` says what to aim at. An ask carrying only a subject is told which field
 it wanted rather than refused in silence.
+
+## An artist rig is set to their own records
+
+A rig whose gear is authored still has every knob to set, and the records listed
+on it are what sets them. Before this each of the 32 named the amplifier a
+source puts somebody on and then carried the catalog's defaults: Dee Dee Ramone
+sat at Bass 0.41, Bias 0.74, ChVol 0.8 and Drive 0.6, which is the factory
+setting to the digit, while his three records sat on the document unread. Across
+the 14 rigs sharing an Ampeg SVT, every control read the same on all 14.
+
+The rig's own identifier is who it is for, and it is also the directory the
+corpus files their records under, which is what makes this answerable without a
+field for it. So `rigs resolve --id <player>` aims, and it needs `--sweeps`:
+only the fingerprints are packed into the binary, so a release sets nothing and
+the controls stay where the corpus medians put them.
+
+**Their middle, not an edge, which is the opposite of a genre.** A genre aims at
+its edge because the middle is what every genre shares and ten of the eleven
+displace less than 6.4 points from one baseline. One player's records describe
+one person, so their middle is the thing being aimed at rather than the thing
+that hides them. Where their own records disagree more than players disagree
+with each other, the report says so and that figure describes none of their
+sounds.
+
+**Still a displacement.** A player is measured off finished records and a block
+off a dry signal through one block, so the two do not subtract. What is
+comparable is how far each sits from its own normal, and the pack carries what
+the other players measure as for exactly this.
+
+**The cabinet is not aimed.** A sweep reads one control at a time and cannot see
+that the cut taking the most energy out of the low band is also the one taking
+the signal with it: letting this set a whole cabinet sent LowCut to 79.9Hz,
+which is above the fundamental of a bass's open E. The cabinet stays the one its
+sources or its amplifier's own pairing name.
+
+It moves real distance. The 14 Ampeg SVT rigs now span Drive 0.5 to 0.875 and
+Mid 0.085 to 1.0. Several land on an endpoint of their control's sweep, which is
+what a monotone control does when it is read alone, and it is the limit of
+reading a sweep rather than a fault in the aim.
+
+**`built:` is where it lands and `rig:` is untouched.** Computed controls written
+into the authored half become an override the next resolve honours, which is how
+eleven genre rigs went on reading as four presets after the compiler had been
+taught to tell them apart. A resolve replaces `built:` whole and never writes
+where the gear and the citations live.
 
 ## What the figures are
 

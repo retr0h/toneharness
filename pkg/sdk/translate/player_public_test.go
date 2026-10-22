@@ -144,6 +144,69 @@ func (s *PlayerTargetPublicTestSuite) TestAPlayerAimsAtTheirMiddle() {
 	s.Require().NotEmpty(got)
 }
 
+// TestAimAtPlayer covers the target the resolve path asks for by identifier.
+//
+// An artist rig's gear is authored, so its resolve never passes through the
+// gear-choosing path where an ask's `like` is read. It asks here instead, with
+// the document's own identifier, which is also the directory the corpus files
+// their records under.
+func (s *PlayerTargetPublicTestSuite) TestAimAtPlayer() {
+	tests := []struct {
+		name string
+		who  string
+		// aimed is whether a target came back at all.
+		aimed bool
+	}{
+		{
+			name:  "a measured player is a target",
+			who:   "dee-dee-ramone",
+			aimed: true,
+		},
+		{
+			// The name is slugged, because the pack files a player under the
+			// directory their records sit in.
+			name:  "the name is read the way the corpus files it",
+			who:   "Dee Dee Ramone",
+			aimed: true,
+		},
+		{
+			// Most rigs, and not an error: those keep the controls their
+			// sources justify.
+			name:  "a rig nobody has records for is no target",
+			who:   "somebody-nobody-recorded",
+			aimed: false,
+		},
+		{
+			// A genre identifier, which reaches here because every rig's
+			// identifier does and must not resolve to a player.
+			name:  "a genre is not a player",
+			who:   "punk",
+			aimed: false,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, ok := translate.AimAtPlayer(tt.who, s.deps.Measured.Baseline)
+			s.Require().Equal(tt.aimed, ok)
+
+			if !tt.aimed {
+				s.Require().Equal(measured.Figures{}, got,
+					"it handed back figures for nobody")
+
+				return
+			}
+
+			// Displaced from the baseline the blocks were measured against,
+			// which is the only thing that makes a player and a block
+			// comparable: a player comes off finished records and a block off
+			// a dry signal through one block.
+			s.Require().NotEqual(s.deps.Measured.Baseline, got,
+				"it handed back the baseline unmoved")
+		})
+	}
+}
+
 func TestPlayerTargetPublicTestSuite(
 	t *testing.T,
 ) {

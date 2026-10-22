@@ -111,12 +111,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "0.9461538461538461"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -136,18 +136,18 @@ built:
           note: '"But the ''75/''76 world tour was another matter. He had a pretty sizeable rig there, with two Crown 300A amps and an Audio Master preamp, and these drove a set of JBL speakers, a Roy Clare 2x12 midrange bin and JBL horns." John Hammel, McCartney''s assistant since the Beatles split, to Mark Cunningham, published September 1993 and put online in 2019. The same passage puts the Acoustic 360 on the 1972 and 1973 tours rather than this one, and ends the era this rig covers on something else again: "for the last UK tour in 1979, Paul switched to using 120-watt Fender Bassmans and three 4x12 cabinets with angled speakers."'
           url: https://guitar.com/features/interviews/paul-mccartney-beatles-wings/
       controls:
-        Bass: "0.684"
-        Bright: "false"
+        Bass: "0.125"
+        Bright: "true"
         ChVol: "0.7"
         Drive: "0.45"
-        Effect: "0.332"
-        Hum: "0.274"
+        Effect: "1.0"
+        Hum: "0.125"
         Master: "1.0"
         TFCoarse: "0.472"
         TFFine: "0.308"
-        Treble: "0.616"
+        Treble: "1.0"
         TuningFork: "0.0"
-        Variamp: "2"
+        Variamp: "4"
       attrs:
         '@position': "1"
       position: 1
@@ -183,11 +183,11 @@ built:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        HighGain: "0.0"
+        HighGain: "9.0"
         Level: "0.0"
-        LowGain: "0.0"
+        LowGain: "-3.0"
         MidFreq: "600.0"
-        MidGain: "1.6"
+        MidGain: "12.0"
       attrs:
         '@position': "3"
       position: 3
@@ -257,8 +257,11 @@ built:
             block3:
               attrs:
                 '@fs_customcolor': "2"
+                '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Simple EQ
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -323,6 +326,9 @@ built:
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
     - block: 3
+      enabled: false
       label: Simple EQ
       led: red
+      momentary: false
+      primary: true
       switch: 1

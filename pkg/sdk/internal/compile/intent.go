@@ -21,6 +21,8 @@
 package compile
 
 import (
+	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
@@ -61,6 +63,31 @@ type Intent struct {
 	// reason: how somebody wants their own presets to sit changes on the clock
 	// a pedal changes on rather than once per sound.
 	Loudness *float64
+	// Aim is what the records of whoever this rig is for measure as, as a
+	// displacement in the units a block is measured in. Nil for a rig nobody
+	// has records for, which is most of them.
+	//
+	// A figure by the time it reaches here, for the reason Loudness is one:
+	// this package builds a chain and has no business deciding who a rig is
+	// for or reading a corpus to find out.
+	//
+	// What it is for: an artist rig names the amplifier a source puts somebody
+	// on and then had every control at the catalog's default, which for
+	// `dee-dee-ramone` was Bass 0.41, Bias 0.74, ChVol 0.8 and Drive 0.6, the
+	// factory setting to the digit. The records are listed on the document and
+	// nothing read them.
+	Aim *measured.Figures
+	// Curves answers with what every control of one block does, measured.
+	//
+	// A reader rather than a map, because which models a chain holds is not
+	// known until this package has resolved the gear names onto them, and
+	// handing in a map would mean the caller resolving them first to ask the
+	// same question twice.
+	//
+	// Nil where no sweeps were offered, which a release is: only the
+	// fingerprints are packed into the binary. False for a block the campaign
+	// never reached, which is 435 of this device's 614.
+	Curves func(model catalog.ModelID) (measured.Curves, bool)
 	// Name is what the preset should be called, which is the subject the ask
 	// names: "Mike Dirnt" is what somebody wants to read on the screen.
 	//

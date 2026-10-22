@@ -64,12 +64,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -85,18 +85,18 @@ built:
           note: 'Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks", Premier Guitar, 18 May 2010. It puts him on three Ampeg SVT 300-watt heads with three matching 8x10 cabinets, bought once there was money for them, and quotes him from a 1976 documentary on why: "We play so loud that the amps couldn''t take it… But now we got these amps that they… work."'
           url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
       controls:
-        Bass: "0.41"
-        Bias: "0.74"
-        BiasX: "0.5"
+        Bass: "0.5"
+        Bias: "0.75"
+        BiasX: "0.0"
         ChVol: "0.8"
-        Drive: "0.6"
-        Hum: "0.5"
+        Drive: "0.875"
+        Hum: "0.75"
         Master: "1.0"
-        Mid: "0.89"
-        MidFreq: "2"
+        Mid: "0.725"
+        MidFreq: "1"
         Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.88"
+        Sag: "0.625"
+        Treble: "0.78"
       attrs:
         '@position': "1"
       position: 1

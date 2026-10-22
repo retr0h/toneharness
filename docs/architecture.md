@@ -39,7 +39,7 @@ come out generic.
 | What order blocks go in   | statistics over `resources/schemas/corpus/`        | added blocks placed; a rig's own order kept            |
 | Which blocks are in it    | the gear a rig names, plus the grammar             | shortlisted by measurement when a solve stalls         |
 | Which way a knob moves    | swept on the device, in `resources/sweeps/`        | 19 blocks measured and shipped, on bass                |
-| What values to set        | catalog defaults, corpus medians, intent           | six axes of ten                                        |
+| What values to set        | the sweeps, then corpus medians, then intent       | aimed at a player's records; six word axes of ten      |
 | What a genre sounds like  | displacement over `resources/music/`               | 21 tagged, all 21 earning a word, 11 aimable, all bass |
 | What a player sounds like | measured over `resources/music/bass/`              | 43 players, 134 records, 33 earning a word             |
 

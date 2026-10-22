@@ -61,12 +61,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -80,18 +80,18 @@ built:
           note: 'Premier Guitar on the pair of them, published 26 April 2018 alongside the band''s self-titled album of that year, which is where these records come from. It separates his studio amplifiers from his live ones, and the studio list is two: a 1967 Ampeg B-15N and an Ampeg VT-22. Live he ran a QSC PLX1602 power amp into two Ampeg SVT-810E extension cabinets, which is a different rig and not this one. The same piece lists the basses he tracked the album with: a 1965 Fender Precision, a 1976 Rickenbacker 4001, a 1971 Rickenbacker 4001 in fireglo with flatwounds, a 1972 Fender Jazz and a 1974 Fender Telecaster Bass.'
           url: https://www.premierguitar.com/artists/stone-temple-pilots-dean-and-robert-deleo
       controls:
-        Bass: "0.67"
-        Bias: "0.66"
+        Bass: "0.5"
+        Bias: "0.625"
         BiasX: "0.5"
         ChVol: "1.0"
-        Drive: "0.7"
-        HighMid: "0.5"
-        Hum: "0.5"
-        LowMid: "0.65"
+        Drive: "0.375"
+        HighMid: "1.0"
+        Hum: "0.625"
+        LowMid: "0.875"
         Master: "1.0"
         Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.69"
+        Sag: "0.0"
+        Treble: "0.875"
       attrs:
         '@position': "1"
       position: 1

@@ -58,12 +58,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "20.0"
         Level: "5.2"
         Mix: "0.9580645161290322"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-45.0"
       attrs:
         '@position': "0"
       position: 0
@@ -79,18 +79,18 @@ built:
           note: No Treble's transcription of Highway Song, from this record, says he "has mainly used Dean, Fender, and Ibanez instruments, and has mainly used Ampeg amplification."
           url: https://www.notreble.com/buzz/2019/11/21/bass-transcription-greg-t-walkers-bass-line-on-highway-song-by-blackfoot/
       controls:
-        Bass: "0.41"
-        Bias: "0.74"
-        BiasX: "0.5"
+        Bass: "0.375"
+        Bias: "0.75"
+        BiasX: "0.25"
         ChVol: "0.8"
-        Drive: "0.6"
-        Hum: "0.5"
+        Drive: "0.5"
+        Hum: "0.625"
         Master: "1.0"
-        Mid: "0.79"
+        Mid: "0.75"
         MidFreq: "2"
         Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.85"
+        Sag: "0.875"
+        Treble: "0.75"
       attrs:
         '@position': "1"
       position: 1
