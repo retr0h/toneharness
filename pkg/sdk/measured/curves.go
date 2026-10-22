@@ -170,6 +170,75 @@ type Curve struct {
 	Spread map[audio.Figure]float64 `json:"spread,omitempty"`
 }
 
+// Carries is how far a slope read off this control may be taken, as a fraction
+// of the control's own range.
+//
+// Straightness, which is the question exactly. `Straight` is the fraction of a
+// figure's movement one line accounts for, so a control reading 0.98 is a line
+// and a slope read anywhere on it is true everywhere, while one reading 0.00
+// has a slope that is true only where it was read.
+//
+// **The controls a least-squares solve models best are the ones that reach a
+// figure by removing signal, and the controls that matter musically are the
+// ones it models worst.** Across this library the filters are nearly perfect
+// lines: a drive's MinFreq reads 0.99 straight over 2,399Hz and a cabinet's
+// LowCut 0.97 over 235Hz. The voicing controls collapse: an equaliser's Mode
+// reads 0.00 over 1,463Hz, a filter's Start 0.00 over 1,436Hz, an amplifier's
+// Ch1 Mid Freq 0.02 over 429Hz.
+//
+// So a slope is worth a distance rather than a yes or a no. Leaving each
+// reading out of the library and predicting it, one least-squares line over
+// the whole range misses by a median 13.3% of the figure's own movement across
+// 28,472 readings, and a slope read locally is worse the further it is taken:
+// the two-point derivative at the middle of a curve is a median 64% wrong one
+// step past where it was read, 77% two steps on and 86% three.
+//
+// **`figures` is the axes being solved, and naming them is not optional in
+// practice.** The worst of them decides, which is the choice [Reach] makes for
+// the same reason: a solve puts every axis it is given into one matrix, so a
+// control that is a line for the centroid and a hairpin for the mid band is
+// not a control whose slope carries. Which axes those are changes the answer
+// more than anything else here. Over the 1,001 committed float curves, the
+// worst of the centroid and the three band shares runs to a median of 0.377
+// and 31% of curves read under 0.1; add the dynamics, the harmonics and the
+// lean a corpus also states and it is a median of 0.058 with 59% under 0.1;
+// take every figure in the file, which includes a decay and a transient that
+// mostly wandered inside their own noise, and it is 0.019 with 77% under 0.1.
+// A target naming harmonics really is asking for a figure almost nothing moves
+// in a straight line, and the tight cap is the finding rather than a fault.
+//
+// No figures is every fit, which is the right answer for a caller asking about
+// the control rather than about a target.
+//
+// False for a control with no fit for any figure named, which is every list. A
+// list has no order, so a line through it is meaningless by construction and
+// there is no distance to carry one over. Those are compared rather than
+// solved, which is what `measure controls` already does with a cabinet's
+// twelve microphones.
+func (curve Curve) Carries(
+	figures ...audio.Figure,
+) (float64, bool) {
+	out, found := 1.0, false
+
+	for key, fit := range curve.Fits {
+		if len(figures) > 0 && !slices.Contains(figures, key) {
+			continue
+		}
+
+		out, found = math.Min(out, fit.Straight), true
+	}
+
+	if !found {
+		return 0, false
+	}
+
+	// Clamped, because `Straight` is 1 minus a ratio of sums of squares and
+	// goes negative wherever the line misses by more than the readings' own
+	// spread: a fraction of a range is the unit here, and a negative one is
+	// not a shorter distance, it is no distance.
+	return math.Min(math.Max(out, 0), 1), true
+}
+
 // Span is the range a control was swept over.
 type Span struct {
 	Low  float64 `json:"low"`

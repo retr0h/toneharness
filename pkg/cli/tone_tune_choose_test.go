@@ -23,6 +23,8 @@ package cli
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -32,6 +34,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/solve"
 )
@@ -102,6 +105,222 @@ func (s *ChooseTestSuite) mic() solve.Choice {
 	s.Require().Len(got, 1)
 
 	return got[0]
+}
+
+// svt is a real swept amplifier, and it holds both ends of task 253 on one
+// block. Against the centroid and the three band shares its Bass reads 0.911
+// straight and its Master 0.063, so one of them is a line a slope carries
+// across and the other has a slope that is true only where it was read. It is
+// also the amplifier whose Sag and Hum a solve took to the stops in task 217,
+// and whose Master a pass took from 1.0 to 0.037.
+const svt = catalog.ModelID("HD2_AmpSVBeastBrt")
+
+// sweeps is the committed curves, which say how far a slope carries.
+const sweeps = "../../resources/sweeps/hx-stomp"
+
+// TestCarrying covers how far each dial may be moved on one reading of its
+// slope.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ChooseTestSuite) TestCarrying() {
+	chain := func(model catalog.ModelID) plan.Plan {
+		return plan.Plan{Blocks: []plan.Block{{
+			Model: model, Pos: 0, Enabled: true,
+			Params: plan.Params{
+				"Bass": catalog.Float(0.5), "Master": catalog.Float(0.5),
+			},
+		}}}
+	}
+
+	// Every control of this amplifier runs 0 to 1, so a carry reads off as a
+	// fraction of the range without any arithmetic.
+	carryOf := func(made plan.Plan, name string, aims map[audio.Figure]solve.Aim,
+		dir string, nudge float64,
+	) float64 {
+		knobs := carrying(knobsOf(made, s.catalog()), made, dir, nudge, aims)
+
+		for _, k := range knobs {
+			if k.Setting == name {
+				return k.Carry
+			}
+		}
+
+		s.Require().Fail("no " + name + " among the dials")
+
+		return 0
+	}
+
+	// The centroid and the three band shares, which is what a bass target
+	// names and the distribution the floor was sized against.
+	spectral := map[audio.Figure]solve.Aim{
+		audio.KeyCentroid: {Want: 150, Tol: 5},
+		audio.KeyLow:      {Want: 95, Tol: 1},
+		audio.KeyMid:      {Want: 4, Tol: 1},
+		audio.KeyHigh:     {Want: 1, Tol: 1},
+	}
+
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The ordinary case, and what a release gets: only the
+			// fingerprints are packed into the binary, so without a sweep
+			// there is nothing that says how far a slope carries.
+			name: "no sweeps named caps nothing",
+			then: func() {
+				s.Require().Zero(carryOf(
+					chain(svt), "Master", spectral, "", 0.1))
+			},
+		},
+		{
+			// A block the campaign never reached, inside a tree that holds
+			// other blocks. A missing file is nothing rather than an error.
+			name: "a block nobody swept caps nothing",
+			then: func() {
+				made := chain("HD2_AmpArchetype")
+
+				for _, k := range carrying(
+					knobsOf(made, s.catalog()), made, sweeps, 0.1, spectral) {
+					s.Require().Zero(k.Carry, k.Setting)
+				}
+			},
+		},
+		{
+			// The floor. This amplifier's Master reads 0.063 straight, which
+			// would cap it at 6.3% of its range: shorter than the step that
+			// measured the slope, and a cap tighter than the evidence.
+			name: "a control that is no line carries one nudge",
+			then: func() {
+				s.Require().InDelta(0.1, carryOf(
+					chain(svt), "Master", spectral, sweeps, 0.1), 1e-9,
+					"the nudge is the distance the slope was read over")
+			},
+		},
+		{
+			// And the floor is the caller's rather than this file's: a run
+			// reading its slopes over a wider step may take them further.
+			name: "a wider nudge carries further",
+			then: func() {
+				s.Require().InDelta(0.25, carryOf(
+					chain(svt), "Master", spectral, sweeps, 0.25), 1e-9)
+			},
+		},
+		{
+			// The other side of the floor, on the same block. This
+			// amplifier's Bass reads 0.911 straight against these axes: it
+			// really is a line, so a slope read anywhere on it is true
+			// everywhere and nearly the whole range carries.
+			name: "a control that is a line carries almost its whole range",
+			then: func() {
+				got := carryOf(chain(svt), "Bass", spectral, sweeps, 0.1)
+
+				s.Require().Greater(got, 0.9,
+					"a line was capped as though it were a hairpin")
+				s.Require().LessOrEqual(got, 1.0,
+					"nothing carries past its own range")
+			},
+		},
+		{
+			// The axes decide, and they decide more than anything else here.
+			// The same Bass that is a line for the band shares reads 0.162
+			// straight for the decay, so changing the target takes the same
+			// control from carrying nearly its whole range to carrying a
+			// sixth of it. A figure almost nothing moves in a straight line
+			// really does deserve the tight cap, and that is the finding
+			// rather than a fault.
+			name: "the axes being solved decide the distance",
+			then: func() {
+				s.Require().InDelta(0.162, carryOf(
+					chain(svt), "Bass",
+					map[audio.Figure]solve.Aim{
+						audio.KeyDecay: {Want: 0.5, Tol: 0.01},
+					}, sweeps, 0.1), 0.001)
+			},
+		},
+		{
+			// A control the sweep read and left no fit for, which is every
+			// list: a line through twelve microphones is meaningless by
+			// construction, so there is no distance to carry a slope over.
+			// Unreachable through knobsOf, which hands the solver floats only,
+			// and the guard is what keeps it that way.
+			name: "a control with no fit carries nothing",
+			then: func() {
+				s.Require().Zero(carries(measured.Curves{
+					Controls: map[string]measured.Curve{"Mic": {
+						Spread: map[audio.Figure]float64{audio.KeyCentroid: 11},
+					}},
+				}, "Mic", 11, 0.1, []audio.Figure{audio.KeyCentroid}))
+			},
+		},
+		{
+			// A chain holding two of a kind, which is ordinary: the sweep is
+			// read once and both blocks are capped from it.
+			name: "two of a kind read one sweep",
+			then: func() {
+				twice := chain(svt)
+				twice.Blocks = append(twice.Blocks, plan.Block{
+					Model: svt, Pos: 1, Enabled: true,
+					Params: plan.Params{
+						"Bass": catalog.Float(0.5), "Master": catalog.Float(0.5),
+					},
+				})
+
+				knobs := carrying(
+					knobsOf(twice, s.catalog()), twice, sweeps, 0.1, spectral)
+
+				seen := 0
+
+				for _, k := range knobs {
+					if k.Setting != "Master" {
+						continue
+					}
+
+					seen++
+
+					s.Require().InDelta(0.1, k.Carry, 1e-9,
+						"block %d read a different sweep", k.Block)
+				}
+
+				s.Require().Equal(2, seen, "both blocks' Masters")
+			},
+		},
+		{
+			// A file that is there and will not parse, which is nothing
+			// rather than an error: this must never stop a run that was about
+			// to measure something.
+			name: "a sweep that will not parse caps nothing",
+			then: func() {
+				dir := s.T().TempDir()
+				s.Require().NoError(os.WriteFile(
+					filepath.Join(dir, string(svt)+".json"),
+					[]byte("{not json"), 0o600))
+
+				made := chain(svt)
+
+				for _, k := range carrying(
+					knobsOf(made, s.catalog()), made, dir, 0.1, spectral) {
+					s.Require().Zero(k.Carry, k.Setting)
+				}
+			},
+		},
+		{
+			// A directory that holds no curves at all.
+			name: "a sweeps path with nothing in it caps nothing",
+			then: func() {
+				made := chain(svt)
+
+				for _, k := range carrying(knobsOf(made, s.catalog()), made,
+					s.T().TempDir(), 0.1, spectral) {
+					s.Require().Zero(k.Carry, k.Setting)
+				}
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			tt.then()
+		})
+	}
 }
 
 // TestListsOf covers listsOf, which is every control in the chain that is

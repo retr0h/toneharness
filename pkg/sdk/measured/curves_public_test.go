@@ -440,6 +440,120 @@ func (s *CurvesPublicTestSuite) TestLoadCurves() {
 	}
 }
 
+// TestCarries covers Carries, which is how far a slope read off a control may
+// be taken.
+//
+// Task 253: the controls a least-squares solve models best are the ones that
+// reach a figure by removing signal, and the ones that matter musically are
+// the ones it models worst. A drive's MinFreq reads 0.99 straight over
+// 2,399Hz; an equaliser's Mode reads 0.00 over 1,463Hz.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *CurvesPublicTestSuite) TestCarries() {
+	fits := func(straight ...float64) map[audio.Figure]measured.Fit {
+		keys := []audio.Figure{
+			audio.KeyCentroid, audio.KeyLow, audio.KeyMid, audio.KeyHigh,
+		}
+
+		out := map[audio.Figure]measured.Fit{}
+		for i, v := range straight {
+			out[keys[i]] = measured.Fit{PerTurn: 1, Straight: v}
+		}
+
+		return out
+	}
+
+	tests := []struct {
+		name  string
+		curve measured.Curve
+		// figures is the axes being solved. Empty reads every fit.
+		figures []audio.Figure
+		// want is the fraction, and fitted whether there was one to give.
+		want   float64
+		fitted bool
+	}{
+		{
+			// A filter, which is what a solve models well and what nobody
+			// reaches for to voice a chain.
+			name:   "a control that is a line carries almost its whole range",
+			curve:  measured.Curve{Fits: fits(0.99)},
+			want:   0.99,
+			fitted: true,
+		},
+		{
+			// A voicing control. A slope read here is true where it was read
+			// and nowhere else, which is the whole of this task.
+			name:   "a control that is not a line carries nothing",
+			curve:  measured.Curve{Fits: fits(0)},
+			want:   0,
+			fitted: true,
+		},
+		{
+			// The worst figure, which is the choice Reach makes for the same
+			// reason: a solve puts every axis in one matrix, so a control that
+			// is a line for the centroid and a hairpin for the mid band is not
+			// a control whose slope carries.
+			name:   "the worst figure decides",
+			curve:  measured.Curve{Fits: fits(0.98, 0.95, 0.02, 0.9)},
+			want:   0.02,
+			fitted: true,
+		},
+		{
+			// Straight is 1 minus a ratio of sums of squares, so it goes
+			// negative where the line misses by more than the readings' own
+			// spread. A negative fraction of a range is not a shorter
+			// distance, it is no distance.
+			name:   "a line that misses by more than the spread carries nothing",
+			curve:  measured.Curve{Fits: fits(-3.4)},
+			want:   0,
+			fitted: true,
+		},
+		{
+			// Clamped the other way too, because nothing may be moved further
+			// than its own range on the strength of a rounding.
+			name:   "straightness above one is still one range",
+			curve:  measured.Curve{Fits: fits(1.2)},
+			want:   1,
+			fitted: true,
+		},
+		{
+			// No figures named, which is a caller asking about the control
+			// rather than about a target. Every fit counts, and the decay a
+			// drive's Bass moved by less than its own noise is one of them.
+			name:   "no figures named reads every fit",
+			curve:  measured.Curve{Fits: fits(0.98, 0.95, 0.02, 0.9)},
+			want:   0.02,
+			fitted: true,
+		},
+		{
+			// A figure this control has no fit for, which answers the same
+			// way a list does: there is nothing to carry a slope over.
+			name:    "a figure with no fit carries nothing",
+			curve:   measured.Curve{Fits: fits(0.98)},
+			figures: []audio.Figure{audio.KeyDecay},
+			fitted:  false,
+		},
+		{
+			// Every list. A list has no order, so a line through it is
+			// meaningless by construction and there is no distance to carry a
+			// slope over: a cabinet's twelve microphones are compared rather
+			// than solved.
+			name:   "a list has no fit and no carry",
+			curve:  measured.Curve{Spread: map[audio.Figure]float64{audio.KeyCentroid: 11}},
+			fitted: false,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, fitted := tt.curve.Carries(tt.figures...)
+
+			s.Require().Equal(tt.fitted, fitted)
+			s.Require().InDelta(tt.want, got, 1e-9)
+		})
+	}
+}
+
 func TestCurvesPublicTestSuite(
 	t *testing.T,
 ) {

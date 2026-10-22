@@ -108,6 +108,25 @@ type Knob struct {
 	// Slope is how much each figure moves per unit of this control, read at
 	// or near At rather than averaged over the range.
 	Slope map[audio.Figure]float64
+	// Carry is how far this control may be moved on one reading of its slope,
+	// in the control's own units.
+	//
+	// A slope is read at one position over one small step, and it stops being
+	// true almost immediately on a control that is not a line: measured over
+	// the committed sweeps, a two-point derivative is a median 64% wrong one
+	// step past where it was read, 77% two steps on and 86% three. Least
+	// squares does not know that and is free to answer with a swing from stop
+	// to stop, which on such a control is a leap taken on a number that had
+	// already stopped describing anything.
+	//
+	// `measured.Curve.Carries` is where this comes from: the fraction of a
+	// figure's movement one line accounts for, which is the question exactly.
+	//
+	// **Zero means nothing was said and the move is not capped.** That is the
+	// honest answer for a block nobody has swept, because without a sweep
+	// there is nothing to say how far its slope carries, and it is what every
+	// caller that does not set this gets.
+	Carry float64
 }
 
 // Where identifies one control: a position in the chain and an index in that
@@ -130,6 +149,14 @@ type Step struct {
 	By float64
 	// To is where it lands.
 	To float64
+	// Capped says the move the solve asked for was longer than the control's
+	// slope carries, and this is as far as it was taken.
+	//
+	// Reported rather than silent. A capped move is the loop deciding to take
+	// a distance in several measured steps instead of one leap, and somebody
+	// reading a pass that moved a dial a third of what the arithmetic asked
+	// for should be able to see why.
+	Capped bool
 }
 
 // Result is one pass of the loop.
@@ -326,7 +353,20 @@ func stepsOf(
 	out := make([]Step, 0, len(knobs))
 
 	for i, k := range knobs {
-		to := math.Min(math.Max(k.At+move[i], k.Low), k.High)
+		by, capped := move[i], false
+
+		// No further than the slope describes. See [Knob.Carry] for what that
+		// distance is and why a slope has one.
+		//
+		// It costs no reach, which is what makes a cap the right answer rather
+		// than a refusal: the loop reads its slopes again from wherever each
+		// pass landed, so this trades one wrong leap for several measured steps
+		// toward the same place. What it costs is passes.
+		if k.Carry > 0 && math.Abs(by) > k.Carry {
+			by, capped = math.Copysign(k.Carry, by), true
+		}
+
+		to := math.Min(math.Max(k.At+by, k.Low), k.High)
 
 		// Anything under a thousandth of the control's own range is not a move.
 		// Two reasons, and the second is the one that bit. It cannot change a
@@ -338,7 +378,7 @@ func stepsOf(
 			continue
 		}
 
-		out = append(out, Step{Knob: k, By: to - k.At, To: to})
+		out = append(out, Step{Knob: k, By: to - k.At, To: to, Capped: capped})
 	}
 
 	return out

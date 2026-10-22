@@ -86,7 +86,7 @@ type Intent struct {
 	//
 	// Nil where no sweeps were offered, which a release is: only the
 	// fingerprints are packed into the binary. False for a block the campaign
-	// never reached, which is 435 of this device's 614.
+	// never reached, which is 436 of this device's 614.
 	Curves func(model catalog.ModelID) (measured.Curves, bool)
 	// Name is what the preset should be called, which is the subject the ask
 	// names: "Mike Dirnt" is what somebody wants to read on the screen.

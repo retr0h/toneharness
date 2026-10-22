@@ -1926,6 +1926,72 @@ func second(
 	return err
 }
 
+// TestAimed covers what a pass prints: the residual per axis and the moves.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *TuneTestSuite) TestAimed() {
+	step := func(capped bool) solve.Result {
+		return solve.Result{
+			Residual: map[audio.Figure]float64{
+				audio.KeyCentroid: 2.4, audio.KeyLow: 0.3,
+			},
+			Steps: []solve.Step{{
+				Knob: solve.Knob{
+					Control: "HD2_AmpSVBeastBrt Master", At: 1, Low: 0, High: 1,
+				},
+				By: -0.1, To: 0.9, Capped: capped,
+			}},
+		}
+	}
+
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// An axis outside its tolerance is marked and an axis inside one
+			// is not, and the moves follow in the order the solve gave them.
+			name: "a pass prints its residuals worst first",
+			then: func() {
+				var buf bytes.Buffer
+
+				aimed(&buf, 2, step(false), 2.4)
+
+				out := buf.String()
+				s.Require().Contains(out, "pass 2, 2.4 tolerances out")
+				s.Require().Contains(out, "-> centroid")
+				s.Require().Contains(out, "   low")
+				s.Require().NotContains(out, "-> low",
+					"an axis inside its tolerance is not marked")
+				s.Require().Contains(out, "1.000 to    0.900")
+				s.Require().NotContains(out, "slope carries")
+			},
+		},
+		{
+			// Task 253. A shortened move has to say so: it is as far as that
+			// control's slope carries, and the rest of the distance is for the
+			// next pass to re-measure. Somebody reading a pass that moved a
+			// dial a third of what the arithmetic asked for should be able to
+			// see why.
+			name: "a capped move says it is as far as the slope carries",
+			then: func() {
+				var buf bytes.Buffer
+
+				aimed(&buf, 1, step(true), 2.4)
+
+				s.Require().Contains(buf.String(),
+					"as far as its slope carries")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+
+			tt.then()
+		})
+	}
+}
+
 func TestTuneTestSuite(
 	t *testing.T,
 ) {

@@ -131,7 +131,7 @@ func (s *AimedTestSuite) TestAimed() {
 			wants:  []plan.Params{{"Drive": catalog.Float(0.6)}},
 		},
 		{
-			// 435 of this device's 614 blocks, which the campaign never
+			// 436 of this device's 614 blocks, which the campaign never
 			// reached.
 			name:   "a block the campaign never swept keeps its default",
 			blocks: []catalog.Block{s.aimedAmp()},
