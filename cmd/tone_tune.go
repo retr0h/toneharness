@@ -41,6 +41,7 @@ var (
 	toneTuneExtend   string
 	toneTuneSweeps   string
 	toneTuneRigs     string
+	toneTuneGrow     int
 	toneTuneAsk      string
 	toneTuneHardware string
 	toneTuneHeadroom float64
@@ -129,6 +130,7 @@ wrong for the sound is a real answer to somebody who owns that gear.`,
 			Out:          toneTuneOut,
 			Keep:         toneTuneKeep,
 			Extend:       toneTuneExtend,
+			Grow:         toneTuneGrow,
 			Sweeps:       toneTuneSweeps,
 			Ask:          toneTuneAsk,
 			Hardware:     toneTuneHardware,
@@ -173,6 +175,14 @@ func init() {
 		"",
 		"where to write this rig with one more block in it, when the dials run out. The loop already names the blocks whose own readings move what is missing; this writes the best of them into the chain, on the side of the amplifier the corpus puts that kind, with evidence saying it arrived by measurement. Nothing is built and nothing is overwritten: read it, keep or drop the block, and tune it again",
 	)
+	f.IntVar(&toneTuneGrow, "grow", 0,
+		"how many blocks the loop may add when the dials run out, one per "+
+			"round. Each is kept only if the chain holding it measures nearer "+
+			"the target than the chain without it, so this is a ceiling on the "+
+			"rounds rather than a number of blocks to reach: a run stops at the "+
+			"first block that does not earn its place. Every round is a whole "+
+			"tuning run and they get slower as the chain grows, so four on a "+
+			"three-block rig is most of half an hour of a pedal playing")
 	f.StringVar(&toneTuneRigs, "rigs", "",
 		"a directory of rigs to use instead of yours, beside the built-in ones")
 	f.StringVar(&toneTuneSweeps, "sweeps", "resources/sweeps/hx-stomp",
