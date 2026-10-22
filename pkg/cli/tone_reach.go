@@ -174,7 +174,7 @@ func Reach(
 		return err
 	}
 
-	knobs := knobsOf(made.Plan, cat)
+	knobs := knobsOf(made.Plan, cat, chainIsFor(made.Plan, cat, declared))
 	if len(knobs) == 0 {
 		return fmt.Errorf("%w: the chain has no dial to turn", solve.ErrNoKnobs)
 	}

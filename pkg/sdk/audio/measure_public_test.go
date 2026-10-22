@@ -463,6 +463,86 @@ func (s *MeasurePublicTestSuite) TestMeasure() {
 	}
 }
 
+// TestLowest covers Lowest, which is the lowest fundamental an instrument
+// sounds and so the highest a cut may be raised.
+//
+// Task 252. A high-pass looks like the largest lever a mic'd cabinet has, a
+// median 190Hz of centroid across the fourteen swept, and every one of those
+// hertz is above this number: the sweeps step 19.9, 79.9, 139.9 and on, so the
+// second position is already above a four-string bass's open E.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasurePublicTestSuite) TestLowest() {
+	tests := []struct {
+		name       string
+		instrument string
+		// want is the frequency, and known whether there is one.
+		want  float64
+		known bool
+	}{
+		{
+			// B0 on a five-string rather than E1 on a four-string, because a
+			// solve may not assume which bass is plugged in and the
+			// conservative number is the one that cannot cut a note somebody
+			// is playing.
+			name:       "a bass keeps down to a five-string's open B",
+			instrument: "bass",
+			want:       30.87,
+			known:      true,
+		},
+		{
+			// B1 on a seven-string rather than E2 on a six, for the same
+			// reason.
+			name:       "a guitar keeps down to a seven-string's open B",
+			instrument: "guitar",
+			want:       61.74,
+			known:      true,
+		},
+		{
+			// The corpus names an instrument in lower case and a document may
+			// not.
+			name:       "the name is read whatever case it arrives in",
+			instrument: "Bass",
+			want:       30.87,
+			known:      true,
+		},
+		{
+			// A chain with no amplifier names no instrument, and a run with
+			// none declared has none to read. A caller with no figure leaves
+			// the control alone rather than cutting notes on a guess.
+			name:       "nothing is claimed for an instrument nobody measured",
+			instrument: "cello",
+			known:      false,
+		},
+		{
+			name:       "and none for no instrument at all",
+			instrument: "",
+			known:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, known := audio.Lowest(tt.instrument)
+
+			s.Require().Equal(tt.known, known)
+
+			if !tt.known {
+				s.Require().Zero(got)
+
+				return
+			}
+
+			s.Require().InDelta(tt.want, got, 0.01)
+
+			// Below the low band's own edge, which is what makes the bound
+			// mean anything: a cut inside this range cannot move a band share
+			// because the share is of everything under 250Hz.
+			s.Require().Less(got, 250.0)
+		})
+	}
+}
+
 func TestMeasurePublicTestSuite(
 	t *testing.T,
 ) {

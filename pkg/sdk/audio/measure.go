@@ -34,6 +34,7 @@ package audio
 import (
 	"math"
 	"slices"
+	"strings"
 )
 
 // Spread is one measurement across a recording, kept as a range.
@@ -132,6 +133,44 @@ const (
 	lowMid  = 250.0
 	midHigh = 2000.0
 )
+
+// Lowest is the lowest fundamental an instrument sounds, in hertz.
+//
+// What a cut may not be raised above. A high-pass reaches a brighter centroid
+// by removing the bottom, and across the fourteen swept bass cabinets taking
+// `LowCut` from 19.9Hz to its top moves the centroid a median 190Hz, more than
+// six times what choosing a different microphone does. **Every one of those
+// hertz is above this number.** The sweeps step 19.9, 79.9, 139.9 and on, so
+// only the bottom stop sits where a bass plays, and within the range the
+// instrument needs the readings say a low cut moves the centroid 0.0Hz. It
+// looked like the biggest lever on a cabinet because it was measured over a
+// range nobody would use.
+//
+// The extended-range tuning rather than the common one, because a solve may
+// not assume which instrument is plugged in: a five-string bass goes to B0 at
+// 30.87Hz where a four-string stops at E1, and a seven-string guitar to B1 at
+// 61.74Hz where a six-string stops at E2. The conservative number is the one
+// that cannot cut a note somebody is playing.
+//
+// False for an instrument nothing here has a figure for, and a caller with no
+// figure leaves the control alone rather than inventing a bound.
+//
+// Only the bottom. There is no matching ceiling, and that is a measurement
+// rather than an omission: a high cut removes brightness and not fundamentals,
+// and across those same cabinets `HighCut` moves the centroid 0.3 to 7.4Hz, so
+// it is not a lever on a bass at all.
+func Lowest(
+	instrument string,
+) (float64, bool) {
+	switch strings.ToLower(instrument) {
+	case "bass":
+		return 30.87, true
+	case "guitar":
+		return 61.74, true
+	default:
+		return 0, false
+	}
+}
 
 // startedAtPeak is how close to its loudest a recording's first frame has to
 // be before there is no attack left in it to measure.
