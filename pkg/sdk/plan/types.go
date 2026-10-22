@@ -198,6 +198,20 @@ type Limits struct {
 	// It sits below 100 deliberately. A chain that exactly fills a processor
 	// in theory is a chain that fails to load in practice.
 	ChipCeiling float64
+	// Refuses is the block families this device will not load, and
+	// RefusesModel the individual models, by what the catalog calls them.
+	//
+	// Measured rather than stated, and per device because the answer is. Line
+	// 6's files offer the 46 pan cabinets and the Transient Shaper on all four
+	// devices here, so the catalog cannot tell them apart; an HX Stomp answers
+	// a request to load one with a chain of no blocks, and 65 presets in the
+	// corpus hold a pan cabinet on a two-processor Helix, where none holds one
+	// on a Stomp.
+	//
+	// Empty is "nobody has measured this device", not "it refuses nothing".
+	// Only the HX Stomp has been asked.
+	Refuses      map[string]bool
+	RefusesModel map[catalog.ModelID]bool
 	// Switches is how many footswitches the device has for a player to stomp.
 	//
 	// From the hardware rather than from the preset corpus, unlike every other
