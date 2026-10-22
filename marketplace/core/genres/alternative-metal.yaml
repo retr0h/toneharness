@@ -4,10 +4,15 @@
 # artists under ../artists/ are people; this is what the records of a genre
 # measure as, resolved to gear.
 #
-# Built rather than researched, then resolved: `tone build` ranked the device's
-# bass amplifiers against what alternative-metal measures as and took the nearest, and
-# `rigs resolve` wrote every control that came out. Both are reproducible on the
-# same corpus.
+# Built rather than researched, then resolved, and reproducible on the same
+# corpus. `tone build` took the amplifier and the cabinet most of alternative metal's
+# documented players used, aimed their controls at the edge of alternative metal's own
+# measured range rather than its middle, and put a drive and an equaliser
+# behind a footswitch, switched off, set from their sweeps.
+#
+# The rule and the measurements behind it are in build-a-rig's measuring.md.
+# The short of it: the middle of a genre is what every genre shares, so aiming
+# there gave nine of these eleven the same amplifier.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
@@ -28,13 +33,8 @@ ask:
   words: []
 rig:
   chain:
-    - role: comp
-      gear: Deluxe Comp
-      evidence:
-        - kind: corpus
-          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
-    - role: amp
-      gear: MESA/Boogie Bass 400+ (channel 1)
+    - role: drive
+      gear: Xotic EP Booster
       capture: direct
       confidence: low
       evidence:
@@ -50,17 +50,85 @@ rig:
             low: 0.99
             mid: 0.01
             transient: 0.71
-          note: Chosen by measurement rather than by anybody's say-so. MESA/Boogie Bass 400+ (channel 1) is the closest of the 27 bass amplifiers this device models to alternative-metal, sitting at 150 Hz against 135. Across 19 records from 6 players, alternative-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 57 bass drives this device models to alternative-metal, sitting at 123 Hz against 118. Across 19 records from 6 players, alternative-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        Bright: "true"
+        Drive: "0.875"
+      enabled: false
+    - role: amp
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: It covers his whole tenure rather than one record, and it names no cabinet, so no cabinet is claimed below. The SVT-2 Pro is the valve SVT reissue generation, so the model here is the same amplifier a generation earlier. The SansAmp the same source names is in the chain below, as a drive.
+          note: 'Premier Guitar''s remembrance of him, which states the rig in one sentence: "Cheng held the fort down with 4-string Fender P basses played with his fingers—occasionally using fretless models on White Pony—through Ampeg SVT-2 Pro heads and really only used a Tech 21 SansAmp GT2 for extra balls."'
+          url: https://www.premierguitar.com/articles/In_Remembrance_Chi_Chengs_Low_End_Legacy
     - role: cab
-      gear: 6x10" MESA/Boogie Power House
+      gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+    - role: eq
+      gear: MXR 10-Band Graphic EQ
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
+          measured:
+            centroid: 114
+            decay: 0.23
+            dynamics: 8.5
+            harmonics: 0.17
+            high: 0
+            lean: 0.86
+            low: 0.99
+            mid: 0.01
+            transient: 0.71
+          note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to alternative-metal, sitting at 124 Hz against 118. Across 19 records from 6 players, alternative-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        125Hz: "-3.75"
+        16kHz: "7.5"
+        1kHz: "11.25"
+        250Hz: "11.25"
+        2kHz: "15.0"
+        31p25Hz: "-15.0"
+        4kHz: "15.0"
+        500Hz: "3.75"
+        62p5Hz: "-7.5"
+        8kHz: "15.0"
+      enabled: false
   instrument: bass
 built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: drive
+      gear: Xotic EP Booster
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
+          measured:
+            centroid: 114
+            decay: 0.23
+            dynamics: 8.5
+            harmonics: 0.17
+            high: 0
+            lean: 0.86
+            low: 0.99
+            mid: 0.01
+            transient: 0.71
+          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 57 bass drives this device models to alternative-metal, sitting at 123 Hz against 118. Across 19 records from 6 players, alternative-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        Boost: "false"
+        Bright: "true"
+        Drive: "0.875"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -75,10 +143,50 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
+        '@position': "1"
+      position: 1
     - role: amp
-      gear: MESA/Boogie Bass 400+ (channel 1)
+      gear: Ampeg SVT
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: It covers his whole tenure rather than one record, and it names no cabinet, so no cabinet is claimed below. The SVT-2 Pro is the valve SVT reissue generation, so the model here is the same amplifier a generation earlier. The SansAmp the same source names is in the chain below, as a drive.
+          note: 'Premier Guitar''s remembrance of him, which states the rig in one sentence: "Cheng held the fort down with 4-string Fender P basses played with his fingers—occasionally using fretless models on White Pony—through Ampeg SVT-2 Pro heads and really only used a Tech 21 SansAmp GT2 for extra balls."'
+          url: https://www.premierguitar.com/articles/In_Remembrance_Chi_Chengs_Low_End_Legacy
+      controls:
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.75"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.8346153846153845"
+      attrs:
+        '@position': "2"
+      position: 2
+    - role: cab
+      gear: 8x10 Ampeg SVT-810AV
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Angle: "45.0"
+        Distance: "5.0"
+        HighCut: "8000.0"
+        Level: "0.0"
+        LowCut: "37.0"
+        Mic: "3"
+        Position: "0.0"
+      attrs:
+        '@position': "3"
+      position: 3
+    - role: eq
+      gear: MXR 10-Band Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -94,39 +202,23 @@ built:
             low: 0.99
             mid: 0.01
             transient: 0.71
-          note: Chosen by measurement rather than by anybody's say-so. MESA/Boogie Bass 400+ (channel 1) is the closest of the 27 bass amplifiers this device models to alternative-metal, sitting at 150 Hz against 135. Across 19 records from 6 players, alternative-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to alternative-metal, sitting at 124 Hz against 118. Across 19 records from 6 players, alternative-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Bass: "0.5"
-        Bias: "0.55"
-        BiasX: "0.9"
-        ChVol: "0.74"
-        Drive: "0.62"
-        HighMid: "0.5"
-        Hum: "0.5"
-        Master: "0.6"
-        Mid: "0.544"
-        Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.44871794871794873"
-      attrs:
-        '@position': "1"
-      position: 1
-    - role: cab
-      gear: 6x10" MESA/Boogie Power House
-      evidence:
-        - kind: corpus
-          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
-      controls:
-        Angle: "0.0"
-        Distance: "3.25"
-        HighCut: "20100.0"
+        125Hz: "-3.75"
+        16kHz: "7.5"
+        1kHz: "11.25"
+        250Hz: "11.25"
+        2kHz: "15.0"
+        31p25Hz: "-15.0"
+        4kHz: "15.0"
+        500Hz: "3.75"
+        62p5Hz: "-7.5"
+        8kHz: "15.0"
         Level: "0.0"
-        LowCut: "19.9"
-        Mic: "0"
-        Position: "0.0"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "4"
+      enabled: false
+      position: 4
   preset:
     dsp0:
       members:
@@ -186,6 +278,26 @@ built:
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block0:
+              attrs:
+                '@fs_customcolor': "2"
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Xotic EP Booster
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block4:
+              attrs:
+                '@fs_customcolor': "6"
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': MXR 10-Band Graphic EQ
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -248,3 +360,18 @@ built:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
+  footswitches:
+    - block: 0
+      enabled: false
+      label: Xotic EP Booster
+      led: red
+      momentary: false
+      primary: true
+      switch: 1
+    - block: 4
+      enabled: false
+      label: MXR 10-Band Graphic EQ
+      led: green
+      momentary: false
+      primary: true
+      switch: 2
