@@ -152,6 +152,38 @@ Run all four before committing a batch. On this campaign the third rejected a
 filter the first two passed, and the fourth is what found the 46 cabinets whose
 readings were of an empty slot.
 
+## The fingerprint library says which run each reading came from
+
+A curve file describes one sweep, so one header describes every reading in it.
+The fingerprint library does not: `measure blocks --resume` skips what is
+already in the output and adds to it, and the fields that decide what a figure
+is of all lived on the library. So a file assembled over several runs described
+every block in it with the **last** run's rig, volume, pinned output and
+baseline, including blocks measured through none of them.
+
+Each reading now carries `run`, a key into the library's `runs`, and the key is
+a digest of what makes readings comparable: the reference, the instrument, the
+headroom, the volume, the rig, whether the loop was open, the device the level
+was pinned on, and the baseline. Two sessions alike on all of those collapse
+into one entry, which is right, because downstream they are one run.
+
+`--resume` freezes the earlier file's own header onto the readings it carries,
+rather than letting this run's header claim them. It keeps a claim the file
+already made instead of replacing it, and `measure blocks` says at the end when
+a file has come to hold more than one run, since not every block in such a file
+may be ranked against every other.
+
+**The 614 committed fingerprints are deliberately left unstamped.** They predate
+the field, and the header describes the run that wrote the file last rather than
+all of them, so stamping them would turn a known silence into a definite-looking
+claim. `Library.RunOf` answers for them from the header and returns false, which
+is how a caller tells a record from a fallback.
+
+A `--resume` that mixes two rigs is still refused outright, because a library
+whose blocks were measured on two pedals is one nothing may rank inside at all.
+The stamp is for the case that refusal cannot see: a file that says nothing
+about its own rig.
+
 **The fourth needs stating carefully, because two models of one pedal are
 supposed to read alike.** `HD2_AmpAguaSledge` and `HD2_PreampAguaSledge` are the
 amplifier and the preamplifier of one Aguilar Tone Hammer, and they agree to

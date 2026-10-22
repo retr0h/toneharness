@@ -28,10 +28,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -189,10 +191,10 @@ func MeasureBlocks(
 		at := built[block.ID]
 
 		if !strings.HasSuffix(at, ".hlx") {
-			lib.Blocks[block.ID] = measured.Block{
+			taken(&lib, measured.Block{
 				ID: block.ID, Name: block.Name,
 				Category: block.Category, Refused: at,
-			}
+			})
 		} else if err := readBackingOff(
 			ctx, w, opts, bench, signal, &lib, block, at, work); err != nil {
 			return err
@@ -246,10 +248,10 @@ func one(
 	// open across many blocks takes the first live replace and refuses every
 	// one after it.
 	if err := seated(ctx, client, at, string(block.ID)); err != nil {
-		lib.Blocks[block.ID] = measured.Block{
+		taken(lib, measured.Block{
 			ID: block.ID, Name: block.Name,
 			Category: block.Category, Refused: short(err),
-		}
+		})
 
 		return nil
 	}
@@ -261,9 +263,33 @@ func one(
 
 	block.Figures = figures
 	block.Clipped = figures.Level > clipped
-	lib.Blocks[block.ID] = block
+
+	taken(lib, block)
 
 	return nil
+}
+
+// taken files one reading under the run that took it.
+//
+// The stamp is read off the library's own header rather than passed in, so the
+// two cannot describe different things: a field added to [measured.Run] reaches
+// every reading without this being changed as well.
+//
+// Idempotent on the run entry, which is what lets every write site call this
+// without anybody tracking whether the run is registered yet.
+func taken(
+	lib *measured.Library,
+	block measured.Block,
+) {
+	run := lib.Header()
+	block.Run = run.Key()
+
+	if lib.Runs == nil {
+		lib.Runs = map[string]measured.Run{}
+	}
+
+	lib.Runs[block.Run] = run
+	lib.Blocks[block.ID] = block
 }
 
 // quieterSteps is how many times a block's own reading may be taken again with
@@ -346,11 +372,11 @@ func readBackingOff(
 	}
 
 	if bad {
-		lib.Blocks[block.ID] = measured.Block{
+		taken(lib, measured.Block{
 			ID: block.ID, Name: block.Name, Category: block.Category,
 			Refused: fmt.Sprintf(
 				"read the loop rather than itself at %.0fdB of headroom", headroom),
-		}
+		})
 	}
 
 	return nil
@@ -764,7 +790,34 @@ func resume(
 		return err
 	}
 
-	lib.Baseline = had.Baseline
+	// What the earlier file claimed about its own readings, frozen onto them
+	// before this run's header replaces it.
+	//
+	// Task 257. Everything that decides what a figure is of lived on the
+	// library and nowhere else, and this function carries earlier blocks into
+	// a header this run has just built: `baseline` then re-measures and
+	// overwrites, so every carried reading came out described by a baseline it
+	// was never read against, at this run's volume, through this run's rig.
+	//
+	// Not a fabrication. The old header is what that file already claimed
+	// about those readings, so pinning it to them keeps the claim rather than
+	// replacing it, which is what used to happen. A reading that already names
+	// its run keeps the one it names.
+	//
+	// It replaces a `lib.Baseline = had.Baseline` that looked load-bearing and
+	// was dead: `baseline` runs afterwards and overwrites it every time.
+	was := had.Header()
+	stamp := was.Key()
+
+	if lib.Runs == nil {
+		lib.Runs = map[string]measured.Run{}
+	}
+
+	lib.Runs[stamp] = was
+
+	for id, run := range had.Runs {
+		lib.Runs[id] = run
+	}
 
 	for id, block := range had.Blocks {
 		// A refusal is worth another go when asked for. About one block in
@@ -773,6 +826,10 @@ func resume(
 		// block, and the same one loads on the next pass.
 		if opts.Retry && block.Refused != "" {
 			continue
+		}
+
+		if block.Run == "" {
+			block.Run = stamp
 		}
 
 		lib.Blocks[id] = block
@@ -989,10 +1046,56 @@ func done(
 
 	_, err := fmt.Fprintf(w,
 		"\n  %d measured, %d refused, %d clipped, in %.0f minutes\n"+
-			"  wrote %s\n\n",
+			"  wrote %s\n",
 		read, refused, clip, took.Minutes(), out)
+	if err != nil {
+		return err
+	}
+
+	runs(w, lib)
+
+	_, err = fmt.Fprint(w, "\n")
 
 	return err
+}
+
+// runs says how many measuring sessions the file now holds readings from.
+//
+// Said because it decides what may be compared with what, and because the way
+// a library comes to hold more than one is `--resume`, which looks like
+// carrying on rather than like mixing two runs. A figure measured on one rig is
+// a figure about that rig: two runs in one file means the blocks in it cannot
+// all be ranked against each other, and nothing used to say so.
+//
+// Silent for one run, which is the ordinary case and needs no remark, and for
+// a file whose readings name no run at all, which is a library written before
+// this was recorded rather than a library from one session.
+func runs(
+	w io.Writer,
+	lib measured.Library,
+) {
+	held := map[string]int{}
+	for _, block := range lib.Blocks {
+		held[block.Run]++
+	}
+
+	if len(held) < 2 {
+		return
+	}
+
+	_, _ = fmt.Fprintf(w,
+		"  this file now holds readings from %d runs, so not every block in "+
+			"it\n  may be ranked against every other:\n", len(held))
+
+	for _, id := range slices.Sorted(maps.Keys(held)) {
+		name, what := id, lib.Runs[id]
+		if id == "" {
+			name = "(unrecorded)"
+		}
+
+		_, _ = fmt.Fprintf(w, "    %-14s %4d blocks   volume %d, %s\n",
+			name, held[id], what.Volume, openAs(what.Open))
+	}
 }
 
 // short is the first line of an error, for a table that has one column for it.

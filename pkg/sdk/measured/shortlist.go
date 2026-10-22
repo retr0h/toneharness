@@ -135,7 +135,17 @@ func Shortlist(
 			continue
 		}
 
-		got, ok := suggest(lib.Baseline, block, want)
+		// The block's own run's baseline, not the file's. A figure says
+		// nothing without the empty loop it was read against, and a library
+		// assembled over several runs holds more than one: comparing a
+		// reading from one run against another run's baseline is the mistake
+		// task 257 records, and the two runs in this campaign disagree about
+		// the same block by a median 20.6Hz of centroid. Falls back to the
+		// header for a reading taken before runs were recorded, which is all
+		// 614 in the committed library, so this is the same answer today.
+		run, _ := lib.RunOf(block)
+
+		got, ok := suggest(run.Baseline, block, want)
 		if !ok {
 			continue
 		}
