@@ -81,6 +81,8 @@ rig:
           caveat: the same tour rig, dated the same March 1993, and a wall of eight cabinets is not one box. This names the make and the size of the half the device models, and a rig is one path, so it takes the 2x15 and leaves the 4x10s out rather than pretending to sum them.
           note: 'the same sentence gives the cabinets: "driving four M/B 4x10s and four 2x15s". The device carries the Mesa/Boogie 2x15, so that half of the stack resolves exactly and the four-by-tens do not.'
           url: https://www.talkbass.com/threads/ben-shepherd-soundgarden-what-bass-rig-did-he-play-on-badmotorfinger-album.298516/
+      controls:
+        Mic: "8"
     - role: eq
       gear: MXR 10-Band Graphic EQ
       capture: direct
@@ -203,7 +205,7 @@ built:
         HighCut: "11500.0"
         Level: "0.0"
         LowCut: "25.0"
-        Mic: "6"
+        Mic: "8"
         Position: "0.09"
       attrs:
         '@position': "3"

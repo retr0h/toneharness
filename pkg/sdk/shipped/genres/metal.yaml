@@ -67,6 +67,8 @@ rig:
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Mic: "6"
     - role: eq
       gear: MXR 10-Band Graphic EQ
       capture: direct
@@ -179,7 +181,7 @@ built:
         HighCut: "8000.0"
         Level: "0.0"
         LowCut: "37.0"
-        Mic: "3"
+        Mic: "6"
         Position: "0.0"
       attrs:
         '@position': "3"

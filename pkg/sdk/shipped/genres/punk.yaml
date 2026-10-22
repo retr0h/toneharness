@@ -74,6 +74,8 @@ rig:
           caveat: the same source as the head, so the two share it and stand or fall together, and the same thirty years separate it from the record. The size is what is claimed; which Ampeg eight by ten is not.
           note: the same sentence as the head, which names "three matching 8x10 cabinets" alongside the three SVT heads.
           url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+      controls:
+        Mic: "7"
     - role: eq
       gear: Simple Tilt
       capture: direct
@@ -184,7 +186,7 @@ built:
         HighCut: "8000.0"
         Level: "0.0"
         LowCut: "37.0"
-        Mic: "3"
+        Mic: "7"
         Position: "0.0"
       attrs:
         '@position': "3"
