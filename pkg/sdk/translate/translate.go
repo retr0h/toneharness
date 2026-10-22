@@ -647,6 +647,30 @@ func likeTheirGenre(
 			continue
 		}
 
+		// The cabinet's own controls, set from its sweep.
+		//
+		// The amplifier's are left to the solve, which already tells the
+		// genres apart: across the eleven it answers with ten distinct sets.
+		// The cabinet's are not. Eight of the eleven arrived on the same
+		// microphone at the same distance, because nothing chose them and the
+		// corpus median is one answer for everybody, and that is what left
+		// three genres sharing a preset after their amplifier and cabinet were
+		// both taken from players who really did share them.
+		//
+		// The microphone is the biggest lever on this device and the last one
+		// nobody pulled: across the twelve on one cabinet it moves the
+		// centroid by a median of 32.7Hz where the whole choice of amplifier
+		// for punk turned on 14Hz, and the harmonics from 6.6 to 21.4. Task
+		// 242 measured it.
+		//
+		// A list rather than a dial, which is why it belongs here rather than
+		// in the solve: `Mic` and `Position` are positions to pick and not
+		// quantities to converge on, and task 253 is about the solver being
+		// best at the controls that should not reach a target.
+		if role == rig.RoleCab {
+			chose(&entry, spec, deps, notes)
+		}
+
 		out = append(out, placed{entry: entry})
 		took[role] = fmt.Sprintf("%s in %d of %d", entry.Gear, count, resolved)
 	}
@@ -756,6 +780,151 @@ func commonest(
 	}
 
 	return groups[best].entry, groups[best].count, true
+}
+
+// chose picks the cabinet's microphone, and nothing else on it.
+//
+// The biggest untouched lever on this device, measured in task 242: across the
+// twelve microphones on one cabinet the centroid moves by a median of 32.7Hz
+// where the whole choice of amplifier for punk turned on 14Hz, and the
+// harmonics run from 6.6 to 21.4. Eight of the eleven genres arrived on the
+// same microphone at the same distance because nothing chose them and a corpus
+// median is one answer for everybody, which is what left three of them sharing
+// a preset after their amplifier and cabinet were both taken from players who
+// really did share them.
+//
+// **The microphone and nothing else, and the reason is worth keeping.** Letting
+// the same reading set the rest of the cabinet sent Distance to its maximum and
+// LowCut to 79.9Hz, which on a bass cuts the fundamentals, and left all of them
+// reading alike anyway: worse than the median it replaced and no more distinct.
+// That is task 255, a band share inside tolerance being invisible while LowCut
+// exploits it. `Mic` does not have that failure, because twelve impulse
+// responses have no order to run along and the answer is a choice between
+// twelve measured sounds rather than a rail.
+//
+// By displacement rather than by position, which is [measured.Curves.TowardFrom]
+// and the same argument the genre figures already rest on: a microphone 11Hz
+// brighter than the others on its cabinet answers a genre 20Hz brighter than
+// the other genres. Comparing the two directly instead sent every genre to one
+// microphone, because a genre is measured off finished records and a cabinet
+// off a dry signal and the nearest of those is always the same end.
+func chose(
+	entry *rig.ChainEntry,
+	spec tone.Ask,
+	deps Deps,
+	notes *Notes,
+) {
+	if deps.CurvesFor == nil {
+		return
+	}
+
+	at, ok := target(spec, deps, notes)
+	if !ok {
+		return
+	}
+
+	model := sweptFor(deps, entry.Gear, catalog.CategoryCab)
+
+	curves, swept := deps.CurvesFor(model)
+	if !swept {
+		return
+	}
+
+	wants := ""
+	if spec.Instrument != nil {
+		wants = string(*spec.Instrument)
+	}
+
+	// The displacement the genre was given, which is what the target carries
+	// over the library's own baseline. The absolute figure is not comparable
+	// with a microphone's.
+	asked := displacedFrom(at.figures, deps.Measured.Baseline)
+
+	pick, chosen := curves.TowardFrom(
+		micControl, asked, measured.SpectralFor(wants))
+	if !chosen {
+		return
+	}
+
+	held := map[string]catalog.Setting{}
+	if entry.Controls != nil {
+		held = *entry.Controls
+	}
+
+	held[micControl] = catalog.Set(catalog.Int(int64(pick)))
+	entry.Controls = &held
+
+	*notes = append(*notes, Note{
+		About:    entry.Gear,
+		Said:     fmt.Sprintf("microphone %.0f of its twelve, by what it moves", pick),
+		Honoured: true,
+	})
+}
+
+// micControl is what the catalog calls a cabinet's microphone.
+const micControl = "Mic"
+
+// displacedFrom is how far a target sits from the library's own baseline.
+//
+// The inverse of what [displacedTo] built, so a chooser that needs the
+// displacement rather than the position can have it without the target
+// carrying both.
+func displacedFrom(
+	at measured.Figures,
+	baseline measured.Figures,
+) measured.Figures {
+	at.Centroid -= baseline.Centroid
+	at.Low -= baseline.Low
+	at.Mid -= baseline.Mid
+	at.High -= baseline.High
+
+	return at
+}
+
+// sweptFor is the model to read a sweep from, among those a gear name reaches.
+//
+// A name reaches several models and only some were swept: "Ampeg 8x10" reaches
+// three cabinets, two of them swept, and the third is a pan variant this device
+// refuses. So the choice is the swept one, and where more than one was swept
+// the one carrying the most controls, which is the microphone'd model rather
+// than the plain port of the same box.
+//
+// That is the model the compiler resolves the same name to, which is what
+// makes the values usable: all three cabinets the eleven genres name come back
+// with `Mic`, `Distance` and `Position` on them. If it ever picks differently
+// the compile says so, naming the control it could not set, rather than
+// quietly writing a value nowhere.
+//
+// Empty where nothing matches or nothing was swept, which [tuned] reads as
+// "no sweep for it" and reports.
+func sweptFor(
+	deps Deps,
+	gear string,
+	kind catalog.Category,
+) catalog.ModelID {
+	// No nil guard on CurvesFor: [chose] is the only caller and returns before
+	// this where none was offered, so a guard here is a branch nothing can
+	// reach and nobody has checked.
+	best, most := catalog.ModelID(""), -1
+
+	for id := range modelsFor(deps.Catalog, gear, kind) {
+		at := catalog.ModelID(id)
+
+		if _, swept := deps.CurvesFor(at); !swept {
+			continue
+		}
+
+		held, known := deps.Catalog.Block(at)
+		if !known {
+			continue
+		}
+
+		if n := len(held.Params); n > most {
+			best, most = at, n
+		}
+	}
+
+	return best
 }
 
 // modelsFor is every model of one kind a gear name reaches.
@@ -954,6 +1123,7 @@ func tuned(
 	}
 
 	toward := curves.Toward(at.figures, measured.SpectralFor(wants))
+
 	if len(toward) == 0 {
 		return
 	}
@@ -1281,13 +1451,6 @@ func wanted(
 
 	return out
 }
-
-// micControl is the microphone list on a mic'd cabinet.
-//
-// The control this device offers that moves a block furthest: twelve
-// microphones, 21 to 48Hz of centroid across the eight cabinets measured for
-// bass. The 14Hz that chose punk's amplifier is less than any of them.
-const micControl = "Mic"
 
 // gearOf is what identifies the gear a block is a copy of.
 //

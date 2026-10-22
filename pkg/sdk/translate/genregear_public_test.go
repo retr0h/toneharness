@@ -664,3 +664,170 @@ func (s *GenreGearPublicTestSuite) TestTunedWritesEachControlInItsOwnKind() {
 	s.Require().True(ok, "Drive did not come back as a float")
 	s.Require().InDelta(0.75, f, 1e-9)
 }
+
+// TestAGenreChoosesItsMicrophone covers the last lever on the cabinet.
+//
+// Eight of the eleven genres arrived on the same microphone at the same
+// distance, because nothing chose them and a corpus median is one answer for
+// everybody. The microphone is the biggest mover this device has: across the
+// twelve on one cabinet it moves the centroid by a median of 32.7Hz, where the
+// whole choice of amplifier for punk turned on 14Hz.
+func (s *GenreGearPublicTestSuite) TestAGenreChoosesItsMicrophone() {
+	// Every player on one 8x10, so the cabinet is taken rather than measured
+	// for and there is a microphone to choose. The cabinet is the real one,
+	// because the choosing reads its committed sweep.
+	withCab := func(string) (rig.Spec, bool) {
+		return rig.Spec{Chain: []rig.ChainEntry{
+			{Role: rig.RoleAmp, Gear: "Ampeg SVT"},
+			{Role: rig.RoleCab, Gear: "Ampeg 8x10"},
+		}}, true
+	}
+
+	deps := s.deps
+	deps.RigNamed = withCab
+	deps.CurvesFor = s.sweeps()
+
+	// Two genres leaning opposite ways on the centroid. punk's records sit
+	// 126Hz brighter than the other genres' and the metals' 20 to 25Hz darker,
+	// so they must not reach the same microphone.
+	picked := map[string]int64{}
+
+	for _, slug := range []string{"punk", "metal"} {
+		built, _, err := translate.Translate(
+			s.forGenre(slug), tone.Setup{}, deps)
+		s.Require().NoError(err)
+
+		for _, e := range built.Chain {
+			if e.Role != rig.RoleCab || e.Controls == nil {
+				continue
+			}
+
+			at, ok := (*e.Controls)["Mic"]
+			s.Require().True(ok, "%s: no microphone was chosen", slug)
+
+			n, ok := at.Int()
+			s.Require().True(ok, "%s: the microphone is not a whole number", slug)
+			picked[slug] = n
+		}
+	}
+
+	s.Require().Len(picked, 2, "a genre got no cabinet to choose a mic on")
+	s.Require().NotEqual(picked["punk"], picked["metal"],
+		"a genre 126Hz brighter than the others and one 25Hz darker reached "+
+			"the same microphone, which is the collapse this exists to stop")
+}
+
+// sweeps reads the committed curves, which is what the choosing rests on.
+func (s *GenreGearPublicTestSuite) sweeps() func(catalog.ModelID) (measured.Curves, bool) {
+	return func(model catalog.ModelID) (measured.Curves, bool) {
+		f, err := os.Open(filepath.Join(
+			"..", "..", "..", "resources", "sweeps", "hx-stomp",
+			string(model)+".json"))
+		if err != nil {
+			return measured.Curves{}, false
+		}
+
+		defer func() { _ = f.Close() }()
+
+		got, err := measured.LoadCurves(f)
+		if err != nil {
+			return measured.Curves{}, false
+		}
+
+		return got, true
+	}
+}
+
+// TestChoseRefuses covers the cabinets with no microphone to choose.
+func (s *GenreGearPublicTestSuite) TestChoseRefuses() {
+	cab := func() rig.ChainEntry {
+		return rig.ChainEntry{Role: rig.RoleCab, Gear: "Ampeg 8x10"}
+	}
+
+	tests := []struct {
+		name string
+		// swept is what the sweeps answer with, nil for none offered at all.
+		swept func(catalog.ModelID) (measured.Curves, bool)
+		ask   tone.Ask
+		// gear names the cabinet, where the default is not the point.
+		gear string
+	}{
+		{
+			// A release carries the fingerprints and not the sweeps, so the
+			// cabinet keeps whatever the compiler fills.
+			name: "no sweeps were offered",
+			ask:  s.forGenre("punk"),
+		},
+		{
+			name: "no sweep for that cabinet",
+			swept: func(catalog.ModelID) (measured.Curves, bool) {
+				return measured.Curves{}, false
+			},
+			ask: s.forGenre("punk"),
+		},
+		{
+			name:  "nothing to aim at",
+			swept: s.sweeps(),
+			ask:   tone.Ask{},
+		},
+		{
+			// A gear name the catalog places nowhere falls back to the name
+			// itself, which is not a model, so there is no block to read a
+			// control count off.
+			name: "a cabinet the catalog does not model",
+			swept: func(catalog.ModelID) (measured.Curves, bool) {
+				return measured.Curves{Controls: map[string]measured.Curve{
+					"Mic": {Control: "Mic", Settled: -20},
+				}}, true
+			},
+			ask:  s.forGenre("punk"),
+			gear: "Nothing Models This Cabinet",
+		},
+		{
+			name: "a sweep with no microphone on it",
+			swept: func(catalog.ModelID) (measured.Curves, bool) {
+				return measured.Curves{Controls: map[string]measured.Curve{
+					"LowCut": {Control: "LowCut", Settled: -20},
+				}}, true
+			},
+			ask: s.forGenre("punk"),
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			deps := s.deps
+			deps.CurvesFor = tt.swept
+
+			entry := cab()
+			if tt.gear != "" {
+				entry.Gear = tt.gear
+			}
+
+			notes := translate.Notes{}
+
+			translate.Chose(&entry, tt.ask, deps, &notes)
+
+			s.Require().Nil(entry.Controls,
+				"it set a microphone with nothing to read it from")
+		})
+	}
+}
+
+// TestChoseKeepsWhatWasAlreadySet covers a cabinet arriving with controls.
+func (s *GenreGearPublicTestSuite) TestChoseKeepsWhatWasAlreadySet() {
+	held := map[string]catalog.Setting{"LowCut": catalog.Set(catalog.Float(37))}
+	entry := rig.ChainEntry{
+		Role: rig.RoleCab, Gear: "Ampeg 8x10", Controls: &held,
+	}
+
+	deps := s.deps
+	deps.CurvesFor = s.sweeps()
+
+	notes := translate.Notes{}
+	translate.Chose(&entry, s.forGenre("punk"), deps, &notes)
+
+	s.Require().NotNil(entry.Controls)
+	s.Require().Contains(*entry.Controls, "LowCut", "it dropped what was there")
+	s.Require().Contains(*entry.Controls, "Mic", "it chose no microphone")
+}
