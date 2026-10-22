@@ -589,3 +589,78 @@ func (s *GenreGearPublicTestSuite) TestDisplacedTowardTheEdgeOfTheRange() {
 		})
 	}
 }
+
+// TestTunedWritesEachControlInItsOwnKind covers the three kinds a swept
+// control comes in.
+//
+// The fault this guards cost four of the eleven genres. Every value was
+// written as a float, and of the swept drives' controls 163 are floats, 20 are
+// integers and 16 are booleans: the Kinky Boost's `Bright` is one of the
+// sixteen, and `presets compile` refused the chain with "parameter Bright:
+// expected bool, got float".
+func (s *GenreGearPublicTestSuite) TestTunedWritesEachControlInItsOwnKind() {
+	// One swept position each, so there is nothing to choose between and the
+	// value that arrives is the one the sweep recorded.
+	at := func(kind string, v float64) measured.Curve {
+		return measured.Curve{
+			Control: kind, Settled: -20, SilentBelow: -50,
+			Points: []measured.Point{
+				{Value: v, Figures: measured.Figures{Mid: 40, Level: -20}},
+				{Value: v, Figures: measured.Figures{Mid: 1, Level: -20}},
+			},
+		}
+	}
+
+	deps := s.deps
+	deps.CurvesFor = func(catalog.ModelID) (measured.Curves, bool) {
+		return measured.Curves{Controls: map[string]measured.Curve{
+			"Bright": {
+				Control: "Bright", Kind: "bool", Settled: -20, SilentBelow: -50,
+				Points: []measured.Point{
+					{Value: 0, Figures: measured.Figures{Mid: 1, Level: -20}},
+					{Value: 1, Figures: measured.Figures{Mid: 40, Level: -20}},
+				},
+			},
+			"MidFreq": {
+				Control: "MidFreq", Kind: "int", Settled: -20, SilentBelow: -50,
+				Points: []measured.Point{
+					{Value: 0, Figures: measured.Figures{Mid: 1, Level: -20}},
+					{Value: 2, Figures: measured.Figures{Mid: 40, Level: -20}},
+				},
+			},
+			"Drive": func() measured.Curve {
+				c := at("float", 0.75)
+				c.Kind = "float"
+				c.Points[1].Value = 0.25
+
+				return c
+			}(),
+		}}, true
+	}
+
+	entry := rig.ChainEntry{Role: rig.RoleDrive, Gear: "Kinky Boost"}
+	notes := translate.Notes{}
+
+	translate.Tuned(
+		&entry, "HD2_DistKinkyBoost", s.forGenre("punk"), deps, &notes)
+
+	s.Require().NotNil(entry.Controls)
+
+	got := *entry.Controls
+
+	// A boolean, written as one. Aiming at punk's mid-forward corner picks the
+	// position that reads 40, which is the true one.
+	on, ok := got["Bright"].Bool()
+	s.Require().True(ok, "Bright did not come back as a boolean")
+	s.Require().True(on)
+
+	// An integer, written as one rather than as 2.0.
+	n, ok := got["MidFreq"].Int()
+	s.Require().True(ok, "MidFreq did not come back as an integer")
+	s.Require().Equal(int64(2), n)
+
+	// And a float, which is what every other control is.
+	f, ok := got["Drive"].Float()
+	s.Require().True(ok, "Drive did not come back as a float")
+	s.Require().InDelta(0.75, f, 1e-9)
+}

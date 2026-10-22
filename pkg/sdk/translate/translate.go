@@ -877,13 +877,19 @@ func stompedFor(
 	// and why `compile.Assign` leaves both unassigned.
 	kinds := []catalog.Category{catalog.CategoryDrive, catalog.CategoryEQ}
 
+	// Capped by what the device has switches for, since a block past the last
+	// switch is a block nobody can reach with a foot and the foot was the
+	// whole reason for it. Taken off the list up front rather than tested each
+	// time round: the smallest device here has three switches and this names
+	// two kinds, so a test inside the loop is a branch nothing can reach, and
+	// a branch nothing reaches is a branch nobody has checked. Adding a third
+	// kind makes the cap bind again and this keeps working.
+	held := plan.LimitsFor(deps.Catalog.Device).Switches
+	kinds = kinds[:min(len(kinds), max(held, 0))]
+
 	out := []placed(nil)
 
 	for _, kind := range kinds {
-		if len(out) >= plan.LimitsFor(deps.Catalog.Device).Switches {
-			break
-		}
-
 		entry, model, ok := nearestTo(spec, setup, deps, kind, notes)
 		if !ok {
 			continue
