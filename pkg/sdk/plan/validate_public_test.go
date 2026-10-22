@@ -34,7 +34,12 @@ type ValidatePublicTestSuite struct {
 }
 
 func (*ValidatePublicTestSuite) limits() plan.Limits {
-	return plan.Limits{MaxBlocks: 6, Paths: 2, ChipCeiling: 95.0}
+	return plan.Limits{
+		MaxBlocks: 6, Paths: 2, ChipCeiling: 95.0,
+		// One refusal, so the layer that reads it is reached. No other block
+		// in this suite is in that family.
+		Refuses: map[string]bool{"cabmicirswithpan": true},
+	}
 }
 
 // TestValidate composes the four layers, and the order they report in is
@@ -79,6 +84,20 @@ func (s *ValidatePublicTestSuite) TestValidate() {
 			is: plan.ErrUnknownBlock,
 		},
 		{
+			// A block the device will not load, set wrongly as well.
+			//
+			// The refusal first, because it answers whether the block may be
+			// in the chain at all and the parameter is about how it is set.
+			// Being told a pan cabinet's LowCut is out of range is no use when
+			// the device will not hold the cabinet.
+			name: "a refused block with a bad parameter: the refusal first",
+			spec: plan.Plan{Blocks: []plan.Block{{
+				Model:  panCab().ID,
+				Params: map[string]catalog.ParamValue{"LowCut": catalog.Float(99999)},
+			}}},
+			is: plan.ErrRefusedBlock,
+		},
+		{
 			name: "a bad parameter at a bad position: parameters next",
 			spec: plan.Plan{Blocks: []plan.Block{{
 				Model:  "HD2_AmpTest",
@@ -101,7 +120,8 @@ func (s *ValidatePublicTestSuite) TestValidate() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			err := plan.Validate(newCatalog(testAmp()), tt.spec, s.limits())
+			err := plan.Validate(
+				newCatalog(testAmp(), panCab()), tt.spec, s.limits())
 
 			if tt.is == nil {
 				s.Require().NoError(err)

@@ -39,11 +39,15 @@ func Validate(
 		return err
 	}
 
-	if err := ValidateParams(l, s); err != nil {
+	// Before the parameters, because both of the first two layers answer
+	// whether a block may be in a chain at all and neither depends on how it
+	// is set. Complaining about a pan cabinet's LowCut is noise when the
+	// device will not load the cabinet.
+	if err := ValidateHolds(l, s, lim); err != nil {
 		return err
 	}
 
-	if err := ValidateHolds(l, s, lim); err != nil {
+	if err := ValidateParams(l, s); err != nil {
 		return err
 	}
 
