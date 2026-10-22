@@ -88,6 +88,9 @@ func (s *LayerPublicTestSuite) TestLayered() {
 					name string
 					// files are written under artists/ in their directory.
 					files map[string]string
+					// flat is files written at the top of the directory rather than
+					// inside a tier, which is where a rig is invisible.
+					flat map[string]string
 					// folders are directories under artists/ named like a rig.
 					folders []string
 					missing bool
@@ -182,6 +185,32 @@ func (s *LayerPublicTestSuite) TestLayered() {
 						listErr: "broken.yaml",
 					},
 					{
+						// The silence this ends. A directory of eleven rigs written
+						// flat answered every lookup from the shipped rigs with no
+						// error and no note, and one whose identifier collided with
+						// a shipped rig answered as the shipped rig: the only
+						// symptom was gear nobody asked for, which reads as a
+						// derivation bug rather than as a file in the wrong place.
+						name: "a rig of theirs written flat rather than in a tier",
+						flat: map[string]string{
+							"flat-rig.yaml": "schema: ToneSpec\nversion: \"4.0.0\"\nid: flat-rig\n",
+						},
+						id:      "mike-dirnt",
+						want:    "Mike Dirnt",
+						listErr: "sits flat in",
+					},
+					{
+						// And asked for by name it is not found, rather than
+						// answering as something else.
+						name: "a flat rig of theirs, asked for by its identifier",
+						flat: map[string]string{
+							"flat-rig.yaml": "schema: ToneSpec\nversion: \"4.0.0\"\nid: flat-rig\n",
+						},
+						id:      "flat-rig",
+						findErr: "sits flat in",
+						listErr: "sits flat in",
+					},
+					{
 						name:    "a file of theirs that is not a rig, asked for by its filename",
 						files:   map[string]string{"broken.yaml": "schema: ToneSpec\nversion: \"4.0.0\"\nid: broken\n"},
 						id:      "broken",
@@ -252,6 +281,13 @@ func (s *LayerPublicTestSuite) TestLayered() {
 						for name, body := range tt.files {
 							s.Require().NoError(os.WriteFile(
 								filepath.Join(dir, "artists", name), []byte(body), 0o600))
+						}
+
+						// Flat, beside artists/ rather than inside it, which is
+						// where the store cannot see a rig.
+						for name, body := range tt.flat {
+							s.Require().NoError(os.WriteFile(
+								filepath.Join(dir, name), []byte(body), 0o600))
 						}
 
 						for _, name := range tt.folders {
