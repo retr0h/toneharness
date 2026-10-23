@@ -2166,7 +2166,13 @@ func displacedTo(
 	got audio.Genre,
 	baseline measured.Figures,
 ) measured.Figures {
-	at := got.Across.Measured()
+	// Unrounded, because this is arithmetic rather than a figure anybody
+	// reads: `Measured` claims one recording's precision and this is a median
+	// over all of a genre's. Three of the eleven lost their displacement to
+	// that rounding, and [audio.Across.Figures] is the same middles without
+	// it. The `read` map in the two targets above still takes `Measured`,
+	// because that one goes into a document.
+	at := got.Across.Figures()
 	wide := got.Across.Spreads()
 
 	// Which way each word the genre earns points, by figure. `Mine` above
@@ -2216,6 +2222,17 @@ func displacedTo(
 					mine = spread.Low
 				}
 			}
+		}
+
+		// A difference the measurement cannot resolve is not a difference.
+		//
+		// The floor the rounding used to apply to the figures either side,
+		// stated on the difference instead: see [audio.Resolves] and task 273.
+		// hard-rock's records sit half a hertz and 0.0008 of a share from the
+		// players who hold none of it, which is nothing either figure can
+		// claim, and acting on it put a compressor's threshold against a stop.
+		if !audio.Resolves(key, mine-theirs) {
+			return 0, false
 		}
 
 		return scale * (mine - theirs), true

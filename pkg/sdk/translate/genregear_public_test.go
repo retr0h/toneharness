@@ -719,10 +719,17 @@ func (s *GenreGearPublicTestSuite) TestTunedSaysWhenNothingReached() {
 // TestTunedSaysNothingWasAsked covers the other reason a block keeps its
 // defaults, which is not about the block.
 //
-// hard-rock displaces the centroid by zero and the midrange by zero, and a
-// bass is weighed on those two alone, so there is nothing for any sweep to
-// answer. Reporting that as "no control of it reaches what was asked"
-// describes a block that was never asked.
+// hard-rock's records sit half a hertz and 0.0008 of a share from the players
+// who hold none of it, and neither figure can claim a difference that small:
+// a centroid resolves to the hertz and a share to two places. A bass is
+// weighed on those two alone, so there is nothing for any sweep to answer.
+// Reporting that as "no control of it reaches what was asked" describes a
+// block that was never asked.
+//
+// The floor is stated on the difference since task 273. It used to fall out of
+// the figures either side being rounded, and when the arithmetic stopped
+// rounding a median over sixteen records to one take's precision, half a hertz
+// became an ask and a compressor's threshold went to a stop delivering it.
 func (s *GenreGearPublicTestSuite) TestTunedSaysNothingWasAsked() {
 	said := "Chosen by measurement rather than by anybody's say-so."
 	held := []tone.Evidence{{Kind: tone.EvidenceAudio, Note: &said}}

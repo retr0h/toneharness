@@ -327,3 +327,154 @@ func TestEvidencePublicTestSuite(
 ) {
 	suite.Run(t, new(EvidencePublicTestSuite))
 }
+
+// TestFigures covers the unrounded middles the arithmetic reads.
+//
+// One method and one table, so a case is a row rather than a file. The pair
+// with `Measured` is the whole of it: that one claims the precision one
+// recording can stand behind, and this one is what anything subtracting two
+// figures or spanning several of them has to read.
+func (s *EvidencePublicTestSuite) TestFigures() {
+	for _, tt := range []struct {
+		name string
+		then func()
+	}{
+		{
+			// The places are the difference. A share held to two of them
+			// cost three of the eleven genres their displacement: hard-rock
+			// sits 0.0008 of a share from the players who hold none of it,
+			// which `Measured` reports as the same figure.
+			name: "a recording's figures keep every place",
+			then: func() {
+				got := audio.Profile{
+					Low: 0.983672, Mid: 0.030841, High: 0.000512,
+					Centroid:  131.50013833,
+					Transient: audio.Reading{Known: true, Value: 0.68421},
+					Decay:     audio.Reading{Known: true, Value: 0.66123},
+				}.Figures()
+
+				s.Require().InDelta(0.983672, got[string(audio.KeyLow)], 1e-12)
+				s.Require().InDelta(0.030841, got[string(audio.KeyMid)], 1e-12)
+				s.Require().InDelta(131.50013833,
+					got[string(audio.KeyCentroid)], 1e-9)
+				s.Require().InDelta(0.68421,
+					got[string(audio.KeyTransient)], 1e-12)
+				s.Require().InDelta(0.66123, got[string(audio.KeyDecay)], 1e-12)
+			},
+		},
+		{
+			// Absent rather than zero, for the reason Measured gives: a
+			// figure nobody could take is not a figure of nothing.
+			name: "a recording that answered neither",
+			then: func() {
+				got := audio.Profile{Centroid: 144}.Figures()
+
+				s.Require().NotContains(got, string(audio.KeyTransient))
+				s.Require().NotContains(got, string(audio.KeyDecay))
+				s.Require().Len(audio.MeasuredKeys(), len(got)+2)
+			},
+		},
+		{
+			name: "several recordings keep every place too",
+			then: func() {
+				got := audio.Across{
+					Tracks:   3,
+					Low:      audio.Spread{Mid: 0.983672},
+					Mid:      audio.Spread{Mid: 0.030841},
+					Centroid: audio.Spread{Mid: 131.50013833},
+					Transient: audio.Ranged{
+						From: 3, Spread: audio.Spread{Mid: 0.68421},
+					},
+					Decay: audio.Ranged{
+						From: 3, Spread: audio.Spread{Mid: 0.66123},
+					},
+				}.Figures()
+
+				s.Require().InDelta(0.030841, got[string(audio.KeyMid)], 1e-12)
+				s.Require().InDelta(131.50013833,
+					got[string(audio.KeyCentroid)], 1e-9)
+				s.Require().InDelta(0.68421,
+					got[string(audio.KeyTransient)], 1e-12)
+				s.Require().InDelta(0.66123, got[string(audio.KeyDecay)], 1e-12)
+			},
+		},
+		{
+			// The same guard Spreads and Measured carry: none of the records
+			// answered, so the spread inside is empty rather than small.
+			name: "several recordings where none answered either",
+			then: func() {
+				got := audio.Across{
+					Tracks: 3, Centroid: audio.Spread{Mid: 144},
+				}.Figures()
+
+				s.Require().NotContains(got, string(audio.KeyTransient))
+				s.Require().NotContains(got, string(audio.KeyDecay))
+				s.Require().Len(audio.MeasuredKeys(), len(got)+2)
+			},
+		},
+	} {
+		s.Run(tt.name, tt.then)
+	}
+}
+
+// TestResolves covers the floor a difference has to clear to be acted on.
+//
+// One method and one table, so a case is a row rather than a file. It used to
+// fall out of the figures either side of a subtraction being rounded, and when
+// the arithmetic stopped doing that it had to be stated: half a hertz of
+// centroid became an ask and a compressor's threshold went to a stop
+// delivering it.
+func (s *EvidencePublicTestSuite) TestResolves() {
+	for _, tt := range []struct {
+		name string
+		key  audio.Figure
+		by   float64
+		want bool
+	}{
+		{
+			// The bins are about 10Hz apart, so a centroid resolves to the
+			// hertz and no finer.
+			name: "a hertz of centroid",
+			key:  audio.KeyCentroid, by: 1, want: true,
+		},
+		{
+			name: "half a hertz, which is hard-rock's whole displacement",
+			key:  audio.KeyCentroid, by: 0.4999,
+		},
+		{
+			name: "and the other way, since a difference has a sign",
+			key:  audio.KeyCentroid, by: -7.05, want: true,
+		},
+		{
+			// The third place moves with which windows the playing fell in,
+			// so a share resolves to two.
+			name: "a hundredth of a share",
+			key:  audio.KeyMid, by: 0.01, want: true,
+		},
+		{
+			name: "0.0008 of one, which is hard-rock's midrange",
+			key:  audio.KeyMid, by: 0.000841,
+		},
+		{
+			name: "0.0047 of one, which is southern-rock's",
+			key:  audio.KeyMid, by: -0.004741,
+		},
+		{
+			name: "nothing at all",
+			key:  audio.KeyCentroid,
+		},
+		{
+			// Every other figure is held to two places, the share default.
+			name: "a figure with no rule of its own",
+			key:  audio.KeyDecay, by: 0.07, want: true,
+		},
+		{
+			name: "and below it",
+			key:  audio.KeyDecay, by: 0.004,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, audio.Resolves(tt.key, tt.by))
+		})
+	}
+}

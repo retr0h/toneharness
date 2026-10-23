@@ -399,11 +399,14 @@ func elsewhere(
 
 		sort.Float64s(rest)
 
-		// Rounded to the same places the figures either side of the comparison
-		// are. The medians going in are rounded and interpolating between two of
-		// them is not, so a share held to two places could be subtracted from one
-		// held to seventeen and leave a shift where there is no difference.
-		out[key] = to(between(rest, 0.5), places(key))
+		// Unrounded, like the medians going in.
+		//
+		// It used to round to the places `Across.Measured` reports, so that one
+		// side of the comparison could not be held to two places while the
+		// other was held to seventeen. Both sides read [Across.Figures] now,
+		// which is the same middles without a single take's precision claimed
+		// over a median of sixteen, so there is nothing left to match.
+		out[key] = between(rest, 0.5)
 	}
 
 	if len(out) == 0 {
@@ -431,7 +434,11 @@ func displaced(
 
 		sort.Float64s(rest)
 
-		at := mine.Measured()[string(ax.Key)]
+		// Unrounded, like the middle it is held against. [Across.Figures]
+		// says why: a median over a genre's records earns more places than
+		// one take can claim, and the two sides of this comparison have to
+		// be held to the same ones.
+		at := mine.Figures()[string(ax.Key)]
 		middle := between(rest, 0.5)
 		lower, upper := between(rest, 0.25), between(rest, 0.75)
 		spread := upper - lower

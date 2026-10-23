@@ -459,7 +459,7 @@ func middles(
 			continue
 		}
 
-		out = append(out, a.Measured()[string(key)])
+		out = append(out, a.Figures()[string(key)])
 	}
 
 	return out

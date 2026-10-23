@@ -34,7 +34,7 @@ ask:
 rig:
   chain:
     - role: drive
-      gear: Xotic EP Booster
+      gear: Earthquaker Devices Life - Boost circuit
       capture: direct
       confidence: low
       evidence:
@@ -50,9 +50,7 @@ rig:
             low: 1
             mid: 0
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 52 bass drives this device models to nu-metal, sitting at 123 Hz against 117. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
-      controls:
-        Bright: "false"
+          note: 'Chosen by measurement rather than by anybody''s say-so. Earthquaker Devices Life - Boost circuit is the closest of the 52 bass drives this device models to nu-metal, sitting at 124 Hz against 117. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
       enabled: false
     - role: amp
       gear: Ampeg SVT
@@ -70,7 +68,7 @@ rig:
       controls:
         Mic: "6"
     - role: eq
-      gear: MXR 10-Band Graphic EQ
+      gear: Simple Tilt
       capture: direct
       confidence: low
       evidence:
@@ -86,15 +84,7 @@ rig:
             low: 1
             mid: 0
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to nu-metal, sitting at 124 Hz against 117. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
-      controls:
-        125Hz: "0.0"
-        1kHz: "-3.75"
-        250Hz: "-3.75"
-        2kHz: "-11.25"
-        31p25Hz: "3.75"
-        500Hz: "0.0"
-        62p5Hz: "0.0"
+          note: 'Chosen by measurement rather than by anybody''s say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to nu-metal, sitting at 124 Hz against 117. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
       enabled: false
   instrument: bass
 built:
@@ -102,7 +92,7 @@ built:
   device: HX Stomp
   chain:
     - role: drive
-      gear: Xotic EP Booster
+      gear: Earthquaker Devices Life - Boost circuit
       capture: direct
       confidence: low
       evidence:
@@ -118,11 +108,9 @@ built:
             low: 1
             mid: 0
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 52 bass drives this device models to nu-metal, sitting at 123 Hz against 117. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: 'Chosen by measurement rather than by anybody''s say-so. Earthquaker Devices Life - Boost circuit is the closest of the 52 bass drives this device models to nu-metal, sitting at 124 Hz against 117. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
       controls:
-        Boost: "false"
-        Bright: "false"
-        Drive: "0.55"
+        Boost: "0.5"
       attrs:
         '@position': "0"
       enabled: false
@@ -184,7 +172,7 @@ built:
         '@position': "3"
       position: 3
     - role: eq
-      gear: MXR 10-Band Graphic EQ
+      gear: Simple Tilt
       capture: direct
       confidence: low
       evidence:
@@ -200,19 +188,11 @@ built:
             low: 1
             mid: 0
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to nu-metal, sitting at 124 Hz against 117. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: 'Chosen by measurement rather than by anybody''s say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to nu-metal, sitting at 124 Hz against 117. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
       controls:
-        125Hz: "0.0"
-        16kHz: "0.0"
-        1kHz: "-3.75"
-        250Hz: "-3.75"
-        2kHz: "-11.25"
-        31p25Hz: "3.75"
-        4kHz: "0.0"
-        500Hz: "0.0"
-        62p5Hz: "0.0"
-        8kHz: "0.0"
+        CenterFreq: "1000.0"
         Level: "0.0"
+        Tilt: "0.5"
       attrs:
         '@position': "4"
       enabled: false
@@ -286,7 +266,7 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Xotic EP Booster
+                '@fs_label': Earthquaker Devices Life - Boost circuit
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -296,7 +276,7 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': MXR 10-Band Graphic EQ
+                '@fs_label': Simple Tilt
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -363,7 +343,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Xotic EP Booster
+    - gear: Earthquaker Devices Life - Boost circuit
       block: 0
       colour: 525824
       enabled: false
@@ -372,7 +352,7 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: MXR 10-Band Graphic EQ
+    - gear: Simple Tilt
       block: 4
       colour: 527360
       enabled: false

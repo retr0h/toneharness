@@ -104,7 +104,7 @@ built:
           url: https://www.premierguitar.com/articles/In_Remembrance_Chi_Chengs_Low_End_Legacy
       controls:
         Bass: "0.625"
-        Blend: "0.4"
+        Blend: "0.5"
         Drive: "0.65"
         Level: "0.48"
         Presence: "0.5"
@@ -153,7 +153,7 @@ built:
         '@position': "3"
       position: 3
     - role: eq
-      gear: MXR 10-Band Graphic EQ
+      gear: Simple Tilt
       capture: direct
       confidence: low
       evidence:
@@ -169,19 +169,11 @@ built:
             low: 1
             mid: 0
             transient: 0.61
-          note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to chi-cheng, sitting at 124 Hz against 120. Across 3 records from 1 players, chi-cheng earns scooped and dark, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because chi-cheng earns "scooped" against the players who measure otherwise, by 0.0279 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to chi-cheng, sitting at 124 Hz against 120. Across 3 records from 1 players, chi-cheng earns scooped and dark, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because chi-cheng earns "scooped" against the players who measure otherwise, by 0.0242 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
       controls:
-        125Hz: "-3.7499999999999996"
-        16kHz: "14.999999999999998"
-        1kHz: "-14.999999999999998"
-        250Hz: "-14.999999999999998"
-        2kHz: "-14.999999999999998"
-        31p25Hz: "14.999999999999998"
-        4kHz: "-14.999999999999998"
-        500Hz: "-14.999999999999998"
-        62p5Hz: "3.7499999999999996"
-        8kHz: "-14.999999999999998"
+        CenterFreq: "1000.0"
         Level: "0.0"
+        Tilt: "0.5"
       attrs:
         '@position': "4"
       enabled: false
@@ -265,7 +257,7 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': MXR 10-Band Graphic EQ
+                '@fs_label': Simple Tilt
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -341,7 +333,7 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: MXR 10-Band Graphic EQ
+    - gear: Simple Tilt
       block: 4
       colour: 527360
       enabled: false

@@ -498,9 +498,6 @@ func (s *GearPublicTestSuite) TestDisplacedTo() {
 					High:     audio.Spread{Mid: 0.001},
 					Centroid: audio.Spread{Mid: 144},
 				},
-				// Both sides on the same grid, as the generator writes them: a
-				// share held to two places subtracted from one held to
-				// seventeen leaves a shift where there is no difference.
 				Elsewhere: map[audio.Figure]float64{
 					audio.KeyLow: 0.95, audio.KeyMid: 0.05,
 					audio.KeyHigh: 0, audio.KeyCentroid: 134,
@@ -508,6 +505,13 @@ func (s *GearPublicTestSuite) TestDisplacedTo() {
 			},
 			// Two points of energy lower and ten hertz brighter than the records
 			// elsewhere, applied to the signal the blocks were measured with.
+			//
+			// And nothing on the high band, where the two sides sit 0.001 of a
+			// share apart: a share resolves to two places because the third
+			// moves with which windows the playing fell in, so that is not a
+			// difference anything may act on. The floor is stated on the
+			// difference since task 273, where it used to fall out of the
+			// figures either side being rounded before the subtraction.
 			want: measured.Figures{Low: 92, Mid: 7, High: 0.3, Centroid: 165},
 		},
 		{

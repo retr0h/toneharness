@@ -313,7 +313,19 @@ func scattered(
 		}
 
 		own := apart(mine, ax.Key)
-		if own <= band {
+
+		// Further apart than the whole corpus by more than the measure can
+		// resolve, which is the same floor [Axis.clears] holds a word to and
+		// for the same reason.
+		//
+		// Stated here rather than left to the figures arriving pre-rounded.
+		// It used to be the second: both sides came off `Measured`, so a
+		// difference below the measure's precision could not exist, and the
+		// moment the arithmetic stopped rounding its inputs a float's tail
+		// read as a player whose records disagree. Three sine tones a hundred
+		// hertz apart reported a scattered mid band, where every one of them
+		// holds the same nothing in it.
+		if own <= band || !ax.resolves(own-band) {
 			continue
 		}
 
@@ -341,8 +353,12 @@ func apart(
 ) float64 {
 	low, high := math.Inf(1), math.Inf(-1)
 
+	// Unrounded, because the band this is held against comes from [middles]
+	// and that is unrounded too. Rounding one side of a comparison and not
+	// the other is the hazard: a player's own span read as wider than the
+	// whole corpus's by nothing but a hundredth of a share.
 	for _, p := range of {
-		got := p.Measured()[string(key)]
+		got := p.Figures()[string(key)]
 		low, high = math.Min(low, got), math.Max(high, got)
 	}
 
