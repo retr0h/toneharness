@@ -239,6 +239,33 @@ type DeviceFootswitch struct {
 	// numbers its own list. Zero is "Auto Color", where the light follows
 	// the block rather than a choice.
 	LED int
+	// Auto is the block's own colour, which the light follows when nobody
+	// chose one.
+	//
+	// A packed value rather than an index into the device's own list: two
+	// drives share 525824 and an octaver reads 196619, and nothing here has a
+	// table of them. Kept whole rather than decomposed, because an export that
+	// wrote a guess for it would differ from the device's own file for a
+	// reason nobody asked for. See task 262.
+	Auto int
+	// Enabled says the block this switch works on is on.
+	//
+	// Not a property of the switch. It is the block's state, stored beside the
+	// assignment because the switch is what toggles it, and an export that
+	// dropped it would put every block back on.
+	Enabled bool
+	// Momentary says the switch holds only while it is pressed, and Primary
+	// that this is the assignment the pedal prints the label of when a switch
+	// carries more than one.
+	Momentary bool
+	Primary   bool
+	// Custom is somebody's own words for the switch, empty where they left
+	// the block's name.
+	//
+	// Apart from Label, which is what the pedal shows either way. A document
+	// records the two separately, so an export that only had the resolved one
+	// could not say whether anybody had chosen anything.
+	Custom string
 }
 
 // DeviceBlock is one block, still named by number.
@@ -662,12 +689,27 @@ func footswitchesOf(
 			led, _ := asUint(entry[int8(keyFsLED)])
 			block, _ := asUint(body[int8(keyFsBlock)])
 
+			// The rest of what the device stores beside an assignment. Read
+			// because an export of the device's own file has to be able to
+			// write it back: see task 262, where a round trip through this
+			// tool dropped every switch on a preset that had three.
+			auto, _ := asUint(body[int8(keyFsAuto)])
+			custom, _ := asString(entry[int8(keyFsCustom)])
+			enabled, _ := body[int8(keyFsEnabled)].(bool)
+			momentary, _ := entry[int8(keyFsMomentary)].(bool)
+			primary, _ := entry[int8(keyFsPrimary)].(bool)
+
 			out = append(out, DeviceFootswitch{
-				Switch: i + 1,
-				Label:  labelOf(entry, gear),
-				Gear:   gear,
-				Block:  int(block),
-				LED:    int(led),
+				Switch:    i + 1,
+				Label:     labelOf(entry, gear),
+				Gear:      gear,
+				Block:     int(block),
+				LED:       int(led),
+				Auto:      int(auto),
+				Enabled:   enabled,
+				Momentary: momentary,
+				Primary:   primary,
+				Custom:    custom,
 			})
 		}
 	}

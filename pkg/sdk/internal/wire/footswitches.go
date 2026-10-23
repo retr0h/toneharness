@@ -143,9 +143,23 @@ func placeGroup(
 			label = fs.Gear
 		}
 
+		// `Auto`, `Enabled` and `Momentary` are carried rather than
+		// flattened, which is what makes a round trip through an export and
+		// back keep what the device had: task 262. Each was written as its
+		// zero before, and a preset this tool compiled still carries the zero
+		// because it has nothing else to carry.
+		//
+		// `Primary` is not among them. It stays true for the reason it always
+		// was: a switch this tool writes carries one assignment, so it is the
+		// one the pedal prints the label of, and reading it off a struct whose
+		// zero value is false would silently label nothing.
+		//
+		// Nor is the custom label, which is written whether or not anybody
+		// chose one. That is what makes the pedal print a name at all, and
+		// task 263 is the question of what it should say.
 		entries = append(entries, map[int]any{
 			int(keyFsOrdinal):   0,
-			int(keyFsMomentary): false,
+			int(keyFsMomentary): fs.Momentary,
 			int(keyFsPrimary):   true,
 			int(keyFsCustom):    label + "\x00",
 			int(keyFsAlways):    true,
@@ -154,8 +168,8 @@ func placeGroup(
 				int(keyFsBodyOne): 1,
 				int(keyFsBodyTwo): 0,
 				int(keyFsModel):   name,
-				int(keyFsAuto):    0,
-				int(keyFsEnabled): false,
+				int(keyFsAuto):    fs.Auto,
+				int(keyFsEnabled): fs.Enabled,
 				int(keyFsBlock):   fs.Block,
 			},
 		})
