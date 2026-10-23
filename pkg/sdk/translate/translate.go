@@ -891,6 +891,16 @@ func DisplacedFrom(
 	at.Mid -= baseline.Mid
 	at.High -= baseline.High
 
+	// Harmonics too, since task 276 weighs it. A pointer because a reading
+	// taken before the figure existed has a gap rather than a zero, and a
+	// displacement from a baseline that has no reading is not a displacement:
+	// the target keeps its absolute figure and whatever reads it has both
+	// sides absent, which [measured.Weights.between] skips.
+	if at.Harmonics != nil && baseline.Harmonics != nil {
+		was := *at.Harmonics - *baseline.Harmonics
+		at.Harmonics = &was
+	}
+
 	return at
 }
 
@@ -2258,6 +2268,16 @@ func displacedTo(
 
 	out := baseline
 
+	// Harmonics is a pointer on a reading, because a sweep taken before the
+	// figure existed has a gap rather than a zero. The target needs somewhere
+	// to put the shift, and a baseline with no reading of its own has nothing
+	// to shift: see [measured.Figures].
+	harmonics := 0.0
+	if baseline.Harmonics != nil {
+		harmonics = *baseline.Harmonics
+		out.Harmonics = &harmonics
+	}
+
 	for _, want := range []struct {
 		key   audio.Figure
 		scale float64
@@ -2267,6 +2287,10 @@ func displacedTo(
 		{audio.KeyMid, 100, &out.Mid},
 		{audio.KeyHigh, 100, &out.High},
 		{audio.KeyCentroid, 1, &out.Centroid},
+		// On the same scale as the band shares, because that is what it is: a
+		// share of the energy, held from zero to one by the corpus and
+		// reported as a percentage by the library. Task 276.
+		{audio.KeyHarmonics, 100, &harmonics},
 	} {
 		by, ok := shift(want.key, want.scale)
 		if !ok {

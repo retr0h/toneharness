@@ -116,11 +116,11 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Drive: "true"
-        Gain: "0.15"
+        Gain: "0.375"
         Level: "1.0"
-        Mix: "1.0"
+        Mix: "0.5"
         Mode: "2"
-        Peak: "0.8"
+        Peak: "0.75"
         Range: "false"
       attrs:
         '@position': "0"
@@ -203,7 +203,7 @@ built:
         Level: "0.0"
         LowGain: "0.0"
         MidFreq: "600.0"
-        MidGain: "10.6"
+        MidGain: "4.6"
       attrs:
         '@position': "4"
       position: 4

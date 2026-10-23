@@ -133,7 +133,7 @@ built:
       controls:
         CenterFreq: "1000.0"
         Level: "0.0"
-        Tilt: "0.5"
+        Tilt: "0.375"
       attrs:
         '@position': "3"
       enabled: false
@@ -148,7 +148,7 @@ built:
         Level: "0.0"
         LowGain: "0.0"
         MidFreq: "600.0"
-        MidGain: "3.8"
+        MidGain: "0.8"
       attrs:
         '@position': "4"
       position: 4

@@ -255,6 +255,82 @@ rig gets is the next section.
 The corpus is reference material for understanding a genre, not a population to
 average. Averaging is what produces one preset eleven times.
 
+## A bass is weighed on three figures, and harmonics is the third
+
+`measured.SpectralFor("bass")` drops the low and high bands and leaves the
+centroid at a thousandth and the midrange at one. For a long time that was the
+whole of it, and the sweeps hold ten figures per position.
+
+**Harmonics is the one of the other eight that can be weighed.** It is a share
+of the energy above the fundamental, a record and a block go through the same
+`audio.Measure` to get it, and the measuring loop's second of padding cannot
+move it: a share does not change when silence is added to either end. That is
+exactly the argument that disqualifies transient and decay, and it does not
+apply here.
+
+What it is worth, measured. The blocks span harmonics from 0 to 86 of a
+hundred, and four of the eleven genres displace it past what the figure can
+claim:
+
+| genre | harmonics it asks for |
+| ----- | --------------------- |
+| grunge | -6.48 |
+| blues-rock | -6.33 |
+| metal | -1.76 |
+| rock | +1.41 |
+
+The other seven displace less than a hundredth of a share and ask for nothing,
+which the floor on a difference already handles.
+
+Weighed at one, like a band share, because it is reported on the same scale: a
+block's reading and a genre's displacement are both hundredths of the energy.
+
+**It broke the two-answer microphone.** A list is chosen by direction, the
+midrange column of the eleven displacements held two signs, and 22 of the 43
+rigs reached the same microphone. With harmonics in the ranking the 43 spread
+across six microphones rather than five, and the 22 become 13 on one and 10 on
+another.
+
+**And it cost a Metal Zone.** rock's drive was a BOSS Metal Zone MT-2, which is
+the headline of the complaint about measurement choosing badly; it is now a
+Carvin VLD1 Legacy Drive. pop-punk's amplifier and cabinet move from a
+MESA/Boogie Bass 400+ into a 6x10 to an Ampeg SVT into an 8x10, which is what
+punk bass is. Tim Commerford's drive moves from a Roland Jet Phaser, which the
+device files as a drive and is a phaser, to an Arbiter Fuzz Face; he earns
+`saturated`. Tobin Esperance's moves off a Bitcrusher.
+
+**Two went the other way.** blues-rock's amplifier moves from an Ampeg SVT
+(bright channel) to a Pearce BC-1 preamp (jumped), which is a worse answer by
+ear on a genre whose amplifier was always a measured guess: 2 of its 3 players
+have a researched rig and no amplifier is in most of them. And Greg T. Walker's
+drive moves from a Z.Vex Fuzz Factory to a Xotic EP Booster although he earns
+`saturated`, because the Fuzz Factory's own harmonics reading is 0.000 and the
+booster's 38.3 is nearer the 41.6 he asks for. The arithmetic is right and the
+reading is the thing to doubt.
+
+**Ten rigs move from a Simple Tilt to an MXR 10-Band Graphic EQ**, which is the
+change worth understanding rather than worrying about. The eight bass
+equalisers span harmonics from 9.1 to 37.8, and the 10-band sits at 37.795
+against a baseline of 37.794: it is the most transparent of them. A genre that
+asks for no change in harmonics gets the equaliser that does not change them.
+Its bands come out as a curve rather than against the stops, which is what the
+reach rule fixed.
+
+### What is still not weighed, and why
+
+`level` stays at zero on purpose: a block that is right and quiet is right, and
+the next block's level control fixes it for nothing.
+
+`transient` and `decay` stay at zero because the measuring loop pads its
+recording with a second of silence to catch a reverb's tail. That moves both,
+the same way for every block and not at all for a record, so a block may be
+compared with a block on them and never with a record. Undoing it would mean
+measuring the padding's own contribution and subtracting it, which is a sweep
+nobody has run.
+
+`dynamics` and `lean` are measured on both sides and nothing has established
+whether the padding moves them. They are the next two to look at.
+
 ## A rig gets the effects its own records ask for
 
 Every chain the corpus built carried the same two, a drive and an equaliser, on

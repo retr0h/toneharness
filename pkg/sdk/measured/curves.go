@@ -689,6 +689,11 @@ func (p Figures) Asks(
 		}
 	}
 
+	// And harmonics, where the displacement carries a reading of it at all.
+	if by.Harmonics != 0 && p.Harmonics != nil && *p.Harmonics != 0 {
+		return true
+	}
+
 	return false
 }
 
@@ -736,6 +741,16 @@ func (c Curves) shared(
 		}
 	}
 
+	// Harmonics, which is a pointer on a reading and so cannot join the table
+	// above. Replaced rather than divided in place, because the caller's own
+	// figures point at the same number.
+	if by.Harmonics != 0 && want.Harmonics != nil {
+		if among := c.dials(audio.KeyHarmonics); among > 1 {
+			was := *want.Harmonics / float64(among)
+			want.Harmonics = &was
+		}
+	}
+
 	return want
 }
 
@@ -756,23 +771,11 @@ func (c Curves) dials(
 			continue
 		}
 
-		of := func(f Figures) float64 {
-			switch key {
-			case audio.KeyLow:
-				return f.Low
-			case audio.KeyMid:
-				return f.Mid
-			case audio.KeyHigh:
-				return f.High
-			default:
-				return f.Centroid
-			}
-		}
-
-		low, high := of(curve.Points[0].Figures), of(curve.Points[0].Figures)
+		low := curve.Points[0].of(key)
+		high := low
 
 		for _, p := range curve.Points {
-			v := of(p.Figures)
+			v := p.of(key)
 			low, high = min(low, v), max(high, v)
 		}
 
@@ -879,7 +882,7 @@ func (curve Curve) moves(
 // stayed at 15dB after the size of the ask was honoured.
 type reached struct {
 	weight   float64
-	of       func(Figures) float64
+	key      audio.Figure
 	middle   float64
 	up, down float64
 	asked    float64
@@ -890,7 +893,7 @@ type reached struct {
 func (r reached) lean(
 	at Point,
 ) float64 {
-	by := r.of(at.Figures) - r.middle
+	by := at.of(r.key) - r.middle
 
 	switch {
 	case by > 0 && r.up > 0:
@@ -914,13 +917,17 @@ func (c Curves) TowardFrom(
 
 	axes := []struct {
 		weight float64
-		of     func(Figures) float64
+		key    audio.Figure
 		asked  float64
 	}{
-		{by.Centroid, func(f Figures) float64 { return f.Centroid }, want.Centroid},
-		{by.Low, func(f Figures) float64 { return f.Low }, want.Low},
-		{by.Mid, func(f Figures) float64 { return f.Mid }, want.Mid},
-		{by.High, func(f Figures) float64 { return f.High }, want.High},
+		{by.Centroid, audio.KeyCentroid, want.Centroid},
+		{by.Low, audio.KeyLow, want.Low},
+		{by.Mid, audio.KeyMid, want.Mid},
+		{by.High, audio.KeyHigh, want.High},
+		// Harmonics, where the displacement carries a reading of it. Task
+		// 276: a share of the energy above the fundamental is the fourth
+		// figure both sides of a comparison measure the same way.
+		{by.Harmonics, audio.KeyHarmonics, orZero(want.Harmonics)},
 	}
 
 	// Only the positions that leave the block at working level, for the reason
@@ -960,12 +967,12 @@ func (c Curves) TowardFrom(
 			continue
 		}
 
-		was := middle(at, a.of)
+		was := middle(at, a.key)
 
 		up, down := 0.0, 0.0
 
 		for _, p := range at {
-			off := a.of(p.Figures) - was
+			off := p.of(a.key) - was
 			up, down = max(up, off), max(down, -off)
 		}
 
@@ -1004,7 +1011,7 @@ func (c Curves) TowardFrom(
 
 		reach = append(reach, reached{
 			weight: a.weight,
-			of:     a.of,
+			key:    a.key,
 			middle: was,
 			up:     up,
 			down:   down,
@@ -1046,11 +1053,11 @@ func (c Curves) TowardFrom(
 // middle is the median of one figure across the positions given.
 func middle(
 	at []Point,
-	of func(Figures) float64,
+	key audio.Figure,
 ) float64 {
 	all := make([]float64, 0, len(at))
 	for _, p := range at {
-		all = append(all, of(p.Figures))
+		all = append(all, p.of(key))
 	}
 
 	slices.Sort(all)

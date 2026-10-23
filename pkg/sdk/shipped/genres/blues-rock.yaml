@@ -54,7 +54,7 @@ rig:
         Sustain: "0.875"
       enabled: false
     - role: amp
-      gear: Ampeg SVT (bright channel)
+      gear: Pearce BC-1 preamp (jumped)
       capture: direct
       confidence: low
       evidence:
@@ -70,7 +70,7 @@ rig:
             low: 0.96
             mid: 0.04
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. Ampeg SVT (bright channel) is the closest of the 15 bass amplifiers this device models to blues-rock, sitting at 189 Hz against 165. Across 9 records from 3 players, blues-rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Pearce BC-1 preamp (jumped) is the closest of the 15 bass amplifiers this device models to blues-rock, sitting at 226 Hz against 165. Across 9 records from 3 players, blues-rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
     - role: eq
       gear: Simple Tilt
       capture: direct
@@ -90,7 +90,7 @@ rig:
             transient: 0.72
           note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to blues-rock, sitting at 124 Hz against 165. Across 9 records from 3 players, blues-rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Tilt: "0.75"
+        Tilt: "0.25"
       enabled: false
   instrument: bass
 built:
@@ -140,7 +140,7 @@ built:
         '@position': "1"
       position: 1
     - role: amp
-      gear: Ampeg SVT (bright channel)
+      gear: Pearce BC-1 preamp (jumped)
       capture: direct
       confidence: low
       evidence:
@@ -156,20 +156,26 @@ built:
             low: 0.96
             mid: 0.04
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. Ampeg SVT (bright channel) is the closest of the 15 bass amplifiers this device models to blues-rock, sitting at 189 Hz against 165. Across 9 records from 3 players, blues-rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Pearce BC-1 preamp (jumped) is the closest of the 15 bass amplifiers this device models to blues-rock, sitting at 226 Hz against 165. Across 9 records from 3 players, blues-rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Bass: "0.41"
-        Bias: "0.74"
-        BiasX: "0.5"
-        ChVol: "0.8"
-        Drive: "0.6"
-        Hum: "0.5"
-        Master: "1.0"
-        Mid: "0.83"
-        MidFreq: "2"
-        Ripple: "0.5"
-        Sag: "0.5"
-        Treble: "0.85"
+        Ch Vol: "0.5"
+        Ch1 Bass: "0.4"
+        Ch1 Boost: "false"
+        Ch1 Drive: "1.0"
+        Ch1 Master: "0.75"
+        Ch1 Mid: "15.0"
+        Ch1 Mid Freq: "150.0"
+        Ch1 Treble: "0.15"
+        Ch2 Bass: "0.25"
+        Ch2 Boost: "false"
+        Ch2 Drive: "0.45"
+        Ch2 Master: "0.8"
+        Ch2 Mid: "0.0"
+        Ch2 Mid Freq: "500.0"
+        Ch2 Treble: "0.438"
+        Input Pad: "1"
+        Limiter: "false"
+        Threshold: "-6.0"
       attrs:
         '@position': "2"
       position: 2
@@ -194,7 +200,7 @@ built:
       controls:
         CenterFreq: "1000.0"
         Level: "0.0"
-        Tilt: "0.75"
+        Tilt: "0.25"
       attrs:
         '@position': "3"
       enabled: false
@@ -215,6 +221,20 @@ built:
       attrs:
         '@position': "4"
       position: 4
+    - role: eq
+      gear: Simple EQ
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        HighGain: "6.0"
+        Level: "0.0"
+        LowGain: "0.0"
+        MidFreq: "600.0"
+        MidGain: "0.64"
+      attrs:
+        '@position': "5"
+      position: 5
   preset:
     dsp0:
       members:
@@ -295,6 +315,16 @@ built:
                 '@fs_enabled': "false"
                 '@fs_index': "2"
                 '@fs_label': Simple Tilt
+                '@fs_ledcolor': "527360"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block5:
+              attrs:
+                '@fs_customcolor': "8"
+                '@fs_customlabel': EQ 2
+                '@fs_enabled': "false"
+                '@fs_index': "3"
+                '@fs_label': Simple EQ
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -379,3 +409,12 @@ built:
       momentary: false
       primary: true
       switch: 2
+    - gear: Simple EQ
+      block: 5
+      colour: 527360
+      enabled: false
+      label: EQ 2
+      led: blue
+      momentary: false
+      primary: true
+      switch: 3
