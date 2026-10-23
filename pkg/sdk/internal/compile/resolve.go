@@ -23,7 +23,6 @@ package compile
 import (
 	"errors"
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
@@ -1044,11 +1043,6 @@ func aimed(
 	}
 }
 
-// swept is how fine a figure read off a sweep is kept: a thousandth of a
-// control's travel, which is finer than the eight positions it was read at and
-// coarser than the noise of interpolating between them.
-const swept = 1000
-
 // choseMic picks a cabinet's microphone by what the microphone moves.
 //
 // Task 242's remaining half. `translate.chose` does this for a genre whose
@@ -1119,13 +1113,9 @@ func set(
 	case "int":
 		params[name] = catalog.Int(int64(at.Value))
 	default:
-		// Rounded, because the digits past this are not a measurement. A
-		// sweep reads eight positions of a control and the value between two
-		// of them is interpolated, so a reading of 0.828986013986014 claims a
-		// precision a hundred thousand times finer than anything that was
-		// measured, and a document full of those is unreadable beside the
-		// catalog's own two digits.
-		params[name] = catalog.Float(
-			math.Round(at.Value*swept) / swept)
+		// Rounded for the reason [rounded] states: a swept position is
+		// interpolated between two readings eight apart, so the digits past a
+		// thousandth of the control are not a measurement.
+		params[name] = catalog.Float(rounded(at.Value, blk.Params[name]))
 	}
 }

@@ -507,7 +507,10 @@ func apply(
 	}
 
 	reach, loose := step(b, key, p, stats)
-	to := clamp(from+t.steps*h.weight*reach, p.Min, p.Max)
+
+	// Rounded, because a nudge is a product of three numbers and none of them
+	// is measured to a thousandth of a control. See [rounded] and task 270.
+	to := rounded(clamp(from+t.steps*h.weight*reach, p.Min, p.Max), p)
 
 	// A knob already at the end it was asked to move towards. The control is
 	// there, the word reached it, and the preset is no different for it, so

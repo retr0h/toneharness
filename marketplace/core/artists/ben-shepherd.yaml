@@ -102,10 +102,10 @@ built:
         HighMid: "0.5"
         Hum: "0.5"
         Master: "0.6"
-        Mid: "0.5360000000000001"
+        Mid: "0.536"
         Ripple: "0.5"
         Sag: "0.5"
-        Treble: "0.46875"
+        Treble: "0.469"
       attrs:
         '@position': "1"
       position: 1

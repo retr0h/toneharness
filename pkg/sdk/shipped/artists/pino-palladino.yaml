@@ -153,7 +153,7 @@ built:
         Master: "1.0"
         Ripple: "0.5"
         Sag: "0.5"
-        Treble: "0.643986013986014"
+        Treble: "0.644"
       attrs:
         '@position': "1"
       position: 1
