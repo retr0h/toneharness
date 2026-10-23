@@ -39,8 +39,15 @@ const footswitchKey = "footswitch"
 
 // Keys one footswitch assignment is stored under. A device owns these names.
 const (
-	fsIndex     = "@fs_index"
+	fsIndex = "@fs_index"
+	// fsLabel is the block's own name and fsPrinted what the switch prints.
+	//
+	// A device keeps both and uses them differently, which this collapsed
+	// into one: HX Edit's own presets put "Clawthorn Drive" in the first and
+	// "FUZZ" in the second, and the pedal has room for about six characters.
+	// See task 263 and `Assign`'s `printed`.
 	fsLabel     = "@fs_label"
+	fsPrinted   = "@fs_customlabel"
 	fsColour    = "@fs_ledcolor"
 	fsEnabled   = "@fs_enabled"
 	fsMomentary = "@fs_momentary"
@@ -50,7 +57,7 @@ const (
 
 // fsModelled names the fields this package reads by name.
 var fsModelled = map[string]bool{
-	fsIndex: true, fsLabel: true, fsColour: true,
+	fsIndex: true, fsLabel: true, fsPrinted: true, fsColour: true,
 	fsEnabled: true, fsMomentary: true, fsPrimary: true, fsChosen: true,
 }
 
@@ -122,7 +129,15 @@ func footswitchOf(
 	}
 
 	decode(fields[fsIndex], &out.Switch)
-	decode(fields[fsLabel], &out.Label)
+	decode(fields[fsLabel], &out.Gear)
+	decode(fields[fsPrinted], &out.Label)
+
+	// A preset written before the two were told apart carries only the gear
+	// name, and what a switch prints is what it prints: the label falls back
+	// to it rather than reading as a switch with no name.
+	if out.Label == nil {
+		out.Label = out.Gear
+	}
 	decode(fields[fsColour], &out.Colour)
 	decode(fields[fsEnabled], &out.Enabled)
 	decode(fields[fsMomentary], &out.Momentary)
@@ -222,7 +237,29 @@ func fieldsOf(
 	fields := map[string]json.RawMessage{}
 
 	putRaw(fields, fsIndex, fs.Switch)
-	putRaw(fields, fsLabel, fs.Label)
+
+	// The gear's own name, falling back to the label for a rig that names one
+	// and no gear. Somebody writing their own switch is allowed to, and a
+	// device that found this field empty would print nothing.
+	gear := fs.Gear
+	if gear == nil {
+		gear = fs.Label
+	}
+
+	putRaw(fields, fsLabel, gear)
+
+	// And what the switch prints, only where it differs from the gear.
+	//
+	// Absence is how a device says "no custom label": HX Edit leaves the
+	// field out of a switch carrying the block's own name, and `footswitchOf`
+	// reads that absence by falling back. Writing it unconditionally would
+	// add a field to every preset read off a pedal and written back, which is
+	// what the round trip refuses.
+	// Non-nil wherever the label is, because that is what gear fell back to.
+	if fs.Label != nil && *fs.Label != *gear {
+		putRaw(fields, fsPrinted, fs.Label)
+	}
+
 	putRaw(fields, fsColour, fs.Colour)
 	putRaw(fields, fsEnabled, fs.Enabled)
 	putRaw(fields, fsMomentary, fs.Momentary)

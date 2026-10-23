@@ -65,8 +65,16 @@ func (s *AssignTestSuite) TestAssign() {
 		name     string
 		models   []catalog.ModelID
 		switches int
-		// labels is what each switch ends up on, in switch order.
+		// labels is what the pedal prints under each switch, in switch order.
+		//
+		// The kind of block rather than its name, which is the whole of task
+		// 263: the pedal has room for about six characters and a gear name
+		// runs to thirty, so FS1 on a built preset read "Ampeg Scrambler Bass
+		// Overdrive".
 		labels []string
+		// gear is what each switch's block is called, which a device keeps
+		// beside the label and this used to send as both.
+		gear []string
 		// leds is the colour each gets, and no two may match.
 		leds []string
 	}{
@@ -83,7 +91,8 @@ func (s *AssignTestSuite) TestAssign() {
 			name:     "a drive and an equaliser each get one, in chain order",
 			models:   []catalog.ModelID{"comp", "drive", "amp", "cab", "eq"},
 			switches: 3,
-			labels:   []string{"A Drive", "An EQ"},
+			labels:   []string{"DRIVE", "EQ"},
+			gear:     []string{"A Drive", "An EQ"},
 			leds:     []string{"red", "green"},
 		},
 		{
@@ -92,7 +101,8 @@ func (s *AssignTestSuite) TestAssign() {
 			name:     "a device runs out of switches before the chain runs out",
 			models:   []catalog.ModelID{"drive", "eq", "verb", "mod"},
 			switches: 2,
-			labels:   []string{"A Drive", "An EQ"},
+			labels:   []string{"DRIVE", "EQ"},
+			gear:     []string{"A Drive", "An EQ"},
 			leds:     []string{"red", "green"},
 		},
 		{
@@ -102,7 +112,8 @@ func (s *AssignTestSuite) TestAssign() {
 			name:     "each switch is a colour no other switch has",
 			models:   []catalog.ModelID{"drive", "eq", "verb", "mod"},
 			switches: 4,
-			labels:   []string{"A Drive", "An EQ", "A Reverb", "A Mod"},
+			labels:   []string{"DRIVE", "EQ", "REVERB", "MOD"},
+			gear:     []string{"A Drive", "An EQ", "A Reverb", "A Mod"},
 			leds:     []string{"red", "green", "blue", "light orange"},
 		},
 		{
@@ -117,7 +128,14 @@ func (s *AssignTestSuite) TestAssign() {
 				"drive", "eq", "verb", "mod",
 			},
 			switches: 8,
+			// And where a board carries two of a kind, the second is
+			// numbered: a foot needs to tell them apart and the kind alone
+			// cannot.
 			labels: []string{
+				"DRIVE", "EQ", "REVERB", "MOD",
+				"DRIVE 2", "EQ 2", "REVERB 2", "MOD 2",
+			},
+			gear: []string{
 				"A Drive", "An EQ", "A Reverb", "A Mod",
 				"A Drive", "An EQ", "A Reverb", "A Mod",
 			},
@@ -145,8 +163,15 @@ func (s *AssignTestSuite) TestAssign() {
 
 			for i, f := range got {
 				s.Require().Equal(i+1, *f.Switch, "switches count from one")
-				s.Require().Equal(tt.labels[i], *f.Label)
+				s.Require().Equal(tt.labels[i], *f.Label,
+					"what the pedal prints")
+				s.Require().Equal(tt.gear[i], *f.Gear, "what the block is")
 				s.Require().Equal(tt.leds[i], *f.Led)
+
+				// Every label short enough to read from three feet away,
+				// which is what the switch is for.
+				s.Require().LessOrEqual(len(*f.Label), 8,
+					"%q will not fit under a switch", *f.Label)
 
 				s.Require().False(seen[*f.Led],
 					"%s is on two switches, so the board reads as one colour",

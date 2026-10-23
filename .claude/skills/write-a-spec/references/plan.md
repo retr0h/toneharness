@@ -53,6 +53,27 @@ in the chain. A preset can hold `block5` whose position is 6.
 
 `snapshots`, `footswitches` and `controllers` are modelled rather than kept
 verbatim, because they are decisions somebody made and might want to change.
+
+**A footswitch carries two names and they are not the same thing.** `gear` is
+the block, up to thirty characters of it, and `label` is what the pedal prints
+under the switch, which has room for about six. A device keeps both: HX Edit's
+own presets put "Clawthorn Drive" in one and "FUZZ" in the other. This tool
+sent the gear name as both until 2026-10-22, so FS1 on a built preset read
+"Ampeg Scrambler Bass Overdrive".
+
+The default label is the kind of block, upper case: DRIVE, EQ, MOD, DELAY,
+REVERB, PITCH, FILTER. All seven fit, and the second of a kind on one board is
+numbered, DRIVE then DRIVE 2. It says what the switch does rather than what the
+block is, which is what a foot needs.
+
+The alternative was the gear's last distinctive word, and the eleven stompable
+blocks the shipped rigs name are why not: Overdrive, MT-2, 250, Pi, Distortion,
+GT2, Booster, EQ, EQ, Tilt, III. Four say nothing, two collide, and two are
+still nine characters.
+
+A rig's own `footswitch:` outranks all of it, so anybody who wants FUZZ on
+their fuzz writes it down. A label that is the gear's own name is written as
+absence, the way a device says nobody chose one.
 `device` is the remainder: entries a person would not hand-edit, kept exactly as
 they arrived, so a field nobody has modelled yet is not a field this drops.
 

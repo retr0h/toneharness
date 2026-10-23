@@ -260,6 +260,105 @@ func (s *FootswitchesPublicTestSuite) TestFootswitches() {
 			},
 		},
 		{
+			// Task 263. A device keeps two labels per assignment and uses
+			// them differently: the gear in `@fs_label` and what the switch
+			// prints in `@fs_customlabel`. This tool sent the gear name as
+			// both, so FS1 on a built preset read "Ampeg Scrambler Bass
+			// Overdrive" under a switch with room for about six characters.
+			name: "the gear and what the switch prints are written apart",
+			then: func() {
+				block, switched := 1, 3
+				gear, label := "Ampeg Scrambler Bass Overdrive", "DRIVE"
+
+				doc, err := preset.Blank()
+				s.Require().NoError(err)
+
+				compile.Footswitches(doc, plan.Plan{Footswitches: []rig.Footswitch{
+					{Switch: &switched, Block: &block, Gear: &gear, Label: &label},
+				}}, s.cat)
+
+				var out bytes.Buffer
+				s.Require().NoError(preset.Write(&out, doc))
+
+				s.Require().Contains(out.String(),
+					`"@fs_label": "Ampeg Scrambler Bass Overdrive"`)
+				s.Require().Contains(out.String(), `"@fs_customlabel": "DRIVE"`)
+
+				// And back, so what a person reads on the pedal is what the
+				// rig says the switch prints.
+				_, _, made, err := compile.Lift(doc, s.cat)
+				s.Require().NoError(err)
+				s.Require().Len(made.Footswitches, 1)
+
+				got := made.Footswitches[0]
+				s.Require().Equal(label, *got.Label)
+				s.Require().Equal(gear, *got.Gear)
+			},
+		},
+		{
+			// A switch carrying the block's own name, which is how a device
+			// says nobody chose a label: HX Edit leaves the field out, and
+			// writing it would add one to every preset read off a pedal and
+			// written back.
+			name: "a label nobody chose is not written",
+			then: func() {
+				block, switched := 1, 3
+				gear := "Dhyana Drive"
+
+				tests := []struct {
+					name  string
+					label *string
+				}{
+					{name: "a rig that names no label"},
+					{name: "a label that is the gear's own name", label: &gear},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						doc, err := preset.Blank()
+						s.Require().NoError(err)
+
+						compile.Footswitches(doc, plan.Plan{Footswitches: []rig.Footswitch{
+							{
+								Switch: &switched, Block: &block,
+								Gear: &gear, Label: tt.label,
+							},
+						}}, s.cat)
+
+						var out bytes.Buffer
+						s.Require().NoError(preset.Write(&out, doc))
+
+						s.Require().Contains(out.String(),
+							`"@fs_label": "Dhyana Drive"`)
+						s.Require().NotContains(out.String(), "@fs_customlabel")
+					})
+				}
+			},
+		},
+		{
+			// A rig naming a label and no gear, which somebody writing their
+			// own switch is allowed to do. The label goes in both, because a
+			// device that found the gear field empty would print nothing.
+			name: "a rig that names a label and no gear",
+			then: func() {
+				block, switched := 1, 3
+				label := "FUZZ"
+
+				doc, err := preset.Blank()
+				s.Require().NoError(err)
+
+				compile.Footswitches(doc, plan.Plan{Footswitches: []rig.Footswitch{
+					{Switch: &switched, Block: &block, Label: &label},
+				}}, s.cat)
+
+				var out bytes.Buffer
+				s.Require().NoError(preset.Write(&out, doc))
+
+				s.Require().Contains(out.String(), `"@fs_label": "FUZZ"`)
+				s.Require().NotContains(out.String(), "@fs_customlabel")
+			},
+		},
+		{
 			// A plan that names no colour, and one that names something this
 			// device does not have.
 			name: "a colour nobody chose is not written",

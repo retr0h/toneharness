@@ -21,6 +21,9 @@
 package compile
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
@@ -92,6 +95,58 @@ var palette = []string{
 	"violet", "yellow", "turquoise", "pink",
 }
 
+// printed is what the pedal prints under a switch.
+//
+// **The pedal has room for about six characters and the gear's own name is up
+// to thirty.** FS1 on a built preset read "Ampeg Scrambler Bass Overdrive",
+// which is a switch that works and cannot be read from three feet away. A
+// device keeps two labels per assignment and uses them differently: HX Edit's
+// own presets put the gear in `@fs_label` ("Clawthorn Drive", "Bass Octaver")
+// and what the switch prints in `@fs_customlabel` ("FUZZ", "Oct -1"). This
+// tool sent the gear name as both.
+//
+// The kind of block, which is the role the rig already states and the same
+// word the catalog files it under. Upper case, the way a label somebody wrote
+// by hand reads: DRIVE, EQ, MOD, DELAY, REVERB, PITCH, FILTER. Every one of
+// the seven fits, the longest being six.
+//
+// **Measured against the alternative, which was the gear's last distinctive
+// word.** Across the eleven stompable blocks the shipped rigs name, that gives
+// Overdrive, MT-2, 250, Pi, Distortion, GT2, Booster, EQ, EQ, Tilt and III.
+// Four of those say nothing about what the switch does, two collide, and
+// Distortion and Overdrive are still nine and ten characters. The role's
+// failure is milder and fixable: two blocks of a kind read alike, and the
+// colours are already distinct per switch.
+//
+// So the second of a kind is numbered. DRIVE then DRIVE 2, which is seven
+// characters and the only thing a foot needs to tell them apart.
+//
+// Nothing here invents an abbreviation per block. That is a table of 661
+// entries nobody has written, and a person who wants FUZZ on their fuzz says
+// so in the rig, which outranks this.
+func printed(
+	of catalog.Category,
+	already []rig.Footswitch,
+) string {
+	label := strings.ToUpper(string(of))
+
+	// Counted over what this has handed out rather than over the chain,
+	// because a block past the last switch gets no label to collide with.
+	same := 0
+
+	for _, fs := range already {
+		if fs.Label != nil && strings.HasPrefix(*fs.Label, label) {
+			same++
+		}
+	}
+
+	if same == 0 {
+		return label
+	}
+
+	return label + " " + strconv.Itoa(same+1)
+}
+
 // Assign gives a switch to each block worth stomping, in chain order.
 //
 // A built preset had none. `plan.Footswitches` was only ever filled by a lift,
@@ -108,10 +163,11 @@ var palette = []string{
 // ten, from [plan.Limits]. Blocks past the last switch keep working and are
 // simply not assignable, which is what happens on the hardware too.
 //
-// The label is the gear's own name and the colour is left unset, which the
-// contract calls `auto`: the light then follows the block, so a drive lights
-// amber and a reverb blue without this choosing. Both are a person's to change
-// and neither is something a build knows better.
+// The label is what the switch does and the gear is what the block is, which
+// is the distinction a device already makes and this collapsed: see [printed].
+//
+// A person's to change either way. A rig's own `footswitch:` outranks all of
+// this, so what is decided here is only the default.
 func Assign(
 	built plan.Plan,
 	cat *catalog.Catalog,
@@ -138,6 +194,7 @@ func Assign(
 
 		at := len(out) + 1
 		name := held.Gear()
+		label := printed(held.Category, out)
 		on := i
 
 		// Round the palette rather than stopping at its end, so a board with
@@ -168,7 +225,7 @@ func Assign(
 		out = append(out, rig.Footswitch{
 			Switch:    &at,
 			Block:     &on,
-			Label:     &name,
+			Label:     &label,
 			Gear:      &name,
 			Led:       &colour,
 			Primary:   &primary,
