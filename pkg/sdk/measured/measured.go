@@ -651,3 +651,48 @@ func orZero(
 
 	return *at
 }
+
+// Resolves is the smallest distance two blocks can be apart and be told apart.
+//
+// A distance is a weighted root of the differences per figure, so the smallest
+// one that means anything is the distance a one-unit difference on every
+// weighed figure produces. A unit is what `audio.Resolves` says it is: a hertz
+// of centroid, because the bins are about 10Hz apart, and a hundredth of a
+// share, because the third place moves with which windows the playing fell in.
+//
+// **What it is for.** `Nearest` always answers, and answering is not the same
+// as choosing. Of the eight equalisers this device models for a bass, punk's
+// nearest sits 24.49 from its target and the median sits 24.51: the winner is
+// two hundredths of a distance better than typical, on a scale where a
+// hundredth of a share of the midrange is worth one. Nothing was chosen there,
+// and a document saying "the closest of the 8 measured" reads as though
+// something was. See task 267.
+//
+// The shares are weighed in percentage points and the corpus holds them from
+// zero to one, which is why a hundredth of a share enters this as one and not
+// as a hundredth.
+func (w Weights) Resolves() float64 {
+	sum := 0.0
+
+	for _, at := range []struct {
+		by   float64
+		unit float64
+	}{
+		// A hertz.
+		{w.Centroid, 1},
+		// A hundredth of a share, in the points the library reports.
+		{w.Low, 1},
+		{w.Mid, 1},
+		{w.High, 1},
+		{w.Harmonics, 1},
+		// A tenth of a decibel, which is what `audio.places` holds a level
+		// to. Weighed at zero everywhere here, and in the sum so that a
+		// caller weighing it gets an answer rather than a silence.
+		{w.Level, 0.1},
+	} {
+		apart := at.by * at.unit
+		sum += apart * apart
+	}
+
+	return math.Sqrt(sum)
+}
