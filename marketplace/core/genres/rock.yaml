@@ -290,6 +290,7 @@ built:
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': BOSS Metal Zone MT-2
+                '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block3:
@@ -299,6 +300,7 @@ built:
                 '@fs_enabled': "false"
                 '@fs_index': "2"
                 '@fs_label': Simple Tilt
+                '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -366,6 +368,7 @@ built:
   footswitches:
     - gear: BOSS Metal Zone MT-2
       block: 0
+      colour: 525824
       enabled: false
       label: DRIVE
       led: red
@@ -374,6 +377,7 @@ built:
       switch: 1
     - gear: Simple Tilt
       block: 3
+      colour: 527360
       enabled: false
       label: EQ
       led: green

@@ -222,6 +222,7 @@ built:
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Tech 21 SansAmp Bass Driver DI V1
+                '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -289,6 +290,7 @@ built:
   footswitches:
     - gear: Tech 21 SansAmp Bass Driver DI V1
       block: 1
+      colour: 525824
       enabled: false
       label: DRIVE
       led: red

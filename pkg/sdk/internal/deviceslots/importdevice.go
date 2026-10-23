@@ -281,8 +281,23 @@ func switchesOf(
 			}
 
 			index, _ := fields[fsIndex].(float64)
-			label, _ := fields[fsLabel].(string)
+			gear, _ := fields[fsLabel].(string)
 			colour, _ := fields[fsChosen].(float64)
+
+			// The block's own colour, which the switch lights when nobody
+			// chose one. Read rather than left at zero, which is not a
+			// colour: see `compile.automatic` for where the value comes from
+			// and task 264 for what sending zero cost.
+			auto, _ := fields[fsAuto].(float64)
+
+			// And the words the switch prints, which the device keeps apart
+			// from the block's name. A preset written before the two were
+			// told apart carries only the gear, and what a switch prints is
+			// what it prints: see task 263.
+			label, _ := fields[fsPrinted].(string)
+			if label == "" {
+				label = gear
+			}
 
 			out = append(out, wire.DeviceFootswitch{
 				Switch: int(index),
@@ -294,9 +309,10 @@ func switchesOf(
 				// block occupies, and the switch lit and did nothing. Put a
 				// compressor in front and it named the compressor instead.
 				Block: placed[at].Position + wire.GridOffset,
-				Gear:  label,
+				Gear:  gear,
 				Label: label,
 				LED:   int(colour),
+				Auto:  int(auto),
 			})
 		}
 	}
@@ -310,6 +326,11 @@ const (
 	footswitchKey = "footswitch"
 	blockPrefix   = "block"
 	fsIndex       = "@fs_index"
-	fsLabel       = "@fs_label"
-	fsChosen      = "@fs_customcolor"
+	// fsLabel is the block's own name and fsPrinted what the switch prints.
+	// fsChosen is the colour somebody picked and fsAuto the one the block
+	// lights with. A device keeps all four and this read two.
+	fsLabel   = "@fs_label"
+	fsPrinted = "@fs_customlabel"
+	fsChosen  = "@fs_customcolor"
+	fsAuto    = "@fs_ledcolor"
 )
