@@ -1291,9 +1291,21 @@ func nearestTo(
 		wants = string(instrumentFor(setup, &quiet))
 	}
 
-	ranked := wanted(deps.Catalog, reachable(
+	kept, refused := asPlayed(deps.Catalog, reachable(
 		deps.Measured.Nearest(category, want, measured.SpectralFor(wants)),
 		setup, deps.Catalog, wants))
+
+	for _, gear := range refused {
+		*notes = append(*notes, Note{
+			About: string(category),
+			Said: fmt.Sprintf(
+				"%s read nearest and was refused: it changes the notes rather "+
+					"than the tone", gear),
+			Honoured: true,
+		})
+	}
+
+	ranked := wanted(deps.Catalog, kept)
 	if len(ranked) == 0 {
 		*notes = append(*notes, Note{
 			About: string(category),
@@ -1472,6 +1484,59 @@ func gearOf(
 	}
 
 	return block.Name
+}
+
+// asPlayed is the blocks that leave the notes somebody played alone.
+//
+// A build choosing a block on somebody's behalf ranks the swept library by
+// four figures, and four figures cannot tell a fuzz from an octave fuzz. Both
+// answer a request for a dirty midrange, and only one of them is still playing
+// the notes that went in. Of the 61 drives this device models, five add an
+// interval, and against the eleven genres each read second or third rather
+// than first: pop-punk's Sub Oct Fuzz 0.69 from the target against the
+// winner's 0.21, rock's Octave Fuzz 0.87 against 0.68. Margins a single
+// record moves.
+//
+// So the pool is narrowed before it is ranked rather than the ranking being
+// taught something it cannot measure. [catalog.Block.ChangesTheNotes] owns
+// which blocks those are and the argument for each.
+//
+// A block the catalog does not hold is kept, as everywhere else here: that is
+// the catalog and the measured library drifting apart, and a shorter chain
+// would hide the drift rather than report it.
+//
+// The second answer is the gear refused ahead of every block that survived,
+// which is the refusal that changed what got chosen. Said out loud, because a
+// pool that silently lost its nearest reads exactly like one where nothing
+// came close.
+func asPlayed(
+	cat *catalog.Catalog,
+	ranked []measured.Match,
+) ([]measured.Match, []string) {
+	if cat == nil {
+		return ranked, nil
+	}
+
+	out := make([]measured.Match, 0, len(ranked))
+
+	var ahead []string
+
+	for _, match := range ranked {
+		block, held := cat.Block(catalog.ModelID(match.ID))
+		if !held || !block.ChangesTheNotes() {
+			out = append(out, match)
+
+			continue
+		}
+
+		// Nothing has survived yet, so this one read nearer than whatever
+		// ends up being chosen.
+		if len(out) == 0 {
+			ahead = append(ahead, block.Gear())
+		}
+	}
+
+	return out, ahead
 }
 
 // reachable is the blocks somebody could actually play.

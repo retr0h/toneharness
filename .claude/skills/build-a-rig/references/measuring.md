@@ -75,6 +75,49 @@ rather than a worse answer.
 A recording still wins where both are named. One performance measured exactly
 beats the middle of a population.
 
+## A block that changes the notes is refused, not ranked
+
+A fingerprint is four figures off one block measured alone, so two pedals that
+land in the same place are interchangeable to it however differently they
+behave. An octave fuzz is the case that matters. Of the 61 drives an HX Stomp
+models, Octave Fuzz reads a centroid of 213Hz with 22.0% of its energy in
+harmonics, and Ballistic Fuzz reads 226Hz and 22.6%. Nothing in those numbers
+tells a fuzz from a fuzz that adds a note nobody played.
+
+So the pool is narrowed before it is ranked rather than the ranking being
+taught something it cannot measure. Every one of the 31 models Line 6 group
+under `pitch` is out, and so are ten they file elsewhere: five drives that are
+octave fuzzes, four ring modulators and frequency shifters under `mod`, and one
+harmonised delay. `catalog.Block.ChangesTheNotes` owns which blocks those are
+and the argument for each.
+
+It bites. Across the eleven genres the drive pool is 52 where it was 57, and
+the refused blocks were not far down the list: pop-punk's Sub Oct Fuzz read
+0.69 from the target against the winner's 0.21, and rock's Octave Fuzz 0.87
+against the Metal Zone's 0.68. Five of the eleven had one in second or third
+place, on margins a single record moves.
+
+Only where the tool is choosing. Gear an ask names by hand is a decision
+somebody made and resolves as it always did, which is why Flea's rig still
+names a Maestro Bass Brassmaster: an octave fuzz is the right answer when it is
+the pedal somebody is documented with.
+
+Where the refusal changed which block got chosen, the build says so:
+
+```text
+did  drive  Tycobrahe Octavia read nearest and was refused: it changes the notes rather than the tone
+```
+
+**What this does not fix.** Two of the three things a fingerprint cannot see
+are still there. It does not know how a block behaves in front of an
+amplifier, because every sweep is of a block alone. And it does not know what
+a pedal is for: a Big Muff is a fuzz with a mid scoop players reach for
+deliberately, and measurement picked one for blues-rock. Preferring a pedal a
+genre's own players are documented with would answer that, and today there is
+nothing to prefer. The Pro Co RAT that Krist Novoselic played reads 39th of
+grunge's 52 drives, 28.7 from the target against the nearest 0.92, and the
+Brassmaster reads last of alternative-rock's.
+
 ## A genre is a region, and its middle is what every genre shares
 
 The displacement above is right in principle and far too small in practice.

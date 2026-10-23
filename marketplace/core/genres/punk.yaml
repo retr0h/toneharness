@@ -49,7 +49,7 @@ rig:
             low: 0.88
             mid: 0.11
             transient: 0.74
-          note: Chosen by measurement rather than by anybody's say-so. MAXON SD9 Sonic Distortion is the closest of the 57 bass drives this device models to punk, sitting at 227 Hz against 282. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. MAXON SD9 Sonic Distortion is the closest of the 52 bass drives this device models to punk, sitting at 227 Hz against 282. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
         Gain: "1.0"
         Tone: "0.5"
@@ -119,7 +119,7 @@ built:
             low: 0.88
             mid: 0.11
             transient: 0.74
-          note: Chosen by measurement rather than by anybody's say-so. MAXON SD9 Sonic Distortion is the closest of the 57 bass drives this device models to punk, sitting at 227 Hz against 282. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. MAXON SD9 Sonic Distortion is the closest of the 52 bass drives this device models to punk, sitting at 227 Hz against 282. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
         Gain: "1.0"
         Level: "0.68"
