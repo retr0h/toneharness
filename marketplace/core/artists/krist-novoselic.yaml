@@ -20,6 +20,19 @@ ask:
       to: 1993
 rig:
   chain:
+    - role: drive
+      gear: Pro Co RAT
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: cited
+          caveat: |-
+            bypassed, because nothing puts it on a record the corpus holds. The corpus measures Lounge Act, Come As You Are and Heart-Shaped Box for him, and the page calls the Rat his choice of pedal without naming a session for it. A weaker fan page puts it on Breed, Endless Nameless and Turnaround, which is more precise and less attributed, and none of those three is a record here either.
+            The same page dates the two pedals either side of this rig, which is what makes the Rat the one to carry. An MXR M-104 Distortion+ is "Used during the Bleach era", before 1991; Kurt's old Boss DS-1s were borrowed "On occasion in late 1992", after Nevermind, and "For later tours he requested the return of the Rat".
+            This device models a Rat twice, as Vermin Dist and as Classic Dist, so the rig names the pedal and the compiler chooses between them rather than this picking one by hand.
+          note: 'the band''s own equipment chronology, from Alex Roberts'' interview with Nirvana''s guitar technician Earnest Bailey, which calls the ProCo Rat 2 "Krist''s distortion pedal of choice". Bailey is the reason this counts: he worked on the band''s gear, so he is describing pedals he handled rather than photographs he studied. It is the same source and the same interview the amplifier below already rests on.'
+          url: https://www.livenirvana.com/equipment/krist.php
+      enabled: false
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -55,6 +68,26 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: drive
+      gear: Pro Co RAT
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: cited
+          caveat: |-
+            bypassed, because nothing puts it on a record the corpus holds. The corpus measures Lounge Act, Come As You Are and Heart-Shaped Box for him, and the page calls the Rat his choice of pedal without naming a session for it. A weaker fan page puts it on Breed, Endless Nameless and Turnaround, which is more precise and less attributed, and none of those three is a record here either.
+            The same page dates the two pedals either side of this rig, which is what makes the Rat the one to carry. An MXR M-104 Distortion+ is "Used during the Bleach era", before 1991; Kurt's old Boss DS-1s were borrowed "On occasion in late 1992", after Nevermind, and "For later tours he requested the return of the Rat".
+            This device models a Rat twice, as Vermin Dist and as Classic Dist, so the rig names the pedal and the compiler chooses between them rather than this picking one by hand.
+          note: 'the band''s own equipment chronology, from Alex Roberts'' interview with Nirvana''s guitar technician Earnest Bailey, which calls the ProCo Rat 2 "Krist''s distortion pedal of choice". Bailey is the reason this counts: he worked on the band''s gear, so he is describing pedals he handled rather than photographs he studied. It is the same source and the same interview the amplifier below already rests on.'
+          url: https://www.livenirvana.com/equipment/krist.php
+      controls:
+        Filter: "1.0"
+        Gain: "0.5"
+        Level: "0.85"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -69,8 +102,8 @@ built:
         Release: "0.2"
         Threshold: "-37.5"
       attrs:
-        '@position': "0"
-      position: 0
+        '@position': "1"
+      position: 1
     - role: amp
       gear: Ampeg SVT
       capture: direct
@@ -101,8 +134,8 @@ built:
         Sag: "0.5"
         Treble: "0.841"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "2"
+      position: 2
     - role: cab
       gear: Mesa/Boogie 2x15
       capture: direct
@@ -121,8 +154,8 @@ built:
         Mic: "8"
         Position: "0.09"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
   preset:
     dsp0:
       members:
@@ -182,6 +215,20 @@ built:
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block0:
+              attrs:
+                '@fs_customcolor': "2"
+                '@fs_customlabel': DRIVE
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Pro Co RAT
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -244,3 +291,13 @@ built:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
+  footswitches:
+    - gear: Pro Co RAT
+      block: 0
+      colour: 525824
+      enabled: false
+      label: DRIVE
+      led: red
+      momentary: false
+      primary: true
+      switch: 1
