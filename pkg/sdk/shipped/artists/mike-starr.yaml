@@ -129,6 +129,40 @@ built:
       attrs:
         '@position': "2"
       position: 2
+    - role: eq
+      gear: MXR 10-Band Graphic EQ
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: A player measured off their own finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used.
+          measured:
+            centroid: 119
+            decay: 0.77
+            dynamics: 6.4
+            harmonics: 0.08
+            high: 0
+            lean: 0.92
+            low: 1
+            mid: 0
+            transient: 0.64
+          note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to mike-starr, sitting at 124 Hz against 142. Across 3 records from 1 players, mike-starr earns scooped, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because mike-starr earns "scooped" against the players who measure otherwise, by 0.0242 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
+      controls:
+        125Hz: "-3.7499999999999996"
+        16kHz: "14.999999999999998"
+        1kHz: "-14.999999999999998"
+        250Hz: "-14.999999999999998"
+        2kHz: "-14.999999999999998"
+        31p25Hz: "14.999999999999998"
+        4kHz: "-14.999999999999998"
+        500Hz: "-14.999999999999998"
+        62p5Hz: "3.7499999999999996"
+        8kHz: "-14.999999999999998"
+        Level: "0.0"
+      attrs:
+        '@position': "3"
+      enabled: false
+      position: 3
   preset:
     dsp0:
       members:
@@ -188,6 +222,20 @@ built:
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block3:
+              attrs:
+                '@fs_customcolor': "2"
+                '@fs_customlabel': EQ
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': MXR 10-Band Graphic EQ
+                '@fs_ledcolor': "527360"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -250,3 +298,13 @@ built:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
+  footswitches:
+    - gear: MXR 10-Band Graphic EQ
+      block: 3
+      colour: 527360
+      enabled: false
+      label: EQ
+      led: red
+      momentary: false
+      primary: true
+      switch: 1

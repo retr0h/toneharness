@@ -134,6 +134,36 @@ built:
       attrs:
         '@position': "2"
       position: 2
+    - role: reverb
+      gear: Hot Springs
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: A player measured off their own finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used.
+          measured:
+            centroid: 161
+            decay: 0.66
+            dynamics: 5
+            harmonics: 0.25
+            high: 0
+            lean: 0.72
+            low: 0.94
+            mid: 0.05
+            transient: 0.68
+          note: Chosen by measurement rather than by anybody's say-so. Hot Springs is the closest of the 14 bass reverbs this device models to glen-matlock, sitting at 133 Hz against 187. Across 3 records from 1 players, glen-matlock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because glen-matlock earns "long-decay" against the players who measure otherwise, by 0.27 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
+      controls:
+        Drip: "1"
+        Dwell: "0.4"
+        HighCut: "5000.0"
+        Level: "0.0"
+        LowCut: "200.0"
+        Mix: "0.26"
+        Spring Count: "2.0"
+      attrs:
+        '@position': "3"
+      enabled: false
+      position: 3
   preset:
     dsp0:
       members:
@@ -193,6 +223,20 @@ built:
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block3:
+              attrs:
+                '@fs_customcolor': "2"
+                '@fs_customlabel': REVERB
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Hot Springs
+                '@fs_ledcolor': "1049600"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -255,3 +299,13 @@ built:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
+  footswitches:
+    - gear: Hot Springs
+      block: 3
+      colour: 1049600
+      enabled: false
+      label: REVERB
+      led: red
+      momentary: false
+      primary: true
+      switch: 1

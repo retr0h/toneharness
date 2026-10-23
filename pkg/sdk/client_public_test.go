@@ -2621,3 +2621,39 @@ func (s *ClientPublicTestSuite) TestControlAddressesABlockOnePastItsPosition() {
 		sdk.Control(4, 3),
 		"measured on an HX Stomp: addressing 5 moved the block recorded at 4")
 }
+
+// TestResolveWritesWhyAChosenBlockIsThere covers task 274's half of a resolve.
+//
+// A resolve reads a document's evidence off the chain the rig named, and a
+// block chosen because the rig's own records ask for one of that kind was
+// named by nobody. Without it in hand the block comes back saying only "added
+// by the compiler rather than named in the rig", which is the sentence for a
+// block the corpus statistics put there and a different claim entirely.
+//
+// Glen Matlock is distinctive on a long decay by 0.27 of a second and nothing
+// else a pedalboard answers, so he gets one reverb, switched off.
+func (s *ClientPublicTestSuite) TestResolveWritesWhyAChosenBlockIsThere() {
+	out := filepath.Join(s.T().TempDir(), "glen-matlock.yaml")
+
+	made, err := sdk.New().Resolve(context.Background(), sdk.Resolve{
+		RigID: "glen-matlock", Out: out,
+	})
+	s.Require().NoError(err)
+	s.Require().Len(made.Chosen, 1)
+
+	body, err := os.ReadFile(out) //nolint:gosec // a path this test wrote
+	s.Require().NoError(err)
+
+	said := string(body)
+
+	s.Require().Contains(said, "role: reverb")
+	s.Require().Contains(said, "Chosen by measurement rather than by anybody")
+	s.Require().Contains(said, "It arrives switched off.")
+
+	// And the authored half is untouched: a block chosen from a word belongs
+	// in the computed half, and putting it in the other one would make the
+	// next resolve read it as something somebody wrote.
+	rig, _, found := strings.Cut(said, "built:")
+	s.Require().True(found)
+	s.Require().NotContains(rig, "role: reverb")
+}

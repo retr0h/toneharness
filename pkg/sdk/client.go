@@ -52,6 +52,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
 
 // Client is what a wrapper holds.
@@ -745,7 +746,7 @@ func (c *Client) Resolve(
 	// The document rather than the plan beside it. Sections, controllers and
 	// footswitches are applied to the preset, so a chain read back from the plan
 	// is missing every one of them.
-	where, err := c.wroteSpec(in, found, made.Preset, cat)
+	where, err := c.wroteSpec(in, found, made.Chosen, made.Preset, cat)
 	if err != nil {
 		return Made{}, err
 	}
@@ -764,6 +765,11 @@ func (c *Client) Resolve(
 func (c *Client) wroteSpec(
 	in Resolve,
 	found Rig,
+	// chosen are the blocks put in the chain because this rig's own records
+	// ask for one of that kind. They are what the build compiled and nobody
+	// authored, so the evidence for each is read off them rather than off the
+	// document, which never held them.
+	chosen []rig.ChainEntry,
 	doc *preset.Document,
 	cat *catalog.Catalog,
 ) (string, error) {
@@ -796,12 +802,22 @@ func (c *Client) wroteSpec(
 	// document stopped answering to the compiler being improved: eleven genre
 	// rigs went on reading as four presets after the compiler had been taught
 	// to tell them apart.
+	// The chain the build actually compiled, for reading evidence off and
+	// nothing else. `rig` below is still the document's own, untouched: a
+	// block chosen from a word belongs in the computed half, and putting it
+	// in the authored one would make the next resolve read it as something
+	// somebody wrote.
+	compiled := found.Rig
+	for _, entry := range chosen {
+		compiled.Chain = translate.Spliced(compiled.Chain, entry)
+	}
+
 	out := tone.Spec{
 		Schema: tone.SchemaToneSpec,
 		Id:     found.ID,
 		Ask:    found.Ask,
 		Rig:    found.Rig,
-		Built:  built(found.Rig, lifted, laid, cat),
+		Built:  built(compiled, lifted, laid, cat),
 	}
 
 	if err := writeSpec(where, out); err != nil {
@@ -850,7 +866,7 @@ func (c *Client) resolveFrom(
 		return Made{}, fmt.Errorf("reading %s: %w", in.From, err)
 	}
 
-	where, err := c.wroteSpec(in, found, doc, cat)
+	where, err := c.wroteSpec(in, found, nil, doc, cat)
 	if err != nil {
 		return Made{}, err
 	}

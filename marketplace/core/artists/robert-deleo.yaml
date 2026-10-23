@@ -111,6 +111,41 @@ built:
       attrs:
         '@position': "2"
       position: 2
+    - role: reverb
+      gear: Dynamic Room
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: A player measured off their own finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used.
+          measured:
+            centroid: 123
+            decay: 0.45
+            dynamics: 7.5
+            harmonics: 0.16
+            high: 0
+            lean: 0.87
+            low: 0.98
+            mid: 0.02
+            transient: 0.6
+          note: Chosen by measurement rather than by anybody's say-so. Dynamic Room is the closest of the 14 bass reverbs this device models to robert-deleo, sitting at 129 Hz against 146. Across 3 records from 1 players, robert-deleo earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because robert-deleo earns "long-decay" against the players who measure otherwise, by 0.12 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
+      controls:
+        BassBoost: "0.0"
+        BassFreq: "100.0"
+        Damping: "3700.0"
+        Decay: "1.2"
+        Diffusion: "0.5"
+        ERLevel: "0.8"
+        HighCut: "10000.0"
+        Level: "0.0"
+        LowCut: "100.0"
+        MatrFreq: "0.333"
+        Mix: "0.41"
+        PreDelay: "0.01"
+      attrs:
+        '@position': "3"
+      enabled: false
+      position: 3
   preset:
     dsp0:
       members:
@@ -170,6 +205,20 @@ built:
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block3:
+              attrs:
+                '@fs_customcolor': "2"
+                '@fs_customlabel': REVERB
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Dynamic Room
+                '@fs_ledcolor': "1049600"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -232,3 +281,13 @@ built:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
+  footswitches:
+    - gear: Dynamic Room
+      block: 3
+      colour: 1049600
+      enabled: false
+      label: REVERB
+      led: red
+      momentary: false
+      primary: true
+      switch: 1

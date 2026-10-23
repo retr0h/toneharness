@@ -86,6 +86,36 @@ built:
       attrs:
         '@position': "0"
       position: 0
+    - role: drive
+      gear: Analogman Prince of Tone
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: A player measured off their own finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used.
+          measured:
+            centroid: 194
+            decay: 0.19
+            dynamics: 5.8
+            harmonics: 0.27
+            high: 0
+            lean: 0.91
+            low: 0.81
+            mid: 0.19
+            transient: 0.84
+          note: Chosen by measurement rather than by anybody's say-so. Analogman Prince of Tone is the closest of the 52 bass drives this device models to matt-freeman, sitting at 207 Hz against 220. Across 3 records from 1 players, matt-freeman earns mid-forward, bright and saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because matt-freeman earns "saturated" against the players who measure otherwise, by 0.0804 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
+      controls:
+        Clipping: "0"
+        Gain: "0.625"
+        GainMod: "1"
+        Level: "0.62"
+        Presence: "1.0"
+        Tone: "1.0"
+        Voltage: "false"
+      attrs:
+        '@position': "1"
+      enabled: false
+      position: 1
     - role: amp
       gear: Ampeg SVT-II Pro
       capture: direct
@@ -123,8 +153,8 @@ built:
         Sag: "0.5"
         Treble: "0.88"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "2"
+      position: 2
     - role: cab
       gear: Ampeg 8x10
       capture: direct
@@ -145,8 +175,34 @@ built:
         Mic: "0"
         Position: "0.0"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
+    - role: eq
+      gear: Simple Tilt
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: A player measured off their own finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used.
+          measured:
+            centroid: 194
+            decay: 0.19
+            dynamics: 5.8
+            harmonics: 0.27
+            high: 0
+            lean: 0.91
+            low: 0.81
+            mid: 0.19
+            transient: 0.84
+          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to matt-freeman, sitting at 124 Hz against 220. Across 3 records from 1 players, matt-freeman earns mid-forward, bright and saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because matt-freeman earns "mid-forward" against the players who measure otherwise, by 0.0893 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
+      controls:
+        CenterFreq: "1000.0"
+        Level: "0.0"
+        Tilt: "0.75"
+      attrs:
+        '@position': "4"
+      enabled: false
+      position: 4
   preset:
     dsp0:
       members:
@@ -206,6 +262,30 @@ built:
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block1:
+              attrs:
+                '@fs_customcolor': "2"
+                '@fs_customlabel': DRIVE
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Analogman Prince of Tone
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block4:
+              attrs:
+                '@fs_customcolor': "6"
+                '@fs_customlabel': EQ
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': Simple Tilt
+                '@fs_ledcolor': "527360"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -268,3 +348,22 @@ built:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
+  footswitches:
+    - gear: Analogman Prince of Tone
+      block: 1
+      colour: 525824
+      enabled: false
+      label: DRIVE
+      led: red
+      momentary: false
+      primary: true
+      switch: 1
+    - gear: Simple Tilt
+      block: 4
+      colour: 527360
+      enabled: false
+      label: EQ
+      led: green
+      momentary: false
+      primary: true
+      switch: 2

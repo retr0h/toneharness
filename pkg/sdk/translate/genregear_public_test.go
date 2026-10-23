@@ -390,9 +390,18 @@ func (s *GenreGearPublicTestSuite) TestPlural() {
 		{catalog.CategoryDrive, "drives"},
 		{catalog.CategoryEQ, "equalisers"},
 		{catalog.CategoryComp, "compressors"},
-		// A kind nobody has thought about keeps its own word rather than
-		// being confidently called an amplifier.
-		{catalog.CategoryReverb, string(catalog.CategoryReverb)},
+		// The kinds task 274 reaches, since a rig gets whichever its own
+		// records ask for and a reverb is one of three it can be.
+		{catalog.CategoryReverb, "reverbs"},
+		{catalog.CategoryDelay, "delays"},
+		{catalog.CategoryFilter, "filters"},
+		{catalog.CategoryMod, "modulations"},
+		{catalog.CategoryWah, "wahs"},
+		{catalog.CategoryPitch, "pitch blocks"},
+		{catalog.CategoryGate, "gates"},
+		// Plumbing, which nothing chooses by measurement: nobody picks a
+		// send for how it sounds, so it keeps its own word.
+		{catalog.CategoryUtility, string(catalog.CategoryUtility)},
 	} {
 		s.Run(string(tt.kind), func() {
 			got := translate.Because(
