@@ -651,9 +651,10 @@ func (c Curves) Toward(
 	}
 
 	out := map[string]Setting{}
+	asked := c.shared(want, by)
 
 	for name, curve := range c.Controls {
-		at, found := c.TowardFrom(name, want, by)
+		at, found := c.TowardFrom(name, asked, by)
 		if !found || !curve.moves(by) {
 			continue
 		}
@@ -662,6 +663,125 @@ func (c Curves) Toward(
 	}
 
 	return out
+}
+
+// Asks reports whether a displacement asks for anything on an axis these
+// weights carry.
+//
+// Separate from the controls, because "nothing on this block reaches what was
+// asked" and "nothing was asked" are two different answers and one of them is
+// not about the block at all. Three of the eleven genres this corpus can aim at
+// displace their midrange by zero, and hard-rock displaces the centroid by zero
+// too, so for a bass, where [SpectralFor] drops the low and high bands, it asks
+// for nothing whatsoever. A report saying no control reached it describes a
+// block that was never asked.
+func (p Figures) Asks(
+	by Weights,
+) bool {
+	for _, each := range [][2]float64{
+		{by.Centroid, p.Centroid},
+		{by.Low, p.Low},
+		{by.Mid, p.Mid},
+		{by.High, p.High},
+	} {
+		if each[0] != 0 && each[1] != 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
+// shared is the target split among the dials that can each answer it.
+//
+// The answer to the limitation this file already named: a sweep moves one
+// control and leaves the rest where they sat, so asking every dial for the
+// whole displacement asks for one thing as many times as there are dials. On
+// a ten-band equaliser that is ten times, and nine of its bands move a bass's
+// midrange past their own noise, so each one was separately told to deliver
+// the genre's whole displacement and each separately went as far as it could.
+//
+// Divided by how many can answer, which is the apportionment a sweep supports
+// and no more. The sweeps say what each control does alone and nothing about
+// what two of them do together, so a share each is the one split that does not
+// claim to know how they interact. A real one is least squares against
+// readings taken in the chain, which is [solve] and needs the device.
+//
+// Dials only. A list or a switch is chosen by direction rather than by size,
+// so dividing the ask would change nothing about which option it reaches and
+// would quietly take a microphone out of the count that decides a band's share.
+//
+// A figure one dial alone can move is not divided, which is the common case
+// and the one every drive on this device is in.
+func (c Curves) shared(
+	want Figures,
+	by Weights,
+) Figures {
+	for _, each := range []struct {
+		key    audio.Figure
+		weight float64
+		onto   *float64
+	}{
+		{audio.KeyCentroid, by.Centroid, &want.Centroid},
+		{audio.KeyLow, by.Low, &want.Low},
+		{audio.KeyMid, by.Mid, &want.Mid},
+		{audio.KeyHigh, by.High, &want.High},
+	} {
+		if each.weight == 0 {
+			continue
+		}
+
+		if among := c.dials(each.key); among > 1 {
+			*each.onto /= float64(among)
+		}
+	}
+
+	return want
+}
+
+// dials is how many of a block's dials move one figure further than that
+// figure's own noise.
+//
+// Noise rather than any movement, for the reason [Curve.moves] states: a move
+// smaller than the figure wandered across repeat takes with nothing touched
+// moved nothing anybody can demonstrate, and counting one would give a real
+// dial a smaller share on the strength of a reading that says nothing.
+func (c Curves) dials(
+	key audio.Figure,
+) int {
+	among := 0
+
+	for _, curve := range c.Controls {
+		if curve.Kind == "int" || curve.Kind == "bool" || len(curve.Points) == 0 {
+			continue
+		}
+
+		of := func(f Figures) float64 {
+			switch key {
+			case audio.KeyLow:
+				return f.Low
+			case audio.KeyMid:
+				return f.Mid
+			case audio.KeyHigh:
+				return f.High
+			default:
+				return f.Centroid
+			}
+		}
+
+		low, high := of(curve.Points[0].Figures), of(curve.Points[0].Figures)
+
+		for _, p := range curve.Points {
+			v := of(p.Figures)
+			low, high = min(low, v), max(high, v)
+		}
+
+		if high-low > curve.Noise[key] {
+			among++
+		}
+	}
+
+	return among
 }
 
 // amplifier says whether these readings are of an amplifier.
@@ -747,6 +867,41 @@ func (curve Curve) moves(
 //
 // Answers false for a control with fewer than two positions, or one whose
 // positions all read alike, because neither offers a choice.
+// reached is one axis as a control's own travel sees it: where the middle of
+// its positions sits, how far it reaches either side of that, and what
+// fraction of the reach in the direction asked the target is asking for.
+//
+// Both sides, because a control is rarely symmetric about its middle. One
+// equaliser band on this device adds 17.5 points of a bass's midrange and
+// takes away 2.3, so a single spread is the boost side and every cut in the
+// sweep compresses into a tenth of the scale. Asked to cut, the whole cut side
+// then reads as too little and the deepest one wins, which is how two bands
+// stayed at 15dB after the size of the ask was honoured.
+type reached struct {
+	weight   float64
+	of       func(Figures) float64
+	middle   float64
+	up, down float64
+	asked    float64
+}
+
+// lean is how far one position sits from the middle, as a fraction of the
+// reach on that side. Between -1 and 1 by construction.
+func (r reached) lean(
+	at Point,
+) float64 {
+	by := r.of(at.Figures) - r.middle
+
+	switch {
+	case by > 0 && r.up > 0:
+		return by / r.up
+	case by < 0 && r.down > 0:
+		return by / r.down
+	default:
+		return 0
+	}
+}
+
 func (c Curves) TowardFrom(
 	control string,
 	want Figures,
@@ -782,36 +937,106 @@ func (c Curves) TowardFrom(
 		return 0, false
 	}
 
+	reach := make([]reached, 0, len(axes))
+
+	// Whether the size of the ask means anything to this control, which is the
+	// distinction [solve.Choice] and [solve.Knob] are built on and the reason
+	// one answer here would be wrong for half the callers.
+	//
+	// A list or a switch is a choice among options. "Brighter than the other
+	// genres" is answered by the brightest microphone this cabinet offers,
+	// however much brighter that is, because there is no twelfth-of-a-mic to
+	// ask for: the sizes are not comparable either, 126Hz across a population
+	// of records against 22Hz across one box. Comparing by direction is what
+	// stopped all eleven genres arriving on one microphone.
+	//
+	// A dial is a quantity, and there the size is the whole of it. Asked for
+	// two points of midrange, a band that moves it by twenty should move a
+	// tenth of the way and not go to its stop.
+	listed := curve.Kind == "int" || curve.Kind == "bool"
+
+	for _, a := range axes {
+		if a.weight == 0 || a.asked == 0 {
+			continue
+		}
+
+		was := middle(at, a.of)
+
+		up, down := 0.0, 0.0
+
+		for _, p := range at {
+			off := a.of(p.Figures) - was
+			up, down = max(up, off), max(down, -off)
+		}
+
+		// How far this control reaches the way it is being asked to go.
+		reaches := up
+		if a.asked < 0 {
+			reaches = down
+		}
+
+		if reaches == 0 {
+			continue
+		}
+
+		asked := sign(a.asked)
+
+		if !listed {
+			// An ask a dial cannot reach is not an ask for that dial.
+			//
+			// What a stop used to mean, and the reason a ten-band equaliser
+			// came out with six of its bands against one: every axis read as
+			// "as far that way as you go". Its 8kHz band moves a bass's
+			// midrange by 0.049 of a point and its 16kHz band by 0.001,
+			// against genres asking for two to twenty-two, and both sat at
+			// 15dB delivering nothing.
+			//
+			// Declining is the honest answer rather than the extreme. A dial
+			// with no axis it can reach is left where the catalog put it,
+			// which for an equaliser band is flat, and a band that cannot
+			// deliver what is asked has nothing to say about it either way.
+			if math.Abs(a.asked) > reaches {
+				continue
+			}
+
+			asked = a.asked / reaches
+		}
+
+		reach = append(reach, reached{
+			weight: a.weight,
+			of:     a.of,
+			middle: was,
+			up:     up,
+			down:   down,
+			asked:  asked,
+		})
+	}
+
+	if len(reach) == 0 {
+		return 0, false
+	}
+
 	best, found := 0.0, false
 	score := math.Inf(1)
 
-	// Each axis normalised by its own side's spread, so a sign and a
-	// proportion survive and the units do not.
-	for _, a := range axes {
-		if a.weight == 0 {
-			continue
+	// Weighed across every axis at once rather than the best single pairing of
+	// an axis and a position.
+	//
+	// The weights are weights here and were a mask before: the axis with the
+	// smallest difference won outright whatever it counted for, so on a bass,
+	// where [SpectralFor] counts the midrange at 1 and the centroid at 0.001,
+	// a position chosen for half a hertz of centroid outvoted one chosen for
+	// the midrange. Summing is what [Weights.between] already does for
+	// ranking blocks, and for the same reason.
+	for i, p := range at {
+		d := 0.0
+
+		for _, a := range reach {
+			d += a.weight * math.Abs(a.lean(p)-a.asked)
 		}
 
-		mid := middle(at, a.of)
-
-		wide := 0.0
-		for _, p := range at {
-			wide = max(wide, math.Abs(a.of(p.Figures)-mid))
-		}
-
-		if wide == 0 || a.asked == 0 {
-			continue
-		}
-
-		for i, p := range at {
-			// Positive where the position and the genre both lean the same
-			// way, and the best score is the smallest difference between the
-			// two leans.
-			d := math.Abs((a.of(p.Figures)-mid)/wide - sign(a.asked))
-
-			if !found || d < score {
-				best, score, found = at[i].Value, d, true
-			}
+		if !found || d < score {
+			best, score, found = at[i].Value, d, true
 		}
 	}
 

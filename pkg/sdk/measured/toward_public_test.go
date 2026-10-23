@@ -62,6 +62,23 @@ func (s *TowardPublicTestSuite) curve(
 	}
 }
 
+// at is a control's swept positions reading these mids, at working level and
+// evenly spaced across the control's range.
+func (s *TowardPublicTestSuite) at(
+	mids ...float64,
+) []measured.Point {
+	out := make([]measured.Point, 0, len(mids))
+
+	for i, mid := range mids {
+		out = append(out, measured.Point{
+			Value:   float64(i) / float64(len(mids)-1),
+			Figures: measured.Figures{Mid: mid, Level: -20},
+		})
+	}
+
+	return out
+}
+
 // TestToward reads the value of each control that leans the way a target asks.
 //
 // **A lean rather than a position, which is task 254's correction.** Scoring a
@@ -81,9 +98,9 @@ func (s *TowardPublicTestSuite) TestToward() {
 		set map[string]float64
 	}{
 		{
-			// A target asking for more mid reaches the end of the control
-			// that has more of it, whatever number the target names: the sign
-			// carries the information and the units do not survive.
+			// A target asking for as much mid as the control has reaches the
+			// end of it. The size is read and not only the sign, so this is
+			// the ask meeting the reach rather than every ask doing so.
 			name: "a target leaning up reaches the top of the control",
 			curves: s.curve("Tone", 0.1,
 				measured.Point{Value: 0, Figures: measured.Figures{Mid: 1}},
@@ -168,6 +185,121 @@ func (s *TowardPublicTestSuite) TestToward() {
 			set:  map[string]float64{},
 		},
 		{
+			// The fix for task 272. The size of the ask decides how far the
+			// control goes, so an ask well inside what the control can do
+			// lands part way rather than against the stop. A ten-band
+			// equaliser came out with six of its bands at 15dB because every
+			// ask read as the full extent of the control.
+			name: "an ask inside the control's reach lands part way",
+			curves: s.curve("Tone", 0.1,
+				measured.Point{Value: 0, Figures: measured.Figures{Mid: 1}},
+				measured.Point{Value: 0.5, Figures: measured.Figures{Mid: 10}},
+				measured.Point{Value: 1, Figures: measured.Figures{Mid: 20}},
+			),
+			want: measured.Figures{Mid: 2},
+			by:   measured.Weights{Mid: 1},
+			set:  map[string]float64{"Tone": 0.5},
+		},
+		{
+			// And an ask beyond it is not an ask for this control. The 16kHz
+			// band of this device's ten-band moves a bass's midrange by 0.001
+			// of a point against genres asking for two to twenty-two, and it
+			// sat at 15dB delivering nothing.
+			name: "an ask beyond the control's reach leaves it alone",
+			curves: s.curve("Tone", 0.1,
+				measured.Point{Value: 0, Figures: measured.Figures{Mid: 1}},
+				measured.Point{Value: 0.5, Figures: measured.Figures{Mid: 10}},
+				measured.Point{Value: 1, Figures: measured.Figures{Mid: 20}},
+			),
+			want: measured.Figures{Mid: 40},
+			by:   measured.Weights{Mid: 1},
+			set:  map[string]float64{},
+		},
+		{
+			// The reach is measured on the side being asked, because a control
+			// is rarely symmetric about its middle. One equaliser band here
+			// adds 17.5 points of midrange and takes away 2.3, so a single
+			// spread is the boost side and asked to cut, every cut in the
+			// sweep read as too little and the deepest one won.
+			//
+			// This control adds 10 and takes away 1. An ask to cut by 2 is
+			// beyond the cut side however far the boost side goes.
+			name: "the reach is the side being asked for",
+			curves: s.curve("Tone", 0.1,
+				measured.Point{Value: 0, Figures: measured.Figures{Mid: 9}},
+				measured.Point{Value: 0.5, Figures: measured.Figures{Mid: 10}},
+				measured.Point{Value: 1, Figures: measured.Figures{Mid: 20}},
+			),
+			want: measured.Figures{Mid: -2},
+			by:   measured.Weights{Mid: 1},
+			set:  map[string]float64{},
+		},
+		{
+			// A sweep moves one control and leaves the rest where they sat, so
+			// asking every dial for the whole displacement asks for one thing
+			// as many times as there are dials. Two here, so each is asked for
+			// half, and half of 16 is inside what one of them reaches.
+			//
+			// Without the split both would go to their stops and the block
+			// would deliver 16 twice over.
+			name: "the ask is shared among the dials that can answer it",
+			curves: measured.Curves{Controls: map[string]measured.Curve{
+				"Bass": {
+					Control: "Bass", Settled: -20, SilentBelow: -50,
+					Noise:  map[audio.Figure]float64{audio.KeyMid: 0.1},
+					Points: s.at(1, 10, 20),
+				},
+				"Treble": {
+					Control: "Treble", Settled: -20, SilentBelow: -50,
+					Noise:  map[audio.Figure]float64{audio.KeyMid: 0.1},
+					Points: s.at(1, 10, 20),
+				},
+			}},
+			want: measured.Figures{Mid: 16},
+			by:   measured.Weights{Mid: 1},
+			set:  map[string]float64{"Bass": 1, "Treble": 1},
+		},
+		{
+			// A control whose whole range moves the figure less than that
+			// figure's own noise is not counted into the share, because
+			// counting it would give a real dial a smaller one on the
+			// strength of a reading that says nothing.
+			name: "a dial that moves nothing takes no share",
+			curves: measured.Curves{Controls: map[string]measured.Curve{
+				"Tone": {
+					Control: "Tone", Settled: -20, SilentBelow: -50,
+					Noise:  map[audio.Figure]float64{audio.KeyMid: 0.1},
+					Points: s.at(1, 10, 20),
+				},
+				"Output": {
+					Control: "Output", Settled: -20, SilentBelow: -50,
+					Noise:  map[audio.Figure]float64{audio.KeyMid: 0.1},
+					Points: s.at(10, 10.05, 10),
+				},
+			}},
+			want: measured.Figures{Mid: 9},
+			by:   measured.Weights{Mid: 1},
+			set:  map[string]float64{"Tone": 1},
+		},
+		{
+			// A list is chosen by direction whatever the size, which is the
+			// distinction `solve.Choice` and `solve.Knob` are built on. There
+			// is no twelfth of a microphone to ask for, and the sizes are not
+			// comparable either: 126Hz across a population of records against
+			// 22Hz across one cabinet's microphones.
+			name: "a list is still reached by direction alone",
+			curves: measured.Curves{Controls: map[string]measured.Curve{
+				"Mic": {
+					Control: "Mic", Kind: "int", Settled: -20, SilentBelow: -50,
+					Noise:  map[audio.Figure]float64{audio.KeyMid: 0.1},
+					Points: s.at(1, 10, 20),
+				},
+			}},
+			want: measured.Figures{Mid: 400},
+			by:   measured.Weights{Mid: 1},
+			set:  map[string]float64{"Mic": 1},
+		},
+		{
 			name:   "a block with nothing swept sets nothing",
 			curves: measured.Curves{},
 			want:   measured.Figures{Mid: 9},
@@ -185,6 +317,78 @@ func (s *TowardPublicTestSuite) TestToward() {
 			for name, want := range tt.set {
 				s.Require().InDelta(want, got[name].Value, 1e-9, name)
 			}
+		})
+	}
+}
+
+// TestAsks covers whether a displacement asks for anything at all.
+//
+// One method and one table, so a case is a row rather than a file. The
+// distinction it draws is between "no control of this block reaches what was
+// asked" and "nothing was asked", which are two different answers and only one
+// of them is about the block.
+func (s *TowardPublicTestSuite) TestAsks() {
+	for _, tt := range []struct {
+		name  string
+		asked measured.Figures
+		by    measured.Weights
+		want  bool
+	}{
+		{
+			name:  "a displacement on a figure the weights carry",
+			asked: measured.Figures{Mid: 9},
+			by:    measured.Weights{Mid: 1},
+			want:  true,
+		},
+		{
+			// What three of the eleven genres are in on a bass, where
+			// SpectralFor drops the low and high bands: the only figure
+			// displaced is one nothing is weighed on.
+			name:  "a displacement only on a figure they do not",
+			asked: measured.Figures{Low: 9},
+			by:    measured.Weights{Mid: 1, Centroid: 1.0 / 1000.0},
+			want:  false,
+		},
+		{
+			name:  "a weighed figure displaced by nothing",
+			asked: measured.Figures{Mid: 0},
+			by:    measured.Weights{Mid: 1},
+			want:  false,
+		},
+		{
+			// hard-rock, which displaces the centroid by zero and the
+			// midrange by zero, and is the reason this exists.
+			name:  "nothing displaced at all",
+			asked: measured.Figures{},
+			by:    measured.Weights{Mid: 1, Centroid: 1.0 / 1000.0},
+			want:  false,
+		},
+		{
+			name:  "the centroid alone",
+			asked: measured.Figures{Centroid: 40},
+			by:    measured.Weights{Centroid: 1.0 / 1000.0},
+			want:  true,
+		},
+		{
+			name:  "the high band alone",
+			asked: measured.Figures{High: 4},
+			by:    measured.Weights{High: 1},
+			want:  true,
+		},
+		{
+			name:  "the low band alone",
+			asked: measured.Figures{Low: 4},
+			by:    measured.Weights{Low: 1},
+			want:  true,
+		},
+		{
+			name:  "no weights to carry anything",
+			asked: measured.Figures{Mid: 9, Centroid: 40},
+			want:  false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, tt.asked.Asks(tt.by))
 		})
 	}
 }

@@ -75,12 +75,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "12.5"
+        Knee: "6.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.5"
+        Threshold: "-37.1"
       attrs:
         '@position': "0"
       position: 0
@@ -104,11 +104,11 @@ built:
           url: https://www.premierguitar.com/articles/In_Remembrance_Chi_Chengs_Low_End_Legacy
       controls:
         Bass: "0.625"
-        Blend: "0.5"
+        Blend: "0.4"
         Drive: "0.65"
         Level: "0.48"
-        Presence: "0.0"
-        Treble: "0.25"
+        Presence: "0.5"
+        Treble: "0.3"
       attrs:
         '@position': "1"
       position: 1

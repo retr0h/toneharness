@@ -1082,6 +1082,33 @@ func stompedFor(
 	return out
 }
 
+// alsoSaid adds a sentence to the measured evidence a block already carries.
+//
+// Onto the audio evidence rather than a second entry, because this qualifies
+// what that one said rather than standing beside it as another reason. Nothing
+// is added where there is nothing to qualify.
+func alsoSaid(
+	entry *rig.ChainEntry,
+	sentence string,
+) {
+	if entry.Evidence == nil {
+		return
+	}
+
+	held := *entry.Evidence
+
+	for i := range held {
+		if held[i].Kind != tone.EvidenceAudio || held[i].Note == nil {
+			continue
+		}
+
+		said := *held[i].Note + " " + sentence
+		held[i].Note = &said
+
+		return
+	}
+}
+
 // tuned sets a block's controls from its sweep rather than leaving the
 // catalog's defaults on it.
 //
@@ -1128,9 +1155,64 @@ func tuned(
 		wants = string(*spec.Instrument)
 	}
 
-	toward := curves.Toward(at.figures, measured.SpectralFor(wants))
+	// The displacement the target was given, for the reason [chose] states
+	// beside the same call: [measured.Curves.Toward] reads its target as a
+	// lean, and an absolute figure is not comparable with a control's own
+	// deviation. This was the one of the four callers that passed the
+	// position, and a band share and a centroid in hertz are both positive
+	// whatever a genre's records say, so every weighed axis read as "more",
+	// and every control it set went to whichever end delivered more.
+	asked := DisplacedFrom(at.figures, deps.Measured.Baseline)
+
+	weigh := measured.SpectralFor(wants)
+
+	if !asked.Asks(weigh) {
+		// Nothing was asked of it, which is not the same as nothing on it
+		// reaching. hard-rock displaces both of the figures a bass is weighed
+		// on by zero, so there is no lean to answer and the block's own sweep
+		// has nothing to say about it.
+		*notes = append(*notes, Note{
+			About: entry.Gear,
+			Said: fmt.Sprintf(
+				"%s displaces nothing a %s is weighed on, so its controls are "+
+					"the catalog's defaults rather than set for this",
+				at.named, wants),
+		})
+
+		alsoSaid(entry, fmt.Sprintf(
+			"Its controls were not moved: %s displaces none of the figures a "+
+				"%s is weighed on, so there was nothing to aim them at.",
+			at.named, wants))
+
+		return
+	}
+
+	toward := curves.Toward(asked, weigh)
 
 	if len(toward) == 0 {
+		// Said rather than left quiet, because a block at the catalog's
+		// defaults is a block nobody chose the settings of and the document
+		// cannot tell that from one that was aimed.
+		//
+		// Two things land here. A sweep whose controls cannot reach what is
+		// being asked: punk sits 126Hz and 21.7 points of midrange from the
+		// other genres, and the MAXON SD9's Tone dial moves the midrange by
+		// 2.0 points across the positions that leave the block at working
+		// level. And a target with no displacement to ask for at all.
+		*notes = append(*notes, Note{
+			About: entry.Gear,
+			Said: "no control of it reaches what was asked, so its controls " +
+				"are the catalog's defaults rather than set for this",
+		})
+
+		// And on the block, because the evidence [aim.because] wrote says the
+		// words a target earns are "what moves the controls off the medians
+		// this instrument's presets sit at". They did not move here, and a
+		// document claiming they did is the one thing this evidence exists to
+		// prevent.
+		alsoSaid(entry, "Its controls were not moved: none of them reaches "+
+			"what that asks for, so they are the catalog's defaults.")
+
 		return
 	}
 

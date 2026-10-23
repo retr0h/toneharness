@@ -145,9 +145,9 @@ built:
           note: 'Premier Guitar''s own Rig Rundown, filmed on the I''m With You Tour and dated 3 June 2012, which is inside the era this rig claims. Left to right across his board: "a Malekko Bassmaster for fuzz and distortion, MXR Micro Amp used as clean boost for slapping and leads, Electro-Harmonix Q-Tron used for \"Sir Psycho Sexy,\" and a Moog Mooferfooger 12-Stage Phaser used just for fun."'
           url: https://www.premierguitar.com/rig-rundown-red-hot-chili-peppers-flea
       controls:
-        Drive: "0.375"
+        Drive: "0.5"
         Level: "0.0"
-        mixture: "0.375"
+        mixture: "0.65"
         tonality: "4"
       attrs:
         '@position': "0"
@@ -160,12 +160,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "20.0"
+        Knee: "6.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-45.0"
+        Threshold: "-37.1"
       attrs:
         '@position': "1"
       position: 1
