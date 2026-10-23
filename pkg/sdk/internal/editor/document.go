@@ -148,6 +148,11 @@ func Document(
 	// After the chain, which a snapshot names the entries of.
 	snapshotsInto(doc, got)
 
+	// And the switches, for the same reason: an assignment names an entry of
+	// the chain too. See footswitchesInto, and task 262 for what a preset
+	// exported without them cost.
+	footswitchesInto(doc, got)
+
 	return doc, false, nil
 }
 

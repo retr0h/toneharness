@@ -66,8 +66,26 @@ audible. The device identifier and the schema version come from the catalog in u
 so building somebody's Helix Floor preset for an HX Stomp changes those on purpose.
 
 `slots export --as hlx` writes the device's own file instead of a rig: a faithful
-copy rather than a reading, carrying the routing and snapshots a rig models but
-nobody chooses.
+copy rather than a reading, carrying the routing, snapshots and footswitch
+assignments a rig models but nobody chooses.
+
+**The footswitch section is the one that went missing.** The reader found the
+assignments and nothing wrote them, so an export said `"footswitch": null` for
+a slot with three working switches on it, and export then re-import silently
+discarded somebody's own decisions about their own pedal. Every field HX Edit
+writes is written now: the switch, the block's own name, the words somebody
+chose, the colour they chose, the block's own colour, and whether the block is
+on, momentary and primary.
+
+Two of those are written only where somebody chose. HX Edit leaves
+`@fs_customlabel` and `@fs_customcolor` out of a switch carrying the block's
+own name and colour, so writing a zero and an empty string would claim two
+decisions nobody made.
+
+`@fs_ledcolor` is the block's own automatic colour and `@fs_customcolor` is the
+chosen one. The automatic one is a packed value and nothing here has a table of
+them, so it is carried whole rather than decomposed: two drives on one preset
+share 525824 and an octaver reads 196619.
 
 ## What the device gives back is not a `.hlx`
 

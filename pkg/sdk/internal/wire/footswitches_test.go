@@ -121,14 +121,52 @@ func (s *FootswitchesTestSuite) TestPlaceFootswitches() {
 
 			if len(tt.held) > 0 {
 				PlaceFootswitches(doc, tt.held)
-				s.Require().Equal(tt.held, s.switchesIn(doc))
+				s.Require().Equal(s.asWritten(tt.held), s.switchesIn(doc))
 			}
 
 			PlaceFootswitches(doc, tt.write)
 
-			s.Require().Equal(tt.want, s.switchesIn(doc))
+			s.Require().Equal(s.asWritten(tt.want), s.switchesIn(doc))
 		})
 	}
+}
+
+// asWritten is what a fixture reads back as once this package has written it.
+//
+// Two fields are the writer's rather than the caller's, so a fixture that set
+// them would be stating this package's behaviour twice. A switch this tool
+// writes carries one assignment, so it is the one the pedal prints the label
+// of, and the label it prints goes into the field somebody's own words go in:
+// the device records no other place for it, and task 263 is the question of
+// what it should say.
+//
+// Everything else survives unchanged, which is what task 262 needed: `Auto`,
+// `Enabled` and `Momentary` used to be flattened to their zeros on the way
+// out, so a preset exported and re-imported lost the block's own colour and
+// came back with every block switched on.
+func (s *FootswitchesTestSuite) asWritten(
+	on []DeviceFootswitch,
+) []DeviceFootswitch {
+	if on == nil {
+		return nil
+	}
+
+	out := make([]DeviceFootswitch, 0, len(on))
+
+	for _, fs := range on {
+		if fs.Custom == "" {
+			fs.Custom = fs.Label
+			if fs.Custom == "" {
+				fs.Custom = fs.Gear
+			}
+		}
+
+		fs.Primary = true
+
+		out = append(out, fs)
+	}
+
+	return out
 }
 
 // TestPlaceFootswitchesWithoutASection writes into a document that has none.
