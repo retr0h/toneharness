@@ -985,7 +985,10 @@ func knobsOf(
 				continue
 			}
 
-			if valveGuts[name] {
+			// Modelled valve behaviour rather than a tone control, and not
+			// this to decide. One owner, in the catalog, because the
+			// compiler and a starting position need the same answer.
+			if catalog.SetByHand(name) {
 				continue
 			}
 
@@ -1205,37 +1208,6 @@ func carries(
 	}
 
 	return math.Max(straight, nudge) * travel
-}
-
-// valveGuts are the controls a solve may not turn.
-//
-// Modelled valve behaviour rather than tone controls. Sag is the power supply
-// drooping under load, Bias and BiasX how hard the output valves are run, Hum
-// and Ripple the mains leaking into the signal. Somebody sets them once for the
-// feel of an amplifier and then leaves them, which is not how a dial that
-// answers a target behaves.
-//
-// A named set because the catalog cannot tell them apart. On an SV Beast all
-// twelve of its controls read `generic_knob` from 0 to 1, so Sag is
-// indistinguishable from Treble by anything the device says, and this is a
-// judgement about amplifiers that has to be written down somewhere.
-//
-// Named because of what the solve did without it. Asked for Mike Dirnt, one run
-// took Sag from 0.500 to 1.000 and Hum to 0.775 closing band shares, and the
-// chain it produced sounded worse to the person holding the pedal than the rig
-// it started from. A hand-built preset he prefers has Sag and Hum at zero, set
-// deliberately. The arithmetic had nothing to say about any of that: a band
-// share closed by rebiasing the output valves closes just as well as one closed
-// with the tone stack, and only one of them is what anybody meant.
-//
-// It takes them out of the solve and leaves them where the rig put them. A rig
-// that states a Sag still gets it; what cannot happen is the loop deciding one.
-var valveGuts = map[string]bool{
-	"Sag":    true,
-	"Bias":   true,
-	"BiasX":  true,
-	"Hum":    true,
-	"Ripple": true,
 }
 
 // converge runs the loop until the target is met or it stops improving.

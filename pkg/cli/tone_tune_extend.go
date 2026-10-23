@@ -592,7 +592,7 @@ func startAt(
 
 	got, found := measured.StartAt(
 		curves, pick.Block.Category,
-		unreached(aims, now), holding(aims, now), valveGuts)
+		unreached(aims, now), holding(aims, now))
 	if !found {
 		_, _ = fmt.Fprintf(w,
 			"  %s is swept, and no position of any control moves what is missing\n"+
