@@ -53,6 +53,10 @@ func (s *AimedTestSuite) aimedAmp() catalog.Block {
 			"Drive":   {Type: catalog.ParamFloat, Min: 0, Max: 1},
 			"MidFreq": {Type: catalog.ParamInt, Min: 0, Max: 4},
 			"Bright":  {Type: catalog.ParamBool},
+			// Modelled valve behaviour, which only an amplifier carries and
+			// nothing may set on somebody's behalf. Swept like the rest, so
+			// the only thing keeping it where the rig put it is the guard.
+			"Sag": {Type: catalog.ParamFloat, Min: 0, Max: 1},
 		},
 	}
 }
@@ -79,6 +83,7 @@ func (s *AimedTestSuite) aimedCurves() measured.Curves {
 		"Drive":   at("float", 0.25, 0.828986013986014),
 		"MidFreq": at("int", 0, 3),
 		"Bright":  at("bool", 0, 1),
+		"Sag":     at("float", 0.25, 0.828986013986014),
 		// A control the sweep read and this model does not carry, which is a
 		// reading about a block this is not.
 		"Elsewhere": at("float", 0, 1),
@@ -204,6 +209,34 @@ func (s *AimedTestSuite) TestAimed() {
 				"Drive":   catalog.Float(0.829),
 				"MidFreq": catalog.Int(3),
 				"Bright":  catalog.Bool(true),
+			}},
+		},
+		{
+			// Task 277. The valve's guts are not this to decide, and this is
+			// the place that did not know: a rig came out at Hum 0.875 and
+			// BiasX 0.0 where its owner had set Sag and Hum to zero on
+			// purpose.
+			//
+			// Sag is swept exactly as Drive is and reads the same lean, so
+			// without the guard it lands on 0.829 beside it. A band share
+			// closed by rebiasing the output valves closes just as well as
+			// one closed with the tone stack, and only one of those is what
+			// anybody meant.
+			name:   "the valve's guts are left where the rig put them",
+			blocks: []catalog.Block{s.aimedAmp()},
+			built: plan.Plan{Blocks: []plan.Block{{
+				Model: "HD2_AmpTestBass",
+				Params: plan.Params{
+					"Drive": catalog.Float(0.6),
+					"Sag":   catalog.Float(0),
+				},
+			}}},
+			intent: Intent{Aim: &high, Curves: s.sweptAs(s.aimedCurves())},
+			wants: []plan.Params{{
+				"Sag": catalog.Float(0),
+				// Beside it, so the row says the guard is about this control
+				// rather than about a sweep nothing read.
+				"Drive": catalog.Float(0.829),
 			}},
 		},
 		{

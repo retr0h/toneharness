@@ -39,3 +39,17 @@ func Interval() []ModelID {
 
 	return out
 }
+
+// ValveGuts is the controls nothing may set on somebody's behalf, so a test
+// can hold each against the shipped catalog. Sorted, so a failure names the
+// same row every run.
+func ValveGuts() []string {
+	out := make([]string, 0, len(valveGuts))
+	for name := range valveGuts {
+		out = append(out, name)
+	}
+
+	sort.Strings(out)
+
+	return out
+}

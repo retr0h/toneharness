@@ -1038,6 +1038,22 @@ func aimed(
 		toward := curves.Toward(*intent.Aim, measured.SpectralFor(instrument))
 
 		for name, at := range toward {
+			// The valve's guts are not this to decide. Task 277.
+			//
+			// A block's own sweep argues for moving them: an Ampeg answers a
+			// request for harmonics with Sag at its top stop, because a band
+			// share closed by rebiasing the output valves closes just as well
+			// as one closed with the tone stack. Only one of those is what
+			// anybody meant, and a rig came out of here at Hum 0.875 and
+			// BiasX 0.0 where its owner had set Sag and Hum to zero on
+			// purpose.
+			//
+			// A rig that states one still gets it. This is the loop declining
+			// to choose, not a value being refused.
+			if catalog.SetByHand(name) {
+				continue
+			}
+
 			set(built.Blocks[i].Params, blk, name, at)
 		}
 	}

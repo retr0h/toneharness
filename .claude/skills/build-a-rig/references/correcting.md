@@ -123,8 +123,37 @@ inverted curves are all amplifiers, and no drive, compressor or equaliser swept
 alone reads upside down.
 
 `measure controls` says so at the top of an amplifier run, before the hour it
-costs, so somebody can decide to sweep it through a cabinet instead. That
-campaign does not exist yet and it is what would let an amplifier be tuned.
+costs, so somebody can decide to sweep it through a cabinet instead.
+`--after <model>` is how one is swept through a cabinet, and a reading taken
+that way records `isolated: false`; the campaign itself has not been run, and
+it is what would let an amplifier be tuned.
+
+### Five controls nothing sets on somebody's behalf, wherever it is reading
+
+`Sag`, `Bias`, `BiasX`, `Hum` and `Ripple` are modelled valve behaviour rather
+than tone controls: the power supply drooping under load, how hard the output
+valves are run, the mains leaking into the signal. Somebody sets them once for
+the feel of an amplifier and then leaves them.
+
+`catalog.SetByHand` is the one place that knows, and three readers ask it: the
+solve filters its knobs, `StartAt` skips a swept position on one, and the
+compiler declines to write one. The compiler was the one that did not ask. A
+rig came out at Hum 0.875 and BiasX 0.0 where its owner had set Sag and Hum to
+zero on purpose.
+
+Why it has to be stated rather than measured: nothing the device says
+separates these from a tone control. On an SV Beast all twelve controls read
+`generic_knob` from 0 to 1, so Sag is indistinguishable from Treble by any
+field. And a block's own sweep argues for moving it, because an Ampeg answers a
+request for harmonics with Sag at its top stop. A band share closed by
+rebiasing the output valves closes just as well as one closed with the tone
+stack, and only one of those is what anybody meant: one run took Sag from 0.500
+to 1.000 and Hum to 0.775 closing band shares, and the chain sounded worse to
+the person holding the pedal than the rig it started from.
+
+**A rig that states one still gets it.** This is the loop declining to choose,
+not a value being refused, the same way a document's `LowCut` is never
+overruled.
 
 **And a reading is only comparable with another from the same run.** `Toward`
 used to score a swept position's own figures against the target directly, which
@@ -946,7 +975,7 @@ readings rather than imagined:
 | a curve that settles at the ceiling          | all seven of an HD2_AmpWoodyBlue's curves do, and its centroid leaps 85Hz to 2,453Hz      |
 | an amplifier                                 | swept with no cabinet, so what comes back is the buzz a cabinet exists to absorb          |
 | a position that moves level off its settling | level sits inside tolerance, drops out of what is aimed at, and is what tone gets bought with |
-| the valve's guts                             | a solve may not move `Sag` to close a band share, so neither may a document                |
+| the valve's guts                             | `catalog.SetByHand`, which the solve and the compiler read too                             |
 
 The amplifier exclusion is the one that costs most. 43 of the 121 usable curves
 hold a position reading more than half its energy in the high band, and all 43

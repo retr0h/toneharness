@@ -112,11 +112,15 @@ const convincing = 3
 //
 // `want` is the axes the chain could not reach, which decide the direction a
 // position is scored for. `keep` is the axes it already holds, which a position
-// may not disturb. `skip` is the controls that are not this to set, which is
-// how the valve's guts stay out: a solve may not move `Sag` to close a band
-// share, and a document written with `Sag` moved to close one is the same
-// decision taken earlier. An Ampeg's sweep answers a request for harmonics
-// with `Sag` at its top stop, so without this it would be written down.
+// may not disturb.
+//
+// The valve's guts stay out, from [catalog.SetByHand] rather than from a set
+// the caller hands over. A document written with `Sag` moved to close a band
+// share is the same decision a solve may not take, one step earlier, and an
+// Ampeg's sweep answers a request for harmonics with `Sag` at its top stop, so
+// without this it would be written down. Read here rather than passed in
+// because a caller that forgets to pass it gets no error and the wrong
+// document.
 //
 // The second is not decoration. A Deluxe Comp asked for less low energy answers
 // with Level at +12, which does take low energy out and carries the chain's
@@ -134,7 +138,6 @@ func StartAt(
 	of catalog.Category,
 	want []Want,
 	keep []Want,
-	skip map[string]bool,
 ) (Starting, bool) {
 	if c.Isolated && of == catalog.CategoryAmp {
 		return Starting{}, false
@@ -154,7 +157,7 @@ func StartAt(
 	sort.Strings(names)
 
 	for _, name := range names {
-		if skip[name] {
+		if catalog.SetByHand(name) {
 			continue
 		}
 

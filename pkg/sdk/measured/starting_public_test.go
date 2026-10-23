@@ -70,7 +70,6 @@ func (s *StartingPublicTestSuite) TestStartAt() {
 		in   measured.Curves
 		want []measured.Want
 		keep []measured.Want
-		skip map[string]bool
 
 		found   bool
 		control string
@@ -121,7 +120,9 @@ func (s *StartingPublicTestSuite) TestStartAt() {
 		},
 		{
 			// A solve may not move the valve's guts to close a band share, so
-			// neither may a document written before the solve runs.
+			// neither may a document written before the solve runs. Read from
+			// the catalog rather than handed over, because a caller that
+			// forgets gets no error and the wrong document: task 277.
 			name: "the valve's guts",
 			of:   catalog.CategoryAmp,
 			in: measured.Curves{Controls: map[string]measured.Curve{
@@ -133,7 +134,6 @@ func (s *StartingPublicTestSuite) TestStartAt() {
 				}(),
 			}},
 			want:  s.brighter(),
-			skip:  map[string]bool{"Sag": true},
 			found: false,
 		},
 		{
@@ -408,7 +408,7 @@ func (s *StartingPublicTestSuite) TestStartAt() {
 		},
 	} {
 		s.Run(tt.name, func() {
-			got, found := measured.StartAt(tt.in, tt.of, tt.want, tt.keep, tt.skip)
+			got, found := measured.StartAt(tt.in, tt.of, tt.want, tt.keep)
 
 			s.Require().Equal(tt.found, found)
 
