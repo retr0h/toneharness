@@ -113,7 +113,7 @@ built:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        Attack: "0.063"
+        Attack: "0.0629685"
         Knee: "20.0"
         Level: "5.2"
         Mix: "1.0"

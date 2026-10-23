@@ -186,7 +186,7 @@ built:
         Master: "0.5"
         Mid: "0.44"
         Mid Freq: "0.5"
-        Treble: "0.46875"
+        Treble: "0.469"
       attrs:
         '@position': "2"
       position: 2

@@ -60,7 +60,7 @@ built:
         Attack: "0.035"
         Knee: "20.0"
         Level: "5.2"
-        Mix: "0.9580645161290322"
+        Mix: "0.958"
         Ratio: "3"
         Release: "0.2"
         Threshold: "-45.0"

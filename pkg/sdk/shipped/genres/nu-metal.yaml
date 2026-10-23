@@ -167,7 +167,7 @@ built:
         MidFreq: "2"
         Ripple: "0.5"
         Sag: "0.5"
-        Treble: "0.8321428571428571"
+        Treble: "0.832"
       attrs:
         '@position': "2"
       position: 2
