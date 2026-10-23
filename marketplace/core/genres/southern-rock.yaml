@@ -273,6 +273,7 @@ built:
             block0:
               attrs:
                 '@fs_customcolor': "2"
+                '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': DOD Overdrive/Preamp 250
@@ -281,6 +282,7 @@ built:
             block4:
               attrs:
                 '@fs_customcolor': "6"
+                '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
                 '@fs_label': Simple Tilt
@@ -349,16 +351,18 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - block: 0
+    - gear: DOD Overdrive/Preamp 250
+      block: 0
       enabled: false
-      label: DOD Overdrive/Preamp 250
+      label: DRIVE
       led: red
       momentary: false
       primary: true
       switch: 1
-    - block: 4
+    - gear: Simple Tilt
+      block: 4
       enabled: false
-      label: Simple Tilt
+      label: EQ
       led: green
       momentary: false
       primary: true

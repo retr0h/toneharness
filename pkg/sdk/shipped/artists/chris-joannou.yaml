@@ -217,6 +217,7 @@ built:
             block3:
               attrs:
                 '@fs_customcolor': "2"
+                '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Simple EQ
@@ -285,9 +286,10 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - block: 3
+    - gear: Simple EQ
+      block: 3
       enabled: false
-      label: Simple EQ
+      label: EQ
       led: red
       momentary: false
       primary: true

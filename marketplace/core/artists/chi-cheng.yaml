@@ -218,6 +218,7 @@ built:
             block1:
               attrs:
                 '@fs_customcolor': "2"
+                '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Tech 21 SansAmp Bass Driver DI V1
@@ -286,9 +287,10 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - block: 1
+    - gear: Tech 21 SansAmp Bass Driver DI V1
+      block: 1
       enabled: false
-      label: Tech 21 SansAmp Bass Driver DI V1
+      label: DRIVE
       led: red
       momentary: false
       primary: true

@@ -261,6 +261,7 @@ built:
             block0:
               attrs:
                 '@fs_customcolor': "2"
+                '@fs_customlabel': FILTER
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Musitronics Mu-Tron III
@@ -269,6 +270,7 @@ built:
             block4:
               attrs:
                 '@fs_customcolor': "6"
+                '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
                 '@fs_label': Simple EQ
@@ -337,16 +339,18 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - block: 0
+    - gear: Musitronics Mu-Tron III
+      block: 0
       enabled: false
-      label: Musitronics Mu-Tron III
+      label: FILTER
       led: red
       momentary: false
       primary: true
       switch: 1
-    - block: 4
+    - gear: Simple EQ
+      block: 4
       enabled: false
-      label: Simple EQ
+      label: EQ
       led: green
       momentary: false
       primary: true
