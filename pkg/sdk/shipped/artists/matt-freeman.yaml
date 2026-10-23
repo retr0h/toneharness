@@ -1,7 +1,8 @@
 # Matt Freeman — Rancid
 #
-# The ask: who he is and when. The gear this resolves to is in
-# matt-freeman.yaml beside it.
+# The ask: who he is and when, and under `rig:` the gear that resolves to. The
+# two were separate files until version 2 of the contract and this line still
+# said so.
 #
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 

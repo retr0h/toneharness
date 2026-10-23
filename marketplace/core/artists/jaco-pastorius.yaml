@@ -1,8 +1,12 @@
 # Jaco Pastorius — Weather Report
 #
-# The ask: who he is, how he played, and what he played. The gear this
-# resolves to is in jaco-pastorius.yaml beside it.
-
+# The ask: who he is, how he played, and what he played, and under `rig:`
+# the gear that resolves to. The two were separate files until version 2
+# of the contract and this line still said so.
+#
+# **His fuzz was a channel on the amplifier rather than a pedal**, which the
+# amp entry below cites and this device models. So this chain is complete
+# without an effect in it. Round four of task 241.
 schema: ToneSpec
 version: 4.0.0
 id: jaco-pastorius
@@ -87,6 +91,9 @@ rig:
       confidence: medium
       evidence:
         - kind: cited
+          note: 'Michael John Simmons, "Catch of the Day: Circa 1969 Acoustic 360/361 Bass Amplifier", Fretboard Journal, November 2013, on what the head itself carries: "the usual volume, bass and treble controls along with a built-in fuzz tone and a 5-position Variamp section that allows you to adjust set frequencies." The same piece names him among its users, having "made it his amp of choice". **So the fuzz he is known for is a channel on this amplifier rather than a pedal**, and this device models it: the Woody Blue carries Drive and a five-position Variamp. Nothing has to be added to the chain for it, and nothing turns it on either, because no source puts it on any of the four records measured here.'
+          url: https://www.fretboardjournal.com/columns/catch-day-circa-1969-acoustic-360361-bass-amplifier/
+        - kind: cited
           note: the 360-361PP, described there as an 18 inch inverted speaker cabinet he converted to after a borrowed one on a gig
           url: https://mixdownmag.com.au/features/rig-rundown-jaco-pastorius/
         - kind: cited
@@ -138,6 +145,9 @@ built:
       capture: both
       confidence: medium
       evidence:
+        - kind: cited
+          note: 'Michael John Simmons, "Catch of the Day: Circa 1969 Acoustic 360/361 Bass Amplifier", Fretboard Journal, November 2013, on what the head itself carries: "the usual volume, bass and treble controls along with a built-in fuzz tone and a 5-position Variamp section that allows you to adjust set frequencies." The same piece names him among its users, having "made it his amp of choice". **So the fuzz he is known for is a channel on this amplifier rather than a pedal**, and this device models it: the Woody Blue carries Drive and a five-position Variamp. Nothing has to be added to the chain for it, and nothing turns it on either, because no source puts it on any of the four records measured here.'
+          url: https://www.fretboardjournal.com/columns/catch-day-circa-1969-acoustic-360361-bass-amplifier/
         - kind: cited
           note: the 360-361PP, described there as an 18 inch inverted speaker cabinet he converted to after a borrowed one on a gig
           url: https://mixdownmag.com.au/features/rig-rundown-jaco-pastorius/

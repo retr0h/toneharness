@@ -6,7 +6,10 @@
 #
 # No cabinet named, so the amp's own pairing is used — which is what Line 6
 # voiced it with, and which is all the source supports.
-
+#
+# **No effect pedal is documented for him in this era**, and any fuzz on these
+# records came out of the Acoustic 360 rather than out of one. Both are cited
+# on the amp entry below. Round four of task 241.
 schema: ToneSpec
 version: 4.0.0
 id: john-paul-jones
@@ -36,6 +39,12 @@ rig:
       gear: Acoustic 360
       confidence: medium
       evidence:
+        - kind: cited
+          note: 'Michael John Simmons, "Catch of the Day: Circa 1969 Acoustic 360/361 Bass Amplifier", Fretboard Journal, November 2013, on what the head itself carries: "the usual volume, bass and treble controls along with a built-in fuzz tone and a 5-position Variamp section that allows you to adjust set frequencies." The same piece has him using "a pair of them". **So any fuzz on these records came out of this amplifier rather than a pedal**, and this device models it: the Woody Blue carries Drive and a five-position Variamp. Nothing turns it on, because no source puts it on any of the three records measured here.'
+          url: https://www.fretboardjournal.com/columns/catch-day-circa-1969-acoustic-360361-bass-amplifier/
+        - kind: cited
+          note: 'Mixdown''s gear rundown, read for effects rather than for the amplifier: "Jones predominantly used an Acoustic 360 bass head paired with a 361 cabinet" through the Led Zeppelin years, and it names no effect pedal for them. The ones it does name, a Big Muff Bass Pi, a TC Corona Chorus, a PolyTune and a Ditto x4, are his Them Crooked Vultures board. The Maestro Phase Shifter it puts at 1973 to 1979 sits on his keyboard rig rather than in front of the bass.'
+          url: https://mixdownmag.com.au/features/rig-rundown-john-paul-jones/
         - kind: cited
           caveat: The provenance is for the stage rig. What a studio take went through is a separate question this does not answer, and all three records measured are studio recordings. The 360 drove a 361 cabinet, a rear-firing 18-inch folded horn, which is the pairing taken below.
           note: 'His own head, sold at auction with provenance: an Acoustic 360 made by Acoustic Control Corporation circa March 1969, serial no. L1009. The lot reads "purchased by John Paul Jones during Led Zeppelin''s spring 1969 USA tour and used on stage with Led Zeppelin between May 1969 and the Earls Court shows in 1975". It is one of the earliest production 360s to leave the factory, the numbering having started at L1000, and the lot notes a 1976 Beat Instrumental feature carrying a ledger of Led Zeppelin''s complete tour equipment which mentions this unit.'
@@ -74,6 +83,12 @@ built:
       gear: Acoustic 360
       confidence: medium
       evidence:
+        - kind: cited
+          note: 'Michael John Simmons, "Catch of the Day: Circa 1969 Acoustic 360/361 Bass Amplifier", Fretboard Journal, November 2013, on what the head itself carries: "the usual volume, bass and treble controls along with a built-in fuzz tone and a 5-position Variamp section that allows you to adjust set frequencies." The same piece has him using "a pair of them". **So any fuzz on these records came out of this amplifier rather than a pedal**, and this device models it: the Woody Blue carries Drive and a five-position Variamp. Nothing turns it on, because no source puts it on any of the three records measured here.'
+          url: https://www.fretboardjournal.com/columns/catch-day-circa-1969-acoustic-360361-bass-amplifier/
+        - kind: cited
+          note: 'Mixdown''s gear rundown, read for effects rather than for the amplifier: "Jones predominantly used an Acoustic 360 bass head paired with a 361 cabinet" through the Led Zeppelin years, and it names no effect pedal for them. The ones it does name, a Big Muff Bass Pi, a TC Corona Chorus, a PolyTune and a Ditto x4, are his Them Crooked Vultures board. The Maestro Phase Shifter it puts at 1973 to 1979 sits on his keyboard rig rather than in front of the bass.'
+          url: https://mixdownmag.com.au/features/rig-rundown-john-paul-jones/
         - kind: cited
           caveat: The provenance is for the stage rig. What a studio take went through is a separate question this does not answer, and all three records measured are studio recordings. The 360 drove a 361 cabinet, a rear-firing 18-inch folded horn, which is the pairing taken below.
           note: 'His own head, sold at auction with provenance: an Acoustic 360 made by Acoustic Control Corporation circa March 1969, serial no. L1009. The lot reads "purchased by John Paul Jones during Led Zeppelin''s spring 1969 USA tour and used on stage with Led Zeppelin between May 1969 and the Earls Court shows in 1975". It is one of the earliest production 360s to leave the factory, the numbering having started at L1000, and the lot notes a 1976 Beat Instrumental feature carrying a ledger of Led Zeppelin''s complete tour equipment which mentions this unit.'
