@@ -838,7 +838,7 @@ func chose(
 	// The displacement the genre was given, which is what the target carries
 	// over the library's own baseline. The absolute figure is not comparable
 	// with a microphone's.
-	asked := displacedFrom(at.figures, deps.Measured.Baseline)
+	asked := DisplacedFrom(at.figures, deps.Measured.Baseline)
 
 	pick, chosen := curves.TowardFrom(
 		micControl, asked, measured.SpectralFor(wants))
@@ -864,12 +864,18 @@ func chose(
 // micControl is what the catalog calls a cabinet's microphone.
 const micControl = "Mic"
 
-// displacedFrom is how far a target sits from the library's own baseline.
+// DisplacedFrom is how far a target sits from the library's own baseline.
 //
 // The inverse of what [displacedTo] built, so a chooser that needs the
 // displacement rather than the position can have it without the target
 // carrying both.
-func displacedFrom(
+//
+// Exported because the compiler needs the same thing and has no baseline to
+// subtract: [measured.Curves.Toward] and [measured.Curves.TowardFrom] both
+// read `want` as a lean rather than a position, and handing either an absolute
+// figure reads as "more of everything", because a centroid in hertz and a band
+// share are both positive whatever the target asks for.
+func DisplacedFrom(
 	at measured.Figures,
 	baseline measured.Figures,
 ) measured.Figures {
@@ -2146,6 +2152,36 @@ func playerTarget(
 			"they played and is not moved by this; only the controls on it are " +
 			"set, and they are set to what those records measure as.",
 	}, true
+}
+
+// AimAtGenre is what a genre's records measure as, as a displacement a block
+// can be ranked against.
+//
+// The sibling of [AimAtPlayer] and the same arithmetic, with one difference
+// that is the whole of task 310: **a genre aims at the edge of its own range
+// and a player at the middle of theirs.** The middle is what every genre
+// shares, and totalled over the three band shares ten of the eleven displace
+// between 0.2 and 6.4 points from one baseline where the blocks they are
+// ranked against span 50. So `displacedTo` is given the genre's terms, which
+// is what makes it take an edge, and a player's are deliberately withheld.
+//
+// Exported for the reason [AimAtPlayer] is: a rig's identifier is who it is
+// for, and three of the eleven genre rigs borrow their amplifier's own
+// pairing, so their cabinet is added by the compiler and never passes through
+// the gear-choosing path here. See task 242.
+//
+// False where the pack carries no genre by that name, which every artist rig
+// and every slug that is not one of the eleven answers with.
+func AimAtGenre(
+	slug string,
+	baseline measured.Figures,
+) (measured.Figures, bool) {
+	got, ok := audio.ShippedGenre(slug)
+	if !ok || got.Instrument == "" {
+		return measured.Figures{}, false
+	}
+
+	return displacedTo(got, baseline), true
 }
 
 // AimAtPlayer is what one player's own records measure as, as a displacement

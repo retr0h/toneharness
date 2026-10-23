@@ -132,12 +132,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "6.0"
+        Knee: "12.5"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.1"
+        Threshold: "-37.5"
       attrs:
         '@position': "1"
       position: 1
@@ -209,7 +209,7 @@ built:
         HighCut: "20100.0"
         Level: "0.0"
         LowCut: "19.9"
-        Mic: "10"
+        Mic: "6"
         Position: "0.75"
       attrs:
         '@position': "4"

@@ -129,7 +129,7 @@ built:
         HighCut: "20100.0"
         Level: "0.0"
         LowCut: "19.9"
-        Mic: "2"
+        Mic: "4"
         Position: "0.2"
       attrs:
         '@position': "2"
