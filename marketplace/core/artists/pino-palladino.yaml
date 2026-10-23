@@ -1,7 +1,8 @@
 # Pino Palladino — D'Angelo, Voodoo
 #
-# The ask: who he is, how he played, and what he played. The gear this
-# resolves to is in pino-palladino.yaml beside it.
+# The ask: who he is, how he played, and what he played, and under `rig:`
+# the gear that resolves to. The two were separate files until version 2
+# of the contract and this line still said so.
 
 schema: ToneSpec
 version: 4.0.0

@@ -1,8 +1,17 @@
 # Geddy Lee — Rush
 #
-# The ask: who he is, how he played, and what he played. The gear this
-# resolves to is in geddy-lee.yaml beside it.
-
+# The ask: who he is, how he played, and what he played, and under `rig:`
+# the gear that resolves to. The two were separate files until version 2
+# of the contract and this line still said so.
+#
+# **No effect pedal is documented for him in this era, and that is sourced.**
+# The A Farewell to Kings 40th Anniversary Edition liner notes, by Rob Bowman
+# for UMe/Anthem on 1 December 2017, credit him with bass, twelve string, Mini
+# Moog and bass pedal synthesizer and nothing else. A Moog Taurus is an
+# instrument rather than an effect, and the 1978 European tour list beside it
+# on the same page is instruments plus two Sunn 2x15s, two Ampeg V4Bs and two
+# SVT heads. Round four of task 241.
+# http://www.2112.net/powerwindows/afarewelltokings40th.html
 schema: ToneSpec
 version: 4.0.0
 id: geddy-lee
