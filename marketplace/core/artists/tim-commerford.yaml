@@ -51,6 +51,13 @@ rig:
       confidence: high
       evidence:
         - kind: cited
+          caveat: |-
+            **the distortion it names cannot be built here.** A Marshall Guv''nor is a Marshall preamp in a box and this device models none of it: all 61 of its drives were read and not one is voiced after a Guv''nor, so naming one of them would be choosing a pedal for him rather than recording his. The chain carries no drive for that reason and not for want of a source.
+            The amplifier sentence is about the wrong record. Two SVT heads and two Classic 8x10 cabinets are what he is said to have liked best, on Evil Empire in 1996, where this rig is the 1992 debut. It corroborates the kind of rig and not this one.
+            The Guv''nor claim is the writer''s framing rather than a quote from him, and the same article has him refusing to say what is on his board: he calls himself "like the Pablo Escobar of bass" about it. So this is the best available account of a sound he will not describe.
+          note: 'Nick Wells for Guitar World. On the distortion: "Since Commerford first set about establishing a bass sound for Rage by using a Marshall Guv''nor stompbox for riff-rock distortion". On the amplifiers: "Commerford''s favorite recorded sound with Rage Against The Machine was on the group''s second album, Evil Empire, on which he used two SVT heads and two Classic 8x10 cabinets".'
+          url: https://www.yahoo.com/entertainment/rage-against-machine-tim-commerford-081800583.html
+        - kind: cited
           caveat: the 2PRO rather than the vintage SVT this device models, and he says in the same piece that he is "a multiple amp kind of guy", one on all the time and one for when he wants the sound different. A preset is one path, so this is the one that is always on.
           note: '"In Rage, I used two Ampeg SVT-2PRO heads and two Ampeg 8x10 cabinets"'
           url: https://www.mixonline.com/the-wire/why-tim-commerford-will-never-give-his-ampeg-svts-430713
@@ -96,6 +103,13 @@ built:
       gear: Ampeg SVT
       confidence: high
       evidence:
+        - kind: cited
+          caveat: |-
+            **the distortion it names cannot be built here.** A Marshall Guv''nor is a Marshall preamp in a box and this device models none of it: all 61 of its drives were read and not one is voiced after a Guv''nor, so naming one of them would be choosing a pedal for him rather than recording his. The chain carries no drive for that reason and not for want of a source.
+            The amplifier sentence is about the wrong record. Two SVT heads and two Classic 8x10 cabinets are what he is said to have liked best, on Evil Empire in 1996, where this rig is the 1992 debut. It corroborates the kind of rig and not this one.
+            The Guv''nor claim is the writer''s framing rather than a quote from him, and the same article has him refusing to say what is on his board: he calls himself "like the Pablo Escobar of bass" about it. So this is the best available account of a sound he will not describe.
+          note: 'Nick Wells for Guitar World. On the distortion: "Since Commerford first set about establishing a bass sound for Rage by using a Marshall Guv''nor stompbox for riff-rock distortion". On the amplifiers: "Commerford''s favorite recorded sound with Rage Against The Machine was on the group''s second album, Evil Empire, on which he used two SVT heads and two Classic 8x10 cabinets".'
+          url: https://www.yahoo.com/entertainment/rage-against-machine-tim-commerford-081800583.html
         - kind: cited
           caveat: the 2PRO rather than the vintage SVT this device models, and he says in the same piece that he is "a multiple amp kind of guy", one on all the time and one for when he wants the sound different. A preset is one path, so this is the one that is always on.
           note: '"In Rage, I used two Ampeg SVT-2PRO heads and two Ampeg 8x10 cabinets"'

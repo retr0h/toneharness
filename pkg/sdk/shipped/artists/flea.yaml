@@ -77,6 +77,19 @@ ask:
       term: dark
 rig:
   chain:
+    - role: drive
+      gear: Maestro Bass Brassmaster
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: cited
+          caveat: |-
+            a tour rig and not a studio one, which is why this arrives bypassed. The rundown films the stage at the Allstate Arena and nothing in it puts a pedal on a take: the corpus measures Brendan's Death Song, The Adventures of Rain Dance Maggie and Dark Necessities for him, and no source names an effect on any of the three.
+            The pedal named is a Malekko B:assmaster and this device models none. It asks for the Maestro Bass Brassmaster instead, which is what the Malekko is a clone of rather than a pedal chosen for sounding like it: Malekko's own sellers call it "a hand-built clone of the Maestro Bass Brassmaster harmonic octave fuzz".
+            Two more pedals on that board are left out. An MXR Micro Amp is a clean boost "for slapping and leads" and this device models no Micro Amp, so naming one of its 61 drives would be a guess. An Electro-Harmonix Q-Tron is named for one song, "Sir Psycho Sexy", which is from 1991 and is not in this era at all.
+          note: 'Premier Guitar''s own Rig Rundown, filmed on the I''m With You Tour and dated 3 June 2012, which is inside the era this rig claims. Left to right across his board: "a Malekko Bassmaster for fuzz and distortion, MXR Micro Amp used as clean boost for slapping and leads, Electro-Harmonix Q-Tron used for \"Sir Psycho Sexy,\" and a Moog Mooferfooger 12-Stage Phaser used just for fun."'
+          url: https://www.premierguitar.com/rig-rundown-red-hot-chili-peppers-flea
+      enabled: false
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -119,6 +132,27 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: drive
+      gear: Maestro Bass Brassmaster
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: cited
+          caveat: |-
+            a tour rig and not a studio one, which is why this arrives bypassed. The rundown films the stage at the Allstate Arena and nothing in it puts a pedal on a take: the corpus measures Brendan's Death Song, The Adventures of Rain Dance Maggie and Dark Necessities for him, and no source names an effect on any of the three.
+            The pedal named is a Malekko B:assmaster and this device models none. It asks for the Maestro Bass Brassmaster instead, which is what the Malekko is a clone of rather than a pedal chosen for sounding like it: Malekko's own sellers call it "a hand-built clone of the Maestro Bass Brassmaster harmonic octave fuzz".
+            Two more pedals on that board are left out. An MXR Micro Amp is a clean boost "for slapping and leads" and this device models no Micro Amp, so naming one of its 61 drives would be a guess. An Electro-Harmonix Q-Tron is named for one song, "Sir Psycho Sexy", which is from 1991 and is not in this era at all.
+          note: 'Premier Guitar''s own Rig Rundown, filmed on the I''m With You Tour and dated 3 June 2012, which is inside the era this rig claims. Left to right across his board: "a Malekko Bassmaster for fuzz and distortion, MXR Micro Amp used as clean boost for slapping and leads, Electro-Harmonix Q-Tron used for \"Sir Psycho Sexy,\" and a Moog Mooferfooger 12-Stage Phaser used just for fun."'
+          url: https://www.premierguitar.com/rig-rundown-red-hot-chili-peppers-flea
+      controls:
+        Drive: "0.375"
+        Level: "0.0"
+        mixture: "0.375"
+        tonality: "4"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -133,8 +167,8 @@ built:
         Release: "0.2"
         Threshold: "-45.0"
       attrs:
-        '@position': "0"
-      position: 0
+        '@position': "1"
+      position: 1
     - role: amp
       gear: Gallien-Krueger 2001RB
       confidence: medium
@@ -163,8 +197,8 @@ built:
         Master: "1.0"
         Treble: "0.66"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "2"
+      position: 2
       stage: true
     - role: cab
       gear: Gallien-Krueger 410
@@ -186,8 +220,8 @@ built:
         Level: "0.0"
         LowCut: "19.9"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
       stage: true
   preset:
     dsp0:
@@ -248,6 +282,20 @@ built:
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block0:
+              attrs:
+                '@fs_customcolor': "2"
+                '@fs_customlabel': DRIVE
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Maestro Bass Brassmaster
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -310,3 +358,13 @@ built:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
+  footswitches:
+    - gear: Maestro Bass Brassmaster
+      block: 0
+      colour: 525824
+      enabled: false
+      label: DRIVE
+      led: red
+      momentary: false
+      primary: true
+      switch: 1

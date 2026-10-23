@@ -85,6 +85,12 @@ rig:
             note: a model's guess at the nearest clean tube bass preamp this device carries. Nobody has compared them.
       evidence:
         - kind: cited
+          caveat: |-
+            the only effect it dates is the one this rig already holds. Every other pedal it lists is undated or modern: a Big Muff, a Key-9, a Microsynth, a Digitech Whammy, an Eventide TimeFactor, a DOD Grunge and a GigFX Sub-Wah, none of which existed in 1976 or is tied to a record here.
+            The preamp is named as part of his live setup rather than a session, so it corroborates the gear and not the take.
+          note: 'Mixdown''s gear rundown. On the filter: "Since the ''70s, Bootsy has been a devout user of the Musictronics Mu-Tron III Envelope Filter", and it quotes him on it elsewhere as "Without that Mu-Tron, there ain''t no Bootsy". On the preamp it lists an Alembic F2B at the front of his live rig. Both are what this rig already holds, from a second source.'
+          url: https://mixdownmag.com.au/features/gear-rundown-bootsy-collins/
+        - kind: cited
           caveat: nothing on this device emulates the F2-B, and the power amps and cabinets are custom. What is here is the filter and something clean behind it.
           note: an Alembic F2-B preamp into Crown power amps and eight custom Electro-Voice cabinets
           url: https://www.uberproaudio.com/who-plays-what/295-bootsy-collins-bass-rig-gear-and-equipment
@@ -145,6 +151,12 @@ built:
           - kind: llm
             note: a model's guess at the nearest clean tube bass preamp this device carries. Nobody has compared them.
       evidence:
+        - kind: cited
+          caveat: |-
+            the only effect it dates is the one this rig already holds. Every other pedal it lists is undated or modern: a Big Muff, a Key-9, a Microsynth, a Digitech Whammy, an Eventide TimeFactor, a DOD Grunge and a GigFX Sub-Wah, none of which existed in 1976 or is tied to a record here.
+            The preamp is named as part of his live setup rather than a session, so it corroborates the gear and not the take.
+          note: 'Mixdown''s gear rundown. On the filter: "Since the ''70s, Bootsy has been a devout user of the Musictronics Mu-Tron III Envelope Filter", and it quotes him on it elsewhere as "Without that Mu-Tron, there ain''t no Bootsy". On the preamp it lists an Alembic F2B at the front of his live rig. Both are what this rig already holds, from a second source.'
+          url: https://mixdownmag.com.au/features/gear-rundown-bootsy-collins/
         - kind: cited
           caveat: nothing on this device emulates the F2-B, and the power amps and cabinets are custom. What is here is the filter and something clean behind it.
           note: an Alembic F2-B preamp into Crown power amps and eight custom Electro-Voice cabinets

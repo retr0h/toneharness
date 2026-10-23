@@ -87,6 +87,12 @@ rig:
       confidence: high
       evidence:
         - kind: cited
+          caveat: |-
+            no effect reaches this rig from it, and two are ruled out by their own dates. The A/DA MP-1 tube preamp in his rig is said to be "used to buffer and beef up his tone in a live setting", so it is not on a take. An Electro-Harmonix Hot Tubes overdrive is named for Primus's 1997 Brown Album, which is two years past the era this rig claims.
+            A rundown without an interview behind it, so this corroborates the gear rather than settling it.
+          note: 'Mixdown''s gear rundown, which dates the amplifier and the cabinets to the whole decade and names both: "Throughout the ''90s, Claypool favoured a Mesa/Boogie Bass 400+ head paired with two 2x15 Mesa/Boogie Diesel cabinets." That is the head and the pair of cabinets this rig already holds, from a second source.'
+          url: https://mixdownmag.com.au/features/rig-rundown-les-claypool/
+        - kind: cited
           caveat: the same rundown has him on Subway D-800 heads and 1x12s now, so this rig is the earlier era.
           note: the Bass 400+ head through the nineties, into two Mesa 2x15 Diesel cabinets
           url: https://mixdownmag.com.au/features/rig-rundown-les-claypool/
@@ -128,6 +134,12 @@ built:
       capture: direct
       confidence: high
       evidence:
+        - kind: cited
+          caveat: |-
+            no effect reaches this rig from it, and two are ruled out by their own dates. The A/DA MP-1 tube preamp in his rig is said to be "used to buffer and beef up his tone in a live setting", so it is not on a take. An Electro-Harmonix Hot Tubes overdrive is named for Primus's 1997 Brown Album, which is two years past the era this rig claims.
+            A rundown without an interview behind it, so this corroborates the gear rather than settling it.
+          note: 'Mixdown''s gear rundown, which dates the amplifier and the cabinets to the whole decade and names both: "Throughout the ''90s, Claypool favoured a Mesa/Boogie Bass 400+ head paired with two 2x15 Mesa/Boogie Diesel cabinets." That is the head and the pair of cabinets this rig already holds, from a second source.'
+          url: https://mixdownmag.com.au/features/rig-rundown-les-claypool/
         - kind: cited
           caveat: the same rundown has him on Subway D-800 heads and 1x12s now, so this rig is the earlier era.
           note: the Bass 400+ head through the nineties, into two Mesa 2x15 Diesel cabinets
