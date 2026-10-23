@@ -405,7 +405,7 @@ func (s *GenreGearPublicTestSuite) TestPlural() {
 	} {
 		s.Run(string(tt.kind), func() {
 			got := translate.Because(
-				translate.Aim{}, "A Block", 9, 150, "bass", tt.kind)
+				translate.Aim{}, "A Block", 9, 150, "bass", tt.kind, false)
 
 			s.Require().NotNil(got.Note)
 			s.Require().Contains(*got.Note, "9 bass "+tt.says+" this device models")

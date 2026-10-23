@@ -347,3 +347,54 @@ func (s *HarmonicsPublicTestSuite) TestSharedSplitsHarmonics() {
 	got = measured.Shared(curves, s.at(16), measured.Weights{Mid: 1})
 	s.Require().InDelta(16.0, *got.Harmonics, 1e-9)
 }
+
+// TestResolvesIsTheSmallestDistanceWorthActingOn covers the bar a choice has
+// to clear.
+//
+// One method and one table, so a case is a row rather than a file. Task 267:
+// `Nearest` always answers and answering is not choosing, so something has to
+// say how near is near enough to have been chosen.
+func (s *HarmonicsPublicTestSuite) TestResolvesIsTheSmallestDistanceWorthActingOn() {
+	for _, tt := range []struct {
+		name string
+		by   measured.Weights
+		want float64
+	}{
+		{
+			// A bass: the centroid at a thousandth of a hertz, the midrange
+			// and harmonics at a point each. The root of three terms, two of
+			// which are one.
+			name: "a bass, weighed on three figures",
+			by:   measured.SpectralFor("bass"),
+			want: 1.4142139159264415,
+		},
+		{
+			// Everything the default weighs, which is five figures.
+			name: "and everything Spectral carries",
+			by:   measured.Spectral(),
+			want: 2.0000002499999843,
+		},
+		{
+			name: "one figure alone",
+			by:   measured.Weights{Mid: 1},
+			want: 1,
+		},
+		{
+			// A caller weighing loudness gets an answer rather than a
+			// silence, in the tenth of a decibel a level is held to.
+			name: "loudness, in the places a level claims",
+			by:   measured.Weights{Level: 1},
+			want: 0.1,
+		},
+		{
+			// Nothing weighed means no distance means anything, which is
+			// what a ranking on no axes answers.
+			name: "nothing weighed at all",
+			by:   measured.Weights{},
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().InDelta(tt.want, tt.by.Resolves(), 1e-9)
+		})
+	}
+}

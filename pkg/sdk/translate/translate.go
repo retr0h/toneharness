@@ -1453,11 +1453,30 @@ func nearestOf(
 	best := ranked[0]
 	gear := named(deps.Catalog, best)
 
+	// Whether being nearest meant anything.
+	//
+	// `Nearest` always answers and answering is not choosing. Of the eight
+	// equalisers this device models for a bass, punk's nearest sits 24.49
+	// from its target and the median of the eight sits 24.51: two hundredths
+	// of a distance, where a hundredth of a share of the midrange is worth
+	// one. Ten of the eleven genres are in that state on their equaliser and
+	// not one is on anything else, where the nearest beats the median by
+	// between 2.1 and 23.9. Task 267.
+	alike := !beats(ranked, measured.SpectralFor(wants))
+
+	said := fmt.Sprintf(
+		"%s is the closest of %d measured to %s, %.0f Hz against %.0f",
+		gear, len(ranked), from, best.Centroid, want.Centroid)
+	if alike {
+		said = fmt.Sprintf(
+			"none of the %d %s this device models is measurably nearer %s "+
+				"than the others, so %s is the first of them rather than a "+
+				"choice", len(ranked), plural(category), from, gear)
+	}
+
 	*notes = append(*notes, Note{
-		About: string(category),
-		Said: fmt.Sprintf(
-			"%s is the closest of %d measured to %s, %.0f Hz against %.0f",
-			gear, len(ranked), from, best.Centroid, want.Centroid),
+		About:    string(category),
+		Said:     said,
 		Honoured: true,
 	})
 
@@ -1469,7 +1488,7 @@ func nearestOf(
 	// It was hand-written before, on every genre rig in the marketplace, and
 	// rebuilding them dropped all eleven at once. Nothing but
 	// TestEveryShippedGearClaimHasASource said so.
-	held := at.because(gear, len(ranked), best.Centroid, wants, category)
+	held := at.because(gear, len(ranked), best.Centroid, wants, category, alike)
 
 	// A measurement off a finished record carries whatever microphone was in
 	// front of whatever cabinet, and this block was picked to sit near that
@@ -1945,6 +1964,9 @@ func (a aim) because(
 	sat float64,
 	instrument string,
 	kind catalog.Category,
+	// alike says being nearest meant nothing, because the field is bunched
+	// closer together than the comparison can resolve.
+	alike bool,
 ) tone.Evidence {
 	// The kind of block rather than the word "amplifiers", which this said for
 	// every one of them. A genre rig now carries a drive and an equaliser
@@ -1955,6 +1977,27 @@ func (a aim) because(
 			"closest of the %d %s %s this device models to %s, sitting "+
 			"at %.0f Hz against %.0f.",
 		gear, ranked, instrument, plural(kind), a.named, sat, a.figures.Centroid)
+
+	// Or it was not chosen at all, and the document has to stop saying it was.
+	//
+	// Task 267, whose complaint was that a genre's drive is the nearest
+	// measured block and the document says so, "which is honest but is not a
+	// recommendation anybody should trust by ear". For ten of the eleven
+	// genres' equalisers it is not even honest: the eight this device models
+	// for a bass sit within two hundredths of a distance of each other
+	// against punk, so the first of them is the first of eight alike.
+	//
+	// The controls on it are still aimed, which is where the shaping an
+	// equaliser does actually happens, and that claim is unaffected.
+	if alike {
+		said = fmt.Sprintf(
+			"Not chosen by measurement. None of the %d %s %s this device "+
+				"models is measurably nearer %s than the others, so %s is the "+
+				"first of them rather than a choice. The model is arbitrary "+
+				"and the controls on it are not: those are set from its own "+
+				"sweep.",
+			ranked, instrument, plural(kind), a.named, gear)
+	}
 
 	if a.records > 0 {
 		// Counted straight, with no pluraliser. The only target that fills these
@@ -2925,4 +2968,31 @@ func gearIsFor(
 	})
 
 	return rig.InstrumentGuitar
+}
+
+// beats reports whether the nearest candidate is nearer than the field by more
+// than the comparison can resolve.
+//
+// A ranking always has a first entry and that is not the same as a choice. The
+// median is what it is held against rather than the second entry: two
+// equalisers may differ while the other six are alike, and what decides
+// whether being first meant anything is the field rather than the runner-up.
+//
+// [measured.Weights.Resolves] is the bar, which is the distance a one-unit
+// difference on every weighed figure produces. Across the eleven genres every
+// amplifier, cabinet, drive, compressor and reverb clears it by between 2.1
+// and 23.9, and ten of the eleven equalisers miss it by between 0.02 and 1.12.
+//
+// True for a field of one, which is a choice nothing could have gone otherwise.
+func beats(
+	ranked []measured.Match,
+	by measured.Weights,
+) bool {
+	if len(ranked) < 2 {
+		return true
+	}
+
+	// Sorted already, by [measured.Library.Nearest], so the middle one is the
+	// median without sorting again.
+	return ranked[len(ranked)/2].Distance-ranked[0].Distance >= by.Resolves()
 }

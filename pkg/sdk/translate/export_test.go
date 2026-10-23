@@ -94,8 +94,11 @@ func Because(
 	sat float64,
 	instrument string,
 	kind catalog.Category,
+	// alike says being nearest meant nothing, because the field was bunched
+	// closer than the comparison can resolve. Task 267.
+	alike bool,
 ) tone.Evidence {
-	return a.because(gear, ranked, sat, instrument, kind)
+	return a.because(gear, ranked, sat, instrument, kind, alike)
 }
 
 // Said3 is a list the way a sentence says one.
@@ -225,3 +228,9 @@ func (a Asked) Past() float64 { return a.past }
 // in the figures a block is measured in.
 func (a Aim) Named() string             { return a.named }
 func (a Aim) Figures() measured.Figures { return a.figures }
+
+// Beats is whether the nearest candidate is nearer than the field by more than
+// the comparison can resolve. Exposed because the state it guards against is
+// the shipped equalisers and the states it allows are everything else, and a
+// table covers both plus the ones no field is in.
+var Beats = beats

@@ -21,6 +21,7 @@
 package translate_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -736,6 +737,82 @@ func (s *GearPublicTestSuite) TestDisplacedFromCarriesHarmonics() {
 
 			s.Require().NotNil(got.Harmonics)
 			s.Require().InDelta(*tt.want, *got.Harmonics, 0.01)
+		})
+	}
+}
+
+// TestBeats covers whether being nearest meant anything.
+//
+// One method and one table, so a case is a row rather than a file. Task 267:
+// a ranking always has a first entry and that is not the same as a choice.
+func (s *GearPublicTestSuite) TestBeats() {
+	at := func(apart ...float64) []measured.Match {
+		out := make([]measured.Match, 0, len(apart))
+		for i, d := range apart {
+			out = append(out, measured.Match{
+				Block:    measured.Block{ID: fmt.Sprint(i)},
+				Distance: d,
+			})
+		}
+
+		return out
+	}
+
+	// A bass, where the bar is the root of a point of midrange and a point of
+	// harmonics: 1.41.
+	by := measured.SpectralFor("bass")
+
+	for _, tt := range []struct {
+		name   string
+		ranked []measured.Match
+		want   bool
+	}{
+		{
+			// punk's drive: the nearest at 0.55 against a median of 17.71.
+			// Every amplifier, cabinet, drive, compressor and reverb across
+			// the eleven genres clears the bar by between 2.1 and 23.9.
+			name:   "a field the nearest is plainly out in front of",
+			ranked: at(0.55, 3, 17.71, 30, 61.59),
+			want:   true,
+		},
+		{
+			// punk's equaliser: 24.49 against a median of 24.51, which is two
+			// hundredths on a scale where a hundredth of a share of the
+			// midrange is worth one. Ten of the eleven genres are here.
+			name:   "and one where it is not",
+			ranked: at(24.49, 24.50, 24.51, 24.52, 40.88),
+		},
+		{
+			// The median rather than the runner-up, because two may differ
+			// while the rest are alike and what decides whether being first
+			// meant anything is the field.
+			name:   "a runner-up far off does not make it a choice",
+			ranked: at(0.1, 0.2, 0.3, 0.4, 90),
+		},
+		{
+			// Nothing could have gone otherwise.
+			name:   "a field of one",
+			ranked: at(5),
+			want:   true,
+		},
+		{
+			name:   "a field of two the nearest leads",
+			ranked: at(1, 30),
+			want:   true,
+		},
+		{
+			name:   "and a field of two that are alike",
+			ranked: at(1, 1.5),
+		},
+		{
+			// No ranking at all, which the caller refuses before it gets
+			// here. It is still the contract.
+			name: "nothing ranked",
+			want: true,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, translate.Beats(tt.ranked, by))
 		})
 	}
 }

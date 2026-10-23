@@ -331,6 +331,53 @@ nobody has run.
 `dynamics` and `lean` are measured on both sides and nothing has established
 whether the padding moves them. They are the next two to look at.
 
+### Being nearest is not the same as having been chosen
+
+`measured.Library.Nearest` always answers. For most kinds of block the answer
+means something, and for one it does not: of the eight equalisers this device
+models for a bass, punk's nearest sits 24.49 from its target and the median of
+the eight sits 24.51. Two hundredths, on a scale where a hundredth of a share
+of the midrange is worth one.
+
+So a choice has to clear a bar, and the bar is the smallest distance the
+comparison can tell apart: `measured.Weights.Resolves`, which is the distance a
+one-unit difference on every weighed figure produces. A hertz of centroid and a
+hundredth of a share each, which for a bass is 1.41.
+
+| kind | how far the nearest beats the median, across the eleven genres |
+| ---- | ------------------------------------------------------------- |
+| amplifier | 9.4 to 23.9 |
+| cabinet | 9.0 to 17.4 |
+| drive | 12.4 to 20.7 |
+| compressor | 2.2 to 16.4 |
+| reverb | 2.5 to 3.9 |
+| **equaliser** | **0.02 to 3.15, and ten of the eleven miss the bar** |
+
+Only grunge's equaliser is a choice. The other ten are the first of eight
+blocks nothing can separate, broken by the model's own identifier so the answer
+is at least the same every run.
+
+**The block stays and the claim goes.** An equaliser nobody could choose is
+still an equaliser, and its controls are set from its own sweep, which is where
+the shaping an equaliser does actually happens. What changes is the evidence:
+
+```text
+Not chosen by measurement. None of the 8 bass equalisers this device models is
+measurably nearer punk than the others, so MXR 10-Band Graphic EQ is the first
+of them rather than a choice. The model is arbitrary and the controls on it are
+not: those are set from its own sweep.
+```
+
+That is task 267's own complaint answered as far as it can be without
+hardware. Its words were that a genre's drive "is the nearest measured block
+and the document says so in its evidence, which is honest but is not a
+recommendation anybody should trust by ear". For ten of the eleven equalisers
+it was not even honest.
+
+**The median rather than the runner-up.** Two blocks may differ while the other
+six are alike, and what decides whether being first meant anything is the field
+rather than the second place.
+
 ## A rig gets the effects its own records ask for
 
 Every chain the corpus built carried the same two, a drive and an equaliser, on

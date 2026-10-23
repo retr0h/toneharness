@@ -1757,7 +1757,7 @@ func (s *TranslatePublicTestSuite) TestABlockChosenByMeasurementSaysWhy() {
 		s.Run(tt.name, func() {
 			got := translate.Because(
 				tt.aim, "MESA/Boogie Bass 400+", 27, 150, "bass",
-				catalog.CategoryAmp)
+				catalog.CategoryAmp, false)
 
 			s.Require().Equal(tone.EvidenceAudio, got.Kind)
 			s.Require().NotNil(got.Note)
