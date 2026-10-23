@@ -81,8 +81,8 @@ built:
           note: 'the band''s own equipment chronology, from Alex Roberts'' interview with Nirvana''s guitar technician Earnest Bailey, which calls the ProCo Rat 2 "Krist''s distortion pedal of choice". Bailey is the reason this counts: he worked on the band''s gear, so he is describing pedals he handled rather than photographs he studied. It is the same source and the same interview the amplifier below already rests on.'
           url: https://www.livenirvana.com/equipment/krist.php
       controls:
-        Filter: "1.0"
-        Gain: "0.5"
+        Filter: "0.625"
+        Gain: "0.75"
         Level: "0.85"
       attrs:
         '@position': "0"
@@ -95,12 +95,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "12.5"
+        Knee: "6.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-37.5"
+        Threshold: "-37.1"
       attrs:
         '@position': "1"
       position: 1
@@ -151,7 +151,7 @@ built:
         HighCut: "11500.0"
         Level: "0.0"
         LowCut: "25.0"
-        Mic: "8"
+        Mic: "6"
         Position: "0.09"
       attrs:
         '@position': "3"

@@ -116,10 +116,11 @@ whose sign is wrong a third of the time is not rescued by reading it as a lean.
 
 `measured.StartAt` has always refused one. `measured.Curves.Toward` now does
 too, which is what `rigs resolve` uses to set an artist rig's controls from its
-player's records. So an artist rig's amplifier arrives at corpus medians and its
-compressor and drive are set from their sweeps, and the report says which
-happened. Everything else is read: the inverted curves are all amplifiers, and
-no drive, compressor or equaliser swept alone reads upside down.
+player's records. So an artist rig's amplifier arrives at corpus medians, and
+whatever else is in the chain is set from its own sweep as far as that sweep
+reaches, with the report saying which happened. Everything else is read: the
+inverted curves are all amplifiers, and no drive, compressor or equaliser swept
+alone reads upside down.
 
 `measure controls` says so at the top of an amplifier run, before the hour it
 costs, so somebody can decide to sweep it through a cabinet instead. That
@@ -135,6 +136,57 @@ against punk's own centroid displacement of 9.6Hz and the eleven genres' band
 shares displacing 0.2 to 18.9 points. The offset between the runs was larger
 than the signal. Every control is now answered by its distance from its own
 median instead, which is the comparison a genre's words are already earned by.
+
+### And the size of the ask decides how far a dial goes
+
+A lean read by its sign alone sends every control to a stop, because the
+question it answers is "which end of you is the way the target leans". Asked of
+one dial that is nearly a sentence somebody would say. Asked of a ten-band
+equaliser it put six of its bands against the ceiling and the bottom octave
+against the floor, on four of the eleven genres, and the same reading pinned a
+compressor's Knee on a span one thousandth above its own noise floor and a
+block's `Mix` at zero, which switches that block off while leaving it in the
+chain.
+
+Three things decide a dial's position now, and a list is untouched by all
+three.
+
+**The size as well as the direction.** A dial asked for two points of midrange,
+on a band that moves it by twenty, goes a tenth of the way. A list has no
+twelfth-of-a-microphone to ask for, so it is still chosen by direction: that is
+the `solve.Choice` against `solve.Knob` distinction, and it is what stopped all
+eleven genres arriving on one microphone.
+
+**The reach on the side being asked.** One of this device's equaliser bands adds
+17.5 points of a bass's midrange and takes away 2.3, so a single spread is the
+boost side, and asked to cut, every cut in the sweep read as too little and the
+deepest one won.
+
+**An ask the dial cannot reach is not an ask for that dial**, and it is left
+where the catalog put it. The 16kHz band moves a bass's midrange by 0.001 of a
+point against genres asking for two to twenty-two. No control of a Deluxe Comp
+moves it by more than 0.14, or the centroid by more than 1.13Hz, across the
+positions that leave the block at working level, so a compressor added to a
+chain now arrives at the corpus medians rather than with its knee against a
+stop. The report says so, and so does the block: the evidence a measured choice
+carries says a target's words are what move the controls off the medians, and
+where they did not move, the document says that too.
+
+**And the ask is shared among the dials that can answer it.** A sweep moves one
+control and leaves the rest where they sat, so asking every dial for the whole
+displacement asks for one thing as many times as there are dials: nine of the
+ten-band's bands move a bass's midrange past their own noise, and each was
+separately told to deliver the genre's whole displacement. A share each is the
+one split the sweeps support, because they say what each control does alone and
+nothing about what two do together. A real apportionment is least squares
+against readings taken in the chain, which is the solve below and needs the
+device.
+
+What this costs: punk asks for 126Hz of centroid and 21.7 points of midrange,
+and the MAXON SD9 it chooses moves the midrange by 2.0 points at working level.
+Nothing on it reaches that, so punk's drive and equaliser arrive at the
+catalog's defaults and the build says which. That is the honest answer rather
+than a document full of stops.
 
 ### The loop oscillates, and it takes both the destination and the headroom
 

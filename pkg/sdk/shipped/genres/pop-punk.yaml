@@ -51,8 +51,7 @@ rig:
             transient: 0.69
           note: Chosen by measurement rather than by anybody's say-so. Ampeg Scrambler Bass Overdrive is the closest of the 52 bass drives this device models to pop-punk, sitting at 137 Hz against 158. Across 12 records from 4 players, pop-punk earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Blend: "0.875"
-        Treble: "1.0"
+        Treble: "0.375"
       enabled: false
     - role: amp
       gear: MESA/Boogie Bass 400+ (channel 2)
@@ -91,7 +90,7 @@ rig:
             transient: 0.69
           note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to pop-punk, sitting at 124 Hz against 158. Across 12 records from 4 players, pop-punk earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Tilt: "0.75"
+        Tilt: "0.5"
       enabled: false
   instrument: bass
 built:
@@ -117,10 +116,10 @@ built:
             transient: 0.69
           note: Chosen by measurement rather than by anybody's say-so. Ampeg Scrambler Bass Overdrive is the closest of the 52 bass drives this device models to pop-punk, sitting at 137 Hz against 158. Across 12 records from 4 players, pop-punk earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Blend: "0.875"
+        Blend: "0.63"
         Drive: "0.76"
         Level: "0.66"
-        Treble: "1.0"
+        Treble: "0.375"
       attrs:
         '@position': "0"
       enabled: false
@@ -132,12 +131,12 @@ built:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Attack: "0.035"
-        Knee: "20.0"
+        Knee: "6.0"
         Level: "5.2"
         Mix: "1.0"
         Ratio: "3"
         Release: "0.2"
-        Threshold: "-45.0"
+        Threshold: "-37.1"
       attrs:
         '@position': "1"
       position: 1
@@ -196,7 +195,7 @@ built:
       controls:
         CenterFreq: "1000.0"
         Level: "0.0"
-        Tilt: "0.75"
+        Tilt: "0.5"
       attrs:
         '@position': "3"
       enabled: false

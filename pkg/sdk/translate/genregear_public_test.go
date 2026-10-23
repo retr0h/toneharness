@@ -24,6 +24,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -306,6 +307,13 @@ func TestGenreGearPublicTestSuite(
 // checked is that a block added to a chain stops arriving at the catalog's
 // default, and a fixture would check the arithmetic [measured.Curves.Toward]
 // is already tested on.
+//
+// rock rather than punk, which this read before task 272. punk sits 126Hz and
+// 21.7 points of midrange from the other genres and the MAXON SD9 it chooses
+// moves the midrange by 2.0 points across the positions that leave the block
+// at working level, so nothing on it reaches what punk asks for and the
+// defaults correctly stand. rock asks for 11Hz and 10.9 points, which its
+// BOSS Metal Zone can answer.
 func (s *GenreGearPublicTestSuite) TestAnEffectIsTunedFromItsSweep() {
 	deps := s.deps
 	deps.CurvesFor = func(model catalog.ModelID) (measured.Curves, bool) {
@@ -327,7 +335,7 @@ func (s *GenreGearPublicTestSuite) TestAnEffectIsTunedFromItsSweep() {
 	}
 
 	built, notes, err := translate.Translate(
-		s.forGenre("punk"), tone.Setup{}, deps)
+		s.forGenre("rock"), tone.Setup{}, deps)
 	s.Require().NoError(err)
 
 	said := ""
@@ -547,11 +555,16 @@ func (s *GenreGearPublicTestSuite) TestTunedRefuses() {
 	deps := s.deps
 	deps.CurvesFor = func(catalog.ModelID) (measured.Curves, bool) {
 		return measured.Curves{Controls: map[string]measured.Curve{
+			// Reaching 29.5 points of midrange above the middle of its own
+			// positions, which is more than the 21.7 punk asks for. A dial
+			// is set by the size of the ask as well as its direction since
+			// task 272, so a curve that cannot reach what is asked declines
+			// and this would be testing that instead.
 			"Drive": {
 				Control: "Drive", Settled: -20, SilentBelow: -50,
 				Points: []measured.Point{
 					{Value: 0, Figures: measured.Figures{Mid: 1, Level: -20}},
-					{Value: 1, Figures: measured.Figures{Mid: 40, Level: -20}},
+					{Value: 1, Figures: measured.Figures{Mid: 60, Level: -20}},
 				},
 			},
 		}}, true
@@ -602,6 +615,142 @@ func (s *GenreGearPublicTestSuite) TestTunedRefuses() {
 			s.Require().Nil(bare.Controls)
 		})
 	}
+}
+
+// TestTunedSaysWhenNothingReached covers what the block itself is left saying.
+//
+// A target's words are what [aim.because] calls "what moves the controls off
+// the medians this instrument's presets sit at", and since task 272 a dial
+// that cannot reach the ask is left where the catalog put it. A document
+// carrying the first sentence and none of the controls is the one thing that
+// evidence exists to prevent, so the qualification goes on the block.
+//
+// Onto the audio evidence and nowhere else: a corpus note says why a block is
+// in the chain at all, which this does not qualify.
+func (s *GenreGearPublicTestSuite) TestTunedSaysWhenNothingReached() {
+	// A sweep whose dial moves the midrange by a point, against punk asking
+	// for 21.7.
+	short := measured.Curves{Controls: map[string]measured.Curve{
+		"Drive": {
+			Control: "Drive", Settled: -20, SilentBelow: -50,
+			Points: []measured.Point{
+				{Value: 0, Figures: measured.Figures{Mid: 1, Level: -20}},
+				{Value: 1, Figures: measured.Figures{Mid: 2, Level: -20}},
+			},
+		},
+	}}
+
+	said := "Chosen by measurement rather than by anybody's say-so."
+	why := "added by the compiler rather than named in the rig."
+
+	for _, tt := range []struct {
+		name string
+		held []tone.Evidence
+		// want is the note each piece of evidence must read afterwards.
+		want []string
+	}{
+		{
+			name: "the measured evidence gains the sentence",
+			held: []tone.Evidence{{Kind: tone.EvidenceAudio, Note: &said}},
+			want: []string{said + " Its controls were not moved: none of them " +
+				"reaches what that asks for, so they are the catalog's defaults."},
+		},
+		{
+			name: "a corpus note is left alone",
+			held: []tone.Evidence{{Kind: tone.EvidenceCorpus, Note: &why}},
+			want: []string{why},
+		},
+		{
+			// The audio evidence is found past one this does not qualify,
+			// rather than only where it happens to come first.
+			name: "the measured evidence is found behind another",
+			held: []tone.Evidence{
+				{Kind: tone.EvidenceCorpus, Note: &why},
+				{Kind: tone.EvidenceAudio, Note: &said},
+			},
+			want: []string{why, said + " Its controls were not moved: none of " +
+				"them reaches what that asks for, so they are the catalog's " +
+				"defaults."},
+		},
+		{
+			name: "evidence with nothing written on it",
+			held: []tone.Evidence{{Kind: tone.EvidenceAudio}},
+			want: []string{""},
+		},
+	} {
+		s.Run(tt.name, func() {
+			held := slices.Clone(tt.held)
+			entry := rig.ChainEntry{
+				Role: rig.RoleDrive, Gear: "Teemah!", Evidence: &held,
+			}
+
+			d := s.deps
+			d.CurvesFor = func(catalog.ModelID) (measured.Curves, bool) {
+				return short, true
+			}
+
+			n := translate.Notes{}
+			translate.Tuned(
+				&entry, "HD2_DistTeemah", s.forGenre("punk"), d, &n)
+
+			s.Require().Nil(entry.Controls)
+
+			for i, want := range tt.want {
+				got := ""
+				if held[i].Note != nil {
+					got = *held[i].Note
+				}
+
+				s.Require().Equal(want, got, "evidence %d", i)
+			}
+		})
+	}
+}
+
+// TestTunedSaysNothingWasAsked covers the other reason a block keeps its
+// defaults, which is not about the block.
+//
+// hard-rock displaces the centroid by zero and the midrange by zero, and a
+// bass is weighed on those two alone, so there is nothing for any sweep to
+// answer. Reporting that as "no control of it reaches what was asked"
+// describes a block that was never asked.
+func (s *GenreGearPublicTestSuite) TestTunedSaysNothingWasAsked() {
+	said := "Chosen by measurement rather than by anybody's say-so."
+	held := []tone.Evidence{{Kind: tone.EvidenceAudio, Note: &said}}
+	entry := rig.ChainEntry{
+		Role: rig.RoleDrive, Gear: "Teemah!", Evidence: &held,
+	}
+
+	deps := s.deps
+	deps.CurvesFor = func(catalog.ModelID) (measured.Curves, bool) {
+		return measured.Curves{Controls: map[string]measured.Curve{
+			"Drive": {
+				Control: "Drive", Settled: -20, SilentBelow: -50,
+				Points: []measured.Point{
+					{Value: 0, Figures: measured.Figures{Mid: 1, Level: -20}},
+					{Value: 1, Figures: measured.Figures{Mid: 60, Level: -20}},
+				},
+			},
+		}}, true
+	}
+
+	notes := translate.Notes{}
+	translate.Tuned(
+		&entry, "HD2_DistTeemah", s.forGenre("hard-rock"), deps, &notes)
+
+	s.Require().Nil(entry.Controls)
+
+	report := ""
+	for _, n := range notes {
+		report += n.Said + "\n"
+	}
+
+	s.Require().Contains(report, "hard-rock displaces nothing a bass is weighed on")
+	s.Require().NotContains(report, "no control of it reaches")
+
+	s.Require().Equal(said+" Its controls were not moved: hard-rock displaces "+
+		"none of the figures a bass is weighed on, so there was nothing to aim "+
+		"them at.", *held[0].Note)
 }
 
 // TestDisplacedTowardTheEdgeOfTheRange covers which end of its own range a
@@ -659,12 +808,14 @@ func (s *GenreGearPublicTestSuite) TestDisplacedTowardTheEdgeOfTheRange() {
 // expected bool, got float".
 func (s *GenreGearPublicTestSuite) TestTunedWritesEachControlInItsOwnKind() {
 	// One swept position each, so there is nothing to choose between and the
-	// value that arrives is the one the sweep recorded.
+	// value that arrives is the one the sweep recorded. Reaching 29.5 points
+	// of midrange either side of the middle, which covers the 21.7 punk asks
+	// for: since task 272 a dial that cannot reach the ask declines.
 	at := func(kind string, v float64) measured.Curve {
 		return measured.Curve{
 			Control: kind, Settled: -20, SilentBelow: -50,
 			Points: []measured.Point{
-				{Value: v, Figures: measured.Figures{Mid: 40, Level: -20}},
+				{Value: v, Figures: measured.Figures{Mid: 60, Level: -20}},
 				{Value: v, Figures: measured.Figures{Mid: 1, Level: -20}},
 			},
 		}
@@ -677,14 +828,14 @@ func (s *GenreGearPublicTestSuite) TestTunedWritesEachControlInItsOwnKind() {
 				Control: "Bright", Kind: "bool", Settled: -20, SilentBelow: -50,
 				Points: []measured.Point{
 					{Value: 0, Figures: measured.Figures{Mid: 1, Level: -20}},
-					{Value: 1, Figures: measured.Figures{Mid: 40, Level: -20}},
+					{Value: 1, Figures: measured.Figures{Mid: 60, Level: -20}},
 				},
 			},
 			"MidFreq": {
 				Control: "MidFreq", Kind: "int", Settled: -20, SilentBelow: -50,
 				Points: []measured.Point{
 					{Value: 0, Figures: measured.Figures{Mid: 1, Level: -20}},
-					{Value: 2, Figures: measured.Figures{Mid: 40, Level: -20}},
+					{Value: 2, Figures: measured.Figures{Mid: 60, Level: -20}},
 				},
 			},
 			"Drive": func() measured.Curve {
@@ -708,7 +859,7 @@ func (s *GenreGearPublicTestSuite) TestTunedWritesEachControlInItsOwnKind() {
 	got := *entry.Controls
 
 	// A boolean, written as one. Aiming at punk's mid-forward corner picks the
-	// position that reads 40, which is the true one.
+	// position that reads 60, which is the true one.
 	on, ok := got["Bright"].Bool()
 	s.Require().True(ok, "Bright did not come back as a boolean")
 	s.Require().True(on)

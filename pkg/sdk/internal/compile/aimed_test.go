@@ -87,9 +87,14 @@ func (s *AimedTestSuite) aimedCurves() measured.Curves {
 
 // TestAimed covers which blocks are aimed and which are left alone.
 func (s *AimedTestSuite) TestAimed() {
-	// 40 in the mid band, which is the high end of every curve, so a control
-	// that is aimed lands on its upper position.
-	high := measured.Figures{Mid: 40}
+	// 15 points of mid, which is exactly how far every curve reaches above
+	// the middle of its own positions, so a control that is aimed lands on
+	// its upper position and one that is not keeps the plan's value.
+	//
+	// A displacement rather than a position. Reading it as the latter is what
+	// task 272 records: the size of the ask is what decides how far a dial
+	// goes, and 40 against a reach of 15 is an ask no control here can answer.
+	high := measured.Figures{Mid: 15}
 
 	cab := catalog.Block{
 		ID: "HD2_CabTest", Category: catalog.CategoryCab,
