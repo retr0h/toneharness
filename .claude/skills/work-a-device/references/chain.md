@@ -46,11 +46,50 @@ other, which looks like a locking switch rather than a leak. Every group the
 chain does not name is now emptied, the same way every grid position the chain
 leaves out is emptied.
 
-**Exporting a preset as `.hlx` drops the switches** (task 262). The device has
-them and the reader finds them; the writer does not render them, so an export
-and re-import loses every assignment. Until that is fixed, an export is not a
-backup of a preset's switches. HX Edit's own export does carry them, which is
-how the two can be compared.
+**An export carries them now**, with every field a device writes, so a preset
+exported as `.hlx` and re-imported keeps its assignments. It did not until
+2026-10-22: the reader found them and the writer rendered nothing, so a round
+trip lost every one. HX Edit's own export of a slot is what the section is held
+to, field for field.
+
+## A switch carries two names and two colours
+
+Four fields and they are pairs, which this tool collapsed into two.
+
+| field              | what it is                                  |
+| ------------------ | ------------------------------------------- |
+| `@fs_label`        | the block, up to thirty characters          |
+| `@fs_customlabel`  | what the pedal prints, room for about six   |
+| `@fs_customcolor`  | the colour somebody chose, 0 to 11          |
+| `@fs_ledcolor`     | the colour the block lights with            |
+
+The two labels are task 263 and the default is the kind of block, upper case.
+
+**The chosen colour is an index into the device's own list and the automatic one
+is not.** `@fs_customcolor` is a place in `catalog.LEDColours`, which the
+catalog reads off the pedal: 0 auto, 2 red, 11 off. `@fs_ledcolor` is a packed
+24-bit value, and the bypassed state is the same hue at about a sixteenth of the
+brightness.
+
+It was written as zero, which is not a colour. The table is mined from the 4,426
+presets in `resources/schemas/corpus/`: across 5,819 assignments in the seven
+categories a switch is given, 99.2% agree on one pair per category, and all 313
+models that appear resolve to one of them.
+
+    drive   0xd0af00 on   0x080600 off
+    eq      0x84ff00      0x080c00
+    delay   0x06ff00      0x010900
+    mod     0x0032ff      0x00040d
+    reverb  0xff2d00      0x100400
+    filter  0x3200ff      0x03000b
+    pitch   0x3200ff      0x03000b
+
+Three pairs repeat, which is the device colouring by what a block does rather
+than by which block it is. A utility block never gets a switch and is the one
+category whose readings do not settle, at 58.5% of 573.
+
+Nothing visible changes from it while a chosen colour is always set, and a
+chosen one wins. What it buys is a preset that says what the pedal would say.
 
 ## The snapshots are part of the chain
 

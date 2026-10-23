@@ -77,6 +77,10 @@ func (s *AssignTestSuite) TestAssign() {
 		gear []string
 		// leds is the colour each gets, and no two may match.
 		leds []string
+		// autos is the colour the switch would light with nobody choosing,
+		// by the kind of block and bypassed, which is the state a switch
+		// arrives in. See [automatic].
+		autos []int
 	}{
 		{
 			// The ordinary chain the corpus builds. Nothing in it is stomped,
@@ -94,6 +98,7 @@ func (s *AssignTestSuite) TestAssign() {
 			labels:   []string{"DRIVE", "EQ"},
 			gear:     []string{"A Drive", "An EQ"},
 			leds:     []string{"red", "green"},
+			autos:    []int{0x080600, 0x080c00},
 		},
 		{
 			// More to stomp than the pedal has switches. The blocks still work
@@ -115,6 +120,7 @@ func (s *AssignTestSuite) TestAssign() {
 			labels:   []string{"DRIVE", "EQ", "REVERB", "MOD"},
 			gear:     []string{"A Drive", "An EQ", "A Reverb", "A Mod"},
 			leds:     []string{"red", "green", "blue", "light orange"},
+			autos:    []int{0x080600, 0x080c00, 0x100400, 0x00040d},
 		},
 		{
 			// The whole palette on one board, which is the only way to see
@@ -168,6 +174,14 @@ func (s *AssignTestSuite) TestAssign() {
 				s.Require().Equal(tt.gear[i], *f.Gear, "what the block is")
 				s.Require().Equal(tt.leds[i], *f.Led)
 
+				if tt.autos != nil {
+					s.Require().NotNil(f.Colour,
+						"a switch with no automatic colour carries a zero, "+
+							"which is not a colour")
+					s.Require().Equal(tt.autos[i], *f.Colour,
+						"the colour the block would light with")
+				}
+
 				// Every label short enough to read from three feet away,
 				// which is what the switch is for.
 				s.Require().LessOrEqual(len(*f.Label), 8,
@@ -178,6 +192,62 @@ func (s *AssignTestSuite) TestAssign() {
 					*f.Led)
 				seen[*f.Led] = true
 			}
+		})
+	}
+}
+
+// TestLit covers the colour a switch lights with nobody choosing.
+//
+// Task 264. `@fs_ledcolor` is the block's own colour and was written as zero,
+// which is not a colour. Mined from the preset corpus: 99.2% of the 5,819
+// assignments in these categories agree with the table, which is why it is
+// fourteen numbers rather than one per model.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *AssignTestSuite) TestLit() {
+	tests := []struct {
+		name string
+		of   catalog.Category
+		on   bool
+		want int
+	}{
+		{
+			// The off state is the same hue at about a sixteenth of the
+			// brightness, which is what the pedal does to a bypassed block.
+			name: "a drive switched off",
+			of:   catalog.CategoryDrive, want: 0x080600,
+		},
+		{
+			name: "and the same drive on",
+			of:   catalog.CategoryDrive, on: true, want: 0xd0af00,
+		},
+		{
+			// Three pairs repeat across the seven, which is the device
+			// colouring by what a block does rather than by which block it
+			// is: a filter and a pitch shifter share one.
+			name: "a filter and a pitch shifter share a colour",
+			of:   catalog.CategoryFilter, on: true, want: 0x3200ff,
+		},
+		{
+			name: "which is the pitch shifter's too",
+			of:   catalog.CategoryPitch, on: true, want: 0x3200ff,
+		},
+		{
+			// A utility block never gets a switch, and it is the one category
+			// whose readings do not settle: 462860 on 58.5% of 573. Zero
+			// leaves the field out rather than writing a number nobody read.
+			name: "a category nothing measured claims nothing",
+			of:   catalog.CategoryUtility,
+		},
+		{
+			name: "nor does a category the catalog does not name",
+			of:   "",
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, lit(tt.of, tt.on))
 		})
 	}
 }

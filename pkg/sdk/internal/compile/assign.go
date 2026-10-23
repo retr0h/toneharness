@@ -95,6 +95,73 @@ var palette = []string{
 	"violet", "yellow", "turquoise", "pink",
 }
 
+// automatic is the colour a switch lights when nobody chose one, by the kind
+// of block and whether it is on.
+//
+// `@fs_ledcolor` beside the chosen colour, and not an index into the device's
+// own list: it is a packed 24-bit value, and the off state is the same hue at
+// about a sixteenth of the brightness. A drive reads 0xd0af00 on and 0x080600
+// off, modulation 0x0032ff and 0x00040d. The write path sent 0, because
+// nothing here had the table.
+//
+// **Mined from the preset corpus rather than guessed or read off a wheel.**
+// Across the 4,426 presets in `resources/schemas/corpus/`, 5,819 footswitch
+// assignments in these seven categories carry both a colour and a block whose
+// state is known, and 99.2% of them agree with the pair below. Per category
+// and per state rather than per model: all 313 models that appear resolve to
+// one of these, which is why a table of fourteen numbers covers them.
+//
+//	category   on          off        agreeing
+//	drive      0xd0af00    0x080600   94.4% of 501 on, 99.7% of 737 off
+//	filter     0x3200ff    0x03000b   100% of 22, 100% of 47
+//	mod        0x0032ff    0x00040d   98.7% of 310, 99.5% of 780
+//	delay      0x06ff00    0x010900   99.5% of 604, 100% of 843
+//	reverb     0xff2d00    0x100400   100% of 819, 98.0% of 249
+//	pitch      0x3200ff    0x03000b   100% of 112, 100% of 256
+//	eq         0x84ff00    0x080c00   100% of 228, 99.7% of 311
+//
+// Three pairs repeat, which is the device colouring by what a block does
+// rather than by which block it is: a filter, a pitch shifter and a wah share
+// one, and so do a compressor, an equaliser and a gate.
+//
+// **Nothing visible changes today**, which is why task 264 called this not
+// urgent. `Assign` always chooses a colour, and a chosen one wins. What it
+// buys is a preset that says what the pedal would say: a rig asking for `auto`
+// gets the light the block would have lit, and the field stops carrying a zero
+// that is not a colour.
+//
+// Only the seven a switch is given. A utility block never gets one, and its
+// readings are the one category that does not settle: 462860 on 58.5% of 573.
+var automatic = map[catalog.Category]struct{ on, off int }{
+	catalog.CategoryDrive:  {0xd0af00, 0x080600},
+	catalog.CategoryFilter: {0x3200ff, 0x03000b},
+	catalog.CategoryMod:    {0x0032ff, 0x00040d},
+	catalog.CategoryDelay:  {0x06ff00, 0x010900},
+	catalog.CategoryReverb: {0xff2d00, 0x100400},
+	catalog.CategoryPitch:  {0x3200ff, 0x03000b},
+	catalog.CategoryEQ:     {0x84ff00, 0x080c00},
+}
+
+// lit is the automatic colour for one block in one state.
+//
+// Zero for a category nothing measured, which leaves the field out rather than
+// writing a number nobody read.
+func lit(
+	of catalog.Category,
+	on bool,
+) int {
+	held, known := automatic[of]
+	if !known {
+		return 0
+	}
+
+	if on {
+		return held.on
+	}
+
+	return held.off
+}
+
 // printed is what the pedal prints under a switch.
 //
 // **The pedal has room for about six characters and the gear's own name is up
@@ -222,6 +289,10 @@ func Assign(
 		// off.
 		primary, enabled, momentary := true, false, false
 
+		// The colour the switch would light with nobody choosing, which is
+		// the field the device keeps beside the chosen one. See [automatic].
+		auto := lit(held.Category, enabled)
+
 		out = append(out, rig.Footswitch{
 			Switch:    &at,
 			Block:     &on,
@@ -232,6 +303,12 @@ func Assign(
 			Enabled:   &enabled,
 			Momentary: &momentary,
 		})
+
+		// Last, because a category nothing measured leaves it out rather than
+		// writing a zero, and a zero in this field is not a colour.
+		if auto != 0 {
+			out[len(out)-1].Colour = &auto
+		}
 	}
 
 	return out

@@ -261,6 +261,7 @@ built:
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Simple EQ
+                '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -328,6 +329,7 @@ built:
   footswitches:
     - gear: Simple EQ
       block: 3
+      colour: 527360
       enabled: false
       label: EQ
       led: red

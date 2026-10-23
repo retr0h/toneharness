@@ -314,6 +314,7 @@ built:
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Xotic EP Booster
+                '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
@@ -323,6 +324,7 @@ built:
                 '@fs_enabled': "false"
                 '@fs_index': "2"
                 '@fs_label': MXR 10-Band Graphic EQ
+                '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -390,6 +392,7 @@ built:
   footswitches:
     - gear: Xotic EP Booster
       block: 0
+      colour: 525824
       enabled: false
       label: DRIVE
       led: red
@@ -398,6 +401,7 @@ built:
       switch: 1
     - gear: MXR 10-Band Graphic EQ
       block: 4
+      colour: 527360
       enabled: false
       label: EQ
       led: green

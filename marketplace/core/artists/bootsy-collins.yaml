@@ -265,6 +265,7 @@ built:
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Musitronics Mu-Tron III
+                '@fs_ledcolor': "196619"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
@@ -274,6 +275,7 @@ built:
                 '@fs_enabled': "false"
                 '@fs_index': "2"
                 '@fs_label': Simple EQ
+                '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -341,6 +343,7 @@ built:
   footswitches:
     - gear: Musitronics Mu-Tron III
       block: 0
+      colour: 196619
       enabled: false
       label: FILTER
       led: red
@@ -349,6 +352,7 @@ built:
       switch: 1
     - gear: Simple EQ
       block: 4
+      colour: 527360
       enabled: false
       label: EQ
       led: green
