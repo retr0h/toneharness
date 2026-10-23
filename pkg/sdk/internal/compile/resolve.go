@@ -1113,9 +1113,10 @@ func set(
 	case "int":
 		params[name] = catalog.Int(int64(at.Value))
 	default:
-		// Rounded for the reason [rounded] states: a swept position is
+		// Rounded for the reason [catalog.Rounded] states: a swept position is
 		// interpolated between two readings eight apart, so the digits past a
 		// thousandth of the control are not a measurement.
-		params[name] = catalog.Float(rounded(at.Value, blk.Params[name]))
+		params[name] = catalog.Float(
+			catalog.Rounded(at.Value, blk.Params[name]))
 	}
 }

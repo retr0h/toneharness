@@ -23,6 +23,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -118,4 +120,53 @@ func TestEmbedPublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(EmbedPublicTestSuite))
+}
+
+// TestNoShippedControlClaimsMorePrecisionThanItHas is task 275's guard.
+//
+// A control written down carries at most a thousandth of its own travel, which
+// `catalog.Rounded` owns and two paths go through: `compile.set` for a block
+// the compiler aimed and `translate.tuned` for one a build added. Neither
+// rounding was wrong and the arithmetic behind the first one was: snapping a
+// value onto a grid of thousandths and dividing back out of it is not
+// representable, so -3.75 on an equaliser band came out
+// -3.7499999999999996 and went into five of these documents.
+//
+// Against the files rather than the arithmetic, because that is where it was
+// found and where somebody reads it. Six places is well past what any control
+// here claims: the finest is a compressor's Attack at four.
+func (s *EmbedPublicTestSuite) TestNoShippedControlClaimsMorePrecisionThanItHas() {
+	// A control line and its value, which is what a document writes a number
+	// as: two spaces of indent per level and the value quoted.
+	long := regexp.MustCompile(`^\s+[^:\s][^:]*: "-?\d+\.\d{7,}"$`)
+
+	err := filepath.WalkDir(core, func(at string, d fs.DirEntry, err error) error {
+		switch {
+		case err != nil:
+			return err
+		case d.IsDir(), filepath.Ext(at) != ".yaml":
+			return nil
+		}
+
+		body, err := os.ReadFile(at) //nolint:gosec // a path this walk found
+		if err != nil {
+			return err
+		}
+
+		for i, line := range strings.Split(string(body), "\n") {
+			// The preset's own fields are the device's numbers rather than
+			// anything computed here: `@variax_toneknob` ships as
+			// -0.10000002384185791 in every blank template Line 6 write, and
+			// rewriting it would be this project editing the pedal's data.
+			if strings.Contains(line, "'@") {
+				continue
+			}
+
+			s.Require().NotRegexp(long, line,
+				"%s:%d claims more precision than the control has", at, i+1)
+		}
+
+		return nil
+	})
+	s.Require().NoError(err)
 }

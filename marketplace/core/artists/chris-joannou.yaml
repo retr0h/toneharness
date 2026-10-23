@@ -147,7 +147,7 @@ built:
         Level: "0.0"
         LowGain: "3.0"
         MidFreq: "600.0"
-        MidGain: "-3.9600000000000004"
+        MidGain: "-3.96"
       attrs:
         '@position': "3"
       position: 3
