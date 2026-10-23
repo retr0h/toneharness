@@ -1228,6 +1228,18 @@ func tuned(
 		held = *entry.Controls
 	}
 
+	// The block's own controls, for the ranges a written value is rounded
+	// against. Absent for a model the catalog does not carry, which is the
+	// catalog and the sweeps drifting apart: the value goes down unrounded
+	// rather than not at all, because a figure nobody can place is still the
+	// reading that was taken.
+	ranges := map[string]catalog.Param{}
+	if deps.Catalog != nil {
+		if blk, carries := deps.Catalog.Block(model); carries {
+			ranges = blk.Params
+		}
+	}
+
 	for name, at := range toward {
 		// In the control's own kind. A sweep records it, and writing a float
 		// where the contract wants a boolean is refused: the Kinky Boost's
@@ -1239,7 +1251,13 @@ func tuned(
 		case "int":
 			held[name] = catalog.Set(catalog.Int(int64(at.Value)))
 		default:
-			held[name] = catalog.Set(catalog.Float(at.Value))
+			// To the precision the control carries, which is the other half
+			// of task 275. This wrote a swept position straight down, and it
+			// came out clean only because the positions a sweep records are
+			// clean: a position interpolated between two readings is not, and
+			// `compile.set` has rounded for the same reason since task 270.
+			held[name] = catalog.Set(catalog.Float(
+				catalog.Rounded(at.Value, ranges[name])))
 		}
 	}
 

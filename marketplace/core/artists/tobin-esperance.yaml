@@ -87,15 +87,15 @@ built:
       controls:
         BitDepth: "8.0"
         CloseThreshold: "-70.0"
-        Decay: "1.5082200000000001"
+        Decay: "1.506"
         Gain: "0.0"
-        HighCut: "2959.6"
-        HoldTime: "0.40527"
+        HighCut: "2950.0"
+        HoldTime: "0.405"
         Level: "0.0"
         LowCut: "19.9"
         Mix: "0.625"
         OpenThreshold: "-70.0"
-        SampleRate: "12070.800000000001"
+        SampleRate: "12075.0"
       attrs:
         '@position': "1"
       enabled: false
