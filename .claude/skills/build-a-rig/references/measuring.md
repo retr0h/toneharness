@@ -130,6 +130,31 @@ centroid, 128Hz to 353Hz. So a mid-forward aim cuts the bass, which is the
 opposite of what the name suggests and the opposite of where a median target
 lands.
 
+**The cabinet gets its microphone, and that is the only lever it has.** Measured
+over every swept mic'd cabinet, the microphone moves the centroid a median
+29.2Hz and nothing else on the box moves it 5: Distance 4.2, Position 2.7,
+HighCut 2.5, Angle 0.8, Level 0.0. `LowCut` moves 190, and is bounded to the
+instrument's lowest note because every one of those hertz is above it, which
+leaves the microphone alone.
+
+It is chosen by displacement rather than by position, because twelve impulse
+responses have no order to run along: a microphone 11Hz brighter than the
+others on its cabinet answers a target 20Hz brighter than the other records.
+Comparing absolutes sent all eleven genres to microphone 0, and letting the
+same reading set the rest of the cabinet sent LowCut to 79.9Hz.
+
+**A cabinet the compiler adds is chosen for too**, which took two goes. A rig
+naming its own cabinet has it chosen where the gear is; a rig that borrows its
+amplifier's own pairing, and every artist rig, has it added later and reached
+neither. 22 of the 43 shipped rigs sat on whatever microphone the corpus median
+gave their model, which is one answer for everybody: 14 on one cabinet all read
+microphone 3. They now spread across four.
+
+Where a target leans nowhere on any weighed axis the median stands, which is
+what it was there for. Five of the eleven genres earn no term at all, so their
+displacement is the middle of their own range, and one of the five leans
+nowhere.
+
 **The chain follows the character, not the corpus's habits.** Every shipped
 genre rig carries a compressor justified by "a chain of this kind almost always
 holds one, and the corpus statistics are what put it here". Punk's transient

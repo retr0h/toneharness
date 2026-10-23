@@ -706,12 +706,33 @@ func (o MakeOptions) aimOf(
 		return nil, err
 	}
 
+	// A player first, then a genre. A rig's identifier is who it is for, and
+	// the two kinds of rig this ships are a person and a sound: 32 artists and
+	// 11 genres, and nothing is both.
+	//
+	// The genre half is task 242's. Three of the eleven borrow their
+	// amplifier's own pairing for a cabinet, so that cabinet is added by the
+	// compiler and never reaches the path where a genre's gear is chosen: they
+	// arrived on the corpus median microphone because nothing else had the
+	// genre's own figures to hand.
 	got, ok := translate.AimAtPlayer(id, lib.Baseline)
+	if !ok {
+		got, ok = translate.AimAtGenre(id, lib.Baseline)
+	}
+
 	if !ok {
 		return nil, nil
 	}
 
-	return &got, nil
+	// As a displacement, because that is what reads it. `AimAtPlayer` answers
+	// with the target over the library's own baseline, which is the shape a
+	// block is ranked against; `Curves.Toward` and `Curves.TowardFrom` both
+	// read their target as a lean and take only its sign, so an absolute
+	// figure reads as "more of everything" on every axis. A centroid in hertz
+	// and a band share are both positive whatever a player's records say.
+	lean := translate.DisplacedFrom(got, lib.Baseline)
+
+	return &lean, nil
 }
 
 // sweptIn reads one block's committed curves out of a tree of them.

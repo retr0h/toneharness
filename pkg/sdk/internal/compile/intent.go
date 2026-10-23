@@ -63,9 +63,14 @@ type Intent struct {
 	// reason: how somebody wants their own presets to sit changes on the clock
 	// a pedal changes on rather than once per sound.
 	Loudness *float64
-	// Aim is what the records of whoever this rig is for measure as, as a
-	// displacement in the units a block is measured in. Nil for a rig nobody
-	// has records for, which is most of them.
+	// Aim is how far the records of whoever this rig is for sit from what the
+	// other players' records measure as, per figure. Nil for a rig nobody has
+	// records for, which is most of them.
+	//
+	// **A displacement, and the sign is what carries.** The readings it is
+	// compared against read their target as a lean: an absolute centroid and
+	// an absolute band share are both positive whatever a player asks for, so
+	// a position here would read as "more of everything" on every axis.
 	//
 	// A figure by the time it reaches here, for the reason Loudness is one:
 	// this package builds a chain and has no business deciding who a rig is

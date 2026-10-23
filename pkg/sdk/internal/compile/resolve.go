@@ -1006,21 +1006,28 @@ func aimed(
 			break
 		}
 
-		// Not the cabinet. A cabinet's LowCut and HighCut move a band share
-		// further than anything else on the device, and a sweep read one
-		// control at a time cannot see that the cut taking the most energy out
-		// of the low band is also the one taking the signal with it: letting
-		// this set a whole cabinet sent LowCut to 79.9Hz, which is above the
-		// fundamental of a bass's open E. Task 255 is that exploit and task
-		// 242 is choosing a cabinet properly. Until then the cabinet is the
-		// one its sources or its amplifier's own pairing name, at the
-		// catalog's figures.
-		if blk.Category == catalog.CategoryCab {
+		curves, swept := intent.Curves(blk.ID)
+		if !swept {
 			continue
 		}
 
-		curves, swept := intent.Curves(blk.ID)
-		if !swept {
+		// A cabinet gets its microphone and nothing else. Task 242.
+		//
+		// Letting the rest of a cabinet be set sent LowCut to 79.9Hz, which on
+		// a bass cuts the fundamentals, and left every one of eleven genres
+		// reading alike anyway: that is task 255's exploit, and task 252 since
+		// bounded a cut to the instrument. The microphone escapes it because
+		// twelve impulse responses have no order to run along, so the answer
+		// is a choice between twelve measured sounds rather than a position on
+		// a rail.
+		//
+		// It is also the only voicing lever a cabinet has. Measured over every
+		// swept mic'd cabinet, the microphone moves the centroid a median
+		// 29.2Hz and everything else under 5: Distance 4.2, Position 2.7,
+		// HighCut 2.5, Angle 0.8, Level 0.0.
+		if blk.Category == catalog.CategoryCab {
+			choseMic(curves, blk, built.Blocks[i].Params, *intent.Aim, instrument)
+
 			continue
 		}
 
@@ -1041,6 +1048,51 @@ func aimed(
 // control's travel, which is finer than the eight positions it was read at and
 // coarser than the noise of interpolating between them.
 const swept = 1000
+
+// choseMic picks a cabinet's microphone by what the microphone moves.
+//
+// Task 242's remaining half. `translate.chose` does this for a genre whose
+// cabinet it names, and a cabinet the compiler adds never reaches it: the five
+// genres that borrowed their amplifier's own pairing, and every artist rig,
+// arrived on microphone 3 at the corpus median because a median is one answer
+// for everybody. 22 of the 43 shipped rigs were on it.
+//
+// Here rather than there because this is where such a cabinet exists. An
+// artist rig's gear is authored and a genre's implied cabinet is added by
+// `impliedCab`, so neither passes through the gear-choosing path, which is the
+// same reason task 268 put the control tuning on this path.
+//
+// By displacement rather than by position, which is [Curves.TowardFrom] and
+// the argument the genre figures already rest on: a microphone 11Hz brighter
+// than the others on its cabinet answers a target 20Hz brighter than the other
+// records. Comparing absolutes instead sent every one of eleven genres to
+// microphone 0.
+//
+// Silent where the cabinet's sweep has no microphone, where the target leans
+// nowhere, or where the twelve read alike. The corpus median then stands,
+// which is what it was there for.
+func choseMic(
+	curves measured.Curves,
+	blk catalog.Block,
+	params plan.Params,
+	aim measured.Figures,
+	instrument string,
+) {
+	if _, has := blk.Params[micControl]; !has {
+		return
+	}
+
+	pick, chosen := curves.TowardFrom(
+		micControl, aim, measured.SpectralFor(instrument))
+	if !chosen {
+		return
+	}
+
+	params[micControl] = catalog.Int(int64(pick))
+}
+
+// micControl is what the catalog calls a cabinet's microphone.
+const micControl = "Mic"
 
 // set writes one swept position onto a block, in the control's own kind.
 //

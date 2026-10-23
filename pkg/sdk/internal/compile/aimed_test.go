@@ -229,6 +229,144 @@ func (s *AimedTestSuite) TestAimed() {
 	}
 }
 
+// TestChoseMic covers picking a cabinet's microphone by what it moves.
+//
+// Task 242. `translate` does this for a genre whose cabinet it names, and a
+// cabinet the compiler adds never reaches it: 22 of the 43 shipped rigs sat on
+// whatever microphone the corpus median gave their model, which is one answer
+// for everybody.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *AimedTestSuite) TestChoseMic() {
+	// Twelve microphones, which is what the device gives a mic'd cabinet.
+	// Three of them read apart on the mid band and the rest sit at the median,
+	// so the lean decides between the three and nothing else.
+	twelve := func() measured.Curves {
+		at := make([]measured.Point, 0, 12)
+		for i := range 12 {
+			mid := 20.0
+
+			switch i {
+			case 2:
+				mid = 10
+			case 7:
+				mid = 30
+			}
+
+			at = append(at, measured.Point{
+				Value:   float64(i),
+				Figures: measured.Figures{Mid: mid, Level: -20},
+			})
+		}
+
+		return measured.Curves{
+			Block: "HD2_CabMicIr_Test",
+			Controls: map[string]measured.Curve{"Mic": {
+				Kind:    "int",
+				Settled: -20,
+				Noise:   map[audio.Figure]float64{audio.KeyMid: 0.1},
+				Points:  at,
+			}},
+		}
+	}
+
+	cab := func(controls ...string) catalog.Block {
+		out := catalog.Block{
+			ID: "HD2_CabMicIr_Test", Category: catalog.CategoryCab,
+			Params: map[string]catalog.Param{},
+		}
+
+		for _, name := range controls {
+			out.Params[name] = catalog.Param{Type: catalog.ParamInt, Min: 0, Max: 11}
+		}
+
+		return out
+	}
+
+	tests := []struct {
+		name   string
+		blk    catalog.Block
+		curves measured.Curves
+		aim    measured.Figures
+		// want is the microphone, and nil means the median stands.
+		want *int
+	}{
+		{
+			// A target leaning up on the mid band reaches the microphone with
+			// most of it, which is the whole of the choosing.
+			name:   "a target leaning up reaches the brightest of the twelve",
+			blk:    cab("Mic"),
+			curves: twelve(),
+			aim:    measured.Figures{Mid: 5},
+			want:   s.mic(7),
+		},
+		{
+			name:   "and leaning down reaches the darkest",
+			blk:    cab("Mic"),
+			curves: twelve(),
+			aim:    measured.Figures{Mid: -5},
+			want:   s.mic(2),
+		},
+		{
+			// A target that leans nowhere on any weighed axis. Five of the
+			// eleven genres earn no term at all, so their displacement is the
+			// middle of their own range and may lean nowhere: the corpus
+			// median then stands, which is what it was there for.
+			name:   "a target leaning nowhere leaves the median alone",
+			blk:    cab("Mic"),
+			curves: twelve(),
+			aim:    measured.Figures{},
+		},
+		{
+			// Four of the 43 rigs hold a cabinet this device models once, with
+			// no microphone to choose between.
+			name:   "a cabinet with no microphone is left alone",
+			blk:    cab("LowCut"),
+			curves: twelve(),
+			aim:    measured.Figures{Mid: 5},
+		},
+		{
+			// A cabinet swept before the microphone was, which is most of
+			// them: 14 of the device's 133 carry a swept Mic.
+			name:   "a cabinet whose sweep has no microphone is left alone",
+			blk:    cab("Mic"),
+			curves: measured.Curves{Block: "HD2_CabMicIr_Test"},
+			aim:    measured.Figures{Mid: 5},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			// The median the corpus put there, which is what a choice
+			// replaces and what stands where there is none.
+			const median = 3
+
+			params := plan.Params{"Mic": catalog.Int(median)}
+
+			choseMic(tt.curves, tt.blk, params, tt.aim, "bass")
+
+			got, held := params["Mic"].Int()
+			s.Require().True(held, "the control stopped being an integer")
+
+			if tt.want == nil {
+				s.Require().Equal(int64(median), got,
+					"it replaced the median with nothing better")
+
+				return
+			}
+
+			s.Require().Equal(int64(*tt.want), got)
+		})
+	}
+}
+
+// mic is a microphone number a table row may compare against nil.
+func (s *AimedTestSuite) mic(
+	at int,
+) *int {
+	return &at
+}
+
 // TestSet covers writing one swept position in its control's own kind.
 //
 // Separately from aimed, because the kinds are what a document refuses: the

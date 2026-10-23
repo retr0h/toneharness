@@ -207,6 +207,93 @@ func (s *PlayerTargetPublicTestSuite) TestAimAtPlayer() {
 	}
 }
 
+// TestAimAtGenre covers the target a genre's own records measure as.
+//
+// Task 242. Three of the eleven genre rigs borrow their amplifier's own
+// pairing for a cabinet, so that cabinet is added by the compiler and never
+// passes through the path where a genre's gear is chosen. The compiler asks
+// here instead.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *PlayerTargetPublicTestSuite) TestAimAtGenre() {
+	tests := []struct {
+		name string
+		slug string
+		// aimed is whether a target came back at all.
+		aimed bool
+	}{
+		{
+			name:  "a measured genre is a target",
+			slug:  "punk",
+			aimed: true,
+		},
+		{
+			// One of the three whose cabinet the compiler adds, which is what
+			// this exists for.
+			name:  "and so is one whose cabinet the compiler adds",
+			slug:  "rock",
+			aimed: true,
+		},
+		{
+			name:  "a genre nobody tagged is no target",
+			slug:  "skiffle",
+			aimed: false,
+		},
+		{
+			// A player's identifier, which reaches here because every rig's
+			// does and must not resolve to a genre.
+			name:  "a player is not a genre",
+			slug:  "dee-dee-ramone",
+			aimed: false,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			got, ok := translate.AimAtGenre(tt.slug, s.deps.Measured.Baseline)
+			s.Require().Equal(tt.aimed, ok)
+
+			if !tt.aimed {
+				s.Require().Equal(measured.Figures{}, got,
+					"it handed back figures for nothing")
+
+				return
+			}
+
+			// Displaced from the baseline the blocks were measured against,
+			// which is the only thing that makes a genre and a block
+			// comparable: a genre comes off finished records and a block off
+			// a dry signal through one block.
+			s.Require().NotEqual(s.deps.Measured.Baseline, got,
+				"it handed back the baseline unmoved")
+		})
+	}
+}
+
+// TestAGenreAimsAtItsEdgeAndAPlayerAtTheirMiddle covers the one difference
+// between the two targets.
+//
+// Task 310. The middle is what every genre shares: totalled over the three
+// band shares, ten of the eleven displace between 0.2 and 6.4 points from one
+// baseline where the blocks they are ranked against span 50. One player's
+// records describe one person, so their middle is the thing being aimed at
+// rather than the thing that hides them.
+func (s *PlayerTargetPublicTestSuite) TestAGenreAimsAtItsEdgeAndAPlayerAtTheirMiddle() {
+	// Punk is the genre that displaces most, 18.90 points against the next
+	// genre's 6.40, so it is the one whose edge is furthest from its middle.
+	edge, ok := translate.AimAtGenre("punk", s.deps.Measured.Baseline)
+	s.Require().True(ok)
+
+	middle, ok := translate.AimAtPlayer("dee-dee-ramone", s.deps.Measured.Baseline)
+	s.Require().True(ok)
+
+	// Both are displacements over the same baseline, so neither is the
+	// baseline and the two are not the same point.
+	s.Require().NotEqual(s.deps.Measured.Baseline, edge)
+	s.Require().NotEqual(edge, middle,
+		"a genre's edge and one of its players' middle cannot be the same")
+}
+
 func TestPlayerTargetPublicTestSuite(
 	t *testing.T,
 ) {
