@@ -33,6 +33,13 @@ rig:
       gear: Ampeg SVT
       confidence: medium
       evidence:
+        - kind: cited
+          caveat: |-
+            **not taken, and the reason is the source rather than the claim.** The page relays an interview it does not name and does not date, and equipboard is an aggregator: everything in the previous round that fell over came from one. An SVT-2 Pro is a different amplifier from the Ampeg SVT this rig holds and this device models one, so the only thing standing between the two is a citation nobody can open.
+            It is the most valuable kind of lead this round found, because it would move the gear rather than add a pedal. Worth another look if the interview behind it surfaces.
+            No effect is attributed to him for this era by anything openable. A second page puts the record on an SWR SM900 through an EA 2x10 instead, which is a different amplifier again and no better held.
+          note: 'equipboard''s page for the album, which says: "According to this interview, Ryan used Ampeg SVT-2 Pro Head on L.D. 50 album." The interview is linked and not named.'
+          url: https://equipboard.com/albums/mudvayne-l-d-50
         - kind: user
           caveat: A transcription, so the magazine is the source and nobody has checked the copying against it. The same post gives the recording rig as the full Ampeg plus an SWR Workingman's 10 head driving a Mesa/Boogie 4x12 guitar cabinet for added midrange and top end, which means the records measured here carry a second amplifier this chain does not have.
           note: 'A forum post transcribing a Bass Player magazine interview in full, which is the print source reaching the open web. The poster, bass element, gives the live rig as "runs his bass into a Shure UHF U4D dual-channel wireless unit, Whirlwind multi-selector, dbx 160 compressor, Ampeg SVT-4Pro head on an SVT PR-810H 8x10 cabinet", and says where it came from: "i finally got this old ass edition of Bass Player Magazine that had a kickass interview".'
@@ -70,6 +77,13 @@ built:
       gear: Ampeg SVT
       confidence: medium
       evidence:
+        - kind: cited
+          caveat: |-
+            **not taken, and the reason is the source rather than the claim.** The page relays an interview it does not name and does not date, and equipboard is an aggregator: everything in the previous round that fell over came from one. An SVT-2 Pro is a different amplifier from the Ampeg SVT this rig holds and this device models one, so the only thing standing between the two is a citation nobody can open.
+            It is the most valuable kind of lead this round found, because it would move the gear rather than add a pedal. Worth another look if the interview behind it surfaces.
+            No effect is attributed to him for this era by anything openable. A second page puts the record on an SWR SM900 through an EA 2x10 instead, which is a different amplifier again and no better held.
+          note: 'equipboard''s page for the album, which says: "According to this interview, Ryan used Ampeg SVT-2 Pro Head on L.D. 50 album." The interview is linked and not named.'
+          url: https://equipboard.com/albums/mudvayne-l-d-50
         - kind: user
           caveat: A transcription, so the magazine is the source and nobody has checked the copying against it. The same post gives the recording rig as the full Ampeg plus an SWR Workingman's 10 head driving a Mesa/Boogie 4x12 guitar cabinet for added midrange and top end, which means the records measured here carry a second amplifier this chain does not have.
           note: 'A forum post transcribing a Bass Player magazine interview in full, which is the print source reaching the open web. The poster, bass element, gives the live rig as "runs his bass into a Shure UHF U4D dual-channel wireless unit, Whirlwind multi-selector, dbx 160 compressor, Ampeg SVT-4Pro head on an SVT PR-810H 8x10 cabinet", and says where it came from: "i finally got this old ass edition of Bass Player Magazine that had a kickass interview".'
