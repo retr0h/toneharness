@@ -27,6 +27,40 @@ That builds the first: a rig holding one block, compiled and played. **Every
 sweep records the chain it ran through**, read back off the device with
 `device current`, and marks whether that chain held anything else.
 
+## Sweeping a block with another behind it
+
+`--after` names a model to put after the one being measured, so the second
+artifact in that table can be measured deliberately rather than only as a
+by-product of a solve:
+
+```bash
+mise exec -- go run main.go measure controls \
+        --model HD2_AmpSVBeastNrm --after HD2_Cab8x10SVBeast
+```
+
+A model identifier, not a gear name, for the same reason the sweep itself takes
+one: 661 models share 468 names, so "Ampeg SVT" matches both of that
+amplifier's channels. The catalog is checked before anything is compiled, and a
+block cannot follow itself, because both would answer to the same name and a
+curve filed under a control would be a curve of whichever of the two the sweep
+reached.
+
+Three things change in the file, and all three are the same point. `isolated`
+goes to `false`, so nothing downstream reads the result as a fact about the
+block. The pre-flight checks the device loaded **both** models rather than one,
+because a chain the device could not build is a chain it answers by playing
+what it could, and a dropped cabinet would leave the amplifier measured alone
+while the file claimed otherwise. And the readings land in
+`<model>-into-<after>.json` rather than `<model>.json`, because what reads
+these back asks for one file per model: a chain sweep under the block's own
+name is handed to the solver as that block's isolated reading, and the filename
+is the only thing standing between those two.
+
+What it is worth measuring: an amplifier swept with nothing in front of it has
+no speaker rolloff, so what comes back is the buzz a cabinet exists to absorb.
+43 of the 121 usable curves hold a position reading more than half its energy
+above 2kHz and all 43 are amplifiers.
+
 ## A sweep leaves its control where it finished
 
 A live edit writes nothing back, so a control stays at the top of its range.

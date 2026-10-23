@@ -20,9 +20,6 @@
 package cmd
 
 import (
-	"path/filepath"
-	"strings"
-
 	"github.com/spf13/cobra"
 
 	"github.com/retr0h/toneharness/pkg/cli"
@@ -30,6 +27,7 @@ import (
 
 var (
 	measureControlsModel    string
+	measureControlsAfter    string
 	measureControlsDry      string
 	measureControlsOut      string
 	measureControlsSeconds  float64
@@ -56,8 +54,11 @@ chain reaches for rather than run across all 661.
 Three things a reading has to control for, and each was got wrong first.
 
 The chain, because a slope is not a property of a control: the same Treble
-into a 4x12 and into a 1x15 are two different numbers. This builds a chain
-holding one block and nothing else, and the whole rig travels in the answer.
+into a 4x12 and into a 1x15 are two different numbers. This builds the chain
+itself and the whole rig travels in the answer. By default that chain holds
+one block and nothing else, which is how every committed reading was taken;
+` + "`--after`" + ` names a block to put behind it, and the file then records
+` + "`isolated: false`" + ` so nothing downstream reads one kind as the other.
 
 The starting point, because a live edit writes nothing back. A control stays
 where the last sweep left it, at the top of its range, so the chain goes back
@@ -77,14 +78,14 @@ Freq swept 0..1 never leaves its bottom stop and reports as inert.`,
 
 		out := measureControlsOut
 		if out == "" {
-			out = filepath.Join("resources", "sweeps", "hx-stomp",
-				strings.ToLower(measureControlsModel)+".json")
+			out = cli.SweptTo(measureControlsModel, measureControlsAfter)
 		}
 
 		return cli.MeasureControls(cmd.Context(), cmd.OutOrStdout(),
 			cli.ControlsOptions{
 				Client:       measureControlsClient.client(),
 				Model:        measureControlsModel,
+				After:        measureControlsAfter,
 				Dry:          measureControlsDry,
 				Out:          out,
 				Seconds:      measureControlsSeconds,
@@ -104,10 +105,16 @@ func init() {
 	f := measureControlsCmd.Flags()
 	f.StringVar(&measureControlsModel, "model", "",
 		"the block to measure, by its model identifier")
+	f.StringVar(&measureControlsAfter, "after", "",
+		"a block to put behind the one being measured, by its model "+
+			"identifier; without it the block is swept on its own, which is "+
+			"how every committed reading was taken and what an amplifier's "+
+			"controls read nothing like through a cabinet")
 	f.StringVar(&measureControlsDry, "dry", "resources/dry/bass-di.wav",
 		"the reference recording to push through it")
 	f.StringVar(&measureControlsOut, "out", "",
-		"where the curves go; named for the model by default")
+		"where the curves go; named for the model by default, and for the "+
+			"pair where --after names one")
 	f.Float64Var(&measureControlsSeconds, "seconds", 4,
 		"how much of the reference to push through per position")
 	f.IntVar(&measureControlsPoints, "points", 9,
