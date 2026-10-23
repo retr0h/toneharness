@@ -150,7 +150,7 @@ func Translate(
 	}
 
 	out := rig.Spec{
-		Instrument: instrumentFor(setup, &notes),
+		Instrument: instrumentFor(spec, setup, &notes),
 	}
 
 	// The words are not copied onto the rig, and that is the point of the
@@ -426,6 +426,14 @@ func chainFor(
 		return nil, err
 	}
 
+	// What the chain is for, for the two evidence tiers below to refuse gear
+	// from the other instrument. Notes are discarded because [Translate] has
+	// already said whatever there was to say about it, once, where the rig's
+	// own instrument was decided. Saying it twice in one report would read as
+	// two findings.
+	quiet := Notes{}
+	wants := instrumentFor(spec, setup, &quiet)
+
 	// An amplifier is the one block a chain cannot do without, and there are
 	// two ways to arrive at one. A player somebody named has a rig if anybody
 	// researched them, and that rig is what they actually played with a source
@@ -433,7 +441,7 @@ func chainFor(
 	// tried first. Failing that, and given something to aim at, the
 	// measurements pick the closest.
 	if !holds(named, rig.RoleAmp) {
-		if from, ok := likeTheirRig(spec, deps, notes); ok {
+		if from, ok := likeTheirRig(spec, wants, deps, notes); ok {
 			named = append(from, named...)
 		}
 	}
@@ -450,7 +458,7 @@ func chainFor(
 	// moved its amplifier from the Ampeg its players used to a Pearce BC-1
 	// preamp, which is a better fit to a number and a worse answer.
 	if !holds(named, rig.RoleAmp) {
-		if from, ok := likeTheirGenre(spec, deps, notes); ok {
+		if from, ok := likeTheirGenre(spec, wants, deps, notes); ok {
 			named = append(from, named...)
 		}
 	}
@@ -532,6 +540,9 @@ func placeOf(
 // caller, so what they named wins where the two overlap.
 func likeTheirRig(
 	spec tone.Ask,
+	// wants is the instrument the chain is for. A rig researched for somebody
+	// who plays another one is not gear for this chain, which is task 266.
+	wants rig.Instrument,
 	deps Deps,
 	notes *Notes,
 ) ([]placed, bool) {
@@ -550,6 +561,25 @@ func likeTheirRig(
 			About: who,
 			Said: "no rig has been researched for that " + kind +
 				", so nothing was taken from one",
+		})
+
+		return nil, false
+	}
+
+	// And only where they play the instrument this chain is for.
+	//
+	// Task 266. Nothing checked, so a guitar ask naming a bass player was
+	// handed their Ampeg SVT and their 8x10: the gear is cited and it is
+	// cited for a different instrument, which is a worse answer than none
+	// because every claim on it is true.
+	if found.Instrument != "" && wants != "" && found.Instrument != wants {
+		*notes = append(*notes, Note{
+			About: who,
+			Said: fmt.Sprintf(
+				"the rig researched for them is for %s and this is for %s, so "+
+					"none of their gear was taken: an amplifier is for one "+
+					"instrument or the other",
+				found.Instrument, wants),
 		})
 
 		return nil, false
@@ -596,6 +626,9 @@ func likeTheirRig(
 // player with no document is not counted, and the note says how many were.
 func likeTheirGenre(
 	spec tone.Ask,
+	// wants is the instrument the chain is for, for the reason
+	// [likeTheirRig] takes it: task 266.
+	wants rig.Instrument,
 	deps Deps,
 	notes *Notes,
 ) ([]placed, bool) {
@@ -605,6 +638,25 @@ func likeTheirGenre(
 
 	got, ok := audio.ShippedGenre(string(spec.Genre[0]))
 	if !ok || !got.Usable || len(got.Who) == 0 {
+		return nil, false
+	}
+
+	// And only where its players play the instrument this chain is for.
+	//
+	// The same guard [genreTarget] has on the figures, on the gear. It had
+	// one and not the other, so a guitar ask naming hard-rock was refused its
+	// figures with "bass sits about an octave from guitar" in the same breath
+	// as being handed the Ampeg SVT three of its five players used.
+	if got.Instrument != "" && wants != "" &&
+		!strings.EqualFold(got.Instrument, string(wants)) {
+		*notes = append(*notes, Note{
+			About: string(spec.Genre[0]),
+			Said: fmt.Sprintf(
+				"its players are measured on %s and this is for %s, so none of "+
+					"their gear was taken either",
+				got.Instrument, wants),
+		})
+
 		return nil, false
 	}
 
@@ -1423,7 +1475,7 @@ func nearestOf(
 
 	if wants == "" {
 		quiet := Notes{}
-		wants = string(instrumentFor(setup, &quiet))
+		wants = string(instrumentFor(spec, setup, &quiet))
 	}
 
 	kept, refused := asPlayed(deps.Catalog, reachable(
@@ -2910,11 +2962,21 @@ func order(
 
 // instrumentFor is what the rig is played on.
 //
-// From the setup rather than from the request, because what somebody owns
-// changes when they buy something and what they want changes every time they
-// ask. A setup naming several says which to assume; one naming none is a bass
-// here, and says so.
+// The setup first, because what somebody owns is a fact and what they want
+// changes every time they ask. A setup naming several says which to assume.
+//
+// **Then the ask, which is task 266.** This read the setup and nothing else,
+// so a request carrying `instrument: guitar` and no setup was answered "the
+// setup names none, so this is for bass" and built a bass rig: a guitar ask
+// naming hard-rock was handed an Ampeg SVT, because that is what three of
+// hard-rock's five documented players used and nothing checked what they
+// played it on. The contract's own description of the field is "what this is
+// for, where the request asserts it rather than leaving it to the Setup",
+// which is exactly the case the setup cannot answer.
+//
+// A bass where neither says, and it says so.
 func instrumentFor(
+	spec tone.Ask,
 	setup tone.Setup,
 	notes *Notes,
 ) rig.Instrument {
@@ -2930,13 +2992,25 @@ func instrumentFor(
 		}
 	}
 
+	if spec.Instrument != nil && *spec.Instrument != "" {
+		*notes = append(*notes, Note{
+			About: "instrument",
+			Said: fmt.Sprintf(
+				"the setup names none and the request asks for %s, so that is "+
+					"what this is for", *spec.Instrument),
+			Honoured: true,
+		})
+
+		return rig.Instrument(*spec.Instrument)
+	}
+
 	// Honoured, because an assumption that was made is a thing that happened.
 	// It read "could not" beside the device note saying the same thing about
 	// the same absent setup, which told somebody the tool had failed at
 	// something it had in fact decided.
 	*notes = append(*notes, Note{
 		About:    "instrument",
-		Said:     "the setup names none, so this is for bass",
+		Said:     "neither the setup nor the request names one, so this is for bass",
 		Honoured: true,
 	})
 

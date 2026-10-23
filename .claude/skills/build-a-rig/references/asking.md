@@ -43,6 +43,61 @@ Named by role rather than by position, because a request does not know how many
 blocks the chain ends up with: "after the amp" survives the compiler adding a
 cabinet and "position 4" does not.
 
+## Which instrument a chain is for, and what it refuses on the strength of it
+
+The Setup first, because what somebody owns is a fact. Then the ask's own
+`instrument:`, which is the one the Setup cannot answer: a request carrying
+`instrument: guitar` and no Setup used to be answered "the setup names none, so
+this is for bass" and built a bass rig. The contract's own description of the
+field is "what this is for, where the request asserts it rather than leaving it
+to the Setup". A bass where neither says, and the report says which of the three
+happened.
+
+**And the two evidence tiers above measurement refuse gear from the other
+instrument.** `translate.genreTarget` had that guard on a genre's *figures* and
+nothing had it on its *gear*, so a guitar ask naming hard-rock was told "bass
+sits about an octave from guitar and the solve would spend every control getting
+there" in the same breath as being handed the Ampeg SVT three of hard-rock's
+five documented players used. Gear that is cited for the wrong instrument is a
+worse answer than none, because every claim on it is true.
+
+So a guitar ask naming a bass genre now gets this and nothing else:
+
+```text
+could not  hard-rock  its players are measured on bass and this is for guitar,
+                      so none of their gear was taken either
+could not  hard-rock  that genre is measured on bass and this asks for guitar,
+                      so its figures are not a target for this
+```
+
+### What does work for a guitar, measured rather than assumed
+
+A guitar rig whose gear is authored builds all the way to a preset. One was
+written naming a Marshall JCM-800 2203 and a 4x12 1960 AT75, and the chain came
+out as five blocks at 54% of the chip with every control set:
+
+- **the catalog is not bass-only.** 173 of its 224 amplifiers are guitar models
+  and `reachable` already draws from the right half
+- **the preset corpus is not bass-only either**, which is the thing task 266's
+  own survey missed. It filled the chain from guitar statistics: a Plateaux
+  reverb because "almost every chain has one (89% of chains)", a Scream 808 and
+  a Simple Delay bypassed because 77% of chains carry one and under half run it
+- **the controls came from guitar corpus medians**, 13 of them on the amplifier,
+  rather than from a target. Correct: there is no guitar target, so nothing
+  aimed and nothing guessed
+
+What is missing is the *measured* layer and only that: no guitar corpus of
+records, no guitar-referenced sweep, no guitar genre. A guitar rig is as good as
+its citations today and cannot be aimed at anything.
+
+### One trap left in place
+
+`gearIsFor` reads any Setup gear name without "bass" in it as a guitar, so a
+Setup naming a Rickenbacker 4001 or a Fender Jazz answers guitar for an
+instrument that is a bass. It is recorded in task 266 rather than fixed here,
+because the fix is a list of names or a question for the catalog and neither is
+this change.
+
 ## Resolve it
 
 ```bash
