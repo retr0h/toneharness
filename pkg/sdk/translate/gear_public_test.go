@@ -482,6 +482,9 @@ func (s *GearPublicTestSuite) TestDisplacedTo() {
 	for _, tt := range []struct {
 		name string
 		got  audio.Genre
+		// bare drops the baseline's own harmonics, for the row about a
+		// library written before the figure existed.
+		bare bool
 		// want is the target this produces.
 		want measured.Figures
 	}{
@@ -515,6 +518,47 @@ func (s *GearPublicTestSuite) TestDisplacedTo() {
 			want: measured.Figures{Low: 92, Mid: 7, High: 0.3, Centroid: 165},
 		},
 		{
+			// Harmonics on the same scale as the band shares, because that is
+			// what it is: a share of the energy, held zero to one by the
+			// corpus and reported as a percentage by the library. Task 276.
+			name: "harmonics is shifted like a band share",
+			got: audio.Genre{
+				Across: audio.Across{
+					Tracks:    1,
+					Centroid:  audio.Spread{Mid: 144},
+					Harmonics: audio.Spread{Mid: 0.11},
+				},
+				Elsewhere: map[audio.Figure]float64{
+					audio.KeyCentroid: 134, audio.KeyHarmonics: 0.17,
+				},
+			},
+			// Six points of harmonics below the records elsewhere, applied to
+			// the signal the blocks were measured with.
+			want: measured.Figures{
+				Low: 90, Mid: 9, High: 0.3, Centroid: 165,
+				Harmonics: ptr(31.794),
+			},
+		},
+		{
+			// A baseline with no reading of harmonics has nothing to shift,
+			// which is what a library written before the figure existed is.
+			// No shipped reading is in that state: all 613 usable blocks in
+			// the committed library carry it, and so does its baseline.
+			name: "a baseline carrying no harmonics keeps none",
+			bare: true,
+			got: audio.Genre{
+				Across: audio.Across{
+					Tracks:    1,
+					Centroid:  audio.Spread{Mid: 144},
+					Harmonics: audio.Spread{Mid: 0.11},
+				},
+				Elsewhere: map[audio.Figure]float64{
+					audio.KeyCentroid: 134, audio.KeyHarmonics: 0.17,
+				},
+			},
+			want: measured.Figures{Low: 90, Mid: 9, High: 0.3, Centroid: 165},
+		},
+		{
 			// Usable carries that check, so this is not reached through a build.
 			// What it does is leave the baseline alone: no displacement is
 			// known, so none is applied.
@@ -540,14 +584,39 @@ func (s *GearPublicTestSuite) TestDisplacedTo() {
 		},
 	} {
 		s.Run(tt.name, func() {
-			got := translate.DisplacedTo(tt.got, baseline)
+			was := baseline
+			if !tt.bare {
+				held := 37.794
+				was.Harmonics = &held
+			}
+
+			got := translate.DisplacedTo(tt.got, was)
 
 			s.Require().InDelta(tt.want.Low, got.Low, 0.01)
 			s.Require().InDelta(tt.want.Mid, got.Mid, 0.01)
 			s.Require().InDelta(tt.want.High, got.High, 0.01)
 			s.Require().InDelta(tt.want.Centroid, got.Centroid, 0.01)
+
+			if tt.want.Harmonics == nil {
+				if tt.bare {
+					s.Require().Nil(got.Harmonics)
+				}
+
+				return
+			}
+
+			s.Require().NotNil(got.Harmonics)
+			s.Require().InDelta(*tt.want.Harmonics, *got.Harmonics, 0.01)
 		})
 	}
+}
+
+// ptr is one figure as a pointer, which the three added after the first sweeps
+// ran are: a reading taken before them has a gap rather than a zero.
+func ptr(
+	at float64,
+) *float64 {
+	return &at
 }
 
 // TestNamed covers the name a chosen block is written into a rig as.
@@ -623,4 +692,50 @@ func TestGearPublicTestSuite(
 	t *testing.T,
 ) {
 	suite.Run(t, new(GearPublicTestSuite))
+}
+
+// TestDisplacedFromCarriesHarmonics covers the inverse keeping the figure.
+//
+// Task 276 weighs harmonics, so a target read as a lean has to carry it. A
+// pointer, because a reading taken before the figure existed has a gap rather
+// than a zero, and a displacement from a baseline that has none is not a
+// displacement: both sides end up absent, which the ranking skips.
+func (s *GearPublicTestSuite) TestDisplacedFromCarriesHarmonics() {
+	for _, tt := range []struct {
+		name string
+		at   *float64
+		was  *float64
+		want *float64
+	}{
+		{
+			name: "both sides carry it",
+			at:   ptr(31.46), was: ptr(37.79), want: ptr(-6.33),
+		},
+		{
+			name: "the target does and the baseline does not",
+			at:   ptr(31.46), want: ptr(31.46),
+		},
+		{
+			name: "the baseline does and the target does not",
+			was:  ptr(37.79),
+		},
+		{name: "neither does"},
+	} {
+		s.Run(tt.name, func() {
+			got := translate.DisplacedFrom(
+				measured.Figures{Centroid: 165, Harmonics: tt.at},
+				measured.Figures{Centroid: 155, Harmonics: tt.was})
+
+			s.Require().InDelta(10.0, got.Centroid, 1e-9)
+
+			if tt.want == nil {
+				s.Require().Nil(got.Harmonics)
+
+				return
+			}
+
+			s.Require().NotNil(got.Harmonics)
+			s.Require().InDelta(*tt.want, *got.Harmonics, 0.01)
+		})
+	}
 }

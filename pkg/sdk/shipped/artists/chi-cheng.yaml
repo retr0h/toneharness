@@ -103,12 +103,12 @@ built:
           note: 'Premier Guitar''s remembrance of him, which states the rig in one sentence: "Cheng held the fort down with 4-string Fender P basses played with his fingers—occasionally using fretless models on White Pony—through Ampeg SVT-2 Pro heads and really only used a Tech 21 SansAmp GT2 for extra balls."'
           url: https://www.premierguitar.com/articles/In_Remembrance_Chi_Chengs_Low_End_Legacy
       controls:
-        Bass: "0.625"
+        Bass: "0.5"
         Blend: "0.5"
         Drive: "0.65"
         Level: "0.48"
-        Presence: "0.5"
-        Treble: "0.3"
+        Presence: "0.625"
+        Treble: "0.0"
       attrs:
         '@position': "1"
       position: 1
@@ -147,7 +147,7 @@ built:
         HighCut: "8000.0"
         Level: "0.0"
         LowCut: "37.0"
-        Mic: "6"
+        Mic: "8"
         Position: "0.0"
       attrs:
         '@position': "3"

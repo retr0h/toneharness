@@ -33,7 +33,7 @@ ask:
 rig:
   chain:
     - role: drive
-      gear: DOD Overdrive/Preamp 250
+      gear: Earthquaker Devices Life - Boost circuit
       capture: direct
       confidence: low
       evidence:
@@ -49,7 +49,7 @@ rig:
             low: 0.98
             mid: 0.03
             transient: 0.68
-          note: 'Chosen by measurement rather than by anybody''s say-so. DOD Overdrive/Preamp 250 is the closest of the 52 bass drives this device models to hard-rock, sitting at 149 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
+          note: 'Chosen by measurement rather than by anybody''s say-so. Earthquaker Devices Life - Boost circuit is the closest of the 52 bass drives this device models to hard-rock, sitting at 124 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
       enabled: false
     - role: amp
       gear: Ampeg SVT
@@ -64,7 +64,7 @@ rig:
           note: 'Opened. One post is first-hand observation rather than opinion, from descendent22: "Cliff uses a couple 810 SVT cabs and I''ve seen him use SVT heads, SVT pro 4 heads and possibly SVT pro 3 at times." A second post, from Briton, puts him elsewhere for the 1970s: "On the Highway to Hell and Powerage LP''s he also used a Jazz Bass and a B-15 Flip Top".'
           url: https://www.talkbass.com/threads/cliff-williams-ac-dc-bass-tone.1444592/
     - role: eq
-      gear: Simple Tilt
+      gear: MXR 10-Band Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -80,7 +80,7 @@ rig:
             low: 0.98
             mid: 0.03
             transient: 0.68
-          note: 'Chosen by measurement rather than by anybody''s say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to hard-rock, sitting at 124 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
+          note: 'Chosen by measurement rather than by anybody''s say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to hard-rock, sitting at 124 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
       enabled: false
   instrument: bass
 built:
@@ -88,7 +88,7 @@ built:
   device: HX Stomp
   chain:
     - role: drive
-      gear: DOD Overdrive/Preamp 250
+      gear: Earthquaker Devices Life - Boost circuit
       capture: direct
       confidence: low
       evidence:
@@ -104,13 +104,9 @@ built:
             low: 0.98
             mid: 0.03
             transient: 0.68
-          note: 'Chosen by measurement rather than by anybody''s say-so. DOD Overdrive/Preamp 250 is the closest of the 52 bass drives this device models to hard-rock, sitting at 149 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
+          note: 'Chosen by measurement rather than by anybody''s say-so. Earthquaker Devices Life - Boost circuit is the closest of the 52 bass drives this device models to hard-rock, sitting at 124 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
       controls:
-        Bass: "0.5"
-        Drive: "0.52"
-        Mid: "0.5"
-        Output: "0.65"
-        Treble: "0.5"
+        Boost: "0.5"
       attrs:
         '@position': "0"
       enabled: false
@@ -160,7 +156,7 @@ built:
         '@position': "2"
       position: 2
     - role: eq
-      gear: Simple Tilt
+      gear: MXR 10-Band Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -176,17 +172,25 @@ built:
             low: 0.98
             mid: 0.03
             transient: 0.68
-          note: 'Chosen by measurement rather than by anybody''s say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to hard-rock, sitting at 124 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
+          note: 'Chosen by measurement rather than by anybody''s say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to hard-rock, sitting at 124 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
       controls:
-        CenterFreq: "1000.0"
+        125Hz: "0.0"
+        16kHz: "0.0"
+        1kHz: "0.0"
+        250Hz: "0.0"
+        2kHz: "0.0"
+        31p25Hz: "0.0"
+        4kHz: "0.0"
+        500Hz: "0.0"
+        62p5Hz: "0.0"
+        8kHz: "0.0"
         Level: "0.0"
-        Tilt: "0.5"
       attrs:
         '@position': "3"
       enabled: false
       position: 3
     - role: reverb
-      gear: Hot Springs
+      gear: Dynamic Room
       capture: direct
       confidence: low
       evidence:
@@ -202,15 +206,20 @@ built:
             low: 0.98
             mid: 0.03
             transient: 0.68
-          note: Chosen by measurement rather than by anybody's say-so. Hot Springs is the closest of the 14 bass reverbs this device models to hard-rock, sitting at 133 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because hard-rock earns "long-decay" against the players who measure otherwise, by 0.15 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Dynamic Room is the closest of the 14 bass reverbs this device models to hard-rock, sitting at 129 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because hard-rock earns "long-decay" against the players who measure otherwise, by 0.15 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
       controls:
-        Drip: "1"
-        Dwell: "0.4"
-        HighCut: "5000.0"
+        BassBoost: "0.0"
+        BassFreq: "100.0"
+        Damping: "3700.0"
+        Decay: "1.2"
+        Diffusion: "0.5"
+        ERLevel: "0.8"
+        HighCut: "10000.0"
         Level: "0.0"
-        LowCut: "200.0"
-        Mix: "0.26"
-        Spring Count: "2.0"
+        LowCut: "100.0"
+        MatrFreq: "0.333"
+        Mix: "0.41"
+        PreDelay: "0.01"
       attrs:
         '@position': "4"
       enabled: false
@@ -300,7 +309,7 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': DOD Overdrive/Preamp 250
+                '@fs_label': Earthquaker Devices Life - Boost circuit
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -310,7 +319,7 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Simple Tilt
+                '@fs_label': MXR 10-Band Graphic EQ
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -320,7 +329,7 @@ built:
                 '@fs_customlabel': REVERB
                 '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': Hot Springs
+                '@fs_label': Dynamic Room
                 '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -387,7 +396,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: DOD Overdrive/Preamp 250
+    - gear: Earthquaker Devices Life - Boost circuit
       block: 0
       colour: 525824
       enabled: false
@@ -396,7 +405,7 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Simple Tilt
+    - gear: MXR 10-Band Graphic EQ
       block: 3
       colour: 527360
       enabled: false
@@ -405,7 +414,7 @@ built:
       momentary: false
       primary: true
       switch: 2
-    - gear: Hot Springs
+    - gear: Dynamic Room
       block: 4
       colour: 1049600
       enabled: false

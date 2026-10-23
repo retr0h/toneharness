@@ -24,3 +24,19 @@ package measured
 // shipped file will never be: something that is not gzip at all, and a
 // library measured in a chain rather than one block at a time.
 var Unpack = unpack
+
+// Exposed to this package's external tests. Which field a figure key means,
+// and a figure a reading may not carry read as a number, are both tables with
+// more rows than any build reaches: nine keys exist and a bass is weighed on
+// three of them.
+var (
+	// Of is one figure by the key the corpus names it with.
+	Of = Figures.of
+	// OrZero is a figure a reading may not carry, as a number.
+	OrZero = orZero
+	// Pair is one figure from each side of a comparison, and whether both
+	// carry it.
+	Pair = pair
+	// Shared is a target split among the dials that can each answer it.
+	Shared = Curves.shared
+)

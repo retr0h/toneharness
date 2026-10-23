@@ -74,7 +74,7 @@ rig:
       controls:
         Mic: "0"
     - role: eq
-      gear: Simple Tilt
+      gear: MXR 10-Band Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -90,7 +90,13 @@ rig:
             low: 0.88
             mid: 0.11
             transient: 0.74
-          note: 'Chosen by measurement rather than by anybody''s say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to punk, sitting at 124 Hz against 282. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
+          note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to punk, sitting at 124 Hz against 282. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        1kHz: "11.25"
+        250Hz: "11.25"
+        31p25Hz: "-11.25"
+        500Hz: "3.75"
+        62p5Hz: "-3.75"
       enabled: false
   instrument: bass
 built:
@@ -187,7 +193,7 @@ built:
         '@position': "3"
       position: 3
     - role: eq
-      gear: Simple Tilt
+      gear: MXR 10-Band Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -203,11 +209,19 @@ built:
             low: 0.88
             mid: 0.11
             transient: 0.74
-          note: 'Chosen by measurement rather than by anybody''s say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to punk, sitting at 124 Hz against 282. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
+          note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to punk, sitting at 124 Hz against 282. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        CenterFreq: "1000.0"
+        125Hz: "0.0"
+        16kHz: "0.0"
+        1kHz: "11.25"
+        250Hz: "11.25"
+        2kHz: "0.0"
+        31p25Hz: "-11.25"
+        4kHz: "0.0"
+        500Hz: "3.75"
+        62p5Hz: "-3.75"
+        8kHz: "0.0"
         Level: "0.0"
-        Tilt: "0.5"
       attrs:
         '@position': "4"
       enabled: false
@@ -321,7 +335,7 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Simple Tilt
+                '@fs_label': MXR 10-Band Graphic EQ
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -407,7 +421,7 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Simple Tilt
+    - gear: MXR 10-Band Graphic EQ
       block: 4
       colour: 527360
       enabled: false

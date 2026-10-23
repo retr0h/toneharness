@@ -87,7 +87,7 @@ built:
         '@position': "0"
       position: 0
     - role: drive
-      gear: Analogman Prince of Tone
+      gear: Subdecay Harmonic Antagonizer
       capture: direct
       confidence: low
       evidence:
@@ -103,15 +103,18 @@ built:
             low: 0.81
             mid: 0.19
             transient: 0.84
-          note: Chosen by measurement rather than by anybody's say-so. Analogman Prince of Tone is the closest of the 52 bass drives this device models to matt-freeman, sitting at 207 Hz against 220. Across 3 records from 1 players, matt-freeman earns mid-forward, bright and saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because matt-freeman earns "saturated" against the players who measure otherwise, by 0.0792 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Subdecay Harmonic Antagonizer is the closest of the 52 bass drives this device models to matt-freeman, sitting at 255 Hz against 220. Across 3 records from 1 players, matt-freeman earns mid-forward, bright and saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because matt-freeman earns "saturated" against the players who measure otherwise, by 0.0792 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
       controls:
-        Clipping: "0"
-        Gain: "0.5"
-        GainMod: "1"
-        Level: "0.62"
-        Presence: "0.0"
-        Tone: "0.875"
-        Voltage: "false"
+        Clipping: "1"
+        Gain: "0.75"
+        Level: "0.578"
+        MaxFreq: "5250.0"
+        MinFreq: "2250.0"
+        OscLevel: "0.125"
+        OscTone: "0.5"
+        Sensitivity: "0.625"
+        Tone: "0.375"
+        WaveShape: "2"
       attrs:
         '@position': "1"
       enabled: false
@@ -178,7 +181,7 @@ built:
         '@position': "3"
       position: 3
     - role: eq
-      gear: Simple Tilt
+      gear: MXR 10-Band Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -194,11 +197,19 @@ built:
             low: 0.81
             mid: 0.19
             transient: 0.84
-          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to matt-freeman, sitting at 124 Hz against 220. Across 3 records from 1 players, matt-freeman earns mid-forward, bright and saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because matt-freeman earns "mid-forward" against the players who measure otherwise, by 0.0917 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to matt-freeman, sitting at 124 Hz against 220. Across 3 records from 1 players, matt-freeman earns mid-forward, bright and saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because matt-freeman earns "mid-forward" against the players who measure otherwise, by 0.0917 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
       controls:
-        CenterFreq: "1000.0"
+        125Hz: "0.0"
+        16kHz: "0.0"
+        1kHz: "7.5"
+        250Hz: "7.5"
+        2kHz: "15.0"
+        31p25Hz: "7.5"
+        4kHz: "0.0"
+        500Hz: "3.75"
+        62p5Hz: "-7.5"
+        8kHz: "0.0"
         Level: "0.0"
-        Tilt: "0.5"
       attrs:
         '@position': "4"
       enabled: false
@@ -272,7 +283,7 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Analogman Prince of Tone
+                '@fs_label': Subdecay Harmonic Antagonizer
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -282,7 +293,7 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Simple Tilt
+                '@fs_label': MXR 10-Band Graphic EQ
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -349,7 +360,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Analogman Prince of Tone
+    - gear: Subdecay Harmonic Antagonizer
       block: 1
       colour: 525824
       enabled: false
@@ -358,7 +369,7 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Simple Tilt
+    - gear: MXR 10-Band Graphic EQ
       block: 4
       colour: 527360
       enabled: false

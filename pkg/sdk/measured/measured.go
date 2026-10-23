@@ -44,6 +44,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 )
 
@@ -468,6 +469,11 @@ func (l Library) Nearest(
 // can fix for nothing.
 type Weights struct {
 	Centroid, Level, Low, Mid, High float64
+	// Harmonics is how much energy sits above the fundamental.
+	//
+	// Separate from the band shares because it is the one figure beyond them
+	// that both sides of a comparison measure the same way. See [Spectral].
+	Harmonics float64
 }
 
 // Spectral weighs where the energy sits and ignores everything else.
@@ -486,8 +492,22 @@ type Weights struct {
 //
 // The centroid is scaled to per-thousand-Hz so it counts about as much as a
 // band share rather than swamping all three of them.
+//
+// **Harmonics is weighed, which is task 276.** It is the fourth figure both
+// sides of a comparison measure the same way: a record and a block go through
+// the same `audio.Measure`, and unlike transient and decay the padding cannot
+// move it, because a share of the energy above the fundamental does not change
+// when silence is added to either end. The blocks span it from 0 to 86 of a
+// hundred and four of the eleven genres displace it past what the figure can
+// claim, blues-rock and grunge by six points of it.
+//
+// Weighed at one like a band share, because it is reported on the same scale:
+// a block's reading and a genre's displacement are both hundredths of the
+// energy, so the two are already comparable without a scale of their own.
 func Spectral() Weights {
-	return Weights{Centroid: 1.0 / 1000.0, Low: 1, Mid: 1, High: 1}
+	return Weights{
+		Centroid: 1.0 / 1000.0, Low: 1, Mid: 1, High: 1, Harmonics: 1,
+	}
 }
 
 // SpectralFor is [Spectral] with the axes an instrument cannot use dropped.
@@ -503,10 +523,16 @@ func Spectral() Weights {
 // nothing the mid band has not already said, and counting both weighs the same
 // difference twice.
 //
-// So a bass is ranked on its centroid and its midrange, which are the two
-// figures its records actually differ by: across those eleven genres the
-// centroid spans 109Hz to 174Hz and the mid band 0.00 to 0.11, and every other
-// axis is flat.
+// So a bass is ranked on its centroid, its midrange and its harmonics. Those
+// are the figures its records actually differ by: across those eleven genres
+// the centroid spans 109Hz to 174Hz, the mid band 0.00 to 0.11 and harmonics
+// 0.11 to 0.19, and every other axis is flat or unreadable.
+//
+// Harmonics is kept rather than dropped, which is task 276 and the reason
+// this reads three figures where it used to read two. Four of the eleven
+// genres displace it past what the figure can claim, blues-rock and grunge by
+// six points of a hundred, and nothing about a bass makes it dead the way the
+// high band is.
 //
 // An instrument this does not know gets [Spectral]. Only the bass corpus has
 // been measured, so only the bass case is a reading rather than a guess, and
@@ -541,5 +567,87 @@ func (w Weights) between(
 		sum += apart * apart
 	}
 
+	// Harmonics, where both sides carry a reading.
+	//
+	// Skipped rather than read as zero where either does not. The three
+	// pointer figures were added after the first sweeps ran, so a reading
+	// taken before that has none, and counting an absent one as nothing would
+	// rank it as the furthest block on the device from any target asking for
+	// harmonics at all.
+	if mine, theirs, both := pair(got.Harmonics, want.Harmonics); both {
+		apart := w.Harmonics * (mine - theirs)
+		sum += apart * apart
+	}
+
 	return math.Sqrt(sum)
+}
+
+// pair is one figure from each side of a comparison, and whether both carry it.
+//
+// The three figures added after the first sweeps ran are pointers, because a
+// reading taken before them has a gap rather than a zero: see [Figures]. So
+// every comparison that reads one has the same two lines to write, and this is
+// them written once.
+func pair(
+	mine, theirs *float64,
+) (float64, float64, bool) {
+	if mine == nil || theirs == nil {
+		return 0, 0, false
+	}
+
+	return *mine, *theirs, true
+}
+
+// of is one figure by the key the corpus names it with.
+//
+// One owner for which field a key means, because three readers had the same
+// switch written out and the fourth figure task 276 weighs would have made it
+// four copies.
+//
+// Zero for a figure a reading does not carry, which is only ever one of the
+// three added after the first sweeps ran. Within a single sweep every point
+// carries the same set, so a curve whose points have no harmonics reads a
+// span of zero and is passed over rather than scored on nothing: see
+// [Curves.TowardFrom], which asks what a control reaches before it asks where
+// to put it.
+func (p Figures) of(
+	key audio.Figure,
+) float64 {
+	switch key {
+	case audio.KeyLow:
+		return p.Low
+	case audio.KeyMid:
+		return p.Mid
+	case audio.KeyHigh:
+		return p.High
+	case audio.KeyLevel:
+		return p.Level
+	case audio.KeyHarmonics:
+		return orZero(p.Harmonics)
+	case audio.KeyDynamics:
+		return orZero(p.Dynamics)
+	case audio.KeyLean:
+		return orZero(p.Lean)
+	case audio.KeyTransient:
+		return orZero(p.Transient)
+	case audio.KeyDecay:
+		return orZero(p.Decay)
+	default:
+		return p.Centroid
+	}
+}
+
+// orZero is a figure a reading may not carry, as a number.
+//
+// Zero for an absent one, which every caller handles by the span it leaves
+// rather than by the value: see [Figures.of]. A displacement nobody asked for
+// reads the same way, which is how nothing being asked reads everywhere here.
+func orZero(
+	at *float64,
+) float64 {
+	if at == nil {
+		return 0
+	}
+
+	return *at
 }

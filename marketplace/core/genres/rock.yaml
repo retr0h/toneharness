@@ -33,7 +33,7 @@ ask:
 rig:
   chain:
     - role: drive
-      gear: BOSS Metal Zone MT-2
+      gear: Carvin VLD1 Legacy Drive (hi gain channel)
       capture: direct
       confidence: low
       evidence:
@@ -49,11 +49,14 @@ rig:
             low: 0.96
             mid: 0.04
             transient: 0.74
-          note: Chosen by measurement rather than by anybody's say-so. BOSS Metal Zone MT-2 is the closest of the 52 bass drives this device models to rock, sitting at 251 Hz against 166. Across 15 records from 5 players, rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Carvin VLD1 Legacy Drive (hi gain channel) is the closest of the 52 bass drives this device models to rock, sitting at 199 Hz against 166. Across 15 records from 5 players, rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Contour: "0.75"
-        Dist: "0.75"
-        Mid Amt: "0.5"
+        Bass: "0.375"
+        Drive: "0.875"
+        Middle: "0.75"
+        Presence: "0.625"
+        Treble: "0.625"
+        Volume: "0.375"
       enabled: false
     - role: amp
       gear: Pearce BC-1 preamp (jumped)
@@ -74,7 +77,7 @@ rig:
             transient: 0.74
           note: Chosen by measurement rather than by anybody's say-so. Pearce BC-1 preamp (jumped) is the closest of the 15 bass amplifiers this device models to rock, sitting at 226 Hz against 166. Across 15 records from 5 players, rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
     - role: eq
-      gear: Simple Tilt
+      gear: MXR 10-Band Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -90,9 +93,18 @@ rig:
             low: 0.96
             mid: 0.04
             transient: 0.74
-          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to rock, sitting at 124 Hz against 166. Across 15 records from 5 players, rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to rock, sitting at 124 Hz against 166. Across 15 records from 5 players, rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Tilt: "0.75"
+        125Hz: "-3.75"
+        16kHz: "11.25"
+        1kHz: "7.5"
+        250Hz: "7.5"
+        2kHz: "3.75"
+        31p25Hz: "-3.75"
+        4kHz: "11.25"
+        500Hz: "3.75"
+        62p5Hz: "-7.5"
+        8kHz: "7.5"
       enabled: false
   instrument: bass
 built:
@@ -100,7 +112,7 @@ built:
   device: HX Stomp
   chain:
     - role: drive
-      gear: BOSS Metal Zone MT-2
+      gear: Carvin VLD1 Legacy Drive (hi gain channel)
       capture: direct
       confidence: low
       evidence:
@@ -116,13 +128,14 @@ built:
             low: 0.96
             mid: 0.04
             transient: 0.74
-          note: Chosen by measurement rather than by anybody's say-so. BOSS Metal Zone MT-2 is the closest of the 52 bass drives this device models to rock, sitting at 251 Hz against 166. Across 15 records from 5 players, rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Carvin VLD1 Legacy Drive (hi gain channel) is the closest of the 52 bass drives this device models to rock, sitting at 199 Hz against 166. Across 15 records from 5 players, rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Contour: "0.75"
-        Dist: "0.75"
-        Gain: "0.5"
-        Mid Amt: "0.5"
-        Mid Freq: "0.88"
+        Bass: "0.375"
+        Drive: "0.875"
+        Middle: "0.75"
+        Presence: "0.625"
+        Treble: "0.625"
+        Volume: "0.375"
       attrs:
         '@position': "0"
       enabled: false
@@ -184,7 +197,7 @@ built:
         '@position': "2"
       position: 2
     - role: eq
-      gear: Simple Tilt
+      gear: MXR 10-Band Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -200,11 +213,19 @@ built:
             low: 0.96
             mid: 0.04
             transient: 0.74
-          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to rock, sitting at 124 Hz against 166. Across 15 records from 5 players, rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to rock, sitting at 124 Hz against 166. Across 15 records from 5 players, rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        CenterFreq: "1000.0"
+        125Hz: "-3.75"
+        16kHz: "11.25"
+        1kHz: "7.5"
+        250Hz: "7.5"
+        2kHz: "3.75"
+        31p25Hz: "-3.75"
+        4kHz: "11.25"
+        500Hz: "3.75"
+        62p5Hz: "-7.5"
+        8kHz: "7.5"
         Level: "0.0"
-        Tilt: "0.75"
       attrs:
         '@position': "3"
       enabled: false
@@ -235,7 +256,7 @@ built:
         Level: "0.0"
         LowGain: "0.0"
         MidFreq: "600.0"
-        MidGain: "6.8"
+        MidGain: "0.8"
       attrs:
         '@position': "5"
       position: 5
@@ -308,7 +329,7 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': BOSS Metal Zone MT-2
+                '@fs_label': Carvin VLD1 Legacy Drive (hi gain channel)
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -318,7 +339,7 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Simple Tilt
+                '@fs_label': MXR 10-Band Graphic EQ
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -395,7 +416,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: BOSS Metal Zone MT-2
+    - gear: Carvin VLD1 Legacy Drive (hi gain channel)
       block: 0
       colour: 525824
       enabled: false
@@ -404,7 +425,7 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Simple Tilt
+    - gear: MXR 10-Band Graphic EQ
       block: 3
       colour: 527360
       enabled: false
