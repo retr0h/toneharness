@@ -234,3 +234,15 @@ func (a Aim) Figures() measured.Figures { return a.figures }
 // the shipped equalisers and the states it allows are everything else, and a
 // table covers both plus the ones no field is in.
 var Beats = beats
+
+// InstrumentFor is what a rig is played on, from the setup and then the ask.
+// Exposed because the states it answers are four and a build reaches two.
+var InstrumentFor = instrumentFor
+
+// LikeTheirRig and LikeTheirGenre are the two evidence tiers above
+// measurement, exposed for the cross-instrument refusal task 266 added: no
+// shipped rig or genre is for a guitar, so a build cannot reach it.
+var (
+	LikeTheirRig   = likeTheirRig
+	LikeTheirGenre = likeTheirGenre
+)
