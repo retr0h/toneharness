@@ -184,3 +184,44 @@ func PlayerAim(
 // chooses, and no category a build chooses from is refused outright, but both
 // are the contract.
 var AsPlayed = asPlayed
+
+// Exposed to this package's external tests. Which kind of block answers a
+// figure, and which kinds a target's records ask for, are both tables with
+// more rows than any build reaches: four figures ever earn a word across the
+// 43 rigs here and three kinds answer them, so the rest are the contract
+// rather than today's data.
+var (
+	// Answers is the kind of block that answers one figure.
+	Answers = answers
+	// AskedFor is the kinds a target's records ask for, in switch order.
+	AskedFor = askedFor
+	// Stompedable is whether a kind is one a foot reaches for, which decides
+	// how many switches a chain has already spoken for.
+	Stompedable = stomped
+	// AimedAt is what a rig's own records measure as, and the words they
+	// earn, found by the document's own identifier.
+	AimedAt = aimedAt
+	// Said adds a sentence to the measured evidence a block carries.
+	Said = said
+)
+
+// Asked is one kind of block a target's records ask for. Aliased rather than
+// exported outright, because nothing outside this package constructs one: a
+// build reads the words and hands the kinds straight to the ranking.
+type Asked = asked
+
+// Kind is the category this one asks for.
+func (a Asked) Kind() catalog.Category { return a.kind }
+
+// Term is the word asking, and Margin how far past the line the records sit.
+func (a Asked) Term() string    { return a.term }
+func (a Asked) Margin() float64 { return a.margin }
+
+// Past is the margin as a share of what everybody else measures, which is the
+// only form two figures can be compared in.
+func (a Asked) Past() float64 { return a.past }
+
+// Named and Figures are what an aim is for: what it came from, and the target
+// in the figures a block is measured in.
+func (a Aim) Named() string             { return a.named }
+func (a Aim) Figures() measured.Figures { return a.figures }

@@ -40,6 +40,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
@@ -968,4 +969,66 @@ func (s *IntentPublicTestSuite) TestAGenrePooledAcrossInstrumentsContributesNoth
 
 	s.Require().Empty(presets.GenreWords(mixed, true, "bass"),
 		"a centre of gravity between two instruments is not either one")
+}
+
+// TestARigGetsTheEffectsItsRecordsAskFor covers task 274's half of the build.
+//
+// Against the shipped rigs, catalog and library rather than this suite's
+// fixture, because what is being checked is that a rig in the marketplace gets
+// a block its own records ask for: the fixture names invented models and the
+// corpus has never heard of its subject.
+//
+// Glen Matlock is distinctive on a long decay by 0.27 of a second, which is the
+// largest margin any of the 43 earns on that figure, and nothing else a
+// pedalboard answers. So he gets one reverb, switched off, behind the cabinet.
+func (s *MakePublicTestSuite) TestARigGetsTheEffectsItsRecordsAskFor() {
+	out := filepath.Join(s.T().TempDir(), "a.hlx")
+
+	made, err := presets.Make(context.Background(), presets.MakeOptions{
+		RigID:      "glen-matlock",
+		OutputPath: out,
+	})
+	s.Require().NoError(err)
+
+	// On the block itself, so a document carries why it is there.
+	s.Require().Len(made.Chosen, 1)
+	s.Require().Equal(rig.RoleReverb, made.Chosen[0].Role)
+	s.Require().NotNil(made.Chosen[0].Enabled)
+	s.Require().False(*made.Chosen[0].Enabled)
+
+	// And in the report, because a block nobody asked for is a decision made
+	// on the player's behalf.
+	said := ""
+	for _, at := range made.Added {
+		if at.Name == made.Chosen[0].Gear {
+			said = at.Reason
+		}
+	}
+
+	s.Require().Contains(said, "long-decay")
+	s.Require().Contains(said, "put a reverb on a switch")
+
+	// Behind the cabinet, because position is not decoration: the reverb is
+	// the last block in the chain rather than the first.
+	s.Require().NotEmpty(made.Plan.Blocks)
+	s.Require().Contains(
+		string(made.Plan.Blocks[len(made.Plan.Blocks)-1].Model), "Reverb")
+}
+
+// TestARigWhoseRecordsAskForNothingGetsNothing covers the other answer.
+//
+// Les Claypool is distinctive only on a shorter decay, which nothing on a
+// floor answers: a gate would cut his notes off and a compressor is set once
+// and left. Fourteen of the 43 rigs here are in that state and seven more earn
+// no word at all, so nothing is the common answer rather than a failure.
+func (s *MakePublicTestSuite) TestARigWhoseRecordsAskForNothingGetsNothing() {
+	out := filepath.Join(s.T().TempDir(), "a.hlx")
+
+	made, err := presets.Make(context.Background(), presets.MakeOptions{
+		RigID:      "les-claypool",
+		OutputPath: out,
+	})
+	s.Require().NoError(err)
+
+	s.Require().Empty(made.Chosen)
 }

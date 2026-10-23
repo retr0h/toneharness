@@ -39,6 +39,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
@@ -118,18 +119,33 @@ func Make(
 	// rig at all: a document carries `subject` and no `like`, and reading the
 	// subject as a target in `translate` was tried and reverted because a
 	// subject-only ask is meant to refuse and name `like` instead.
-	aim, err := opts.aimOf(known.ID)
+	// The readings, read once. Both the aim and the effects a foot reaches for
+	// are measured against them, and reading them twice would mean two error
+	// paths for one file.
+	lib, err := opts.library()
 	if err != nil {
 		return result.Made{}, err
 	}
 
-	intent.Aim = aim
+	intent.Aim = opts.aimOf(known.ID, lib)
 	intent.Curves = sweptIn(opts.SweepsDir)
 
 	cat, err := opts.catalog(ctx)
 	if err != nil {
 		return result.Made{}, err
 	}
+
+	// And what a foot reaches for, chosen from the same records the aim came
+	// from.
+	//
+	// Here rather than in the compiler for the reason `Intent.Aim` is: that
+	// package builds a chain and has no business reading a corpus to find out
+	// who a rig is for. And here rather than in `translate` because an artist
+	// rig's chain is authored and never passes through `chainFor`, so the
+	// genre-only list that used to live there could not reach one: all eleven
+	// genres carried the same drive and equaliser and none of the 32 artists
+	// carried anything.
+	rec, chosen, stomped := stompable(known.ID, rec, setupOf(held), cat, lib, opts)
 
 	// Statistics are an improvement on the catalog's defaults, not a
 	// requirement, but somebody who named a file asked for those ones. Building
@@ -229,7 +245,8 @@ func Make(
 
 	return result.Made{
 		Plan:       spec,
-		Added:      addedFrom(added),
+		Added:      append(stomped, addedFrom(added)...),
+		Chosen:     chosen,
 		Moved:      movedFrom(moved),
 		Unfamiliar: unfamiliar(intent),
 		Playing:    result.Playing{Terms: playing.Terms, Said: playing.Said},
@@ -700,12 +717,8 @@ func (o MakeOptions) loudnessOf(
 // is: that package builds a chain and has no business reading a corpus.
 func (o MakeOptions) aimOf(
 	id string,
-) (*measured.Figures, error) {
-	lib, err := o.library()
-	if err != nil {
-		return nil, err
-	}
-
+	lib measured.Library,
+) *measured.Figures {
 	// A player first, then a genre. A rig's identifier is who it is for, and
 	// the two kinds of rig this ships are a person and a sound: 32 artists and
 	// 11 genres, and nothing is both.
@@ -721,7 +734,7 @@ func (o MakeOptions) aimOf(
 	}
 
 	if !ok {
-		return nil, nil
+		return nil
 	}
 
 	// As a displacement, because that is what reads it. `AimAtPlayer` answers
@@ -732,7 +745,7 @@ func (o MakeOptions) aimOf(
 	// and a band share are both positive whatever a player's records say.
 	lean := translate.DisplacedFrom(got, lib.Baseline)
 
-	return &lean, nil
+	return &lean
 }
 
 // sweptIn reads one block's committed curves out of a tree of them.
@@ -763,4 +776,61 @@ func sweptIn(
 
 		return got, true
 	}
+}
+
+// stompable adds the effects this rig's own records ask for, each switched
+// off, and says what each one is for.
+//
+// Spliced into the chain at the position its role implies rather than
+// appended, because the compiler walks a rig's chain in the order it is
+// written and a reverb at the front of one is a reverb in front of the
+// amplifier. The rig's own order is otherwise untouched: whoever wrote it made
+// that decision, and a sort here would silently move somebody's pedals.
+//
+// Silent where the rig is for nobody the corpus measures, which is every rig
+// outside the marketplace, and where the records ask for nothing.
+func stompable(
+	id string,
+	rec rig.Spec,
+	setup tone.Setup,
+	cat *catalog.Catalog,
+	lib measured.Library,
+	opts MakeOptions,
+) (rig.Spec, []rig.ChainEntry, []result.Added) {
+	notes := translate.Notes{}
+
+	got := translate.Stompable(id, rec, setup, translate.Deps{
+		Catalog:   cat,
+		Measured:  lib,
+		CurvesFor: sweptIn(opts.SweepsDir),
+	}, &notes)
+
+	out := make([]result.Added, 0, len(got))
+	chosen := make([]rig.ChainEntry, 0, len(got))
+
+	for _, at := range got {
+		rec.Chain = translate.Spliced(rec.Chain, at.Entry)
+		chosen = append(chosen, at.Entry)
+
+		out = append(out, result.Added{
+			Name: at.Entry.Gear, Reason: at.Said, Bypassed: true,
+		})
+	}
+
+	return rec, chosen, out
+}
+
+// setupOf is the Setup a build was given, or an empty one where none was.
+//
+// The pointer says whether a person wrote one and nothing downstream of here
+// needs that distinction: a Setup naming nothing and no Setup at all reach the
+// same answers.
+func setupOf(
+	held *tone.Setup,
+) tone.Setup {
+	if held == nil {
+		return tone.Setup{}
+	}
+
+	return *held
 }

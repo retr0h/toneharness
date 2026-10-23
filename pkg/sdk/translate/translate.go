@@ -466,6 +466,13 @@ func chainFor(
 	// averaged into one point: the blocks that carry the chain further into
 	// the genre arrive switched off, each on its own switch, and the base
 	// sound is the amplifier until one is stepped on.
+	//
+	// A genre only, and from a list of kinds rather than from what its records
+	// ask for. [Stompable] is the other half, which `presets.Make` calls with
+	// the document's own identifier: it reaches an artist rig, whose chain is
+	// authored and never passes through here, and it reads the kinds off the
+	// words a target earns. Both run, and the second adds only what the first
+	// did not: see stomp.go.
 	named = append(named, stompedFor(spec, setup, deps, notes)...)
 
 	if len(named) == 0 {
@@ -1271,6 +1278,24 @@ func nearestTo(
 		return rig.ChainEntry{}, "", false
 	}
 
+	return nearestOf(at, spec, setup, deps, category, notes)
+}
+
+// nearestOf is [nearestTo] with the target already in hand.
+//
+// Split out because a target arrives two ways. An ask says what to aim at, and
+// a document's own identifier says whose records it is for, which is the route
+// [Stompable] takes and the one task 268 established: a rig for somebody
+// aiming at their own records is not circular, and the identifier is what
+// reaches it without reading `subject` as a target here.
+func nearestOf(
+	at aim,
+	spec tone.Ask,
+	setup tone.Setup,
+	deps Deps,
+	category catalog.Category,
+	notes *Notes,
+) (rig.ChainEntry, catalog.ModelID, bool) {
 	want, from := at.figures, at.named
 
 	// The instrument the chain is for. The ask where it says, and otherwise
@@ -1763,9 +1788,14 @@ type aim struct {
 // and an equaliser picked the same way, and both arrived claiming to be the
 // closest of the 57 and the 8 bass amplifiers this device models.
 //
-// A kind not named here keeps its own word with nothing added. That reads a
-// little flatly for a category nobody has thought about yet, and it is better
-// than a sentence confidently calling a reverb an amplifier.
+// Every category the catalog distinguishes is named now. The five that were
+// not read as "the closest of the 14 bass reverb this device models", and a
+// kind nobody adds yet still earns its word the day something does: a rig gets
+// whichever kind its records ask for since task 274, so which categories reach
+// this sentence is no longer a short list anybody can keep in their head.
+//
+// Utility and other are left out on purpose. Nothing chooses one by
+// measurement, because nobody picks plumbing for how it sounds.
 func plural(
 	kind catalog.Category,
 ) string {
@@ -1780,6 +1810,20 @@ func plural(
 		return "equalisers"
 	case catalog.CategoryComp:
 		return "compressors"
+	case catalog.CategoryReverb:
+		return "reverbs"
+	case catalog.CategoryDelay:
+		return "delays"
+	case catalog.CategoryFilter:
+		return "filters"
+	case catalog.CategoryMod:
+		return "modulations"
+	case catalog.CategoryWah:
+		return "wahs"
+	case catalog.CategoryPitch:
+		return "pitch blocks"
+	case catalog.CategoryGate:
+		return "gates"
 	}
 
 	return string(kind)

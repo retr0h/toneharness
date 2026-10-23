@@ -208,10 +208,77 @@ statistics are not evidence about the genre.
 cover a range no single setting reaches, so give the range to the player's feet
 instead of picking one point in it: the base sound is the amplifier, and the
 blocks that reach further into the genre sit switched off until somebody steps
-on one. `compile.Assign` does the assigning and the colours.
+on one. `compile.Assign` does the assigning and the colours, and which kinds a
+rig gets is the next section.
 
 The corpus is reference material for understanding a genre, not a population to
 average. Averaging is what produces one preset eleven times.
+
+## A rig gets the effects its own records ask for
+
+Every chain the corpus built carried the same two, a drive and an equaliser, on
+all eleven genres. None of the 32 artists carried any, because the list was
+reached only where the ask named one of the eleven genres the bass corpus can
+aim at, and an artist rig's chain is authored and never passes through that
+path. The eight artists that had a switch had it because their researched rig
+names a pedal of its own: Flea's Maestro Bass Brassmaster, Krist Novoselic's
+Pro Co RAT, Bootsy Collins's Mu-Tron III.
+
+So the kinds come off the records instead. A target earns a word where one of
+its figures sits outside what everybody else measures, and that word is the
+only thing that says a block of some kind is wanted rather than merely
+available. Four figures ever earn one across the 43 rigs here: decay 25 times,
+the mid band 20, the centroid 17 and harmonics 4.
+
+| the word | the figure | what it gets | why |
+| -------- | ---------- | ------------ | --- |
+| bright, dark | centroid | an equaliser | where the energy sits is what an equaliser moves |
+| mid-forward, scooped | mid | an equaliser | the same control of the same thing, so a target earning both gets one |
+| saturated | harmonics | a drive | energy above the fundamental is what distortion makes |
+| long-decay | decay | a reverb | what the figure measures is a tail, and a tail is what a reverb adds |
+| short-decay | decay | nothing | see below |
+
+`translate.Stompable` owns it and `presets.Make` calls it with the document's
+own identifier, which is the route task 268 established: a rig for somebody
+aiming at their own records is not circular, and the identifier is what reaches
+it without reading `ask.subject` as a target.
+
+Four rules around the choosing:
+
+**Ordered by how far past everybody else the records sit**, as a share of what
+the others measure. A margin is in its figure's own units, so the raw numbers
+rank by unit rather than by distinctiveness: the centroid margins here run from
+10 to 78 hertz and the harmonics margins from 0.03 to 0.08 of a share. As a
+share of the others' median, Jaco Pastorius's 78Hz of centroid is 0.6 and Matt
+Freeman's 0.08 of harmonics is 0.27, which are two numbers about the same
+thing.
+
+**A kind the chain already holds is not doubled.** Matt Freeman earns `bright`
+and `saturated` and gets both; a rig that already names a drive gets only the
+equaliser. Two blocks of one kind would also light the same, because
+`compile.assign`'s colour table is keyed by category.
+
+**Capped by the switches the device has.** A block past the last switch is one
+no foot can reach, and the foot is the whole reason for it. An HX Stomp has
+three, and a researched pedal already on the floor spends one of them.
+
+**Switched off, every one.** A block chosen because a figure sits outside
+everybody else's is for reaching the far end of what those records cover, not
+for sitting in the signal path.
+
+Each one lands in the computed half of the document with its own evidence: what
+it measured nearest, and the word that asked for a block of its kind at all.
+The authored half is untouched, because a block chosen from a word is not
+something somebody wrote.
+
+**A shorter decay has no answer, and that is most of what is left.** Fourteen
+of the 43 are distinctive only on it and seven more earn no word at all, so
+eight rigs end up with nothing after what their chains already name. A gate
+would shorten a note by cutting it off and a compressor by holding the front,
+and neither is a thing to put under a foot on a bass, which is why
+`compile.stomped` excludes the compressor in the first place. Nothing is the
+honest answer: reaching for a block to fill a switch is how a Metal Zone ended
+up on rock bass, which is task 267.
 
 ## Or name the player, and get the rig somebody researched
 

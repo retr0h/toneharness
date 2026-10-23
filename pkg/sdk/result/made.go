@@ -23,6 +23,7 @@ package result
 import (
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
+	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
 // Made is a preset built from a rig.
@@ -66,6 +67,15 @@ type Made struct {
 	// reported on its own rather than folded into the words. A knob moved to
 	// land on a level is a different claim from one moved because of a word.
 	Levelled Levelled `json:"levelled"`
+	// Chosen are the blocks put in the chain because this rig's own records
+	// ask for one of that kind, each with the evidence for it.
+	//
+	// Here because a resolve reads a document's evidence off the chain the
+	// rig named, and these were not named by anybody: without them a block
+	// chosen from a word comes back saying only "added by the compiler",
+	// which is the generic sentence for a block the corpus statistics put
+	// there and a different claim entirely.
+	Chosen []rig.ChainEntry `json:"chosen,omitempty"`
 	// Path is the file that was written.
 	Path string `json:"path"`
 	// Preset is the document that was written, as it stood when it was written.
