@@ -193,6 +193,47 @@ neither. 22 of the 43 shipped rigs sat on whatever microphone the corpus median
 gave their model, which is one answer for everybody: 14 on one cabinet all read
 microphone 3. They now spread across four.
 
+### What computes and what a document shows are not the same figures
+
+A measurement is reported to the places it can honestly claim. A centroid goes
+to the hertz because the bins are about 10Hz apart, and a share to two places
+because the third moves with which windows the playing fell in.
+`audio.Across.Measured` and `audio.Profile.Measured` do that rounding, and they
+are the maps a rig's evidence carries.
+
+**The arithmetic read them too, and it cost three genres their displacement.**
+A genre's figure is a median over its records, each itself a median over
+windows, and averaging is what buys the places back: rounding a median over
+sixteen records to one take's precision throws away precision the averaging
+earned. hard-rock's records sit 0.5Hz and 0.0008 of a share from the players
+who hold none of it, which read as a centroid of 132 against 132 and a mid
+share of 0.03 against 0.03. Nothing to aim at, on a figure whose whole range
+across the eleven genres is 0.02 to 0.11, where two places leave ten
+distinguishable values.
+
+So `audio.Across.Figures` and `audio.Profile.Figures` are the same middles
+unrounded, and everything that subtracts two figures or spans several of them
+reads those: `middles`, `elsewhere`, `apart` and `displacedTo`. `Measured`
+stays what goes into a document, so nothing is claimed to more places anywhere
+a person sees a figure.
+
+**The floor moves to the difference, because it was never really in the
+inputs.** Dropping the rounding without saying so is worse than keeping it: a
+genre sitting half a hertz from everybody else then asks for half a hertz, and
+a Deluxe Comp's Threshold has 0.14 points of midrange of authority, so it
+reaches that ask and goes to a stop delivering noise. `audio.Resolves(key, by)`
+is the floor stated on the difference instead, the same one `Axis.resolves`
+holds a word to. hard-rock asks for nothing again, southern-rock asks for 7.05
+hertz of centroid and nothing on the midrange, and rock asks for 11.44 rather
+than the 11.00 the rounding left it.
+
+The same floor had to be stated in `audio.scattered`, which compares a player's
+own span against the whole corpus's. Both sides came off `Measured`, so a
+difference below the measure's precision could not exist, and the moment the
+inputs stopped being rounded a float's tail read as a player whose records
+disagree: three sine tones a hundred hertz apart reported a scattered mid band,
+where every one of them holds the same nothing in it.
+
 Where a target leans nowhere on any weighed axis the median stands, which is
 what it was there for. Five of the eleven genres earn no term at all, so their
 displacement is the middle of their own range, and one of the five leans

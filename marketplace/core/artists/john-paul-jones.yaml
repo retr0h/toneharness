@@ -113,19 +113,45 @@ built:
         '@position': "2"
       position: 2
     - role: eq
+      gear: Simple Tilt
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: A player measured off their own finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used.
+          measured:
+            centroid: 145
+            decay: 0.19
+            dynamics: 8.2
+            harmonics: 0.11
+            high: 0
+            lean: 0.96
+            low: 0.95
+            mid: 0.05
+            transient: 0.72
+          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to john-paul-jones, sitting at 124 Hz against 171. Across 3 records from 1 players, john-paul-jones earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because john-paul-jones earns "mid-forward" against the players who measure otherwise, by 0.0129 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
+      controls:
+        CenterFreq: "1000.0"
+        Level: "0.0"
+        Tilt: "0.5"
+      attrs:
+        '@position': "3"
+      enabled: false
+      position: 3
+    - role: eq
       gear: Simple EQ
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        HighGain: "9.0"
+        HighGain: "6.0"
         Level: "0.0"
         LowGain: "0.0"
         MidFreq: "600.0"
-        MidGain: "0.40800000000000003"
+        MidGain: "3.7920000000000003"
       attrs:
-        '@position': "3"
-      position: 3
+        '@position': "4"
+      position: 4
   preset:
     dsp0:
       members:
@@ -195,6 +221,16 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "1"
+                '@fs_label': Simple Tilt
+                '@fs_ledcolor': "527360"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block4:
+              attrs:
+                '@fs_customcolor': "6"
+                '@fs_customlabel': EQ 2
+                '@fs_enabled': "false"
+                '@fs_index': "2"
                 '@fs_label': Simple EQ
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
@@ -262,7 +298,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Simple EQ
+    - gear: Simple Tilt
       block: 3
       colour: 527360
       enabled: false
@@ -271,3 +307,12 @@ built:
       momentary: false
       primary: true
       switch: 1
+    - gear: Simple EQ
+      block: 4
+      colour: 527360
+      enabled: false
+      label: EQ 2
+      led: green
+      momentary: false
+      primary: true
+      switch: 2

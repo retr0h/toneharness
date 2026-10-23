@@ -100,7 +100,7 @@ built:
         '@position': "0"
       position: 0
     - role: drive
-      gear: Z.Vex Fuzz Factory
+      gear: Roland Jet Phaser
       capture: direct
       confidence: low
       evidence:
@@ -116,14 +116,13 @@ built:
             low: 0.95
             mid: 0.05
             transient: 0.83
-          note: Chosen by measurement rather than by anybody's say-so. Z.Vex Fuzz Factory is the closest of the 52 bass drives this device models to tim-commerford, sitting at 156 Hz against 132. Across 3 records from 1 players, tim-commerford earns saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because tim-commerford earns "saturated" against the players who measure otherwise, by 0.0561 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Roland Jet Phaser is the closest of the 52 bass drives this device models to tim-commerford, sitting at 178 Hz against 132. Across 3 records from 1 players, tim-commerford earns saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because tim-commerford earns "saturated" against the players who measure otherwise, by 0.0548 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
       controls:
-        Compress: "1.0"
         Drive: "0.5"
-        Gate: "0.75"
-        Level: "0.77"
-        Oscillator: "true"
-        Stability: "1.0"
+        Feedback: "0.25"
+        Output: "0.71"
+        Rate: "0.875"
+        Tone: "0.27"
       attrs:
         '@position': "1"
       enabled: false
@@ -256,7 +255,7 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Z.Vex Fuzz Factory
+                '@fs_label': Roland Jet Phaser
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -323,7 +322,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Z.Vex Fuzz Factory
+    - gear: Roland Jet Phaser
       block: 1
       colour: 525824
       enabled: false

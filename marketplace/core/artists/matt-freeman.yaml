@@ -103,14 +103,14 @@ built:
             low: 0.81
             mid: 0.19
             transient: 0.84
-          note: Chosen by measurement rather than by anybody's say-so. Analogman Prince of Tone is the closest of the 52 bass drives this device models to matt-freeman, sitting at 207 Hz against 220. Across 3 records from 1 players, matt-freeman earns mid-forward, bright and saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because matt-freeman earns "saturated" against the players who measure otherwise, by 0.0804 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Analogman Prince of Tone is the closest of the 52 bass drives this device models to matt-freeman, sitting at 207 Hz against 220. Across 3 records from 1 players, matt-freeman earns mid-forward, bright and saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because matt-freeman earns "saturated" against the players who measure otherwise, by 0.0792 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
       controls:
         Clipping: "0"
-        Gain: "0.625"
+        Gain: "0.5"
         GainMod: "1"
         Level: "0.62"
-        Presence: "1.0"
-        Tone: "1.0"
+        Presence: "0.0"
+        Tone: "0.875"
         Voltage: "false"
       attrs:
         '@position': "1"
@@ -194,11 +194,11 @@ built:
             low: 0.81
             mid: 0.19
             transient: 0.84
-          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to matt-freeman, sitting at 124 Hz against 220. Across 3 records from 1 players, matt-freeman earns mid-forward, bright and saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because matt-freeman earns "mid-forward" against the players who measure otherwise, by 0.0893 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to matt-freeman, sitting at 124 Hz against 220. Across 3 records from 1 players, matt-freeman earns mid-forward, bright and saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because matt-freeman earns "mid-forward" against the players who measure otherwise, by 0.0917 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
       controls:
         CenterFreq: "1000.0"
         Level: "0.0"
-        Tilt: "0.75"
+        Tilt: "0.5"
       attrs:
         '@position': "4"
       enabled: false

@@ -67,7 +67,7 @@ built:
         '@position': "0"
       position: 0
     - role: drive
-      gear: Earthquaker Devices Life - Boost circuit
+      gear: Bitcrusher
       capture: direct
       confidence: low
       evidence:
@@ -83,9 +83,19 @@ built:
             low: 0.99
             mid: 0.01
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. Earthquaker Devices Life - Boost circuit is the closest of the 52 bass drives this device models to tobin-esperance, sitting at 124 Hz against 137. Across 3 records from 1 players, tobin-esperance earns scooped, dark, saturated and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because tobin-esperance earns "saturated" against the players who measure otherwise, by 0.0288 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Bitcrusher is the closest of the 52 bass drives this device models to tobin-esperance, sitting at 129 Hz against 138. Across 3 records from 1 players, tobin-esperance earns scooped, dark, saturated and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because tobin-esperance earns "saturated" against the players who measure otherwise, by 0.0276 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
       controls:
-        Boost: "0.5"
+        BitDepth: "8.0"
+        CloseThreshold: "-70.0"
+        Decay: "1.5082200000000001"
+        Gain: "0.0"
+        HighCut: "2959.6"
+        HoldTime: "0.40527"
+        Level: "0.0"
+        LowCut: "19.9"
+        Mix: "0.625"
+        OpenThreshold: "-70.0"
+        SampleRate: "12070.800000000001"
       attrs:
         '@position': "1"
       enabled: false
@@ -147,11 +157,11 @@ built:
             low: 0.99
             mid: 0.01
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to tobin-esperance, sitting at 124 Hz against 137. Across 3 records from 1 players, tobin-esperance earns scooped, dark, saturated and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because tobin-esperance earns "scooped" against the players who measure otherwise, by 0.0151 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to tobin-esperance, sitting at 124 Hz against 138. Across 3 records from 1 players, tobin-esperance earns scooped, dark, saturated and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because tobin-esperance earns "scooped" against the players who measure otherwise, by 0.0114 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
       controls:
         CenterFreq: "1000.0"
         Level: "0.0"
-        Tilt: "0.25"
+        Tilt: "0.5"
       attrs:
         '@position': "4"
       enabled: false
@@ -225,7 +235,7 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Earthquaker Devices Life - Boost circuit
+                '@fs_label': Bitcrusher
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -302,7 +312,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Earthquaker Devices Life - Boost circuit
+    - gear: Bitcrusher
       block: 1
       colour: 525824
       enabled: false

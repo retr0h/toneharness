@@ -140,6 +140,36 @@ func handsFrom(
 // between two readings cannot be finer than the readings. A share of the energy
 // is measured to two places and a centroid to whole hertz, so a mean of 468 of
 // them carries 17 significant figures and claims a precision nobody measured.
+// Resolves reports whether a difference in one figure is larger than the
+// measurement's own precision.
+//
+// A difference of at least one unit in the last place the figure can claim: a
+// hertz of centroid, because the bins are about 10Hz apart, and a hundredth of
+// a share, because the third place moves with which windows the playing fell
+// in.
+//
+// **One unit, not whatever survives being reported.** [Axis.resolves] asks the
+// other question and answers it the other way: a margin of 0.6Hz rounds to 1Hz
+// and reads as a hertz past the line, which is a claim the measurement
+// supports, so a word may be earned on it. Acting on 0.6Hz is different, and
+// for a while this rounded the same way and let two thirds of a hertz through
+// as a target.
+//
+// Why it is needed out there: the arithmetic that turns a genre into a target
+// used to read [Across.Measured], which rounds its inputs, so a difference
+// below the precision could not survive to be acted on. It reads
+// [Across.Figures] since task 273, because rounding a median over sixteen
+// records to one take's precision threw away places the averaging had earned.
+// The floor has to be stated on the difference instead, or a genre sitting
+// half a hertz from everybody else asks for half a hertz and a compressor's
+// threshold goes to a stop delivering it.
+func Resolves(
+	key Figure,
+	by float64,
+) bool {
+	return math.Abs(by) >= math.Pow(10, -float64(places(key)))
+}
+
 func places(
 	which Figure,
 ) int {

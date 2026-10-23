@@ -139,6 +139,36 @@ func (p Profile) Measured() map[string]float64 {
 	return out
 }
 
+// Figures is the same figures [Profile.Measured] reports, unrounded.
+//
+// For the reason [Across.Figures] exists: `Measured` claims the precision one
+// recording can honestly stand behind, and anything comparing two recordings
+// or spanning several of them is arithmetic rather than a figure somebody
+// reads. Rounding one side of a comparison and not the other is what left a
+// player's own records reading as further apart than the whole corpus by a
+// hundredth of a share.
+func (p Profile) Figures() map[string]float64 {
+	out := map[string]float64{
+		string(KeyLow):       p.Low,
+		string(KeyMid):       p.Mid,
+		string(KeyHigh):      p.High,
+		string(KeyCentroid):  p.Centroid,
+		string(KeyDynamics):  p.DynamicRange,
+		string(KeyHarmonics): p.Harmonics.Mid,
+		string(KeyLean):      p.EvenOdd.Mid,
+	}
+
+	if p.Transient.Known {
+		out[string(KeyTransient)] = p.Transient.Value
+	}
+
+	if p.Decay.Known {
+		out[string(KeyDecay)] = p.Decay.Value
+	}
+
+	return out
+}
+
 // Measured is what several recordings measure as together, keyed for a rig's
 // evidence.
 //
@@ -168,6 +198,49 @@ func (a Across) Measured() map[string]float64 {
 
 	if a.Decay.From > 0 {
 		out[string(KeyDecay)] = to(a.Decay.Mid, 2)
+	}
+
+	return out
+}
+
+// Figures is the same middles [Across.Measured] reports, unrounded.
+//
+// **What computes, against what a document shows.** `Measured` rounds to what
+// one recording can honestly claim: a centroid to the hertz because the bins
+// are about 10Hz apart, and a share to two places because the third moves with
+// which windows the playing fell in. That is right for one recording and wrong
+// for a median over sixteen of them, because averaging is what buys the places
+// back, and rounding a population to a single take's precision throws away
+// precision the averaging earned.
+//
+// It cost three of the eleven genres their displacement. hard-rock's records
+// sit 0.5Hz and 0.0008 of a share from the players who hold none of it, which
+// rounded to a centroid of 132 against 132 and a mid share of 0.03 against
+// 0.03: nothing to aim at, on a figure whose whole range across the eleven is
+// 0.02 to 0.11, where two places leave ten distinguishable values. southern-
+// rock's mid sat 0.0047 of a share out and read as zero.
+//
+// So the arithmetic reads this and a rig's evidence reads `Measured`. Nothing
+// is claimed to more places anywhere a person sees a figure.
+func (a Across) Figures() map[string]float64 {
+	out := map[string]float64{
+		string(KeyLow):       a.Low.Mid,
+		string(KeyMid):       a.Mid.Mid,
+		string(KeyHigh):      a.High.Mid,
+		string(KeyCentroid):  a.Centroid.Mid,
+		string(KeyDynamics):  a.DynamicRange.Mid,
+		string(KeyHarmonics): a.Harmonics.Mid,
+		string(KeyLean):      a.EvenOdd.Mid,
+	}
+
+	// Absent rather than zero, for the reason [Across.Measured] gives: a
+	// figure nobody could take is not a figure of nothing.
+	if a.Transient.From > 0 {
+		out[string(KeyTransient)] = a.Transient.Mid
+	}
+
+	if a.Decay.From > 0 {
+		out[string(KeyDecay)] = a.Decay.Mid
 	}
 
 	return out
