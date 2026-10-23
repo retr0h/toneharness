@@ -658,6 +658,32 @@ func compile(
 	enabled bool,
 	headroom float64,
 ) (string, error) {
+	return compiled(ctx, client, block, "", work, enabled, headroom)
+}
+
+// compiled is [compile] with something allowed after the block.
+//
+// Task 271. Every reading in the library was taken with one block in the chain
+// and nothing else, which for an amplifier decides the figures: nothing is
+// lowpassing it and what comes back is the buzz a cabinet exists to absorb. 43
+// of the 121 usable curves hold a position reading more than half its energy
+// above 2kHz and all 43 are amplifiers.
+//
+// So a sweep may now name what follows the block. The model rather than the
+// gear, for the reason [planFor] gives: 661 models share 468 names and a sweep
+// wants this one and no other.
+//
+// Empty is the chain this has always built, and the four callers that measure
+// a block alone go through [compile] and say nothing.
+func compiled(
+	ctx context.Context,
+	client Quiets,
+	block measured.Block,
+	after string,
+	work string,
+	enabled bool,
+	headroom float64,
+) (string, error) {
 	name := strings.NewReplacer("/", "-", " ", "-").Replace(block.ID)
 	spec := filepath.Join(work, name+".yaml")
 	out := filepath.Join(work, name+".hlx")
@@ -667,7 +693,7 @@ func compile(
 		return "", fmt.Errorf("writing %s: %w", spec, err)
 	}
 
-	if err := plan.Write(f, planFor(block, enabled)); err != nil {
+	if err := plan.Write(f, planFor(block, enabled, after)); err != nil {
 		_ = f.Close()
 
 		return "", fmt.Errorf("writing %s: %w", spec, err)
@@ -703,14 +729,34 @@ func compile(
 func planFor(
 	block measured.Block,
 	enabled bool,
+	// after is a model to put behind the block, or empty for the chain of one
+	// this always built. Task 271.
+	after string,
 ) plan.Plan {
+	blocks := []plan.Block{{
+		Model:   catalog.ModelID(block.ID),
+		Enabled: enabled,
+	}}
+
+	// Switched on whatever the block in front of it is, because the whole
+	// point of putting it there is that it is in the signal path: a cabinet
+	// bypassed behind an amplifier leaves the amplifier measured alone with
+	// extra DSP spent.
+	if after != "" {
+		blocks = append(blocks, plan.Block{
+			Model: catalog.ModelID(after),
+			// Position one, because positions on a path have to form the
+			// contiguous run 0..n-1 and two blocks left at the default sit on
+			// top of each other.
+			Pos:     1,
+			Enabled: true,
+		})
+	}
+
 	return plan.Plan{
 		Name: "measure-" + strings.ToLower(
 			strings.NewReplacer("_", "-", " ", "-", "'", "").Replace(block.ID)),
-		Blocks: []plan.Block{{
-			Model:   catalog.ModelID(block.ID),
-			Enabled: enabled,
-		}},
+		Blocks: blocks,
 	}
 }
 

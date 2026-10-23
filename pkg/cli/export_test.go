@@ -27,8 +27,13 @@ var (
 	Wanted = wanted
 	// Resume reads what a previous run got as far as.
 	Resume = resume
-	// PlanFor is a plan holding one block.
+	// PlanFor is a plan holding one block, or two where one follows the
+	// other.
 	PlanFor = planFor
+	// Behind checks a block named to follow the one being swept, and ChainOf
+	// names a chain the device is holding.
+	Behind  = behind
+	ChainOf = chainOf
 	// Reference reads the signal every block is measured against, and
 	// Resample puts it at the rate the loop runs at.
 	Reference = reference

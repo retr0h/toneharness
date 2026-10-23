@@ -248,12 +248,16 @@ func (s *ControlsRunTestSuite) moves(
 func (s *ControlsRunTestSuite) run(
 	model string,
 	b sdk.Bench,
+	// after is a model to put behind the one being swept, or nothing for the
+	// chain of one every other case here measures. Task 271.
+	after ...string,
 ) (measured.Curves, string, error) {
 	var buf bytes.Buffer
 
 	err := MeasureControls(context.Background(), &buf, ControlsOptions{
 		Client: s.pedal, Model: model, Dry: s.dry, Out: s.out,
 		Seconds: 1, Points: 3, Takes: 2, Bench: b,
+		After: strings.Join(after, ""),
 	})
 	if err != nil {
 		return measured.Curves{}, buf.String(), err
@@ -493,14 +497,14 @@ func (s *ControlsRunTestSuite) TestControlsRefusesABlockTheDeviceDidNotLoad() {
 			// What an HX Stomp answers when asked to hold a dual cabinet.
 			name:    "an empty chain",
 			reading: sdk.Reading{},
-			says:    "chain of 0 blocks",
+			says:    "an empty chain",
 		},
 		{
 			// Worse than empty, because the readings would be of real gear
 			// and would still be filed under the wrong name.
 			name:    "a chain holding something else",
 			reading: eqReading(nil),
-			says:    "chain of 1 blocks",
+			says:    "a chain of HD2_EQSimple3Band",
 		},
 		{
 			name: "a device that will not say what it is playing",
@@ -530,6 +534,149 @@ func (s *ControlsRunTestSuite) TestControlsRefusesABlockTheDeviceDidNotLoad() {
 				Choose(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
 			_, _, err := s.run("HD2_CabMicIr_2x15Brute", bench{})
+
+			s.Require().ErrorContains(err, tt.says)
+		})
+	}
+}
+
+// ampIntoCab is what the device reports while playing an amplifier with a
+// cabinet behind it, which is the chain task 271 exists for.
+func ampIntoCab() sdk.Reading {
+	return sdk.Reading{
+		ID: "measured",
+		Rig: rig.Spec{
+			Instrument: rig.InstrumentBass,
+			Chain: []rig.ChainEntry{
+				{Role: rig.RoleAmp, Gear: "Ampeg SVT"},
+				{Role: rig.RoleCab, Gear: "8x10 Ampeg SVT-E"},
+			},
+		},
+		Plan: plan.Plan{
+			Name: "measured",
+			Blocks: []plan.Block{
+				{Model: "HD2_AmpSVBeastNrm", Enabled: true},
+				{Model: "HD2_Cab8x10SVBeast", Pos: 1, Enabled: true},
+			},
+		},
+	}
+}
+
+// TestControlsSweepsIntoABlockBehindIt covers --after, which is the whole of
+// task 271 that does not need the pedal.
+//
+// An amplifier swept with nothing in front of it has no speaker rolloff, so
+// what comes back is the buzz a cabinet exists to absorb: its Treble moved
+// the centroid 12,763Hz per turn where the same control in a chain moves it
+// 3,250, and four of its eleven controls changed sign. So the reading has to
+// say which kind it is, and say it in the file rather than in a sentence
+// somewhere.
+func (s *ControlsRunTestSuite) TestControlsSweepsIntoABlockBehindIt() {
+	var compiled plan.Plan
+
+	s.pedal.EXPECT().
+		Compile(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, in sdk.Compile) (sdk.Built, error) {
+			// The plan on its way to the device, read back off disk, because
+			// what the chain holds is the claim the file then makes about it.
+			f, err := os.Open(in.Plan)
+			s.Require().NoError(err)
+
+			defer func() { _ = f.Close() }()
+
+			got, err := plan.Load(f)
+			s.Require().NoError(err)
+
+			if len(got.Blocks) > len(compiled.Blocks) {
+				compiled = got
+			}
+
+			writeBlank(s.T(), in.Out)
+
+			return sdk.Built{}, nil
+		}).AnyTimes()
+	s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	s.pedal.EXPECT().
+		Turn(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	s.pedal.EXPECT().
+		Choose(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	s.pedal.EXPECT().
+		Current(gomock.Any(), gomock.Any()).
+		Return(ampIntoCab(), nil).AnyTimes()
+
+	got, _, err := s.run("HD2_AmpSVBeastNrm", bench{}, "HD2_Cab8x10SVBeast")
+	s.Require().NoError(err)
+
+	s.Require().Len(compiled.Blocks, 2, "the cabinet went behind the amplifier")
+	s.Require().Equal(
+		catalog.ModelID("HD2_Cab8x10SVBeast"), compiled.Blocks[1].Model)
+	s.Require().True(compiled.Blocks[1].Enabled,
+		"a bypassed cabinet leaves the amplifier measured alone")
+
+	s.Require().False(got.Isolated,
+		"nothing downstream may read a chain sweep as a reading about the block")
+	s.Require().Contains(got.Chain, "Ampeg SVT")
+	s.Require().Contains(got.Chain, "8x10 Ampeg SVT-E",
+		"the chain the device reported, so a later reader can rebuild it")
+}
+
+// TestControlsRefusesAChainMissingTheBlockBehind covers a cabinet the device
+// quietly dropped.
+//
+// The failure that matters most here, because it is silent: the device
+// answers a chain it could not build by playing what it could, so the
+// amplifier would be measured alone while the file said `isolated: false`
+// and claimed a cabinet was in the path.
+func (s *ControlsRunTestSuite) TestControlsRefusesAChainMissingTheBlockBehind() {
+	s.ready()
+
+	// Nothing is measured, which is half the assertion.
+	s.pedal.EXPECT().
+		Turn(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+	_, _, err := s.run(
+		"HD2_CabMicIr_2x15Brute", bench{}, "HD2_Cab8x10SVBeast")
+
+	s.Require().ErrorContains(err, "the device did not load HD2_Cab8x10SVBeast")
+	s.Require().ErrorContains(err, "a chain of HD2_CabMicIr_2x15Brute")
+}
+
+// TestControlsRefusesABlockBehindItThatIsNotOne covers --after naming
+// something the catalog has no model of, and naming the block itself.
+//
+// Refused before any hardware is touched, for the same reason the sweep
+// checks what the device loaded: a chain the device could not build is a
+// chain it answers by playing what it could.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ControlsRunTestSuite) TestControlsRefusesABlockBehindItThatIsNotOne() {
+	for _, tt := range []struct {
+		name  string
+		after string
+		says  string
+	}{
+		{
+			name:  "a model nobody has",
+			after: "nothing calls itself this",
+			says:  "the catalog has no nothing calls itself this",
+		},
+		{
+			// Both blocks answer to the same name, so a curve filed under a
+			// control is a curve of whichever of the two the sweep reached.
+			name:  "the block being swept",
+			after: "HD2_CabMicIr_2x15Brute",
+			says:  "cannot follow itself",
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+
+			// Nothing is compiled and nothing is played, which is the point
+			// of checking it here.
+			s.pedal.EXPECT().Compile(gomock.Any(), gomock.Any()).Times(0)
+			s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Times(0)
+
+			_, _, err := s.run("HD2_CabMicIr_2x15Brute", bench{}, tt.after)
 
 			s.Require().ErrorContains(err, tt.says)
 		})
@@ -773,7 +920,7 @@ func (s *ControlsRunTestSuite) TestControlsReportsAChainItCannotBuild() {
 
 	_, _, err := s.run("HD2_CabMicIr_2x15Brute", bench{})
 
-	s.Require().ErrorContains(err, "building a chain holding only")
+	s.Require().ErrorContains(err, "building a chain holding HD2_CabMicIr_2x15Brute")
 }
 
 // TestControlsCarriesOnPastAControlTheDeviceRefuses covers a declined move.

@@ -178,7 +178,7 @@ func (s *MeasureTestSuite) TestPlanFor() {
 			then: func() {
 				spec := PlanFor(measured.Block{
 					ID: "HD2_Reverb63Spring", Name: "'63 Spring", Category: "reverb",
-				}, true)
+				}, true, "")
 
 				var buf bytes.Buffer
 				s.Require().NoError(plan.Write(&buf, spec))
@@ -198,13 +198,49 @@ func (s *MeasureTestSuite) TestPlanFor() {
 			then: func() {
 				spec := PlanFor(measured.Block{
 					ID: "HD2_AmpSVBeastNrm", Name: "Ampeg SVT", Category: "amp",
-				}, true)
+				}, true, "")
 
 				s.Require().Len(spec.Blocks, 1)
 				s.Require().Equal(catalog.ModelID("HD2_AmpSVBeastNrm"), spec.Blocks[0].Model)
 				s.Require().True(spec.Blocks[0].Enabled,
 					"switched on unless it is the baseline")
 				s.Require().NoError(plan.Validate(s.cat, spec, plan.HXStompLimits()))
+			},
+		},
+		{
+			// Task 271. An amplifier swept with nothing in front of it has no
+			// speaker rolloff, so its Treble moved the centroid 12,763Hz per turn
+			// where the same control in a chain moves it 3,250, and four of its
+			// eleven controls changed sign. So a sweep may name what follows.
+			name: "can put a block behind the one being measured",
+			then: func() {
+				spec := PlanFor(measured.Block{
+					ID: "HD2_AmpSVBeastNrm", Name: "Ampeg SVT", Category: "amp",
+				}, true, "HD2_Cab8x10SVBeast")
+
+				s.Require().Len(spec.Blocks, 2)
+				s.Require().Equal(
+					catalog.ModelID("HD2_AmpSVBeastNrm"), spec.Blocks[0].Model,
+					"the block being swept stays in front")
+				s.Require().Equal(
+					catalog.ModelID("HD2_Cab8x10SVBeast"), spec.Blocks[1].Model)
+				s.Require().True(spec.Blocks[1].Enabled,
+					"a cabinet bypassed behind an amplifier leaves it measured "+
+						"alone with extra DSP spent")
+				s.Require().NoError(
+					plan.Validate(s.cat, spec, plan.HXStompLimits()))
+			},
+		},
+		{
+			// The chain is named for the block in front, which is the one the
+			// readings are about.
+			name: "names itself after the block being measured",
+			then: func() {
+				spec := PlanFor(measured.Block{
+					ID: "HD2_AmpSVBeastNrm", Name: "Ampeg SVT", Category: "amp",
+				}, true, "HD2_Cab8x10SVBeast")
+
+				s.Require().Equal("measure-hd2-ampsvbeastnrm", spec.Name)
 			},
 		},
 		{
@@ -217,7 +253,7 @@ func (s *MeasureTestSuite) TestPlanFor() {
 			then: func() {
 				spec := PlanFor(measured.Block{
 					ID: "HD2_EQSimple3Band", Name: "Simple EQ", Category: "eq",
-				}, false)
+				}, false, "")
 
 				s.Require().False(spec.Blocks[0].Enabled)
 				s.Require().NoError(plan.Validate(s.cat, spec, plan.HXStompLimits()))
@@ -240,7 +276,7 @@ func (s *MeasureTestSuite) TestPlanFor() {
 // throwing them away.
 func (s *MeasureTestSuite) TestEveryBlockCompilesIntoAPlanThatValidates() {
 	for _, block := range Wanted(s.cat, "", nil) {
-		spec := PlanFor(block, true)
+		spec := PlanFor(block, true, "")
 
 		s.Require().NoErrorf(
 			plan.Validate(s.cat, spec, plan.LimitsFor(s.cat.Device)),
@@ -786,6 +822,131 @@ func (s *MeasureTestSuite) TestDriftedSaysWhenTheRigChangedUnderYou() {
 			s.Require().Contains(said, "different measuring rig")
 			s.Require().Contains(said, "volume",
 				"it names what to check, or the warning is just alarm")
+		})
+	}
+}
+
+// TestBehind covers a block named to follow the one being swept.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasureTestSuite) TestBehind() {
+	for _, tt := range []struct {
+		name  string
+		model string
+		after string
+		says  string
+	}{
+		{
+			// The sweep every committed reading came from.
+			name:  "nothing named is the chain of one",
+			model: "HD2_AmpSVBeastNrm",
+		},
+		{
+			name:  "takes a model the catalog carries",
+			model: "HD2_AmpSVBeastNrm",
+			after: "HD2_Cab8x10SVBeast",
+		},
+		{
+			// Refused here rather than at the device, because the device
+			// answers a chain it could not build by playing what it could: a
+			// dropped block reads as an isolated sweep that the file then
+			// claims was taken in a chain.
+			name:  "refuses a model the catalog has no entry for",
+			model: "HD2_AmpSVBeastNrm",
+			after: "HD2_Cab8x10NotAThing",
+			says:  "the catalog has no HD2_Cab8x10NotAThing",
+		},
+		{
+			// Both blocks answer to the same name, so a curve filed under a
+			// control is a curve of whichever of the two the sweep reached.
+			name:  "refuses the same model twice",
+			model: "HD2_AmpSVBeastNrm",
+			after: "HD2_AmpSVBeastNrm",
+			says:  "cannot follow itself",
+		},
+	} {
+		s.Run(tt.name, func() {
+			err := Behind(s.cat, tt.model, tt.after)
+
+			if tt.says == "" {
+				s.Require().NoError(err)
+
+				return
+			}
+
+			s.Require().ErrorContains(err, tt.says)
+		})
+	}
+}
+
+// TestChainOf covers naming the chain a device is holding.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasureTestSuite) TestChainOf() {
+	for _, tt := range []struct {
+		name string
+		give []string
+		want string
+	}{
+		{
+			// A count alone cannot tell an empty chain from one of the right
+			// length missing one of two models, which is the failure the
+			// message exists for.
+			name: "says so when the chain is empty",
+			want: "an empty chain",
+		},
+		{
+			name: "names one block",
+			give: []string{"HD2_AmpSVBeastNrm"},
+			want: "a chain of HD2_AmpSVBeastNrm",
+		},
+		{
+			name: "names them in the order they are played",
+			give: []string{"HD2_AmpSVBeastNrm", "HD2_Cab8x10SVBeast"},
+			want: "a chain of HD2_AmpSVBeastNrm > HD2_Cab8x10SVBeast",
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, ChainOf(tt.give))
+		})
+	}
+}
+
+// TestSweptTo covers where a sweep's readings go when nothing named a file.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MeasureTestSuite) TestSweptTo() {
+	for _, tt := range []struct {
+		name  string
+		model string
+		after string
+		want  string
+	}{
+		{
+			// What reads these back asks for one file per model, lowercased.
+			name:  "names the file after the block",
+			model: "HD2_AmpSVBeastNrm",
+			want:  "hd2_ampsvbeastnrm.json",
+		},
+		{
+			// The whole reason this is a function. A chain sweep written to
+			// the block's own name would be handed to the solver as that
+			// block's isolated reading, which is what `isolated: false`
+			// exists to prevent and what a filename nothing checks undoes.
+			name:  "names a chain sweep after the pair",
+			model: "HD2_AmpSVBeastNrm",
+			after: "HD2_Cab8x10SVBeast",
+			want:  "hd2_ampsvbeastnrm-into-hd2_cab8x10svbeast.json",
+		},
+	} {
+		s.Run(tt.name, func() {
+			got := SweptTo(tt.model, tt.after)
+
+			s.Require().Equal(tt.want, filepath.Base(got))
+			s.Require().Equal(
+				filepath.Join("resources", "sweeps", "hx-stomp"),
+				filepath.Dir(got),
+				"beside the readings somebody looks at")
 		})
 	}
 }

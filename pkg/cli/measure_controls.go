@@ -83,6 +83,16 @@ type ControlsOptions struct {
 	// Bench is somewhere to push the signal through, as it is for measuring
 	// blocks. Left unset, the named hardware is opened.
 	Bench sdk.Bench
+	// After is a model to put behind the block being swept, or empty to sweep
+	// it alone the way every committed reading was taken.
+	//
+	// Task 271. For an amplifier the difference is the whole reading: swept
+	// alone one of these moved the centroid 12,763Hz per turn of Treble where
+	// the same control in a chain moves it 3,250, and four of its eleven
+	// controls changed sign. A reading taken this way records `isolated:
+	// false` and the chain the device reported, so nothing downstream can
+	// mistake one kind for the other.
+	After string
 }
 
 // alongside says what a sweep of an amplifier with no cabinet is worth.
@@ -234,6 +244,10 @@ func MeasureControls(
 		return fmt.Errorf("the catalog has no %s", opts.Model)
 	}
 
+	if err := behind(cat, opts.Model, opts.After); err != nil {
+		return err
+	}
+
 	// The catalog's order where there is one, and the device's own where there
 	// is not. Line 6 ship a symbol list for every block, so in practice this
 	// is the catalog's: the belief that equalisers had none was a lookup that
@@ -282,12 +296,21 @@ func MeasureControls(
 		Category: block.Category,
 	}
 
-	preset, err := compile(ctx, opts.Client, entry, work, true, opts.Headroom)
+	preset, err := compiled(
+		ctx, opts.Client, entry, opts.After, work, true, opts.Headroom)
 	if err != nil {
-		return fmt.Errorf("building a chain holding only %s: %w", opts.Model, err)
+		return fmt.Errorf("building a chain holding %s: %w", opts.Model, err)
 	}
 
-	if err := seated(ctx, opts.Client, preset, opts.Model); err != nil {
+	// Both models where one follows the other, because a cabinet the device
+	// quietly dropped would leave the amplifier measured alone while the file
+	// claimed a chain.
+	expect := []string{opts.Model}
+	if opts.After != "" {
+		expect = append(expect, opts.After)
+	}
+
+	if err := seated(ctx, opts.Client, preset, expect...); err != nil {
 		return err
 	}
 
@@ -302,7 +325,7 @@ func MeasureControls(
 
 	out := measured.Curves{
 		Device: cat.Device, Gear: block.Name, Block: string(block.ID),
-		Slot: alone, Isolated: true, Probed: probed,
+		Slot: alone, Isolated: opts.After == "", Probed: probed,
 		Instrument: referenceIsFor(opts.Dry), Headroom: opts.Headroom,
 		Volume: level,
 		// The same three the fingerprint library records, for the same
@@ -781,7 +804,11 @@ func seated(
 		Reads
 	},
 	preset string,
-	model string,
+	// models is every one the chain has to hold. More than one since task
+	// 271: a sweep may name a cabinet to put behind the block, and a cabinet
+	// the device quietly dropped would leave the amplifier measured alone
+	// while the file said it was measured in a chain.
+	models ...string,
 ) error {
 	if err := client.Play(ctx, preset); err != nil {
 		return err
@@ -792,19 +819,101 @@ func seated(
 		return err
 	}
 
+	held := make([]string, 0, len(read.Plan.Blocks))
 	for _, b := range read.Plan.Blocks {
-		if string(b.Model) == model {
-			return nil
+		held = append(held, string(b.Model))
+	}
+
+	for _, model := range models {
+		if !slices.Contains(held, model) {
+			return notLoaded(held, model)
 		}
 	}
 
+	return nil
+}
+
+// SweptTo is where a sweep's readings go when nothing named a file.
+//
+// A chain sweep lands under its own name rather than the block's, and that is
+// the point of it. What reads these back asks for one file per model, so a
+// sweep taken through a cabinet written to the block's own name would be
+// handed to the solver as that block's isolated reading. `isolated: false`
+// exists to stop exactly that, and a filename nothing checks would undo it.
+//
+// Here rather than beside the flag that defaults to it, because which file a
+// chain sweep lands in is the thing keeping the two kinds of reading apart,
+// and that is worth a test.
+func SweptTo(
+	model string,
+	after string,
+) string {
+	name := strings.ToLower(model)
+	if after != "" {
+		name += "-into-" + strings.ToLower(after)
+	}
+
+	return filepath.Join("resources", "sweeps", "hx-stomp", name+".json")
+}
+
+// behind checks a block named to follow the one being swept.
+//
+// Refused here rather than at the device, because the device answers a chain
+// it could not build by playing what it could: a dropped block would read as
+// an isolated sweep that the file then claims was taken in a chain.
+func behind(
+	cat *catalog.Catalog,
+	model string,
+	after string,
+) error {
+	if after == "" {
+		return nil
+	}
+
+	if _, ok := cat.Blocks[catalog.ModelID(after)]; !ok {
+		return fmt.Errorf("the catalog has no %s to put behind %s",
+			after, model)
+	}
+
+	// The same model twice is a chain the device holds and a reading nothing
+	// can read: both blocks answer to the same name, so a curve filed under
+	// a control is a curve of whichever of the two the sweep reached.
+	if after == model {
+		return fmt.Errorf(
+			"%s cannot follow itself: both blocks answer to the same model, "+
+				"so a reading could not say which of the two a control moved",
+			model)
+	}
+
+	return nil
+}
+
+// notLoaded says the device is playing a chain without the model in it.
+//
+// It names what the device is holding instead. A chain of the right length
+// missing one of two models is the failure this exists for, and a count alone
+// cannot tell that from an empty one.
+func notLoaded(
+	held []string,
+	model string,
+) error {
 	return fmt.Errorf(
-		"the device did not load %s: it is playing a chain of %d blocks and "+
-			"none of them is that model, so every reading would be of the "+
-			"measuring loop rather than of this block. The catalog carries "+
-			"the model and the hardware will not hold it, which is a question "+
-			"about the catalog rather than about this sweep",
-		model, len(read.Plan.Blocks))
+		"the device did not load %s: it is playing %s, so every reading "+
+			"would be of something other than this block. The catalog "+
+			"carries the model and the hardware will not hold it, which is a "+
+			"question about the catalog rather than about this sweep",
+		model, chainOf(held))
+}
+
+// chainOf names a chain the way a person reads one, or says it is empty.
+func chainOf(
+	held []string,
+) string {
+	if len(held) == 0 {
+		return "an empty chain"
+	}
+
+	return "a chain of " + strings.Join(held, " > ")
 }
 
 // current is the chain the device is playing, as the rig it describes.
