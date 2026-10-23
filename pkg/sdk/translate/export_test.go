@@ -176,3 +176,11 @@ func PlayerAim(
 
 	return at.read, ok
 }
+
+// AsPlayed narrows a ranking to the blocks that leave the notes alone.
+//
+// Read here rather than through a build because a build reaches one of its
+// three answers. Nothing shipped refuses the nearest block of a category it
+// chooses, and no category a build chooses from is refused outright, but both
+// are the contract.
+var AsPlayed = asPlayed

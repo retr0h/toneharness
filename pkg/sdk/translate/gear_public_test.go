@@ -365,6 +365,111 @@ func (s *GearPublicTestSuite) TestWanted() {
 	}
 }
 
+// TestAsPlayed covers the refusal of blocks that change what is played.
+//
+// One method and one table, so a case is a row rather than a file. The second
+// answer is what makes this worth a table: whether the refusal happened in
+// front of everything that survived, which is the only refusal that changed
+// which block got chosen.
+func (s *GearPublicTestSuite) TestAsPlayed() {
+	// Keyed by the model identifiers Line 6 use, because that is what the
+	// named half of the refusal reads and a short name of our own would not
+	// exercise it.
+	held := s.built(map[catalog.ModelID]catalog.Block{
+		"fuzz": {
+			ID: "HD2_DistTriangleFuzz", Name: "Triangle Fuzz",
+			Category: catalog.CategoryDrive,
+		},
+		"octave": {
+			ID: "HD2_DM4OctaveFuzz", Name: "Octave Fuzz",
+			Category: catalog.CategoryDrive, BasedOn: "Tycobrahe Octavia",
+		},
+		"synth": {
+			ID: "HD2_FM4OctiSynth", Name: "Octi Synth",
+			Category: catalog.CategoryPitch,
+		},
+		"boost": {
+			ID: "HD2_DistKinkyBoost", Name: "Kinky Boost",
+			Category: catalog.CategoryDrive,
+		},
+	})
+
+	for _, tt := range []struct {
+		name    string
+		cat     *catalog.Catalog
+		ranked  []measured.Match
+		want    []string
+		refused []string
+	}{
+		{
+			name:   "nothing to refuse",
+			cat:    held,
+			ranked: s.ranked("fuzz", "boost"),
+			want:   []string{"fuzz", "boost"},
+		},
+		{
+			// The case this exists for. The octave fuzz read nearest, so its
+			// refusal is what put the ordinary fuzz in the chain.
+			name:    "the nearest changes the notes, and it is said so",
+			cat:     held,
+			ranked:  s.ranked("octave", "fuzz", "boost"),
+			want:    []string{"fuzz", "boost"},
+			refused: []string{"Tycobrahe Octavia"},
+		},
+		{
+			// Refused behind a survivor, so it was never going to be chosen
+			// and there is nothing to report.
+			name:   "one further out is dropped quietly",
+			cat:    held,
+			ranked: s.ranked("fuzz", "octave", "boost"),
+			want:   []string{"fuzz", "boost"},
+		},
+		{
+			name:    "two ahead of the first survivor are both named",
+			cat:     held,
+			ranked:  s.ranked("synth", "octave", "boost"),
+			want:    []string{"boost"},
+			refused: []string{"Octi Synth", "Tycobrahe Octavia"},
+		},
+		{
+			// Nothing left to rank, which no category a build chooses from
+			// is in. It is still the contract.
+			name:    "every one of them changes the notes",
+			cat:     held,
+			ranked:  s.ranked("synth", "octave"),
+			want:    []string{},
+			refused: []string{"Octi Synth", "Tycobrahe Octavia"},
+		},
+		{
+			// The catalog and the measured library drifting apart. Kept, so
+			// the drift shows up as a block rather than as an absence.
+			name:   "a block the catalog does not hold",
+			cat:    held,
+			ranked: s.ranked("gone", "fuzz"),
+			want:   []string{"gone", "fuzz"},
+		},
+		{
+			// Nothing to ask, so nothing is refused. A caller with no catalog
+			// gets its ranking back whole.
+			name:   "no catalog to ask",
+			ranked: s.ranked("octave", "fuzz"),
+			want:   []string{"octave", "fuzz"},
+		},
+	} {
+		s.Run(tt.name, func() {
+			kept, refused := translate.AsPlayed(tt.cat, tt.ranked)
+
+			ids := make([]string, 0, len(kept))
+			for _, match := range kept {
+				ids = append(ids, match.ID)
+			}
+
+			s.Require().Equal(tt.want, ids)
+			s.Require().Equal(tt.refused, refused)
+		})
+	}
+}
+
 // TestDisplacedTo covers turning a genre into a target a block can be ranked
 // against.
 //

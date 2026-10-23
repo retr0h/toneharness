@@ -49,7 +49,7 @@ rig:
             low: 1
             mid: 0.01
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 57 bass drives this device models to metal, sitting at 123 Hz against 125. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 52 bass drives this device models to metal, sitting at 123 Hz against 125. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
         Bright: "true"
         Drive: "0.875"
@@ -88,14 +88,14 @@ rig:
             transient: 0.72
           note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to metal, sitting at 124 Hz against 125. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        125Hz: "-3.75"
-        16kHz: "7.5"
-        1kHz: "11.25"
+        125Hz: "3.75"
+        16kHz: "15.0"
+        1kHz: "15.0"
         250Hz: "11.25"
         2kHz: "15.0"
         31p25Hz: "-15.0"
         4kHz: "15.0"
-        500Hz: "3.75"
+        500Hz: "15.0"
         62p5Hz: "-7.5"
         8kHz: "15.0"
       enabled: false
@@ -121,7 +121,7 @@ built:
             low: 1
             mid: 0.01
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 57 bass drives this device models to metal, sitting at 123 Hz against 125. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 52 bass drives this device models to metal, sitting at 123 Hz against 125. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
         Boost: "false"
         Bright: "true"
@@ -205,14 +205,14 @@ built:
             transient: 0.72
           note: Chosen by measurement rather than by anybody's say-so. MXR 10-Band Graphic EQ is the closest of the 8 bass equalisers this device models to metal, sitting at 124 Hz against 125. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        125Hz: "-3.75"
-        16kHz: "7.5"
-        1kHz: "11.25"
+        125Hz: "3.75"
+        16kHz: "15.0"
+        1kHz: "15.0"
         250Hz: "11.25"
         2kHz: "15.0"
         31p25Hz: "-15.0"
         4kHz: "15.0"
-        500Hz: "3.75"
+        500Hz: "15.0"
         62p5Hz: "-7.5"
         8kHz: "15.0"
         Level: "0.0"

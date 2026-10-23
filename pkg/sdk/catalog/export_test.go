@@ -20,6 +20,22 @@
 
 package catalog
 
+import "sort"
+
 // Exposed to the package's own tests: the embedded catalog cannot be damaged
 // at run time, so decoding failures are only reachable with supplied bytes.
 var Decode = decode
+
+// Interval is the blocks named as changing the notes outside the pitch
+// category, so a test can hold each against the shipped catalog. Sorted, so a
+// failure names the same row every run.
+func Interval() []ModelID {
+	out := make([]ModelID, 0, len(interval))
+	for id := range interval {
+		out = append(out, id)
+	}
+
+	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+
+	return out
+}

@@ -21,6 +21,7 @@
 package translate_test
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"testing"
@@ -213,6 +214,64 @@ func (s *GenreGearPublicTestSuite) TestAnEffectIsSetFromItsSweep() {
 
 	// A block with no sweep says so rather than arriving quietly untouched.
 	s.Require().Contains(said, "no sweep for it")
+}
+
+// TestTheNearestEffectThatChangesTheNotesIsRefused covers the refusal where a
+// build is choosing on somebody's behalf.
+//
+// The committed library does not quite reach it. Five of this device's 61
+// drives add an interval nobody played, and against the eleven genres each
+// reads second or third rather than first: pop-punk's nearest of the five is
+// a Sub Oct Fuzz 0.69 out against the Ampeg Scrambler's 0.21, and rock's is
+// an Octave Fuzz 0.87 against the Metal Zone's 0.68. Those are margins a
+// single record moves, so the library is narrowed here to put one in front,
+// which is the state the ranking arrives at on its own sooner or later.
+func (s *GenreGearPublicTestSuite) TestTheNearestEffectThatChangesTheNotesIsRefused() {
+	const (
+		octave = "HD2_DM4OctaveFuzz"
+		plain  = "HD2_DistHedgehogD9"
+	)
+
+	deps := s.deps
+	deps.Measured.Blocks = maps.Clone(s.deps.Measured.Blocks)
+
+	// Two drives in the library and nothing else, so which of them reads
+	// nearest is not a question about the other 59.
+	for id, block := range deps.Measured.Blocks {
+		if block.Category == catalog.CategoryDrive && id != octave && id != plain {
+			delete(deps.Measured.Blocks, id)
+		}
+	}
+
+	// The octave fuzz keeps its own reading and the ordinary drive is moved
+	// where no bass record sits, so the ranking has to answer with the one
+	// that changes the notes.
+	was := deps.Measured.Blocks[plain]
+	was.Centroid, was.Low, was.Mid, was.High = 9000, 0, 0, 100
+	deps.Measured.Blocks[plain] = was
+
+	built, notes, err := translate.Translate(
+		s.forGenre("punk"), tone.Setup{}, deps)
+	s.Require().NoError(err)
+
+	said := ""
+	for _, n := range notes {
+		said += n.Said + "\n"
+	}
+
+	s.Require().Contains(said,
+		"Tycobrahe Octavia read nearest and was refused: it changes the notes "+
+			"rather than the tone")
+
+	// And the chain got the one that does not, rather than nothing at all.
+	gear := []string(nil)
+	for _, e := range built.Chain {
+		if e.Role == rig.RoleDrive {
+			gear = append(gear, e.Gear)
+		}
+	}
+
+	s.Require().Equal([]string{"MAXON SD9 Sonic Distortion"}, gear)
 }
 
 // TestAnUnmeasuredGenreGetsNothing covers the genre nobody can aim at.
