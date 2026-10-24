@@ -78,7 +78,12 @@ func (s *PooledTestSuite) mic() *catalog.Catalog {
 			"Legacy": {
 				ID: "Legacy", Category: catalog.CategoryCab,
 				Params: map[string]catalog.Param{
-					"High Cut":         {Key: "High Cut", Type: catalog.ParamFloat, Min: 500, Max: 20100},
+					"High Cut": {
+						Key:  "High Cut",
+						Type: catalog.ParamFloat,
+						Min:  500,
+						Max:  20100,
+					},
 					"EarlyReflections": {Key: "EarlyReflections", Type: catalog.ParamFloat, Max: 1},
 				},
 			},
