@@ -106,6 +106,43 @@ and which positions each snapshot switches on.
 The four routing positions are left alone, because a snapshot records those too
 and switching one off recalls the chain with its split bypassed.
 
+### A snapshot the device does not trust breaks the footswitches
+
+Each snapshot also carries `@valid`, which says whether the device believes its
+record. **An untouched preset has all three invalid and no block record at
+all**, and a preset built here is written into an untouched one, so it inherits
+them unless something writes over them.
+
+A pedal loading a preset whose snapshots are invalid has nothing to recall and
+initialises them from whatever the chain happens to be. The footswitches then
+take three presses before they work: the first goes into that initialisation
+and moves nothing, the second leaves the pedal and the block disagreeing, and
+the third settles them. After that the switch works for good.
+
+**That symptom points nowhere near its cause**, which is why it is written down:
+
+- the switch is bound to the right block, and reading the preset back proves it
+- `@fs_enabled` is `false`, and so is a working preset's, so it is not the
+  difference
+- the preset comes up edited partway through, which is the snapshot being
+  written
+- it never recurs for that slot, so it reads as a one-off
+
+So if a built preset's switches need pressing three times, read `@valid` before
+anything else:
+
+```bash
+mise exec -- go run main.go slots export --slot 37C --as hlx --out /tmp/was.hlx
+python3 -c "import json;t=json.load(open('/tmp/was.hlx'))['data']['tone'];print([t[s]['@valid'] for s in ('snapshot0','snapshot1','snapshot2')])"
+```
+
+Three `True` is right. Any `False` is this. Compare against a preset the pedal
+itself wrote, which carries `True` on all three and a block record per
+snapshot.
+
+The protocol side, and what was read off the device to establish it, is
+[the wire README](../../../../pkg/sdk/internal/wire/README.md).
+
 ## The routing is part of the chain too
 
 A chain is written into the other sixteen positions, so a preset built from a

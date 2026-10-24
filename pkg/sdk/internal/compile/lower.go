@@ -176,6 +176,16 @@ func Lower(
 		restoreSnapshots(doc, p.Snapshots)
 	}
 
+	// After either of those, because the question is about what the document
+	// ends up holding rather than where it came from. A plan carrying the
+	// blank snapshots it lifted from an untouched preset is as unbelievable as
+	// a plan carrying none, and only one of those two is the branch above.
+	//
+	// Task 278: three snapshots the device does not believe make every
+	// footswitch on the preset take three presses before it works. See
+	// [trustSnapshots].
+	Trust(doc, p.Blocks)
+
 	// After the device's own state, so a plan's own assignments win over
 	// whatever the preset underneath carried. Checked already, by check above,
 	// along with everything else the plan claims.

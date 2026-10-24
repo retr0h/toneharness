@@ -299,6 +299,29 @@ func switchesOf(
 				label = gear
 			}
 
+			// Whether the assignment acts on the block, and whether it holds
+			// while pressed. Task 278.
+			//
+			// **These were not read, and the zero value of a bool is the
+			// wrong answer for the first of them.** Every switch this tool
+			// wrote reached the pedal with `@fs_enabled: false` however the
+			// document was built, because this is the only place the field
+			// could have been carried and it was not among the six that
+			// were.
+			//
+			// What that looked like on the hardware: a switch pointing at the
+			// right block that did nothing until it had been pressed three
+			// times, after which it worked for good. The presses were the
+			// pedal arming the assignment itself, which is why the preset
+			// came up edited partway through and why it never recurred for
+			// that slot. It read like a decode fault for weeks.
+			//
+			// Written false by `compile.Assign` as well, which was the other
+			// half and is fixed beside this. Either alone leaves the switch
+			// dead: the document has to say true and this has to carry it.
+			enabled, _ := fields[fsEnabled].(bool)
+			momentary, _ := fields[fsMomentary].(bool)
+
 			out = append(out, wire.DeviceFootswitch{
 				Switch: int(index),
 				// A document counts blocks from zero along the chain and the
@@ -308,11 +331,13 @@ func switchesOf(
 				// drive, amp and cab the drive asked for position 0, which no
 				// block occupies, and the switch lit and did nothing. Put a
 				// compressor in front and it named the compressor instead.
-				Block: placed[at].Position + wire.GridOffset,
-				Gear:  gear,
-				Label: label,
-				LED:   int(colour),
-				Auto:  int(auto),
+				Block:     placed[at].Position + wire.GridOffset,
+				Gear:      gear,
+				Label:     label,
+				LED:       int(colour),
+				Auto:      int(auto),
+				Enabled:   enabled,
+				Momentary: momentary,
 			})
 		}
 	}
@@ -333,4 +358,8 @@ const (
 	fsPrinted = "@fs_customlabel"
 	fsChosen  = "@fs_customcolor"
 	fsAuto    = "@fs_ledcolor"
+	// fsEnabled is whether the assignment acts on the block and fsMomentary
+	// whether it holds while pressed rather than latching.
+	fsEnabled   = "@fs_enabled"
+	fsMomentary = "@fs_momentary"
 )

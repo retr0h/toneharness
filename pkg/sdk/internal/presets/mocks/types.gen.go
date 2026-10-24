@@ -294,3 +294,15 @@ func (mr *MockCompilerMockRecorder) Sections(doc, spec, made, blocks, cat any) *
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sections", reflect.TypeOf((*MockCompiler)(nil).Sections), doc, spec, made, blocks, cat)
 }
+
+// Trust mocks base method.
+func (m *MockCompiler) Trust(doc *preset.Document, blocks []plan.Block) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Trust", doc, blocks)
+}
+
+// Trust indicates an expected call of Trust.
+func (mr *MockCompilerMockRecorder) Trust(doc, blocks any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Trust", reflect.TypeOf((*MockCompiler)(nil).Trust), doc, blocks)
+}

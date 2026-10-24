@@ -244,6 +244,124 @@ func (s *SnapshotsPublicTestSuite) TestLowerSnapshots() {
 	}
 }
 
+// TestTrust covers making a preset's snapshots ones the device believes.
+//
+// Task 278, and the whole of what it was. Block bypass is snapshot state, so a
+// pedal loading a preset whose snapshots are invalid has nothing to recall and
+// initialises them from whatever the chain happens to be. Every footswitch on
+// the preset then takes three presses before it works, and after that works
+// for good, which is why it read as a decode fault for weeks.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *SnapshotsPublicTestSuite) TestTrust() {
+	on := plan.Block{Model: "HD2_AmpSVBeastNrm", Pos: 0, Enabled: true}
+	off := plan.Block{Model: "HD2_DistHedgehogD9", Pos: 2, Enabled: false}
+
+	for _, tt := range []struct {
+		name    string
+		entries map[string]string
+		blocks  []plan.Block
+		// valid is what each snapshot's @valid must read, by key.
+		valid map[string]bool
+		// states is what the snapshot's block record must hold, by key.
+		// Absent means the record must be left alone.
+		states map[string]map[string]bool
+	}{
+		{
+			// The blank an untouched preset ships with, which is what a
+			// built preset inherits: neither valid nor carrying a record.
+			name: "three blank snapshots get the chain",
+			entries: map[string]string{
+				"snapshot0": `{"@valid": false}`,
+				"snapshot1": `{"@valid": false}`,
+				"snapshot2": `{"@valid": false}`,
+			},
+			blocks: []plan.Block{on, off},
+			valid:  map[string]bool{"snapshot0": true, "snapshot1": true, "snapshot2": true},
+			states: map[string]map[string]bool{
+				"snapshot0": {"block0": true, "block2": false},
+			},
+		},
+		{
+			// A field absent is the same as false here: an untouched preset
+			// omits it rather than writing one.
+			name: "a snapshot that says nothing about being valid",
+			entries: map[string]string{
+				"snapshot0": `{"@name": "SNAPSHOT 1"}`,
+			},
+			blocks: []plan.Block{off},
+			valid:  map[string]bool{"snapshot0": true},
+			states: map[string]map[string]bool{"snapshot0": {"block2": false}},
+		},
+		{
+			// **One captured snapshot and none of them are touched.**
+			// Somebody setting up even a single one has made a musical
+			// decision, and seeding all three from the chain would throw it
+			// away: a preset that arrived with three different sounds would
+			// come back holding one.
+			name: "a preset somebody has captured a snapshot into",
+			entries: map[string]string{
+				"snapshot0": `{"@valid": true, "blocks": {"dsp0": {"block0": false}}}`,
+				"snapshot1": `{"@valid": false}`,
+			},
+			blocks: []plan.Block{on, off},
+			valid:  map[string]bool{"snapshot0": true, "snapshot1": false},
+			states: map[string]map[string]bool{
+				"snapshot0": {"block0": false},
+			},
+		},
+		{
+			// Nothing to make believable. A preset keeping no snapshots is
+			// not a caller's mistake.
+			name:    "a preset with no snapshots at all",
+			entries: map[string]string{},
+			blocks:  []plan.Block{on},
+			valid:   map[string]bool{},
+		},
+		{
+			// A chain of nothing still marks them valid: three snapshots
+			// recalling an empty grid is a true record, and leaving them
+			// invalid is what costs the footswitches.
+			name:    "a chain with no blocks",
+			entries: map[string]string{"snapshot0": `{"@valid": false}`},
+			blocks:  nil,
+			valid:   map[string]bool{"snapshot0": true},
+		},
+	} {
+		s.Run(tt.name, func() {
+			doc := s.presetWith(tt.entries)
+
+			compile.Trust(doc, tt.blocks)
+
+			for key, want := range tt.valid {
+				entry, held := doc.Data.Tone[key]
+				s.Require().True(held, "%s is gone", key)
+
+				var got bool
+				s.Require().NoError(json.Unmarshal(entry["@valid"], &got))
+				s.Require().Equal(want, got, "%s @valid", key)
+			}
+
+			for key, want := range tt.states {
+				var record map[string]map[string]bool
+				s.Require().NoError(
+					json.Unmarshal(doc.Data.Tone[key]["blocks"], &record))
+				s.Require().Equal(want, record["dsp0"], "%s blocks", key)
+			}
+
+			// A snapshot nobody named is not invented. Only the entries the
+			// document came with are written, because how many a device holds
+			// is the device's to say.
+			if len(tt.entries) == 0 {
+				for key := range doc.Data.Tone {
+					s.Require().Negative(preset.SnapshotIndex(key),
+						"%s was invented", key)
+				}
+			}
+		})
+	}
+}
+
 func TestSnapshotsPublicTestSuite(
 	t *testing.T,
 ) {
