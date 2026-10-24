@@ -157,7 +157,7 @@ func Resolve(
 	blocks, wants, asked := demand(blocks, wants, cat, stats, intent, instrument)
 	added = append(added, asked...)
 
-	built := specFor(id, intent, blocks, wants, stats)
+	built := specFor(id, intent, blocks, wants, cat, stats, instrument)
 
 	// What the records of whoever this rig is for measure as, over the corpus
 	// medians and under everything a person wrote.
@@ -603,7 +603,9 @@ func specFor(
 	intent Intent,
 	blocks []catalog.Block,
 	said []*wanted,
+	cat *catalog.Catalog,
 	stats *corpus.Stats,
+	instrument string,
 ) plan.Plan {
 	// The name is what the device prints on its screen, and "Mike Dirnt" is
 	// what somebody wants to read there. That is the subject, which lives on
@@ -634,7 +636,7 @@ func specFor(
 
 		out.Blocks = append(out.Blocks, plan.Block{
 			Model:   b.ID,
-			Params:  settings(b, stats),
+			Params:  settings(b, cat, stats, instrument),
 			DSP:     0,
 			Pos:     at(entry.Position, i),
 			Enabled: playing(entry) && !bypassedAt(said, i),
