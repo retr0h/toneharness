@@ -69,13 +69,26 @@ var ErrUnderTest = errors.New(
 // replaced them with a test of the refusal, which is a worse suite and a
 // worse guard: what is dangerous is reaching the machine, and a fake is not
 // the machine.
-func underTest() bool { return testing.Testing() }
+// A variable, so the pass-through can be exercised. Left as a function the
+// guard calls directly, the branch that reaches the platform is unreachable
+// from any test by construction, and a guard with an untested pass-through is
+// a guard nobody has checked in the direction that matters: that a real run
+// still changes the level.
+//
+// Flipping it is not a way round the guard. What a test gets by flipping it is
+// the fake it passed to [aside], never the machine: `writes` and `setsOutput`
+// are the only callers that bind the real platform, and neither is reachable
+// from here.
+var underTest = testing.Testing
 
 // aside wraps a call that changes the machine so a test binary cannot make it.
 //
 // Named for what it does rather than for the test: this is the real thing set
 // aside, and the only caller is the default each injectable variable is
 // declared with.
+//
+// The wrapper rather than the wrapped is what carries the refusal, so the
+// thing being guarded stays a plain function somebody can read.
 func aside[T any](
 	platform func(T) error,
 ) func(T) error {
