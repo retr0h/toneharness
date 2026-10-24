@@ -189,6 +189,14 @@ func Resolve(
 		return plan.Plan{}, nil, nil, Compensated{}, err
 	}
 
+	// And the two a cabinet keeps in fields of its own, which until now were
+	// written into an attribute nothing on this device reads while the corpus
+	// decided the control. A document said `mic: 4` and the preset arrived at
+	// Mic 11.
+	if err := statedMicing(built.Blocks, blocks, wants); err != nil {
+		return plan.Plan{}, nil, nil, Compensated{}, err
+	}
+
 	// What the chain actually holds, now that everything entitled to write
 	// over a word has written. Read rather than predicted: the two passes
 	// above are the ones that beat a word, and asking the plan what it holds
@@ -851,6 +859,86 @@ func statedControls(
 	return errors.Join(out...)
 }
 
+// statedMicing puts a stated microphone and distance onto the cabinet.
+//
+// The contract keeps these in fields of their own rather than in `controls`,
+// on the reasoning that "the device stores it as an attribute rather than a
+// parameter, so the catalog carries no range for it". **That is true of the
+// legacy cabinets and false of the mic'd impulse responses every rig here
+// builds with.** An `HD2_CabMicIr_8x10SVTAV` carries `Mic` from 0 to 11 and
+// `Distance` from 1 to 12 as parameters with ranges and defaults; the legacy
+// `HD2_Cab8x10SVBeast` carries no `Mic` at all and `Distance` as a parameter
+// all the same.
+//
+// So a stated microphone went into `@mic`, which nothing on this device reads,
+// and the parameter was left to whatever the corpus said. A document asking
+// for microphone 4 built a preset on microphone 11, silently, while every
+// `settings:` field beside it survived. Found by stating every field the
+// contract defines and reading back what the preset carried.
+//
+// The parameter where the block has one and the attribute where it does not,
+// so a legacy cabinet keeps the behaviour it had. Range-checked by name like
+// any other stated value, because a device handed microphone 20 refuses the
+// whole preset and finding that out from the pedal is worse than from a
+// message naming the control.
+//
+// Here rather than in `attrsFrom`, and after `statedControls`, because that is
+// what makes it beat the corpus: this file's order is what decides which of
+// several writers survives, and a number somebody wrote down is the most
+// explicit thing in a rig.
+func statedMicing(
+	built []plan.Block,
+	blocks []catalog.Block,
+	asked []*wanted,
+) error {
+	out := []error(nil)
+
+	for i, entry := range asked {
+		if entry == nil || entry.entry == nil || i >= len(built) {
+			continue
+		}
+
+		if at := entry.entry.Mic; at != nil {
+			out = append(out, micOnto(
+				built[i], blocks[i], micControl, catalog.Int(int64(*at)), i))
+		}
+
+		if at := entry.entry.Distance; at != nil {
+			out = append(out, micOnto(
+				built[i], blocks[i], distanceControl, catalog.Float(*at), i))
+		}
+	}
+
+	return errors.Join(out...)
+}
+
+// micOnto writes one of those two onto the block, or says why it could not.
+//
+// A block with no such parameter is not an error. A legacy cabinet has no
+// `Mic`, and the document's own field is the right place to have said so: the
+// attribute still carries it for whatever reads that, which is what happened
+// before this existed.
+func micOnto(
+	to plan.Block,
+	of catalog.Block,
+	name string,
+	value catalog.ParamValue,
+	at int,
+) error {
+	spec, carried := of.Params[name]
+	if !carried {
+		return nil
+	}
+
+	if err := within(spec, value, at, name); err != nil {
+		return err
+	}
+
+	to.Params[name] = value
+
+	return nil
+}
+
 // within refuses a value the control cannot take.
 //
 // The catalog carries a range for all 5,602 controls, so this is checkable
@@ -1117,7 +1205,12 @@ func choseMic(
 }
 
 // micControl is what the catalog calls a cabinet's microphone.
-const micControl = "Mic"
+const (
+	micControl = "Mic"
+	// distanceControl is how far the microphone sits from the speaker, in
+	// inches. Carried by every cabinet this device models, legacy or mic'd.
+	distanceControl = "Distance"
+)
 
 // set writes one swept position onto a block, in the control's own kind.
 //
