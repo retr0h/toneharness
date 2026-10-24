@@ -296,17 +296,114 @@ func applyMembers(
 	for _, key := range sorted(*members) {
 		fields := deviceFields((*members)[key])
 
-		tone := doc.Data.Tone[key]
-		if tone == nil {
-			tone = preset.Tone{}
+		// Where the document keeps this member, which is not always beside
+		// the processors.
+		//
+		// `global`, `variax` and the snapshots sit at the top of `tone`.
+		// `inputA`, `inputB`, `outputA`, `outputB`, `split` and `join` sit
+		// *inside* `dsp0`, and writing those at the top put six members
+		// somewhere nothing reads while the real one kept whatever the blank
+		// template had. A document stating `@output` could not change where
+		// its chain goes, silently, and left a key behind that the device
+		// never sent. Task 280.
+		//
+		// The document is the authority rather than a list written here. It
+		// comes off the blank template, so it already holds every member this
+		// device sends, in the place the device puts it: a key present at the
+		// top belongs at the top and one present inside a processor belongs
+		// there. A list here would be a second place to keep the same fact
+		// and would be wrong the first time a device family differs.
+		if _, atTop := doc.Data.Tone[key]; atTop {
+			doc.Data.Tone[key] = merged(doc.Data.Tone[key], fields)
+
+			continue
 		}
 
-		for name, raw := range fields {
-			tone[name] = raw
+		if within, ok := processorHolding(doc, key); ok {
+			doc.Data.Tone[within] = nestedInto(
+				doc.Data.Tone[within], key, fields)
+
+			continue
 		}
 
-		doc.Data.Tone[key] = tone
+		// A member this device has nowhere for. Written at the top, which is
+		// what every member did before this, so a document describing a
+		// device family with members this one lacks keeps them rather than
+		// losing them on a round trip.
+		doc.Data.Tone[key] = merged(nil, fields)
 	}
+}
+
+// merged writes a member's stated fields over whatever a tone entry held.
+func merged(
+	was preset.Tone,
+	fields map[string]json.RawMessage,
+) preset.Tone {
+	if was == nil {
+		was = preset.Tone{}
+	}
+
+	for name, raw := range fields {
+		was[name] = raw
+	}
+
+	return was
+}
+
+// processorHolding is the processor a member sits inside, where one does.
+//
+// Walked in order so the answer is the same every run, and the first match
+// wins: a member name is unique across a preset's processors, and a device
+// that sent the same one twice is describing something this cannot express
+// anyway.
+func processorHolding(
+	doc *preset.Document,
+	member string,
+) (string, bool) {
+	for _, key := range sorted(doc.Data.Tone) {
+		if !strings.HasPrefix(key, processorPrefix) {
+			continue
+		}
+
+		var held map[string]json.RawMessage
+		if err := json.Unmarshal(asObject(doc.Data.Tone[key]), &held); err != nil {
+			continue
+		}
+
+		if _, there := held[member]; there {
+			return key, true
+		}
+	}
+
+	return "", false
+}
+
+// nestedInto writes a member's stated fields over one that sits inside a
+// processor.
+//
+// Field by field, for the reason [deviceFields] renders them that way: a
+// processor's entry holds the chain's blocks beside its members, and the
+// member itself holds a model and attributes the rig says nothing about.
+// Replacing either whole would take them out.
+func nestedInto(
+	processor preset.Tone,
+	member string,
+	fields map[string]json.RawMessage,
+) preset.Tone {
+	var was map[string]json.RawMessage
+	if err := json.Unmarshal(processor[member], &was); err != nil || was == nil {
+		was = map[string]json.RawMessage{}
+	}
+
+	for name, raw := range fields {
+		was[name] = raw
+	}
+
+	// A map of raw JSON always marshals.
+	body, _ := json.Marshal(was)
+	processor[member] = body
+
+	return processor
 }
 
 // deviceFields renders one member as the device's own JSON, field by field.
@@ -414,4 +511,20 @@ func empty(
 ) bool {
 	return of.Model == nil && of.Attrs == nil &&
 		of.Controls == nil && of.Members == nil && of.Entries == nil
+}
+
+// asObject renders a tone entry back as the JSON object it arrived as.
+//
+// `preset.Tone` is already a map of raw fields, so a processor's entry has to
+// be put back together to be read as one: its members are values inside it
+// rather than entries beside it.
+func asObject(
+	tone preset.Tone,
+) []byte {
+	body, err := json.Marshal(tone)
+	if err != nil {
+		return []byte("{}")
+	}
+
+	return body
 }

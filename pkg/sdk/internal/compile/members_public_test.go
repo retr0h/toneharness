@@ -26,6 +26,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -311,6 +312,120 @@ func (s *MembersPublicTestSuite) TestApplyMembers() {
 			tt.then(into.Data.Tone)
 		})
 	}
+}
+
+// TestApplyMembersPutsAProcessorsMemberWhereItLives covers a rig naming a
+// member directly rather than under its processor.
+//
+// Both shapes are expressible. A lifted plan nests, `dsp0` holding `members`
+// holding `inputA`, and that is what every case above exercises because that
+// is what a lift produces. A person writing a rig by hand states the member
+// itself, which is the shape the contract's own description implies when it
+// calls `rig.preset` "the few member fields somebody chose".
+//
+// The flat shape was written into `tone["inputA"]`, beside the processors
+// rather than inside one. Nothing reads a member there, so a document stating
+// `@output` could not change where its chain goes and the preset carried a key
+// the device never sent. Silently, and it is the routing: `signal-path.md`
+// exists because of figures taken through a loop nobody meant to close.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *MembersPublicTestSuite) TestApplyMembersPutsAProcessorsMemberWhereItLives() {
+	held := func(v catalog.ParamValue) *catalog.Held {
+		h := catalog.Hold(v)
+
+		return &h
+	}
+
+	for _, tt := range []struct {
+		name    string
+		member  string
+		attrs   map[string]string
+		control *catalog.Held
+		// then reads the document back.
+		then func(tone map[string]preset.Tone)
+	}{
+		{
+			// The bug. Stated 7, and `dsp0.inputA` kept the 1 the template
+			// had while a stray `tone.inputA` appeared beside it.
+			name:   "an input's own attribute reaches the processor",
+			member: "inputA",
+			attrs:  map[string]string{"@input": "7"},
+			then: func(tone map[string]preset.Tone) {
+				s.Require().NotContains(tone, "inputA",
+					"nothing reads a member beside the processors")
+
+				var held map[string]any
+				s.Require().NoError(json.Unmarshal(tone["dsp0"]["inputA"], &held))
+				s.Require().EqualValues(7, held["@input"])
+
+				// And what the rig said nothing about survives, because a
+				// processor's member holds a model the rig never names.
+				s.Require().Equal("HD2_AppDSPFlow1Input", held["@model"])
+			},
+		},
+		{
+			name:    "and a control of it",
+			member:  "inputA",
+			control: held(catalog.Float(-31.5)),
+			then: func(tone map[string]preset.Tone) {
+				var held map[string]any
+				s.Require().NoError(json.Unmarshal(tone["dsp0"]["inputA"], &held))
+				s.Require().InDelta(-31.5, held["threshold"], 1e-9)
+				s.Require().Equal(false, held["noiseGate"], "untouched")
+			},
+		},
+		{
+			// A member this device has nowhere for is kept rather than
+			// dropped, which is what every member did before this: a document
+			// describing a device family with members this one lacks survives
+			// a round trip.
+			name:   "a member this device has no place for stays where it was",
+			member: "nosuchmember",
+			attrs:  map[string]string{"@thing": "1"},
+			then: func(tone map[string]preset.Tone) {
+				s.Require().Contains(tone, "nosuchmember")
+			},
+		},
+	} {
+		s.Run(tt.name, func() {
+			member := rig.PresetMember{}
+
+			if tt.attrs != nil {
+				raw := map[string]*catalog.Held{}
+				for k, v := range tt.attrs {
+					raw[k] = held(catalog.Int(mustInt(v)))
+				}
+
+				member.Attrs = &raw
+			}
+
+			if tt.control != nil {
+				controls := map[string]*catalog.Held{"threshold": tt.control}
+				member.Controls = &controls
+			}
+
+			members := map[string]rig.PresetMember{tt.member: member}
+
+			into := s.read(`{"dsp0":{"inputA":{"@model":"HD2_AppDSPFlow1Input",` +
+				`"@input":1,"threshold":-48.0,"noiseGate":false}}}`)
+
+			compile.ApplyMembers(into, &members)
+			tt.then(into.Data.Tone)
+		})
+	}
+}
+
+// mustInt reads an attribute's stated value as the integer a device stores.
+func mustInt(
+	s string,
+) int64 {
+	n, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	return n
 }
 
 // TestApplyMembersSaysNothing covers the two cases where there is nothing to
