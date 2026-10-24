@@ -1215,6 +1215,17 @@ type Setup struct {
 	// Device The hardware, which decides what a chain may cost and what it may hold.
 	Device *Device `json:"device,omitempty"`
 
+	// Favourites The slots worth getting to in one step, in the order to cycle them. `["19A", "24B", "11A"]`.
+	//
+	// Here for the reason `slots` is: it is a preference about somebody's own pedal. A person playing has three or four sounds they move between and a hundred and twenty-three they do not, and which three is not something anything could work out.
+	//
+	// **The first is where `fav` lands.** One field rather than a list and a separate `start`, because a list already has a first element and a `start` naming a slot outside the list is a thing that would have to be refused. Reordering the list moves the starting point, which is the same decision expressed where it can only be consistent.
+	//
+	// Cycling needs to know which favourite is current and that is read off the device rather than remembered here: the rig the pedal is playing is matched against the rig `slots` puts in each of these. Remembering it would be wrong the moment somebody changed preset with a footswitch, which is most of the time. A pedal playing something that is not a favourite goes to the first on the next step.
+	//
+	// Absent means `fav` has nothing to go to and says so. The slots themselves need no entry in `slots`; one that has none can still be jumped to, and only recognising it as the current favourite needs the pairing.
+	Favourites *[]string `json:"favourites,omitempty"`
+
 	// Instruments What they play. More than one, because most people have more than one and they do not sound the same.
 	Instruments *[]Held `json:"instruments,omitempty"`
 
@@ -1250,6 +1261,15 @@ type Setup struct {
 	PlaysInto *PlaysInto  `json:"plays_into,omitempty"`
 	Schema    SetupSchema `json:"schema"`
 
+	// Slots Which slot on the pedal each rig is kept in.
+	//
+	// Here for the reason `match_loudness` is: it is a preference about somebody's own pedal and nothing anybody else would share. Two people building the same rig want the same preset and not the same slot, because one of them already keeps their own work in bank one.
+	//
+	// It is what makes "update my pedal" a thing that can be asked for twice. Without it the slots are remembered by whoever did it last, and a second run either lands somewhere else or has to be told again; with it a rig goes back where it was and a person's muscle memory survives a rebuild.
+	//
+	// Absent means nothing is written on anybody's behalf, which is the right default: a device has no undo and a slot holds somebody's work until they say otherwise.
+	Slots *[]Slotted `json:"slots,omitempty"`
+
 	// Technique How the instrument is played, where it changes the sound. Not modelled by any device, and it still decides what the rig has to do.
 	//
 	// Three things rather than a sentence, because three things are being said and a sentence has to be parsed to get at them.
@@ -1269,6 +1289,19 @@ type Setup struct {
 
 // SetupSchema defines model for Setup.Schema.
 type SetupSchema string
+
+// Slotted One rig and the slot it lives in.
+//
+// A pair rather than a map keyed by slot, because the order is worth keeping: somebody reading this wants to see the layout they chose, and a map comes back in whatever order it was parsed.
+type Slotted struct {
+	// At The slot, as the pedal prints it: `11A`, `03C`.
+	//
+	// Named the way the hardware names it rather than by a number from zero, because that is what somebody reads off the screen while deciding. The commands take both and this takes the one a person would write down.
+	At string `json:"at"`
+
+	// Rig The rig that goes there, by its identifier, the way `--id` names one.
+	Rig string `json:"rig"`
+}
 
 // Snapshot One snapshot: a set of block states a footswitch recalls.
 type Snapshot struct {

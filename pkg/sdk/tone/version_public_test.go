@@ -43,8 +43,8 @@ import (
 // generator would move the hash on its own and the whole point is that
 // changing the contract costs a decision about which number moves.
 const (
-	contractVersion = "4.0.0"
-	contractSHA     = "431d43cb133243826dc9247ceae9b968b4cdb1fd86318a463a0055b832abb7cb"
+	contractVersion = "4.2.0"
+	contractSHA     = "71cd799bc361c98be2c5b8cb21d99872ecc444a391d2c2b0b7108ca151fb2830"
 )
 
 // semver is major.minor.patch and nothing else. No build metadata and no

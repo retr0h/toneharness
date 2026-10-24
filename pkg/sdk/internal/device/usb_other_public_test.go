@@ -40,14 +40,30 @@ type USBOtherPublicTestSuite struct {
 }
 
 // TestOpen covers starting a session.
+//
+// **The guard answers before the platform does**, so this asserts the guard.
+// `NewUSB` hands a test binary an Opener that will not open, whatever backend
+// is underneath, because the one thing it exists to stop is a test reaching
+// the pedal on somebody's desk. On an operating system with no backend there
+// is nothing to reach and the refusal is redundant, but a guard that is
+// skipped on some platforms is a guard with a platform-shaped hole in it.
+//
+// The platform's own refusal is not left untested: [USBOtherPublicTestSuite.TestList]
+// asserts it twice, through the lister and through the Opener, and neither of
+// those is guarded.
 func (s *USBOtherPublicTestSuite) TestOpen() {
 	_, err := device.NewUSB(nil).Open(context.Background())
 
-	s.Require().ErrorIs(err, device.ErrNoUSBSupport)
+	s.Require().ErrorIs(err, device.ErrUnderTest)
 }
 
 // TestList covers listing what is attached, through the lister and through
 // the Opener built on it.
+//
+// Also where this platform's refusal is established, since the guard takes
+// [USBOtherPublicTestSuite.TestOpen]. Listing is not guarded, because it
+// changes nothing on a device, so both of these reach the backend and both
+// report what it has: nothing.
 func (s *USBOtherPublicTestSuite) TestList() {
 	l := device.NewUSBLister()
 

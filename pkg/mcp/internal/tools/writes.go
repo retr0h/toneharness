@@ -171,3 +171,35 @@ func (h *handlers) presetsCompile(
 
 	return said("%s holds %d blocks", built.Path, built.Blocks), built, nil
 }
+
+// slotsFill builds every rig a setup places and writes it to its slot.
+//
+// No input of its own: the layout is on the setup the server was started with,
+// which is the point of it being there. A caller naming slots per call would
+// be a caller deciding where somebody's rigs live.
+func (h *handlers) slotsFill(
+	ctx context.Context,
+	_ *gomcp.CallToolRequest,
+	_ struct{},
+) (*gomcp.CallToolResult, []sdk.Placed, error) {
+	// Through the client rather than a Session, so the pedal is held with
+	// `alone`: the writes go to one device, two calls doing this at once
+	// would be two things writing the same flash, and a Session this server
+	// still holds would refuse the one Fill opens.
+	placed, err := alone(ctx, h.pedal, func() ([]sdk.Placed, error) {
+		return h.client.Fill(ctx)
+	})
+	if err != nil && len(placed) == 0 {
+		return nil, nil, err
+	}
+
+	wrote := 0
+
+	for _, at := range placed {
+		if at.Err == nil {
+			wrote++
+		}
+	}
+
+	return said("wrote %d of %d slots", wrote, len(placed)), placed, nil
+}

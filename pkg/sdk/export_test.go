@@ -39,3 +39,29 @@ func WithDevices(
 ) Option {
 	return func(o *options) { o.devices = d }
 }
+
+// HomeDirWas and ContractVersionWas replace what a starter setup needs, and
+// hand back a function putting the real one back.
+//
+// Neither can fail in a correct build, which is the reason to be able to make
+// them fail: these two branches decide whether somebody gets a file they can
+// edit or a message saying why not, and a branch nothing can reach is one
+// nobody has read.
+func HomeDirWas(
+	f func() (string, error),
+) func() {
+	was := homeDir
+	homeDir = f
+
+	return func() { homeDir = was }
+}
+
+// ContractVersionWas replaces where the version in a starter setup comes from.
+func ContractVersionWas(
+	f func() (string, error),
+) func() {
+	was := contractVersion
+	contractVersion = f
+
+	return func() { contractVersion = was }
+}

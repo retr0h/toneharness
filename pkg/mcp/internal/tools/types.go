@@ -29,6 +29,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // Client is what the tools call. FromSDK makes one of an *sdk.Client.
@@ -48,6 +49,21 @@ type Client interface {
 	Resolve(ctx context.Context, in sdk.Resolve) (sdk.Made, error)
 	Tone(ctx context.Context, in sdk.Ask) (sdk.Resolved, error)
 	Make(ctx context.Context, in sdk.Build) (sdk.Made, error)
+	// Fill builds every rig the setup places and writes it to its slot. On
+	// the client rather than the Session because it builds as well as writes:
+	// a slot map says which rig goes where, and the rigs have to be resolved
+	// before anything reaches flash.
+	Fill(ctx context.Context) ([]sdk.Placed, error)
+	// Favourite makes one of the setup's favourite slots the active preset.
+	// On the client for Fill's reason: it reads a setup before it touches a
+	// device, and the setup is what says which slots those are.
+	Favourite(ctx context.Context, step sdk.Step) (sdk.Chosen, error)
+	// Setup is what the person has, which is the only record of which slots
+	// on the pedal this tool manages and which belong to whoever holds it.
+	Setup() (tone.Setup, error)
+	// StartSetup writes one somebody can edit. Refuses an existing file
+	// rather than replacing it, whatever the server allows.
+	StartSetup(at string) (sdk.Written, error)
 	Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error)
 	// The music corpus, read as files rather than measured: a listing costs
 	// nothing where measuring costs minutes per record.
@@ -238,6 +254,16 @@ type Play struct {
 // Slot addresses one slot on the pedal.
 type Slot struct {
 	Slot string `json:"slot" jsonschema:"a slot as the pedal labels it, 01A to 42C"`
+}
+
+// Favourite says which favourite device_fav goes to.
+type Favourite struct {
+	Step string `json:"step,omitempty" jsonschema:"first for the first favourite the setup lists, next or prev to move one along and wrap; empty is first"`
+}
+
+// StartingSetup says where setup_init writes.
+type StartingSetup struct {
+	At string `json:"at,omitempty" jsonschema:"where to write it; empty is where every command looks, under the config directory"`
 }
 
 // Export says which slot slots_export writes out, where, and as what.

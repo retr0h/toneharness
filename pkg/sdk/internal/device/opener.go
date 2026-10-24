@@ -40,10 +40,21 @@ type usbOpener struct {
 // Nothing is opened until a method is called. trace receives every frame a
 // session sends and reads, which is how both directions were read off a device
 // in the first place; nil traces nothing.
+//
+// **A test gets one that will not open.** This is the fallback `sdk.New` takes
+// when nobody passes `WithDevices`, so it is the one place a suite can reach
+// hardware by omission, and one did: see [setAside]. Listing still works,
+// because listing takes nothing from the device.
 func NewUSB(
 	trace io.Writer,
 ) Opener {
-	return usbOpener{trace: trace, buses: usbBuses{}, budgets: defaultBudgets()}
+	over := usbOpener{trace: trace, buses: usbBuses{}, budgets: defaultBudgets()}
+
+	if underTest() {
+		return setAside{opens: over}
+	}
+
+	return over
 }
 
 // List reports every device on the bus.

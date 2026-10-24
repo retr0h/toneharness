@@ -214,7 +214,8 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 		"tone_build", "presets_make", "rigs_show", "rigs_list", "rigs_records",
 		"measure_genres", "measure_players", "measure_recordings",
 		"device_hardware", "slots_list", "presets_show", "slots_export", "device_select",
-		"device_current", "device_play", "device_turn",
+		"device_current", "device_play", "device_turn", "device_fav",
+		"setup_show",
 	}
 
 	tests := []struct {
@@ -238,6 +239,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 				"rigs_records":   true,
 				"measure_genres": true, "measure_players": true,
 				"measure_recordings": true, "device_current": true,
+				"device_fav": false, "setup_show": true,
 			},
 		},
 		{
@@ -249,16 +251,20 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 				"rigs_resolve",
 				"presets_compile",
 				"slots_import",
+				"slots_fill",
 				"slots_copy",
 				"slots_swap",
+				"setup_init",
 			),
 			readOnly: map[string]bool{
 				"rigs_new":        false,
 				"rigs_resolve":    false,
 				"presets_compile": false,
 				"slots_import":    false,
+				"slots_fill":      false,
 				"slots_copy":      false,
 				"slots_swap":      false,
+				"setup_init":      false,
 			},
 		},
 	}
@@ -279,14 +285,25 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 					s.Equal(want, tool.Annotations.ReadOnlyHint, tool.Name)
 				}
 
-				if tool.Name == "device_select" {
+				// The two that load a preset and store nothing. Both say so,
+				// because an agent reading destructive here would not use
+				// the one operation that costs no flash.
+				if tool.Name == "device_select" || tool.Name == "device_fav" {
+					s.Require().NotNil(tool.Annotations.DestructiveHint, tool.Name)
+					s.False(*tool.Annotations.DestructiveHint, tool.Name)
+					s.True(tool.Annotations.IdempotentHint, tool.Name)
+				}
+
+				// A setup is hand-authored and never replaced, so the tool
+				// that writes one is not destructive however it is reached.
+				if tool.Name == "setup_init" {
 					s.Require().NotNil(tool.Annotations.DestructiveHint)
 					s.False(*tool.Annotations.DestructiveHint)
-					s.True(tool.Annotations.IdempotentHint)
 				}
 
 				switch tool.Name {
 				case "slots_import",
+					"slots_fill",
 					"slots_copy",
 					"slots_swap",
 					"slots_export",

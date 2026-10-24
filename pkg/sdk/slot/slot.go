@@ -41,12 +41,16 @@ func Label(
 	return fmt.Sprintf("%02d%c", slot/perBank+1, rune('A'+slot%perBank))
 }
 
-// parse reads either form: a label the pedal shows, or a bare index.
+// Parse reads either form: a label the pedal shows, or a bare index.
 //
 // A label is what somebody has in front of them, and it is what this project
 // prints, so refusing it would mean printing addresses nothing accepts. A bare
 // number stays valid because scripts count.
-func parse(
+//
+// Exported since a setup may name slots, which puts labels in a document
+// rather than only on a flag: a person writing down where their rigs live
+// writes `11A`, and the same reading has to answer both.
+func Parse(
 	s string,
 ) (int, error) {
 	s = strings.TrimSpace(s)

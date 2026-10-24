@@ -1,6 +1,6 @@
 ---
 name: work-a-device
-description: Read, write and rearrange what a Line 6 Helix holds, over USB or in an HX Edit backup. Covers listing slots, reading a preset back as a rig, auditioning a chain without writing flash, placing one into a slot, copying, swapping and moving presets, exporting and restoring, and the session rules that keep a pedal on the bus. Use when asked what is on the pedal, to get a preset onto it, to move or swap slots, to back one up or put it back, to work from a .hlb with nothing attached, or when a device stops answering.
+description: Read, write and rearrange what a Line 6 Helix holds, over USB or in an HX Edit backup. Covers listing slots, reading a preset back as a rig, auditioning a chain without writing flash, placing one into a slot, copying, swapping and moving presets, exporting and restoring, which slots a setup says this tool manages, rebuilding and uploading all of them at once, jumping to a favourite slot and cycling between the favourites, and the session rules that keep a pedal on the bus. Use when asked what is on the pedal, to get a preset onto it, to rebuild and upload the genres or artists, to go to a favourite or to the next or previous one, to set up the config file that remembers any of that, to move or swap slots, to back one up or put it back, to work from a .hlb with nothing attached, or when a device stops answering.
 compatibility: Requires a toneharness checkout with mise available. Every command runs through `mise exec -- go run main.go`, never a bare `toneharness`. Device access is macOS only; every `--file` path works everywhere.
 license: MIT
 metadata:
@@ -24,7 +24,13 @@ mise exec -- go run main.go --help                    # which groups exist
 mise exec -- go run main.go device --help             # what that group takes
 mise exec -- go run main.go device hardware --json    # what is on the bus
 mise exec -- go run main.go slots list --json         # what it holds
+mise exec -- go run main.go setup show --json         # which of those slots are ours
 ```
+
+`setup show` is the one people forget, and it answers a question `slots list`
+cannot: a setup's `slots` is the only record of which presets on the pedal this
+tool manages and which belong to whoever is holding it. A rebuild writes those
+and leaves every other slot alone. No setup there yet means `setup init`, once.
 
 `--help` on a checkout compiles the checkout, so it is the source's own answer
 rather than a description of it, and it shows the flags a parent registers that
@@ -67,12 +73,14 @@ where the progress shows and Ctrl-C reaches the session holding the pedal.
 | -------------------------------------------------------------------- | ---------------------------------------------------------- |
 | what is on the pedal, what a slot holds, whether a slot is empty      | [references/reading.md](references/reading.md)             |
 | to get a preset onto the device, to try one, to put a backup back     | [references/writing.md](references/writing.md), **before the first write, not after it fails** |
+| **to rebuild and upload the genres and artists, or which slots are ours** | [references/setup.md](references/setup.md), which says what a rebuild touches |
+| to jump to a favourite slot, or to cycle between the favourites       | [references/setup.md](references/setup.md)                 |
 | to load, copy, swap or move a preset between slots                    | [references/rearranging.md](references/rearranging.md)     |
 | why the front panel is dead, why the pedal stopped answering          | [references/session.md](references/session.md)             |
 | what a `.hlx`, `.hls`, `.hlb` or `.bin` is, and what converting loses | [references/formats.md](references/formats.md)             |
 | what a chain carries besides blocks: snapshots, routing, the grid     | [references/chain.md](references/chain.md)                 |
 | which device this is for, and which catalog answers                   | [references/identity.md](references/identity.md)           |
-| anything else                                                        | All seven, in that order                                   |
+| anything else                                                        | All eight, in that order                                   |
 
 ## The slot called SCRATCH
 

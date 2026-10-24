@@ -61,6 +61,9 @@ type (
 	// instrument is a fact about a person rather than about the sound they
 	// are chasing today.
 	Setup = gen.Setup
+	// Slotted is one rig and the slot somebody keeps it in, which is a
+	// preference about their own pedal rather than anything shared.
+	Slotted = gen.Slotted
 	// Like is something to sound like: a player, a band, a song, or a
 	// recording handed over to be measured.
 	Like = gen.Like
