@@ -92,7 +92,11 @@ type Intent struct {
 	// Nil where no sweeps were offered, which a release is: only the
 	// fingerprints are packed into the binary. False for a block the campaign
 	// never reached, which is 436 of this device's 614.
-	Curves func(model catalog.ModelID) (measured.Curves, bool)
+	// The cabinet the chain ends in travels with the model, so a reading
+	// taken through it can be preferred over one of the block alone: an
+	// amplifier swept alone is refused by everything that reads these, which
+	// is what left every artist rig's amplifier at catalog defaults. Task 271.
+	Curves func(model, with catalog.ModelID) (measured.Curves, bool)
 	// Name is what the preset should be called, which is the subject the ask
 	// names: "Mike Dirnt" is what somebody wants to read on the screen.
 	//

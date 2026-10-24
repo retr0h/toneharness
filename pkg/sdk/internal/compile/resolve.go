@@ -1000,12 +1000,25 @@ func aimed(
 		return
 	}
 
+	// The cabinet first. An amplifier's readings are preferred from a sweep
+	// taken through the cabinet it is actually playing into, because one taken
+	// alone describes a chain nobody plays and is refused downstream.
+	cab := catalog.ModelID("")
+
+	for _, blk := range blocks {
+		if blk.Category == catalog.CategoryCab {
+			cab = blk.ID
+
+			break
+		}
+	}
+
 	for i, blk := range blocks {
 		if i >= len(built.Blocks) {
 			break
 		}
 
-		curves, swept := intent.Curves(blk.ID)
+		curves, swept := intent.Curves(blk.ID, cab)
 		if !swept {
 			continue
 		}

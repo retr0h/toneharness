@@ -48,6 +48,19 @@ var stomped = map[catalog.Category]bool{
 	catalog.CategoryReverb: true,
 	catalog.CategoryPitch:  true,
 	catalog.CategoryEQ:     true,
+	// A compressor is a pedal somebody steps on, and leaving it out was the
+	// difference between three switches and none.
+	//
+	// The corpus puts one in 85% of chains, so almost every rig built here
+	// carries one, and it was the only block in the shortest chains: an
+	// artist rig of compressor, amplifier and cabinet reached the pedal with
+	// nothing on any switch at all. Two of the seven loaded on 2026-10-23 did.
+	//
+	// It is also what the corpus itself stomps. Of 1,154 compressor
+	// assignments across the 4,426 presets, every one is a switch somebody
+	// put a compressor on deliberately, which is more than this device's
+	// presets carry for filters, pitch and wah together.
+	catalog.CategoryComp: true,
 }
 
 // palette is the colours a switch is given, in the order they are handed out.
@@ -140,6 +153,17 @@ var automatic = map[catalog.Category]struct{ on, off int }{
 	catalog.CategoryReverb: {0xff2d00, 0x100400},
 	catalog.CategoryPitch:  {0x3200ff, 0x03000b},
 	catalog.CategoryEQ:     {0x84ff00, 0x080c00},
+	// Mined the same way and from the same corpus as the seven above, which
+	// is how its agreement can be stated beside theirs: on 0x84ff00 for
+	// 875 of 888, off 0x080c00 for 264 of 266. The method reproduces every
+	// one of the other seven exactly, which is what makes this row worth as
+	// much as they are.
+	//
+	// The same pair as an equaliser, and that is the device's answer rather
+	// than a gap in the mining: Line 6 light both green, and a gate reads
+	// green too. A switch is told from its neighbour by the colour somebody
+	// chose, which `palette` hands out per switch rather than per kind.
+	catalog.CategoryComp: {0x84ff00, 0x080c00},
 }
 
 // lit is the automatic colour for one block in one state.

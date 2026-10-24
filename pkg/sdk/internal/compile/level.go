@@ -93,7 +93,7 @@ func Level(
 ) (plan.Plan, result.Levelled) {
 	out := result.Levelled{Wanted: want}
 
-	was, ok := expected(built, cat, lib)
+	was, ok := expected(built, cat, lib, curves)
 	if !ok {
 		out.Because = "nothing in the chain has a measured level"
 
@@ -145,15 +145,64 @@ func Level(
 
 // expected is the level the chain's own gear leaves it at.
 //
-// The cabinet's reading, because the cabinet is what decides it and the
-// evidence is that it decides nearly all of it: the one case this was found on
-// had every other level control identical between two chains and the two
-// cabinets accounted for the whole 2.9dB.
+// The cabinet's reading, plus how far the amplifier's own level controls have
+// been moved from where its fingerprint was taken. Two terms, and the first
+// version had only one.
 //
-// A chain with no cabinet has no answer here rather than a guess. Every figure
-// this project measured came through one, so a chain without one is a chain
-// nothing has a reading for.
+// **The cabinet alone was wrong, and somebody heard it.** The reasoning was
+// that the cabinet decides nearly all of it, from one case where "every other
+// level control identical between two chains" left the two cabinets
+// accounting for the whole 2.9dB. That premise does not hold across two
+// chains built for different players, because each amplifier arrives at its
+// own catalog default and its own corpus medians. Two presets on the same
+// 8x10 reported as already matched while one of them was barely audible:
+// punk's SV Beast sat at Master 1.0 and Ch Vol 0.8, and an Ampeg SVT-4 Pro
+// sat at 0.75 and 0.75 against a Ch Vol default of 1.0. The cabinets were
+// identical, so the gap read as zero and nothing moved.
+//
+// **Both terms are differences inside one run**, which is the rule this file
+// is built on. The cabinet's level comes out of the fingerprint library,
+// which measured every block in the same run, and what is taken from it is
+// the difference between two chains' cabinets. The control correction comes
+// from that amplifier's own sweep and is the difference between two positions
+// of one control. A fingerprint and a sweep are never subtracted from each
+// other.
+//
+// **The amplifier's own fingerprint level is deliberately not a term here**,
+// and adding it was tried. An amplifier measured alone has no cabinet
+// lowpassing it, so its reading is about a chain nobody plays: putting it in
+// made two presets on the same 8x10 report a 53dB gap, which is not a
+// difference any pair of bass rigs has. What the fingerprint cannot say is how
+// loud an amplifier is in a chain, and task 271's chain sweeps are the
+// measurement that would.
+//
+// **The correction is against the catalog's default** because that is where
+// `measure blocks` took the fingerprint: it measures every block once at its
+// own defaults. So a preset whose Ch Vol sits below the default is quieter
+// than its fingerprint says by exactly that much, and nothing knew.
+//
+// A chain with no cabinet has no answer here rather than a guess. Every
+// figure this project measured came through one, so a chain without one is a
+// chain nothing has a reading for. An amplifier that is unmeasured or unswept
+// contributes nothing rather than a zero, which leaves the answer the
+// cabinet's alone: that is the old behaviour, kept for the chains it was
+// right about.
 func expected(
+	built plan.Plan,
+	cat *catalog.Catalog,
+	lib measured.Library,
+	curves map[catalog.ModelID]measured.Curves,
+) (float64, bool) {
+	cab, ok := cabinetLevel(built, cat, lib)
+	if !ok {
+		return 0, false
+	}
+
+	return cab + amplifierLevel(built, cat, curves), true
+}
+
+// cabinetLevel is the first cabinet's own measured reading.
+func cabinetLevel(
 	built plan.Plan,
 	cat *catalog.Catalog,
 	lib measured.Library,
@@ -173,6 +222,86 @@ func expected(
 	}
 
 	return 0, false
+}
+
+// amplifierLevel is how far the amplifier's level controls sit from where its
+// fingerprint was taken, in decibels of its own sweep.
+//
+// Zero where the amplifier is unmeasured or unswept, which is honest: it
+// leaves the comparison to the cabinets, and two chains both missing this
+// term are still compared on the same basis.
+func amplifierLevel(
+	built plan.Plan,
+	cat *catalog.Catalog,
+	curves map[catalog.ModelID]measured.Curves,
+) float64 {
+	for _, b := range built.Blocks {
+		one, known := cat.Block(b.Model)
+		if !known || one.Category != catalog.CategoryAmp {
+			continue
+		}
+
+		return turnedFrom(one, b, curves[b.Model])
+	}
+
+	return 0
+}
+
+// turnedFrom is how far an amplifier's level controls have been moved from
+// the positions its fingerprint was taken at, in decibels of its own sweep.
+//
+// Every level control it carries rather than only the preferred one, because a
+// preset arrives with all of them somewhere and the fingerprint was taken with
+// all of them at their defaults. An Ampeg SVT-4 Pro reaching a build with Ch
+// Vol at 0.75 against a default of 1.0 is quieter than its fingerprint by
+// whatever that quarter turn is worth, and the same is true of its Master.
+//
+// Each control's contribution is the difference between two positions of that
+// one control inside that one sweep, which is the only comparison a sweep
+// supports. A control with no sweep, or whose sweep cannot read either
+// position, contributes nothing.
+func turnedFrom(
+	one catalog.Block,
+	placed plan.Block,
+	swept measured.Curves,
+) float64 {
+	out := 0.0
+
+	for _, name := range levelControls {
+		spec, carried := one.Params[name]
+		if !carried {
+			continue
+		}
+
+		curve, read := swept.Controls[name]
+		if !read {
+			continue
+		}
+
+		was, stated := spec.Default.Float()
+		if !stated {
+			continue
+		}
+
+		at, told := placed.Params[name].Float()
+		if !told {
+			at = was
+		}
+
+		now, there := levelOf(curve, at)
+		if !there {
+			continue
+		}
+
+		then, back := levelOf(curve, was)
+		if !back {
+			continue
+		}
+
+		out += now - then
+	}
+
+	return out
 }
 
 // levelAt finds the amplifier's level control, and where in the chain it is.

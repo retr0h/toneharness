@@ -277,9 +277,15 @@ func (s *MakePublicTestSuite) TestMake() {
 		},
 		{
 			// A song's sections become the preset's snapshots, named.
+			//
+			// Two blocks rather than three: a sectioned document is offered
+			// nothing, because a section says which roles play and a block
+			// nobody wrote into the chain would join a section the author
+			// never put it in. See `translate.Pizzazz`.
 			name:     "a rig in song sections",
 			id:       "in-sections",
 			loadable: true,
+			blocks:   2,
 			written:  []string{`"@name":"Verse"`, `"@name":"Chorus"`},
 		},
 		{
@@ -730,9 +736,13 @@ func (s *MakePublicTestSuite) TestMake() {
 					return err
 				}
 
+				// Three rather than two since the corpus fills the
+				// switches a rig's own records cannot ask for: the fixture
+				// names a drive and an amplifier and the offer makes the
+				// third. See `translate.Pizzazz`.
 				blocks := tt.blocks
 				if blocks == 0 {
-					blocks = 2
+					blocks = 3
 				}
 
 				s.Require().Len(spec.Blocks, blocks)
@@ -980,7 +990,13 @@ func (s *IntentPublicTestSuite) TestAGenrePooledAcrossInstrumentsContributesNoth
 //
 // Glen Matlock is distinctive on a long decay by 0.27 of a second, which is the
 // largest margin any of the 43 earns on that figure, and nothing else a
-// pedalboard answers. So he gets one reverb, switched off, behind the cabinet.
+// pedalboard answers. So measurement asks for one reverb, switched off, behind
+// the cabinet, and the corpus fills the rest of his switches with a weaker
+// claim that says so: see `translate.Pizzazz`.
+//
+// The reverb is asserted by role and by being first, because measurement runs
+// before the corpus is asked for anything. What this test is about is that a
+// rig's own records reach the chain at all.
 func (s *MakePublicTestSuite) TestARigGetsTheEffectsItsRecordsAskFor() {
 	out := filepath.Join(s.T().TempDir(), "a.hlx")
 
@@ -991,7 +1007,7 @@ func (s *MakePublicTestSuite) TestARigGetsTheEffectsItsRecordsAskFor() {
 	s.Require().NoError(err)
 
 	// On the block itself, so a document carries why it is there.
-	s.Require().Len(made.Chosen, 1)
+	s.Require().NotEmpty(made.Chosen)
 	s.Require().Equal(rig.RoleReverb, made.Chosen[0].Role)
 	s.Require().NotNil(made.Chosen[0].Enabled)
 	s.Require().False(*made.Chosen[0].Enabled)
@@ -1015,13 +1031,26 @@ func (s *MakePublicTestSuite) TestARigGetsTheEffectsItsRecordsAskFor() {
 		string(made.Plan.Blocks[len(made.Plan.Blocks)-1].Model), "Reverb")
 }
 
-// TestARigWhoseRecordsAskForNothingGetsNothing covers the other answer.
+// TestARigWhoseRecordsAskForNothingIsOfferedTheCorpus covers the other answer,
+// which used to be no answer.
 //
 // Les Claypool is distinctive only on a shorter decay, which nothing on a
 // floor answers: a gate would cut his notes off and a compressor is set once
 // and left. Fourteen of the 43 rigs here are in that state and seven more earn
-// no word at all, so nothing is the common answer rather than a failure.
-func (s *MakePublicTestSuite) TestARigWhoseRecordsAskForNothingGetsNothing() {
+// no word at all, so measurement asking for nothing is the common case rather
+// than a failure.
+//
+// **It used to mean an empty pedalboard, and that was the wrong answer.** Two
+// of seven presets put on a pedal on 2026-10-23 reached the hardware with
+// nothing on any switch, which the person holding it reported as broken rather
+// than as honest. A switch is bypassed, so offering one is not a claim about
+// how anything sounds, and `translate.Pizzazz` fills them from what the corpus
+// says players of this instrument carry and leave off.
+//
+// The sentence is what keeps the two apart. A measured choice says the word
+// and the margin it was earned by; an offer says how many chains hold one and
+// that it arrives switched off. Both are in the report.
+func (s *MakePublicTestSuite) TestARigWhoseRecordsAskForNothingIsOfferedTheCorpus() {
 	out := filepath.Join(s.T().TempDir(), "a.hlx")
 
 	made, err := presets.Make(context.Background(), presets.MakeOptions{
@@ -1030,5 +1059,22 @@ func (s *MakePublicTestSuite) TestARigWhoseRecordsAskForNothingGetsNothing() {
 	})
 	s.Require().NoError(err)
 
-	s.Require().Empty(made.Chosen)
+	s.Require().NotEmpty(made.Chosen,
+		"a rig whose records ask for nothing is still offered something")
+
+	// Every one bypassed, which is what makes a weaker source honest here.
+	for _, at := range made.Chosen {
+		s.Require().NotNil(at.Enabled, at.Gear)
+		s.Require().False(*at.Enabled, at.Gear)
+	}
+
+	// And said as an offer rather than as a measurement, in the report: the
+	// preset carries the block and the reasoning travels beside it.
+	said := ""
+	for _, at := range made.Added {
+		said += at.Reason + "\n"
+	}
+
+	s.Require().Contains(said, "which is a pedal rather than a sound")
+	s.Require().Contains(said, "leave it switched off")
 }

@@ -2631,7 +2631,13 @@ func (s *ClientPublicTestSuite) TestControlAddressesABlockOnePastItsPosition() {
 // block the corpus statistics put there and a different claim entirely.
 //
 // Glen Matlock is distinctive on a long decay by 0.27 of a second and nothing
-// else a pedalboard answers, so he gets one reverb, switched off.
+// else a pedalboard answers, so measurement asks for one reverb. The other two
+// switches are filled from the corpus, which is a weaker claim and says so in
+// its own sentence: see `translate.Pizzazz`. All three arrive switched off.
+//
+// The reverb is the one asserted here rather than the count, because what this
+// test is about is the sentence a measured choice carries. A corpus offer
+// carries a different one and the two must not read alike.
 func (s *ClientPublicTestSuite) TestResolveWritesWhyAChosenBlockIsThere() {
 	out := filepath.Join(s.T().TempDir(), "glen-matlock.yaml")
 
@@ -2639,7 +2645,7 @@ func (s *ClientPublicTestSuite) TestResolveWritesWhyAChosenBlockIsThere() {
 		RigID: "glen-matlock", Out: out,
 	})
 	s.Require().NoError(err)
-	s.Require().Len(made.Chosen, 1)
+	s.Require().NotEmpty(made.Chosen)
 
 	body, err := os.ReadFile(out) //nolint:gosec // a path this test wrote
 	s.Require().NoError(err)
