@@ -171,6 +171,18 @@ func (s *PizzazzPublicTestSuite) TestOffers() {
 			want: []catalog.Category{catalog.CategoryMod},
 		},
 		{
+			// Two kinds players leave off equally often. The catalog and the
+			// grammar are both maps, so without a second key the order would
+			// be whichever the walk produced and a rebuild would not be
+			// byte-identical.
+			name: "two kinds equally left off resolve by name",
+			grammar: grammar(map[catalog.Category]corpus.CategoryStats{
+				catalog.CategoryReverb: {Chains: 50, Engaged: 25},
+				catalog.CategoryDelay:  {Chains: 20, Engaged: 10},
+			}),
+			want: []catalog.Category{catalog.CategoryDelay, catalog.CategoryReverb},
+		},
+		{
 			name:    "a grammar holding nothing offers nothing",
 			grammar: grammar(map[catalog.Category]corpus.CategoryStats{}),
 			want:    nil,
@@ -413,6 +425,24 @@ func (s *PizzazzPublicTestSuite) TestPizzazz() {
 			spec: s.bass(),
 			deps: func() translate.Deps {
 				return translate.Deps{Corpus: s.deps.Corpus}
+			},
+			want: false,
+		},
+		{
+			// Three stompable kinds already, which is every switch an HX
+			// Stomp has. A block past the last switch is one no foot can
+			// reach, and the foot was the whole reason for it.
+			name: "a chain that has spoken for every switch",
+			id:   "mike-dirnt",
+			spec: rig.Spec{
+				Instrument: rig.InstrumentBass,
+				Chain: []rig.ChainEntry{
+					{Role: rig.RoleComp, Gear: "Deluxe Comp"},
+					{Role: rig.RoleDrive, Gear: "Pro Co RAT"},
+					{Role: rig.RoleAmp, Gear: "Ampeg SVT"},
+					{Role: rig.RoleCab, Gear: "8x10 Ampeg SVT-810AV"},
+					{Role: rig.RoleEQ, Gear: "MXR 10-Band Graphic EQ"},
+				},
 			},
 			want: false,
 		},

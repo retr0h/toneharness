@@ -313,6 +313,84 @@ func (s *PooledTestSuite) TestSameControlsCountsBothWays() {
 		"one control fewer is a different block")
 }
 
+// TestAgreedFallsBackToThePool is the whole point of the pool reaching a
+// built preset, rather than being arithmetic nobody calls.
+//
+// A model the corpus barely holds followed its own two presets before this,
+// which is how a cabinet's microphone arrived at the factory's dead-centre
+// Position 0.0 while the players of that kind of cabinet sit off-axis.
+func (s *PooledTestSuite) TestAgreedFallsBackToThePool() {
+	cat := s.mic()
+	block := cat.Blocks["MicThin"]
+
+	stats := s.bassOn(
+		map[catalog.ModelID]int{"MicThin": 2, "MicUsed": 30},
+		map[catalog.ModelID]corpus.ParamStats{
+			// Its own evidence: two presets, which is below the bar.
+			"MicThin": {N: 2, Median: 0.95},
+			// And the sibling's, which is not.
+			"MicUsed": {N: 65, Median: 0.39},
+		})
+
+	got, ok := agreed(
+		block, "Position", block.Params["Position"], cat, stats, "bass")
+
+	s.Require().True(ok)
+
+	at, isFloat := got.Float()
+	s.Require().True(isFloat)
+	s.Require().InDelta(0.39, at, 1e-9,
+		"the sibling's 65 presets answer, not this model's two")
+}
+
+// TestAcrossSkipsASiblingNobodyMeasured covers a model in the grammar that the
+// corpus has no figures for.
+//
+// Not the same as a model nobody holds: the grammar counts chains and the
+// model table counts settings, and a block can be in one and absent from the
+// other. Counted as evidence it would weigh nothing and still raise the total
+// past the bar, which is how a pool of nothing passes for a pool.
+func (s *PooledTestSuite) TestAcrossSkipsASiblingNobodyMeasured() {
+	cat := s.mic()
+
+	stats := s.bassOn(
+		map[catalog.ModelID]int{"MicUsed": 30},
+		map[catalog.ModelID]corpus.ParamStats{"MicUsed": {N: 0, Median: 4000}})
+
+	_, ok := across(cat.Blocks["MicThin"], "HighCut", cat, stats, "bass")
+	s.Require().False(ok, "a sibling with no figures is no evidence")
+}
+
+// TestAcrossBreaksATieTheSameWayEveryRun covers two siblings agreeing on a
+// figure.
+//
+// The catalog is walked as a map, so without a second key the pool would
+// resolve however the walk happened to go and a rebuild would not be
+// byte-identical.
+func (s *PooledTestSuite) TestAcrossBreaksATieTheSameWayEveryRun() {
+	cat := s.mic()
+	cat.Blocks["MicTwin"] = catalog.Block{
+		ID: "MicTwin", Category: catalog.CategoryCab,
+		Params: cat.Blocks["MicUsed"].Params,
+	}
+
+	stats := s.bassOn(
+		map[catalog.ModelID]int{"MicUsed": 30, "MicTwin": 30},
+		map[catalog.ModelID]corpus.ParamStats{
+			"MicUsed": {N: 40, Median: 4000},
+			"MicTwin": {N: 20, Median: 4000},
+		})
+
+	first, ok := across(cat.Blocks["MicThin"], "HighCut", cat, stats, "bass")
+	s.Require().True(ok)
+
+	for range 8 {
+		again, ok := across(cat.Blocks["MicThin"], "HighCut", cat, stats, "bass")
+		s.Require().True(ok)
+		s.Require().Equal(first, again)
+	}
+}
+
 func TestPooledTestSuite(
 	t *testing.T,
 ) {
