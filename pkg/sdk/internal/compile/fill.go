@@ -163,6 +163,28 @@ func fill(
 // Index zero where the chain holds no amplifier, which is what a chain of
 // effects is. Never an empty chain: filling one is refused above, so the only way
 // here is a chain somebody put something in.
+//
+// **A cabinet is a third case, and it was the second one.** Before this a
+// block was either spliced in ahead of the amplifier or appended to the end,
+// and a cabinet takes the second: a cabinet goes after an amplifier, so it
+// was appended. Where the corpus also added an equaliser and a reverb, those
+// were appended first and the cabinet landed behind them.
+//
+// What that built, for a rig naming drive, amp and equaliser:
+//
+//	drive  comp  amp  eq  verb  CAB
+//
+// The equaliser and the reverb are working on the amplifier's raw output with
+// the speaker simulation after them, which is not a chain anybody would build
+// and is what "muddy, sounds like a guitar" sounds like on a bass. Three of
+// the eleven genres on this pedal were built that way, and they are exactly
+// the three whose rigs do not name a cabinet of their own: a rig that names
+// one has it in the right place already and never reaches this.
+//
+// So a cabinet goes immediately after its amplifier and everything else that
+// belongs after an amplifier goes after the cabinet, which is the order a
+// signal takes: instrument, pedals, amplifier, speaker, then whatever is
+// recorded off it.
 func insert(
 	blocks []catalog.Block,
 	said []*wanted,
@@ -177,20 +199,57 @@ func insert(
 		with = &wanted{bypassed: true}
 	}
 
+	// A cabinet, straight after the amplifier it belongs to. Nowhere to put
+	// one in a chain with no amplifier, so it falls through and is appended,
+	// which is where a cabinet ending a chain of effects goes anyway.
+	if b.Category == catalog.CategoryCab {
+		if at := amplifierAt(blocks); at >= 0 {
+			return spliceAt(blocks, said, b, with, at+1)
+		}
+
+		return append(blocks, b), append(said, with)
+	}
+
 	if !beforeAmp {
 		return append(blocks, b), append(said, with)
 	}
 
 	at := 0
 
+	if found := amplifierAt(blocks); found >= 0 {
+		at = found
+	}
+
+	return spliceAt(blocks, said, b, with, at)
+}
+
+// amplifierAt is where the chain's amplifier sits, or -1 for a chain with
+// none.
+//
+// The first one, because a chain with two amplifiers is a chain whose second
+// is a parallel path and the cabinet belongs to the one the signal reaches
+// first.
+func amplifierAt(
+	blocks []catalog.Block,
+) int {
 	for i, existing := range blocks {
 		if existing.Category == catalog.CategoryAmp {
-			at = i
-
-			break
+			return i
 		}
 	}
 
+	return -1
+}
+
+// spliceAt opens a gap at one index and puts the block in it, keeping the
+// parallel slice of settings in step.
+func spliceAt(
+	blocks []catalog.Block,
+	said []*wanted,
+	b catalog.Block,
+	with *wanted,
+	at int,
+) ([]catalog.Block, []*wanted) {
 	out := make([]catalog.Block, 0, len(blocks)+1)
 	out = append(out, blocks[:at]...)
 	out = append(out, b)
