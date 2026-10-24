@@ -262,21 +262,27 @@ func across(
 		return read[i].n < read[j].n
 	})
 
+	// The dearest row stands in until the walk reaches the middle, which it
+	// always does on a positive total: writing a refusal after the loop read
+	// as an outcome this cannot have.
+	median := read[len(read)-1].at
 	seen := 0
 
 	for _, at := range read {
 		seen += at.n
 
 		if seen*2 >= total {
-			// Spread left at zero, which reads as total agreement and is the
-			// right answer for a pooled figure: the spread this would report
-			// is the spread between models rather than between players, and
-			// `agreed` uses spread to decide whether players agree.
-			return corpus.ParamStats{N: total, Median: at.at}, true
+			median = at.at
+
+			break
 		}
 	}
 
-	return corpus.ParamStats{}, false
+	// Spread left at zero, which reads as total agreement and is the right
+	// answer for a pooled figure: the spread this would report is the spread
+	// between models rather than between players, and `agreed` uses spread to
+	// decide whether players agree.
+	return corpus.ParamStats{N: total, Median: median}, true
 }
 
 // sameControls says whether a block's controls are exactly the named set.

@@ -288,13 +288,15 @@ func turnedFrom(
 			at = was
 		}
 
+		// Both positions against the same curve, so one test rather than
+		// two: `levelOf` answers from whichever points are usable, and a
+		// curve with a usable point answers for every position while one
+		// without answers for none. Checking them separately read as two
+		// outcomes where there is one.
 		now, there := levelOf(curve, at)
-		if !there {
-			continue
-		}
-
 		then, back := levelOf(curve, was)
-		if !back {
+
+		if !there || !back {
 			continue
 		}
 

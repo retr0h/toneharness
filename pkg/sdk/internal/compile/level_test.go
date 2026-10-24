@@ -540,6 +540,23 @@ func (s *LevelTestSuite) TestTurnedFrom() {
 			swept: curve,
 			want:  0,
 		},
+		{
+			// A sweep whose every position is under its own silence floor,
+			// which is a control that was measured through a chain carrying
+			// nothing. Neither position can be read, so no correction is
+			// claimed rather than one being guessed at.
+			name:  "a sweep no position of which can be read",
+			model: "AmpSwept",
+			at:    plan.Params{"ChVol": catalog.Float(0)},
+			swept: measured.Curves{Controls: map[string]measured.Curve{"ChVol": {
+				Control: "ChVol", Settled: -20, SilentBelow: -10,
+				Points: []measured.Point{
+					{Value: 0, Figures: measured.Figures{Level: -90}},
+					{Value: 1, Figures: measured.Figures{Level: -88}},
+				},
+			}}},
+			want: 0,
+		},
 	} {
 		s.Run(tt.name, func() {
 			one := cat.Blocks[tt.model]
