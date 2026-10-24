@@ -331,7 +331,11 @@ func (s *SnapshotsPublicTestSuite) TestTrust() {
 		s.Run(tt.name, func() {
 			doc := s.presetWith(tt.entries)
 
-			compile.Trust(doc, tt.blocks)
+			// Through the Compiler rather than the package function, because
+			// that is how both build paths reach it: a step beside Sections
+			// and Footswitches, since `presets compile` goes through Lower
+			// and `presets make` calls the steps one at a time.
+			(&compile.Compiler{}).Trust(doc, tt.blocks)
 
 			for key, want := range tt.valid {
 				entry, held := doc.Data.Tone[key]
