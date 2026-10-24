@@ -35,6 +35,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
+	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // addTool registers one tool, with every failure carrying its remedy.
@@ -236,6 +237,30 @@ func register(
 	}, h.deviceSelect)
 
 	addTool(s, &gomcp.Tool{
+		Name: "device_fav",
+		Description: "Load one of the favourite slots the person's setup lists, " +
+			"without naming a slot: step=first goes to the first they list, " +
+			"next and prev move one along and wrap. Which favourite is current " +
+			"is read off the pedal rather than remembered, by matching what it " +
+			"is playing against the rig their setup puts in each favourite " +
+			"slot, so a footswitch pressed by hand does not confuse it. Playing " +
+			"something that is no favourite is not an error and goes to the " +
+			"first. Changes nothing stored.",
+		Annotations:  &gomcp.ToolAnnotations{DestructiveHint: new(false), IdempotentHint: true},
+		OutputSchema: mustOutputSchema[sdk.Chosen](),
+	}, h.deviceFav)
+	addTool(s, &gomcp.Tool{
+		Name: "setup_show",
+		Description: "What the person has, as every build reads it. The slot " +
+			"map and the favourites are the part worth asking for: they are the " +
+			"only record of which presets on the pedal this tool manages, so " +
+			"they are what says which slots a rebuild will overwrite and which " +
+			"belong to whoever holds the pedal.",
+		Annotations:  readOnly(),
+		OutputSchema: mustOutputSchema[tone.Setup](),
+	}, h.setupShow)
+
+	addTool(s, &gomcp.Tool{
 		Name:         "device_current",
 		Description:  "What the pedal is playing right now, read back as a rig. The only way to see a live edit: a turn is not stored, so nothing else shows what it did.",
 		Annotations:  &gomcp.ToolAnnotations{ReadOnlyHint: true},
@@ -288,6 +313,23 @@ func register(
 		Annotations:  destructive(),
 		OutputSchema: mustOutputSchema[sdk.Change](),
 	}, h.slotsImport)
+	addTool(s, &gomcp.Tool{
+		Name:         "slots_fill",
+		Description:  "Build every rig a setup places and write it to its slot, which is how a pedal is put back the way somebody keeps it. The layout lives on their setup rather than in the call, so asking twice lands in the same places. Every slot named is a flash write and whatever it held is saved to a file first; one rig failing does not stop the rest.",
+		Annotations:  destructive(),
+		OutputSchema: mustOutputSchema[[]sdk.Placed](),
+	}, h.slotsFill)
+	addTool(s, &gomcp.Tool{
+		Name: "setup_init",
+		Description: "Write a setup the person can edit, where every command " +
+			"looks for one. Every field on it is optional, so what lands is the " +
+			"schema line, the version this build reads and a commented line " +
+			"beside each field. Refuses a setup already there and does not " +
+			"replace one, whatever the server allows: it is the only record of " +
+			"decisions nothing else keeps.",
+		Annotations:  &gomcp.ToolAnnotations{DestructiveHint: new(false)},
+		OutputSchema: mustOutputSchema[sdk.Written](),
+	}, h.setupInit)
 	addTool(s, &gomcp.Tool{
 		Name:         "slots_copy",
 		Description:  "Copy one slot onto another. The destination's old preset is saved to a file first.",

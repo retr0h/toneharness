@@ -59,13 +59,13 @@ has to have finished before it is opened.
 skill is authoritative for its own domain. Five of them, self-contained and
 separately installable, so nothing is stated in two of them:
 
-| Skill              | Owns                                                                                                     |
-| ------------------ | -------------------------------------------------------------------------------------------------------- |
-| `build-a-rig`      | research, citing gear, resolving an ask, tuning after hearing it                                         |
-| `write-a-spec`     | every field on the two contracts, and which document a fact belongs in                                   |
-| `measure-a-device` | **playing audio through the pedal and hearing it back**, sweeps, what a control does, trusting a catalog |
-| `measure-music`    | growing a corpus, measuring records, players and genres, deriving words                                  |
-| `work-a-device`    | reading and writing what a pedal holds, and the rules that keep one alive                                |
+| Skill              | Owns                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `build-a-rig`      | research, citing gear, resolving an ask, tuning after hearing it                                                   |
+| `write-a-spec`     | every field on the two contracts, and which document a fact belongs in                                             |
+| `measure-a-device` | **playing audio through the pedal and hearing it back**, sweeps, what a control does, trusting a catalog           |
+| `measure-music`    | growing a corpus, measuring records, players and genres, deriving words                                            |
+| `work-a-device`    | reading and writing what a pedal holds, which slots a setup manages, favourites, and the rules that keep one alive |
 
 Read the skill that matches the task. Do not read all five, and do not restate
 one skill's knowledge in another: that is the duplication the split exists to

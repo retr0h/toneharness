@@ -20,9 +20,8 @@
 
 package slot
 
-// Parse is parse, exposed to this package's external tests.
-//
-// It is the inverse of Label, and the pair only holds if both are tested
-// against each other. Nothing outside this repository calls it, so it is not
-// part of what the package promises.
-var Parse = parse
+// Nothing is exposed here any more. `Parse` was an alias for the unexported
+// reading, on the grounds that nothing outside this repository calls it; a
+// setup may now name its slots, which puts labels in a document rather than
+// only on a flag, so the reading is exported in its own right and the suite
+// calls it directly.

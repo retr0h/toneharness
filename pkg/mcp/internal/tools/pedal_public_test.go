@@ -236,6 +236,89 @@ func (s *PedalPublicTestSuite) TestClose() {
 			},
 		},
 		{
+			// The two tools that open a Session of their own rather than
+			// using the held one, so the held one has to be let go first.
+			name: "alone",
+			then: func() {
+				tests := []struct {
+					name string
+					// held says a device tool is called first, so there is a
+					// Session for this one to let go.
+					held bool
+					// after says the pedal is closed before the call, which
+					// is what a call arriving after the server stopped meets.
+					after bool
+					setup func(c *mocks.MockClient, first *mocks.MockSession)
+					want  string
+					err   bool
+				}{
+					{
+						// A Session this server holds claims the editor
+						// interface exclusively, so the one Favourite opens
+						// would be refused by a pedal this very process has
+						// not let go of. The held one is closed first.
+						name: "a held Session is let go before the call",
+						held: true,
+						setup: func(c *mocks.MockClient, first *mocks.MockSession) {
+							c.EXPECT().Open(gomock.Any()).Return(first, nil)
+							first.EXPECT().Presets(gomock.Any(), 0).
+								Return(sdk.Listing{Slots: []sdk.Held{{}}}, nil)
+							first.EXPECT().Close().Return(nil)
+							c.EXPECT().Favourite(gomock.Any(), sdk.AtFirst).
+								Return(sdk.Chosen{At: "11A", Position: 1, Of: 1}, nil)
+						},
+						want: "loaded 11A",
+					},
+					{
+						// Nothing held, which is the ordinary case: the first
+						// thing an agent does may well be this.
+						name: "nothing held at all",
+						setup: func(c *mocks.MockClient, _ *mocks.MockSession) {
+							c.EXPECT().Favourite(gomock.Any(), sdk.AtFirst).
+								Return(sdk.Chosen{At: "11A", Position: 1, Of: 1}, nil)
+						},
+						want: "loaded 11A",
+					},
+					{
+						// A call arriving after the server let the pedal go
+						// does not claim it again, and the client is never
+						// reached.
+						name:  "a call after the server stopped",
+						after: true,
+						setup: func(_ *mocks.MockClient, _ *mocks.MockSession) {},
+						want:  "the server has stopped",
+						err:   true,
+					},
+				}
+
+				for _, tt := range tests {
+					s.Run(tt.name, func() {
+						c := mocks.NewMockClient(s.ctrl)
+						first := mocks.NewMockSession(s.ctrl)
+
+						tt.setup(c, first)
+
+						session, pedal := connectIdle(s.T(), c, true, time.Hour)
+
+						// A held Session to be let go, where the case wants
+						// one: any device tool opens it.
+						if tt.held {
+							s.False(call(s.T(), session, "slots_list", tools.None{}).IsError)
+						}
+
+						if tt.after {
+							s.Require().NoError(pedal.Close())
+						}
+
+						res := call(s.T(), session, "device_fav", map[string]any{})
+
+						s.Equal(tt.err, res.IsError)
+						s.Contains(text(s.T(), res), tt.want)
+					})
+				}
+			},
+		},
+		{
 			// Letting the pedal go when the server stops.
 			name: "close",
 			then: func() {

@@ -27,6 +27,9 @@ mise exec -- go run main.go presets show --slot 42C --json
 says which, `TONEHARNESS_SCRATCH_SLOT` is how one is named, and a high bank is
 the convention only because low banks are where most people keep what they play.
 
+Writing the whole layout at once rather than one slot is `slots fill`, and
+which slots that touches is [setup.md](setup.md).
+
 ### Build it with `presets compile`, not `presets make`
 
 `presets make` builds a preset from a rig's identifier to look at. **A device

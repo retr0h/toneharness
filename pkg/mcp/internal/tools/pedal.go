@@ -114,6 +114,42 @@ func locked[T any](
 	return call()
 }
 
+// alone runs call with the pedal held and no Session of this server's open.
+//
+// For the Client's own operations rather than a Session's. `Fill` and
+// `Favourite` both read a setup and then act on the device, and each opens its
+// own session to do it. A session this server is still holding claims the
+// editor interface exclusively, so the one they open would be refused by a
+// pedal this very process has not let go of.
+//
+// So the held one is closed first and the lock is held for the whole call. The
+// next device tool opens a fresh session, which costs a claim and a handshake
+// and is the price of these two not needing to be written twice.
+func alone[T any](
+	ctx context.Context,
+	p *pedal,
+	call func() (T, error),
+) (T, error) {
+	if err := p.take(ctx); err != nil {
+		var zero T
+
+		return zero, err
+	}
+
+	defer p.give()
+
+	// Before the release, so the idle close cannot fire against a Session
+	// this is about to close itself.
+	p.disarm()
+
+	// What Close says is lost on purpose: this is a Session nobody asked
+	// about, closed to get out of the way of the one the call will open, and
+	// the call's own answer is what the caller is waiting for.
+	_ = p.release()
+
+	return call()
+}
+
 // onPedal runs call on the held Session, opening one first when none is held.
 func onPedal[T any](
 	ctx context.Context,

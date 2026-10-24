@@ -40,7 +40,7 @@ func NewValue(
 func (v *Value) Set(
 	s string,
 ) error {
-	n, err := parse(s)
+	n, err := Parse(s)
 	if err != nil {
 		return err
 	}

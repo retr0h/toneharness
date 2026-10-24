@@ -81,8 +81,22 @@ The resolved model per block, the position, the snapshots and footswitches, and
 the device state a lifted preset arrived with live on the Plan and in `built:`,
 which names the pedal and catalog that produced them.
 
-Only the ToneSpec has a contract, and the rule is worth stating: **becoming a
-file is not what earns a contract. Being typed by somebody is.**
+There is a third authored document, and it is about the person rather than the
+sound: a **Setup** says what somebody owns, and it changes when they buy
+something rather than when they want to sound different. It lives at
+`$XDG_CONFIG_HOME/toneharness/setup.yaml`, and `setup init` writes a starter
+one.
+
+Two of its fields drive hardware rather than a build. `slots:` pairs each rig
+with the slot it lives in, which is the only record of which presets on a pedal
+this tool manages, and `slots fill` writes every one of them. `favourites:` is
+the handful worth reaching in one step, and `device fav` cycles them. Both are
+preferences about one person's own pedal, which is why neither could live on a
+rig: two people building the same rig want the same preset and different slots.
+
+The ToneSpec and the Setup are what the contract covers, and the rule is worth
+stating: **becoming a file is not what earns a contract. Being typed by somebody
+is.**
 
 [One document, and the rig is required](superpowers/specs/2026-10-01-one-document-rig-required-design.md)
 is the record for the merge, superseding

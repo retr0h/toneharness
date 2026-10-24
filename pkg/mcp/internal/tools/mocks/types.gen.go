@@ -18,6 +18,7 @@ import (
 	audio "github.com/retr0h/toneharness/pkg/sdk/audio"
 	catalog "github.com/retr0h/toneharness/pkg/sdk/catalog"
 	slot "github.com/retr0h/toneharness/pkg/sdk/slot"
+	tone "github.com/retr0h/toneharness/pkg/sdk/tone"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -133,6 +134,36 @@ func (m *MockClient) Devices(ctx context.Context) (sdk.Attached, error) {
 func (mr *MockClientMockRecorder) Devices(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Devices", reflect.TypeOf((*MockClient)(nil).Devices), ctx)
+}
+
+// Favourite mocks base method.
+func (m *MockClient) Favourite(ctx context.Context, step sdk.Step) (sdk.Chosen, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Favourite", ctx, step)
+	ret0, _ := ret[0].(sdk.Chosen)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Favourite indicates an expected call of Favourite.
+func (mr *MockClientMockRecorder) Favourite(ctx, step any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Favourite", reflect.TypeOf((*MockClient)(nil).Favourite), ctx, step)
+}
+
+// Fill mocks base method.
+func (m *MockClient) Fill(ctx context.Context) ([]sdk.Placed, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Fill", ctx)
+	ret0, _ := ret[0].([]sdk.Placed)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Fill indicates an expected call of Fill.
+func (mr *MockClientMockRecorder) Fill(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fill", reflect.TypeOf((*MockClient)(nil).Fill), ctx)
 }
 
 // Make mocks base method.
@@ -359,6 +390,36 @@ func (m *MockClient) Scaffold(ctx context.Context, in sdk.NewRig) (sdk.Scaffolde
 func (mr *MockClientMockRecorder) Scaffold(ctx, in any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scaffold", reflect.TypeOf((*MockClient)(nil).Scaffold), ctx, in)
+}
+
+// Setup mocks base method.
+func (m *MockClient) Setup() (tone.Setup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Setup")
+	ret0, _ := ret[0].(tone.Setup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Setup indicates an expected call of Setup.
+func (mr *MockClientMockRecorder) Setup() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Setup", reflect.TypeOf((*MockClient)(nil).Setup))
+}
+
+// StartSetup mocks base method.
+func (m *MockClient) StartSetup(at string) (sdk.Written, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StartSetup", at)
+	ret0, _ := ret[0].(sdk.Written)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StartSetup indicates an expected call of StartSetup.
+func (mr *MockClientMockRecorder) StartSetup(at any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartSetup", reflect.TypeOf((*MockClient)(nil).StartSetup), at)
 }
 
 // Tone mocks base method.
