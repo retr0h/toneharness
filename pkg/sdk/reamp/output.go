@@ -91,7 +91,9 @@ func (e *NoOutputError) Unwrap() error { return ErrOutput }
 // level.
 var (
 	saysOutput = output
-	setsOutput = setOutput
+	// Set aside under test, for the reason the level is: which device the
+	// machine plays through is a side effect on whoever is sitting at it.
+	setsOutput = aside(setOutput)
 )
 
 // Output answers which device the computer is currently set to play through.

@@ -52,8 +52,11 @@ import "errors"
 // names `asks`: the interesting answers are on the far side of something this
 // package cannot make happen.
 var (
-	reads  = volume
-	writes = setVolume
+	reads = volume
+	// Set aside under test, because this one changes the machine: see [aside]
+	// and what forgetting it cost. A suite replacing this reaches its own
+	// fake and is unaffected.
+	writes = aside(setVolume)
 )
 
 // Volume is the computer's own output level, 0 to 100.

@@ -257,6 +257,13 @@ func (s *ControlsRunTestSuite) run(
 	err := MeasureControls(context.Background(), &buf, ControlsOptions{
 		Client: s.pedal, Model: model, Dry: s.dry, Out: s.out,
 		Seconds: 1, Points: 3, Takes: 2, Bench: b,
+		// Its own level, so nothing here asks the machine for one. Left nil
+		// this falls back to `reamp.Held`, and the options carry `Volume: 0`:
+		// every run of this suite set the output level of whatever computer
+		// it was on to zero, which the owner of this one noticed by being
+		// muted while playing. `reamp` refuses it in a test binary now and
+		// this says so at the call site too.
+		Level: func(want int) (int, bool, error) { return want, false, nil },
 		After: strings.Join(after, ""),
 	})
 	if err != nil {
