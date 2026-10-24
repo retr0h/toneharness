@@ -334,9 +334,11 @@ func (s *StompPublicTestSuite) TestStompedable() {
 		// not a thing anybody does.
 		{catalog.CategoryAmp, false},
 		{catalog.CategoryCab, false},
-		// Set once and left, which is why every chain the corpus builds
-		// carries one without anybody reaching for it.
-		{catalog.CategoryComp, false},
+		// Set once and left was the reasoning, and the person holding the
+		// pedal disagreed: two presets whose whole chain was a compressor,
+		// an amplifier and a cabinet reached the hardware with nothing on
+		// any switch. The corpus stomps 1,154 of them.
+		{catalog.CategoryComp, true},
 		{catalog.CategoryGate, false},
 		{catalog.CategoryUtility, false},
 	} {

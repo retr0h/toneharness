@@ -154,7 +154,7 @@ func Pizzazz(
 
 	room := plan.LimitsFor(deps.Catalog.Device).Switches
 	for kind := range held {
-		if stomped(kind) {
+		if catalog.Stompable(kind) {
 			room--
 		}
 	}
@@ -226,7 +226,7 @@ func offers(
 	all := make([]offer, 0, len(grammar.Categories))
 
 	for kind, stats := range grammar.Categories {
-		if held[kind] || !stomped(kind) || stats.Chains == 0 {
+		if held[kind] || !catalog.Stompable(kind) || stats.Chains == 0 {
 			continue
 		}
 
@@ -255,6 +255,14 @@ func offers(
 	// Rotated rather than shuffled, so the ranking still shows through: a rig
 	// starting at the third candidate gets the third, fourth and fifth rather
 	// than three drawn from anywhere.
+	//
+	// Nothing to rotate by means no rotation, which leaves the ranking itself.
+	// [Pizzazz] refuses a rig with no identifier, so this is the order a test
+	// reads rather than one a build reaches.
+	if id == "" {
+		return all
+	}
+
 	sum := fnv.New32a()
 	_, _ = sum.Write([]byte(id))
 

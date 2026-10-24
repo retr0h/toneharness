@@ -199,8 +199,10 @@ var (
 	// AskedFor is the kinds a target's records ask for, in switch order.
 	AskedFor = askedFor
 	// Stompedable is whether a kind is one a foot reaches for, which decides
-	// how many switches a chain has already spoken for.
-	Stompedable = stomped
+	// how many switches a chain has already spoken for. The catalog owns the
+	// answer since there were two copies of it and they disagreed about a
+	// compressor; this alias is what the suite was already written against.
+	Stompedable = catalog.Stompable
 	// AimedAt is what a rig's own records measure as, and the words they
 	// earn, found by the document's own identifier.
 	AimedAt = aimedAt
@@ -246,3 +248,31 @@ var (
 	LikeTheirRig   = likeTheirRig
 	LikeTheirGenre = likeTheirGenre
 )
+
+// Exposed to this package's external tests: the pieces of a corpus offer.
+//
+// Each is reachable through [Pizzazz] for the rows today's data produces, and
+// each covers more than those. A category nothing holds, a category every
+// chain engages, a chain already at the chip's ceiling and a name whose models
+// all change the notes are all states the 43 shipped rigs do not reach, and
+// all four decide what a person is offered.
+var (
+	// CarriedButOff ranks a kind of block by how often players put one in and
+	// leave it switched off.
+	CarriedButOff = carriedButOff
+	// Offers is every kind worth a switch, best first, rotated per subject.
+	Offers = offers
+	// Popular is the model of one kind that the most chains hold.
+	Popular = popular
+	// SpareOn is how much of the chip a chain has not spent.
+	SpareOn = spareOn
+)
+
+// Offer is one kind of block worth a switch, for a test that reads the order.
+type Offer = offer
+
+// Kind is which category an offer names.
+func (o Offer) Kind() catalog.Category { return o.kind }
+
+// Share is how often a chain holding one leaves it off.
+func (o Offer) Share() float64 { return o.share }

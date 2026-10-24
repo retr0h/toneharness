@@ -29,40 +29,6 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
-// stomped is the kinds of block a player turns on and off with a foot, in the
-// order a chain holds them.
-//
-// Not every block is worth a switch, and the ones that are not are the point
-// of the list. An amplifier and a cabinet are the sound rather than an effect
-// on it: bypassing either mid-song is not a thing anybody does, and a switch
-// spent on one is a switch not spent on the drive. A compressor on a bass is
-// set once and left, which is why it is absent here and why every chain the
-// corpus builds carries one without anybody reaching for it.
-//
-// What is left is what a pedalboard would have had on the floor.
-var stomped = map[catalog.Category]bool{
-	catalog.CategoryDrive:  true,
-	catalog.CategoryFilter: true,
-	catalog.CategoryMod:    true,
-	catalog.CategoryDelay:  true,
-	catalog.CategoryReverb: true,
-	catalog.CategoryPitch:  true,
-	catalog.CategoryEQ:     true,
-	// A compressor is a pedal somebody steps on, and leaving it out was the
-	// difference between three switches and none.
-	//
-	// The corpus puts one in 85% of chains, so almost every rig built here
-	// carries one, and it was the only block in the shortest chains: an
-	// artist rig of compressor, amplifier and cabinet reached the pedal with
-	// nothing on any switch at all. Two of the seven loaded on 2026-10-23 did.
-	//
-	// It is also what the corpus itself stomps. Of 1,154 compressor
-	// assignments across the 4,426 presets, every one is a switch somebody
-	// put a compressor on deliberately, which is more than this device's
-	// presets carry for filters, pitch and wah together.
-	catalog.CategoryComp: true,
-}
-
 // palette is the colours a switch is given, in the order they are handed out.
 //
 // Unique per switch rather than per kind of block, so a board where every
@@ -275,7 +241,7 @@ func Assign(
 		// model identifier and the two questions here — what kind of block is
 		// this, and what is it called — are both the catalog's.
 		held, known := cat.Block(b.Model)
-		if !known || !stomped[held.Category] {
+		if !known || !catalog.Stompable(held.Category) {
 			continue
 		}
 

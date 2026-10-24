@@ -72,3 +72,38 @@ func SetByHand(
 ) bool {
 	return valveGuts[param]
 }
+
+// Stompable reports whether a block is the kind of thing somebody puts on a
+// footswitch.
+//
+// One owner, because there were two and they drifted. `compile` kept a map and
+// `translate` kept a switch, and when the compressor was added to one of them
+// the other went on believing a compressor is not a pedal: a build then put
+// one on a switch while the chooser went on counting switches as though it had
+// not. Two copies of a judgement is how one of them gets missed, which is the
+// same lesson as [SetByHand].
+//
+// An amplifier and a cabinet are the sound rather than an effect on it, so
+// neither is here: a switch on either is a switch spent turning the rig off.
+// Everything else a chain holds is something a foot reaches for.
+//
+// A compressor is, and leaving it out cost two presets every switch they had.
+// The corpus stomps 1,154 of them, it is in 85% of bass chains, and in the
+// shortest chains it was the only block there was.
+func Stompable(
+	of Category,
+) bool {
+	switch of {
+	case CategoryComp,
+		CategoryDrive,
+		CategoryFilter,
+		CategoryMod,
+		CategoryDelay,
+		CategoryReverb,
+		CategoryPitch,
+		CategoryEQ:
+		return true
+	default:
+		return false
+	}
+}
