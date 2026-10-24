@@ -111,12 +111,22 @@ type ControlsOptions struct {
 // leave an isolated amplifier's controls where the corpus medians put them.
 //
 // So this is said at the top of a run that costs most of an hour, where
-// somebody can still decide to sweep it through a cabinet instead. Task 271 is
-// what would make that possible.
+// somebody can still decide to sweep it through a cabinet instead. `--after`
+// is how, and this says nothing when one is named: the reading is then of a
+// chain, the file records it, and a warning that the file says otherwise is
+// worse than no warning. It claimed exactly that for one run before `--after`
+// taught it to keep quiet.
 func alongside(
 	w io.Writer,
 	of catalog.Category,
+	// after is the model put behind the block, or empty where the block was
+	// swept on its own.
+	after string,
 ) {
+	if after != "" {
+		return
+	}
+
 	// One category covers both halves: the catalog files all 113 `HD2_Preamp`
 	// models as `amp`, and a preamp is the same hazard for the same reason,
 	// being the front of an amplifier with no cabinet after it.
@@ -344,7 +354,7 @@ func MeasureControls(
 
 	// Said before the sweep rather than after it, because it is the case where
 	// the reading differs most from use and the run costs most of an hour.
-	alongside(w, block.Category)
+	alongside(w, block.Category, opts.After)
 
 	// What the chain settles at before the first control is swept, which every
 	// control after it is held to. See [working].

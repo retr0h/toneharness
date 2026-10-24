@@ -1015,12 +1015,24 @@ func (s *ControlsRunTestSuite) TestAlongside() {
 	tests := []struct {
 		name string
 		of   catalog.Category
+		// after is the model put behind the block, empty where it was swept
+		// on its own.
+		after string
 		// said is whether the caveat is printed.
 		said bool
 	}{
 		{
 			name: "an amplifier is warned about",
 			of:   catalog.CategoryAmp, said: true,
+		},
+		{
+			// The run that found this said "no cabinet after it" and "the
+			// file records isolated: true" with a cabinet behind the block
+			// and `isolated: false` in the file. A warning that contradicts
+			// the file is worse than none.
+			name:  "an amplifier with a cabinet behind it is not",
+			of:    catalog.CategoryAmp,
+			after: "HD2_CabMicIr_8x10SVTAV", said: false,
 		},
 		{
 			// Nothing else. A drive or a compressor swept alone is a caveat
@@ -1043,7 +1055,7 @@ func (s *ControlsRunTestSuite) TestAlongside() {
 		s.Run(tt.name, func() {
 			var buf bytes.Buffer
 
-			alongside(&buf, tt.of)
+			alongside(&buf, tt.of, tt.after)
 
 			if !tt.said {
 				s.Require().Empty(buf.String())
