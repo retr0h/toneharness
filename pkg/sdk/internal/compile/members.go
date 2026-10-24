@@ -365,12 +365,10 @@ func processorHolding(
 			continue
 		}
 
-		var held map[string]json.RawMessage
-		if err := json.Unmarshal(asObject(doc.Data.Tone[key]), &held); err != nil {
-			continue
-		}
-
-		if _, there := held[member]; there {
+		// Read straight out of the map rather than marshalled and parsed
+		// back: a `preset.Tone` already is the processor's entries, and its
+		// members sit in it beside the chain's blocks.
+		if _, there := doc.Data.Tone[key][member]; there {
 			return key, true
 		}
 	}
@@ -511,20 +509,4 @@ func empty(
 ) bool {
 	return of.Model == nil && of.Attrs == nil &&
 		of.Controls == nil && of.Members == nil && of.Entries == nil
-}
-
-// asObject renders a tone entry back as the JSON object it arrived as.
-//
-// `preset.Tone` is already a map of raw fields, so a processor's entry has to
-// be put back together to be read as one: its members are values inside it
-// rather than entries beside it.
-func asObject(
-	tone preset.Tone,
-) []byte {
-	body, err := json.Marshal(tone)
-	if err != nil {
-		return []byte("{}")
-	}
-
-	return body
 }

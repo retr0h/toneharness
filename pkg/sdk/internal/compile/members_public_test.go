@@ -342,6 +342,8 @@ func (s *MembersPublicTestSuite) TestApplyMembersPutsAProcessorsMemberWhereItLiv
 		member  string
 		attrs   map[string]string
 		control *catalog.Held
+		// tone is the document merged into, where the default will not do.
+		tone string
 		// then reads the document back.
 		then func(tone map[string]preset.Tone)
 	}{
@@ -387,6 +389,23 @@ func (s *MembersPublicTestSuite) TestApplyMembersPutsAProcessorsMemberWhereItLiv
 				s.Require().Contains(tone, "nosuchmember")
 			},
 		},
+		{
+			// A processor holding something where a member should be, which
+			// no device sends and a hand-edited file can carry. The stated
+			// fields are written rather than dropped, and whatever was there
+			// is not read as an object it is not: a crash or a silent drop
+			// are both worse than replacing a value nothing could have used.
+			name:    "a member that is not an object is replaced rather than parsed",
+			member:  "outputA",
+			control: held(catalog.Float(-12)),
+			tone:    `{"dsp0":{"outputA":"not an object at all"}}`,
+			then: func(tone map[string]preset.Tone) {
+				var held map[string]any
+				s.Require().NoError(
+					json.Unmarshal(tone["dsp0"]["outputA"], &held))
+				s.Require().InDelta(-12.0, held["threshold"], 1e-9)
+			},
+		},
 	} {
 		s.Run(tt.name, func() {
 			member := rig.PresetMember{}
@@ -407,8 +426,13 @@ func (s *MembersPublicTestSuite) TestApplyMembersPutsAProcessorsMemberWhereItLiv
 
 			members := map[string]rig.PresetMember{tt.member: member}
 
-			into := s.read(`{"dsp0":{"inputA":{"@model":"HD2_AppDSPFlow1Input",` +
-				`"@input":1,"threshold":-48.0,"noiseGate":false}}}`)
+			body := tt.tone
+			if body == "" {
+				body = `{"dsp0":{"inputA":{"@model":"HD2_AppDSPFlow1Input",` +
+					`"@input":1,"threshold":-48.0,"noiseGate":false}}}`
+			}
+
+			into := s.read(body)
 
 			compile.ApplyMembers(into, &members)
 			tt.then(into.Data.Tone)
