@@ -92,6 +92,27 @@ func bassRig(
 	return spec
 }
 
+// miced is a bass rig whose cabinet states its own microphone and distance.
+//
+// The two fields the contract keeps beside `controls` rather than in it, which
+// went into an attribute nothing on this device reads while the corpus decided
+// the parameter: see `statedMicing`.
+func miced(
+	mic *int,
+	distance *float64,
+) rig.Spec {
+	return rig.Spec{
+		Instrument: rig.InstrumentBass,
+		Chain: []rig.ChainEntry{
+			{Role: rig.RoleAmp, Gear: "Ampeg SVT"},
+			{
+				Role: rig.RoleCab, Gear: "Fixture 2x12 Miced",
+				Mic: mic, Distance: distance,
+			},
+		},
+	}
+}
+
 // realised is the plan a rig fits to on the device a catalog describes.
 //
 // One block per chain entry, at factory settings, which is the chain the
@@ -416,6 +437,45 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 // range that took whatever matched first. Two resolvers cannot both be right
 // about which Ampeg SVT is meant, and the one that ignored the role would
 // answer with a cabinet.
+// TestResolveTakesAStatedMicrophoneAndRefusesABadOne covers the two values a
+// cabinet keeps in fields of its own.
+//
+// The contract puts `mic` and `distance` beside `controls` rather than in it,
+// on the reasoning that the device stores them as attributes and the catalog
+// carries no range. That holds for the legacy cabinets and not for the mic'd
+// impulse responses every rig here builds with, so a stated microphone went
+// into `@mic`, which nothing on this device reads, and the parameter kept
+// whatever wrote it last: a document asking for microphone 4 built one on 11.
+//
+// Through `Resolve` rather than against `statedMicing` directly, because what
+// was broken was the wiring rather than the arithmetic.
+func (s *ResolvePublicTestSuite) TestResolveTakesAStatedMicrophoneAndRefusesABadOne() {
+	at := func(i int) *int { return &i }
+	to := func(f float64) *float64 { return &f }
+
+	got, _, _, _, err := compile.Resolve(
+		"test", miced(at(4), to(2.5)), compile.Intent{}, s.cat, nil)
+	s.Require().NoError(err)
+
+	var cab *plan.Block
+
+	for i := range got.Blocks {
+		if got.Blocks[i].Model == "HD2_CabMicIr_Miced" {
+			cab = &got.Blocks[i]
+		}
+	}
+
+	s.Require().NotNil(cab, "the miced cabinet is in the chain")
+	s.Require().Equal(catalog.Int(4), cab.Params["Mic"])
+	s.Require().Equal(catalog.Float(2.5), cab.Params["Distance"])
+
+	// And a figure the control cannot take is refused and named, rather than
+	// reaching a device that would refuse the whole preset.
+	_, _, _, _, err = compile.Resolve(
+		"test", miced(nil, to(99)), compile.Intent{}, s.cat, nil)
+	s.Require().ErrorContains(err, "Distance")
+}
+
 func (s *ResolvePublicTestSuite) TestGear() {
 	tests := []struct {
 		name       string
