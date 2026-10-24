@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
@@ -145,8 +146,6 @@ func Make(
 	// genre-only list that used to live there could not reach one: all eleven
 	// genres carried the same drive and equaliser and none of the 32 artists
 	// carried anything.
-	rec, chosen, stomped := stompable(known.ID, rec, setupOf(held), cat, lib, opts)
-
 	// Statistics are an improvement on the catalog's defaults, not a
 	// requirement, but somebody who named a file asked for those ones. Building
 	// without them would hand back a more generic preset than the one asked
@@ -155,6 +154,9 @@ func Make(
 	if err != nil {
 		return result.Made{}, err
 	}
+
+	rec, chosen, stomped := stompable(
+		known.ID, rec, setupOf(held), cat, lib, stats, opts)
 
 	spec, added, moved, playing, err := opts.compiler().Resolve(
 		known.ID, rec, intent, cat, stats)
@@ -598,13 +600,26 @@ func curvesIn(
 	read := sweptIn(dir)
 	out := map[catalog.ModelID]measured.Curves{}
 
+	// The cabinet first, because an amplifier's readings are preferred from a
+	// sweep taken through it: see [sweepNames].
+	cab := catalog.ModelID("")
+
+	for _, b := range spec.Blocks {
+		if one, known := cat.Block(b.Model); known &&
+			one.Category == catalog.CategoryCab {
+			cab = b.Model
+
+			break
+		}
+	}
+
 	for _, b := range spec.Blocks {
 		if one, known := cat.Block(b.Model); !known ||
 			one.Category != catalog.CategoryAmp {
 			continue
 		}
 
-		got, swept := read(b.Model)
+		got, swept := read(b.Model, cab)
 		if !swept {
 			continue
 		}
@@ -754,28 +769,74 @@ func (o MakeOptions) aimOf(
 // compiler can tell "no sweeps were offered" from "that block is not in them".
 func sweptIn(
 	dir string,
-) func(catalog.ModelID) (measured.Curves, bool) {
+) func(model, with catalog.ModelID) (measured.Curves, bool) {
 	if dir == "" {
 		return nil
 	}
 
-	return func(model catalog.ModelID) (measured.Curves, bool) {
-		f, err := os.Open(
-			filepath.Join(dir, string(model)+".json"),
-		) //nolint:gosec // a path built from the catalog
-		if err != nil {
-			return measured.Curves{}, false
+	// `with` is the cabinet the chain ends in, so a reading taken through
+	// that cabinet is preferred over one taken with the block alone. Empty
+	// asks only for the isolated reading, which is every caller with no
+	// chain in hand.
+	return func(model, with catalog.ModelID) (measured.Curves, bool) {
+		for _, name := range sweepNames(model, with) {
+			got, ok := loadCurves(filepath.Join(dir, name))
+			if ok {
+				return got, true
+			}
 		}
 
-		defer func() { _ = f.Close() }()
-
-		got, err := measured.LoadCurves(f)
-		if err != nil {
-			return measured.Curves{}, false
-		}
-
-		return got, true
+		return measured.Curves{}, false
 	}
+}
+
+// sweepNames is the files that hold a block's readings, best first.
+//
+// **A chain sweep before the isolated one**, which is the whole of task 271
+// reaching the solver. An amplifier swept alone has no cabinet lowpassing it,
+// so `measured.StartAt` and `Curves.Toward` both refuse one, and every artist
+// rig's amplifier then arrived at corpus medians and catalog defaults: Bass
+// 0.41, Drive 0.6, ChVol 0.8, which is the factory setting to the digit and
+// the regression task 268 existed to stop.
+//
+// A reading through this chain's own cabinet is not refused, because it
+// describes a chain rather than a block. So naming the cabinet is what lets an
+// amplifier be tuned from somebody's records at all.
+//
+// Lowercased, which is how `measure controls --after` writes them, and the
+// isolated name is left exactly as the catalog spells it because that is how
+// the committed library is filed.
+func sweepNames(
+	model catalog.ModelID,
+	with catalog.ModelID,
+) []string {
+	out := make([]string, 0, 2)
+
+	if with != "" && with != model {
+		out = append(out, strings.ToLower(
+			string(model))+"-into-"+strings.ToLower(string(with))+".json")
+	}
+
+	return append(out, string(model)+".json")
+}
+
+// loadCurves reads one file of readings, or says it could not.
+func loadCurves(
+	path string,
+) (measured.Curves, bool) {
+	f, err := os.Open(path) //nolint:gosec // a path built from the catalog
+	if err != nil {
+		return measured.Curves{}, false
+	}
+
+	defer func() { _ = f.Close() }()
+
+	got, err := measured.LoadCurves(f)
+	if err != nil {
+		return measured.Curves{}, false
+	}
+
+	return got, true
 }
 
 // stompable adds the effects this rig's own records ask for, each switched
@@ -795,20 +856,44 @@ func stompable(
 	setup tone.Setup,
 	cat *catalog.Catalog,
 	lib measured.Library,
+	stats *corpus.Stats,
 	opts MakeOptions,
 ) (rig.Spec, []rig.ChainEntry, []result.Added) {
 	notes := translate.Notes{}
 
-	got := translate.Stompable(id, rec, setup, translate.Deps{
+	deps := translate.Deps{
 		Catalog:   cat,
 		Measured:  lib,
+		Corpus:    stats,
 		CurvesFor: sweptIn(opts.SweepsDir),
-	}, &notes)
+	}
+
+	got := translate.Stompable(id, rec, setup, deps, &notes)
 
 	out := make([]result.Added, 0, len(got))
 	chosen := make([]rig.ChainEntry, 0, len(got))
 
+	// Spliced before the corpus is asked for more, because what the records
+	// asked for is already spending the chip and the switches. Asking first
+	// and splicing afterwards is how Matt Freeman's chain reached 99.03% of a
+	// 95% ceiling and refused to build at all: the offers were costed against
+	// a chain that did not yet hold the two blocks his own records had just
+	// put in it.
 	for _, at := range got {
+		rec.Chain = translate.Spliced(rec.Chain, at.Entry)
+		chosen = append(chosen, at.Entry)
+
+		out = append(out, result.Added{
+			Name: at.Entry.Gear, Reason: at.Said, Bypassed: true,
+		})
+	}
+
+	// Then whatever measurement could not ask for. A word is earned on four
+	// axes which answer with three kinds of block, so three switches is the
+	// ceiling and 21 of the 43 rigs here earn nothing at all: two of seven
+	// presets put on a pedal arrived with every switch empty. Everything this
+	// adds is bypassed, so it is an offer rather than a claim.
+	for _, at := range translate.Pizzazz(id, rec, deps, &notes) {
 		rec.Chain = translate.Spliced(rec.Chain, at.Entry)
 		chosen = append(chosen, at.Entry)
 

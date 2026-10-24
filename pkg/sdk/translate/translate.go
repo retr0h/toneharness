@@ -51,6 +51,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
@@ -83,6 +84,11 @@ type Deps struct {
 	// nothing is looked up, so an ask naming a player resolves nothing, which is
 	// what a caller wanting only its own gear resolved gets.
 	RigNamed func(name string) (rig.Spec, bool)
+	// Corpus is what strangers' presets do, which answers a different
+	// question from Measured: not "which block sounds like this" but "which
+	// block do players of this instrument actually carry". It is what fills a
+	// switch no measured word can ask for. Nil means nothing is offered.
+	Corpus *corpus.Stats
 	// CurvesFor is what every control of one block does, measured, and
 	// whether that block has been swept.
 	//
@@ -90,7 +96,7 @@ type Deps struct {
 	// readings and translate sits upstream of whatever reads it. Nil means
 	// nothing is looked up, and a block added to a chain then arrives at the
 	// catalog's defaults, which is what every added block used to do.
-	CurvesFor func(model catalog.ModelID) (measured.Curves, bool)
+	CurvesFor func(model, with catalog.ModelID) (measured.Curves, bool)
 }
 
 // UnknownWord is a word somebody used that nothing defines, and the nearest
@@ -884,7 +890,9 @@ func chose(
 
 	model := sweptFor(deps, entry.Gear, catalog.CategoryCab)
 
-	curves, swept := deps.CurvesFor(model)
+	// No cabinet named, because this is the cabinet: a reading of it through
+	// itself is not a thing, and its microphone is read from its own sweep.
+	curves, swept := deps.CurvesFor(model, "")
 	if !swept {
 		return
 	}
@@ -985,7 +993,7 @@ func sweptFor(
 	for id := range modelsFor(deps.Catalog, gear, kind) {
 		at := catalog.ModelID(id)
 
-		if _, swept := deps.CurvesFor(at); !swept {
+		if _, swept := deps.CurvesFor(at, ""); !swept {
 			continue
 		}
 
@@ -1208,7 +1216,12 @@ func tuned(
 		return
 	}
 
-	curves, swept := deps.CurvesFor(model)
+	// No cabinet named, and that is right here rather than a gap. Every block
+	// this tunes is an effect being added to a chain, never the chain's own
+	// amplifier, and `Curves.Toward` only refuses an isolated reading of an
+	// amplifier. The amplifier's own controls are set in `compile.aimed`,
+	// which does name the cabinet: task 271.
+	curves, swept := deps.CurvesFor(model, "")
 	if !swept {
 		*notes = append(*notes, Note{
 			About: entry.Gear,

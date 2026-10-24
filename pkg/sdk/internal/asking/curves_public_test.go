@@ -99,7 +99,7 @@ func (s *CurvesInPublicTestSuite) TestCurvesIn() {
 
 			s.Require().NotNil(read)
 
-			got, ok := read(asking.ModelID(tt.model))
+			got, ok := read(asking.ModelID(tt.model), "")
 			s.Require().Equal(tt.found, ok)
 
 			if tt.found {

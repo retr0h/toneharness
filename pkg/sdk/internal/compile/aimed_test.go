@@ -151,7 +151,7 @@ func (s *AimedTestSuite) TestAimed() {
 			}}},
 			intent: Intent{
 				Aim: &high,
-				Curves: func(catalog.ModelID) (measured.Curves, bool) {
+				Curves: func(_, _ catalog.ModelID) (measured.Curves, bool) {
 					return measured.Curves{}, false
 				},
 			},
@@ -167,7 +167,7 @@ func (s *AimedTestSuite) TestAimed() {
 				Params: plan.Params{"LowCut": catalog.Float(37)},
 			}}},
 			intent: Intent{Aim: &high, Curves: func(
-				catalog.ModelID,
+				_, _ catalog.ModelID,
 			) (measured.Curves, bool) {
 				return measured.Curves{Controls: map[string]measured.Curve{
 					"LowCut": {
@@ -480,8 +480,8 @@ func (s *AimedTestSuite) TestSet() {
 // sweptAs answers with the same curves for every model asked about.
 func (s *AimedTestSuite) sweptAs(
 	curves measured.Curves,
-) func(catalog.ModelID) (measured.Curves, bool) {
-	return func(catalog.ModelID) (measured.Curves, bool) {
+) func(_, _ catalog.ModelID) (measured.Curves, bool) {
+	return func(_, _ catalog.ModelID) (measured.Curves, bool) {
 		return curves, true
 	}
 }

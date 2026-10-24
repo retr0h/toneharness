@@ -200,7 +200,7 @@ func (s *GenreGearPublicTestSuite) TestAGenreGetsEffectsSwitchedOff() {
 // TestAnEffectIsSetFromItsSweep covers tuning rather than defaulting.
 func (s *GenreGearPublicTestSuite) TestAnEffectIsSetFromItsSweep() {
 	deps := s.deps
-	deps.CurvesFor = func(catalog.ModelID) (measured.Curves, bool) {
+	deps.CurvesFor = func(_, _ catalog.ModelID) (measured.Curves, bool) {
 		return measured.Curves{}, false
 	}
 
@@ -316,7 +316,7 @@ func TestGenreGearPublicTestSuite(
 // BOSS Metal Zone can answer.
 func (s *GenreGearPublicTestSuite) TestAnEffectIsTunedFromItsSweep() {
 	deps := s.deps
-	deps.CurvesFor = func(model catalog.ModelID) (measured.Curves, bool) {
+	deps.CurvesFor = func(model, _ catalog.ModelID) (measured.Curves, bool) {
 		f, err := os.Open(filepath.Join(
 			"..", "..", "..", "resources", "sweeps", "hx-stomp",
 			string(model)+".json"))
@@ -562,7 +562,7 @@ func (s *GenreGearPublicTestSuite) TestTunedRefuses() {
 	}
 
 	deps := s.deps
-	deps.CurvesFor = func(catalog.ModelID) (measured.Curves, bool) {
+	deps.CurvesFor = func(_, _ catalog.ModelID) (measured.Curves, bool) {
 		return measured.Curves{Controls: map[string]measured.Curve{
 			// Reaching 29.5 points of midrange above the middle of its own
 			// positions, which is more than the 21.7 punk asks for. A dial
@@ -614,7 +614,7 @@ func (s *GenreGearPublicTestSuite) TestTunedRefuses() {
 			bare := rig.ChainEntry{Role: rig.RoleDrive, Gear: "Teemah!"}
 
 			d := s.deps
-			d.CurvesFor = func(catalog.ModelID) (measured.Curves, bool) {
+			d.CurvesFor = func(_, _ catalog.ModelID) (measured.Curves, bool) {
 				return tt.curves, true
 			}
 
@@ -694,7 +694,7 @@ func (s *GenreGearPublicTestSuite) TestTunedSaysWhenNothingReached() {
 			}
 
 			d := s.deps
-			d.CurvesFor = func(catalog.ModelID) (measured.Curves, bool) {
+			d.CurvesFor = func(_, _ catalog.ModelID) (measured.Curves, bool) {
 				return short, true
 			}
 
@@ -738,7 +738,7 @@ func (s *GenreGearPublicTestSuite) TestTunedSaysNothingWasAsked() {
 	}
 
 	deps := s.deps
-	deps.CurvesFor = func(catalog.ModelID) (measured.Curves, bool) {
+	deps.CurvesFor = func(_, _ catalog.ModelID) (measured.Curves, bool) {
 		return measured.Curves{Controls: map[string]measured.Curve{
 			"Drive": {
 				Control: "Drive", Settled: -20, SilentBelow: -50,
@@ -838,7 +838,7 @@ func (s *GenreGearPublicTestSuite) TestTunedWritesEachControlInItsOwnKind() {
 	}
 
 	deps := s.deps
-	deps.CurvesFor = func(catalog.ModelID) (measured.Curves, bool) {
+	deps.CurvesFor = func(_, _ catalog.ModelID) (measured.Curves, bool) {
 		return measured.Curves{Controls: map[string]measured.Curve{
 			"Bright": {
 				Control: "Bright", Kind: "bool", Settled: -20, SilentBelow: -50,
@@ -944,8 +944,8 @@ func (s *GenreGearPublicTestSuite) TestAGenreChoosesItsMicrophone() {
 }
 
 // sweeps reads the committed curves, which is what the choosing rests on.
-func (s *GenreGearPublicTestSuite) sweeps() func(catalog.ModelID) (measured.Curves, bool) {
-	return func(model catalog.ModelID) (measured.Curves, bool) {
+func (s *GenreGearPublicTestSuite) sweeps() func(_, _ catalog.ModelID) (measured.Curves, bool) {
+	return func(model, _ catalog.ModelID) (measured.Curves, bool) {
 		f, err := os.Open(filepath.Join(
 			"..", "..", "..", "resources", "sweeps", "hx-stomp",
 			string(model)+".json"))
@@ -973,7 +973,7 @@ func (s *GenreGearPublicTestSuite) TestChoseRefuses() {
 	tests := []struct {
 		name string
 		// swept is what the sweeps answer with, nil for none offered at all.
-		swept func(catalog.ModelID) (measured.Curves, bool)
+		swept func(_, _ catalog.ModelID) (measured.Curves, bool)
 		ask   tone.Ask
 		// gear names the cabinet, where the default is not the point.
 		gear string
@@ -986,7 +986,7 @@ func (s *GenreGearPublicTestSuite) TestChoseRefuses() {
 		},
 		{
 			name: "no sweep for that cabinet",
-			swept: func(catalog.ModelID) (measured.Curves, bool) {
+			swept: func(_, _ catalog.ModelID) (measured.Curves, bool) {
 				return measured.Curves{}, false
 			},
 			ask: s.forGenre("punk"),
@@ -1001,7 +1001,7 @@ func (s *GenreGearPublicTestSuite) TestChoseRefuses() {
 			// itself, which is not a model, so there is no block to read a
 			// control count off.
 			name: "a cabinet the catalog does not model",
-			swept: func(catalog.ModelID) (measured.Curves, bool) {
+			swept: func(_, _ catalog.ModelID) (measured.Curves, bool) {
 				return measured.Curves{Controls: map[string]measured.Curve{
 					"Mic": {Control: "Mic", Settled: -20},
 				}}, true
@@ -1011,7 +1011,7 @@ func (s *GenreGearPublicTestSuite) TestChoseRefuses() {
 		},
 		{
 			name: "a sweep with no microphone on it",
-			swept: func(catalog.ModelID) (measured.Curves, bool) {
+			swept: func(_, _ catalog.ModelID) (measured.Curves, bool) {
 				return measured.Curves{Controls: map[string]measured.Curve{
 					"LowCut": {Control: "LowCut", Settled: -20},
 				}}, true

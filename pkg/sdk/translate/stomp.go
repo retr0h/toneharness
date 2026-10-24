@@ -250,7 +250,7 @@ func Stompable(
 	// Bass Brassmaster is a drive, so nothing adds him another.
 	switches := plan.LimitsFor(deps.Catalog.Device).Switches
 	for kind := range held {
-		if stomped(kind) {
+		if catalog.Stompable(kind) {
 			switches--
 		}
 	}
@@ -327,30 +327,6 @@ type Stomped struct {
 	Entry rig.ChainEntry
 	// Said is what asked for a block of this kind, in a sentence.
 	Said string
-}
-
-// stomped reports whether a kind of block is one a foot reaches for.
-//
-// The same question `compile.stomped` answers and deliberately not the same
-// table: that one decides which block in a finished chain gets a switch, and
-// this one decides how many switches are already spoken for before any is
-// chosen. Keeping one copy would mean importing the compiler from upstream of
-// it, which inverts the pipeline this package sits at the top of.
-func stomped(
-	kind catalog.Category,
-) bool {
-	switch kind {
-	case catalog.CategoryDrive,
-		catalog.CategoryFilter,
-		catalog.CategoryMod,
-		catalog.CategoryDelay,
-		catalog.CategoryReverb,
-		catalog.CategoryPitch,
-		catalog.CategoryEQ:
-		return true
-	default:
-		return false
-	}
 }
 
 // aimedAt is what a rig's own records measure as, and the words they earn.

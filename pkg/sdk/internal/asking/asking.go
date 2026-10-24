@@ -166,12 +166,16 @@ func unknownWords(
 // caller can tell "no sweeps were offered" from "that block is not in them".
 func curvesIn(
 	dir string,
-) func(catalog.ModelID) (measured.Curves, bool) {
+) func(model, with catalog.ModelID) (measured.Curves, bool) {
 	if dir == "" {
 		return nil
 	}
 
-	return func(model catalog.ModelID) (measured.Curves, bool) {
+	// `with` goes unread here. Every block this answers for is an effect
+	// being added to a chain, and only an amplifier's isolated reading is
+	// refused downstream, so there is nothing a chain sweep would change.
+	// Taking the argument keeps one shape for the lookup rather than two.
+	return func(model, _ catalog.ModelID) (measured.Curves, bool) {
 		f, err := os.Open(filepath.Join(dir, string(model)+".json"))
 		if err != nil {
 			return measured.Curves{}, false

@@ -83,22 +83,40 @@ func (s *AssignTestSuite) TestAssign() {
 		autos []int
 	}{
 		{
-			// The ordinary chain the corpus builds. Nothing in it is stomped,
-			// because an amplifier and a cabinet are the sound and a bass
-			// compressor is set once: a switch on any of them is a switch
-			// wasted.
-			name:     "a chain with nothing worth a switch gets none",
+			// The ordinary chain the corpus builds, and the compressor in it
+			// gets the switch.
+			//
+			// It used to get none, on the reasoning that a bass compressor is
+			// set once. The person holding the pedal disagreed: two of seven
+			// presets loaded on 2026-10-23 were a compressor, an amplifier
+			// and a cabinet, and they reached the hardware with nothing on
+			// any switch at all. A compressor is a pedal somebody steps on,
+			// the corpus stomps 1,154 of them, and the amplifier and cabinet
+			// are still the sound.
+			name:     "the compressor in an ordinary chain gets a switch",
 			models:   []catalog.ModelID{"comp", "amp", "cab"},
 			switches: 3,
+			labels:   []string{"COMP"},
+			gear:     []string{"A Comp"},
+			leds:     []string{"red"},
+			autos:    []int{0x080c00},
 		},
 		{
-			name:     "a drive and an equaliser each get one, in chain order",
+			// Chain order, which is the order they sit in on the floor.
+			name:     "a compressor, a drive and an equaliser each get one, in chain order",
 			models:   []catalog.ModelID{"comp", "drive", "amp", "cab", "eq"},
 			switches: 3,
-			labels:   []string{"DRIVE", "EQ"},
-			gear:     []string{"A Drive", "An EQ"},
-			leds:     []string{"red", "green"},
-			autos:    []int{0x080600, 0x080c00},
+			labels:   []string{"COMP", "DRIVE", "EQ"},
+			gear:     []string{"A Comp", "A Drive", "An EQ"},
+			leds:     []string{"red", "green", "blue"},
+			autos:    []int{0x080c00, 0x080600, 0x080c00},
+		},
+		{
+			// A chain genuinely holding nothing to stomp, which is the case
+			// the row above used to stand for.
+			name:     "a chain with nothing worth a switch gets none",
+			models:   []catalog.ModelID{"amp", "cab"},
+			switches: 3,
 		},
 		{
 			// More to stomp than the pedal has switches. The blocks still work

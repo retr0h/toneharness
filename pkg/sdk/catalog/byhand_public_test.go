@@ -141,6 +141,69 @@ func (s *ByHandPublicTestSuite) TestSetByHandNamesControlsOnlyAmplifiersCarry() 
 	}
 }
 
+// TestStompable covers which kinds of block go on a footswitch.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *ByHandPublicTestSuite) TestStompable() {
+	for _, tt := range []struct {
+		name string
+		of   catalog.Category
+		want bool
+	}{
+		{
+			// Leaving this out cost two presets every switch they had: their
+			// whole chain was a compressor, an amplifier and a cabinet, and
+			// they reached the hardware with nothing on any switch at all.
+			// The corpus stomps 1,154 of them.
+			name: "a compressor is a pedal somebody steps on",
+			of:   catalog.CategoryComp, want: true,
+		},
+		{
+			name: "a drive", of: catalog.CategoryDrive, want: true,
+		},
+		{
+			name: "a filter", of: catalog.CategoryFilter, want: true,
+		},
+		{
+			name: "modulation", of: catalog.CategoryMod, want: true,
+		},
+		{
+			name: "a delay", of: catalog.CategoryDelay, want: true,
+		},
+		{
+			name: "a reverb", of: catalog.CategoryReverb, want: true,
+		},
+		{
+			name: "a pitch block", of: catalog.CategoryPitch, want: true,
+		},
+		{
+			name: "an equaliser", of: catalog.CategoryEQ, want: true,
+		},
+		{
+			// The sound rather than an effect on it. A switch on either is a
+			// switch spent turning the rig off.
+			name: "an amplifier is the sound",
+			of:   catalog.CategoryAmp, want: false,
+		},
+		{
+			name: "so is a cabinet", of: catalog.CategoryCab, want: false,
+		},
+		{
+			name: "a gate", of: catalog.CategoryGate, want: false,
+		},
+		{
+			name: "a utility block", of: catalog.CategoryUtility, want: false,
+		},
+		{
+			name: "a category nothing names", of: "", want: false,
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(tt.want, catalog.Stompable(tt.of))
+		})
+	}
+}
+
 func TestByHandPublicTestSuite(
 	t *testing.T,
 ) {

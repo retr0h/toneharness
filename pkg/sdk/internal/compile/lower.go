@@ -68,7 +68,7 @@ func Realise(
 		// The catalog's defaults with no corpus behind them: Line 6 state one for
 		// every parameter and it is never invalid, while a median is an opinion
 		// about what other people did and belongs to a build that asked for one.
-		params := settings(blk, nil)
+		params := settings(blk, cat, nil, string(spec.Instrument))
 
 		// Then what the document actually says, which is the whole of what this
 		// path is for. Without it a rig stated every control and got the

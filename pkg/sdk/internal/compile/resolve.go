@@ -157,7 +157,7 @@ func Resolve(
 	blocks, wants, asked := demand(blocks, wants, cat, stats, intent, instrument)
 	added = append(added, asked...)
 
-	built := specFor(id, intent, blocks, wants, stats)
+	built := specFor(id, intent, blocks, wants, cat, stats, instrument)
 
 	// What the records of whoever this rig is for measure as, over the corpus
 	// medians and under everything a person wrote.
@@ -603,7 +603,9 @@ func specFor(
 	intent Intent,
 	blocks []catalog.Block,
 	said []*wanted,
+	cat *catalog.Catalog,
 	stats *corpus.Stats,
+	instrument string,
 ) plan.Plan {
 	// The name is what the device prints on its screen, and "Mike Dirnt" is
 	// what somebody wants to read there. That is the subject, which lives on
@@ -634,7 +636,7 @@ func specFor(
 
 		out.Blocks = append(out.Blocks, plan.Block{
 			Model:   b.ID,
-			Params:  settings(b, stats),
+			Params:  settings(b, cat, stats, instrument),
 			DSP:     0,
 			Pos:     at(entry.Position, i),
 			Enabled: playing(entry) && !bypassedAt(said, i),
@@ -1000,12 +1002,25 @@ func aimed(
 		return
 	}
 
+	// The cabinet first. An amplifier's readings are preferred from a sweep
+	// taken through the cabinet it is actually playing into, because one taken
+	// alone describes a chain nobody plays and is refused downstream.
+	cab := catalog.ModelID("")
+
+	for _, blk := range blocks {
+		if blk.Category == catalog.CategoryCab {
+			cab = blk.ID
+
+			break
+		}
+	}
+
 	for i, blk := range blocks {
 		if i >= len(built.Blocks) {
 			break
 		}
 
-		curves, swept := intent.Curves(blk.ID)
+		curves, swept := intent.Curves(blk.ID, cab)
 		if !swept {
 			continue
 		}

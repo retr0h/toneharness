@@ -29,27 +29,6 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
 
-// stomped is the kinds of block a player turns on and off with a foot, in the
-// order a chain holds them.
-//
-// Not every block is worth a switch, and the ones that are not are the point
-// of the list. An amplifier and a cabinet are the sound rather than an effect
-// on it: bypassing either mid-song is not a thing anybody does, and a switch
-// spent on one is a switch not spent on the drive. A compressor on a bass is
-// set once and left, which is why it is absent here and why every chain the
-// corpus builds carries one without anybody reaching for it.
-//
-// What is left is what a pedalboard would have had on the floor.
-var stomped = map[catalog.Category]bool{
-	catalog.CategoryDrive:  true,
-	catalog.CategoryFilter: true,
-	catalog.CategoryMod:    true,
-	catalog.CategoryDelay:  true,
-	catalog.CategoryReverb: true,
-	catalog.CategoryPitch:  true,
-	catalog.CategoryEQ:     true,
-}
-
 // palette is the colours a switch is given, in the order they are handed out.
 //
 // Unique per switch rather than per kind of block, so a board where every
@@ -140,6 +119,17 @@ var automatic = map[catalog.Category]struct{ on, off int }{
 	catalog.CategoryReverb: {0xff2d00, 0x100400},
 	catalog.CategoryPitch:  {0x3200ff, 0x03000b},
 	catalog.CategoryEQ:     {0x84ff00, 0x080c00},
+	// Mined the same way and from the same corpus as the seven above, which
+	// is how its agreement can be stated beside theirs: on 0x84ff00 for
+	// 875 of 888, off 0x080c00 for 264 of 266. The method reproduces every
+	// one of the other seven exactly, which is what makes this row worth as
+	// much as they are.
+	//
+	// The same pair as an equaliser, and that is the device's answer rather
+	// than a gap in the mining: Line 6 light both green, and a gate reads
+	// green too. A switch is told from its neighbour by the colour somebody
+	// chose, which `palette` hands out per switch rather than per kind.
+	catalog.CategoryComp: {0x84ff00, 0x080c00},
 }
 
 // lit is the automatic colour for one block in one state.
@@ -251,7 +241,7 @@ func Assign(
 		// model identifier and the two questions here — what kind of block is
 		// this, and what is it called — are both the catalog's.
 		held, known := cat.Block(b.Model)
-		if !known || !stomped[held.Category] {
+		if !known || !catalog.Stompable(held.Category) {
 			continue
 		}
 
