@@ -252,6 +252,61 @@ components:
 	}
 }
 
+// TestADocumentThatDoesNotFitItsType covers a document the schema allows and
+// the Go type cannot hold.
+//
+// The two can disagree: a schema is what the file may say and a struct is what
+// this program can keep, and generation keeps them together only while nobody
+// writes one by hand.
+func (s *ContractPublicTestSuite) TestADocumentThatDoesNotFitItsType() {
+	// `name` is a string in the contract and an int in the struct below.
+	var held struct {
+		Schema string `json:"schema"`
+		Name   int    `json:"name"`
+	}
+
+	err := s.checker.Read(
+		strings.NewReader("schema: Thing\nname: a thing\n"), "Thing", &held)
+
+	s.Require().ErrorContains(err, "reading the Thing")
+}
+
+// TestAValueThatWillNotMarshal covers a document built in memory that cannot
+// be turned into JSON at all, which is a caller holding something no file
+// could contain.
+func (s *ContractPublicTestSuite) TestAValueThatWillNotMarshal() {
+	err := s.checker.Check(map[string]any{"ch": make(chan int)}, "Thing")
+
+	s.Require().ErrorContains(err, "reading the Thing")
+}
+
+// TestAFailureWithNoReasonOfItsOwn covers the fallback in the message.
+//
+// `SchemaError.Reason` is empty for some failures, and passing it through
+// refuses a document with no explanation at all: a field name and a blank. The
+// error's own text is worse prose than a reason and is not nothing.
+func (s *ContractPublicTestSuite) TestAFailureWithNoReasonOfItsOwn() {
+	c := contract.New([]byte(`
+openapi: 3.0.3
+info: { title: Thing, version: "1.0.0" }
+paths: {}
+components:
+  schemas:
+    Thing:
+      type: object
+      properties:
+        either:
+          oneOf:
+            - type: string
+            - type: integer
+`), "Thing")
+
+	err := c.Check(map[string]any{"either": []any{1, 2}}, "Thing")
+
+	s.Require().ErrorIs(err, contract.ErrInvalid)
+	s.Require().NotEmpty(err.Error())
+}
+
 // TestVersion covers the contract stating its own version, which is how a
 // document says which rules it was written under.
 func (s *ContractPublicTestSuite) TestVersion() {

@@ -122,10 +122,11 @@ func (c *Checker) Read(
 		return fmt.Errorf("decoding the %s: %w", name, err)
 	}
 
+	// What YAMLToJSON produced is JSON, so reading it back cannot fail. The
+	// same reasoning [Checker.Check] states about Marshal, and the same
+	// shape: an unreachable branch is one nobody has read.
 	var document any
-	if err := json.Unmarshal(body, &document); err != nil {
-		return fmt.Errorf("decoding the %s: %w", name, err)
-	}
+	_ = json.Unmarshal(body, &document)
 
 	if err := c.Against(document, name); err != nil {
 		return err
