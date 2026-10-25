@@ -11,7 +11,7 @@
 # records came out of the Acoustic 360 rather than out of one. Both are cited
 # on the amp entry below. Round four of task 241.
 schema: ToneSpec
-version: 4.0.0
+version: 4.2.0
 id: john-paul-jones
 ask:
   confidence: medium
@@ -99,17 +99,17 @@ built:
           url: https://www.talkbass.com/threads/john-paul-jones-rig.259308/
       controls:
         Bass: "0.684"
-        Bright: "false"
+        Bright: "true"
         ChVol: "0.7"
         Drive: "0.45"
-        Effect: "0.332"
+        Effect: "0.875"
         Hum: "0.274"
         Master: "1.0"
         TFCoarse: "0.472"
         TFFine: "0.308"
         Treble: "0.616"
         TuningFork: "0.0"
-        Variamp: "2"
+        Variamp: "4"
       attrs:
         '@position': "1"
       position: 1
@@ -153,6 +153,25 @@ built:
         '@position': "3"
       enabled: false
       position: 3
+    - role: reverb
+      gear: Room
+      controls:
+        BassBoost: "0.0"
+        BassFreq: "100.0"
+        Damping: "3700.0"
+        Decay: "1.2"
+        Diffusion: "0.5"
+        ERLevel: "0.8"
+        HighCut: "10000.0"
+        Level: "0.0"
+        LowCut: "100.0"
+        MatrFreq: "0.333"
+        Mix: "0.41"
+        PreDelay: "0.01"
+      attrs:
+        '@position': "4"
+      enabled: false
+      position: 4
     - role: eq
       gear: Simple EQ
       evidence:
@@ -165,8 +184,8 @@ built:
         MidFreq: "600.0"
         MidGain: "0.8"
       attrs:
-        '@position': "4"
-      position: 4
+        '@position': "5"
+      position: 5
   preset:
     dsp0:
       members:
@@ -230,9 +249,19 @@ built:
       members:
         dsp0:
           members:
+            block0:
+              attrs:
+                '@fs_customcolor': "4"
+                '@fs_customlabel': COMP
+                '@fs_enabled': "true"
+                '@fs_index': "3"
+                '@fs_label': Deluxe Comp
+                '@fs_ledcolor': "8716032"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
             block3:
               attrs:
-                '@fs_customcolor': "2"
+                '@fs_customcolor': "10"
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "1"
@@ -242,12 +271,12 @@ built:
                 '@fs_primary': "true"
             block4:
               attrs:
-                '@fs_customcolor': "6"
-                '@fs_customlabel': EQ 2
+                '@fs_customcolor': "8"
+                '@fs_customlabel': REVERB
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Simple EQ
-                '@fs_ledcolor': "527360"
+                '@fs_label': Dynamic Room
+                '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -275,7 +304,18 @@ built:
         '@name': SNAPSHOT 1
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "false"
+                block4: "false"
+                block5: "true"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -283,7 +323,18 @@ built:
         '@name': SNAPSHOT 2
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "false"
+                block4: "false"
+                block5: "true"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -291,7 +342,18 @@ built:
         '@name': SNAPSHOT 3
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "false"
+                block4: "false"
+                block5: "true"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -313,21 +375,30 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
+    - gear: Deluxe Comp
+      block: 0
+      colour: 8716032
+      enabled: true
+      label: COMP
+      led: light orange
+      momentary: false
+      primary: true
+      switch: 3
     - gear: Simple Tilt
       block: 3
       colour: 527360
       enabled: false
       label: EQ
-      led: red
+      led: pink
       momentary: false
       primary: true
       switch: 1
-    - gear: Simple EQ
+    - gear: Dynamic Room
       block: 4
-      colour: 527360
+      colour: 1049600
       enabled: false
-      label: EQ 2
-      led: green
+      label: REVERB
+      led: blue
       momentary: false
       primary: true
       switch: 2

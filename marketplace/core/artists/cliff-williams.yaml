@@ -5,7 +5,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.0.0
+version: 4.2.0
 id: cliff-williams
 ask:
   confidence: medium
@@ -83,7 +83,7 @@ built:
           note: 'Opened. One post is first-hand observation rather than opinion, from descendent22: "Cliff uses a couple 810 SVT cabs and I''ve seen him use SVT heads, SVT pro 4 heads and possibly SVT pro 3 at times." A second post, from Briton, puts him elsewhere for the 1970s: "On the Highway to Hell and Powerage LP''s he also used a Jazz Bass and a B-15 Flip Top".'
           url: https://www.talkbass.com/threads/cliff-williams-ac-dc-bass-tone.1444592/
       controls:
-        Bass: "0.41"
+        Bass: "0.5"
         Bias: "0.74"
         BiasX: "0.5"
         ChVol: "0.8"
@@ -91,7 +91,7 @@ built:
         Hum: "0.5"
         Master: "1.0"
         Mid: "0.84"
-        MidFreq: "2"
+        MidFreq: "1"
         Ripple: "0.5"
         Sag: "0.5"
         Treble: "0.85"
@@ -107,13 +107,13 @@ built:
           note: 'Named by the maker on the same page as the head: an SVT-810E.'
           url: https://ampeg.com/artists/437/Cliff%20Williams/
       controls:
-        Angle: "45.0"
-        Distance: "5.0"
-        HighCut: "8000.0"
+        Angle: "0.0"
+        Distance: "1.0"
+        HighCut: "4000.0"
         Level: "0.0"
-        LowCut: "37.0"
+        LowCut: "19.9"
         Mic: "6"
-        Position: "0.0"
+        Position: "0.39"
       attrs:
         '@position': "2"
       position: 2
@@ -151,6 +151,26 @@ built:
         '@position': "3"
       enabled: false
       position: 3
+    - role: mod
+      gear: Chorus
+      controls:
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
+        SyncSelect1: "6"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
+      attrs:
+        '@position': "4"
+      enabled: false
+      position: 4
   preset:
     dsp0:
       members:
@@ -214,14 +234,34 @@ built:
       members:
         dsp0:
           members:
+            block0:
+              attrs:
+                '@fs_customcolor': "9"
+                '@fs_customlabel': COMP
+                '@fs_enabled': "true"
+                '@fs_index': "3"
+                '@fs_label': Deluxe Comp
+                '@fs_ledcolor': "8716032"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
             block3:
               attrs:
-                '@fs_customcolor': "2"
+                '@fs_customcolor': "8"
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': MXR 10-Band Graphic EQ
                 '@fs_ledcolor': "527360"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block4:
+              attrs:
+                '@fs_customcolor': "4"
+                '@fs_customlabel': MOD
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': BOSS CE-1
+                '@fs_ledcolor': "1037"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -249,7 +289,17 @@ built:
         '@name': SNAPSHOT 1
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "false"
+                block4: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -257,7 +307,17 @@ built:
         '@name': SNAPSHOT 2
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "false"
+                block4: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -265,7 +325,17 @@ built:
         '@name': SNAPSHOT 3
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "false"
+                block4: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -287,12 +357,30 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
+    - gear: Deluxe Comp
+      block: 0
+      colour: 8716032
+      enabled: true
+      label: COMP
+      led: violet
+      momentary: false
+      primary: true
+      switch: 3
     - gear: MXR 10-Band Graphic EQ
       block: 3
       colour: 527360
       enabled: false
       label: EQ
-      led: red
+      led: blue
       momentary: false
       primary: true
       switch: 1
+    - gear: BOSS CE-1
+      block: 4
+      colour: 1037
+      enabled: false
+      label: MOD
+      led: light orange
+      momentary: false
+      primary: true
+      switch: 2

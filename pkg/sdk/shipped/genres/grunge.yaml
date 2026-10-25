@@ -17,7 +17,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.0.0
+version: 4.2.0
 id: grunge
 ask:
   confidence: low
@@ -188,13 +188,13 @@ built:
           note: 'the same sentence gives the cabinets: "driving four M/B 4x10s and four 2x15s". The device carries the Mesa/Boogie 2x15, so that half of the stack resolves exactly and the four-by-tens do not.'
           url: https://www.talkbass.com/threads/ben-shepherd-soundgarden-what-bass-rig-did-he-play-on-badmotorfinger-album.298516/
       controls:
-        Angle: "45.0"
-        Distance: "4.25"
-        HighCut: "11500.0"
+        Angle: "0.0"
+        Distance: "1.0"
+        HighCut: "4000.0"
         Level: "0.0"
-        LowCut: "25.0"
+        LowCut: "19.9"
         Mic: "6"
-        Position: "0.09"
+        Position: "0.39"
       attrs:
         '@position': "3"
       position: 3
@@ -318,7 +318,7 @@ built:
           members:
             block0:
               attrs:
-                '@fs_customcolor': "2"
+                '@fs_customcolor': "9"
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
@@ -328,7 +328,7 @@ built:
                 '@fs_primary': "true"
             block4:
               attrs:
-                '@fs_customcolor': "6"
+                '@fs_customcolor': "7"
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
@@ -338,7 +338,7 @@ built:
                 '@fs_primary': "true"
             block5:
               attrs:
-                '@fs_customcolor': "8"
+                '@fs_customcolor': "10"
                 '@fs_customlabel': REVERB
                 '@fs_enabled': "false"
                 '@fs_index': "3"
@@ -371,7 +371,18 @@ built:
         '@name': SNAPSHOT 1
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
+                block5: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -379,7 +390,18 @@ built:
         '@name': SNAPSHOT 2
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
+                block5: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -387,7 +409,18 @@ built:
         '@name': SNAPSHOT 3
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
+                block5: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -414,7 +447,7 @@ built:
       colour: 525824
       enabled: false
       label: DRIVE
-      led: red
+      led: violet
       momentary: false
       primary: true
       switch: 1
@@ -423,7 +456,7 @@ built:
       colour: 527360
       enabled: false
       label: EQ
-      led: green
+      led: turquoise
       momentary: false
       primary: true
       switch: 2
@@ -432,7 +465,7 @@ built:
       colour: 1049600
       enabled: false
       label: REVERB
-      led: blue
+      led: pink
       momentary: false
       primary: true
       switch: 3

@@ -3,7 +3,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.0.0
+version: 4.2.0
 id: krist-novoselic
 ask:
   confidence: low
@@ -146,16 +146,34 @@ built:
           note: the same chronology gives the Nevermind-era speakers as "4 Marshall 4x12s, 2 Mesa/Boogie Road Ready 4x10s and 2 Mesa/Boogie Road Ready 2x15s". The device carries a Mesa/Boogie 2x15, which is the one box in that list it models.
           url: https://www.livenirvana.com/equipment/krist.php
       controls:
-        Angle: "45.0"
-        Distance: "4.25"
-        HighCut: "11500.0"
+        Angle: "0.0"
+        Distance: "1.0"
+        HighCut: "4000.0"
         Level: "0.0"
-        LowCut: "25.0"
+        LowCut: "19.9"
         Mic: "8"
-        Position: "0.09"
+        Position: "0.39"
       attrs:
         '@position': "3"
       position: 3
+    - role: eq
+      gear: MXR 10-Band Graphic EQ
+      controls:
+        125Hz: "0.0"
+        16kHz: "11.25"
+        1kHz: "0.0"
+        250Hz: "-3.75"
+        2kHz: "3.75"
+        31p25Hz: "-3.75"
+        4kHz: "11.25"
+        500Hz: "0.0"
+        62p5Hz: "0.0"
+        8kHz: "7.5"
+        Level: "0.0"
+      attrs:
+        '@position': "4"
+      enabled: false
+      position: 4
   preset:
     dsp0:
       members:
@@ -221,12 +239,32 @@ built:
           members:
             block0:
               attrs:
-                '@fs_customcolor': "2"
+                '@fs_customcolor': "4"
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Pro Co RAT
                 '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block1:
+              attrs:
+                '@fs_customcolor': "7"
+                '@fs_customlabel': COMP
+                '@fs_enabled': "true"
+                '@fs_index': "3"
+                '@fs_label': Deluxe Comp
+                '@fs_ledcolor': "8716032"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block4:
+              attrs:
+                '@fs_customcolor': "9"
+                '@fs_customlabel': EQ
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': MXR 10-Band Graphic EQ
+                '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -254,7 +292,17 @@ built:
         '@name': SNAPSHOT 1
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -262,7 +310,17 @@ built:
         '@name': SNAPSHOT 2
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -270,7 +328,17 @@ built:
         '@name': SNAPSHOT 3
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -297,7 +365,25 @@ built:
       colour: 525824
       enabled: false
       label: DRIVE
-      led: red
+      led: light orange
       momentary: false
       primary: true
       switch: 1
+    - gear: Deluxe Comp
+      block: 1
+      colour: 8716032
+      enabled: true
+      label: COMP
+      led: turquoise
+      momentary: false
+      primary: true
+      switch: 3
+    - gear: MXR 10-Band Graphic EQ
+      block: 4
+      colour: 527360
+      enabled: false
+      label: EQ
+      led: violet
+      momentary: false
+      primary: true
+      switch: 2

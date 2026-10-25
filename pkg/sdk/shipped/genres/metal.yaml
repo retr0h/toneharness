@@ -17,7 +17,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.0.0
+version: 4.2.0
 id: metal
 ask:
   confidence: low
@@ -92,6 +92,24 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: filter
+      gear: Auto Filter
+      controls:
+        Attack: "1.252"
+        Decay: "1.503"
+        Direction: "true"
+        FilterGain: "18.0"
+        FilterQ: "7.75"
+        FreqDepth: "10000.0"
+        Frequency: "50.0"
+        Level: "0.0"
+        Mix: "0.625"
+        Mode: "0"
+        Sens: "0.25"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: drive
       gear: Earthquaker Devices Life - Boost circuit
       capture: direct
@@ -113,9 +131,9 @@ built:
       controls:
         Boost: "0.5"
       attrs:
-        '@position': "0"
+        '@position': "1"
       enabled: false
-      position: 0
+      position: 1
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -130,8 +148,8 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "2"
+      position: 2
     - role: amp
       gear: Ampeg SVT
       confidence: medium
@@ -141,37 +159,37 @@ built:
           note: 'His own words on when the amplifier arrives, which is what dates every record here: "I don''t think I got my SVT until the first official Pantera record. But once I got my SVT stacks, that changed everything." The first official Pantera record is Cowboys from Hell, 1990, so no record earlier than that is measured.'
           url: https://www.yahoo.com/entertainment/music/articles/dimebag-darrell-pushed-pantera-bassist-135400189.html
       controls:
-        Bass: "0.41"
+        Bass: "0.5"
         Bias: "0.74"
         BiasX: "0.5"
         ChVol: "0.8"
-        Drive: "0.6"
+        Drive: "0.875"
         Hum: "0.5"
         Master: "1.0"
-        Mid: "0.75"
-        MidFreq: "2"
+        Mid: "0.46"
+        MidFreq: "1"
         Ripple: "0.5"
         Sag: "0.5"
-        Treble: "0.832"
+        Treble: "0.607"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
     - role: cab
       gear: 8x10 Ampeg SVT-810AV
       evidence:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        Angle: "45.0"
-        Distance: "5.0"
-        HighCut: "8000.0"
+        Angle: "0.0"
+        Distance: "1.0"
+        HighCut: "4000.0"
         Level: "0.0"
-        LowCut: "37.0"
+        LowCut: "19.9"
         Mic: "8"
-        Position: "0.0"
+        Position: "0.39"
       attrs:
-        '@position': "3"
-      position: 3
+        '@position': "4"
+      position: 4
     - role: eq
       gear: Low/High Shelf
       capture: direct
@@ -197,9 +215,9 @@ built:
         LowFreq: "150.0"
         LowGain: "-3.0"
       attrs:
-        '@position': "4"
+        '@position': "5"
       enabled: false
-      position: 4
+      position: 5
   preset:
     dsp0:
       members:
@@ -265,20 +283,30 @@ built:
           members:
             block0:
               attrs:
-                '@fs_customcolor': "2"
-                '@fs_customlabel': DRIVE
+                '@fs_customcolor': "8"
+                '@fs_customlabel': FILTER
                 '@fs_enabled': "false"
                 '@fs_index': "1"
+                '@fs_label': Auto Filter
+                '@fs_ledcolor': "196619"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block1:
+              attrs:
+                '@fs_customcolor': "4"
+                '@fs_customlabel': DRIVE
+                '@fs_enabled': "false"
+                '@fs_index': "2"
                 '@fs_label': Earthquaker Devices Life - Boost circuit
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block4:
+            block5:
               attrs:
-                '@fs_customcolor': "6"
+                '@fs_customcolor': "9"
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
-                '@fs_index': "2"
+                '@fs_index': "3"
                 '@fs_label': Low/High Shelf
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
@@ -308,7 +336,18 @@ built:
         '@name': SNAPSHOT 1
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "false"
+                block2: "true"
+                block3: "true"
+                block4: "true"
+                block5: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -316,7 +355,18 @@ built:
         '@name': SNAPSHOT 2
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "false"
+                block2: "true"
+                block3: "true"
+                block4: "true"
+                block5: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -324,7 +374,18 @@ built:
         '@name': SNAPSHOT 3
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "false"
+                block2: "true"
+                block3: "true"
+                block4: "true"
+                block5: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -346,21 +407,30 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Earthquaker Devices Life - Boost circuit
+    - gear: Auto Filter
       block: 0
-      colour: 525824
+      colour: 196619
       enabled: false
-      label: DRIVE
-      led: red
+      label: FILTER
+      led: blue
       momentary: false
       primary: true
       switch: 1
-    - gear: Low/High Shelf
-      block: 4
-      colour: 527360
+    - gear: Earthquaker Devices Life - Boost circuit
+      block: 1
+      colour: 525824
       enabled: false
-      label: EQ
-      led: green
+      label: DRIVE
+      led: light orange
       momentary: false
       primary: true
       switch: 2
+    - gear: Low/High Shelf
+      block: 5
+      colour: 527360
+      enabled: false
+      label: EQ
+      led: violet
+      momentary: false
+      primary: true
+      switch: 3
