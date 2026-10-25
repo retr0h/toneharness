@@ -139,8 +139,14 @@ func (s *PizzazzPublicTestSuite) TestOffers() {
 				catalog.CategoryDrive: {Chains: 107, Engaged: 52},
 				catalog.CategoryMod:   {Chains: 54, Engaged: 15},
 			}),
-			id:   "",
-			want: []catalog.Category{catalog.CategoryMod, catalog.CategoryDrive, catalog.CategoryComp},
+			id: "",
+			// The compressor is not among them at all: 127 of the 146 chains
+			// holding one run it, so it is the sound rather than something to
+			// stomp, and `fill` adds it enabled. Offering it here took the
+			// category first and left `fill` nothing to add, which is how two
+			// of four genres built on 2026-10-25 came out with the compressor
+			// switched off and two with it in the signal.
+			want: []catalog.Category{catalog.CategoryMod, catalog.CategoryDrive},
 		},
 		{
 			name: "a kind the chain already holds is not offered again",
@@ -154,13 +160,32 @@ func (s *PizzazzPublicTestSuite) TestOffers() {
 		{
 			// An amplifier and a cabinet are the sound. Neither is stompable
 			// and neither may be offered.
+			// An amplifier and a cabinet are not stompable whatever the
+			// corpus says about them, which is what this row is for. The
+			// equaliser is left off often enough to be an offer.
 			name: "a kind nothing steps on is not offered",
 			grammar: grammar(map[catalog.Category]corpus.CategoryStats{
 				catalog.CategoryAmp: {Chains: 90, Engaged: 1},
 				catalog.CategoryCab: {Chains: 90, Engaged: 1},
-				catalog.CategoryEQ:  {Chains: 78, Engaged: 65},
+				catalog.CategoryEQ:  {Chains: 78, Engaged: 20},
 			}),
 			want: []catalog.Category{catalog.CategoryEQ},
+		},
+		{
+			// **A kind the corpus runs when it carries one is the sound.**
+			// The same threshold `compile.fill` decides with, so the two
+			// cannot disagree about which side of the line a kind falls and
+			// race each other for the category.
+			//
+			// The drive here is carried as often as the compressor and run
+			// half as much, which is the difference between a pedal and a
+			// sound.
+			name: "a kind that is usually running is the sound, not an offer",
+			grammar: grammar(map[catalog.Category]corpus.CategoryStats{
+				catalog.CategoryComp:  {Chains: 146, Engaged: 127},
+				catalog.CategoryDrive: {Chains: 146, Engaged: 60},
+			}),
+			want: []catalog.Category{catalog.CategoryDrive},
 		},
 		{
 			name: "a kind every chain engages is dropped rather than ranked last",

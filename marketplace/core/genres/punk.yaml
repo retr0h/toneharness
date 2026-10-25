@@ -14,6 +14,17 @@
 # The short of it: the middle of a genre is what every genre shares, so aiming
 # there gave nine of these eleven the same amplifier.
 #
+#
+# The gear is researched rather than measured, since 2026-10-25. What stood
+# here before was chosen by fingerprint and said so: `confidence: low`, and a
+# note reading "not one anybody is known to have used". The players a genre is
+# measured from are recorded, and so is their gear, so this names what they are
+# documented using and cites it.
+#
+# A drive only where one of those players is documented with one. The corpus
+# still offers a bypassed drive on a footswitch, which is an offer rather than
+# a claim.
+#
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
@@ -32,103 +43,28 @@ ask:
   words: []
 rig:
   chain:
-    - role: drive
-      gear: MAXON SD9 Sonic Distortion
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 174
-            decay: 0.4
-            dynamics: 6.1
-            harmonics: 0.18
-            high: 0
-            lean: 0.88
-            low: 0.88
-            mid: 0.11
-            transient: 0.74
-          note: 'Chosen by measurement rather than by anybody''s say-so. MAXON SD9 Sonic Distortion is the closest of the 52 bass drives this device models to punk, sitting at 227 Hz against 282. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
-      enabled: false
     - role: amp
       gear: Ampeg SVT
       capture: direct
-      confidence: low
+      confidence: medium
       evidence:
         - kind: cited
-          caveat: |-
-            the touring rig, and the quote is about amplifiers failing rather than about a record. The article is a 2010 retrospective on a 1977 album, so it is a writer assembling a period rig thirty years later and not somebody who was in the room.
-            Nothing found says what was in Mediasound for these sessions. A band that owned three SVTs very likely recorded through one, and "very likely" is not evidence.
-          note: 'Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks", Premier Guitar, 18 May 2010. It puts him on three Ampeg SVT 300-watt heads with three matching 8x10 cabinets, bought once there was money for them, and quotes him from a 1976 documentary on why: "We play so loud that the amps couldn''t take it… But now we got these amps that they… work."'
+          caveat: Freeman recorded the first two Rancid records on an Acoustic 320 and a 4x15 instead, so the SVT is where the group converged rather than what every record was cut on.
+          note: Dee Dee Ramone bought three Ampeg SVT heads and three matching 8x10 cabinets, and the Ramones rig was two SVTs into two 8x10s either side of the drum riser. Paul Simonon played an SVT into a fridge cabinet, and Matt Freeman bought an SVT-II Pro into a single 8x10 after asking what was used on Dookie. Three of the seven players punk is measured from, on the same amplifier.
           url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
     - role: cab
-      gear: Ampeg 8x10
+      gear: 8x10" Ampeg SVT-810AV
       capture: direct
-      confidence: low
+      confidence: medium
       evidence:
         - kind: cited
-          caveat: the same source as the head, so the two share it and stand or fall together, and the same thirty years separate it from the record. The size is what is claimed; which Ampeg eight by ten is not.
-          note: the same sentence as the head, which names "three matching 8x10 cabinets" alongside the three SVT heads.
-          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
-      controls:
-        Mic: "0"
-    - role: eq
-      gear: MXR 10-Band Graphic EQ
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 174
-            decay: 0.4
-            dynamics: 6.1
-            harmonics: 0.18
-            high: 0
-            lean: 0.88
-            low: 0.88
-            mid: 0.11
-            transient: 0.74
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer punk than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
-      controls:
-        1kHz: "11.25"
-        250Hz: "11.25"
-        31p25Hz: "-11.25"
-        500Hz: "3.75"
-        62p5Hz: "-3.75"
-      enabled: false
+          note: The Ampeg 8x10 under every one of those rigs.
+          url: https://equipboard.com/pros/dee-dee-ramone
   instrument: bass
 built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
-    - role: drive
-      gear: MAXON SD9 Sonic Distortion
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 174
-            decay: 0.4
-            dynamics: 6.1
-            harmonics: 0.18
-            high: 0
-            lean: 0.88
-            low: 0.88
-            mid: 0.11
-            transient: 0.74
-          note: 'Chosen by measurement rather than by anybody''s say-so. MAXON SD9 Sonic Distortion is the closest of the 52 bass drives this device models to punk, sitting at 227 Hz against 282. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
-      controls:
-        Gain: "0.7"
-        Level: "0.68"
-        Tone: "0.27"
-      attrs:
-        '@position': "0"
-      enabled: false
-      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -143,18 +79,16 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "0"
+      position: 0
     - role: amp
       gear: Ampeg SVT
       capture: direct
-      confidence: low
+      confidence: medium
       evidence:
         - kind: cited
-          caveat: |-
-            the touring rig, and the quote is about amplifiers failing rather than about a record. The article is a 2010 retrospective on a 1977 album, so it is a writer assembling a period rig thirty years later and not somebody who was in the room.
-            Nothing found says what was in Mediasound for these sessions. A band that owned three SVTs very likely recorded through one, and "very likely" is not evidence.
-          note: 'Wallace Marx Jr., "Maximum Energy: The Gear of the Original Punks", Premier Guitar, 18 May 2010. It puts him on three Ampeg SVT 300-watt heads with three matching 8x10 cabinets, bought once there was money for them, and quotes him from a 1976 documentary on why: "We play so loud that the amps couldn''t take it… But now we got these amps that they… work."'
+          caveat: Freeman recorded the first two Rancid records on an Acoustic 320 and a 4x15 instead, so the SVT is where the group converged rather than what every record was cut on.
+          note: Dee Dee Ramone bought three Ampeg SVT heads and three matching 8x10 cabinets, and the Ramones rig was two SVTs into two 8x10s either side of the drum riser. Paul Simonon played an SVT into a fridge cabinet, and Matt Freeman bought an SVT-II Pro into a single 8x10 after asking what was used on Dookie. Three of the seven players punk is measured from, on the same amplifier.
           url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
       controls:
         Bass: "0.41"
@@ -170,17 +104,16 @@ built:
         Sag: "0.5"
         Treble: "0.88"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "1"
+      position: 1
     - role: cab
-      gear: Ampeg 8x10
+      gear: 8x10" Ampeg SVT-810AV
       capture: direct
-      confidence: low
+      confidence: medium
       evidence:
         - kind: cited
-          caveat: the same source as the head, so the two share it and stand or fall together, and the same thirty years separate it from the record. The size is what is claimed; which Ampeg eight by ten is not.
-          note: the same sentence as the head, which names "three matching 8x10 cabinets" alongside the three SVT heads.
-          url: https://www.premierguitar.com/gear/maximum-energy-the-gear-of-the-original-punks
+          note: The Ampeg 8x10 under every one of those rigs.
+          url: https://equipboard.com/pros/dee-dee-ramone
       controls:
         Angle: "0.0"
         Distance: "1.0"
@@ -190,15 +123,15 @@ built:
         Mic: "0"
         Position: "0.39"
       attrs:
-        '@position': "3"
-      position: 3
+        '@position': "2"
+      position: 2
     - role: eq
       gear: MXR 10-Band Graphic EQ
       capture: direct
       confidence: low
       evidence:
         - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
+          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players.'
           measured:
             centroid: 174
             decay: 0.4
@@ -209,7 +142,7 @@ built:
             low: 0.88
             mid: 0.11
             transient: 0.74
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer punk than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
+          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer punk than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because punk earns "mid-forward" against the players who measure otherwise, by 0.0968 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
       controls:
         125Hz: "0.0"
         16kHz: "0.0"
@@ -222,6 +155,26 @@ built:
         62p5Hz: "-3.75"
         8kHz: "0.0"
         Level: "0.0"
+      attrs:
+        '@position': "3"
+      enabled: false
+      position: 3
+    - role: mod
+      gear: Chorus
+      controls:
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
+        SyncSelect1: "6"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
       attrs:
         '@position': "4"
       enabled: false
@@ -319,24 +272,24 @@ built:
       members:
         dsp0:
           members:
-            block0:
+            block3:
               attrs:
                 '@fs_customcolor': "8"
-                '@fs_customlabel': DRIVE
+                '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': MAXON SD9 Sonic Distortion
-                '@fs_ledcolor': "525824"
+                '@fs_label': MXR 10-Band Graphic EQ
+                '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
               attrs:
                 '@fs_customcolor': "4"
-                '@fs_customlabel': EQ
+                '@fs_customlabel': MOD
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': MXR 10-Band Graphic EQ
-                '@fs_ledcolor': "527360"
+                '@fs_label': BOSS CE-1
+                '@fs_ledcolor': "1037"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block5:
@@ -380,10 +333,10 @@ built:
           members:
             dsp0:
               controls:
-                block0: "false"
+                block0: "true"
                 block1: "true"
                 block2: "true"
-                block3: "true"
+                block3: "false"
                 block4: "false"
                 block5: "false"
     snapshot1:
@@ -399,10 +352,10 @@ built:
           members:
             dsp0:
               controls:
-                block0: "false"
+                block0: "true"
                 block1: "true"
                 block2: "true"
-                block3: "true"
+                block3: "false"
                 block4: "false"
                 block5: "false"
     snapshot2:
@@ -418,10 +371,10 @@ built:
           members:
             dsp0:
               controls:
-                block0: "false"
+                block0: "true"
                 block1: "true"
                 block2: "true"
-                block3: "true"
+                block3: "false"
                 block4: "false"
                 block5: "false"
     variax:
@@ -445,20 +398,20 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: MAXON SD9 Sonic Distortion
-      block: 0
-      colour: 525824
+    - gear: MXR 10-Band Graphic EQ
+      block: 3
+      colour: 527360
       enabled: false
-      label: DRIVE
+      label: EQ
       led: blue
       momentary: false
       primary: true
       switch: 1
-    - gear: MXR 10-Band Graphic EQ
+    - gear: BOSS CE-1
       block: 4
-      colour: 527360
+      colour: 1037
       enabled: false
-      label: EQ
+      label: MOD
       led: light orange
       momentary: false
       primary: true

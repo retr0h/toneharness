@@ -14,6 +14,17 @@
 # The short of it: the middle of a genre is what every genre shares, so aiming
 # there gave nine of these eleven the same amplifier.
 #
+#
+# The gear is researched rather than measured, since 2026-10-25. What stood
+# here before was chosen by fingerprint and said so: `confidence: low`, and a
+# note reading "not one anybody is known to have used". The players a genre is
+# measured from are recorded, and so is their gear, so this names what they are
+# documented using and cites it.
+#
+# A drive only where one of those players is documented with one. The corpus
+# still offers a bypassed drive on a footswitch, which is an offer rather than
+# a claim.
+#
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
@@ -32,81 +43,42 @@ ask:
   words: []
 rig:
   chain:
-    - role: drive
-      gear: Earthquaker Devices Life - Boost circuit
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 132
-            decay: 0.45
-            dynamics: 7.5
-            harmonics: 0.16
-            high: 0
-            lean: 0.9
-            low: 0.98
-            mid: 0.03
-            transient: 0.68
-          note: 'Chosen by measurement rather than by anybody''s say-so. Earthquaker Devices Life - Boost circuit is the closest of the 52 bass drives this device models to hard-rock, sitting at 124 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
-      enabled: false
     - role: amp
       gear: Ampeg SVT
+      capture: direct
       confidence: medium
       evidence:
         - kind: cited
-          caveat: First-party and undated. An artist page says what somebody uses now and brackets no era, which is why the records measured here are the later albums rather than the famous late-1970s ones. The SVT-4PRO is a hybrid with a valve preamp and a solid-state output section; the model on this device is the original all-valve SVT, so this is the same family and not the same amplifier.
-          note: 'Ampeg''s own artist page, which is the maker stating its own endorsement. It lists him with two products and no prose: an SVT-4PRO head and an SVT-810E cabinet.'
-          url: https://ampeg.com/artists/437/Cliff%20Williams/
-        - kind: user
-          caveat: 'The B-15 claim is the interesting one and it is unsourced hearsay, so no record from that era is measured here. If somebody can confirm it from period press, this rig should be split in two: an Ampeg B-15NF for 1978-1980 and this one for the 1990s on.'
-          note: 'Opened. One post is first-hand observation rather than opinion, from descendent22: "Cliff uses a couple 810 SVT cabs and I''ve seen him use SVT heads, SVT pro 4 heads and possibly SVT pro 3 at times." A second post, from Briton, puts him elsewhere for the 1970s: "On the Highway to Hell and Powerage LP''s he also used a Jazz Bass and a B-15 Flip Top".'
-          url: https://www.talkbass.com/threads/cliff-williams-ac-dc-bass-tone.1444592/
-    - role: eq
-      gear: MXR 10-Band Graphic EQ
+          caveat: John Paul Jones used an Acoustic 360 rather than an Ampeg, so this is the centre of the group rather than a claim about any record.
+          note: Cliff Williams plays an Ampeg SVT-4PRO into an SVT-810E and uses no effects pedals at all, which is why this names no drive. Of the five players hard rock is measured from his rig is the plainest documented.
+          url: https://equipboard.com/pros/cliff-williams
+    - role: cab
+      gear: 8x10" Ampeg SVT-810AV
       capture: direct
-      confidence: low
+      confidence: medium
       evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 132
-            decay: 0.45
-            dynamics: 7.5
-            harmonics: 0.16
-            high: 0
-            lean: 0.9
-            low: 0.98
-            mid: 0.03
-            transient: 0.68
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer hard-rock than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
-      enabled: false
+        - kind: cited
+          note: The SVT-810E. The device models the 810AV, a later revision of the same cabinet.
+          url: https://whatgear.com/pro/cliff-williams
   instrument: bass
 built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
-    - role: drive
-      gear: Earthquaker Devices Life - Boost circuit
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 132
-            decay: 0.45
-            dynamics: 7.5
-            harmonics: 0.16
-            high: 0
-            lean: 0.9
-            low: 0.98
-            mid: 0.03
-            transient: 0.68
-          note: 'Chosen by measurement rather than by anybody''s say-so. Earthquaker Devices Life - Boost circuit is the closest of the 52 bass drives this device models to hard-rock, sitting at 124 Hz against 155. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
+    - role: filter
+      gear: Auto Filter
       controls:
-        Boost: "0.5"
+        Attack: "0.03"
+        Decay: "0.35"
+        Direction: "true"
+        FilterGain: "18.0"
+        FilterQ: "7.5"
+        FreqDepth: "3500.0"
+        Frequency: "50.0"
+        Level: "0.0"
+        Mix: "1.0"
+        Mode: "1"
+        Sens: "0.4"
       attrs:
         '@position': "0"
       enabled: false
@@ -129,16 +101,13 @@ built:
       position: 1
     - role: amp
       gear: Ampeg SVT
+      capture: direct
       confidence: medium
       evidence:
         - kind: cited
-          caveat: First-party and undated. An artist page says what somebody uses now and brackets no era, which is why the records measured here are the later albums rather than the famous late-1970s ones. The SVT-4PRO is a hybrid with a valve preamp and a solid-state output section; the model on this device is the original all-valve SVT, so this is the same family and not the same amplifier.
-          note: 'Ampeg''s own artist page, which is the maker stating its own endorsement. It lists him with two products and no prose: an SVT-4PRO head and an SVT-810E cabinet.'
-          url: https://ampeg.com/artists/437/Cliff%20Williams/
-        - kind: user
-          caveat: 'The B-15 claim is the interesting one and it is unsourced hearsay, so no record from that era is measured here. If somebody can confirm it from period press, this rig should be split in two: an Ampeg B-15NF for 1978-1980 and this one for the 1990s on.'
-          note: 'Opened. One post is first-hand observation rather than opinion, from descendent22: "Cliff uses a couple 810 SVT cabs and I''ve seen him use SVT heads, SVT pro 4 heads and possibly SVT pro 3 at times." A second post, from Briton, puts him elsewhere for the 1970s: "On the Highway to Hell and Powerage LP''s he also used a Jazz Bass and a B-15 Flip Top".'
-          url: https://www.talkbass.com/threads/cliff-williams-ac-dc-bass-tone.1444592/
+          caveat: John Paul Jones used an Acoustic 360 rather than an Ampeg, so this is the centre of the group rather than a claim about any record.
+          note: Cliff Williams plays an Ampeg SVT-4PRO into an SVT-810E and uses no effects pedals at all, which is why this names no drive. Of the five players hard rock is measured from his rig is the plainest documented.
+          url: https://equipboard.com/pros/cliff-williams
       controls:
         Bass: "0.41"
         Bias: "0.74"
@@ -156,10 +125,13 @@ built:
         '@position': "2"
       position: 2
     - role: cab
-      gear: 8x10 Ampeg SVT-810AV
+      gear: 8x10" Ampeg SVT-810AV
+      capture: direct
+      confidence: medium
       evidence:
-        - kind: corpus
-          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+        - kind: cited
+          note: The SVT-810E. The device models the 810AV, a later revision of the same cabinet.
+          url: https://whatgear.com/pro/cliff-williams
       controls:
         Angle: "0.0"
         Distance: "1.0"
@@ -171,36 +143,22 @@ built:
       attrs:
         '@position': "3"
       position: 3
-    - role: eq
-      gear: MXR 10-Band Graphic EQ
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 132
-            decay: 0.45
-            dynamics: 7.5
-            harmonics: 0.16
-            high: 0
-            lean: 0.9
-            low: 0.98
-            mid: 0.03
-            transient: 0.68
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer hard-rock than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 16 records from 5 players, hard-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: hard-rock displaces none of the figures a bass is weighed on, so there was nothing to aim them at.'
+    - role: mod
+      gear: Chorus
       controls:
-        125Hz: "0.0"
-        16kHz: "0.0"
-        1kHz: "0.0"
-        250Hz: "0.0"
-        2kHz: "0.0"
-        31p25Hz: "0.0"
-        4kHz: "0.0"
-        500Hz: "0.0"
-        62p5Hz: "0.0"
-        8kHz: "0.0"
-        Level: "0.0"
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
+        SyncSelect1: "6"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
       attrs:
         '@position': "4"
       enabled: false
@@ -306,21 +264,21 @@ built:
             block0:
               attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': DRIVE
+                '@fs_customlabel': FILTER
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Earthquaker Devices Life - Boost circuit
-                '@fs_ledcolor': "525824"
+                '@fs_label': Auto Filter
+                '@fs_ledcolor': "196619"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
               attrs:
                 '@fs_customcolor': "10"
-                '@fs_customlabel': EQ
+                '@fs_customlabel': MOD
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': MXR 10-Band Graphic EQ
-                '@fs_ledcolor': "527360"
+                '@fs_label': BOSS CE-1
+                '@fs_ledcolor': "1037"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block5:
@@ -429,20 +387,20 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Earthquaker Devices Life - Boost circuit
+    - gear: Auto Filter
       block: 0
-      colour: 525824
+      colour: 196619
       enabled: false
-      label: DRIVE
+      label: FILTER
       led: turquoise
       momentary: false
       primary: true
       switch: 1
-    - gear: MXR 10-Band Graphic EQ
+    - gear: BOSS CE-1
       block: 4
-      colour: 527360
+      colour: 1037
       enabled: false
-      label: EQ
+      label: MOD
       led: pink
       momentary: false
       primary: true

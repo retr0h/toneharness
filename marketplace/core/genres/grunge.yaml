@@ -14,6 +14,17 @@
 # The short of it: the middle of a genre is what every genre shares, so aiming
 # there gave nine of these eleven the same amplifier.
 #
+#
+# The gear is researched rather than measured, since 2026-10-25. What stood
+# here before was chosen by fingerprint and said so: `confidence: low`, and a
+# note reading "not one anybody is known to have used". The players a genre is
+# measured from are recorded, and so is their gear, so this names what they are
+# documented using and cites it.
+#
+# A drive only where one of those players is documented with one. The corpus
+# still offers a bypassed drive on a footswitch, which is an offer rather than
+# a claim.
+#
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
@@ -33,104 +44,50 @@ ask:
 rig:
   chain:
     - role: drive
-      gear: Alpaca Rouge
+      gear: Pro Co RAT
       capture: direct
-      confidence: low
+      confidence: medium
       evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 119
-            decay: 0.41
-            dynamics: 6.5
-            harmonics: 0.11
-            high: 0
-            lean: 0.86
-            low: 0.99
-            mid: 0.01
-            transient: 0.69
-          note: 'Chosen by measurement rather than by anybody''s say-so. Alpaca Rouge is the closest of the 52 bass drives this device models to grunge, sitting at 104 Hz against 111. Across 15 records from 5 players, grunge earns scooped, dark and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
-      enabled: false
+        - kind: cited
+          caveat: Novoselic's, not the genre's. Ben Shepherd, Jeff Ament, Chris Joannou and Mike Starr are not documented reaching for it.
+          note: The one drive any of grunge's five players is documented with, and it is the pedal in Krist Novoselic's own rig in this collection, named by his technician.
+          url: https://equipboard.com/pros/krist-novoselic
     - role: amp
-      gear: Aguilar Tone Hammer
+      gear: Ampeg SVT
       capture: direct
-      confidence: low
+      confidence: medium
       evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 119
-            decay: 0.41
-            dynamics: 6.5
-            harmonics: 0.11
-            high: 0
-            lean: 0.86
-            low: 0.99
-            mid: 0.01
-            transient: 0.69
-          note: Chosen by measurement rather than by anybody's say-so. Aguilar Tone Hammer is the closest of the 15 bass amplifiers this device models to grunge, sitting at 121 Hz against 111. Across 15 records from 5 players, grunge earns scooped, dark and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+        - kind: cited
+          note: Novoselic used Ampeg SVT-400T and SVT-II heads, and cut Nevermind on an SVT-400T. Ben Shepherd ran Ampeg SVT and Mesa heads in the studio alongside a B-15. The Aguilar Tone Hammer that stood here before is used by none of them.
+          url: https://equipboard.com/pros/krist-novoselic
     - role: cab
       gear: Mesa/Boogie 2x15
       capture: direct
-      confidence: low
+      confidence: medium
       evidence:
-        - kind: user
-          caveat: the same tour rig, dated the same March 1993, and a wall of eight cabinets is not one box. This names the make and the size of the half the device models, and a rig is one path, so it takes the 2x15 and leaves the 4x10s out rather than pretending to sum them.
-          note: 'the same sentence gives the cabinets: "driving four M/B 4x10s and four 2x15s". The device carries the Mesa/Boogie 2x15, so that half of the stack resolves exactly and the four-by-tens do not.'
-          url: https://www.talkbass.com/threads/ben-shepherd-soundgarden-what-bass-rig-did-he-play-on-badmotorfinger-album.298516/
-      controls:
-        Mic: "6"
-    - role: eq
-      gear: Simple Tilt
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 119
-            decay: 0.41
-            dynamics: 6.5
-            harmonics: 0.11
-            high: 0
-            lean: 0.86
-            low: 0.99
-            mid: 0.01
-            transient: 0.69
-          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to grunge, sitting at 124 Hz against 111. Across 15 records from 5 players, grunge earns scooped, dark and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
-      controls:
-        Tilt: "0.25"
-      enabled: false
+        - kind: cited
+          note: Nevermind was cut through a 2x15, and the Nevermind tour ran Mesa RR 2x15 cabinets. This one was already right.
+          url: https://equipboard.com/pros/krist-novoselic
   instrument: bass
 built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
     - role: drive
-      gear: Alpaca Rouge
+      gear: Pro Co RAT
       capture: direct
-      confidence: low
+      confidence: medium
       evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 119
-            decay: 0.41
-            dynamics: 6.5
-            harmonics: 0.11
-            high: 0
-            lean: 0.86
-            low: 0.99
-            mid: 0.01
-            transient: 0.69
-          note: 'Chosen by measurement rather than by anybody''s say-so. Alpaca Rouge is the closest of the 52 bass drives this device models to grunge, sitting at 104 Hz against 111. Across 15 records from 5 players, grunge earns scooped, dark and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
+        - kind: cited
+          caveat: Novoselic's, not the genre's. Ben Shepherd, Jeff Ament, Chris Joannou and Mike Starr are not documented reaching for it.
+          note: The one drive any of grunge's five players is documented with, and it is the pedal in Krist Novoselic's own rig in this collection, named by his technician.
+          url: https://equipboard.com/pros/krist-novoselic
       controls:
-        Drive: "0.34"
-        HiCut: "0.5"
-        Volume: "0.7"
+        Filter: "0.625"
+        Gain: "0.75"
+        Level: "0.85"
       attrs:
         '@position': "0"
-      enabled: false
       position: 0
     - role: comp
       gear: Deluxe Comp
@@ -149,44 +106,37 @@ built:
         '@position': "1"
       position: 1
     - role: amp
-      gear: Aguilar Tone Hammer
+      gear: Ampeg SVT
       capture: direct
-      confidence: low
+      confidence: medium
       evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 119
-            decay: 0.41
-            dynamics: 6.5
-            harmonics: 0.11
-            high: 0
-            lean: 0.86
-            low: 0.99
-            mid: 0.01
-            transient: 0.69
-          note: Chosen by measurement rather than by anybody's say-so. Aguilar Tone Hammer is the closest of the 15 bass amplifiers this device models to grunge, sitting at 121 Hz against 111. Across 15 records from 5 players, grunge earns scooped, dark and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+        - kind: cited
+          note: Novoselic used Ampeg SVT-400T and SVT-II heads, and cut Nevermind on an SVT-400T. Ben Shepherd ran Ampeg SVT and Mesa heads in the studio alongside a B-15. The Aguilar Tone Hammer that stood here before is used by none of them.
+          url: https://equipboard.com/pros/krist-novoselic
       controls:
-        Bass: "0.5"
-        Ch Vol: "1.0"
-        Drive: "0.0"
-        Gain: "0.32"
-        Master: "0.5"
-        Mid: "0.44"
-        Mid Freq: "0.5"
-        Treble: "0.469"
+        Bass: "0.41"
+        Bias: "0.74"
+        BiasX: "0.5"
+        ChVol: "0.8"
+        Drive: "0.6"
+        Hum: "0.5"
+        Master: "1.0"
+        Mid: "0.73"
+        MidFreq: "2"
+        Ripple: "0.5"
+        Sag: "0.5"
+        Treble: "0.841"
       attrs:
         '@position': "2"
       position: 2
     - role: cab
       gear: Mesa/Boogie 2x15
       capture: direct
-      confidence: low
+      confidence: medium
       evidence:
-        - kind: user
-          caveat: the same tour rig, dated the same March 1993, and a wall of eight cabinets is not one box. This names the make and the size of the half the device models, and a rig is one path, so it takes the 2x15 and leaves the 4x10s out rather than pretending to sum them.
-          note: 'the same sentence gives the cabinets: "driving four M/B 4x10s and four 2x15s". The device carries the Mesa/Boogie 2x15, so that half of the stack resolves exactly and the four-by-tens do not.'
-          url: https://www.talkbass.com/threads/ben-shepherd-soundgarden-what-bass-rig-did-he-play-on-badmotorfinger-album.298516/
+        - kind: cited
+          note: Nevermind was cut through a 2x15, and the Nevermind tour ran Mesa RR 2x15 cabinets. This one was already right.
+          url: https://equipboard.com/pros/krist-novoselic
       controls:
         Angle: "0.0"
         Distance: "1.0"
@@ -204,7 +154,7 @@ built:
       confidence: low
       evidence:
         - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
+          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players.'
           measured:
             centroid: 119
             decay: 0.41
@@ -215,7 +165,7 @@ built:
             low: 0.99
             mid: 0.01
             transient: 0.69
-          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to grunge, sitting at 124 Hz against 111. Across 15 records from 5 players, grunge earns scooped, dark and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to grunge, sitting at 124 Hz against 111. Across 15 records from 5 players, grunge earns scooped, dark and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because grunge earns "scooped" against the players who measure otherwise, by 0.0265 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
       controls:
         CenterFreq: "1000.0"
         Level: "0.0"
@@ -318,30 +268,30 @@ built:
           members:
             block0:
               attrs:
-                '@fs_customcolor': "9"
+                '@fs_customcolor': "10"
                 '@fs_customlabel': DRIVE
-                '@fs_enabled': "false"
-                '@fs_index': "1"
-                '@fs_label': Alpaca Rouge
-                '@fs_ledcolor': "525824"
+                '@fs_enabled': "true"
+                '@fs_index': "3"
+                '@fs_label': Pro Co RAT
+                '@fs_ledcolor': "13676288"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
               attrs:
-                '@fs_customcolor': "7"
+                '@fs_customcolor': "9"
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
-                '@fs_index': "2"
+                '@fs_index': "1"
                 '@fs_label': Simple Tilt
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block5:
               attrs:
-                '@fs_customcolor': "10"
+                '@fs_customcolor': "7"
                 '@fs_customlabel': REVERB
                 '@fs_enabled': "false"
-                '@fs_index': "3"
+                '@fs_index': "2"
                 '@fs_label': Ganymede
                 '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
@@ -377,7 +327,7 @@ built:
           members:
             dsp0:
               controls:
-                block0: "false"
+                block0: "true"
                 block1: "true"
                 block2: "true"
                 block3: "true"
@@ -396,7 +346,7 @@ built:
           members:
             dsp0:
               controls:
-                block0: "false"
+                block0: "true"
                 block1: "true"
                 block2: "true"
                 block3: "true"
@@ -415,7 +365,7 @@ built:
           members:
             dsp0:
               controls:
-                block0: "false"
+                block0: "true"
                 block1: "true"
                 block2: "true"
                 block3: "true"
@@ -442,30 +392,30 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Alpaca Rouge
+    - gear: Pro Co RAT
       block: 0
-      colour: 525824
-      enabled: false
+      colour: 13676288
+      enabled: true
       label: DRIVE
-      led: violet
+      led: pink
       momentary: false
       primary: true
-      switch: 1
+      switch: 3
     - gear: Simple Tilt
       block: 4
       colour: 527360
       enabled: false
       label: EQ
-      led: turquoise
+      led: violet
       momentary: false
       primary: true
-      switch: 2
+      switch: 1
     - gear: Ganymede
       block: 5
       colour: 1049600
       enabled: false
       label: REVERB
-      led: pink
+      led: turquoise
       momentary: false
       primary: true
-      switch: 3
+      switch: 2
