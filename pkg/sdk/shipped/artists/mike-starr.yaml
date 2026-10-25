@@ -5,7 +5,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.0.0
+version: 4.2.0
 id: mike-starr
 ask:
   confidence: low
@@ -95,7 +95,7 @@ built:
           note: 'Opened, and it carries a named first-hand witness at one remove. Post 77 of the thread, from wolfkeller: "well, after speaking with Evan of Bass Northwest in Seattle, who was there for the recording, here is how Would was recorded. 3 tracks of bass. 1) Spector NS2 into Ampeg SVT 2 into 8x10 E. track 2) Spector into ART Nightbass on rickenfaker preset tweaked a bit into board. track 3) Kramer Ferrington acoustic bass into board. Mixx the 3, that''s the sound." Three other posters put him on the same gear without the detail. Mr. Dead: "Mike Inez used the same bass/rig setup (Spector/Ampeg) as original A.I.C. bassist Mike Starr". Angus, on the band''s bass sound: "Spector basses and Ampeg amps."'
           url: https://www.talkbass.com/threads/x.553451/
       controls:
-        Bass: "0.41"
+        Bass: "0.5"
         Bias: "0.74"
         BiasX: "0.5"
         ChVol: "0.8"
@@ -103,7 +103,7 @@ built:
         Hum: "0.5"
         Master: "1.0"
         Mid: "0.79"
-        MidFreq: "2"
+        MidFreq: "1"
         Ripple: "0.5"
         Sag: "0.5"
         Treble: "0.85"
@@ -119,13 +119,13 @@ built:
           note: Named in the same sentence as the head, an Ampeg 8x10E.
           url: https://www.talkbass.com/threads/x.553451/
       controls:
-        Angle: "45.0"
-        Distance: "5.0"
-        HighCut: "8000.0"
+        Angle: "0.0"
+        Distance: "1.0"
+        HighCut: "4000.0"
         Level: "0.0"
-        LowCut: "37.0"
+        LowCut: "19.9"
         Mic: "8"
-        Position: "0.0"
+        Position: "0.39"
       attrs:
         '@position': "2"
       position: 2
@@ -155,6 +155,20 @@ built:
         '@position': "3"
       enabled: false
       position: 3
+    - role: delay
+      gear: Simple Delay
+      controls:
+        Feedback: "0.345"
+        Level: "0.0"
+        Mix: "0.4"
+        Scale: "0.75"
+        SyncSelect1: "6"
+        TempoSync1: "false"
+        Time: "0.507"
+      attrs:
+        '@position': "4"
+      enabled: false
+      position: 4
   preset:
     dsp0:
       members:
@@ -218,14 +232,34 @@ built:
       members:
         dsp0:
           members:
+            block0:
+              attrs:
+                '@fs_customcolor': "4"
+                '@fs_customlabel': COMP
+                '@fs_enabled': "true"
+                '@fs_index': "3"
+                '@fs_label': Deluxe Comp
+                '@fs_ledcolor': "8716032"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
             block3:
               attrs:
-                '@fs_customcolor': "2"
+                '@fs_customcolor': "10"
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "1"
                 '@fs_label': Simple Tilt
                 '@fs_ledcolor': "527360"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block4:
+              attrs:
+                '@fs_customcolor': "8"
+                '@fs_customlabel': DELAY
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': Simple Delay
+                '@fs_ledcolor': "67840"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -253,7 +287,17 @@ built:
         '@name': SNAPSHOT 1
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "false"
+                block4: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -261,7 +305,17 @@ built:
         '@name': SNAPSHOT 2
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "false"
+                block4: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -269,7 +323,17 @@ built:
         '@name': SNAPSHOT 3
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "false"
+                block4: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -291,12 +355,30 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
+    - gear: Deluxe Comp
+      block: 0
+      colour: 8716032
+      enabled: true
+      label: COMP
+      led: light orange
+      momentary: false
+      primary: true
+      switch: 3
     - gear: Simple Tilt
       block: 3
       colour: 527360
       enabled: false
       label: EQ
-      led: red
+      led: pink
       momentary: false
       primary: true
       switch: 1
+    - gear: Simple Delay
+      block: 4
+      colour: 67840
+      enabled: false
+      label: DELAY
+      led: blue
+      momentary: false
+      primary: true
+      switch: 2

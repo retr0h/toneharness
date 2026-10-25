@@ -5,7 +5,7 @@
 # of the contract and this line still said so.
 
 schema: ToneSpec
-version: 4.0.0
+version: 4.2.0
 id: bootsy-collins
 ask:
   confidence: low
@@ -184,13 +184,13 @@ built:
         - kind: corpus
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
-        Angle: "45.0"
-        Distance: "9.0"
-        HighCut: "20100.0"
+        Angle: "0.0"
+        Distance: "1.0"
+        HighCut: "4000.0"
         Level: "0.0"
         LowCut: "19.9"
         Mic: "0"
-        Position: "0.75"
+        Position: "0.39"
       attrs:
         '@position': "3"
       position: 3
@@ -273,22 +273,32 @@ built:
           members:
             block0:
               attrs:
-                '@fs_customcolor': "2"
+                '@fs_customcolor': "8"
                 '@fs_customlabel': FILTER
-                '@fs_enabled': "false"
+                '@fs_enabled': "true"
                 '@fs_index': "1"
                 '@fs_label': Musitronics Mu-Tron III
-                '@fs_ledcolor': "196619"
+                '@fs_ledcolor': "3277055"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block1:
+              attrs:
+                '@fs_customcolor': "4"
+                '@fs_customlabel': COMP
+                '@fs_enabled': "true"
+                '@fs_index': "2"
+                '@fs_label': Deluxe Comp
+                '@fs_ledcolor': "8716032"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
               attrs:
-                '@fs_customcolor': "6"
+                '@fs_customcolor': "9"
                 '@fs_customlabel': EQ
-                '@fs_enabled': "false"
-                '@fs_index': "2"
+                '@fs_enabled': "true"
+                '@fs_index': "3"
                 '@fs_label': Simple EQ
-                '@fs_ledcolor': "527360"
+                '@fs_ledcolor': "8716032"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -316,7 +326,17 @@ built:
         '@name': SNAPSHOT 1
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "true"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -324,7 +344,17 @@ built:
         '@name': SNAPSHOT 2
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "true"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -332,7 +362,17 @@ built:
         '@name': SNAPSHOT 3
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "true"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "true"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -356,19 +396,28 @@ built:
   footswitches:
     - gear: Musitronics Mu-Tron III
       block: 0
-      colour: 196619
-      enabled: false
+      colour: 3277055
+      enabled: true
       label: FILTER
-      led: red
+      led: blue
       momentary: false
       primary: true
       switch: 1
-    - gear: Simple EQ
-      block: 4
-      colour: 527360
-      enabled: false
-      label: EQ
-      led: green
+    - gear: Deluxe Comp
+      block: 1
+      colour: 8716032
+      enabled: true
+      label: COMP
+      led: light orange
       momentary: false
       primary: true
       switch: 2
+    - gear: Simple EQ
+      block: 4
+      colour: 8716032
+      enabled: true
+      label: EQ
+      led: violet
+      momentary: false
+      primary: true
+      switch: 3

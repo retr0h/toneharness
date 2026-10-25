@@ -17,7 +17,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.0.0
+version: 4.2.0
 id: hard-rock
 ask:
   confidence: low
@@ -155,6 +155,22 @@ built:
       attrs:
         '@position': "2"
       position: 2
+    - role: cab
+      gear: 8x10 Ampeg SVT-810AV
+      evidence:
+        - kind: corpus
+          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
+      controls:
+        Angle: "0.0"
+        Distance: "1.0"
+        HighCut: "4000.0"
+        Level: "0.0"
+        LowCut: "19.9"
+        Mic: "11"
+        Position: "0.39"
+      attrs:
+        '@position': "3"
+      position: 3
     - role: eq
       gear: MXR 10-Band Graphic EQ
       capture: direct
@@ -186,9 +202,9 @@ built:
         8kHz: "0.0"
         Level: "0.0"
       attrs:
-        '@position': "3"
+        '@position': "4"
       enabled: false
-      position: 3
+      position: 4
     - role: reverb
       gear: Dynamic Room
       capture: direct
@@ -221,24 +237,8 @@ built:
         Mix: "0.41"
         PreDelay: "0.01"
       attrs:
-        '@position': "4"
-      enabled: false
-      position: 4
-    - role: cab
-      gear: 8x10 Ampeg SVT-810AV
-      evidence:
-        - kind: corpus
-          note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
-      controls:
-        Angle: "45.0"
-        Distance: "5.0"
-        HighCut: "8000.0"
-        Level: "0.0"
-        LowCut: "37.0"
-        Mic: "3"
-        Position: "0.0"
-      attrs:
         '@position': "5"
+      enabled: false
       position: 5
   preset:
     dsp0:
@@ -305,7 +305,7 @@ built:
           members:
             block0:
               attrs:
-                '@fs_customcolor': "2"
+                '@fs_customcolor': "7"
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
@@ -313,9 +313,9 @@ built:
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block3:
+            block4:
               attrs:
-                '@fs_customcolor': "6"
+                '@fs_customcolor': "10"
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
@@ -323,7 +323,7 @@ built:
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block4:
+            block5:
               attrs:
                 '@fs_customcolor': "8"
                 '@fs_customlabel': REVERB
@@ -358,7 +358,18 @@ built:
         '@name': SNAPSHOT 1
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
+                block5: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -366,7 +377,18 @@ built:
         '@name': SNAPSHOT 2
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
+                block5: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -374,7 +396,18 @@ built:
         '@name': SNAPSHOT 3
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
+                block5: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -401,21 +434,21 @@ built:
       colour: 525824
       enabled: false
       label: DRIVE
-      led: red
+      led: turquoise
       momentary: false
       primary: true
       switch: 1
     - gear: MXR 10-Band Graphic EQ
-      block: 3
+      block: 4
       colour: 527360
       enabled: false
       label: EQ
-      led: green
+      led: pink
       momentary: false
       primary: true
       switch: 2
     - gear: Dynamic Room
-      block: 4
+      block: 5
       colour: 1049600
       enabled: false
       label: REVERB

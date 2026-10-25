@@ -5,7 +5,7 @@
 # of the contract and this line still said so.
 
 schema: ToneSpec
-version: 4.0.0
+version: 4.2.0
 id: flea
 ask:
   confidence: medium
@@ -191,12 +191,12 @@ built:
         Bass: "0.5"
         Boost: "0.5"
         ChVol: "0.8"
-        Contour: "true"
+        Contour: "false"
         Drive: "0.26"
-        HighMid: "0.78"
-        LowMid: "0.4"
+        HighMid: "0.5"
+        LowMid: "0.25"
         Master: "1.0"
-        Treble: "0.66"
+        Treble: "0.625"
       attrs:
         '@position': "2"
       position: 2
@@ -323,7 +323,7 @@ built:
           members:
             block0:
               attrs:
-                '@fs_customcolor': "2"
+                '@fs_customcolor': "10"
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
@@ -331,9 +331,19 @@ built:
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
+            block1:
+              attrs:
+                '@fs_customcolor': "4"
+                '@fs_customlabel': COMP
+                '@fs_enabled': "true"
+                '@fs_index': "3"
+                '@fs_label': Deluxe Comp
+                '@fs_ledcolor': "8716032"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
             block4:
               attrs:
-                '@fs_customcolor': "6"
+                '@fs_customcolor': "8"
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
@@ -366,7 +376,17 @@ built:
         '@name': SNAPSHOT 1
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -374,7 +394,17 @@ built:
         '@name': SNAPSHOT 2
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -382,7 +412,17 @@ built:
         '@name': SNAPSHOT 3
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "true"
+                block3: "true"
+                block4: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -409,16 +449,25 @@ built:
       colour: 525824
       enabled: false
       label: DRIVE
-      led: red
+      led: pink
       momentary: false
       primary: true
       switch: 1
+    - gear: Deluxe Comp
+      block: 1
+      colour: 8716032
+      enabled: true
+      label: COMP
+      led: light orange
+      momentary: false
+      primary: true
+      switch: 3
     - gear: MXR 10-Band Graphic EQ
       block: 4
       colour: 527360
       enabled: false
       label: EQ
-      led: green
+      led: blue
       momentary: false
       primary: true
       switch: 2

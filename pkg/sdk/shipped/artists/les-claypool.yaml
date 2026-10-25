@@ -5,7 +5,7 @@
 # of the contract and this line still said so.
 
 schema: ToneSpec
-version: 4.0.0
+version: 4.2.0
 id: les-claypool
 ask:
   confidence: medium
@@ -114,6 +114,24 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: filter
+      gear: Auto Filter
+      controls:
+        Attack: "1.751"
+        Decay: "1.877"
+        Direction: "true"
+        FilterGain: "18.0"
+        FilterQ: "6.625"
+        FreqDepth: "3750.0"
+        Frequency: "50.0"
+        Level: "0.0"
+        Mix: "0.5"
+        Mode: "2"
+        Sens: "0.25"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -128,8 +146,24 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
+        '@position': "1"
+      position: 1
+    - role: drive
+      gear: Wounded Paw Battering Ram
+      controls:
+        Fuzz: "true"
+        FuzzGain: "0.5"
+        FuzzLevel: "0.25"
+        FuzzOct: "true"
+        FuzzTone: "0.375"
+        ODGain: "0.0"
+        ODLevel: "0.0"
+        ODLowBoost: "false"
+        ODTone: "0.25"
+      attrs:
+        '@position': "2"
+      enabled: false
+      position: 2
     - role: amp
       gear: Mesa/Boogie Bass 400+
       capture: direct
@@ -146,21 +180,21 @@ built:
           note: the Bass 400+ head through the nineties, into two Mesa 2x15 Diesel cabinets
           url: https://mixdownmag.com.au/features/rig-rundown-les-claypool/
       controls:
-        Bass: "0.5"
+        Bass: "0.375"
         Bias: "0.55"
         BiasX: "0.9"
         ChVol: "0.74"
         Drive: "0.62"
-        HighMid: "0.5"
+        HighMid: "0.625"
         Hum: "0.5"
         Master: "0.6"
         Mid: "0.56"
         Ripple: "0.5"
         Sag: "0.75"
-        Treble: "0.5"
+        Treble: "0.75"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "3"
+      position: 3
     - role: cab
       gear: Mesa/Boogie 2x15
       capture: direct
@@ -174,16 +208,16 @@ built:
           note: 'asked how he records: "I go out of the back of my MESA/Boogie amp direct into the board. They pad the signal somehow. We''ve always put up a mike in front of the bass amp, but we''ve never used it."'
           url: http://www.ram.org/music/primus/articles/bp1.html
       controls:
-        Angle: "45.0"
-        Distance: "4.25"
-        HighCut: "11500.0"
+        Angle: "0.0"
+        Distance: "1.0"
+        HighCut: "4000.0"
         Level: "0.0"
-        LowCut: "25.0"
+        LowCut: "19.9"
         Mic: "0"
-        Position: "0.09"
+        Position: "0.39"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "4"
+      position: 4
   preset:
     dsp0:
       members:
@@ -243,6 +277,40 @@ built:
           model: HD2_AppDSPFlowSplitY
     dsp1:
       members: {}
+    footswitch:
+      members:
+        dsp0:
+          members:
+            block0:
+              attrs:
+                '@fs_customcolor': "7"
+                '@fs_customlabel': FILTER
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Auto Filter
+                '@fs_ledcolor': "196619"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block1:
+              attrs:
+                '@fs_customcolor': "8"
+                '@fs_customlabel': COMP
+                '@fs_enabled': "true"
+                '@fs_index': "3"
+                '@fs_label': Deluxe Comp
+                '@fs_ledcolor': "8716032"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block2:
+              attrs:
+                '@fs_customcolor': "10"
+                '@fs_customlabel': DRIVE
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': Wounded Paw Battering Ram
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
     global:
       attrs:
         '@DtSelect': "2"
@@ -268,7 +336,17 @@ built:
         '@name': SNAPSHOT 1
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "false"
+                block3: "true"
+                block4: "true"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -276,7 +354,17 @@ built:
         '@name': SNAPSHOT 2
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "false"
+                block3: "true"
+                block4: "true"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -284,7 +372,17 @@ built:
         '@name': SNAPSHOT 3
         '@pedalstate': "0"
         '@tempo': "120"
-        '@valid': "false"
+        '@valid': "true"
+      members:
+        blocks:
+          members:
+            dsp0:
+              controls:
+                block0: "false"
+                block1: "true"
+                block2: "false"
+                block3: "true"
+                block4: "true"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -305,3 +403,31 @@ built:
         '@variax_str6tuning': "0"
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
+  footswitches:
+    - gear: Auto Filter
+      block: 0
+      colour: 196619
+      enabled: false
+      label: FILTER
+      led: turquoise
+      momentary: false
+      primary: true
+      switch: 1
+    - gear: Deluxe Comp
+      block: 1
+      colour: 8716032
+      enabled: true
+      label: COMP
+      led: blue
+      momentary: false
+      primary: true
+      switch: 3
+    - gear: Wounded Paw Battering Ram
+      block: 2
+      colour: 525824
+      enabled: false
+      label: DRIVE
+      led: pink
+      momentary: false
+      primary: true
+      switch: 2
