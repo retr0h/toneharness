@@ -471,6 +471,10 @@ func (s *MadePublicTestSuite) TestMade() {
 							m.Moved = []sdk.Moved{
 								{Term: "mid-forward", Param: "Mid", From: 0.5, To: 0.6},
 							}
+							m.Omitted = []sdk.Omitted{{
+								Name:   "8x10 Ampeg SVT-810AV",
+								Reason: "this plays into an amplifier",
+							}}
 							m.Unfamiliar = []sdk.Unfamiliar{{Term: "wet paper bag"}}
 							m.Playing = sdk.Playing{
 								Terms: []string{"soft-attack", "scooped"},
@@ -527,6 +531,10 @@ func (s *MadePublicTestSuite) TestMade() {
 							From: 0.6, To: 0.72, Held: 0.88, Overridden: true,
 						},
 					}
+					m.Omitted = []sdk.Omitted{{
+						Name:   "8x10 Ampeg SVT-810AV",
+						Reason: "this plays into an amplifier",
+					}}
 					m.Unfamiliar = []sdk.Unfamiliar{{Term: "wet paper bag"}}
 					m.Playing = sdk.Playing{
 						Terms: []string{"soft-attack", "scooped"},
