@@ -87,6 +87,14 @@ func carriedButOff(
 	return float64(stats.Chains-stats.Engaged) / float64(stats.Chains)
 }
 
+// usuallyOn is how often a kind is running among the chains that hold one,
+// above which it is the sound rather than something to stomp.
+//
+// The same figure `compile.fill` decides with, repeated rather than shared
+// because the two packages do not import each other, and named the same so a
+// reader finds both.
+const usuallyOn = 0.75
+
 // offer is one kind of block worth a switch, and how strongly.
 type offer struct {
 	kind catalog.Category
@@ -232,6 +240,26 @@ func offers(
 
 		share := carriedButOff(stats)
 		if share <= 0 {
+			continue
+		}
+
+		// **A kind the corpus runs when it carries one is the sound, not an
+		// offer.** This file has argued it from the first line — "a
+		// compressor is in 85% of chains and running in nearly all of them,
+		// so it is the sound rather than an effect" — and then offered one
+		// anyway whenever a switch was free.
+		//
+		// What that did: `fill` adds a compressor enabled because nearly
+		// every chain runs one, and this reached the category first and put
+		// a bypassed one on a switch instead, so `fill` found one present
+		// and left it alone. Four genres built on 2026-10-25 came out two
+		// with the compressor in the signal and two with it switched off,
+		// decided by nothing more than whether the rig named a drive and
+		// left a switch spare.
+		//
+		// The same threshold `fill` uses, so the two cannot disagree about
+		// which side of the line a kind falls.
+		if stats.Running() >= usuallyOn {
 			continue
 		}
 
