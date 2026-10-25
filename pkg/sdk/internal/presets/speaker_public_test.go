@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
 )
 
@@ -185,6 +186,84 @@ func (s *SpeakerPublicTestSuite) TestTheGridHasNoHoleInIt() {
 	for i, b := range made.Plan.Blocks {
 		s.Require().Equal(i, b.Pos, "block %d sits at %d", i, b.Pos)
 	}
+}
+
+// TestASlotOverridesTheFile covers one slot differing from the rest, which
+// is how the same rig is built twice.
+//
+// The file says headphones and the slot says it plays into an amplifier, so
+// the slot wins — for that build and no other.
+func (s *SpeakerPublicTestSuite) TestASlotOverridesTheFile() {
+	at := filepath.Join(s.dir, "config.yaml")
+	s.Require().NoError(os.WriteFile(at, []byte(
+		"schema: Config\nversion: \"1.1.0\"\nplays_into: headphones\n"), 0o600))
+
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	into := config.AmpReturn
+
+	for _, tt := range []struct {
+		name string
+		// override is what the slot says, or nil for a slot that says
+		// nothing and takes the file's answer.
+		override *config.PlaysInto
+		cab      bool
+	}{
+		{name: "a slot that says nothing takes the file's answer", cab: true},
+		{name: "a slot that plays into an amplifier", override: &into},
+	} {
+		s.Run(tt.name, func() {
+			made, err := presets.Make(context.Background(), presets.MakeOptions{
+				RigID:      "punk",
+				ConfigPath: at,
+				PlaysInto:  tt.override,
+				OutputPath: filepath.Join(s.dir, "out.hlx"),
+			})
+			s.Require().NoError(err)
+
+			held := false
+
+			for _, b := range made.Plan.Blocks {
+				if one, known := cat.Block(b.Model); known &&
+					one.Category == catalog.CategoryCab {
+					held = true
+				}
+			}
+
+			s.Require().Equal(tt.cab, held)
+		})
+	}
+}
+
+// TestAChainWithNoCabinetIsLeftAlone covers a rig naming none, where there is
+// nothing to take out and nothing to report.
+//
+// A chain of effects is one: no amplifier, so no cabinet and nothing for
+// `impliedCab` to supply either.
+func (s *SpeakerPublicTestSuite) TestAChainWithNoCabinetIsLeftAlone() {
+	at := filepath.Join(s.dir, "config.yaml")
+	s.Require().NoError(os.WriteFile(at, []byte(
+		"schema: Config\nversion: \"1.1.0\"\nplays_into: amp-return\n"), 0o600))
+
+	rig := filepath.Join(s.dir, "effects.yaml")
+	s.Require().NoError(os.WriteFile(rig, []byte(`schema: ToneSpec
+version: "4.0.0"
+id: just-a-drive
+rig:
+  instrument: bass
+  chain:
+    - role: drive
+      gear: Klon Centaur
+`), 0o600))
+
+	made, err := presets.Make(context.Background(), presets.MakeOptions{
+		RigPath:    rig,
+		ConfigPath: at,
+		OutputPath: filepath.Join(s.dir, "out.hlx"),
+	})
+	s.Require().NoError(err)
+	s.Require().Empty(made.Omitted, "nothing to take out")
 }
 
 func TestSpeakerPublicTestSuite(

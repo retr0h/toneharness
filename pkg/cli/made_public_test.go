@@ -136,6 +136,24 @@ func (s *MadePublicTestSuite) TestMade() {
 						absent: []string{"added", "no such word"},
 					},
 					{
+						// A decision made on somebody's behalf, so it is
+						// printed: a chain that came back without the cabinet
+						// its own document names is one they would otherwise
+						// go looking for.
+						name: "a cabinet left out because they play into one",
+						in: s.made(func(m *sdk.Made) {
+							m.Omitted = []sdk.Omitted{{
+								Name: "8x10 Ampeg SVT-810AV",
+								Reason: "this plays into an amplifier, which " +
+									"has a speaker of its own",
+							}}
+						}),
+						want: []string{
+							"left out", "8x10 Ampeg SVT-810AV",
+							"speaker of its own",
+						},
+					},
+					{
 						// A block the corpus carries but most players leave
 						// off, which arrives bypassed. Both figures printed
 						// and each labelled, because they answered two
