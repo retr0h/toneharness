@@ -65,6 +65,10 @@ func made(
 		return err
 	}
 
+	if err := omitted(w, m.Omitted); err != nil {
+		return err
+	}
+
 	if err := says(w, m.Moved); err != nil {
 		return err
 	}
@@ -150,6 +154,33 @@ func playing(
 }
 
 // added names the blocks nobody asked for, and why they are there.
+// omitted says what the rig names and the build left out.
+//
+// Said rather than left to be noticed, because it is a decision made on
+// somebody's behalf: a chain that came back without the cabinet its own
+// document names is one they would otherwise go looking for.
+func omitted(
+	w io.Writer,
+	all []sdk.Omitted,
+) error {
+	if len(all) == 0 {
+		return nil
+	}
+
+	if _, err := fmt.Fprintln(w); err != nil {
+		return err
+	}
+
+	for _, o := range all {
+		if _, err := fmt.Fprintf(w, "%s%s\n", paint.Indent, paint.Info(w,
+			fmt.Sprintf("left out %s — %s", o.Name, o.Reason))); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func added(
 	w io.Writer,
 	all []sdk.Added,

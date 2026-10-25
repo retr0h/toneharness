@@ -23,6 +23,8 @@ package sdk
 import (
 	"context"
 
+	"github.com/retr0h/toneharness/pkg/sdk/config"
+
 	"github.com/retr0h/toneharness/pkg/sdk/internal/presets"
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
 )
@@ -261,6 +263,9 @@ type Build struct {
 	Rig string
 	// Out is where the preset is written.
 	Out string
+	// PlaysInto overrides what the config says this build is for, for one
+	// slot differing from the rest. Nil leaves the config's own answer.
+	PlaysInto *config.PlaysInto
 	// Existing is what happens to a file already at Out. The zero value,
 	// ReplaceExisting, puts the preset in its place; KeepExisting refuses it
 	// with an error matching fs.ErrExist.
@@ -298,6 +303,9 @@ type Compile struct {
 	Template string
 	// Out is where the preset is written.
 	Out string
+	// PlaysInto overrides what the config says this build is for, for one
+	// slot differing from the rest. Nil leaves the config's own answer.
+	PlaysInto *config.PlaysInto
 	// Existing is what happens to a file already at Out. The zero value,
 	// ReplaceExisting, puts the preset in its place; KeepExisting refuses it
 	// with an error matching fs.ErrExist.

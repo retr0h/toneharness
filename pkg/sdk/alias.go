@@ -63,6 +63,9 @@ type (
 	Made = result.Made
 	// Added is a block put in the chain that the rig did not name.
 	Added = result.Added
+	// Omitted is gear the rig names that a build left out, and why. A
+	// decision made on somebody's behalf, so it travels in the answer.
+	Omitted = result.Omitted
 	// Unfamiliar is a character term nothing defines.
 	Unfamiliar = result.Unfamiliar
 	// Moved is what a word did to a parameter.

@@ -42,7 +42,7 @@ type SetupPublicTestSuite struct {
 func held(
 	device string,
 	instruments []string,
-	slots [][2]string,
+	slots [][3]string,
 	favourites []string,
 	loudness string,
 ) config.Config {
@@ -64,7 +64,16 @@ func held(
 	if len(slots) > 0 {
 		placed := make([]config.Slotted, 0, len(slots))
 		for _, pair := range slots {
-			placed = append(placed, config.Slotted{At: pair[0], Rig: pair[1]})
+			one := config.Slotted{At: pair[0], Rig: pair[1]}
+
+			// A third entry is what this slot is built for, where it differs
+			// from the file's own answer.
+			if pair[2] != "" {
+				into := config.PlaysInto(pair[2])
+				one.PlaysInto = &into
+			}
+
+			placed = append(placed, one)
 		}
 
 		out.Slots = &placed
@@ -97,7 +106,7 @@ func (s *SetupPublicTestSuite) TestSetup() {
 			// is looking at.
 			name: "a setup with everything on it",
 			in: held("HX Stomp", []string{"Fender Precision Bass"},
-				[][2]string{{"11A", "punk"}, {"18A", "mike-dirnt"}},
+				[][3]string{{"11A", "punk", ""}, {"18A", "mike-dirnt", ""}},
 				[]string{"11A", "18A"}, "punk"),
 			want: []string{
 				"HX Stomp", "Fender Precision Bass", "as loud as",
@@ -121,17 +130,29 @@ func (s *SetupPublicTestSuite) TestSetup() {
 			// The one case where a cycle cannot tell it is the current
 			// favourite, called out where somebody is reading the list.
 			name: "a favourite the slot map says nothing about",
-			in: held("", nil, [][2]string{{"11A", "punk"}},
+			in: held("", nil, [][3]string{{"11A", "punk", ""}},
 				[]string{"11A", "24C"}, ""),
 			want: []string{
 				"11A", "punk", "24C", "a step cannot recognise it",
 			},
 		},
 		{
+			// Two slots holding one rig are the same name twice otherwise,
+			// and the difference between them is the whole reason both are
+			// there: the first has its cabinet, for headphones, and the
+			// second does not, for a real one.
+			name: "one rig in two slots, built for two rooms",
+			in: held("", nil, [][3]string{
+				{"13C", "punk", ""},
+				{"13B", "punk", "amp-return"},
+			}, nil, ""),
+			want: []string{"13C", "13B", "punk", "into amp-return"},
+		},
+		{
 			// Slots without favourites. The two are separate decisions and a
 			// person may well make only the first.
 			name: "slots placed and no favourites",
-			in: held("", nil, [][2]string{{"11A", "punk"}},
+			in: held("", nil, [][3]string{{"11A", "punk", ""}},
 				nil, ""),
 			want:    []string{"11A", "punk", "device fav has nowhere to go"},
 			missing: []string{"where device fav lands"},
@@ -156,7 +177,7 @@ func (s *SetupPublicTestSuite) TestSetup() {
 // TestSetupReportsAWriterThatFails covers each seam the page is written at.
 func (s *SetupPublicTestSuite) TestSetupReportsAWriterThatFails() {
 	full := held("HX Stomp", []string{"Fender Precision Bass"},
-		[][2]string{{"11A", "punk"}}, []string{"11A"}, "punk")
+		[][3]string{{"11A", "punk", ""}}, []string{"11A"}, "punk")
 	bare := held("", nil, nil, nil, "")
 
 	for _, tt := range []struct {

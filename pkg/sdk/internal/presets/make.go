@@ -75,6 +75,13 @@ type MakeOptions struct {
 	// ConfigPath is what the person has. Empty builds for the record rather
 	// than for them.
 	ConfigPath string
+	// PlaysInto overrides what the config file says this build is for.
+	//
+	// For one slot differing from the rest, which is how the same rig is
+	// built twice: with its cabinet for headphones and without for a real
+	// one. Nil leaves the file's own answer alone, which is every build that
+	// is not a slot saying otherwise.
+	PlaysInto *config.PlaysInto
 	// OutputPath is where the preset is written.
 	OutputPath string
 	// Existing is what happens to a file already at OutputPath. The zero
@@ -107,6 +114,15 @@ func Make(
 	held, err := configAt(opts.ConfigPath)
 	if err != nil {
 		return result.Made{}, err
+	}
+
+	// A slot's own answer over the file's, and only where it gives one. A
+	// config with nothing to override is still the config: this builds for
+	// the record where there is no file at all, and a slot saying where it
+	// plays is not a reason to invent one.
+	if opts.PlaysInto != nil && held != nil {
+		into := *opts.PlaysInto
+		held.PlaysInto = &into
 	}
 
 	rec, intent := known.Rig, intentOf(known.Ask, held)
@@ -181,6 +197,22 @@ func Make(
 	// that block sits, and the fit is what moves it; the rig names gear by role
 	// and has no number the fit could invalidate.
 	spec = compile.Refit(spec, before, spec.Blocks)
+
+	// The speaker, where somebody has one of their own.
+	//
+	// A cabinet block simulates a speaker and a real cabinet is one, so a
+	// chain carrying both puts a simulated speaker in front of a real one and
+	// the sound goes dark. Whoever wrote `amp-return` has already said which
+	// they have.
+	//
+	// **After the plan is settled rather than on the rig's own chain**, which
+	// is where this went first and where it did not work: taking the cabinet
+	// out of the chain leaves an amplifier with none, and `impliedCab`
+	// supplies the one Line 6 voiced that amplifier with. The chain came back
+	// holding exactly what had just been removed.
+	var omitted []result.Omitted
+
+	spec.Blocks, omitted = withoutASpeaker(spec.Blocks, held, cat)
 
 	// How loud it comes out, after the fit so the plan being matched is the one
 	// that will be written. Only when a Setup named a rig: a build that was
@@ -258,6 +290,7 @@ func Make(
 		Added:      append(stomped, addedFrom(added)...),
 		Chosen:     chosen,
 		Moved:      movedFrom(moved),
+		Omitted:    omitted,
 		Unfamiliar: unfamiliar(intent),
 		Playing:    result.Playing{Terms: playing.Terms, Said: playing.Said},
 		Levelled:   levelled.Levelled,
@@ -516,6 +549,65 @@ func movedFrom(
 	}
 
 	return out
+}
+
+// withoutASpeaker drops a cabinet block where the person plays into a real
+// cabinet.
+//
+// Dropped rather than bypassed, because a bypassed one cannot be reached: a
+// cabinet is not in `catalog.Stompable`, so no footswitch brings it back, and
+// on a three-switch pedal a switch is worth more as an effect. A block that
+// cannot be heard and cannot be switched on costs the chip and nothing else.
+//
+// The rig still names it. Which cabinet somebody used is part of the gear and
+// travels with the document; whether to build one is about the room and
+// travels with the config. That is what lets one rig serve a desk and a
+// backline.
+func withoutASpeaker(
+	blocks []plan.Block,
+	held *config.Config,
+	cat *catalog.Catalog,
+) ([]plan.Block, []result.Omitted) {
+	if held == nil || held.PlaysInto == nil || cat == nil {
+		return blocks, nil
+	}
+
+	if into := *held.PlaysInto; into != config.AmpFront && into != config.AmpReturn {
+		return blocks, nil
+	}
+
+	kept := make([]plan.Block, 0, len(blocks))
+	gone := []result.Omitted(nil)
+
+	for _, block := range blocks {
+		if held, known := cat.Block(block.Model); known &&
+			held.Category == catalog.CategoryCab {
+			gone = append(gone, result.Omitted{
+				Name: held.Gear(),
+				Reason: "this plays into an amplifier, which has a speaker " +
+					"of its own. The rig still names it, and a slot saying " +
+					"pa or headphones builds it",
+			})
+
+			continue
+		}
+
+		kept = append(kept, block)
+	}
+
+	if len(gone) == 0 {
+		return blocks, nil
+	}
+
+	// Closed up, because the grid has no hole in it. A block's position is
+	// what a footswitch names it by, so leaving a gap where the cabinet was
+	// puts every switch after it one place out — which is the whole of task
+	// 278, arrived at from the other direction.
+	for i := range kept {
+		kept[i].Pos = i
+	}
+
+	return kept, gone
 }
 
 // configAt reads what the person has, where they named a file.

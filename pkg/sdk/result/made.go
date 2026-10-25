@@ -52,6 +52,12 @@ type Made struct {
 	// is still something the rig said, and reporting only the ones that
 	// worked would read as if the rest had.
 	Moved []Moved `json:"moved"`
+	// Omitted is gear the rig names that this build left out, and why.
+	//
+	// A decision made on somebody's behalf, so it is reported rather than
+	// quietly acted on: a chain that came back without the cabinet its own
+	// document names is one somebody would otherwise go looking for.
+	Omitted []Omitted `json:"omitted"`
 	// Playing is what was done about how this person plays, and why.
 	//
 	// Only ever set when a Setup said. It is the one decision here taken from
@@ -248,6 +254,20 @@ func (m Moved) Unanswered() bool { return m.Because != "" }
 func (m Moved) Holds() bool { return m.Already != "" }
 
 // Added is a block put in the chain that the rig did not name.
+// Omitted is one block the rig names and the build left out.
+//
+// The rig is still right: which cabinet somebody used is part of the gear and
+// travels with the document. What travels with the config is whether to build
+// one, because that is about the room. So the same rig is the record's
+// cabinet for whoever plays into a desk and no cabinet for whoever plays into
+// their own, and this is where the second of those says so.
+type Omitted struct {
+	// Name is what the block is called.
+	Name string `json:"name"`
+	// Reason says why it was left out.
+	Reason string `json:"reason"`
+}
+
 type Added struct {
 	// Name is what the block is called.
 	Name string `json:"name"`
