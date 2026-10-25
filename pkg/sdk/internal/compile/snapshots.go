@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/preset"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 )
@@ -160,6 +161,126 @@ func restoreSnapshots(
 
 		doc.Data.Tone[snapshotPrefix+strconv.Itoa(i)] = entry
 	}
+}
+
+// Trust makes a preset's snapshots ones the device believes, where nothing has
+// ever captured one.
+//
+// A step of its own on the Compiler, beside Sections and Footswitches, because
+// the two ways a preset is built do not share an assembly: `presets compile`
+// goes through [Lower] and `presets make` builds the document itself and calls
+// the steps one at a time. Task 278 was fixed in the first and shipped broken
+// in the second, which is exactly what a step reachable from one path and not
+// the other buys.
+func Trust(
+	doc *preset.Document,
+	blocks []plan.Block,
+) {
+	if captured(doc) {
+		return
+	}
+
+	trustSnapshots(doc, blocks)
+}
+
+// trustSnapshots makes the snapshots a preset came with ones the device
+// believes, recalling the chain the preset now holds.
+//
+// **Task 278, and the whole of it.** A preset this tool writes is written into
+// an untouched one the device wrote, and an untouched preset's three snapshots
+// are blank: `@valid: false` and no `blocks` key at all, because nothing has
+// ever been captured into them. Nothing here replaced them, so every preset
+// this tool produced carried three snapshots the device does not trust.
+//
+// What that did on the hardware. Block bypass is snapshot state, so a pedal
+// loading a preset whose snapshots are invalid has nothing to recall and
+// initialises them from whatever the chain happens to be. The first press of a
+// footswitch went into that initialisation and moved nothing audible, the
+// second left the pedal's idea of the state and the block's disagreeing, and
+// the third settled them. After that the switch worked for good, because by
+// then the snapshots were real. It looked like a decode fault for weeks, and
+// the preset coming up edited partway through was the snapshot being written.
+//
+// The pedal's own presets have `@valid: true` on all three, which is what
+// finally said where to look: `05C` on this pedal differs from a preset
+// written here in exactly this field and in nothing else about its switches.
+//
+// All of them get the chain as it stands, which is the honest answer rather
+// than a musical one: this tool does not know what somebody would want
+// snapshot two to recall, and three snapshots that agree are three a player
+// can then change. Inventing a difference would be inventing a decision.
+//
+// Only where the rig brought none of its own. A plan carrying snapshots has
+// said what each should recall and [restoreSnapshots] writes those, including
+// their own validity.
+func trustSnapshots(
+	doc *preset.Document,
+	blocks []plan.Block,
+) {
+	paths := map[string]map[string]bool{}
+
+	for _, block := range blocks {
+		path := processorKey(block.DSP)
+		if paths[path] == nil {
+			paths[path] = map[string]bool{}
+		}
+
+		// By grid position rather than by the key the block is filed under,
+		// which is what a device records and what the two differ by: a preset
+		// is free to store block5 at position 6 and a real one does.
+		paths[path][blockPrefix+strconv.Itoa(block.Pos)] = block.Enabled
+	}
+
+	valid := true
+
+	// The entries the document came with, rather than a count from the
+	// limits. How many snapshots a device holds is the device's to say, and
+	// the preset underneath was written by one.
+	for key, entry := range doc.Data.Tone {
+		if preset.SnapshotIndex(key) < 0 {
+			continue
+		}
+
+		put(entry, snapValid, &valid)
+		put(entry, snapBlocks, &paths)
+
+		doc.Data.Tone[key] = entry
+	}
+}
+
+// captured says whether anything has ever been captured into this preset's
+// snapshots.
+//
+// One valid snapshot is enough. A preset where somebody has set up even a
+// single one has made a musical decision, and seeding all three from the
+// chain would throw it away: that is the case
+// [work-a-device's chain reference] warns about, where a preset that arrived
+// with three different sounds comes back holding one.
+//
+// None valid is the blank an untouched preset ships with, whether it reached
+// here as a template nothing replaced or as a plan that lifted those blanks
+// and carried them as if they were the rig's own. The second is how
+// `presets make` produced an unbelievable preset while `presets compile`
+// produced a good one, which is the half of task 278 that a build through one
+// command and not the other hid.
+func captured(
+	doc *preset.Document,
+) bool {
+	for key, entry := range doc.Data.Tone {
+		if preset.SnapshotIndex(key) < 0 {
+			continue
+		}
+
+		var valid *bool
+
+		decode(entry[snapValid], &valid)
+
+		if valid != nil && *valid {
+			return true
+		}
+	}
+
+	return false
 }
 
 // decode reads one of a snapshot's fields, leaving it unset when absent.

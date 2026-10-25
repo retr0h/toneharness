@@ -626,6 +626,50 @@ that was never written anywhere, `device current` read it back, and every slot
 still held what it held. What it replaces lasts until the next preset is
 selected.
 
+## A snapshot the device does not trust makes a footswitch take three presses
+
+Block bypass is snapshot state. A snapshot entry records which grid positions
+are on, and `@valid` says whether the device believes that record.
+
+An untouched preset the device wrote has three snapshots with `@valid: false`
+and no `blocks` key at all, because nothing has ever been captured into them.
+That matters because a preset built here is written **into** an untouched one,
+so it inherits them.
+
+**A pedal loading a preset whose snapshots are invalid has nothing to recall and
+initialises them from whatever the chain happens to be.** The first press of a
+footswitch goes into that initialisation and moves nothing audible, the second
+leaves the pedal's idea of the state and the block's disagreeing, and the third
+settles them. After that the switch works for good, because by then the
+snapshots are real.
+
+That is what it looks like from the floor, and it looks nothing like its cause:
+
+- the switch is bound to the right block, and reading the preset back proves it
+- `@fs_enabled` is `false`, which is also what a working preset from the pedal
+  has, so it is not the difference
+- the preset comes up edited partway through the three presses, which is the
+  snapshot being written
+- it never recurs for that slot, so it reads as a one-off rather than a bug
+
+Two readings off one HX Stomp on 24 October 2026. `05C`, built with HX Edit and
+working from the first press, carries `@valid: true` on all three snapshots and
+a `blocks` record per snapshot; snapshot one differs from two and three, which
+is what a real captured snapshot looks like. A preset written here carried
+`@valid: false`, no `blocks`, and three snapshots the device reported as
+identical because it was echoing the live chain back. Every other field of the
+two footswitch sections agreed exactly.
+
+So **anything that writes a chain has to write snapshots the device believes**,
+which means `@valid: true` and a `blocks` record covering the chain's own bypass
+states. `compile.trustSnapshots` is where that happens, for a plan that brought
+no snapshots of its own.
+
+`@fs_enabled` is a separate field and is not this: it is the switch's own on-off
+state, which the pedal applies to the block when the preset loads. Writing
+`true` turns the block on at load, which for a block offered bypassed is the
+wrong answer. A working preset from the pedal has `false`.
+
 ## Writing a preset
 
 Opcode 5 writes a document into a slot and leaves its name alone. Opcode 8

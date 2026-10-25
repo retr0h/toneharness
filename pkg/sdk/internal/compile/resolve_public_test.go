@@ -185,6 +185,39 @@ func (s *ResolvePublicTestSuite) TestResolve() {
 						},
 					},
 					{
+						// **The cabinet goes straight after the amplifier, not
+						// at the end.** Task 278.
+						//
+						// A rig naming an equaliser after its amplifier used to
+						// come back as amp, eq, cab: the implied cabinet was
+						// appended, so the equaliser worked on the amplifier's
+						// raw output with the speaker simulation behind it.
+						// The corpus then filled a compressor and a reverb
+						// around that and what reached the pedal was
+						// drive, comp, amp, eq, verb, cab.
+						//
+						// It was audible before it was measurable — "sounds
+						// like a guitar, muddy and not clear" — and it moved
+						// every block after the amplifier one place, which is
+						// what made three footswitches look bound to the wrong
+						// blocks. Only rigs naming no cabinet of their own
+						// reach this, which is exactly the three genres that
+						// were wrong on the pedal.
+						name: "the cabinet lands behind its amp and ahead of what follows",
+						spec: rig.Spec{
+							Instrument: rig.InstrumentBass,
+							Chain: []rig.ChainEntry{
+								{Role: rig.RoleAmp, Gear: "Ampeg SVT"},
+								{Role: rig.RoleOther, Gear: "Klon Centaur"},
+							},
+						},
+						models: []catalog.ModelID{
+							"HD2_AmpSVBeastBrt",
+							"HD2_Cab8x10SVBeast",
+							"HD2_DistMinotaur",
+						},
+					},
+					{
 						// Two pedals, descriptions of equal length. The identifier
 						// decides, so the answer does not depend on map iteration order.
 						name:   "the identifier breaks a tie",

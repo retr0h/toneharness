@@ -99,6 +99,10 @@ type Compiler interface {
 	)
 	// Footswitches writes what the pedal prints under each switch.
 	Footswitches(doc *preset.Document, made plan.Plan, cat *catalog.Catalog)
+	// Trust makes a preset's snapshots ones the device believes, where
+	// nothing has ever captured one. Without it every footswitch on the
+	// preset takes three presses before it works: task 278.
+	Trust(doc *preset.Document, blocks []plan.Block)
 	// Sections writes a rig's song sections into a preset's snapshots.
 	Sections(
 		doc *preset.Document, spec rig.Spec, made plan.Plan, blocks []plan.Block,

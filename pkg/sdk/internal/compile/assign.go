@@ -21,6 +21,7 @@
 package compile
 
 import (
+	"hash/fnv"
 	"strconv"
 	"strings"
 
@@ -37,41 +38,39 @@ import (
 // The device names twelve and the catalog reads them off it in the order it
 // numbers them, which is where `auto color` being 0, red 2 and off 11 come
 // from. Three carry no hue: `auto` follows the block, and white and off are
-// not colours to tell apart. Of the nine that remain, dark orange and light
-// orange sit 15 degrees apart on the hue circle and no player can tell them
-// from each other, so one of them is dropped. Two colours that look the same
-// cannot both be distinct, and keeping both only guarantees a board that has
-// a pair of them somewhere.
+// not colours to tell apart. Dark orange and light orange sit 15 degrees
+// apart and no player can tell them from each other, so one of them goes:
+// two colours that look the same cannot both be distinct, and keeping both
+// only guarantees a board with a pair of them somewhere.
 //
-// The eight left are ordered to make the worst pair as good as possible rather
-// than by stepping the circle greedily. Stepping it farthest-first reads well
-// and ends badly: it spends the far colours early and leaves the neighbours to
-// collide at the end, which is how the old order put light orange next to dark
-// orange on switches 8 and 9, 15 degrees apart.
+// **Red, yellow and green are left out, and that is the owner's call rather
+// than a measurement.** They are what every pedal on the floor already uses,
+// which makes a board of them look like every other board. What is left is
+// the part of the circle nothing else claims:
 //
-// Ordered this way, measured in degrees of hue:
+//	violet         270 degrees
+//	turquoise      174
+//	pink           330
+//	blue           240
+//	light orange    30
 //
-//	the closest pair among the first three  100   an HX Stomp shows three
-//	the closest pair among all eight         20   and they are five apart
-//	the closest pair on adjacent switches   100
-//
-// Red stays first because it is the one somebody expects on FS1, and it costs
-// 5 degrees against the best order that does not: red, green and blue are the
-// three an HX Stomp shows, which is as legible as three lights get.
+// Ordered so no two handed out next to each other are close: the smallest gap
+// between adjacent entries is 90 degrees, and round the wrap it is 120. An HX
+// Stomp shows three at a time, so what matters is the first three and the
+// worst pair among them is 96.
 //
 // **This is a visual choice. The hue figures are read off a colour wheel and
-// not off the pedal**, so they rank the orderings against each other rather
-// than describing what the LEDs emit. Anybody who dislikes the result says so
-// in the rig, where a footswitch somebody wrote outranks this entirely.
+// not off the pedal**, so they rank orderings against each other rather than
+// describing what the LEDs emit. Anybody who wants red back says so in the
+// rig, where a footswitch somebody wrote outranks this entirely.
 //
 // What it gives up is worth naming. `auto` lights by what the block is, so an
 // untouched preset shows red for an amp, amber for drive and blue for
 // modulation, and a player learns that one mapping across every preset they
-// own. This trades it for a board legible at arm's length, which is the thing
-// to want when the switches are three feet away and all of them are lit.
+// own. This trades it for a board that does not look like the shop floor,
+// which is the thing to want when they are all yours.
 var palette = []string{
-	"red", "green", "blue", "light orange",
-	"violet", "yellow", "turquoise", "pink",
+	"violet", "turquoise", "pink", "blue", "light orange",
 }
 
 // automatic is the colour a switch lights when nobody chose one, by the kind
@@ -236,7 +235,68 @@ func Assign(
 
 	out := []rig.Footswitch(nil)
 
+	// Blocks that arrived bypassed first, then the rest, each in chain order.
+	//
+	// **A switch belongs to an effect somebody would step on, not to the
+	// sound.** A bypassed block is an offer: it is there to be brought in, so
+	// a switch is the only way to reach it and is what it was put there for.
+	// A running block is part of how the preset sounds, and spending one of
+	// three switches on it means an offer goes unreachable.
+	//
+	// `pizzazz` has argued this from the corpus all along, about the very
+	// block that made it obvious: "A compressor is in 85% of chains and
+	// running in nearly all of them, so it is the sound rather than an effect;
+	// a wah is in 5.7% and running in none, which is a footswitch effect
+	// sitting there waiting to be stepped on." Nothing here read that, so a
+	// built punk preset spent its middle switch on a compressor that was
+	// already on while the reverb beside it had no switch at all.
+	//
+	// Running blocks are kept as candidates rather than refused, because a
+	// chain with nothing bypassed should still be stompable: turning a drive
+	// that is on back off is a thing a player does. They just go last.
+	ordered := make([]int, 0, len(built.Blocks))
+
 	for i, b := range built.Blocks {
+		if !b.Enabled {
+			ordered = append(ordered, i)
+		}
+	}
+
+	for i, b := range built.Blocks {
+		if b.Enabled {
+			ordered = append(ordered, i)
+		}
+	}
+
+	// Where in the palette this preset starts.
+	//
+	// **Rotated by the preset's own name, because the alternative was every
+	// preset looking the same.** Walking the palette from nought meant FS1 was
+	// the first colour, FS2 the second and FS3 the third on all forty-three
+	// rigs on this pedal: three identical lights whatever the preset, which
+	// tells a player nothing and was the first thing anybody noticed about
+	// them.
+	//
+	// The order through the palette is kept rather than shuffled, so adjacent
+	// switches stay far apart in hue the way the palette was chosen to be.
+	// Deterministic, so a rebuild is byte-identical and two people building
+	// one rig get the same pedal.
+	//
+	// A colour is not a claim about the sound, which is what makes an
+	// arbitrary choice honest here: nothing downstream reads it and a player
+	// reassigns it in seconds.
+	start := 0
+
+	if built.Name != "" {
+		sum := fnv.New32a()
+		_, _ = sum.Write([]byte(built.Name))
+
+		start = int(sum.Sum32() % uint32(len(palette)))
+	}
+
+	for _, i := range ordered {
+		b := built.Blocks[i]
+
 		// Through the catalog rather than off the plan, because a plan holds a
 		// model identifier and the two questions here — what kind of block is
 		// this, and what is it called — are both the catalog's.
@@ -260,7 +320,7 @@ func Assign(
 		// so the ninth and tenth repeat the first two: a repeat between
 		// switches that far apart is worth less than a pair of oranges
 		// nobody can tell apart, which is what carrying a ninth colour cost.
-		colour := palette[len(out)%len(palette)]
+		colour := palette[(start+len(out))%len(palette)]
 
 		// The three a device writes on every assignment and this did not.
 		//
@@ -277,11 +337,34 @@ func Assign(
 		// false the way the pedal does. Momentary latches rather than holding
 		// while pressed, which is what a player expects of a pedal they step
 		// off.
-		primary, enabled, momentary := true, false, false
+		// **Enabled mirrors the block, and was a constant false.** Task 278.
+		//
+		// It is the switch's own on-off state, which the pedal applies to the
+		// block when the preset loads, so it has to agree with the block's
+		// own bypass or the two fight: the first press reconciles them, the
+		// second leaves them disagreeing again, and the third settles it.
+		// After that the switch works for good, which is what made it look
+		// like a decode fault.
+		//
+		// Read off one HX Stomp with three switches, where the two blocks
+		// that arrived bypassed worked from the first press and the one that
+		// arrived running took three. Every one of them had `false` here.
+		//
+		// A constant `true` is not the fix either, and was tried: it turns
+		// every block on when the preset loads, which for a block offered
+		// bypassed throws away the offer. Mirroring is the only answer that
+		// is right for both.
+		primary, momentary := true, false
+		enabled := b.Enabled
 
 		// The colour the switch would light with nobody choosing, which is
 		// the field the device keeps beside the chosen one. See [automatic].
-		auto := lit(held.Category, enabled)
+		//
+		// The block's own state, which is what it was already being passed
+		// now that the two agree, and which is the honest source: this is
+		// whether the block is passing signal rather than anything about the
+		// switch.
+		auto := lit(held.Category, b.Enabled)
 
 		out = append(out, rig.Footswitch{
 			Switch:    &at,

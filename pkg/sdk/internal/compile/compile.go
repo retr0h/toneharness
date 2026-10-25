@@ -116,6 +116,14 @@ func (*Compiler) Controllers(
 }
 
 // Footswitches writes what the pedal prints under each switch.
+// Trust makes a preset's snapshots ones the device believes.
+func (*Compiler) Trust(
+	doc *preset.Document,
+	blocks []plan.Block,
+) {
+	Trust(doc, blocks)
+}
+
 func (*Compiler) Footswitches(
 	doc *preset.Document,
 	made plan.Plan,

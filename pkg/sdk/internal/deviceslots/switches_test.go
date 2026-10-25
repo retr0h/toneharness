@@ -97,6 +97,37 @@ func (s *SwitchesTestSuite) TestSwitchesOf() {
 			}},
 		},
 		{
+			// **The switch's own state and whether it latches, which were
+			// not read at all.** Task 278. Six fields were carried out of the
+			// document and these two were not, so every switch reached the
+			// pedal with `@fs_enabled: false` whatever the document said:
+			// the zero value of a bool, and the wrong answer for a switch on
+			// a block that is running.
+			//
+			// What that cost: a switch pointing at the right block that did
+			// nothing until it had been pressed three times, after which it
+			// worked for good. The state the pedal applies to the block on
+			// load disagreed with the block's own, and the presses were it
+			// reconciling them.
+			//
+			// It also silently dropped these from a preset lifted off a
+			// device and written back, which is the round trip task 262 was
+			// about.
+			name: "a switch carries its own state and whether it latches",
+			section: `{"block2":{"@fs_index":2,"@fs_label":"Deluxe Comp",
+				"@fs_customcolor":9,"@fs_enabled":true,"@fs_momentary":true}}`,
+			placed: chain,
+			want: []wire.DeviceFootswitch{{
+				Switch:    2,
+				Block:     2 + wire.GridOffset,
+				Gear:      "Deluxe Comp",
+				Label:     "Deluxe Comp",
+				LED:       9,
+				Enabled:   true,
+				Momentary: true,
+			}},
+		},
+		{
 			name:    "a block the chain never placed is skipped",
 			section: `{"block9":{"@fs_index":1,"@fs_label":"Teemah!"}}`,
 			placed:  chain,

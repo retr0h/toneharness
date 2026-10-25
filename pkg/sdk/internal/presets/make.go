@@ -241,6 +241,13 @@ func Make(
 
 	opts.compiler().Footswitches(doc, spec, cat)
 
+	// Last, because it records the chain's bypass states and everything above
+	// may still have changed which blocks there are. Block bypass is snapshot
+	// state, so a preset whose snapshots the device does not believe has
+	// footswitches that do nothing until they have been pressed three times:
+	// task 278, and `build` hands over three blank ones.
+	opts.compiler().Trust(doc, spec.Blocks)
+
 	if err := write(opts.OutputPath, doc, opts.Existing); err != nil {
 		return result.Made{}, err
 	}

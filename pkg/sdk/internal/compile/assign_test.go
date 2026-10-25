@@ -81,6 +81,9 @@ func (s *AssignTestSuite) TestAssign() {
 		// by the kind of block and bypassed, which is the state a switch
 		// arrives in. See [automatic].
 		autos []int
+		// repeats says this board has more switches than the palette has
+		// colours, so a colour is expected on two of them.
+		repeats bool
 	}{
 		{
 			// The ordinary chain the corpus builds, and the compressor in it
@@ -98,7 +101,7 @@ func (s *AssignTestSuite) TestAssign() {
 			switches: 3,
 			labels:   []string{"COMP"},
 			gear:     []string{"A Comp"},
-			leds:     []string{"red"},
+			leds:     []string{"violet"},
 			autos:    []int{0x080c00},
 		},
 		{
@@ -108,7 +111,7 @@ func (s *AssignTestSuite) TestAssign() {
 			switches: 3,
 			labels:   []string{"COMP", "DRIVE", "EQ"},
 			gear:     []string{"A Comp", "A Drive", "An EQ"},
-			leds:     []string{"red", "green", "blue"},
+			leds:     []string{"violet", "turquoise", "pink"},
 			autos:    []int{0x080c00, 0x080600, 0x080c00},
 		},
 		{
@@ -126,35 +129,30 @@ func (s *AssignTestSuite) TestAssign() {
 			switches: 2,
 			labels:   []string{"DRIVE", "EQ"},
 			gear:     []string{"A Drive", "An EQ"},
-			leds:     []string{"red", "green"},
+			leds:     []string{"violet", "turquoise"},
 		},
 		{
 			// Every switch a colour no other switch has, and none of them a
-			// shade of its neighbour: the closest pair here is 100 degrees of
+			// shade of its neighbour: the closest pair here is 90 degrees of
 			// hue apart. See [palette].
 			name:     "each switch is a colour no other switch has",
 			models:   []catalog.ModelID{"drive", "eq", "verb", "mod"},
 			switches: 4,
 			labels:   []string{"DRIVE", "EQ", "REVERB", "MOD"},
 			gear:     []string{"A Drive", "An EQ", "A Reverb", "A Mod"},
-			leds:     []string{"red", "green", "blue", "light orange"},
+			leds:     []string{"violet", "turquoise", "pink", "blue"},
 			autos:    []int{0x080600, 0x080c00, 0x100400, 0x00040d},
 		},
 		{
-			// The whole palette on one board, which is the only way to see
-			// that it does what it claims: eight switches, eight colours, and
-			// the closest pair of them 100 degrees of hue apart. The old
-			// order put light orange and dark orange side by side here, 15
-			// degrees apart and indistinguishable on the pedal.
-			name: "every colour in the palette, none a shade of its neighbour",
+			// More switches than the palette has colours, which is a Helix
+			// Floor's ten against five. The sequence repeats from the start
+			// rather than leaving the rest dark.
+			name: "a board with more switches than there are colours",
 			models: []catalog.ModelID{
 				"drive", "eq", "verb", "mod",
 				"drive", "eq", "verb", "mod",
 			},
 			switches: 8,
-			// And where a board carries two of a kind, the second is
-			// numbered: a foot needs to tell them apart and the kind alone
-			// cannot.
 			labels: []string{
 				"DRIVE", "EQ", "REVERB", "MOD",
 				"DRIVE 2", "EQ 2", "REVERB 2", "MOD 2",
@@ -164,8 +162,35 @@ func (s *AssignTestSuite) TestAssign() {
 				"A Drive", "An EQ", "A Reverb", "A Mod",
 			},
 			leds: []string{
-				"red", "green", "blue", "light orange",
-				"violet", "yellow", "turquoise", "pink",
+				"violet", "turquoise", "pink", "blue", "light orange",
+				"violet", "turquoise", "pink",
+			},
+			repeats: true,
+		},
+		{
+			// The whole palette on one board, which is the only way to see
+			// that it does what it claims: five colours, the closest pair of
+			// them 90 degrees of hue apart, and none of the three every other
+			// pedal on the floor uses.
+			//
+			// More switches than colours, so the sequence repeats rather than
+			// leaving the rest dark: a board of eight on a palette of five
+			// shows the first three twice. A repeat four switches apart is
+			// worth less than a pair nobody can tell apart.
+			name: "every colour in the palette, none a shade of its neighbour",
+			models: []catalog.ModelID{
+				"drive", "eq", "verb", "mod", "drive",
+			},
+			switches: 5,
+			// And where a board carries two of a kind, the second is
+			// numbered: a foot needs to tell them apart and the kind alone
+			// cannot.
+			labels: []string{"DRIVE", "EQ", "REVERB", "MOD", "DRIVE 2"},
+			gear: []string{
+				"A Drive", "An EQ", "A Reverb", "A Mod", "A Drive",
+			},
+			leds: []string{
+				"violet", "turquoise", "pink", "blue", "light orange",
 			},
 		},
 		{
@@ -205,10 +230,135 @@ func (s *AssignTestSuite) TestAssign() {
 				s.Require().LessOrEqual(len(*f.Label), 8,
 					"%q will not fit under a switch", *f.Label)
 
-				s.Require().False(seen[*f.Led],
-					"%s is on two switches, so the board reads as one colour",
-					*f.Led)
+				// Every switch a colour no other switch has, up to the size
+				// of the palette. Past that the sequence repeats rather than
+				// leaving switches dark, which `repeats` marks: five colours
+				// against a Helix Floor's ten switches means the sixth
+				// switch shows the first colour again, and a repeat five
+				// switches apart beats a dark one.
+				if !tt.repeats {
+					s.Require().False(seen[*f.Led],
+						"%s is on two switches, so the board reads as one colour",
+						*f.Led)
+				}
+
 				seen[*f.Led] = true
+			}
+		})
+	}
+}
+
+// TestAssignOffersBeforeTheSound covers which blocks get a switch when some
+// of them arrive running, what each switch's own state is set to, and where in
+// the palette a preset starts.
+//
+// Task 278's second half. Everything [AssignTestSuite.TestAssign] covers is a
+// chain where every block arrives bypassed, which is the case that cannot tell
+// any of these three apart.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *AssignTestSuite) TestAssignOffersBeforeTheSound() {
+	for _, tt := range []struct {
+		name string
+		// on names which of the models arrive running, by position.
+		models   []catalog.ModelID
+		on       []bool
+		switches int
+		// preset is the plan's name, which the palette is rotated by.
+		preset string
+		// labels is what the pedal prints, in switch order.
+		labels []string
+		// enabled is each switch's own state, which has to agree with the
+		// block's or the two fight and the switch takes three presses.
+		enabled []bool
+		// leds is the colour each switch gets.
+		leds []string
+	}{
+		{
+			// **The compressor is the sound and the reverb is an offer.**
+			// Spending a switch on a compressor that is already on, while the
+			// reverb beside it has none, is what a built punk preset did: the
+			// middle switch took three presses and the reverb was
+			// unreachable.
+			name:     "a running compressor goes behind a bypassed reverb",
+			models:   []catalog.ModelID{"comp", "amp", "cab", "verb"},
+			on:       []bool{true, true, true, false},
+			switches: 2,
+			labels:   []string{"REVERB", "COMP"},
+			enabled:  []bool{false, true},
+		},
+		{
+			// Chain order inside each group, so a player looking down still
+			// reads the offers left to right.
+			name:     "bypassed blocks keep chain order among themselves",
+			models:   []catalog.ModelID{"drive", "comp", "eq", "verb"},
+			on:       []bool{false, true, false, false},
+			switches: 4,
+			labels:   []string{"DRIVE", "EQ", "REVERB", "COMP"},
+			enabled:  []bool{false, false, false, true},
+		},
+		{
+			// A chain with nothing bypassed is still stompable. Turning a
+			// drive that is on back off is a thing a player does, so running
+			// blocks are candidates rather than refused.
+			name:     "a chain where everything is running",
+			models:   []catalog.ModelID{"drive", "amp", "cab"},
+			on:       []bool{true, true, true},
+			switches: 2,
+			labels:   []string{"DRIVE"},
+			enabled:  []bool{true},
+		},
+		{
+			// Two presets, two starting points in the palette. Walking from
+			// nought meant FS1 was the first colour on all forty-three rigs
+			// on one pedal: three identical lights whatever the preset.
+			name:     "a named preset starts somewhere of its own",
+			models:   []catalog.ModelID{"drive", "eq"},
+			on:       []bool{false, false},
+			switches: 2,
+			preset:   "punk",
+			labels:   []string{"DRIVE", "EQ"},
+			enabled:  []bool{false, false},
+			leds:     []string{"turquoise", "pink"},
+		},
+		{
+			name:     "and another lands elsewhere",
+			models:   []catalog.ModelID{"drive", "eq"},
+			on:       []bool{false, false},
+			switches: 2,
+			preset:   "grunge",
+			labels:   []string{"DRIVE", "EQ"},
+			enabled:  []bool{false, false},
+			leds:     []string{"pink", "blue"},
+		},
+	} {
+		s.Run(tt.name, func() {
+			built := s.chain(tt.models...)
+			built.Name = tt.preset
+
+			for i := range built.Blocks {
+				built.Blocks[i].Pos = i
+				built.Blocks[i].Enabled = tt.on[i]
+			}
+
+			got := Assign(built, s.cat(), tt.switches)
+
+			s.Require().Len(got, len(tt.labels))
+
+			for i, f := range got {
+				s.Require().Equal(tt.labels[i], *f.Label, "switch %d", i+1)
+
+				// The switch's own state against the block's. These have to
+				// agree: the pedal applies this to the block when the preset
+				// loads, so a disagreement is reconciled by the first press,
+				// left disagreeing by the second and settled by the third.
+				s.Require().NotNil(f.Enabled, "switch %d says nothing", i+1)
+				s.Require().Equal(tt.enabled[i], *f.Enabled,
+					"switch %d does not mirror its block", i+1)
+
+				if tt.leds != nil {
+					s.Require().Equal(tt.leds[i], *f.Led, "switch %d colour", i+1)
+				}
 			}
 		})
 	}

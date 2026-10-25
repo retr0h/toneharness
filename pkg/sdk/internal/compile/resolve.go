@@ -131,8 +131,7 @@ func Resolve(
 			})
 		}
 
-		blocks = append(blocks, *cab)
-		wants = append(wants, nil)
+		blocks, wants = afterTheAmp(blocks, wants, *cab)
 	} else if missed != "" {
 		// Nothing to fall back to, so the rig named a cabinet that cannot be
 		// built and saying so is the only honest answer.
@@ -254,6 +253,72 @@ func categoryFor(
 	}
 
 	return catalog.Category(role)
+}
+
+// afterTheAmp puts a cabinet straight after the amplifier it belongs to.
+//
+// **Appended before this, and that was the bug.** A cabinet goes after an
+// amplifier, so appending it looks right and is right only for a chain that
+// ends at the amplifier. A rig naming drive, amp and equaliser got
+//
+//	drive  amp  eq  CAB
+//
+// which puts the equaliser on the amplifier's raw output with the speaker
+// simulation behind it. The corpus then fills a compressor and a reverb around
+// that, and what reached the pedal was
+//
+//	drive  comp  amp  eq  verb  CAB
+//
+// Three of the eleven genres on one pedal were built that way on 2026-10-24,
+// and they are exactly the three whose rigs name no cabinet: one that names
+// its own has it in the right place and never comes here. The owner heard it
+// before anything here measured it — "sounds like a guitar, muddy and not
+// clear" — which is what an equaliser and a reverb ahead of a speaker do.
+//
+// Everything the corpus adds after an amplifier is appended, so it lands
+// behind the cabinet, which is the order a signal takes: pedals, amplifier,
+// speaker, then whatever is recorded off it.
+//
+// `wants` is the parallel slice of what a rig wrote for each block and it is
+// spliced in step. That pairing is index-by-index and silently writes one
+// block's settings onto its neighbour when it slips, which is the bug
+// `spliced` in fill.go exists to prevent and was a live one.
+// The amplifier is always there: [impliedCab] finds the cabinet through one,
+// so it answers nil for a chain with none and this is never reached without.
+func afterTheAmp(
+	blocks []catalog.Block,
+	wants []*wanted,
+	cab catalog.Block,
+) ([]catalog.Block, []*wanted) {
+	at := len(blocks)
+
+	for i, b := range blocks {
+		if b.Category == catalog.CategoryAmp {
+			at = i + 1
+
+			break
+		}
+	}
+
+	out := make([]catalog.Block, 0, len(blocks)+1)
+	out = append(out, blocks[:at]...)
+	out = append(out, cab)
+	out = append(out, blocks[at:]...)
+
+	kept := make([]*wanted, 0, len(wants)+1)
+
+	// Shorter than the chain where the caller has already added blocks of its
+	// own, so a gap past the end is appended rather than indexed.
+	if at <= len(wants) {
+		kept = append(kept, wants[:at]...)
+		kept = append(kept, nil)
+		kept = append(kept, wants[at:]...)
+	} else {
+		kept = append(kept, wants...)
+		kept = append(kept, nil)
+	}
+
+	return out, kept
 }
 
 // impliedCab returns the cabinet an amplifier names, when the chain has none.
