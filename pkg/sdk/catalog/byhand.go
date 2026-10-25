@@ -90,11 +90,18 @@ func SetByHand(
 // A compressor is, and leaving it out cost two presets every switch they had.
 // The corpus stomps 1,154 of them, it is in 85% of bass chains, and in the
 // shortest chains it was the only block there was.
+//
+// A wah is the plainest case here and was missing longest. Nothing in the
+// corpus runs one: 5.7% of bass chains hold a wah and 0.0% have it engaged,
+// which is a block nobody wanted in the signal sitting there waiting for a
+// foot. Leaving it out meant Tim Commerford's 105Q, which is the pedal he is
+// documented with, could not be put on the switch it exists to be put on.
 func Stompable(
 	of Category,
 ) bool {
 	switch of {
 	case CategoryComp,
+		CategoryWah,
 		CategoryDrive,
 		CategoryFilter,
 		CategoryMod,

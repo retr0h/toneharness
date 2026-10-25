@@ -159,6 +159,13 @@ func (s *ByHandPublicTestSuite) TestStompable() {
 			of:   catalog.CategoryComp, want: true,
 		},
 		{
+			// 5.7% of bass chains hold one and 0.0% have it engaged, which is
+			// the whole of what a footswitch effect looks like in the
+			// measurements.
+			name: "a wah is held by people who never run it",
+			of:   catalog.CategoryWah, want: true,
+		},
+		{
 			name: "a drive", of: catalog.CategoryDrive, want: true,
 		},
 		{

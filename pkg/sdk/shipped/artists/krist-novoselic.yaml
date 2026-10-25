@@ -3,7 +3,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: krist-novoselic
 ask:
   confidence: low
@@ -156,20 +156,22 @@ built:
       attrs:
         '@position': "3"
       position: 3
-    - role: eq
-      gear: MXR 10-Band Graphic EQ
+    - role: mod
+      gear: Chorus
       controls:
-        125Hz: "0.0"
-        16kHz: "11.25"
-        1kHz: "0.0"
-        250Hz: "-3.75"
-        2kHz: "3.75"
-        31p25Hz: "-3.75"
-        4kHz: "11.25"
-        500Hz: "0.0"
-        62p5Hz: "0.0"
-        8kHz: "7.5"
-        Level: "0.0"
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
+        SyncSelect1: "6"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
       attrs:
         '@position': "4"
       enabled: false
@@ -260,11 +262,11 @@ built:
             block4:
               attrs:
                 '@fs_customcolor': "9"
-                '@fs_customlabel': EQ
+                '@fs_customlabel': MOD
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': MXR 10-Band Graphic EQ
-                '@fs_ledcolor': "527360"
+                '@fs_label': BOSS CE-1
+                '@fs_ledcolor': "1037"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -378,11 +380,11 @@ built:
       momentary: false
       primary: true
       switch: 3
-    - gear: MXR 10-Band Graphic EQ
+    - gear: BOSS CE-1
       block: 4
-      colour: 527360
+      colour: 1037
       enabled: false
-      label: EQ
+      label: MOD
       led: violet
       momentary: false
       primary: true

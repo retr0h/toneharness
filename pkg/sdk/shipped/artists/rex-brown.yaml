@@ -5,7 +5,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: rex-brown
 ask:
   confidence: medium
@@ -23,6 +23,16 @@ ask:
   words: []
 rig:
   chain:
+    - role: drive
+      gear: Darkglass® Electronics Microtubes® B7K Ultra
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The Blowtorch is not modelled; this is the B7K, the bass distortion of that shape the device carries.
+          note: Brown uses an MXR M-181 Bass Blowtorch, a bass distortion with a blend and its own EQ.
+          url: https://equipboard.com/pros/rex-brown
+      enabled: false
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -46,6 +56,33 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: drive
+      gear: Darkglass® Electronics Microtubes® B7K Ultra
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The Blowtorch is not modelled; this is the B7K, the bass distortion of that shape the device carries.
+          note: Brown uses an MXR M-181 Bass Blowtorch, a bass distortion with a blend and its own EQ.
+          url: https://equipboard.com/pros/rex-brown
+      controls:
+        Attack: "1"
+        Bass: "10.0"
+        Blend: "0.75"
+        Distortion: "true"
+        Drive: "0.5"
+        Grunt: "2"
+        HiMid: "0.0"
+        HiMidFreq: "0"
+        Level: "0.5"
+        LoMid: "-15.0"
+        LoMidFreq: "1"
+        Master: "0.55"
+        Treble: "0.0"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -60,8 +97,8 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
+        '@position': "1"
+      position: 1
     - role: amp
       gear: Ampeg SVT
       confidence: medium
@@ -84,8 +121,8 @@ built:
         Sag: "0.5"
         Treble: "0.832"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "2"
+      position: 2
     - role: cab
       gear: 8x10 Ampeg SVT-810AV
       evidence:
@@ -100,8 +137,8 @@ built:
         Mic: "8"
         Position: "0.39"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
     - role: eq
       gear: Simple Tilt
       capture: direct
@@ -124,25 +161,6 @@ built:
         CenterFreq: "1000.0"
         Level: "0.0"
         Tilt: "0.5"
-      attrs:
-        '@position': "3"
-      enabled: false
-      position: 3
-    - role: reverb
-      gear: Room
-      controls:
-        BassBoost: "0.0"
-        BassFreq: "100.0"
-        Damping: "3700.0"
-        Decay: "1.2"
-        Diffusion: "0.5"
-        ERLevel: "0.8"
-        HighCut: "10000.0"
-        Level: "0.0"
-        LowCut: "100.0"
-        MatrFreq: "0.333"
-        Mix: "0.41"
-        PreDelay: "0.01"
       attrs:
         '@position': "4"
       enabled: false
@@ -212,6 +230,16 @@ built:
           members:
             block0:
               attrs:
+                '@fs_customcolor': "4"
+                '@fs_customlabel': DRIVE
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Darkglass Electronics Microtubes B7K Ultra
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block1:
+              attrs:
                 '@fs_customcolor': "7"
                 '@fs_customlabel': COMP
                 '@fs_enabled': "true"
@@ -220,24 +248,14 @@ built:
                 '@fs_ledcolor': "8716032"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block3:
-              attrs:
-                '@fs_customcolor': "4"
-                '@fs_customlabel': EQ
-                '@fs_enabled': "false"
-                '@fs_index': "1"
-                '@fs_label': Simple Tilt
-                '@fs_ledcolor': "527360"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
             block4:
               attrs:
                 '@fs_customcolor': "9"
-                '@fs_customlabel': REVERB
+                '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Dynamic Room
-                '@fs_ledcolor': "1049600"
+                '@fs_label': Simple Tilt
+                '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -271,10 +289,10 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
+                block0: "false"
                 block1: "true"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
     snapshot1:
       attrs:
@@ -289,10 +307,10 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
+                block0: "false"
                 block1: "true"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
     snapshot2:
       attrs:
@@ -307,10 +325,10 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
+                block0: "false"
                 block1: "true"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
     variax:
       attrs:
@@ -333,8 +351,17 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Deluxe Comp
+    - gear: Darkglass Electronics Microtubes B7K Ultra
       block: 0
+      colour: 525824
+      enabled: false
+      label: DRIVE
+      led: light orange
+      momentary: false
+      primary: true
+      switch: 1
+    - gear: Deluxe Comp
+      block: 1
       colour: 8716032
       enabled: true
       label: COMP
@@ -343,19 +370,10 @@ built:
       primary: true
       switch: 3
     - gear: Simple Tilt
-      block: 3
+      block: 4
       colour: 527360
       enabled: false
       label: EQ
-      led: light orange
-      momentary: false
-      primary: true
-      switch: 1
-    - gear: Dynamic Room
-      block: 4
-      colour: 1049600
-      enabled: false
-      label: REVERB
       led: violet
       momentary: false
       primary: true

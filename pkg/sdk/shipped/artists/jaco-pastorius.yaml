@@ -8,7 +8,7 @@
 # amp entry below cites and this device models. So this chain is complete
 # without an effect in it. Round four of task 241.
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: jaco-pastorius
 ask:
   confidence: medium

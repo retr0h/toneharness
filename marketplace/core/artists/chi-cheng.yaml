@@ -8,7 +8,7 @@
 # voiced it with, and which is all the source supports.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: chi-cheng
 ask:
   confidence: medium

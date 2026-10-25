@@ -156,15 +156,41 @@ func Pizzazz(
 	}
 
 	held := map[catalog.Category]bool{}
-	for _, entry := range spec.Chain {
-		held[catalog.Category(entry.Role)] = true
-	}
 
+	// Room is counted against what will actually take a switch.
+	//
+	// A kind the rig names holds one, because somebody chose it and a block
+	// chosen by hand outranks a block the corpus guessed at. A kind the
+	// corpus runs when it carries one does not: it is the sound rather than
+	// something to stomp, `compile.Assign` puts it behind every offer, and
+	// counting it here held a switch open for something that would not use
+	// it.
+	//
+	// In practice that kind is the compressor. Every artist rig names one and
+	// nearly all of them run it, so a pedal somebody is documented with lost
+	// its place to a compressor nobody steps on: Les Claypool came back with
+	// a Mu-Tron, a reverb and a Deluxe Comp, which is one of his three
+	// switches spent on the corpus and one on a compressor.
+	//
+	// It still gets a switch where nothing else wants one, which is what
+	// keeps a chain of amplifier, cabinet and compressor from reaching the
+	// pedal with an empty board.
 	room := plan.LimitsFor(deps.Catalog.Device).Switches
-	for kind := range held {
-		if catalog.Stompable(kind) {
-			room--
+
+	for _, entry := range spec.Chain {
+		kind := catalog.Category(entry.Role)
+		held[kind] = true
+
+		if !catalog.Stompable(kind) {
+			continue
 		}
+
+		if stats, known := grammar.Categories[kind]; known &&
+			stats.Running() >= usuallyOn {
+			continue
+		}
+
+		room--
 	}
 
 	if room <= 0 {

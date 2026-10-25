@@ -923,10 +923,13 @@ func (s *MeasureTestSuite) TestSweptTo() {
 		want  string
 	}{
 		{
-			// What reads these back asks for one file per model, lowercased.
-			name:  "names the file after the block",
+			// Six callers open `string(model)+".json"`, so the file carries
+			// the model's own spelling. Lowercasing it wrote a reading that
+			// every one of them then looked for under the other name, and on
+			// a case-insensitive filesystem the file was there anyway.
+			name:  "names the file after the block, spelled as the model is",
 			model: "HD2_AmpSVBeastNrm",
-			want:  "hd2_ampsvbeastnrm.json",
+			want:  "HD2_AmpSVBeastNrm.json",
 		},
 		{
 			// The whole reason this is a function. A chain sweep written to

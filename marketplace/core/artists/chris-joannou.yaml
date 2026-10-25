@@ -10,7 +10,7 @@
 # measured.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: chris-joannou
 ask:
   confidence: medium
@@ -31,6 +31,16 @@ ask:
   words: []
 rig:
   chain:
+    - role: drive
+      gear: Tech 21® SansAmp Bass Driver DI V1
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The ODB-3 is not modelled; this is the SansAmp Bass Driver, a bass overdrive with a blend like the ODB-3's.
+          note: Joannou used a Boss ODB-3 bass overdrive, which is the distortion in the intro of Israel's Son.
+          url: https://equipboard.com/pros/chris-joannou
+      enabled: false
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -70,6 +80,26 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: drive
+      gear: Tech 21® SansAmp Bass Driver DI V1
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The ODB-3 is not modelled; this is the SansAmp Bass Driver, a bass overdrive with a blend like the ODB-3's.
+          note: Joannou used a Boss ODB-3 bass overdrive, which is the distortion in the intro of Israel's Son.
+          url: https://equipboard.com/pros/chris-joannou
+      controls:
+        Bass: "0.625"
+        Blend: "0.125"
+        Drive: "0.65"
+        Level: "0.48"
+        Presence: "0.25"
+        Treble: "0.3"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -84,23 +114,7 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
-    - role: drive
-      gear: Wounded Paw Battering Ram
-      controls:
-        Fuzz: "false"
-        FuzzGain: "0.5"
-        FuzzLevel: "0.125"
-        FuzzOct: "false"
-        FuzzTone: "0.625"
-        ODGain: "0.375"
-        ODLevel: "0.0"
-        ODLowBoost: "true"
-        ODTone: "0.6"
-      attrs:
         '@position': "1"
-      enabled: false
       position: 1
     - role: amp
       gear: Ampeg B-15NF Portaflex
@@ -232,22 +246,22 @@ built:
           members:
             block0:
               attrs:
+                '@fs_customcolor': "10"
+                '@fs_customlabel': DRIVE
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Tech 21 SansAmp Bass Driver DI V1
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block1:
+              attrs:
                 '@fs_customcolor': "8"
                 '@fs_customlabel': COMP
                 '@fs_enabled': "true"
                 '@fs_index': "2"
                 '@fs_label': Deluxe Comp
                 '@fs_ledcolor': "8716032"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block1:
-              attrs:
-                '@fs_customcolor': "10"
-                '@fs_customlabel': DRIVE
-                '@fs_enabled': "false"
-                '@fs_index': "1"
-                '@fs_label': Wounded Paw Battering Ram
-                '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
@@ -291,8 +305,8 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "false"
+                block0: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
                 block4: "true"
@@ -309,8 +323,8 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "false"
+                block0: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
                 block4: "true"
@@ -327,8 +341,8 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "false"
+                block0: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
                 block4: "true"
@@ -353,17 +367,8 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Deluxe Comp
+    - gear: Tech 21 SansAmp Bass Driver DI V1
       block: 0
-      colour: 8716032
-      enabled: true
-      label: COMP
-      led: blue
-      momentary: false
-      primary: true
-      switch: 2
-    - gear: Wounded Paw Battering Ram
-      block: 1
       colour: 525824
       enabled: false
       label: DRIVE
@@ -371,6 +376,15 @@ built:
       momentary: false
       primary: true
       switch: 1
+    - gear: Deluxe Comp
+      block: 1
+      colour: 8716032
+      enabled: true
+      label: COMP
+      led: blue
+      momentary: false
+      primary: true
+      switch: 2
     - gear: Simple EQ
       block: 4
       colour: 8716032

@@ -5,7 +5,7 @@
 # of the contract and this line still said so.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: les-claypool
 ask:
   confidence: medium
@@ -77,6 +77,16 @@ ask:
       term: percussive
 rig:
   chain:
+    - role: filter
+      gear: Musitronics Mu-Tron III
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The Korg is not modelled; this is the Mu-Tron III, which is the circuit that class of filter descends from. Same effect, a different box.
+          note: Claypool's envelope filter is the one unmistakable thing in that sound. He reaches it through a Korg ToneWorks AX300B, used for its envelope filter, alongside a Line 6 DL4 and DM4.
+          url: https://mixdownmag.com.au/features/rig-rundown-les-claypool/
+      enabled: false
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -115,19 +125,22 @@ built:
   device: HX Stomp
   chain:
     - role: filter
-      gear: Auto Filter
+      gear: Musitronics Mu-Tron III
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The Korg is not modelled; this is the Mu-Tron III, which is the circuit that class of filter descends from. Same effect, a different box.
+          note: Claypool's envelope filter is the one unmistakable thing in that sound. He reaches it through a Korg ToneWorks AX300B, used for its envelope filter, alongside a Line 6 DL4 and DM4.
+          url: https://mixdownmag.com.au/features/rig-rundown-les-claypool/
       controls:
-        Attack: "1.751"
-        Decay: "1.877"
-        Direction: "true"
-        FilterGain: "18.0"
-        FilterQ: "6.625"
-        FreqDepth: "3750.0"
-        Frequency: "50.0"
-        Level: "0.0"
+        Drive: "true"
+        Gain: "0.25"
+        Level: "1.0"
         Mix: "0.5"
         Mode: "2"
-        Sens: "0.25"
+        Peak: "0.75"
+        Range: "false"
       attrs:
         '@position': "0"
       enabled: false
@@ -148,22 +161,6 @@ built:
       attrs:
         '@position': "1"
       position: 1
-    - role: drive
-      gear: Wounded Paw Battering Ram
-      controls:
-        Fuzz: "true"
-        FuzzGain: "0.5"
-        FuzzLevel: "0.25"
-        FuzzOct: "true"
-        FuzzTone: "0.375"
-        ODGain: "0.0"
-        ODLevel: "0.0"
-        ODLowBoost: "false"
-        ODTone: "0.25"
-      attrs:
-        '@position': "2"
-      enabled: false
-      position: 2
     - role: amp
       gear: Mesa/Boogie Bass 400+
       capture: direct
@@ -193,8 +190,8 @@ built:
         Sag: "0.75"
         Treble: "0.75"
       attrs:
-        '@position': "3"
-      position: 3
+        '@position': "2"
+      position: 2
     - role: cab
       gear: Mesa/Boogie 2x15
       capture: direct
@@ -216,7 +213,26 @@ built:
         Mic: "0"
         Position: "0.39"
       attrs:
+        '@position': "3"
+      position: 3
+    - role: reverb
+      gear: Room
+      controls:
+        BassBoost: "0.0"
+        BassFreq: "100.0"
+        Damping: "3700.0"
+        Decay: "1.2"
+        Diffusion: "0.5"
+        ERLevel: "0.8"
+        HighCut: "10000.0"
+        Level: "0.0"
+        LowCut: "100.0"
+        MatrFreq: "0.333"
+        Mix: "0.41"
+        PreDelay: "0.01"
+      attrs:
         '@position': "4"
+      enabled: false
       position: 4
   preset:
     dsp0:
@@ -287,7 +303,7 @@ built:
                 '@fs_customlabel': FILTER
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Auto Filter
+                '@fs_label': Musitronics Mu-Tron III
                 '@fs_ledcolor': "196619"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -301,14 +317,14 @@ built:
                 '@fs_ledcolor': "8716032"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block2:
+            block4:
               attrs:
                 '@fs_customcolor': "10"
-                '@fs_customlabel': DRIVE
+                '@fs_customlabel': REVERB
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Wounded Paw Battering Ram
-                '@fs_ledcolor': "525824"
+                '@fs_label': Dynamic Room
+                '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -344,9 +360,9 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "false"
+                block2: "true"
                 block3: "true"
-                block4: "true"
+                block4: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -362,9 +378,9 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "false"
+                block2: "true"
                 block3: "true"
-                block4: "true"
+                block4: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -380,9 +396,9 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "false"
+                block2: "true"
                 block3: "true"
-                block4: "true"
+                block4: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -404,7 +420,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Auto Filter
+    - gear: Musitronics Mu-Tron III
       block: 0
       colour: 196619
       enabled: false
@@ -422,11 +438,11 @@ built:
       momentary: false
       primary: true
       switch: 3
-    - gear: Wounded Paw Battering Ram
-      block: 2
-      colour: 525824
+    - gear: Dynamic Room
+      block: 4
+      colour: 1049600
       enabled: false
-      label: DRIVE
+      label: REVERB
       led: pink
       momentary: false
       primary: true

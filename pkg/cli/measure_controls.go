@@ -854,16 +854,24 @@ func seated(
 // Here rather than beside the flag that defaults to it, because which file a
 // chain sweep lands in is the thing keeping the two kinds of reading apart,
 // and that is worth a test.
+//
+// An isolated sweep keeps the model's own spelling and a chain sweep is
+// lowercased, because that is what each one's reader asks for: six callers
+// open `string(model)+".json"` and `presets.sweptPair` builds the pair name
+// with `strings.ToLower`. Lowercasing both wrote `hd2_wahteardropbassq.json`
+// for a reading everything then looked for as `HD2_WahTeardropBassQ.json`,
+// which is a file that exists on a case-insensitive filesystem and is missing
+// on the one continuous integration runs.
 func SweptTo(
 	model string,
 	after string,
 ) string {
-	name := strings.ToLower(model)
 	if after != "" {
-		name += "-into-" + strings.ToLower(after)
+		return filepath.Join("resources", "sweeps", "hx-stomp",
+			strings.ToLower(model)+"-into-"+strings.ToLower(after)+".json")
 	}
 
-	return filepath.Join("resources", "sweeps", "hx-stomp", name+".json")
+	return filepath.Join("resources", "sweeps", "hx-stomp", model+".json")
 }
 
 // behind checks a block named to follow the one being swept.

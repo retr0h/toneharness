@@ -5,7 +5,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: dee-dee-ramone
 ask:
   confidence: low
@@ -120,22 +120,16 @@ built:
       attrs:
         '@position': "2"
       position: 2
-    - role: mod
-      gear: Chorus
+    - role: delay
+      gear: Simple Delay
       controls:
-        ChorusIntensity: "0.57"
-        Headroom: "0.0"
-        Level: "1.0"
-        Mix: "0.5"
-        Mode: "false"
-        Spread: "0.0"
-        Stereo: "false"
+        Feedback: "0.345"
+        Level: "0.0"
+        Mix: "0.4"
+        Scale: "0.75"
         SyncSelect1: "6"
-        SyncSelect2: "6"
         TempoSync1: "false"
-        TempoSync2: "false"
-        VibratoDepth: "0.5"
-        VibratoRate: "0.7"
+        Time: "0.507"
       attrs:
         '@position': "3"
       enabled: false
@@ -251,11 +245,11 @@ built:
             block3:
               attrs:
                 '@fs_customcolor': "8"
-                '@fs_customlabel': MOD
+                '@fs_customlabel': DELAY
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': BOSS CE-1
-                '@fs_ledcolor': "1037"
+                '@fs_label': Simple Delay
+                '@fs_ledcolor': "67840"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
@@ -370,11 +364,11 @@ built:
       momentary: false
       primary: true
       switch: 3
-    - gear: BOSS CE-1
+    - gear: Simple Delay
       block: 3
-      colour: 1037
+      colour: 67840
       enabled: false
-      label: MOD
+      label: DELAY
       led: blue
       momentary: false
       primary: true

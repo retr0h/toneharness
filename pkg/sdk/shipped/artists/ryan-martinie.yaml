@@ -5,7 +5,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: ryan-martinie
 ask:
   confidence: medium
@@ -73,6 +73,22 @@ built:
       attrs:
         '@position': "0"
       position: 0
+    - role: drive
+      gear: Wounded Paw Battering Ram
+      controls:
+        Fuzz: "true"
+        FuzzGain: "0.5"
+        FuzzLevel: "0.25"
+        FuzzOct: "true"
+        FuzzTone: "0.5"
+        ODGain: "0.375"
+        ODLevel: "0.375"
+        ODLowBoost: "true"
+        ODTone: "0.25"
+      attrs:
+        '@position': "1"
+      enabled: false
+      position: 1
     - role: amp
       gear: Ampeg SVT
       confidence: medium
@@ -102,8 +118,8 @@ built:
         Sag: "0.5"
         Treble: "0.625"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "2"
+      position: 2
     - role: cab
       gear: Ampeg 8x10
       confidence: medium
@@ -121,42 +137,18 @@ built:
         Mic: "0"
         Position: "0.39"
       attrs:
-        '@position': "2"
-      position: 2
-    - role: eq
-      gear: MXR 10-Band Graphic EQ
-      controls:
-        125Hz: "0.0"
-        16kHz: "0.0"
-        1kHz: "0.0"
-        250Hz: "0.0"
-        2kHz: "3.75"
-        31p25Hz: "0.0"
-        4kHz: "15.0"
-        500Hz: "0.0"
-        62p5Hz: "-3.75"
-        8kHz: "0.0"
-        Level: "0.0"
-      attrs:
         '@position': "3"
-      enabled: false
       position: 3
-    - role: mod
-      gear: Chorus
+    - role: delay
+      gear: Simple Delay
       controls:
-        ChorusIntensity: "0.57"
-        Headroom: "0.0"
-        Level: "1.0"
-        Mix: "0.5"
-        Mode: "false"
-        Spread: "0.0"
-        Stereo: "false"
+        Feedback: "0.345"
+        Level: "0.0"
+        Mix: "0.4"
+        Scale: "0.75"
         SyncSelect1: "6"
-        SyncSelect2: "6"
         TempoSync1: "false"
-        TempoSync2: "false"
-        VibratoDepth: "0.5"
-        VibratoRate: "0.7"
+        Time: "0.507"
       attrs:
         '@position': "4"
       enabled: false
@@ -234,24 +226,24 @@ built:
                 '@fs_ledcolor': "8716032"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block3:
+            block1:
               attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': EQ
+                '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': MXR 10-Band Graphic EQ
-                '@fs_ledcolor': "527360"
+                '@fs_label': Wounded Paw Battering Ram
+                '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
               attrs:
                 '@fs_customcolor': "10"
-                '@fs_customlabel': MOD
+                '@fs_customlabel': DELAY
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': BOSS CE-1
-                '@fs_ledcolor': "1037"
+                '@fs_label': Simple Delay
+                '@fs_ledcolor': "67840"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -286,9 +278,9 @@ built:
             dsp0:
               controls:
                 block0: "true"
-                block1: "true"
+                block1: "false"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
     snapshot1:
       attrs:
@@ -304,9 +296,9 @@ built:
             dsp0:
               controls:
                 block0: "true"
-                block1: "true"
+                block1: "false"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
     snapshot2:
       attrs:
@@ -322,9 +314,9 @@ built:
             dsp0:
               controls:
                 block0: "true"
-                block1: "true"
+                block1: "false"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
     variax:
       attrs:
@@ -356,20 +348,20 @@ built:
       momentary: false
       primary: true
       switch: 3
-    - gear: MXR 10-Band Graphic EQ
-      block: 3
-      colour: 527360
+    - gear: Wounded Paw Battering Ram
+      block: 1
+      colour: 525824
       enabled: false
-      label: EQ
+      label: DRIVE
       led: turquoise
       momentary: false
       primary: true
       switch: 1
-    - gear: BOSS CE-1
+    - gear: Simple Delay
       block: 4
-      colour: 1037
+      colour: 67840
       enabled: false
-      label: MOD
+      label: DELAY
       led: pink
       momentary: false
       primary: true
