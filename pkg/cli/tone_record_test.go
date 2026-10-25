@@ -187,7 +187,7 @@ func (s *RecordTestSuite) TestRecord() {
 			// A file that will not load.
 			name: "an ask that is not a tone spec",
 			then: func() {
-				s.Require().NoError(os.WriteFile(s.ask, []byte("schema: Setup\nversion: \"4.0.0\"\n"), 0o600))
+				s.Require().NoError(os.WriteFile(s.ask, []byte("schema: Config\nversion: \"1.0.0\"\n"), 0o600))
 
 				s.Require().Error(record(s.ask, "punk", nil, nil, true))
 			},

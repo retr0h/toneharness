@@ -23,6 +23,7 @@ package translate
 import (
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -125,7 +126,7 @@ func Commonest(
 // StompedFor is the effects a genre gets, switched off and tuned.
 func StompedFor(
 	spec tone.Ask,
-	setup tone.Setup,
+	setup config.Config,
 	deps Deps,
 	notes *Notes,
 ) []rig.ChainEntry {

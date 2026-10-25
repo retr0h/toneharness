@@ -76,7 +76,7 @@ from is untouched, so this costs no flash write however often you run it.`,
 
 		pedal.claim()
 
-		deviceFavClient.setup = ownSetup(deviceFavClient.setup)
+		deviceFavClient.config = ownConfig(deviceFavClient.config)
 
 		chosen, err := deviceFavClient.client().Favourite(cmd.Context(), step)
 		if err != nil {
@@ -93,7 +93,7 @@ func init() {
 	f := deviceFavCmd.Flags()
 	f.StringVar(&deviceFavStep, "step", "first",
 		"which favourite: first, next or prev")
-	f.StringVar(&deviceFavClient.setup, "setup", "", setupUsage)
+	f.StringVar(&deviceFavClient.config, "config", "", configUsage)
 	f.StringVar(&deviceFavClient.catalog, "catalog", "",
 		"a generated catalog to use instead of the built-in one")
 	f.StringVar(&deviceFavClient.device, "device", "", deviceUsage)

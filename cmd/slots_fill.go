@@ -50,7 +50,7 @@ here: two people building one rig want the same preset and different slots,
 since one of them already keeps their own work in bank one. Nothing is written
 where no slot says to.
 
-Yours is read from ` + "`$XDG_CONFIG_HOME/toneharness/setup.yaml`" + ` unless
+Yours is read from ` + "`$XDG_CONFIG_HOME/toneharness/config.yaml`" + ` unless
 ` + "`--setup`" + ` names another, so ` + "`setup init`" + ` once is the whole of
 getting started.
 
@@ -65,7 +65,7 @@ with no record of which half.`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		pedal.claim()
 
-		slotsFillClient.setup = ownSetup(slotsFillClient.setup)
+		slotsFillClient.config = ownConfig(slotsFillClient.config)
 
 		placed, err := slotsFillClient.client(
 			ownRigs(slotsFillRigs)).Fill(cmd.Context())
@@ -85,7 +85,7 @@ func init() {
 	slotsCmd.AddCommand(slotsFillCmd)
 
 	f := slotsFillCmd.Flags()
-	f.StringVar(&slotsFillClient.setup, "setup", "",
+	f.StringVar(&slotsFillClient.config, "config", "",
 		"a Setup saying which slot each rig lives in, instead of yours")
 	f.StringVar(&slotsFillRigs, "rigs", "",
 		"a directory of rigs to use instead of yours, beside the built-in ones")

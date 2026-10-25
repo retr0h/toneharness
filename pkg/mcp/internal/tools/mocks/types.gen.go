@@ -17,8 +17,8 @@ import (
 	sdk "github.com/retr0h/toneharness/pkg/sdk"
 	audio "github.com/retr0h/toneharness/pkg/sdk/audio"
 	catalog "github.com/retr0h/toneharness/pkg/sdk/catalog"
+	config "github.com/retr0h/toneharness/pkg/sdk/config"
 	slot "github.com/retr0h/toneharness/pkg/sdk/slot"
-	tone "github.com/retr0h/toneharness/pkg/sdk/tone"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -393,10 +393,10 @@ func (mr *MockClientMockRecorder) Scaffold(ctx, in any) *gomock.Call {
 }
 
 // Setup mocks base method.
-func (m *MockClient) Setup() (tone.Setup, error) {
+func (m *MockClient) Setup() (config.Config, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Setup")
-	ret0, _ := ret[0].(tone.Setup)
+	ret0, _ := ret[0].(config.Config)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -407,19 +407,19 @@ func (mr *MockClientMockRecorder) Setup() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Setup", reflect.TypeOf((*MockClient)(nil).Setup))
 }
 
-// StartSetup mocks base method.
-func (m *MockClient) StartSetup(at string) (sdk.Written, error) {
+// StartConfig mocks base method.
+func (m *MockClient) StartConfig(at string) (sdk.Written, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StartSetup", at)
+	ret := m.ctrl.Call(m, "StartConfig", at)
 	ret0, _ := ret[0].(sdk.Written)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// StartSetup indicates an expected call of StartSetup.
-func (mr *MockClientMockRecorder) StartSetup(at any) *gomock.Call {
+// StartConfig indicates an expected call of StartConfig.
+func (mr *MockClientMockRecorder) StartConfig(at any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartSetup", reflect.TypeOf((*MockClient)(nil).StartSetup), at)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartConfig", reflect.TypeOf((*MockClient)(nil).StartConfig), at)
 }
 
 // Tone mocks base method.

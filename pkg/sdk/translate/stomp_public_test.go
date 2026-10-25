@@ -28,6 +28,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -631,7 +632,7 @@ func (s *StompPublicTestSuite) TestStompable() {
 			got := translate.Stompable(
 				tt.id,
 				rig.Spec{Instrument: bass, Chain: chain},
-				tone.Setup{}, s.deps, &notes)
+				config.Config{}, s.deps, &notes)
 
 			roles := make([]rig.Role, 0, len(got))
 			for _, at := range got {
@@ -696,7 +697,7 @@ func (s *StompPublicTestSuite) TestStompableWithNothingMeasuredOfThatKind() {
 		Chain: []rig.ChainEntry{
 			{Role: rig.RoleComp}, {Role: rig.RoleAmp}, {Role: rig.RoleCab},
 		},
-	}, tone.Setup{}, deps, &notes)
+	}, config.Config{}, deps, &notes)
 
 	s.Require().Empty(got)
 

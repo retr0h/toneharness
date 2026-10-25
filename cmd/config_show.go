@@ -25,39 +25,37 @@ import (
 	"github.com/retr0h/toneharness/pkg/cli"
 )
 
-var setupInitOut string
+var configShowClient clientFlags
 
-// setupInitCmd represents the setup init command.
-var setupInitCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Write a setup you can edit",
-	Long: `Put a starter setup where every command looks for one.
+// configShowCmd represents the setup show command.
+var configShowCmd = &cobra.Command{
+	Use:   "show",
+	Short: "Say what the config holds",
+	Long: `Read the config back, as the commands that use it read it.
 
-Every field on a setup is optional and the document does nothing until some of
-them are filled in, so what lands is the schema line, the version this build
-reads, and a commented line beside each field saying what it is for. Uncomment
-what applies and the next build reads it.
+The slot map and the favourites first, because those two are the only record
+of which presets on the pedal belong to this tool rather than to whoever was
+holding it. A rebuild writes the slots it names and leaves every other slot
+alone, so this is the answer to "which ones will change".
 
-It goes to ` + "`$XDG_CONFIG_HOME/toneharness/setup.yaml`" + ` unless ` + "`--out`" + `
-says otherwise, which is where ` + "`--setup`" + ` falls back to everywhere.
-
-Nothing is written over. A setup is the only record of decisions nothing else
-keeps, so one already there is reported and left alone; moving it aside is
-yours to do.`,
+A favourite the slot map says nothing about is called out: it can be jumped to
+but a cycle cannot tell it is the current one, because recognising where the
+pedal is means matching what it is playing against the rig a slot holds.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		written, err := newClient().StartSetup(setupInitOut)
+		configShowClient.config = ownConfig(configShowClient.config)
+
+		held, err := configShowClient.client().Setup()
 		if err != nil {
 			return err
 		}
 
-		return answer(cmd, written, cli.Written)
+		return answer(cmd, held, cli.Setup)
 	},
 }
 
 func init() {
-	setupCmd.AddCommand(setupInitCmd)
+	configCmd.AddCommand(configShowCmd)
 
-	setupInitCmd.Flags().StringVar(&setupInitOut, "out", "",
-		"where to write it, instead of where every command looks")
+	configShowCmd.Flags().StringVar(&configShowClient.config, "config", "", configUsage)
 }

@@ -116,7 +116,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			then: func() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
 					Spec:  s.at("like-a-record.yaml"),
-					Setup: s.at("mine.setup.yaml"),
+					Setup: s.at("mine.config.yaml"),
 				}, s.cat, s.lib, s.rigNamed, "")
 
 				s.Require().NoError(err)

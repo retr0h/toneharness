@@ -26,10 +26,10 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
-	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // Client is what the tools call. FromSDK makes one of an *sdk.Client.
@@ -60,10 +60,10 @@ type Client interface {
 	Favourite(ctx context.Context, step sdk.Step) (sdk.Chosen, error)
 	// Setup is what the person has, which is the only record of which slots
 	// on the pedal this tool manages and which belong to whoever holds it.
-	Setup() (tone.Setup, error)
-	// StartSetup writes one somebody can edit. Refuses an existing file
+	Setup() (config.Config, error)
+	// StartConfig writes one somebody can edit. Refuses an existing file
 	// rather than replacing it, whatever the server allows.
-	StartSetup(at string) (sdk.Written, error)
+	StartConfig(at string) (sdk.Written, error)
 	Compile(ctx context.Context, in sdk.Compile) (sdk.Built, error)
 	// The music corpus, read as files rather than measured: a listing costs
 	// nothing where measuring costs minutes per record.
@@ -261,8 +261,8 @@ type Favourite struct {
 	Step string `json:"step,omitempty" jsonschema:"first for the first favourite the setup lists, next or prev to move one along and wrap; empty is first"`
 }
 
-// StartingSetup says where setup_init writes.
-type StartingSetup struct {
+// StartingConfig says where setup_init writes.
+type StartingConfig struct {
 	At string `json:"at,omitempty" jsonschema:"where to write it; empty is where every command looks, under the config directory"`
 }
 

@@ -49,9 +49,13 @@ func (s *EmbedPublicTestSuite) SetupSuite() {
 	s.doc = doc
 }
 
-// TestTheContractDescribesBothDocuments covers the two roots existing.
-func (s *EmbedPublicTestSuite) TestTheContractDescribesBothDocuments() {
-	for _, name := range []string{"ToneSpec", "Setup"} {
+// TestTheContractDescribesItsDocument covers the root existing.
+//
+// One root since the config was split out on 2026-10-25. This contract
+// describes the document people publish and download; what somebody owns and
+// how they like their pedal laid out has a contract of its own.
+func (s *EmbedPublicTestSuite) TestTheContractDescribesItsDocument() {
+	for _, name := range []string{"ToneSpec"} {
 		s.Run(name, func() {
 			ref, ok := s.doc.Components.Schemas[name]
 			s.Require().True(ok, "the contract describes no %s", name)
@@ -66,24 +70,25 @@ func (s *EmbedPublicTestSuite) TestTheContractDescribesBothDocuments() {
 	}
 }
 
-// TestAskAndSetupStayApart is the split, held to.
+// TestTheAskHoldsNothingAboutThePerson is half of the split, held to.
 //
 // The two documents change on different clocks: what somebody wants changes
 // every request and what they own changes when they buy something. Folding an
 // instrument into the ask would mean restating it every time, and the twelfth
 // request contradicting the first.
-func (s *EmbedPublicTestSuite) TestAskAndSetupStayApart() {
+//
+// They are separate contracts since 2026-10-25, so the structure enforces most
+// of this: `instruments` cannot appear here by accident when the schema it
+// came from is in another file. What it still catches is somebody adding one
+// back, which is the direction the pressure runs — a request is where a person
+// is looking when they want the tool to know something about them. The other
+// half is in the config package's own test.
+func (s *EmbedPublicTestSuite) TestTheAskHoldsNothingAboutThePerson() {
 	ask := s.doc.Components.Schemas["Ask"].Value.Properties
-	setup := s.doc.Components.Schemas["Setup"].Value.Properties
 
-	for _, field := range []string{"instruments", "device", "owns"} {
+	for _, field := range []string{"instruments", "device", "owns", "slots", "favourites"} {
 		s.Require().NotContains(ask, field,
 			"%s belongs to the person, not to the request", field)
-	}
-
-	for _, field := range []string{"genre", "words", "nudges", "like"} {
-		s.Require().NotContains(setup, field,
-			"%s belongs to the request, not to the person", field)
 	}
 }
 

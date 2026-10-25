@@ -10,7 +10,7 @@
 # they are what they are.
 #
 #     toneharness tone build --ask marketplace/examples/corrected-by-ear.yaml \
-#       --setup marketplace/examples/mine.setup.yaml --out rig.yaml
+#       --config marketplace/examples/mine.config.yaml --out rig.yaml
 #
 # Rebuilding does not replay them: a correction's paths point into the plan it
 # was made against, and a rebuild makes a new one. `tone build` reads them out

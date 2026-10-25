@@ -64,16 +64,16 @@ func (s *ValidatePublicTestSuite) TestError() {
 						errText: "ToneSpec schema",
 					},
 					{
-						name: "a document describing only one of the two",
+						name: "a document describing no ToneSpec at all",
 						doc: []byte(`
 openapi: 3.0.3
-info: { title: Half A Contract, version: "1.0.0" }
+info: { title: Not This Contract, version: "1.0.0" }
 paths: {}
 components:
   schemas:
-    ToneSpec: { type: object }
+    Something: { type: object }
 `),
-						errText: "describes no Setup",
+						errText: "describes no ToneSpec",
 					},
 				}
 
@@ -89,7 +89,7 @@ components:
 						}
 
 						s.Require().NoError(err)
-						s.Require().Len(got, 2)
+						s.Require().Len(got, 1)
 					})
 				}
 			},
@@ -149,8 +149,8 @@ components:
 	}
 }
 
-// TestAnUnreadableContractRefusesBothDocuments covers the cached failure.
-func (s *ValidatePublicTestSuite) TestAnUnreadableContractRefusesBothDocuments() {
+// TestAnUnreadableContractRefusesTheDocument covers the cached failure.
+func (s *ValidatePublicTestSuite) TestAnUnreadableContractRefusesTheDocument() {
 	restore := *tone.Contracts
 	defer func() { *tone.Contracts = restore }()
 
@@ -160,7 +160,6 @@ func (s *ValidatePublicTestSuite) TestAnUnreadableContractRefusesBothDocuments()
 	}
 
 	s.Require().ErrorIs(tone.Validate(tone.Spec{}), boom)
-	s.Require().ErrorIs(tone.ValidateSetup(tone.Setup{}), boom)
 }
 
 // TestAFailureInsideAListIsWrittenTheWayTheFileIs covers the field path.

@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/toneharness/pkg/cli"
-	"github.com/retr0h/toneharness/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 )
 
 // SetupPublicTestSuite covers reading a setup back.
@@ -45,26 +45,26 @@ func held(
 	slots [][2]string,
 	favourites []string,
 	loudness string,
-) tone.Setup {
-	out := tone.Setup{Schema: tone.SetupSchema, Version: "4.2.0"}
+) config.Config {
+	out := config.Config{Schema: config.Name, Version: "4.2.0"}
 
 	if device != "" {
-		out.Device = &tone.Device{Model: device}
+		out.Device = &config.Device{Model: device}
 	}
 
 	if len(instruments) > 0 {
-		gear := make([]tone.Held, 0, len(instruments))
+		gear := make([]config.Held, 0, len(instruments))
 		for _, one := range instruments {
-			gear = append(gear, tone.Held{Gear: one})
+			gear = append(gear, config.Held{Gear: one})
 		}
 
 		out.Instruments = &gear
 	}
 
 	if len(slots) > 0 {
-		placed := make([]tone.Slotted, 0, len(slots))
+		placed := make([]config.Slotted, 0, len(slots))
 		for _, pair := range slots {
-			placed = append(placed, tone.Slotted{At: pair[0], Rig: pair[1]})
+			placed = append(placed, config.Slotted{At: pair[0], Rig: pair[1]})
 		}
 
 		out.Slots = &placed
@@ -87,7 +87,7 @@ func held(
 func (s *SetupPublicTestSuite) TestSetup() {
 	for _, tt := range []struct {
 		name string
-		in   tone.Setup
+		in   config.Config
 		want []string
 		// missing is what must not be said.
 		missing []string
@@ -161,7 +161,7 @@ func (s *SetupPublicTestSuite) TestSetupReportsAWriterThatFails() {
 
 	for _, tt := range []struct {
 		name  string
-		in    tone.Setup
+		in    config.Config
 		after int
 	}{
 		{name: "the blank line before the gear", in: full},

@@ -26,8 +26,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
-	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // ErrNoSlots is returned when nothing says which slot anything goes in.
@@ -79,7 +79,7 @@ type Placed struct {
 func (c *Client) Fill(
 	ctx context.Context,
 ) ([]Placed, error) {
-	held, err := c.setup()
+	held, err := c.loadConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (c *Client) Fill(
 // fillOne builds one rig and writes it to its slot.
 func (c *Client) fillOne(
 	ctx context.Context,
-	at tone.Slotted,
+	at config.Slotted,
 	work string,
 ) Placed {
 	placed := Placed{At: at.At, Rig: at.Rig}
@@ -164,19 +164,19 @@ func (p Placed) failed(
 }
 
 // setup reads what the person has, which is where their slot map lives.
-func (c *Client) setup() (tone.Setup, error) {
-	if c.opts.setup == "" {
-		return tone.Setup{}, fmt.Errorf(
+func (c *Client) loadConfig() (config.Config, error) {
+	if c.opts.config == "" {
+		return config.Config{}, fmt.Errorf(
 			"%w: name one with --setup, which is where a slot map lives",
 			ErrNoSlots)
 	}
 
-	f, err := os.Open(c.opts.setup) //nolint:gosec // the path is the user's own
+	f, err := os.Open(c.opts.config) //nolint:gosec // the path is the user's own
 	if err != nil {
-		return tone.Setup{}, fmt.Errorf("reading %s: %w", c.opts.setup, err)
+		return config.Config{}, fmt.Errorf("reading %s: %w", c.opts.config, err)
 	}
 
 	defer func() { _ = f.Close() }()
 
-	return tone.LoadSetup(f)
+	return config.Load(f)
 }

@@ -37,8 +37,8 @@ const debugEnv = "TONEHARNESS_USB_DEBUG"
 const deviceUsage = "which pedal's built-in catalog to use: " +
 	"HX Stomp, HX Stomp XL, Helix Floor or Helix LT"
 
-// setupUsage is what naming a Setup buys, in one line.
-const setupUsage = "a Setup saying what you have, so the build fits you " +
+// configUsage is what naming a Setup buys, in one line.
+const configUsage = "a Setup saying what you have, so the build fits you " +
 	"as well as the record"
 
 // newClient builds the Client a command calls.
@@ -68,7 +68,7 @@ type clientFlags struct {
 	catalog   string
 	device    string
 	stats     string
-	setup     string
+	config    string
 	sweeps    string
 	rigs      string
 	backupDir string
@@ -82,7 +82,7 @@ func (f *clientFlags) client(
 		sdk.WithCatalog(f.catalog),
 		sdk.WithDevice(f.device),
 		sdk.WithStats(f.stats),
-		sdk.WithSetup(f.setup),
+		sdk.WithConfig(f.config),
 		sdk.WithSweeps(f.sweeps),
 		sdk.WithRigs(f.rigs),
 		sdk.WithBackupDir(f.backupDir),

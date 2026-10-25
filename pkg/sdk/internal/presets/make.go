@@ -31,6 +31,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/fileslots"
@@ -71,9 +72,9 @@ type MakeOptions struct {
 	// StatsPath is measured corpus statistics. Empty means the ones built
 	// into this binary.
 	StatsPath string
-	// SetupPath is what the person has. Empty builds for the record rather
+	// ConfigPath is what the person has. Empty builds for the record rather
 	// than for them.
-	SetupPath string
+	ConfigPath string
 	// OutputPath is where the preset is written.
 	OutputPath string
 	// Existing is what happens to a file already at OutputPath. The zero
@@ -103,7 +104,7 @@ func Make(
 	// than the record. A path nobody gave is not an error: building for the
 	// record is what this did before a Setup could be named, and still the
 	// right answer for somebody who did not write one.
-	held, err := setupAt(opts.SetupPath)
+	held, err := configAt(opts.ConfigPath)
 	if err != nil {
 		return result.Made{}, err
 	}
@@ -324,7 +325,7 @@ func write(
 // is taken only where the ask actually said it.
 func intentOf(
 	ask *tone.Ask,
-	held *tone.Setup,
+	held *config.Config,
 ) compile.Intent {
 	out := compile.Intent{}
 
@@ -517,7 +518,7 @@ func movedFrom(
 	return out
 }
 
-// setupAt reads what the person has, where they named a file.
+// configAt reads what the person has, where they named a file.
 //
 // Nothing is not an error. Every build before a Setup could be named built for
 // the record, and that is still the answer for somebody who has not written
@@ -562,9 +563,9 @@ var ErrOneRig = errors.New("name one of a rig identifier or a rig file")
 // somebody compares against another one.
 var ErrNoLoudness = errors.New("no measured cabinet to match")
 
-func setupAt(
+func configAt(
 	at string,
-) (*tone.Setup, error) {
+) (*config.Config, error) {
 	if at == "" {
 		return nil, nil
 	}
@@ -576,7 +577,7 @@ func setupAt(
 
 	defer func() { _ = f.Close() }()
 
-	held, err := tone.LoadSetup(f)
+	held, err := config.Load(f)
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", at, err)
 	}
@@ -654,7 +655,7 @@ type matchedTo struct {
 // built: a chain is already as loud as itself, and saying so would be a report
 // about nothing.
 func (o MakeOptions) matched(
-	held *tone.Setup,
+	held *config.Config,
 	id string,
 	spec plan.Plan,
 	cat *catalog.Catalog,
@@ -860,7 +861,7 @@ func loadCurves(
 func stompable(
 	id string,
 	rec rig.Spec,
-	setup tone.Setup,
+	setup config.Config,
 	cat *catalog.Catalog,
 	lib measured.Library,
 	stats *corpus.Stats,
@@ -918,10 +919,10 @@ func stompable(
 // needs that distinction: a Setup naming nothing and no Setup at all reach the
 // same answers.
 func setupOf(
-	held *tone.Setup,
-) tone.Setup {
+	held *config.Config,
+) config.Config {
 	if held == nil {
-		return tone.Setup{}
+		return config.Config{}
 	}
 
 	return *held

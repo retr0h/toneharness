@@ -34,8 +34,8 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk"
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
-	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // addTool registers one tool, with every failure carrying its remedy.
@@ -250,15 +250,15 @@ func register(
 		OutputSchema: mustOutputSchema[sdk.Chosen](),
 	}, h.deviceFav)
 	addTool(s, &gomcp.Tool{
-		Name: "setup_show",
+		Name: "config_show",
 		Description: "What the person has, as every build reads it. The slot " +
 			"map and the favourites are the part worth asking for: they are the " +
 			"only record of which presets on the pedal this tool manages, so " +
 			"they are what says which slots a rebuild will overwrite and which " +
 			"belong to whoever holds the pedal.",
 		Annotations:  readOnly(),
-		OutputSchema: mustOutputSchema[tone.Setup](),
-	}, h.setupShow)
+		OutputSchema: mustOutputSchema[config.Config](),
+	}, h.configShow)
 
 	addTool(s, &gomcp.Tool{
 		Name:         "device_current",
@@ -320,7 +320,7 @@ func register(
 		OutputSchema: mustOutputSchema[[]sdk.Placed](),
 	}, h.slotsFill)
 	addTool(s, &gomcp.Tool{
-		Name: "setup_init",
+		Name: "config_init",
 		Description: "Write a setup the person can edit, where every command " +
 			"looks for one. Every field on it is optional, so what lands is the " +
 			"schema line, the version this build reads and a commented line " +
@@ -329,7 +329,7 @@ func register(
 			"decisions nothing else keeps.",
 		Annotations:  &gomcp.ToolAnnotations{DestructiveHint: new(false)},
 		OutputSchema: mustOutputSchema[sdk.Written](),
-	}, h.setupInit)
+	}, h.configInit)
 	addTool(s, &gomcp.Tool{
 		Name:         "slots_copy",
 		Description:  "Copy one slot onto another. The destination's old preset is saved to a file first.",

@@ -140,10 +140,11 @@ func (s *ShippedPublicTestSuite) TestEveryExampleUsesTheVocabulary() {
 	s.Require().NotEmpty(paths, "no examples found to check")
 
 	for _, path := range paths {
-		// The directory holds two other kinds beside the documents: a setup,
-		// which says what somebody owns, and a plan, which is the device half of
-		// a preset. Neither has a word in it.
-		if strings.HasSuffix(path, ".setup.yaml") ||
+		// The directory holds two other kinds beside the documents: a config,
+		// which says what somebody owns and is a contract of its own, and a
+		// plan, which is the device half of a preset. Neither has a word in
+		// it.
+		if strings.HasSuffix(path, ".config.yaml") ||
 			strings.HasSuffix(path, ".plan.yaml") {
 			continue
 		}

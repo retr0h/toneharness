@@ -5,7 +5,7 @@
 # the device's 224 amplifiers to what that file actually measures.
 #
 #     toneharness tone build --ask marketplace/examples/like-a-record.yaml \
-#       --setup marketplace/examples/mine.setup.yaml --out rig.yaml
+#       --config marketplace/examples/mine.config.yaml --out rig.yaml
 #     toneharness presets compile --rig rig.yaml --out a.hlx
 
 schema: ToneSpec
