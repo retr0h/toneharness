@@ -684,6 +684,7 @@ func (c *Client) makeOpts(
 		Source:     c.source(),
 		StatsPath:  c.opts.stats,
 		ConfigPath: c.opts.config,
+		PlaysInto:  in.PlaysInto,
 		SweepsDir:  c.opts.sweeps,
 		OutputPath: in.Out,
 		Existing:   in.Existing,

@@ -128,9 +128,19 @@ func (c *Client) fillOne(
 			fmt.Errorf("slot %q for %q: %w", at.At, at.Rig, err))
 	}
 
-	built := filepath.Join(work, at.Rig+".hlx")
+	// Named for the slot rather than the rig, because one rig may fill two
+	// of them: the same punk with its cabinet for headphones and without for
+	// a real one. Named for the rig, the second build would overwrite the
+	// first and both slots would get whichever came last.
+	built := filepath.Join(work, at.At+"-"+at.Rig+".hlx")
 
-	if _, err := c.Make(ctx, Build{RigID: at.Rig, Out: built}); err != nil {
+	if _, err := c.Make(ctx, Build{
+		RigID: at.Rig,
+		Out:   built,
+		// What this slot is built for, where it says. Nil is the file's own
+		// answer, which is every slot that does not differ from the rest.
+		PlaysInto: at.PlaysInto,
+	}); err != nil {
 		return placed.failed(
 			fmt.Errorf("building %q for slot %s: %w", at.Rig, at.At, err))
 	}

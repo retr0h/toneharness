@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Config
-  version: "1.0.0"
+  version: "1.1.0"
   description: >
     What somebody has, and what they want done with it.
 
@@ -331,6 +331,41 @@ components:
           description: >
             The rig that goes there, by its identifier, the way `--id` names
             one.
+        plays_into:
+          $ref: "#/components/schemas/PlaysInto"
+          description: >
+            What this slot is built for, where it differs from the answer at
+            the top of the file.
+
+
+            **One rig, two slots, two rooms.** A cabinet block is a speaker.
+            Into headphones, a PA or an interface it has to be there, because
+            nothing else is one; into a real cabinet it is a simulated speaker
+            in front of a real one and the sound goes dark and muddy. So the
+            same rig wants a different preset depending on where the pedal is
+            plugged in, and that is not a fact about the gear, which is why it
+            cannot live on the rig.
+
+
+            Per slot rather than only at the top, because somebody who plays
+            both wants both at once:
+
+
+                slots:
+                  - { at: 13C, rig: punk }
+                  - { at: 13B, rig: punk, plays_into: amp-return }
+
+
+            which is one rig in two slots, the first with its cabinet and the
+            second without, chosen with the preset selector rather than by
+            rebuilding. A footswitch would cost one of three on an HX Stomp,
+            and a cabinet cannot take one anyway: `catalog.Stompable` has no
+            cabinet in it, because a switch is worth more as an effect.
+
+
+            Absent is the file's own `plays_into`, and absent there too builds
+            the cabinet, which is what a preset heard on headphones or sent to
+            a desk needs.
 
     Strings:
       type: string

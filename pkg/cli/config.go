@@ -107,8 +107,17 @@ func setupSlots(
 	rows := make([][]string, 0, len(*held.Slots))
 
 	for _, placed := range *held.Slots {
+		// What this one is built for, where it differs from the file's own
+		// answer. Two slots holding one rig are the same name twice
+		// otherwise, and the difference between them is the whole reason
+		// both are there.
+		into := ""
+		if placed.PlaysInto != nil {
+			into = paint.Mute(w, "into "+string(*placed.PlaysInto))
+		}
+
 		rows = append(rows,
-			[]string{paint.Accent(w, placed.At), placed.Rig})
+			[]string{paint.Accent(w, placed.At), placed.Rig, into})
 	}
 
 	if _, err := fmt.Fprintln(w); err != nil {
@@ -116,7 +125,7 @@ func setupSlots(
 	}
 
 	return paint.Table(w, rows,
-		[]lipgloss.Position{lipgloss.Left, lipgloss.Left})
+		[]lipgloss.Position{lipgloss.Left, lipgloss.Left, lipgloss.Left})
 }
 
 // setupFavourites prints the cycle, and says which one is the start.
