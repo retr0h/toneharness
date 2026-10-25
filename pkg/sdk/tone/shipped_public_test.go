@@ -30,6 +30,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/shipped"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
@@ -58,7 +59,7 @@ func (s *ShippedPublicTestSuite) TestEveryDocumentThatShipsLoads() {
 			//
 			// Two kinds live in one directory, because a request and the setup
 			// it is answered against are written together and read together.
-			// A `.setup.yaml` is what somebody owns; everything else is a
+			// A `.config.yaml` is the application's own settings; everything else is a
 			// ToneSpec. A `.plan.yaml` is the device half of a preset and
 			// pkg/sdk/plan is what reads one.
 			name: "every example loads",
@@ -77,8 +78,8 @@ func (s *ShippedPublicTestSuite) TestEveryDocumentThatShipsLoads() {
 						body, err := os.ReadFile(path) //nolint:gosec // a path this glob found
 						s.Require().NoError(err)
 
-						if strings.HasSuffix(path, ".setup.yaml") {
-							_, err = tone.LoadSetup(bytes.NewReader(body))
+						if strings.HasSuffix(path, ".config.yaml") {
+							_, err = config.Load(bytes.NewReader(body))
 							s.Require().NoError(err)
 
 							return

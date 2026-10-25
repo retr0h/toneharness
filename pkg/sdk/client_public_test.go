@@ -372,7 +372,7 @@ func (s *ClientPublicTestSuite) TestWithStats() {
 // asserts is that the Client read the file it was given, which a path nothing
 // is at says loudly enough.
 func (s *ClientPublicTestSuite) TestWithSetup() {
-	_, err := sdk.New(sdk.WithSetup("no-such-setup.yaml")).
+	_, err := sdk.New(sdk.WithConfig("no-such-setup.yaml")).
 		Make(context.Background(), sdk.Build{
 			RigID: "mike-dirnt",
 			Out:   filepath.Join(s.T().TempDir(), "o.hlx"),
@@ -384,7 +384,7 @@ func (s *ClientPublicTestSuite) TestWithSetup() {
 
 // TestWithSweeps covers naming the curves a loudness match is made with.
 //
-// A client option beside WithSetup, because what it serves changes on that
+// A client option beside WithConfig, because what it serves changes on that
 // clock. Asserted end to end rather than on the option, because the figure it
 // produces is the point: Krist Novoselic's rig ends in a `2x15 Brute` at
 // -59.62dB and Paul McCartney's in a `1x18 Woody Blue` at -57.61dB, a 2dB gap
@@ -399,7 +399,7 @@ func (s *ClientPublicTestSuite) TestWithSweeps() {
 	at := filepath.Join(s.T().TempDir(), "setup.yaml")
 
 	s.Require().NoError(os.WriteFile(at,
-		[]byte("schema: Setup\nversion: \"4.0.0\"\nmatch_loudness: paul-mccartney\n"),
+		[]byte("schema: Config\nversion: \"1.0.0\"\nmatch_loudness: paul-mccartney\n"),
 		0o600))
 
 	for _, tt := range []struct {
@@ -428,7 +428,7 @@ func (s *ClientPublicTestSuite) TestWithSweeps() {
 	} {
 		s.Run(tt.name, func() {
 			got, err := sdk.New(
-				sdk.WithSetup(at), sdk.WithSweeps(tt.sweeps),
+				sdk.WithConfig(at), sdk.WithSweeps(tt.sweeps),
 			).Make(context.Background(), sdk.Build{
 				RigID: "krist-novoselic",
 				Out:   filepath.Join(s.T().TempDir(), "o.hlx"),
@@ -1130,7 +1130,7 @@ func (s *ClientPublicTestSuite) TestWithUserRigs() {
 					},
 					{
 						name:    "a file of theirs that is not a rig, named for the one asked for",
-						files:   map[string]string{"mike-dirnt.yaml": "schema: Setup\nversion: \"4.0.0\"\n"},
+						files:   map[string]string{"mike-dirnt.yaml": "schema: Config\nversion: \"1.0.0\"\n"},
 						id:      "mike-dirnt",
 						listErr: "mike-dirnt.yaml",
 						findErr: "mike-dirnt.yaml",
@@ -1747,7 +1747,7 @@ func (s *ClientPublicTestSuite) TestTone() {
 			name: "a request and what somebody owns",
 			in: sdk.Ask{
 				Spec:  examples("like-a-record.yaml"),
-				Setup: examples("mine.setup.yaml"),
+				Setup: examples("mine.config.yaml"),
 			},
 			notes: true,
 		},

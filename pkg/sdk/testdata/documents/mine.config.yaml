@@ -4,8 +4,8 @@
 # strings and the pedal every time, and the twelfth request contradicting the
 # first.
 
-schema: Setup
-version: "4.0.0"
+schema: Config
+version: "1.0.0"
 
 device:
   model: HX Stomp

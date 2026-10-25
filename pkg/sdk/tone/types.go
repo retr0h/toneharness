@@ -54,16 +54,6 @@ type (
 	// every claim. Real-world names rather than model identifiers, which is
 	// what lets one compile for any Helix.
 	Rig = gen.Rig
-	// Held is one instrument somebody owns. Named for what it is rather than
-	// `Instrument`, which is which half of a catalog a build may draw from.
-	Held = gen.Held
-	// Setup is what somebody has. Separate from the ask because an
-	// instrument is a fact about a person rather than about the sound they
-	// are chasing today.
-	Setup = gen.Setup
-	// Slotted is one rig and the slot somebody keeps it in, which is a
-	// preference about their own pedal rather than anything shared.
-	Slotted = gen.Slotted
 	// Like is something to sound like: a player, a band, a song, or a
 	// recording handed over to be measured.
 	Like = gen.Like
@@ -78,20 +68,11 @@ type (
 	// Nudge is a move along one axis from wherever the last answer landed,
 	// which is what conversation is made of.
 	Nudge = gen.Nudge
-	// Device is the hardware, which decides what a chain may cost.
-	Device = gen.Device
 	// Instrument is one instrument somebody owns, in what changes the sound.
 	Instrument = gen.Instrument
 	// Strings is what is on it. Flatwounds and roundwounds are a larger
 	// difference than most pedals.
 	Strings = gen.Strings
-	// Owned is one thing on the device that did not ship with it.
-	Owned = gen.Owned
-	// PlaysInto is what the pedal is plugged into, when somebody says. The
-	// last thing in the path is not always the cabinet block.
-	PlaysInto = gen.PlaysInto
-	// OwnedKind is whether that is an impulse response or a model.
-	OwnedKind = gen.OwnedKind
 	// Subject is who or what the request is about.
 	Subject = gen.Subject
 	// Technique is how the instrument is played, which no device models and
@@ -210,8 +191,7 @@ const (
 
 // What a request may say.
 const (
-	SchemaName  = "ToneSpec"
-	SetupSchema = "Setup"
+	SchemaName = "ToneSpec"
 )
 
 // The strings an instrument may carry.
@@ -223,10 +203,7 @@ const (
 )
 
 // What somebody may own that the device did not ship with.
-const (
-	OwnedIR    = gen.OwnedIR
-	OwnedModel = gen.OwnedModel
-)
+const ()
 
 // What the pedal may be plugged into.
 //
@@ -234,10 +211,6 @@ const (
 // instrument input puts the amplifier's own preamp in front of its speaker,
 // and the effects return bypasses that preamp and leaves the power section.
 const (
-	Pa         = gen.Pa
-	Headphones = gen.Headphones
-	AmpFront   = gen.AmpFront
-	AmpReturn  = gen.AmpReturn
 	// The rig half's, for the same reason its types are here.
 	RoleAmp     = gen.RoleAmp
 	RoleCab     = gen.RoleCab

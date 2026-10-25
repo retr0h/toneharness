@@ -69,7 +69,7 @@ func (s *FavouritePublicTestSuite) setupSaying(
 ) string {
 	at := filepath.Join(s.T().TempDir(), "setup.yaml")
 	s.Require().NoError(os.WriteFile(at, []byte(
-		"schema: Setup\nversion: \"4.2.0\"\n"+body), 0o600))
+		"schema: Config\nversion: \"1.0.0\"\n"+body), 0o600))
 
 	return at
 }
@@ -116,12 +116,12 @@ func (s *FavouritePublicTestSuite) listens(
 // clientOver is a Client over the device given, reading the setup given.
 func (s *FavouritePublicTestSuite) clientOver(
 	dev *attached,
-	setup string,
+	config string,
 ) *sdk.Client {
 	bus := mocks.NewMockOpener(s.ctrl)
 	bus.EXPECT().Open(gomock.Any()).Return(dev, nil).AnyTimes()
 
-	return sdk.New(sdk.WithDevices(bus), sdk.WithSetup(setup))
+	return sdk.New(sdk.WithDevices(bus), sdk.WithConfig(config))
 }
 
 // threeFavourites is a setup listing three, with the one the fixture reads
@@ -140,8 +140,8 @@ func (s *FavouritePublicTestSuite) TestFavouriteSteps() {
 	for _, tt := range []struct {
 		name string
 		// setup is the body of a Setup.
-		setup string
-		step  sdk.Step
+		config string
+		step   sdk.Step
 		// reads is whether the pedal will say what it is playing.
 		reads bool
 		// at is the slot the step should land on, and position its place in
@@ -160,22 +160,22 @@ func (s *FavouritePublicTestSuite) TestFavouriteSteps() {
 		{
 			// The one that needs nothing read off the device, which is why it
 			// is the default: it cannot be confused by what is loaded.
-			name:  "first goes to the first listed",
-			setup: threeFavourites,
-			step:  sdk.AtFirst, reads: true,
+			name:   "first goes to the first listed",
+			config: threeFavourites,
+			step:   sdk.AtFirst, reads: true,
 			at: "11A", rig: "punk", position: 1, of: 3,
 		},
 		{
-			name:  "next moves one along from what is playing",
-			setup: threeFavourites,
-			step:  sdk.Onward, reads: true,
+			name:   "next moves one along from what is playing",
+			config: threeFavourites,
+			step:   sdk.Onward, reads: true,
 			at: "24C", rig: "mike-dirnt", position: 3, of: 3,
 			from: "19B", was: playing,
 		},
 		{
-			name:  "prev moves one back from what is playing",
-			setup: threeFavourites,
-			step:  sdk.Back, reads: true,
+			name:   "prev moves one back from what is playing",
+			config: threeFavourites,
+			step:   sdk.Back, reads: true,
 			at: "11A", rig: "punk", position: 1, of: 3,
 			from: "19B", was: playing,
 		},
@@ -184,7 +184,7 @@ func (s *FavouritePublicTestSuite) TestFavouriteSteps() {
 			// the first. Refusing there would make them read the list to find
 			// out why nothing happened.
 			name: "next wraps round the end",
-			setup: `favourites: ["19B", "11A"]
+			config: `favourites: ["19B", "11A"]
 slots:
   - { at: 19B, rig: ` + playing + ` }
   - { at: 11A, rig: punk }
@@ -195,7 +195,7 @@ slots:
 		},
 		{
 			name: "prev wraps round the start",
-			setup: `favourites: ["19B", "11A"]
+			config: `favourites: ["19B", "11A"]
 slots:
   - { at: 19B, rig: ` + playing + ` }
   - { at: 11A, rig: punk }
@@ -208,7 +208,7 @@ slots:
 			// Not an error. Somebody asking to cycle wanted to be among the
 			// favourites, and the first is where that starts.
 			name: "a pedal playing no favourite goes to the first",
-			setup: `favourites: ["11A", "24C"]
+			config: `favourites: ["11A", "24C"]
 slots:
   - { at: 11A, rig: punk }
   - { at: 24C, rig: mike-dirnt }
@@ -220,23 +220,23 @@ slots:
 		{
 			// The slot map is what makes the match possible, so favourites
 			// with no entry in it can be jumped to and never recognised.
-			name:  "favourites the slot map says nothing about",
-			setup: `favourites: ["11A", "24C"]`,
-			step:  sdk.Onward, reads: true,
+			name:   "favourites the slot map says nothing about",
+			config: `favourites: ["11A", "24C"]`,
+			step:   sdk.Onward, reads: true,
 			at: "11A", position: 1, of: 2, was: playing,
 		},
 		{
 			// A pedal that will not say what it holds still gets somebody to
 			// a favourite, which is what was asked for.
-			name:  "a pedal that will not say what it is playing",
-			setup: threeFavourites,
-			step:  sdk.Onward, reads: false,
+			name:   "a pedal that will not say what it is playing",
+			config: threeFavourites,
+			step:   sdk.Onward, reads: false,
 			at: "11A", rig: "punk", position: 1, of: 3,
 		},
 		{
-			name:  "one favourite is a cycle of one",
-			setup: `favourites: ["19B"]` + "\nslots:\n  - { at: 19B, rig: " + playing + " }\n",
-			step:  sdk.Onward, reads: true,
+			name:   "one favourite is a cycle of one",
+			config: `favourites: ["19B"]` + "\nslots:\n  - { at: 19B, rig: " + playing + " }\n",
+			step:   sdk.Onward, reads: true,
 			at: "19B", rig: playing, position: 1, of: 1, from: "19B", was: playing,
 		},
 	} {
@@ -251,7 +251,7 @@ slots:
 			dev.MockSelector.EXPECT().SelectPreset(gomock.Any(), 0, at).
 				Return(nil).Times(1)
 
-			got, err := s.clientOver(dev, s.setupSaying(tt.setup)).
+			got, err := s.clientOver(dev, s.setupSaying(tt.config)).
 				Favourite(context.Background(), tt.step)
 
 			s.Require().NoError(err)
@@ -271,7 +271,7 @@ func (s *FavouritePublicTestSuite) TestFavouriteRefuses() {
 	for _, tt := range []struct {
 		name string
 		// setup is the body of a Setup, or empty to name no setup at all.
-		setup string
+		config string
 		// named is false where no --setup is given.
 		named bool
 		// selects is true where the device will be asked to load something,
@@ -286,15 +286,15 @@ func (s *FavouritePublicTestSuite) TestFavouriteRefuses() {
 			is:   sdk.ErrNoSlots,
 		},
 		{
-			name:  "a setup listing no favourites",
-			setup: `match_loudness: punk`, named: true,
+			name:   "a setup listing no favourites",
+			config: `match_loudness: punk`, named: true,
 			says: "list them under favourites",
 			is:   sdk.ErrNoFavourites,
 		},
 		{
 			// Refused by the contract, before anything here looks at it.
-			name:  "a favourite that is not a slot label at all",
-			setup: `favourites: ["99Z"]`, named: true,
+			name:   "a favourite that is not a slot label at all",
+			config: `favourites: ["99Z"]`, named: true,
 			says: `favourites[0]`,
 		},
 		{
@@ -302,13 +302,13 @@ func (s *FavouritePublicTestSuite) TestFavouriteRefuses() {
 			// numbering, where banks start at one. Refused before the pedal
 			// is claimed, because claiming one takes the front panel off
 			// whoever is playing and this is a file to fix.
-			name:  "a label the pedal has no position for",
-			setup: `favourites: ["0A"]`, named: true,
+			name:   "a label the pedal has no position for",
+			config: `favourites: ["0A"]`, named: true,
 			says: "favourite 0A",
 		},
 		{
-			name:  "a device that will not load it",
-			setup: `favourites: ["11A"]`, named: true,
+			name:   "a device that will not load it",
+			config: `favourites: ["11A"]`, named: true,
 			selects: true,
 			says:    "going to 11A",
 		},
@@ -324,7 +324,7 @@ func (s *FavouritePublicTestSuite) TestFavouriteRefuses() {
 
 			at := ""
 			if tt.named {
-				at = s.setupSaying(tt.setup)
+				at = s.setupSaying(tt.config)
 			}
 
 			_, err := s.clientOver(dev, at).

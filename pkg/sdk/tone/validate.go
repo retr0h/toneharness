@@ -47,8 +47,8 @@ var ErrInvalid = errors.New("not valid")
 
 // InvalidError says which part of a document is wrong, and which document.
 type InvalidError struct {
-	// Document is ToneSpec or Setup, so a message says which file to look in
-	// when somebody is holding both.
+	// Document is what the schema is called, so a message says which file to
+	// look in.
 	Document string
 	// Field is the path to the offending value, as it appears in the file.
 	Field string
@@ -130,15 +130,6 @@ func OneSetOfSnapshots(
 // through snapshot7 on hardware that holds eight.
 const snapshotPrefix = "snapshot"
 
-// ValidateSetup reports whether a setup meets the contract.
-func ValidateSetup(
-	s Setup,
-) error {
-	stamp(&s.Version)
-
-	return check(s, SetupSchema)
-}
-
 // check marshals a document and holds it to the schema of that name.
 func check(
 	of any,
@@ -158,7 +149,7 @@ func check(
 	return against(document, name)
 }
 
-// contracts returns the two schemas, parsed once.
+// contracts returns the schema, parsed once.
 //
 // Parsing an OpenAPI document is not cheap and this one never changes, so it
 // happens on the first document checked and not again.
@@ -166,7 +157,7 @@ var contracts = sync.OnceValues(func() (map[string]*openapi3.Schema, error) {
 	return load(Schema)
 })
 
-// load reads both contracts out of an OpenAPI document.
+// load reads the contract out of an OpenAPI document.
 func load(
 	raw []byte,
 ) (map[string]*openapi3.Schema, error) {
@@ -177,7 +168,7 @@ func load(
 
 	out := map[string]*openapi3.Schema{}
 
-	for _, name := range []string{SchemaName, SetupSchema} {
+	for _, name := range []string{SchemaName} {
 		ref, ok := doc.Components.Schemas[name]
 		if !ok {
 			return nil, fmt.Errorf("the schema describes no %s", name)

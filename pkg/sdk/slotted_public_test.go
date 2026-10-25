@@ -74,7 +74,7 @@ func (s *SlottedPublicTestSuite) setupSaying(
 ) string {
 	at := filepath.Join(s.T().TempDir(), "setup.yaml")
 	s.Require().NoError(os.WriteFile(at, []byte(
-		"schema: Setup\nversion: \"4.2.0\"\n"+body), 0o600))
+		"schema: Config\nversion: \"1.0.0\"\n"+body), 0o600))
 
 	return at
 }
@@ -82,7 +82,7 @@ func (s *SlottedPublicTestSuite) setupSaying(
 // pedal is a Client over a device that takes every write, which is what a
 // successful fill meets.
 func (s *SlottedPublicTestSuite) pedal(
-	setup string,
+	config string,
 ) *sdk.Client {
 	body, err := os.ReadFile(
 		filepath.Join("internal", "wire", "testdata", "preset.bin"))
@@ -112,7 +112,7 @@ func (s *SlottedPublicTestSuite) pedal(
 
 	return sdk.New(
 		sdk.WithDevices(bus),
-		sdk.WithSetup(setup),
+		sdk.WithConfig(config),
 		sdk.WithBackupDir(s.T().TempDir()))
 }
 
@@ -123,7 +123,7 @@ func (s *SlottedPublicTestSuite) TestFillRefusesWhatCannotBeRead() {
 	for _, tt := range []struct {
 		name string
 		// setup is the body of a Setup, or empty to name no setup at all.
-		setup string
+		config string
 		// named is false where no --setup is given.
 		named bool
 		says  string
@@ -139,41 +139,41 @@ func (s *SlottedPublicTestSuite) TestFillRefusesWhatCannotBeRead() {
 			is:    sdk.ErrNoSlots,
 		},
 		{
-			name:  "a setup naming no slots",
-			setup: "device:\n  model: HX Stomp\n",
-			named: true,
-			is:    sdk.ErrNoSlots,
+			name:   "a setup naming no slots",
+			config: "device:\n  model: HX Stomp\n",
+			named:  true,
+			is:     sdk.ErrNoSlots,
 		},
 		{
-			name:  "a setup whose slot list is empty",
-			setup: "slots: []\n",
-			named: true,
-			is:    sdk.ErrNoSlots,
+			name:   "a setup whose slot list is empty",
+			config: "slots: []\n",
+			named:  true,
+			is:     sdk.ErrNoSlots,
 		},
 		{
-			name:  "a setup whose slots are not a list",
-			setup: "slots: \"not a list\"\n",
-			named: true,
-			says:  "slots",
+			name:   "a setup whose slots are not a list",
+			config: "slots: \"not a list\"\n",
+			named:  true,
+			says:   "slots",
 		},
 		{
 			// The contract gives `at` a pattern, so a label the pedal could
 			// never print is refused before anything is built. Forty presets
 			// compiled to discover the first address is unreadable would be
 			// forty seconds for nothing.
-			name:  "a slot label the pedal would never print",
-			setup: "slots:\n  - { at: \"not a slot\", rig: punk }\n",
-			named: true,
-			says:  "at",
+			name:   "a slot label the pedal would never print",
+			config: "slots:\n  - { at: \"not a slot\", rig: punk }\n",
+			named:  true,
+			says:   "at",
 		},
 	} {
 		s.Run(tt.name, func() {
 			at := ""
 			if tt.named {
-				at = s.setupSaying(tt.setup)
+				at = s.setupSaying(tt.config)
 			}
 
-			placed, err := sdk.New(s.absent(), sdk.WithSetup(at)).
+			placed, err := sdk.New(s.absent(), sdk.WithConfig(at)).
 				Fill(context.Background())
 
 			s.Require().Error(err)
@@ -202,7 +202,7 @@ func (s *SlottedPublicTestSuite) TestFillSaysWhichSlotThePedalHasNoPositionFor()
 			"  - { at: \"0A\", rig: punk }\n" +
 			"  - { at: \"11B\", rig: pop-punk }\n")
 
-	placed, err := sdk.New(s.absent(), sdk.WithSetup(at)).
+	placed, err := sdk.New(s.absent(), sdk.WithConfig(at)).
 		Fill(context.Background())
 
 	s.Require().Error(err)
@@ -221,7 +221,7 @@ func (s *SlottedPublicTestSuite) TestFillSaysWhichSlotThePedalHasNoPositionFor()
 func (s *SlottedPublicTestSuite) TestFillReadsNoSetupFile() {
 	at := filepath.Join(s.T().TempDir(), "nothing.yaml")
 
-	_, err := sdk.New(s.absent(), sdk.WithSetup(at)).Fill(context.Background())
+	_, err := sdk.New(s.absent(), sdk.WithConfig(at)).Fill(context.Background())
 
 	s.Require().ErrorContains(err, "nothing.yaml")
 }
@@ -238,7 +238,7 @@ func (s *SlottedPublicTestSuite) TestFillSaysWhichRigWouldNotGo() {
 			"  - { at: \"11A\", rig: nobody-has-this-rig }\n" +
 			"  - { at: \"11B\", rig: punk }\n")
 
-	placed, err := sdk.New(s.absent(), sdk.WithSetup(at)).
+	placed, err := sdk.New(s.absent(), sdk.WithConfig(at)).
 		Fill(context.Background())
 
 	// The error joins them, so a caller that only checks the error still
@@ -273,7 +273,7 @@ func (s *SlottedPublicTestSuite) TestFillReportsNowhereToBuild() {
 
 	at := s.setupSaying("slots:\n  - { at: \"11A\", rig: punk }\n")
 
-	placed, err := sdk.New(s.absent(), sdk.WithSetup(at)).
+	placed, err := sdk.New(s.absent(), sdk.WithConfig(at)).
 		Fill(context.Background())
 
 	s.Require().ErrorContains(err, "making somewhere to build the presets")
@@ -312,7 +312,7 @@ func (s *SlottedPublicTestSuite) TestFillWritesEveryRigToItsSlot() {
 func (s *SlottedPublicTestSuite) TestFillSaysWhenTheDeviceWillNotTakeIt() {
 	at := s.setupSaying("slots:\n  - { at: \"11A\", rig: punk }\n")
 
-	placed, err := sdk.New(s.absent(), sdk.WithSetup(at)).
+	placed, err := sdk.New(s.absent(), sdk.WithConfig(at)).
 		Fill(context.Background())
 
 	s.Require().Error(err)

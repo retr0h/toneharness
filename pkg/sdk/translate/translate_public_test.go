@@ -29,6 +29,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
@@ -113,8 +114,8 @@ func nest(
 // setup reads what somebody has.
 func (s *TranslatePublicTestSuite) setup(
 	body string,
-) tone.Setup {
-	out, err := tone.LoadSetup(strings.NewReader("schema: Setup\nversion: \"4.0.0\"\n" + body))
+) config.Config {
+	out, err := config.Load(strings.NewReader("schema: Config\nversion: \"1.0.0\"\n" + body))
 	s.Require().NoError(err)
 
 	return out

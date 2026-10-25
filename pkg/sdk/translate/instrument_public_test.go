@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -51,17 +52,17 @@ func (s *InstrumentPublicTestSuite) TestInstrumentFor() {
 	bass := tone.AskInstrument("bass")
 	guitar := tone.AskInstrument("guitar")
 
-	owns := func(gear string) tone.Setup {
+	owns := func(gear string) config.Config {
 		yes := true
-		held := []tone.Held{{Gear: gear, Default: &yes}}
+		held := []config.Held{{Gear: gear, Default: &yes}}
 
-		return tone.Setup{Instruments: &held}
+		return config.Config{Instruments: &held}
 	}
 
 	for _, tt := range []struct {
 		name string
 		spec tone.Ask
-		held tone.Setup
+		held config.Config
 		want rig.Instrument
 		// says is a fragment the note has to carry.
 		says string

@@ -26,7 +26,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/retr0h/toneharness/pkg/cli/internal/paint"
-	"github.com/retr0h/toneharness/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 )
 
 // Setup says what the setup holds, in the order somebody asks about it.
@@ -37,7 +37,7 @@ import (
 // Everything else on a setup shows up in a build's own answer.
 func Setup(
 	w io.Writer,
-	held tone.Setup,
+	held config.Config,
 ) error {
 	if err := setupGear(w, held); err != nil {
 		return err
@@ -53,7 +53,7 @@ func Setup(
 // setupGear prints the pedal, the instruments and the rig builds match.
 func setupGear(
 	w io.Writer,
-	held tone.Setup,
+	held config.Config,
 ) error {
 	rows := [][]string{}
 
@@ -90,7 +90,7 @@ func setupGear(
 // setupSlots prints which rig each slot holds.
 func setupSlots(
 	w io.Writer,
-	held tone.Setup,
+	held config.Config,
 ) error {
 	if _, err := fmt.Fprintf(w, "\n%s\n",
 		paint.Heading(w, "slots")); err != nil {
@@ -122,7 +122,7 @@ func setupSlots(
 // setupFavourites prints the cycle, and says which one is the start.
 func setupFavourites(
 	w io.Writer,
-	held tone.Setup,
+	held config.Config,
 ) error {
 	if _, err := fmt.Fprintf(w, "\n%s\n",
 		paint.Heading(w, "favourites")); err != nil {

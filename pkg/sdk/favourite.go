@@ -24,8 +24,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/slot"
-	"github.com/retr0h/toneharness/pkg/sdk/tone"
 )
 
 // ErrNoFavourites is returned when the setup names none.
@@ -96,7 +96,7 @@ func (c *Client) Favourite(
 	ctx context.Context,
 	step Step,
 ) (Chosen, error) {
-	held, err := c.setup()
+	held, err := c.loadConfig()
 	if err != nil {
 		return Chosen{}, err
 	}
@@ -134,7 +134,7 @@ func (c *Client) Favourite(
 // halves of the setup are written in and parsing one to compare it with the
 // other would only add a way to disagree.
 func rigsAt(
-	held tone.Setup,
+	held config.Config,
 ) map[string]string {
 	out := map[string]string{}
 

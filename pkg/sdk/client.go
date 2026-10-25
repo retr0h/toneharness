@@ -103,7 +103,7 @@ type options struct {
 	stats string
 	// setup is what the person has, which is what makes an answer fit them
 	// rather than the record. Empty builds for the record.
-	setup  string
+	config string
 	sweeps string
 	// rigs is a directory of rigs. Empty means the ones that ship.
 	rigs string
@@ -153,7 +153,7 @@ func WithStats(
 	return func(o *options) { o.stats = path }
 }
 
-// WithSetup reads what the person has, so a build can fit them.
+// WithConfig reads what the person has, so a build can fit them.
 //
 // A client option rather than a call's argument, for the reason the Setup is a
 // separate document at all: it changes on a different clock. Somebody's bass,
@@ -163,16 +163,16 @@ func WithStats(
 // What it changes today is the playing. An ask says how the subject played and
 // a Setup says how this person does, and the difference between the two right
 // hands is a knob position rather than a surprise at the first rehearsal.
-func WithSetup(
+func WithConfig(
 	path string,
 ) Option {
-	return func(o *options) { o.setup = path }
+	return func(o *options) { o.config = path }
 }
 
 // WithSweeps reads the committed curves, which say what a turn of a control is
 // worth.
 //
-// A client option beside WithSetup, because what it serves changes on that
+// A client option beside WithConfig, because what it serves changes on that
 // clock: an output level is a fact about somebody's rig, and the curves are how
 // a build reaches one. A turn is not worth the same on two amplifiers, so this
 // cannot be assumed: the five swept here run 19.8dB to 42.3dB across the same
@@ -683,7 +683,7 @@ func (c *Client) makeOpts(
 		RigPath:    in.Rig,
 		Source:     c.source(),
 		StatsPath:  c.opts.stats,
-		SetupPath:  c.opts.setup,
+		ConfigPath: c.opts.config,
 		SweepsDir:  c.opts.sweeps,
 		OutputPath: in.Out,
 		Existing:   in.Existing,

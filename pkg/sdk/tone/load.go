@@ -42,20 +42,7 @@ func Load(
 	return spec, read(r, SchemaName, &spec)
 }
 
-// LoadSetup reads what somebody has and checks it against its own contract.
-func LoadSetup(
-	r io.Reader,
-) (Setup, error) {
-	var setup Setup
-
-	return setup, read(r, SetupSchema, &setup)
-}
-
-// read is Load and LoadSetup, which differ only in what they are reading.
-//
-// Sharing it rather than writing it twice, because the interesting part is
-// the order the steps happen in and two copies of that order is two chances
-// to get it wrong in one of them.
+// read decodes a document and checks it.
 func read(
 	r io.Reader,
 	name string,
@@ -169,16 +156,6 @@ func Write(
 	stamp(&spec.Version)
 
 	return write(w, SchemaName, spec, Validate(spec))
-}
-
-// WriteSetup renders what somebody has.
-func WriteSetup(
-	w io.Writer,
-	setup Setup,
-) error {
-	stamp(&setup.Version)
-
-	return write(w, SetupSchema, setup, ValidateSetup(setup))
 }
 
 // stamp fills in the contract version where a document does not carry one.

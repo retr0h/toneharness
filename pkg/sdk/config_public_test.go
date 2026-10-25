@@ -29,27 +29,27 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/toneharness/pkg/sdk"
-	spec "github.com/retr0h/toneharness/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 )
 
-// SetupPublicTestSuite covers the document that says what somebody has, and
+// ConfigFilePublicTestSuite covers the document that says what somebody has, and
 // the command that writes one.
 //
 // Every field on a setup is optional, which makes the empty document valid and
 // useless. So the starter file is the feature: what lands is the schema line,
 // the version this build reads, and a commented line beside each field saying
 // what it is for.
-type SetupPublicTestSuite struct {
+type ConfigFilePublicTestSuite struct {
 	suite.Suite
 }
 
-// TestSetupPathIsUnderTheConfigDirectory covers where a setup lives.
+// TestConfigPathIsUnderTheConfigDirectory covers where a setup lives.
 //
 // A setup is configuration rather than data or state, so it is the config
 // directory, resolved the way rigs and backups resolve theirs: the XDG
 // variable, and the documented fallback under the home directory where the
 // environment says nothing.
-func (s *SetupPublicTestSuite) TestSetupPathIsUnderTheConfigDirectory() {
+func (s *ConfigFilePublicTestSuite) TestConfigPathIsUnderTheConfigDirectory() {
 	for _, tt := range []struct {
 		name string
 		// config is what XDG_CONFIG_HOME is set to, or empty to unset it.
@@ -60,17 +60,17 @@ func (s *SetupPublicTestSuite) TestSetupPathIsUnderTheConfigDirectory() {
 		{
 			name:   "the config directory the environment names",
 			config: filepath.Join("/tmp", "someone", "config"),
-			under:  filepath.Join("/tmp", "someone", "config", "toneharness", "setup.yaml"),
+			under:  filepath.Join("/tmp", "someone", "config", "toneharness", "config.yaml"),
 		},
 		{
 			name:  "the documented fallback where it names none",
-			under: filepath.Join(".config", "toneharness", "setup.yaml"),
+			under: filepath.Join(".config", "toneharness", "config.yaml"),
 		},
 	} {
 		s.Run(tt.name, func() {
 			s.T().Setenv("XDG_CONFIG_HOME", tt.config)
 
-			at, err := sdk.SetupPath()
+			at, err := sdk.ConfigPath()
 
 			s.Require().NoError(err)
 			s.Require().True(strings.HasSuffix(at, tt.under),
@@ -79,20 +79,20 @@ func (s *SetupPublicTestSuite) TestSetupPathIsUnderTheConfigDirectory() {
 	}
 }
 
-// TestStartSetupWritesOneThatValidates covers what a starter setup is for.
+// TestStartConfigWritesOneThatValidates covers what a starter setup is for.
 //
 // Read back through the loader rather than only checked for bytes, because a
 // starter file that does not validate is worse than none: it is one somebody
 // edits for an hour before the first refusal, and the refusal then names
 // their line rather than the one that shipped.
-func (s *SetupPublicTestSuite) TestStartSetupWritesOneThatValidates() {
-	at := filepath.Join(s.T().TempDir(), "setup.yaml")
+func (s *ConfigFilePublicTestSuite) TestStartConfigWritesOneThatValidates() {
+	at := filepath.Join(s.T().TempDir(), "config.yaml")
 
-	written, err := sdk.New().StartSetup(at)
+	written, err := sdk.New().StartConfig(at)
 
 	s.Require().NoError(err)
 	s.Require().Equal(at, written.Path)
-	s.Require().Equal(spec.SetupSchema, written.Name)
+	s.Require().Equal(config.Name, written.Name)
 
 	body, err := os.ReadFile(at)
 	s.Require().NoError(err)
@@ -100,7 +100,7 @@ func (s *SetupPublicTestSuite) TestStartSetupWritesOneThatValidates() {
 	// The version this build reads, rather than one typed into the template:
 	// a starter file stating a version the embedded contract does not is one
 	// that fails the moment it is read back.
-	version, err := spec.Version()
+	version, err := config.Version()
 	s.Require().NoError(err)
 	s.Require().Contains(string(body), `version: "`+version+`"`)
 
@@ -113,59 +113,59 @@ func (s *SetupPublicTestSuite) TestStartSetupWritesOneThatValidates() {
 		s.Require().Contains(string(body), field, "the starter setup names no "+field)
 	}
 
-	held, err := sdk.New(sdk.WithSetup(at)).Setup()
+	held, err := sdk.New(sdk.WithConfig(at)).Setup()
 
 	s.Require().NoError(err)
 	s.Require().Nil(held.Slots, "a starter setup places no slots")
 	s.Require().Nil(held.Favourites, "a starter setup lists no favourites")
 }
 
-// TestStartSetupDefaultsToWhereCommandsLook covers the path it takes when
+// TestStartConfigDefaultsToWhereCommandsLook covers the path it takes when
 // nobody names one, which is how it is meant to be run.
-func (s *SetupPublicTestSuite) TestStartSetupDefaultsToWhereCommandsLook() {
+func (s *ConfigFilePublicTestSuite) TestStartConfigDefaultsToWhereCommandsLook() {
 	home := s.T().TempDir()
 	s.T().Setenv("XDG_CONFIG_HOME", home)
 
-	written, err := sdk.New().StartSetup("")
+	written, err := sdk.New().StartConfig("")
 
 	s.Require().NoError(err)
 	s.Require().Equal(
-		filepath.Join(home, "toneharness", "setup.yaml"), written.Path)
+		filepath.Join(home, "toneharness", "config.yaml"), written.Path)
 }
 
-// TestSetupPathReportsNoHomeDirectory covers the one thing that can stop a
+// TestConfigPathReportsNoHomeDirectory covers the one thing that can stop a
 // path being worked out.
 //
 // Unreachable in a correct build, which is why it is reachable from here: this
 // branch decides whether somebody is told where to put a setup or told
 // nothing, and a branch nothing can reach is one nobody has read.
-func (s *SetupPublicTestSuite) TestSetupPathReportsNoHomeDirectory() {
+func (s *ConfigFilePublicTestSuite) TestConfigPathReportsNoHomeDirectory() {
 	s.T().Setenv("XDG_CONFIG_HOME", "")
 	s.T().Cleanup(sdk.HomeDirWas(func() (string, error) {
 		return "", errors.New("nobody lives here")
 	}))
 
-	_, err := sdk.SetupPath()
+	_, err := sdk.ConfigPath()
 
 	s.Require().ErrorContains(err, "finding where a setup lives")
 	s.Require().ErrorContains(err, "nobody lives here")
 
-	// And the same failure reaching StartSetup, which is where somebody
+	// And the same failure reaching StartConfig, which is where somebody
 	// actually meets it: nowhere named means the default path, and there is
 	// no default path to work out.
-	_, err = sdk.New().StartSetup("")
+	_, err = sdk.New().StartConfig("")
 
 	s.Require().ErrorContains(err, "nobody lives here")
 }
 
-// TestStartSetupRefusesATemplateThatHasDrifted covers the guard between the
+// TestStartConfigRefusesATemplateThatHasDrifted covers the guard between the
 // contract and the file this writes.
 //
 // Checked before the file lands rather than after, so a starter setup that
 // does not validate never reaches the disk. The version is what the template
 // takes from the contract, so a version the contract's own pattern refuses is
 // the drift this is for.
-func (s *SetupPublicTestSuite) TestStartSetupRefusesATemplateThatHasDrifted() {
+func (s *ConfigFilePublicTestSuite) TestStartConfigRefusesATemplateThatHasDrifted() {
 	for _, tt := range []struct {
 		name string
 		// version is what the contract's version is made to answer.
@@ -191,9 +191,9 @@ func (s *SetupPublicTestSuite) TestStartSetupRefusesATemplateThatHasDrifted() {
 				return tt.version, tt.fails
 			}))
 
-			at := filepath.Join(s.T().TempDir(), "setup.yaml")
+			at := filepath.Join(s.T().TempDir(), "config.yaml")
 
-			_, err := sdk.New().StartSetup(at)
+			_, err := sdk.New().StartConfig(at)
 
 			s.Require().ErrorContains(err, tt.says)
 
@@ -204,18 +204,18 @@ func (s *SetupPublicTestSuite) TestStartSetupRefusesATemplateThatHasDrifted() {
 	}
 }
 
-// TestStartSetupRefuses covers the answers that are not a file.
-func (s *SetupPublicTestSuite) TestStartSetupRefuses() {
+// TestStartConfigRefuses covers the answers that are not a file.
+func (s *ConfigFilePublicTestSuite) TestStartConfigRefuses() {
 	s.Run("a setup already there", func() {
-		at := filepath.Join(s.T().TempDir(), "setup.yaml")
+		at := filepath.Join(s.T().TempDir(), "config.yaml")
 		s.Require().NoError(os.WriteFile(at, []byte("mine\n"), 0o600))
 
-		_, err := sdk.New().StartSetup(at)
+		_, err := sdk.New().StartConfig(at)
 
 		// Reported rather than replaced, and the whole file left alone. A
 		// setup is hand-authored and the only record of decisions nothing
 		// else keeps, so moving the old one aside is the person's call.
-		s.Require().ErrorIs(err, sdk.ErrSetupExists)
+		s.Require().ErrorIs(err, sdk.ErrConfigExists)
 		s.Require().ErrorContains(err, at)
 
 		body, err := os.ReadFile(at)
@@ -233,9 +233,9 @@ func (s *SetupPublicTestSuite) TestStartSetupRefuses() {
 		// removed when the test ends.
 		s.T().Cleanup(func() { _ = os.Chmod(dir, 0o700) })
 
-		at := filepath.Join(dir, "setup.yaml")
+		at := filepath.Join(dir, "config.yaml")
 
-		_, err := sdk.New().StartSetup(at)
+		_, err := sdk.New().StartConfig(at)
 
 		s.Require().ErrorContains(err, "writing "+at)
 	})
@@ -246,24 +246,24 @@ func (s *SetupPublicTestSuite) TestStartSetupRefuses() {
 		blocked := filepath.Join(s.T().TempDir(), "in-the-way")
 		s.Require().NoError(os.WriteFile(blocked, nil, 0o600))
 
-		_, err := sdk.New().StartSetup(filepath.Join(blocked, "setup.yaml"))
+		_, err := sdk.New().StartConfig(filepath.Join(blocked, "config.yaml"))
 
 		s.Require().ErrorContains(err, "making somewhere for a setup")
 	})
 }
 
-// TestSetupReadsBackWhatWasWritten covers the read the slot map and the
+// TestConfigReadsBackWhatWasWritten covers the read the slot map and the
 // favourites are asked for through.
-func (s *SetupPublicTestSuite) TestSetupReadsBackWhatWasWritten() {
-	at := filepath.Join(s.T().TempDir(), "setup.yaml")
-	s.Require().NoError(os.WriteFile(at, []byte(`schema: Setup
-version: "4.2.0"
+func (s *ConfigFilePublicTestSuite) TestConfigReadsBackWhatWasWritten() {
+	at := filepath.Join(s.T().TempDir(), "config.yaml")
+	s.Require().NoError(os.WriteFile(at, []byte(`schema: Config
+version: "1.0.0"
 favourites: ["11A", "19B"]
 slots:
   - { at: 11A, rig: punk }
 `), 0o600))
 
-	held, err := sdk.New(sdk.WithSetup(at)).Setup()
+	held, err := sdk.New(sdk.WithConfig(at)).Setup()
 
 	s.Require().NoError(err)
 	s.Require().NotNil(held.Favourites)
@@ -273,9 +273,9 @@ slots:
 	s.Require().Equal("punk", (*held.Slots)[0].Rig)
 }
 
-// TestSetupRefusesWhatCannotBeRead covers naming no setup and naming one that
+// TestConfigRefusesWhatCannotBeRead covers naming no setup and naming one that
 // is not there.
-func (s *SetupPublicTestSuite) TestSetupRefusesWhatCannotBeRead() {
+func (s *ConfigFilePublicTestSuite) TestConfigRefusesWhatCannotBeRead() {
 	for _, tt := range []struct {
 		name string
 		at   string
@@ -285,15 +285,15 @@ func (s *SetupPublicTestSuite) TestSetupRefusesWhatCannotBeRead() {
 		{name: "a setup that is not there", at: "no-such-setup.yaml", says: "no-such-setup.yaml"},
 	} {
 		s.Run(tt.name, func() {
-			_, err := sdk.New(sdk.WithSetup(tt.at)).Setup()
+			_, err := sdk.New(sdk.WithConfig(tt.at)).Setup()
 
 			s.Require().ErrorContains(err, tt.says)
 		})
 	}
 }
 
-func TestSetupPublicTestSuite(
+func TestConfigFilePublicTestSuite(
 	t *testing.T,
 ) {
-	suite.Run(t, new(SetupPublicTestSuite))
+	suite.Run(t, new(ConfigFilePublicTestSuite))
 }

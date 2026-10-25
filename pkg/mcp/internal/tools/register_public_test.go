@@ -215,7 +215,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 		"measure_genres", "measure_players", "measure_recordings",
 		"device_hardware", "slots_list", "presets_show", "slots_export", "device_select",
 		"device_current", "device_play", "device_turn", "device_fav",
-		"setup_show",
+		"config_show",
 	}
 
 	tests := []struct {
@@ -239,7 +239,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 				"rigs_records":   true,
 				"measure_genres": true, "measure_players": true,
 				"measure_recordings": true, "device_current": true,
-				"device_fav": false, "setup_show": true,
+				"device_fav": false, "config_show": true,
 			},
 		},
 		{
@@ -254,7 +254,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 				"slots_fill",
 				"slots_copy",
 				"slots_swap",
-				"setup_init",
+				"config_init",
 			),
 			readOnly: map[string]bool{
 				"rigs_new":        false,
@@ -264,7 +264,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 				"slots_fill":      false,
 				"slots_copy":      false,
 				"slots_swap":      false,
-				"setup_init":      false,
+				"config_init":     false,
 			},
 		},
 	}
@@ -296,7 +296,7 @@ func (s *RegisterPublicTestSuite) TestRegister() {
 
 				// A setup is hand-authored and never replaced, so the tool
 				// that writes one is not destructive however it is reached.
-				if tool.Name == "setup_init" {
+				if tool.Name == "config_init" {
 					s.Require().NotNil(tool.Annotations.DestructiveHint)
 					s.False(*tool.Annotations.DestructiveHint)
 				}

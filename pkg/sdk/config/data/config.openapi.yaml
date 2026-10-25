@@ -1,0 +1,417 @@
+openapi: 3.0.3
+info:
+  title: Config
+  version: "1.0.0"
+  description: >
+    What somebody has, and what they want done with it.
+
+
+    **This is the application's configuration and nothing else reads it.** It
+    lives at $XDG_CONFIG_HOME/toneharness/config.yaml, it never leaves the
+    machine it is on, and no rig anybody ships or downloads refers to it.
+
+
+    It is a separate contract from the ToneSpec for that reason. A rig is a
+    document people share: it is published to a marketplace, downloaded by
+    strangers and validated against a version they can read. A preference is
+    not. While the two shared one contract, adding a field here moved the
+    version every shipped rig declares, so somebody's slot map bumped the
+    number the marketplace validates against three times in one day while
+    nothing about rigs changed.
+
+
+    Nothing is copied from the rig contract. The two name a few of the same
+    things — how an instrument is strung and played, and a version line — and
+    they are written here on their own terms, because they mean different
+    things in each: a rig says how somebody else played, and this says how you
+    do.
+
+
+    What is deliberately not here is evidence. A rig cites where a claim came
+    from, because somebody else has to be able to disagree with it. Nobody
+    needs a citation for which strings are on their own bass.
+paths: {}
+components:
+  schemas:
+
+    Config:
+      type: object
+      additionalProperties: false
+      description: >
+        What somebody has.
+
+
+        Separate from the ask because it changes on a different clock. Folding
+        an instrument into a request would mean restating the bass, the
+        strings and the pedal every time, and the twelfth request
+        contradicting the first.
+
+
+        It is also what makes an answer fit the person rather than the record.
+        Every figure in the corpus was measured off somebody else's
+        instrument, and the difference between that and the one being held is
+        a knob position nothing could hold before this existed.
+      required: [schema, version]
+      properties:
+        schema:
+          type: string
+          enum: [Config]
+        version:
+          $ref: "#/components/schemas/ContractVersion"
+        device:
+          $ref: "#/components/schemas/Device"
+        instruments:
+          type: array
+          items: { $ref: "#/components/schemas/Held" }
+          description: >
+            What they play. More than one, because most people have more than
+            one and they do not sound the same.
+        owns:
+          type: array
+          items: { $ref: "#/components/schemas/Owned" }
+          description: >
+            Content the device does not ship with: impulse responses somebody
+            loaded, models somebody bought.
+
+
+            A preset naming one of these on a device that does not have it is
+            silent in that block, and nothing could tell before this: the
+            catalog knows what ships and only the owner knows what else is
+            there.
+        plays_into:
+          $ref: "#/components/schemas/PlaysInto"
+        slots:
+          type: array
+          items: { $ref: "#/components/schemas/Slotted" }
+          description: >
+            Which slot on the pedal each rig is kept in.
+
+
+            Here for the reason `match_loudness` is: it is a preference about
+            somebody's own pedal and nothing anybody else would share. Two
+            people building the same rig want the same preset and not the same
+            slot, because one of them already keeps their own work in bank one.
+
+
+            It is what makes "update my pedal" a thing that can be asked for
+            twice. Without it the slots are remembered by whoever did it last,
+            and a second run either lands somewhere else or has to be told
+            again; with it a rig goes back where it was and a person's muscle
+            memory survives a rebuild.
+
+
+            Absent means nothing is written on anybody's behalf, which is the
+            right default: a device has no undo and a slot holds somebody's
+            work until they say otherwise.
+        favourites:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            pattern: "^[0-9]{1,3}[A-Ca-c]$"
+          description: >
+            The slots worth getting to in one step, in the order to cycle
+            them. `["19A", "24B", "11A"]`.
+
+
+            Here for the reason `slots` is: it is a preference about
+            somebody's own pedal. A person playing has three or four sounds
+            they move between and a hundred and twenty-three they do not, and
+            which three is not something anything could work out.
+
+
+            **The first is where `fav` lands.** One field rather than a list
+            and a separate `start`, because a list already has a first element
+            and a `start` naming a slot outside the list is a thing that would
+            have to be refused. Reordering the list moves the starting point,
+            which is the same decision expressed where it can only be
+            consistent.
+
+
+            Cycling needs to know which favourite is current and that is read
+            off the device rather than remembered here: the rig the pedal is
+            playing is matched against the rig `slots` puts in each of these.
+            Remembering it would be wrong the moment somebody changed preset
+            with a footswitch, which is most of the time. A pedal playing
+            something that is not a favourite goes to the first on the next
+            step.
+
+
+            Absent means `fav` has nothing to go to and says so. The slots
+            themselves need no entry in `slots`; one that has none can still
+            be jumped to, and only recognising it as the current favourite
+            needs the pairing.
+        match_loudness:
+          type: string
+          description: >
+            A rig every build should come out as loud as, by its identifier.
+
+
+            Here rather than on a request because it is a preference about
+            somebody's own pedal: they want their own presets comparable to
+            each other, which is as true at the twelfth build as at the first.
+
+
+            **Why this names a rig rather than stating decibels.** The only
+            loudness anything here has measured is per block, in a chain
+            holding that block alone, and a chain's level is not the sum of
+            its blocks. A cabinet's own reading sits within a decibel of the
+            empty loop while the chain it ends is twenty louder, so a figure
+            in those units is not a level anything comes out at and nobody
+            could obtain one to write down. What is sound is the difference
+            between two cabinets, and that is what this asks for: as loud as
+            that one.
+
+
+            It is worth asking for because the cabinet decides most of it and
+            nothing noticed. Across the 133 cabinets measured here the
+            readings run -67.88dB to -56.56dB, a spread of 11.3dB. A
+            `2x15 Brute` reads -59.62dB and an `8x10 Ampeg SVT-E` -56.76dB,
+            so two chains identical in every other level control sit 2.9dB
+            apart, and the quieter one reads as worse in an A/B almost
+            regardless of its tone.
+
+
+            A build moves the amplifier's own level control to close the gap
+            and says by how much. It reads that control's committed sweep to
+            know what a turn is worth, because a turn is not worth the same on
+            two amplifiers: the five swept here run 19.8dB to 42.3dB across
+            the same control. An amplifier nobody has swept gets the gap
+            reported and nothing moved.
+
+
+            Naming the rig being built changes nothing, which is the right
+            answer rather than an error: it is already as loud as itself.
+        technique:
+          $ref: "#/components/schemas/Technique"
+          description: >
+            How this person plays, which is the other side of the comparison
+            the Technique schema describes.
+
+
+            Here rather than on a request for the reason everything else here
+            is: a right hand changes on the same clock as a bass, which is to
+            say hardly ever, and restating it per request is how the twelfth
+            one comes to contradict the first.
+
+
+            What it buys is the one compensation nothing could make before.
+            A rig tuned from a picked recording is duller played with fingers,
+            because a pick puts high-frequency attack into every note that
+            fingers do not. With both sides stated, the difference is a knob
+            position rather than a surprise at the first rehearsal.
+
+    Device:
+      type: object
+      additionalProperties: false
+      description: >
+        The hardware, which decides what a chain may cost and what it may
+        hold.
+      required: [model]
+      properties:
+        model:
+          type: string
+          minLength: 1
+          description: >
+            As Line 6 name it: "HX Stomp", "Helix Floor".
+
+    Held:
+      type: object
+      additionalProperties: false
+      description: >
+        One instrument somebody owns, described in what changes the sound.
+
+
+        Called Held rather than Instrument since version 2. Both contracts
+        had a schema by that name and they were different things: this is a
+        bass on a stand, and Instrument is which half of a catalog a build
+        may draw from.
+      required: [gear]
+      properties:
+        gear:
+          type: string
+          minLength: 1
+          description: >
+            As a person would say it: "Fender Jazz Bass", "Rickenbacker 4003".
+        strings:
+          $ref: "#/components/schemas/Strings"
+        default:
+          type: boolean
+          default: false
+          description: >
+            The one to assume when a request does not say. The first
+            instrument is assumed when none is marked.
+    Owned:
+      type: object
+      additionalProperties: false
+      description: >
+        One thing on the device that did not ship with it.
+      required: [kind, name]
+      properties:
+        kind:
+          type: string
+          enum: [ir, model]
+          x-enum-varnames: [OwnedIR, OwnedModel]
+        name:
+          type: string
+          minLength: 1
+        slot:
+          type: integer
+          minimum: 0
+          description: >
+            Where it is loaded, for an impulse response, which a preset
+            references by position rather than by name. A preset written
+            against somebody else's numbering points at whatever they happen
+            to have there.
+
+    PlaysInto:
+      type: string
+      enum: [pa, headphones, amp-front, amp-return]
+      description: >
+        What the pedal is plugged into, when somebody says.
+
+
+        Optional, and it changes nothing on its own. It is recorded because
+        the last thing in the path is not always the cabinet block, and a
+        chain built without knowing which is a chain built for a guess.
+
+
+        `pa` is a PA, a full-range speaker or an interface: nothing after the
+        pedal colours the sound, so whatever speaker is wanted has to be in
+        the chain. `headphones` is the same path with the room left out.
+
+
+        The two amp entries are not one answer. `amp-front` goes into the
+        instrument input, so the amplifier's own preamp is in front of its
+        speaker and the chain is stacked on top of a whole amplifier.
+        `amp-return` goes into the effects return, which bypasses that preamp
+        and leaves the power section and the speaker.
+
+
+        **This does not say whether to use a cabinet block.** That is the
+        question it exists to let somebody ask rather than the answer: a
+        cabinet block is how a chain is made to sound like a recorded rig, so
+        somebody chasing a record may want one whatever they are plugged into,
+        and somebody who wants their own amplifier to be the sound may not.
+        Both are reasonable and the difference is taste rather than fact.
+
+
+        What it is not is a tone correction. Nothing here has measured an
+        amplifier in anybody's room, and an equalisation applied for one would
+        be a number nobody took. Every figure this project ships was measured
+        through a cabinet block into a computer, which is one of these four,
+        and a reading is worth less to somebody on another.
+
+    Slotted:
+      type: object
+      additionalProperties: false
+      description: >
+        One rig and the slot it lives in.
+
+
+        A pair rather than a map keyed by slot, because the order is worth
+        keeping: somebody reading this wants to see the layout they chose, and
+        a map comes back in whatever order it was parsed.
+      required: [at, rig]
+      properties:
+        at:
+          type: string
+          pattern: "^[0-9]{1,3}[A-Ca-c]$"
+          description: >
+            The slot, as the pedal prints it: `11A`, `03C`.
+
+
+            Named the way the hardware names it rather than by a number from
+            zero, because that is what somebody reads off the screen while
+            deciding. The commands take both and this takes the one a person
+            would write down.
+        rig:
+          type: string
+          minLength: 1
+          description: >
+            The rig that goes there, by its identifier, the way `--id` names
+            one.
+
+    Strings:
+      type: string
+      description: >
+        What is on it.
+
+
+        Flatwounds and roundwounds are a larger difference than most pedals,
+        and the difference between what a record was made on and what is being
+        held is a correction the answer can make. Unknown is honest and
+        useful: it says nobody checked rather than implying either.
+      enum: [round, flat, tape, unknown]
+      x-enum-varnames: [StringsRound, StringsFlat, StringsTape, StringsUnknown]
+
+    Technique:
+      type: object
+      additionalProperties: false
+      description: >
+        How the instrument is played, where it changes the sound. Not modelled
+        by any device, and it still decides what the rig has to do.
+
+
+        Three things rather than a sentence, because three things are being
+        said and a sentence has to be parsed to get at them.
+
+
+        Two places, and they are different claims. On a subject this is how
+        the player being emulated played. On a Setup it is how the person
+        holding the instrument plays.
+
+
+        The distinction is not pedantry. A pick puts high-frequency attack
+        into every note that fingers do not, so a rig tuned from a picked
+        recording sounds duller played fingered, and the fix is in the amp and
+        the compressor rather than in the player. Stating both sides lets the
+        difference be compensated rather than discovered, and that comparison
+        needs both to be the same kind of value: two `attack` values can be
+        held against each other, and two sentences cannot.
+      required: [attack]
+      properties:
+        attack:
+          type: string
+          description: >
+            What sets the string moving. Required, because there is no playing
+            without one.
+          enum: [pick, fingers, slap, thumb, hybrid]
+          x-enum-varnames:
+            [AttackPick, AttackFingers, AttackSlap, AttackThumb, AttackHybrid]
+        position:
+          type: string
+          description: >
+            Where along the string, which decides how much fundamental there
+            is against harmonics. Omit it where it does not matter.
+          enum: [bridge, middle, neck]
+          x-enum-varnames: [PositionBridge, PositionMiddle, PositionNeck]
+        muting:
+          type: string
+          description: >
+            What damps the string. Omit it where it does not matter, and say
+            `none` where the notes ringing on is part of the sound rather than
+            the absence of a decision.
+          enum: [none, palm]
+          x-enum-varnames: [MutingNone, MutingPalm]
+
+    ContractVersion:
+      type: string
+      pattern: "^\\d+\\.\\d+\\.\\d+$"
+      description: >
+        Which version of this contract the document was written against, as
+        `info.version` states it: "4.0.0".
+
+
+        Required, so that a document always says. Without it a reader cannot
+        tell a document that predates a field from one that leaves the field
+        out, and both read as a document that is simply wrong. The major is
+        what carries the warning: it moves when something that used to
+        validate stops, so a document whose major is not the reader's is one
+        the reader should refuse rather than guess at. A later minor or patch
+        is accepted, because everything either adds or rewords.
+
+
+        The reader checks the major. The pattern here only holds it to
+        major.minor.patch, since a schema cannot compare a document against
+        the version of the schema reading it.

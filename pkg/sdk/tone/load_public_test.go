@@ -213,132 +213,6 @@ rig:
 	}
 }
 
-// TestLoadSetup covers LoadSetup, which reads what somebody has and checks it
-// against its own contract.
-//
-// One method and one table, so a case is a row rather than a file.
-func (s *LoadPublicTestSuite) TestLoadSetup() {
-	for _, tt := range []struct {
-		name string
-		then func()
-	}{
-		{
-			// The other document.
-			name: "reads a setup",
-			then: func() {
-				setup, err := tone.LoadSetup(strings.NewReader(`
-schema: Setup
-version: "4.0.0"
-device:
-  model: HX Stomp
-instruments:
-  - gear: Fender Jazz Bass
-    strings: flat
-    default: true
-owns:
-  - kind: ir
-    name: Owned 4x10
-    slot: 3
-`))
-
-				s.Require().NoError(err)
-				s.Require().Equal("HX Stomp", setup.Device.Model)
-				s.Require().Equal(tone.StringsFlat, *(*setup.Instruments)[0].Strings)
-				s.Require().Equal(tone.OwnedIR, (*setup.Owns)[0].Kind)
-			},
-		},
-		{
-			// Plays_into.
-			//
-			// Optional, because it is a thing somebody may not have said and
-			// a setup written before the field existed is still a setup. Four
-			// spellings and nothing else, because the two amplifier entries
-			// are different questions — the instrument input has the
-			// amplifier's own preamp in front of its speaker, and the effects
-			// return does not — and a free-string field would let somebody
-			// write "amp" and mean either.
-			name: "what the pedal is plugged into is optional and spelt",
-			then: func() {
-				held, err := tone.LoadSetup(strings.NewReader(
-					"schema: Setup\nversion: \"4.0.0\"\ndevice:\n  model: HX Stomp\n"))
-
-				s.Require().NoError(err)
-				s.Require().Nil(held.PlaysInto, "a setup that does not say says nothing")
-
-				for _, want := range []tone.PlaysInto{
-					tone.Pa, tone.Headphones, tone.AmpFront, tone.AmpReturn,
-				} {
-					got, err := tone.LoadSetup(strings.NewReader(
-						"schema: Setup\nversion: \"4.0.0\"\ndevice:\n  model: HX Stomp\nplays_into: " +
-							string(want) + "\n"))
-
-					s.Require().NoError(err, string(want))
-					s.Require().Equal(want, *got.PlaysInto)
-				}
-
-				_, err = tone.LoadSetup(strings.NewReader(
-					"schema: Setup\nversion: \"4.0.0\"\ndevice:\n  model: HX Stomp\nplays_into: amp\n"))
-
-				s.Require().ErrorIs(err, tone.ErrInvalid,
-					"`amp` is two different paths, so the contract will not take it")
-			},
-		},
-		{
-			// Passing a Setup where the ask goes.
-			//
-			// The enum would refuse it anyway and say `schema` is not an
-			// allowed value, which is true and unhelpful to somebody who
-			// passed the wrong file.
-			name: "the wrong document says so",
-			then: func() {
-				_, err := tone.Load(strings.NewReader("schema: Setup\nversion: \"4.0.0\"\n"))
-
-				s.Require().ErrorIs(err, tone.ErrInvalid)
-				s.Require().Contains(err.Error(), "says Setup, so this is not a ToneSpec")
-
-				_, err = tone.LoadSetup(strings.NewReader("schema: ToneSpec\nversion: \"4.0.0\"\n"))
-				s.Require().Contains(err.Error(), "says ToneSpec, so this is not a Setup")
-			},
-		},
-		{
-			// The reader itself failing.
-			name: "a read failure is reported",
-			then: func() {
-				_, err := tone.LoadSetup(iotest{})
-
-				s.Require().ErrorContains(err, "reading the Setup")
-			},
-		},
-		{
-			// The case the schema allows.
-			//
-			// JSON Schema calls 2000000000000000000000 an integer and Go's
-			// int cannot hold it, so without the second check this returns a
-			// document with the field silently zeroed and no error at all.
-			// The contract caps a year at 2100, so the number has to arrive
-			// somewhere uncapped: `slot` on an owned impulse response has a
-			// minimum and no maximum.
-			name: "a number too large for the types is refused",
-			then: func() {
-				_, err := tone.LoadSetup(strings.NewReader(`
-schema: Setup
-version: "4.0.0"
-owns:
-  - kind: ir
-    name: Owned 4x10
-    slot: 2000000000000000000000
-`))
-
-				s.Require().ErrorContains(err, "decoding the Setup")
-			},
-		},
-	} {
-		s.Run(tt.name, func() {
-			tt.then()
-		})
-	}
-}
-
 // TestWrite covers Write, which renders a request.
 //
 // One method and one table, so a case is a row rather than a file.
@@ -393,54 +267,6 @@ func (s *LoadPublicTestSuite) TestWrite() {
 	}
 }
 
-// TestWriteSetup covers WriteSetup, which renders what somebody has.
-//
-// One method and one table, so a case is a row rather than a file.
-func (s *LoadPublicTestSuite) TestWriteSetup() {
-	for _, tt := range []struct {
-		name string
-		then func()
-	}{
-		{
-			// The other document's round trip.
-			name: "writes a setup",
-			then: func() {
-				setup := tone.Setup{
-					Schema: "Setup",
-					Device: &tone.Device{Model: "HX Stomp"},
-				}
-
-				var buf bytes.Buffer
-				s.Require().NoError(tone.WriteSetup(&buf, setup))
-
-				back, err := tone.LoadSetup(&buf)
-				s.Require().NoError(err)
-				s.Require().Equal("HX Stomp", back.Device.Model)
-			},
-		},
-		{
-			// The check before the render.
-			//
-			// Writing one that does not meet its own contract would put a
-			// file into the world that nothing else will accept.
-			name: "an invalid document is not written",
-			then: func() {
-				var buf bytes.Buffer
-
-				s.Require().ErrorIs(
-					tone.Write(&buf, tone.Spec{}), tone.ErrInvalid)
-				s.Require().ErrorIs(
-					tone.WriteSetup(&buf, tone.Setup{}), tone.ErrInvalid)
-				s.Require().Empty(buf.String())
-			},
-		},
-	} {
-		s.Run(tt.name, func() {
-			tt.then()
-		})
-	}
-}
-
 // minimalRig is the least a document may say about gear, which the contract
 // requires: what it is played on, and one block.
 func minimalRig() tone.Rig {
@@ -450,15 +276,6 @@ func minimalRig() tone.Rig {
 			{Role: tone.RoleAmp, Gear: "Ampeg SVT"},
 		},
 	}
-}
-
-// iotest is a reader that always fails.
-type iotest struct{}
-
-func (iotest) Read(
-	[]byte,
-) (int, error) {
-	return 0, errors.New("no")
 }
 
 // broken is a writer that always fails.

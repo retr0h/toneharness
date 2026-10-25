@@ -51,6 +51,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
@@ -146,7 +147,7 @@ func (n Notes) Unmet() Notes {
 // the ask resolves against things that move, and the answer does not.
 func Translate(
 	spec tone.Ask,
-	setup tone.Setup,
+	setup config.Config,
 	deps Deps,
 ) (rig.Spec, Notes, error) {
 	var notes Notes
@@ -214,7 +215,7 @@ func Translate(
 // `amp-front` does not. No claim is made about what two sounds like, because
 // nothing here has measured an amplifier in anybody's room.
 func speakers(
-	setup tone.Setup,
+	setup config.Config,
 	chain []rig.ChainEntry,
 	notes *Notes,
 ) {
@@ -223,7 +224,7 @@ func speakers(
 	}
 
 	into := *setup.PlaysInto
-	if into != tone.AmpFront && into != tone.AmpReturn {
+	if into != config.AmpFront && into != config.AmpReturn {
 		return
 	}
 
@@ -308,7 +309,7 @@ func unknownWords(
 // asking what a record sounds like has not necessarily said what they own,
 // and the measurements name the device they came from.
 func agrees(
-	setup tone.Setup,
+	setup config.Config,
 	deps Deps,
 	notes *Notes,
 ) error {
@@ -356,7 +357,7 @@ func agrees(
 // may sit wrong, and knows it was noticed rather than missed.
 func strung(
 	spec tone.Ask,
-	setup tone.Setup,
+	setup config.Config,
 	notes *Notes,
 ) {
 	made := stringsOf(spec)
@@ -399,7 +400,7 @@ func stringsOf(
 // same instrument instrumentFor picks. Two answers about one instrument would be
 // worse than none.
 func heldStrings(
-	setup tone.Setup,
+	setup config.Config,
 ) string {
 	if setup.Instruments == nil {
 		return ""
@@ -423,7 +424,7 @@ func heldStrings(
 // chainFor is the signal path a request asks for.
 func chainFor(
 	spec tone.Ask,
-	setup tone.Setup,
+	setup config.Config,
 	deps Deps,
 	notes *Notes,
 ) ([]rig.ChainEntry, error) {
@@ -1105,7 +1106,7 @@ type placed struct {
 // can reach with a foot and the whole reason for it was the foot.
 func stompedFor(
 	spec tone.Ask,
-	setup tone.Setup,
+	setup config.Config,
 	deps Deps,
 	notes *Notes,
 ) []placed {
@@ -1443,7 +1444,7 @@ func namedGear(
 // was, so the comparison is between two of the same kind of thing.
 func nearestTo(
 	spec tone.Ask,
-	setup tone.Setup,
+	setup config.Config,
 	deps Deps,
 	category catalog.Category,
 	notes *Notes,
@@ -1466,7 +1467,7 @@ func nearestTo(
 func nearestOf(
 	at aim,
 	spec tone.Ask,
-	setup tone.Setup,
+	setup config.Config,
 	deps Deps,
 	category catalog.Category,
 	notes *Notes,
@@ -1792,7 +1793,7 @@ func asPlayed(
 // namedGear and is unaffected, because naming it is a decision and this is not.
 func reachable(
 	ranked []measured.Match,
-	setup tone.Setup,
+	setup config.Config,
 	cat *catalog.Catalog,
 	instrument string,
 ) []measured.Match {
@@ -1800,7 +1801,7 @@ func reachable(
 
 	if setup.Owns != nil {
 		for _, held := range *setup.Owns {
-			if held.Kind == tone.OwnedIR {
+			if held.Kind == config.OwnedIR {
 				loaded[strings.ToLower(held.Name)] = true
 			}
 		}
@@ -2990,7 +2991,7 @@ func order(
 // A bass where neither says, and it says so.
 func instrumentFor(
 	spec tone.Ask,
-	setup tone.Setup,
+	setup config.Config,
 	notes *Notes,
 ) rig.Instrument {
 	if setup.Instruments != nil {
@@ -3039,7 +3040,7 @@ func instrumentFor(
 // instrument field may not be empty. Neither is named for the question they
 // share, because merging them would make one of the two answers wrong.
 func gearIsFor(
-	held tone.Held,
+	held config.Held,
 	notes *Notes,
 ) rig.Instrument {
 	name := strings.ToLower(held.Gear)

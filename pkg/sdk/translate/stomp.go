@@ -27,6 +27,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -227,7 +228,7 @@ func askedFor(
 func Stompable(
 	id string,
 	spec rig.Spec,
-	setup tone.Setup,
+	setup config.Config,
 	deps Deps,
 	notes *Notes,
 ) []Stomped {

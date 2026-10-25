@@ -43,8 +43,8 @@ import (
 // generator would move the hash on its own and the whole point is that
 // changing the contract costs a decision about which number moves.
 const (
-	contractVersion = "4.2.0"
-	contractSHA     = "71cd799bc361c98be2c5b8cb21d99872ecc444a391d2c2b0b7108ca151fb2830"
+	contractVersion = "4.0.0"
+	contractSHA     = "f68c3d3eea23d3e98e975c233d960c3ee8731db7d692278d5904cfe597ba10e9"
 )
 
 // semver is major.minor.patch and nothing else. No build metadata and no
@@ -225,19 +225,11 @@ rig:
     - {role: amp, gear: Ampeg SVT}
 `,
 		},
-		{
-			name: "a Setup",
-			raw:  "schema: Setup\n",
-		},
 	} {
 		s.Run(tt.name, func() {
 			var err error
 
-			if strings.Contains(tt.raw, "ToneSpec") {
-				_, err = tone.Load(strings.NewReader(tt.raw))
-			} else {
-				_, err = tone.LoadSetup(strings.NewReader(tt.raw))
-			}
+			_, err = tone.Load(strings.NewReader(tt.raw))
 
 			s.Require().ErrorIs(err, tone.ErrInvalid)
 			s.Require().ErrorContains(err, "version")

@@ -26,11 +26,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/retr0h/toneharness/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 )
 
-// ErrSetupExists is returned rather than writing over one somebody has.
-var ErrSetupExists = errors.New("a setup is already there")
+// ErrConfigExists is returned rather than writing over one somebody has.
+var ErrConfigExists = errors.New("a setup is already there")
 
 // Where the two things a starter setup needs come from, as variables so both
 // failures can be exercised.
@@ -42,10 +42,10 @@ var ErrSetupExists = errors.New("a setup is already there")
 // message saying why not.
 var (
 	homeDir         = os.UserHomeDir
-	contractVersion = tone.Version
+	contractVersion = config.Version
 )
 
-// SetupPath is where somebody's own setup lives.
+// ConfigPath is where somebody's own setup lives.
 //
 // Resolved the way rigs and backups resolve theirs: the XDG directory for the
 // kind of file it is, and the documented fallback under the home directory
@@ -53,13 +53,13 @@ var (
 // data or state, so it is the config directory.
 //
 // **Exported rather than applied here.** The library reads none of this tool's
-// environment and nothing defaults to this path: a Client with no WithSetup
+// environment and nothing defaults to this path: a Client with no WithConfig
 // has no setup, which is what keeps a test from reading whatever the machine
 // running it happens to have. The commands and the MCP server are what pass
 // it in, so the default is a decision of the thing a person is talking to.
-func SetupPath() (string, error) {
+func ConfigPath() (string, error) {
 	if config := os.Getenv("XDG_CONFIG_HOME"); config != "" {
-		return filepath.Join(config, "toneharness", "setup.yaml"), nil
+		return filepath.Join(config, "toneharness", "config.yaml"), nil
 	}
 
 	home, err := homeDir()
@@ -67,7 +67,7 @@ func SetupPath() (string, error) {
 		return "", fmt.Errorf("finding where a setup lives: %w", err)
 	}
 
-	return filepath.Join(home, ".config", "toneharness", "setup.yaml"), nil
+	return filepath.Join(home, ".config", "toneharness", "config.yaml"), nil
 }
 
 // Setup answers with what the person has, as the document says it.
@@ -76,11 +76,11 @@ func SetupPath() (string, error) {
 // "which slots is this managing" is a question worth asking on its own: the
 // slot map and the favourites are the only record of which presets belong to
 // this tool rather than to whoever was holding the pedal.
-func (c *Client) Setup() (tone.Setup, error) {
-	return c.setup()
+func (c *Client) Setup() (config.Config, error) {
+	return c.loadConfig()
 }
 
-// StartSetup writes a setup somebody can edit, at the path given.
+// StartConfig writes a setup somebody can edit, at the path given.
 //
 // **Why a command rather than a page telling somebody what to type.** Every
 // field here is optional and the document is useless until several of them
@@ -96,11 +96,11 @@ func (c *Client) Setup() (tone.Setup, error) {
 //
 // Checked through the loader before it lands rather than after, so a template
 // that has drifted from the contract never reaches the disk.
-func (c *Client) StartSetup(
+func (c *Client) StartConfig(
 	at string,
 ) (Written, error) {
 	if at == "" {
-		named, err := SetupPath()
+		named, err := ConfigPath()
 		if err != nil {
 			return Written{}, err
 		}
@@ -109,7 +109,7 @@ func (c *Client) StartSetup(
 	}
 
 	if _, err := os.Stat(at); err == nil {
-		return Written{}, fmt.Errorf("%w: %s", ErrSetupExists, at)
+		return Written{}, fmt.Errorf("%w: %s", ErrConfigExists, at)
 	}
 
 	body, err := starterSetup()
@@ -122,7 +122,7 @@ func (c *Client) StartSetup(
 	// edits for an hour before the first refusal, and the refusal then names
 	// their line rather than the one that shipped. Checking first means the
 	// bad one never reaches the disk at all.
-	if _, err := tone.LoadSetup(strings.NewReader(body)); err != nil {
+	if _, err := config.Load(strings.NewReader(body)); err != nil {
 		return Written{}, fmt.Errorf("the starter setup does not validate: %w", err)
 	}
 
@@ -134,10 +134,10 @@ func (c *Client) StartSetup(
 		return Written{}, fmt.Errorf("writing %s: %w", at, err)
 	}
 
-	return Written{Path: at, Name: tone.SetupSchema}, nil
+	return Written{Path: at, Name: config.Name}, nil
 }
 
-// starterSetup is the file StartSetup writes.
+// starterSetup is the file StartConfig writes.
 //
 // Commented rather than bare, because a document of optional fields with
 // nothing filled in says nothing about what to fill in. Every line that would
@@ -158,7 +158,7 @@ func starterSetup() (string, error) {
 # Read by every build, so a rig comes out fitting your instrument and your
 # pedal rather than the record it was measured from. Nothing here is required
 # beyond the two lines at the top; uncomment what applies.
-schema: Setup
+schema: Config
 version: "` + version + `"
 
 # Which pedal. Decides how many blocks a build may use and which models exist.

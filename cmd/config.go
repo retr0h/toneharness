@@ -25,26 +25,26 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk"
 )
 
-// setupCmd represents the setup command.
-var setupCmd = &cobra.Command{
-	Use:   "setup",
+// configCmd represents the setup command.
+var configCmd = &cobra.Command{
+	Use:   "config",
 	Short: "Work with the file describing what you have",
 	Args:  cobra.NoArgs,
 	Long: `Read and start the document that says what you own.
 
-A Setup is one of the two documents here and the only one that is about the
+A config is the application's own file and the only one that is about the
 person rather than the sound. A rig says what gear makes a noise; a setup says
 which pedal you have it on, which bass you are holding, where each rig lives on
 that pedal and which slots you reach for. It changes when you buy something
 rather than when you want to sound different, which is why it is a file of its
 own and not part of every request.
 
-It lives at ` + "`$XDG_CONFIG_HOME/toneharness/setup.yaml`" + `, and every command
+It lives at ` + "`$XDG_CONFIG_HOME/toneharness/config.yaml`" + `, and every command
 that reads one falls back to there when ` + "`--setup`" + ` names nothing. So the
 usual way to use it is to run ` + "`setup init`" + ` once and never name it again.`,
 }
 
-// ownSetup is the setup to read: the one named, or the person's own.
+// ownConfig is the setup to read: the one named, or the person's own.
 //
 // The fallback is here rather than in the library on purpose. The SDK reads
 // none of this tool's environment, so a Client built with no setup has none,
@@ -53,14 +53,14 @@ usual way to use it is to run ` + "`setup init`" + ` once and never name it agai
 //
 // Nowhere to look is not an error. A command that would have read a setup it
 // cannot find reads none, which is what it did before any of this existed.
-func ownSetup(
+func ownConfig(
 	named string,
 ) string {
 	if named != "" {
 		return named
 	}
 
-	at, err := sdk.SetupPath()
+	at, err := sdk.ConfigPath()
 	if err != nil {
 		return ""
 	}
@@ -69,5 +69,5 @@ func ownSetup(
 }
 
 func init() {
-	rootCmd.AddCommand(setupCmd)
+	rootCmd.AddCommand(configCmd)
 }

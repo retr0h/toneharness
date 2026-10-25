@@ -90,7 +90,7 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 
 				s.Require().NoError(cli.ToneBuild(&buf, cli.ToneBuildOptions{
 					Ask:   s.examples("like-a-record.yaml"),
-					Setup: s.examples("mine.setup.yaml"),
+					Setup: s.examples("mine.config.yaml"),
 					Out:   out,
 				}))
 
@@ -255,7 +255,7 @@ rig:
 					{
 						name: "an ask that is not a ToneSpec",
 						opts: cli.ToneBuildOptions{
-							Ask: s.file("ask.yaml", "schema: Setup\nversion: \"4.0.0\"\n"),
+							Ask: s.file("ask.yaml", "schema: Config\nversion: \"1.0.0\"\n"),
 						},
 						want: "this is not a ToneSpec",
 					},

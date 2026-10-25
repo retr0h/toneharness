@@ -26,7 +26,7 @@ import (
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/retr0h/toneharness/pkg/sdk"
-	"github.com/retr0h/toneharness/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 )
 
 // steps are what device_fav's step takes.
@@ -74,15 +74,15 @@ func (h *handlers) deviceFav(
 		chosen.At, chosen.Position, chosen.Of, chosen.From), chosen, nil
 }
 
-// setupShow answers with what the person has.
-func (h *handlers) setupShow(
+// configShow answers with what the person has.
+func (h *handlers) configShow(
 	_ context.Context,
 	_ *gomcp.CallToolRequest,
 	_ None,
-) (*gomcp.CallToolResult, tone.Setup, error) {
+) (*gomcp.CallToolResult, config.Config, error) {
 	held, err := h.client.Setup()
 	if err != nil {
-		return nil, tone.Setup{}, err
+		return nil, config.Config{}, err
 	}
 
 	slots := 0
@@ -99,13 +99,13 @@ func (h *handlers) setupShow(
 		slots, favourites), held, nil
 }
 
-// setupInit writes a setup somebody can edit.
-func (h *handlers) setupInit(
+// configInit writes a setup somebody can edit.
+func (h *handlers) configInit(
 	_ context.Context,
 	_ *gomcp.CallToolRequest,
-	in StartingSetup,
+	in StartingConfig,
 ) (*gomcp.CallToolResult, sdk.Written, error) {
-	written, err := h.client.StartSetup(in.At)
+	written, err := h.client.StartConfig(in.At)
 	if err != nil {
 		return nil, sdk.Written{}, err
 	}

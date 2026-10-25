@@ -98,7 +98,7 @@ func init() {
 	f.StringVar(&presetsMakeClient.device, "device", "", deviceUsage)
 	f.StringVar(&presetsMakeClient.stats, "stats", "",
 		"measured corpus statistics to use instead of the built-in ones")
-	f.StringVar(&presetsMakeClient.setup, "setup", "", setupUsage)
+	f.StringVar(&presetsMakeClient.config, "config", "", configUsage)
 	f.StringVar(&presetsMakeClient.sweeps, "sweeps", "resources/sweeps/hx-stomp",
 		"the committed curves a stated output level is reached with. They say "+
 			"what a turn of an amplifier's level control is worth, which is not the "+

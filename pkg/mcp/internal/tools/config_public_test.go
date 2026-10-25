@@ -28,7 +28,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/mcp/internal/tools/mocks"
 	"github.com/retr0h/toneharness/pkg/sdk"
-	"github.com/retr0h/toneharness/pkg/sdk/tone"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 )
 
 // SetupPublicTestSuite covers the tools that read the person's own setup, and
@@ -52,13 +52,13 @@ func (s *SetupPublicTestSuite) SetupSubTest() {
 func setupWith(
 	slots [][2]string,
 	favourites []string,
-) tone.Setup {
-	out := tone.Setup{Schema: tone.SetupSchema, Version: "4.2.0"}
+) config.Config {
+	out := config.Config{Schema: config.Name, Version: "4.2.0"}
 
 	if len(slots) > 0 {
-		placed := make([]tone.Slotted, 0, len(slots))
+		placed := make([]config.Slotted, 0, len(slots))
 		for _, pair := range slots {
-			placed = append(placed, tone.Slotted{At: pair[0], Rig: pair[1]})
+			placed = append(placed, config.Slotted{At: pair[0], Rig: pair[1]})
 		}
 
 		out.Slots = &placed
@@ -181,7 +181,7 @@ func (s *SetupPublicTestSuite) TestDeviceFav() {
 func (s *SetupPublicTestSuite) TestSetupShow() {
 	for _, tt := range []struct {
 		name  string
-		held  tone.Setup
+		held  config.Config
 		fails error
 		want  string
 		err   bool
@@ -217,13 +217,13 @@ func (s *SetupPublicTestSuite) TestSetupShow() {
 			pedal := mocks.NewMockSession(s.ctrl)
 			held(s.client, pedal)
 
-			res := call(s.T(), connect(s.T(), s.client, true), "setup_show", map[string]any{})
+			res := call(s.T(), connect(s.T(), s.client, true), "config_show", map[string]any{})
 
 			s.Equal(tt.err, res.IsError)
 			s.Contains(text(s.T(), res), tt.want)
 
 			if !tt.err {
-				var got tone.Setup
+				var got config.Config
 				structured(s.T(), res, &got)
 
 				s.Equal(tt.held.Favourites, got.Favourites)
@@ -264,19 +264,19 @@ func (s *SetupPublicTestSuite) TestSetupInit() {
 			// setup is the only record of decisions nothing else keeps.
 			name:  "a setup already there",
 			args:  map[string]any{},
-			fails: sdk.ErrSetupExists,
+			fails: sdk.ErrConfigExists,
 			want:  "a setup is already there",
 			err:   true,
 		},
 	} {
 		s.Run(tt.name, func() {
-			s.client.EXPECT().StartSetup(tt.at).
+			s.client.EXPECT().StartConfig(tt.at).
 				Return(tt.written, tt.fails).Times(1)
 
 			pedal := mocks.NewMockSession(s.ctrl)
 			held(s.client, pedal)
 
-			res := call(s.T(), connect(s.T(), s.client, true), "setup_init", tt.args)
+			res := call(s.T(), connect(s.T(), s.client, true), "config_init", tt.args)
 
 			s.Equal(tt.err, res.IsError)
 			s.Contains(text(s.T(), res), tt.want)

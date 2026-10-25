@@ -38,6 +38,7 @@ import (
 	"path/filepath"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
@@ -82,10 +83,10 @@ func Resolve(
 	// A setup is optional. Somebody asking what a record sounds like has not
 	// necessarily said what they own, and the answer says what it assumed
 	// rather than refusing.
-	setup := tone.Setup{Schema: tone.SetupSchema}
+	setup := config.Config{Schema: config.Name}
 
 	if in.Setup != "" {
-		if setup, err = read(in.Setup, tone.LoadSetup); err != nil {
+		if setup, err = read(in.Setup, config.Load); err != nil {
 			return result.Resolved{}, err
 		}
 	}

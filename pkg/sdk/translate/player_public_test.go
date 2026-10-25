@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
 	"github.com/retr0h/toneharness/pkg/sdk/translate"
@@ -112,7 +113,7 @@ func (s *PlayerTargetPublicTestSuite) TestAPlayerIsATarget() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			_, notes, err := translate.Translate(tt.ask, tone.Setup{}, s.deps)
+			_, notes, err := translate.Translate(tt.ask, config.Config{}, s.deps)
 			s.Require().NoError(err)
 
 			said := ""
@@ -316,7 +317,7 @@ func (s *PlayerTargetPublicTestSuite) TestAScatteredPlayerSaysSo() {
 	_, notes, err := translate.Translate(tone.Ask{
 		Genre: []string{"punk"}, Instrument: &bass,
 		Like: &tone.Like{Artist: &dukowski},
-	}, tone.Setup{}, s.deps)
+	}, config.Config{}, s.deps)
 	s.Require().NoError(err)
 
 	said := ""

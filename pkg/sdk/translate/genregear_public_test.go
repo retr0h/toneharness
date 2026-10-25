@@ -31,6 +31,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/config"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/rig"
 	"github.com/retr0h/toneharness/pkg/sdk/tone"
@@ -136,7 +137,7 @@ func (s *GenreGearPublicTestSuite) TestAGenreTakesTheGearItsPlayersUsed() {
 			deps.RigNamed = s.rigNamed(tt.amps)
 
 			built, notes, err := translate.Translate(
-				s.forGenre("punk"), tone.Setup{}, deps)
+				s.forGenre("punk"), config.Config{}, deps)
 			s.Require().NoError(err)
 
 			said := ""
@@ -173,7 +174,7 @@ func (s *GenreGearPublicTestSuite) TestAGenreTakesTheGearItsPlayersUsed() {
 // switch instead of being averaged away.
 func (s *GenreGearPublicTestSuite) TestAGenreGetsEffectsSwitchedOff() {
 	built, _, err := translate.Translate(
-		s.forGenre("punk"), tone.Setup{}, s.deps)
+		s.forGenre("punk"), config.Config{}, s.deps)
 	s.Require().NoError(err)
 
 	stompable := 0
@@ -205,7 +206,7 @@ func (s *GenreGearPublicTestSuite) TestAnEffectIsSetFromItsSweep() {
 	}
 
 	_, notes, err := translate.Translate(
-		s.forGenre("punk"), tone.Setup{}, deps)
+		s.forGenre("punk"), config.Config{}, deps)
 	s.Require().NoError(err)
 
 	said := ""
@@ -252,7 +253,7 @@ func (s *GenreGearPublicTestSuite) TestTheNearestEffectThatChangesTheNotesIsRefu
 	deps.Measured.Blocks[plain] = was
 
 	built, notes, err := translate.Translate(
-		s.forGenre("punk"), tone.Setup{}, deps)
+		s.forGenre("punk"), config.Config{}, deps)
 	s.Require().NoError(err)
 
 	said := ""
@@ -278,7 +279,7 @@ func (s *GenreGearPublicTestSuite) TestTheNearestEffectThatChangesTheNotesIsRefu
 // TestAnUnmeasuredGenreGetsNothing covers the genre nobody can aim at.
 func (s *GenreGearPublicTestSuite) TestAnUnmeasuredGenreGetsNothing() {
 	built, _, err := translate.Translate(
-		s.forGenre("not-a-measured-genre"), tone.Setup{}, s.deps)
+		s.forGenre("not-a-measured-genre"), config.Config{}, s.deps)
 	// Either it refuses outright or it builds nothing stompable. Both are
 	// honest; what must not happen is a drive chosen against figures no
 	// records back.
@@ -335,7 +336,7 @@ func (s *GenreGearPublicTestSuite) TestAnEffectIsTunedFromItsSweep() {
 	}
 
 	built, notes, err := translate.Translate(
-		s.forGenre("rock"), tone.Setup{}, deps)
+		s.forGenre("rock"), config.Config{}, deps)
 	s.Require().NoError(err)
 
 	said := ""
@@ -547,7 +548,7 @@ func (s *GenreGearPublicTestSuite) TestStompedForRefuses() {
 			notes := translate.Notes{}
 
 			s.Require().Empty(translate.StompedFor(
-				tt.ask, tone.Setup{}, s.deps, &notes))
+				tt.ask, config.Config{}, s.deps, &notes))
 		})
 	}
 }
@@ -920,7 +921,7 @@ func (s *GenreGearPublicTestSuite) TestAGenreChoosesItsMicrophone() {
 
 	for _, slug := range []string{"punk", "metal"} {
 		built, _, err := translate.Translate(
-			s.forGenre(slug), tone.Setup{}, deps)
+			s.forGenre(slug), config.Config{}, deps)
 		s.Require().NoError(err)
 
 		for _, e := range built.Chain {

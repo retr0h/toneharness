@@ -27,7 +27,7 @@ import (
 
 var (
 	toneBuildAsk    string
-	toneBuildSetup  string
+	toneBuildConfig string
 	toneBuildOut    string
 	toneBuildClient clientFlags
 )
@@ -60,7 +60,7 @@ Compile what comes out with ` + "`toneharness presets compile --rig`" + `.`,
 		return cli.ToneBuild(cmd.OutOrStdout(), cli.ToneBuildOptions{
 			Client: toneBuildClient.client(),
 			Ask:    toneBuildAsk,
-			Setup:  toneBuildSetup,
+			Setup:  toneBuildConfig,
 			Out:    toneBuildOut,
 			AsData: asData,
 		})
@@ -72,7 +72,7 @@ func init() {
 
 	f := toneBuildCmd.Flags()
 	f.StringVar(&toneBuildAsk, "ask", "", "the ToneSpec to read")
-	f.StringVar(&toneBuildSetup, "setup", "",
+	f.StringVar(&toneBuildConfig, "config", "",
 		"the Setup to read; without one the rig is for a bass")
 	f.StringVar(&toneBuildOut, "out", "",
 		"where the rig goes; standard output without it")
