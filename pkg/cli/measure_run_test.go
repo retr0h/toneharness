@@ -623,9 +623,10 @@ func (s *MeasureRunTestSuite) TestMeasureBlocks() {
 			then: func() {
 				s.compiles()
 
-				// The baseline, then one block, then the bench stops
-				// answering. Five readings, because the baseline is the
-				// middle of three takes and a block is two.
+				// The stream settling, then the baseline, then one block,
+				// then the bench stops answering. Seven readings: two for
+				// the stream, three for the baseline's median and two for
+				// the block.
 				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
 				var (
@@ -635,7 +636,9 @@ func (s *MeasureRunTestSuite) TestMeasureBlocks() {
 
 				err := MeasureBlocks(context.Background(), &buf, MeasureOptions{
 					Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq", Seconds: 1,
-					Bench: stopping{after: baselineTakes + 2, calls: &calls},
+					Bench: stopping{
+						after: settles + baselineTakes + 2, calls: &calls,
+					},
 				})
 
 				s.Require().Error(err)
@@ -1006,6 +1009,14 @@ func (b blinking) Through(
 }
 
 func (blinking) Name() string { return "a bench that blinks" }
+
+// settles is how many readings [stream] spends on a bench whose level does
+// not move, which is every double in this file.
+//
+// Two, because agreeing takes a pair. A real rig needed three on the night
+// the settling was measured, and the count here is about the doubles rather
+// than about any rig.
+const settles = 2
 
 // stopping is a bench that answers a few times and then does not.
 type stopping struct {
