@@ -240,6 +240,114 @@ func arrived(
 // sweep.
 var errNothingArrived = errors.New("nothing came back from the chain")
 
+// unaccountable reports silence a control cannot account for.
+//
+// A control that mutes a chain mutes it monotonically. Turned one way it
+// reaches a point where nothing comes through and stays there, so the
+// positions that carried signal are a run at one end of the travel: a Level
+// swept from -60 is silent for its first four positions and carries signal
+// for the rest, and a control that mutes at the top is the same shape
+// reversed. Either is a reading about the control.
+//
+// Silence with signal on both sides of it is not. No dial mutes an amplifier
+// across the middle of its range and un-mutes at the top, and when that shape
+// appeared the cause was outside the chain: the computer's playback dropped
+// out partway through.
+//
+// Measured, which is how this came to be written. Task 271's campaign lost
+// three of eleven amplifiers on 2026-10-24, and the message cost an hour of
+// looking in the wrong place. Cali 400 Ch2's Hum read -47.47 and -47.46dB at
+// its first two positions, six silent positions after them, and -58.67dB at
+// the top. `working` then blamed the control that came next, Ripple, for
+// leaving the chain muted. Tuck n Go's Bass was worse and the same: one
+// position of signal on an Ampeg B-15's bass control and silence either side
+// of it. The third failure of the three named the cause outright, from a
+// different guard, saying the output level was asked for 38 and came back at
+// 0.
+//
+// So the readings were evidence all along and the tool drew the wrong
+// conclusion from them. This reads the shape instead of the last position.
+//
+// A position the device refused is not evidence either way and is left out by
+// the caller: nothing was played there, so it says nothing about whether
+// anything would have come back.
+func unaccountable(
+	carried []bool,
+) bool {
+	first, last := -1, -1
+
+	for at, yes := range carried {
+		if !yes {
+			continue
+		}
+
+		if first < 0 {
+			first = at
+		}
+
+		last = at
+	}
+
+	// Nothing came through at any position, which is the whole control being
+	// silent rather than a run of it. The caller says so and keeps no curve.
+	if first < 0 {
+		return false
+	}
+
+	// A gap inside the run, which is the Cali 400's six positions.
+	for at := first; at <= last; at++ {
+		if !carried[at] {
+			return true
+		}
+	}
+
+	// A run that touches neither end, which is Tuck n Go's one position: the
+	// control would have to mute at both extremes of its own travel.
+	return first > 0 && last < len(carried)-1
+}
+
+// droppedOut says the playback stopped, and what the level and device read
+// when it was noticed.
+//
+// The level is read back rather than assumed, because that is the figure that
+// tells the two apart and the one the third failure of the three reported on
+// its own. A device change makes macOS restore that device's remembered
+// volume, so a level pinned at the start of a campaign is not a level that is
+// still pinned an hour in.
+//
+// Said rather than guessed at: if the level cannot be read, the refusal still
+// names the shape it saw.
+func droppedOut(
+	control string,
+	level func() (int, error),
+) error {
+	at, err := level()
+	if err != nil {
+		return fmt.Errorf(
+			"%w: %s carried signal, then nothing, then signal again. No dial "+
+				"mutes a chain across the middle of its range and un-mutes "+
+				"past it, so the chain is not what went quiet: the computer's "+
+				"playback dropped out partway through. Its output level could "+
+				"not be read back to say what it had reached (%v). Check it is "+
+				"still pinned and that the device feeding the pedal is still "+
+				"the default output, then sweep this block again",
+			errPlaybackDropped, control, err)
+	}
+
+	return fmt.Errorf(
+		"%w: %s carried signal, then nothing, then signal again. No dial "+
+			"mutes a chain across the middle of its range and un-mutes past "+
+			"it, so the chain is not what went quiet: the computer's playback "+
+			"dropped out partway through. Its output level reads %d on %q. "+
+			"Check it is still pinned and that the device feeding the pedal "+
+			"is still the default output, then sweep this block again",
+		errPlaybackDropped, control, at, pinnedOn())
+}
+
+// errPlaybackDropped reports the computer's playback stopping mid-sweep,
+// which is not the chain's doing.
+var errPlaybackDropped = errors.New("the computer's playback dropped out")
+
 // idle is how loud the signal path is when it is asked to carry nothing.
 //
 // The same length as the reference so it travels the same buffers, and taken
@@ -591,6 +699,12 @@ func sweep(
 	_, _ = fmt.Fprintf(w, "  %s (index %d, %s), %d positions from %g to %g\n",
 		c.name, c.index, c.kind, points, c.low, c.high)
 
+	// Whether each position carried signal, in the order they were measured.
+	// `MutedAt` and `Points` each keep their own half of this and neither
+	// keeps how the two interleave, which is the whole of the evidence: see
+	// [unaccountable].
+	carried := make([]bool, 0, points)
+
 	for i := range points {
 		at := c.low
 		if points > 1 {
@@ -610,11 +724,16 @@ func sweep(
 
 		switch verdict, why := judge(got.Level, curve.SilentBelow); verdict {
 		case tooQuiet:
+			carried = append(carried, false)
 			curve.MutedAt = append(curve.MutedAt, at)
 			_, _ = fmt.Fprintf(w, "    %8g  %s\n", at, why)
 
 			continue
 		case tooLoud:
+			// Signal, and too much of it. Clipping says the converters ran
+			// out of headroom rather than that nothing came through, so for
+			// the shape this counts as carried.
+			carried = append(carried, true)
 			curve.ClippedAt = append(curve.ClippedAt, at)
 			_, _ = fmt.Fprintf(w, "    %8g  %s\n", at, why)
 
@@ -622,10 +741,20 @@ func sweep(
 		case believable:
 		}
 
+		carried = append(carried, true)
+
 		curve.Points = append(curve.Points, measured.Point{Value: at, Figures: got})
 
 		_, _ = fmt.Fprintf(w, "    %8g  centroid %9.1f  level %7.2f\n",
 			at, got.Centroid, got.Level)
+	}
+
+	// Read before the count below, because a control with one position of
+	// signal and silence either side of it reaches both and this is the
+	// answer: Tuck n Go's Bass was reported as a control with no curve when
+	// what happened was the playback stopping.
+	if unaccountable(carried) {
+		return nil, droppedOut(c.name, reamp.Volume)
 	}
 
 	if len(curve.Points) < 2 {
