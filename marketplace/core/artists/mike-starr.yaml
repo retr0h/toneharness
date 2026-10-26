@@ -71,35 +71,6 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
-    - role: eq
-      gear: MESA/Boogie Mark IV Graphic EQ
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: A player measured off their own finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used.
-          measured:
-            centroid: 119
-            decay: 0.77
-            dynamics: 6.4
-            harmonics: 0.08
-            high: 0
-            lean: 0.92
-            low: 1
-            mid: 0
-            transient: 0.64
-          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer mike-starr than the others, so MESA/Boogie Mark IV Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 3 records from 1 players, mike-starr earns scooped, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because mike-starr earns "scooped" against the players who measure otherwise, by 0.0205 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
-      controls:
-        2200Hz: "-9.6"
-        240Hz: "-3.36"
-        6600Hz: "0.0"
-        750Hz: "-9.99"
-        80Hz: "0.0"
-        Level: "0.0"
-      attrs:
-        '@position': "0"
-      enabled: false
-      position: 0
     - role: mod
       gear: MXR Flanger
       capture: direct
@@ -118,9 +89,9 @@ built:
         TempoSync1: "false"
         Width: "1.0"
       attrs:
-        '@position': "1"
+        '@position': "0"
       enabled: false
-      position: 1
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -135,8 +106,8 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "1"
+      position: 1
     - role: amp
       gear: Ampeg SVT
       capture: both
@@ -168,8 +139,8 @@ built:
         Sag: "0.5"
         Treble: "0.85"
       attrs:
-        '@position': "3"
-      position: 3
+        '@position': "2"
+      position: 2
     - role: cab
       gear: Ampeg 8x10
       confidence: low
@@ -187,8 +158,8 @@ built:
         Mic: "8"
         Position: "0.39"
       attrs:
-        '@position': "4"
-      position: 4
+        '@position': "3"
+      position: 3
     - role: delay
       gear: Dual Delay
       controls:
@@ -210,9 +181,9 @@ built:
         TempoSync1: "false"
         TempoSync2: "false"
       attrs:
-        '@position': "5"
+        '@position': "4"
       enabled: false
-      position: 5
+      position: 4
     - role: reverb
       gear: Room
       controls:
@@ -229,9 +200,9 @@ built:
         Mix: "0.125"
         PreDelay: "0.05"
       attrs:
-        '@position': "6"
+        '@position': "5"
       enabled: false
-      position: 6
+      position: 5
   preset:
     dsp0:
       members:
@@ -298,31 +269,31 @@ built:
             block0:
               attrs:
                 '@fs_customcolor': "10"
-                '@fs_customlabel': EQ
-                '@fs_enabled': "false"
-                '@fs_index': "1"
-                '@fs_label': MESA/Boogie Mark IV Graphic EQ
-                '@fs_ledcolor': "527360"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block1:
-              attrs:
-                '@fs_customcolor': "8"
                 '@fs_customlabel': MOD
                 '@fs_enabled': "false"
-                '@fs_index': "2"
+                '@fs_index': "1"
                 '@fs_label': MXR Flanger
                 '@fs_ledcolor': "1037"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block4:
+              attrs:
+                '@fs_customcolor': "8"
+                '@fs_customlabel': DELAY
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': Dual Delay
+                '@fs_ledcolor': "67840"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block5:
               attrs:
                 '@fs_customcolor': "4"
-                '@fs_customlabel': DELAY
+                '@fs_customlabel': REVERB
                 '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': Dual Delay
-                '@fs_ledcolor': "67840"
+                '@fs_label': Dynamic Room
+                '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -357,12 +328,11 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
-                block4: "true"
+                block4: "false"
                 block5: "false"
-                block6: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -377,12 +347,11 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
-                block4: "true"
+                block4: "false"
                 block5: "false"
-                block6: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -397,12 +366,11 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
-                block4: "true"
+                block4: "false"
                 block5: "false"
-                block6: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -424,29 +392,29 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: MESA/Boogie Mark IV Graphic EQ
+    - gear: MXR Flanger
       block: 0
-      colour: 527360
+      colour: 1037
       enabled: false
-      label: EQ
+      label: MOD
       led: pink
       momentary: false
       primary: true
       switch: 1
-    - gear: MXR Flanger
-      block: 1
-      colour: 1037
+    - gear: Dual Delay
+      block: 4
+      colour: 67840
       enabled: false
-      label: MOD
+      label: DELAY
       led: blue
       momentary: false
       primary: true
       switch: 2
-    - gear: Dual Delay
+    - gear: Dynamic Room
       block: 5
-      colour: 67840
+      colour: 1049600
       enabled: false
-      label: DELAY
+      label: REVERB
       led: light orange
       momentary: false
       primary: true

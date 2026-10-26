@@ -1,21 +1,3 @@
-# Nu metal — the genre, not a player
-#
-# A rig for the sound of a genre rather than for somebody who plays it. The
-# artists under ../artists/ are people; this is what the records of a genre
-# measure as, resolved to gear.
-#
-# Built rather than researched, then resolved, and reproducible on the same
-# corpus. `tone build` took the amplifier and the cabinet most of nu metal's
-# documented players used, aimed their controls at the edge of nu metal's own
-# measured range rather than its middle, and put a drive and an equaliser
-# behind a footswitch, switched off, set from their sweeps.
-#
-# The rule and the measurements behind it are in build-a-rig's measuring.md.
-# The short of it: the middle of a genre is what every genre shares, so aiming
-# there gave nine of these eleven the same amplifier.
-#
-# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
 schema: ToneSpec
 version: 4.0.0
 id: nu-metal
@@ -34,7 +16,7 @@ ask:
 rig:
   chain:
     - role: drive
-      gear: Xotic EP Booster
+      gear: Darkglass Electronics Microtubes B7K Ultra
       capture: direct
       confidence: low
       evidence:
@@ -50,9 +32,14 @@ rig:
             low: 1
             mid: 0
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 52 bass drives this device models to nu-metal, sitting at 123 Hz against 117. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Darkglass Electronics Microtubes B7K Ultra is the closest of the 19 bass drives this device models to nu-metal, sitting at 104 Hz against 75. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Bright: "false"
+        Attack: "1"
+        Bass: "10.0"
+        HiMid: "-11.25"
+        HiMidFreq: "0"
+        LoMid: "-15.0"
+        LoMidFreq: "1"
       enabled: false
     - role: amp
       gear: Ampeg SVT
@@ -69,40 +56,13 @@ rig:
           note: 'added by the compiler rather than named in the rig: a chain of this kind almost always holds one, and the corpus statistics are what put it here.'
       controls:
         Mic: "6"
-    - role: eq
-      gear: MXR 10-Band Graphic EQ
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 109
-            decay: 0.23
-            dynamics: 7.2
-            harmonics: 0.17
-            high: 0
-            lean: 0.92
-            low: 1
-            mid: 0
-            transient: 0.72
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer nu-metal than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
-      controls:
-        125Hz: "0.0"
-        1kHz: "-3.75"
-        250Hz: "-3.75"
-        2kHz: "-11.25"
-        31p25Hz: "3.75"
-        500Hz: "0.0"
-        62p5Hz: "0.0"
-      enabled: false
   instrument: bass
 built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
     - role: drive
-      gear: Xotic EP Booster
+      gear: Darkglass Electronics Microtubes B7K Ultra
       capture: direct
       confidence: low
       evidence:
@@ -118,11 +78,21 @@ built:
             low: 1
             mid: 0
             transient: 0.72
-          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 52 bass drives this device models to nu-metal, sitting at 123 Hz against 117. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+          note: Chosen by measurement rather than by anybody's say-so. Darkglass Electronics Microtubes B7K Ultra is the closest of the 19 bass drives this device models to nu-metal, sitting at 104 Hz against 75. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Boost: "false"
-        Bright: "false"
-        Drive: "0.55"
+        Attack: "1"
+        Bass: "10.0"
+        Blend: "1.0"
+        Distortion: "true"
+        Drive: "0.39"
+        Grunt: "2"
+        HiMid: "-11.25"
+        HiMidFreq: "0"
+        Level: "0.5"
+        LoMid: "-15.0"
+        LoMidFreq: "1"
+        Master: "0.55"
+        Treble: "-1.5"
       attrs:
         '@position': "0"
       enabled: false
@@ -183,40 +153,6 @@ built:
       attrs:
         '@position': "3"
       position: 3
-    - role: eq
-      gear: MXR 10-Band Graphic EQ
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: 'A genre measured off finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used. It also moves: a genre is measured against the players who play none of it, so this answer changes when the corpus gains players, and it is worth rebuilding rather than trusting indefinitely.'
-          measured:
-            centroid: 109
-            decay: 0.23
-            dynamics: 7.2
-            harmonics: 0.17
-            high: 0
-            lean: 0.92
-            low: 1
-            mid: 0
-            transient: 0.72
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer nu-metal than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 9 records from 3 players, nu-metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
-      controls:
-        125Hz: "0.0"
-        16kHz: "0.0"
-        1kHz: "-3.75"
-        250Hz: "-3.75"
-        2kHz: "-11.25"
-        31p25Hz: "3.75"
-        4kHz: "0.0"
-        500Hz: "0.0"
-        62p5Hz: "0.0"
-        8kHz: "0.0"
-        Level: "0.0"
-      attrs:
-        '@position': "4"
-      enabled: false
-      position: 4
     - role: delay
       gear: Mod/Chorus Echo
       controls:
@@ -234,9 +170,9 @@ built:
         TempoSync1: "false"
         Time: "2.0"
       attrs:
-        '@position': "5"
+        '@position': "4"
       enabled: false
-      position: 5
+      position: 4
     - role: reverb
       gear: Cave
       controls:
@@ -247,9 +183,9 @@ built:
         Mix: "0.5"
         Predelay: "0.075"
       attrs:
-        '@position': "6"
+        '@position': "5"
       enabled: false
-      position: 6
+      position: 5
   preset:
     dsp0:
       members:
@@ -319,28 +255,28 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Xotic EP Booster
+                '@fs_label': Darkglass Electronics Microtubes B7K Ultra
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
               attrs:
                 '@fs_customcolor': "4"
-                '@fs_customlabel': EQ
+                '@fs_customlabel': DELAY
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': MXR 10-Band Graphic EQ
-                '@fs_ledcolor': "527360"
+                '@fs_label': Mod/Chorus Echo
+                '@fs_ledcolor': "67840"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block5:
               attrs:
                 '@fs_customcolor': "9"
-                '@fs_customlabel': DELAY
+                '@fs_customlabel': REVERB
                 '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': Mod/Chorus Echo
-                '@fs_ledcolor': "67840"
+                '@fs_label': Cave
+                '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -380,7 +316,6 @@ built:
                 block3: "true"
                 block4: "false"
                 block5: "false"
-                block6: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -400,7 +335,6 @@ built:
                 block3: "true"
                 block4: "false"
                 block5: "false"
-                block6: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -420,7 +354,6 @@ built:
                 block3: "true"
                 block4: "false"
                 block5: "false"
-                block6: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -442,7 +375,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Xotic EP Booster
+    - gear: Darkglass Electronics Microtubes B7K Ultra
       block: 0
       colour: 525824
       enabled: false
@@ -451,20 +384,20 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: MXR 10-Band Graphic EQ
+    - gear: Mod/Chorus Echo
       block: 4
-      colour: 527360
+      colour: 67840
       enabled: false
-      label: EQ
+      label: DELAY
       led: light orange
       momentary: false
       primary: true
       switch: 2
-    - gear: Mod/Chorus Echo
+    - gear: Cave
       block: 5
-      colour: 67840
+      colour: 1049600
       enabled: false
-      label: DELAY
+      label: REVERB
       led: violet
       momentary: false
       primary: true

@@ -547,8 +547,11 @@ func (s *GenreGearPublicTestSuite) TestStompedForRefuses() {
 		s.Run(tt.name, func() {
 			notes := translate.Notes{}
 
+			// No chain, so nothing names an amplifier and the isolated
+			// ranking is what answers. These cases are about a genre with
+			// nothing to aim at rather than about which library is read.
 			s.Require().Empty(translate.StompedFor(
-				tt.ask, config.Config{}, s.deps, &notes))
+				tt.ask, config.Config{}, s.deps, nil, &notes))
 		})
 	}
 }

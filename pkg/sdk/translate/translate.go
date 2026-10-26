@@ -98,6 +98,25 @@ type Deps struct {
 	// nothing is looked up, and a block added to a chain then arrives at the
 	// catalog's defaults, which is what every added block used to do.
 	CurvesFor func(model, with catalog.ModelID) (measured.Curves, bool)
+	// InFrontOf is the library of blocks measured with one named block behind
+	// them, and whether anything has measured that pair.
+	//
+	// Task 288. Every reading in `Measured` was taken with one block in the
+	// chain and nothing else, and a drive's whole job is how it hits the stage
+	// behind it: a Metal Zone into an already-driven SVT is not the sum of two
+	// fingerprints. Measured both ways against the same settled rig, every one
+	// of the eleven genres chose a different drive, and eight of them traded a
+	// clean boost for a Darkglass B7K Ultra.
+	//
+	// Kept apart from `Measured` rather than merged into it, because
+	// `measured.BuiltIn` refuses a library that says `isolated: false` and
+	// that refusal is right: these figures describe the pair, and ranking one
+	// against the other's target is what `Library.Rig` exists to prevent.
+	//
+	// Nil means nothing is looked up and the isolated ranking stands, which is
+	// what a release gets: the pair libraries are a directory of readings
+	// rather than something embedded, the same as the control sweeps.
+	InFrontOf func(after catalog.ModelID) (measured.Library, bool)
 }
 
 // UnknownWord is a word somebody used that nothing defines, and the nearest
@@ -471,7 +490,11 @@ func chainFor(
 	}
 
 	if !holds(named, rig.RoleAmp) {
-		if amp, _, ok := nearestTo(spec, setup, deps, "amp", notes); ok {
+		// Nothing to rank behind, because this is the amplifier. `rankFrom`
+		// refuses an amp a pair reading either way, and passing the chain
+		// would only read as though it might not.
+		if amp, _, ok := nearestTo(
+			spec, setup, deps, "amp", nil, notes); ok {
 			named = append([]placed{{entry: amp}}, named...)
 		}
 	}
@@ -488,7 +511,8 @@ func chainFor(
 	// authored and never passes through here, and it reads the kinds off the
 	// words a target earns. Both run, and the second adds only what the first
 	// did not: see stomp.go.
-	named = append(named, stompedFor(spec, setup, deps, notes)...)
+	named = append(named, stompedFor(
+		spec, setup, deps, entriesOf(named), notes)...)
 
 	if len(named) == 0 {
 		return nil, ErrNothingToBuildFrom
@@ -1011,6 +1035,67 @@ func sweptFor(
 	return best
 }
 
+// rankFrom is the library a block of this kind is ranked against, and whether
+// it describes the block in a chain rather than on its own.
+//
+// Task 288. Every figure in the isolated library was taken with one block in
+// the chain and nothing else, and a drive's whole job is how it hits the stage
+// behind it. Measured both ways against one settled rig, every one of the
+// eleven genres chose a different drive and eight traded a clean boost for a
+// Darkglass B7K Ultra, so a pair reading is the better evidence where one
+// exists.
+//
+// Only for the kinds that sit in front of the amplifier. An amplifier is not
+// ranked behind itself and a cabinet sits after it, so neither has a pair
+// reading to prefer.
+//
+// **Only where the chain's amplifier can mean one amp this has been measured
+// behind.** A gear name is not a model: "Ampeg SVT" names four of them and a
+// pair reading is of exactly one. Where one candidate has a library the choice
+// is unambiguous and it is taken; where none or several do, the isolated
+// ranking stands. Guessing which of four a name meant is how a figure from one
+// rig comes to be ranked against a target from another, which is what task 289
+// was about.
+func rankFrom(
+	chain []rig.ChainEntry,
+	deps Deps,
+	kind catalog.Category,
+) (measured.Library, bool) {
+	if deps.InFrontOf == nil || deps.Catalog == nil {
+		return deps.Measured, false
+	}
+
+	if kind == catalog.CategoryAmp || kind == catalog.CategoryCab {
+		return deps.Measured, false
+	}
+
+	var found measured.Library
+
+	seen := 0
+
+	for _, entry := range chain {
+		if catalog.Category(entry.Role) != catalog.CategoryAmp {
+			continue
+		}
+
+		for id := range modelsFor(deps.Catalog, entry.Gear, catalog.CategoryAmp) {
+			got, ok := deps.InFrontOf(catalog.ModelID(id))
+			if !ok {
+				continue
+			}
+
+			found = got
+			seen++
+		}
+	}
+
+	if seen != 1 {
+		return deps.Measured, false
+	}
+
+	return found, true
+}
+
 // modelsFor is every model of one kind a gear name reaches.
 //
 // The whole set rather than the nearest, because what [commonest] asks is
@@ -1108,6 +1193,9 @@ func stompedFor(
 	spec tone.Ask,
 	setup config.Config,
 	deps Deps,
+	// chain is what the rig already holds, which by here includes whichever
+	// amplifier was named or chosen. See [rankFrom].
+	chain []rig.ChainEntry,
 	notes *Notes,
 ) []placed {
 	// A genre the corpus can aim at, and nothing else. Every ask carries a
@@ -1143,7 +1231,8 @@ func stompedFor(
 	out := []placed(nil)
 
 	for _, kind := range kinds {
-		entry, model, ok := nearestTo(spec, setup, deps, kind, notes)
+		entry, model, ok := nearestTo(
+			spec, setup, deps, kind, chain, notes)
 		if !ok {
 			continue
 		}
@@ -1447,6 +1536,8 @@ func nearestTo(
 	setup config.Config,
 	deps Deps,
 	category catalog.Category,
+	// chain is what the rig already holds. See [rankFrom].
+	chain []rig.ChainEntry,
 	notes *Notes,
 ) (rig.ChainEntry, catalog.ModelID, bool) {
 	at, ok := target(spec, deps, notes)
@@ -1454,7 +1545,23 @@ func nearestTo(
 		return rig.ChainEntry{}, "", false
 	}
 
-	return nearestOf(at, spec, setup, deps, category, notes)
+	return nearestOf(at, spec, setup, deps, category, chain, notes)
+}
+
+// entriesOf is the chain entries of what has been placed so far.
+//
+// So that what is already in the chain can be read for the amplifier a pair
+// reading may have been taken behind, without the caller unpacking `placed`
+// at each site.
+func entriesOf(
+	placed []placed,
+) []rig.ChainEntry {
+	out := make([]rig.ChainEntry, 0, len(placed))
+	for _, one := range placed {
+		out = append(out, one.entry)
+	}
+
+	return out
 }
 
 // nearestOf is [nearestTo] with the target already in hand.
@@ -1470,6 +1577,9 @@ func nearestOf(
 	setup config.Config,
 	deps Deps,
 	category catalog.Category,
+	// chain is what the rig already holds, read for an amplifier a pair
+	// reading may have been taken behind. See [rankFrom].
+	chain []rig.ChainEntry,
 	notes *Notes,
 ) (rig.ChainEntry, catalog.ModelID, bool) {
 	want, from := at.figures, at.named
@@ -1492,8 +1602,31 @@ func nearestOf(
 		wants = string(instrumentFor(spec, setup, &quiet))
 	}
 
+	// The pair reading where the chain holds an amplifier one was taken
+	// behind, and the isolated library otherwise.
+	lib, inChain := rankFrom(chain, deps, category)
+
+	// Re-aimed at the pair library's own empty loop, because a target is a
+	// displacement from a baseline and each library carries its own. They
+	// agree to a hundredth of a decibel on the rig these were taken on, and
+	// leaning on that rather than saying it is how figures from two rigs come
+	// to be compared.
+	if inChain {
+		if got, ok := AimAtGenre(from, lib.Baseline); ok {
+			want = got
+		}
+
+		*notes = append(*notes, Note{
+			About: string(category),
+			Said: fmt.Sprintf(
+				"ranked against readings taken in front of %s rather than "+
+					"readings of a block on its own", lib.After),
+			Honoured: true,
+		})
+	}
+
 	kept, refused := asPlayed(deps.Catalog, reachable(
-		deps.Measured.Nearest(category, want, measured.SpectralFor(wants)),
+		lib.Nearest(category, want, measured.SpectralFor(wants)),
 		setup, deps.Catalog, wants))
 
 	for _, gear := range refused {

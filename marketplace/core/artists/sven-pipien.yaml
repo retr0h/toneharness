@@ -142,35 +142,6 @@ built:
       attrs:
         '@position': "4"
       position: 4
-    - role: eq
-      gear: MESA/Boogie Mark IV Graphic EQ
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: A player measured off their own finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used.
-          measured:
-            centroid: 114
-            decay: 0.37
-            dynamics: 7.4
-            harmonics: 0.08
-            high: 0
-            lean: 0.87
-            low: 0.99
-            mid: 0.01
-            transient: 0.6
-          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer sven-pipien than the others, so MESA/Boogie Mark IV Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 3 records from 1 players, sven-pipien earns scooped, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because sven-pipien earns "scooped" against the players who measure otherwise, by 0.0127 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
-      controls:
-        2200Hz: "-9.6"
-        240Hz: "-6.68"
-        6600Hz: "0.0"
-        750Hz: "-9.99"
-        80Hz: "0.0"
-        Level: "0.0"
-      attrs:
-        '@position': "5"
-      enabled: false
-      position: 5
     - role: mod
       gear: Chorus
       controls:
@@ -188,9 +159,9 @@ built:
         VibratoDepth: "0.5"
         VibratoRate: "0.875"
       attrs:
-        '@position': "6"
+        '@position': "5"
       enabled: false
-      position: 6
+      position: 5
   preset:
     dsp0:
       members:
@@ -276,11 +247,11 @@ built:
             block5:
               attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': EQ
+                '@fs_customlabel': MOD
                 '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': MESA/Boogie Mark IV Graphic EQ
-                '@fs_ledcolor': "527360"
+                '@fs_label': BOSS CE-1
+                '@fs_ledcolor': "1037"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -320,7 +291,6 @@ built:
                 block3: "true"
                 block4: "true"
                 block5: "false"
-                block6: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -340,7 +310,6 @@ built:
                 block3: "true"
                 block4: "true"
                 block5: "false"
-                block6: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -360,7 +329,6 @@ built:
                 block3: "true"
                 block4: "true"
                 block5: "false"
-                block6: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -399,11 +367,11 @@ built:
       momentary: false
       primary: true
       switch: 2
-    - gear: MESA/Boogie Mark IV Graphic EQ
+    - gear: BOSS CE-1
       block: 5
-      colour: 527360
+      colour: 1037
       enabled: false
-      label: EQ
+      label: MOD
       led: turquoise
       momentary: false
       primary: true
