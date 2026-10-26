@@ -1506,6 +1506,19 @@ func nearestOf(
 		})
 	}
 
+	kept, unused := asHeld(deps.Catalog, deps.Corpus, wants, kept)
+
+	for _, gear := range unused {
+		*notes = append(*notes, Note{
+			About: string(category),
+			Said: fmt.Sprintf(
+				"%s read nearest and was refused: not one measured %s chain "+
+					"holds one, so nothing says a player reaches for it",
+				gear, wants),
+			Honoured: true,
+		})
+	}
+
 	ranked := wanted(deps.Catalog, kept)
 	if len(ranked) == 0 {
 		*notes = append(*notes, Note{
@@ -1754,6 +1767,89 @@ func asPlayed(
 		if len(out) == 0 {
 			ahead = append(ahead, block.Gear())
 		}
+	}
+
+	return out, ahead
+}
+
+// asHeld is the blocks a measured chain actually holds.
+//
+// The second thing four figures cannot say, after [asPlayed]. A fingerprint is
+// four numbers off one block measured alone, so two pedals landing in the same
+// place are interchangeable to it however differently anybody treats them. It
+// has no way to know what a pedal is for.
+//
+// The corpus does, and says it in a figure of its own: how many of the chains
+// measured for this instrument hold one. That is not taste and it is not one
+// person's say-so, it is 172 bass chains, and it separates the readings this
+// was raised for:
+//
+//	rock        BOSS Metal Zone MT-2    0 chains of 172
+//	blues-rock  Big Muff Pi             0, and no Big Muff variant is held
+//	punk        MAXON SD9               1
+//	metal       Xotic EP Booster        7
+//
+// A block no measured chain holds is not a block a reading should put on
+// somebody's board. Nineteen of the 56 swept drives are held by at least one
+// chain and 37 by none, so there is a pool to rank inside rather than a
+// shortlist of one.
+//
+// **It vetoes rather than ranks.** Measurement still chooses, and this only
+// removes the candidates nothing says anybody plays. Preferring a popular
+// block over a nearer one would be the other mistake: task 241's round three
+// showed a documented pedal sitting 39th of 52 and 28.65 out against a
+// nearest of 0.92, which is overruling the measurement rather than narrowing
+// it.
+//
+// Nothing is refused where nothing survives. Both modulation blocks this
+// device has swept are held by no chain at all, and an empty pool would turn
+// a choice somebody can hear into no block at all. A category the corpus has
+// nothing to say about keeps the ranking it had.
+//
+// The second answer is the gear refused ahead of everything that survived,
+// for the same reason [asPlayed] reports its own: a pool that quietly lost
+// its nearest reads exactly like one where nothing came close.
+func asHeld(
+	cat *catalog.Catalog,
+	stats *corpus.Stats,
+	instrument string,
+	ranked []measured.Match,
+) ([]measured.Match, []string) {
+	if cat == nil || stats == nil {
+		return ranked, nil
+	}
+
+	grammar, known := stats.Grammar[instrument]
+	if !known || grammar.Chains == 0 {
+		return ranked, nil
+	}
+
+	out := make([]measured.Match, 0, len(ranked))
+
+	var ahead []string
+
+	for _, match := range ranked {
+		model := catalog.ModelID(match.ID)
+
+		// A block the catalog does not hold is kept, as everywhere else here:
+		// that is the catalog and the measured library drifting apart, and a
+		// shorter chain would hide the drift rather than report it.
+		block, held := cat.Block(model)
+		if !held || grammar.Models[model] > 0 {
+			out = append(out, match)
+
+			continue
+		}
+
+		if len(out) == 0 {
+			ahead = append(ahead, block.Gear())
+		}
+	}
+
+	// Nothing a chain holds, which is every modulation block the device has
+	// swept. The ranking it arrived with is the only answer there is.
+	if len(out) == 0 {
+		return ranked, nil
 	}
 
 	return out, ahead

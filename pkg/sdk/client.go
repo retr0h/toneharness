@@ -490,7 +490,7 @@ func (c *Client) Tone(
 	}
 
 	return asking.Resolve(
-		ctx, asking.Ask(in), cat, lib, c.rigNamed, c.opts.sweeps)
+		ctx, asking.Ask(in), cat, lib, c.rigNamed, c.opts.sweeps, c.opts.stats)
 }
 
 // rigNamed is the curated rig for a player, band or sound somebody named.

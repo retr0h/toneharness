@@ -1,21 +1,3 @@
-# Alternative rock — the genre, not a player
-#
-# A rig for the sound of a genre rather than for somebody who plays it. The
-# artists under ../artists/ are people; this is what the records of a genre
-# measure as, resolved to gear.
-#
-# Built rather than researched, then resolved, and reproducible on the same
-# corpus. `tone build` took the amplifier and the cabinet most of alternative rock's
-# documented players used, aimed their controls at the edge of alternative rock's own
-# measured range rather than its middle, and put a drive and an equaliser
-# behind a footswitch, switched off, set from their sweeps.
-#
-# The rule and the measurements behind it are in build-a-rig's measuring.md.
-# The short of it: the middle of a genre is what every genre shares, so aiming
-# there gave nine of these eleven the same amplifier.
-#
-# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
 schema: ToneSpec
 version: 4.0.0
 id: alternative-rock
@@ -33,7 +15,7 @@ ask:
 rig:
   chain:
     - role: drive
-      gear: Earthquaker Devices Life - Boost circuit
+      gear: Xotic EP Booster
       capture: direct
       confidence: low
       evidence:
@@ -49,7 +31,9 @@ rig:
             low: 0.97
             mid: 0.03
             transient: 0.71
-          note: 'Chosen by measurement rather than by anybody''s say-so. Earthquaker Devices Life - Boost circuit is the closest of the 52 bass drives this device models to alternative-rock, sitting at 124 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
+          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 19 bass drives this device models to alternative-rock, sitting at 123 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        Bright: "false"
       enabled: false
     - role: amp
       gear: Ampeg B-15NF Portaflex
@@ -83,7 +67,7 @@ rig:
             low: 0.97
             mid: 0.03
             transient: 0.71
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer alternative-rock than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer alternative-rock than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
       controls:
         125Hz: "0.0"
         1kHz: "0.0"
@@ -99,7 +83,7 @@ built:
   device: HX Stomp
   chain:
     - role: drive
-      gear: Earthquaker Devices Life - Boost circuit
+      gear: Xotic EP Booster
       capture: direct
       confidence: low
       evidence:
@@ -115,9 +99,11 @@ built:
             low: 0.97
             mid: 0.03
             transient: 0.71
-          note: 'Chosen by measurement rather than by anybody''s say-so. Earthquaker Devices Life - Boost circuit is the closest of the 52 bass drives this device models to alternative-rock, sitting at 124 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
+          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 19 bass drives this device models to alternative-rock, sitting at 123 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Boost: "0.5"
+        Boost: "false"
+        Bright: "false"
+        Drive: "0.55"
       attrs:
         '@position': "0"
       enabled: false
@@ -202,7 +188,7 @@ built:
             low: 0.97
             mid: 0.03
             transient: 0.71
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer alternative-rock than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer alternative-rock than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
       controls:
         125Hz: "0.0"
         16kHz: "0.0"
@@ -244,7 +230,7 @@ built:
       enabled: false
       position: 5
     - role: reverb
-      gear: Dynamic Room
+      gear: Plateaux
       capture: direct
       confidence: low
       evidence:
@@ -260,20 +246,19 @@ built:
             low: 0.97
             mid: 0.03
             transient: 0.71
-          note: Chosen by measurement rather than by anybody's say-so. Dynamic Room is the closest of the 14 bass reverbs this device models to alternative-rock, sitting at 129 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because alternative-rock earns "long-decay" against the players who measure otherwise, by 0.12 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Plateaux is the closest of the 4 bass reverbs this device models to alternative-rock, sitting at 122 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because alternative-rock earns "long-decay" against the players who measure otherwise, by 0.12 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
       controls:
-        BassBoost: "0.0"
-        BassFreq: "100.0"
-        Damping: "3700.0"
-        Decay: "1.2"
-        Diffusion: "0.5"
-        ERLevel: "0.8"
-        HighCut: "10000.0"
+        Cents1: "0.0"
+        Cents2: "0.0"
+        Decay: "0.8"
         Level: "0.0"
-        LowCut: "100.0"
-        MatrFreq: "0.333"
-        Mix: "0.41"
-        PreDelay: "0.01"
+        Mix: "0.33"
+        Modulation: "0.5"
+        Pitch1: "-12"
+        Pitch2: "12"
+        PitchMix: "0.24"
+        Predelay: "0.022"
+        Tone: "0.75"
       attrs:
         '@position': "6"
       enabled: false
@@ -347,7 +332,7 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Earthquaker Devices Life - Boost circuit
+                '@fs_label': Xotic EP Booster
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -470,7 +455,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Earthquaker Devices Life - Boost circuit
+    - gear: Xotic EP Booster
       block: 0
       colour: 525824
       enabled: false

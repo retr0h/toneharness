@@ -28,6 +28,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/translate"
 )
@@ -459,6 +460,170 @@ func (s *GearPublicTestSuite) TestAsPlayed() {
 	} {
 		s.Run(tt.name, func() {
 			kept, refused := translate.AsPlayed(tt.cat, tt.ranked)
+
+			ids := make([]string, 0, len(kept))
+			for _, match := range kept {
+				ids = append(ids, match.ID)
+			}
+
+			s.Require().Equal(tt.want, ids)
+			s.Require().Equal(tt.refused, refused)
+		})
+	}
+}
+
+// TestAsHeld covers the refusal of blocks no measured chain holds.
+//
+// One method and one table, so a case is a row rather than a file. The second
+// answer is what makes this worth a table, as in [TestAsPlayed]: whether the
+// refusal happened in front of everything that survived, which is the only
+// refusal that changed which block got chosen.
+func (s *GearPublicTestSuite) TestAsHeld() {
+	held := s.built(map[catalog.ModelID]catalog.Block{
+		"rat": {
+			ID: "HD2_DistVerminDist", Name: "Vermin Dist",
+			Category: catalog.CategoryDrive, BasedOn: "Pro Co RAT",
+		},
+		"metalzone": {
+			ID: "KillerZ", Name: "Killer Z",
+			Category: catalog.CategoryDrive, BasedOn: "BOSS Metal Zone MT-2",
+		},
+		"bigmuff": {
+			ID: "HD2_DM4FuzzPi", Name: "Fuzz Pi",
+			Category: catalog.CategoryDrive,
+			BasedOn:  "Electro-Harmonix Big Muff Pi",
+		},
+		"boost": {
+			ID: "HD2_DistKinkyBoost", Name: "Kinky Boost",
+			Category: catalog.CategoryDrive, BasedOn: "Xotic EP Booster",
+		},
+	})
+
+	// What the shipped bass corpus says about those four: a Pro Co RAT is in
+	// 14 of the 172 chains and an EP Booster in 7, and not one holds a Metal
+	// Zone or any Big Muff variant.
+	chains := &corpus.Stats{
+		Grammar: map[string]corpus.Grammar{
+			"bass": {
+				Chains: 172,
+				// Keyed the way the ranking names them, which is how
+				// `Nearest` answers and what the lookup uses.
+				Models: map[catalog.ModelID]int{"rat": 14, "boost": 7},
+			},
+		},
+	}
+
+	for _, tt := range []struct {
+		name       string
+		cat        *catalog.Catalog
+		stats      *corpus.Stats
+		instrument string
+		ranked     []measured.Match
+		want       []string
+		refused    []string
+	}{
+		{
+			name:       "nothing to refuse",
+			cat:        held,
+			stats:      chains,
+			instrument: "bass",
+			ranked:     s.ranked("rat", "boost"),
+			want:       []string{"rat", "boost"},
+		},
+		{
+			// The reading this exists for. A Metal Zone read nearest to rock
+			// and not one of 172 measured bass chains holds one, so its
+			// refusal is what puts a pedal somebody plays in the chain.
+			name:       "the nearest is one nobody holds, and it is said so",
+			cat:        held,
+			stats:      chains,
+			instrument: "bass",
+			ranked:     s.ranked("metalzone", "rat", "boost"),
+			want:       []string{"rat", "boost"},
+			refused:    []string{"BOSS Metal Zone MT-2"},
+		},
+		{
+			// Refused behind a survivor, so it was never going to be chosen
+			// and there is nothing to report.
+			name:       "one further out is dropped quietly",
+			cat:        held,
+			stats:      chains,
+			instrument: "bass",
+			ranked:     s.ranked("rat", "bigmuff", "boost"),
+			want:       []string{"rat", "boost"},
+		},
+		{
+			name:       "two ahead of the first survivor are both named",
+			cat:        held,
+			stats:      chains,
+			instrument: "bass",
+			ranked:     s.ranked("metalzone", "bigmuff", "boost"),
+			want:       []string{"boost"},
+			refused: []string{
+				"BOSS Metal Zone MT-2", "Electro-Harmonix Big Muff Pi",
+			},
+		},
+		{
+			// Every modulation block this device has swept is in this state,
+			// so it is reachable today rather than the contract. An empty
+			// pool would turn a block somebody can hear into no block, so the
+			// ranking it arrived with is the answer.
+			name:       "nothing in the pool is held, so the ranking stands",
+			cat:        held,
+			stats:      chains,
+			instrument: "bass",
+			ranked:     s.ranked("metalzone", "bigmuff"),
+			want:       []string{"metalzone", "bigmuff"},
+		},
+		{
+			// The catalog and the measured library drifting apart. Kept, so
+			// the drift shows up as a block rather than as an absence, which
+			// is what [asPlayed] does with the same case.
+			name:       "a block the catalog does not hold",
+			cat:        held,
+			stats:      chains,
+			instrument: "bass",
+			ranked:     s.ranked("gone", "rat"),
+			want:       []string{"gone", "rat"},
+		},
+		{
+			// An instrument nobody has measured chains for. There is nothing
+			// to say, so nothing is said.
+			name:       "an instrument the corpus has no chains for",
+			cat:        held,
+			stats:      chains,
+			instrument: "sitar",
+			ranked:     s.ranked("metalzone", "rat"),
+			want:       []string{"metalzone", "rat"},
+		},
+		{
+			// A corpus that names the instrument and has measured nothing,
+			// which is a manifest rather than a measurement.
+			name:       "a corpus with no chains counted",
+			cat:        held,
+			stats:      &corpus.Stats{Grammar: map[string]corpus.Grammar{"bass": {}}},
+			instrument: "bass",
+			ranked:     s.ranked("metalzone", "rat"),
+			want:       []string{"metalzone", "rat"},
+		},
+		{
+			name:       "no corpus to ask",
+			cat:        held,
+			instrument: "bass",
+			ranked:     s.ranked("metalzone", "rat"),
+			want:       []string{"metalzone", "rat"},
+		},
+		{
+			name:       "no catalog to ask",
+			stats:      chains,
+			instrument: "bass",
+			ranked:     s.ranked("metalzone", "rat"),
+			want:       []string{"metalzone", "rat"},
+		},
+	} {
+		s.Run(tt.name, func() {
+			kept, refused := translate.AsHeld(
+				tt.cat, tt.stats, tt.instrument, tt.ranked)
 
 			ids := make([]string, 0, len(kept))
 			for _, match := range kept {
