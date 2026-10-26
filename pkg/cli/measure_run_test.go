@@ -971,6 +971,42 @@ func (b turning) Through(
 
 func (turning) Name() string { return "a bench that changes" }
 
+// blinking is a bench that goes quiet for a while and then comes back.
+//
+// The shape no control can produce, and the one a computer whose playback
+// drops out does: signal, silence, signal again. `turning` cannot stand in
+// for it because it never returns, and that difference is the whole of what
+// `unaccountable` reads.
+type blinking struct {
+	bench
+
+	// quietFrom and loudAgain bracket the readings that come back silent,
+	// counted in readings of the reference. The idle reading is not one of
+	// them, as in [turning].
+	quietFrom int
+	loudAgain int
+	calls     *int
+}
+
+func (b blinking) Through(
+	ctx context.Context,
+	signal []float32,
+) ([]float32, error) {
+	if nothingIn(signal) {
+		return b.bench.Through(ctx, signal)
+	}
+
+	*b.calls++
+
+	if *b.calls >= b.quietFrom && *b.calls < b.loudAgain {
+		return bench{quiet: true}.Through(ctx, signal)
+	}
+
+	return b.bench.Through(ctx, signal)
+}
+
+func (blinking) Name() string { return "a bench that blinks" }
+
 // stopping is a bench that answers a few times and then does not.
 type stopping struct {
 	after int
