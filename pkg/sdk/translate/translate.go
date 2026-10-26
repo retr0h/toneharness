@@ -3090,15 +3090,19 @@ func instrumentFor(
 	setup config.Config,
 	notes *Notes,
 ) rig.Instrument {
-	if setup.Instruments != nil {
-		for _, held := range *setup.Instruments {
-			if held.Default != nil && *held.Default {
-				return gearIsFor(held, notes)
-			}
-		}
-
-		if len(*setup.Instruments) > 0 {
-			return gearIsFor((*setup.Instruments)[0], notes)
+	// The setup's instrument, where its name actually says which kind it is.
+	//
+	// Asked before the request, because somebody who wrote down what they own
+	// has said something more specific than a genre, and asked only for the
+	// certain answer: a name that does not say is a guess, and a guess must
+	// not outrank the request. It did. A setup naming a Rickenbacker 4001 or
+	// a Fender Jazz answered guitar over an ask that said bass in as many
+	// words, because the guess came first and the request was never reached.
+	held, told := heldIsFor(setup)
+	if told {
+		kind, certain := gearIsFor(held, notes)
+		if certain {
+			return kind
 		}
 	}
 
@@ -3114,6 +3118,16 @@ func instrumentFor(
 		return rig.Instrument(*spec.Instrument)
 	}
 
+	// The guess, now that the request has had its say. A name that says
+	// neither is still evidence of something: a Stratocaster in a setup and
+	// nothing in the ask is a guitar, and answering bass there would be worse
+	// than answering from the name.
+	if told {
+		kind, _ := gearIsFor(held, notes)
+
+		return kind
+	}
+
 	// Honoured, because an assumption that was made is a thing that happened.
 	// It read "could not" beside the device note saying the same thing about
 	// the same absent setup, which told somebody the tool had failed at
@@ -3127,22 +3141,67 @@ func instrumentFor(
 	return rig.InstrumentBass
 }
 
-// gearIsFor is which kind of instrument a setup entry describes.
+// heldIsFor is the instrument a setup speaks for, where it names one.
 //
-// Guitar where the gear's name does not say bass, and the note says so rather
-// than the assumption being silent. pkg/cli's referenceIsFor asks the same
-// shape of question of a reference recording's filename and answers nothing
-// where it cannot tell: a measurement may claim no instrument, and a rig's
-// instrument field may not be empty. Neither is named for the question they
-// share, because merging them would make one of the two answers wrong.
+// The default where one is marked, and the first otherwise, which is the order
+// [instrumentFor] always read them in. Lifted out because that order is now
+// consulted twice: once for what the name says for certain, and once for the
+// guess after the request has been heard.
+func heldIsFor(
+	setup config.Config,
+) (config.Held, bool) {
+	if setup.Instruments == nil {
+		return config.Held{}, false
+	}
+
+	for _, held := range *setup.Instruments {
+		if held.Default != nil && *held.Default {
+			return held, true
+		}
+	}
+
+	if len(*setup.Instruments) > 0 {
+		return (*setup.Instruments)[0], true
+	}
+
+	return config.Held{}, false
+}
+
+// gearIsFor is which kind of instrument a setup entry describes, and whether
+// the name said so or was guessed at.
+//
+// The second answer is the point. "Bass" in the name is certain and so is a
+// bass somebody would name without the word, and everything else is a guess
+// that must not outrank a request saying which instrument this is for.
+// [instrumentFor] asks twice on that basis.
+//
+// pkg/cli's referenceIsFor asks the same shape of question of a reference
+// recording's filename and answers nothing where it cannot tell: a
+// measurement may claim no instrument, and a rig's instrument field may not be
+// empty. Neither is named for the question they share, because merging them
+// would make one of the two answers wrong.
 func gearIsFor(
 	held config.Held,
 	notes *Notes,
-) rig.Instrument {
+) (rig.Instrument, bool) {
 	name := strings.ToLower(held.Gear)
 
 	if strings.Contains(name, "bass") {
-		return rig.InstrumentBass
+		return rig.InstrumentBass, true
+	}
+
+	for _, one := range bassesByName {
+		if !strings.Contains(name, one) {
+			continue
+		}
+
+		*notes = append(*notes, Note{
+			About:    held.Gear,
+			Said:     "read as a bass, which is what that name is",
+			Honoured: true,
+		})
+
+		return rig.InstrumentBass, true
 	}
 
 	*notes = append(*notes, Note{
@@ -3151,7 +3210,29 @@ func gearIsFor(
 		Honoured: true,
 	})
 
-	return rig.InstrumentGuitar
+	return rig.InstrumentGuitar, false
+}
+
+// bassesByName are basses whose names do not carry the word.
+//
+// A list is not a thing to enjoy and the alternative is worse. The catalog
+// cannot answer this: it models amplifiers and effects, and a Rickenbacker
+// 4001 is neither. So the names come from the one place this repository has
+// evidence of what people play, the gear its own artist rigs cite: a
+// Precision, a Jazz Bass, a Rickenbacker 4001, a Stingray, a Spector, a Music
+// Man, a Lakland, a Thunderbird.
+//
+// Incomplete on purpose rather than by accident. A name this does not know
+// falls through to the request, which is the half of the fix that does not
+// depend on a list being right: only a setup naming a bass with no request to
+// fall back on needs this to recognise it.
+//
+// Lower case, because the comparison is.
+var bassesByName = []string{
+	"precision", "jazz bass", "rickenbacker", "stingray", "sting ray",
+	"thunderbird", "spector", "music man", "musicman", "lakland",
+	"sadowsky", "warwick", "fodera", "dingwall", "modulus", "alembic",
+	"höfner", "hofner", "jaco", "p-bass", "pbass", "jbass",
 }
 
 // beats reports whether the nearest candidate is nearer than the field by more
