@@ -42,6 +42,16 @@ ask:
     attack: fingers
 rig:
   chain:
+    - role: wah
+      gear: Modified Dunlop 105Q
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: He also runs a Marshall Guv'nor he modified himself and an EHX POG2, neither of which this device carries.
+          note: Commerford uses a Dunlop Cry Baby 105Q bass wah, which the device models directly.
+          url: https://equipboard.com/pros/tim-commerford
+      enabled: false
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -85,13 +95,20 @@ built:
   device: HX Stomp
   chain:
     - role: wah
-      gear: Vetta Wah
+      gear: Modified Dunlop 105Q
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: He also runs a Marshall Guv'nor he modified himself and an EHX POG2, neither of which this device carries.
+          note: Commerford uses a Dunlop Cry Baby 105Q bass wah, which the device models directly.
+          url: https://equipboard.com/pros/tim-commerford
       controls:
-        FcHigh: "2300.0"
-        FcLow: "300.0"
         Level: "0.0"
-        Mix: "1.0"
-        Pedal: "0.0"
+        Mix: "0.5"
+        Pedal: "0.625"
+        Q Trim: "0.75"
+        Volume Trim: "0.7"
       attrs:
         '@position': "0"
       enabled: false
@@ -288,7 +305,7 @@ built:
                 '@fs_customlabel': WAH
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Vetta Wah
+                '@fs_label': Modified Dunlop 105Q
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block2:
@@ -407,7 +424,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Vetta Wah
+    - gear: Modified Dunlop 105Q
       block: 0
       enabled: false
       label: WAH

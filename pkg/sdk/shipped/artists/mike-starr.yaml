@@ -26,6 +26,16 @@ ask:
   words: []
 rig:
   chain:
+    - role: mod
+      gear: MXR Flanger
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The BF-2 is not modelled; this is the MXR, the flanger the device carries.
+          note: Starr used a Boss BF-2 flanger, which is the sound on Rooster.
+          url: https://equipboard.com/pros/mike-starr
+      enabled: false
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -61,6 +71,53 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: eq
+      gear: Simple Tilt
+      capture: direct
+      confidence: low
+      evidence:
+        - kind: audio
+          caveat: A player measured off their own finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used.
+          measured:
+            centroid: 119
+            decay: 0.77
+            dynamics: 6.4
+            harmonics: 0.08
+            high: 0
+            lean: 0.92
+            low: 1
+            mid: 0
+            transient: 0.64
+          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to mike-starr, sitting at 124 Hz against 142. Across 3 records from 1 players, mike-starr earns scooped, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because mike-starr earns "scooped" against the players who measure otherwise, by 0.0205 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
+      controls:
+        CenterFreq: "1000.0"
+        Level: "0.0"
+        Tilt: "0.5"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
+    - role: mod
+      gear: MXR Flanger
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The BF-2 is not modelled; this is the MXR, the flanger the device carries.
+          note: Starr used a Boss BF-2 flanger, which is the sound on Rooster.
+          url: https://equipboard.com/pros/mike-starr
+      controls:
+        Level: "0.0"
+        Manual: "0.5"
+        Regen: "0.625"
+        Speed: "1.96"
+        SyncSelect1: "1"
+        TempoSync1: "false"
+        Width: "1.0"
+      attrs:
+        '@position': "1"
+      enabled: false
+      position: 1
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -75,24 +132,8 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
-    - role: drive
-      gear: Wounded Paw Battering Ram
-      controls:
-        Fuzz: "false"
-        FuzzGain: "0.375"
-        FuzzLevel: "0.125"
-        FuzzOct: "false"
-        FuzzTone: "0.875"
-        ODGain: "0.375"
-        ODLevel: "0.375"
-        ODLowBoost: "true"
-        ODTone: "0.625"
-      attrs:
-        '@position': "1"
-      enabled: false
-      position: 1
+        '@position': "2"
+      position: 2
     - role: amp
       gear: Ampeg SVT
       capture: both
@@ -124,8 +165,8 @@ built:
         Sag: "0.5"
         Treble: "0.85"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
     - role: cab
       gear: Ampeg 8x10
       confidence: low
@@ -143,33 +184,7 @@ built:
         Mic: "8"
         Position: "0.39"
       attrs:
-        '@position': "3"
-      position: 3
-    - role: eq
-      gear: Simple Tilt
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: A player measured off their own finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used.
-          measured:
-            centroid: 119
-            decay: 0.77
-            dynamics: 6.4
-            harmonics: 0.08
-            high: 0
-            lean: 0.92
-            low: 1
-            mid: 0
-            transient: 0.64
-          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to mike-starr, sitting at 124 Hz against 142. Across 3 records from 1 players, mike-starr earns scooped, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because mike-starr earns "scooped" against the players who measure otherwise, by 0.0205 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
-      controls:
-        CenterFreq: "1000.0"
-        Level: "0.0"
-        Tilt: "0.5"
-      attrs:
         '@position': "4"
-      enabled: false
       position: 4
     - role: delay
       gear: Simple Delay
@@ -267,24 +282,24 @@ built:
       members:
         dsp0:
           members:
-            block1:
+            block0:
               attrs:
                 '@fs_customcolor': "10"
-                '@fs_customlabel': DRIVE
-                '@fs_enabled': "false"
-                '@fs_index': "1"
-                '@fs_label': Wounded Paw Battering Ram
-                '@fs_ledcolor': "525824"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block4:
-              attrs:
-                '@fs_customcolor': "8"
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
-                '@fs_index': "2"
+                '@fs_index': "1"
                 '@fs_label': Simple Tilt
                 '@fs_ledcolor': "527360"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block1:
+              attrs:
+                '@fs_customcolor': "8"
+                '@fs_customlabel': MOD
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': MXR Flanger
+                '@fs_ledcolor': "1037"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block5:
@@ -328,11 +343,11 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
+                block0: "false"
                 block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
+                block4: "true"
                 block5: "false"
                 block6: "false"
     snapshot1:
@@ -348,11 +363,11 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
+                block0: "false"
                 block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
+                block4: "true"
                 block5: "false"
                 block6: "false"
     snapshot2:
@@ -368,11 +383,11 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
+                block0: "false"
                 block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
+                block4: "true"
                 block5: "false"
                 block6: "false"
     variax:
@@ -396,20 +411,20 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Wounded Paw Battering Ram
-      block: 1
-      colour: 525824
+    - gear: Simple Tilt
+      block: 0
+      colour: 527360
       enabled: false
-      label: DRIVE
+      label: EQ
       led: pink
       momentary: false
       primary: true
       switch: 1
-    - gear: Simple Tilt
-      block: 4
-      colour: 527360
+    - gear: MXR Flanger
+      block: 1
+      colour: 1037
       enabled: false
-      label: EQ
+      label: MOD
       led: blue
       momentary: false
       primary: true
