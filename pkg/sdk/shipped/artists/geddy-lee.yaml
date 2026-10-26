@@ -254,7 +254,7 @@ built:
             low: 0.87
             mid: 0.14
             transient: 0.74
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer geddy-lee than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 4 records from 1 players, geddy-lee earns mid-forward and bright, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because geddy-lee earns "mid-forward" against the players who measure otherwise, by 0.0958 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer geddy-lee than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 4 records from 1 players, geddy-lee earns mid-forward and bright, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because geddy-lee earns "mid-forward" against the players who measure otherwise, by 0.0958 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
       controls:
         125Hz: "-3.75"
         16kHz: "0.0"
@@ -276,11 +276,11 @@ built:
       controls:
         Feedback: "0.345"
         Level: "0.0"
-        Mix: "0.4"
+        Mix: "0.125"
         Scale: "0.75"
-        SyncSelect1: "6"
-        TempoSync1: "false"
-        Time: "0.507"
+        SyncSelect1: "17"
+        TempoSync1: "true"
+        Time: "0.0"
       attrs:
         '@position': "6"
       enabled: false

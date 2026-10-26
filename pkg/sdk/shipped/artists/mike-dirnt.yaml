@@ -258,17 +258,17 @@ built:
     - role: mod
       gear: Chorus
       controls:
-        ChorusIntensity: "0.57"
+        ChorusIntensity: "0.5"
         Headroom: "0.0"
         Level: "1.0"
         Mix: "0.5"
-        Mode: "false"
+        Mode: "true"
         Spread: "0.0"
         Stereo: "false"
-        SyncSelect1: "6"
-        SyncSelect2: "6"
-        TempoSync1: "false"
-        TempoSync2: "false"
+        SyncSelect1: "13"
+        SyncSelect2: "9"
+        TempoSync1: "true"
+        TempoSync2: "true"
         VibratoDepth: "0.5"
         VibratoRate: "0.7"
       attrs:

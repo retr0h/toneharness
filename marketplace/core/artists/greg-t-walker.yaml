@@ -84,7 +84,7 @@ built:
             low: 0.96
             mid: 0.04
             transient: 0.68
-          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 52 bass drives this device models to greg-t-walker, sitting at 123 Hz against 154. Across 3 records from 1 players, greg-t-walker earns saturated and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because greg-t-walker earns "saturated" against the players who measure otherwise, by 0.037 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 19 bass drives this device models to greg-t-walker, sitting at 123 Hz against 154. Across 3 records from 1 players, greg-t-walker earns saturated and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because greg-t-walker earns "saturated" against the players who measure otherwise, by 0.037 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
       controls:
         Boost: "false"
         Bright: "true"
@@ -139,13 +139,13 @@ built:
     - role: delay
       gear: Simple Delay
       controls:
-        Feedback: "0.345"
+        Feedback: "0.5"
         Level: "0.0"
-        Mix: "0.4"
+        Mix: "1.0"
         Scale: "0.75"
-        SyncSelect1: "6"
+        SyncSelect1: "17"
         TempoSync1: "false"
-        Time: "0.507"
+        Time: "6.0"
       attrs:
         '@position': "4"
       enabled: false
@@ -153,12 +153,12 @@ built:
     - role: reverb
       gear: Cave
       controls:
-        Decay: "0.47"
-        HighCut: "9400.0"
+        Decay: "0.625"
+        HighCut: "2950.0"
         Level: "0.0"
-        LowCut: "59.0"
-        Mix: "0.5"
-        Predelay: "0.05"
+        LowCut: "500.0"
+        Mix: "0.25"
+        Predelay: "0.1"
       attrs:
         '@position': "5"
       enabled: false

@@ -114,10 +114,10 @@ built:
       gear: Colorsound Wah-fuzz
       controls:
         FcHigh: "2101.0"
-        FcLow: "280.0"
+        FcLow: "320.0"
         Level: "0.0"
-        Mix: "1.0"
-        Pedal: "0.0"
+        Mix: "0.875"
+        Pedal: "0.25"
       attrs:
         '@position': "0"
       enabled: false
@@ -223,18 +223,18 @@ built:
     - role: mod
       gear: BOSS CE-1
       controls:
-        ChorusIntensity: "0.57"
-        Headroom: "0.0"
+        ChorusIntensity: "0.125"
+        Headroom: "6.0"
         Level: "1.0"
-        Mix: "0.5"
-        Mode: "false"
+        Mix: "0.875"
+        Mode: "true"
         Spread: "0.0"
         Stereo: "false"
-        SyncSelect1: "6"
-        SyncSelect2: "6"
+        SyncSelect1: "7"
+        SyncSelect2: "13"
         TempoSync1: "false"
         TempoSync2: "false"
-        VibratoDepth: "0.5"
+        VibratoDepth: "0.375"
         VibratoRate: "0.7"
       attrs:
         '@position': "6"

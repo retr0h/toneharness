@@ -202,13 +202,13 @@ built:
     - role: delay
       gear: Dual Delay
       controls:
-        Depth: "0.35"
+        Depth: "0.625"
         HighCut: "20100.0"
-        Left Time: "0.375"
-        LeftFeedback: "0.3"
+        Left Time: "2.0"
+        LeftFeedback: "0.75"
         Level: "0.0"
-        LowCut: "19.9"
-        MixL: "0.23"
+        LowCut: "79.9"
+        MixL: "0.875"
         MixR: "0.23"
         ModulationMode: "1"
         Right Time: "0.5"

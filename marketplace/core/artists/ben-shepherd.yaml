@@ -62,10 +62,10 @@ built:
       gear: Vetta Wah
       controls:
         FcHigh: "2300.0"
-        FcLow: "300.0"
+        FcLow: "320.0"
         Level: "0.0"
-        Mix: "1.0"
-        Pedal: "0.0"
+        Mix: "0.625"
+        Pedal: "0.25"
       attrs:
         '@position': "0"
       enabled: false
@@ -157,19 +157,19 @@ built:
     - role: mod
       gear: BOSS CE-1
       controls:
-        ChorusIntensity: "0.57"
-        Headroom: "0.0"
+        ChorusIntensity: "0.5"
+        Headroom: "9.0"
         Level: "1.0"
-        Mix: "0.5"
+        Mix: "0.375"
         Mode: "false"
         Spread: "0.0"
         Stereo: "false"
-        SyncSelect1: "6"
+        SyncSelect1: "3"
         SyncSelect2: "6"
-        TempoSync1: "false"
-        TempoSync2: "false"
+        TempoSync1: "true"
+        TempoSync2: "true"
         VibratoDepth: "0.5"
-        VibratoRate: "0.7"
+        VibratoRate: "0.875"
       attrs:
         '@position': "5"
       enabled: false

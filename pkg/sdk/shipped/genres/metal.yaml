@@ -211,19 +211,19 @@ built:
     - role: mod
       gear: BOSS CE-1
       controls:
-        ChorusIntensity: "0.57"
-        Headroom: "0.0"
+        ChorusIntensity: "0.5"
+        Headroom: "-6.0"
         Level: "1.0"
-        Mix: "0.5"
+        Mix: "0.0"
         Mode: "false"
         Spread: "0.0"
         Stereo: "false"
-        SyncSelect1: "6"
+        SyncSelect1: "3"
         SyncSelect2: "6"
-        TempoSync1: "false"
-        TempoSync2: "false"
-        VibratoDepth: "0.5"
-        VibratoRate: "0.7"
+        TempoSync1: "true"
+        TempoSync2: "true"
+        VibratoDepth: "0.0"
+        VibratoRate: "1.0"
       attrs:
         '@position': "6"
       enabled: false

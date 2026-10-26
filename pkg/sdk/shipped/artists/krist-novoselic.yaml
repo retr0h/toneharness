@@ -171,12 +171,12 @@ built:
     - role: reverb
       gear: Cave
       controls:
-        Decay: "0.47"
-        HighCut: "9400.0"
+        Decay: "0.625"
+        HighCut: "15200.0"
         Level: "0.0"
-        LowCut: "59.0"
-        Mix: "0.5"
-        Predelay: "0.05"
+        LowCut: "19.9"
+        Mix: "0.25"
+        Predelay: "0.175"
       attrs:
         '@position': "5"
       enabled: false
