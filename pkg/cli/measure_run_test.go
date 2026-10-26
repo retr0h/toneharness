@@ -122,7 +122,7 @@ func (b bench) Through(
 	// what `idle` asks for. A double that answered a tone to a buffer of
 	// zeros made the reference and the idle path read alike, which is the
 	// state `arrived` exists to refuse.
-	if silentSignal(signal) {
+	if nothingIn(signal) {
 		amplitude = 0.0000002
 	}
 
@@ -160,26 +160,6 @@ func loudly(
 	}
 
 	return out
-}
-
-// silentSignal says nothing was asked to be played.
-//
-// A non-empty buffer of zeros, which is what `idle` pushes through to find out
-// how loud the path is carrying nothing. An empty one is not a question.
-func silentSignal(
-	signal []float32,
-) bool {
-	if len(signal) == 0 {
-		return false
-	}
-
-	for _, v := range signal {
-		if v != 0 {
-			return false
-		}
-	}
-
-	return true
 }
 
 // quietly is the same tone at the amplitude a chain that has stopped reads at.
@@ -258,7 +238,7 @@ func (d *dies) Through(
 ) ([]float32, error) {
 	// As in [turning]: the countdown is readings of the reference, and the
 	// one the sweep takes of the idle path is not one of them.
-	if silentSignal(signal) {
+	if nothingIn(signal) {
 		return d.bench.Through(ctx, signal)
 	}
 
@@ -976,7 +956,7 @@ func (b turning) Through(
 	// sweep also reads the path carrying nothing, and counting that would
 	// move every `after` in this file by one for a reading that is not of
 	// the chain at all.
-	if silentSignal(signal) {
+	if nothingIn(signal) {
 		return bench{}.Through(ctx, signal)
 	}
 

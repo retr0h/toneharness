@@ -416,6 +416,14 @@ func MeasureControls(
 		return err
 	}
 
+	// Printed where it is measured rather than beside the sweep, because a run
+	// this refuses never reaches the sweep: the figure the refusal turns on is
+	// the one a person needs to see, and printing it after the check would
+	// show it only on the runs that did not need it.
+	_, _ = fmt.Fprintf(w,
+		"  the path reads %.2fdB carrying nothing, so a reading has to clear "+
+			"%.2fdB\n", quiet, quiet+silent)
+
 	carried, err := sdk.Fingerprint(ctx, bench, signal)
 	if err != nil {
 		return err
@@ -442,15 +450,8 @@ func MeasureControls(
 
 	want := sweepable(block, order)
 
-	_, _ = fmt.Fprintf(w, "\n  %s (%s), %d controls through %s\n",
+	_, _ = fmt.Fprintf(w, "\n  %s (%s), %d controls through %s\n\n",
 		block.Name, block.ID, len(want), bench.Name())
-
-	// Printed because it is what the run is checked against, and because a
-	// person reading it can tell a path that carries nothing from one that
-	// carries something quiet.
-	_, _ = fmt.Fprintf(w,
-		"  the path reads %.2fdB carrying nothing, so a reading has to clear "+
-			"%.2fdB\n\n", quiet, quiet+silent)
 
 	// Said before the sweep rather than after it, because it is the case where
 	// the reading differs most from use and the run costs most of an hour.
