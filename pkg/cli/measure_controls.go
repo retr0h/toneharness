@@ -190,6 +190,74 @@ func working(
 // sweep.
 var errChainDied = errors.New("the chain went quiet mid-sweep")
 
+// arrived refuses a sweep nothing reached, which [working] cannot catch.
+//
+// Every floor in a sweep is derived from what the chain settles at, and
+// [working] holds each control to the first one. So a chain that is dead
+// before the first control is a chain every later control agrees with, and
+// the whole run clears a floor that is itself silence.
+//
+// Measured, which is how this came to be written. A sweep of
+// `HD2_WahTeardropBassQ` on 2026-10-25 ran with nothing plugged into the
+// pedal's input and wrote 24,854 bytes: all five controls measured, `real?
+// yes` on low, high, centroid, transient and level, and the five settled
+// within 0.03dB of each other so [working] passed every one. It was caught
+// only by re-sweeping a block already in the library and noticing it had
+// moved 77dB.
+//
+// Nothing in the file said so. `volume: 38`, `open: true`, `pinned_on`, the
+// reference and its sha256 and a preset byte-identical down to `@input: 1`
+// all agreed with the committed readings, because every one of them describes
+// what was asked for rather than what came back.
+//
+// So the reference is compared against the same path carrying nothing. That is
+// the one reading that does not move with the rig: a figure measured on one
+// machine is a figure about that machine, and the converters' floor here is
+// -108.5dB where somebody else's is their own. The question is not how loud
+// the answer is but whether it is louder than the path is when it is idle.
+//
+// The same `silent` the rest of the sweep uses, so the two cannot disagree
+// about what counts as a reading. Live, there is no argument: the reference
+// settles 50 to 60dB over the idle path. Dead, the two are the same reading
+// and the margin is nothing.
+func arrived(
+	reference, quiet float64,
+) error {
+	if reference >= quiet+silent {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"%w: the reference settled at %.2fdB and the same path carrying "+
+			"nothing reads %.2fdB, which is %.1fdB apart where %.0f is the "+
+			"least a reading may clear it by. Nothing is arriving from the "+
+			"pedal: check the lead into its input, and that --hardware names "+
+			"the device the reference actually plays out of",
+		errNothingArrived, reference, quiet, reference-quiet, silent)
+}
+
+// errNothingArrived reports a signal path that carried nothing for the whole
+// sweep.
+var errNothingArrived = errors.New("nothing came back from the chain")
+
+// idle is how loud the signal path is when it is asked to carry nothing.
+//
+// The same length as the reference so it travels the same buffers, and taken
+// through the same bench, because what is wanted is this path's own noise
+// rather than a figure about silence in general.
+func idle(
+	ctx context.Context,
+	bench sdk.Bench,
+	signal []float32,
+) (float64, error) {
+	got, err := sdk.Fingerprint(ctx, bench, make([]float32, len(signal)))
+	if err != nil {
+		return 0, err
+	}
+
+	return got.Level, nil
+}
+
 // silent is how far under the settled level a reading may sit and still be a
 // reading.
 //
@@ -333,6 +401,30 @@ func MeasureControls(
 
 	curveRig, curveOpen := rigTaken(opts.Hardware)
 
+	// Both readings taken before any control, because this is a question
+	// about the rig rather than about a control.
+	//
+	// A pre-flight rather than a check inside the sweep, and that is the
+	// second attempt. Held against the first control it fired on the wrong
+	// run: a control whose every position is silent yields no curve and
+	// leaves no anchor behind, so the check fell through to the next control,
+	// where a chain a control had legitimately muted looked like a chain
+	// nothing ever reached. Measured once, up front, it cannot be confused
+	// with either.
+	quiet, err := idle(ctx, bench, signal)
+	if err != nil {
+		return err
+	}
+
+	carried, err := sdk.Fingerprint(ctx, bench, signal)
+	if err != nil {
+		return err
+	}
+
+	if err := arrived(carried.Level, quiet); err != nil {
+		return err
+	}
+
 	out := measured.Curves{
 		Device: cat.Device, Gear: block.Name, Block: string(block.ID),
 		Slot: alone, Isolated: opts.After == "", Probed: probed,
@@ -341,6 +433,7 @@ func MeasureControls(
 		// The same three the fingerprint library records, for the same
 		// reason: a curve taken on one rig is a curve about that rig.
 		Rig: curveRig, Open: curveOpen, PinnedOn: pinnedOn(),
+		Idle: quiet,
 		Reference: measured.Reference{
 			File: opts.Dry, SHA256: sum, Seconds: opts.Seconds,
 		},
@@ -349,8 +442,15 @@ func MeasureControls(
 
 	want := sweepable(block, order)
 
-	_, _ = fmt.Fprintf(w, "\n  %s (%s), %d controls through %s\n\n",
+	_, _ = fmt.Fprintf(w, "\n  %s (%s), %d controls through %s\n",
 		block.Name, block.ID, len(want), bench.Name())
+
+	// Printed because it is what the run is checked against, and because a
+	// person reading it can tell a path that carries nothing from one that
+	// carries something quiet.
+	_, _ = fmt.Fprintf(w,
+		"  the path reads %.2fdB carrying nothing, so a reading has to clear "+
+			"%.2fdB\n\n", quiet, quiet+silent)
 
 	// Said before the sweep rather than after it, because it is the case where
 	// the reading differs most from use and the run costs most of an hour.

@@ -108,6 +108,27 @@ type Curves struct {
 	// A library written in that state records its volume honestly and describes
 	// a signal path nobody measured.
 	PinnedOn string `json:"pinned_on,omitempty"`
+	// Idle is how loud this signal path reads carrying nothing, measured once
+	// per sweep by pushing silence of the reference's own length through it.
+	//
+	// The field that says the readings are of something. Every other figure
+	// here describes what was asked for, so all of them agree whether or not
+	// anything arrived: a sweep taken with nothing plugged into the pedal's
+	// input wrote 24,854 bytes with `volume: 38`, `open: true`, a matching
+	// reference sha256 and a byte-identical preset, and the five controls
+	// settled within 0.03dB of each other so the mid-sweep guard passed every
+	// one. Only the absolute level was wrong, by 77dB, and nothing in the file
+	// had anything to compare it against.
+	//
+	// This is that comparison, and it is the one reading that does not move
+	// with the rig. The converters' floor on the machine these were taken on
+	// is -108.5dB and somebody else's is their own, so what matters is not how
+	// loud the answer is but how far it sits above the path at rest. Live that
+	// is 50 to 60dB; dead it is nothing.
+	//
+	// Zero in a library written before this was recorded, which is a sweep
+	// nobody checked rather than a path with no noise.
+	Idle float64 `json:"idle,omitempty"`
 
 	// Probed says the wire order was discovered on the device rather than read
 	// out of the catalog.

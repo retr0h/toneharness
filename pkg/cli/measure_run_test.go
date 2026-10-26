@@ -118,6 +118,14 @@ func (b bench) Through(
 		amplitude = 0.000001
 	}
 
+	// Silence in, the path's own noise out, which is what hardware does and
+	// what `idle` asks for. A double that answered a tone to a buffer of
+	// zeros made the reference and the idle path read alike, which is the
+	// state `arrived` exists to refuse.
+	if silentSignal(signal) {
+		amplitude = 0.0000002
+	}
+
 	// Driven well past the ceiling and clamped there, which is what clipping
 	// is: flat tops, an RMS close to one, and harmonics that were never in
 	// the signal.
@@ -135,6 +143,44 @@ func (b bench) Through(
 }
 
 func (bench) Name() string { return "a bench" }
+
+// loudly is a buffer with something in it, for a case that needs the bench to
+// answer as though the chain were passing signal.
+//
+// The content does not matter and never did. What matters is that it is not
+// silence: a bench handed a buffer of zeros answers with the path's own noise,
+// the way hardware does, so a zero-filled placeholder reads as a dead path
+// rather than as a loud one.
+func loudly(
+	samples int,
+) []float32 {
+	out := make([]float32, samples)
+	for i := range out {
+		out[i] = 0.5
+	}
+
+	return out
+}
+
+// silentSignal says nothing was asked to be played.
+//
+// A non-empty buffer of zeros, which is what `idle` pushes through to find out
+// how loud the path is carrying nothing. An empty one is not a question.
+func silentSignal(
+	signal []float32,
+) bool {
+	if len(signal) == 0 {
+		return false
+	}
+
+	for _, v := range signal {
+		if v != 0 {
+			return false
+		}
+	}
+
+	return true
+}
 
 // quietly is the same tone at the amplitude a chain that has stopped reads at.
 //
@@ -210,6 +256,12 @@ func (d *dies) Through(
 	ctx context.Context,
 	signal []float32,
 ) ([]float32, error) {
+	// As in [turning]: the countdown is readings of the reference, and the
+	// one the sweep takes of the idle path is not one of them.
+	if silentSignal(signal) {
+		return d.bench.Through(ctx, signal)
+	}
+
 	d.seen++
 
 	if d.seen > d.after {
@@ -920,6 +972,14 @@ func (b turning) Through(
 	ctx context.Context,
 	signal []float32,
 ) ([]float32, error) {
+	// A reading of the reference, which is what the countdown is about. The
+	// sweep also reads the path carrying nothing, and counting that would
+	// move every `after` in this file by one for a reading that is not of
+	// the chain at all.
+	if silentSignal(signal) {
+		return bench{}.Through(ctx, signal)
+	}
+
 	*b.calls++
 
 	if *b.calls > b.after {

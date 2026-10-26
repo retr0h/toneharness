@@ -821,7 +821,7 @@ func (s *ChooseTestSuite) TestReadings() {
 				// Settled at nothing, against a bench reading well under it: loud
 				// enough to be believed and far past what may be spent.
 				got, err := readings(context.Background(), w, s.opts(), bench{},
-					make([]float32, 64), s.mic(), 0)
+					loudly(64), s.mic(), 0)
 
 				s.Require().NoError(err)
 				s.Require().Empty(got, "every setting cost more than it may")

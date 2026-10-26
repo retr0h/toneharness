@@ -375,8 +375,11 @@ func (s *ControlsRunTestSuite) TestControlsRecordsWhatWentSilent() {
 	// Only the first control, because each later one measures its own floor
 	// from the chain as it then sits, and a bench that is quiet throughout
 	// makes quiet the settled level.
+	//
+	// Three readings of the reference, not two: the pre-flight takes one
+	// before any control, to hold against the idle path. See [arrived].
 	got, said, err := s.run("HD2_CabMicIr_2x15Brute",
-		turning{after: 2, to: bench{quiet: true}, calls: &calls})
+		turning{after: 3, to: bench{quiet: true}, calls: &calls})
 
 	s.Require().NoError(err)
 	s.Require().Contains(said, "silent")
@@ -485,6 +488,7 @@ func (s *ControlsRunTestSuite) TestControlsRefusesAChainThatDiesMidSweep() {
 	// Enough readings for the first control and then nothing, which is the
 	// shape of the fault: the block that was swept first is fine and every
 	// one after it is the converters.
+	//
 	_, said, err := s.run("HD2_CabMicIr_2x15Brute", &dies{after: 24})
 
 	s.Require().Error(err)
