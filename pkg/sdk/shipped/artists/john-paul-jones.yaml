@@ -73,6 +73,18 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: wah
+      gear: RMC Real McCoy 1
+      controls:
+        FcHigh: "1735.0"
+        FcLow: "340.0"
+        Level: "0.0"
+        Mix: "1.0"
+        Pedal: "0.667"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: drive
       gear: Arbiter® Fuzz Face®
       capture: direct
@@ -89,9 +101,9 @@ built:
         Output: "0.75"
         Treble: "0.625"
       attrs:
-        '@position': "0"
+        '@position': "1"
       enabled: false
-      position: 0
+      position: 1
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -106,8 +118,8 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "2"
+      position: 2
     - role: amp
       gear: Acoustic 360
       confidence: medium
@@ -140,8 +152,8 @@ built:
         TuningFork: "0.0"
         Variamp: "4"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
     - role: cab
       gear: 1x18" Acoustic 360
       evidence:
@@ -154,8 +166,8 @@ built:
         Level: "0.0"
         LowCut: "20.0"
       attrs:
-        '@position': "3"
-      position: 3
+        '@position': "4"
+      position: 4
     - role: eq
       gear: Simple Tilt
       capture: direct
@@ -179,9 +191,22 @@ built:
         Level: "0.0"
         Tilt: "0.375"
       attrs:
-        '@position': "4"
+        '@position': "5"
       enabled: false
-      position: 4
+      position: 5
+    - role: reverb
+      gear: Cave
+      controls:
+        Decay: "0.47"
+        HighCut: "9400.0"
+        Level: "0.0"
+        LowCut: "59.0"
+        Mix: "0.5"
+        Predelay: "0.05"
+      attrs:
+        '@position': "6"
+      enabled: false
+      position: 6
     - role: eq
       gear: Simple EQ
       evidence:
@@ -194,8 +219,8 @@ built:
         MidFreq: "600.0"
         MidGain: "0.8"
       attrs:
-        '@position': "5"
-      position: 5
+        '@position': "7"
+      position: 7
   preset:
     dsp0:
       members:
@@ -262,29 +287,28 @@ built:
             block0:
               attrs:
                 '@fs_customcolor': "10"
-                '@fs_customlabel': DRIVE
+                '@fs_customlabel': WAH
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Arbiter Fuzz Face
-                '@fs_ledcolor': "525824"
+                '@fs_label': RMC Real McCoy 1
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block1:
               attrs:
-                '@fs_customcolor': "4"
-                '@fs_customlabel': COMP
-                '@fs_enabled': "true"
-                '@fs_index': "3"
-                '@fs_label': Deluxe Comp
-                '@fs_ledcolor': "8716032"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block4:
-              attrs:
                 '@fs_customcolor': "8"
-                '@fs_customlabel': EQ
+                '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "2"
+                '@fs_label': Arbiter Fuzz Face
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block5:
+              attrs:
+                '@fs_customcolor': "4"
+                '@fs_customlabel': EQ
+                '@fs_enabled': "false"
+                '@fs_index': "3"
                 '@fs_label': Simple Tilt
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
@@ -321,11 +345,13 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "true"
+                block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
-                block5: "true"
+                block4: "true"
+                block5: "false"
+                block6: "false"
+                block7: "true"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -340,11 +366,13 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "true"
+                block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
-                block5: "true"
+                block4: "true"
+                block5: "false"
+                block6: "false"
+                block7: "true"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -359,11 +387,13 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "true"
+                block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
-                block5: "true"
+                block4: "true"
+                block5: "false"
+                block6: "false"
+                block7: "true"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -385,30 +415,29 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Arbiter Fuzz Face
+    - gear: RMC Real McCoy 1
       block: 0
-      colour: 525824
       enabled: false
-      label: DRIVE
+      label: WAH
       led: pink
       momentary: false
       primary: true
       switch: 1
-    - gear: Deluxe Comp
+    - gear: Arbiter Fuzz Face
       block: 1
-      colour: 8716032
-      enabled: true
-      label: COMP
-      led: light orange
-      momentary: false
-      primary: true
-      switch: 3
-    - gear: Simple Tilt
-      block: 4
-      colour: 527360
+      colour: 525824
       enabled: false
-      label: EQ
+      label: DRIVE
       led: blue
       momentary: false
       primary: true
       switch: 2
+    - gear: Simple Tilt
+      block: 5
+      colour: 527360
+      enabled: false
+      label: EQ
+      led: light orange
+      momentary: false
+      primary: true
+      switch: 3

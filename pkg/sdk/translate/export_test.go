@@ -263,8 +263,12 @@ var (
 	CarriedButOff = carriedButOff
 	// Offers is every kind worth a switch, best first, rotated per subject.
 	Offers = offers
-	// Popular is the model of one kind that the most chains hold.
+	// Popular is a model of one kind that chains hold, rotated per subject.
 	Popular = popular
+	// RanksFor is the models of one kind worth offering, best first.
+	RanksFor = ranksFor
+	// Rotated is which of those candidates a subject takes.
+	Rotated = rotated
 	// SpareOn is how much of the chip a chain has not spent.
 	SpareOn = spareOn
 )

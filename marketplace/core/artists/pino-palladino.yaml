@@ -120,22 +120,30 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
-    - role: drive
-      gear: Wounded Paw Battering Ram
+    - role: filter
+      gear: Musitronics Mu-Tron III
       controls:
-        Fuzz: "true"
-        FuzzGain: "0.625"
-        FuzzLevel: "0.25"
-        FuzzOct: "true"
-        FuzzTone: "0.0"
-        ODGain: "0.0"
-        ODLevel: "0.25"
-        ODLowBoost: "false"
-        ODTone: "0.125"
+        Drive: "true"
+        Gain: "0.15"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "2"
+        Peak: "0.75"
+        Range: "false"
       attrs:
         '@position': "0"
       enabled: false
       position: 0
+    - role: drive
+      gear: Klon Centaur
+      controls:
+        Gain: "0.42"
+        Level: "0.6"
+        Tone: "0.25"
+      attrs:
+        '@position': "1"
+      enabled: false
+      position: 1
     - role: pitch
       gear: EBS OctaBass
       capture: direct
@@ -151,9 +159,9 @@ built:
         Octave: "0.85"
         Tone: "0.875"
       attrs:
-        '@position': "1"
+        '@position': "2"
       enabled: false
-      position: 1
+      position: 2
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -168,8 +176,8 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
     - role: amp
       gear: Ampeg B-15
       capture: miked
@@ -200,8 +208,8 @@ built:
         Sag: "0.5"
         Treble: "0.644"
       attrs:
-        '@position': "3"
-      position: 3
+        '@position': "4"
+      position: 4
     - role: cab
       gear: Ampeg B-15
       capture: miked
@@ -219,8 +227,8 @@ built:
         Mic: "6"
         Position: "0.39"
       attrs:
-        '@position': "4"
-      position: 4
+        '@position': "5"
+      position: 5
   preset:
     dsp0:
       members:
@@ -287,31 +295,31 @@ built:
             block0:
               attrs:
                 '@fs_customcolor': "10"
-                '@fs_customlabel': DRIVE
+                '@fs_customlabel': FILTER
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Wounded Paw Battering Ram
-                '@fs_ledcolor': "525824"
+                '@fs_label': Musitronics Mu-Tron III
+                '@fs_ledcolor': "196619"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block1:
               attrs:
                 '@fs_customcolor': "8"
-                '@fs_customlabel': PITCH
+                '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': EBS OctaBass
-                '@fs_ledcolor': "196619"
+                '@fs_label': Klon Centaur
+                '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block2:
               attrs:
                 '@fs_customcolor': "4"
-                '@fs_customlabel': COMP
-                '@fs_enabled': "true"
+                '@fs_customlabel': PITCH
+                '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': Deluxe Comp
-                '@fs_ledcolor': "8716032"
+                '@fs_label': EBS OctaBass
+                '@fs_ledcolor': "196619"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -347,9 +355,10 @@ built:
               controls:
                 block0: "false"
                 block1: "false"
-                block2: "true"
+                block2: "false"
                 block3: "true"
                 block4: "true"
+                block5: "true"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -365,9 +374,10 @@ built:
               controls:
                 block0: "false"
                 block1: "false"
-                block2: "true"
+                block2: "false"
                 block3: "true"
                 block4: "true"
+                block5: "true"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -383,9 +393,10 @@ built:
               controls:
                 block0: "false"
                 block1: "false"
-                block2: "true"
+                block2: "false"
                 block3: "true"
                 block4: "true"
+                block5: "true"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -407,29 +418,29 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Wounded Paw Battering Ram
+    - gear: Musitronics Mu-Tron III
       block: 0
-      colour: 525824
+      colour: 196619
       enabled: false
-      label: DRIVE
+      label: FILTER
       led: pink
       momentary: false
       primary: true
       switch: 1
-    - gear: EBS OctaBass
+    - gear: Klon Centaur
       block: 1
-      colour: 196619
+      colour: 525824
       enabled: false
-      label: PITCH
+      label: DRIVE
       led: blue
       momentary: false
       primary: true
       switch: 2
-    - gear: Deluxe Comp
+    - gear: EBS OctaBass
       block: 2
-      colour: 8716032
-      enabled: true
-      label: COMP
+      colour: 196619
+      enabled: false
+      label: PITCH
       led: light orange
       momentary: false
       primary: true

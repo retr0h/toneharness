@@ -17,7 +17,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: metal
 ask:
   confidence: low
@@ -218,6 +218,26 @@ built:
         '@position': "5"
       enabled: false
       position: 5
+    - role: mod
+      gear: BOSS CE-1
+      controls:
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
+        SyncSelect1: "6"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
+      attrs:
+        '@position': "6"
+      enabled: false
+      position: 6
   preset:
     dsp0:
       members:
@@ -348,6 +368,7 @@ built:
                 block3: "true"
                 block4: "true"
                 block5: "false"
+                block6: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -367,6 +388,7 @@ built:
                 block3: "true"
                 block4: "true"
                 block5: "false"
+                block6: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -386,6 +408,7 @@ built:
                 block3: "true"
                 block4: "true"
                 block5: "false"
+                block6: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"

@@ -161,6 +161,22 @@ built:
       attrs:
         '@position': "1"
       position: 1
+    - role: drive
+      gear: Wounded Paw Battering Ram
+      controls:
+        Fuzz: "true"
+        FuzzGain: "0.5"
+        FuzzLevel: "0.25"
+        FuzzOct: "true"
+        FuzzTone: "0.375"
+        ODGain: "0.0"
+        ODLevel: "0.0"
+        ODLowBoost: "false"
+        ODTone: "0.25"
+      attrs:
+        '@position': "2"
+      enabled: false
+      position: 2
     - role: amp
       gear: Mesa/Boogie Bass 400+
       capture: direct
@@ -190,8 +206,8 @@ built:
         Sag: "0.75"
         Treble: "0.75"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
     - role: cab
       gear: Mesa/Boogie 2x15
       capture: direct
@@ -213,27 +229,28 @@ built:
         Mic: "0"
         Position: "0.39"
       attrs:
-        '@position': "3"
-      position: 3
-    - role: reverb
-      gear: Room
-      controls:
-        BassBoost: "0.0"
-        BassFreq: "100.0"
-        Damping: "3700.0"
-        Decay: "1.2"
-        Diffusion: "0.5"
-        ERLevel: "0.8"
-        HighCut: "10000.0"
-        Level: "0.0"
-        LowCut: "100.0"
-        MatrFreq: "0.333"
-        Mix: "0.41"
-        PreDelay: "0.01"
-      attrs:
         '@position': "4"
-      enabled: false
       position: 4
+    - role: mod
+      gear: Chorus
+      controls:
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
+        SyncSelect1: "6"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
+      attrs:
+        '@position': "5"
+      enabled: false
+      position: 5
   preset:
     dsp0:
       members:
@@ -307,24 +324,24 @@ built:
                 '@fs_ledcolor': "196619"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block1:
-              attrs:
-                '@fs_customcolor': "8"
-                '@fs_customlabel': COMP
-                '@fs_enabled': "true"
-                '@fs_index': "3"
-                '@fs_label': Deluxe Comp
-                '@fs_ledcolor': "8716032"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block4:
+            block2:
               attrs:
                 '@fs_customcolor': "10"
-                '@fs_customlabel': REVERB
+                '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Dynamic Room
-                '@fs_ledcolor': "1049600"
+                '@fs_label': Wounded Paw Battering Ram
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block5:
+              attrs:
+                '@fs_customcolor': "8"
+                '@fs_customlabel': MOD
+                '@fs_enabled': "false"
+                '@fs_index': "3"
+                '@fs_label': BOSS CE-1
+                '@fs_ledcolor': "1037"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -360,9 +377,10 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "true"
+                block2: "false"
                 block3: "true"
-                block4: "false"
+                block4: "true"
+                block5: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -378,9 +396,10 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "true"
+                block2: "false"
                 block3: "true"
-                block4: "false"
+                block4: "true"
+                block5: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -396,9 +415,10 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "true"
+                block2: "false"
                 block3: "true"
-                block4: "false"
+                block4: "true"
+                block5: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -429,21 +449,21 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Deluxe Comp
-      block: 1
-      colour: 8716032
-      enabled: true
-      label: COMP
-      led: blue
-      momentary: false
-      primary: true
-      switch: 3
-    - gear: Dynamic Room
-      block: 4
-      colour: 1049600
+    - gear: Wounded Paw Battering Ram
+      block: 2
+      colour: 525824
       enabled: false
-      label: REVERB
+      label: DRIVE
       led: pink
       momentary: false
       primary: true
       switch: 2
+    - gear: BOSS CE-1
+      block: 5
+      colour: 1037
+      enabled: false
+      label: MOD
+      led: blue
+      momentary: false
+      primary: true
+      switch: 3

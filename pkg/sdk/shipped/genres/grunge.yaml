@@ -28,7 +28,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: grunge
 ask:
   confidence: low
@@ -174,6 +174,26 @@ built:
         '@position': "4"
       enabled: false
       position: 4
+    - role: mod
+      gear: Chorus
+      controls:
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
+        SyncSelect1: "6"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
+      attrs:
+        '@position': "5"
+      enabled: false
+      position: 5
     - role: reverb
       gear: Ganymede
       capture: direct
@@ -200,9 +220,9 @@ built:
         Predelay: "0.0"
         Tone: "0.5"
       attrs:
-        '@position': "5"
+        '@position': "6"
       enabled: false
-      position: 5
+      position: 6
   preset:
     dsp0:
       members:
@@ -266,16 +286,6 @@ built:
       members:
         dsp0:
           members:
-            block0:
-              attrs:
-                '@fs_customcolor': "10"
-                '@fs_customlabel': DRIVE
-                '@fs_enabled': "true"
-                '@fs_index': "3"
-                '@fs_label': Pro Co RAT
-                '@fs_ledcolor': "13676288"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
             block4:
               attrs:
                 '@fs_customcolor': "9"
@@ -289,9 +299,19 @@ built:
             block5:
               attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': REVERB
+                '@fs_customlabel': MOD
                 '@fs_enabled': "false"
                 '@fs_index': "2"
+                '@fs_label': BOSS CE-1
+                '@fs_ledcolor': "1037"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block6:
+              attrs:
+                '@fs_customcolor': "10"
+                '@fs_customlabel': REVERB
+                '@fs_enabled': "false"
+                '@fs_index': "3"
                 '@fs_label': Ganymede
                 '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
@@ -333,6 +353,7 @@ built:
                 block3: "true"
                 block4: "false"
                 block5: "false"
+                block6: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -352,6 +373,7 @@ built:
                 block3: "true"
                 block4: "false"
                 block5: "false"
+                block6: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -371,6 +393,7 @@ built:
                 block3: "true"
                 block4: "false"
                 block5: "false"
+                block6: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -392,15 +415,6 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Pro Co RAT
-      block: 0
-      colour: 13676288
-      enabled: true
-      label: DRIVE
-      led: pink
-      momentary: false
-      primary: true
-      switch: 3
     - gear: Simple Tilt
       block: 4
       colour: 527360
@@ -410,12 +424,21 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Ganymede
+    - gear: BOSS CE-1
       block: 5
-      colour: 1049600
+      colour: 1037
       enabled: false
-      label: REVERB
+      label: MOD
       led: turquoise
       momentary: false
       primary: true
       switch: 2
+    - gear: Ganymede
+      block: 6
+      colour: 1049600
+      enabled: false
+      label: REVERB
+      led: pink
+      momentary: false
+      primary: true
+      switch: 3

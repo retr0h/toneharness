@@ -64,19 +64,15 @@ built:
   device: HX Stomp
   chain:
     - role: filter
-      gear: Auto Filter
+      gear: Musitronics Mu-Tron III
       controls:
-        Attack: "1.751"
-        Decay: "1.877"
-        Direction: "true"
-        FilterGain: "18.0"
-        FilterQ: "6.625"
-        FreqDepth: "3750.0"
-        Frequency: "50.0"
-        Level: "0.0"
-        Mix: "0.625"
+        Drive: "true"
+        Gain: "0.375"
+        Level: "1.0"
+        Mix: "0.5"
         Mode: "2"
-        Sens: "0.25"
+        Peak: "0.75"
+        Range: "false"
       attrs:
         '@position': "0"
       enabled: false
@@ -164,6 +160,26 @@ built:
       attrs:
         '@position': "4"
       position: 4
+    - role: mod
+      gear: BOSS CE-1
+      controls:
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
+        SyncSelect1: "6"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
+      attrs:
+        '@position': "5"
+      enabled: false
+      position: 5
   preset:
     dsp0:
       members:
@@ -233,7 +249,7 @@ built:
                 '@fs_customlabel': FILTER
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Auto Filter
+                '@fs_label': Musitronics Mu-Tron III
                 '@fs_ledcolor': "196619"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -247,14 +263,14 @@ built:
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block2:
+            block5:
               attrs:
                 '@fs_customcolor': "4"
-                '@fs_customlabel': COMP
-                '@fs_enabled': "true"
+                '@fs_customlabel': MOD
+                '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': Deluxe Comp
-                '@fs_ledcolor': "8716032"
+                '@fs_label': BOSS CE-1
+                '@fs_ledcolor': "1037"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -293,6 +309,7 @@ built:
                 block2: "true"
                 block3: "true"
                 block4: "true"
+                block5: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -311,6 +328,7 @@ built:
                 block2: "true"
                 block3: "true"
                 block4: "true"
+                block5: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -329,6 +347,7 @@ built:
                 block2: "true"
                 block3: "true"
                 block4: "true"
+                block5: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -350,7 +369,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Auto Filter
+    - gear: Musitronics Mu-Tron III
       block: 0
       colour: 196619
       enabled: false
@@ -368,11 +387,11 @@ built:
       momentary: false
       primary: true
       switch: 2
-    - gear: Deluxe Comp
-      block: 2
-      colour: 8716032
-      enabled: true
-      label: COMP
+    - gear: BOSS CE-1
+      block: 5
+      colour: 1037
+      enabled: false
+      label: MOD
       led: light orange
       momentary: false
       primary: true

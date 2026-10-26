@@ -217,7 +217,7 @@ built:
       position: 4
       stage: true
     - role: mod
-      gear: Chorus
+      gear: BOSS CE-1
       controls:
         ChorusIntensity: "0.57"
         Headroom: "0.0"

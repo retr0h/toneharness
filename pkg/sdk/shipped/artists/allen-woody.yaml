@@ -56,19 +56,14 @@ built:
   device: HX Stomp
   chain:
     - role: filter
-      gear: Auto Filter
+      gear: Musitronics Mu-Tron III (down position)
       controls:
-        Attack: "1.252"
-        Decay: "1.503"
-        Direction: "true"
-        FilterGain: "18.0"
-        FilterQ: "7.75"
-        FreqDepth: "10000.0"
-        Frequency: "50.0"
+        Freq: "0.69"
         Level: "0.0"
-        Mix: "0.5"
-        Mode: "2"
-        Sens: "0.25"
+        Mix: "1.0"
+        Q: "1.0"
+        Range: "false"
+        Type: "0"
       attrs:
         '@position': "0"
       enabled: false
@@ -89,6 +84,16 @@ built:
       attrs:
         '@position': "1"
       position: 1
+    - role: drive
+      gear: Klon Centaur
+      controls:
+        Gain: "0.5"
+        Level: "0.6"
+        Tone: "0.5"
+      attrs:
+        '@position': "2"
+      enabled: false
+      position: 2
     - role: amp
       gear: Ampeg SVT
       confidence: medium
@@ -111,8 +116,8 @@ built:
         Sag: "0.5"
         Treble: "0.625"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
     - role: cab
       gear: 8x10 Ampeg SVT-810AV
       evidence:
@@ -127,10 +132,10 @@ built:
         Mic: "0"
         Position: "0.39"
       attrs:
-        '@position': "3"
-      position: 3
+        '@position': "4"
+      position: 4
     - role: mod
-      gear: Chorus
+      gear: BOSS CE-1
       controls:
         ChorusIntensity: "0.57"
         Headroom: "0.0"
@@ -146,9 +151,9 @@ built:
         VibratoDepth: "0.5"
         VibratoRate: "0.7"
       attrs:
-        '@position': "4"
+        '@position': "5"
       enabled: false
-      position: 4
+      position: 5
   preset:
     dsp0:
       members:
@@ -218,26 +223,26 @@ built:
                 '@fs_customlabel': FILTER
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Auto Filter
+                '@fs_label': Musitronics Mu-Tron III (down position)
                 '@fs_ledcolor': "196619"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block1:
-              attrs:
-                '@fs_customcolor': "10"
-                '@fs_customlabel': COMP
-                '@fs_enabled': "true"
-                '@fs_index': "3"
-                '@fs_label': Deluxe Comp
-                '@fs_ledcolor': "8716032"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block4:
+            block2:
               attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': MOD
+                '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "2"
+                '@fs_label': Klon Centaur
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block5:
+              attrs:
+                '@fs_customcolor': "10"
+                '@fs_customlabel': MOD
+                '@fs_enabled': "false"
+                '@fs_index': "3"
                 '@fs_label': BOSS CE-1
                 '@fs_ledcolor': "1037"
                 '@fs_momentary': "false"
@@ -275,9 +280,10 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "true"
+                block2: "false"
                 block3: "true"
-                block4: "false"
+                block4: "true"
+                block5: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -293,9 +299,10 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "true"
+                block2: "false"
                 block3: "true"
-                block4: "false"
+                block4: "true"
+                block5: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -311,9 +318,10 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "true"
+                block2: "false"
                 block3: "true"
-                block4: "false"
+                block4: "true"
+                block5: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -335,7 +343,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Auto Filter
+    - gear: Musitronics Mu-Tron III (down position)
       block: 0
       colour: 196619
       enabled: false
@@ -344,21 +352,21 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Deluxe Comp
-      block: 1
-      colour: 8716032
-      enabled: true
-      label: COMP
-      led: pink
-      momentary: false
-      primary: true
-      switch: 3
-    - gear: BOSS CE-1
-      block: 4
-      colour: 1037
+    - gear: Klon Centaur
+      block: 2
+      colour: 525824
       enabled: false
-      label: MOD
+      label: DRIVE
       led: turquoise
       momentary: false
       primary: true
       switch: 2
+    - gear: BOSS CE-1
+      block: 5
+      colour: 1037
+      enabled: false
+      label: MOD
+      led: pink
+      momentary: false
+      primary: true
+      switch: 3

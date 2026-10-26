@@ -435,14 +435,50 @@ it measured nearest, and the word that asked for a block of its kind at all.
 The authored half is untouched, because a block chosen from a word is not
 something somebody wrote.
 
-**A shorter decay has no answer, and that is most of what is left.** Fourteen
-of the 43 are distinctive only on it and seven more earn no word at all, so
-eight rigs end up with nothing after what their chains already name. A gate
-would shorten a note by cutting it off and a compressor by holding the front,
-and neither is a thing to put under a foot on a bass, which is why
-`compile.stomped` excludes the compressor in the first place. Nothing is the
-honest answer: reaching for a block to fill a switch is how a Metal Zone ended
-up on rock bass, which is task 267.
+**A shorter decay has no answer.** Fourteen of the 43 are distinctive only on
+it and seven more earn no word at all. A gate would shorten a note by cutting
+it off and a compressor by holding the front, and neither is a thing to put
+under a foot on a bass, which is why `compile.stomped` excludes the compressor
+in the first place. Measurement has nothing to say here, and reaching for a
+block on the strength of a figure that cannot carry one is how a Metal Zone
+ended up on rock bass, which is task 267.
+
+## What fills a switch the records cannot ask for
+
+Words run out. Four figures earn one, they answer with an equaliser, a drive
+and a reverb and nothing else, so three switches is a ceiling only a target
+earning all three words reaches. Twenty-one of the 43 rigs earn nothing at
+all, and two presets loaded on 2026-10-23 arrived with every switch empty.
+
+`translate.Pizzazz` fills what is left, and it is a different kind of claim.
+The kinds come off `carriedButOff`, which ranks a category by how often
+players put one in a chain and leave it switched off: 5.7% of bass chains hold
+a wah and 0.0% run one, which is a footswitch effect waiting to be stepped on
+rather than a block anybody wanted in the signal. A kind the corpus runs when
+it carries one is excluded, because that is the sound rather than something to
+stomp, and the threshold is the one `compile.fill` uses so the two cannot
+disagree.
+
+**The model is rotated per rig, not taken from the top.** `popular` returned
+the single most-held model of the kind and knew nothing about whose rig it
+was, so every rig with room for a drive got a Wounded Paw Battering Ram: the
+105 offers across the 43 rigs were drawn from six models, one per kind. Now
+`ranksFor` ranks the candidates by the chains holding each and `rotated` turns
+that list by the rig's own identifier and the kind, which spreads the same 105
+offers over 19 models.
+
+The candidates stop where the corpus does. A model is one where the chains
+holding it reach a fifth of the chains holding the leader, which keeps six of
+the 19 drives and three of the 13 reverbs and drops the tail: eleven of those
+drives sit at four chains or fewer out of 172, and their order is noise rather
+than a ranking. A kind with one well-supported model gives every rig that
+model, which is the corpus being decisive rather than the choice being stuck.
+
+**An offer is not a measurement, and the note says so.** Each one carries "a
+pedal rather than a sound", because the source behind it is weaker than
+anything that may move an amplifier control. That is what makes the weaker
+source honest here: the block arrives switched off, so nothing it chooses
+changes how the preset sounds until a foot says otherwise.
 
 ## Or name the player, and get the rig somebody researched
 

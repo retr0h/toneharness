@@ -29,7 +29,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: rock
 ask:
   confidence: low
@@ -67,24 +67,31 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
-    - role: filter
-      gear: Auto Filter
+    - role: wah
+      gear: Vetta Wah
       controls:
-        Attack: "1.751"
-        Decay: "1.877"
-        Direction: "true"
-        FilterGain: "18.0"
-        FilterQ: "6.625"
-        FreqDepth: "3750.0"
-        Frequency: "50.0"
+        FcHigh: "2300.0"
+        FcLow: "300.0"
         Level: "0.0"
-        Mix: "0.625"
-        Mode: "2"
-        Sens: "0.25"
+        Mix: "1.0"
+        Pedal: "0.0"
       attrs:
         '@position': "0"
       enabled: false
       position: 0
+    - role: filter
+      gear: Musitronics Mu-Tron III (down position)
+      controls:
+        Freq: "0.69"
+        Level: "0.0"
+        Mix: "1.0"
+        Q: "1.0"
+        Range: "false"
+        Type: "0"
+      attrs:
+        '@position': "1"
+      enabled: false
+      position: 1
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -99,8 +106,8 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "2"
+      position: 2
     - role: amp
       gear: SVT-4 Pro
       capture: direct
@@ -133,8 +140,8 @@ built:
         UltraHi: "false"
         UltraLo: "false"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
     - role: cab
       gear: 8x10" Ampeg SVT-810AV
       capture: direct
@@ -153,8 +160,8 @@ built:
         Mic: "0"
         Position: "0.39"
       attrs:
-        '@position': "3"
-      position: 3
+        '@position': "4"
+      position: 4
     - role: eq
       gear: MXR 10-Band Graphic EQ
       capture: direct
@@ -186,11 +193,11 @@ built:
         8kHz: "7.5"
         Level: "0.0"
       attrs:
-        '@position': "4"
+        '@position': "5"
       enabled: false
-      position: 4
+      position: 5
     - role: mod
-      gear: Chorus
+      gear: BOSS CE-1
       controls:
         ChorusIntensity: "0.57"
         Headroom: "0.0"
@@ -206,9 +213,9 @@ built:
         VibratoDepth: "0.5"
         VibratoRate: "0.7"
       attrs:
-        '@position': "5"
+        '@position': "6"
       enabled: false
-      position: 5
+      position: 6
   preset:
     dsp0:
       members:
@@ -275,31 +282,30 @@ built:
             block0:
               attrs:
                 '@fs_customcolor': "4"
-                '@fs_customlabel': FILTER
+                '@fs_customlabel': WAH
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Auto Filter
-                '@fs_ledcolor': "196619"
+                '@fs_label': Vetta Wah
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block4:
+            block1:
               attrs:
                 '@fs_customcolor': "9"
-                '@fs_customlabel': EQ
+                '@fs_customlabel': FILTER
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': MXR 10-Band Graphic EQ
-                '@fs_ledcolor': "527360"
+                '@fs_label': Musitronics Mu-Tron III (down position)
+                '@fs_ledcolor': "196619"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block5:
               attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': MOD
+                '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': BOSS CE-1
-                '@fs_ledcolor': "1037"
+                '@fs_label': MXR 10-Band Graphic EQ
+                '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -334,11 +340,12 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "true"
+                block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
+                block4: "true"
                 block5: "false"
+                block6: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -353,11 +360,12 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "true"
+                block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
+                block4: "true"
                 block5: "false"
+                block6: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -372,11 +380,12 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "true"
+                block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
+                block4: "true"
                 block5: "false"
+                block6: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -398,29 +407,28 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Auto Filter
+    - gear: Vetta Wah
       block: 0
-      colour: 196619
       enabled: false
-      label: FILTER
+      label: WAH
       led: light orange
       momentary: false
       primary: true
       switch: 1
-    - gear: MXR 10-Band Graphic EQ
-      block: 4
-      colour: 527360
+    - gear: Musitronics Mu-Tron III (down position)
+      block: 1
+      colour: 196619
       enabled: false
-      label: EQ
+      label: FILTER
       led: violet
       momentary: false
       primary: true
       switch: 2
-    - gear: BOSS CE-1
+    - gear: MXR 10-Band Graphic EQ
       block: 5
-      colour: 1037
+      colour: 527360
       enabled: false
-      label: MOD
+      label: EQ
       led: turquoise
       momentary: false
       primary: true

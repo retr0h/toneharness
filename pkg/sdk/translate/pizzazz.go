@@ -213,7 +213,7 @@ func Pizzazz(
 			break
 		}
 
-		entry, gear, cost, ok := popular(grammar, deps.Catalog, at.kind)
+		entry, gear, cost, ok := popular(grammar, deps.Catalog, at.kind, id)
 		if !ok {
 			continue
 		}
@@ -325,39 +325,39 @@ func offers(
 	return append(all[at:], all[:at]...)
 }
 
-// popular is the model of one kind that the most chains for this instrument
-// hold, and what a person calls it.
+// popular is a model of one kind that chains for this instrument hold, and
+// what a person calls it.
 //
 // The corpus rather than the measured ranking, which is the point of this
 // file: measurement is what put five genres on one drive, and what most bass
 // players reach for is a different question with a different answer.
+//
+// **One answer per kind was still one answer for everybody.** This returned
+// the single most-held model, and nothing in the call knew whose rig it was,
+// so every rig with room for a drive got a Wounded Paw Battering Ram: five of
+// the 43 did on 2026-10-25, with the 13 offers across all of them drawn from
+// only 5 distinct models. The cited pedals were never the problem. Three
+// players really did use a SansAmp. The offers were, because they had one
+// input.
+//
+// So the candidates are rotated by subject, the same way [offers] rotates
+// which kind to offer and for the same reason: the ranking still shows
+// through, and a rig starting at the third candidate gets the third rather
+// than one drawn from anywhere.
 //
 // Nothing that changes the notes, and nothing the catalog does not carry.
 func popular(
 	grammar corpus.Grammar,
 	cat *catalog.Catalog,
 	kind catalog.Category,
+	id string,
 ) (rig.ChainEntry, string, float64, bool) {
-	best, chains := catalog.ModelID(""), 0
-
-	for model, held := range grammar.Models {
-		one, known := cat.Block(model)
-		if !known || one.Category != kind || one.ChangesTheNotes() {
-			continue
-		}
-
-		// Ties by identifier, so a corpus that counts two models alike
-		// resolves the same way every run.
-		if held > chains || (held == chains && model < best) {
-			best, chains = model, held
-		}
-	}
-
-	if chains == 0 {
+	ranked := ranksFor(grammar, cat, kind)
+	if len(ranked) == 0 {
 		return rig.ChainEntry{}, "", 0, false
 	}
 
-	one, _ := cat.Block(best)
+	one, _ := cat.Block(rotated(ranked, id, kind))
 	off := false
 
 	return rig.ChainEntry{
@@ -365,6 +365,119 @@ func popular(
 		Gear:    one.Gear(),
 		Enabled: &off,
 	}, one.Gear(), one.DSP.Mono, true
+}
+
+// ranksFor is the models of one kind worth offering, best first.
+//
+// Everything the corpus holds of that kind is not the answer. The tails are
+// thin: of the 19 drives bass chains hold, the 19th is in one chain of 172,
+// and rotating across all of them would hand somebody a worse pedal than the
+// single most-held one this replaced. Variety that costs the choice its
+// standing is not an improvement.
+//
+// So a model is a candidate where the chains holding it reach a fifth of the
+// chains holding the leader, which is where the corpus stops having anything
+// to say. What that keeps, measured on the shipped corpus:
+//
+//	drive    6 of 19   31, 22, 17, 14, 10, 7 chains
+//	reverb   3 of 13   22, 5, 5
+//	mod      2 of 11   30, 15
+//	comp     2 of  6   73, 66
+//	delay    5 of  5    8, 7, 7, 6, 3
+//	eq       2 of  5   52, 13
+//	filter   3 of  4    6, 6, 3
+//	wah      3 of  3    4, 3, 2
+//
+// The thinnest it admits is a reverb 5 chains of 172 hold, against 22 for a
+// Room. That is a long way behind and it is still gear bass players reached
+// for, which is the only claim an offer makes: the note says "a pedal rather
+// than a sound" precisely so this is not read as a measurement. What stays
+// out is the tail where the counts are not a ranking at all — eleven of the
+// 19 drives sit at four chains or fewer, and nothing held by one or two
+// chains is a candidate anywhere the leader is strong.
+//
+// A kind whose whole category is thin keeps most of it, because there the
+// leader is on four chains too and relative support is what there is to go
+// on. A wah is the extreme: 4, 3 and 2 chains, all three kept.
+func ranksFor(
+	grammar corpus.Grammar,
+	cat *catalog.Catalog,
+	kind catalog.Category,
+) []catalog.ModelID {
+	type candidate struct {
+		model  catalog.ModelID
+		chains int
+	}
+
+	all := make([]candidate, 0, len(grammar.Models))
+
+	for model, held := range grammar.Models {
+		one, known := cat.Block(model)
+		if !known || one.Category != kind || one.ChangesTheNotes() {
+			continue
+		}
+
+		all = append(all, candidate{model: model, chains: held})
+	}
+
+	// Ties by identifier, so a corpus that counts two models alike ranks them
+	// the same way every run.
+	sort.Slice(all, func(i, j int) bool {
+		if all[i].chains != all[j].chains {
+			return all[i].chains > all[j].chains
+		}
+
+		return all[i].model < all[j].model
+	})
+
+	out := make([]catalog.ModelID, 0, len(all))
+
+	for _, one := range all {
+		if one.chains*supportedShare < all[0].chains {
+			break
+		}
+
+		out = append(out, one.model)
+	}
+
+	return out
+}
+
+// supportedShare is how far behind the leader a model may be and still be
+// offered, as the reciprocal of a share: five means a fifth.
+//
+// It is the point where the corpus stops distinguishing a pedal somebody
+// reached for from one that turned up once. Above it the counts are a
+// ranking; below it, of the 19 drives in the bass corpus, eleven sit at four
+// chains or fewer out of 172 and their order is noise.
+//
+// A third was tried first and left the reverbs on one candidate, because 22
+// chains hold a Room and 5 hold the next: 17 of the 43 rigs came back with a
+// Room, which is the fault this was meant to fix wearing another kind's name.
+const supportedShare = 5
+
+// rotated is which candidate this subject takes.
+//
+// Keyed on the kind as well as the subject so the lists do not turn in step:
+// a rig taking the third drive has no reason to take the third reverb, and
+// hashing the identifier alone would have made the two move together.
+//
+// Nothing to rotate by means the ranking itself, which is the order a test
+// reads rather than one a build reaches: [Pizzazz] refuses a rig with no
+// identifier.
+func rotated(
+	ranked []catalog.ModelID,
+	id string,
+	kind catalog.Category,
+) catalog.ModelID {
+	if id == "" {
+		return ranked[0]
+	}
+
+	sum := fnv.New32a()
+	_, _ = sum.Write([]byte(id + "/" + string(kind)))
+
+	return ranked[int(sum.Sum32())%len(ranked)]
 }
 
 // spareOn is how much of the chip the chain has not spent, in the percent

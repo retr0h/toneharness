@@ -29,7 +29,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: blues-rock
 ask:
   confidence: low
@@ -67,35 +67,25 @@ built:
   device: HX Stomp
   chain:
     - role: filter
-      gear: Auto Filter
+      gear: Musitronics Mu-Tron III
       controls:
-        Attack: "2.0"
-        Decay: "1.503"
-        Direction: "true"
-        FilterGain: "18.0"
-        FilterQ: "8.875"
-        FreqDepth: "10000.0"
-        Frequency: "50.0"
-        Level: "0.0"
-        Mix: "0.75"
+        Drive: "true"
+        Gain: "0.25"
+        Level: "1.0"
+        Mix: "0.5"
         Mode: "2"
-        Sens: "0.375"
+        Peak: "0.875"
+        Range: "false"
       attrs:
         '@position': "0"
       enabled: false
       position: 0
     - role: drive
-      gear: Wounded Paw Battering Ram
+      gear: Pro Co RAT
       controls:
-        Fuzz: "true"
-        FuzzGain: "0.5"
-        FuzzLevel: "0.125"
-        FuzzOct: "true"
-        FuzzTone: "0.75"
-        ODGain: "0.375"
-        ODLevel: "0.375"
-        ODLowBoost: "true"
-        ODTone: "0.5"
+        Filter: "0.625"
+        Gain: "1.0"
+        Level: "0.85"
       attrs:
         '@position': "1"
       enabled: false
@@ -186,6 +176,26 @@ built:
         '@position': "5"
       enabled: false
       position: 5
+    - role: mod
+      gear: BOSS CE-1
+      controls:
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
+        SyncSelect1: "6"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
+      attrs:
+        '@position': "6"
+      enabled: false
+      position: 6
   preset:
     dsp0:
       members:
@@ -255,7 +265,7 @@ built:
                 '@fs_customlabel': FILTER
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Auto Filter
+                '@fs_label': Musitronics Mu-Tron III
                 '@fs_ledcolor': "196619"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -265,7 +275,7 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Wounded Paw Battering Ram
+                '@fs_label': Pro Co RAT
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -316,6 +326,7 @@ built:
                 block3: "true"
                 block4: "true"
                 block5: "false"
+                block6: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -335,6 +346,7 @@ built:
                 block3: "true"
                 block4: "true"
                 block5: "false"
+                block6: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -354,6 +366,7 @@ built:
                 block3: "true"
                 block4: "true"
                 block5: "false"
+                block6: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -375,7 +388,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Auto Filter
+    - gear: Musitronics Mu-Tron III
       block: 0
       colour: 196619
       enabled: false
@@ -384,7 +397,7 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Wounded Paw Battering Ram
+    - gear: Pro Co RAT
       block: 1
       colour: 525824
       enabled: false
