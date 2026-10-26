@@ -474,6 +474,49 @@ func (s *ControlsRunTestSuite) TestControlsRefusesALevelItCouldNotPin() {
 	s.Require().Contains(buf.String(), "moved to 0")
 }
 
+// TestControlsRefusesAPathThatCarriedNothing covers the pre-flight, which is
+// the guard the other two cannot stand in for.
+//
+// `seated` says the device loaded the blocks, and it had: a pedal with no lead
+// in it loads a preset the same way. `working` holds each control to the first
+// one, and a path dead before the first control is one every later control
+// agrees with. A sweep ran that way and wrote 24,854 bytes of the converters.
+func (s *ControlsRunTestSuite) TestControlsRefusesAPathThatCarriedNothing() {
+	s.ready()
+
+	// The same tone whatever goes in, silence included, which is a loop
+	// oscillating rather than a chain answering. The reference and the idle
+	// path then read alike, and two readings that cannot be told apart
+	// describe the loop instead of the block.
+	_, said, err := s.run("HD2_CabMicIr_2x15Brute", squealing{})
+
+	s.Require().Error(err)
+	s.Require().ErrorIs(err, errNothingArrived)
+	s.Require().ErrorContains(err, "Nothing is arriving from the pedal")
+	s.Require().Contains(said, "carrying nothing",
+		"and the figure it was held against is printed either way")
+}
+
+// TestControlsReportsABenchThatStopsBeforeTheReference covers the pre-flight's
+// second reading failing.
+//
+// Two readings before any control, and the one of the reference is the second.
+// A bench that answers the idle reading and then gives up fails here rather
+// than inside a sweep, which is a different message about a different thing.
+func (s *ControlsRunTestSuite) TestControlsReportsABenchThatStopsBeforeTheReference() {
+	s.ready()
+
+	var calls int
+
+	_, _, err := s.run("HD2_CabMicIr_2x15Brute",
+		stopping{after: 1, calls: &calls})
+
+	s.Require().Error(err)
+	s.Require().ErrorContains(err, "stopped answering")
+	s.Require().Equal(2, calls,
+		"the idle reading answered and the reference did not")
+}
+
 // TestControlsRefusesAChainThatDiesMidSweep covers the sweep stopping when the
 // chain stops, rather than carrying on and measuring the converters.
 //
