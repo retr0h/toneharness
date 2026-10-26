@@ -640,7 +640,12 @@ func (s *ExtendTestSuite) TestRanked() {
 	s.Require().NoError(err)
 
 	// A target far enough out that something in the library moves it. The
-	// shortlist for it is five blocks across three kinds: amp, drive and mod.
+	// shortlist for it is five blocks across five kinds: drive, amp, pitch,
+	// mod and wah.
+	//
+	// Three kinds until the library was re-measured on one settled rig, task
+	// 289. The figures moved and so did which blocks read nearest, which is
+	// the shortlist doing its job rather than anything here changing.
 	aims := map[audio.Figure]solve.Aim{audio.KeyCentroid: {Want: 9000, Tol: 1}}
 	now := map[audio.Figure]float64{audio.KeyCentroid: 100}
 	met := map[audio.Figure]float64{audio.KeyCentroid: 9000}
@@ -648,6 +653,12 @@ func (s *ExtendTestSuite) TestRanked() {
 	amp := plan.Block{Model: catalog.ModelID("HD2_AmpSVBeastBrt"), Pos: 0, Enabled: true}
 	drive := plan.Block{Model: catalog.ModelID("HD2_DistObsidian7000"), Pos: 1, Enabled: true}
 	mod := plan.Block{Model: catalog.ModelID("HD2_Chorus"), Pos: 2, Enabled: true}
+	pitch := plan.Block{
+		Model: catalog.ModelID("HD2_FM4AttackSynth"), Pos: 3, Enabled: true,
+	}
+	wah := plan.Block{
+		Model: catalog.ModelID("HD2_WahUKWah846"), Pos: 4, Enabled: true,
+	}
 
 	for _, tt := range []struct {
 		name   string
@@ -675,13 +686,12 @@ func (s *ExtendTestSuite) TestRanked() {
 			want:   false,
 		},
 		{
-			// The shortlist's five candidates are all amps, drives or mods.
-			// A chain holding an amp, a drive and a chorus, with no grammar
-			// to license a second of any kind, refuses all five and falls
-			// through. That is the honest answer rather than a block added on
-			// no evidence.
+			// One of each kind the shortlist offers, with no grammar to
+			// license a second of any of them, so all five are refused and it
+			// falls through. That is the honest answer rather than a block
+			// added on no evidence.
 			name:   "a chain with room for none of them",
-			blocks: []plan.Block{amp, drive, mod},
+			blocks: []plan.Block{amp, drive, mod, pitch, wah},
 			now:    now,
 			want:   false,
 		},

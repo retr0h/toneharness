@@ -68,7 +68,7 @@ built:
         '@position': "0"
       position: 0
     - role: drive
-      gear: Xotic EP Booster
+      gear: Paul Cochrane Timmy Overdrive
       capture: direct
       confidence: low
       evidence:
@@ -84,11 +84,13 @@ built:
             low: 0.96
             mid: 0.04
             transient: 0.68
-          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 19 bass drives this device models to greg-t-walker, sitting at 123 Hz against 154. Across 3 records from 1 players, greg-t-walker earns saturated and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because greg-t-walker earns "saturated" against the players who measure otherwise, by 0.037 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Paul Cochrane Timmy Overdrive is the closest of the 19 bass drives this device models to greg-t-walker, sitting at 154 Hz against 112. Across 3 records from 1 players, greg-t-walker earns saturated and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because greg-t-walker earns "saturated" against the players who measure otherwise, by 0.037 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
       controls:
-        Boost: "false"
-        Bright: "true"
-        Drive: "0.55"
+        Bass: "0.625"
+        Clipping: "1"
+        Gain: "0.75"
+        Level: "0.62"
+        Treble: "0.375"
       attrs:
         '@position': "1"
       enabled: false
@@ -232,7 +234,7 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Xotic EP Booster
+                '@fs_label': Paul Cochrane Timmy Overdrive
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -352,7 +354,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Xotic EP Booster
+    - gear: Paul Cochrane Timmy Overdrive
       block: 1
       colour: 525824
       enabled: false

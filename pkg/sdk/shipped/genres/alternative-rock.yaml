@@ -230,7 +230,7 @@ built:
       enabled: false
       position: 5
     - role: reverb
-      gear: Plateaux
+      gear: Glitz
       capture: direct
       confidence: low
       evidence:
@@ -246,19 +246,21 @@ built:
             low: 0.97
             mid: 0.03
             transient: 0.71
-          note: Chosen by measurement rather than by anybody's say-so. Plateaux is the closest of the 4 bass reverbs this device models to alternative-rock, sitting at 122 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because alternative-rock earns "long-decay" against the players who measure otherwise, by 0.12 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Glitz is the closest of the 4 bass reverbs this device models to alternative-rock, sitting at 115 Hz against 104. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because alternative-rock earns "long-decay" against the players who measure otherwise, by 0.12 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
       controls:
-        Cents1: "25.0"
-        Cents2: "0.0"
-        Decay: "0.125"
+        Decay: "0.51"
+        Delay: "0.064"
+        Depth: "0.38"
+        HighCut: "15500.0"
         Level: "0.0"
-        Mix: "0.375"
-        Modulation: "0.5"
-        Pitch1: "1"
-        Pitch2: "0"
-        PitchMix: "0.875"
-        Predelay: "0.125"
-        Tone: "0.125"
+        LowCut: "19.9"
+        Mix: "0.18"
+        Mod Mix: "0.5"
+        Predelay: "0.001"
+        Rate: "1.84"
+        SyncSelect1: "6"
+        TempoSync1: "false"
+        Xover: "900.0"
       attrs:
         '@position': "6"
       enabled: false

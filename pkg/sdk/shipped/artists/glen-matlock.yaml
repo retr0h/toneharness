@@ -171,7 +171,7 @@ built:
       enabled: false
       position: 4
     - role: reverb
-      gear: Plateaux
+      gear: Glitz
       capture: direct
       confidence: low
       evidence:
@@ -187,19 +187,21 @@ built:
             low: 0.94
             mid: 0.05
             transient: 0.68
-          note: Chosen by measurement rather than by anybody's say-so. Plateaux is the closest of the 4 bass reverbs this device models to glen-matlock, sitting at 122 Hz against 187. Across 3 records from 1 players, glen-matlock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because glen-matlock earns "long-decay" against the players who measure otherwise, by 0.27 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Glitz is the closest of the 4 bass reverbs this device models to glen-matlock, sitting at 115 Hz against 145. Across 3 records from 1 players, glen-matlock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because glen-matlock earns "long-decay" against the players who measure otherwise, by 0.27 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
       controls:
-        Cents1: "12.5"
-        Cents2: "0.0"
-        Decay: "0.125"
+        Decay: "0.51"
+        Delay: "0.064"
+        Depth: "0.38"
+        HighCut: "15500.0"
         Level: "0.0"
-        Mix: "0.25"
-        Modulation: "0.875"
-        Pitch1: "15"
-        Pitch2: "16"
-        PitchMix: "0.875"
-        Predelay: "0.025"
-        Tone: "0.625"
+        LowCut: "19.9"
+        Mix: "0.18"
+        Mod Mix: "0.5"
+        Predelay: "0.001"
+        Rate: "1.84"
+        SyncSelect1: "6"
+        TempoSync1: "false"
+        Xover: "900.0"
       attrs:
         '@position': "5"
       enabled: false
@@ -292,7 +294,7 @@ built:
                 '@fs_customlabel': REVERB
                 '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': Plateaux
+                '@fs_label': Glitz
                 '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -409,7 +411,7 @@ built:
       momentary: false
       primary: true
       switch: 2
-    - gear: Plateaux
+    - gear: Glitz
       block: 5
       colour: 1049600
       enabled: false
