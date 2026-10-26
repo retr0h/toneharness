@@ -135,7 +135,15 @@ func (s *ToneBuildPublicTestSuite) TestToneBuild() {
 				s.Require().True(off[rig.RoleDrive], "the drive arrived on")
 				s.Require().True(off[rig.RoleEQ], "the equaliser arrived on")
 
-				s.Require().Contains(buf.String(), "closest of 15 measured")
+				// Fourteen amplifiers rather than the fifteen measured, and
+				// the difference is task 267's veto: one of them is a block
+				// no measured bass chain holds, so it is out of the pool
+				// before anything is ranked. The equaliser shows the same
+				// thing out loud, refusing a Simple Tilt and a Low/High
+				// Shelf on the way to its answer.
+				s.Require().Contains(buf.String(), "closest of 14 measured")
+				s.Require().Contains(buf.String(),
+					"not one measured bass chain holds one")
 			},
 		},
 		{
