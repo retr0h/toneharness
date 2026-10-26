@@ -183,16 +183,16 @@ built:
     - role: reverb
       gear: Plate
       controls:
-        Cents1: "0.0"
-        Cents2: "0.0"
-        Decay: "0.8"
+        Cents1: "25.0"
+        Cents2: "-12.5"
+        Decay: "0.25"
         Level: "0.0"
-        Mix: "0.33"
-        Modulation: "0.5"
-        Pitch1: "-12"
-        Pitch2: "12"
-        PitchMix: "0.24"
-        Predelay: "0.022"
+        Mix: "0.875"
+        Modulation: "0.125"
+        Pitch1: "2"
+        Pitch2: "1"
+        PitchMix: "1.0"
+        Predelay: "0.075"
         Tone: "0.75"
       attrs:
         '@position': "6"

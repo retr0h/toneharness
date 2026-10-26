@@ -160,18 +160,18 @@ built:
     - role: reverb
       gear: Room
       controls:
-        BassBoost: "0.0"
+        BassBoost: "-3.75"
         BassFreq: "100.0"
         Damping: "3700.0"
-        Decay: "1.2"
+        Decay: "3.0"
         Diffusion: "0.5"
-        ERLevel: "0.8"
+        ERLevel: "0.25"
         HighCut: "10000.0"
         Level: "0.0"
-        LowCut: "100.0"
+        LowCut: "264.9"
         MatrFreq: "0.333"
-        Mix: "0.41"
-        PreDelay: "0.01"
+        Mix: "0.25"
+        PreDelay: "0.0625"
       attrs:
         '@position': "5"
       enabled: false
