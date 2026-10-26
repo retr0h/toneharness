@@ -75,6 +75,21 @@ type MeasureOptions struct {
 	Resume   bool
 	Retry    bool
 	Hardware string
+	// After is a block to put behind every one being measured, by its model
+	// identifier. Empty is the chain this has always built, one block and
+	// nothing else.
+	//
+	// Task 288. A fingerprint taken alone is what the ranking reads, and a
+	// drive's whole job is how it hits the stage behind it: a Metal Zone into
+	// an already-driven SVT is not the sum of two fingerprints. The plumbing
+	// for a block with something after it came with task 271 and `measure
+	// blocks` never exposed it.
+	//
+	// A library taken this way records `isolated: false`, which is what keeps
+	// `measured.BuiltIn` from handing it to anything that chooses a block:
+	// these readings describe the pair rather than the block, and comparing
+	// them with the isolated ones is the mistake that flag exists to prevent.
+	After string
 	// Bench is somewhere to push the signal through. Left unset, the named
 	// hardware is opened. A test sets it, because everything this does
 	// besides listening is bookkeeping and ought not to need an audio
@@ -114,8 +129,13 @@ func MeasureBlocks(
 	rig, open := rigTaken(opts.Hardware)
 
 	lib := measured.Library{
-		Device:   cat.Device,
-		Isolated: true,
+		Device: cat.Device,
+		// False where something was put behind the block, because then every
+		// reading describes the pair. `measured.BuiltIn` refuses a library
+		// that says so, which is the point: nothing that chooses a block may
+		// read these beside the isolated ones.
+		Isolated: opts.After == "",
+		After:    opts.After,
 		Blocks:   map[string]measured.Block{},
 		// Which rig took these, because a figure measured on one device is a
 		// figure about that device. Without it the file cannot answer whether
@@ -179,7 +199,7 @@ func MeasureBlocks(
 	opts.Headroom = trimFor(w, opts.Hardware, opts.Headroom, opts.HeadroomTold)
 	lib.Headroom = opts.Headroom
 
-	built := build(ctx, w, opts.Client, want, work, opts.Headroom)
+	built := build(ctx, w, opts.Client, want, work, opts.Headroom, opts.After)
 
 	if err := baseline(ctx, w, bench, signal, &lib, work, opts); err != nil {
 		return err
@@ -679,6 +699,9 @@ func build(
 	want []measured.Block,
 	work string,
 	headroom float64,
+	// after is a block to put behind each one, or empty for the chain of one
+	// this has always built. See [MeasureOptions.After].
+	after string,
 ) map[string]string {
 	var (
 		mu   sync.Mutex
@@ -696,7 +719,8 @@ func build(
 			gate <- struct{}{}
 			defer func() { <-gate }()
 
-			at, err := compile(ctx, client, block, work, true, headroom)
+			at, err := compiled(
+				ctx, client, block, after, work, true, headroom)
 
 			mu.Lock()
 			defer mu.Unlock()

@@ -34,6 +34,7 @@ var (
 	measureBlocksResume   bool
 	measureBlocksRetry    bool
 	measureBlocksHardware string
+	measureBlocksAfter    string
 	measureBlocksHeadroom float64
 	measureBlocksVolume   int
 	measureBlocksClient   clientFlags
@@ -83,6 +84,7 @@ had. ` + "`--resume`" + ` picks it up again.`,
 			HeadroomTold: cmd.Flags().Changed("headroom"),
 			Volume:       measureBlocksVolume,
 			Hardware:     measureBlocksHardware,
+			After:        measureBlocksAfter,
 		})
 	},
 }
@@ -98,6 +100,12 @@ func init() {
 		"where the readings go")
 	f.StringVar(&measureBlocksCategory, "category", "",
 		"only blocks of this kind: amp, cab, drive, comp, eq and so on")
+	f.StringVar(&measureBlocksAfter, "after", "",
+		"a block to put behind every one being measured, by its model "+
+			"identifier; without it each is measured on its own, which is how "+
+			"every committed fingerprint was taken. A library taken with one "+
+			"behind records isolated: false and cannot be used to choose a "+
+			"block, because the readings then describe the pair")
 	f.Float64Var(&measureBlocksSeconds, "seconds", 4,
 		"how much of the reference to push through per block")
 	f.BoolVar(&measureBlocksResume, "resume", false,
