@@ -262,6 +262,15 @@ type Library struct {
 	// Isolated says every reading was taken with one block in the chain.
 	// Nothing measured in a chain may be compared with these.
 	Isolated bool `json:"isolated"`
+	// After is the model that sat behind every block measured here, where
+	// something did.
+	//
+	// The other half of what `Isolated: false` means. Knowing that a library
+	// was taken in a chain is not enough to use it: a drive measured into an
+	// Ampeg SVT and the same drive into a Tuck n Go are two different
+	// readings, and a file that says only "in a chain" cannot tell them
+	// apart. Empty where the readings were taken alone.
+	After string `json:"after,omitempty"`
 	// Runs is every measuring session this file holds readings from, keyed by
 	// [Run.Key].
 	//

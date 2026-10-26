@@ -564,6 +564,39 @@ func (s *MeasureRunTestSuite) TestMeasureBlocks() {
 			},
 		},
 		{
+			// Task 288. A fingerprint taken with one block in the chain is
+			// what the ranking reads, and a drive's whole job is how it hits
+			// the stage behind it.
+			//
+			// What the file says about itself is the point. `isolated: false`
+			// is what keeps `measured.BuiltIn` from handing these to anything
+			// that chooses a block, and `after` is what tells one pair from
+			// another: the same drive into an Ampeg SVT and into a Tuck n Go
+			// are two different readings and a file saying only "in a chain"
+			// cannot tell them apart.
+			name: "blocks measures a category behind another block",
+			then: func() {
+				s.compiles()
+				s.pedal.EXPECT().Play(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+				var buf bytes.Buffer
+
+				s.Require().NoError(MeasureBlocks(context.Background(), &buf, MeasureOptions{
+					Client: s.pedal, Dry: s.dry, Out: s.out, Category: "eq",
+					Seconds: 1, Bench: bench{},
+					After: "HD2_AmpSVBeastBrt",
+				}))
+
+				lib := s.read()
+
+				s.Require().NotEmpty(lib.Blocks)
+				s.Require().False(lib.Isolated,
+					"every reading here describes the pair rather than the block")
+				s.Require().Equal("HD2_AmpSVBeastBrt", lib.After,
+					"and which pair, because one chain reading is not another")
+			},
+		},
+		{
 			// A reading at the converters' ceiling.
 			//
 			// A clipped spectrum is the clipping's rather than the block's,
