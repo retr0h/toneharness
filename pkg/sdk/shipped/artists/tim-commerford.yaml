@@ -130,7 +130,7 @@ built:
         '@position': "1"
       position: 1
     - role: drive
-      gear: Arbiter Fuzz Face
+      gear: Paul Cochrane Timmy Overdrive
       capture: direct
       confidence: low
       evidence:
@@ -146,13 +146,13 @@ built:
             low: 0.95
             mid: 0.05
             transient: 0.83
-          note: Chosen by measurement rather than by anybody's say-so. Arbiter Fuzz Face is the closest of the 19 bass drives this device models to tim-commerford, sitting at 232 Hz against 132. Across 3 records from 1 players, tim-commerford earns saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because tim-commerford earns "saturated" against the players who measure otherwise, by 0.0548 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Paul Cochrane Timmy Overdrive is the closest of the 19 bass drives this device models to tim-commerford, sitting at 154 Hz against 90. Across 3 records from 1 players, tim-commerford earns saturated, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because tim-commerford earns "saturated" against the players who measure otherwise, by 0.0548 of harmonics, and that is the figure a pedalboard answers with a drive. It arrives switched off.
       controls:
-        Bass: "0.375"
-        Drive: "1.0"
-        Mid: "0.5"
-        Output: "0.75"
-        Treble: "0.875"
+        Bass: "0.75"
+        Clipping: "1"
+        Gain: "0.75"
+        Level: "0.62"
+        Treble: "0.25"
       attrs:
         '@position': "2"
       enabled: false
@@ -314,7 +314,7 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Arbiter Fuzz Face
+                '@fs_label': Paul Cochrane Timmy Overdrive
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -432,7 +432,7 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Arbiter Fuzz Face
+    - gear: Paul Cochrane Timmy Overdrive
       block: 2
       colour: 525824
       enabled: false

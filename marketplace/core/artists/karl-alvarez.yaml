@@ -150,7 +150,7 @@ built:
         '@position': "4"
       position: 4
     - role: eq
-      gear: MXR 10-Band Graphic EQ
+      gear: Low and High Cut
       capture: direct
       confidence: low
       evidence:
@@ -166,19 +166,11 @@ built:
             low: 0.74
             mid: 0.26
             transient: 0.8
-          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer karl-alvarez than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 3 records from 1 players, karl-alvarez earns mid-forward, bright and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because karl-alvarez earns "mid-forward" against the players who measure otherwise, by 0.202 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer karl-alvarez than the others, so Low and High Cut is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 3 records from 1 players, karl-alvarez earns mid-forward, bright and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because karl-alvarez earns "mid-forward" against the players who measure otherwise, by 0.202 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
       controls:
-        125Hz: "0.0"
-        16kHz: "0.0"
-        1kHz: "11.25"
-        250Hz: "3.75"
-        2kHz: "15.0"
-        31p25Hz: "-7.5"
-        4kHz: "0.0"
-        500Hz: "3.75"
-        62p5Hz: "-3.75"
-        8kHz: "0.0"
+        HighCut: "20100.0"
         Level: "0.0"
+        LowCut: "109.874"
       attrs:
         '@position': "5"
       enabled: false
@@ -291,7 +283,7 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': MXR 10-Band Graphic EQ
+                '@fs_label': Low and High Cut
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -411,7 +403,7 @@ built:
       momentary: false
       primary: true
       switch: 2
-    - gear: MXR 10-Band Graphic EQ
+    - gear: Low and High Cut
       block: 5
       colour: 527360
       enabled: false

@@ -387,8 +387,13 @@ func (s *ClientPublicTestSuite) TestWithSetup() {
 // A client option beside WithConfig, because what it serves changes on that
 // clock. Asserted end to end rather than on the option, because the figure it
 // produces is the point: Krist Novoselic's rig ends in a `2x15 Brute` at
-// -59.62dB and Paul McCartney's in a `1x18 Woody Blue` at -57.61dB, a 2dB gap
+// -53.99dB and Paul McCartney's in a `1x18 Woody Blue` at -51.98dB, a 2dB gap
 // the level control has to close.
+//
+// Both figures moved by 5.63dB when the library was re-measured on one
+// settled rig, and the gap between them did not move at all. That is the
+// whole of what task 289 was about: the absolute level is a figure about a
+// rig, and what a leveller acts on is the distance between two of them.
 //
 // It was punk against Novoselic, at 2.9dB, which is the gap that was found by
 // playing the two and hearing one as quiet. Punk ended in the legacy `8x10
@@ -440,8 +445,8 @@ func (s *ClientPublicTestSuite) TestWithSweeps() {
 			// The two cabinet readings, to the precision this comment and the
 			// contract quote them at. An exact literal here would be a test
 			// about how many decimals the library happens to hold.
-			s.Require().InDelta(-57.61, got.Levelled.Wanted, 0.01)
-			s.Require().InDelta(-59.62, got.Levelled.Was, 0.01)
+			s.Require().InDelta(-51.98, got.Levelled.Wanted, 0.01)
+			s.Require().InDelta(-53.99, got.Levelled.Was, 0.01)
 
 			if !tt.moved {
 				s.Require().Empty(got.Levelled.Param)
