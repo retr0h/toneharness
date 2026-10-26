@@ -517,6 +517,32 @@ func (s *ControlsRunTestSuite) TestControlsReportsABenchThatStopsBeforeTheRefere
 		"the idle reading answered and the reference did not")
 }
 
+// TestControlsNamesThePlaybackRatherThanTheControl covers the shape a control
+// cannot produce.
+//
+// Signal, then silence, then signal again. Task 271's campaign lost three of
+// eleven amplifiers to this and the message named the wrong thing every time:
+// Cali 400 Ch2's Hum read -47.47dB, six silent positions, then -58.67dB, and
+// `working` blamed the control that came after it for leaving the chain
+// muted.
+func (s *ControlsRunTestSuite) TestControlsNamesThePlaybackRatherThanTheControl() {
+	s.ready()
+
+	var calls int
+
+	// Loud for the pre-flight and the first control's own readings, then
+	// quiet across the middle of its positions, then loud again.
+	_, said, err := s.run("HD2_CabMicIr_2x15Brute",
+		blinking{quietFrom: 6, loudAgain: 14, calls: &calls})
+
+	s.Require().Error(err)
+	s.Require().ErrorIs(err, errPlaybackDropped)
+	s.Require().ErrorContains(err, "the chain is not what went quiet")
+	s.Require().NotErrorIs(err, errChainDied,
+		"which is the fault it was reported as for a whole campaign")
+	s.Require().NotEmpty(said)
+}
+
 // TestControlsRefusesAChainThatDiesMidSweep covers the sweep stopping when the
 // chain stops, rather than carrying on and measuring the converters.
 //
