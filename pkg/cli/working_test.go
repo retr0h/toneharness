@@ -85,8 +85,10 @@ func (s *WorkingTestSuite) TestWorking() {
 		},
 		{
 			// The first control itself, which has nothing to be held to. A
-			// chain that is silent from the start is the pre-flight's business,
-			// and `seated` is what refuses it.
+			// chain that is silent from the start is `arrived`'s business:
+			// `seated` only reads the chain back over USB and says the device
+			// loaded the blocks, which is true of a pedal with nothing
+			// plugged into it.
 			name:    "no anchor yet",
 			settled: -129.20,
 			anchor:  0,
