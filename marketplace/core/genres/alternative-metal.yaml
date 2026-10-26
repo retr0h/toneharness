@@ -220,18 +220,18 @@ built:
     - role: delay
       gear: Electro-Harmonix Deluxe Memory Man
       controls:
-        Depth: "0.2"
-        Feedback: "0.39"
+        Depth: "0.125"
+        Feedback: "0.25"
         Headroom: "0.0"
         Level: "0.0"
         Mix: "0.5"
-        Mode: "false"
-        Noise: "0.1"
+        Mode: "true"
+        Noise: "0.0"
         Scale: "1.0"
         Spread: "0.272"
-        SyncSelect1: "6"
-        TempoSync1: "false"
-        Time: "0.375"
+        SyncSelect1: "3"
+        TempoSync1: "true"
+        Time: "0.26"
       attrs:
         '@position': "5"
       enabled: false
@@ -242,14 +242,14 @@ built:
         BassBoost: "0.0"
         BassFreq: "100.0"
         Damping: "3700.0"
-        Decay: "1.2"
-        Diffusion: "0.5"
+        Decay: "0.463"
+        Diffusion: "0.0"
         ERLevel: "0.8"
         HighCut: "10000.0"
         Level: "0.0"
         LowCut: "100.0"
         MatrFreq: "0.333"
-        Mix: "0.41"
+        Mix: "0.125"
         PreDelay: "0.01"
       attrs:
         '@position': "6"

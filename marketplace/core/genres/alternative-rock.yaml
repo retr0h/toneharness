@@ -248,17 +248,17 @@ built:
             transient: 0.71
           note: Chosen by measurement rather than by anybody's say-so. Plateaux is the closest of the 4 bass reverbs this device models to alternative-rock, sitting at 122 Hz against 146. Across 9 records from 3 players, alternative-rock earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because alternative-rock earns "long-decay" against the players who measure otherwise, by 0.12 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
       controls:
-        Cents1: "0.0"
+        Cents1: "25.0"
         Cents2: "0.0"
-        Decay: "0.8"
+        Decay: "0.125"
         Level: "0.0"
-        Mix: "0.33"
+        Mix: "0.375"
         Modulation: "0.5"
-        Pitch1: "-12"
-        Pitch2: "12"
-        PitchMix: "0.24"
-        Predelay: "0.022"
-        Tone: "0.75"
+        Pitch1: "1"
+        Pitch2: "0"
+        PitchMix: "0.875"
+        Predelay: "0.125"
+        Tone: "0.125"
       attrs:
         '@position': "6"
       enabled: false

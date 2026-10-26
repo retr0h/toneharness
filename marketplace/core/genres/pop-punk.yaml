@@ -253,17 +253,17 @@ built:
             transient: 0.69
           note: Chosen by measurement rather than by anybody's say-so. Plateaux is the closest of the 4 bass reverbs this device models to pop-punk, sitting at 122 Hz against 158. Across 12 records from 4 players, pop-punk earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because pop-punk earns "long-decay" against the players who measure otherwise, by 0.2 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
       controls:
-        Cents1: "0.0"
+        Cents1: "37.5"
         Cents2: "0.0"
-        Decay: "0.8"
+        Decay: "0.25"
         Level: "0.0"
-        Mix: "0.33"
-        Modulation: "0.5"
-        Pitch1: "-12"
-        Pitch2: "12"
-        PitchMix: "0.24"
-        Predelay: "0.022"
-        Tone: "0.75"
+        Mix: "0.375"
+        Modulation: "0.375"
+        Pitch1: "0"
+        Pitch2: "23"
+        PitchMix: "0.5"
+        Predelay: "0.075"
+        Tone: "0.25"
       attrs:
         '@position': "6"
       enabled: false
