@@ -136,19 +136,19 @@ built:
     - role: mod
       gear: Chorus
       controls:
-        ChorusIntensity: "0.57"
-        Headroom: "0.0"
+        ChorusIntensity: "1.0"
+        Headroom: "9.0"
         Level: "1.0"
-        Mix: "0.5"
+        Mix: "0.25"
         Mode: "false"
         Spread: "0.0"
         Stereo: "false"
-        SyncSelect1: "6"
-        SyncSelect2: "6"
+        SyncSelect1: "2"
+        SyncSelect2: "16"
         TempoSync1: "false"
         TempoSync2: "false"
-        VibratoDepth: "0.5"
-        VibratoRate: "0.7"
+        VibratoDepth: "0.25"
+        VibratoRate: "0.5"
       attrs:
         '@position': "4"
       enabled: false
@@ -170,7 +170,7 @@ built:
             low: 0.97
             mid: 0.03
             transient: 0.69
-          note: Chosen by measurement rather than by anybody's say-so. Dynamic Hall is the closest of the 14 bass reverbs this device models to dee-dee-ramone, sitting at 124 Hz against 160. Across 3 records from 1 players, dee-dee-ramone earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because dee-dee-ramone earns "long-decay" against the players who measure otherwise, by 0.14 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
+          note: 'Not chosen by measurement. None of the 4 bass reverbs this device models is measurably nearer dee-dee-ramone than the others, so Dynamic Hall is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 3 records from 1 players, dee-dee-ramone earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because dee-dee-ramone earns "long-decay" against the players who measure otherwise, by 0.14 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.'
       controls:
         BassBoost: "0.0"
         BassFreq: "100.0"

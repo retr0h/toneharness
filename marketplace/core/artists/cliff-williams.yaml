@@ -146,7 +146,7 @@ built:
             low: 1
             mid: 0
             transient: 0.82
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer cliff-williams than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 3 records from 1 players, cliff-williams earns scooped and dark, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because cliff-williams earns "scooped" against the players who measure otherwise, by 0.0128 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer cliff-williams than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 3 records from 1 players, cliff-williams earns scooped and dark, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because cliff-williams earns "scooped" against the players who measure otherwise, by 0.0128 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
       controls:
         125Hz: "0.0"
         16kHz: "0.0"
@@ -166,17 +166,17 @@ built:
     - role: mod
       gear: BOSS CE-1
       controls:
-        ChorusIntensity: "0.57"
+        ChorusIntensity: "0.5"
         Headroom: "0.0"
         Level: "1.0"
-        Mix: "0.5"
-        Mode: "false"
+        Mix: "0.25"
+        Mode: "true"
         Spread: "0.0"
         Stereo: "false"
-        SyncSelect1: "6"
-        SyncSelect2: "6"
-        TempoSync1: "false"
-        TempoSync2: "false"
+        SyncSelect1: "13"
+        SyncSelect2: "9"
+        TempoSync1: "true"
+        TempoSync2: "true"
         VibratoDepth: "0.5"
         VibratoRate: "0.7"
       attrs:

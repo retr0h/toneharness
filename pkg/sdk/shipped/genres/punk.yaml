@@ -69,10 +69,10 @@ built:
       gear: Colorsound Wah-fuzz
       controls:
         FcHigh: "2101.0"
-        FcLow: "280.0"
+        FcLow: "440.0"
         Level: "0.0"
         Mix: "1.0"
-        Pedal: "0.0"
+        Pedal: "0.25"
       attrs:
         '@position': "0"
       enabled: false
@@ -154,7 +154,7 @@ built:
             low: 0.88
             mid: 0.11
             transient: 0.74
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer punk than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because punk earns "mid-forward" against the players who measure otherwise, by 0.0968 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer punk than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because punk earns "mid-forward" against the players who measure otherwise, by 0.0968 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
       controls:
         125Hz: "0.0"
         16kHz: "0.0"
@@ -176,11 +176,11 @@ built:
       controls:
         Depth: "0.35"
         HighCut: "20100.0"
-        Left Time: "0.375"
+        Left Time: "0.25"
         LeftFeedback: "0.3"
         Level: "0.0"
         LowCut: "19.9"
-        MixL: "0.23"
+        MixL: "0.125"
         MixR: "0.23"
         ModulationMode: "1"
         Right Time: "0.5"
@@ -196,7 +196,7 @@ built:
       enabled: false
       position: 5
     - role: reverb
-      gear: Hot Springs
+      gear: '''63 Spring'
       capture: direct
       confidence: low
       evidence:
@@ -212,15 +212,14 @@ built:
             low: 0.88
             mid: 0.11
             transient: 0.74
-          note: Chosen by measurement rather than by anybody's say-so. Hot Springs is the closest of the 14 bass reverbs this device models to punk, sitting at 133 Hz against 282. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because punk earns "long-decay" against the players who measure otherwise, by 0.07 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
+          note: 'Not chosen by measurement. None of the 4 bass reverbs this device models is measurably nearer punk than the others, so ''63 Spring is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 21 records from 7 players, punk earns mid-forward, bright and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because punk earns "long-decay" against the players who measure otherwise, by 0.07 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.'
       controls:
-        Drip: "1"
-        Dwell: "0.4"
-        HighCut: "5000.0"
+        Decay: "0.56"
+        HighCut: "3929.0"
         Level: "0.0"
-        LowCut: "200.0"
-        Mix: "0.26"
-        Spring Count: "2.0"
+        LowCut: "87.0"
+        Mix: "0.33"
+        Predelay: "0.0"
       attrs:
         '@position': "6"
       enabled: false

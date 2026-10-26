@@ -70,11 +70,11 @@ built:
     - role: wah
       gear: Vetta Wah
       controls:
-        FcHigh: "2300.0"
-        FcLow: "300.0"
+        FcHigh: "3313.0"
+        FcLow: "320.0"
         Level: "0.0"
         Mix: "1.0"
-        Pedal: "0.0"
+        Pedal: "0.375"
       attrs:
         '@position': "0"
       enabled: false
@@ -179,7 +179,7 @@ built:
             low: 0.96
             mid: 0.04
             transient: 0.74
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer rock than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 15 records from 5 players, rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because rock earns "mid-forward" against the players who measure otherwise, by 0.0129 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer rock than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 15 records from 5 players, rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because rock earns "mid-forward" against the players who measure otherwise, by 0.0129 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
       controls:
         125Hz: "-3.75"
         16kHz: "11.25"
@@ -199,19 +199,19 @@ built:
     - role: mod
       gear: BOSS CE-1
       controls:
-        ChorusIntensity: "0.57"
+        ChorusIntensity: "0.25"
         Headroom: "0.0"
         Level: "1.0"
-        Mix: "0.5"
-        Mode: "false"
+        Mix: "0.375"
+        Mode: "true"
         Spread: "0.0"
         Stereo: "false"
-        SyncSelect1: "6"
-        SyncSelect2: "6"
+        SyncSelect1: "7"
+        SyncSelect2: "13"
         TempoSync1: "false"
         TempoSync2: "false"
-        VibratoDepth: "0.5"
-        VibratoRate: "0.7"
+        VibratoDepth: "0.875"
+        VibratoRate: "0.375"
       attrs:
         '@position': "6"
       enabled: false

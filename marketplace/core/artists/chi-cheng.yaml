@@ -167,7 +167,7 @@ built:
         '@position': "4"
       position: 4
     - role: eq
-      gear: Simple Tilt
+      gear: MESA/Boogie Mark IV Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -183,11 +183,14 @@ built:
             low: 1
             mid: 0
             transient: 0.61
-          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to chi-cheng, sitting at 124 Hz against 120. Across 3 records from 1 players, chi-cheng earns scooped and dark, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because chi-cheng earns "scooped" against the players who measure otherwise, by 0.0242 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer chi-cheng than the others, so MESA/Boogie Mark IV Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 3 records from 1 players, chi-cheng earns scooped and dark, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because chi-cheng earns "scooped" against the players who measure otherwise, by 0.0242 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
       controls:
-        CenterFreq: "1000.0"
+        2200Hz: "-9.6"
+        240Hz: "-3.36"
+        6600Hz: "0.0"
+        750Hz: "-6.68"
+        80Hz: "0.0"
         Level: "0.0"
-        Tilt: "0.5"
       attrs:
         '@position': "5"
       enabled: false
@@ -195,19 +198,19 @@ built:
     - role: mod
       gear: Chorus
       controls:
-        ChorusIntensity: "0.57"
-        Headroom: "0.0"
+        ChorusIntensity: "0.5"
+        Headroom: "3.0"
         Level: "1.0"
-        Mix: "0.5"
+        Mix: "0.25"
         Mode: "false"
         Spread: "0.0"
         Stereo: "false"
-        SyncSelect1: "6"
+        SyncSelect1: "3"
         SyncSelect2: "6"
-        TempoSync1: "false"
-        TempoSync2: "false"
+        TempoSync1: "true"
+        TempoSync2: "true"
         VibratoDepth: "0.5"
-        VibratoRate: "0.7"
+        VibratoRate: "0.875"
       attrs:
         '@position': "6"
       enabled: false
@@ -291,7 +294,7 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Simple Tilt
+                '@fs_label': MESA/Boogie Mark IV Graphic EQ
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -413,7 +416,7 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Simple Tilt
+    - gear: MESA/Boogie Mark IV Graphic EQ
       block: 5
       colour: 527360
       enabled: false

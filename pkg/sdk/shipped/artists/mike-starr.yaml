@@ -72,7 +72,7 @@ built:
   device: HX Stomp
   chain:
     - role: eq
-      gear: Simple Tilt
+      gear: MESA/Boogie Mark IV Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -88,11 +88,14 @@ built:
             low: 1
             mid: 0
             transient: 0.64
-          note: Chosen by measurement rather than by anybody's say-so. Simple Tilt is the closest of the 8 bass equalisers this device models to mike-starr, sitting at 124 Hz against 142. Across 3 records from 1 players, mike-starr earns scooped, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because mike-starr earns "scooped" against the players who measure otherwise, by 0.0205 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer mike-starr than the others, so MESA/Boogie Mark IV Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 3 records from 1 players, mike-starr earns scooped, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because mike-starr earns "scooped" against the players who measure otherwise, by 0.0205 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
       controls:
-        CenterFreq: "1000.0"
+        2200Hz: "-9.6"
+        240Hz: "-3.36"
+        6600Hz: "0.0"
+        750Hz: "-9.99"
+        80Hz: "0.0"
         Level: "0.0"
-        Tilt: "0.5"
       attrs:
         '@position': "0"
       enabled: false
@@ -189,19 +192,19 @@ built:
     - role: delay
       gear: Dual Delay
       controls:
-        Depth: "0.35"
-        HighCut: "20100.0"
-        Left Time: "0.375"
-        LeftFeedback: "0.3"
+        Depth: "0.25"
+        HighCut: "5400.0"
+        Left Time: "1.0"
+        LeftFeedback: "0.625"
         Level: "0.0"
-        LowCut: "19.9"
-        MixL: "0.23"
-        MixR: "0.23"
+        LowCut: "260.0"
+        MixL: "1.0"
+        MixR: "0.375"
         ModulationMode: "1"
-        Right Time: "0.5"
-        RightFeedback: "0.4"
-        Speed: "0.05"
-        Spread: "1.0"
+        Right Time: "1.25"
+        RightFeedback: "0.875"
+        Speed: "0.375"
+        Spread: "0.375"
         SyncSelect1: "9"
         SyncSelect2: "6"
         TempoSync1: "false"
@@ -298,7 +301,7 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Simple Tilt
+                '@fs_label': MESA/Boogie Mark IV Graphic EQ
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -421,7 +424,7 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Simple Tilt
+    - gear: MESA/Boogie Mark IV Graphic EQ
       block: 0
       colour: 527360
       enabled: false

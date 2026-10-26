@@ -180,25 +180,25 @@ built:
     - role: mod
       gear: BOSS CE-1
       controls:
-        ChorusIntensity: "0.57"
-        Headroom: "0.0"
+        ChorusIntensity: "0.5"
+        Headroom: "9.0"
         Level: "1.0"
-        Mix: "0.5"
+        Mix: "0.375"
         Mode: "false"
         Spread: "0.0"
         Stereo: "false"
-        SyncSelect1: "6"
+        SyncSelect1: "3"
         SyncSelect2: "6"
-        TempoSync1: "false"
-        TempoSync2: "false"
+        TempoSync1: "true"
+        TempoSync2: "true"
         VibratoDepth: "0.5"
-        VibratoRate: "0.7"
+        VibratoRate: "0.875"
       attrs:
         '@position': "5"
       enabled: false
       position: 5
     - role: reverb
-      gear: Ganymede
+      gear: Glitz
       capture: direct
       confidence: low
       evidence:
@@ -214,14 +214,21 @@ built:
             low: 0.99
             mid: 0.01
             transient: 0.69
-          note: Chosen by measurement rather than by anybody's say-so. Ganymede is the closest of the 14 bass reverbs this device models to jeff-ament, sitting at 126 Hz against 134. Across 3 records from 1 players, jeff-ament earns scooped and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because jeff-ament earns "long-decay" against the players who measure otherwise, by 0.07 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
+          note: Chosen by measurement rather than by anybody's say-so. Glitz is the closest of the 4 bass reverbs this device models to jeff-ament, sitting at 126 Hz against 134. Across 3 records from 1 players, jeff-ament earns scooped and long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at. It is here because jeff-ament earns "long-decay" against the players who measure otherwise, by 0.07 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.
       controls:
-        Decay: "0.65"
+        Decay: "0.51"
+        Delay: "0.064"
+        Depth: "0.38"
+        HighCut: "15500.0"
         Level: "0.0"
-        Mix: "0.35"
-        Modulation: "0.7"
-        Predelay: "0.0"
-        Tone: "0.5"
+        LowCut: "19.9"
+        Mix: "0.18"
+        Mod Mix: "0.5"
+        Predelay: "0.001"
+        Rate: "1.84"
+        SyncSelect1: "6"
+        TempoSync1: "false"
+        Xover: "900.0"
       attrs:
         '@position': "6"
       enabled: false

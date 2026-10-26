@@ -223,19 +223,19 @@ built:
     - role: delay
       gear: Dual Delay
       controls:
-        Depth: "0.35"
-        HighCut: "20100.0"
-        Left Time: "0.375"
-        LeftFeedback: "0.3"
+        Depth: "0.625"
+        HighCut: "17650.0"
+        Left Time: "1.25"
+        LeftFeedback: "0.25"
         Level: "0.0"
-        LowCut: "19.9"
-        MixL: "0.23"
-        MixR: "0.23"
+        LowCut: "260.0"
+        MixL: "0.25"
+        MixR: "0.25"
         ModulationMode: "1"
-        Right Time: "0.5"
-        RightFeedback: "0.4"
-        Speed: "0.05"
-        Spread: "1.0"
+        Right Time: "1.75"
+        RightFeedback: "1.0"
+        Speed: "0.125"
+        Spread: "0.875"
         SyncSelect1: "9"
         SyncSelect2: "6"
         TempoSync1: "false"
@@ -247,12 +247,12 @@ built:
     - role: reverb
       gear: Cave
       controls:
-        Decay: "0.47"
+        Decay: "0.5"
         HighCut: "9400.0"
         Level: "0.0"
         LowCut: "59.0"
         Mix: "0.5"
-        Predelay: "0.05"
+        Predelay: "0.075"
       attrs:
         '@position': "6"
       enabled: false

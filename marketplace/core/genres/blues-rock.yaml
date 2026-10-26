@@ -151,7 +151,7 @@ built:
         '@position': "4"
       position: 4
     - role: eq
-      gear: Simple Tilt
+      gear: MESA/Boogie Mark IV Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -167,11 +167,14 @@ built:
             low: 0.96
             mid: 0.04
             transient: 0.72
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer blues-rock than the others, so Simple Tilt is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 9 records from 3 players, blues-rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because blues-rock earns "mid-forward" against the players who measure otherwise, by 0.0129 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer blues-rock than the others, so MESA/Boogie Mark IV Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 9 records from 3 players, blues-rock earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because blues-rock earns "mid-forward" against the players who measure otherwise, by 0.0129 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
       controls:
-        CenterFreq: "1000.0"
+        2200Hz: "-7.2"
+        240Hz: "-3.36"
+        6600Hz: "4.8"
+        750Hz: "3.26"
+        80Hz: "0.0"
         Level: "0.0"
-        Tilt: "0.25"
       attrs:
         '@position': "5"
       enabled: false
@@ -179,19 +182,19 @@ built:
     - role: mod
       gear: BOSS CE-1
       controls:
-        ChorusIntensity: "0.57"
-        Headroom: "0.0"
+        ChorusIntensity: "1.0"
+        Headroom: "9.0"
         Level: "1.0"
-        Mix: "0.5"
+        Mix: "0.25"
         Mode: "false"
         Spread: "0.0"
         Stereo: "false"
-        SyncSelect1: "6"
-        SyncSelect2: "6"
+        SyncSelect1: "18"
+        SyncSelect2: "12"
         TempoSync1: "false"
         TempoSync2: "false"
-        VibratoDepth: "0.5"
-        VibratoRate: "0.7"
+        VibratoDepth: "0.25"
+        VibratoRate: "0.5"
       attrs:
         '@position': "6"
       enabled: false
@@ -285,7 +288,7 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': Simple Tilt
+                '@fs_label': MESA/Boogie Mark IV Graphic EQ
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -406,7 +409,7 @@ built:
       momentary: false
       primary: true
       switch: 2
-    - gear: Simple Tilt
+    - gear: MESA/Boogie Mark IV Graphic EQ
       block: 5
       colour: 527360
       enabled: false

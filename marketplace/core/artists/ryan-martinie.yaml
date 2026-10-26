@@ -61,10 +61,10 @@ built:
       gear: Vetta Wah
       controls:
         FcHigh: "2300.0"
-        FcLow: "300.0"
+        FcLow: "320.0"
         Level: "0.0"
-        Mix: "1.0"
-        Pedal: "0.0"
+        Mix: "0.75"
+        Pedal: "0.125"
       attrs:
         '@position': "0"
       enabled: false
@@ -138,19 +138,19 @@ built:
     - role: mod
       gear: Chorus
       controls:
-        ChorusIntensity: "0.57"
+        ChorusIntensity: "0.625"
         Headroom: "0.0"
         Level: "1.0"
-        Mix: "0.5"
+        Mix: "0.0"
         Mode: "false"
         Spread: "0.0"
         Stereo: "false"
-        SyncSelect1: "6"
-        SyncSelect2: "6"
+        SyncSelect1: "18"
+        SyncSelect2: "12"
         TempoSync1: "false"
         TempoSync2: "false"
         VibratoDepth: "0.5"
-        VibratoRate: "0.7"
+        VibratoRate: "0.0"
       attrs:
         '@position': "4"
       enabled: false
@@ -158,11 +158,11 @@ built:
     - role: reverb
       gear: Cave
       controls:
-        Decay: "0.47"
+        Decay: "0.5"
         HighCut: "9400.0"
         Level: "0.0"
-        LowCut: "59.0"
-        Mix: "0.5"
+        LowCut: "500.0"
+        Mix: "0.375"
         Predelay: "0.05"
       attrs:
         '@position': "5"
