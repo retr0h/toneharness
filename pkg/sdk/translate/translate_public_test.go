@@ -30,6 +30,7 @@ import (
 	"github.com/retr0h/toneharness/pkg/sdk/audio"
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/config"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/rigs"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/slug"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
@@ -260,6 +261,68 @@ func (s *TranslatePublicTestSuite) TestTranslate() {
 			// was, so the comparison is between two of the same kind of
 			// thing, and the answer is the nearest of two hundred and twenty
 			// four rather than whichever name somebody wrote down.
+			// The same recording, with the corpus saying nobody plays the
+			// amplifier it reached for.
+			//
+			// Built rather than written down: the pool is ranked against a
+			// real recording and which block reads nearest is not a figure to
+			// hardcode. So the choice is made once to learn it, and then a
+			// corpus is handed over that holds every bass block except that
+			// one.
+			name: "the amplifier it reached for is one no chain holds",
+			then: func() {
+				body := "like:\n  recording: " + s.recording() + "\n"
+
+				first, _, err := translate.Translate(
+					s.ask(body), s.setup(""), s.deps)
+				s.Require().NoError(err)
+				s.Require().Len(first.Chain, 1)
+
+				reached := first.Chain[0].Gear
+				s.Require().NotEmpty(reached)
+
+				// Every model but the ones carrying that gear's name, each in
+				// one chain, which is the least the corpus can say and still
+				// be saying something.
+				holds := map[catalog.ModelID]int{}
+				for id, block := range s.deps.Catalog.Blocks {
+					if block.Gear() == reached {
+						continue
+					}
+
+					holds[id] = 1
+				}
+
+				deps := s.deps
+				deps.Corpus = &corpus.Stats{
+					Grammar: map[string]corpus.Grammar{
+						"bass": {Chains: 172, Models: holds},
+					},
+				}
+
+				got, notes, err := translate.Translate(
+					s.ask(body), s.setup(""), deps)
+
+				s.Require().NoError(err)
+				s.Require().NoError(rig.Validate(got))
+				s.Require().Len(got.Chain, 1)
+				s.Require().NotEqual(reached, got.Chain[0].Gear,
+					"the refusal has to change which block was chosen")
+
+				var said string
+				for _, note := range notes {
+					if strings.Contains(note.Said, "not one measured") {
+						said = note.Said
+					}
+				}
+
+				s.Require().Contains(said, reached)
+				s.Require().Contains(said,
+					"not one measured bass chain holds one, so nothing says a "+
+						"player reaches for it")
+			},
+		},
+		{
 			name: "a recording chooses the amplifier",
 			then: func() {
 				got, notes, err := translate.Translate(

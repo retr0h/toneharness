@@ -1,21 +1,3 @@
-# Metal — the genre, not a player
-#
-# A rig for the sound of a genre rather than for somebody who plays it. The
-# artists under ../artists/ are people; this is what the records of a genre
-# measure as, resolved to gear.
-#
-# Built rather than researched, then resolved, and reproducible on the same
-# corpus. `tone build` took the amplifier and the cabinet most of metal's
-# documented players used, aimed their controls at the edge of metal's own
-# measured range rather than its middle, and put a drive and an equaliser
-# behind a footswitch, switched off, set from their sweeps.
-#
-# The rule and the measurements behind it are in build-a-rig's measuring.md.
-# The short of it: the middle of a genre is what every genre shares, so aiming
-# there gave nine of these eleven the same amplifier.
-#
-# See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
-
 schema: ToneSpec
 version: 4.0.0
 id: metal
@@ -33,7 +15,7 @@ ask:
 rig:
   chain:
     - role: drive
-      gear: Earthquaker Devices Life - Boost circuit
+      gear: Xotic EP Booster
       capture: direct
       confidence: low
       evidence:
@@ -49,7 +31,9 @@ rig:
             low: 1
             mid: 0.01
             transient: 0.72
-          note: 'Chosen by measurement rather than by anybody''s say-so. Earthquaker Devices Life - Boost circuit is the closest of the 52 bass drives this device models to metal, sitting at 124 Hz against 125. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
+          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 19 bass drives this device models to metal, sitting at 123 Hz against 125. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
+      controls:
+        Bright: "false"
       enabled: false
     - role: amp
       gear: Ampeg SVT
@@ -67,7 +51,7 @@ rig:
       controls:
         Mic: "8"
     - role: eq
-      gear: Low/High Shelf
+      gear: MESA/Boogie Mark IV Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -83,9 +67,12 @@ rig:
             low: 1
             mid: 0.01
             transient: 0.72
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer metal than the others, so Low/High Shelf is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer metal than the others, so MESA/Boogie Mark IV Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
       controls:
-        LowGain: "-3.0"
+        2200Hz: "-2.4"
+        240Hz: "-3.36"
+        6600Hz: "2.4"
+        750Hz: "-3.36"
       enabled: false
   instrument: bass
 built:
@@ -111,7 +98,7 @@ built:
       enabled: false
       position: 0
     - role: drive
-      gear: Earthquaker Devices Life - Boost circuit
+      gear: Xotic EP Booster
       capture: direct
       confidence: low
       evidence:
@@ -127,9 +114,11 @@ built:
             low: 1
             mid: 0.01
             transient: 0.72
-          note: 'Chosen by measurement rather than by anybody''s say-so. Earthquaker Devices Life - Boost circuit is the closest of the 52 bass drives this device models to metal, sitting at 124 Hz against 125. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. Its controls were not moved: none of them reaches what that asks for, so they are the catalog''s defaults.'
+          note: Chosen by measurement rather than by anybody's say-so. Xotic EP Booster is the closest of the 19 bass drives this device models to metal, sitting at 123 Hz against 125. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument's presets sit at.
       controls:
-        Boost: "0.5"
+        Boost: "false"
+        Bright: "false"
+        Drive: "0.55"
       attrs:
         '@position': "1"
       enabled: false
@@ -191,7 +180,7 @@ built:
         '@position': "4"
       position: 4
     - role: eq
-      gear: Low/High Shelf
+      gear: MESA/Boogie Mark IV Graphic EQ
       capture: direct
       confidence: low
       evidence:
@@ -207,13 +196,14 @@ built:
             low: 1
             mid: 0.01
             transient: 0.72
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer metal than the others, so Low/High Shelf is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
+          note: 'Not chosen by measurement. None of the 5 bass equalisers this device models is measurably nearer metal than the others, so MESA/Boogie Mark IV Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 10 records from 3 players, metal earns scooped, dark and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at.'
       controls:
-        HighFreq: "3000.0"
-        HighGain: "0.0"
+        2200Hz: "-2.4"
+        240Hz: "-3.36"
+        6600Hz: "2.4"
+        750Hz: "-3.36"
+        80Hz: "0.0"
         Level: "0.0"
-        LowFreq: "150.0"
-        LowGain: "-3.0"
       attrs:
         '@position': "5"
       enabled: false
@@ -317,7 +307,7 @@ built:
                 '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Earthquaker Devices Life - Boost circuit
+                '@fs_label': Xotic EP Booster
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -327,7 +317,7 @@ built:
                 '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': Low/High Shelf
+                '@fs_label': MESA/Boogie Mark IV Graphic EQ
                 '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -439,7 +429,7 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Earthquaker Devices Life - Boost circuit
+    - gear: Xotic EP Booster
       block: 1
       colour: 525824
       enabled: false
@@ -448,7 +438,7 @@ built:
       momentary: false
       primary: true
       switch: 2
-    - gear: Low/High Shelf
+    - gear: MESA/Boogie Mark IV Graphic EQ
       block: 5
       colour: 527360
       enabled: false

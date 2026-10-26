@@ -189,6 +189,16 @@ func PlayerAim(
 // are the contract.
 var AsPlayed = asPlayed
 
+// AsHeld narrows a ranking to the blocks a measured chain actually holds.
+//
+// Read here for the reason [AsPlayed] is, and for one more: the cases that
+// matter most are the ones the shipped corpus does not produce. Every
+// modulation block this device has swept is held by no chain at all, so the
+// fall-through where nothing survives is reachable today, and a corpus with
+// no chains for the instrument is the contract rather than a state anything
+// ships in.
+var AsHeld = asHeld
+
 // Exposed to this package's external tests. Which kind of block answers a
 // figure, and which kinds a target's records ask for, are both tables with
 // more rows than any build reaches: four figures ever earn a word across the

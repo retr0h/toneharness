@@ -117,7 +117,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
 					Spec:  s.at("like-a-record.yaml"),
 					Setup: s.at("mine.config.yaml"),
-				}, s.cat, s.lib, s.rigNamed, "")
+				}, s.cat, s.lib, s.rigNamed, "", "")
 
 				s.Require().NoError(err)
 				s.Require().NotEmpty(got.Rig.Chain)
@@ -134,7 +134,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 			then: func() {
 				got, err := asking.Resolve(context.Background(), asking.Ask{
 					Spec: s.at("like-a-record.yaml"),
-				}, s.cat, s.lib, s.rigNamed, "")
+				}, s.cat, s.lib, s.rigNamed, "", "")
 
 				s.Require().NoError(err)
 				s.Require().NotEmpty(got.Rig.Chain)
@@ -159,13 +159,32 @@ func (s *AskingPublicTestSuite) TestResolve() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib, s.rigNamed, "")
+						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib, s.rigNamed, "", "")
 
 						s.Require().Error(err)
 						s.Require().ErrorContains(err, absent,
 							"the error names the file somebody has to go and look at")
 					})
 				}
+			},
+		},
+		{
+			// The statistics, which resolving reads so that a block chosen by
+			// measurement can be held against how many measured chains hold
+			// one. A path that is not there is the person's to fix, and a
+			// resolution that carried on would choose from a pool nothing
+			// vetoed while reporting nothing.
+			name: "statistics that are not there are reported",
+			then: func() {
+				absent := filepath.Join(s.T().TempDir(), "nowhere.json")
+
+				_, err := asking.Resolve(context.Background(),
+					asking.Ask{Spec: s.at("like-a-record.yaml")},
+					s.cat, s.lib, s.rigNamed, "", absent)
+
+				s.Require().Error(err)
+				s.Require().ErrorContains(err, absent,
+					"the error names the file somebody has to go and look at")
 			},
 		},
 		{
@@ -191,7 +210,7 @@ func (s *AskingPublicTestSuite) TestResolve() {
 
 				for _, tt := range tests {
 					s.Run(tt.name, func() {
-						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib, s.rigNamed, "")
+						_, err := asking.Resolve(context.Background(), tt.in, s.cat, s.lib, s.rigNamed, "", "")
 
 						s.Require().Error(err)
 					})
@@ -221,7 +240,7 @@ rig:
   chain:
     - {role: amp, gear: Ampeg SVT}
 `),
-				}, s.cat, s.lib, s.rigNamed, "")
+				}, s.cat, s.lib, s.rigNamed, "", "")
 
 				s.Require().Error(err, "a request that insisted on gear the device has not")
 				s.Require().NotEmpty(got.Notes, "and the notes say which gear, and why")
@@ -236,7 +255,7 @@ rig:
 
 				_, err := asking.Resolve(ctx, asking.Ask{
 					Spec: s.at("like-a-record.yaml"),
-				}, s.cat, s.lib, s.rigNamed, "")
+				}, s.cat, s.lib, s.rigNamed, "", "")
 
 				s.Require().ErrorIs(err, context.Canceled)
 			},

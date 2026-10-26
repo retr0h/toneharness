@@ -39,6 +39,7 @@ import (
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
 	"github.com/retr0h/toneharness/pkg/sdk/config"
+	"github.com/retr0h/toneharness/pkg/sdk/corpus"
 	"github.com/retr0h/toneharness/pkg/sdk/internal/compile"
 	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/result"
@@ -70,6 +71,10 @@ func Resolve(
 	// a block does. Empty means none were read, and a block added to a chain
 	// then arrives at the catalog's defaults.
 	sweeps string,
+	// stats is measured corpus statistics to read instead of the built-in
+	// ones. Empty means the built-in ones, which is what every caller but a
+	// test wants.
+	stats string,
 ) (result.Resolved, error) {
 	if err := ctx.Err(); err != nil {
 		return result.Resolved{}, err
@@ -98,8 +103,22 @@ func Resolve(
 		ask = *spec.Ask
 	}
 
+	// The corpus, because a block chosen by measurement is ranked on four
+	// figures and four figures cannot say what a pedal is for. How many
+	// measured chains hold one can, and `translate.asHeld` is what asks: not
+	// one of the 172 bass chains holds a BOSS Metal Zone, which is what rock
+	// was given.
+	//
+	// Read here rather than left nil, which is how it was: `presets.Make`
+	// handed the statistics in and this did not, so the veto was inert on the
+	// one path that writes a chosen block into a document.
+	counted, err := corpus.Open(stats)
+	if err != nil {
+		return result.Resolved{}, err
+	}
+
 	built, notes, err := translate.Translate(ask, setup, translate.Deps{
-		Catalog: cat, Measured: lib,
+		Catalog: cat, Measured: lib, Corpus: counted,
 		// Wired here because this is the one place above both: translate runs
 		// before compile and must not import it, and compile owns the
 		// vocabulary.
