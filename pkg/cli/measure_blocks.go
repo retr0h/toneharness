@@ -496,6 +496,30 @@ func baseline(
 		return fmt.Errorf("loading the empty loop: %w", err)
 	}
 
+	// The stream settled before anything is kept, because the readings it
+	// hands back while it is settling are not of the chain and there are two
+	// of them.
+	//
+	// Measured on 2026-10-26, eight takes of one loaded empty loop with the
+	// bench opened once and nothing touched between them:
+	//
+	//	1    centroid 161.2   level -58.60   93.3% low
+	//	2    centroid 166.6   level -59.97   92.6% low
+	//	3    centroid 113.4   level -51.04   97.1% low
+	//	4-8  the same as take 3, to the last digit
+	//
+	// Three takes and the middle of them put the baseline on take 1 or 2,
+	// because two of the three were the stream rather than the loop and a
+	// median of three cannot outvote two of them. Three runs minutes apart
+	// read 129.5, 170.8 and 154.1 Hz for the same loop: a 41 Hz and 4.2 dB
+	// spread on the one figure every other reading is calibrated against.
+	//
+	// `steady` in measure_controls.go discards one for the same reason and
+	// says so in its own comment. One was not enough here.
+	if err := stream(ctx, bench, signal); err != nil {
+		return err
+	}
+
 	// Three takes and the median of them, because this one reading calibrates
 	// every other and is the noisiest the rig produces. See measured.Middle
 	// for the five reads that settled the count.
@@ -548,7 +572,60 @@ const (
 // Three, which is the smallest number at which one wild reading is discarded
 // rather than averaged in, and costs eight seconds against a campaign measured
 // in hours.
+//
+// Three of a settling stream is what put a 41 Hz spread on the figure every
+// other reading is held against, so [stream] runs first and these three are
+// of the loop.
 const baselineTakes = 3
+
+// stream reads and throws away until the audio stream stops settling.
+//
+// Not a fixed count. Two readings were unsettled on the rig this was written
+// against and one is unsettled in `steady`'s own evidence, so a number here
+// would be a number about one machine on one night. What is the same on every
+// machine is that the figures stop moving, so this reads until two in a row
+// agree on level, which is the figure that moved most.
+//
+// Bounded, because a loop that never settles has something else wrong and the
+// run should get on and report what it reads rather than spin. Giving up is
+// not an error for that reason: the readings that follow are the best this can
+// do, and the guards downstream are what decide whether they are usable.
+func stream(
+	ctx context.Context,
+	bench sdk.Bench,
+	signal []float32,
+) error {
+	was := math.NaN()
+
+	for range streamSettles {
+		got, err := sdk.Fingerprint(ctx, bench, signal)
+		if err != nil {
+			return err
+		}
+
+		if !math.IsNaN(was) && math.Abs(got.Level-was) < settledWithin {
+			return nil
+		}
+
+		was = got.Level
+	}
+
+	return nil
+}
+
+// streamSettles is how many readings stream spends before giving up.
+//
+// Eight, which is four times what the measured case needed and still under a
+// minute of a campaign measured in hours.
+const streamSettles = 8
+
+// settledWithin is how close two readings in a row have to be, in decibels,
+// for the stream to count as settled.
+//
+// A tenth of a decibel. The settled takes measured on 2026-10-26 agreed to
+// 0.01 dB and the settling ones were 1.4 to 9 dB apart, so this sits an order
+// of magnitude clear of both.
+const settledWithin = 0.1
 
 // drifted says when the empty loop no longer reads what the shipped library's
 // did.
