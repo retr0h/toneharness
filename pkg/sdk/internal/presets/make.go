@@ -966,6 +966,11 @@ func stompable(
 		Measured:  lib,
 		Corpus:    stats,
 		CurvesFor: sweptIn(opts.SweepsDir),
+		// And the pair readings, so an effect added in front of an amplifier
+		// is ranked on how it reads there. Task 288: measured both ways on
+		// one settled rig, every one of the eleven genres chose a different
+		// drive.
+		InFrontOf: measured.InFrontOf(opts.SweepsDir),
 	}
 
 	got := translate.Stompable(id, rec, setup, deps, &notes)

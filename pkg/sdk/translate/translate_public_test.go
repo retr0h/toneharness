@@ -323,6 +323,54 @@ func (s *TranslatePublicTestSuite) TestTranslate() {
 			},
 		},
 		{
+			// Task 288. A genre with an amplifier already named, and a pair
+			// library measured behind that amplifier, so the drive is ranked
+			// on how it reads there rather than on how it reads alone.
+			//
+			// The note is the assertion. Which drive wins is the library's
+			// answer and would pin a figure; that a build says which readings
+			// it ranked against is the contract, because a reading taken in a
+			// chain and one taken alone are different claims.
+			name: "an effect is ranked in front of the amplifier it sits behind",
+			then: func() {
+				// The shipped library's own figures, relabelled as a pair
+				// reading taken behind an Ampeg SVT. Borrowed rather than
+				// invented so the ranking has a real spread to work on.
+				lib, err := measured.BuiltIn()
+				s.Require().NoError(err)
+
+				lib.Isolated = false
+				lib.After = "HD2_AmpSVBeastBrt"
+
+				deps := s.deps
+				deps.InFrontOf = func(
+					after catalog.ModelID,
+				) (measured.Library, bool) {
+					if after != "HD2_AmpSVBeastBrt" {
+						return measured.Library{}, false
+					}
+
+					return lib, true
+				}
+
+				_, notes, err := translate.Translate(
+					s.ask("genre:\n  - rock\ngear:\n  - gear: Ampeg SVT Brt\n"+
+						"    role: amp\n"),
+					s.setup(""), deps)
+
+				s.Require().NoError(err)
+				said := "ranked against readings taken in front of " +
+					"HD2_AmpSVBeastBrt rather than readings of a block on " +
+					"its own"
+
+				// Both kinds a genre's words reach, because each is ranked
+				// separately and either could have been left on the isolated
+				// library.
+				s.Require().Contains(sayings(notes), "drive: "+said)
+				s.Require().Contains(sayings(notes), "eq: "+said)
+			},
+		},
+		{
 			name: "a recording chooses the amplifier",
 			then: func() {
 				got, notes, err := translate.Translate(

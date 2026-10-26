@@ -119,6 +119,12 @@ func Resolve(
 
 	built, notes, err := translate.Translate(ask, setup, translate.Deps{
 		Catalog: cat, Measured: lib, Corpus: counted,
+		// And the pair readings, so a block that sits in front of an
+		// amplifier is ranked on how it reads there rather than on how it
+		// reads alone. Nil when nobody named a sweeps tree, which a release
+		// has not: these are a directory of readings rather than something
+		// embedded, the same as the control sweeps.
+		InFrontOf: measured.InFrontOf(sweeps),
 		// Wired here because this is the one place above both: translate runs
 		// before compile and must not import it, and compile owns the
 		// vocabulary.

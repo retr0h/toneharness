@@ -124,13 +124,18 @@ func Commonest(
 }
 
 // StompedFor is the effects a genre gets, switched off and tuned.
+//
+// The chain is taken as well, because what it holds decides which library the
+// ranking reads: an amplifier a pair reading was taken behind means the
+// effects are ranked on how they read in front of it. See `rankFrom`.
 func StompedFor(
 	spec tone.Ask,
 	setup config.Config,
 	deps Deps,
+	chain []rig.ChainEntry,
 	notes *Notes,
 ) []rig.ChainEntry {
-	said := stompedFor(spec, setup, deps, notes)
+	said := stompedFor(spec, setup, deps, chain, notes)
 	out := make([]rig.ChainEntry, 0, len(said))
 
 	for _, p := range said {
@@ -198,6 +203,14 @@ var AsPlayed = asPlayed
 // no chains for the instrument is the contract rather than a state anything
 // ships in.
 var AsHeld = asHeld
+
+// RankFrom is the library a block of one kind is ranked against, and whether
+// it describes the block in a chain rather than on its own.
+//
+// Read here because the cases that decide it are ones no shipped rig
+// produces: a gear name whose candidate models hold two pair libraries, and a
+// chain naming an amplifier nothing has been measured behind.
+var RankFrom = rankFrom
 
 // Exposed to this package's external tests. Which kind of block answers a
 // figure, and which kinds a target's records ask for, are both tables with

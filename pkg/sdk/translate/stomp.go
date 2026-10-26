@@ -280,7 +280,8 @@ func Stompable(
 			ask.Instrument = &was
 		}
 
-		entry, _, chose := nearestOf(at, ask, setup, deps, asked.kind, notes)
+		entry, _, chose := nearestOf(
+			at, ask, setup, deps, asked.kind, spec.Chain, notes)
 		if !chose {
 			continue
 		}
