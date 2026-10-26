@@ -285,16 +285,33 @@ func (s *PizzazzPublicTestSuite) TestPopular() {
 		name    string
 		grammar corpus.Grammar
 		kind    catalog.Category
-		gear    string
-		ok      bool
+		// id is the subject the candidates are rotated for, empty for the
+		// ranking itself.
+		id   string
+		gear string
+		ok   bool
 	}{
 		{
 			// The corpus rather than the measured ranking, which is the whole
 			// point: measurement put five genres on one drive.
+			//
+			// One candidate clears the floor here, so every subject gets it
+			// and the rotation has nothing to turn.
 			name: "the model the most chains hold",
 			grammar: corpus.Grammar{Models: map[catalog.ModelID]int{
 				"HD2_DistHedgehogD9": 2,
 				"HD2_Chorus":         30,
+			}},
+			kind: catalog.CategoryMod,
+			gear: "Chorus",
+			ok:   true,
+		},
+		{
+			// Two candidates and no subject, which is the ranking itself.
+			name: "no subject takes the leader",
+			grammar: corpus.Grammar{Models: map[catalog.ModelID]int{
+				"HD2_Chorus":          30,
+				"HD2_Chorus70sChorus": 15,
 			}},
 			kind: catalog.CategoryMod,
 			gear: "Chorus",
@@ -335,7 +352,7 @@ func (s *PizzazzPublicTestSuite) TestPopular() {
 	} {
 		s.Run(tt.name, func() {
 			entry, gear, cost, ok := translate.Popular(
-				tt.grammar, s.deps.Catalog, tt.kind)
+				tt.grammar, s.deps.Catalog, tt.kind, tt.id)
 
 			if !tt.ok {
 				s.Require().False(ok)
@@ -353,6 +370,183 @@ func (s *PizzazzPublicTestSuite) TestPopular() {
 			s.Require().False(*entry.Enabled)
 		})
 	}
+}
+
+// TestRanksFor covers which models of a kind are worth offering.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *PizzazzPublicTestSuite) TestRanksFor() {
+	for _, tt := range []struct {
+		name    string
+		grammar corpus.Grammar
+		kind    catalog.Category
+		want    []catalog.ModelID
+	}{
+		{
+			// Best first, which is what makes the rotation a rotation rather
+			// than a draw: a rig starting at the second candidate gets the
+			// second.
+			name: "ranked by the chains holding each",
+			grammar: corpus.Grammar{Models: map[catalog.ModelID]int{
+				"HD2_Chorus70sChorus": 15,
+				"HD2_Chorus":          30,
+			}},
+			kind: catalog.CategoryMod,
+			want: []catalog.ModelID{"HD2_Chorus", "HD2_Chorus70sChorus"},
+		},
+		{
+			// A fifth of the leader is the floor. Thirty against five is
+			// below it, and five chains of 172 behind a model thirty hold is
+			// where the counts stop being a ranking.
+			name: "a model too far behind the leader is not a candidate",
+			grammar: corpus.Grammar{Models: map[catalog.ModelID]int{
+				"HD2_Chorus":               30,
+				"HD2_PhaserScriptModPhase": 5,
+			}},
+			kind: catalog.CategoryMod,
+			want: []catalog.ModelID{"HD2_Chorus"},
+		},
+		{
+			// Exactly a fifth is in, so the floor is a figure rather than a
+			// strict inequality somebody has to remember the side of.
+			name: "a model at exactly a fifth is a candidate",
+			grammar: corpus.Grammar{Models: map[catalog.ModelID]int{
+				"HD2_Chorus":          30,
+				"HD2_Chorus70sChorus": 6,
+			}},
+			kind: catalog.CategoryMod,
+			want: []catalog.ModelID{"HD2_Chorus", "HD2_Chorus70sChorus"},
+		},
+		{
+			// Ties by identifier, so a corpus that counts two models alike
+			// ranks them the same way every run.
+			name: "two models alike resolve by identifier",
+			grammar: corpus.Grammar{Models: map[catalog.ModelID]int{
+				"HD2_Chorus70sChorus": 12,
+				"HD2_Chorus":          12,
+			}},
+			kind: catalog.CategoryMod,
+			want: []catalog.ModelID{"HD2_Chorus", "HD2_Chorus70sChorus"},
+		},
+		{
+			// Task 328, which holds bypassed as well: an octave is a
+			// different note and a build may not choose one for somebody.
+			name: "a model that changes the notes is no candidate",
+			grammar: corpus.Grammar{Models: map[catalog.ModelID]int{
+				"HD2_MM4RingModulator": 400,
+			}},
+			kind: catalog.CategoryMod,
+		},
+		{
+			name: "a model the catalog does not carry",
+			grammar: corpus.Grammar{Models: map[catalog.ModelID]int{
+				"HD2_NothingCallsItselfThis": 90,
+			}},
+			kind: catalog.CategoryMod,
+		},
+		{
+			name: "a kind no measured chain holds",
+			grammar: corpus.Grammar{Models: map[catalog.ModelID]int{
+				"HD2_Chorus": 30,
+			}},
+			kind: catalog.CategoryDelay,
+		},
+		{
+			name:    "a grammar naming no models at all",
+			grammar: corpus.Grammar{},
+			kind:    catalog.CategoryMod,
+		},
+	} {
+		s.Run(tt.name, func() {
+			got := translate.RanksFor(tt.grammar, s.deps.Catalog, tt.kind)
+
+			if len(tt.want) == 0 {
+				s.Require().Empty(got)
+
+				return
+			}
+
+			s.Require().Equal(tt.want, got)
+		})
+	}
+}
+
+// TestRotated covers which candidate a subject takes.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *PizzazzPublicTestSuite) TestRotated() {
+	three := []catalog.ModelID{"first", "second", "third"}
+
+	for _, tt := range []struct {
+		name   string
+		ranked []catalog.ModelID
+		id     string
+		kind   catalog.Category
+		want   catalog.ModelID
+	}{
+		{
+			// Nothing to rotate by is the ranking itself, which is the order
+			// a test reads rather than one a build reaches: Pizzazz refuses a
+			// rig with no identifier.
+			name:   "no subject takes the leader",
+			ranked: three,
+			want:   "first",
+		},
+		{
+			name:   "one candidate is every subject's answer",
+			ranked: []catalog.ModelID{"only"},
+			id:     "les-claypool",
+			kind:   catalog.CategoryDrive,
+			want:   "only",
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.Require().Equal(
+				tt.want, translate.Rotated(tt.ranked, tt.id, tt.kind))
+		})
+	}
+}
+
+// TestRotatedIsSteadyAndSpreads covers the two properties the rotation exists
+// for, which a table of expected answers cannot state: the same subject comes
+// back the same every run, and two kinds in one rig do not turn in step.
+//
+// The second is why the hash is keyed on the kind as well. Hashing the
+// identifier alone made a rig taking the third drive take the third reverb,
+// so a rig was not offered a spread of gear, it was offered one offset
+// applied to every list.
+func (s *PizzazzPublicTestSuite) TestRotatedIsSteadyAndSpreads() {
+	ranked := []catalog.ModelID{"a", "b", "c", "d", "e"}
+
+	for _, id := range []string{"les-claypool", "flea", "punk"} {
+		first := translate.Rotated(ranked, id, catalog.CategoryDrive)
+		s.Require().Equal(
+			first, translate.Rotated(ranked, id, catalog.CategoryDrive),
+			"%s has to come back the same every run", id)
+	}
+
+	// Across the shipped subjects, two kinds landing on the same offset every
+	// time is the fault this keying prevents.
+	together, apart := 0, 0
+
+	for _, id := range []string{
+		"les-claypool", "flea", "geddy-lee", "mike-dirnt", "tom-araya",
+		"rex-brown", "punk", "rock", "grunge", "metal",
+	} {
+		if translate.Rotated(ranked, id, catalog.CategoryDrive) ==
+			translate.Rotated(ranked, id, catalog.CategoryReverb) {
+			together++
+
+			continue
+		}
+
+		apart++
+	}
+
+	s.Require().Positive(apart,
+		"the two kinds have to be able to land on different candidates")
+	s.Require().Less(together, apart,
+		"and they must not be moving together")
 }
 
 // TestSpareOn covers how much of the chip a chain has left.

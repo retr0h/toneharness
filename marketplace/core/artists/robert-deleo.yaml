@@ -54,6 +54,18 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: wah
+      gear: Colorsound Wah-fuzz
+      controls:
+        FcHigh: "2101.0"
+        FcLow: "280.0"
+        Level: "0.0"
+        Mix: "1.0"
+        Pedal: "0.0"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -68,23 +80,7 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
-    - role: drive
-      gear: Wounded Paw Battering Ram
-      controls:
-        Fuzz: "false"
-        FuzzGain: "0.5"
-        FuzzLevel: "0.125"
-        FuzzOct: "false"
-        FuzzTone: "0.5"
-        ODGain: "0.0"
-        ODLevel: "0.0"
-        ODLowBoost: "true"
-        ODTone: "0.375"
-      attrs:
         '@position': "1"
-      enabled: false
       position: 1
     - role: amp
       gear: Ampeg B-15NF
@@ -127,6 +123,30 @@ built:
       attrs:
         '@position': "3"
       position: 3
+    - role: delay
+      gear: Dual Delay
+      controls:
+        Depth: "0.35"
+        HighCut: "20100.0"
+        Left Time: "0.375"
+        LeftFeedback: "0.3"
+        Level: "0.0"
+        LowCut: "19.9"
+        MixL: "0.23"
+        MixR: "0.23"
+        ModulationMode: "1"
+        Right Time: "0.5"
+        RightFeedback: "0.4"
+        Speed: "0.05"
+        Spread: "1.0"
+        SyncSelect1: "9"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+      attrs:
+        '@position': "4"
+      enabled: false
+      position: 4
     - role: reverb
       gear: Dynamic Ambience
       capture: direct
@@ -156,9 +176,9 @@ built:
         PreDelay: "0.005"
         RoomSize: "0"
       attrs:
-        '@position': "4"
+        '@position': "5"
       enabled: false
-      position: 4
+      position: 5
   preset:
     dsp0:
       members:
@@ -224,30 +244,29 @@ built:
           members:
             block0:
               attrs:
-                '@fs_customcolor': "7"
-                '@fs_customlabel': COMP
-                '@fs_enabled': "true"
-                '@fs_index': "3"
-                '@fs_label': Deluxe Comp
-                '@fs_ledcolor': "8716032"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block1:
-              attrs:
                 '@fs_customcolor': "4"
-                '@fs_customlabel': DRIVE
+                '@fs_customlabel': WAH
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Wounded Paw Battering Ram
-                '@fs_ledcolor': "525824"
+                '@fs_label': Colorsound Wah-fuzz
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
               attrs:
                 '@fs_customcolor': "9"
-                '@fs_customlabel': REVERB
+                '@fs_customlabel': DELAY
                 '@fs_enabled': "false"
                 '@fs_index': "2"
+                '@fs_label': Dual Delay
+                '@fs_ledcolor': "67840"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block5:
+              attrs:
+                '@fs_customcolor': "7"
+                '@fs_customlabel': REVERB
+                '@fs_enabled': "false"
+                '@fs_index': "3"
                 '@fs_label': Dynamic Ambience
                 '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
@@ -283,11 +302,12 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "false"
+                block0: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
                 block4: "false"
+                block5: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -301,11 +321,12 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "false"
+                block0: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
                 block4: "false"
+                block5: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -319,11 +340,12 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "false"
+                block0: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
                 block4: "false"
+                block5: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -345,30 +367,29 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Deluxe Comp
+    - gear: Colorsound Wah-fuzz
       block: 0
-      colour: 8716032
-      enabled: true
-      label: COMP
-      led: turquoise
-      momentary: false
-      primary: true
-      switch: 3
-    - gear: Wounded Paw Battering Ram
-      block: 1
-      colour: 525824
       enabled: false
-      label: DRIVE
+      label: WAH
       led: light orange
       momentary: false
       primary: true
       switch: 1
-    - gear: Dynamic Ambience
+    - gear: Dual Delay
       block: 4
-      colour: 1049600
+      colour: 67840
       enabled: false
-      label: REVERB
+      label: DELAY
       led: violet
       momentary: false
       primary: true
       switch: 2
+    - gear: Dynamic Ambience
+      block: 5
+      colour: 1049600
+      enabled: false
+      label: REVERB
+      led: turquoise
+      momentary: false
+      primary: true
+      switch: 3

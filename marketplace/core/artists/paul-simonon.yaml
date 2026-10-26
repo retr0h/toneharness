@@ -58,6 +58,32 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: wah
+      gear: Colorsound Wah-fuzz
+      controls:
+        FcHigh: "2101.0"
+        FcLow: "280.0"
+        Level: "0.0"
+        Mix: "1.0"
+        Pedal: "0.0"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
+    - role: filter
+      gear: Musitronics Mu-Tron III
+      controls:
+        Drive: "true"
+        Gain: "0.15"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "1"
+        Peak: "0.8"
+        Range: "false"
+      attrs:
+        '@position': "1"
+      enabled: false
+      position: 1
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -72,8 +98,8 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
+        '@position': "2"
+      position: 2
     - role: amp
       gear: Ampeg SVT
       capture: direct
@@ -99,8 +125,8 @@ built:
         Sag: "0.5"
         Treble: "0.88"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "3"
+      position: 3
     - role: cab
       gear: 8x10 Ampeg SVT-810AV
       evidence:
@@ -115,8 +141,8 @@ built:
         Mic: "8"
         Position: "0.39"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "4"
+      position: 4
     - role: eq
       gear: Simple Tilt
       capture: direct
@@ -140,28 +166,29 @@ built:
         Level: "0.0"
         Tilt: "0.25"
       attrs:
-        '@position': "3"
+        '@position': "5"
       enabled: false
-      position: 3
-    - role: reverb
-      gear: Room
+      position: 5
+    - role: mod
+      gear: Chorus
       controls:
-        BassBoost: "0.0"
-        BassFreq: "100.0"
-        Damping: "3700.0"
-        Decay: "1.2"
-        Diffusion: "0.5"
-        ERLevel: "0.8"
-        HighCut: "10000.0"
-        Level: "0.0"
-        LowCut: "100.0"
-        MatrFreq: "0.333"
-        Mix: "0.41"
-        PreDelay: "0.01"
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
+        SyncSelect1: "6"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
       attrs:
-        '@position': "4"
+        '@position': "6"
       enabled: false
-      position: 4
+      position: 6
   preset:
     dsp0:
       members:
@@ -227,32 +254,31 @@ built:
           members:
             block0:
               attrs:
-                '@fs_customcolor': "9"
-                '@fs_customlabel': COMP
-                '@fs_enabled': "true"
-                '@fs_index': "3"
-                '@fs_label': Deluxe Comp
-                '@fs_ledcolor': "8716032"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block3:
-              attrs:
                 '@fs_customcolor': "8"
-                '@fs_customlabel': EQ
+                '@fs_customlabel': WAH
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Simple Tilt
-                '@fs_ledcolor': "527360"
+                '@fs_label': Colorsound Wah-fuzz
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block4:
+            block1:
               attrs:
                 '@fs_customcolor': "4"
-                '@fs_customlabel': REVERB
+                '@fs_customlabel': FILTER
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Dynamic Room
-                '@fs_ledcolor': "1049600"
+                '@fs_label': Musitronics Mu-Tron III
+                '@fs_ledcolor': "196619"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block5:
+              attrs:
+                '@fs_customcolor': "9"
+                '@fs_customlabel': EQ
+                '@fs_enabled': "false"
+                '@fs_index': "3"
+                '@fs_label': Simple Tilt
+                '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -286,11 +312,13 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "true"
+                block0: "false"
+                block1: "false"
                 block2: "true"
-                block3: "false"
-                block4: "false"
+                block3: "true"
+                block4: "true"
+                block5: "false"
+                block6: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -304,11 +332,13 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "true"
+                block0: "false"
+                block1: "false"
                 block2: "true"
-                block3: "false"
-                block4: "false"
+                block3: "true"
+                block4: "true"
+                block5: "false"
+                block6: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -322,11 +352,13 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "true"
+                block0: "false"
+                block1: "false"
                 block2: "true"
-                block3: "false"
-                block4: "false"
+                block3: "true"
+                block4: "true"
+                block5: "false"
+                block6: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -348,30 +380,29 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Deluxe Comp
+    - gear: Colorsound Wah-fuzz
       block: 0
-      colour: 8716032
-      enabled: true
-      label: COMP
-      led: violet
-      momentary: false
-      primary: true
-      switch: 3
-    - gear: Simple Tilt
-      block: 3
-      colour: 527360
       enabled: false
-      label: EQ
+      label: WAH
       led: blue
       momentary: false
       primary: true
       switch: 1
-    - gear: Dynamic Room
-      block: 4
-      colour: 1049600
+    - gear: Musitronics Mu-Tron III
+      block: 1
+      colour: 196619
       enabled: false
-      label: REVERB
+      label: FILTER
       led: light orange
       momentary: false
       primary: true
       switch: 2
+    - gear: Simple Tilt
+      block: 5
+      colour: 527360
+      enabled: false
+      label: EQ
+      led: violet
+      momentary: false
+      primary: true
+      switch: 3

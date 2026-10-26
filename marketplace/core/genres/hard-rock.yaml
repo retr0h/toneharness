@@ -28,7 +28,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: hard-rock
 ask:
   confidence: low
@@ -65,20 +65,14 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
-    - role: filter
-      gear: Auto Filter
+    - role: wah
+      gear: RMC Real McCoy 1
       controls:
-        Attack: "0.03"
-        Decay: "0.35"
-        Direction: "true"
-        FilterGain: "18.0"
-        FilterQ: "7.5"
-        FreqDepth: "3500.0"
-        Frequency: "50.0"
+        FcHigh: "1735.0"
+        FcLow: "310.0"
         Level: "0.0"
         Mix: "1.0"
-        Mode: "1"
-        Sens: "0.4"
+        Pedal: "0.0"
       attrs:
         '@position': "0"
       enabled: false
@@ -144,7 +138,7 @@ built:
         '@position': "3"
       position: 3
     - role: mod
-      gear: Chorus
+      gear: BOSS CE-1
       controls:
         ChorusIntensity: "0.57"
         Headroom: "0.0"
@@ -264,11 +258,10 @@ built:
             block0:
               attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': FILTER
+                '@fs_customlabel': WAH
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Auto Filter
-                '@fs_ledcolor': "196619"
+                '@fs_label': RMC Real McCoy 1
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
@@ -387,11 +380,10 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Auto Filter
+    - gear: RMC Real McCoy 1
       block: 0
-      colour: 196619
       enabled: false
-      label: FILTER
+      label: WAH
       led: turquoise
       momentary: false
       primary: true

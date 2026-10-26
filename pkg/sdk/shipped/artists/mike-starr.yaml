@@ -187,15 +187,25 @@ built:
         '@position': "4"
       position: 4
     - role: delay
-      gear: Simple Delay
+      gear: Dual Delay
       controls:
-        Feedback: "0.345"
+        Depth: "0.35"
+        HighCut: "20100.0"
+        Left Time: "0.375"
+        LeftFeedback: "0.3"
         Level: "0.0"
-        Mix: "0.4"
-        Scale: "0.75"
-        SyncSelect1: "6"
+        LowCut: "19.9"
+        MixL: "0.23"
+        MixR: "0.23"
+        ModulationMode: "1"
+        Right Time: "0.5"
+        RightFeedback: "0.4"
+        Speed: "0.05"
+        Spread: "1.0"
+        SyncSelect1: "9"
+        SyncSelect2: "6"
         TempoSync1: "false"
-        Time: "0.507"
+        TempoSync2: "false"
       attrs:
         '@position': "5"
       enabled: false
@@ -308,7 +318,7 @@ built:
                 '@fs_customlabel': DELAY
                 '@fs_enabled': "false"
                 '@fs_index': "3"
-                '@fs_label': Simple Delay
+                '@fs_label': Dual Delay
                 '@fs_ledcolor': "67840"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
@@ -429,7 +439,7 @@ built:
       momentary: false
       primary: true
       switch: 2
-    - gear: Simple Delay
+    - gear: Dual Delay
       block: 5
       colour: 67840
       enabled: false

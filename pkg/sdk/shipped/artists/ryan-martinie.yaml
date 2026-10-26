@@ -57,6 +57,18 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: wah
+      gear: Vetta Wah
+      controls:
+        FcHigh: "2300.0"
+        FcLow: "300.0"
+        Level: "0.0"
+        Mix: "1.0"
+        Pedal: "0.0"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -71,23 +83,7 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
-    - role: drive
-      gear: Wounded Paw Battering Ram
-      controls:
-        Fuzz: "true"
-        FuzzGain: "0.5"
-        FuzzLevel: "0.25"
-        FuzzOct: "true"
-        FuzzTone: "0.5"
-        ODGain: "0.375"
-        ODLevel: "0.375"
-        ODLowBoost: "true"
-        ODTone: "0.25"
-      attrs:
         '@position': "1"
-      enabled: false
       position: 1
     - role: amp
       gear: Ampeg SVT
@@ -139,20 +135,39 @@ built:
       attrs:
         '@position': "3"
       position: 3
-    - role: delay
-      gear: Simple Delay
+    - role: mod
+      gear: Chorus
       controls:
-        Feedback: "0.345"
-        Level: "0.0"
-        Mix: "0.4"
-        Scale: "0.75"
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
         SyncSelect1: "6"
+        SyncSelect2: "6"
         TempoSync1: "false"
-        Time: "0.507"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
       attrs:
         '@position': "4"
       enabled: false
       position: 4
+    - role: reverb
+      gear: Cave
+      controls:
+        Decay: "0.47"
+        HighCut: "9400.0"
+        Level: "0.0"
+        LowCut: "59.0"
+        Mix: "0.5"
+        Predelay: "0.05"
+      attrs:
+        '@position': "5"
+      enabled: false
+      position: 5
   preset:
     dsp0:
       members:
@@ -218,32 +233,31 @@ built:
           members:
             block0:
               attrs:
-                '@fs_customcolor': "8"
-                '@fs_customlabel': COMP
-                '@fs_enabled': "true"
-                '@fs_index': "3"
-                '@fs_label': Deluxe Comp
-                '@fs_ledcolor': "8716032"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block1:
-              attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': DRIVE
+                '@fs_customlabel': WAH
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Wounded Paw Battering Ram
-                '@fs_ledcolor': "525824"
+                '@fs_label': Vetta Wah
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
               attrs:
                 '@fs_customcolor': "10"
-                '@fs_customlabel': DELAY
+                '@fs_customlabel': MOD
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Simple Delay
-                '@fs_ledcolor': "67840"
+                '@fs_label': BOSS CE-1
+                '@fs_ledcolor': "1037"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block5:
+              attrs:
+                '@fs_customcolor': "8"
+                '@fs_customlabel': REVERB
+                '@fs_enabled': "false"
+                '@fs_index': "3"
+                '@fs_label': Cave
+                '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -277,11 +291,12 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "false"
+                block0: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
                 block4: "false"
+                block5: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -295,11 +310,12 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "false"
+                block0: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
                 block4: "false"
+                block5: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -313,11 +329,12 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "false"
+                block0: "false"
+                block1: "true"
                 block2: "true"
                 block3: "true"
                 block4: "false"
+                block5: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -339,30 +356,29 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Deluxe Comp
+    - gear: Vetta Wah
       block: 0
-      colour: 8716032
-      enabled: true
-      label: COMP
-      led: blue
-      momentary: false
-      primary: true
-      switch: 3
-    - gear: Wounded Paw Battering Ram
-      block: 1
-      colour: 525824
       enabled: false
-      label: DRIVE
+      label: WAH
       led: turquoise
       momentary: false
       primary: true
       switch: 1
-    - gear: Simple Delay
+    - gear: BOSS CE-1
       block: 4
-      colour: 67840
+      colour: 1037
       enabled: false
-      label: DELAY
+      label: MOD
       led: pink
       momentary: false
       primary: true
       switch: 2
+    - gear: Cave
+      block: 5
+      colour: 1049600
+      enabled: false
+      label: REVERB
+      led: blue
+      momentary: false
+      primary: true
+      switch: 3
