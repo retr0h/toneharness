@@ -19,7 +19,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: mike-dirnt
 ask:
   confidence: medium
@@ -77,6 +77,16 @@ ask:
       term: audible-pick-attack
 rig:
   chain:
+    - role: drive
+      gear: Fulltone® OCD
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: Neither is modelled; this is the OCD, the transparent overdrive the device carries. The Teletronix compressor already in this rig stays.
+          note: Dirnt runs a Zinky Master Blaster boost and a True Grit overdrive.
+          url: https://www.uberproaudio.com/who-plays-what/131-green-day-mike-dirnts-bass-gear-rig-and-equipment
+      enabled: false
     - role: comp
       gear: Teletronix LA-2A
       evidence:
@@ -131,20 +141,21 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
-    - role: filter
-      gear: Auto Filter
+    - role: drive
+      gear: Fulltone® OCD
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: Neither is modelled; this is the OCD, the transparent overdrive the device carries. The Teletronix compressor already in this rig stays.
+          note: Dirnt runs a Zinky Master Blaster boost and a True Grit overdrive.
+          url: https://www.uberproaudio.com/who-plays-what/131-green-day-mike-dirnts-bass-gear-rig-and-equipment
       controls:
-        Attack: "0.03"
-        Decay: "1.128"
-        Direction: "true"
-        FilterGain: "18.0"
-        FilterQ: "7.5"
-        FreqDepth: "5000.0"
-        Frequency: "50.0"
-        Level: "0.0"
-        Mix: "1.0"
-        Mode: "0"
-        Sens: "0.4"
+        Gain: "0.66"
+        LPHP: "false"
+        Level: "0.65"
+        Tone: "0.5"
+        Version: "false"
       attrs:
         '@position': "0"
       enabled: false
@@ -231,22 +242,21 @@ built:
       attrs:
         '@position': "3"
       position: 3
-    - role: mod
-      gear: Chorus
+    - role: reverb
+      gear: Room
       controls:
-        ChorusIntensity: "0.57"
-        Headroom: "0.0"
-        Level: "1.0"
-        Mix: "0.5"
-        Mode: "false"
-        Spread: "0.0"
-        Stereo: "false"
-        SyncSelect1: "6"
-        SyncSelect2: "6"
-        TempoSync1: "false"
-        TempoSync2: "false"
-        VibratoDepth: "0.5"
-        VibratoRate: "0.7"
+        BassBoost: "0.0"
+        BassFreq: "100.0"
+        Damping: "3700.0"
+        Decay: "1.2"
+        Diffusion: "0.5"
+        ERLevel: "0.8"
+        HighCut: "10000.0"
+        Level: "0.0"
+        LowCut: "100.0"
+        MatrFreq: "0.333"
+        Mix: "0.41"
+        PreDelay: "0.01"
       attrs:
         '@position': "4"
       enabled: false
@@ -317,11 +327,11 @@ built:
             block0:
               attrs:
                 '@fs_customcolor': "9"
-                '@fs_customlabel': FILTER
+                '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': Auto Filter
-                '@fs_ledcolor': "196619"
+                '@fs_label': Fulltone OCD
+                '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block1:
@@ -337,11 +347,11 @@ built:
             block4:
               attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': MOD
+                '@fs_customlabel': REVERB
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': BOSS CE-1
-                '@fs_ledcolor': "1037"
+                '@fs_label': Dynamic Room
+                '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -437,11 +447,11 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Auto Filter
+    - gear: Fulltone OCD
       block: 0
-      colour: 196619
+      colour: 525824
       enabled: false
-      label: FILTER
+      label: DRIVE
       led: violet
       momentary: false
       primary: true
@@ -455,11 +465,11 @@ built:
       momentary: false
       primary: true
       switch: 3
-    - gear: BOSS CE-1
+    - gear: Dynamic Room
       block: 4
-      colour: 1037
+      colour: 1049600
       enabled: false
-      label: MOD
+      label: REVERB
       led: turquoise
       momentary: false
       primary: true

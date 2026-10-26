@@ -3,7 +3,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: mark-hoppus
 ask:
   confidence: low
@@ -21,6 +21,16 @@ ask:
       to: 2003
 rig:
   chain:
+    - role: drive
+      gear: Electro-Harmonix Big Muff Pi
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: One of several he is documented with. The Muff is the one with a sound of its own rather than a DI or a clean boost.
+          note: Hoppus's board carries a Big Muff Pi alongside a Fulltone OCD and an MXR M80.
+          url: https://www.uberproaudio.com/who-plays-what/296-mark-hoppus-bass-gear-rig-and-equipment
+      enabled: false
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -61,6 +71,41 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: filter
+      gear: Auto Filter
+      controls:
+        Attack: "1.751"
+        Decay: "2.251"
+        Direction: "true"
+        FilterGain: "18.0"
+        FilterQ: "5.5"
+        FreqDepth: "3750.0"
+        Frequency: "50.0"
+        Level: "0.0"
+        Mix: "0.5"
+        Mode: "2"
+        Sens: "0.25"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
+    - role: drive
+      gear: Electro-Harmonix Big Muff Pi
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: One of several he is documented with. The Muff is the one with a sound of its own rather than a DI or a clean boost.
+          note: Hoppus's board carries a Big Muff Pi alongside a Fulltone OCD and an MXR M80.
+          url: https://www.uberproaudio.com/who-plays-what/296-mark-hoppus-bass-gear-rig-and-equipment
+      controls:
+        Level: "0.81"
+        Sustain: "0.875"
+        Tone: "0.56"
+      attrs:
+        '@position': "1"
+      enabled: false
+      position: 1
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -75,8 +120,8 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
+        '@position': "2"
+      position: 2
     - role: amp
       gear: Ampeg SVT-4 Pro
       capture: direct
@@ -121,8 +166,8 @@ built:
         UltraHi: "false"
         UltraLo: "false"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "3"
+      position: 3
     - role: cab
       gear: Ampeg 8x10
       capture: direct
@@ -141,40 +186,7 @@ built:
         Mic: "0"
         Position: "0.39"
       attrs:
-        '@position': "2"
-      position: 2
-    - role: delay
-      gear: Simple Delay
-      controls:
-        Feedback: "0.345"
-        Level: "0.0"
-        Mix: "0.4"
-        Scale: "0.75"
-        SyncSelect1: "6"
-        TempoSync1: "false"
-        Time: "0.507"
-      attrs:
-        '@position': "3"
-      enabled: false
-      position: 3
-    - role: reverb
-      gear: Room
-      controls:
-        BassBoost: "0.0"
-        BassFreq: "100.0"
-        Damping: "3700.0"
-        Decay: "1.2"
-        Diffusion: "0.5"
-        ERLevel: "0.8"
-        HighCut: "10000.0"
-        Level: "0.0"
-        LowCut: "100.0"
-        MatrFreq: "0.333"
-        Mix: "0.41"
-        PreDelay: "0.01"
-      attrs:
         '@position': "4"
-      enabled: false
       position: 4
   preset:
     dsp0:
@@ -241,32 +253,32 @@ built:
           members:
             block0:
               attrs:
+                '@fs_customcolor': "7"
+                '@fs_customlabel': FILTER
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Auto Filter
+                '@fs_ledcolor': "196619"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block1:
+              attrs:
+                '@fs_customcolor': "10"
+                '@fs_customlabel': DRIVE
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': Electro-Harmonix Big Muff Pi
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block2:
+              attrs:
                 '@fs_customcolor': "8"
                 '@fs_customlabel': COMP
                 '@fs_enabled': "true"
                 '@fs_index': "3"
                 '@fs_label': Deluxe Comp
                 '@fs_ledcolor': "8716032"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block3:
-              attrs:
-                '@fs_customcolor': "7"
-                '@fs_customlabel': DELAY
-                '@fs_enabled': "false"
-                '@fs_index': "1"
-                '@fs_label': Simple Delay
-                '@fs_ledcolor': "67840"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block4:
-              attrs:
-                '@fs_customcolor': "10"
-                '@fs_customlabel': REVERB
-                '@fs_enabled': "false"
-                '@fs_index': "2"
-                '@fs_label': Dynamic Room
-                '@fs_ledcolor': "1049600"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -300,11 +312,11 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "true"
+                block0: "false"
+                block1: "false"
                 block2: "true"
-                block3: "false"
-                block4: "false"
+                block3: "true"
+                block4: "true"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -318,11 +330,11 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "true"
+                block0: "false"
+                block1: "false"
                 block2: "true"
-                block3: "false"
-                block4: "false"
+                block3: "true"
+                block4: "true"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -336,11 +348,11 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "true"
+                block0: "false"
+                block1: "false"
                 block2: "true"
-                block3: "false"
-                block4: "false"
+                block3: "true"
+                block4: "true"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -362,8 +374,26 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Deluxe Comp
+    - gear: Auto Filter
       block: 0
+      colour: 196619
+      enabled: false
+      label: FILTER
+      led: turquoise
+      momentary: false
+      primary: true
+      switch: 1
+    - gear: Electro-Harmonix Big Muff Pi
+      block: 1
+      colour: 525824
+      enabled: false
+      label: DRIVE
+      led: pink
+      momentary: false
+      primary: true
+      switch: 2
+    - gear: Deluxe Comp
+      block: 2
       colour: 8716032
       enabled: true
       label: COMP
@@ -371,21 +401,3 @@ built:
       momentary: false
       primary: true
       switch: 3
-    - gear: Simple Delay
-      block: 3
-      colour: 67840
-      enabled: false
-      label: DELAY
-      led: turquoise
-      momentary: false
-      primary: true
-      switch: 1
-    - gear: Dynamic Room
-      block: 4
-      colour: 1049600
-      enabled: false
-      label: REVERB
-      led: pink
-      momentary: false
-      primary: true
-      switch: 2

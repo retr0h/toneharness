@@ -5,7 +5,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: tom-araya
 ask:
   confidence: medium
@@ -23,6 +23,16 @@ ask:
   words: []
 rig:
   chain:
+    - role: drive
+      gear: Tech 21® SansAmp Bass Driver DI V1
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The M80 is not modelled; this is the SansAmp Bass Driver, the DI-with-drive the device carries.
+          note: Araya runs an MXR M80 Bass D.I.+, a DI with a distortion side.
+          url: https://equipboard.com/pros/tom-araya
+      enabled: false
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -53,6 +63,44 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: filter
+      gear: Auto Filter
+      controls:
+        Attack: "1.751"
+        Decay: "1.877"
+        Direction: "true"
+        FilterGain: "18.0"
+        FilterQ: "6.625"
+        FreqDepth: "3750.0"
+        Frequency: "50.0"
+        Level: "0.0"
+        Mix: "0.625"
+        Mode: "2"
+        Sens: "0.25"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
+    - role: drive
+      gear: Tech 21® SansAmp Bass Driver DI V1
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The M80 is not modelled; this is the SansAmp Bass Driver, the DI-with-drive the device carries.
+          note: Araya runs an MXR M80 Bass D.I.+, a DI with a distortion side.
+          url: https://equipboard.com/pros/tom-araya
+      controls:
+        Bass: "0.625"
+        Blend: "0.5"
+        Drive: "0.65"
+        Level: "0.48"
+        Presence: "0.25"
+        Treble: "1.0"
+      attrs:
+        '@position': "1"
+      enabled: false
+      position: 1
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -67,8 +115,8 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
+        '@position': "2"
+      position: 2
     - role: amp
       gear: Ampeg SVT
       confidence: medium
@@ -95,8 +143,8 @@ built:
         Sag: "0.5"
         Treble: "0.0"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "3"
+      position: 3
     - role: cab
       gear: Ampeg 8x10
       confidence: medium
@@ -114,45 +162,7 @@ built:
         Mic: "4"
         Position: "0.39"
       attrs:
-        '@position': "2"
-      position: 2
-    - role: eq
-      gear: MXR 10-Band Graphic EQ
-      controls:
-        125Hz: "-3.75"
-        16kHz: "0.0"
-        1kHz: "3.75"
-        250Hz: "-3.75"
-        2kHz: "-15.0"
-        31p25Hz: "11.25"
-        4kHz: "0.0"
-        500Hz: "3.75"
-        62p5Hz: "3.75"
-        8kHz: "0.0"
-        Level: "0.0"
-      attrs:
-        '@position': "3"
-      enabled: false
-      position: 3
-    - role: mod
-      gear: Chorus
-      controls:
-        ChorusIntensity: "0.57"
-        Headroom: "0.0"
-        Level: "1.0"
-        Mix: "0.5"
-        Mode: "false"
-        Spread: "0.0"
-        Stereo: "false"
-        SyncSelect1: "6"
-        SyncSelect2: "6"
-        TempoSync1: "false"
-        TempoSync2: "false"
-        VibratoDepth: "0.5"
-        VibratoRate: "0.7"
-      attrs:
         '@position': "4"
-      enabled: false
       position: 4
   preset:
     dsp0:
@@ -219,32 +229,32 @@ built:
           members:
             block0:
               attrs:
+                '@fs_customcolor': "10"
+                '@fs_customlabel': FILTER
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Auto Filter
+                '@fs_ledcolor': "196619"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block1:
+              attrs:
+                '@fs_customcolor': "8"
+                '@fs_customlabel': DRIVE
+                '@fs_enabled': "false"
+                '@fs_index': "2"
+                '@fs_label': Tech 21 SansAmp Bass Driver DI V1
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block2:
+              attrs:
                 '@fs_customcolor': "4"
                 '@fs_customlabel': COMP
                 '@fs_enabled': "true"
                 '@fs_index': "3"
                 '@fs_label': Deluxe Comp
                 '@fs_ledcolor': "8716032"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block3:
-              attrs:
-                '@fs_customcolor': "10"
-                '@fs_customlabel': EQ
-                '@fs_enabled': "false"
-                '@fs_index': "1"
-                '@fs_label': MXR 10-Band Graphic EQ
-                '@fs_ledcolor': "527360"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block4:
-              attrs:
-                '@fs_customcolor': "8"
-                '@fs_customlabel': MOD
-                '@fs_enabled': "false"
-                '@fs_index': "2"
-                '@fs_label': BOSS CE-1
-                '@fs_ledcolor': "1037"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -278,11 +288,11 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "true"
+                block0: "false"
+                block1: "false"
                 block2: "true"
-                block3: "false"
-                block4: "false"
+                block3: "true"
+                block4: "true"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -296,11 +306,11 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "true"
+                block0: "false"
+                block1: "false"
                 block2: "true"
-                block3: "false"
-                block4: "false"
+                block3: "true"
+                block4: "true"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -314,11 +324,11 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
-                block1: "true"
+                block0: "false"
+                block1: "false"
                 block2: "true"
-                block3: "false"
-                block4: "false"
+                block3: "true"
+                block4: "true"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -340,8 +350,26 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Deluxe Comp
+    - gear: Auto Filter
       block: 0
+      colour: 196619
+      enabled: false
+      label: FILTER
+      led: pink
+      momentary: false
+      primary: true
+      switch: 1
+    - gear: Tech 21 SansAmp Bass Driver DI V1
+      block: 1
+      colour: 525824
+      enabled: false
+      label: DRIVE
+      led: blue
+      momentary: false
+      primary: true
+      switch: 2
+    - gear: Deluxe Comp
+      block: 2
       colour: 8716032
       enabled: true
       label: COMP
@@ -349,21 +377,3 @@ built:
       momentary: false
       primary: true
       switch: 3
-    - gear: MXR 10-Band Graphic EQ
-      block: 3
-      colour: 527360
-      enabled: false
-      label: EQ
-      led: pink
-      momentary: false
-      primary: true
-      switch: 1
-    - gear: BOSS CE-1
-      block: 4
-      colour: 1037
-      enabled: false
-      label: MOD
-      led: blue
-      momentary: false
-      primary: true
-      switch: 2

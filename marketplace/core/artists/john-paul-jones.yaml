@@ -11,7 +11,7 @@
 # records came out of the Acoustic 360 rather than out of one. Both are cited
 # on the amp entry below. Round four of task 241.
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: john-paul-jones
 ask:
   confidence: medium
@@ -30,6 +30,16 @@ ask:
   words: []
 rig:
   chain:
+    - role: drive
+      gear: Arbiter® Fuzz Face®
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The 360's own fuzz is not modelled separately; this is a Fuzz Face, the fuzz of that era the device carries. It arrives switched off.
+          note: The Acoustic 360 Jones played has a fuzz built into it, beside its five-position Variamp. The fuzz is part of the amplifier rather than a pedal he stepped on.
+          url: https://www.fretboardjournal.com/columns/catch-day-circa-1969-acoustic-360361-bass-amplifier/
+      enabled: false
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -63,6 +73,25 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: drive
+      gear: Arbiter® Fuzz Face®
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: The 360's own fuzz is not modelled separately; this is a Fuzz Face, the fuzz of that era the device carries. It arrives switched off.
+          note: The Acoustic 360 Jones played has a fuzz built into it, beside its five-position Variamp. The fuzz is part of the amplifier rather than a pedal he stepped on.
+          url: https://www.fretboardjournal.com/columns/catch-day-circa-1969-acoustic-360361-bass-amplifier/
+      controls:
+        Bass: "0.375"
+        Drive: "0.875"
+        Mid: "0.5"
+        Output: "0.75"
+        Treble: "0.625"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -77,8 +106,8 @@ built:
         Release: "0.2"
         Threshold: "-37.1"
       attrs:
-        '@position': "0"
-      position: 0
+        '@position': "1"
+      position: 1
     - role: amp
       gear: Acoustic 360
       confidence: medium
@@ -111,8 +140,8 @@ built:
         TuningFork: "0.0"
         Variamp: "4"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "2"
+      position: 2
     - role: cab
       gear: 1x18" Acoustic 360
       evidence:
@@ -125,8 +154,8 @@ built:
         Level: "0.0"
         LowCut: "20.0"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
     - role: eq
       gear: Simple Tilt
       capture: direct
@@ -149,25 +178,6 @@ built:
         CenterFreq: "1000.0"
         Level: "0.0"
         Tilt: "0.375"
-      attrs:
-        '@position': "3"
-      enabled: false
-      position: 3
-    - role: reverb
-      gear: Room
-      controls:
-        BassBoost: "0.0"
-        BassFreq: "100.0"
-        Damping: "3700.0"
-        Decay: "1.2"
-        Diffusion: "0.5"
-        ERLevel: "0.8"
-        HighCut: "10000.0"
-        Level: "0.0"
-        LowCut: "100.0"
-        MatrFreq: "0.333"
-        Mix: "0.41"
-        PreDelay: "0.01"
       attrs:
         '@position': "4"
       enabled: false
@@ -251,6 +261,16 @@ built:
           members:
             block0:
               attrs:
+                '@fs_customcolor': "10"
+                '@fs_customlabel': DRIVE
+                '@fs_enabled': "false"
+                '@fs_index': "1"
+                '@fs_label': Arbiter Fuzz Face
+                '@fs_ledcolor': "525824"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block1:
+              attrs:
                 '@fs_customcolor': "4"
                 '@fs_customlabel': COMP
                 '@fs_enabled': "true"
@@ -259,24 +279,14 @@ built:
                 '@fs_ledcolor': "8716032"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block3:
-              attrs:
-                '@fs_customcolor': "10"
-                '@fs_customlabel': EQ
-                '@fs_enabled': "false"
-                '@fs_index': "1"
-                '@fs_label': Simple Tilt
-                '@fs_ledcolor': "527360"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
             block4:
               attrs:
                 '@fs_customcolor': "8"
-                '@fs_customlabel': REVERB
+                '@fs_customlabel': EQ
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Dynamic Room
-                '@fs_ledcolor': "1049600"
+                '@fs_label': Simple Tilt
+                '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -310,10 +320,10 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
+                block0: "false"
                 block1: "true"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
                 block5: "true"
     snapshot1:
@@ -329,10 +339,10 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
+                block0: "false"
                 block1: "true"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
                 block5: "true"
     snapshot2:
@@ -348,10 +358,10 @@ built:
           members:
             dsp0:
               controls:
-                block0: "true"
+                block0: "false"
                 block1: "true"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
                 block5: "true"
     variax:
@@ -375,8 +385,17 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Deluxe Comp
+    - gear: Arbiter Fuzz Face
       block: 0
+      colour: 525824
+      enabled: false
+      label: DRIVE
+      led: pink
+      momentary: false
+      primary: true
+      switch: 1
+    - gear: Deluxe Comp
+      block: 1
       colour: 8716032
       enabled: true
       label: COMP
@@ -385,19 +404,10 @@ built:
       primary: true
       switch: 3
     - gear: Simple Tilt
-      block: 3
+      block: 4
       colour: 527360
       enabled: false
       label: EQ
-      led: pink
-      momentary: false
-      primary: true
-      switch: 1
-    - gear: Dynamic Room
-      block: 4
-      colour: 1049600
-      enabled: false
-      label: REVERB
       led: blue
       momentary: false
       primary: true

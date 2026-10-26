@@ -10,7 +10,7 @@
 # inventing it.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: allen-woody
 ask:
   confidence: medium
@@ -89,22 +89,6 @@ built:
       attrs:
         '@position': "1"
       position: 1
-    - role: drive
-      gear: Wounded Paw Battering Ram
-      controls:
-        Fuzz: "true"
-        FuzzGain: "0.5"
-        FuzzLevel: "0.125"
-        FuzzOct: "true"
-        FuzzTone: "0.5"
-        ODGain: "0.0"
-        ODLevel: "0.0"
-        ODLowBoost: "true"
-        ODTone: "0.25"
-      attrs:
-        '@position': "2"
-      enabled: false
-      position: 2
     - role: amp
       gear: Ampeg SVT
       confidence: medium
@@ -127,8 +111,8 @@ built:
         Sag: "0.5"
         Treble: "0.625"
       attrs:
-        '@position': "3"
-      position: 3
+        '@position': "2"
+      position: 2
     - role: cab
       gear: 8x10 Ampeg SVT-810AV
       evidence:
@@ -143,7 +127,27 @@ built:
         Mic: "0"
         Position: "0.39"
       attrs:
+        '@position': "3"
+      position: 3
+    - role: mod
+      gear: Chorus
+      controls:
+        ChorusIntensity: "0.57"
+        Headroom: "0.0"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "false"
+        Spread: "0.0"
+        Stereo: "false"
+        SyncSelect1: "6"
+        SyncSelect2: "6"
+        TempoSync1: "false"
+        TempoSync2: "false"
+        VibratoDepth: "0.5"
+        VibratoRate: "0.7"
+      attrs:
         '@position': "4"
+      enabled: false
       position: 4
   preset:
     dsp0:
@@ -228,14 +232,14 @@ built:
                 '@fs_ledcolor': "8716032"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block2:
+            block4:
               attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': DRIVE
+                '@fs_customlabel': MOD
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Wounded Paw Battering Ram
-                '@fs_ledcolor': "525824"
+                '@fs_label': BOSS CE-1
+                '@fs_ledcolor': "1037"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -271,9 +275,9 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "false"
+                block2: "true"
                 block3: "true"
-                block4: "true"
+                block4: "false"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -289,9 +293,9 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "false"
+                block2: "true"
                 block3: "true"
-                block4: "true"
+                block4: "false"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -307,9 +311,9 @@ built:
               controls:
                 block0: "false"
                 block1: "true"
-                block2: "false"
+                block2: "true"
                 block3: "true"
-                block4: "true"
+                block4: "false"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -349,11 +353,11 @@ built:
       momentary: false
       primary: true
       switch: 3
-    - gear: Wounded Paw Battering Ram
-      block: 2
-      colour: 525824
+    - gear: BOSS CE-1
+      block: 4
+      colour: 1037
       enabled: false
-      label: DRIVE
+      label: MOD
       led: turquoise
       momentary: false
       primary: true

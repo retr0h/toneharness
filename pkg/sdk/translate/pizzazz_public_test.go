@@ -454,10 +454,36 @@ func (s *PizzazzPublicTestSuite) TestPizzazz() {
 			want: false,
 		},
 		{
-			// Three stompable kinds already, which is every switch an HX
-			// Stomp has. A block past the last switch is one no foot can
-			// reach, and the foot was the whole reason for it.
+			// Three kinds a foot is for, which is every switch an HX Stomp
+			// has. A block past the last switch is one no foot can reach, and
+			// the foot was the whole reason for it.
 			name: "a chain that has spoken for every switch",
+			id:   "mike-dirnt",
+			spec: rig.Spec{
+				Instrument: rig.InstrumentBass,
+				Chain: []rig.ChainEntry{
+					{Role: rig.RoleDrive, Gear: "Pro Co RAT"},
+					{Role: rig.RoleMod, Gear: "BOSS CE-1 Chorus"},
+					{Role: rig.RoleFilter, Gear: "Mu-Tron III"},
+					{Role: rig.RoleAmp, Gear: "Ampeg SVT"},
+					{Role: rig.RoleCab, Gear: "8x10 Ampeg SVT-810AV"},
+				},
+			},
+			want: false,
+		},
+		{
+			// The same chain, but two of the three are kinds the corpus runs
+			// whenever a chain holds one: a compressor at 87.0% and an
+			// equaliser at 83.3%. Those are the sound rather than something
+			// to stomp, `compile.Assign` ranks them behind every bypassed
+			// block, and counting them here held two switches open for
+			// blocks that would not have used them.
+			//
+			// Les Claypool is the rig that showed it: a Mu-Tron, a reverb and
+			// a Deluxe Comp, which spent one of his three switches on a
+			// compressor nobody steps on while the Wounded Paw and the CE-1
+			// he is documented with had nowhere to go.
+			name: "a compressor and an equaliser are the sound, not a stomp",
 			id:   "mike-dirnt",
 			spec: rig.Spec{
 				Instrument: rig.InstrumentBass,
@@ -469,7 +495,7 @@ func (s *PizzazzPublicTestSuite) TestPizzazz() {
 					{Role: rig.RoleEQ, Gear: "MXR 10-Band Graphic EQ"},
 				},
 			},
-			want: false,
+			want: true,
 		},
 		{
 			name: "a rig with no identifier is offered nothing",

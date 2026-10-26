@@ -5,7 +5,7 @@
 # of the contract and this line still said so.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: flea
 ask:
   confidence: medium
@@ -78,6 +78,16 @@ ask:
       term: dark
 rig:
   chain:
+    - role: filter
+      gear: Musitronics Mu-Tron III
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: His board also holds a Boss OC-2, an MXR M-80 and a Cry Baby bass wah. The Brassmaster that stood here is kept as the drive.
+          note: Flea played a Mu-Tron through the nineties — Sir Psycho Sexy is one with a dying battery — and moved to an EHX Q-Tron later. The Mu-Tron is the one the device models.
+          url: https://www.gear4music.com/blog/steal-the-sound-flea-red-hot-chili-peppers/
+      enabled: false
     - role: drive
       gear: Maestro Bass Brassmaster
       capture: direct
@@ -133,6 +143,27 @@ built:
   catalog: HX Edit 3.82
   device: HX Stomp
   chain:
+    - role: filter
+      gear: Musitronics Mu-Tron III
+      capture: direct
+      confidence: medium
+      evidence:
+        - kind: cited
+          caveat: His board also holds a Boss OC-2, an MXR M-80 and a Cry Baby bass wah. The Brassmaster that stood here is kept as the drive.
+          note: Flea played a Mu-Tron through the nineties — Sir Psycho Sexy is one with a dying battery — and moved to an EHX Q-Tron later. The Mu-Tron is the one the device models.
+          url: https://www.gear4music.com/blog/steal-the-sound-flea-red-hot-chili-peppers/
+      controls:
+        Drive: "true"
+        Gain: "0.25"
+        Level: "1.0"
+        Mix: "0.5"
+        Mode: "2"
+        Peak: "0.5"
+        Range: "false"
+      attrs:
+        '@position': "0"
+      enabled: false
+      position: 0
     - role: drive
       gear: Maestro Bass Brassmaster
       capture: direct
@@ -151,9 +182,9 @@ built:
         mixture: "0.65"
         tonality: "4"
       attrs:
-        '@position': "0"
+        '@position': "1"
       enabled: false
-      position: 0
+      position: 1
     - role: comp
       gear: Deluxe Comp
       evidence:
@@ -168,8 +199,8 @@ built:
         Release: "0.2"
         Threshold: "-45.0"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "2"
+      position: 2
     - role: amp
       gear: Gallien-Krueger 2001RB
       confidence: medium
@@ -198,8 +229,8 @@ built:
         Master: "1.0"
         Treble: "0.625"
       attrs:
-        '@position': "2"
-      position: 2
+        '@position': "3"
+      position: 3
       stage: true
     - role: cab
       gear: Gallien-Krueger 410
@@ -221,43 +252,9 @@ built:
         Level: "0.0"
         LowCut: "19.9"
       attrs:
-        '@position': "3"
-      position: 3
-      stage: true
-    - role: eq
-      gear: MXR 10-Band Graphic EQ
-      capture: direct
-      confidence: low
-      evidence:
-        - kind: audio
-          caveat: A player measured off their own finished records, so the figures carry the amplifier, the microphone, the desk and the master of every one of them. This block is what sits nearest those figures, not one anybody is known to have used.
-          measured:
-            centroid: 134
-            decay: 0.21
-            dynamics: 6.7
-            harmonics: 0.18
-            high: 0
-            lean: 0.88
-            low: 0.93
-            mid: 0.06
-            transient: 0.73
-          note: 'Not chosen by measurement. None of the 8 bass equalisers this device models is measurably nearer flea than the others, so MXR 10-Band Graphic EQ is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 3 records from 1 players, flea earns mid-forward and short-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because flea earns "mid-forward" against the players who measure otherwise, by 0.0117 of mid, and that is the figure a pedalboard answers with a eq. It arrives switched off.'
-      controls:
-        125Hz: "0.0"
-        16kHz: "11.25"
-        1kHz: "0.0"
-        250Hz: "-3.75"
-        2kHz: "11.25"
-        31p25Hz: "-3.75"
-        4kHz: "3.75"
-        500Hz: "0.0"
-        62p5Hz: "-3.75"
-        8kHz: "7.5"
-        Level: "0.0"
-      attrs:
         '@position': "4"
-      enabled: false
       position: 4
+      stage: true
   preset:
     dsp0:
       members:
@@ -324,14 +321,24 @@ built:
             block0:
               attrs:
                 '@fs_customcolor': "10"
-                '@fs_customlabel': DRIVE
+                '@fs_customlabel': FILTER
                 '@fs_enabled': "false"
                 '@fs_index': "1"
+                '@fs_label': Musitronics Mu-Tron III
+                '@fs_ledcolor': "196619"
+                '@fs_momentary': "false"
+                '@fs_primary': "true"
+            block1:
+              attrs:
+                '@fs_customcolor': "8"
+                '@fs_customlabel': DRIVE
+                '@fs_enabled': "false"
+                '@fs_index': "2"
                 '@fs_label': Maestro Bass Brassmaster
                 '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block1:
+            block2:
               attrs:
                 '@fs_customcolor': "4"
                 '@fs_customlabel': COMP
@@ -339,16 +346,6 @@ built:
                 '@fs_index': "3"
                 '@fs_label': Deluxe Comp
                 '@fs_ledcolor': "8716032"
-                '@fs_momentary': "false"
-                '@fs_primary': "true"
-            block4:
-              attrs:
-                '@fs_customcolor': "8"
-                '@fs_customlabel': EQ
-                '@fs_enabled': "false"
-                '@fs_index': "2"
-                '@fs_label': MXR 10-Band Graphic EQ
-                '@fs_ledcolor': "527360"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -383,10 +380,10 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "true"
+                block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
+                block4: "true"
     snapshot1:
       attrs:
         '@custom_name': "false"
@@ -401,10 +398,10 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "true"
+                block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
+                block4: "true"
     snapshot2:
       attrs:
         '@custom_name': "false"
@@ -419,10 +416,10 @@ built:
             dsp0:
               controls:
                 block0: "false"
-                block1: "true"
+                block1: "false"
                 block2: "true"
                 block3: "true"
-                block4: "false"
+                block4: "true"
     variax:
       attrs:
         '@variax_customtuning': "true"
@@ -444,17 +441,26 @@ built:
         '@variax_toneknob': "-0.10000002384185791"
         '@variax_volumeknob': "-0.10000002384185791"
   footswitches:
-    - gear: Maestro Bass Brassmaster
+    - gear: Musitronics Mu-Tron III
       block: 0
-      colour: 525824
+      colour: 196619
       enabled: false
-      label: DRIVE
+      label: FILTER
       led: pink
       momentary: false
       primary: true
       switch: 1
-    - gear: Deluxe Comp
+    - gear: Maestro Bass Brassmaster
       block: 1
+      colour: 525824
+      enabled: false
+      label: DRIVE
+      led: blue
+      momentary: false
+      primary: true
+      switch: 2
+    - gear: Deluxe Comp
+      block: 2
       colour: 8716032
       enabled: true
       label: COMP
@@ -462,12 +468,3 @@ built:
       momentary: false
       primary: true
       switch: 3
-    - gear: MXR 10-Band Graphic EQ
-      block: 4
-      colour: 527360
-      enabled: false
-      label: EQ
-      led: blue
-      momentary: false
-      primary: true
-      switch: 2

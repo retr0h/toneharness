@@ -5,7 +5,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: greg-t-walker
 ask:
   confidence: low
@@ -136,21 +136,16 @@ built:
       attrs:
         '@position': "3"
       position: 3
-    - role: reverb
-      gear: Room
+    - role: delay
+      gear: Simple Delay
       controls:
-        BassBoost: "0.0"
-        BassFreq: "100.0"
-        Damping: "3700.0"
-        Decay: "1.2"
-        Diffusion: "0.5"
-        ERLevel: "0.8"
-        HighCut: "10000.0"
+        Feedback: "0.345"
         Level: "0.0"
-        LowCut: "100.0"
-        MatrFreq: "0.333"
-        Mix: "0.41"
-        PreDelay: "0.01"
+        Mix: "0.4"
+        Scale: "0.75"
+        SyncSelect1: "6"
+        TempoSync1: "false"
+        Time: "0.507"
       attrs:
         '@position': "4"
       enabled: false
@@ -241,11 +236,11 @@ built:
             block4:
               attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': REVERB
+                '@fs_customlabel': DELAY
                 '@fs_enabled': "false"
                 '@fs_index': "2"
-                '@fs_label': Dynamic Room
-                '@fs_ledcolor': "1049600"
+                '@fs_label': Simple Delay
+                '@fs_ledcolor': "67840"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
     global:
@@ -359,11 +354,11 @@ built:
       momentary: false
       primary: true
       switch: 1
-    - gear: Dynamic Room
+    - gear: Simple Delay
       block: 4
-      colour: 1049600
+      colour: 67840
       enabled: false
-      label: REVERB
+      label: DELAY
       led: turquoise
       momentary: false
       primary: true

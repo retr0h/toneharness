@@ -5,7 +5,7 @@
 # of the contract and this line still said so.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: bootsy-collins
 ask:
   confidence: low

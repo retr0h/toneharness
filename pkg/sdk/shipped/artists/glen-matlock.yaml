@@ -9,7 +9,7 @@
 # See pkg/sdk/tone/data/tonespec.openapi.yaml for what a ToneSpec may hold.
 
 schema: ToneSpec
-version: 4.2.0
+version: 4.0.0
 id: glen-matlock
 ask:
   confidence: low
@@ -83,6 +83,22 @@ built:
       attrs:
         '@position': "0"
       position: 0
+    - role: drive
+      gear: Wounded Paw Battering Ram
+      controls:
+        Fuzz: "true"
+        FuzzGain: "0.5"
+        FuzzLevel: "0.25"
+        FuzzOct: "true"
+        FuzzTone: "0.25"
+        ODGain: "0.0"
+        ODLevel: "0.0"
+        ODLowBoost: "false"
+        ODTone: "0.125"
+      attrs:
+        '@position': "1"
+      enabled: false
+      position: 1
     - role: amp
       gear: Fender Bassman
       capture: direct
@@ -105,8 +121,8 @@ built:
         Sag: "0.5"
         Treble: "0.6"
       attrs:
-        '@position': "1"
-      position: 1
+        '@position': "2"
+      position: 2
     - role: cab
       gear: Fender Bassman 4x12
       capture: direct
@@ -132,25 +148,7 @@ built:
         Mic: "4"
         Position: "0.39"
       attrs:
-        '@position': "2"
-      position: 2
-    - role: eq
-      gear: MXR 10-Band Graphic EQ
-      controls:
-        125Hz: "0.0"
-        16kHz: "0.0"
-        1kHz: "3.75"
-        250Hz: "-3.75"
-        2kHz: "7.5"
-        31p25Hz: "-3.75"
-        4kHz: "0.0"
-        500Hz: "0.0"
-        62p5Hz: "-3.75"
-        8kHz: "0.0"
-        Level: "0.0"
-      attrs:
         '@position': "3"
-      enabled: false
       position: 3
     - role: reverb
       gear: Hot Springs
@@ -255,14 +253,14 @@ built:
                 '@fs_ledcolor': "8716032"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
-            block3:
+            block1:
               attrs:
                 '@fs_customcolor': "7"
-                '@fs_customlabel': EQ
+                '@fs_customlabel': DRIVE
                 '@fs_enabled': "false"
                 '@fs_index': "1"
-                '@fs_label': MXR 10-Band Graphic EQ
-                '@fs_ledcolor': "527360"
+                '@fs_label': Wounded Paw Battering Ram
+                '@fs_ledcolor': "525824"
                 '@fs_momentary': "false"
                 '@fs_primary': "true"
             block4:
@@ -307,9 +305,9 @@ built:
             dsp0:
               controls:
                 block0: "true"
-                block1: "true"
+                block1: "false"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
     snapshot1:
       attrs:
@@ -325,9 +323,9 @@ built:
             dsp0:
               controls:
                 block0: "true"
-                block1: "true"
+                block1: "false"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
     snapshot2:
       attrs:
@@ -343,9 +341,9 @@ built:
             dsp0:
               controls:
                 block0: "true"
-                block1: "true"
+                block1: "false"
                 block2: "true"
-                block3: "false"
+                block3: "true"
                 block4: "false"
     variax:
       attrs:
@@ -377,11 +375,11 @@ built:
       momentary: false
       primary: true
       switch: 3
-    - gear: MXR 10-Band Graphic EQ
-      block: 3
-      colour: 527360
+    - gear: Wounded Paw Battering Ram
+      block: 1
+      colour: 525824
       enabled: false
-      label: EQ
+      label: DRIVE
       led: turquoise
       momentary: false
       primary: true
