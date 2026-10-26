@@ -172,18 +172,18 @@ built:
             transient: 0.69
           note: 'Not chosen by measurement. None of the 4 bass reverbs this device models is measurably nearer dee-dee-ramone than the others, so Dynamic Hall is the first of them rather than a choice. The model is arbitrary and the controls on it are not: those are set from its own sweep. Across 3 records from 1 players, dee-dee-ramone earns long-decay, measured against the players who play none of it, and that is what moves the controls off the medians this instrument''s presets sit at. It is here because dee-dee-ramone earns "long-decay" against the players who measure otherwise, by 0.14 of decay, and that is the figure a pedalboard answers with a reverb. It arrives switched off.'
       controls:
-        BassBoost: "0.0"
-        BassFreq: "100.0"
-        Damping: "3720.0"
-        Decay: "4.0"
-        Diffusion: "0.7"
-        HighCut: "6300.0"
+        BassBoost: "-3.75"
+        BassFreq: "140.0"
+        Damping: "15125.0"
+        Decay: "11.35"
+        Diffusion: "0.5"
+        HighCut: "15200.0"
         Level: "0.0"
-        LowCut: "117.0"
-        Mix: "0.3"
-        Motion: "0.29"
-        Predelay: "0.05"
-        RoomSize: "1"
+        LowCut: "632.5"
+        Mix: "0.125"
+        Motion: "1.0"
+        Predelay: "0.2"
+        RoomSize: "2"
       attrs:
         '@position': "5"
       enabled: false
