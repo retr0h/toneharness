@@ -76,17 +76,46 @@ func (s *InstrumentPublicTestSuite) TestInstrumentFor() {
 			want: rig.InstrumentBass,
 		},
 		{
-			// And it answers either way round, so the ask is only reached
-			// where the setup is silent rather than where it disagrees.
+			// Task 266's trap, now shut. A Rickenbacker 4001 is a bass and
+			// its name does not carry the word, so reading the name alone
+			// answered guitar for an ask that said bass in as many words.
 			//
-			// `gearIsFor` reads any gear name without "bass" in it as a
-			// guitar, so a setup naming a Rickenbacker 4001 answers guitar
-			// for an instrument that is a bass. That is a separate defect and
-			// task 266 records it.
-			name: "even where what it names is read as the other one",
+			// Two things stop it and the order matters. The name is known
+			// here, so this never reaches the request; the case below is the
+			// one that proves the ordering rather than the list.
+			name: "a bass whose name does not carry the word",
 			spec: tone.Ask{Instrument: &bass},
 			held: owns("Rickenbacker 4001"),
+			want: rig.InstrumentBass,
+			says: "read as a bass, which is what that name is",
+		},
+		{
+			// The half of the fix that does not depend on a list being
+			// complete. Nothing recognises this name, so the guess would have
+			// said guitar, and the request is asked first and says bass.
+			name: "a name nothing knows, with a request that says",
+			spec: tone.Ask{Instrument: &bass},
+			held: owns("Wal Mk II"),
+			want: rig.InstrumentBass,
+			says: "the request asks for bass",
+		},
+		{
+			// And the guess survives where there is nothing to prefer over
+			// it. A Stratocaster in a setup and silence in the ask is a
+			// guitar, and answering bass there would be worse than answering
+			// from the name.
+			name: "a name nothing knows, with nothing to fall back on",
+			held: owns("Fender Stratocaster"),
 			want: rig.InstrumentGuitar,
+			says: "read as a guitar rather than a bass",
+		},
+		{
+			// What the list is for: a bass named without the word and no
+			// request to rescue it.
+			name: "a known bass with nothing to fall back on",
+			held: owns("1962 Precision"),
+			want: rig.InstrumentBass,
+			says: "read as a bass, which is what that name is",
 		},
 		{
 			// The case task 266 found. The contract's own description of the
@@ -102,6 +131,16 @@ func (s *InstrumentPublicTestSuite) TestInstrumentFor() {
 			spec: tone.Ask{Instrument: &bass},
 			want: rig.InstrumentBass,
 			says: "the request asks for bass",
+		},
+		{
+			// A setup that carries the field and names nothing in it, which
+			// is a file somebody started and did not fill in. There is no
+			// instrument to read, so it is the same as having no setup.
+			name: "a setup naming an empty list of instruments",
+			spec: tone.Ask{Instrument: &guitar},
+			held: config.Config{Instruments: &[]config.Held{}},
+			want: "guitar",
+			says: "the request asks for guitar",
 		},
 		{
 			// An assumption that was made is a thing that happened, so it is
