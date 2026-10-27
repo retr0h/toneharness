@@ -105,7 +105,9 @@ func pack(
 			continue
 		}
 
-		some, err := audio.Corpus(os.DirFS(from), e.Name())
+		// The directory is the instrument, and it is both the tree this reads
+		// and the name to fall back on.
+		some, err := audio.Corpus(os.DirFS(from), e.Name(), e.Name())
 		if err != nil {
 			return fmt.Errorf("measuring the players in %s: %w", e.Name(), err)
 		}

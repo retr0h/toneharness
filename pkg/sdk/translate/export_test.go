@@ -102,6 +102,26 @@ func Because(
 	return a.because(gear, ranked, sat, instrument, kind, alike)
 }
 
+// GenreTarget is the figures a genre's records measure as, with the notes it
+// wrote on the way.
+//
+// Read here rather than through a build because a build no longer reaches its
+// cross-instrument refusal: task 290 put the same test on the readings the
+// pedal itself was measured with, and all 215 of those were taken with a bass,
+// so a guitar ask is turned back before a genre is ever consulted. The genre
+// refusal stops being shadowed the day one guitar sweep is committed, and
+// until then it is the contract rather than today's data.
+func GenreTarget(
+	spec tone.Ask,
+	deps Deps,
+) (map[string]float64, Notes, bool) {
+	notes := Notes{}
+
+	at, ok := genreTarget(spec, deps, &notes)
+
+	return at.read, notes, ok
+}
+
 // Said3 is a list the way a sentence says one.
 var Said3 = said3
 
@@ -175,15 +195,19 @@ func Chose(
 }
 
 // PlayerAim is the figures a player's own records measure as.
+// The notes come back too, because the refusals are the half worth testing:
+// a player measured on another instrument is declined with a sentence saying
+// so, and a test that reads only the boolean cannot tell that from a player
+// nobody has recorded.
 func PlayerAim(
 	spec tone.Ask,
 	deps Deps,
-) (map[string]float64, bool) {
+) (map[string]float64, Notes, bool) {
 	notes := Notes{}
 
 	at, ok := playerTarget(spec, deps, &notes)
 
-	return at.read, ok
+	return at.read, notes, ok
 }
 
 // AsPlayed narrows a ranking to the blocks that leave the notes alone.

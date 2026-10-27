@@ -70,6 +70,26 @@ could not  hard-rock  that genre is measured on bass and this asks for guitar,
                       so its figures are not a target for this
 ```
 
+**And a player is refused the same way, which took a second pass to notice.**
+The guard was on a genre's figures and a genre's gear, and `like: artist:` went
+straight past both: an ask refused hard-rock's figures for being measured on a
+bass was handed a hard-rock bassist's figures in the same breath by naming
+them. A centroid is about an instrument before it is about a player.
+
+**And so is the reading of the pedal itself.** This is the one that was easiest
+to miss, because it is not about the corpus at all. Every target ends as a
+displacement from the library's own empty loop, and that loop is a bass through
+the pedal: 147.9Hz with 93.9% of its energy low before a block touches it. A
+guitar does not start there, so there is nothing for a guitar chain to be
+displaced from, and a guitar ask aimed at a handed-over recording now refuses
+rather than subtracting the wrong baseline from it. The same goes for a control
+set from a sweep and a cabinet's microphone chosen from one: all 215 committed
+readings were taken with a bass, and each is refused for a chain built for
+anything else.
+
+A reading that cannot say which instrument it was taken on is refused too,
+which is `measure-a-device`'s `sweeping.md` to explain and not this page.
+
 ### What does work for a guitar, measured rather than assumed
 
 A guitar rig whose gear is authored builds all the way to a preset. One was
@@ -88,7 +108,8 @@ out as five blocks at 54% of the chip with every control set:
 
 What is missing is the *measured* layer and only that: no guitar corpus of
 records, no guitar-referenced sweep, no guitar genre. A guitar rig is as good as
-its citations today and cannot be aimed at anything.
+its citations today and cannot be aimed at anything, and the refusals above are
+what makes that a stated answer rather than a silent bass one.
 
 ### One trap left in place
 

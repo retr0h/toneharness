@@ -78,6 +78,14 @@ func InFrontOf(
 			return Library{}, false
 		}
 
+		// The instrument is not checked here, on purpose. A pair reading
+		// answers for one instrument the same way an isolated one does, and
+		// [Describes] is what refuses a mismatch, but the chain's instrument
+		// is not known at this depth: this is a lookup handed to translate
+		// before any document is read. `translate.rankFrom` is the one place
+		// that has both, and it holds every candidate pair library to it.
+		// A second copy of the test here is a second place for it to drift.
+
 		return got, true
 	}
 }

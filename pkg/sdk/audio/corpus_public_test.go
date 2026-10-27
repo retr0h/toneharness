@@ -75,7 +75,7 @@ func (s *CorpusPublicTestSuite) record(
 
 // corpus reads the tree the way the command does.
 func (s *CorpusPublicTestSuite) corpus() []audio.Player {
-	got, err := audio.Corpus(os.DirFS(s.root), ".")
+	got, err := audio.Corpus(os.DirFS(s.root), ".", "bass")
 	s.Require().NoError(err)
 
 	return got
@@ -387,7 +387,7 @@ func (s *CorpusPublicTestSuite) TestCorpus() {
 					filepath.Join(s.root, "mike-dirnt", "corpus.yaml"),
 					[]byte("tracks:\n  - track: one\n    note: a note: with a colon\n"), 0o600))
 
-				_, err := audio.Corpus(os.DirFS(s.root), ".")
+				_, err := audio.Corpus(os.DirFS(s.root), ".", "bass")
 
 				s.Require().Error(err)
 			},
@@ -411,7 +411,7 @@ func (s *CorpusPublicTestSuite) TestCorpus() {
 				at := filepath.Join(s.root, "mike-dirnt", "corpus.yaml")
 				s.Require().NoError(os.Symlink("corpus.yaml", at))
 
-				_, err := audio.Corpus(os.DirFS(s.root), ".")
+				_, err := audio.Corpus(os.DirFS(s.root), ".", "bass")
 
 				s.Require().Error(err)
 				s.Require().Contains(err.Error(), "mike-dirnt")
@@ -421,7 +421,7 @@ func (s *CorpusPublicTestSuite) TestCorpus() {
 			// The path being wrong.
 			name: "a tree that is not there",
 			then: func() {
-				_, err := audio.Corpus(os.DirFS(s.root), "nowhere")
+				_, err := audio.Corpus(os.DirFS(s.root), "nowhere", "bass")
 
 				s.Require().Error(err)
 				s.Require().Contains(err.Error(), "nowhere")
@@ -435,7 +435,7 @@ func (s *CorpusPublicTestSuite) TestCorpus() {
 				s.Require().NoError(os.MkdirAll(filepath.Dir(full), 0o750))
 				s.Require().NoError(os.WriteFile(full, []byte("not a wav"), 0o600))
 
-				_, err := audio.Corpus(os.DirFS(s.root), ".")
+				_, err := audio.Corpus(os.DirFS(s.root), ".", "bass")
 
 				s.Require().Error(err)
 			},
@@ -582,6 +582,75 @@ func (s *CorpusPublicTestSuite) TestScattered() {
 			s.SetupTest()
 			tc.setup()
 			tc.want(s.byID())
+		})
+	}
+}
+
+// TestPlayedOn covers which instrument a player's records were played on.
+//
+// Task 291. The figures are meaningless without it and carry no hint of it
+// otherwise: a bass guitar's centre of gravity sits an octave below a
+// guitar's, so a guitar chain aimed at a bassist's centroid is being asked to
+// sound like a different instrument, and nothing in the figures refuses it.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *CorpusPublicTestSuite) TestPlayedOn() {
+	for _, tt := range []struct {
+		name string
+		// root is what the tree is read from, and named the instrument the
+		// caller passes alongside.
+		root, named string
+		// under is the directory the player sits in, relative to the tree.
+		under string
+		want  string
+	}{
+		{
+			// Every caller pointed at one instrument's tree: the walk sees
+			// the player and the word `bass` is nowhere in it, so the only
+			// answer is the name the caller passed.
+			name:  "the caller's name, where the tree says nothing",
+			root:  ".",
+			named: "bass",
+			under: "mike-dirnt",
+			want:  "bass",
+		},
+		{
+			// What `genrepack` does: one instrument's tree at a time, where
+			// the directory holding the player names theirs.
+			name:  "the tree, where it says",
+			root:  "guitar",
+			named: "guitar",
+			under: filepath.Join("guitar", "mike-dirnt"),
+			want:  "guitar",
+		},
+		{
+			// The tree wins, which is what makes it the stronger answer: the
+			// name is a fallback rather than an override.
+			name:  "the tree over the caller's name",
+			root:  "guitar",
+			named: "bass",
+			under: filepath.Join("guitar", "mike-dirnt"),
+			want:  "guitar",
+		},
+		{
+			// Nothing says, and nothing is the answer. `AimAtPlayer` refuses
+			// to aim at a player it cannot place rather than guessing.
+			name:  "and nothing, where neither says",
+			root:  ".",
+			under: "mike-dirnt",
+		},
+	} {
+		s.Run(tt.name, func() {
+			s.SetupTest()
+
+			for _, track := range []string{"one", "two", "three"} {
+				s.record(tt.under, track, audio.Sine(80, 1, rate, 0.8))
+			}
+
+			got, err := audio.Corpus(os.DirFS(s.root), tt.root, tt.named)
+			s.Require().NoError(err)
+			s.Require().Len(got, 1)
+			s.Require().Equal(tt.want, got[0].Instrument)
 		})
 	}
 }

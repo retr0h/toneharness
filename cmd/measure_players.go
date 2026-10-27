@@ -23,6 +23,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -54,7 +55,7 @@ and mean nothing by either.
     toneharness measure players --corpus resources/music/bass --evidence`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		players, err := audio.Corpus(os.DirFS(measureCorpus), ".")
+		players, err := audio.Corpus(os.DirFS(measureCorpus), ".", filepath.Base(measureCorpus))
 		if err != nil {
 			return err
 		}

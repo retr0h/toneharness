@@ -2421,6 +2421,7 @@
   "players": [
     {
       "id": "allen-woody",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -2543,6 +2544,7 @@
     },
     {
       "id": "ben-shepherd",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -2631,6 +2633,7 @@
     },
     {
       "id": "berry-oakley",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -2712,6 +2715,7 @@
     },
     {
       "id": "bootsy-collins",
+      "instrument": "bass",
       "records": 4,
       "across": {
         "tracks": 4,
@@ -2821,6 +2825,7 @@
     },
     {
       "id": "charlie-hayward",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -2887,6 +2892,7 @@
     },
     {
       "id": "chi-cheng",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -3080,6 +3086,7 @@
     },
     {
       "id": "chris-joannou",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -3168,6 +3175,7 @@
     },
     {
       "id": "chuck-dukowski",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -3294,6 +3302,7 @@
     },
     {
       "id": "cliff-williams",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -3473,6 +3482,7 @@
     },
     {
       "id": "cone-mccaslin",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -3604,6 +3614,7 @@
     },
     {
       "id": "dan-andriano",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -3707,6 +3718,7 @@
     },
     {
       "id": "dee-dee-ramone",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -3838,6 +3850,7 @@
     },
     {
       "id": "dusty-hill",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -3926,6 +3939,7 @@
     },
     {
       "id": "flea",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -4057,6 +4071,7 @@
     },
     {
       "id": "geddy-lee",
+      "instrument": "bass",
       "records": 4,
       "across": {
         "tracks": 4,
@@ -4202,6 +4217,7 @@
     },
     {
       "id": "glen-matlock",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -4333,6 +4349,7 @@
     },
     {
       "id": "greg-t-walker",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -4464,6 +4481,7 @@
     },
     {
       "id": "jaco-pastorius",
+      "instrument": "bass",
       "records": 4,
       "across": {
         "tracks": 4,
@@ -4575,6 +4593,7 @@
     },
     {
       "id": "jeff-ament",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -4670,6 +4689,7 @@
     },
     {
       "id": "john-paul-jones",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -4849,6 +4869,7 @@
     },
     {
       "id": "karl-alvarez",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -5008,6 +5029,7 @@
     },
     {
       "id": "klaus-flouride",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -5103,6 +5125,7 @@
     },
     {
       "id": "krist-novoselic",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -5219,6 +5242,7 @@
     },
     {
       "id": "leon-wilkeson",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -5322,6 +5346,7 @@
     },
     {
       "id": "les-claypool",
+      "instrument": "bass",
       "records": 4,
       "across": {
         "tracks": 4,
@@ -5462,6 +5487,7 @@
     },
     {
       "id": "mark-hoppus",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -5564,6 +5590,7 @@
     },
     {
       "id": "matt-freeman",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -5709,6 +5736,7 @@
     },
     {
       "id": "mike-dirnt",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -5811,6 +5839,7 @@
     },
     {
       "id": "mike-starr",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -5962,6 +5991,7 @@
     },
     {
       "id": "paul-mccartney",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -6079,6 +6109,7 @@
     },
     {
       "id": "paul-simonon",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -6196,6 +6227,7 @@
     },
     {
       "id": "pino-palladino",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -6277,6 +6309,7 @@
     },
     {
       "id": "rex-brown",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -6408,6 +6441,7 @@
     },
     {
       "id": "rick-danko",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -6629,6 +6663,7 @@
     },
     {
       "id": "robert-deleo",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -6746,6 +6781,7 @@
     },
     {
       "id": "ryan-martinie",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -6834,6 +6870,7 @@
     },
     {
       "id": "stu-cook",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -6971,6 +7008,7 @@
     },
     {
       "id": "sven-pipien",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -7122,6 +7160,7 @@
     },
     {
       "id": "tim-commerford",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -7225,6 +7264,7 @@
     },
     {
       "id": "tobin-esperance",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -7418,6 +7458,7 @@
     },
     {
       "id": "tom-araya",
+      "instrument": "bass",
       "records": 4,
       "across": {
         "tracks": 4,
@@ -7549,6 +7590,7 @@
     },
     {
       "id": "tommy-caldwell",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,
@@ -7615,6 +7657,7 @@
     },
     {
       "id": "troy-sanders",
+      "instrument": "bass",
       "records": 3,
       "across": {
         "tracks": 3,

@@ -1417,6 +1417,15 @@ like:
 			// asked to sound like another instrument, and every dial would be
 			// spent doing it. Which instrument the ask states is the only
 			// thing that catches it, so it travels into the note.
+			//
+			// Task 290 made it refuse rather than carry on from the handed-over
+			// recording, and that is the point rather than a regression. A
+			// recording's figures are absolute and every target ends as a
+			// displacement from the library's own empty loop, which here is a
+			// bass through the pedal: 147.9Hz and 93.9% of its energy low
+			// before a block touches it. Subtracting that from a guitar is the
+			// same mistake one line further down, so there is nothing left to
+			// aim at and the honest answer is to say so.
 			name: "the ask names one instrument and the genre is measured on another",
 			then: func() {
 				_, notes, err := translate.Translate(
@@ -1424,12 +1433,18 @@ like:
 						s.recording()+"\n"),
 					s.setup(""), s.deps)
 
-				s.Require().NoError(err)
+				s.Require().Error(err,
+					"a guitar ask has nothing here to be measured against")
 
 				said := strings.Join(sayings(notes.Unmet()), " ")
 				s.Require().Contains(said, "is measured on bass")
 				s.Require().Contains(said, "this asks for guitar")
 				s.Require().Contains(said, "about an octave")
+
+				// And the readings themselves, said separately, because the
+				// genre and the pedal's own empty loop are two different
+				// reasons and fixing one would not fix the other.
+				s.Require().Contains(said, "nothing here is aimed at a figure")
 			},
 		},
 		{

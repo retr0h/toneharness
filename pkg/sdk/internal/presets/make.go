@@ -145,7 +145,7 @@ func Make(
 		return result.Made{}, err
 	}
 
-	intent.Aim = opts.aimOf(known.ID, lib)
+	intent.Aim = opts.aimOf(known.ID, lib, string(rec.Instrument))
 	intent.Curves = sweptIn(opts.SweepsDir)
 
 	cat, err := opts.catalog(ctx)
@@ -830,9 +830,22 @@ func (o MakeOptions) loudnessOf(
 //
 // Resolved here rather than in the compiler, for the reason `Intent.Loudness`
 // is: that package builds a chain and has no business reading a corpus.
+// `instrument` is what the chain is for, and it is the whole of task 291.
+// This reaches a player's and a genre's figures by the rig's own identifier
+// rather than through an ask, so `genreTarget`'s cross-instrument refusal was
+// never on this path: a guitar rig named after a measured genre or player got
+// their bass figures, silently, and the solve converges and reports its
+// tolerances met while being wrong about what it was asked. The refusal now
+// lives in [translate.AimAtPlayer] and [translate.AimAtGenre], which is the
+// one place both doors pass through.
+//
+// Nothing shipped was in that state. Every genre and player measured here is
+// bass, and a rig is named after one only if it is that rig, so the guard buys
+// nothing today and everything on the day a guitar record is measured.
 func (o MakeOptions) aimOf(
 	id string,
 	lib measured.Library,
+	instrument string,
 ) *measured.Figures {
 	// A player first, then a genre. A rig's identifier is who it is for, and
 	// the two kinds of rig this ships are a person and a sound: 32 artists and
@@ -843,9 +856,17 @@ func (o MakeOptions) aimOf(
 	// compiler and never reaches the path where a genre's gear is chosen: they
 	// arrived on the corpus median microphone because nothing else had the
 	// genre's own figures to hand.
-	got, ok := translate.AimAtPlayer(id, lib.Baseline)
+	// The library's own instrument first, because every answer below is a
+	// displacement from its baseline and that baseline is a reading of one
+	// instrument through the pedal. The guard `translate.target` carries on
+	// the ask's path, on this one.
+	if measured.Describes(lib.PlayedOn(), instrument) != nil {
+		return nil
+	}
+
+	got, ok := translate.AimAtPlayer(id, lib.Baseline, instrument)
 	if !ok {
-		got, ok = translate.AimAtGenre(id, lib.Baseline)
+		got, ok = translate.AimAtGenre(id, lib.Baseline, instrument)
 	}
 
 	if !ok {

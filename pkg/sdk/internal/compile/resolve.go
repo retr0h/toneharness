@@ -1178,6 +1178,20 @@ func aimed(
 			continue
 		}
 
+		// And only a sweep taken on the instrument this chain is for. Task
+		// 290. A reading has carried the field since 2026-09-29 and this loop
+		// never read it, so every committed sweep saying `bass` was available
+		// to set a Marshall JCM-800's controls for a guitar.
+		//
+		// Silent, like the rest of this function: a control is either set
+		// from a reading or left where the catalog put it, and `Intent.Aim`
+		// being nil already means most chains come through here untouched.
+		// What is not silent is the path that chose the aim, which refuses
+		// the same mismatch and says so.
+		if measured.Describes(curves.PlayedOn(), instrument) != nil {
+			continue
+		}
+
 		// A cabinet gets its microphone and nothing else. Task 242.
 		//
 		// Letting the rest of a cabinet be set sent LowCut to 79.9Hz, which on

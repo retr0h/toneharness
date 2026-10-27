@@ -49,9 +49,15 @@ centroid sits between 90 and 182Hz, and every block was swept with
 `resources/dry/bass-di.wav` through it. A guitar ask aimed at one of those
 figures is not a near miss: it is a request to sound like another instrument,
 and the solve would spend every control getting there and report that it
-arrived. A genre now records which instrument it was measured on and the tool
-says so rather than aiming, which is the guard, not a fix. What closes it is
-guitar records in the corpus and a guitar campaign on the device.
+arrived.
+
+Every reading records which instrument it was taken on, and five places refuse
+one taken on another: the target, the block ranking, the pair library, the
+control tuning and a cabinet's microphone. A player and a genre carry it too, so
+a guitar ask gets a sentence saying what was refused and why rather than a bass
+answer. That is the guard and not a fix. What closes it is guitar records in the
+corpus and a guitar campaign on the device, and a guitar rig whose gear is cited
+builds all the way to a preset meanwhile.
 
 **Keep this table honest.** A pull request that finishes something marked not
 built or partly built updates the line in the same pull request and says so in
