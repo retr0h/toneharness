@@ -927,6 +927,20 @@ func chose(
 		wants = string(*spec.Instrument)
 	}
 
+	// The guard [tuned] carries, on the one control a cabinet gets set.
+	// Twelve impulse responses of a 4x12 measured with a bass through them
+	// say which of them is nearest a bass target, and nothing about that
+	// answers the same question for a guitar.
+	if err := measured.Describes(curves.PlayedOn(), wants); err != nil {
+		*notes = append(*notes, Note{
+			About: entry.Gear,
+			Said: fmt.Sprintf("its sweep %v, so its microphone is the "+
+				"catalog's default rather than chosen for this", err),
+		})
+
+		return
+	}
+
 	// The displacement the genre was given, which is what the target carries
 	// over the library's own baseline. The absolute figure is not comparable
 	// with a microphone's.
@@ -1060,6 +1074,12 @@ func rankFrom(
 	chain []rig.ChainEntry,
 	deps Deps,
 	kind catalog.Category,
+	// instrument is what the chain is for. A pair reading is a reading, so it
+	// answers for one instrument the same way the isolated library does, and
+	// task 290's guard belongs on both doors rather than on the one that
+	// happened to be looked at. Falling back to the isolated library is safe
+	// here only because [target] refuses that one too.
+	instrument string,
 ) (measured.Library, bool) {
 	if deps.InFrontOf == nil || deps.Catalog == nil {
 		return deps.Measured, false
@@ -1081,6 +1101,10 @@ func rankFrom(
 		for id := range modelsFor(deps.Catalog, entry.Gear, catalog.CategoryAmp) {
 			got, ok := deps.InFrontOf(catalog.ModelID(id))
 			if !ok {
+				continue
+			}
+
+			if err := measured.Describes(got.PlayedOn(), instrument); err != nil {
 				continue
 			}
 
@@ -1325,6 +1349,20 @@ func tuned(
 	wants := ""
 	if spec.Instrument != nil {
 		wants = string(*spec.Instrument)
+	}
+
+	// And only where the sweep was taken on the instrument this is for. Task
+	// 290: the field has been on a reading since 2026-09-29 and nothing on
+	// this path read it, so every committed sweep saying `bass` was available
+	// to set a guitar block's controls.
+	if err := measured.Describes(curves.PlayedOn(), wants); err != nil {
+		*notes = append(*notes, Note{
+			About: entry.Gear,
+			Said: fmt.Sprintf("its sweep %v, so its controls are the catalog's "+
+				"defaults rather than set for this", err),
+		})
+
+		return
 	}
 
 	// The displacement the target was given, for the reason [chose] states
@@ -1604,7 +1642,7 @@ func nearestOf(
 
 	// The pair reading where the chain holds an amplifier one was taken
 	// behind, and the isolated library otherwise.
-	lib, inChain := rankFrom(chain, deps, category)
+	lib, inChain := rankFrom(chain, deps, category, wants)
 
 	// Re-aimed at the pair library's own empty loop, because a target is a
 	// displacement from a baseline and each library carries its own. They
@@ -1612,7 +1650,7 @@ func nearestOf(
 	// leaning on that rather than saying it is how figures from two rigs come
 	// to be compared.
 	if inChain {
-		if got, ok := AimAtGenre(from, lib.Baseline); ok {
+		if got, ok := AimAtGenre(from, lib.Baseline, wants); ok {
 			want = got
 		}
 
@@ -2355,6 +2393,32 @@ func target(
 	deps Deps,
 	notes *Notes,
 ) (aim, bool) {
+	// Before any of the three, because all three end as a displacement from
+	// this library's own baseline and that baseline is a reading of one
+	// instrument through the pedal. Task 290. The library has carried the
+	// field since 2026-09-29 and nothing read it, so a chain for a guitar
+	// would have been aimed from a bass empty loop: 147.9Hz and 93.9% of its
+	// energy low before a block touches it, which is not where a guitar
+	// starts and so not a displacement a guitar chain can answer.
+	//
+	// A refusal rather than a weaker answer, for the reason `genreTarget`
+	// gives about a genre: the nearest block to the wrong octave is not a
+	// near miss, it is the answer to a different question.
+	wants := ""
+	if spec.Instrument != nil {
+		wants = string(*spec.Instrument)
+	}
+
+	if err := measured.Describes(deps.Measured.PlayedOn(), wants); err != nil {
+		*notes = append(*notes, Note{
+			About: deps.Measured.Device,
+			Said: fmt.Sprintf("the readings this device was measured with %v, "+
+				"so nothing here is aimed at a figure", err),
+		})
+
+		return aim{}, false
+	}
+
 	if spec.Like == nil || spec.Like.Recording == nil {
 		// A player, where one is named and their records are measured.
 		//
@@ -2702,6 +2766,31 @@ func playerTarget(
 		return aim{}, false
 	}
 
+	wants := ""
+	if spec.Instrument != nil {
+		wants = string(*spec.Instrument)
+	}
+
+	// And only where they play the instrument this chain is for. The guard
+	// [genreTarget] carries, on the narrower target: it had one and a player
+	// did not, so an ask that was refused hard-rock's figures for being
+	// measured on a bass was handed a hard-rock bassist's figures in the same
+	// breath by naming them in `like`.
+	// Through [measured.Describes], which already answers both halves of it:
+	// a player measured on the wrong instrument and one the pack cannot place
+	// at all are refused for the same reason, and writing that test twice is
+	// how the two sentences come to disagree.
+	if err := measured.Describes(got.Instrument, wants); err != nil {
+		*notes = append(*notes, Note{
+			About: who,
+			Said: fmt.Sprintf("their records %v, so their figures aim at "+
+				"nothing here: a centroid is about an instrument before it is "+
+				"about a player", err),
+		})
+
+		return aim{}, false
+	}
+
 	// No guard on `Elsewhere` being absent. `Corpus` fills it from the other
 	// players and all 43 in this corpus carry it, so a branch for one player
 	// alone is one nothing can reach and nobody has checked. `displacedTo`
@@ -2725,7 +2814,7 @@ func playerTarget(
 		earned = append(earned, term.Term)
 	}
 
-	figures, _ := AimAtPlayer(who, deps.Measured.Baseline)
+	figures, _ := AimAtPlayer(who, deps.Measured.Baseline, wants)
 
 	return aim{
 		figures: figures,
@@ -2760,12 +2849,30 @@ func playerTarget(
 //
 // False where the pack carries no genre by that name, which every artist rig
 // and every slug that is not one of the eleven answers with.
+//
+// And false where the genre is measured on another instrument, which is the
+// guard [genreTarget] already had on the path a request takes. This is the
+// other door to the same figures: `presets.aimOf` reaches them by the rig's
+// own identifier rather than by an ask, so a guitar rig named after a measured
+// genre was handed that genre's bass figures with nothing to say so. Nothing
+// ships in that state, because every genre measured here is bass and only a
+// bass rig can be named after one, and the day a guitar genre is measured it
+// would be the quietest kind of wrong: the solve converges and reports its
+// tolerances met.
 func AimAtGenre(
 	slug string,
 	baseline measured.Figures,
+	// instrument is what the chain is for. Empty asks for the figures
+	// whatever they were measured on, which is what a caller with no chain in
+	// hand has to do.
+	instrument string,
 ) (measured.Figures, bool) {
 	got, ok := audio.ShippedGenre(slug)
 	if !ok || got.Instrument == "" {
+		return measured.Figures{}, false
+	}
+
+	if instrument != "" && !strings.EqualFold(got.Instrument, instrument) {
 		return measured.Figures{}, false
 	}
 
@@ -2796,12 +2903,28 @@ func AimAtGenre(
 // False where the pack carries nobody by that name, and the caller then keeps
 // whatever the rig's sources justify. The name is slugged, because the pack
 // files a player under the directory their records sit in.
+//
+// False too where they are measured on another instrument, or where the pack
+// cannot say which. The guard [AimAtGenre] carries, on the narrower target:
+// `Player.Instrument` is the directory their records sit under, and a player
+// with none is one nothing can hold against the chain asking. Refusing is the
+// answer rather than aiming anyway, because a bassist's centroid sits an
+// octave below a guitarist's and a guitar chain pulled down to it is not a
+// near miss, it is a chain asked to sound like a different instrument.
 func AimAtPlayer(
 	who string,
 	baseline measured.Figures,
+	// instrument is what the chain is for, for the reason [AimAtGenre] takes
+	// one, and empty means the same thing: take the figures as measured.
+	instrument string,
 ) (measured.Figures, bool) {
 	got, ok := audio.ShippedPlayer(slug.Of(who))
 	if !ok {
+		return measured.Figures{}, false
+	}
+
+	if instrument != "" &&
+		(got.Instrument == "" || !strings.EqualFold(got.Instrument, instrument)) {
 		return measured.Figures{}, false
 	}
 

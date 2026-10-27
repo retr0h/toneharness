@@ -25,6 +25,7 @@ import (
 	"fmt"
 
 	"github.com/retr0h/toneharness/pkg/sdk/catalog"
+	"github.com/retr0h/toneharness/pkg/sdk/measured"
 	"github.com/retr0h/toneharness/pkg/sdk/plan"
 )
 
@@ -97,7 +98,7 @@ func sameInstrument(
 	dry string,
 	declared string,
 ) error {
-	chain, reference := chainIsFor(made, cat, declared), referenceIsFor(dry)
+	chain, reference := chainIsFor(made, cat, declared), measured.InstrumentIn(dry)
 	if chain == "" || reference == "" || chain == reference {
 		return nil
 	}

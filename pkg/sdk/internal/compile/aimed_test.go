@@ -21,6 +21,7 @@
 package compile
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -79,7 +80,7 @@ func (s *AimedTestSuite) aimedCurves() measured.Curves {
 		}
 	}
 
-	return measured.Curves{Controls: map[string]measured.Curve{
+	return measured.Curves{Instrument: "bass", Controls: map[string]measured.Curve{
 		"Drive":   at("float", 0.25, 0.828986013986014),
 		"MidFreq": at("int", 0, 3),
 		"Bright":  at("bool", 0, 1),
@@ -88,6 +89,30 @@ func (s *AimedTestSuite) aimedCurves() measured.Curves {
 		// reading about a block this is not.
 		"Elsewhere": at("float", 0, 1),
 	}}
+}
+
+// playedOn is the same sweep taken on another instrument, or on one it cannot
+// name. Task 290.
+func (s *AimedTestSuite) playedOn(
+	instrument string,
+) measured.Curves {
+	out := s.aimedCurves()
+	out.Instrument = instrument
+
+	return out
+}
+
+// referencedBy is the same sweep with no instrument field and a reference
+// recording whose filename says which one, which is the shape of the 8
+// readings committed before the field existed.
+func (s *AimedTestSuite) referencedBy(
+	reference string,
+) measured.Curves {
+	out := s.aimedCurves()
+	out.Instrument = ""
+	out.Reference = measured.Reference{File: reference}
+
+	return out
 }
 
 // TestAimed covers which blocks are aimed and which are left alone.
@@ -115,6 +140,9 @@ func (s *AimedTestSuite) TestAimed() {
 		intent Intent
 		// wants is what each control must read afterwards, by block index.
 		wants []plan.Params
+		// on is the instrument the chain is for, where a bass is not the
+		// point of the row.
+		on string
 	}{
 		{
 			// The ordinary answer for 11 of the 43 players nobody has
@@ -169,7 +197,7 @@ func (s *AimedTestSuite) TestAimed() {
 			intent: Intent{Aim: &high, Curves: func(
 				_, _ catalog.ModelID,
 			) (measured.Curves, bool) {
-				return measured.Curves{Controls: map[string]measured.Curve{
+				return measured.Curves{Instrument: "bass", Controls: map[string]measured.Curve{
 					"LowCut": {
 						Kind:    "float",
 						Settled: -20,
@@ -251,11 +279,60 @@ func (s *AimedTestSuite) TestAimed() {
 			intent: Intent{Aim: &high, Curves: s.sweptAs(s.aimedCurves())},
 			wants:  []plan.Params{{"Drive": catalog.Float(0.829)}},
 		},
+		{
+			// Task 290. The sweep has carried the instrument since
+			// 2026-09-29 and this loop never read it, so a Marshall
+			// JCM-800's controls were available to be set from a reading of
+			// a bass through the pedal.
+			name:   "a sweep taken on another instrument sets nothing",
+			blocks: []catalog.Block{s.aimedAmp()},
+			built: plan.Plan{Blocks: []plan.Block{{
+				Model:  "HD2_AmpTestBass",
+				Params: plan.Params{"Drive": catalog.Float(0.6)},
+			}}},
+			intent: Intent{Aim: &high, Curves: s.sweptAs(s.playedOn("guitar"))},
+			wants:  []plan.Params{{"Drive": catalog.Float(0.6)}},
+			on:     "bass",
+		},
+		{
+			// A reading from before the field existed whose reference cannot
+			// say either. "Probably bass, everything here is" is the
+			// reasoning the guard exists to stop.
+			name:   "a sweep that names no instrument sets nothing",
+			blocks: []catalog.Block{s.aimedAmp()},
+			built: plan.Plan{Blocks: []plan.Block{{
+				Model:  "HD2_AmpTestBass",
+				Params: plan.Params{"Drive": catalog.Float(0.6)},
+			}}},
+			intent: Intent{Aim: &high, Curves: s.sweptAs(s.playedOn(""))},
+			wants:  []plan.Params{{"Drive": catalog.Float(0.6)}},
+			on:     "bass",
+		},
+		{
+			// And the reference recording answers where the field does not,
+			// which is what keeps the 8 readings that predate it: every one
+			// of them names `bass-di.wav`.
+			name:   "a sweep whose reference names the instrument is used",
+			blocks: []catalog.Block{s.aimedAmp()},
+			built: plan.Plan{Blocks: []plan.Block{{
+				Model:  "HD2_AmpTestBass",
+				Params: plan.Params{"Drive": catalog.Float(0.6)},
+			}}},
+			intent: Intent{Aim: &high, Curves: s.sweptAs(s.referencedBy(
+				filepath.Join("resources", "dry", "bass-di.wav")))},
+			wants: []plan.Params{{"Drive": catalog.Float(0.829)}},
+			on:    "bass",
+		},
 	}
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			aimed(tt.intent, tt.blocks, tt.built, "bass")
+			on := tt.on
+			if on == "" {
+				on = "bass"
+			}
+
+			aimed(tt.intent, tt.blocks, tt.built, on)
 
 			for i, want := range tt.wants {
 				for name, at := range want {
@@ -298,7 +375,8 @@ func (s *AimedTestSuite) TestChoseMic() {
 		}
 
 		return measured.Curves{
-			Block: "HD2_CabMicIr_Test",
+			Instrument: "bass",
+			Block:      "HD2_CabMicIr_Test",
 			Controls: map[string]measured.Curve{"Mic": {
 				Kind:    "int",
 				Settled: -20,
@@ -368,7 +446,7 @@ func (s *AimedTestSuite) TestChoseMic() {
 			// them: 14 of the device's 133 carry a swept Mic.
 			name:   "a cabinet whose sweep has no microphone is left alone",
 			blk:    cab("Mic"),
-			curves: measured.Curves{Block: "HD2_CabMicIr_Test"},
+			curves: measured.Curves{Block: "HD2_CabMicIr_Test", Instrument: "bass"},
 			aim:    measured.Figures{Mid: 5},
 		},
 	}

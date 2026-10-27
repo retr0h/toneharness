@@ -25,6 +25,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -567,7 +568,7 @@ func (s *GenreGearPublicTestSuite) TestTunedRefuses() {
 
 	deps := s.deps
 	deps.CurvesFor = func(_, _ catalog.ModelID) (measured.Curves, bool) {
-		return measured.Curves{Controls: map[string]measured.Curve{
+		return measured.Curves{Instrument: "bass", Controls: map[string]measured.Curve{
 			// Reaching 29.5 points of midrange above the middle of its own
 			// positions, which is more than the 21.7 punk asks for. A dial
 			// is set by the size of the ask as well as its direction since
@@ -597,12 +598,48 @@ func (s *GenreGearPublicTestSuite) TestTunedRefuses() {
 		name   string
 		ask    tone.Ask
 		curves measured.Curves
+		// said is a phrase the note has to carry, where the refusal is one
+		// somebody has to be told about.
+		said string
 	}{
 		{name: "nothing to aim at", ask: tone.Ask{}},
 		{
-			name: "a sweep that moves nothing",
+			// Task 290. Every committed sweep says `bass` and nothing on
+			// this path read it, so a guitar block's controls were set from
+			// a reading of a bass through the pedal.
+			name: "a sweep taken on another instrument",
+			ask:  s.forGenre("punk"),
+			curves: measured.Curves{Instrument: "guitar", Controls: map[string]measured.Curve{
+				"Drive": {
+					Control: "Drive", Settled: -20, SilentBelow: -50,
+					Points: []measured.Point{
+						{Value: 0, Figures: measured.Figures{Mid: 1, Level: -20}},
+						{Value: 1, Figures: measured.Figures{Mid: 60, Level: -20}},
+					},
+				},
+			}},
+			said: "measured on another instrument",
+		},
+		{
+			// A reading from before the field existed whose reference cannot
+			// say either.
+			name: "a sweep that names no instrument at all",
 			ask:  s.forGenre("punk"),
 			curves: measured.Curves{Controls: map[string]measured.Curve{
+				"Drive": {
+					Control: "Drive", Settled: -20, SilentBelow: -50,
+					Points: []measured.Point{
+						{Value: 0, Figures: measured.Figures{Mid: 1, Level: -20}},
+						{Value: 1, Figures: measured.Figures{Mid: 60, Level: -20}},
+					},
+				},
+			}},
+			said: "names no instrument",
+		},
+		{
+			name: "a sweep that moves nothing",
+			ask:  s.forGenre("punk"),
+			curves: measured.Curves{Instrument: "bass", Controls: map[string]measured.Curve{
 				"Hum": {
 					Control: "Hum", Settled: -20, SilentBelow: -50,
 					Noise: map[audio.Figure]float64{audio.KeyMid: 50},
@@ -626,6 +663,13 @@ func (s *GenreGearPublicTestSuite) TestTunedRefuses() {
 			translate.Tuned(&bare, "HD2_DistTeemah", tt.ask, d, &n)
 
 			s.Require().Nil(bare.Controls)
+
+			if tt.said == "" {
+				return
+			}
+
+			s.Require().Contains(strings.Join(sayings(n), " "), tt.said,
+				"a refusal somebody can disagree with is said out loud")
 		})
 	}
 }
@@ -643,7 +687,7 @@ func (s *GenreGearPublicTestSuite) TestTunedRefuses() {
 func (s *GenreGearPublicTestSuite) TestTunedSaysWhenNothingReached() {
 	// A sweep whose dial moves the midrange by a point, against punk asking
 	// for 21.7.
-	short := measured.Curves{Controls: map[string]measured.Curve{
+	short := measured.Curves{Instrument: "bass", Controls: map[string]measured.Curve{
 		"Drive": {
 			Control: "Drive", Settled: -20, SilentBelow: -50,
 			Points: []measured.Point{
@@ -743,7 +787,7 @@ func (s *GenreGearPublicTestSuite) TestTunedSaysNothingWasAsked() {
 
 	deps := s.deps
 	deps.CurvesFor = func(_, _ catalog.ModelID) (measured.Curves, bool) {
-		return measured.Curves{Controls: map[string]measured.Curve{
+		return measured.Curves{Instrument: "bass", Controls: map[string]measured.Curve{
 			"Drive": {
 				Control: "Drive", Settled: -20, SilentBelow: -50,
 				Points: []measured.Point{
@@ -843,7 +887,7 @@ func (s *GenreGearPublicTestSuite) TestTunedWritesEachControlInItsOwnKind() {
 
 	deps := s.deps
 	deps.CurvesFor = func(_, _ catalog.ModelID) (measured.Curves, bool) {
-		return measured.Curves{Controls: map[string]measured.Curve{
+		return measured.Curves{Instrument: "bass", Controls: map[string]measured.Curve{
 			"Bright": {
 				Control: "Bright", Kind: "bool", Settled: -20, SilentBelow: -50,
 				Points: []measured.Point{
@@ -981,6 +1025,9 @@ func (s *GenreGearPublicTestSuite) TestChoseRefuses() {
 		ask   tone.Ask
 		// gear names the cabinet, where the default is not the point.
 		gear string
+		// said is a phrase the note has to carry, where the refusal is one
+		// somebody has to be told about rather than an absent sweep.
+		said string
 	}{
 		{
 			// A release carries the fingerprints and not the sweeps, so the
@@ -1006,7 +1053,7 @@ func (s *GenreGearPublicTestSuite) TestChoseRefuses() {
 			// control count off.
 			name: "a cabinet the catalog does not model",
 			swept: func(_, _ catalog.ModelID) (measured.Curves, bool) {
-				return measured.Curves{Controls: map[string]measured.Curve{
+				return measured.Curves{Instrument: "bass", Controls: map[string]measured.Curve{
 					"Mic": {Control: "Mic", Settled: -20},
 				}}, true
 			},
@@ -1016,11 +1063,37 @@ func (s *GenreGearPublicTestSuite) TestChoseRefuses() {
 		{
 			name: "a sweep with no microphone on it",
 			swept: func(_, _ catalog.ModelID) (measured.Curves, bool) {
-				return measured.Curves{Controls: map[string]measured.Curve{
+				return measured.Curves{Instrument: "bass", Controls: map[string]measured.Curve{
 					"LowCut": {Control: "LowCut", Settled: -20},
 				}}, true
 			},
 			ask: s.forGenre("punk"),
+		},
+		{
+			// Task 290. Twelve impulse responses of a cabinet measured with
+			// a guitar through them say which is nearest a guitar target,
+			// and nothing about that answers the same question for a bass.
+			name: "a sweep taken on another instrument",
+			swept: func(_, _ catalog.ModelID) (measured.Curves, bool) {
+				return measured.Curves{Instrument: "guitar", Controls: map[string]measured.Curve{
+					"Mic": {Control: "Mic", Settled: -20},
+				}}, true
+			},
+			ask:  s.forGenre("punk"),
+			said: "measured on another instrument",
+		},
+		{
+			// A reading from before the field existed whose reference cannot
+			// say either. "Probably bass, everything here is" is the
+			// reasoning the guard exists to stop.
+			name: "a sweep that names no instrument at all",
+			swept: func(_, _ catalog.ModelID) (measured.Curves, bool) {
+				return measured.Curves{Controls: map[string]measured.Curve{
+					"Mic": {Control: "Mic", Settled: -20},
+				}}, true
+			},
+			ask:  s.forGenre("punk"),
+			said: "names no instrument",
 		},
 	}
 
@@ -1040,6 +1113,14 @@ func (s *GenreGearPublicTestSuite) TestChoseRefuses() {
 
 			s.Require().Nil(entry.Controls,
 				"it set a microphone with nothing to read it from")
+
+			if tt.said == "" {
+				return
+			}
+
+			s.Require().Contains(
+				strings.Join(sayings(notes), " "), tt.said,
+				"a refusal somebody can disagree with is said out loud")
 		})
 	}
 }

@@ -136,13 +136,84 @@ func (s *PlayerTargetPublicTestSuite) TestAPlayerIsATarget() {
 func (s *PlayerTargetPublicTestSuite) TestAPlayerAimsAtTheirMiddle() {
 	who := "Dee Dee Ramone"
 
-	got, ok := translate.PlayerAim(
+	got, _, ok := translate.PlayerAim(
 		tone.Ask{Like: &tone.Like{Artist: &who}}, s.deps)
 	s.Require().True(ok)
 
 	// Every figure it reports is the middle of his records, which is what
 	// `Across.Measured` answers with, rather than a percentile of them.
 	s.Require().NotEmpty(got)
+}
+
+// TestAPlayerIsNoTargetForAnotherInstrument covers the refusal on the ask's
+// own path.
+//
+// Task 291. `genreTarget` had this guard and a player did not, so an ask
+// refused hard-rock's figures for being measured on a bass was handed a
+// hard-rock bassist's figures in the same breath by naming them in `like`.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *PlayerTargetPublicTestSuite) TestAPlayerIsNoTargetForAnotherInstrument() {
+	who := "Dee Dee Ramone"
+
+	for _, tt := range []struct {
+		name string
+		// on is what the ask says the chain is for.
+		on string
+		// aimed is whether his records answered.
+		aimed bool
+		// said is a phrase the note has to carry.
+		said string
+	}{
+		{
+			name:  "a bassist for a bass",
+			on:    "bass",
+			aimed: true,
+		},
+		{
+			// A bassist's centroid sits an octave below a guitarist's, so a
+			// guitar chain pulled down to it is not a near miss: it is a
+			// chain asked to sound like a different instrument, and nothing
+			// in the figures refuses it.
+			name: "a bassist for a guitar",
+			on:   "guitar",
+			said: "their records measured on another instrument: taken on bass and this is for guitar",
+		},
+		{
+			// An ask that says nothing takes the figures as measured, which
+			// is every artist rig that predates the field.
+			name:  "an ask that names no instrument",
+			aimed: true,
+		},
+	} {
+		s.Run(tt.name, func() {
+			ask := tone.Ask{Like: &tone.Like{Artist: &who}}
+
+			if tt.on != "" {
+				on := tone.AskInstrument(tt.on)
+				ask.Instrument = &on
+			}
+
+			got, notes, ok := translate.PlayerAim(ask, s.deps)
+			s.Require().Equal(tt.aimed, ok)
+
+			if tt.aimed {
+				s.Require().NotEmpty(got)
+
+				return
+			}
+
+			s.Require().Empty(got)
+
+			said := ""
+			for _, n := range notes {
+				said += n.Said + "\n"
+			}
+
+			s.Require().Contains(said, tt.said,
+				"a refusal somebody can disagree with is said out loud")
+		})
+	}
 }
 
 // TestAimAtPlayer covers the target the resolve path asks for by identifier.
@@ -155,6 +226,9 @@ func (s *PlayerTargetPublicTestSuite) TestAimAtPlayer() {
 	tests := []struct {
 		name string
 		who  string
+		// on is the instrument the chain asking is for. Empty takes the
+		// figures as measured, which is what a caller with no chain does.
+		on string
 		// aimed is whether a target came back at all.
 		aimed bool
 	}{
@@ -162,6 +236,25 @@ func (s *PlayerTargetPublicTestSuite) TestAimAtPlayer() {
 			name:  "a measured player is a target",
 			who:   "dee-dee-ramone",
 			aimed: true,
+		},
+		{
+			// Every player this corpus measures is a bassist, so naming the
+			// instrument changes nothing and that is the point: the guard
+			// costs a shipped build nothing.
+			name:  "a bassist answers a chain for a bass",
+			who:   "dee-dee-ramone",
+			on:    "bass",
+			aimed: true,
+		},
+		{
+			// Task 291. A bassist's centroid sits an octave below a
+			// guitarist's, so pulling a guitar chain down to it is not a near
+			// miss: it asks the chain to sound like a different instrument,
+			// and the solve converges and reports its tolerances met.
+			name:  "a bassist is no target for a guitar",
+			who:   "dee-dee-ramone",
+			on:    "guitar",
+			aimed: false,
 		},
 		{
 			// The name is slugged, because the pack files a player under the
@@ -188,7 +281,8 @@ func (s *PlayerTargetPublicTestSuite) TestAimAtPlayer() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got, ok := translate.AimAtPlayer(tt.who, s.deps.Measured.Baseline)
+			got, ok := translate.AimAtPlayer(
+				tt.who, s.deps.Measured.Baseline, tt.on)
 			s.Require().Equal(tt.aimed, ok)
 
 			if !tt.aimed {
@@ -220,6 +314,9 @@ func (s *PlayerTargetPublicTestSuite) TestAimAtGenre() {
 	tests := []struct {
 		name string
 		slug string
+		// on is the instrument the chain asking is for, for the reason
+		// [TestAimAtPlayer] takes one.
+		on string
 		// aimed is whether a target came back at all.
 		aimed bool
 	}{
@@ -227,6 +324,22 @@ func (s *PlayerTargetPublicTestSuite) TestAimAtGenre() {
 			name:  "a measured genre is a target",
 			slug:  "punk",
 			aimed: true,
+		},
+		{
+			name:  "and still is for a chain built for a bass",
+			slug:  "punk",
+			on:    "bass",
+			aimed: true,
+		},
+		{
+			// Task 291, and the door `genreTarget` already guarded: this one
+			// is reached by a rig's own identifier rather than by an ask, so
+			// a guitar rig named after a measured genre got its bass figures
+			// with nothing in the report to say so.
+			name:  "a bass genre is no target for a guitar",
+			slug:  "punk",
+			on:    "guitar",
+			aimed: false,
 		},
 		{
 			// One of the three whose cabinet the compiler adds, which is what
@@ -251,7 +364,8 @@ func (s *PlayerTargetPublicTestSuite) TestAimAtGenre() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			got, ok := translate.AimAtGenre(tt.slug, s.deps.Measured.Baseline)
+			got, ok := translate.AimAtGenre(
+				tt.slug, s.deps.Measured.Baseline, tt.on)
 			s.Require().Equal(tt.aimed, ok)
 
 			if !tt.aimed {
@@ -282,10 +396,11 @@ func (s *PlayerTargetPublicTestSuite) TestAimAtGenre() {
 func (s *PlayerTargetPublicTestSuite) TestAGenreAimsAtItsEdgeAndAPlayerAtTheirMiddle() {
 	// Punk is the genre that displaces most, 18.90 points against the next
 	// genre's 6.40, so it is the one whose edge is furthest from its middle.
-	edge, ok := translate.AimAtGenre("punk", s.deps.Measured.Baseline)
+	edge, ok := translate.AimAtGenre("punk", s.deps.Measured.Baseline, "")
 	s.Require().True(ok)
 
-	middle, ok := translate.AimAtPlayer("dee-dee-ramone", s.deps.Measured.Baseline)
+	middle, ok := translate.AimAtPlayer(
+		"dee-dee-ramone", s.deps.Measured.Baseline, "")
 	s.Require().True(ok)
 
 	// Both are displacements over the same baseline, so neither is the
@@ -293,6 +408,78 @@ func (s *PlayerTargetPublicTestSuite) TestAGenreAimsAtItsEdgeAndAPlayerAtTheirMi
 	s.Require().NotEqual(s.deps.Measured.Baseline, edge)
 	s.Require().NotEqual(edge, middle,
 		"a genre's edge and one of its players' middle cannot be the same")
+}
+
+// TestAGenreIsNoTargetForAnotherInstrument covers the refusal a genre carries
+// on its own figures.
+//
+// Not reachable through a build any more, and that is why it is here. Task 290
+// put the same test on the readings the pedal was measured with, and all 215
+// of those were taken with a bass, so a guitar ask is turned back before a
+// genre is consulted at all. The genre refusal is what answers once one guitar
+// sweep exists and the chain gets that far.
+//
+// One method and one table, so a case is a row rather than a file.
+func (s *PlayerTargetPublicTestSuite) TestAGenreIsNoTargetForAnotherInstrument() {
+	for _, tt := range []struct {
+		name string
+		// genre is what the ask names, and on what it says the chain is for.
+		genre, on string
+		// aimed is whether the genre's figures answered.
+		aimed bool
+		// said is a phrase the note has to carry.
+		said string
+	}{
+		{
+			name:  "a bass genre for a bass",
+			genre: "punk",
+			on:    "bass",
+			aimed: true,
+		},
+		{
+			// A bass corpus puts every genre's centroid between 90 and 182Hz,
+			// and a guitar chain solved against that spends every control
+			// sounding like another instrument.
+			name:  "a bass genre for a guitar",
+			genre: "punk",
+			on:    "guitar",
+			said:  "is measured on bass and this is for guitar",
+		},
+		{
+			// An ask that says nothing takes the figures as measured.
+			name:  "an ask that names no instrument",
+			genre: "punk",
+			aimed: true,
+		},
+	} {
+		s.Run(tt.name, func() {
+			ask := tone.Ask{Genre: []string{tt.genre}}
+
+			if tt.on != "" {
+				on := tone.AskInstrument(tt.on)
+				ask.Instrument = &on
+			}
+
+			got, notes, ok := translate.GenreTarget(ask, s.deps)
+			s.Require().Equal(tt.aimed, ok)
+
+			if tt.aimed {
+				s.Require().NotEmpty(got)
+
+				return
+			}
+
+			s.Require().Empty(got)
+
+			said := ""
+			for _, n := range notes {
+				said += n.Said + "\n"
+			}
+
+			s.Require().Contains(said, tt.said,
+				"a refusal somebody can disagree with is said out loud")
+		})
+	}
 }
 
 func TestPlayerTargetPublicTestSuite(

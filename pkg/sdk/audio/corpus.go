@@ -37,6 +37,18 @@ import (
 type Player struct {
 	// ID is the directory the records sit in, which is the rig's identifier.
 	ID string `json:"id"`
+	// Instrument is what these records were played on.
+	//
+	// The same field a genre carries and for the same reason: the figures are
+	// meaningless without it and carry no hint of it otherwise. A bass
+	// guitar's centre of gravity sits an octave below a guitar's, so a chain
+	// aimed at a bassist's centroid is not close to it, it is being asked to
+	// sound like a different instrument, and the solve converges and reports
+	// its tolerances met while being wrong about what it was asked.
+	//
+	// Empty where nothing says, which [AimAtPlayer] refuses to aim at rather
+	// than aiming at it anyway.
+	Instrument string `json:"instrument,omitempty"`
 	// Records is how many of their recordings were measured.
 	Records int `json:"records"`
 	// Across is what those records measure as together.
@@ -139,9 +151,20 @@ const peersNeeded = 3
 //
 // A directory holding no recordings is not a player, and is skipped rather
 // than reported as one measuring nothing.
+//
+// `instrument` names what the tree holds, for the reason [GenresMeasured]
+// takes it: the tree's own name is not in the tree. Read through
+// `os.DirFS(resources/music/bass)` with a root of ".", the walk sees
+// `mike-dirnt` and the word `bass` is nowhere in it, so every player would
+// read with no instrument and nothing downstream could refuse aiming a guitar
+// chain at their figures. Applied only where the tree itself says nothing,
+// which is the same rule and for the same reason: a player sitting beside the
+// instrument directories rather than under one has to stay empty, because
+// naming them after the root would classify a stray as bass.
 func Corpus(
 	fsys fs.FS,
 	root string,
+	instrument string,
 ) ([]Player, error) {
 	entries, err := fs.ReadDir(fsys, root)
 	if err != nil {
@@ -178,7 +201,10 @@ func Corpus(
 		together[e.Name()] = a
 		plays[e.Name()] = tags
 
-		out = append(out, Player{ID: e.Name(), Records: len(got), Across: a})
+		out = append(out, Player{
+			ID: e.Name(), Records: len(got), Across: a,
+			Instrument: playedOn(root, e.Name(), instrument),
+		})
 	}
 
 	for i := range out {
@@ -191,6 +217,30 @@ func Corpus(
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 
 	return out, nil
+}
+
+// playedOn is what one player's records were played on: the tree where it says
+// so, and what the caller named otherwise.
+//
+// The tree first, because it is the stronger answer. Pointed at the corpus
+// above every instrument, the directory holding a player names theirs, and
+// `genrepack` reads one instrument's tree at a time that way. Pointed at one
+// instrument's tree with a root of ".", there is nothing above the player at
+// all and the only answer is the name the caller passed, which is why it takes
+// one: `filepath.Base` of the corpus path is how both callers know.
+//
+// Empty where neither says, and that is a refusal rather than a gap.
+// [AimAtPlayer] cannot hold a player with no instrument against the chain
+// asking, so it declines to aim at them, which is the same thing
+// [Genre.Usable] does to a genre whose records disagree.
+func playedOn(
+	root, player, instrument string,
+) string {
+	if said := instrumentDir(".", path.Join(root, player)); said != "" {
+		return said
+	}
+
+	return instrument
 }
 
 // named keeps the recordings the manifest names, where there is one.

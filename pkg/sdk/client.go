@@ -1235,7 +1235,7 @@ func (c *Client) MeasuredPlayers(
 		return nil, err
 	}
 
-	return audio.Corpus(os.DirFS(corpus), ".")
+	return audio.Corpus(os.DirFS(corpus), ".", filepath.Base(corpus))
 }
 
 // MeasuredRecordings is what a directory of recordings measures as, one entry

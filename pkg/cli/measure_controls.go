@@ -544,7 +544,7 @@ func MeasureControls(
 	out := measured.Curves{
 		Device: cat.Device, Gear: block.Name, Block: string(block.ID),
 		Slot: alone, Isolated: opts.After == "", Probed: probed,
-		Instrument: referenceIsFor(opts.Dry), Headroom: opts.Headroom,
+		Instrument: measured.InstrumentIn(opts.Dry), Headroom: opts.Headroom,
 		Volume: level,
 		// The same three the fingerprint library records, for the same
 		// reason: a curve taken on one rig is a curve about that rig.

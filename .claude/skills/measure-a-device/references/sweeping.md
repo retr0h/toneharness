@@ -186,6 +186,26 @@ Run all four before committing a batch. On this campaign the third rejected a
 filter the first two passed, and the fourth is what found the 46 cabinets whose
 readings were of an empty slot.
 
+### `instrument` is now checked, not just recorded
+
+The second check used to be hygiene. It is not any more: a reading is refused
+for a chain built for another instrument, and a reading that cannot say which
+instrument it was taken on is refused too. Five places ask, and the refusal
+reaches the target, the block ranking, the pair library, the control tuning and
+a cabinet's microphone.
+
+So a sweep that lands without the field is a sweep whose readings nothing will
+use. Check it before committing rather than after.
+
+There is one fallback and it is not a guess. Where the field is absent the
+reference recording's filename answers, because that was the only trace of it
+before the field existed and 8 of the 215 readings committed here predate it.
+Every one of those names `bass-di.wav`. Refusing them outright took an EQ's
+controls off a preset and put the catalog's defaults back, which is a worse
+answer than the one the file can still give. Name a reference recording after
+the instrument it holds and that fallback keeps working; name it `take-3.wav`
+and it does not.
+
 ## The fingerprint library says which run each reading came from
 
 A curve file describes one sweep, so one header describes every reading in it.

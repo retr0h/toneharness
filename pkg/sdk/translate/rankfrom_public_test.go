@@ -41,13 +41,17 @@ type RankFromPublicTestSuite struct {
 	suite.Suite
 }
 
-// pair is a library of readings taken behind one named block.
+// pair is a library of readings taken behind one named block, on one
+// instrument. Every committed one says `bass`, which is what every row here
+// but the cross-instrument ones uses.
 func (s *RankFromPublicTestSuite) pair(
 	after catalog.ModelID,
+	on string,
 ) measured.Library {
 	return measured.Library{
 		Device: "HX Stomp", Isolated: false, After: string(after),
-		Baseline: measured.Figures{Level: -51.03},
+		Instrument: on,
+		Baseline:   measured.Figures{Level: -51.03},
 	}
 }
 
@@ -73,7 +77,7 @@ func (s *RankFromPublicTestSuite) TestRankFrom() {
 	}}
 
 	isolated := measured.Library{
-		Device: "HX Stomp", Isolated: true,
+		Device: "HX Stomp", Isolated: true, Instrument: "bass",
 		Baseline: measured.Figures{Level: -51.03},
 	}
 
@@ -93,6 +97,10 @@ func (s *RankFromPublicTestSuite) TestRankFrom() {
 		kind  catalog.Category
 		// have is which models a pair library exists for.
 		have []catalog.ModelID
+		// on is the instrument those pair readings were taken on, and `for`
+		// the instrument the chain is built for. Both default to a bass,
+		// which is every committed reading and every shipped rig.
+		on, built string
 		// inChain is whether a pair reading answered.
 		inChain bool
 	}{
@@ -164,9 +172,46 @@ func (s *RankFromPublicTestSuite) TestRankFrom() {
 			chain: amp("Ampeg SVT Brt"),
 			kind:  catalog.CategoryDrive,
 		},
+		{
+			// Task 290. A pair reading is a reading, so it answers for the
+			// instrument it was taken on and no other. The isolated library
+			// stands, which `target` then refuses in its own right.
+			name:  "a pair reading taken on another instrument",
+			chain: amp("Ampeg SVT Brt"),
+			kind:  catalog.CategoryDrive,
+			have:  []catalog.ModelID{"HD2_AmpSVBeastBrt"},
+			built: "guitar",
+		},
+		{
+			// A reading from before the field existed. It cannot be shown to
+			// be about this chain, and "probably bass, everything is" is the
+			// reasoning the guard exists to stop.
+			name:  "a pair reading that names no instrument",
+			chain: amp("Ampeg SVT Brt"),
+			kind:  catalog.CategoryDrive,
+			have:  []catalog.ModelID{"HD2_AmpSVBeastBrt"},
+			on:    "-",
+			built: "bass",
+		},
 	} {
 		s.Run(tt.name, func() {
 			deps := translate.Deps{Catalog: cat, Measured: isolated}
+
+			// A dash means the reading names none, which an empty string
+			// cannot say in a table whose other rows default to a bass.
+			on := tt.on
+			if on == "" {
+				on = "bass"
+			}
+
+			if on == "-" {
+				on = ""
+			}
+
+			built := tt.built
+			if built == "" {
+				built = "bass"
+			}
 
 			if len(tt.have) > 0 {
 				deps.InFrontOf = func(
@@ -174,7 +219,7 @@ func (s *RankFromPublicTestSuite) TestRankFrom() {
 				) (measured.Library, bool) {
 					for _, one := range tt.have {
 						if one == after {
-							return s.pair(one), true
+							return s.pair(one, on), true
 						}
 					}
 
@@ -182,7 +227,7 @@ func (s *RankFromPublicTestSuite) TestRankFrom() {
 				}
 			}
 
-			lib, inChain := translate.RankFrom(tt.chain, deps, tt.kind)
+			lib, inChain := translate.RankFrom(tt.chain, deps, tt.kind, built)
 
 			s.Require().Equal(tt.inChain, inChain)
 
@@ -210,13 +255,13 @@ func (s *RankFromPublicTestSuite) TestRankFromWithoutACatalog() {
 	deps := translate.Deps{
 		Measured: measured.Library{Isolated: true},
 		InFrontOf: func(catalog.ModelID) (measured.Library, bool) {
-			return s.pair("HD2_AmpSVBeastBrt"), true
+			return s.pair("HD2_AmpSVBeastBrt", "bass"), true
 		},
 	}
 
 	lib, inChain := translate.RankFrom(
 		[]rig.ChainEntry{{Role: rig.RoleAmp, Gear: "Ampeg SVT Brt"}},
-		deps, catalog.CategoryDrive)
+		deps, catalog.CategoryDrive, "bass")
 
 	s.Require().False(inChain)
 	s.Require().True(lib.Isolated)
