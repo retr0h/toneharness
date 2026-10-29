@@ -409,7 +409,7 @@ func (f *Flows) readSlot(
 		return nil, nil
 	}
 
-	read, err := f.deviceReading(ctx, body, at.Slot, name, result.FormatPreset)
+	read, err := f.deviceReading(ctx, body, &at.Slot, name, result.FormatPreset)
 	if err != nil {
 		return nil, err
 	}

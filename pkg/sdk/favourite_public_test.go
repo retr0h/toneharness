@@ -41,7 +41,18 @@ import (
 // Taken from the fixture rather than chosen: a preset lifted off a device has
 // no document, so the identifier comes from what the device calls the slot,
 // and the edit buffer is read with no slot known.
-const playing = "slot-01a"
+//
+// **It is not an identifier any real rig has, and that is the point of this
+// comment.** The device's wire format carries no preset name in a chain
+// response and there is no call that reports which slot is selected, so a read
+// of the edit buffer can only synthesise one. Every row below that recognises
+// what is playing does so by naming its favourite's rig this, which no setup
+// anybody writes would. So the recognition these rows cover has never worked
+// on hardware, and task 293 is that rather than this constant.
+//
+// It read `slot-01a` until task 292, which was worse: zero is a real slot, so
+// the fiction was indistinguishable from a genuine read of 01A.
+const playing = "what-is-loaded"
 
 // FavouritePublicTestSuite covers getting to a favourite slot in one step.
 //

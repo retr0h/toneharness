@@ -52,7 +52,7 @@ func (d Decoder) Document(
 	at slot.Address,
 	name string,
 ) (*preset.Document, error) {
-	read, err := d.flows.deviceReading(ctx, body, at.Slot, name, result.FormatPreset)
+	read, err := d.flows.deviceReading(ctx, body, &at.Slot, name, result.FormatPreset)
 	if err != nil {
 		return nil, err
 	}
