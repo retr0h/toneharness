@@ -131,8 +131,11 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 				tests := []struct {
 					name string
 					// which answer to read: the capture unless a case says otherwise.
-					answer  string
-					slot    int
+					answer string
+					slot   int
+					// loaded reads the edit buffer rather than a slot, which is what
+					// `Flows.Loaded` does and the only caller that passes no slot.
+					loaded  bool
 					called  string
 					as      result.Format
 					catalog string
@@ -219,6 +222,23 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 					},
 					{name: "a slot the device did not name", contains: []string{"slot 01A"}},
 					{
+						// The edit buffer, which is no slot. It used to be spelled as
+						// slot zero, and zero is 01A, so `device current` reported
+						// `slot 01A` and `slot-01a` whatever the pedal had loaded.
+						name:     "what is loaded, which is no slot",
+						loaded:   true,
+						contains: []string{"what is loaded"},
+						absent:   []string{"slot 01A", "slot-01a"},
+					},
+					{
+						// And the error says where the trouble was, which for the edit
+						// buffer is not a slot either. It blamed 01A.
+						name:    "an answer that is not a preset, read off the edit buffer",
+						answer:  "nonsense",
+						loaded:  true,
+						errText: "reading what is loaded",
+					},
+					{
 						// Only the document is wanted, so the rig is work nobody asked
 						// for.
 						name:     "the device's own file",
@@ -289,7 +309,12 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 
 						f := &Flows{Catalogs: catalogsAt(s.T(), tt.catalog)}
 
-						read, err := f.deviceReading(context.Background(), answer, tt.slot, tt.called, tt.as)
+						at := &tt.slot
+						if tt.loaded {
+							at = nil
+						}
+
+						read, err := f.deviceReading(context.Background(), answer, at, tt.called, tt.as)
 
 						if tt.err || tt.errText != "" {
 							s.Require().Error(err)
@@ -360,7 +385,10 @@ func (s *DeviceReadTestSuite) TestDeviceReading() {
 
 				f := &Flows{}
 
-				read, err := f.deviceReading(context.Background(), s.capture(), 0, "", result.FormatRig)
+				at := 0
+
+				read, err := f.deviceReading(
+					context.Background(), s.capture(), &at, "", result.FormatRig)
 				s.Require().NoError(err)
 
 				var buf bytes.Buffer

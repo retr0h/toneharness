@@ -131,7 +131,7 @@ func (f *Flows) read(
 			"%w: %s", ErrEmptySlot, slotpkg.Label(at.Slot))
 	}
 
-	return f.deviceReading(ctx, body, at.Slot, name, as)
+	return f.deviceReading(ctx, body, &at.Slot, name, as)
 }
 
 // ErrEmptySlot is returned for a slot holding no preset.

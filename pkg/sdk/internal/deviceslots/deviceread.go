@@ -39,17 +39,24 @@ import (
 // name is what the device calls the slot, empty when nothing said. as is the
 // format the reading is for: the device's own file needs no rig lifted out of
 // it.
+//
+// slot is nil where the reading is of no slot, which is the edit buffer and
+// only [Flows.Loaded] reads one. It used to be an `int` that the caller set to
+// zero to mean that, and zero is slot 01A: `device current` reported `slot
+// 01A` and `slot-01a` whatever the pedal had loaded, so the one command that
+// tells a slot write from a slot load named the wrong slot every time, and a
+// decode failure on the edit buffer blamed 01A too. Absent has to be a value
+// the type can hold rather than a position that means it.
 func (f *Flows) deviceReading(
 	ctx context.Context,
 	body []byte,
-	slot int,
+	slot *int,
 	name string,
 	as result.Format,
 ) (result.Reading, error) {
 	got, err := wire.DecodePreset(body)
 	if err != nil {
-		return result.Reading{}, fmt.Errorf(
-			"reading slot %s: %w", slotpkg.Label(slot), err)
+		return result.Reading{}, fmt.Errorf("reading %s: %w", read(slot), err)
 	}
 
 	cat, err := f.catalog(ctx)
@@ -58,7 +65,7 @@ func (f *Flows) deviceReading(
 	}
 
 	if name == "" {
-		name = "slot " + slotpkg.Label(slot)
+		name = read(slot)
 	}
 
 	doc, empty, err := f.translator().Document(got, cat, name)
@@ -79,8 +86,7 @@ func (f *Flows) deviceReading(
 
 	id, spec, made, err := f.compiler().Lift(doc, cat)
 	if err != nil {
-		return result.Reading{}, fmt.Errorf(
-			"reading slot %s: %w", slotpkg.Label(slot), err)
+		return result.Reading{}, fmt.Errorf("reading %s: %w", read(slot), err)
 	}
 
 	// Everything else in that section would be the untouched preset this was
@@ -107,4 +113,20 @@ func deref[T any](
 	}
 
 	return *of
+}
+
+// read names what a reading is of, for a name nobody gave and for the errors
+// that have to say where the trouble was.
+//
+// "what is loaded" rather than a slot where there is none. The phrase is the
+// command's own: `device current` reads what the attached device is playing,
+// and that is the edit buffer rather than a position.
+func read(
+	slot *int,
+) string {
+	if slot == nil {
+		return "what is loaded"
+	}
+
+	return "slot " + slotpkg.Label(*slot)
 }

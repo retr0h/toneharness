@@ -223,9 +223,14 @@ func (s *TurnPublicTestSuite) TestLoaded() {
 						want: "reading what is loaded",
 					},
 					{
+						// Named as what it is rather than as a slot. This row used to
+						// expect "reading slot", which was the bug: the edit buffer is
+						// no slot, and the absence was spelled as slot zero, which is
+						// 01A, so a failure here blamed 01A and so did every successful
+						// read.
 						name: "the answer is not a preset",
 						give: []byte("not a document"),
-						want: "reading slot",
+						want: "reading what is loaded",
 					},
 				}
 

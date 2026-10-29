@@ -59,9 +59,14 @@ func (f *Flows) Loaded(
 		return result.Reading{}, ErrNothingLoaded
 	}
 
-	// The slot is not known: what the device hands back is a document, not a
-	// position, and it may have been edited away from whatever it was loaded
-	// from. Reporting a slot number for it would name a slot whose contents
-	// this is no longer.
-	return f.deviceReading(ctx, body, 0, "", as)
+	// No slot, because the slot is not knowable here: what the device hands
+	// back is a document rather than a position, and it may have been edited
+	// away from whatever it was loaded from, so naming a slot would name one
+	// whose contents this is no longer.
+	//
+	// Passed as nil rather than as zero, which is what it used to be. Zero is
+	// slot 01A, so this read reported `slot 01A` and an id of `slot-01a`
+	// whatever was loaded, and the command that exists to tell a slot write
+	// from a slot load named the wrong slot every time.
+	return f.deviceReading(ctx, body, nil, "", as)
 }

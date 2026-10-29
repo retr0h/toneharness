@@ -18,6 +18,19 @@ difference. A live parameter move changes the buffer and writes nothing back, so
 reading the slot it came from answers with the stored document and makes it look
 as though nothing happened.
 
+**It cannot tell you which slot you are on, and it no longer pretends to.** The
+buffer may have been edited away from whatever it was loaded from, and the wire
+format carries no preset name in a chain response, so there is nothing to name
+it after. It answers `what is loaded` and an id of `what-is-loaded`, every time.
+
+Until task 292 it answered `slot 01A` and `slot-01a` instead, because the
+absence of a slot was spelled as slot zero and zero is 01A. That is a specific
+false claim rather than a gap, and it is the trap worth naming: the command
+whose job is to tell a slot write from a slot load named the wrong slot on every
+read, and a session believed it and reported the pedal was sitting on 01A when
+it was not. Compare the **chain** it returns against what you wrote, never the
+label.
+
 ## A named slot can still be empty
 
 A device names every slot. An untouched one is called `New Preset`, and a slot
