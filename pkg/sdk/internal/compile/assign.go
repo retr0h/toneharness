@@ -129,6 +129,25 @@ var automatic = map[catalog.Category]struct{ on, off int }{
 	// green too. A switch is told from its neighbour by the colour somebody
 	// chose, which `palette` hands out per switch rather than per kind.
 	catalog.CategoryComp: {0x84ff00, 0x080c00},
+	// A wah, mined the same way: off 0x03000b on 573 of 573 assignments, on
+	// 0x3200ff on 23 of 24. The off reading is the only unanimous one in this
+	// table.
+	//
+	// The same pair as a filter, which is the device's answer rather than a
+	// gap: a wah is a filter on this device, and Line 6 light the two alike.
+	//
+	// **It was missing, and a switch with no colour does not work.** A wah
+	// became stompable without being given a row here, so `lit` answered zero
+	// and the field was left out, which put a zero on the wire. On an attached
+	// HX Stomp that broke the whole footswitch section and not only the wah's
+	// own switch: on `flea` the wah took three presses, the filter beside it
+	// worked and the drive was dead. Filling this one field in and writing
+	// nothing else fixed all three, confirmed on the hardware.
+	//
+	// 44 of the 86 presets this setup builds carried that zero, every one of
+	// them on a wah. Task 264 is where sending zero first cost something, and
+	// `Stompable` and this table disagreeing is how it came back.
+	catalog.CategoryWah: {0x3200ff, 0x03000b},
 }
 
 // lit is the automatic colour for one block in one state.

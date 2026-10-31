@@ -425,6 +425,43 @@ func (s *AssignTestSuite) TestNoCatalog() {
 	s.Require().Empty(Assign(s.chain("drive"), nil, 3))
 }
 
+// TestEveryStompableKindHasAColour covers the two lists agreeing.
+//
+// A switch written with no automatic colour sends a zero, and a zero is not a
+// colour: on an attached HX Stomp it broke the whole footswitch section, not
+// only the switch that carried it. That is how a wah being added to
+// `catalog.Stompable` without a row in `automatic` reached 44 of the 86 presets
+// one setup builds.
+//
+// Held here rather than trusted to review, because the two lists live in
+// different packages and nothing else reads them together.
+func (s *AssignTestSuite) TestEveryStompableKindHasAColour() {
+	cat, err := catalog.BuiltIn()
+	s.Require().NoError(err)
+
+	// Every category the device actually models, so a kind added to the
+	// catalog is covered here without anybody remembering to add it.
+	kinds := map[catalog.Category]bool{}
+	for _, b := range cat.Blocks {
+		if catalog.Stompable(b.Category) {
+			kinds[b.Category] = true
+		}
+	}
+
+	s.Require().NotEmpty(kinds)
+
+	for kind := range kinds {
+		s.Run(string(kind), func() {
+			on, off := lit(kind, true), lit(kind, false)
+
+			s.Require().NotZero(on,
+				"a switch on a running %s would send a zero, which is not a colour", kind)
+			s.Require().NotZero(off,
+				"a switch on a bypassed %s would send a zero, which is not a colour", kind)
+		})
+	}
+}
+
 func TestAssignTestSuite(
 	t *testing.T,
 ) {
