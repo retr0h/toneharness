@@ -72,22 +72,6 @@ claim. Keep the tool's own wording for a refusal or a figure. The numbers and
 field names are what somebody greps for, and a reworded error cannot be
 searched.
 
-## Task tracking
-
-Work is tracked with Claude Code's task tools in the shared `tonestack` list.
-[CONTRIBUTING.md](CONTRIBUTING.md#claude-code) has the setup.
-
-- Check `TaskList` at the start of a session, before picking up work.
-- When somebody asks for something to be done later, create a task for it and
-  carry on with the current work. Do not start it.
-- Mark a task `in_progress` when starting it and `completed` only once the work
-  is merged or the decision is made. An open pull request is not done.
-- Anything left over at the end of a piece of work becomes a task rather than a
-  sentence in a reply. A sentence in a reply is gone after the next session.
-
-If `TaskCreate` is not available, the tools are off. Say so instead of carrying
-on without them.
-
 ## Commit trailer
 
 When committing via Claude Code, end the message with:

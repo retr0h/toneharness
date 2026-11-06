@@ -81,15 +81,10 @@ If you use [Claude Code] for development, install two plugins.
   plans break into.
 
 superpowers is built on Claude Code's task tools, and Claude Code 2.1.233 turned
-those off by default. `.claude/settings.json` in this repository sets two things
-so nobody has to remember them:
-
-- `CLAUDE_CODE_ENABLE_TODO_TOOLS` turns the task tools back on. Without it the
-  plugin still loads, but every step that says to create a task does nothing.
-- `CLAUDE_CODE_TASK_LIST_ID` names the list `tonestack`. By default a list
-  belongs to one session and disappears with it. A named list lives in
-  `~/.claude/tasks/tonestack/`, survives a restart, and is the same list in
-  every session opened here.
+those off by default. `.claude/settings.json` in this repository sets
+`CLAUDE_CODE_ENABLE_TODO_TOOLS` to turn them back on. Without it the plugin
+still loads, but every step that says to create a task does nothing. The list
+belongs to the session. Work that outlives a session is a GitHub issue.
 
 Settings are read at startup, so restart Claude Code after pulling a change to
 that file.
