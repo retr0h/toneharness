@@ -1,6 +1,6 @@
 module github.com/retr0h/toneharness
 
-go 1.27.1
+go 1.27.3
 
 tool (
 	github.com/boumenot/gocover-cobertura
