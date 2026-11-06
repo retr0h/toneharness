@@ -3,9 +3,10 @@
 Test: `just test` | Before committing: `just ready`
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) first. It covers prerequisites, setup,
-package structure, code standards and testing. All of it applies to agents
-exactly as it applies to people. This file carries only what is specific to
-agents.
+project structure, how the system and its skills fit together, sourcing a rig,
+code standards, testing, and the prose rules every markdown change goes through.
+All of it applies to agents exactly as it applies to people. This file carries
+only what is specific to agents.
 
 ## Running tools
 
@@ -33,189 +34,56 @@ go run main.go rigs records --corpus resources/music/bass
 ```
 
 Use an installed `toneharness` only if you have one. It is a release, so it does
-not have a command added on the branch you are working on, and reporting that a
+not have a command added on the branch you are working on. Reporting that a
 command "does not exist yet" when it was added an hour ago is what happens
 otherwise.
 
-## CONTRIBUTING is not optional reading
-
-[CONTRIBUTING.md](CONTRIBUTING.md) is the source of truth for layout,
-conventions, testing and the licence header every file carries. It applies to
-agents exactly as it applies to people, and none of it is repeated here.
-
-Four of its rules are easy to skip and worth naming. Write Go, and reach for
-Python only where there is nothing in Go to call: see
-[The language is Go](CONTRIBUTING.md#the-language-is-go), which lists the four
-jobs that qualify and what it cost the last time something was written twice.
-Run `just ready` before committing. Put every markdown change through the unslop
-skill first, see [Prose](CONTRIBUTING.md#prose). And when the change touches a
-rig, read [Sourcing a rig](CONTRIBUTING.md#sourcing-a-rig) before starting: it
-is the difference between research and typing, and it says what a pull request
-has to have finished before it is opened.
-
-## Finding your way around the domain
-
-**How to do anything here is in [.claude/skills/](.claude/skills/)**, and each
-skill is authoritative for its own domain. Five of them, self-contained and
-separately installable, so nothing is stated in two of them:
-
-| Skill              | Owns                                                                                                               |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `build-a-rig`      | research, citing gear, resolving an ask, tuning after hearing it                                                   |
-| `write-a-spec`     | every field on the two contracts, and which document a fact belongs in                                             |
-| `measure-a-device` | **playing audio through the pedal and hearing it back**, sweeps, what a control does, trusting a catalog           |
-| `measure-music`    | growing a corpus, measuring records, players and genres, deriving words                                            |
-| `work-a-device`    | reading and writing what a pedal holds, which slots a setup manages, favourites, and the rules that keep one alive |
-
-Read the skill that matches the task. Do not read all five, and do not restate
-one skill's knowledge in another: that is the duplication the split exists to
-prevent.
-
-**Nothing you send reaches an amplifier by default.** If audio is going out and
-coming back wrong, silent, or unchanging, that is the signal path and it is
-`measure-a-device`'s `references/signal-path.md`, before the wire framing and
-before anything about the block being measured. The two numbers that decide it
-live on the preset rather than in any setting, and one of them is a destination
-whose label says it carries USB when it does not.
-
-## Nothing here is one pedal on one laptop
-
-Every number that describes hardware is somebody else's different number, and
-each of these has already been a bug:
-
-| Varies with     | Do not hardcode                                                                                                                                           |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| the Helix model | how many audio channels it presents. Ask the device; a Stomp is 8 in and 8 out                                                                            |
-| the Helix model | the routing enum indices. The same file carries separate lists for a Stomp, an LT and the plugin                                                          |
-| the Helix model | how many blocks, paths and snapshots it holds. `plan.LimitsFor` answers, keyed by the catalog's device name                                               |
-| the computer    | the audio device's name and its backend. `--hardware` names one, or two comma separated to play and record on different devices                           |
-| the computer    | the sample rate. 48kHz is what every committed figure was taken at, and the loop checks it rather than assuming it                                        |
-| the computer    | **its output volume, when it is the thing playing the reference.** Every figure moves with it, so `--volume` pins it and the file records what it reached |
-| the room        | whether a cable loops the output back to the input, or the return comes over USB, or the computer plays in and the pedal's output goes nowhere            |
-
-A figure measured on one device is a figure about that device. Say which.
-
-**The measuring rig itself is a variable, and the one that has mattered most.**
-Playing the reference out of the pedal's own output means the chain hears
-itself, because that socket carries the chain's output too, and a whole library
-was measured of that squeal. Playing out of the computer's own output opens the
-loop. The two rigs do not produce the same numbers even for a block neither
-refused: an Ampeg SVT reads 12.7% of its energy in the mids on one and 4.0% on
-the other. So which rig a figure came from is part of the figure, and
-[measure-a-device's signal-path](.claude/skills/measure-a-device/references/signal-path.md)
-is the page that owns it.
-
-Three things are not in a skill, on purpose:
-
-| Task                              | Read                                                                                                                                                                  |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| How the whole thing fits together | [docs/architecture.md](docs/architecture.md), the one file to read first: the layers, the pipeline, the three ways in, the loop a person is in, and what is not built |
-| Why the system is this shape      | [docs/superpowers/specs/](docs/superpowers/specs/), dated records of decisions, superseded rather than rewritten                                                      |
-| Talking to a device over USB      | [`pkg/sdk/internal/wire/README.md`](pkg/sdk/internal/wire/README.md), the reverse-engineered framing, beside the code that speaks it                                  |
-
-**A spec is history, not documentation.** It records what was decided on a date
-and is never brought up to date, so a spec and the code disagree the moment
-anything changes. How something works now is the skill that owns it, and the
-skill is what gets updated. Reading a spec to learn how the solver works today
-is how somebody came to design a feature the contract had already specified.
-
-The one that gets looked for most: **how the solve works** is
-[`build-a-rig`'s correcting.md](.claude/skills/build-a-rig/references/correcting.md).
-Slopes, least squares, what a tolerance is, the noise floor, what one step
-means, and what the loop does when it cannot get there.
-
-And four questions answer themselves from the tool rather than from any page:
-
-| Question                                  | Ask                                                                                      |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Which commands and flags exist            | `go run main.go --help`, which compiles the tree. Never a list written down              |
-| Which tools an agent gets over MCP        | the running server advertises them. Start it and read what it offers                     |
-| What a field may say, and what is refused | the contract's `description:` fields                                                     |
-| Which words an ask may use                | [`words.json`](pkg/sdk/internal/compile/data/words.json), which is the vocabulary itself |
-| What a control actually does              | [resources/sweeps/](resources/sweeps/), the readings themselves                          |
-
-There is one contract, embedded in the package that reads it:
-[`pkg/sdk/tone/data/tonespec.openapi.yaml`](pkg/sdk/tone/data/tonespec.openapi.yaml).
-A document's `ask:` is what somebody may ask for and its `rig:` is what that
-resolves to, with the rig required. There were two contracts until version 2,
-and ten schemas were defined in both. It is the only hand-authored format; the
-Go types and everything downstream are compiled from it, and each field's
-`description:` is the grammar for that field. There are no generated grammar
-pages: there were, they are gone, and the skill
-[write-a-spec](.claude/skills/write-a-spec/SKILL.md) is what reads the contracts
-back in prose. The generated catalog, the gear map and the corpus are in
-[resources/schemas/](resources/schemas/), and
-[resources/README.md](resources/README.md) says what else is in that tree and
-which of it may be redistributed.
-
 ## What to report, every time
 
-The commands here are careful about saying what they did and where it went. An
-agent that runs one and summarises it as "done" throws that away, and the person
-reading has no way to get it back. So a skill's answer carries the same four
-things the CLI's does.
+The commands here say what they did and where it went. An agent that runs one
+and summarises it as "done" throws that away, and the person reading has no way
+to get it back. So a skill's answer carries the same four things the CLI's does.
 
 **Where anything landed, by path.** Every file written, and every file read or
 replaced on the way. This matters most where something was overwritten: a slot
 write keeps what the slot held and prints where, and a reply that does not
-repeat that path has quietly turned a recoverable change into a lost one. The
-same goes for a document written, a preset built, a backup kept, a plan
-exported.
+repeat that path has quietly turned a recoverable change into a lost one.
 
 **What was decided on somebody's behalf.** Every block the corpus added, every
 substitution made for gear the device has no model of, every word that moved
 nothing, every note the tool returned about what it could not honour. These are
-printed because they are decisions a person may disagree with, and a summary
-that keeps only the result is a summary that hides them.
+printed because a person may disagree with them, and a summary that keeps only
+the result hides them.
 
-**Which claim you have.** Each skill carries the ladder for its own domain, and
-the rule is the same everywhere: say the rung you reached, never the one above
-it. "The rig validates against the catalog", "HX Edit imported the file" and
-"the hardware loaded it" are three different claims. The first needs no device.
-The third needs one attached and `device current` read back afterwards, because
-a chain that is stored is not a chain that rendered: for a fortnight every one
-this tool wrote read back byte for byte and drew nothing on the pedal.
-
-Do not report one as another, and do not describe work as verified on evidence
-you did not gather. If you did not run it, say you did not run it. A fix that
-compiles and passes tests is not a fix that worked on hardware, and saying so
-costs one clause.
+**Which claim you have.** Each skill carries the ladder for its own domain. Say
+the rung you reached, never the one above it. "The rig validates against the
+catalog", "HX Edit imported the file" and "the hardware loaded it" are three
+different claims. The third needs a device attached and `device current` read
+back afterwards, because a chain that is stored is not a chain that rendered. If
+you did not run it, say so. A fix that passes tests is not a fix that worked on
+hardware.
 
 **What it cost the device, where it touched one.** A slot write is a flash
-write. Say which slots were written and that they were, because the person
-deciding whether to do it again is the one holding the pedal.
-
-### The shape
+write. Say which slots were written, because the person deciding whether to do
+it again is the one holding the pedal.
 
 Lead with what happened, then the paths, then what was chosen for them, then the
-claim. Keep the tool's own wording for a refusal or a figure rather than
-paraphrasing it: the numbers and the field names are what somebody greps for,
-and a reworded error is one they cannot search.
+claim. Keep the tool's own wording for a refusal or a figure. The numbers and
+field names are what somebody greps for, and a reworded error cannot be
+searched.
 
 ## Task tracking
 
-Work is tracked with Claude Code's task tools, which the superpowers plugin is
-built on. `.claude/settings.json` turns them on and names the list `tonestack`,
-so it is one list across sessions rather than one per session. See
-[CONTRIBUTING.md](CONTRIBUTING.md#claude-code) for setup.
+Work is tracked with Claude Code's task tools in the shared `tonestack` list.
+[CONTRIBUTING.md](CONTRIBUTING.md#claude-code) has the setup.
 
 - Check `TaskList` at the start of a session, before picking up work.
 - When somebody asks for something to be done later, create a task for it and
   carry on with the current work. Do not start it.
 - Mark a task `in_progress` when starting it and `completed` only once the work
   is merged or the decision is made. An open pull request is not done.
-- Anything left over at the end of a piece of work, a follow-up, a decision
-  nobody has made, a bug found on the way, becomes a task rather than a sentence
-  in a reply. A sentence in a reply is gone after the next session.
-- When a pull request finishes something
-  [docs/architecture.md](docs/architecture.md) marks not built or partly built,
-  update that line in the same pull request, and say so in its description. That
-  table is how the next session learns what exists, and it fell three features
-  behind when nobody did.
-- When a pull request changes behaviour a skill describes, update that skill in
-  the same pull request. One skill owns each fact, so there is exactly one file
-  to change, and a skill that has drifted is worse than no skill: it is
-  confident and wrong.
+- Anything left over at the end of a piece of work becomes a task rather than a
+  sentence in a reply. A sentence in a reply is gone after the next session.
 
 If `TaskCreate` is not available, the tools are off. Say so instead of carrying
 on without them.
@@ -229,45 +97,3 @@ When committing via Claude Code, end the message with:
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
-
-## Re-running the scaffold
-
-`retemplate-go` brings this project up to a newer template. It reads
-`.swamp-template.json`, which records what the last run wrote and the hash of
-each file, and decides per file:
-
-- A file **unchanged since generated** gets the current template's version.
-- A file **edited here** is left alone, and named in the output.
-- A file that is **absent** gets written.
-
-Keep `.swamp-template.json` in the repository. Without it every file looks
-edited, and a retemplate can only skip.
-
-### When a file is reported as an orphan
-
-An orphan is a file an earlier template generated, this one no longer generates,
-and nobody has edited. An `internal/cli/` left behind when the entry point moved
-to `cmd/` is one. It gets reported, never deleted:
-
-```
-orphan internal/cli/cli.go: generated by an earlier template, no longer
-       part of this one, and unchanged since. Safe to delete.
-```
-
-Check nothing imports it, then delete it. Left in place it compiles and passes
-the gate while being unreachable, which is how it goes unnoticed.
-
-### When a file is held
-
-Some files only make sense together: `main.go` imports `cmd`, `cmd` imports
-`internal/<pkg>`; the library stub's test calls a function its source defines.
-If one of them has been edited, the others are held rather than written, and the
-output says so:
-
-```
-HOLD cmd/root.go: the entrypoint files this project already has came from an
-     earlier template.
-```
-
-The run cannot merge your edit into the new shape. Either port the edit by hand,
-or move those files aside and re-run to get the current set.
