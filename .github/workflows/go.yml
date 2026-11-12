@@ -32,6 +32,9 @@ on:
       - "pkg/sdk/**/data/**"
       - "marketplace/**"
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
